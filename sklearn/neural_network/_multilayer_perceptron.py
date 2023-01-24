@@ -1783,12 +1783,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         return X, y, sample_weight
 
     @available_if(lambda est: est._check_solver)
-<<<<<<< HEAD
     @_fit_context(prefer_skip_nested_validation=True)
-    def partial_fit(self, X, y):
-=======
     def partial_fit(self, X, y, sample_weight=None):
->>>>>>> 61c050804 (feat: add support for partial_fit)
         """Update the model with a single iteration over the given data.
 
         Parameters
@@ -1807,11 +1803,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         self : object
             Trained MLP model.
         """
-<<<<<<< HEAD
-        return self._fit(X, y, incremental=True)
-=======
         if not hasattr(self, "coefs_"):
             self._validate_params()
 
         return self._fit(X, y, incremental=True, sample_weight=sample_weight)
->>>>>>> 61c050804 (feat: add support for partial_fit)

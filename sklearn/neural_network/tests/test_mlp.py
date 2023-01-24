@@ -17,9 +17,11 @@ import pytest
 from sklearn.datasets import (
     load_digits,
     load_iris,
+    make_blobs,
     make_multilabel_classification,
     make_regression,
 )
+from sklearn import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
@@ -30,8 +32,10 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_equal,
     ignore_warnings,
+    set_random_state
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils._tags import _safe_tags
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
@@ -1080,3 +1084,44 @@ def test_mlp_classifier_with_sample_and_class_weights(weighted_class):
 
     # Test that class_weight and sample_weight have the same effect
     assert (class_weighted_score != sample_weighted_score).sum() == 0
+
+
+def check_class_weight_same_as_in_estimator_checks():
+    """Conduct the same test as check_class_weight_classifiers in estimator_checks.py"""
+    classifier_orig = MLPClassifier()
+    if _safe_tags(classifier_orig, key="binary_only"):
+        problems = [2]
+    else:
+        problems = [2, 3]
+
+    for n_centers in problems:
+        # create a very noisy dataset
+        X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.5, random_state=0
+        )
+
+        n_centers = len(np.unique(y_train))
+
+        if n_centers == 2:
+            class_weight = {0: 1000, 1: 0.0001}
+        else:
+            class_weight = {0: 1000, 1: 0.0001, 2: 0.0001}
+
+        classifier = clone(classifier_orig)
+        if hasattr(classifier, "n_iter"):
+            classifier.set_params(n_iter=100)
+        if hasattr(classifier, "max_iter"):
+            classifier.set_params(max_iter=1000)
+        if hasattr(classifier, "min_weight_fraction_leaf"):
+            classifier.set_params(min_weight_fraction_leaf=0.01)
+        if hasattr(classifier, "n_iter_no_change"):
+            classifier.set_params(n_iter_no_change=20)
+
+        set_random_state(classifier)
+        classifier.fit(X_train, y_train, class_weight=class_weight)
+        y_pred = classifier.predict(X_test)
+        # XXX: Generally can use 0.89 here. On Windows, LinearSVC gets
+        #      0.88 (Issue #9111)
+        if not _safe_tags(classifier_orig, key="poor_score"):
+            assert np.mean(y_pred == 0) > 0.87
