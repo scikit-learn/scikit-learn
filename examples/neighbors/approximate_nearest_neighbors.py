@@ -4,9 +4,9 @@ Approximate nearest neighbors in TSNE
 =====================================
 
 This example presents how to chain KNeighborsTransformer and TSNE in a pipeline.
-It also shows how to wrap the packages `annoy`, `nmslib` and `pynndescent` to
-replace KNeighborsTransformer and perform approximate nearest neighbors. These
-packages can be installed with `pip install annoy nmslib pynndescent`.
+It also shows how to wrap the packages `nmslib` and `pynndescent` to replace
+KNeighborsTransformer and perform approximate nearest neighbors. These packages
+can be installed with `pip install nmslib pynndescent`.
 
 Note: In KNeighborsTransformer we use the definition which includes each
 training point as its own neighbor in the count of `n_neighbors`, and for
@@ -17,11 +17,9 @@ Sample output::
 
     Benchmarking on MNIST_2000:
     ---------------------------
-    AnnoyTransformer:                    0.305 sec
     NMSlibTransformer:                   0.144 sec
     KNeighborsTransformer:               0.090 sec
     PyNNDescentTransformer:              23.402 sec
-    TSNE with AnnoyTransformer:          2.818 sec
     TSNE with NMSlibTransformer:         2.592 sec
     TSNE with KNeighborsTransformer:     2.338 sec
     TSNE with PyNNDescentTransformer:    6.288 sec
@@ -29,11 +27,9 @@ Sample output::
 
     Benchmarking on MNIST_10000:
     ----------------------------
-    AnnoyTransformer:                    2.874 sec
     NMSlibTransformer:                   1.098 sec
     KNeighborsTransformer:               1.264 sec
     PyNNDescentTransformer:              7.170 sec
-    TSNE with AnnoyTransformer:          16.118 sec
     TSNE with NMSlibTransformer:         15.281 sec
     TSNE with KNeighborsTransformer:     15.400 sec
     TSNE with PyNNDescentTransformer:    28.782 sec
@@ -52,12 +48,6 @@ prediction time.
 # License: BSD 3 clause
 import time
 import sys
-
-try:
-    import annoy
-except ImportError:
-    print("The package 'annoy' is required to run this example.")
-    sys.exit()
 
 try:
     import nmslib
@@ -131,63 +121,6 @@ class NMSlibTransformer(TransformerMixin, BaseEstimator):
         return kneighbors_graph
 
 
-class AnnoyTransformer(TransformerMixin, BaseEstimator):
-    """Wrapper for using annoy.AnnoyIndex as sklearn's KNeighborsTransformer"""
-
-    def __init__(self, n_neighbors=5, metric="euclidean", n_trees=10, search_k=-1):
-        self.n_neighbors = n_neighbors
-        self.n_trees = n_trees
-        self.search_k = search_k
-        self.metric = metric
-
-    def fit(self, X):
-        self.n_samples_fit_ = X.shape[0]
-        self.annoy_ = annoy.AnnoyIndex(X.shape[1], metric=self.metric)
-        for i, x in enumerate(X):
-            self.annoy_.add_item(i, x.tolist())
-        self.annoy_.build(self.n_trees)
-        return self
-
-    def transform(self, X):
-        return self._transform(X)
-
-    def fit_transform(self, X, y=None):
-        return self.fit(X)._transform(X=None)
-
-    def _transform(self, X):
-        """As `transform`, but handles X is None for faster `fit_transform`."""
-
-        n_samples_transform = self.n_samples_fit_ if X is None else X.shape[0]
-
-        # For compatibility reasons, as each sample is considered as its own
-        # neighbor, one extra neighbor will be computed.
-        n_neighbors = self.n_neighbors + 1
-
-        indices = np.empty((n_samples_transform, n_neighbors), dtype=int)
-        distances = np.empty((n_samples_transform, n_neighbors))
-
-        if X is None:
-            for i in range(self.annoy_.get_n_items()):
-                ind, dist = self.annoy_.get_nns_by_item(
-                    i, n_neighbors, self.search_k, include_distances=True
-                )
-
-                indices[i], distances[i] = ind, dist
-        else:
-            for i, x in enumerate(X):
-                indices[i], distances[i] = self.annoy_.get_nns_by_vector(
-                    x.tolist(), n_neighbors, self.search_k, include_distances=True
-                )
-
-        indptr = np.arange(0, n_samples_transform * n_neighbors + 1, n_neighbors)
-        kneighbors_graph = csr_matrix(
-            (distances.ravel(), indices.ravel(), indptr),
-            shape=(n_samples_transform, self.n_samples_fit_),
-        )
-
-        return kneighbors_graph
-
-
 def test_transformers():
     """Test that AnnoyTransformer and KNeighborsTransformer give same results"""
     X = np.random.RandomState(42).randn(10, 2)
@@ -195,14 +128,10 @@ def test_transformers():
     knn = KNeighborsTransformer()
     Xt0 = knn.fit_transform(X)
 
-    ann = AnnoyTransformer()
-    Xt1 = ann.fit_transform(X)
-
     nms = NMSlibTransformer()
-    Xt2 = nms.fit_transform(X)
+    Xt1 = nms.fit_transform(X)
 
     assert_array_almost_equal(Xt0.toarray(), Xt1.toarray(), decimal=5)
-    assert_array_almost_equal(Xt0.toarray(), Xt2.toarray(), decimal=5)
 
 
 def load_mnist(n_samples):
@@ -236,7 +165,6 @@ def run_benchmark():
     )
 
     transformers = [
-        ("AnnoyTransformer", AnnoyTransformer(n_neighbors=n_neighbors, metric=metric)),
         (
             "NMSlibTransformer",
             NMSlibTransformer(n_neighbors=n_neighbors, metric=metric),
@@ -250,13 +178,6 @@ def run_benchmark():
         (
             "PyNNDescentTransformer",
             PyNNDescentTransformer(n_neighbors=n_neighbors, metric=metric),
-        ),
-        (
-            "TSNE with AnnoyTransformer",
-            make_pipeline(
-                AnnoyTransformer(n_neighbors=n_neighbors, metric=metric),
-                TSNE(metric="precomputed", **tsne_params),
-            ),
         ),
         (
             "TSNE with NMSlibTransformer",
