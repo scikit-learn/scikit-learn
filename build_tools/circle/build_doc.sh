@@ -16,6 +16,9 @@ set -e
 # If the inspection of the current commit fails for any reason, the default
 # behavior is to quick build the documentation.
 
+# defines the get_dep and show_installed_libraries functions
+source build_tools/shared.sh
+
 if [ -n "$GITHUB_ACTION" ]
 then
     # Map the variables for the new documentation builder to the old one
@@ -169,11 +172,12 @@ ccache -M 512M
 export CCACHE_COMPRESS=1
 
 # pin conda-lock to latest released version (needs manual update from time to time)
-mamba install conda-lock==1.0.5 -y
+mamba install "$(get_dep conda-lock min)" -y
+
 conda-lock install --log-level WARNING --name $CONDA_ENV_NAME $LOCK_FILE
 source activate $CONDA_ENV_NAME
 
-mamba list
+show_installed_libraries
 
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.
