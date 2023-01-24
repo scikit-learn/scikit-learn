@@ -995,16 +995,14 @@ def export_text(
     check_is_fitted(decision_tree)
     tree_ = decision_tree.tree_
     if is_classifier(decision_tree):
-        if class_names is not None:
-            if len(class_names) != len(decision_tree.classes_):
-                raise ValueError(
-                    "When `class_names` is not None, it should be a list containing as"
-                    " many items as `decision_tree.classes_`. Got"
-                    f" {len(class_names)} while the tree was fitted with"
-                    f" {len(decision_tree.classes_)} classes."
-                )
-            class_names = class_names
-        else:
+        if class_names is not None and len(class_names) != len(decision_tree.classes_):
+            raise ValueError(
+                "When `class_names` is not None, it should be a list containing as"
+                " many items as `decision_tree.classes_`. Got"
+                f" {len(class_names)} while the tree was fitted with"
+                f" {len(decision_tree.classes_)} classes."
+            )
+        elif class_names is None:
             class_names = decision_tree.classes_
     right_child_fmt = "{} {} <= {}\n"
     left_child_fmt = "{} {} >  {}\n"
