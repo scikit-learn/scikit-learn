@@ -243,6 +243,8 @@ def _yield_transformer_checks(transformer):
     yield partial(check_transformer_general, readonly_memmap=True)
     if not _safe_tags(transformer, key="stateless"):
         yield check_transformers_unfitted
+    else:
+        yield check_transformers_unfitted_stateless
     # Dependent on external solvers and hence accessing the iter
     # param is non-trivial.
     external_solver = [
@@ -1552,6 +1554,21 @@ def check_transformers_unfitted(name, transformer):
         ),
     ):
         transformer.transform(X)
+
+
+@ignore_warnings(category=FutureWarning)
+def check_transformers_unfitted_stateless(name, transformer):
+    """Check that using transform without prior fitting
+    doesn't raise a NotFittedError for stateless transformers.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(20, 5))
+    X = _enforce_estimator_tags_X(transformer, X)
+
+    transformer = clone(transformer)
+    X_trans = transformer.transform(X)
+
+    assert X_trans.shape[0] == X.shape[0]
 
 
 def _check_transformer(name, transformer_orig, X, y):
