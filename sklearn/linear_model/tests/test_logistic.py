@@ -246,11 +246,16 @@ def test_multinomial_binary(solver):
     assert np.mean(pred == target) > 0.9
 
 
-def test_multinomial_binary_probabilities():
+def test_multinomial_binary_probabilities(global_random_seed):
     # Test multinomial LR gives expected probabilities based on the
     # decision function, for a binary problem.
-    X, y = make_classification()
-    clf = LogisticRegression(multi_class="multinomial", solver="saga", tol=1e-3)
+    X, y = make_classification(random_state=global_random_seed)
+    clf = LogisticRegression(
+        multi_class="multinomial",
+        solver="saga",
+        tol=1e-3,
+        random_state=global_random_seed,
+    )
     clf.fit(X, y)
 
     decision = clf.decision_function(X)
@@ -813,8 +818,10 @@ def _compute_class_weight_dictionary(y):
 
 
 def test_logistic_regression_class_weights():
+    # Scale data to avoid convergence warnings with the lbfgs solver
+    X_iris = scale(iris.data)
     # Multinomial case: remove 90% of class 0
-    X = iris.data[45:, :]
+    X = X_iris[45:, :]
     y = iris.target[45:]
     solvers = ("lbfgs", "newton-cg")
     class_weight_dict = _compute_class_weight_dictionary(y)
@@ -831,7 +838,7 @@ def test_logistic_regression_class_weights():
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=4)
 
     # Binary case: remove 90% of class 0 and 100% of class 2
-    X = iris.data[45:100, :]
+    X = X_iris[45:100, :]
     y = iris.target[45:100]
     class_weight_dict = _compute_class_weight_dictionary(y)
 
@@ -1373,13 +1380,13 @@ def test_elastic_net_coeffs():
     C = 2.0
     l1_ratio = 0.5
     coeffs = list()
-    for penalty in ("elasticnet", "l1", "l2"):
+    for penalty, ratio in (("elasticnet", l1_ratio), ("l1", None), ("l2", None)):
         lr = LogisticRegression(
             penalty=penalty,
             C=C,
             solver="saga",
             random_state=0,
-            l1_ratio=l1_ratio,
+            l1_ratio=ratio,
             tol=1e-3,
             max_iter=200,
         )
@@ -1800,7 +1807,7 @@ def test_penalty_none(solver):
     #   non-default value.
     # - Make sure setting penalty=None is equivalent to setting C=np.inf with
     #   l2 penalty.
-    X, y = make_classification(n_samples=1000, random_state=0)
+    X, y = make_classification(n_samples=1000, n_redundant=0, random_state=0)
 
     msg = "Setting penalty=None will ignore the C"
     lr = LogisticRegression(penalty=None, solver=solver, C=4)
