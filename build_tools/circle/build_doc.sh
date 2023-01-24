@@ -21,7 +21,7 @@ source build_tools/shared.sh
 
 if [ -n "$GITHUB_ACTION" ]
 then
-    # Map the variables for the new documentation builder to the old one
+    # Map the variables from Github Action to CircleCI
     CIRCLE_SHA1=$(git log -1 --pretty=format:%H)
 
     CIRCLE_JOB=$GITHUB_JOB
