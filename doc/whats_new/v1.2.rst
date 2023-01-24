@@ -105,12 +105,6 @@ Changelog
 - |Fix| :class:`manifold.TSNE` now works correctly when output type is
   set to pandas :pr:`25370` by :user:`Tim Head <betatim>`.
 
-:mod:`sklearn.metrics`
-......................
-
-- |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
-  :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
-
 :mod:`sklearn.model_selection`
 ..............................
 
