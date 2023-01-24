@@ -22,6 +22,8 @@ from ._base import _convert_data_dataframe
 from . import get_data_home
 from ._base import RemoteFileMetadata
 from ._base import load_descr
+from ..utils._param_validation import StrOptions
+from ..utils._param_validation import validate_params
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
@@ -45,7 +47,7 @@ ARCHIVE_10_PERCENT = RemoteFileMetadata(
 
 logger = logging.getLogger(__name__)
 
- @validate_params( 
+@validate_params( 
      { 
          "subset": [StrOptions({"SA", "SF", "http","smtp"}),None],
          "data_home":[str, None],
@@ -57,7 +59,7 @@ logger = logging.getLogger(__name__)
          "as_frame":["boolean"],
          
      }     
- )
+)
 def fetch_kddcup99(
     *,
     subset=None,
