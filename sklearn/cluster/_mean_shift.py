@@ -16,13 +16,12 @@ Seeding is performed using a binning technique for scalability.
 
 import numpy as np
 import warnings
-from joblib import Parallel
 from numbers import Integral, Real
 
 from collections import defaultdict
 from ..utils._param_validation import Interval, validate_params
 from ..utils.validation import check_is_fitted
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
@@ -288,7 +287,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
     Parameters
     ----------
     bandwidth : float, default=None
-        Bandwidth used in the RBF kernel.
+        Bandwidth used in the flat kernel.
 
         If not given, the bandwidth is estimated using
         sklearn.cluster.estimate_bandwidth; see the documentation for that
