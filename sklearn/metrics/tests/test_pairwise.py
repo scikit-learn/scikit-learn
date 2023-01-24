@@ -1556,7 +1556,7 @@ def test_sparse_manhattan_readonly_dataset():
     # Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/7981
     matrices1 = [csr_matrix(np.ones((5, 5)))]
     matrices2 = [csr_matrix(np.ones((5, 5)))]
-    # Joblib memory maps datasets which makes them read only.
+    # Joblib memory maps datasets which makes them read-only.
     # The following call was reporting as failing in #7981, but this must pass.
     Parallel(n_jobs=-1, max_nbytes=0)(
         delayed(manhattan_distances)(m1, m2) for m1, m2 in zip(matrices1, matrices2)
