@@ -258,9 +258,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if not np.any(is_categorical):
             return None, None
 
-        # compute the known categories in the training data. We need to do
-        # that here instead of in the BinMapper because in case of early
-        # stopping, the mapper only gets a fraction of the training data.
+        # Compute the known categories in the training data. We cannot do this
+        # in the BinMapper because it only gets a fraction of the training data
+        # when early stopping is enabled.
         known_categories = []
 
         for f_idx in range(n_features):
@@ -270,18 +270,24 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if missing.any():
                     categories = categories[~missing]
 
+                if hasattr(self, "feature_names_in_"):
+                    feature_name = f"'{self.feature_names_in_[f_idx]}'"
+                else:
+                    feature_name = f"at index {f_idx}"
+
                 if categories.size > self.max_bins:
                     raise ValueError(
-                        f"Categorical feature at index {f_idx} is "
-                        "expected to have a "
-                        f"cardinality <= {self.max_bins}"
+                        f"Categorical feature {feature_name} is expected to "
+                        f"have a cardinality <= {self.max_bins} but actually "
+                        f"has a cardinality of {categories.size}."
                     )
 
                 if (categories >= self.max_bins).any():
                     raise ValueError(
-                        f"Categorical feature at index {f_idx} is "
-                        "expected to be encoded with "
-                        f"values < {self.max_bins}"
+                        f"Categorical feature {feature_name} is expected to "
+                        f"be encoded with values < {self.max_bins} but the "
+                        "largest value for the encoded categories is "
+                        f"{categories.max()}."
                     )
             else:
                 categories = None

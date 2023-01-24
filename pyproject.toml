@@ -3,7 +3,7 @@
 requires = [
     "setuptools<60.0",
     "wheel",
-    "Cython>=0.29.24",
+    "Cython>=0.29.33",
 
     # use oldest-supported-numpy which provides the oldest numpy version with
     # wheels on PyPI
