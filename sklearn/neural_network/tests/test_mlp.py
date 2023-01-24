@@ -926,3 +926,22 @@ def test_mlp_warm_start_with_early_stopping(MLPEstimator):
     mlp.set_params(max_iter=20)
     mlp.fit(X_iris, y_iris)
     assert len(mlp.validation_scores_) > n_validation_scores
+
+
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_mlp_warm_start_no_convergence(MLPEstimator):
+    """Check that we stop the number of iteration at `max_iter` when warm starting.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24764
+    """
+    model = MLPEstimator(warm_start=True, early_stopping=False, max_iter=10)
+
+    with pytest.warns(ConvergenceWarning):
+        model.fit(X_iris, y_iris)
+    assert model.n_iter_ == 10
+
+    model.set_params(max_iter=20)
+    with pytest.warns(ConvergenceWarning):
+        model.fit(X_iris, y_iris)
+    assert model.n_iter_ == 20
