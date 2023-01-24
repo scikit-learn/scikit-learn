@@ -110,7 +110,7 @@ Changelog
   :pr:`24882` by :user:`Ashwin Mathur <awinml>`.
 
 - |Efficiency| :class:`ensemble.IsolationForest` predict time is now faster
-  (typically by a factor up to 5x). Internally, the estimator now precomputes
+  (typically by a 8x factor or more). Internally, the estimator now precomputes
   decision path lengths per tree at `fit` time. It is therefore not possible
   to load an estimator trained with scikit-learn 1.2 to make it predict with
   scikit-learn 1.3: retraining with scikit-learn 1.3 is required.
