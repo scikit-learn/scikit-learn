@@ -189,14 +189,17 @@ ccache -s
 
 export OMP_NUM_THREADS=1
 
+# Avoid CI job getting killed because it uses too much memory
+if [[ -z $SPHINX_NUMJOBS ]]; then
+    export SPHINX_NUMJOBS=2
+fi
+
 if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
 then
     # List available documentation versions if on main
     python build_tools/circle/list_versions.py > doc/versions.rst
 fi
 
-# Avoid CI job getting killed because it uses too much memory
-export SPHINX_NUMJOBS=3
 
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
