@@ -4,9 +4,9 @@ Approximate nearest neighbors in TSNE
 =====================================
 
 This example presents how to chain KNeighborsTransformer and TSNE in a pipeline.
-It also shows how to wrap the packages `annoy` and `nmslib` to replace
-KNeighborsTransformer and perform approximate nearest neighbors. These packages
-can be installed with `pip install annoy nmslib`.
+It also shows how to wrap the packages `annoy`, `nmslib` and `pynndescent` to
+replace KNeighborsTransformer and perform approximate nearest neighbors. These
+packages can be installed with `pip install annoy nmslib pynndescent`.
 
 Note: In KNeighborsTransformer we use the definition which includes each
 training point as its own neighbor in the count of `n_neighbors`, and for
@@ -20,9 +20,11 @@ Sample output::
     AnnoyTransformer:                    0.305 sec
     NMSlibTransformer:                   0.144 sec
     KNeighborsTransformer:               0.090 sec
+    PyNNDescentTransformer:              23.402 sec
     TSNE with AnnoyTransformer:          2.818 sec
     TSNE with NMSlibTransformer:         2.592 sec
     TSNE with KNeighborsTransformer:     2.338 sec
+    TSNE with PyNNDescentTransformer:    6.288 sec
     TSNE with internal NearestNeighbors: 2.364 sec
 
     Benchmarking on MNIST_10000:
@@ -30,9 +32,11 @@ Sample output::
     AnnoyTransformer:                    2.874 sec
     NMSlibTransformer:                   1.098 sec
     KNeighborsTransformer:               1.264 sec
+    PyNNDescentTransformer:              7.170 sec
     TSNE with AnnoyTransformer:          16.118 sec
     TSNE with NMSlibTransformer:         15.281 sec
     TSNE with KNeighborsTransformer:     15.400 sec
+    TSNE with PyNNDescentTransformer:    28.782 sec
     TSNE with internal NearestNeighbors: 15.573 sec
 
 
@@ -65,6 +69,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 from scipy.sparse import csr_matrix
+from pynndescent import PyNNDescentTransformer
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.neighbors import KNeighborsTransformer
@@ -238,6 +243,10 @@ def run_benchmark():
             ),
         ),
         (
+            "PyNNDescentTransformer",
+            PyNNDescentTransformer(n_neighbors=n_neighbors, metric=metric),
+        ),
+        (
             "TSNE with AnnoyTransformer",
             make_pipeline(
                 AnnoyTransformer(n_neighbors=n_neighbors, metric=metric),
@@ -257,6 +266,13 @@ def run_benchmark():
                 KNeighborsTransformer(
                     n_neighbors=n_neighbors, mode="distance", metric=metric
                 ),
+                TSNE(metric="precomputed", **tsne_params),
+            ),
+        ),
+        (
+            "TSNE with PyNNDescentTransformer",
+            make_pipeline(
+                PyNNDescentTransformer(n_neighbors=n_neighbors, metric=metric),
                 TSNE(metric="precomputed", **tsne_params),
             ),
         ),
