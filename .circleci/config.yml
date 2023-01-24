@@ -95,8 +95,8 @@ workflows:
   version: 2
   build-doc-and-deploy:
     jobs:
-      - doc:
-      - doc-min-dependencies:
+      - doc
+      - doc-min-dependencies
       - deploy:
           requires:
             - doc
