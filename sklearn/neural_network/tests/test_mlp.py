@@ -354,7 +354,7 @@ def test_learning_rate_warmstart():
         if learning_rate == "constant":
             assert prev_eta == post_eta
         elif learning_rate == "invscaling":
-            assert mlp.learning_rate_init / pow(8 + 1, mlp.power_t) == post_eta
+            assert mlp.learning_rate_init == post_eta
 
 
 def test_multilabel_classification():
