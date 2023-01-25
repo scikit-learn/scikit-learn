@@ -62,6 +62,8 @@ for sub_plot_idx, criterion in enumerate(criterions):
     Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1].reshape(xx.shape)
     plt.contourf(xx, yy, Z, cmap=plt.cm.rainbow)
     plt.colorbar(label="minority class prediction probability")
+    # Set the range for probability on the colorbar.
+    plt.clim(0, 1)
 
     # Draw axis labels
     plt.xlabel("feature_1")
