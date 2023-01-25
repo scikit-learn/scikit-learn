@@ -136,9 +136,7 @@ have the same interface; we'll show an example of using the KD Tree here:
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
 for more information on the options available for nearest neighbors searches,
 including specification of query strategies, distance metrics, etc. For a list
-of available metrics, see the documentation of the :class:`DistanceMetric` class
-and the metrics listed in `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`.
-Note that the "cosine" metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
+of valid metrics use {BallTree,KDTree}.valid_metrics.
 
 .. _classification:
 
