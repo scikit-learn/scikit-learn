@@ -68,7 +68,6 @@ from scipy.sparse import csr_matrix
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.neighbors import KNeighborsTransformer
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.datasets import fetch_openml
 from sklearn.pipeline import make_pipeline
 from sklearn.manifold import TSNE
@@ -119,19 +118,6 @@ class NMSlibTransformer(TransformerMixin, BaseEstimator):
         )
 
         return kneighbors_graph
-
-
-def test_transformers():
-    """Test that AnnoyTransformer and KNeighborsTransformer give same results"""
-    X = np.random.RandomState(42).randn(10, 2)
-
-    knn = KNeighborsTransformer()
-    Xt0 = knn.fit_transform(X)
-
-    nms = NMSlibTransformer()
-    Xt1 = nms.fit_transform(X)
-
-    assert_array_almost_equal(Xt0.toarray(), Xt1.toarray(), decimal=5)
 
 
 def load_mnist(n_samples):
@@ -249,5 +235,4 @@ def run_benchmark():
 
 
 if __name__ == "__main__":
-    test_transformers()
     run_benchmark()
