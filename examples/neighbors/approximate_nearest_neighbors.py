@@ -46,6 +46,7 @@ prediction time.
 # Author: Tom Dupre la Tour
 #
 # License: BSD 3 clause
+import joblib
 import time
 import sys
 
@@ -77,7 +78,7 @@ from sklearn.utils import shuffle
 class NMSlibTransformer(TransformerMixin, BaseEstimator):
     """Wrapper for using nmslib as sklearn's KNeighborsTransformer"""
 
-    def __init__(self, n_neighbors=5, metric="euclidean", method="sw-graph", n_jobs=1):
+    def __init__(self, n_neighbors=5, metric="euclidean", method="sw-graph", n_jobs=-1):
         self.n_neighbors = n_neighbors
         self.method = method
         self.metric = metric
@@ -96,7 +97,7 @@ class NMSlibTransformer(TransformerMixin, BaseEstimator):
         }[self.metric]
 
         self.nmslib_ = nmslib.init(method=self.method, space=space)
-        self.nmslib_.addDataPointBatch(X)
+        self.nmslib_.addDataPointBatch(X.copy())
         self.nmslib_.createIndex()
         return self
 
@@ -107,7 +108,16 @@ class NMSlibTransformer(TransformerMixin, BaseEstimator):
         # neighbor, one extra neighbor will be computed.
         n_neighbors = self.n_neighbors + 1
 
-        results = self.nmslib_.knnQueryBatch(X, k=n_neighbors, num_threads=self.n_jobs)
+        if self.n_jobs < 0:
+            # Same handling as done in joblib for negative values of n_jobs:
+            # in particular, `n_jobs == -1` means "as many threads as CPUs".
+            num_threads = joblib.cpu_count() + self.n_jobs + 1
+        else:
+            num_threads = self.n_jobs
+
+        results = self.nmslib_.knnQueryBatch(
+            X.copy(), k=n_neighbors, num_threads=num_threads
+        )
         indices, distances = zip(*results)
         indices, distances = np.vstack(indices), np.vstack(distances)
 
