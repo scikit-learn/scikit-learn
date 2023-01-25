@@ -1256,7 +1256,7 @@ class PartialDependenceDisplay:
         else:
             pd_results_ = []
             for kind_plot, pd_result in zip(kind, self.pd_results):
-                current_results = {"values": pd_result["pdp_values"]}
+                current_results = {"pdp_values": pd_result["pdp_values"]}
 
                 if kind_plot in ("individual", "both"):
                     preds = pd_result.individual
