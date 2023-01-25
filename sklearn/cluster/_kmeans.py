@@ -307,10 +307,13 @@ class KMeansCythonEngine:
         self.estimator = estimator
 
     def accepts(self, X, y=None, sample_weight=None):
-        """Validate input and hyper-parameters.
+        """Determine if input data and hyper-parameters are supported by
+        this engine.
 
-        Determine if the engine can handle the hyper-parameter of the estimator
-        as well as the input data.
+        Determine if this engine can handle the hyper-parameters of the
+        estimator as well as the input data. If not, return `False`. This
+        method is called during engine selection where each enabled engine
+        is tried in the user defined order.
 
         Should fail as quickly as possible.
         """
