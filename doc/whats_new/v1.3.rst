@@ -29,11 +29,6 @@ random sampling procedures.
   `transform_algorithm` is not the same as `fit_algorithm` and the number of iterations
   is small. :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
 
-- |Fix| The `categories_` attribute of :class:`preprocessing.OneHotEncoder` now
-  always contains an array of `object`s when using predefined categories that
-  are strings. Predefined categories encoded as bytes will no longer work
-  with `X` encoded as strings. :pr:`25174` by :user:`Tim Head <betatim>`.
-
 Changes impacting all modules
 -----------------------------
 
@@ -41,13 +36,27 @@ Changes impacting all modules
   raises a `NotFittedError` if the instance is not fitted. This ensures the error is
   consistent in all estimators with the `get_feature_names_out` method.
 
+  - :class:`impute.MissingIndicator`
+  - :class:`feature_extraction.DictVectorizer`
   - :class:`feature_extraction.text.TfidfTransformer`
+  - :class:`feature_selection.GenericUnivariateSelect`
+  - :class:`feature_selection.RFE`
+  - :class:`feature_selection.RFECV`
+  - :class:`feature_selection.SelectFdr`
+  - :class:`feature_selection.SelectFpr`
+  - :class:`feature_selection.SelectFromModel`
+  - :class:`feature_selection.SelectFwe`
+  - :class:`feature_selection.SelectKBest`
+  - :class:`feature_selection.SelectPercentile`
+  - :class:`feature_selection.SequentialFeatureSelector`
+  - :class:`feature_selection.VarianceThreshold`
   - :class:`kernel_approximation.AdditiveChi2Sampler`
   - :class:`impute.IterativeImputer`
   - :class:`impute.KNNImputer`
   - :class:`impute.SimpleImputer`
   - :class:`isotonic.IsotonicRegression`
   - :class:`preprocessing.Binarizer`
+  - :class:`preprocessing.KBinsDiscretizer`
   - :class:`preprocessing.MaxAbsScaler`
   - :class:`preprocessing.MinMaxScaler`
   - :class:`preprocessing.Normalizer`
@@ -55,13 +64,17 @@ Changes impacting all modules
   - :class:`preprocessing.PowerTransformer`
   - :class:`preprocessing.QuantileTransformer`
   - :class:`preprocessing.RobustScaler`
+  - :class:`preprocessing.SplineTransformer`
   - :class:`preprocessing.StandardScaler`
+  - :class:`random_projection.GaussianRandomProjection`
+  - :class:`random_projection.SparseRandomProjection`
 
   The `NotFittedError` displays an informative message asking to fit the instance
   with the appropriate arguments.
 
-  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291`, :pr:`25367` by
-  :user:`Rahil Parikh <rprkh>`.
+  :pr:`25294`, :pr:`25308`, :pr:`25291`, :pr:`25367`, :pr:`25402`,
+  by :user:`John Pangas <jpangas>`, :user:`Rahil Parikh <rprkh>` ,
+  and :user:`Alex Buzenet <albuzenet>`.
 
 Changelog
 ---------
@@ -76,6 +89,12 @@ Changelog
     Entries should end with:
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.base`
+...................
+
+- |Feature| A `__sklearn_clone__` protocol is now available to override the
+  default behavior of :func:`base.clone`. :pr:`24568` by `Thomas Fan`_.
 
 :mod:`sklearn.cluster`
 ......................
@@ -104,6 +123,13 @@ Changelog
   out-of-bag scores via the `oob_scores_` or `oob_score_` attributes.
   :pr:`24882` by :user:`Ashwin Mathur <awinml>`.
 
+- |Efficiency| :class:`ensemble.IsolationForest` predict time is now faster
+  (typically by a factor of 8 or more). Internally, the estimator now precomputes
+  decision path lengths per tree at `fit` time. It is therefore not possible
+  to load an estimator trained with scikit-learn 1.2 to make it predict with
+  scikit-learn 1.3: retraining with scikit-learn 1.3 is required.
+  :pr:`25186` by :user:`Felipe Breve Siola <fsiola>`.
+
 :mod:`sklearn.exception`
 ........................
 - |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
@@ -117,33 +143,12 @@ Changelog
 - |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
   :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
 
-:mod:`sklearn.feature_extraction`
-.................................
-
-- |Fix| :class:`feature_extraction.FeatureHasher` raises an informative error
-  when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
-
-:mod:`sklearn.model_selection`
-..............................
-
-- |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
-  case of some failing scorers the non-failing scorers now returns proper
-  scores instead of `error_score` values.
-  :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
-
 :mod:`sklearn.naive_bayes`
 ..........................
 
 - |Fix| :class:`naive_bayes.GaussianNB` does not raise anymore a `ZeroDivisionError`
   when the provided `sample_weight` reduces the problem to a single class in `fit`.
   :pr:`24140` by :user:`Jonathan Ohayon <Johayon>` and :user:`Chiara Marmo <cmarmo>`.
-
-:mod:`sklearn.neural_network`
-.............................
-
-- |Fix| :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPRegressor`
-  no longer raise warnings when fitting data with feature names.
-  :pr:`24873` by :user:`Tim Head <betatim>`.
 
 :mod:`sklearn.pipeline`
 .......................
