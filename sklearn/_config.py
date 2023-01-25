@@ -184,7 +184,9 @@ def set_config(
         # Single provider name was passed in
         if isinstance(engine_provider, str):
             engine_provider = (engine_provider,)
-        # Single engine class was passed in
+        # Allow direct registration of engine classes to ease testing, debugging
+        # and benchmarking without having to register a fake package with metadata
+        # just to use a custom engine not meant to be used by end-users.
         elif inspect.isclass(engine_provider):
             engine_provider = (engine_provider,)
         local_config["engine_provider"] = engine_provider
