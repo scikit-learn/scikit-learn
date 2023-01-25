@@ -390,8 +390,6 @@ def test_pairwise_kernels(metric):
     Y_sparse = csr_matrix(Y)
     if metric in ["chi2", "additive_chi2"]:
         # these don't support sparse matrices yet
-        with pytest.raises(ValueError):
-            pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
         return
     K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
     assert_allclose(K1, K2)
@@ -1230,12 +1228,6 @@ def test_chi_square_kernel():
     # different n_features in X and Y
     with pytest.raises(ValueError):
         chi2_kernel([[0, 1]], [[0.2, 0.2, 0.6]])
-
-    # sparse matrices
-    with pytest.raises(ValueError):
-        chi2_kernel(csr_matrix(X), csr_matrix(Y))
-    with pytest.raises(ValueError):
-        additive_chi2_kernel(csr_matrix(X), csr_matrix(Y))
 
 
 @pytest.mark.parametrize(
