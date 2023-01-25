@@ -3298,7 +3298,6 @@ def check_parameters_default_constructible(name, Estimator):
                 type(None),
                 type,
                 types.FunctionType,
-                joblib.Memory,
             }
             # Any numpy numeric such as np.int32.
             allowed_types.update(np.core.numerictypes.allTypes.values())
