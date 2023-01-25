@@ -151,6 +151,10 @@ Changelog
   no longer raise warnings when fitting data with feature names.
   :pr:`24873` by :user:`Tim Head <betatim>`.
 
+- |Fix| :class:`neural_network.MLPRegressor`
+  MLPEstimator respect `max_iter` when `warm_start` is on.
+  :pr:`25443` by :user:`Marvin Krawutschke <Marvvxi>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
