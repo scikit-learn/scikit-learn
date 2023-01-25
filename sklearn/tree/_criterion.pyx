@@ -15,7 +15,7 @@
 
 from libc.string cimport memcpy
 from libc.string cimport memset
-from libc.math cimport fabs, sqrt, pow, abs
+from libc.math cimport fabs, sqrt, pow
 
 import numpy as np
 cimport numpy as cnp
