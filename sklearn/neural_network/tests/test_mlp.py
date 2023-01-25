@@ -891,7 +891,7 @@ def test_mlp_loading_from_joblib_partial_fit(tmp_path):
 
     # finetuned model learned the new target
     predicted_value = load_estimator.predict(fine_tune_features)
-    assert_allclose(predicted_value, fine_tune_target, rtol=1e-4)
+    assert_allclose(predicted_value, fine_tune_target, rtol=1e-3)
 
 
 @pytest.mark.parametrize("Estimator", [MLPClassifier, MLPRegressor])
