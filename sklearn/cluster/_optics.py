@@ -711,6 +711,24 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     return labels
 
 
+@validate_params(
+    {
+        "reachability": [np.ndarray],
+        "predecessor": [np.ndarray],
+        "ordering": [np.ndarray],
+        "min_samples": [
+            Interval(Integral, 1, None, closed="neither"),
+            Interval(Real, 0, 1, closed="both"),
+        ],
+        "min_cluster_size": [
+            Interval(Integral, 1, None, closed="neither"),
+            Interval(Real, 0, 1, closed="both"),
+            None,
+        ],
+        "xi": [Interval(Real, 0, 1, closed="both")],
+        "predecessor_correction": ["boolean"],
+    }
+)
 def cluster_optics_xi(
     *,
     reachability,
