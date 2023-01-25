@@ -50,7 +50,7 @@ def _generate_hypercube(samples, dimensions, rng):
         "n_clusters_per_class": [Interval(Integral, 1, None, closed="left")],
         "weights": ["array-like", None],
         "flip_y": [Interval(Real, 0, 1, closed="both")],
-        "class_sep": [Interval(Real, None, None, closed="neither")],
+        "class_sep": [Interval(Real, 0, None, closed="neither")],
         "hypercube": ["boolean"],
         "shift": [Interval(Real, None, None, closed="neither"), "array-like", None],
         "scale": [Interval(Real, None, None, closed="neither"), "array-like", None],
