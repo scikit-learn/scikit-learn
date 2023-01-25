@@ -707,8 +707,8 @@ class Multinomial_LDL_Decomposition:
         p : ndarray of shape (n_samples, n_classes)
             Array of predicted probabilities per class (and sample).
 
-        q : ndarray of shape (n_samples, n_classes)
-            Helper array, q[:, j] = 1 - sum_{i=0}^j p[:, i].
+        q_inv : ndarray of shape (n_samples, n_classes)
+            Helper array, inverse of q[:, j] = 1 - sum_{i=0}^j p[:, i], i.e. 1/q.
 
         sqrt_d : ndarray of shape (n_samples, n_classes)
             Square root of the diagonal matrix D, D_ii = p_i * q_i / q_{i-1}
@@ -727,33 +727,35 @@ class Multinomial_LDL_Decomposition:
 
     def __init__(self, *, proba, proba_sum_to_1=True):
         self.p = proba
-        self.q = 1 - np.cumsum(self.p, axis=1)  # contiguity of p
+        q = 1 - np.cumsum(self.p, axis=1)  # contiguity of p
         self.proba_sum_to_1 = proba_sum_to_1
         if self.p.dtype == np.float32:
             eps = 2 * np.finfo(np.float32).resolution
         else:
             eps = 2 * np.finfo(np.float64).resolution
-        if np.any(self.q[:, -1] > eps):
+        if np.any(q[:, -1] > eps):
             warnings.warn(
                 "Probabilities proba are assumed to sum to 1, but they don't."
             )
         if self.proba_sum_to_1:
             # If np.sum(p, axis=1) = 1 then q[:, -1] = d[:, -1] = 0.
-            self.q[:, -1] = 0.0
+            q[:, -1] = 0.0
             # One might not need all classes for p to sum to 1, so we detect and
             # correct all values close to zero.
-            self.q[self.q <= eps] = 0.0
+            q[q <= eps] = 0.0
             self.p[self.p <= eps] = 0.0
-        d = self.p * self.q
-        # From now on, self.q is always used in the denominator. We handle q == 0 by
+        d = self.p * q
+        # From now on, q is always used in the denominator. We handle q == 0 by
         # setting q to 1 whenever q == 0 such that a division of q is a no-op in this
         # case.
-        self.q[self.q == 0] = 1
+        q[q == 0] = 1
+        # And we use the inverse of q, 1/q.
+        self.q_inv = 1 / q
         if self.proba_sum_to_1:
             # If q_{i - 1} = 0, then also q_i = 0.
-            d[:, 1:-1] /= self.q[:, :-2]  # d[:, -1] = 0 anyway.
+            d[:, 1:-1] *= self.q_inv[:, :-2]  # d[:, -1] = 0 anyway.
         else:
-            d[:, 1:] /= self.q[:, :-1]
+            d[:, 1:] *= self.q_inv[:, :-1]
         self.sqrt_d = np.sqrt(d)
 
     def sqrt_D_Lt_matmul(self, x):
@@ -787,8 +789,16 @@ class Multinomial_LDL_Decomposition:
         n_classes = self.p.shape[1]
         for i in range(0, n_classes - 1):  # row i
             # L_ij = -p_i / q_j, we need transpose L'
-            for j in range(i + 1, n_classes):  # column j
-                x[:, i] -= self.p[:, j] / self.q[:, i] * x[:, j]
+            # for j in range(i + 1, n_classes):  # column j
+            #     x[:, i] -= self.p[:, j] / self.q[:, i] * x[:, j]
+            # The following is the same but faster.
+            px = np.einsum(
+                "ij,ij->i",
+                self.p[:, i + 1 : n_classes],
+                x[:, i + 1 : n_classes],
+                order="A",
+            )
+            x[:, i] -= px * self.q_inv[:, i]
         x *= self.sqrt_d
         return x
 
@@ -823,8 +833,11 @@ class Multinomial_LDL_Decomposition:
         x *= self.sqrt_d
         for i in range(n_classes - 1, 0, -1):  # row i
             # L_ij = -p_i / q_j
-            for j in range(0, i):  # column j
-                x[:, i] -= self.p[:, i] / self.q[:, j] * x[:, j]
+            # for j in range(0, i):  # column j
+            #     x[:, i] -= self.p[:, i] / self.q[:, j] * x[:, j]
+            # The following is the same but faster.
+            qx = np.einsum("ij,ij->i", self.q_inv[:, :i], x[:, :i], order="A")
+            x[:, i] -= qx * self.p[:, i]
         return x
 
     def inverse_L_sqrt_D_matmul(self, x):
@@ -855,11 +868,13 @@ class Multinomial_LDL_Decomposition:
         n_classes = self.p.shape[1]
         for i in range(n_classes - 1, 0, -1):  # row i
             if i > 0:
-                fj = self.p[:, i] / self.q[:, i - 1]
+                fj = self.p[:, i] * self.q_inv[:, i - 1]
             else:
                 fj = self.p[:, i]
-            for j in range(0, i):  # column j
-                x[:, i] += fj * x[:, j]
+            # for j in range(0, i):  # column j
+            #     x[:, i] += fj * x[:, j]
+            # The following is the same but faster.
+            x[:, i] += fj * np.sum(x[:, :i], axis=1)
         if self.proba_sum_to_1:
             # x[:, :-1] /= self.sqrt_d[:, :-1]
             mask = self.sqrt_d[:, :-1] == 0

@@ -441,7 +441,7 @@ def test_multinomial_LDL_decomposition_binomial_single_point():
     zero = 1
 
     LDL = Multinomial_LDL_Decomposition(proba=p)
-    assert_allclose(LDL.q[0, :], [1 - p0, zero])
+    assert_allclose(1 / LDL.q_inv[0, :], [1 - p0, zero])
     assert_allclose(LDL.sqrt_d[0, :] ** 2, [p0 * (1 - p0), 0])
 
     # C = diag(D) L' x with x = [[1, 0]] (n_samples=1, n_classes=2)
@@ -600,7 +600,7 @@ def test_multinomial_LDL_decomposition(global_random_seed):
     # Note that LDL sets q = 1 whenever q = 0 for easier handling of divisions by zero.
     # As q[:, -1] = 0 if p sums to 1, we do not compare the last values corresponding
     # to the last class.
-    assert_allclose(LDL.q[:, :-1], 1 - np.cumsum(LDL.p, axis=1)[:, :-1])
+    assert_allclose(1 / LDL.q_inv[:, :-1], 1 - np.cumsum(LDL.p, axis=1)[:, :-1])
 
     # C = diag(D) L' x with x = X @ coef = raw_prediction
     C = LDL.sqrt_D_Lt_matmul(raw_prediction.copy())
