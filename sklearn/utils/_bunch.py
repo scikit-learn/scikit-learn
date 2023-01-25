@@ -31,7 +31,7 @@ class Bunch(dict):
         self.__dict__["_deprecated_key_to_warnings"] = {}
 
     def __getitem__(self, key):
-        if key in self.__dict__["_deprecated_key_to_warnings"]:
+        if key in self.__dict__.get("_deprecated_key_to_warnings", {}):
             warnings.warn(
                 self._deprecated_key_to_warnings[key],
                 FutureWarning,
