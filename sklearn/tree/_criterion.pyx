@@ -617,11 +617,11 @@ cdef class HellingerDistance(ClassificationCriterion):
 
     then let
 
-        weight_k1 = (\sqrt{\frac{N_{left_0}}{N_{parent_0}}}-\sqrt{\frac{N_{left_1}}{N_{parent_1}}})^2
+        weight_k1 = (\sqrt{left_0}/parent_0} - \sqrt{left_1/parent_1})^2
 
-    be the partial hellinger distance score for the k1 node.
+    be the partial Hellinger distance score for the k1 node.
 
-        weight_k2 = (\sqrt{\frac{N_{right_0}}{N_{parent_0}}}-\sqrt{\frac{N_{right_1}}{N_{parent_1}}})^2
+        weight_k2 = (\sqrt{right_0}/parent_0} - \sqrt{right_1/parent_1})^2
 
     be the partial hellinger distance score for the k2 node.
 
