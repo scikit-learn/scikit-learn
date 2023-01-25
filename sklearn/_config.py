@@ -2,6 +2,7 @@
 """
 import os
 from contextlib import contextmanager as contextmanager
+import inspect
 import threading
 
 _global_config = {
@@ -126,10 +127,10 @@ def set_config(
 
         .. versionadded:: 1.2
 
-    engine_provider : str or sequence of str, default=None
-        Enable computational engine implementation provided by third party
-        packages to leverage specific hardware platforms using frameworks or
-        libraries outside of the usual scikit-learn project dependencies.
+    engine_provider : str or sequence of {str, engine class}, default=None
+        Specify list of enabled computational engine implementations provided
+        by third party packages. Engines are enabled by listing the name of
+        the provider or listing an engine class directly.
 
         See the :ref:`User Guide <engine>` for more details.
 
@@ -180,6 +181,12 @@ def set_config(
     if array_api_dispatch is not None:
         local_config["array_api_dispatch"] = array_api_dispatch
     if engine_provider is not None:
+        # Single provider name was passed in
+        if isinstance(engine_provider, str):
+            engine_provider = (engine_provider,)
+        # Single engine class was passed in
+        elif inspect.isclass(engine_provider):
+            engine_provider = (engine_provider,)
         local_config["engine_provider"] = engine_provider
     if engine_attributes is not None:
         local_config["engine_attributes"] = engine_attributes
@@ -267,10 +274,10 @@ def config_context(
 
         .. versionadded:: 1.2
 
-    engine_provider : str or sequence of str, default=None
-        Enable computational engine implementation provided by third party
-        packages to leverage specific hardware platforms using frameworks or
-        libraries outside of the usual scikit-learn project dependencies.
+    engine_provider : str or sequence of {str, engine class}, default=None
+        Specify list of enabled computational engine implementations provided
+        by third party packages. Engines are enabled by listing the name of
+        the provider or listing an engine class directly.
 
         See the :ref:`User Guide <engine>` for more details.
 

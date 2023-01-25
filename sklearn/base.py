@@ -1004,6 +1004,13 @@ class EngineAwareMixin:
         again.
         """
         if hasattr(self, "_engine_provider") and not reset:
+            configured_providers = get_config()["engine_provider"]
+            if self._engine_provider not in configured_providers:
+                raise RuntimeError(
+                    f"Previously selected engine ({self._engine_provider}) is no longer"
+                    " configured."
+                )
+
             return self._engine_class(self)
 
         for provider, engine_class in get_engine_classes(

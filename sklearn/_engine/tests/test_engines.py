@@ -27,6 +27,40 @@ class FakeEngineHolder:
         pass
 
 
+# Dummy classes used to test engine resolution
+class DefaultEngine:
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    def accepts(self, X, y=None, sample_weight=None):
+        return True
+
+
+class NeverAcceptsEngine:
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    def accepts(self, X, y=None, sample_weight=None):
+        return False
+
+
+class AlwaysAcceptsEngine:
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    def accepts(self, X, y=None, sample_weight=None):
+        return True
+
+
+class AlsoAlwaysAcceptsEngine(AlwaysAcceptsEngine):
+    pass
+
+
+class FakeEstimator(EngineAwareMixin):
+    _engine_name = "test-engine"
+    _default_engine = DefaultEngine
+
+
 FakeEntryPoint = namedtuple("FakeEntryPoint", ["name", "value"])
 
 
@@ -158,6 +192,9 @@ def test_attribute_conversion(attribute_types, converted):
             return np.asarray(value)
 
     class Estimator:
+        _default_engine = DefaultEngine
+        # Setup attribute as if `Engine` had previously been selected,
+        # we want to test attribute conversion, not engine resolution.
         _engine_class = Engine
 
         @convert_attributes
@@ -170,52 +207,84 @@ def test_attribute_conversion(attribute_types, converted):
         est.fit(X)
 
     assert isinstance(est.X_, np.ndarray) == converted
+    if converted:
+        assert est._engine_class == est._default_engine == DefaultEngine
+    else:
+        assert est._engine_class == Engine
 
 
 def test_engine_selection():
-    """Check that the correct engine is selected"""
+    """Check that the correct engine is selected."""
+    # Values aren't important, just need something to pass as argument
+    # to _get_engine
+    X = [[1, 2], [3, 4]]
 
-    class DefaultEngine:
-        def __init__(self, estimator):
-            self.estimator = estimator
-
-        def accepts(self, X, y=None, sample_weight=None):
-            return True
-
-    class NeverAcceptsEngine:
-        def __init__(self, estimator):
-            self.estimator = estimator
-
-        def accepts(self, X, y=None, sample_weight=None):
-            return False
-
-    class AlwaysAcceptsEngine:
-        def __init__(self, estimator):
-            self.estimator = estimator
-
-        def accepts(self, X, y=None, sample_weight=None):
-            return True
-
-    class Estimator(EngineAwareMixin):
-        _engine_name = "test-engine"
-        _default_engine = DefaultEngine
-
-        def resolve_engine(self, X, y):
-            # Test that `_get_engine` works properly
-            engine = self._get_engine(X, y, reset=True)
-            return engine
-
-    with config_context(engine_provider=(NeverAcceptsEngine)):
-        est = Estimator()
-        engine = est.resolve_engine([[1, 2], [3, 4]], [0, 1])
+    # If no engine accepts, default engine should be selected
+    with config_context(engine_provider=NeverAcceptsEngine):
+        est = FakeEstimator()
+        engine = est._get_engine(X)
         assert isinstance(engine, DefaultEngine)
 
-    with config_context(engine_provider=(AlwaysAcceptsEngine)):
-        est = Estimator()
-        engine = est.resolve_engine([[1, 2], [3, 4]], [0, 1])
+    with config_context(engine_provider=AlwaysAcceptsEngine):
+        est = FakeEstimator()
+        engine = est._get_engine(X)
         assert isinstance(engine, AlwaysAcceptsEngine)
 
+    # Engine with second priority (AlwaysAccepts) is selected
     with config_context(engine_provider=(NeverAcceptsEngine, AlwaysAcceptsEngine)):
-        est = Estimator()
-        engine = est.resolve_engine([[1, 2], [3, 4]], [0, 1])
+        est = FakeEstimator()
+        engine = est._get_engine(X)
         assert isinstance(engine, AlwaysAcceptsEngine)
+
+
+def test_engine_selection_is_fozen():
+    """Check that a previously selected engine keeps being used.
+
+    Engine selection is only performed once, after that the same engine
+    is used. Re-reselecting the engine is possible when explicitly requested.
+    """
+    # Values aren't important, just need something to pass as argument
+    # to _get_engine
+    X = [[1, 2], [3, 4]]
+
+    est = FakeEstimator()
+
+    with config_context(engine_provider=(NeverAcceptsEngine, AlwaysAcceptsEngine)):
+        engine = est._get_engine(X)
+        assert isinstance(engine, AlwaysAcceptsEngine)
+
+    # Even though `AlsoAlwaysAcceptsEngine` is listed first, it should not
+    # be selected
+    with config_context(engine_provider=(AlsoAlwaysAcceptsEngine, AlwaysAcceptsEngine)):
+        engine = est._get_engine(X)
+        assert isinstance(engine, AlwaysAcceptsEngine)
+
+    # Explicitly ask for engine re-selection
+    with config_context(engine_provider=(AlsoAlwaysAcceptsEngine, AlwaysAcceptsEngine)):
+        engine = est._get_engine(X, reset=True)
+        assert isinstance(engine, AlsoAlwaysAcceptsEngine)
+
+
+def test_missing_engine_raises():
+    """Check an exception is raised when a previously configured engine is
+    no longer available.
+    """
+    # Values aren't important, just need something to pass as argument
+    # to _get_engine
+    X = [[1, 2], [3, 4]]
+
+    est = FakeEstimator()
+
+    with config_context(engine_provider=(NeverAcceptsEngine, AlwaysAcceptsEngine)):
+        engine = est._get_engine(X)
+        assert isinstance(engine, AlwaysAcceptsEngine)
+
+    # Raise an exception because the previously selected engine isn't available
+    with config_context(engine_provider=(AlsoAlwaysAcceptsEngine,)):
+        with pytest.raises(RuntimeError, match="Previously selected engine.*"):
+            est._get_engine(X)
+
+    # Doesn't raise because `reset=True`
+    with config_context(engine_provider=(NeverAcceptsEngine, AlsoAlwaysAcceptsEngine)):
+        engine = est._get_engine(X, reset=True)
+        assert isinstance(engine, AlsoAlwaysAcceptsEngine)

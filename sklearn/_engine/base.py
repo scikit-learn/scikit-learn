@@ -85,8 +85,12 @@ def _get_engine_classes(engine_name, provider_names, engine_specs, default):
 
     for provider_name in provider_names:
         if inspect.isclass(provider_name):
-            # The provider name is actually a ready-to-go engine
-            yield provider_name.__name__, provider_name
+            # The provider name is actually a ready-to-go engine class.
+            # Instead of a made up string to name this ad-hoc provider
+            # we use the class itself. This mirrors what the user used
+            # when they set the config (ad-hoc class or string naming
+            # a provider).
+            yield provider_name, provider_name
 
         spec = specs_by_provider.get(provider_name)
         if spec is not None:
@@ -96,13 +100,20 @@ def _get_engine_classes(engine_name, provider_names, engine_specs, default):
 
 
 def get_engine_classes(engine_name, default, verbose=False):
+    """Find all possible providers of `engine_name`.
+
+    Provider candidates are found based on parsing entrypoint definitions that
+    match the name of enabled engine providers, as well as, ad-hoc providers
+    in the form of engine classes in the list of enabled engine providers.
+
+    Returns
+    -------
+    For each matching provider the "name" and the engine class
+    is yielded. The "name" corresponds to the entry in the
+    `engine_provider` configuration. It can be a string or
+    a class for ad-hoc providers.
+    """
     provider_names = get_config()["engine_provider"]
-    # Single provider name was passed in
-    if isinstance(provider_names, str):
-        provider_names = (provider_names,)
-    # Single provider class was passed in
-    elif inspect.isclass(provider_names):
-        provider_names = (provider_names,)
 
     if not provider_names:
         yield "default", default
@@ -121,7 +132,7 @@ def get_engine_classes(engine_name, default, verbose=False):
     ):
         if verbose:
             print(
-                f"trying engine {engine_class.__module__}.{engine_class.__qualname__} ."
+                f"trying engine {engine_class.__module__}.{engine_class.__qualname__}."
             )
         yield provider, engine_class
 
