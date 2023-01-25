@@ -227,6 +227,12 @@ class BaseEstimator:
                 valid_params[key] = value
 
         for key, sub_params in nested_params.items():
+            # The "base_estimator" key is special. It was deprecated and
+            # renamed to "estimator". This means we need to translate it
+            # here and set sub-parameters on "estimator", but only if the
+            # user did not explicitly set a value for "base_estimator".
+            if key == "base_estimator" and valid_params[key] == "deprecated":
+                key = "estimator"
             valid_params[key].set_params(**sub_params)
 
         return self
