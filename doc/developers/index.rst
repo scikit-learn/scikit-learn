@@ -22,4 +22,5 @@ Developer's Guide
    advanced_installation
    bug_triaging
    maintainer
+   release_process
    plotting
