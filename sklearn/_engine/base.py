@@ -90,7 +90,10 @@ def _get_engine_classes(engine_name, provider_names, engine_specs, default):
             # we use the class itself. This mirrors what the user used
             # when they set the config (ad-hoc class or string naming
             # a provider).
-            yield provider_name, provider_name
+            engine_class = provider_name
+            if getattr(engine_class, "engine_name", None) != engine_name:
+                continue
+            yield engine_class, engine_class
 
         spec = specs_by_provider.get(provider_name)
         if spec is not None:
