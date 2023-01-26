@@ -646,4 +646,5 @@ def test_deprecated_base_estimator_parameters_can_be_set():
     # "base_estimator".
     clf = AdaBoostClassifier(DecisionTreeClassifier())
 
-    clf.set_params(base_estimator__max_depth=2)
+    with pytest.warns(FutureWarning, match="Parameter 'base_estimator' of"):
+        clf.set_params(base_estimator__max_depth=2)
