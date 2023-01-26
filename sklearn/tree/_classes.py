@@ -173,7 +173,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.tree_.n_leaves
 
-    def fit(self, X, y, sample_weight=None, check_input=True):
+    def fit(self, X, y=None, sample_weight=None, check_input=True):
         self._validate_params()
         random_state = check_random_state(self.random_state)
 
@@ -194,7 +194,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                         "No support for np.int64 index based sparse matrices"
                     )
 
-            if self.criterion == "poisson":
+            if y is not None and self.criterion == "poisson":
                 if np.any(y < 0):
                     raise ValueError(
                         "Some value(s) of y are negative which is"
@@ -208,45 +208,56 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         # Determine output settings
         n_samples, self.n_features_in_ = X.shape
-        is_classification = is_classifier(self)
 
-        y = np.atleast_1d(y)
-        expanded_class_weight = None
+        # Do preprocessing if 'y' is passed
+        is_classification = False
+        if y is not None:
+            is_classification = is_classifier(self)
 
-        if y.ndim == 1:
-            # reshape is necessary to preserve the data contiguity against vs
-            # [:, np.newaxis] that does not.
-            y = np.reshape(y, (-1, 1))
+            y = np.atleast_1d(y)
+            expanded_class_weight = None
 
-        self.n_outputs_ = y.shape[1]
+            if y.ndim == 1:
+                # reshape is necessary to preserve the data contiguity against vs
+                # [:, np.newaxis] that does not.
+                y = np.reshape(y, (-1, 1))
 
-        if is_classification:
-            check_classification_targets(y)
-            y = np.copy(y)
+            self.n_outputs_ = y.shape[1]
 
-            self.classes_ = []
-            self.n_classes_ = []
+            if is_classification:
+                check_classification_targets(y)
+                y = np.copy(y)
 
-            if self.class_weight is not None:
-                y_original = np.copy(y)
+                self.classes_ = []
+                self.n_classes_ = []
 
-            y_encoded = np.zeros(y.shape, dtype=int)
-            for k in range(self.n_outputs_):
-                classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
-                self.classes_.append(classes_k)
-                self.n_classes_.append(classes_k.shape[0])
-            y = y_encoded
+                if self.class_weight is not None:
+                    y_original = np.copy(y)
 
-            if self.class_weight is not None:
-                expanded_class_weight = compute_sample_weight(
-                    self.class_weight, y_original
+                y_encoded = np.zeros(y.shape, dtype=int)
+                for k in range(self.n_outputs_):
+                    classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
+                    self.classes_.append(classes_k)
+                    self.n_classes_.append(classes_k.shape[0])
+                y = y_encoded
+
+                if self.class_weight is not None:
+                    expanded_class_weight = compute_sample_weight(
+                        self.class_weight, y_original
+                    )
+
+                self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
+
+            if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
+                y = np.ascontiguousarray(y, dtype=DOUBLE)
+
+            if len(y) != n_samples:
+                raise ValueError(
+                    "Number of labels=%d does not match number of samples=%d"
+                    % (len(y), n_samples)
                 )
 
-            self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
-
-        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DOUBLE)
-
+        # set decision-tree model parameters
         max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
 
         if isinstance(self.min_samples_leaf, numbers.Integral):
@@ -298,12 +309,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
 
-        if len(y) != n_samples:
-            raise ValueError(
-                "Number of labels=%d does not match number of samples=%d"
-                % (len(y), n_samples)
-            )
-
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, DOUBLE)
 
@@ -318,6 +323,63 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_weight_leaf = self.min_weight_fraction_leaf * n_samples
         else:
             min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
+
+        # build the actual tree now with the parameters
+        self._build_tree(
+            X,
+            y,
+            sample_weight,
+            is_classification,
+            min_samples_leaf,
+            min_weight_leaf,
+            max_leaf_nodes,
+            min_samples_split,
+            max_depth,
+            random_state,
+        )
+
+        return self
+
+    def _build_tree(
+        self,
+        X,
+        y,
+        sample_weight,
+        is_classification,
+        min_samples_leaf,
+        min_weight_leaf,
+        max_leaf_nodes,
+        min_samples_split,
+        max_depth,
+        random_state,
+    ):
+        """Build the actual tree.
+
+        Parameters
+        ----------
+        X : _type_
+            _description_
+        y : _type_
+            _description_
+        sample_weight : _type_
+            _description_
+        is_classification : bool
+            _description_
+        min_samples_leaf : _type_
+            _description_
+        min_weight_leaf : _type_
+            _description_
+        max_leaf_nodes : _type_
+            _description_
+        min_samples_split : _type_
+            _description_
+        max_depth : _type_
+            _description_
+        random_state : _type_
+            _description_
+        """
+
+        n_samples = X.shape[0]
 
         # Build tree
         criterion = self.criterion
@@ -383,8 +445,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.classes_ = self.classes_[0]
 
         self._prune_tree()
-
-        return self
 
     def _validate_X_predict(self, X, check_input):
         """Validate the training data on predict (probabilities)."""
