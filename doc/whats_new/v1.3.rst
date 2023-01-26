@@ -151,12 +151,25 @@ Changelog
   and the `values` key will be removed in 1.5.
   :pr:`21809` by `Thomas Fan`_.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
+  :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
 - |Fix| :class:`naive_bayes.GaussianNB` does not raise anymore a `ZeroDivisionError`
   when the provided `sample_weight` reduces the problem to a single class in `fit`.
   :pr:`24140` by :user:`Jonathan Ohayon <Johayon>` and :user:`Chiara Marmo <cmarmo>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Remove support for `KulsinskiDistance` in :class:`neighbors.BallTree`. This
+  dissimilarity is not a metric and cannot be supported by the BallTree.
+  :pr:`25417` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.pipeline`
 .......................
