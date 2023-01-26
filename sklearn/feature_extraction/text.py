@@ -996,8 +996,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
 
-        If None, no stop words will be used. max_df can be set to a value
-        in the range [0.7, 1.0) to automatically detect and filter stop
+        If None, no stop words will be used. ``max_df`` can be set to a value
+        in the range [0.0, 1.0] to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
     token_pattern : str or None, default=r"(?u)\\b\\w\\w+\\b"
