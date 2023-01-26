@@ -17,7 +17,7 @@ cdef inline cnp.int32_t _deg2_column(
     cnp.int32_t d,
     cnp.int32_t i,
     cnp.int32_t j,
-    cnp.int32_t interaction_only
+    cnp.int32_t interaction_only,
 ) nogil:
     """Compute the index of the column for a degree 2 expansion
 
@@ -53,9 +53,9 @@ cdef inline cnp.int32_t _deg3_column(
 
 
 def _csr_polynomial_expansion(
-    cnp.ndarray[DATA_T, ndim=1] data,
-    cnp.int32_t[:] indices,
-    cnp.int32_t[:] indptr,
+    const DATA_T[:] data,
+    const cnp.int32_t[:] indices,
+    const cnp.int32_t[:] indptr,
     cnp.int32_t d,
     cnp.int32_t interaction_only,
     cnp.int32_t degree
