@@ -1014,14 +1014,8 @@ def check_class_weight_same_as_in_estimator_checks():
             class_weight = {0: 1000, 1: 0.0001, 2: 0.0001}
 
         classifier = clone(classifier_orig)
-        if hasattr(classifier, "n_iter"):
-            classifier.set_params(n_iter=100)
-        if hasattr(classifier, "max_iter"):
-            classifier.set_params(max_iter=1000)
-        if hasattr(classifier, "min_weight_fraction_leaf"):
-            classifier.set_params(min_weight_fraction_leaf=0.01)
-        if hasattr(classifier, "n_iter_no_change"):
-            classifier.set_params(n_iter_no_change=20)
+        classifier.set_params(max_iter=1000)
+        classifier.set_params(n_iter_no_change=20)
 
         set_random_state(classifier)
         classifier.fit(X_train, y_train, class_weight=class_weight)
