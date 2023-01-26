@@ -143,6 +143,12 @@ Changelog
 - |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
   :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
+  :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
