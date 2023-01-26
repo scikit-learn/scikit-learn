@@ -29,6 +29,7 @@ from ..preprocessing import normalize
 from ..utils._mask import _get_mask
 from ..utils.parallel import delayed, Parallel
 from ..utils.fixes import sp_base_version, sp_version, parse_version
+from ..utils._param_validation import validate_params
 
 from ._pairwise_distances_reduction import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
