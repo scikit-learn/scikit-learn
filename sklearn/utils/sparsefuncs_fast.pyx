@@ -27,7 +27,7 @@ def csr_row_norms(X):
     """Squared L2 norm of each row in CSR matrix X."""
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-    return _csr_row_norms(X.data, X.indices, X.indptr).base
+    return _csr_row_norms(X.data, X.indices, X.indptr)
 
 
 def _csr_row_norms(
@@ -38,7 +38,7 @@ def _csr_row_norms(
     cdef:
         integral n_samples = X_indptr.shape[0] - 1
         integral i, j
-        floating sum_
+        double sum_
 
     dtype = np.float32 if floating is float else np.float64
 
@@ -49,7 +49,7 @@ def _csr_row_norms(
             for j in range(X_indptr[i], X_indptr[i + 1]):
                 norms[i] += X_data[j] * X_data[j]
 
-    return norms
+    return norms.base
 
 
 def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
