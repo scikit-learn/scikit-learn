@@ -116,8 +116,8 @@ from sklearn.neighbors import KNeighborsTransformer
 from sklearn.pipeline import make_pipeline
 
 datasets = [
-    ("MNIST_10000", load_mnist(n_samples=2000)),
-    ("MNIST_20000", load_mnist(n_samples=20000)),
+    ("MNIST_10000", load_mnist(n_samples=10_000)),
+    ("MNIST_20000", load_mnist(n_samples=20_000)),
 ]
 
 n_iter = 500
@@ -211,12 +211,11 @@ for dataset_name, (X, y) in datasets:
 #     PyNNDescentTransformer: 7.001 sec (transform)
 #     PyNNDescentTransformer: 1.748 sec (transform)
 #
-# `fit` and the first `transform` due to the overhead of the numba just
-# in time compiler. But after the first call, the compiled Python code
-# is kept in a cache by numba and as a result subsequent calls are do
-# not suffer from this initial overhead. Both
-# :class:`~sklearn.neighbors.KNeighborsTransformer` and `NMSlibTransformer` show
-# more stable `fit` and `transform` times.
+# `fit` and the first `transform` due to the overhead of the numba just in time
+# compiler. But after the first call, the compiled Python code is kept in a
+# cache by numba and as a result subsequent calls are do not suffer from this
+# initial overhead. Both :class:`~sklearn.neighbors.KNeighborsTransformer` and
+# `NMSlibTransformer` show more stable `fit` and `transform` times.
 
 # %%
 import matplotlib.pyplot as plt
