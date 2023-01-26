@@ -856,7 +856,7 @@ def test_partial_dependence_bunch_values_deprecated():
 
     with warnings.catch_warnings():
         # Does not raise warnings with "pdp_values"
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", FutureWarning)
         pdp_values = pdp_avg["pdp_values"]
 
     with pytest.warns(FutureWarning, match=msg):
