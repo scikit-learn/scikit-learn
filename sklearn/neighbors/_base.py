@@ -16,7 +16,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
@@ -37,40 +37,40 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.fixes import delayed, sp_version
-from ..utils.fixes import parse_version
+from ..utils.parallel import delayed, Parallel
+from ..utils.fixes import parse_version, sp_base_version, sp_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
+
+SCIPY_METRICS = [
+    "braycurtis",
+    "canberra",
+    "chebyshev",
+    "correlation",
+    "cosine",
+    "dice",
+    "hamming",
+    "jaccard",
+    "mahalanobis",
+    "matching",
+    "minkowski",
+    "rogerstanimoto",
+    "russellrao",
+    "seuclidean",
+    "sokalmichener",
+    "sokalsneath",
+    "sqeuclidean",
+    "yule",
+]
+if sp_base_version < parse_version("1.11"):
+    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
+    SCIPY_METRICS += ["kulsinski"]
 
 VALID_METRICS = dict(
     ball_tree=BallTree.valid_metrics,
     kd_tree=KDTree.valid_metrics,
     # The following list comes from the
     # sklearn.metrics.pairwise doc string
-    brute=sorted(
-        set(PAIRWISE_DISTANCE_FUNCTIONS).union(
-            [
-                "braycurtis",
-                "canberra",
-                "chebyshev",
-                "correlation",
-                "cosine",
-                "dice",
-                "hamming",
-                "jaccard",
-                "kulsinski",
-                "mahalanobis",
-                "matching",
-                "minkowski",
-                "rogerstanimoto",
-                "russellrao",
-                "seuclidean",
-                "sokalmichener",
-                "sokalsneath",
-                "sqeuclidean",
-                "yule",
-            ]
-        )
-    ),
+    brute=sorted(set(PAIRWISE_DISTANCE_FUNCTIONS).union(SCIPY_METRICS)),
 )
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
@@ -839,9 +839,13 @@ class KNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
-            # TODO: should no longer be needed once ArgKmin
-            # is extended to accept sparse and/or float32 inputs.
+            # Joblib-based backend, which is used when user-defined callable
+            # are passed for metric.
 
+            # This won't be used in the future once PairwiseDistancesReductions
+            # support:
+            #   - DistanceMetrics which work on supposedly binary data
+            #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
             reduce_func = partial(
                 self._kneighbors_reduce_func,
                 n_neighbors=n_neighbors,
@@ -1173,9 +1177,13 @@ class RadiusNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
-            # TODO: should no longer be needed once we have Cython-optimized
-            # implementation for radius queries, with support for sparse and/or
-            # float32 inputs.
+            # Joblib-based backend, which is used when user-defined callable
+            # are passed for metric.
+
+            # This won't be used in the future once PairwiseDistancesReductions
+            # support:
+            #   - DistanceMetrics which work on supposedly binary data
+            #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
 
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == "euclidean":

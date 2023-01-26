@@ -86,5 +86,6 @@ Display Objects
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
+   metrics.PredictionErrorDisplay
    metrics.RocCurveDisplay
    model_selection.LearningCurveDisplay
