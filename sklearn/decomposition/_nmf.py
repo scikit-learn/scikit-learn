@@ -609,7 +609,7 @@ def _multiplicative_update_w(
         denominator += l1_reg_W
     if l2_reg_W > 0:
         denominator = denominator + l2_reg_W * W
-    denominator[denominator < EPSILON] = EPSILON
+    denominator[denominator == 0] = EPSILON
 
     numerator /= denominator
     delta_W = numerator
@@ -695,7 +695,7 @@ def _multiplicative_update_h(
         denominator += l1_reg_H
     if l2_reg_H > 0:
         denominator = denominator + l2_reg_H * H
-    denominator[denominator < EPSILON] = EPSILON
+    denominator[denominator == 0] = EPSILON
 
     if A is not None and B is not None:
         # Updates for the online nmf
