@@ -2,6 +2,7 @@
 """
 import os
 from contextlib import contextmanager as contextmanager
+import inspect
 import threading
 
 _global_config = {
@@ -15,6 +16,7 @@ _global_config = {
     "enable_cython_pairwise_dist": True,
     "array_api_dispatch": False,
     "engine_provider": (),
+    "engine_attributes": "engine_types",
     "transform_output": "default",
 }
 _threadlocal = threading.local()
@@ -55,6 +57,7 @@ def set_config(
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
     engine_provider=None,
+    engine_attributes=None,
     transform_output=None,
 ):
     """Set global scikit-learn configuration
@@ -124,10 +127,21 @@ def set_config(
 
         .. versionadded:: 1.2
 
-    engine_provider : str or sequence of str, default=None
-        Enable computational engine implementation provided by third party
-        packages to leverage specific hardware platforms using frameworks or
-        libraries outside of the usual scikit-learn project dependencies.
+    engine_provider : str or sequence of {str, engine class}, default=None
+        Specify list of enabled computational engine implementations provided
+        by third party packages. Engines are enabled by listing the name of
+        the provider or listing an engine class directly.
+
+        See the :ref:`User Guide <engine>` for more details.
+
+        .. versionadded:: 1.3
+
+    engine_attributes : str, default=None
+        Enable conversion of estimator attributes to scikit-learn native
+        types by setting to "sklearn_types". By default attributes are
+        stored using engine native types. This avoids additional conversions
+        and memory transfers between host and device when calling `predict`/
+        `transform` after `fit` of an engine-aware estimator.
 
         See the :ref:`User Guide <engine>` for more details.
 
@@ -167,7 +181,17 @@ def set_config(
     if array_api_dispatch is not None:
         local_config["array_api_dispatch"] = array_api_dispatch
     if engine_provider is not None:
+        # Single provider name was passed in
+        if isinstance(engine_provider, str):
+            engine_provider = (engine_provider,)
+        # Allow direct registration of engine classes to ease testing, debugging
+        # and benchmarking without having to register a fake package with metadata
+        # just to use a custom engine not meant to be used by end-users.
+        elif inspect.isclass(engine_provider):
+            engine_provider = (engine_provider,)
         local_config["engine_provider"] = engine_provider
+    if engine_attributes is not None:
+        local_config["engine_attributes"] = engine_attributes
     if transform_output is not None:
         local_config["transform_output"] = transform_output
 
@@ -183,6 +207,7 @@ def config_context(
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
     engine_provider=None,
+    engine_attributes=None,
     transform_output=None,
 ):
     """Context manager for global scikit-learn configuration.
@@ -251,10 +276,19 @@ def config_context(
 
         .. versionadded:: 1.2
 
-    engine_provider : str or sequence of str, default=None
-        Enable computational engine implementation provided by third party
-        packages to leverage specific hardware platforms using frameworks or
-        libraries outside of the usual scikit-learn project dependencies.
+    engine_provider : str or sequence of {str, engine class}, default=None
+        Specify list of enabled computational engine implementations provided
+        by third party packages. Engines are enabled by listing the name of
+        the provider or listing an engine class directly.
+
+        See the :ref:`User Guide <engine>` for more details.
+
+        .. versionadded:: 1.3
+
+    engine_attributes : str, default=None
+        Enable conversion of estimator attributes to scikit-learn native
+        types by setting to "sklearn_types". By default attributes are
+        stored using engine native types.
 
         See the :ref:`User Guide <engine>` for more details.
 
@@ -309,6 +343,7 @@ def config_context(
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
         array_api_dispatch=array_api_dispatch,
         engine_provider=engine_provider,
+        engine_attributes=engine_attributes,
         transform_output=transform_output,
     )
 

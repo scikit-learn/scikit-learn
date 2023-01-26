@@ -23,7 +23,9 @@ from ..base import (
     ClusterMixin,
     TransformerMixin,
     ClassNamePrefixFeaturesOutMixin,
+    EngineAwareMixin,
 )
+from .._engine import convert_attributes
 from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import _euclidean_distances
 from ..utils.extmath import row_norms, stable_cumsum
@@ -54,8 +56,6 @@ from ._k_means_elkan import init_bounds_dense
 from ._k_means_elkan import init_bounds_sparse
 from ._k_means_elkan import elkan_iter_chunked_dense
 from ._k_means_elkan import elkan_iter_chunked_sparse
-from .._config import get_config
-from .._engine import get_engine_classes
 
 
 ###############################################################################
@@ -275,15 +275,54 @@ class KMeansCythonEngine:
     TODO: see URL for more details.
     """
 
+    @staticmethod
+    def convert_to_sklearn_types(name, value):
+        """Convert estimator attributes to scikit-learn types.
+
+        Users can configure whether estimator attributes should be stored
+        using engine native types or scikit-learn types. This function is
+        used to convert attributes from engine to scikit-learn native types.
+
+        Scikit-learn native types are ndarrays and basic Python types. There
+        is no need to convert these.
+
+        Parameters
+        ----------
+        name : str
+            Name of the attribute being converted.
+
+        value
+            Value of the attribute being converted.
+
+        Returns
+        --------
+        converted
+            Attribute value converted to a scikit-learn native type.
+        """
+        # XXX Maybe a bit useless as it should never get called, but it
+        # does demonstrate the API
+        return value
+
     def __init__(self, estimator):
         self.estimator = estimator
 
     def accepts(self, X, y=None, sample_weight=None):
+        """Determine if input data and hyper-parameters are supported by
+        this engine.
+
+        Determine if this engine can handle the hyper-parameters of the
+        estimator as well as the input data. If not, return `False`. This
+        method is called during engine selection where each enabled engine
+        is tried in the user defined order.
+
+        Should fail as quickly as possible.
+        """
         # The default engine accepts everything
         return True
 
     def prepare_fit(self, X, y=None, sample_weight=None):
         estimator = self.estimator
+
         X = estimator._validate_data(
             X,
             accept_sparse="csr",
@@ -1310,7 +1349,7 @@ class _BaseKMeans(
         }
 
 
-class KMeans(_BaseKMeans):
+class KMeans(_BaseKMeans, EngineAwareMixin):
     """K-Means clustering.
 
     Read more in the :ref:`User Guide <k_means>`.
@@ -1484,6 +1523,9 @@ class KMeans(_BaseKMeans):
         ],
     }
 
+    _engine_name = "kmeans"
+    _default_engine = KMeansCythonEngine
+
     def __init__(
         self,
         n_clusters=8,
@@ -1529,26 +1571,6 @@ class KMeans(_BaseKMeans):
             )
             self._algorithm = "lloyd"
 
-    def _get_engine(self, X, y=None, sample_weight=None, reset=False):
-        for provider, engine_class in get_engine_classes(
-            "kmeans", default=KMeansCythonEngine
-        ):
-            if hasattr(self, "_engine_provider") and not reset:
-                if self._engine_provider != provider:
-                    continue
-
-            engine = engine_class(self)
-            if engine.accepts(X, y=y, sample_weight=sample_weight):
-                self._engine_provider = provider
-                return engine
-
-        if hasattr(self, "_engine_provider"):
-            raise RuntimeError(
-                "Estimator was previously fitted with the"
-                f" {self._engine_provider} engine, but it is not available. Currently"
-                f" configured engines: {get_config()['engine_provider']}"
-            )
-
     def _warn_mkl_vcomp(self, n_active_threads):
         """Warn when vcomp and mkl are both present"""
         warnings.warn(
@@ -1558,6 +1580,7 @@ class KMeans(_BaseKMeans):
             f" variable OMP_NUM_THREADS={n_active_threads}."
         )
 
+    @convert_attributes
     def fit(self, X, y=None, sample_weight=None):
         """Compute k-means clustering.
 
@@ -1592,7 +1615,6 @@ class KMeans(_BaseKMeans):
             y=y,
             sample_weight=sample_weight,
         )
-        self._check_params_vs_input(X)
 
         best_inertia, best_labels = None, None
 
@@ -1665,7 +1687,7 @@ class KMeans(_BaseKMeans):
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
-        engine = self._get_engine(X)
+        engine = self._get_engine(X, sample_weight=sample_weight)
         X, sample_weight = engine.prepare_prediction(X, sample_weight)
         return engine.get_labels(X, sample_weight)
 

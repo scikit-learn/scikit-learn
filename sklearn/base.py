@@ -30,6 +30,8 @@ from .utils.validation import check_is_fitted
 from .utils.validation import _get_feature_names
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils._param_validation import validate_parameter_constraints
+from ._config import get_config
+from ._engine import get_engine_classes
 
 
 def clone(estimator, *, safe=True):
@@ -997,6 +999,38 @@ class _UnstableArchMixin:
                 _IS_32BIT or platform.machine().startswith(("ppc", "powerpc"))
             )
         }
+
+
+class EngineAwareMixin:
+    """Mixin for estimators that use a pluggable engine to do the work"""
+
+    def _get_engine(self, X, y=None, sample_weight=None, reset=False):
+        """Determine the engine for the estimator to use.
+
+        All enabled engine providers are tried in turn, the first one that
+        accepts is selected. The choice of engine is stored and re-used
+        unless `reset=True`, in which case the selection process is started
+        again.
+        """
+        if hasattr(self, "_engine_provider") and not reset:
+            configured_providers = get_config()["engine_provider"]
+            if self._engine_provider not in configured_providers:
+                raise RuntimeError(
+                    f"Previously selected engine ({self._engine_provider}) is no longer"
+                    " configured."
+                )
+
+            return self._engine_class(self)
+
+        for provider, engine_class in get_engine_classes(
+            self._engine_name,
+            default=self._default_engine,
+        ):
+            engine = engine_class(self)
+            if engine.accepts(X, y=y, sample_weight=sample_weight):
+                self._engine_provider = provider
+                self._engine_class = engine_class
+                return engine
 
 
 def is_classifier(estimator):
