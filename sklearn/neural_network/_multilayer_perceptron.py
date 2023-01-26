@@ -321,7 +321,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             intercept parameters of the ith layer in an iteration.
 
         sample_weight : array-like of shape (n_samples,)
-            The sample weights
+            The sample weights.
 
         Returns
         -------
@@ -1278,7 +1278,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             Note that y doesn't need to contain all labels in `classes`.
 
         sample_weight : array-like of shape (n_samples,)
-            The sample weights
+            The sample weights.
 
         class_weight : dict, list of dicts, "balanced", or None
             Only applicable to MLPClassifier
@@ -1764,7 +1764,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             The target values.
 
         sample_weight : array-like of shape (n_samples,)
-            The sample weights
+            The sample weights.
 
         Returns
         -------
