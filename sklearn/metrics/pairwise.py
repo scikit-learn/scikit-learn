@@ -1409,6 +1409,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
     return K
 
 
+@validate_params({"X": ["array-like"], "Y": ["array-like", None]})
 def additive_chi2_kernel(X, Y=None):
     """Compute the additive chi-squared kernel between observations in X and Y.
 
@@ -1429,7 +1430,7 @@ def additive_chi2_kernel(X, Y=None):
     X : array-like of shape (n_samples_X, n_features)
         A feature array.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : array-like of shape (n_samples_Y, n_features), default=None
         An optional second feature array. If `None`, uses `Y=X`.
 
     Returns
@@ -1457,8 +1458,6 @@ def additive_chi2_kernel(X, Y=None):
       International Journal of Computer Vision 2007
       https://hal.archives-ouvertes.fr/hal-00171412/document
     """
-    if issparse(X) or issparse(Y):
-        raise ValueError("additive_chi2 does not support sparse matrices.")
     X, Y = check_pairwise_arrays(X, Y)
     if (X < 0).any():
         raise ValueError("X contains negative values.")
