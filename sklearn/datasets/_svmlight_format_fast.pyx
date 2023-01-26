@@ -187,6 +187,7 @@ def _dump_svmlight_file(
     bint y_is_sp,
 ):
     cdef bint X_is_integral
+    cdef bint query_id_is_not_empty = query_id.size > 0
     X_is_integral = X.dtype.kind == "i"
     if X_is_integral:
         value_pattern = "%d:%d"
@@ -198,7 +199,7 @@ def _dump_svmlight_file(
         label_pattern = "%.16g"
 
     line_pattern = "%s"
-    if query_id is not None:
+    if query_id_is_not_empty:
         line_pattern += " qid:%d"
     line_pattern += " %s\n"
 
@@ -246,7 +247,7 @@ def _dump_svmlight_file(
             else:
                 labels_str = label_pattern % y[i,0]
 
-        if query_id is not None:
+        if query_id_is_not_empty:
             feat = (labels_str, query_id[i], s)
         else:
             feat = (labels_str, s)

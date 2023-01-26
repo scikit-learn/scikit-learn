@@ -16,13 +16,12 @@ Seeding is performed using a binning technique for scalability.
 
 import numpy as np
 import warnings
-from joblib import Parallel
 from numbers import Integral, Real
 
 from collections import defaultdict
 from ..utils._param_validation import Interval, validate_params
 from ..utils.validation import check_is_fitted
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
@@ -176,8 +175,15 @@ def mean_shift(
         operation terminates (for that seed point), if has not converged yet.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation. This works by computing
-        each of the n_init runs in parallel.
+        The number of jobs to use for the computation. The following tasks benefit
+        from the parallelization:
+
+        - The search of nearest neighbors for bandwidth estimation and label
+          assignments. See the details in the docstring of the
+          ``NearestNeighbors`` class.
+        - Hill-climbing optimization for all seeds.
+
+        See :term:`Glossary <n_jobs>` for more details.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -281,7 +287,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
     Parameters
     ----------
     bandwidth : float, default=None
-        Bandwidth used in the RBF kernel.
+        Bandwidth used in the flat kernel.
 
         If not given, the bandwidth is estimated using
         sklearn.cluster.estimate_bandwidth; see the documentation for that
@@ -312,8 +318,15 @@ class MeanShift(ClusterMixin, BaseEstimator):
         If false, then orphans are given cluster label -1.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation. This works by computing
-        each of the n_init runs in parallel.
+        The number of jobs to use for the computation. The following tasks benefit
+        from the parallelization:
+
+        - The search of nearest neighbors for bandwidth estimation and label
+          assignments. See the details in the docstring of the
+          ``NearestNeighbors`` class.
+        - Hill-climbing optimization for all seeds.
+
+        See :term:`Glossary <n_jobs>` for more details.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
