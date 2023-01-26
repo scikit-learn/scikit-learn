@@ -14,6 +14,7 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
 
+from .._config import get_config, config_context
 from .validation import _is_arraylike_not_scalar
 
 
@@ -142,7 +143,7 @@ def make_constraint(constraint):
     raise ValueError(f"Unknown constraint type: {constraint}")
 
 
-def validate_params(parameter_constraints):
+def validate_params(parameter_constraints, *, skip_nested_validation=True):
     """Decorator to validate types and values of functions and methods.
 
     Parameters
@@ -153,6 +154,10 @@ def validate_params(parameter_constraints):
 
         Note that the *args and **kwargs parameters are not validated and must not be
         present in the parameter_constraints dictionary.
+
+    skip_nested_validation : bool, default=True
+        Whether to skip the validation of parameters of inner estimators or functions
+        called by the decorated function.
 
     Returns
     -------
@@ -168,6 +173,8 @@ def validate_params(parameter_constraints):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            if get_config()["skip_parameter_validation"]:
+                return func(*args, **kwargs)
 
             func_sig = signature(func)
 
@@ -189,7 +196,11 @@ def validate_params(parameter_constraints):
             )
 
             try:
-                return func(*args, **kwargs)
+                if not skip_nested_validation:
+                    return func(*args, **kwargs)
+
+                with config_context(skip_parameter_validation=True):
+                    return func(*args, **kwargs)
             except InvalidParameterError as e:
                 # When the function is just a wrapper around an estimator, we allow
                 # the function to delegate validation to the estimator, but we replace

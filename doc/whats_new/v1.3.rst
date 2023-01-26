@@ -137,6 +137,16 @@ Changelog
 - |Enhancement| All selectors in :mod:`sklearn.feature_selection` will preserve
   a DataFrame's dtype when transformed. :pr:`25102` by `Thomas Fan`_.
 
+:mod:`sklearn`
+..............
+
+- |Feature| Added a new option `skip_parameter_validation`, to the function
+  :func:`sklearn.set_config` and context manager :func:`sklearn.config_context`, that
+  allows to skip the validation of the parameters passed to the estimators and public
+  functions. This is useful to speed up the code but should be used with care because
+  it can lead to potential crashes.
+  :pr:`25815` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.base`
 ...................
 

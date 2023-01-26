@@ -16,6 +16,7 @@ from scipy import linalg
 from joblib import effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils._param_validation import validate_params
@@ -2320,6 +2321,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         return False
 
+    @_fit_context()
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -2337,8 +2339,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X, dtype=[np.float64, np.float32], order="C", copy=False
         )
