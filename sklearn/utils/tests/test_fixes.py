@@ -11,8 +11,7 @@ import scipy.stats
 
 from sklearn.utils._testing import assert_array_equal
 
-from sklearn.utils.fixes import _object_dtype_isnan
-from sklearn.utils.fixes import loguniform
+from sklearn.utils.fixes import _object_dtype_isnan, delayed, loguniform
 
 
 @pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))
@@ -46,3 +45,14 @@ def test_loguniform(low, high, base):
     assert loguniform(base**low, base**high).rvs(random_state=0) == loguniform(
         base**low, base**high
     ).rvs(random_state=0)
+
+
+def test_delayed_deprecation():
+    """Check that we issue the FutureWarning regarding the deprecation of delayed."""
+
+    def func(x):
+        return x
+
+    warn_msg = "The function `delayed` has been moved from `sklearn.utils.fixes`"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        delayed(func)
