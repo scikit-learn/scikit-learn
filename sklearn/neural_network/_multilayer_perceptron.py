@@ -1280,8 +1280,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         sample_weight : array-like of shape (n_samples,)
             The sample weights
 
-        class_weight: dict, list of dicts, "balanced", or None
+        class_weight : dict, list of dicts, "balanced", or None
             Only applicable to MLPClassifier
+
             Weights associated with classes in the form ``{class_label: weight}``.
             If not given, all classes are supposed to have weight one. For
             multi-output problems, a list of dicts can be provided in the same
