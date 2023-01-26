@@ -104,6 +104,14 @@ Changelog
   is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| Allows to overwrite the parameters used to open the ARFF file using
+  the parameter `read_csv_kwargs` in :func:`datasets.fetch_openml` when using the
+  pandas parser.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.decomposition`
 ............................
 

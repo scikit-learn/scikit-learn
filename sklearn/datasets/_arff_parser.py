@@ -302,6 +302,7 @@ def _pandas_arff_parser(
     openml_columns_info,
     feature_names_to_select,
     target_names_to_select,
+    read_csv_kwargs=None,
 ):
     """ARFF parser using `pandas.read_csv`.
 
@@ -330,6 +331,12 @@ def _pandas_arff_parser(
 
     target_names_to_select : list of str
         A list of the target names to be selected to build `y`.
+
+    read_csv_kwargs : dict, default=None
+        Keyword arguments to pass to `pandas.read_csv`. It allows to overwrite
+        the default options.
+
+        .. versionadded:: 1.3
 
     Returns
     -------
@@ -364,17 +371,19 @@ def _pandas_arff_parser(
         elif column_dtype.lower() == "nominal":
             dtypes[name] = "category"
 
+    default_read_csv_kwargs = {
+        "header": None,
+        "na_values": ["?"],  # missing values are represented by `?`
+        "comment": "%",  # skip line starting by `%` since they are comments
+        "quotechar": '"',  # delimiter to use for quoted strings
+        "names": [name for name in openml_columns_info],
+        "dtype": dtypes,
+        "skipinitialspace": True,  # skip spaces after delimiter to follow ARFF specs
+    }
+    read_csv_kwargs = {**default_read_csv_kwargs, **(read_csv_kwargs or {})}
+
     # ARFF represents missing values with "?"
-    frame = pd.read_csv(
-        gzip_file,
-        header=None,
-        na_values=["?"],  # missing values are represented by `?`
-        comment="%",  # skip line starting by `%` since they are comments
-        quotechar='"',  # delimiter to use for quoted strings
-        names=[name for name in openml_columns_info],
-        dtype=dtypes,
-        skipinitialspace=True,  # skip spaces after delimiter to follow ARFF specs
-    )
+    frame = pd.read_csv(gzip_file, **read_csv_kwargs)
 
     columns_to_select = feature_names_to_select + target_names_to_select
     columns_to_keep = [col for col in frame.columns if col in columns_to_select]
@@ -431,6 +440,7 @@ def load_arff_from_gzip_file(
     feature_names_to_select,
     target_names_to_select,
     shape=None,
+    read_csv_kwargs=None,
 ):
     """Load a compressed ARFF file using a given parser.
 
@@ -460,6 +470,12 @@ def load_arff_from_gzip_file(
 
     target_names_to_select : list of str
         A list of the target names to be selected.
+
+    read_csv_kwargs : dict, default=None
+        Keyword arguments to pass to `pandas.read_csv`. It allows to overwrite
+        the default options.
+
+        .. versionadded:: 1.3
 
     Returns
     -------
@@ -493,6 +509,7 @@ def load_arff_from_gzip_file(
             openml_columns_info,
             feature_names_to_select,
             target_names_to_select,
+            read_csv_kwargs,
         )
     else:
         raise ValueError(
