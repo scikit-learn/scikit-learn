@@ -117,10 +117,16 @@ def _csr_polynomial_expansion(
                           - interaction_only * nnz ** 2)
 
     # Make the arrays that will form the CSR matrix of the expansion.
-    cdef DATA_T[:] expanded_data = np.empty(shape=total_nnz, dtype=data.dtype)
-    cdef cnp.int32_t[:] expanded_indices = np.empty(shape=total_nnz, dtype=np.int32)
+    cdef DATA_T[:] expanded_data = np.empty(
+        shape=total_nnz, dtype=data.dtype
+    )
+    cdef cnp.int32_t[:] expanded_indices = np.empty(
+        shape=total_nnz, dtype=np.int32
+    )
     cdef cnp.int32_t num_rows = indptr.shape[0] - 1
-    cdef cnp.int32_t[:] expanded_indptr = np.empty(shape=num_rows + 1, dtype=np.int32)
+    cdef cnp.int32_t[:] expanded_indptr = np.empty(
+        shape=num_rows + 1, dtype=np.int32
+    )
 
     cdef cnp.int32_t expanded_index = 0, row_starts, row_ends, i, j, k, \
                  i_ptr, j_ptr, k_ptr, num_cols_in_row,  \
