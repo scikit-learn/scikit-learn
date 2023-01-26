@@ -590,6 +590,9 @@ class BaseEstimator:
         the docstring of `validate_parameter_constraints` for a description of the
         accepted constraints.
         """
+        if get_config()["skip_parameter_validation"]:
+            return
+
         validate_parameter_constraints(
             self._parameter_constraints,
             self.get_params(deep=False),

@@ -23,6 +23,7 @@ from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
 from ..utils.parallel import delayed, Parallel
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
+from .._config import config_context
 
 
 def _check_positive_coding(method, positive):
@@ -2381,9 +2382,10 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             for i, batch in zip(range(n_steps), batches):
                 X_batch = X_train[batch]
 
-                batch_cost = self._minibatch_step(
-                    X_batch, dictionary, self._random_state, i
-                )
+                with config_context(assume_finite=True, skip_parameter_validation=True):
+                    batch_cost = self._minibatch_step(
+                        X_batch, dictionary, self._random_state, i
+                    )
 
                 if self._check_convergence(
                     X_batch, batch_cost, dictionary, old_dict, n_samples, i, n_steps
@@ -2463,7 +2465,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         else:
             dictionary = self.components_
 
-        self._minibatch_step(X, dictionary, self._random_state, self.n_steps_)
+        with config_context(assume_finite=True, skip_parameter_validation=True):
+            self._minibatch_step(X, dictionary, self._random_state, self.n_steps_)
 
         self.components_ = dictionary
         self.n_steps_ += 1

@@ -14,6 +14,7 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
 
+from .._config import get_config
 from .validation import _is_arraylike_not_scalar
 
 
@@ -168,6 +169,8 @@ def validate_params(parameter_constraints):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            if get_config()["skip_parameter_validation"]:
+                return func(*args, **kwargs)
 
             func_sig = signature(func)
 
