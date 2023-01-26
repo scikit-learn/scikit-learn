@@ -211,9 +211,10 @@ for dataset_name, (X, y) in datasets:
 #     PyNNDescentTransformer: 7.001 sec (transform)
 #     PyNNDescentTransformer: 1.748 sec (transform)
 #
-# Notice that the `PyNNDescentTransformer` takes more time during the first
-# `fit` and the first `transform` due to storing in the cache memory, but a
-# second run will dramatically improve prediction time. Both
+# `fit` and the first `transform` due to the overhead of the numba just
+# in time compiler. But after the first call, the compiled Python code
+# is kept in a cache by numba and as a result subsequent calls are do
+# not suffer from this initial overhead. Both
 # :class:`~sklearn.neighbors.KNeighborsTransformer` and `NMSlibTransformer` show
 # more stable `fit` and `transform` times.
 
