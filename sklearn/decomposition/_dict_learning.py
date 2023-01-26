@@ -46,7 +46,7 @@ def _sparse_encode_precomputed(
     verbose=0,
     positive=False,
 ):
-    """Generic sparse coding.
+    """Generic sparse coding with precomputed Gram and/or covariance matrices.
 
     Each row of the result is the solution to a Lasso problem.
 
@@ -387,7 +387,7 @@ def _sparse_encode(
     verbose=0,
     positive=False,
 ):
-    """Sparse coding without input validation."""
+    """Sparse coding without input/parameter validation."""
 
     n_samples, n_features = X.shape
     n_components = dictionary.shape[0]
