@@ -62,7 +62,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     smooth : "auto" or float, default="auto"
         The amount of mixing of the categorical encoding with the global target mean. A
         larger `smooth` value will put more weight on the global target mean.
-        If `"auto"`, then `smooth` is estimated using an empirical bayes estimate.
+        If `"auto"`, then `smooth` is set to an empirical bayes estimate.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy used in
@@ -114,18 +114,33 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     Examples
     --------
+    With `smooth="auto"`, the smoothing parameter is set to an empirical bayes estimate:
     >>> import numpy as np
     >>> from sklearn.preprocessing import TargetEncoder
     >>> X = np.array([["dog"] * 20 + ["cat"] * 30 + ["snake"] * 38], dtype=object).T
-    >>> y = [10.3] * 5 + [40.1] * 15 + [20.4] * 5 + [11.1] * 25 + [21.2] * 8 + [49] * 30
-    >>> enc = TargetEncoder(smooth=5.0)
-    >>> X_trans = enc.fit_transform(X, y)
+    >>> y = [90.3] * 5 + [80.1] * 15 + [20.4] * 5 + [20.1] * 25 + [21.2] * 8 + [49] * 30
+    >>> enc_auto = TargetEncoder(smooth="auto")
+    >>> X_trans = enc_auto.fit_transform(X, y)
+
+    A high `smooth` parameter puts more weight on global mean on the categorical
+    encodings:
+    >>> enc_high_smooth = TargetEncoder(smooth=5000.0).fit(X, y)
+    >>> enc_high_smooth.encoding_mean_
+    44...
+    >>> enc_high_smooth.encodings_
+    [array([44..., 44..., 44...])]
+
+    On the other hand, a low `smooth` parameter puts more weight on target conditioned
+    on the value of the categorical:
+    >>> enc_no_smooth = TargetEncoder(smooth=1.0).fit(X, y)
+    >>> enc_no_smooth.encodings_
+    [array([20..., 80..., 43...])]
     """
 
     _parameter_constraints: dict = {
         "categories": [StrOptions({"auto"}), list],
         "target_type": [StrOptions({"auto", "continuous", "binary"})],
-        "smooth": [StrOptions({"auto"}), Interval(Real, 1, None, closed="left")],
+        "smooth": [StrOptions({"auto"}), Interval(Real, 0, None, closed="left")],
         "cv": ["cv_object"],
     }
 
