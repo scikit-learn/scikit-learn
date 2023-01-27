@@ -3297,12 +3297,18 @@ def check_parameters_default_constructible(name, Estimator):
                 type(None),
                 type,
             }
-
             # Any numpy numeric such as np.int32.
             allowed_types.update(np.core.numerictypes.allTypes.values())
 
-            allowed_value = type(init_param.default) in allowed_types or callable(
-                init_param.default
+            allowed_value = (
+                type(init_param.default) in allowed_types
+                or
+                # Although callables are mutable, we accept them as argument
+                # default value and trust that neither the implementation of
+                # the callable nor of the estimator changes the state of the
+                # callable, which is needed for consistency regarding
+                # pickling and unpickling objects.
+                callable(init_param.default)
             )
 
             assert allowed_value, (
