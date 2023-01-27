@@ -6,6 +6,8 @@ import numpy as np
 
 cnp.import_array()
 
+# TODO: use `cnp.{int,float}{32,64}` when cython#5230 is resolved:
+# https://github.com/cython/cython/issues/5230
 ctypedef fused DATA_T:
     float
     double
