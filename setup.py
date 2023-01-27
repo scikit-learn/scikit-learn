@@ -70,6 +70,7 @@ DEFINE_MACRO_NUMPY_C_API = (
 USE_NEWEST_NUMPY_C_API = (
     "sklearn.__check_build._check_build",
     "sklearn._loss._loss",
+    "sklearn._isotonic",
     "sklearn.cluster._dbscan_inner",
     "sklearn.cluster._hierarchical_fast",
     "sklearn.cluster._k_means_common",
@@ -125,7 +126,6 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.utils._vector_sentinel",
     "sklearn.utils._weight_vector",
     "sklearn.utils.murmurhash",
-    "sklearn._isotonic",
 )
 
 
