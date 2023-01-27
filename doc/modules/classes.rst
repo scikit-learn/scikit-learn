@@ -1668,8 +1668,15 @@ Utilities from joblib:
    :toctree: generated/
    :template: function.rst
 
+   utils.parallel.delayed
    utils.parallel_backend
    utils.register_parallel_backend
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   utils.parallel.Parallel
 
 
 Recently deprecated
