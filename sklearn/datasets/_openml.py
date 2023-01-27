@@ -579,7 +579,16 @@ def _download_data_to_bunch(
 
     read_csv_kwargs : dict, default=None
         Keyword arguments to pass to `pandas.read_csv`. It allows to overwrite
-        the default options.
+        the default options. Internally, we used the default parameters of
+        :func:`pandas.read_csv` except for the following parameters:
+
+        - `header`: set to `None`
+        - `na_values`: set to `["?"]`
+        - `comment`: set to `#`
+        - `quotechar`: set to `"` (double quote)
+        - `names`: set to the list of column names given by OpenML
+        - `dtypes`: set to the list provided by OpenML
+        - `skipinitialspace`: set to `True`
 
         .. versionadded:: 1.3
 
