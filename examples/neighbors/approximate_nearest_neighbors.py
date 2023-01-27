@@ -298,11 +298,27 @@ plt.show()
 #     TSNE with NMSlibTransformer:         43.536 sec (fit_transform)
 #     TSNE with internal NearestNeighbors: 51.955 sec (fit_transform)
 #
-# Notice that the prediction speed
-# :class:`~sklearn.neighbors.KNeighborsTransformer` was optimized in
-# scikit-learn 1.1 and therefore the total `fit_transform` time of approximate
-# methods is not necessarily lower than the exact
-# :class:`~sklearn.neighbors.KNeighborsTransformer` solution. The reason is that
-# computing the index takes time and can nullify the benefits obtained by the
-# approximation. Indeed, the gains with respect to the exact solution increase
-# with increasing number of samples.
+# We can observe that the default `TSNE` estimator with its internal
+# :class:`~sklearn.neighbors.NearestNeighbors` implementation is roughly
+# equivalent the `TSNE` pipeline with
+# :class:`~sklearn.neighbors.KNeighborsTransformer` in terms of performance.
+# This is expected because both pipelines rely internally on the same
+# :class:`~sklearn.neighbors.NearestNeighbors`NearestNeighbors` implementation
+# that performs exacts neighbors search. The approximate `NMSlibTransformer` is
+# already slightly faster than exact search on the smallest dataset but this
+# speed difference is expected to become more significant on datasets with a
+# larger number of samples.
+#
+# Note however that not all approximate search methods are guaranteed to
+# improve upon the speed of the default exact search method: indeed the exact
+# search implementation has been significantly improved in scikit-learn 1.1.
+# Furthermore, the brute-force exact search method does not require building an
+# index at `fit` time. So, to get an overall performance improvement in the
+# context of the `TSNE` pipeline, the gains of the approximate search at
+# `transform` need to be larger than the extra time speed to build the
+# approximate search index at `fit` time.
+#
+# Finally, the TSNE algorithm itself is also computationally intensive,
+# irrespective of the nearest neighbors search. So speeding-up the nearest
+# neighbors search step by a factor of 5 would not result in a speed up by a
+# factor of 5 for the overall pipeline.
