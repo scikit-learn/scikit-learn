@@ -10,9 +10,9 @@ Bisecting K-Means clustering builds on top of the previous ones. As a result, it
 tends to create clusters that have a more regular large-scale structure. This
 difference can be visually observed: for all numbers of clusters, there is a
 
-This difference can visually be observed: for all numbers of clusters,
-there is a dividing line cutting the overall data cloud in two for
-BisectingKMeans, but not for regular KMeans.
+dividing line cutting the overall data cloud in two for BisectingKMeans, whereas
+regular K-Means results into a `Voronoi cell partitioning
+<https://en.wikipedia.org/wiki/Voronoi_cell>`_.
 
 """
 import matplotlib.pyplot as plt
