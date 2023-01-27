@@ -24,32 +24,32 @@ ctypedef cnp.float64_t DOUBLE
 
 
 def csr_row_norms(X):
-    """L2 norm of each row in CSR matrix X."""
+    """Squared L2 norm of each row in CSR matrix X."""
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-    return _csr_row_norms(X.data, X.shape, X.indices, X.indptr)
+    return _csr_row_norms(X.data, X.indices, X.indptr)
 
 
-def _csr_row_norms(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
-                   shape,
-                   cnp.ndarray[integral, ndim=1, mode="c"] X_indices,
-                   cnp.ndarray[integral, ndim=1, mode="c"] X_indptr):
+def _csr_row_norms(
+    const floating[::1] X_data,
+    const integral[::1] X_indices,
+    const integral[::1] X_indptr,
+):
     cdef:
-        unsigned long long n_samples = shape[0]
-        unsigned long long i
-        integral j
+        integral n_samples = X_indptr.shape[0] - 1
+        integral i, j
         double sum_
 
-    norms = np.empty(n_samples, dtype=X_data.dtype)
-    cdef floating[::1] norms_view = norms
+    dtype = np.float32 if floating is float else np.float64
 
-    for i in range(n_samples):
-        sum_ = 0.0
-        for j in range(X_indptr[i], X_indptr[i + 1]):
-            sum_ += X_data[j] * X_data[j]
-        norms_view[i] = sum_
+    cdef floating[::1] norms = np.zeros(n_samples, dtype=dtype)
 
-    return norms
+    with nogil:
+        for i in range(n_samples):
+            for j in range(X_indptr[i], X_indptr[i + 1]):
+                norms[i] += X_data[j] * X_data[j]
+
+    return np.asarray(norms)
 
 
 def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):

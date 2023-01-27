@@ -7,7 +7,41 @@
 Version 1.2.1
 =============
 
-**In Development**
+**January 2023**
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Fix| The fitted components in :class:`MiniBatchDictionaryLearning` might differ. The
+  online updates of the sufficient statistics now properly take the sizes of the batches
+  into account.
+  :pr:`25354` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| The `categories_` attribute of :class:`preprocessing.OneHotEncoder` now
+  always contains an array of `object`s when using predefined categories that
+  are strings. Predefined categories encoded as bytes will no longer work
+  with `X` encoded as strings. :pr:`25174` by :user:`Tim Head <betatim>`.
+
+Changes impacting all modules
+-----------------------------
+
+- |Fix| Support `pandas.Int64` dtyped `y` for classifiers and regressors.
+  :pr:`25089` by :user:`Tim Head <betatim>`.
+
+- |Fix| Remove spurious warnings for estimators internally using neighbors search methods.
+  :pr:`25129` by :user:`Julien Jerphanion <jjerphan>`.
+
+- |Fix| Fix a bug where the current configuration was ignored in estimators using
+  `n_jobs > 1`. This bug was triggered for tasks dispatched by the auxillary
+  thread of `joblib` as :func:`sklearn.get_config` used to access an empty thread
+  local configuration instead of the configuration visible from the thread where
+  `joblib.Parallel` was first called.
+  :pr:`25363` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changelog
 ---------
@@ -30,6 +64,19 @@ Changelog
   The ARFF specs requires to ignore the leading space.
   :pr:`25312` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`decomposition.MiniBatchDictionaryLearning` where the
+  online updates of the sufficient statistics where not correct when calling
+  `partial_fit` on batches of different sizes.
+  :pr:`25354` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| :class:`decomposition.DictionaryLearning` better supports readonly NumPy
+  arrays. In particular, it better supports large datasets which are memory-mapped
+  when it is used with coordinate descent algorithms (i.e. when `fit_algorithm='cd'`).
+  :pr:`25172` by :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -37,6 +84,12 @@ Changelog
   :class:`ensemble.RandomForestRegressor` :class:`ensemble.ExtraTreesClassifier`
   and :class:`ensemble.ExtraTreesRegressor` now support sparse readonly datasets.
   :pr:`25341` by :user:`Julien Jerphanion <jjerphan>`
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| :class:`feature_extraction.FeatureHasher` raises an informative error
+  when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -52,6 +105,20 @@ Changelog
 - |Fix| :class:`manifold.TSNE` now works correctly when output type is
   set to pandas :pr:`25370` by :user:`Tim Head <betatim>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
+  case of some failing scorers the non-failing scorers now returns proper
+  scores instead of `error_score` values.
+  :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPRegressor`
+  no longer raise warnings when fitting data with feature names.
+  :pr:`24873` by :user:`Tim Head <betatim>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -78,6 +145,13 @@ Changelog
 - |Fix| Restore :func:`utils.check_array`'s behaviour for pandas Series of type
   boolean. The type is maintained, instead of converting to `float64.`
   :pr:`25147` by :user:`Tim Head <betatim>`.
+
+- |API| :func:`utils.fixes.delayed` is deprecated in 1.2.1 and will be removed
+  in 1.5. Instead, import :func:`utils.parallel.delayed` and use it in
+  conjunction with the newly introduced :func:`utils.parallel.Parallel`
+  to ensure proper propagation of the scikit-learn configuration to
+  the workers.
+  :pr:`25363` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_1_2:
 
@@ -816,50 +890,55 @@ the project since version 1.1, including:
 
 2357juan, 3lLobo, Adam J. Stewart, Adam Li, Aditya Anulekh, Adrin Jalali, Aiko,
 Akshita Prasanth, Alessandro Miola, Alex, Alexandr, Alexandre Perez-Lebel, aman
-kumar, Amit Bera, Andreas Grivas, Andreas Mueller, angela-maennel, Aniket
-Shirsat, Antony Lee, anupam, Apostolos Tsetoglou, Aravindh R, Arturo Amor,
-Ashwin Mathur, avm19, b0rxington, Badr MOUFAD, Bardiya Ak, Bartłomiej Gońda,
-BdeGraaff, Benjamin Carter, berkecanrizai, Bernd Fritzke, Bhoomika, Biswaroop
-Mitra, Brandon TH Chen, Brett Cannon, Bsh, carlo, Carlos Ramos Carreño, ceh,
-chalulu, Charles Zablit, Chiara Marmo, Christian Lorentzen, Christian Ritter,
-christianwaldmann, Christine P. Chai, Claudio Salvatore Arcidiacono, Clément
-Verrier, Daniela Fernandes, DanielGaerber, darioka, Darren Nguyen, David
-Gilbertson, David Poznik, Dev Khant, Dhanshree Arora, Diadochokinetic,
-diederikwp, Dimitri Papadopoulos Orfanos, drewhogg, Duarte OC, Dwight
-Lindquist, Eden Brekke, Edoardo Abati, Eleanore Denies, EliaSchiavon,
-ErmolaevPA, Fabrizio Damicelli, fcharras, Flynn, francesco-tuveri, Franck
-Charras, ftorres16, Gael Varoquaux, Geevarghese George, GeorgiaMayDay, Gianr
-Lazz, Gleb Levitski, Glòria Macià Muñoz, Guillaume Lemaitre, Guillem García
-Subies, Guitared, Hansin Ahuja, Hao Chun Chang, Harsh Agrawal, harshit5674,
-hasan-yaman, henrymooresc, Henry Sorsky, Hristo Vrigazov, htsedebenham, humahn,
-i-aki-y, Iglesys, Iliya Zhechev, Irene, ivanllt, Ivan Sedykh, jakirkham, Jason
-G, Jérémie du Boisberranger, Jiten Sidhpura, jkarolczak, João David, John Koumentis,
-John P, johnthagen, Jordan Fleming, Joshua Choo Yun Keat, Jovan Stojanovic,
-Juan Carlos Alfaro Jiménez, juanfe88, Juan Felipe Arias, Julien Jerphanion,
-Kanishk Sachdev, Kanissh, Kendall, Kenneth Prabakaran, kernc, Kevin Roice, Kian Eliasi,
-Kilian Lieret, Kirandevraj, Kraig, krishna kumar, krishna vamsi, Kshitij Kapadni,
-Kshitij Mathur, Lauren Burke, Léonard Binet, lingyi1110, Lisa Casino, Loic Esteve,
-Luciano Mantovani, Lucy Liu, Maascha, Madhura Jayaratne, madinak, Maksym, Malte
-S. Kurz, Mansi Agrawal, Marco Edward Gorelli, Marco Wurps, Maren Westermann,
-Maria Telenczuk, martin-kokos, mathurinm, mauroantonioserrano, Maxi Marufo,
-Maxim Smolskiy, Maxwell, Meekail Zain, Mehgarg, mehmetcanakbay, Mia Bajić,
-Michael Flaks, Michael Hornstein, Michel de Ruiter, Michelle Paradis, Misa
-Ogura, Moritz Wilksch, mrastgoo, Naipawat Poolsawat, Naoise Holohan, Nass,
-Nathan Jacobi, Nguyễn Văn Diễn, Nihal Thukarama Rao, Nikita Jare,
-nima10khodaveisi, Nima Sarajpoor, nitinramvelraj, Nwanna-Joseph, Nymark Kho,
-o-holman, Olivier Grisel, Olle Lukowski, Omar Hassoun, Omar Salman, osman
-tamer, Oyindamola Olatunji, Paulo Sergio  Soares, Petar Mlinarić, Peter
-Jansson, Peter Steinbach, Philipp Jung, Piet Brömmel, priyam kakati, puhuk,
-Rachel Freeland, Rachit Keerti Das, Rahil Parikh, Ravi Makhija, Rehan Guha,
-Reshama Shaikh, Richard Klima, Rob Crockett, Robert Hommes, Robert Juergens,
-Robin Lenz, Rocco Meli, Roman4oo, Ross Barnowski, Rowan Mankoo, Rudresh
-Veerkhare, Rushil Desai, Sabri Monaf Sabri, Safikh, Safiuddin Khaja,
-Salahuddin, Sam Adam Day, Sandra Yojana Meneses, Sandro Ephrem, Sangam,
-SangamSwadik, SarahRemus, SavkoMax, Sean Atukorala, sec65, SELEE, seljaks,
-Shane, shellyfung, Shinsuke Mori, Shoaib Khan, Shrankhla Srivastava, Shuangchi
-He, Simon, Srinath Kailasa, Stefanie Molin, stellalin7, Stéphane Collot, Steve
-Schmerler, Sven Stehle, TheDevPanda, the-syd-sre, Thomas Bonald, Thomas J. Fan,
-Ti-Ion, Tim Head, Timofei Kornev, toastedyeast, Tobias Pitters, Tom Dupré la
-Tour, Tom Mathews, Tom McTiernan, tspeng, Tyler Egashira, Valentin Laurent,
-Varun Jain, Vera Komeyer, Vicente Reyes-Puerta, Vincent M, Vishal, wattai,
-wchathura, WEN Hao, x110, Xiao Yuan, Xunius, yanhong-zhao-ef, Z Adil Khwaja
+kumar, Amit Bera, Andreas Grivas, Andreas Mueller, András Simon,
+angela-maennel, Aniket Shirsat, Antony Lee, anupam, Apostolos Tsetoglou,
+Aravindh R, Artur Hermano, Arturo Amor, Ashwin Mathur, avm19, b0rxington, Badr
+MOUFAD, Bardiya Ak, Bartłomiej Gońda, BdeGraaff, Benjamin Bossan, Benjamin
+Carter, berkecanrizai, Bernd Fritzke, Bhoomika, Biswaroop Mitra, Brandon TH
+Chen, Brett Cannon, Bsh, carlo, Carlos Ramos Carreño, ceh, chalulu, Charles
+Zablit, Chiara Marmo, Christian Lorentzen, Christian Ritter, christianwaldmann,
+Christine P. Chai, Claudio Salvatore Arcidiacono, Clément Verrier,
+crispinlogan, Da-Lan, DanGonite57, Daniela Fernandes, DanielGaerber, darioka,
+Darren Nguyen, David Gilbertson, David Poznik, david-cortes, Denis, Dev Khant,
+Dhanshree Arora, Diadochokinetic, diederikwp, Dimitri Papadopoulos Orfanos,
+drewhogg, Duarte OC, Dwight Lindquist, Eden Brekke, Edoardo Abati, Eleanore
+Denies, EliaSchiavon, ErmolaevPA, Fabrizio Damicelli, fcharras, Flynn,
+francesco-tuveri, Franck Charras, ftorres16, Gael Varoquaux, Geevarghese
+George, GeorgiaMayDay, Gianr Lazz, Gleb Levitski, Glòria Macià Muñoz, Guillaume
+Lemaitre, Guillem García Subies, Guitared, gunesbayir, Hansin Ahuja, Hao Chun
+Chang, Harsh Agrawal, harshit5674, hasan-yaman, Henry Sorsky, henrymooresc,
+Hristo Vrigazov, htsedebenham, humahn, i-aki-y, Ido M, Iglesys, Iliya Zhechev,
+Irene, Ivan Sedykh, ivanllt, jakirkham, Jason G, Jiten Sidhpura, jkarolczak,
+John Koumentis, John P, John Pangas, johnthagen, Jordan Fleming, Joshua Choo
+Yun Keat, Jovan Stojanovic, João David, Juan Carlos Alfaro Jiménez, Juan Felipe
+Arias, juanfe88, Julien Jerphanion, jygerardy, Jérémie du Boisberranger,
+Kanishk Sachdev, Kanissh, Kendall, Kenneth Prabakaran, Kento Nozawa, kernc,
+Kevin Roice, Kian Eliasi, Kilian Kluge, Kilian Lieret, Kirandevraj, Kraig,
+krishna kumar, krishna vamsi, Kshitij Kapadni, Kshitij Mathur, Lauren Burke,
+lingyi1110, Lisa Casino, Loic Esteve, Luciano Mantovani, Lucy Liu, Léonard
+Binet, m. bou, Maascha, Madhura Jayaratne, madinak, Maksym, Malte S. Kurz,
+Mansi Agrawal, Marco Edward Gorelli, Marco Wurps, Maren Westermann, Maria
+Telenczuk, martin-kokos, mathurinm, mauroantonioserrano, Maxi Marufo, Maxim
+Smolskiy, Maxwell, Meekail Zain, Mehgarg, mehmetcanakbay, Mia Bajić, Michael
+Flaks, Michael Hornstein, Michel de Ruiter, Michelle Paradis, Misa Ogura,
+Moritz Wilksch, mrastgoo, Naipawat Poolsawat, Naoise Holohan, Nass, Nathan
+Jacobi, Nguyễn Văn Diễn, Nihal Thukarama Rao, Nikita Jare, Nima Sarajpoor,
+nima10khodaveisi, nitinramvelraj, Nwanna-Joseph, Nymark Kho, o-holman, Olivier
+Grisel, Olle Lukowski, Omar Hassoun, Omar Salman, osman tamer, Oyindamola
+Olatunji, PAB, Pandata, Paulo Sergio  Soares, Petar Mlinarić, Peter Jansson,
+Peter Steinbach, Philipp Jung, Piet Brömmel, priyam kakati, puhuk, Rachel
+Freeland, Rachit Keerti Das, Rafal Wojdyla, Rahil Parikh, ram vikram singh,
+Ravi Makhija, Rehan Guha, Reshama Shaikh, Richard Klima, Rob Crockett, Robert
+Hommes, Robert Juergens, Robin Lenz, Rocco Meli, Roman4oo, Ross Barnowski,
+Rowan Mankoo, Rudresh Veerkhare, Rushil Desai, Sabri Monaf Sabri, Safikh,
+Safiuddin Khaja, Salahuddin, Sam Adam Day, Sandra Yojana Meneses, Sandro
+Ephrem, Sangam, SangamSwadik, SarahRemus, SavkoMax, Scott Gigante, Scott
+Gustafson, Sean Atukorala, sec65, SELEE, seljaks, Shane, shellyfung, Shinsuke
+Mori, Shoaib Khan, Shogo Hida, Shrankhla Srivastava, Shuangchi He, Simon,
+Srinath Kailasa, Stefanie Molin, stellalin7, Steve Schmerler, Steven Van
+Vaerenbergh, Stéphane Collot, Sven Stehle, the-syd-sre, TheDevPanda, Thomas
+Bonald, Thomas Germer, Thomas J. Fan, Ti-Ion, Tim Head, Timofei Kornev,
+toastedyeast, Tobias Pitters, Tom Dupré la Tour, Tom Mathews, Tom McTiernan,
+tspeng, Tyler Egashira, Valentin Laurent, Varun Jain, Vera Komeyer, Vicente
+Reyes-Puerta, Vincent M, Vishal, wattai, wchathura, WEN Hao, x110, Xiao Yuan,
+Xunius, yanhong-zhao-ef, Z Adil Khwaja
