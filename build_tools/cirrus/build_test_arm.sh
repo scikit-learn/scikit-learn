@@ -22,7 +22,9 @@ setup_ccache() {
     ccache -M 0
 }
 
-MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh"
+# XXX: Revert back to latest when https://github.com/conda-forge/miniforge/issues/413 is fixed
+# MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh"
+MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/download/22.9.0-3/Mambaforge-22.9.0-3-Linux-aarch64.sh"
 
 # Install Mambaforge
 wget $MINICONDA_URL -O mambaforge.sh
