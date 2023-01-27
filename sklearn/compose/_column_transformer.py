@@ -12,7 +12,6 @@ from collections import Counter
 
 import numpy as np
 from scipy import sparse
-from joblib import Parallel
 
 from ..base import clone, TransformerMixin
 from ..utils._estimator_html_repr import _VisualBlock
@@ -26,7 +25,7 @@ from ..utils._set_output import _get_output_config, _safe_set_output
 from ..utils import check_pandas_support
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted, _check_feature_names_in
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 
 __all__ = ["ColumnTransformer", "make_column_transformer", "make_column_selector"]
