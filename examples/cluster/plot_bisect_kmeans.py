@@ -10,7 +10,7 @@ Bisecting K-Means clustering build on top of the previous ones. As a
 result, it tends to create clusters that have a more consistent
 large-scale structure across the clusters.
 
-This difference can visually be observed: for all number of clusters,
+This difference can visually be observed: for all numbers of clusters,
 there is a dividing line cutting the overall data cloud in two for
 BisectingKMeans, but not for regular KMeans.
 
