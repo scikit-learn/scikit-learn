@@ -21,7 +21,6 @@ from numbers import Real, Integral
 
 import numpy as np
 from scipy.special import logsumexp
-from joblib import Parallel
 
 from .base import BaseEstimator, ClassifierMixin
 from .base import clone
@@ -35,7 +34,7 @@ from .utils.validation import _check_sample_weight
 from .utils.validation import column_or_1d, check_array
 from .utils.metaestimators import _BaseComposition, available_if
 from .utils import _safe_indexing, _get_column_indices, _print_elapsed_time, Bunch
-from .utils.fixes import delayed
+from .utils.parallel import delayed, Parallel
 from .utils._encode import _unique
 from .utils._estimator_html_repr import _VisualBlock
 from .compose._column_transformer import _is_empty_column_selection
