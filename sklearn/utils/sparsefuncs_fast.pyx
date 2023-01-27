@@ -49,7 +49,7 @@ def _csr_row_norms(
             for j in range(X_indptr[i], X_indptr[i + 1]):
                 norms[i] += X_data[j] * X_data[j]
 
-    return norms.base
+    return np.asarray(norms)
 
 
 def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
