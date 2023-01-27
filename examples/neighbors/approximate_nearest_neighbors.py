@@ -162,14 +162,18 @@ for dataset_name, (X, y) in datasets:
     for transformer_name, transformer in transformers:
         longest = np.max([len(name) for name, model in transformers])
         whitespaces = " " * (longest - len(transformer_name))
-        for _ in range(2):
-            start = time.time()
-            transformer.fit(X)
-            fit_duration = time.time() - start
-            print(
-                "%s: %s%.3f sec (fit)" % (transformer_name, whitespaces, fit_duration)
-            )
-        for _ in range(2):
+        start = time.time()
+        transformer.fit(X)
+        fit_duration = time.time() - start
+        print("%s: %s%.3f sec (fit)" % (transformer_name, whitespaces, fit_duration))
+        start = time.time()
+        Xt = transformer.transform(X)
+        transform_duration = time.time() - start
+        print(
+            "%s: %s%.3f sec (transform)"
+            % (transformer_name, whitespaces, transform_duration)
+        )
+        if transformer_name == "PyNNDescentTransformer":
             start = time.time()
             Xt = transformer.transform(X)
             transform_duration = time.time() - start
@@ -183,33 +187,23 @@ for dataset_name, (X, y) in datasets:
 #
 #     Benchmarking on MNIST_10000:
 #     ----------------------------
-#     KNeighborsTransformer:  0.005 sec (fit)
-#     KNeighborsTransformer:  0.004 sec (fit)
-#     KNeighborsTransformer:  1.285 sec (transform)
-#     KNeighborsTransformer:  1.162 sec (transform)
-#     NMSlibTransformer:      0.226 sec (fit)
-#     NMSlibTransformer:      0.235 sec (fit)
-#     NMSlibTransformer:      0.323 sec (transform)
-#     NMSlibTransformer:      0.295 sec (transform)
-#     PyNNDescentTransformer: 18.129 sec (fit)
-#     PyNNDescentTransformer: 4.584 sec (fit)
-#     PyNNDescentTransformer: 15.092 sec (transform)
-#     PyNNDescentTransformer: 0.862 sec (transform)
+#     KNeighborsTransformer:  0.007 sec (fit)
+#     KNeighborsTransformer:  1.139 sec (transform)
+#     NMSlibTransformer:      0.208 sec (fit)
+#     NMSlibTransformer:      0.315 sec (transform)
+#     PyNNDescentTransformer: 4.823 sec (fit)
+#     PyNNDescentTransformer: 4.884 sec (transform)
+#     PyNNDescentTransformer: 0.744 sec (transform)
 #
 #     Benchmarking on MNIST_20000:
 #     ----------------------------
-#     KNeighborsTransformer:  0.010 sec (fit)
-#     KNeighborsTransformer:  0.010 sec (fit)
-#     KNeighborsTransformer:  6.992 sec (transform)
-#     KNeighborsTransformer:  6.951 sec (transform)
-#     NMSlibTransformer:      0.777 sec (fit)
-#     NMSlibTransformer:      0.788 sec (fit)
-#     NMSlibTransformer:      0.796 sec (transform)
-#     NMSlibTransformer:      0.740 sec (transform)
-#     PyNNDescentTransformer: 13.609 sec (fit)
-#     PyNNDescentTransformer: 13.359 sec (fit)
-#     PyNNDescentTransformer: 7.001 sec (transform)
-#     PyNNDescentTransformer: 1.748 sec (transform)
+#     KNeighborsTransformer:  0.011 sec (fit)
+#     KNeighborsTransformer:  5.769 sec (transform)
+#     NMSlibTransformer:      0.733 sec (fit)
+#     NMSlibTransformer:      1.077 sec (transform)
+#     PyNNDescentTransformer: 14.448 sec (fit)
+#     PyNNDescentTransformer: 7.103 sec (transform)
+#     PyNNDescentTransformer: 1.759 sec (transform)
 #
 # `fit` and the first `transform` due to the overhead of the numba just in time
 # compiler. But after the first call, the compiled Python code is kept in a
