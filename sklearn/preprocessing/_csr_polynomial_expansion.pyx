@@ -1,11 +1,16 @@
 # Author: Andrew nystrom <awnystrom@gmail.com>
 
-from cython cimport numeric
 from scipy.sparse import csr_matrix
 cimport numpy as cnp
 import numpy as np
 
 cnp.import_array()
+
+ctypedef fused DATA_T:
+    float
+    double
+    int
+    long
 
 
 cdef inline cnp.int32_t _deg2_column(
@@ -48,7 +53,7 @@ cdef inline cnp.int32_t _deg3_column(
 
 
 def _csr_polynomial_expansion(
-    const numeric[:] data,
+    const DATA_T[:] data,
     const cnp.int32_t[:] indices,
     const cnp.int32_t[:] indptr,
     cnp.int32_t d,
@@ -113,7 +118,7 @@ def _csr_polynomial_expansion(
 
     # Make the arrays that will form the CSR matrix of the expansion.
     cdef:
-        numeric[:] expanded_data = np.empty(
+        DATA_T[:] expanded_data = np.empty(
             shape=total_nnz, dtype=data.base.dtype
         )
         cnp.int32_t[:] expanded_indices = np.empty(
