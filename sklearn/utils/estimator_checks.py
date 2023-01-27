@@ -3306,18 +3306,15 @@ def check_parameters_default_constructible(name, Estimator):
                 # Although callables are mutable, we accept them as argument
                 # default value and trust that neither the implementation of
                 # the callable nor of the estimator changes the state of the
-                # callable, which is needed for consistency regarding
-                # pickling and unpickling objects.
+                # callable.
                 callable(init_param.default)
             )
 
             assert allowed_value, (
                 f"Parameter '{init_param.name}' of estimator "
                 f"'{Estimator.__name__}' is of type "
-                f"{type(init_param.default).__name__} which is not "
-                "allowed. All init parameters have to be immutable to "
-                "make cloning possible. Therefore we restrict the set of "
-                "legal types to "
+                f"{type(init_param.default).__name__} which is not allowed. "
+                f"'{init_param.name}' must be a callable or must be of type "
                 f"{set(type.__name__ for type in allowed_types)}."
             )
             if init_param.name not in params.keys():
