@@ -218,6 +218,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 
 transformers = [
+    ("TSNE with internal NearestNeighbors", TSNE(metric=metric, **tsne_params)),
     (
         "TSNE with KNeighborsTransformer",
         make_pipeline(
@@ -234,7 +235,6 @@ transformers = [
             TSNE(metric="precomputed", **tsne_params),
         ),
     ),
-    ("TSNE with internal NearestNeighbors", TSNE(metric=metric, **tsne_params)),
 ]
 
 # init the plot
@@ -284,15 +284,15 @@ plt.show()
 #
 #     Benchmarking on MNIST_10000:
 #     ----------------------------
+#     TSNE with internal NearestNeighbors: 24.828 sec (fit_transform)
 #     TSNE with KNeighborsTransformer:     20.111 sec (fit_transform)
 #     TSNE with NMSlibTransformer:         21.757 sec (fit_transform)
-#     TSNE with internal NearestNeighbors: 24.828 sec (fit_transform)
 #
 #     Benchmarking on MNIST_20000:
 #     ----------------------------
+#     TSNE with internal NearestNeighbors: 51.955 sec (fit_transform)
 #     TSNE with KNeighborsTransformer:     50.994 sec (fit_transform)
 #     TSNE with NMSlibTransformer:         43.536 sec (fit_transform)
-#     TSNE with internal NearestNeighbors: 51.955 sec (fit_transform)
 #
 # We can observe that the default :class:`~sklearn.manifold.TSNE` estimator with
 # its internal :class:`~sklearn.neighbors.NearestNeighbors` implementation is
