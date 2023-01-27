@@ -205,11 +205,13 @@ for dataset_name, (X, y) in datasets:
 #     PyNNDescentTransformer: 7.103 sec (transform)
 #     PyNNDescentTransformer: 1.759 sec (transform)
 #
+# Notice that the `PyNNDescentTransformer` takes more time during the first
 # `fit` and the first `transform` due to the overhead of the numba just in time
 # compiler. But after the first call, the compiled Python code is kept in a
-# cache by numba and as a result subsequent calls are do not suffer from this
-# initial overhead. Both :class:`~sklearn.neighbors.KNeighborsTransformer` and
-# `NMSlibTransformer` show more stable `fit` and `transform` times.
+# cache by numba and subsequent calls do not suffer from this initial overhead.
+# Both :class:`~sklearn.neighbors.KNeighborsTransformer` and `NMSlibTransformer`
+# are only run once here as they would show more stable `fit` and `transform`
+# times (they don't have the cold start problem of PyNNDescentTransformer).
 
 # %%
 import matplotlib.pyplot as plt
@@ -292,24 +294,24 @@ plt.show()
 #     TSNE with NMSlibTransformer:         43.536 sec (fit_transform)
 #     TSNE with internal NearestNeighbors: 51.955 sec (fit_transform)
 #
-# We can observe that the default `TSNE` estimator with its internal
-# :class:`~sklearn.neighbors.NearestNeighbors` implementation is roughly
-# equivalent the `TSNE` pipeline with
+# We can observe that the default :class:`~sklearn.manifold.TSNE` estimator with
+# its internal :class:`~sklearn.neighbors.NearestNeighbors` implementation is
+# roughly equivalent to the pipeline with :class:`~sklearn.manifold.TSNE` and
 # :class:`~sklearn.neighbors.KNeighborsTransformer` in terms of performance.
 # This is expected because both pipelines rely internally on the same
-# :class:`~sklearn.neighbors.NearestNeighbors`NearestNeighbors` implementation
-# that performs exacts neighbors search. The approximate `NMSlibTransformer` is
-# already slightly faster than exact search on the smallest dataset but this
-# speed difference is expected to become more significant on datasets with a
-# larger number of samples.
+# :class:`~sklearn.neighbors.NearestNeighbors` implementation that performs
+# exacts neighbors search. The approximate `NMSlibTransformer` is already
+# slightly faster than the exact search on the smallest dataset but this speed
+# difference is expected to become more significant on datasets with a larger
+# number of samples.
 #
-# Note however that not all approximate search methods are guaranteed to
-# improve upon the speed of the default exact search method: indeed the exact
-# search implementation has been significantly improved in scikit-learn 1.1.
-# Furthermore, the brute-force exact search method does not require building an
-# index at `fit` time. So, to get an overall performance improvement in the
-# context of the `TSNE` pipeline, the gains of the approximate search at
-# `transform` need to be larger than the extra time speed to build the
+# Notice however that not all approximate search methods are guaranteed to
+# improve the speed of the default exact search method: indeed the exact search
+# implementation significantly improved since scikit-learn 1.1. Furthermore, the
+# brute-force exact search method does not require building an index at `fit`
+# time. So, to get an overall performance improvement in the context of the
+# :class:`~sklearn.manifold.TSNE` pipeline, the gains of the approximate search
+# at `transform` need to be larger than the extra time spent to build the
 # approximate search index at `fit` time.
 #
 # Finally, the TSNE algorithm itself is also computationally intensive,
