@@ -1,16 +1,11 @@
 # Author: Andrew nystrom <awnystrom@gmail.com>
 
+from cython cimport numeric
 from scipy.sparse import csr_matrix
 cimport numpy as cnp
 import numpy as np
 
 cnp.import_array()
-
-ctypedef fused DATA_T:
-    cnp.float32_t
-    cnp.float64_t
-    cnp.int32_t
-    cnp.int64_t
 
 
 cdef inline cnp.int32_t _deg2_column(
@@ -53,7 +48,7 @@ cdef inline cnp.int32_t _deg3_column(
 
 
 def _csr_polynomial_expansion(
-    const DATA_T[:] data,
+    const numeric[:] data,
     const cnp.int32_t[:] indices,
     const cnp.int32_t[:] indptr,
     cnp.int32_t d,
@@ -117,20 +112,21 @@ def _csr_polynomial_expansion(
                           - interaction_only * nnz ** 2)
 
     # Make the arrays that will form the CSR matrix of the expansion.
-    cdef DATA_T[:] expanded_data = np.empty(
-        shape=total_nnz, dtype=data.dtype
-    )
-    cdef cnp.int32_t[:] expanded_indices = np.empty(
-        shape=total_nnz, dtype=np.int32
-    )
-    cdef cnp.int32_t num_rows = indptr.shape[0] - 1
-    cdef cnp.int32_t[:] expanded_indptr = np.empty(
-        shape=num_rows + 1, dtype=np.int32
-    )
+    cdef:
+        numeric[:] expanded_data = np.empty(
+            shape=total_nnz, dtype=data.base.dtype
+        )
+        cnp.int32_t[:] expanded_indices = np.empty(
+            shape=total_nnz, dtype=np.int32
+        )
+        cnp.int32_t num_rows = indptr.shape[0] - 1
+        cnp.int32_t[:] expanded_indptr = np.empty(
+            shape=num_rows + 1, dtype=np.int32
+        )
 
-    cdef cnp.int32_t expanded_index = 0, row_starts, row_ends, i, j, k, \
-                 i_ptr, j_ptr, k_ptr, num_cols_in_row,  \
-                 expanded_column
+        cnp.int32_t expanded_index = 0, row_starts, row_ends, i, j, k, \
+                i_ptr, j_ptr, k_ptr, num_cols_in_row,  \
+                expanded_column
 
     with nogil:
         expanded_indptr[0] = indptr[0]
