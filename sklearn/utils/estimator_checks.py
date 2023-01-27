@@ -3299,6 +3299,7 @@ def check_parameters_default_constructible(name, Estimator):
                 type,
                 types.FunctionType,
                 joblib.Memory,
+                np.core._multiarray_umath._ArrayFunctionDispatcher,
             }
             # Any numpy numeric such as np.int32.
             allowed_types.update(np.core.numerictypes.allTypes.values())
