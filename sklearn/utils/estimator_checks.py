@@ -52,11 +52,12 @@ from ..pipeline import make_pipeline
 from ..exceptions import DataConversionWarning
 from ..exceptions import NotFittedError
 from ..exceptions import SkipTestWarning
+from ..externals._packaging.version import parse
 from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
-from ..utils.fixes import sp_version
+from ..utils.fixes import sp_version, np_version
 from ..utils.fixes import parse_version
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import make_constraint
@@ -3299,8 +3300,15 @@ def check_parameters_default_constructible(name, Estimator):
                 type,
                 types.FunctionType,
                 joblib.Memory,
-                np.core._multiarray_umath._ArrayFunctionDispatcher,
             }
+
+            if np_version > parse("1.24"):
+                # This is a workaround to support the change of type for NumPy function,
+                # which appeared in 1.25.0.dev.
+                # See: https://github.com/scikit-learn/scikit-learn/pull/25498
+                # TODO: Remove this branch once NumPy resolved the issue.
+                allowed_types.add(np.core._multiarray_umath._ArrayFunctionDispatcher)
+
             # Any numpy numeric such as np.int32.
             allowed_types.update(np.core.numerictypes.allTypes.values())
             assert type(init_param.default) in allowed_types, (
