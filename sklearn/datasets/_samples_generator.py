@@ -53,7 +53,7 @@ def _generate_hypercube(samples, dimensions, rng):
         "class_sep": [Interval(Real, 0, None, closed="neither")],
         "hypercube": ["boolean"],
         "shift": [Interval(Real, None, None, closed="neither"), "array-like", None],
-        "scale": [Interval(Real, None, None, closed="neither"), "array-like", None],
+        "scale": [Interval(Real, 0, None, closed="neither"), "array-like", None],
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
     }
