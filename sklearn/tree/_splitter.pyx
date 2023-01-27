@@ -21,7 +21,7 @@ import numpy as np
 
 from scipy.sparse import csc_matrix
 
-from ..utils._sorting cimport sort
+from ..utils._sorting cimport simultaneous_introsort as sort
 
 from ._utils cimport log
 from ._utils cimport rand_int

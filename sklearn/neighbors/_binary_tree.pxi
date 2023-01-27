@@ -164,7 +164,7 @@ from ..utils import check_array
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 from ..utils._typedefs import DTYPE, ITYPE
 from ..utils._heap cimport heap_push
-from ..utils._sorting cimport simultaneous_sort as _simultaneous_sort
+from ..utils._sorting cimport simultaneous_quick_sort as _simultaneous_sort
 
 # TODO: use cnp.PyArray_ENABLEFLAGS when Cython>=3.0 is used.
 cdef extern from "numpy/arrayobject.h":
@@ -561,8 +561,8 @@ cdef class NeighborsHeap:
         cdef ITYPE_t row
         for row in range(self.distances.shape[0]):
             _simultaneous_sort(
-                dist=&self.distances[row, 0],
-                idx=&self.indices[row, 0],
+                values=&self.distances[row, 0],
+                indices=&self.indices[row, 0],
                 size=self.distances.shape[1],
             )
         return 0
