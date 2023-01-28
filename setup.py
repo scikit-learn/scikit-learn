@@ -104,6 +104,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.neighbors._kd_tree",
     "sklearn.neighbors._partition_nodes",
     "sklearn.neighbors._quad_tree",
+    "sklearn.preprocessing._csr_polynomial_expansion",
     "sklearn.svm._liblinear",
     "sklearn.svm._libsvm",
     "sklearn.svm._libsvm_sparse",
