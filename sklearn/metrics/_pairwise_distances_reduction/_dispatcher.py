@@ -497,6 +497,7 @@ class ArgKminLabels(BaseDistancesReductionDispatcher):
             # TODO: Support CSR matrices.
             and not issparse(X)
             and not issparse(Y)
+            and metric not in ("euclidean", "sqeuclidean")
         )
 
     @classmethod
