@@ -299,33 +299,20 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                 if self.metric == "minkowski" and self.p == 2
                 else self.metric
             )
-            if self.algorithm == "brute" and ArgKminLabels.is_usable_for(
-                X, self._fit_X, metric
+            if (
+                self.algorithm == "brute"
+                and ArgKminLabels.is_usable_for(X, self._fit_X, metric)
+                and not self.outputs_2d_
             ):
-                if self.outputs_2d_:
-                    probabilities = []
-                    for k in range(self._y.shape[1]):
-                        probabilities.append(
-                            ArgKminLabels.compute(
-                                X,
-                                self._fit_X,
-                                k=self.n_neighbors,
-                                weights=self.weights,
-                                labels=self._y[:, k],
-                                metric=metric,
-                                metric_kwargs=self.metric_params,
-                            )
-                        )
-                else:
-                    probabilities = ArgKminLabels.compute(
-                        X,
-                        self._fit_X,
-                        k=self.n_neighbors,
-                        weights=self.weights,
-                        labels=self._y,
-                        metric=metric,
-                        metric_kwargs=self.metric_params,
-                    )
+                probabilities = ArgKminLabels.compute(
+                    X,
+                    self._fit_X,
+                    k=self.n_neighbors,
+                    weights=self.weights,
+                    labels=self._y,
+                    metric=metric,
+                    metric_kwargs=self.metric_params,
+                )
                 return probabilities
 
             # In that case, we do not need the distances to perform
