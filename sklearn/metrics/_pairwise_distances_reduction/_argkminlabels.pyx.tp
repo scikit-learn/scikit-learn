@@ -16,7 +16,7 @@ implementation_specific_values = [
 
 from cython cimport floating, integral
 from cython.parallel cimport parallel, prange
-from libcpp.map cimport map as cmap, pair
+from libcpp.map cimport map as cpp_map, pair as cpp_pair
 from libc.stdlib cimport free
 
 cimport numpy as cnp
@@ -46,7 +46,7 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
     cdef:
         const ITYPE_t[:] labels,
         DTYPE_t[:, :] label_weights
-        cmap[ITYPE_t, ITYPE_t] labels_to_index
+        cpp_map[ITYPE_t, ITYPE_t] labels_to_index
         WeightingStrategy weight_type
 
     @classmethod
@@ -151,7 +151,7 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
         cdef ITYPE_t idx, label
         # Map from set of unique labels to their indices in `label_weights`
         for idx, label in enumerate(unique_labels):
-            self.labels_to_index.insert(pair[ITYPE_t, ITYPE_t](label, idx))
+            self.labels_to_index.insert(cpp_pair[ITYPE_t, ITYPE_t](label, idx))
 
         # Buffer used in building a histogram for one-pass weighted mode
         self.label_weights = np.zeros(
@@ -250,7 +250,7 @@ cdef class EuclideanArgKminLabels{{name_suffix}}(EuclideanArgKmin{{name_suffix}}
     cdef:
         const ITYPE_t[:] labels,
         DTYPE_t[:, :] label_weights
-        cmap[ITYPE_t, ITYPE_t] labels_to_index
+        cpp_map[ITYPE_t, ITYPE_t] labels_to_index
         WeightingStrategy weight_type
 
     def __init__(
@@ -285,7 +285,7 @@ cdef class EuclideanArgKminLabels{{name_suffix}}(EuclideanArgKmin{{name_suffix}}
         cdef ITYPE_t idx, label
         # Map from set of unique labels to their indices in `label_weights`
         for idx, label in enumerate(unique_labels):
-            self.labels_to_index.insert(pair[ITYPE_t, ITYPE_t](label, idx))
+            self.labels_to_index.insert(cpp_pair[ITYPE_t, ITYPE_t](label, idx))
 
         # Buffer used in building a histogram for one-pass weighted mode
         self.label_weights = np.zeros(

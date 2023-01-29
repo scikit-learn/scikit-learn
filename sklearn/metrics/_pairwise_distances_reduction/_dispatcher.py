@@ -4,7 +4,7 @@ import numpy as np
 
 from typing import List
 
-from scipy.sparse import isspmatrix_csr
+from scipy.sparse import isspmatrix_csr, issparse
 
 from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 
@@ -79,7 +79,7 @@ class BaseDistancesReductionDispatcher:
         return sorted(({"sqeuclidean"} | set(METRIC_MAPPING.keys())) - excluded)
 
     @classmethod
-    def is_usable_for(cls, X, Y, metric, validation_params=None) -> bool:
+    def is_usable_for(cls, X, Y, metric) -> bool:
         """Return True if the dispatcher can be used for the
         given parameters.
 
@@ -95,10 +95,6 @@ class BaseDistancesReductionDispatcher:
             The distance metric to use.
             For a list of available metrics, see the documentation of
             :class:`~sklearn.metrics.DistanceMetric`.
-
-        validation_params : dict, default=None
-            A dictionary containing any additional parameters. This exists for
-            use in subclasses that may require additional information.
 
         Returns
         -------
@@ -475,7 +471,7 @@ class ArgKminLabels(BaseDistancesReductionDispatcher):
     """
 
     @classmethod
-    def is_usable_for(cls, X, Y, metric, validation_params=None) -> bool:
+    def is_usable_for(cls, X, Y, metric) -> bool:
         """Return True if the dispatcher can be used for the given parameters.
 
         Parameters
@@ -492,10 +488,6 @@ class ArgKminLabels(BaseDistancesReductionDispatcher):
             the documentation of :class:`~sklearn.metrics.DistanceMetric`.
             Currently does not support `'precomputed'`.
 
-        validation_params : dict, default=None
-            A dictionary containing any additional parameters. This exists for
-            use in subclasses that may require additional information.
-
         Returns
         -------
         True if the PairwiseDistancesReduction can be used, else False.
@@ -503,8 +495,8 @@ class ArgKminLabels(BaseDistancesReductionDispatcher):
         return (
             ArgKmin.is_usable_for(X, Y, metric)
             # TODO: Support CSR matrices.
-            and not is_sparse(X)
-            and not is_sparse(Y)
+            and not issparse(X)
+            and not issparse(Y)
         )
 
     @classmethod

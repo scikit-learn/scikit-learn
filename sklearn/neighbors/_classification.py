@@ -231,7 +231,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         """
         if self.weights == "uniform":
             if self.algorithm == "brute" and ArgKminLabels.is_usable_for(
-                X, self._fit_X, self.metric, validation_params={"labels": self._y}
+                X, self._fit_X, self.metric
             ):
                 probabilities = self.predict_proba(X)
                 if self.outputs_2d_:
@@ -721,7 +721,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
 
             proba_k = np.zeros((n_queries, classes_k.size))
-            proba_inl = np.zeros((len(inliers), classes_k.size), dtype=np.int64)
+            proba_inl = np.zeros((len(inliers), classes_k.size))
 
             # samples have different size of neighbors within the same radius
             if weights is None:
