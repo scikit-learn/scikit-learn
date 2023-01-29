@@ -85,7 +85,7 @@ def _check_function_param_validation(
 
         for constraint in constraints:
             try:
-                bad_value = generate_invalid_param_val(constraint)
+                bad_value = generate_invalid_param_val(constraint, constraints)
             except NotImplementedError:
                 continue
 
@@ -94,16 +94,41 @@ def _check_function_param_validation(
 
 
 PARAM_VALIDATION_FUNCTION_LIST = [
+    "sklearn.cluster.cluster_optics_dbscan",
+    "sklearn.cluster.compute_optics_graph",
     "sklearn.cluster.estimate_bandwidth",
     "sklearn.cluster.kmeans_plusplus",
+    "sklearn.cluster.cluster_optics_xi",
+    "sklearn.cluster.ward_tree",
+    "sklearn.covariance.empirical_covariance",
+    "sklearn.covariance.shrunk_covariance",
+    "sklearn.datasets.fetch_california_housing",
+    "sklearn.datasets.make_sparse_coded_signal",
+    "sklearn.decomposition.sparse_encode",
     "sklearn.feature_extraction.grid_to_graph",
     "sklearn.feature_extraction.img_to_graph",
+    "sklearn.feature_extraction.image.extract_patches_2d",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
+    "sklearn.metrics.average_precision_score",
+    "sklearn.metrics.balanced_accuracy_score",
+    "sklearn.metrics.cluster.contingency_matrix",
+    "sklearn.metrics.cohen_kappa_score",
+    "sklearn.metrics.confusion_matrix",
+    "sklearn.metrics.det_curve",
+    "sklearn.metrics.hamming_loss",
     "sklearn.metrics.mean_absolute_error",
+    "sklearn.metrics.mean_squared_error",
+    "sklearn.metrics.mean_tweedie_deviance",
+    "sklearn.metrics.median_absolute_error",
+    "sklearn.metrics.multilabel_confusion_matrix",
+    "sklearn.metrics.mutual_info_score",
+    "sklearn.metrics.pairwise.additive_chi2_kernel",
+    "sklearn.metrics.r2_score",
     "sklearn.metrics.roc_curve",
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.train_test_split",
+    "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",
 ]
 
@@ -123,6 +148,11 @@ def test_function_param_validation(func_module):
 
 
 PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
+    ("sklearn.cluster.affinity_propagation", "sklearn.cluster.AffinityPropagation"),
+    ("sklearn.covariance.ledoit_wolf", "sklearn.covariance.LedoitWolf"),
+    ("sklearn.covariance.oas", "sklearn.covariance.OAS"),
+    ("sklearn.decomposition.dict_learning", "sklearn.decomposition.DictionaryLearning"),
+    ("sklearn.decomposition.fastica", "sklearn.decomposition.FastICA"),
     ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
 ]
 

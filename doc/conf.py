@@ -331,6 +331,7 @@ intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "joblib": ("https://joblib.readthedocs.io/en/latest/", None),
     "seaborn": ("https://seaborn.pydata.org/", None),
+    "skops": ("https://skops.readthedocs.io/en/stable/", None),
 }
 
 v = parse(release)
