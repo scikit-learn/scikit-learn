@@ -62,23 +62,22 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
         dict metric_kwargs=None,
         str strategy=None,
     ):
-        """Compute the argkmin reduction.
+        """Compute the argkmin reduction with labels.
 
         This classmethod is responsible for introspecting the arguments
         values to dispatch to the most appropriate implementation of
-        :class:`ArgKmin{{name_suffix}}`.
+        :class:`ArgKminLabels{{name_suffix}}`.
 
         This allows decoupling the API entirely from the implementation details
         whilst maintaining RAII: all temporarily allocated datastructures necessary
         for the concrete implementation are therefore freed when this classmethod
         returns.
 
-        No instance should directly be created outside of this class method.
+        No instance _must_ directly be created outside of this class method.
         """
         if (
             (
                 metric in ("euclidean", "sqeuclidean")
-                or metric=="minkowski" and (metric_kwargs is None or metric_kwargs.get("p", 2)==2)
             )
             and not (issparse(X) ^ issparse(Y))  # "^" is the XOR operator
         ):
@@ -88,7 +87,7 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
             # a decomposition of the Squared Euclidean distance.
             # This specialisation has an improved arithmetic intensity for both
             # the dense and sparse settings, allowing in most case speed-ups of
-            # several orders of magnitude compared to the generic ArgKmin
+            # several orders of magnitude compared to the generic ArgKminLabels
             # implementation.
             # For more information see MiddleTermComputer.
             use_squared_distances = metric == "sqeuclidean"
@@ -155,7 +154,9 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
             self.labels_to_index.insert(pair[ITYPE_t, ITYPE_t](label, idx))
 
         # Buffer used in building a histogram for one-pass weighted mode
-        self.label_weights = np.zeros((self.n_samples_X,  len(unique_labels)), dtype=DTYPE)
+        self.label_weights = np.zeros(
+            (self.n_samples_X, unique_labels.shape[0]), dtype=DTYPE,
+        )
 
     def _finalize_results(self):
         probabilities = np.asarray(self.label_weights)
@@ -171,12 +172,17 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
         cdef:
             ITYPE_t y_idx, label, label_index, multi_output_index
             DTYPE_t label_weight = 1
+            bint use_distance_weighting = (
+                self.weight_type == WeightingStrategy.distance
+            )
 
         # Iterate through the sample k-nearest neighbours
         for jdx in range(self.k):
             # Absolute indice of the jdx-th Nearest Neighbors
             # in range [0, n_samples_Y)
-            if self.weight_type == WeightingStrategy.distance:
+            # TODO: inspect if it worth permuting this condition
+            # and the for-loop above for improved branching.
+            if use_distance_weighting:
                 label_weight = 1 / distances[jdx]
             y_idx = indices[jdx]
             label = self.labels[y_idx]
@@ -203,7 +209,6 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
             # One-pass top-one weighted mode
             # Compute the absolute index in [0, n_samples_X)
             sample_index = X_start + idx
-            max_label_weight = -1
             self.weighted_histogram_mode(
                 sample_index,
                 &self.heaps_indices_chunks[thread_num][0],
@@ -283,7 +288,9 @@ cdef class EuclideanArgKminLabels{{name_suffix}}(EuclideanArgKmin{{name_suffix}}
             self.labels_to_index.insert(pair[ITYPE_t, ITYPE_t](label, idx))
 
         # Buffer used in building a histogram for one-pass weighted mode
-        self.label_weights = np.zeros((self.n_samples_X,  len(unique_labels)), dtype=DTYPE)
+        self.label_weights = np.zeros(
+            (self.n_samples_X,  unique_labels.shape[0]), dtype=DTYPE,
+        )
 
     def _finalize_results(self):
         probabilities = np.asarray(self.label_weights)
@@ -299,13 +306,19 @@ cdef class EuclideanArgKminLabels{{name_suffix}}(EuclideanArgKmin{{name_suffix}}
         cdef:
             ITYPE_t y_idx, label, label_index, multi_output_index
             DTYPE_t label_weight = 1
+            bint use_distance_weighting = (
+                self.weight_type == WeightingStrategy.distance
+            )
 
         # Iterate through the sample k-nearest neighbours
         for jdx in range(self.k):
+            # TODO: inspect if it worth permuting this condition
+            # and the for-loop above for improved branching.
+            if use_distance_weighting:
+                label_weight = 1 / distances[jdx]
+
             # Absolute indice of the jdx-th Nearest Neighbors
             # in range [0, n_samples_Y)
-            if self.weight_type == WeightingStrategy.distance:
-                label_weight = 1 / distances[jdx]
             y_idx = indices[jdx]
             label = self.labels[y_idx]
             label_index = self.labels_to_index[label]
@@ -331,11 +344,10 @@ cdef class EuclideanArgKminLabels{{name_suffix}}(EuclideanArgKmin{{name_suffix}}
             # One-pass top-one weighted mode
             # Compute the absolute index in [0, n_samples_X)
             sample_index = X_start + idx
-            max_label_weight = -1
             self.weighted_histogram_mode(
                 sample_index,
-                &self.heaps_indices_chunks[thread_num][0],
-                &self.heaps_r_distances_chunks[thread_num][0],
+                indices=self.heaps_indices_chunks[thread_num],
+                distances=self.heaps_r_distances_chunks[thread_num],
             )
         return
 
@@ -361,8 +373,8 @@ cdef class EuclideanArgKminLabels{{name_suffix}}(EuclideanArgKmin{{name_suffix}}
                 )
                 self.weighted_histogram_mode(
                     sample_index,
-                    &self.argkmin_indices[sample_index][0],
-                    &self.argkmin_distances[sample_index][0],
+                    indices=&self.argkmin_indices[sample_index, 0],
+                    distances=&self.argkmin_distances[sample_index, 0],
                 )
         return
 

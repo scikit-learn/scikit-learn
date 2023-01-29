@@ -502,9 +502,9 @@ class ArgKminLabels(BaseDistancesReductionDispatcher):
         """
         return (
             ArgKmin.is_usable_for(X, Y, metric)
-            and not isspmatrix_csr(X)
-            and not isspmatrix_csr(Y)
-            and metric != "precomputed"  # TODO: support
+            # TODO: Support CSR matrices.
+            and not is_sparse(X)
+            and not is_sparse(Y)
         )
 
     @classmethod
