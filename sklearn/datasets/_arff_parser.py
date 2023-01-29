@@ -373,6 +373,7 @@ def _pandas_arff_parser(
         quotechar='"',  # delimiter to use for quoted strings
         names=[name for name in openml_columns_info],
         dtype=dtypes,
+        skipinitialspace=True,  # skip spaces after delimiter to follow ARFF specs
     )
 
     columns_to_select = feature_names_to_select + target_names_to_select

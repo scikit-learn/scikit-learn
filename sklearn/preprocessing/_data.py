@@ -1910,8 +1910,10 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     Notes
     -----
-    This estimator is stateless (besides constructor parameters), the
-    fit method does nothing but is useful when used in a pipeline.
+    This estimator is :term:`stateless` and does not need to be fitted.
+    However, we recommend to call :meth:`fit_transform` instead of
+    :meth:`transform`, as parameter validation is only performed in
+    :meth:`fit`.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
@@ -1942,10 +1944,10 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged.
+        """Only validates estimator's parameters.
 
-        This method is just there to implement the usual API and hence
-        work in pipelines.
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
@@ -2086,10 +2088,12 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     Notes
     -----
     If the input is a sparse matrix, only the non-zero values are subject
-    to update by the Binarizer class.
+    to update by the :class:`Binarizer` class.
 
-    This estimator is stateless (besides constructor parameters), the
-    fit method does nothing but is useful when used in a pipeline.
+    This estimator is :term:`stateless` and does not need to be fitted.
+    However, we recommend to call :meth:`fit_transform` instead of
+    :meth:`transform`, as parameter validation is only performed in
+    :meth:`fit`.
 
     Examples
     --------
@@ -2116,10 +2120,10 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged.
+        """Only validates estimator's parameters.
 
-        This method is just there to implement the usual API and hence
-        work in pipelines.
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
