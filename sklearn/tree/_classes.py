@@ -89,7 +89,6 @@ OBLIQUE_DENSE_SPLITTERS = {
     "best": _oblique_splitter.BestObliqueSplitter,
 }
 
-
 # =============================================================================
 # Base decision tree
 # =============================================================================
@@ -181,7 +180,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.tree_.n_leaves
 
-    def fit(self, X, y, sample_weight=None, check_input=True):
+    def fit(self, X, y=None, sample_weight=None, check_input=True):
         self._validate_params()
         random_state = check_random_state(self.random_state)
 
@@ -202,7 +201,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                         "No support for np.int64 index based sparse matrices"
                     )
 
-            if self.criterion == "poisson":
+            if y is not None and self.criterion == "poisson":
                 if np.any(y < 0):
                     raise ValueError(
                         "Some value(s) of y are negative which is"
@@ -216,45 +215,56 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         # Determine output settings
         n_samples, self.n_features_in_ = X.shape
-        is_classification = is_classifier(self)
 
-        y = np.atleast_1d(y)
-        expanded_class_weight = None
+        # Do preprocessing if 'y' is passed
+        is_classification = False
+        if y is not None:
+            is_classification = is_classifier(self)
 
-        if y.ndim == 1:
-            # reshape is necessary to preserve the data contiguity against vs
-            # [:, np.newaxis] that does not.
-            y = np.reshape(y, (-1, 1))
+            y = np.atleast_1d(y)
+            expanded_class_weight = None
 
-        self.n_outputs_ = y.shape[1]
+            if y.ndim == 1:
+                # reshape is necessary to preserve the data contiguity against vs
+                # [:, np.newaxis] that does not.
+                y = np.reshape(y, (-1, 1))
 
-        if is_classification:
-            check_classification_targets(y)
-            y = np.copy(y)
+            self.n_outputs_ = y.shape[1]
 
-            self.classes_ = []
-            self.n_classes_ = []
+            if is_classification:
+                check_classification_targets(y)
+                y = np.copy(y)
 
-            if self.class_weight is not None:
-                y_original = np.copy(y)
+                self.classes_ = []
+                self.n_classes_ = []
 
-            y_encoded = np.zeros(y.shape, dtype=int)
-            for k in range(self.n_outputs_):
-                classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
-                self.classes_.append(classes_k)
-                self.n_classes_.append(classes_k.shape[0])
-            y = y_encoded
+                if self.class_weight is not None:
+                    y_original = np.copy(y)
 
-            if self.class_weight is not None:
-                expanded_class_weight = compute_sample_weight(
-                    self.class_weight, y_original
+                y_encoded = np.zeros(y.shape, dtype=int)
+                for k in range(self.n_outputs_):
+                    classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
+                    self.classes_.append(classes_k)
+                    self.n_classes_.append(classes_k.shape[0])
+                y = y_encoded
+
+                if self.class_weight is not None:
+                    expanded_class_weight = compute_sample_weight(
+                        self.class_weight, y_original
+                    )
+
+                self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
+
+            if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
+                y = np.ascontiguousarray(y, dtype=DOUBLE)
+
+            if len(y) != n_samples:
+                raise ValueError(
+                    "Number of labels=%d does not match number of samples=%d"
+                    % (len(y), n_samples)
                 )
 
-            self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
-
-        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DOUBLE)
-
+        # set decision-tree model parameters
         max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
 
         if isinstance(self.min_samples_leaf, numbers.Integral):
@@ -306,12 +316,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
 
-        if len(y) != n_samples:
-            raise ValueError(
-                "Number of labels=%d does not match number of samples=%d"
-                % (len(y), n_samples)
-            )
-
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, DOUBLE)
 
@@ -327,6 +331,63 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
 
+        # build the actual tree now with the parameters
+        self._build_tree(
+            X,
+            y,
+            sample_weight,
+            is_classification,
+            min_samples_leaf,
+            min_weight_leaf,
+            max_leaf_nodes,
+            min_samples_split,
+            max_depth,
+            random_state,
+        )
+
+        return self
+
+    def _build_tree(
+        self,
+        X,
+        y,
+        sample_weight,
+        is_classification,
+        min_samples_leaf,
+        min_weight_leaf,
+        max_leaf_nodes,
+        min_samples_split,
+        max_depth,
+        random_state,
+    ):
+        """Build the actual tree.
+
+        Parameters
+        ----------
+        X : _type_
+            _description_
+        y : _type_
+            _description_
+        sample_weight : _type_
+            _description_
+        is_classification : bool
+            _description_
+        min_samples_leaf : _type_
+            _description_
+        min_weight_leaf : _type_
+            _description_
+        max_leaf_nodes : _type_
+            _description_
+        min_samples_split : _type_
+            _description_
+        max_depth : _type_
+            _description_
+        random_state : _type_
+            _description_
+        """
+
+        n_samples = X.shape[0]
+
         # Build tree
         criterion = self.criterion
         if not isinstance(criterion, Criterion):
@@ -341,17 +402,22 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # might be shared and modified concurrently during parallel fitting
             criterion = copy.deepcopy(criterion)
 
-        # set splitter, tree and tree builder
-        splitter = self._set_splitter(
-            issparse(X), criterion, min_samples_leaf, min_weight_leaf, random_state
-        )
-        tree_func = self._set_tree_func()
-        if is_classifier(self):
-            self.tree_ = tree_func(
-                self.n_features_in_, self.n_classes_, self.n_outputs_
+        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
+
+        splitter = self.splitter
+        if not isinstance(self.splitter, Splitter):
+            splitter = SPLITTERS[self.splitter](
+                criterion,
+                self.max_features_,
+                min_samples_leaf,
+                min_weight_leaf,
+                random_state,
             )
+
+        if is_classifier(self):
+            self.tree_ = Tree(self.n_features_in_, self.n_classes_, self.n_outputs_)
         else:
-            self.tree_ = tree_func(
+            self.tree_ = Tree(
                 self.n_features_in_,
                 # TODO: tree shouldn't need this in this case
                 np.array([1] * self.n_outputs_, dtype=np.intp),
@@ -386,28 +452,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.classes_ = self.classes_[0]
 
         self._prune_tree()
-        return self
-
-    def _set_tree_func(self):
-        """Set tree function."""
-        return Tree
-
-    def _set_splitter(
-        self, issparse, criterion, min_samples_leaf, min_weight_leaf, random_state
-    ):
-        """Set splitting function."""
-        SPLITTERS = SPARSE_SPLITTERS if issparse else DENSE_SPLITTERS
-
-        splitter = self.splitter
-        if not isinstance(self.splitter, Splitter):
-            splitter = SPLITTERS[self.splitter](
-                criterion,
-                self.max_features_,
-                min_samples_leaf,
-                min_weight_leaf,
-                random_state,
-            )
-        return splitter
 
     def _validate_X_predict(self, X, check_input):
         """Validate the training data on predict (probabilities)."""
@@ -844,7 +888,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
-        "criterion": [StrOptions({"gini", "entropy", "log_loss"}), Hidden(Criterion)],
+        "criterion": [
+            StrOptions({"gini", "entropy", "log_loss"}),
+            Hidden(Criterion),
+        ],
         "class_weight": [dict, list, StrOptions({"balanced"}), None],
     }
 
@@ -1791,7 +1838,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             ccp_alpha=ccp_alpha,
         )
 
-
 class ObliqueDecisionTreeClassifier(DecisionTreeClassifier):
     """A decision tree classifier.
 
@@ -2067,17 +2113,63 @@ class ObliqueDecisionTreeClassifier(DecisionTreeClassifier):
 
         self.feature_combinations = feature_combinations
 
-    def _set_tree_func(self):
-        """Set tree function."""
-        return ObliqueTree
-
-    def _set_splitter(
-        self, issparse, criterion, min_samples_leaf, min_weight_leaf, random_state
+    def _build_tree(
+        self,
+        X,
+        y,
+        sample_weight,
+        is_classification,
+        min_samples_leaf,
+        min_weight_leaf,
+        max_leaf_nodes,
+        min_samples_split,
+        max_depth,
+        random_state,
     ):
-        """Set splitting function."""
-        splitter = self.splitter
+        """Build the actual tree.
 
-        if issparse:
+        Parameters
+        ----------
+        X : _type_
+            _description_
+        y : _type_
+            _description_
+        sample_weight : _type_
+            _description_
+        is_classification : bool
+            _description_
+        min_samples_leaf : _type_
+            _description_
+        min_weight_leaf : _type_
+            _description_
+        max_leaf_nodes : _type_
+            _description_
+        min_samples_split : _type_
+            _description_
+        max_depth : _type_
+            _description_
+        random_state : _type_
+            _description_
+        """
+
+        n_samples = X.shape[0]
+
+        # Build tree
+        criterion = self.criterion
+        if not isinstance(criterion, Criterion):
+            if is_classification:
+                criterion = CRITERIA_CLF[self.criterion](
+                    self.n_outputs_, self.n_classes_
+                )
+            else:
+                criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
+        else:
+            # Make a deepcopy in case the criterion has mutable attributes that
+            # might be shared and modified concurrently during parallel fitting
+            criterion = copy.deepcopy(criterion)
+
+        splitter = self.splitter
+        if issparse(X):
             raise ValueError(
                 "Sparse input is not supported for oblique trees. "
                 "Please convert your data to a dense array."
@@ -2095,4 +2187,39 @@ class ObliqueDecisionTreeClassifier(DecisionTreeClassifier):
                 random_state,
             )
 
-        return splitter
+        if is_classifier(self):
+            self.tree_ = ObliqueTree(self.n_features_in_, self.n_classes_, self.n_outputs_)
+        else:
+            self.tree_ = ObliqueTree(
+                self.n_features_in_,
+                # TODO: tree shouldn't need this in this case
+                np.array([1] * self.n_outputs_, dtype=np.intp),
+                self.n_outputs_,
+            )
+
+        # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
+        if max_leaf_nodes < 0:
+            builder = DepthFirstTreeBuilder(
+                splitter,
+                min_samples_split,
+                min_samples_leaf,
+                min_weight_leaf,
+                max_depth,
+                self.min_impurity_decrease,
+            )
+        else:
+            builder = BestFirstTreeBuilder(
+                splitter,
+                min_samples_split,
+                min_samples_leaf,
+                min_weight_leaf,
+                max_depth,
+                max_leaf_nodes,
+                self.min_impurity_decrease,
+            )
+
+        builder.build(self.tree_, X, y, sample_weight)
+
+        if self.n_outputs_ == 1 and is_classifier(self):
+            self.n_classes_ = self.n_classes_[0]
+            self.classes_ = self.classes_[0]
