@@ -727,6 +727,7 @@ cdef inline int node_split_random(
     # Reorganize into samples[start:best.pos] + samples[best.pos:end]
     if best.pos < end:
         if current.feature != best.feature:
+            # TODO: Pass in best.n_missing when random splitter supports missing values.
             partitioner.partition_samples_final(
                 best.pos, best.threshold, best.feature, 0
             )
@@ -923,27 +924,28 @@ cdef class DensePartitioner:
         cdef:
             SIZE_t start = self.start
             SIZE_t end = self.end
-            SIZE_t p, partition_end
+            SIZE_t p, n_missing, partition_end
             SIZE_t[::1] samples = self.samples
             const DTYPE_t[:, :] X = self.X
             SIZE_t end_non_missing = self.end - best_n_missing
 
         # Move missing values to the end
         if best_n_missing != 0:
+            n_missing = 0
             p, partition_end = start, end - 1
-            while p < partition_end and p < best_n_missing:
+            while p < partition_end and n_missing < best_n_missing:
                 # Finds the lowest partition_end that is not missing
                 if isnan(X[samples[partition_end], best_feature]):
-                    p += 1
                     partition_end -= 1
+                    n_missing += 1
                     continue
 
                 # X[samples[partition_end]] is a non-missing value
                 if isnan(X[samples[p], best_feature]):
                     # If X[samples[p]] is missing, swap samples[p] and samples[partition_end]
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
-                    p += 1
                     partition_end -= 1
+                    n_missing += 1
                 p += 1
 
         if best_threshold != INFINITY:
