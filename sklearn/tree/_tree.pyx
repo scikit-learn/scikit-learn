@@ -18,10 +18,11 @@ from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.stdint cimport SIZE_MAX
-from libcpp.vector cimport vector
 from libcpp.algorithm cimport pop_heap
 from libcpp.algorithm cimport push_heap
 from libcpp cimport bool
+from cython.operator cimport dereference as deref
+from libc.stdlib cimport malloc, free
 
 import struct
 
@@ -82,6 +83,7 @@ NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 # =============================================================================
 # TreeBuilder
 # =============================================================================
+
 
 cdef class TreeBuilder:
     """Interface for different tree building strategies."""
@@ -179,8 +181,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef bint is_left
         cdef SIZE_t n_node_samples = splitter.n_samples
         cdef double weighted_n_node_samples
-        cdef SplitRecord split
         cdef SIZE_t node_id
+
+        cdef SplitRecord split
+        cdef SplitRecord* split_ptr = <SplitRecord *>malloc(splitter.pointer_size())
 
         cdef double impurity = INFINITY
         cdef SIZE_t n_constant_features
@@ -231,7 +235,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_leaf = is_leaf or impurity <= EPSILON
 
                 if not is_leaf:
-                    splitter.node_split(impurity, &split, &n_constant_features)
+                    splitter.node_split(impurity, split_ptr, &n_constant_features)
+
+                    # assign local copy of SplitRecord to assign
+                    # pos, improvement, and impurity scores
+                    split = deref(split_ptr)
+
                     # If EPSILON=0 in the below comparison, float precision
                     # issues stop splitting, producing trees that are
                     # dissimilar to v0.18
@@ -239,8 +248,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                (split.improvement + EPSILON <
                                 min_impurity_decrease))
 
-                node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
-                                         split.threshold, impurity, n_node_samples,
+                node_id = tree._add_node(parent, is_left, is_leaf, split_ptr,
+                                         impurity, n_node_samples,
                                          weighted_n_node_samples)
 
                 if node_id == SIZE_MAX:
@@ -280,6 +289,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
             if rc >= 0:
                 tree.max_depth = max_depth_seen
+        
+        # free the memory created for the SplitRecord pointer
+        free(split_ptr)
+
         if rc == -1:
             raise MemoryError()
 
@@ -440,6 +453,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     FrontierRecord* res) nogil except -1:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
+        cdef SplitRecord* split_ptr = <SplitRecord *>malloc(splitter.pointer_size())
+        
         cdef SIZE_t node_id
         cdef SIZE_t n_node_samples
         cdef SIZE_t n_constant_features = 0
@@ -461,7 +476,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                    )
 
         if not is_leaf:
-            splitter.node_split(impurity, &split, &n_constant_features)
+            splitter.node_split(impurity, split_ptr, &n_constant_features)
+            # assign local copy of SplitRecord to assign
+            # pos, improvement, and impurity scores
+            split = deref(split_ptr)
+
             # If EPSILON=0 in the below comparison, float precision issues stop
             # splitting early, producing trees that are dissimilar to v0.18
             is_leaf = (is_leaf or split.pos >= end or
@@ -471,7 +490,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  if parent != NULL
                                  else _TREE_UNDEFINED,
                                  is_left, is_leaf,
-                                 split.feature, split.threshold, impurity, n_node_samples,
+                                 split_ptr, impurity, n_node_samples,
                                  weighted_n_node_samples)
         if node_id == SIZE_MAX:
             return -1
@@ -500,7 +519,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             res.improvement = 0.0
             res.impurity_left = impurity
             res.impurity_right = impurity
-
+        
+        free(split_ptr)
         return 0
 
 
@@ -731,8 +751,27 @@ cdef class Tree:
         self.capacity = capacity
         return 0
 
+    cdef int _set_node_values(self, SplitRecord* split_node,
+            Node *node) nogil except -1:
+        """Set node data.
+        """
+        node.feature = split_node.feature
+        node.threshold = split_node.threshold
+        return 1
+
+    cdef DTYPE_t _compute_feature(self, const DTYPE_t[:] X_ndarray,
+            Node *node, SIZE_t node_id) nogil:
+        """Compute feature from a given data matrix, X.
+
+        In axis-aligned trees, this is simply the value in the column of X
+        for this specific feature.
+        """
+        # the feature index
+        cdef DTYPE_t feature = X_ndarray[node.feature]
+        return feature
+
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
-                          SIZE_t feature, double threshold, double impurity,
+                          SplitRecord* split_node, double impurity,
                           SIZE_t n_node_samples,
                           double weighted_n_node_samples) nogil except -1:
         """Add a node to the tree.
@@ -763,11 +802,12 @@ cdef class Tree:
             node.right_child = _TREE_LEAF
             node.feature = _TREE_UNDEFINED
             node.threshold = _TREE_UNDEFINED
-
         else:
+            # set the Node values
             # left_child and right_child will be set later
-            node.feature = feature
-            node.threshold = threshold
+            if self._set_node_values(split_node, node) != 1:
+                with gil:
+                    raise RuntimeError
 
         self.node_count += 1
 
@@ -801,6 +841,7 @@ cdef class Tree:
 
         # Extract input
         cdef const DTYPE_t[:, :] X_ndarray = X
+        cdef const DTYPE_t[:] X_vector
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize output
@@ -811,19 +852,32 @@ cdef class Tree:
         cdef Node* node = NULL
         cdef SIZE_t i = 0
 
+        # to keep track of the current ID of each node
+        cdef SIZE_t node_id = 0
+
+        # the feature value
+        cdef DTYPE_t feature_value = 0
+
         with nogil:
             for i in range(n_samples):
                 node = self.nodes
+                node_id = 0
+
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
                     # ... and node.right_child != _TREE_LEAF:
-                    if X_ndarray[i, node.feature] <= node.threshold:
+                    
+                    # compute the feature value to compare against threshold
+                    X_vector = X_ndarray[i, :]
+                    feature_value = self._compute_feature(X_vector, node, node_id)
+                    if feature_value <= node.threshold:
+                        node_id = node.left_child
                         node = &self.nodes[node.left_child]
                     else:
+                        node_id = node.right_child
                         node = &self.nodes[node.right_child]
 
                 out_ptr[i] = <SIZE_t>(node - self.nodes)  # node offset
-
         return out
 
     cdef inline cnp.ndarray _apply_sparse_csr(self, object X):
@@ -884,7 +938,6 @@ cdef class Tree:
                     # ... and node.right_child != _TREE_LEAF:
                     if feature_to_sample[node.feature] == i:
                         feature_value = X_sample[node.feature]
-
                     else:
                         feature_value = 0.
 
@@ -921,6 +974,7 @@ cdef class Tree:
 
         # Extract input
         cdef const DTYPE_t[:, :] X_ndarray = X
+        cdef const DTYPE_t[:] X_vector
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize output
@@ -936,6 +990,12 @@ cdef class Tree:
         cdef Node* node = NULL
         cdef SIZE_t i = 0
 
+        # to keep track of the current ID of each node
+        cdef SIZE_t node_id = 0
+
+        # the feature index
+        cdef DOUBLE_t feature
+
         with nogil:
             for i in range(n_samples):
                 node = self.nodes
@@ -947,9 +1007,14 @@ cdef class Tree:
                     indices_ptr[indptr_ptr[i + 1]] = <SIZE_t>(node - self.nodes)
                     indptr_ptr[i + 1] += 1
 
-                    if X_ndarray[i, node.feature] <= node.threshold:
+                    # compute the feature value to compare against threshold
+                    X_vector = X_ndarray[i, :]
+                    feature = self._compute_feature(X_vector, node, node_id)
+                    if feature <= node.threshold:
+                        node_id = node.left_child
                         node = &self.nodes[node.left_child]
                     else:
+                        node_id = node.right_child
                         node = &self.nodes[node.right_child]
 
                 # Add the leave node
@@ -1085,8 +1150,6 @@ cdef class Tree:
 
     cpdef compute_feature_importances(self, normalize=True):
         """Computes the importance of each feature (aka variable)."""
-        cdef Node* left
-        cdef Node* right
         cdef Node* nodes = self.nodes
         cdef Node* node = nodes
         cdef Node* end_node = node + self.node_count
@@ -1097,18 +1160,20 @@ cdef class Tree:
         importances = np.zeros((self.n_features,))
         cdef DOUBLE_t* importance_data = <DOUBLE_t*>importances.data
 
+        # to keep track of the current ID of each node
+        cdef SIZE_t node_id = 0
+
         with nogil:
+            node_id = 0
+
             while node != end_node:
                 if node.left_child != _TREE_LEAF:
                     # ... and node.right_child != _TREE_LEAF:
-                    left = &nodes[node.left_child]
-                    right = &nodes[node.right_child]
-
-                    importance_data[node.feature] += (
-                        node.weighted_n_node_samples * node.impurity -
-                        left.weighted_n_node_samples * left.impurity -
-                        right.weighted_n_node_samples * right.impurity)
+                    self._compute_feature_importances(
+                        importance_data, node, node_id)
+                    
                 node += 1
+                node_id += 1
 
         importances /= nodes[0].weighted_n_node_samples
 
@@ -1120,6 +1185,25 @@ cdef class Tree:
                 importances /= normalizer
 
         return importances
+
+    cdef void _compute_feature_importances(self, DOUBLE_t* importance_data,
+                                Node* node, SIZE_t node_id) nogil:
+        """Compute feature importances from a Node in the Tree.
+        
+        Wrapped in a private function to allow subclassing that
+        computes feature importances.
+        """
+        cdef Node* nodes = self.nodes
+        cdef Node* left
+        cdef Node* right
+
+        left = &nodes[node.left_child]
+        right = &nodes[node.right_child]
+
+        importance_data[node.feature] += (
+            node.weighted_n_node_samples * node.impurity -
+            left.weighted_n_node_samples * left.impurity -
+            right.weighted_n_node_samples * right.impurity)
 
     cdef cnp.ndarray _get_value_ndarray(self):
         """Wraps value as a 3-d NumPy array.
@@ -1748,6 +1832,8 @@ cdef _build_pruned_tree(
         stack[BuildPrunedRecord] prune_stack
         BuildPrunedRecord stack_record
 
+        SplitRecord split
+
     with nogil:
         # push root node onto stack
         prune_stack.push({"start": 0, "depth": 0, "parent": _TREE_UNDEFINED, "is_left": 0})
@@ -1764,8 +1850,12 @@ cdef _build_pruned_tree(
             is_leaf = leaves_in_subtree[orig_node_id]
             node = &orig_tree.nodes[orig_node_id]
 
+            # redefine to a SplitRecord to pass into _add_node
+            split.feature = node.feature
+            split.threshold = node.threshold
+
             new_node_id = tree._add_node(
-                parent, is_left, is_leaf, node.feature, node.threshold,
+                parent, is_left, is_leaf, &split,
                 node.impurity, node.n_node_samples,
                 node.weighted_n_node_samples)
 

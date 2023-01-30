@@ -3,14 +3,16 @@
 Plot the decision surface of decision trees trained on the iris dataset
 =======================================================================
 
-Plot the decision surface of a decision tree trained on pairs
-of features of the iris dataset.
+Plot the decision surface of a decision tree and oblique decision tree
+trained on pairs of features of the iris dataset.
 
-See :ref:`decision tree <tree>` for more information on the estimator.
+See :ref:`decision tree <tree>` for more information on the estimators.
 
-For each pair of iris features, the decision tree learns decision
+For each pair of iris features, the decision tree learns axis-aligned decision
 boundaries made of combinations of simple thresholding rules inferred from
-the training samples.
+the training samples. The oblique decision tree learns oblique decision boundaries
+made from linear combinations of the features in the training samples and then
+the same thresholding rule as regular decision trees.
 
 We also show the tree structure of a model built on all of the features.
 """
@@ -27,7 +29,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import load_iris
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, ObliqueDecisionTreeClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
 
 
@@ -36,52 +38,67 @@ n_classes = 3
 plot_colors = "ryb"
 plot_step = 0.02
 
+clf_labels = ["Axis-aligned", "Oblique"]
+random_state = 123456
 
-for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]):
-    # We only take the two corresponding features
-    X = iris.data[:, pair]
-    y = iris.target
+clfs = [
+    DecisionTreeClassifier(random_state=random_state),
+    ObliqueDecisionTreeClassifier(random_state=random_state),
+]
 
-    # Train
-    clf = DecisionTreeClassifier().fit(X, y)
+for clf, clf_label in zip(clfs, clf_labels):
+    fig, axes = plt.subplots(2, 3)
+    axes = axes.flatten()
 
-    # Plot the decision boundary
-    ax = plt.subplot(2, 3, pairidx + 1)
-    plt.tight_layout(h_pad=0.5, w_pad=0.5, pad=2.5)
-    DecisionBoundaryDisplay.from_estimator(
-        clf,
-        X,
-        cmap=plt.cm.RdYlBu,
-        response_method="predict",
-        ax=ax,
-        xlabel=iris.feature_names[pair[0]],
-        ylabel=iris.feature_names[pair[1]],
-    )
+    for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]):
+        # We only take the two corresponding features
+        X = iris.data[:, pair]
+        y = iris.target
 
-    # Plot the training points
-    for i, color in zip(range(n_classes), plot_colors):
-        idx = np.where(y == i)
-        plt.scatter(
-            X[idx, 0],
-            X[idx, 1],
-            c=color,
-            label=iris.target_names[i],
+        # Train
+        clf.fit(X, y)
+
+        # Plot the decision boundary
+        ax = axes[pairidx]
+        plt.tight_layout(h_pad=0.5, w_pad=0.5, pad=2.5)
+        DecisionBoundaryDisplay.from_estimator(
+            clf,
+            X,
             cmap=plt.cm.RdYlBu,
-            edgecolor="black",
-            s=15,
+            response_method="predict",
+            ax=ax,
+            xlabel=iris.feature_names[pair[0]],
+            ylabel=iris.feature_names[pair[1]],
         )
 
-plt.suptitle("Decision surface of decision trees trained on pairs of features")
-plt.legend(loc="lower right", borderpad=0, handletextpad=0)
-_ = plt.axis("tight")
+        # Plot the training points
+        for i, color in zip(range(n_classes), plot_colors):
+            idx = np.where(y == i)
+            ax.scatter(
+                X[idx, 0],
+                X[idx, 1],
+                c=color,
+                label=iris.target_names[i],
+                cmap=plt.cm.RdYlBu,
+                edgecolor="black",
+                s=15,
+            )
+
+    fig.suptitle(
+        f"Decision surface of {clf_label} decision trees trained on pairs of features"
+    )
+    plt.legend(loc="lower right", borderpad=0, handletextpad=0)
+    _ = plt.axis("tight")
+    plt.show()
 
 # %%
 # Display the structure of a single decision tree trained on all the features
 # together.
 from sklearn.tree import plot_tree
 
-plt.figure()
-clf = DecisionTreeClassifier().fit(iris.data, iris.target)
-plot_tree(clf, filled=True)
-plt.title("Decision tree trained on all the iris features")
-plt.show()
+for clf, clf_label in zip(clfs, clf_labels):
+    plt.figure()
+    clf.fit(iris.data, iris.target)
+    plot_tree(clf, filled=True)
+    plt.title(f"{clf_label} decision tree trained on all the iris features")
+    plt.show()

@@ -13,6 +13,8 @@
 import numpy as np
 cimport numpy as cnp
 
+from libcpp.vector cimport vector
+
 ctypedef cnp.npy_float32 DTYPE_t          # Type of X
 ctypedef cnp.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef cnp.npy_intp SIZE_t              # Type for indices and counters
@@ -56,11 +58,20 @@ cdef class Tree:
 
     # Methods
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
-                          SIZE_t feature, double threshold, double impurity,
+                          SplitRecord* split_node,
+                          double impurity,
                           SIZE_t n_node_samples,
                           double weighted_n_node_samples) nogil except -1
+    cdef int _set_node_values(self, SplitRecord* split_node,
+                              Node *node)  nogil except -1
+    cdef DTYPE_t _compute_feature(self, const DTYPE_t[:] X_ndarray,
+                            Node *node, SIZE_t node_id) nogil
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
+
+    cdef void _compute_feature_importances(self,
+        DOUBLE_t* importance_data, Node* node,
+        SIZE_t node_id) nogil
 
     cdef cnp.ndarray _get_value_ndarray(self)
     cdef cnp.ndarray _get_node_ndarray(self)
@@ -91,8 +102,7 @@ cdef class TreeBuilder:
     # This class controls the various stopping criteria and the node splitting
     # evaluation order, e.g. depth-first or best-first.
 
-    cdef Splitter splitter              # Splitting algorithm
-
+    cdef Splitter splitter
     cdef SIZE_t min_samples_split       # Minimum number of samples in an internal node
     cdef SIZE_t min_samples_leaf        # Minimum number of samples in a leaf
     cdef double min_weight_leaf         # Minimum weight in a leaf

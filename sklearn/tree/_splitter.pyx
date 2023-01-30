@@ -52,7 +52,7 @@ cdef class Splitter:
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state):
+                  object random_state, *argv):
         """
         Parameters
         ----------
@@ -220,6 +220,11 @@ cdef class Splitter:
         """Return the impurity of the current node."""
 
         return self.criterion.node_impurity()
+
+    cdef int pointer_size(self) nogil:
+        """Get size of a pointer to record for Splitter."""
+        
+        return sizeof(SplitRecord)
 
 # Introduce a fused-class to make it possible to share the split implementation
 # between the dense and sparse cases in the node_split_best and node_split_random
