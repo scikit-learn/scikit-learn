@@ -32,7 +32,7 @@ Changelog
 
 - |Fix| Fixes a bug in :class:`isotonic.IsotonicRegression` where
   :meth:`isotonic.IsotonicRegression.predict` would return a pandas DataFrame
-  when `set_output` would be fixed to `"pandas"`.
+  when the global configuration sets `transform_output="pandas"`.
   :pr:`25500` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_1_2_1:
