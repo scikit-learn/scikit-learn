@@ -361,6 +361,15 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         return self
 
     def _transform(self, T):
+        """`_transform` is called by both `transform` and `predict` methods.
+
+        Since `transform` is wrapped to output arrays of specific types (e.g.
+        NumPy arrays, pandas DataFrame), we cannot make `predict` call `transform`
+        directly.
+
+        The above behaviour could be changed in the future, if we decide to output
+        other type of arrays when calling `predict`.
+        """
         if hasattr(self, "X_thresholds_"):
             dtype = self.X_thresholds_.dtype
         else:
