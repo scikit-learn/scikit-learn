@@ -607,8 +607,7 @@ def multilabel_confusion_matrix(
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d < 0"
-                    % np.min(labels)
+                    "Got %d < 0" % np.min(labels)
                 )
 
         if n_labels is not None:
@@ -650,10 +649,16 @@ def multilabel_confusion_matrix(
         "labels": ["array-like", None],
         "weights": [StrOptions({"linear", "quadratic"}), None],
         "sample_weight": ["array-like", None],
-        "zero_division": [StrOptions({"warn"}), Options(int, {0, 1}), Options(float, {np.nan})],
+        "zero_division": [
+            StrOptions({"warn"}),
+            Options(int, {0, 1}),
+            Options(float, {np.nan}),
+        ],
     }
 )
-def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None, zero_division="warn"):
+def cohen_kappa_score(
+    y1, y2, *, labels=None, weights=None, sample_weight=None, zero_division="warn"
+):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -1035,8 +1040,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None, zero_division="warn
     n_correct = np.trace(C, dtype=np.float64)
     n_samples = p_sum.sum()
     cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
-    cov_ypyp = n_samples**2 - np.dot(p_sum, p_sum)
-    cov_ytyt = n_samples**2 - np.dot(t_sum, t_sum)
+    cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
+    cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
 
     if cov_ypyp * cov_ytyt == 0:
         if zero_division == "warn":
@@ -1743,7 +1748,7 @@ def precision_recall_fscore_support(
         true_sum = np.array([true_sum.sum()])
 
     # Finally, we have all our sufficient statistics. Divide! #
-    beta2 = beta**2
+    beta2 = beta ** 2
 
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:

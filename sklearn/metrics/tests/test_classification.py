@@ -258,7 +258,7 @@ def test_precision_recall_f1_score_binary():
 
         assert_almost_equal(
             my_assert(fbeta_score, y_true, y_pred, beta=2, **kwargs),
-            (1 + 2**2) * ps * rs / (2**2 * ps + rs),
+            (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs),
             2,
         )
 
@@ -727,15 +727,18 @@ def test_cohen_kappa():
 
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 @pytest.mark.parametrize("y_true, y_pred", [([0], [0]), ([], [])])
-@pytest.mark.parametrize("metric", [
-    jaccard_score,
-    matthews_corrcoef,
-    f1_score,
-    partial(fbeta_score, beta=1),
-    precision_score,
-    recall_score,
-    cohen_kappa_score,
-])
+@pytest.mark.parametrize(
+    "metric",
+    [
+        jaccard_score,
+        matthews_corrcoef,
+        f1_score,
+        partial(fbeta_score, beta=1),
+        precision_score,
+        recall_score,
+        cohen_kappa_score,
+    ],
+)
 def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
     """Check the behaviour of `zero_division` when setting to 0, 1 or np.nan.
     No warnings should be raised.
@@ -751,15 +754,18 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
 
 
 @pytest.mark.parametrize("y_true, y_pred", [([0], [0]), ([], [])])
-@pytest.mark.parametrize("metric", [
-    jaccard_score,
-    matthews_corrcoef,
-    f1_score,
-    partial(fbeta_score, beta=1),
-    precision_score,
-    recall_score,
-    cohen_kappa_score,
-])
+@pytest.mark.parametrize(
+    "metric",
+    [
+        jaccard_score,
+        matthews_corrcoef,
+        f1_score,
+        partial(fbeta_score, beta=1),
+        precision_score,
+        recall_score,
+        cohen_kappa_score,
+    ],
+)
 def test_zero_division_nan_warning(metric, y_true, y_pred):
     """Check the behaviour of `zero_division` when setting to "warn".
     A `UndefinedMetricWarning` should be raised.
@@ -1723,10 +1729,10 @@ def test_precision_recall_f1_score_multilabel_2():
 @ignore_warnings
 @pytest.mark.parametrize(
     "zero_division, zero_division_expected",
-    [("warn", 0), (0, 0), (1, 1), (np.nan, np.nan)]
+    [("warn", 0), (0, 0), (1, 1), (np.nan, np.nan)],
 )
 def test_precision_recall_f1_score_with_an_empty_prediction(
-        zero_division, zero_division_expected
+    zero_division, zero_division_expected
 ):
     y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
     y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
@@ -2121,8 +2127,7 @@ def test_recall_warnings(zero_division):
         )
         if zero_division == "warn":
             assert (
-                str(record.pop().message)
-                == "Recall is ill-defined and "
+                str(record.pop().message) == "Recall is ill-defined and "
                 "being set to 0.0 due to no true samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2133,8 +2138,7 @@ def test_recall_warnings(zero_division):
         recall_score([0, 0], [0, 0])
         if zero_division == "warn":
             assert (
-                str(record.pop().message)
-                == "Recall is ill-defined and "
+                str(record.pop().message) == "Recall is ill-defined and "
                 "being set to 0.0 due to no true samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2153,8 +2157,7 @@ def test_precision_warnings(zero_division):
         )
         if zero_division == "warn":
             assert (
-                str(record.pop().message)
-                == "Precision is ill-defined and "
+                str(record.pop().message) == "Precision is ill-defined and "
                 "being set to 0.0 due to no predicted samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2165,8 +2168,7 @@ def test_precision_warnings(zero_division):
         precision_score([0, 0], [0, 0])
         if zero_division == "warn":
             assert (
-                str(record.pop().message)
-                == "Precision is ill-defined and "
+                str(record.pop().message) == "Precision is ill-defined and "
                 "being set to 0.0 due to no predicted samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2211,8 +2213,7 @@ def test_fscore_warnings(zero_division):
             )
             if zero_division == "warn":
                 assert (
-                    str(record.pop().message)
-                    == "F-score is ill-defined and "
+                    str(record.pop().message) == "F-score is ill-defined and "
                     "being set to 0.0 due to no true nor predicted "
                     "samples. Use `zero_division` parameter to "
                     "control this behavior."
