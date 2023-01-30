@@ -12,8 +12,6 @@ from numbers import Integral, Real
 from warnings import warn
 from functools import partial
 
-from joblib import Parallel
-
 from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
@@ -26,7 +24,7 @@ from ..utils.random import sample_without_replacement
 from ..utils._param_validation import Interval, HasMethods, StrOptions
 from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
 from ..utils._tags import _safe_tags
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 
 __all__ = ["BaggingClassifier", "BaggingRegressor"]
