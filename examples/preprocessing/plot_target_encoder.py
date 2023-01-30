@@ -51,7 +51,7 @@ target_name = "points"
 X = df[numerical_features + categorical_features]
 y = df[target_name]
 
-y.hist()
+_ = y.hist()
 
 # %%
 # Then, we split the dataset into a training and test set.
@@ -59,7 +59,10 @@ from sklearn.model_selection import train_test_split
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-print(f"Samples in training set: {len(X_train)}\nSamples in test set: {len(X_test)}")
+print(
+    f"Data points in training set: {len(X_train)}\n"
+    f"Data points in test set: {len(X_test)}"
+)
 
 # %%
 # Training and Evaluating Pipelines with Different Encoders
@@ -77,7 +80,7 @@ categorical_preprocessors = [
     ("drop", "drop"),
     ("ordinal", OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)),
     (
-        "one_hot_encoder",
+        "one_hot",
         OneHotEncoder(handle_unknown="ignore", max_categories=50, sparse_output=False),
     ),
     ("target", TargetEncoder(target_type="continuous")),
@@ -94,7 +97,7 @@ results = []
 for name, categorical_preprocessor in categorical_preprocessors:
     preprocessor = ColumnTransformer(
         [
-            ("nummerical", "passthrough", numerical_features),
+            ("numerical", "passthrough", numerical_features),
             ("categorical", categorical_preprocessor, categorical_features),
         ]
     )
@@ -115,6 +118,6 @@ for name, categorical_preprocessor in categorical_preprocessors:
 # the significance of the improvement.
 import pandas as pd
 
-pd.DataFrame(results).sort_values("root mean squared error", ascending=False).set_index(
+_ = pd.DataFrame(results).sort_values("root mean squared error", ascending=False).set_index(
     "preprocessor"
 ).plot(kind="barh")
