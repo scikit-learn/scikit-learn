@@ -92,8 +92,8 @@ from ._scorer import get_scorer_names
 from ._plot.det_curve import DetCurveDisplay
 from ._plot.roc_curve import RocCurveDisplay
 from ._plot.precision_recall_curve import PrecisionRecallDisplay
-
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
+from ._plot.regression import PredictionErrorDisplay
 
 
 __all__ = [
@@ -163,6 +163,7 @@ __all__ = [
     "precision_recall_curve",
     "precision_recall_fscore_support",
     "precision_score",
+    "PredictionErrorDisplay",
     "r2_score",
     "rand_score",
     "recall_score",

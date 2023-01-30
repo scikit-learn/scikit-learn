@@ -32,8 +32,7 @@ cdef class KDTree(BinaryTree):
 cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes,
                        ITYPE_t n_features) except -1:
     """Allocate arrays needed for the KD Tree"""
-    tree.node_bounds_arr = np.zeros((2, n_nodes, n_features), dtype=DTYPE)
-    tree.node_bounds = tree.node_bounds_arr
+    tree.node_bounds = np.zeros((2, n_nodes, n_features), dtype=DTYPE)
     return 0
 
 
@@ -160,10 +159,8 @@ cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
             d_hi = pt[j] - tree.node_bounds[1, i_node, j]
             d = (d_lo + fabs(d_lo)) + (d_hi + fabs(d_hi))
             min_dist[0] = fmax(min_dist[0], 0.5 * d)
-            max_dist[0] = fmax(max_dist[0],
-                               fabs(pt[j] - tree.node_bounds[0, i_node, j]))
-            max_dist[0] = fmax(max_dist[0],
-                               fabs(pt[j] - tree.node_bounds[1, i_node, j]))
+            max_dist[0] = fmax(max_dist[0], fabs(d_lo))
+            max_dist[0] = fmax(max_dist[0], fabs(d_hi))
     else:
         # as above, use the fact that x + abs(x) = 2 * max(x, 0)
         for j in range(n_features):

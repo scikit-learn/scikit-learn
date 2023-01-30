@@ -1,4 +1,3 @@
-import types
 import warnings
 import pickle
 import re
@@ -61,6 +60,7 @@ from ..utils.fixes import parse_version
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import make_constraint
 from ..utils._param_validation import generate_invalid_param_val
+from ..utils._param_validation import InvalidParameterError
 
 from . import shuffle
 from ._tags import (
@@ -140,6 +140,7 @@ def _yield_classifier_checks(classifier):
     yield check_classifier_data_not_an_array
     # test classifiers trained on a single label always return this label
     yield check_classifiers_one_label
+    yield check_classifiers_one_label_sample_weights
     yield check_classifiers_classes
     yield check_estimators_partial_fit_n_features
     if tags["multioutput"]:
@@ -241,6 +242,8 @@ def _yield_transformer_checks(transformer):
     yield partial(check_transformer_general, readonly_memmap=True)
     if not _safe_tags(transformer, key="stateless"):
         yield check_transformers_unfitted
+    else:
+        yield check_transformers_unfitted_stateless
     # Dependent on external solvers and hence accessing the iter
     # param is non-trivial.
     external_solver = [
@@ -670,6 +673,9 @@ def _set_checking_parameters(estimator):
         # NMF
         if name == "NMF":
             estimator.set_params(max_iter=500)
+        # DictionaryLearning
+        if name == "DictionaryLearning":
+            estimator.set_params(max_iter=200, transform_algorithm="lasso_lars")
         # MiniBatchNMF
         if estimator.__class__.__name__ == "MiniBatchNMF":
             estimator.set_params(max_iter=20, fresh_restarts=True)
@@ -1549,6 +1555,21 @@ def check_transformers_unfitted(name, transformer):
         transformer.transform(X)
 
 
+@ignore_warnings(category=FutureWarning)
+def check_transformers_unfitted_stateless(name, transformer):
+    """Check that using transform without prior fitting
+    doesn't raise a NotFittedError for stateless transformers.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(20, 5))
+    X = _enforce_estimator_tags_X(transformer, X)
+
+    transformer = clone(transformer)
+    X_trans = transformer.transform(X)
+
+    assert X_trans.shape[0] == X.shape[0]
+
+
 def _check_transformer(name, transformer_orig, X, y):
     n_samples, n_features = np.asarray(X).shape
     transformer = clone(transformer_orig)
@@ -2113,6 +2134,43 @@ def check_classifiers_one_label(name, classifier_orig):
         assert_array_equal(classifier.predict(X_test), y, err_msg=error_string_predict)
 
 
+@ignore_warnings(category=FutureWarning)
+def check_classifiers_one_label_sample_weights(name, classifier_orig):
+    """Check that classifiers accepting sample_weight fit or throws a ValueError with
+    an explicit message if the problem is reduced to one class.
+    """
+    error_fit = (
+        f"{name} failed when fitted on one label after sample_weight trimming. Error "
+        "message is not explicit, it should have 'class'."
+    )
+    error_predict = f"{name} prediction results should only output the remaining class."
+    rnd = np.random.RandomState(0)
+    # X should be square for test on SVC with precomputed kernel
+    X_train = rnd.uniform(size=(10, 10))
+    X_test = rnd.uniform(size=(10, 10))
+    y = np.arange(10) % 2
+    sample_weight = y.copy()  # select a single class
+    classifier = clone(classifier_orig)
+
+    if has_fit_parameter(classifier, "sample_weight"):
+        match = [r"\bclass(es)?\b", error_predict]
+        err_type, err_msg = (AssertionError, ValueError), error_fit
+    else:
+        match = r"\bsample_weight\b"
+        err_type, err_msg = (TypeError, ValueError), None
+
+    with raises(err_type, match=match, may_pass=True, err_msg=err_msg) as cm:
+        classifier.fit(X_train, y, sample_weight=sample_weight)
+        if cm.raised_and_matched:
+            # raise the proper error type with the proper error message
+            return
+        # for estimators that do not fail, they should be able to predict the only
+        # class remaining during fit
+        assert_array_equal(
+            classifier.predict(X_test), np.ones(10), err_msg=error_predict
+        )
+
+
 @ignore_warnings  # Warnings are raised by decision function
 def check_classifiers_train(
     name, classifier_orig, readonly_memmap=False, X_dtype="float64"
@@ -2590,6 +2648,22 @@ def check_classifiers_multilabel_output_format_decision_function(name, classifie
 
 
 @ignore_warnings(category=FutureWarning)
+def check_get_feature_names_out_error(name, estimator_orig):
+    """Check the error raised by get_feature_names_out when called before fit.
+
+    Unfitted estimators with get_feature_names_out should raise a NotFittedError.
+    """
+
+    estimator = clone(estimator_orig)
+    err_msg = (
+        f"Estimator {name} should have raised a NotFitted error when fit is called"
+        " before get_feature_names_out"
+    )
+    with raises(NotFittedError, err_msg=err_msg):
+        estimator.get_feature_names_out()
+
+
+@ignore_warnings(category=FutureWarning)
 def check_estimators_fit_returns_self(name, estimator_orig, readonly_memmap=False):
     """Check if self is returned when calling fit."""
     X, y = make_blobs(random_state=0, n_samples=21)
@@ -2702,7 +2776,11 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
                     "decision_function does not match "
                     "classifier for %r: expected '%s', got '%s'"
                 )
-                % (classifier, ", ".join(map(str, y_exp)), ", ".join(map(str, y_pred))),
+                % (
+                    classifier,
+                    ", ".join(map(str, y_exp)),
+                    ", ".join(map(str, y_pred)),
+                ),
             )
 
     # training set performance
@@ -3218,18 +3296,25 @@ def check_parameters_default_constructible(name, Estimator):
                 tuple,
                 type(None),
                 type,
-                types.FunctionType,
-                joblib.Memory,
             }
             # Any numpy numeric such as np.int32.
             allowed_types.update(np.core.numerictypes.allTypes.values())
-            assert type(init_param.default) in allowed_types, (
+
+            allowed_value = (
+                type(init_param.default) in allowed_types
+                or
+                # Although callables are mutable, we accept them as argument
+                # default value and trust that neither the implementation of
+                # the callable nor of the estimator changes the state of the
+                # callable.
+                callable(init_param.default)
+            )
+
+            assert allowed_value, (
                 f"Parameter '{init_param.name}' of estimator "
                 f"'{Estimator.__name__}' is of type "
-                f"{type(init_param.default).__name__} which is not "
-                "allowed. All init parameters have to be immutable to "
-                "make cloning possible. Therefore we restrict the set of "
-                "legal types to "
+                f"{type(init_param.default).__name__} which is not allowed. "
+                f"'{init_param.name}' must be a callable or must be of type "
                 f"{set(type.__name__ for type in allowed_types)}."
             )
             if init_param.name not in params.keys():
@@ -4082,7 +4167,7 @@ def check_param_validation(name, estimator_orig):
                 # the method is not accessible with the current set of parameters
                 continue
 
-            with raises(ValueError, match=match, err_msg=err_msg):
+            with raises(InvalidParameterError, match=match, err_msg=err_msg):
                 if any(
                     isinstance(X_type, str) and X_type.endswith("labels")
                     for X_type in _safe_tags(estimator, key="X_types")
@@ -4110,7 +4195,7 @@ def check_param_validation(name, estimator_orig):
                     # the method is not accessible with the current set of parameters
                     continue
 
-                with raises(ValueError, match=match, err_msg=err_msg):
+                with raises(InvalidParameterError, match=match, err_msg=err_msg):
                     if any(
                         X_type.endswith("labels")
                         for X_type in _safe_tags(estimator, key="X_types")
@@ -4164,6 +4249,71 @@ def check_set_output_transform(name, transformer_orig):
         assert_allclose_dense_sparse(X_trans_no_setting, X_trans_default)
 
 
+def _output_from_fit_transform(transformer, name, X, df, y):
+    """Generate output to test `set_output` for different configuration:
+
+    - calling either `fit.transform` or `fit_transform`;
+    - passing either a dataframe or a numpy array to fit;
+    - passing either a dataframe or a numpy array to transform.
+    """
+    outputs = {}
+
+    # fit then transform case:
+    cases = [
+        ("fit.transform/df/df", df, df),
+        ("fit.transform/df/array", df, X),
+        ("fit.transform/array/df", X, df),
+        ("fit.transform/array/array", X, X),
+    ]
+    for (
+        case,
+        data_fit,
+        data_transform,
+    ) in cases:
+        transformer.fit(data_fit, y)
+        if name in CROSS_DECOMPOSITION:
+            X_trans, _ = transformer.transform(data_transform, y)
+        else:
+            X_trans = transformer.transform(data_transform)
+        outputs[case] = (X_trans, transformer.get_feature_names_out())
+
+    # fit_transform case:
+    cases = [
+        ("fit_transform/df", df),
+        ("fit_transform/array", X),
+    ]
+    for case, data in cases:
+        if name in CROSS_DECOMPOSITION:
+            X_trans, _ = transformer.fit_transform(data, y)
+        else:
+            X_trans = transformer.fit_transform(data, y)
+        outputs[case] = (X_trans, transformer.get_feature_names_out())
+
+    return outputs
+
+
+def _check_generated_dataframe(name, case, outputs_default, outputs_pandas):
+    import pandas as pd
+
+    X_trans, feature_names_default = outputs_default
+    df_trans, feature_names_pandas = outputs_pandas
+
+    assert isinstance(df_trans, pd.DataFrame)
+    # We always rely on the output of `get_feature_names_out` of the
+    # transformer used to generate the dataframe as a ground-truth of the
+    # columns.
+    expected_dataframe = pd.DataFrame(X_trans, columns=feature_names_pandas)
+
+    try:
+        pd.testing.assert_frame_equal(df_trans, expected_dataframe)
+    except AssertionError as e:
+        raise AssertionError(
+            f"{name} does not generate a valid dataframe in the {case} "
+            "case. The generated dataframe is not equal to the expected "
+            f"dataframe. The error message is: {e}"
+        ) from e
+
+
 def check_set_output_transform_pandas(name, transformer_orig):
     # Check transformer.set_output configures the output of transform="pandas".
     try:
@@ -4189,37 +4339,62 @@ def check_set_output_transform_pandas(name, transformer_orig):
     feature_names_in = [f"col{i}" for i in range(X.shape[1])]
     df = pd.DataFrame(X, columns=feature_names_in)
 
-    def fit_then_transform(est):
-        if name in CROSS_DECOMPOSITION:
-            return est.fit(df, y).transform(df, y)
-        return est.fit(df, y).transform(df)
+    transformer_default = clone(transformer).set_output(transform="default")
+    outputs_default = _output_from_fit_transform(transformer_default, name, X, df, y)
+    transformer_pandas = clone(transformer).set_output(transform="pandas")
+    try:
+        outputs_pandas = _output_from_fit_transform(transformer_pandas, name, X, df, y)
+    except ValueError as e:
+        # transformer does not support sparse data
+        assert str(e) == "Pandas output does not support sparse data.", e
+        return
 
-    def fit_transform(est):
-        return est.fit_transform(df, y)
-
-    transform_methods = [fit_then_transform, fit_transform]
-
-    for transform_method in transform_methods:
-        transformer = clone(transformer).set_output(transform="default")
-        X_trans_no_setting = transform_method(transformer)
-
-        # Auto wrapping only wraps the first array
-        if name in CROSS_DECOMPOSITION:
-            X_trans_no_setting = X_trans_no_setting[0]
-
-        transformer.set_output(transform="pandas")
-        try:
-            X_trans_pandas = transform_method(transformer)
-        except ValueError as e:
-            # transformer does not support sparse data
-            assert str(e) == "Pandas output does not support sparse data.", e
-            return
-
-        if name in CROSS_DECOMPOSITION:
-            X_trans_pandas = X_trans_pandas[0]
-
-        assert isinstance(X_trans_pandas, pd.DataFrame)
-        expected_dataframe = pd.DataFrame(
-            X_trans_no_setting, columns=transformer.get_feature_names_out()
+    for case in outputs_default:
+        _check_generated_dataframe(
+            name, case, outputs_default[case], outputs_pandas[case]
         )
-        pd.testing.assert_frame_equal(X_trans_pandas, expected_dataframe)
+
+
+def check_global_ouptut_transform_pandas(name, transformer_orig):
+    """Check that setting globally the output of a transformer to pandas lead to the
+    right results."""
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest(
+            "pandas is not installed: not checking column name consistency for pandas"
+        )
+
+    tags = transformer_orig._get_tags()
+    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+        return
+
+    rng = np.random.RandomState(0)
+    transformer = clone(transformer_orig)
+
+    X = rng.uniform(size=(20, 5))
+    X = _enforce_estimator_tags_X(transformer_orig, X)
+    y = rng.randint(0, 2, size=20)
+    y = _enforce_estimator_tags_y(transformer_orig, y)
+    set_random_state(transformer)
+
+    feature_names_in = [f"col{i}" for i in range(X.shape[1])]
+    df = pd.DataFrame(X, columns=feature_names_in)
+
+    transformer_default = clone(transformer).set_output(transform="default")
+    outputs_default = _output_from_fit_transform(transformer_default, name, X, df, y)
+    transformer_pandas = clone(transformer)
+    try:
+        with config_context(transform_output="pandas"):
+            outputs_pandas = _output_from_fit_transform(
+                transformer_pandas, name, X, df, y
+            )
+    except ValueError as e:
+        # transformer does not support sparse data
+        assert str(e) == "Pandas output does not support sparse data.", e
+        return
+
+    for case in outputs_default:
+        _check_generated_dataframe(
+            name, case, outputs_default[case], outputs_pandas[case]
+        )
