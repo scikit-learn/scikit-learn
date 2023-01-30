@@ -2536,7 +2536,7 @@ def test_missing_values_is_resilience(make_data, Tree):
     """Check that tree can deal with missing values and have decent performance."""
 
     rng = np.random.RandomState(0)
-    n_samples, n_features = 1000, 20
+    n_samples, n_features = 1000, 50
     X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
 
     # Create dataset with missing values
@@ -2554,7 +2554,7 @@ def test_missing_values_is_resilience(make_data, Tree):
     # Train tree without missing
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     tree = Tree(random_state=0)
-    tree.fit(X_missing_train, y_train)
+    tree.fit(X_train, y_train)
     non_missing_score = tree.score(X_test, y_test)
 
     # Score is still 90 percent of the tree's score that had no missing values
