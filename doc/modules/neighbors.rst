@@ -136,7 +136,7 @@ have the same interface; we'll show an example of using the KD Tree here:
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
 for more information on the options available for nearest neighbors searches,
 including specification of query strategies, distance metrics, etc. For a list
-of valid metrics use {BallTree,KDTree}.valid_metrics.
+of valid metrics use {BallTree,KDTree}.get_valid_metric.
 
 .. _classification:
 
