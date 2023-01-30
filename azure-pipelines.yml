@@ -33,18 +33,13 @@ jobs:
       inputs:
         versionSpec: '3.9'
     - bash: |
+        source build_tools/shared.sh
         # Include pytest compatibility with mypy
-        pip install pytest flake8 mypy==0.961 black==22.3.0
+        pip install pytest flake8 $(get_dep mypy min) $(get_dep black min)
       displayName: Install linters
     - bash: |
-        black --check --diff .
-      displayName: Run black
-    - bash: |
-        ./build_tools/azure/linting.sh
-      displayName: Run linting
-    - bash: |
-        mypy sklearn/
-      displayName: Run mypy
+        ./build_tools/linting.sh
+      displayName: Run linters
 
 - template: build_tools/azure/posix.yml
   parameters:
