@@ -2,19 +2,25 @@
 
 from scipy.sparse import csr_matrix
 cimport numpy as cnp
+import numpy as np
 
 cnp.import_array()
-ctypedef cnp.int32_t INDEX_T
 
+# TODO: use `cnp.{int,float}{32,64}` when cython#5230 is resolved:
+# https://github.com/cython/cython/issues/5230
 ctypedef fused DATA_T:
-    cnp.float32_t
-    cnp.float64_t
-    cnp.int32_t
-    cnp.int64_t
+    float
+    double
+    int
+    long
 
 
-cdef inline INDEX_T _deg2_column(INDEX_T d, INDEX_T i, INDEX_T j,
-                                 INDEX_T interaction_only) nogil:
+cdef inline cnp.int32_t _deg2_column(
+    cnp.int32_t d,
+    cnp.int32_t i,
+    cnp.int32_t j,
+    cnp.int32_t interaction_only,
+) nogil:
     """Compute the index of the column for a degree 2 expansion
 
     d is the dimensionality of the input data, i and j are the indices
@@ -26,8 +32,13 @@ cdef inline INDEX_T _deg2_column(INDEX_T d, INDEX_T i, INDEX_T j,
         return d * i - (i**2 + i) / 2 + j
 
 
-cdef inline INDEX_T _deg3_column(INDEX_T d, INDEX_T i, INDEX_T j, INDEX_T k,
-                                 INDEX_T interaction_only) nogil:
+cdef inline cnp.int32_t _deg3_column(
+    cnp.int32_t d,
+    cnp.int32_t i,
+    cnp.int32_t j,
+    cnp.int32_t k,
+    cnp.int32_t interaction_only
+) nogil:
     """Compute the index of the column for a degree 3 expansion
 
     d is the dimensionality of the input data, i, j and k are the indices
@@ -43,11 +54,14 @@ cdef inline INDEX_T _deg3_column(INDEX_T d, INDEX_T i, INDEX_T j, INDEX_T k,
                 + d * j + k)
 
 
-def _csr_polynomial_expansion(cnp.ndarray[DATA_T, ndim=1] data,
-                              cnp.ndarray[INDEX_T, ndim=1] indices,
-                              cnp.ndarray[INDEX_T, ndim=1] indptr,
-                              INDEX_T d, INDEX_T interaction_only,
-                              INDEX_T degree):
+def _csr_polynomial_expansion(
+    const DATA_T[:] data,
+    const cnp.int32_t[:] indices,
+    const cnp.int32_t[:] indptr,
+    cnp.int32_t d,
+    cnp.int32_t interaction_only,
+    cnp.int32_t degree
+):
     """
     Perform a second-degree polynomial or interaction expansion on a scipy
     compressed sparse row (CSR) matrix. The method used only takes products of
@@ -57,13 +71,13 @@ def _csr_polynomial_expansion(cnp.ndarray[DATA_T, ndim=1] data,
 
     Parameters
     ----------
-    data : nd-array
+    data : memory view on nd-array
         The "data" attribute of the input CSR matrix.
 
-    indices : nd-array
+    indices : memory view on nd-array
         The "indices" attribute of the input CSR matrix.
 
-    indptr : nd-array
+    indptr : memory view on nd-array
         The "indptr" attribute of the input CSR matrix.
 
     d : int
@@ -92,7 +106,7 @@ def _csr_polynomial_expansion(cnp.ndarray[DATA_T, ndim=1] data,
         return None
     assert expanded_dimensionality > 0
 
-    cdef INDEX_T total_nnz = 0, row_i, nnz
+    cdef cnp.int32_t total_nnz = 0, row_i, nnz
 
     # Count how many nonzero elements the expanded matrix will contain.
     for row_i in range(indptr.shape[0]-1):
@@ -105,17 +119,21 @@ def _csr_polynomial_expansion(cnp.ndarray[DATA_T, ndim=1] data,
                           - interaction_only * nnz ** 2)
 
     # Make the arrays that will form the CSR matrix of the expansion.
-    cdef cnp.ndarray[DATA_T, ndim=1] expanded_data = cnp.ndarray(
-        shape=total_nnz, dtype=data.dtype)
-    cdef cnp.ndarray[INDEX_T, ndim=1] expanded_indices = cnp.ndarray(
-        shape=total_nnz, dtype=indices.dtype)
-    cdef INDEX_T num_rows = indptr.shape[0] - 1
-    cdef cnp.ndarray[INDEX_T, ndim=1] expanded_indptr = cnp.ndarray(
-        shape=num_rows + 1, dtype=indptr.dtype)
+    cdef:
+        DATA_T[:] expanded_data = np.empty(
+            shape=total_nnz, dtype=data.base.dtype
+        )
+        cnp.int32_t[:] expanded_indices = np.empty(
+            shape=total_nnz, dtype=np.int32
+        )
+        cnp.int32_t num_rows = indptr.shape[0] - 1
+        cnp.int32_t[:] expanded_indptr = np.empty(
+            shape=num_rows + 1, dtype=np.int32
+        )
 
-    cdef INDEX_T expanded_index = 0, row_starts, row_ends, i, j, k, \
-                 i_ptr, j_ptr, k_ptr, num_cols_in_row,  \
-                 expanded_column
+        cnp.int32_t expanded_index = 0, row_starts, row_ends, i, j, k, \
+                i_ptr, j_ptr, k_ptr, num_cols_in_row,  \
+                expanded_column
 
     with nogil:
         expanded_indptr[0] = indptr[0]

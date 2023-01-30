@@ -21,7 +21,7 @@ dependencies:
   - seaborn
   - memory_profiler
   - compilers
-  - sphinx
+  - sphinx=6.0.0
   - sphinx-gallery
   - numpydoc
   - sphinx-prompt
