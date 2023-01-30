@@ -9,6 +9,8 @@
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #          Nelson Liu <nelson@nelsonliu.me>
+#          Adam Li <adam2392@gmail.com>
+#          Jong Shin <jshinm@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -29,50 +31,29 @@ from ._utils cimport WeightedMedianCalculator
 # EPSILON is used in the Poisson criterion
 cdef double EPSILON = 10 * np.finfo('double').eps
 
-cdef class Criterion:
-    """Interface for impurity criteria.
+cdef class BaseCriterion:
+    """This is an abstract interface for criterion. For example, a tree model could
+    be either supervisedly, or unsupervisedly computing impurity on samples of
+    covariates, or labels, or both. Although scikit-learn currently only contains
+    supervised tree methods, this class enables 3rd party packages to leverage
+    scikit-learn's Cython code for criteria.
+
+    The downstream classes _must_ implement methods to compute the impurity
+    in current node and in children nodes.
 
     This object stores methods on how to calculate how good a split is using
-    different metrics.
+    a set API. 
+
+    Samples in the "current" node are stored in `samples[start:end]` which is
+    partitioned around `pos` (an index in `start:end`) so that:
+
+       - the samples of left child node are stored in `samples[start:pos]`
+       - the samples of right child node are stored in `samples[pos:end]`
     """
     def __getstate__(self):
         return {}
 
     def __setstate__(self, d):
-        pass
-
-    cdef int init(
-        self,
-        const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight,
-        double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end,
-    ) nogil except -1:
-        """Placeholder for a method which will initialize the criterion.
-
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-
-        Parameters
-        ----------
-        y : ndarray, dtype=DOUBLE_t
-            y is a buffer that can store values for n_outputs target variables
-            stored as a Cython memoryview.
-        sample_weight : ndarray, dtype=DOUBLE_t
-            The weight of each sample stored as a Cython memoryview.
-        weighted_n_samples : double
-            The total weight of the samples being considered
-        sample_indices : ndarray, dtype=SIZE_t
-            A mask on the samples. Indices of the samples in X and y we want to use,
-            where sample_indices[start:end] correspond to the samples in this node.
-        start : SIZE_t
-            The first sample to be used on this node
-        end : SIZE_t
-            The last sample used on this node
-
-        """
         pass
 
     cdef int reset(self) nogil except -1:
@@ -199,6 +180,69 @@ cdef class Criterion:
                                  - (self.weighted_n_left /
                                     self.weighted_n_node_samples * impurity_left)))
 
+    cdef void set_sample_pointers(
+        self,
+        SIZE_t start,
+        SIZE_t end
+    ) nogil:
+        """Abstract method which will set sample pointers in the criterion.
+
+        The dataset array that we compute criteria on is assumed to consist of 'N' 
+        ordered samples or rows (i.e. sorted). Since we pass this by reference, we 
+        use sample pointers to move the start and end around to consider only a subset of data. 
+
+        This function should also update relevant statistics that the class uses to compute the final criterion.
+
+        Parameters
+        ----------
+        start : SIZE_t
+            The index of the first sample to be used on computation of criteria of the current node.
+        end : SIZE_t
+            The last sample used on this node
+        """
+        pass
+
+
+cdef class Criterion(BaseCriterion):
+    """Interface for impurity criteria.
+
+    The supervised criterion computes the impurity of a node and the reduction of
+    impurity of a split on that node using the distribution of labels in parent and
+    children nodes. It also computes the output statistics
+    such as the mean in regression and class probabilities in classification.
+
+    Instances of this class are responsible for compute splits' impurity difference
+
+    Criterion is the base class for criteria used in supervised tree-based models
+    with a homogeneous float64-dtyped y.
+    """
+    cdef int init(
+        self,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight,
+        double weighted_n_samples,
+        const SIZE_t[:] sample_indices
+    ) nogil except -1:
+        """Placeholder for a method which will initialize the criterion.
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+
+        Parameters
+        ----------
+        y : ndarray, dtype=DOUBLE_t
+            y is a buffer that can store values for n_outputs target variables
+            stored as a Cython memoryview.
+        sample_weight : ndarray, dtype=DOUBLE_t
+            The weight of each sample stored as a Cython memoryview.
+        weighted_n_samples : double
+            The total weight of the samples being considered
+        sample_indices : ndarray, dtype=SIZE_t
+            A mask on the samples. Indices of the samples in X and y we want to use,
+            where sample_indices[start:end] correspond to the samples in this node.
+        """
+        pass
+
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
@@ -254,14 +298,9 @@ cdef class ClassificationCriterion(Criterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end
+        const SIZE_t[:] sample_indices
     ) nogil except -1:
         """Initialize the criterion.
-
-        This initializes the criterion at node sample_indices[start:end] and children
-        sample_indices[start:start] and sample_indices[start:end].
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
@@ -277,18 +316,24 @@ cdef class ClassificationCriterion(Criterion):
         sample_indices : ndarray, dtype=SIZE_t
             A mask on the samples. Indices of the samples in X and y we want to use,
             where sample_indices[start:end] correspond to the samples in this node.
-        start : SIZE_t
-            The first sample to use in the mask
-        end : SIZE_t
-            The last sample to use in the mask
         """
         self.y = y
         self.sample_weight = sample_weight
         self.sample_indices = sample_indices
+        self.weighted_n_samples = weighted_n_samples
+
+        return 0
+
+    cdef void set_sample_pointers(
+        self,
+        SIZE_t start,
+        SIZE_t end
+    ) nogil:
+        """Set sample pointers in the criterion."""
+        self.n_node_samples = end - start
         self.start = start
         self.end = end
-        self.n_node_samples = end - start
-        self.weighted_n_samples = weighted_n_samples
+
         self.weighted_n_node_samples = 0.0
 
         cdef SIZE_t i
@@ -301,12 +346,12 @@ cdef class ClassificationCriterion(Criterion):
             memset(&self.sum_total[k, 0], 0, self.n_classes[k] * sizeof(double))
 
         for p in range(start, end):
-            i = sample_indices[p]
+            i = self.sample_indices[p]
 
             # w is originally set to be 1.0, meaning that if no sample weights
             # are given, the default weight of each sample is 1.0.
-            if sample_weight is not None:
-                w = sample_weight[i]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
 
             # Count weighted class frequency for each target
             for k in range(self.n_outputs):
@@ -317,7 +362,6 @@ cdef class ClassificationCriterion(Criterion):
 
         # Reset to pos=start
         self.reset()
-        return 0
 
     cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start.
@@ -648,23 +692,29 @@ cdef class RegressionCriterion(Criterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end,
+        const SIZE_t[:] sample_indices
     ) nogil except -1:
-        """Initialize the criterion.
-
-        This initializes the criterion at node sample_indices[start:end] and children
-        sample_indices[start:start] and sample_indices[start:end].
-        """
+        """Initialize the criterion."""
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
         self.sample_indices = sample_indices
+        self.weighted_n_samples = weighted_n_samples
+
+        return 0
+
+    cdef void set_sample_pointers(
+        self,
+        SIZE_t start,
+        SIZE_t end
+    ) nogil:
+        """Set sample pointers in the criterion."""
         self.start = start
         self.end = end
+
         self.n_node_samples = end - start
-        self.weighted_n_samples = weighted_n_samples
+
+        self.sq_sum_total = 0.0
         self.weighted_n_node_samples = 0.
 
         cdef SIZE_t i
@@ -673,14 +723,14 @@ cdef class RegressionCriterion(Criterion):
         cdef DOUBLE_t y_ik
         cdef DOUBLE_t w_y_ik
         cdef DOUBLE_t w = 1.0
-        self.sq_sum_total = 0.0
+
         memset(&self.sum_total[0], 0, self.n_outputs * sizeof(double))
 
         for p in range(start, end):
-            i = sample_indices[p]
+            i = self.sample_indices[p]
 
-            if sample_weight is not None:
-                w = sample_weight[i]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
 
             for k in range(self.n_outputs):
                 y_ik = self.y[i, k]
@@ -692,7 +742,6 @@ cdef class RegressionCriterion(Criterion):
 
         # Reset to pos=start
         self.reset()
-        return 0
 
     cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start."""
@@ -928,26 +977,30 @@ cdef class MAE(RegressionCriterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end,
+        const SIZE_t[:] sample_indices
     ) nogil except -1:
-        """Initialize the criterion.
-
-        This initializes the criterion at node sample_indices[start:end] and children
-        sample_indices[start:start] and sample_indices[start:end].
-        """
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t w = 1.0
-
+        """Initialize the criterion."""
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
         self.sample_indices = sample_indices
+        self.weighted_n_samples = weighted_n_samples
+
+        return 0
+
+    cdef void set_sample_pointers(
+        self,
+        SIZE_t start,
+        SIZE_t end
+    ) nogil:
+        """Set sample pointers in the criterion."""
+        cdef SIZE_t i, p, k
+        cdef DOUBLE_t w = 1.0
+
         self.start = start
         self.end = end
+
         self.n_node_samples = end - start
-        self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
         cdef void** left_child
@@ -961,10 +1014,10 @@ cdef class MAE(RegressionCriterion):
             (<WeightedMedianCalculator> right_child[k]).reset()
 
         for p in range(start, end):
-            i = sample_indices[p]
+            i = self.sample_indices[p]
 
-            if sample_weight is not None:
-                w = sample_weight[i]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
 
             for k in range(self.n_outputs):
                 # push method ends up calling safe_realloc, hence `except -1`
@@ -979,7 +1032,6 @@ cdef class MAE(RegressionCriterion):
 
         # Reset to pos=start
         self.reset()
-        return 0
 
     cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start.
