@@ -25,6 +25,7 @@ from ..externals._packaging.version import parse as parse_version
 
 np_version = parse_version(np.__version__)
 sp_version = parse_version(scipy.__version__)
+sp_base_version = parse_version(sp_version.base_version)
 
 
 if sp_version >= parse_version("1.4"):

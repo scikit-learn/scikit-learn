@@ -1,6 +1,7 @@
 import itertools
 import os
 import warnings
+from functools import partial
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -28,13 +29,16 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._logistic import (
     _log_reg_scoring_path,
     _logistic_regression_path,
-    LogisticRegression,
-    LogisticRegressionCV,
+    LogisticRegression as LogisticRegressionDefault,
+    LogisticRegressionCV as LogisticRegressionCVDefault,
 )
 
 pytestmark = pytest.mark.filterwarnings(
     "error::sklearn.exceptions.ConvergenceWarning:sklearn.*"
 )
+# Fixing random_state helps prevent ConvergenceWarnings
+LogisticRegression = partial(LogisticRegressionDefault, random_state=0)
+LogisticRegressionCV = partial(LogisticRegressionCVDefault, random_state=0)
 
 
 SOLVERS = ("lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga")
