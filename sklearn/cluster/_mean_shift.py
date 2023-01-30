@@ -287,7 +287,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
     Parameters
     ----------
     bandwidth : float, default=None
-        Bandwidth used in the RBF kernel.
+        Bandwidth used in the flat kernel.
 
         If not given, the bandwidth is estimated using
         sklearn.cluster.estimate_bandwidth; see the documentation for that
