@@ -13,6 +13,7 @@
 # License: BSD 3 clause
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
+from cython cimport floating
 
 from libc.stdlib cimport free
 from libc.string cimport memcpy
@@ -243,7 +244,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                          split.threshold, impurity, n_node_samples,
                                          weighted_n_node_samples)
 
-                if node_id == SIZE_MAX:
+                if <size_t> node_id == SIZE_MAX:
                     rc = -1
                     break
 
@@ -473,7 +474,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  is_left, is_leaf,
                                  split.feature, split.threshold, impurity, n_node_samples,
                                  weighted_n_node_samples)
-        if node_id == SIZE_MAX:
+        if <size_t> node_id == SIZE_MAX:
             return -1
 
         # compute values also for split nodes (might become leafs later).
@@ -709,7 +710,7 @@ cdef class Tree:
         if capacity == self.capacity and self.nodes != NULL:
             return 0
 
-        if capacity == SIZE_MAX:
+        if <size_t> capacity == SIZE_MAX:
             if self.capacity == 0:
                 capacity = 3  # default initial value
             else:
@@ -1769,7 +1770,7 @@ cdef _build_pruned_tree(
                 node.impurity, node.n_node_samples,
                 node.weighted_n_node_samples)
 
-            if new_node_id == SIZE_MAX:
+            if <size_t> new_node_id == SIZE_MAX:
                 rc = -1
                 break
 
