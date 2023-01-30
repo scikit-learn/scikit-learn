@@ -109,7 +109,7 @@ def test_same_predictions_regression(
         # Less than 1% of the predictions may deviate more than 1e-3 in relative terms.
         assert np.mean(np.isclose(pred_lightgbm, pred_sklearn, rtol=1e-3)) > 1 - 0.01
 
-    if max_leaf_nodes < 10 and n_samples >= 1000 and loss in ("squared_error"):
+    if max_leaf_nodes < 10 and n_samples >= 1000 and loss in ("squared_error",):
         pred_lightgbm = est_lightgbm.predict(X_test)
         pred_sklearn = est_sklearn.predict(X_test)
         # Less than 1% of the predictions may deviate more than 1e-4 in relative terms.
