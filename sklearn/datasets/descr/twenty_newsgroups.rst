@@ -215,9 +215,9 @@ It loses even more if we also strip this metadata from the training data:
   >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
   0.76995...
 
-Some other classifiers cope better with this harder version of the task. Try
-running :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` with and without
-the ``--filter`` option to compare the results.
+Some other classifiers cope better with this harder version of the task. Try the
+:ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
+example with and without the `remove` option to compare the results.
 
 .. topic:: Data Considerations
 
@@ -248,6 +248,10 @@ the ``--filter`` option to compare the results.
 
 .. topic:: Examples
 
-   * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
+   * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 
    * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
+
+   * :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`
+
+   * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`

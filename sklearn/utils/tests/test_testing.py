@@ -1,6 +1,5 @@
 import warnings
 import unittest
-import sys
 import os
 import atexit
 
@@ -15,7 +14,6 @@ from sklearn.utils.metaestimators import available_if, if_delegate_has_method
 from sklearn.utils._readonly_array_wrapper import _test_sum
 from sklearn.utils._testing import (
     assert_raises,
-    assert_warns,
     assert_no_warnings,
     set_random_state,
     assert_raise_message,
@@ -223,44 +221,9 @@ class TestWarns(unittest.TestCase):
             warnings.warn("yo")
             return 3
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            filters_orig = warnings.filters[:]
-
-            # TODO: remove in 1.2
-            with pytest.warns(FutureWarning):
-                assert assert_warns(UserWarning, f) == 3
-
-            # test that assert_warns doesn't have side effects on warnings
-            # filters
-            assert warnings.filters == filters_orig
         with pytest.raises(AssertionError):
             assert_no_warnings(f)
         assert assert_no_warnings(lambda x: x, 1) == 1
-
-    # TODO: remove in 1.2
-    @ignore_warnings(category=FutureWarning)
-    def test_warn_wrong_warning(self):
-        def f():
-            warnings.warn("yo", FutureWarning)
-
-        failed = False
-        filters = sys.modules["warnings"].filters[:]
-        try:
-            try:
-                # Should raise an AssertionError
-
-                # assert_warns has a special handling of "FutureWarning" that
-                # pytest.warns does not have
-                assert_warns(UserWarning, f)
-                failed = True
-            except AssertionError:
-                pass
-        finally:
-            sys.modules["warnings"].filters = filters
-
-        if failed:
-            raise AssertionError("wrong warning caught by assert_warn")
 
 
 # Tests for docstrings:

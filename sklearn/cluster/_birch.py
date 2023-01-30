@@ -15,7 +15,7 @@ from ..base import (
     TransformerMixin,
     ClusterMixin,
     BaseEstimator,
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils.extmath import row_norms
 from ..utils._param_validation import Interval
@@ -357,7 +357,7 @@ class _CFSubcluster:
 
 
 class Birch(
-    _ClassNamePrefixFeaturesOutMixin, ClusterMixin, TransformerMixin, BaseEstimator
+    ClassNamePrefixFeaturesOutMixin, ClusterMixin, TransformerMixin, BaseEstimator
 ):
     """Implements the BIRCH clustering algorithm.
 

@@ -151,15 +151,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         # check input
         X, y, sample_weight = self._check_input(X, y, sample_weight)
 
-        cdef DOUBLE_t* sample_weight_ptr = NULL
-        if sample_weight is not None:
-            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
-
         # Initial capacity
         cdef int init_capacity
 
         if tree.max_depth <= 10:
-            init_capacity = (2 ** (tree.max_depth + 1)) - 1
+            init_capacity = <int> (2 ** (tree.max_depth + 1)) - 1
         else:
             init_capacity = 2047
 
@@ -174,7 +170,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double min_impurity_decrease = self.min_impurity_decrease
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr)
+        splitter.init(X, y, sample_weight)
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -346,16 +342,12 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         # check input
         X, y, sample_weight = self._check_input(X, y, sample_weight)
 
-        cdef DOUBLE_t* sample_weight_ptr = NULL
-        if sample_weight is not None:
-            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
-
         # Parameters
         cdef Splitter splitter = self.splitter
         cdef SIZE_t max_leaf_nodes = self.max_leaf_nodes
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr)
+        splitter.init(X, y, sample_weight)
 
         cdef vector[FrontierRecord] frontier
         cdef FrontierRecord record
@@ -1064,6 +1056,32 @@ cdef class Tree:
 
         return out
 
+    cpdef compute_node_depths(self):
+        """Compute the depth of each node in a tree.
+
+        .. versionadded:: 1.3
+
+        Returns
+        -------
+        depths : ndarray of shape (self.node_count,), dtype=np.int64
+            The depth of each node in the tree.
+        """
+        cdef:
+            cnp.int64_t[::1] depths = np.empty(self.node_count, dtype=np.int64)
+            cnp.npy_intp[:] children_left = self.children_left
+            cnp.npy_intp[:] children_right = self.children_right
+            cnp.npy_intp node_id
+            cnp.npy_intp node_count = self.node_count
+            cnp.int64_t depth
+
+        depths[0] = 1  # init root node
+        for node_id in range(node_count):
+            if children_left[node_id] != _TREE_LEAF:
+                depth = depths[node_id] + 1
+                depths[children_left[node_id]] = depth
+                depths[children_right[node_id]] = depth
+
+        return depths.base
 
     cpdef compute_feature_importances(self, normalize=True):
         """Computes the importance of each feature (aka variable)."""

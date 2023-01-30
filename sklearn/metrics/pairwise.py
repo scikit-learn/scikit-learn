@@ -15,7 +15,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from .. import config_context
 from ..utils.validation import _num_samples
@@ -27,8 +27,9 @@ from ..utils import is_scalar_nan
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils._mask import _get_mask
-from ..utils.fixes import delayed
-from ..utils.fixes import sp_version, parse_version
+from ..utils.parallel import delayed, Parallel
+from ..utils.fixes import sp_base_version, sp_version, parse_version
+from ..utils._param_validation import validate_params
 
 from ._pairwise_distances_reduction import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
@@ -277,7 +278,7 @@ def euclidean_distances(
 
     See Also
     --------
-    paired_distances : Distances betweens pairs of elements of X and Y.
+    paired_distances : Distances between pairs of elements of X and Y.
 
     Notes
     -----
@@ -643,6 +644,9 @@ def pairwise_distances_argmin_min(
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
+        .. note::
+           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
+
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
 
@@ -688,8 +692,12 @@ def pairwise_distances_argmin_min(
         values = values.flatten()
         indices = indices.flatten()
     else:
-        # TODO: once ArgKmin supports sparse input matrices and 32 bit,
-        # we won't need to fallback to pairwise_distances_chunked anymore.
+        # Joblib-based backend, which is used when user-defined callable
+        # are passed for metric.
+
+        # This won't be used in the future once PairwiseDistancesReductions support:
+        #   - DistanceMetrics which work on supposedly binary data
+        #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
 
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.
@@ -721,10 +729,10 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_X, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
         Array containing points.
 
-    Y : array-like of shape (n_samples_Y, n_features)
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features)
         Arrays containing points.
 
     axis : int, default=1
@@ -755,6 +763,9 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
+
+        .. note::
+           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -799,8 +810,12 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         )
         indices = indices.flatten()
     else:
-        # TODO: once ArgKmin supports sparse input matrices and 32 bit,
-        # we won't need to fallback to pairwise_distances_chunked anymore.
+        # Joblib-based backend, which is used when user-defined callable
+        # are passed for metric.
+
+        # This won't be used in the future once PairwiseDistancesReductions support:
+        #   - DistanceMetrics which work on supposedly binary data
+        #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
 
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.
@@ -871,7 +886,7 @@ def haversine_distances(X, Y=None):
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 
 
-def manhattan_distances(X, Y=None, *, sum_over_features=True):
+def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     """Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
@@ -892,6 +907,10 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
         If True the function returns the pairwise distance matrix
         else it returns the componentwise L1 pairwise-distances.
         Not supported for sparse matrix inputs.
+
+        .. deprecated:: 1.2
+            ``sum_over_features`` was deprecated in version 1.2 and will be removed in
+            1.4.
 
     Returns
     -------
@@ -922,13 +941,17 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
          [[1, 2], [0, 3]])
     array([[0., 2.],
            [4., 4.]])
-    >>> import numpy as np
-    >>> X = np.ones((1, 2))
-    >>> y = np.full((2, 2), 2.)
-    >>> manhattan_distances(X, y, sum_over_features=False)
-    array([[1., 1.],
-           [1., 1.]])
     """
+    # TODO(1.4): remove sum_over_features
+    if sum_over_features != "deprecated":
+        warnings.warn(
+            "`sum_over_features` is deprecated in version 1.2 and will be"
+            " removed in version 1.4.",
+            FutureWarning,
+        )
+    else:
+        sum_over_features = True
+
     X, Y = check_pairwise_arrays(X, Y)
 
     if issparse(X) or issparse(Y):
@@ -1054,6 +1077,53 @@ def paired_manhattan_distances(X, Y):
         return np.squeeze(np.array(diff.sum(axis=1)))
     else:
         return np.abs(diff).sum(axis=-1)
+
+
+def paired_haversine_distances(X, Y):
+    """Compute the Haversine distance between paired samples in X and Y.
+
+    The Haversine (or great circle) distance is the angular distance between
+    two points on the surface of a sphere. The first coordinate of each point
+    is assumed to be the latitude, the second is the longitude, given
+    in radians. The dimension of the data must be 2.
+
+    .. math::
+       D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
+                                + \\cos(x1)\\cos(y1)\\sin^2((x2 - y2) / 2)}]
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, 2)
+        A numpy array of coordinates (latitude and longitude, in radians).
+
+    Y : array-like of shape (n_samples_Y, 2)
+        A numpy array of coordinates (latitude and longitude, in radians).
+
+    Returns
+    -------
+    distance : ndarray of shape (n_samples_X, )
+        The distances between the points in X and Y.
+
+    Notes
+    -----
+    As the Earth is nearly spherical, the haversine formula provides a good
+    approximation of the distance between two points of the Earth surface, with
+    a less than 1% error on average.
+    """
+    X, Y = check_paired_arrays(X, Y)
+    if not (len(X.shape) == len(Y.shape) == 2) or not (X.shape[1] == Y.shape[1] == 2):
+        raise ValueError(
+            "For paired distances and the metric `haversine`, "
+            "X and Y should both be of shape (n_samples, 2), "
+            f"but X.shape is {X.shape} and Y.shape is {Y.shape}"
+        )
+    dlat, dlon = (Y - X).T
+    lat1, lat2 = X[:, 0], Y[:, 0]
+
+    a_1 = np.sin(dlat / 2.0) ** 2
+    a_2 = np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2.0) ** 2
+    c = 2 * np.arcsin(np.sqrt(a_1 + a_2))
+    return c
 
 
 def paired_cosine_distances(X, Y):
@@ -1193,7 +1263,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     """
     Compute the polynomial kernel between X and Y.
 
-    :math:`K(X, Y) = (gamma <X, Y> + coef0)^degree`
+    :math:`K(X, Y) = (gamma <X, Y> + coef0)^{degree}`
 
     Read more in the :ref:`User Guide <polynomial_kernel>`.
 
@@ -1388,6 +1458,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
     return K
 
 
+@validate_params({"X": ["array-like"], "Y": ["array-like", None]})
 def additive_chi2_kernel(X, Y=None):
     """Compute the additive chi-squared kernel between observations in X and Y.
 
@@ -1408,7 +1479,7 @@ def additive_chi2_kernel(X, Y=None):
     X : array-like of shape (n_samples_X, n_features)
         A feature array.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : array-like of shape (n_samples_Y, n_features), default=None
         An optional second feature array. If `None`, uses `Y=X`.
 
     Returns
@@ -1436,8 +1507,6 @@ def additive_chi2_kernel(X, Y=None):
       International Journal of Computer Vision 2007
       https://hal.archives-ouvertes.fr/hal-00171412/document
     """
-    if issparse(X) or issparse(Y):
-        raise ValueError("additive_chi2 does not support sparse matrices.")
     X, Y = check_pairwise_arrays(X, Y)
     if (X < 0).any():
         raise ValueError("X contains negative values.")
@@ -1624,7 +1693,6 @@ _VALID_METRICS = [
     "dice",
     "hamming",
     "jaccard",
-    "kulsinski",
     "mahalanobis",
     "matching",
     "minkowski",
@@ -1639,6 +1707,9 @@ _VALID_METRICS = [
     "nan_euclidean",
     "haversine",
 ]
+if sp_base_version < parse_version("1.11"):
+    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
+    _VALID_METRICS += ["kulsinski"]
 
 _NAN_METRICS = ["nan_euclidean"]
 
@@ -1702,11 +1773,11 @@ def pairwise_distances_chunked(
 ):
     """Generate a distance matrix chunk by chunk with optional reduction.
 
-    In cases where not all of a pairwise distance matrix needs to be stored at
-    once, this is used to calculate pairwise distances in
-    ``working_memory``-sized chunks.  If ``reduce_func`` is given, it is run
-    on each chunk and its return values are concatenated into lists, arrays
-    or sparse matrices.
+    In cases where not all of a pairwise distance matrix needs to be
+    stored at once, this is used to calculate pairwise distances in
+    ``working_memory``-sized chunks.  If ``reduce_func`` is given, it is
+    run on each chunk and its return values are concatenated into lists,
+    arrays or sparse matrices.
 
     Parameters
     ----------
@@ -1726,8 +1797,9 @@ def pairwise_distances_chunked(
         is called repeatedly, where ``D_chunk`` is a contiguous vertical
         slice of the pairwise distance matrix, starting at row ``start``.
         It should return one of: None; an array, a list, or a sparse matrix
-        of length ``D_chunk.shape[0]``; or a tuple of such objects. Returning
-        None is useful for in-place operations, rather than reductions.
+        of length ``D_chunk.shape[0]``; or a tuple of such objects.
+        Returning None is useful for in-place operations, rather than
+        reductions.
 
         If None, pairwise_distances_chunked returns a generator of vertical
         chunks of the distance matrix.
@@ -1735,18 +1807,18 @@ def pairwise_distances_chunked(
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by scipy.spatial.distance.pdist for its metric parameter, or
-        a metric listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
+        allowed by scipy.spatial.distance.pdist for its metric parameter,
+        or a metric listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
         If metric is "precomputed", X is assumed to be a distance matrix.
-        Alternatively, if metric is a callable function, it is called on each
-        pair of instances (rows) and the resulting value recorded. The callable
-        should take two arrays from X as input and return a value indicating
-        the distance between them.
+        Alternatively, if metric is a callable function, it is called on
+        each pair of instances (rows) and the resulting value recorded.
+        The callable should take two arrays from X as input and return a
+        value indicating the distance between them.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
+        The number of jobs to use for the computation. This works by
+        breaking down the pairwise matrix into n_jobs even slices and
+        computing them in parallel.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1757,7 +1829,7 @@ def pairwise_distances_chunked(
         When None (default), the value of
         ``sklearn.get_config()['working_memory']`` is used.
 
-    `**kwds` : optional keyword parameters
+    **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
@@ -1892,6 +1964,9 @@ def pairwise_distances(
       See the documentation for scipy.spatial.distance for details on these
       metrics. These metrics do not support sparse matrix inputs.
 
+    .. note::
+        `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
+
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
     valid scipy.spatial.distance metrics), the scikit-learn implementation
     will be used, which is faster and has support for sparse matrices (except
@@ -2023,58 +2098,10 @@ def pairwise_distances(
     return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
 
 
-def paired_haversine_distances(X, Y):
-    """Compute the Haversine distance between paired samples in X and Y.
-
-    The Haversine (or great circle) distance is the angular distance between
-    two points on the surface of a sphere. The first coordinate of each point
-    is assumed to be the latitude, the second is the longitude, given
-    in radians. The dimension of the data must be 2.
-
-    .. math::
-       D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
-                                + \\cos(x1)\\cos(y1)\\sin^2((x2 - y2) / 2)}]
-
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, 2)
-        A numpy array of coordinates (latitude and longitude, in radians).
-
-    Y : array-like of shape (n_samples_Y, 2)
-        A numpy array of coordinates (latitude and longitude, in radians).
-
-    Returns
-    -------
-    distance : ndarray of shape (n_samples_X, )
-        The distances between the points in X and Y.
-
-    Notes
-    -----
-    As the Earth is nearly spherical, the haversine formula provides a good
-    approximation of the distance between two points of the Earth surface, with
-    a less than 1% error on average.
-    """
-    X, Y = check_paired_arrays(X, Y)
-    if not (len(X.shape) == len(Y.shape) == 2) or not (X.shape[1] == Y.shape[1] == 2):
-        raise ValueError(
-            "For paired distances and the metric `haversine`, "
-            "X and Y should both be of shape (n_samples, 2), "
-            f"but X.shape is {X.shape} and Y.shape is {Y.shape}"
-        )
-    dlat, dlon = (Y - X).T
-    lat1, lat2 = X[:, 0], Y[:, 0]
-
-    a_1 = np.sin(dlat / 2.0) ** 2
-    a_2 = np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2.0) ** 2
-    c = 2 * np.arcsin(np.sqrt(a_1 + a_2))
-    return c
-
-
 # These distances require boolean arrays, when using scipy.spatial.distance
 PAIRWISE_BOOLEAN_FUNCTIONS = [
     "dice",
     "jaccard",
-    "kulsinski",
     "matching",
     "rogerstanimoto",
     "russellrao",
@@ -2082,6 +2109,9 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
     "sokalsneath",
     "yule",
 ]
+if sp_base_version < parse_version("1.11"):
+    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
+    PAIRWISE_BOOLEAN_FUNCTIONS += ["kulsinski"]
 
 # Helper functions - distance
 PAIRWISE_KERNEL_FUNCTIONS = {

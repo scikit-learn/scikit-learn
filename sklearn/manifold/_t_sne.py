@@ -461,11 +461,12 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+        (n_samples, n_samples)
         If the metric is 'precomputed' X must be a square distance
         matrix. Otherwise it contains a sample per row.
 
-    X_embedded : ndarray of shape (n_samples, n_components)
+    X_embedded : {array-like, sparse matrix} of shape (n_samples, n_components)
         Embedding of the training data in low-dimensional space.
 
     n_neighbors : int, default=5
@@ -565,7 +566,7 @@ class TSNE(BaseEstimator):
         is used in other manifold learning algorithms. Larger datasets
         usually require a larger perplexity. Consider selecting a value
         between 5 and 50. Different values can result in significantly
-        different results. The perplexity must be less that the number
+        different results. The perplexity must be less than the number
         of samples.
 
     early_exaggeration : float, default=12.0
@@ -989,6 +990,8 @@ class TSNE(BaseEstimator):
                 svd_solver="randomized",
                 random_state=random_state,
             )
+            # Always output a numpy array, no matter what is configured globally
+            pca.set_output(transform="default")
             X_embedded = pca.fit_transform(X).astype(np.float32, copy=False)
             # PCA is rescaled so that PC1 has standard deviation 1e-4 which is
             # the default value for random initialization. See issue #18018.
@@ -1095,7 +1098,8 @@ class TSNE(BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+            (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row. If the method
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'
@@ -1121,7 +1125,8 @@ class TSNE(BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+            (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row. If the method
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'

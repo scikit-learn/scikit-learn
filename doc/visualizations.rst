@@ -21,7 +21,7 @@ instead. In the following example, we plot a ROC curve for a fitted support
 vector machine:
 
 .. plot::
-   :context:
+   :context: close-figs
    :align: center
 
     from sklearn.model_selection import train_test_split
@@ -73,20 +73,6 @@ values of the curves.
 Available Plotting Utilities
 ============================
 
-Functions
----------
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-
-   inspection.plot_partial_dependence
-   metrics.plot_confusion_matrix
-   metrics.plot_det_curve
-   metrics.plot_precision_recall_curve
-   metrics.plot_roc_curve
-
-
 Display Objects
 ---------------
 
@@ -100,4 +86,6 @@ Display Objects
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
+   metrics.PredictionErrorDisplay
    metrics.RocCurveDisplay
+   model_selection.LearningCurveDisplay

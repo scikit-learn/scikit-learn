@@ -284,7 +284,7 @@ General Concepts
               >>> from sklearn.model_selection import GridSearchCV
               >>> from sklearn.linear_model import SGDClassifier
               >>> clf = GridSearchCV(SGDClassifier(),
-              ...                    param_grid={'loss': ['log', 'hinge']})
+              ...                    param_grid={'loss': ['log_loss', 'hinge']})
 
           This means that we can only check for duck-typed attributes after
           fitting, and that we must be careful to make :term:`meta-estimators`
@@ -748,6 +748,15 @@ General Concepts
         possible (i.e. if an estimator does not / cannot support sparse
         matrices).
 
+    stateless
+        An estimator is stateless if it does not store any information that is
+        obtained during :term:`fit`. This information can be either parameters
+        learned during :term:`fit` or statistics computed from the
+        training data. An estimator is stateless if it has no :term:`attributes`
+        apart from ones set in `__init__`. Calling :term:`fit` for these
+        estimators will only validate the public :term:`attributes` passed
+        in `__init__`.
+
     supervised
     supervised learning
         Learning where the expected prediction (label or ground truth) is
@@ -881,7 +890,6 @@ Class APIs and Estimator Types
 
         * :term:`fit`
         * :term:`transform`
-        * :term:`get_feature_names`
         * :term:`get_feature_names_out`
 
     meta-estimator
@@ -1246,14 +1254,6 @@ Methods
         careful not to apply ``fit_transform`` to the entirety of a dataset
         (i.e. training and test data together) before further modelling, as
         this results in :term:`data leakage`.
-
-    ``get_feature_names``
-        Primarily for :term:`feature extractors`, but also used for other
-        transformers to provide string names for each column in the output of
-        the estimator's :term:`transform` method.  It outputs a list of
-        strings and may take a list of strings as input, corresponding
-        to the names of input columns from which output column names can
-        be generated.  By default input features are named x0, x1, ....
 
     ``get_feature_names_out``
         Primarily for :term:`feature extractors`, but also used for other

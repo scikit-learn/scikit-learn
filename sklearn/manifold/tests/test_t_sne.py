@@ -5,6 +5,7 @@ from numpy.testing import assert_allclose
 import scipy.sparse as sp
 import pytest
 
+from sklearn import config_context
 from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors import kneighbors_graph
 from sklearn.exceptions import EfficiencyWarning
@@ -329,7 +330,9 @@ def test_optimization_minimizes_kl_divergence():
 
 
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])
-def test_fit_csr_matrix(method):
+def test_fit_transform_csr_matrix(method):
+    # TODO: compare results on dense and sparse data as proposed in:
+    # https://github.com/scikit-learn/scikit-learn/pull/23585#discussion_r968388186
     # X can be a sparse matrix.
     rng = check_random_state(0)
     X = rng.randn(50, 2)
@@ -1189,3 +1192,14 @@ def test_tsne_perplexity_validation(perplexity):
     msg = "perplexity must be less than n_samples"
     with pytest.raises(ValueError, match=msg):
         est.fit_transform(X)
+
+
+def test_tsne_works_with_pandas_output():
+    """Make sure that TSNE works when the output is set to "pandas".
+
+    Non-regression test for gh-25365.
+    """
+    pytest.importorskip("pandas")
+    with config_context(transform_output="pandas"):
+        arr = np.arange(35 * 4).reshape(35, 4)
+        TSNE(n_components=2).fit_transform(arr)
