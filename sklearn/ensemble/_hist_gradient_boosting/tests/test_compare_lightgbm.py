@@ -98,6 +98,9 @@ def test_same_predictions_regression(
     pred_sklearn = est_sklearn.predict(X_train)
     if loss in ("gamma", "poisson"):
         # More than 65% of the predictions must be close up to the 2nd decimal.
+        # TODO: We are not entirely satisfied with this lax comparison, but the root
+        # cause is not clear, maybe algorithmic differences. One such example is the
+        # poisson_max_delta_step parameter of LightGBM which does not exist in HGBT.
         assert (
             np.mean(np.isclose(pred_lightgbm, pred_sklearn, rtol=1e-2, atol=1e-2))
             > 0.65
