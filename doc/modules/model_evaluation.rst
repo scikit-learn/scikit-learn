@@ -324,8 +324,9 @@ Which scoring function should I use?
 
 Before diving into the details of the many scores and metrics, we want
 to give some guidance, inspired by statistical decision theory, on the choice
-of scoring functions for supervized learning, see [Gneiting2009]_ and
+of scoring functions for supervised learning, see [Gneiting2009]_ and
 [Fissler2022]_:
+
   - *Which scoring function should I use?*
   - *Which scoring function is a good one for my task?*
 
@@ -357,7 +358,7 @@ The higher the score the better the corresponding model (note that the
 literature uses sometimes the other orientation: smaller values are better).
 For a test or validation set :math:`y_i`, one usually uses
 
-.. :math::
+.. math::
 
     \bar{S} = \frac{1}{n_\text{samples}}
               \sum_{i=0}^{n_\text{samples}-1} S(y_i, \hat{y}_i).
@@ -365,7 +366,7 @@ For a test or validation set :math:`y_i`, one usually uses
 The optimal point prediction :math:`\hat{y}^\star` under :math:`S` is the
 *Bayes Rule*
 
-.. :math:
+.. math::
 
     \hat{y}^\star = \operatorname{argmax}_x \mathbb{E}[S(Y, x)].
 
@@ -410,8 +411,8 @@ quantile              pinball loss                strictly consistent   all real
 The zero-one loss is equivalent to one minus the accuracy score, meaning it
 gives different score values but the same ranking.
 R² gives the same ranking as squared loss.
-Furthermode, the Brier score is just a different name for the squared error
-in case ofclassification.
+Furthermore, the Brier score is just a different name for the squared error
+in case of classification.
 
 An example with binary classification
 -------------------------------------
@@ -441,7 +442,7 @@ Let's have a look on different purposes of your prediction:
 * If you want to optimize the conditions for good blossoms and you therefore
   cut off blossoms for which you predict :math:`\text{no fruit}`, you might
   want to minimize the false negative rate (predicting :math:`\text{no fruit}`
-  when it actually gives a fruit) in order to avoid cutting of too many.
+  when it actually gives a fruit) in order to avoid cutting off too many.
   If you have calibrated predictions for the probability :math:`p`, this helps
   a lot. You can start cutting off the blossoms with lowest predicted
   :math:`p`, which serves as prediction of the (expected) false negative rate.
@@ -462,7 +463,7 @@ Let's have a look on different purposes of your prediction:
 
   .. [Fissler2022] T. Fissler, C. Lorentzen and M. Mayer. :arxiv:`Model
      Comparison and Calibration Assessment: User Guide for Consistent Scoring
-    Functions in Machine Learning and Actuarial Practice. <2202.12780>`
+     Functions in Machine Learning and Actuarial Practice. <2202.12780>`
 
   .. [Gneiting2007] T. Gneiting and A. E. Raftery. :doi:`Strictly Proper
      Scoring Rules, Prediction, and Estimation <10.1198/016214506000001437>`
