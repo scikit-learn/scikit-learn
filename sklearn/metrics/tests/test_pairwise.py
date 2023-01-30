@@ -118,8 +118,9 @@ def test_pairwise_distances(global_dtype):
     with pytest.raises(
         ValueError,
         match=(
-            r"For paired distances and the metric `haversine`, X and Y should both be of"
-            r" shape \(n_samples, 2\), but X.shape is \(5, 3\) and Y.shape is \(5, 3\)"
+            r"For paired distances and the metric `haversine`, X and Y should both be"
+            r" of shape \(n_samples, 2\), but X.shape is \(5, 3\) and Y.shape is"
+            r" \(5, 3\)"
         ),
     ):
         paired_haversine_distances(X, Y)
