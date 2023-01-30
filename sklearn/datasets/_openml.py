@@ -37,7 +37,9 @@ def _get_local_path(openml_path: str, data_home: str) -> str:
     return os.path.join(data_home, "openml.org", openml_path + ".gz")
 
 
-def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Callable:
+def _retry_with_clean_cache(
+    openml_path: str, data_home: Optional[str], parser: Optional[str] = None
+) -> Callable:
     """If the first call to the decorated function fails, the local cached
     file is removed, and the function is called again. If ``data_home`` is
     ``None``, then the function is called once.
@@ -53,6 +55,14 @@ def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Calla
             except URLError:
                 raise
             except Exception:
+                if parser is not None and parser == "pandas":
+                    # If we get a ParserError, then we don't want to retry and we raise
+                    # early. As we don't have a hard dependency on pandas, we need to
+                    # manually handle the exception instead of adding another `except`.
+                    from pandas.errors import ParserError
+
+                    if isinstance(Exception, ParserError):
+                        raise
                 warn("Invalid cache, redownloading file", RuntimeWarning)
                 local_path = _get_local_path(openml_path, data_home)
                 if os.path.exists(local_path):
@@ -216,7 +226,7 @@ def _get_json_content_from_openml_api(
         An exception otherwise.
     """
 
-    @_retry_with_clean_cache(url, data_home)
+    @_retry_with_clean_cache(url, data_home=data_home)
     def _load_json():
         with closing(
             _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
@@ -492,20 +502,41 @@ def _load_arff_response(
             "and retry..."
         )
 
-    gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
-    with closing(gzip_file):
+    def _open_url_and_load_gzip_file(url, data_home, n_retries, delay, arff_params):
+        gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
+        with closing(gzip_file):
+            return load_arff_from_gzip_file(gzip_file, **arff_params)
 
-        X, y, frame, categories = load_arff_from_gzip_file(
-            gzip_file,
-            parser=parser,
-            output_type=output_type,
-            openml_columns_info=openml_columns_info,
-            feature_names_to_select=feature_names_to_select,
-            target_names_to_select=target_names_to_select,
-            shape=shape,
+    arff_params = dict(
+        parser=parser,
+        output_type=output_type,
+        openml_columns_info=openml_columns_info,
+        feature_names_to_select=feature_names_to_select,
+        target_names_to_select=target_names_to_select,
+        shape=shape,
+    )
+
+    if parser == "pandas":
+        # We cannot infer ahead of time if quote character is single or double.
+        # The easiest way to deal with it to rely on a parsing error of `read_csv`.
+        from pandas.errors import ParserError
+
+        arff_params["read_csv_kwargs"] = {"quotechar": '"'}
+        try:
+            X, y, frame, categories = _open_url_and_load_gzip_file(
+                url, data_home, n_retries, delay, arff_params
+            )
+        except ParserError:
+            arff_params["read_csv_kwargs"] = {"quotechar": "'"}
+            X, y, frame, categories = _open_url_and_load_gzip_file(
+                url, data_home, n_retries, delay, arff_params
+            )
+    else:
+        X, y, frame, categories = _open_url_and_load_gzip_file(
+            url, data_home, n_retries, delay, arff_params
         )
 
-        return X, y, frame, categories
+    return X, y, frame, categories
 
 
 def _download_data_to_bunch(
@@ -605,7 +636,7 @@ def _download_data_to_bunch(
                 "values. Missing values are not supported for target columns."
             )
 
-    X, y, frame, categories = _retry_with_clean_cache(url, data_home)(
+    X, y, frame, categories = _retry_with_clean_cache(url, data_home, parser)(
         _load_arff_response
     )(
         url,
