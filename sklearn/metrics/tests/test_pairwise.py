@@ -16,6 +16,7 @@ except ImportError:
     from scipy.spatial.distance import minkowski as wminkowski
 
 from sklearn.utils.fixes import sp_version, parse_version
+from sklearn.utils.parallel import delayed, Parallel
 
 import pytest
 
@@ -225,7 +226,7 @@ def test_pairwise_boolean_distance(metric):
     with ignore_warnings(category=DataConversionWarning):
         for Z in [Y, None]:
             res = pairwise_distances(X, Z, metric=metric)
-            res[np.isnan(res)] = 0
+            np.nan_to_num(res, nan=0, posinf=0, neginf=0, copy=False)
             assert np.sum(res != 0) == 0
 
     # non-boolean arrays are converted to boolean for boolean
@@ -390,8 +391,6 @@ def test_pairwise_kernels(metric):
     Y_sparse = csr_matrix(Y)
     if metric in ["chi2", "additive_chi2"]:
         # these don't support sparse matrices yet
-        with pytest.raises(ValueError):
-            pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
         return
     K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
     assert_allclose(K1, K2)
@@ -1231,12 +1230,6 @@ def test_chi_square_kernel():
     with pytest.raises(ValueError):
         chi2_kernel([[0, 1]], [[0.2, 0.2, 0.6]])
 
-    # sparse matrices
-    with pytest.raises(ValueError):
-        chi2_kernel(csr_matrix(X), csr_matrix(Y))
-    with pytest.raises(ValueError):
-        additive_chi2_kernel(csr_matrix(X), csr_matrix(Y))
-
 
 @pytest.mark.parametrize(
     "kernel",
@@ -1549,3 +1542,14 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
     dist = pairwise_distances(X, Y, metric=metric, **params)
 
     assert_allclose(dist, expected_dist)
+
+
+def test_sparse_manhattan_readonly_dataset():
+    # Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/7981
+    matrices1 = [csr_matrix(np.ones((5, 5)))]
+    matrices2 = [csr_matrix(np.ones((5, 5)))]
+    # Joblib memory maps datasets which makes them read-only.
+    # The following call was reporting as failing in #7981, but this must pass.
+    Parallel(n_jobs=2, max_nbytes=0)(
+        delayed(manhattan_distances)(m1, m2) for m1, m2 in zip(matrices1, matrices2)
+    )

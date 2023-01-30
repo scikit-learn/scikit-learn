@@ -29,11 +29,6 @@ random sampling procedures.
   `transform_algorithm` is not the same as `fit_algorithm` and the number of iterations
   is small. :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
 
-- |Fix| The `categories_` attribute of :class:`preprocessing.OneHotEncoder` now
-  always contains an array of `object`s when using predefined categories that
-  are strings. Predefined categories encoded as bytes will no longer work
-  with `X` encoded as strings. :pr:`25174` by :user:`Tim Head <betatim>`.
-
 Changes impacting all modules
 -----------------------------
 
@@ -41,8 +36,27 @@ Changes impacting all modules
   raises a `NotFittedError` if the instance is not fitted. This ensures the error is
   consistent in all estimators with the `get_feature_names_out` method.
 
+  - :class:`impute.MissingIndicator`
+  - :class:`feature_extraction.DictVectorizer`
+  - :class:`feature_extraction.text.TfidfTransformer`
+  - :class:`feature_selection.GenericUnivariateSelect`
+  - :class:`feature_selection.RFE`
+  - :class:`feature_selection.RFECV`
+  - :class:`feature_selection.SelectFdr`
+  - :class:`feature_selection.SelectFpr`
+  - :class:`feature_selection.SelectFromModel`
+  - :class:`feature_selection.SelectFwe`
+  - :class:`feature_selection.SelectKBest`
+  - :class:`feature_selection.SelectPercentile`
+  - :class:`feature_selection.SequentialFeatureSelector`
+  - :class:`feature_selection.VarianceThreshold`
   - :class:`kernel_approximation.AdditiveChi2Sampler`
+  - :class:`impute.IterativeImputer`
+  - :class:`impute.KNNImputer`
+  - :class:`impute.SimpleImputer`
+  - :class:`isotonic.IsotonicRegression`
   - :class:`preprocessing.Binarizer`
+  - :class:`preprocessing.KBinsDiscretizer`
   - :class:`preprocessing.MaxAbsScaler`
   - :class:`preprocessing.MinMaxScaler`
   - :class:`preprocessing.Normalizer`
@@ -50,14 +64,17 @@ Changes impacting all modules
   - :class:`preprocessing.PowerTransformer`
   - :class:`preprocessing.QuantileTransformer`
   - :class:`preprocessing.RobustScaler`
+  - :class:`preprocessing.SplineTransformer`
   - :class:`preprocessing.StandardScaler`
-  - :class:`feature_extraction.text.TfidfTransformer`
+  - :class:`random_projection.GaussianRandomProjection`
+  - :class:`random_projection.SparseRandomProjection`
 
   The `NotFittedError` displays an informative message asking to fit the instance
   with the appropriate arguments.
 
-  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291` by
-  :user:`Rahil Parikh <rprkh>`.
+  :pr:`25294`, :pr:`25308`, :pr:`25291`, :pr:`25367`, :pr:`25402`,
+  by :user:`John Pangas <jpangas>`, :user:`Rahil Parikh <rprkh>` ,
+  and :user:`Alex Buzenet <albuzenet>`.
 
 Changelog
 ---------
@@ -72,6 +89,12 @@ Changelog
     Entries should end with:
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.base`
+...................
+
+- |Feature| A `__sklearn_clone__` protocol is now available to override the
+  default behavior of :func:`base.clone`. :pr:`24568` by `Thomas Fan`_.
 
 :mod:`sklearn.cluster`
 ......................
@@ -91,24 +114,46 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Feature| :class:`ensemble.HistGradientBoostingRegressor` now supports
+  the Gamma deviance loss via `loss="gamma"`.
+  Using the Gamma deviance as loss function comes in handy for modelling skewed
+  distributed, strictly positive valued targets.
+  :pr:`22409` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Feature| Compute a custom out-of-bag score by passing a callable to
   :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
   :pr:`25177` by :user:`Tim Head <betatim>`.
 
-:mod:`sklearn.feature_extraction`
-.................................
+- |Feature| :class:`ensemble.GradientBoostingClassifier` now exposes
+  out-of-bag scores via the `oob_scores_` or `oob_score_` attributes.
+  :pr:`24882` by :user:`Ashwin Mathur <awinml>`.
 
-- |Fix| :class:`feature_extraction.FeatureHasher` raises an informative error
-  when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
+- |Efficiency| :class:`ensemble.IsolationForest` predict time is now faster
+  (typically by a factor of 8 or more). Internally, the estimator now precomputes
+  decision path lengths per tree at `fit` time. It is therefore not possible
+  to load an estimator trained with scikit-learn 1.2 to make it predict with
+  scikit-learn 1.3: retraining with scikit-learn 1.3 is required.
+  :pr:`25186` by :user:`Felipe Breve Siola <fsiola>`.
 
-:mod:`sklearn.model_selection`
-..............................
+:mod:`sklearn.exception`
+........................
+- |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
+  when a scikit-learn estimator is unpickled with a scikit-learn version that is
+  inconsistent with the sckit-learn verion the estimator was pickled with.
+  :pr:`25297` by `Thomas Fan`_.
 
-- |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
-  case of some failing scorers the non-failing scorers now returns proper
-  scores instead of `error_score` values.
-  :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
+  :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
+  :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -117,12 +162,12 @@ Changelog
   when the provided `sample_weight` reduces the problem to a single class in `fit`.
   :pr:`24140` by :user:`Jonathan Ohayon <Johayon>` and :user:`Chiara Marmo <cmarmo>`.
 
-:mod:`sklearn.neural_network`
-.............................
+:mod:`sklearn.neighbors`
+........................
 
-- |Fix| :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPRegressor`
-  no longer raise warnings when fitting data with feature names.
-  :pr:`24873` by :user:`Tim Head <betatim>`.
+- |Fix| Remove support for `KulsinskiDistance` in :class:`neighbors.BallTree`. This
+  dissimilarity is not a metric and cannot be supported by the BallTree.
+  :pr:`25417` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.pipeline`
 .......................
@@ -131,14 +176,39 @@ Changelog
   `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
   `Thomas Fan`_.
 
+- |Feature| :class:`pipeline.FeatureUnion` can now access the
+  `feature_names_in_` attribute if the `X` value seen during `.fit` has a
+  `columns` attribute and all columns are strings. e.g. when `X` is a
+  `pandas.DataFrame`
+  :pr:`25220` by :user:`Ian Thompson <it176131>`.
+
 :mod:`sklearn.preprocessing`
 ............................
+
+- |Enhancement| Adds a `feature_name_combiner` parameter to
+  :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
+  feature names to be returned by :meth:`get_feature_names_out`.
+  The callable combines input arguments `(input_feature, category)` to a string.
+  :pr:`22506` by :user:`Mario Kostelac <mariokostelac>`.
+
 - |Enhancement| Added support for `sample_weight` in
   :class:`preprocessing.KBinsDiscretizer`. This allows specifying the parameter
   `sample_weight` for each sample to be used while fitting. The option is only
   available when `strategy` is set to `quantile` and `kmeans`.
   :pr:`24935` by :user:`Seladus <seladus>`, :user:`Guillaume Lemaitre <glemaitre>`, and
   :user:`Dea María Léon <deamarialeon>`, :pr:`25257` by :user:`Gleb Levitski <glevv>`.
+
+- |Fix| :class:`AdditiveChi2Sampler` is now stateless.
+  The `sample_interval_` attribute is deprecated and will be removed in 1.5.
+  :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |API| :func:`estimator_checks.check_transformers_unfitted_stateless` has been
+  introduced to ensure stateless transformers don't raise `NotFittedError`
+  during `transform` with no prior call to `fit` or `fit_transform`.
+  :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
 Code and Documentation Contributors
 -----------------------------------

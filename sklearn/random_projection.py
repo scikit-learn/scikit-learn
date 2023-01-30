@@ -419,15 +419,10 @@ class BaseRandomProjection(
         if self.compute_inverse_components:
             self.inverse_components_ = self._compute_inverse_components()
 
+        # Required by ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
+        self._n_features_out = self.n_components
+
         return self
-
-    @property
-    def _n_features_out(self):
-        """Number of transformed output features.
-
-        Used by ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
-        """
-        return self.n_components
 
     def inverse_transform(self, X):
         """Project data back to its original space.
