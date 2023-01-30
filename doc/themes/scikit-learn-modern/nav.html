@@ -34,11 +34,11 @@
 
 <nav id="navbar" class="{{ nav_bar_class }} navbar navbar-expand-md navbar-light bg-light py-0">
   <div class="container-fluid {{ top_container_cls }} px-0">
-    {%- if logo %}
+    {%- if logo_url %}
       <a class="navbar-brand py-0" href="{{ pathto('index') }}">
         <img
           class="sk-brand-img"
-          src="{{ pathto('_static/' + logo, 1) }}"
+          src="{{ logo_url|e }}"
           alt="logo"/>
       </a>
     {%- endif %}
