@@ -75,10 +75,10 @@ def _make_unique(const floating[::1] X,
     """
     unique_values = len(np.unique(X))
 
-    cdef const floating[::1] y_out = np.empty(unique_values,
+    cdef floating[::1] y_out = np.empty(unique_values,
                                                      dtype=X.dtype)
-    cdef const floating[::1] x_out = np.empty_like(y_out)
-    cdef const floating[::1] weights_out = np.empty_like(y_out)
+    cdef floating[::1] x_out = np.empty_like(y_out)
+    cdef floating[::1] weights_out = np.empty_like(y_out)
 
     cdef floating current_x = X[0]
     cdef floating current_y = 0
