@@ -40,7 +40,12 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import StrOptions, validate_params
+from ..utils._param_validation import (
+    Hidden,
+    Options,
+    StrOptions,
+    validate_params,
+)
 from ..exceptions import UndefinedMetricWarning
 
 from ._base import _check_pos_label_consistency
@@ -645,6 +650,7 @@ def multilabel_confusion_matrix(
         "labels": ["array-like", None],
         "weights": [StrOptions({"linear", "quadratic"}), None],
         "sample_weight": ["array-like", None],
+        "zero_division": [StrOptions({"warn"}), Options(int, {0, 1}), Options(float, {np.nan})],
     }
 )
 def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None, zero_division="warn"):
