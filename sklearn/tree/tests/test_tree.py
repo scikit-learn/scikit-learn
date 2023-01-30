@@ -2523,3 +2523,39 @@ def test_missing_values_poisson():
 
     y_pred = reg.predict(X)
     assert (y_pred >= 0.0).all()
+
+
+@pytest.mark.parametrize(
+    "make_data, Tree",
+    [
+        (datasets.make_regression, DecisionTreeRegressor),
+        (datasets.make_classification, DecisionTreeClassifier),
+    ],
+)
+def test_missing_values_is_resilience(make_data, Tree):
+    """Check that tree can deal with missing values and have decent performance."""
+
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 1000, 20
+    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
+
+    # Create dataset with missing values
+    X_missing = X.copy()
+    X_missing[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
+    X_missing_train, X_missing_test, y_train, y_test = train_test_split(
+        X_missing, y, random_state=0
+    )
+
+    # Train tree with missing values
+    tree_with_missing = Tree(random_state=0)
+    tree_with_missing.fit(X_missing_train, y_train)
+    missing_score = tree_with_missing.score(X_missing_test, y_test)
+
+    # Train tree without missing
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    tree = Tree(random_state=0)
+    tree.fit(X_missing_train, y_train)
+    non_missing_score = tree.score(X_test, y_test)
+
+    # Score is still 90 percent of the tree's score that had no missing values
+    assert missing_score >= 0.9 * non_missing_score
