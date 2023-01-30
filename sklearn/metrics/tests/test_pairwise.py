@@ -115,7 +115,10 @@ def test_pairwise_distances(global_dtype):
     # test paired haversine
     X = rng.randn(5, 3)
     Y = rng.randn(5, 3)
-    with pytest.raises(ValueError, match=r"X and Y should both be of shape (n_samples, 2), "):
+    with pytest.raises(
+            ValueError,
+            match=r'For paired distances and the metric `haversine`, X and Y should both be of shape (n_samples, 2), but X.shape is (5, 3) and Y.shape is (5, 3)'
+    ):
         paired_haversine_distances(X, Y)
 
     # compare paired to pairwise implementations
