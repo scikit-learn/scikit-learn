@@ -54,14 +54,14 @@ def _retry_with_clean_cache(
                 return f(*args, **kw)
             except URLError:
                 raise
-            except Exception:
+            except Exception as exc:
                 if parser is not None and parser == "pandas":
                     # If we get a ParserError, then we don't want to retry and we raise
                     # early. As we don't have a hard dependency on pandas, we need to
                     # manually handle the exception instead of adding another `except`.
                     from pandas.errors import ParserError
 
-                    if isinstance(Exception, ParserError):
+                    if isinstance(exc, ParserError):
                         raise
                 warn("Invalid cache, redownloading file", RuntimeWarning)
                 local_path = _get_local_path(openml_path, data_home)
@@ -515,26 +515,24 @@ def _load_arff_response(
         target_names_to_select=target_names_to_select,
         shape=shape,
     )
-
-    if parser == "pandas":
-        # We cannot infer ahead of time if quote character is single or double.
-        # The easiest way to deal with it to rely on a parsing error of `read_csv`.
-        from pandas.errors import ParserError
-
-        arff_params["read_csv_kwargs"] = {"quotechar": '"'}
-        try:
-            X, y, frame, categories = _open_url_and_load_gzip_file(
-                url, data_home, n_retries, delay, arff_params
-            )
-        except ParserError:
-            arff_params["read_csv_kwargs"] = {"quotechar": "'"}
-            X, y, frame, categories = _open_url_and_load_gzip_file(
-                url, data_home, n_retries, delay, arff_params
-            )
-    else:
+    try:
         X, y, frame, categories = _open_url_and_load_gzip_file(
             url, data_home, n_retries, delay, arff_params
         )
+    except Exception as exc:
+        if parser == "pandas":
+            from pandas.errors import ParserError
+
+            if isinstance(exc, ParserError):
+                # A parsing error could come from providing the wrong quotechar
+                # to pandas. By default, we use a double quote. Thus, we retry
+                # with a single quote before to raise the error.
+                arff_params["read_csv_kwargs"] = {"quotechar": "'"}
+                X, y, frame, categories = _open_url_and_load_gzip_file(
+                    url, data_home, n_retries, delay, arff_params
+                )
+            else:
+                raise
 
     return X, y, frame, categories
 
