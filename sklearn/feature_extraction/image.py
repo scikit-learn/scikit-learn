@@ -10,14 +10,14 @@ extract features from images.
 # License: BSD 3 clause
 
 from itertools import product
-import numbers
+from numbers import Integral, Number, Real
 import numpy as np
 from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
-from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval, validate_params
 
 __all__ = [
     "PatchExtractor",
@@ -97,7 +97,7 @@ def _to_graph(
     """Auxiliary function for img_to_graph and grid_to_graph"""
     edges = _make_edges_3d(n_x, n_y, n_z)
 
-    if dtype is None:
+    if dtype is None:  # To not overwrite input dtype
         if img is None:
             dtype = int
         else:
@@ -115,7 +115,6 @@ def _to_graph(
     else:
         if mask is not None:
             mask = mask.astype(dtype=bool, copy=False)
-            mask = np.asarray(mask, dtype=bool)
             edges = _mask_edges_weights(mask, edges)
             n_voxels = np.sum(mask)
         else:
@@ -139,6 +138,14 @@ def _to_graph(
     return return_as(graph)
 
 
+@validate_params(
+    {
+        "img": ["array-like"],
+        "mask": [None, np.ndarray],
+        "return_as": [type],
+        "dtype": "no_validation",  # validation delegated to numpy
+    }
+)
 def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     """Graph of the pixel-to-pixel gradient connections.
 
@@ -148,7 +155,7 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
 
     Parameters
     ----------
-    img : ndarray of shape (height, width) or (height, width, channel)
+    img : array-like of shape (height, width) or (height, width, channel)
         2D or 3D image.
     mask : ndarray of shape (height, width) or \
             (height, width, channel), dtype=bool, default=None
@@ -180,6 +187,16 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     return _to_graph(n_x, n_y, n_z, mask, img, return_as, dtype)
 
 
+@validate_params(
+    {
+        "n_x": [Interval(Integral, left=1, right=None, closed="left")],
+        "n_y": [Interval(Integral, left=1, right=None, closed="left")],
+        "n_z": [Interval(Integral, left=1, right=None, closed="left")],
+        "mask": [None, np.ndarray],
+        "return_as": [type],
+        "dtype": "no_validation",  # validation delegated to numpy
+    }
+)
 def grid_to_graph(
     n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_matrix, dtype=int
 ):
@@ -250,11 +267,11 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
     all_patches = n_h * n_w
 
     if max_patches:
-        if isinstance(max_patches, (numbers.Integral)) and max_patches < all_patches:
+        if isinstance(max_patches, (Integral)) and max_patches < all_patches:
             return max_patches
-        elif isinstance(max_patches, (numbers.Integral)) and max_patches >= all_patches:
+        elif isinstance(max_patches, (Integral)) and max_patches >= all_patches:
             return all_patches
-        elif isinstance(max_patches, (numbers.Real)) and 0 < max_patches < 1:
+        elif isinstance(max_patches, (Real)) and 0 < max_patches < 1:
             return int(max_patches * all_patches)
         else:
             raise ValueError("Invalid value for max_patches: %r" % max_patches)
@@ -300,9 +317,9 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
 
     arr_ndim = arr.ndim
 
-    if isinstance(patch_shape, numbers.Number):
+    if isinstance(patch_shape, Number):
         patch_shape = tuple([patch_shape] * arr_ndim)
-    if isinstance(extraction_step, numbers.Number):
+    if isinstance(extraction_step, Number):
         extraction_step = tuple([extraction_step] * arr_ndim)
 
     patch_strides = arr.strides
@@ -321,6 +338,18 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
     return patches
 
 
+@validate_params(
+    {
+        "image": [np.ndarray],
+        "patch_size": [tuple, list],
+        "max_patches": [
+            Interval(Real, left=0, right=1, closed="neither"),
+            Interval(Integral, left=1, right=None, closed="left"),
+            None,
+        ],
+        "random_state": ["random_state"],
+    }
+)
 def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None):
     """Reshape a 2D image into a collection of patches.
 
@@ -484,17 +513,15 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         deterministic.
         See :term:`Glossary <random_state>`.
 
-    Attributes
-    ----------
-    patch_size_ : tuple of int (patch_height, patch_width)
-        The dimensions of one patch.
-
-        .. versionadded:: 1.2
-           `patch_size_` was added in version 1.2.
-
     See Also
     --------
     reconstruct_from_patches_2d : Reconstruct image from all of its patches.
+
+    Notes
+    -----
+    This estimator is stateless and does not need to be fitted. However, we
+    recommend to call :meth:`fit_transform` instead of :meth:`transform`, as
+    parameter validation is only performed in :meth:`fit`.
 
     Examples
     --------
@@ -505,10 +532,20 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
     >>> print(f"Image shape: {X.shape}")
     Image shape: (427, 640, 3)
     >>> pe = image.PatchExtractor(patch_size=(2, 2))
-    >>> pe_trans = pe.fit_transform(X)
+    >>> pe_trans = pe.transform(X)
     >>> print(f"Patches shape: {pe_trans.shape}")
     Patches shape: (545706, 2, 2)
     """
+
+    _parameter_constraints: dict = {
+        "patch_size": [tuple, None],
+        "max_patches": [
+            None,
+            Interval(Real, 0, 1, closed="neither"),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+        "random_state": ["random_state"],
+    }
 
     def __init__(self, *, patch_size=None, max_patches=None, random_state=None):
         self.patch_size = patch_size
@@ -516,10 +553,9 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         self.random_state = random_state
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged.
-
-        This method is just there to implement the usual API and hence
-        work in pipelines.
+        """Only validates estimator's parameters.
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
@@ -537,23 +573,7 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(
-            X=X,
-            ensure_2d=False,
-            allow_nd=True,
-            ensure_min_samples=0,
-            ensure_min_features=0,
-        )
-        img_height, img_width = X.shape[1:3]
-        if self.patch_size is None:
-            self.patch_size_ = img_height // 10, img_width // 10
-        else:
-            if len(self.patch_size) != 2:
-                raise ValueError(
-                    f"patch_size must be a tuple of two integers. Got {self.patch_size}"
-                    " instead."
-                )
-            self.patch_size_ = self.patch_size
+        self._validate_params()
         return self
 
     def transform(self, X):
@@ -575,7 +595,6 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             `n_patches` is either `n_samples * max_patches` or the total
             number of patches that can be extracted.
         """
-        check_is_fitted(self, attributes=["patch_size_"])
         X = self._validate_data(
             X=X,
             ensure_2d=False,
@@ -584,23 +603,28 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             ensure_min_features=0,
             reset=False,
         )
-        return self._transform(X)
-
-    def _transform(self, X):
-        """Private transform method shared between fit_transform and transform.
-        No data validation is performed.
-        """
         random_state = check_random_state(self.random_state)
+        img_height, img_width = X.shape[1:3]
+        if self.patch_size is None:
+            patch_size = img_height // 10, img_width // 10
+        else:
+            if len(self.patch_size) != 2:
+                raise ValueError(
+                    f"patch_size must be a tuple of two integers. Got {self.patch_size}"
+                    " instead."
+                )
+            patch_size = self.patch_size
+
         n_imgs, img_height, img_width = X.shape[:3]
         X = np.reshape(X, (n_imgs, img_height, img_width, -1))
         n_channels = X.shape[-1]
 
         # compute the dimensions of the patches array
-        patch_height, patch_width = self.patch_size_
+        patch_height, patch_width = patch_size
         n_patches = _compute_n_patches(
             img_height, img_width, patch_height, patch_width, self.max_patches
         )
-        patches_shape = (n_imgs * n_patches,) + self.patch_size_
+        patches_shape = (n_imgs * n_patches,) + patch_size
         if n_channels > 1:
             patches_shape += (n_channels,)
 
@@ -609,38 +633,11 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         for ii, image in enumerate(X):
             patches[ii * n_patches : (ii + 1) * n_patches] = extract_patches_2d(
                 image,
-                self.patch_size_,
+                patch_size,
                 max_patches=self.max_patches,
                 random_state=random_state,
             )
         return patches
 
-    def fit_transform(self, X, y=None):
-        """Fit and transform the image samples in `X` into a matrix of patch data.
-
-        .. versionadded:: 1.2
-           `fit_transform` was added in version 1.2.
-
-        Parameters
-        ----------
-        X : ndarray of shape (n_samples, image_height, image_width) or \
-                (n_samples, image_height, image_width, n_channels)
-            Array of images from which to extract patches. For color images,
-            the last dimension specifies the channel: a RGB image would have
-            `n_channels=3`.
-
-        y : Ignored
-            Not used, present for API consistency by convention.
-
-        Returns
-        -------
-        patches : array of shape (n_patches, patch_height, patch_width) or \
-                (n_patches, patch_height, patch_width, n_channels)
-            The collection of patches extracted from the images, where
-            `n_patches` is either `n_samples * max_patches` or the total
-            number of patches that can be extracted.
-        """
-        return self.fit(X, y)._transform(X)
-
     def _more_tags(self):
-        return {"X_types": ["3darray"]}
+        return {"X_types": ["3darray"], "stateless": True}

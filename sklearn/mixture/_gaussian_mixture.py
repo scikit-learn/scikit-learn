@@ -637,7 +637,7 @@ class GaussianMixture(BaseMixture):
     array([1, 0])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseMixture._parameter_constraints,
         "covariance_type": [StrOptions({"full", "tied", "diag", "spherical"})],
         "weights_init": ["array-like", None],

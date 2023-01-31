@@ -10,9 +10,8 @@ IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
     cimport openmp
 from cython cimport floating
 from cython.parallel import prange, parallel
-from libc.math cimport sqrt
 from libc.stdlib cimport calloc, free
-from libc.string cimport memset, memcpy
+from libc.string cimport memset
 
 from ..utils.extmath import row_norms
 from ._k_means_common import CHUNK_SIZE

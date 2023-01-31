@@ -9,16 +9,14 @@
 from libc.math cimport fabs
 cimport numpy as cnp
 import numpy as np
-import numpy.linalg as linalg
 
-from cpython cimport bool
 from cython cimport floating
 import warnings
 from ..exceptions import ConvergenceWarning
 
-from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2,
+from ..utils._cython_blas cimport (_axpy, _dot, _asum, _gemv, _nrm2,
                                    _copy, _scal)
-from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
+from ..utils._cython_blas cimport ColMajor, Trans, NoTrans
 
 
 from ..utils._random cimport our_rand_r
@@ -92,14 +90,14 @@ cdef floating diff_abs_max(int n, floating* a, floating* b) nogil:
             m = d
     return m
 
-
+# TODO: use const fused typed memoryview where possible when Cython 0.29.33 is used.
 def enet_coordinate_descent(
-    floating[::1] w,
+    cnp.ndarray[floating, ndim=1, mode='c'] w,
     floating alpha,
     floating beta,
-    floating[::1, :] X,
-    floating[::1] y,
-    int max_iter,
+    cnp.ndarray[floating, ndim=2, mode='fortran'] X,
+    cnp.ndarray[floating, ndim=1, mode='c'] y,
+    unsigned int max_iter,
     floating tol,
     object rng,
     bint random=0,
@@ -275,17 +273,18 @@ def enet_coordinate_descent(
     return np.asarray(w), gap, tol, n_iter + 1
 
 
+# TODO: use const fused typed memoryview where possible when Cython 0.29.33 is used.
 def sparse_enet_coordinate_descent(
-    floating [::1] w,
+    cnp.ndarray[floating, ndim=1, mode='c'] w,
     floating alpha,
     floating beta,
-    floating[::1] X_data, # TODO: Make const after release of Cython 3 (#23147)
+    cnp.ndarray[floating, ndim=1, mode='c'] X_data,
     const int[::1] X_indices,
     const int[::1] X_indptr,
-    floating[::1] y,
-    floating[::1] sample_weight,
-    floating[::1] X_mean,
-    int max_iter,
+    cnp.ndarray[floating, ndim=1, mode='c'] y,
+    cnp.ndarray[floating, ndim=1, mode='c'] sample_weight,
+    cnp.ndarray[floating, ndim=1, mode='c'] X_mean,
+    unsigned int max_iter,
     floating tol,
     object rng,
     bint random=0,
@@ -373,6 +372,7 @@ def sparse_enet_coordinate_descent(
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
     cdef bint no_sample_weights = sample_weight is None
+    cdef int kk
 
     if no_sample_weights:
         yw = y
@@ -509,8 +509,8 @@ def sparse_enet_coordinate_descent(
                 # XtA = X.T @ R - beta * w
                 for ii in range(n_features):
                     XtA[ii] = 0.0
-                    for jj in range(X_indptr[ii], X_indptr[ii + 1]):
-                        XtA[ii] += X_data[jj] * R[X_indices[jj]]
+                    for kk in range(X_indptr[ii], X_indptr[ii + 1]):
+                        XtA[ii] += X_data[kk] * R[X_indices[kk]]
 
                     if center:
                         XtA[ii] -= X_mean[ii] * R_sum
@@ -565,14 +565,15 @@ def sparse_enet_coordinate_descent(
     return np.asarray(w), gap, tol, n_iter + 1
 
 
+# TODO: use const fused typed memoryview where possible when Cython 0.29.33 is used.
 def enet_coordinate_descent_gram(
-    floating[::1] w,
+    cnp.ndarray[floating, ndim=1, mode='c'] w,
     floating alpha,
     floating beta,
     cnp.ndarray[floating, ndim=2, mode='c'] Q,
     cnp.ndarray[floating, ndim=1, mode='c'] q,
     cnp.ndarray[floating, ndim=1] y,
-    int max_iter,
+    unsigned int max_iter,
     floating tol,
     object rng,
     bint random=0,
@@ -631,9 +632,9 @@ def enet_coordinate_descent_gram(
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
     cdef floating y_norm2 = np.dot(y, y)
-    cdef floating* w_ptr = <floating*>&w[0]
+    cdef floating* w_ptr = &w[0]
     cdef floating* Q_ptr = &Q[0, 0]
-    cdef floating* q_ptr = <floating*>q.data
+    cdef floating* q_ptr = &q[0]
     cdef floating* H_ptr = &H[0]
     cdef floating* XtA_ptr = &XtA[0]
     tol = tol * y_norm2
@@ -735,15 +736,15 @@ def enet_coordinate_descent_gram(
 
     return np.asarray(w), gap, tol, n_iter + 1
 
-
+# TODO: use const fused typed memoryview where possible when Cython 0.29.33 is used.
 def enet_coordinate_descent_multi_task(
-    floating[::1, :] W,
+    cnp.ndarray[floating, ndim=2, mode='fortran'] W,
     floating l1_reg,
     floating l2_reg,
     # TODO: use const qualified fused-typed memoryview when Cython 3.0 is used.
     cnp.ndarray[floating, ndim=2, mode='fortran'] X,
     cnp.ndarray[floating, ndim=2, mode='fortran'] Y,
-    int max_iter,
+    unsigned int max_iter,
     floating tol,
     object rng,
     bint random=0

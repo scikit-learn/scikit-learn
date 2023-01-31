@@ -3,12 +3,11 @@
 # License: BSD 3 clause
 
 import numpy as np
-import scipy as sp
 from scipy import ndimage
 from scipy.sparse.csgraph import connected_components
 import pytest
 
-from sklearn.exceptions import NotFittedError
+from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.feature_extraction.image import (
     img_to_graph,
     grid_to_graph,
@@ -17,6 +16,17 @@ from sklearn.feature_extraction.image import (
     PatchExtractor,
     _extract_patches,
 )
+
+
+@pytest.fixture(scope="module")
+def raccoon_face():
+    if sp_version.release >= parse_version("1.10").release:
+        pytest.importorskip("pooch")
+        from scipy.datasets import face
+    else:
+        from scipy.misc import face
+
+    return face(gray=True)
 
 
 def test_img_to_graph():
@@ -83,8 +93,8 @@ def test_grid_to_graph():
     assert A.dtype == np.float64
 
 
-def test_connect_regions():
-    face = sp.misc.face(gray=True)
+def test_connect_regions(raccoon_face):
+    face = raccoon_face.copy()
     # subsample by 4 to reduce run time
     face = face[::4, ::4]
     for thr in (50, 150):
@@ -93,8 +103,8 @@ def test_connect_regions():
         assert ndimage.label(mask)[1] == connected_components(graph)[0]
 
 
-def test_connect_regions_with_grid():
-    face = sp.misc.face(gray=True)
+def test_connect_regions_with_grid(raccoon_face):
+    face = raccoon_face.copy()
 
     # subsample by 4 to reduce run time
     face = face[::4, ::4]
@@ -109,13 +119,13 @@ def test_connect_regions_with_grid():
 
 
 def _downsampled_face():
-    try:
-        face = sp.face(gray=True)
-    except AttributeError:
-        # Newer versions of scipy have face in misc
-        from scipy import misc
+    if sp_version.release >= parse_version("1.10").release:
+        pytest.importorskip("pooch")
+        from scipy.datasets import face as raccoon_face
+    else:
+        from scipy.misc import face as raccoon_face
 
-        face = misc.face(gray=True)
+    face = raccoon_face(gray=True)
     face = face.astype(np.float32)
     face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
     face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
@@ -248,7 +258,7 @@ def test_patch_extractor_max_patches():
     extr = PatchExtractor(
         patch_size=(p_h, p_w), max_patches=max_patches, random_state=0
     )
-    patches = extr.fit_transform(faces)
+    patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
     max_patches = 0.5
@@ -258,14 +268,14 @@ def test_patch_extractor_max_patches():
     extr = PatchExtractor(
         patch_size=(p_h, p_w), max_patches=max_patches, random_state=0
     )
-    patches = extr.fit_transform(faces)
+    patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
 
 def test_patch_extractor_max_patches_default():
     faces = face_collection
     extr = PatchExtractor(max_patches=100, random_state=0)
-    patches = extr.fit_transform(faces)
+    patches = extr.transform(faces)
     assert patches.shape == (len(faces) * 100, 19, 25)
 
 
@@ -275,7 +285,7 @@ def test_patch_extractor_all_patches():
     p_h, p_w = 8, 8
     expected_n_patches = len(faces) * (i_h - p_h + 1) * (i_w - p_w + 1)
     extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
-    patches = extr.fit_transform(faces)
+    patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
 
@@ -285,7 +295,7 @@ def test_patch_extractor_color():
     p_h, p_w = 8, 8
     expected_n_patches = len(faces) * (i_h - p_h + 1) * (i_w - p_w + 1)
     extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
-    patches = extr.fit_transform(faces)
+    patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w, 3)
 
 
@@ -361,11 +371,4 @@ def test_patch_extractor_wrong_input():
     faces = _make_images(orange_face)
     err_msg = "patch_size must be a tuple of two integers"
     with pytest.raises(ValueError, match=err_msg):
-        PatchExtractor(patch_size=(8, 8, 8)).fit(faces)
-
-
-def test_patch_extractor_not_fitted():
-    """Check that we raise a NotFittedError if fit is not called before transform."""
-    faces = _make_images(orange_face)
-    with pytest.raises(NotFittedError):
-        PatchExtractor(patch_size=(8, 8)).transform(faces)
+        PatchExtractor(patch_size=(8, 8, 8)).transform(faces)

@@ -266,7 +266,7 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
     ax2.tick_params(axis="y", colors=line2.get_color())
 
     plt.legend(
-        (line1, line2), ("prediction error", "prediction latency"), loc="upper right"
+        (line1, line2), ("prediction error", "prediction latency"), loc="upper center"
     )
 
     plt.title(

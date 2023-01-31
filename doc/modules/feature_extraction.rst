@@ -607,7 +607,7 @@ As usual the best way to adjust the feature extraction parameters
 is to use a cross-validated grid search, for instance by pipelining the
 feature extractor with a classifier:
 
- * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
+ * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 
 
 Decoding text files
@@ -1037,7 +1037,7 @@ implemented as a scikit-learn transformer, so it can be used in pipelines.
 See::
 
     >>> five_images = np.arange(5 * 4 * 4 * 3).reshape(5, 4, 4, 3)
-    >>> patches = image.PatchExtractor(patch_size=(2, 2)).fit_transform(five_images)
+    >>> patches = image.PatchExtractor(patch_size=(2, 2)).transform(five_images)
     >>> patches.shape
     (45, 2, 2, 3)
 

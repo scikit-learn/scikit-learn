@@ -44,7 +44,7 @@ from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
-from .metrics.pairwise import euclidean_distances
+from .metrics.pairwise import pairwise_distances_argmin
 from .utils import check_random_state
 from .utils._param_validation import HasMethods, Interval
 from .utils._tags import _safe_tags
@@ -56,9 +56,7 @@ from .utils.multiclass import (
     _ovr_decision_function,
 )
 from .utils.metaestimators import _safe_split, available_if
-from .utils.fixes import delayed
-
-from joblib import Parallel
+from .utils.parallel import delayed, Parallel
 
 __all__ = [
     "OneVsRestClassifier",
@@ -203,8 +201,11 @@ class OneVsRestClassifier(
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing :term:`fit` and one of
-        :term:`decision_function` or :term:`predict_proba`.
+        A regressor or a classifier that implements :term:`fit`.
+        When a classifier is passed, :term:`decision_function` will be used
+        in priority and it will fallback to :term:`predict_proba` if it is not
+        available.
+        When a regressor is passed, :term:`predict` is used.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation: the `n_classes`
@@ -258,8 +259,10 @@ class OneVsRestClassifier(
 
     See Also
     --------
-    MultiOutputClassifier : Alternate way of extending an estimator for
-        multilabel classification.
+    OneVsOneClassifier : One-vs-one multiclass strategy.
+    OutputCodeClassifier : (Error-Correcting) Output-Code multiclass strategy.
+    sklearn.multioutput.MultiOutputClassifier : Alternate way of extending an
+        estimator for multilabel classification.
     sklearn.preprocessing.MultiLabelBinarizer : Transform iterable of iterables
         to binary indicator matrix.
 
@@ -282,6 +285,12 @@ class OneVsRestClassifier(
     array([2, 0, 1])
     """
 
+    _parameter_constraints = {
+        "estimator": [HasMethods(["fit"])],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+    }
+
     def __init__(self, estimator, *, n_jobs=None, verbose=0):
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -292,10 +301,10 @@ class OneVsRestClassifier(
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
+        y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_classes)
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
@@ -304,6 +313,8 @@ class OneVsRestClassifier(
         self : object
             Instance of fitted estimator.
         """
+        self._validate_params()
+
         # A sparse LabelBinarizer, with sparse_output=True, has been shown to
         # outperform or match a dense label binarizer in all cases and has also
         # resulted in less or equal memory consumption in the fit_ovr function
@@ -345,10 +356,10 @@ class OneVsRestClassifier(
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
+        y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_classes)
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
@@ -365,6 +376,8 @@ class OneVsRestClassifier(
             Instance of partially fitted estimator.
         """
         if _check_partial_fit_first_call(self, classes):
+            self._validate_params()
+
             if not hasattr(self.estimator, "partial_fit"):
                 raise ValueError(
                     ("Base estimator {0}, doesn't have partial_fit method").format(
@@ -406,12 +419,12 @@ class OneVsRestClassifier(
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         Returns
         -------
-        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
+        y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_classes)
             Predicted multi-class targets.
         """
         check_is_fitted(self)
@@ -455,12 +468,12 @@ class OneVsRestClassifier(
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        T : (sparse) array-like of shape (n_samples, n_classes)
+        T : array-like of shape (n_samples, n_classes)
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
         """
@@ -573,8 +586,11 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing :term:`fit` and one of
-        :term:`decision_function` or :term:`predict_proba`.
+        A regressor or a classifier that implements :term:`fit`.
+        When a classifier is passed, :term:`decision_function` will be used
+        in priority and it will fallback to :term:`predict_proba` if it is not
+        available.
+        When a regressor is passed, :term:`predict` is used.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation: the `n_classes * (
@@ -613,6 +629,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     See Also
     --------
     OneVsRestClassifier : One-vs-all multiclass strategy.
+    OutputCodeClassifier : (Error-Correcting) Output-Code multiclass strategy.
 
     Examples
     --------
@@ -629,6 +646,11 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
 
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods(["fit"])],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -638,7 +660,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         y : array-like of shape (n_samples,)
@@ -649,6 +671,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self : object
             The fitted underlying estimator.
         """
+        self._validate_params()
         # We need to validate the data because we do a safe_indexing later.
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc"], force_all_finite=False
@@ -692,7 +715,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix) of shape (n_samples, n_features)
             Data.
 
         y : array-like of shape (n_samples,)
@@ -712,6 +735,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         first_call = _check_partial_fit_first_call(self, classes)
         if first_call:
+            self._validate_params()
+
             self.estimators_ = [
                 clone(self.estimator)
                 for _ in range(self.n_classes_ * (self.n_classes_ - 1) // 2)
@@ -756,7 +781,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         Returns
@@ -836,8 +861,8 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     classifiers are used to project new points in the class space and the class
     closest to the points is chosen. The main advantage of these strategies is
     that the number of classifiers used can be controlled by the user, either
-    for compressing the model (0 < code_size < 1) or for making the model more
-    robust to errors (code_size > 1). See the documentation for more details.
+    for compressing the model (0 < `code_size` < 1) or for making the model more
+    robust to errors (`code_size` > 1). See the documentation for more details.
 
     Read more in the :ref:`User Guide <ecoc>`.
 
@@ -927,7 +952,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     array([1])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "estimator": [
             HasMethods(["fit", "decision_function"]),
             HasMethods(["fit", "predict_proba"]),
@@ -948,7 +973,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         y : array-like of shape (n_samples,)
@@ -976,12 +1001,12 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         # FIXME: there are more elaborate methods than generating the codebook
         # randomly.
         self.code_book_ = random_state.uniform(size=(n_classes, code_size_))
-        self.code_book_[self.code_book_ > 0.5] = 1
+        self.code_book_[self.code_book_ > 0.5] = 1.0
 
         if hasattr(self.estimator, "decision_function"):
-            self.code_book_[self.code_book_ != 1] = -1
+            self.code_book_[self.code_book_ != 1] = -1.0
         else:
-            self.code_book_[self.code_book_ != 1] = 0
+            self.code_book_[self.code_book_ != 1] = 0.0
 
         classes_index = {c: i for i, c in enumerate(self.classes_)}
 
@@ -1006,7 +1031,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         Returns
@@ -1015,6 +1040,13 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             Predicted multi-class targets.
         """
         check_is_fitted(self)
-        Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
-        pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)
+        # ArgKmin only accepts C-contiguous array. The aggregated predictions need to be
+        # transposed. We therefore create a F-contiguous array to avoid a copy and have
+        # a C-contiguous array after the transpose operation.
+        Y = np.array(
+            [_predict_binary(e, X) for e in self.estimators_],
+            order="F",
+            dtype=np.float64,
+        ).T
+        pred = pairwise_distances_argmin(Y, self.code_book_, metric="euclidean")
         return self.classes_[pred]

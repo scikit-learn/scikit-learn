@@ -4,13 +4,12 @@
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.stdio cimport printf
 from libc.stdint cimport SIZE_MAX
 
-from ..tree._utils cimport safe_realloc, sizet_ptr_to_ndarray
-from ..utils import check_array
+from ..tree._utils cimport safe_realloc
 
 import numpy as np
 cimport numpy as cnp
@@ -53,7 +52,7 @@ cdef class _QuadTree:
         # Parameters of the tree
         self.n_dimensions = n_dimensions
         self.verbose = verbose
-        self.n_cells_per_cell = 2 ** self.n_dimensions
+        self.n_cells_per_cell = <int> (2 ** self.n_dimensions)
 
         # Inner structures
         self.max_depth = 0
@@ -69,11 +68,13 @@ cdef class _QuadTree:
 
     property cumulative_size:
         def __get__(self):
-            return self._get_cell_ndarray()['cumulative_size'][:self.cell_count]
+            cdef Cell[:] cell_mem_view = self._get_cell_ndarray()
+            return cell_mem_view.base['cumulative_size'][:self.cell_count]
 
     property leafs:
         def __get__(self):
-            return self._get_cell_ndarray()['is_leaf'][:self.cell_count]
+            cdef Cell[:] cell_mem_view = self._get_cell_ndarray()
+            return cell_mem_view.base['is_leaf'][:self.cell_count]
 
     def build_tree(self, X):
         """Build a tree from an array of points X."""
@@ -116,7 +117,6 @@ cdef class _QuadTree:
                           SIZE_t cell_id=0) nogil except -1:
         """Insert a point in the QuadTree."""
         cdef int ax
-        cdef DTYPE_t n_frac
         cdef SIZE_t selected_child
         cdef Cell* cell = &self.cells[cell_id]
         cdef SIZE_t n_point = cell.cumulative_size
@@ -502,7 +502,7 @@ cdef class _QuadTree:
         d["cell_count"] = self.cell_count
         d["capacity"] = self.capacity
         d["n_points"] = self.n_points
-        d["cells"] = self._get_cell_ndarray()
+        d["cells"] = self._get_cell_ndarray().base
         return d
 
     def __setstate__(self, d):
@@ -527,14 +527,18 @@ cdef class _QuadTree:
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
 
-        cells = memcpy(self.cells, (<cnp.ndarray> cell_ndarray).data,
-                       self.capacity * sizeof(Cell))
+        cdef Cell[:] cell_mem_view = cell_ndarray
+        cells = memcpy(
+            pto=self.cells,
+            pfrom=&cell_mem_view[0],
+            size=self.capacity * sizeof(Cell),
+        )
 
 
     # Array manipulation methods, to convert it to numpy or to resize
     # self.cells array
 
-    cdef cnp.ndarray _get_cell_ndarray(self):
+    cdef Cell[:] _get_cell_ndarray(self):
         """Wraps nodes as a NumPy struct array.
 
         The array keeps a reference to this Tree, which manages the underlying
@@ -545,14 +549,20 @@ cdef class _QuadTree:
         shape[0] = <cnp.npy_intp> self.cell_count
         cdef cnp.npy_intp strides[1]
         strides[0] = sizeof(Cell)
-        cdef cnp.ndarray arr
+        cdef Cell[:] arr
         Py_INCREF(CELL_DTYPE)
-        arr = PyArray_NewFromDescr(<PyTypeObject *> np.ndarray,
-                                   CELL_DTYPE, 1, shape,
-                                   strides, <void*> self.cells,
-                                   cnp.NPY_DEFAULT, None)
+        arr = PyArray_NewFromDescr(
+            subtype=<PyTypeObject *> np.ndarray,
+            descr=CELL_DTYPE,
+            nd=1,
+            dims=shape,
+            strides=strides,
+            data=<void*> self.cells,
+            flags=cnp.NPY_ARRAY_DEFAULT,
+            obj=None,
+        )
         Py_INCREF(self)
-        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+        if PyArray_SetBaseObject(arr.base, <PyObject*> self) < 0:
             raise ValueError("Can't initialize array!")
         return arr
 
@@ -577,7 +587,7 @@ cdef class _QuadTree:
         if capacity == self.capacity and self.cells != NULL:
             return 0
 
-        if capacity == SIZE_MAX:
+        if <size_t> capacity == SIZE_MAX:
             if self.capacity == 0:
                 capacity = 9  # default initial value to min
             else:
