@@ -104,6 +104,13 @@ Changelog
   is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 
+:mod:`sklearn.covariance`
+.........................
+
+- |Fix| :func:`covariance.empirical_covariance` now estimates the covariance
+  instead of pseudo-covariance for centered complex inputs.
+  :pr:`25520` by :user:`Quentin Barthélemy <qbarthelemy>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
