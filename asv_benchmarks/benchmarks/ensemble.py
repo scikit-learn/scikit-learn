@@ -31,7 +31,6 @@ class RandomForestClassifierBenchmark(Predictor, Estimator, Benchmark):
             data = _20newsgroups_highdim_dataset()
         else:
             data = _20newsgroups_lowdim_dataset()
-
         return data
 
     def make_estimator(self, params):
