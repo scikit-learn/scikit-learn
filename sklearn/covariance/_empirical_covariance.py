@@ -95,7 +95,7 @@ def empirical_covariance(X, *, assume_centered=False):
         )
 
     if assume_centered:
-        covariance = np.dot(X.T, X) / X.shape[0]
+        covariance = np.dot(X.T, X.conj()) / X.shape[0]
     else:
         covariance = np.cov(X.T, bias=1)
 

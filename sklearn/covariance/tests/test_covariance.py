@@ -79,6 +79,14 @@ def test_covariance():
     cov.fit(X)
     assert_array_equal(cov.location_, np.zeros(X.shape[1]))
 
+    # test centered complex case
+    rng = np.random.RandomState(0)
+    X_complex = rng.randn(10, 3) + 1.0j * rng.randn(10, 3)
+    X_complex -= np.mean(X_complex, axis=0, keepdims=True)
+    emp_cov_true = empirical_covariance(X_complex, assume_centered=True)
+    emp_cov_false = empirical_covariance(X_complex, assume_centered=False)
+    assert_array_almost_equal(emp_cov_true, emp_cov_false)
+
 
 def test_shrunk_covariance():
     # Tests ShrunkCovariance module on a simple dataset.
