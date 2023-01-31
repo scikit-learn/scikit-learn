@@ -1,7 +1,7 @@
 """
-========================================
-Lasso and Elastic Net for Sparse Signals
-========================================
+==================================
+L1-based models for Sparse Signals
+==================================
 
 The present example compares three l1-based regression models on a synthetic
 signal obtained from sparse and correlated features that are further corrupted
@@ -20,6 +20,8 @@ Here we compare the performance of the three models in terms of the :math:`R^2`
 score, the fitting time and the sparsity of the estimated coefficients when
 compared with the ground-truth.
 """
+
+# Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
 
 # %%
 # Generate synthetic dataset
