@@ -1193,7 +1193,7 @@ def test_paired_manhattan_distances():
     assert_allclose(D, [1.0, 2.0])
 
 
-def test_paired_manhattan_distances():
+def test_paired_haversine_distances():
     # Check the paired haversine distances computation
     rng = np.random.RandomState(0)
     X = rng.randn(5, 3)
