@@ -13,7 +13,6 @@
 # License: BSD 3 clause
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
-from cython cimport floating
 
 from libc.stdlib cimport free
 from libc.string cimport memcpy
