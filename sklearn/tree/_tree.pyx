@@ -111,10 +111,10 @@ cdef class TreeBuilder:
             if X.indices.dtype != np.int32 or X.indptr.dtype != np.int32:
                 raise ValueError("No support for np.int64 index based "
                                  "sparse matrices")
-        elif X.data.dtype != DTYPE:
+        elif X.dtype != DTYPE:
             # since we have to copy we will make it fortran for efficiency
             X = np.asfortranarray(X, dtype=DTYPE)
-        elif not X.flags.contiguous:
+        elif not X.flags.fortran:
             # moreover fortran is used during fitting because it is more
             # efficient for looping over samples
             raise ValueError("Dense arrays must be represented in fortran format.")
