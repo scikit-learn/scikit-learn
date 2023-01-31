@@ -352,7 +352,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
             X.sort_indices()
-        elif X.flags == 'contiguous':
+        elif not X.flags.fortran:
             # if X is not fortran, then make a copy here and make sure it is fortran
             X = np.asfortranarray(X, dtype=DTYPE)
 
