@@ -979,10 +979,7 @@ cdef class BinaryTree:
         )
 
     def get_valid_metrics(self):
-        """
-        get_valid_metrics()
-
-        Get valid metrics.
+        """Get list of valid distance metrics.
 
         Returns
         -------
