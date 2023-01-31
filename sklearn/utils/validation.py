@@ -642,7 +642,6 @@ def check_array(
     estimator=None,
     input_name="",
 ):
-
     """Input validation on an array, list, sparse matrix or similar.
 
     By default, the input is checked to be a non-empty 2D array containing
@@ -1119,7 +1118,13 @@ def check_X_y(
         input_name="X",
     )
 
-    y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric, estimator=estimator, allow_nd=allow_nd)
+    y = _check_y(
+        y,
+        multi_output=multi_output,
+        y_numeric=y_numeric,
+        estimator=estimator,
+        allow_nd=allow_nd,
+    )
 
     check_consistent_length(X, y)
 
