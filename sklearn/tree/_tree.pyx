@@ -103,8 +103,9 @@ cdef class TreeBuilder:
             X = X.tocsc()
             X.sort_indices()
 
-            # if X.data.dtype != DTYPE:
-            X.data = np.asfortranarray(X.data, dtype=DTYPE)
+            # if we need to copy to convert the datatype, then do it using fortran
+            if X.data.dtype != DTYPE:
+                X.data = np.asfortranarray(X.data, dtype=DTYPE)
 
             if X.indices.dtype != np.int32 or X.indptr.dtype != np.int32:
                 raise ValueError("No support for np.int64 index based "
@@ -121,8 +122,9 @@ cdef class TreeBuilder:
         if (sample_weight is not None and
             (sample_weight.dtype != DOUBLE or
             not sample_weight.flags.contiguous)):
-                sample_weight = np.asarray(sample_weight, dtype=DOUBLE,
-                                           order="C")
+                # sample weight should be contiguous array
+                sample_weight = np.ascontiguousarray(sample_weight,
+                                                     dtype=DOUBLE)
 
         return X, y, sample_weight
 
