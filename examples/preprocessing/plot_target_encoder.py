@@ -118,6 +118,9 @@ for name, categorical_preprocessor in categorical_preprocessors:
 # the significance of the improvement.
 import pandas as pd
 
-_ = pd.DataFrame(results).sort_values("root mean squared error", ascending=False).set_index(
-    "preprocessor"
-).plot(kind="barh")
+_ = (
+    pd.DataFrame(results)
+    .sort_values("root mean squared error", ascending=False)
+    .set_index("preprocessor")
+    .plot(kind="barh")
+)
