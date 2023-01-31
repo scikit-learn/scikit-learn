@@ -56,7 +56,7 @@ y.value_counts().sort_index()
 # * :class:`~sklearn.multiclass.OutputCodeClassifier`: trains a set of binary
 #   classifiers where each classifier is trained to distinguish between
 #   a set of classes from the rest of the classes. The set of classes is
-#   defined a codebook (i.e. randomly generated in scikit-learn).
+#   defined by a codebook, which is randomly generated in scikit-learn.
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.multiclass import (
@@ -153,7 +153,7 @@ plt.show()
 # Conclusion
 # ----------
 #
-# We can get a couple of intuition behind those results.
+# We can get some intuition behind those results.
 #
 # First, the reason for which one-vs-one and error-correcting output code are
 # performing better when the hyperparameters are not optimized relies on the
@@ -168,7 +168,7 @@ plt.show()
 #
 # Finally, it is important to recall that the estimators in scikit-learn
 # are developed with a specific strategy to handle multiclass classification
-# out of the box. It means that there is little interest of using the
+# out of the box. It means that there is little interest in using the
 # different strategies. However, it also shows that even if a strategy has been
 # chosen and implemented, the hyperparameters should be optimized.
 #
