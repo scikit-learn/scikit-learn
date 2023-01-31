@@ -1096,12 +1096,12 @@ def paired_haversine_distances(X, Y):
     X : array-like of shape (n_samples, 2)
         A numpy array of coordinates (latitude and longitude, in radians).
 
-    Y : array-like of shape (n_samples_Y, 2)
+    Y : array-like of shape (n_samples, 2)
         A numpy array of coordinates (latitude and longitude, in radians).
 
     Returns
     -------
-    distance : ndarray of shape (n_samples_X, )
+    distance : ndarray of shape (n_samples, )
         The distances between the points in X and Y.
 
     Notes

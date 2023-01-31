@@ -112,19 +112,6 @@ def test_pairwise_distances(global_dtype):
     S2 = haversine_distances(X, Y)
     assert_allclose(S, S2)
 
-    # test paired haversine
-    X = rng.randn(5, 3)
-    Y = rng.randn(5, 3)
-    with pytest.raises(
-        ValueError,
-        match=(
-            r"For paired distances and the metric `haversine`, X and Y should both be"
-            r" of shape \(n_samples, 2\), but X.shape is \(5, 3\) and Y.shape is"
-            r" \(5, 3\)"
-        ),
-    ):
-        paired_haversine_distances(X, Y)
-
     # compare paired to pairwise implementations
     X = rng.randn(5, 2)
     Y = np.tile(X[0, :], (5, 1))
@@ -1204,6 +1191,22 @@ def test_paired_manhattan_distances():
     Y = [[1], [2]]
     D = paired_manhattan_distances(X, Y)
     assert_allclose(D, [1.0, 2.0])
+
+
+def test_paired_manhattan_distances():
+    # Check the paired haversine distances computation
+    rng = np.random.RandomState(0)
+    X = rng.randn(5, 3)
+    Y = rng.randn(5, 3)
+    with pytest.raises(
+        ValueError,
+        match=(
+            r"For paired distances and the metric `haversine`, X and Y should both be"
+            r" of shape \(n_samples, 2\), but X.shape is \(5, 3\) and Y.shape is"
+            r" \(5, 3\)"
+        ),
+    ):
+        paired_haversine_distances(X, Y)
 
 
 def test_chi_square_kernel():
