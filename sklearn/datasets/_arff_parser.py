@@ -336,8 +336,6 @@ def _pandas_arff_parser(
         Keyword arguments to pass to `pandas.read_csv`. It allows to overwrite
         the default options.
 
-        .. versionadded:: 1.3
-
     Returns
     -------
     X : {ndarray, sparse matrix, dataframe}
@@ -473,8 +471,6 @@ def load_arff_from_gzip_file(
     read_csv_kwargs : dict, default=None
         Keyword arguments to pass to `pandas.read_csv`. It allows to overwrite
         the default options.
-
-        .. versionadded:: 1.3
 
     Returns
     -------
