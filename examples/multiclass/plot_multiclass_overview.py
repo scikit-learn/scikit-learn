@@ -1,15 +1,22 @@
 """
-==================================
-Multiclass classification overview
-==================================
+===============================================
+Overview of multiclass training meta-estimators
+===============================================
 
 In this example, we discuss the problem of classification when the target
 variable is composed of more than two classes. This is called multiclass
 classification.
 
-In scikit-learn, all estimators support multiclass classification by out of
-box. The :mod:`sklearn.multiclass` module implements various strategies that
+In scikit-learn, all estimators support multiclass classification out of the
+box: the most sensible strategy was implemented for the end-user. The
+:mod:`sklearn.multiclass` module implements various strategies that
 one can use for experimenting. This example will review them.
+
+One should not confuse the OvO/OvR strategy used for the evaluation of
+multiclass classifiers with the OvO/OvR strategy used to train a multiclass
+classifier by fitting a set of binary classifiers (the
+:class:`~sklearn.multiclass.OneVsOneClassifier` and
+:class:`~sklearn.multiclass.OneVsRestClassifier` meta-estimator).
 """
 
 # %%
