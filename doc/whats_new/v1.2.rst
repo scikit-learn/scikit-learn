@@ -59,10 +59,14 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Fix| Fix an inconsistency in :func:`datasets.fetch_openml` between liac-arff
+- |Fix| Fixes an inconsistency in :func:`datasets.fetch_openml` between liac-arff
   and pandas parser when a leading space is introduced after the delimiter.
   The ARFF specs requires to ignore the leading space.
   :pr:`25312` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fixes a bug in :func:`datasets.fetch_openml` when using `parser="pandas"`
+  where single quote and backslash escape characters were not properly handled.
+  :pr:`25511` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.decomposition`
 ............................
