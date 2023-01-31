@@ -29,7 +29,7 @@ from ..preprocessing import normalize
 from ..utils._mask import _get_mask
 from ..utils.parallel import delayed, Parallel
 from ..utils.fixes import sp_base_version, sp_version, parse_version
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import validate_params, StrOptions, Integral
 
 from ._pairwise_distances_reduction import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
@@ -1886,6 +1886,15 @@ def pairwise_distances_chunked(
         yield D_chunk
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "Y": ["array-like", None],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "n_jobs": [Integral, None],
+        "force_all_finite": [bool],
+    }
+)
 def pairwise_distances(
     X, Y=None, metric="euclidean", *, n_jobs=None, force_all_finite=True, **kwds
 ):
@@ -1930,13 +1939,13 @@ def pairwise_distances(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_X, n_samples_X) or \
+    X : array-like of shape (n_samples_X, n_samples_X) or \
             (n_samples_X, n_features)
         Array of pairwise distances between samples, or a feature array.
         The shape of the array should be (n_samples_X, n_samples_X) if
         metric == "precomputed" and (n_samples_X, n_features) otherwise.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : array-like of shape (n_samples_Y, n_features), default=None
         An optional second feature array. Only allowed if
         metric != "precomputed".
 
@@ -1998,16 +2007,6 @@ def pairwise_distances(
     paired_distances : Computes the distances between corresponding elements
         of two arrays.
     """
-    if (
-        metric not in _VALID_METRICS
-        and not callable(metric)
-        and metric != "precomputed"
-    ):
-        raise ValueError(
-            "Unknown metric %s. Valid metrics are %s, or 'precomputed', or a callable"
-            % (metric, _VALID_METRICS)
-        )
-
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
             X, Y, precomputed=True, force_all_finite=force_all_finite
@@ -2021,13 +2020,10 @@ def pairwise_distances(
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
-    elif callable(metric):
+    else:  # callable(metric):
         func = partial(
             _pairwise_callable, metric=metric, force_all_finite=force_all_finite, **kwds
         )
-    else:
-        if issparse(X) or issparse(Y):
-            raise TypeError("scipy distance metrics do not support sparse matrices.")
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
 
