@@ -31,33 +31,73 @@ compared with the ground-truth.
 # number of features. This leads to a singular matrix that cannot be dealt with
 # an :ref:`ordinary_least_squares` as it requires some regularization.
 #
-# Here `X` and `y` are linearly linked. Only 100 out of the 1_000 features in
-# `X` will be used to generate `y` while the rest are not useful at predicting
-# `y`, resulting in a sparse feature space. Some correlations between the
-# informative features are added by means of the `effective_rank` parameter.
-# Finally, gaussian noise is added.
-#
+# The target `y` is a linear combination with alternating signs of sinusoidal
+# signals. Only the 10 lowest out of the 100 frequencies in `X` are used to
+# generate `y`, while the rest of the features are not informative. This results
+# in a high dimentional sparse feature space, where some degree of
+# l1-penalization is necessary.
+
+import numpy as np
+
+rng = np.random.RandomState(0)
+n_samples, n_features, n_informative = 50, 100, 10
+time_step = np.linspace(-2, 2, n_samples)
+freqs = 2 * np.pi * np.sort(rng.rand(n_features)) / 0.01
+X = np.zeros((n_samples, n_features))
+
+for i in range(n_features):
+    X[:, i] = np.sin(freqs[i] * time_step)
+
+idx = np.arange(n_features)
+true_coef = (-1) ** idx * np.exp(-idx / 10)
+true_coef[n_informative:] = 0  # sparsify coef
+y = np.dot(X, true_coef)
+
+# %%
+# Some of the informative features have close frequencies to induce
+# (anti-)correlations.
+
+freqs[:n_informative]
+
+# %%
+# A random phase is introduced using `numpy.random.random_sample
+# <https://numpy.org/doc/stable/reference/random/generated/numpy.random.random_sample.html>`_
+# and some gaussian noise (implemented by `numpy.random.normal
+# <https://numpy.org/doc/stable/reference/random/generated/numpy.random.random_sample.html>`_)
+# is added to both the features and the target.
+
+for i in range(n_features):
+    X[:, i] = np.sin(freqs[i] * time_step + 2 * (rng.random_sample() - 0.5))
+    X[:, i] += 0.2 * rng.normal(0, 1, n_samples)
+
+y += 0.2 * rng.normal(0, 1, n_samples)
+
+# %%
 # Such sparse, noisy and correlated features can be obtained, for instance, from
 # sensor nodes monitoring some environmental variables, as they typically register
 # similar values depending on their positions (spatial correlations).
-from sklearn.datasets import make_regression
-from sklearn.model_selection import train_test_split
+# We can visualize the target.
 
-X, y, true_coef = make_regression(
-    n_samples=500,
-    n_features=1000,
-    n_informative=100,
-    effective_rank=15,
-    noise=1,
-    coef=True,
-    random_state=42,
-)
+import matplotlib.pyplot as plt
+
+plt.plot(time_step, y)
+plt.ylabel("target signal")
+plt.xlabel("time")
+_ = plt.title("Superposition of sinusoidal signals")
 
 # %%
-# We split data in train set and test set for simplicity. In practice one should
-# use cross-validation to estimate the variance of the test score.
+# We split the data into train and test sets for simplicity. In practice one should
+# use a :class:`~sklearn.model_selection.TimeSeriesSplit` cross-validation to
+# estimate the variance of the test score. Here we set `shuffle="False"` to keep
+# the causality of the unseen data.
+
+from sklearn.model_selection import train_test_split
+
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.5, random_state=42
+    X,
+    y,
+    test_size=0.5,
+    shuffle=False,
 )
 
 # %%
@@ -66,16 +106,16 @@ X_train, X_test, y_train, y_test = train_test_split(
 #
 # In this example we demo a :class:`~sklearn.linear_model.Lasso` with a fix
 # value of the regularization parameter `alpha`. In practice, the optimal
-# parameter `alpha` should be selected using cross-validation by using
+# parameter `alpha` should be selected by passing a
+# :class:`~sklearn.model_selection.TimeSeriesSplit` cross-validation strategy to a
 # :class:`~sklearn.linear_model.LassoCV`. To keep the example simple and fast to
 # execute, we directly set the optimal value for alpha here.
 from sklearn.linear_model import Lasso
 from sklearn.metrics import r2_score
 from time import time
 
-common_params = {"alpha": 0.00002, "max_iter": 10_000}
 t0 = time()
-lasso = Lasso(**common_params).fit(X_train, y_train)
+lasso = Lasso(alpha=0.14).fit(X_train, y_train)
 print(f"Lasso fit done in {(time() - t0):.3f}s")
 
 y_pred_lasso = lasso.predict(X_test)
@@ -88,7 +128,7 @@ print(f"Lasso r^2 on test data : {r2_score_lasso:.3f}")
 #
 # An ARD regression is the bayesian version of the Lasso. It can produce
 # interval estimates for all of the parameters, including the error variance, if
-# required.
+# required. It is a suitable option when the signals have gaussian noise.
 
 from sklearn.linear_model import ARDRegression
 
@@ -121,7 +161,7 @@ print(f"ARD r^2 on test data : {r2_score_ard:.3f}")
 from sklearn.linear_model import ElasticNet
 
 t0 = time()
-enet = ElasticNet(l1_ratio=0.8, **common_params).fit(X_train, y_train)
+enet = ElasticNet(alpha=0.08, l1_ratio=0.5).fit(X_train, y_train)
 print(f"ElasticNet fit done in {(time() - t0):.3f}s")
 
 y_pred_enet = enet.predict(X_test)
@@ -152,7 +192,7 @@ df = pd.DataFrame(
 plt.figure(figsize=(10, 6))
 ax = sns.heatmap(
     df.T,
-    norm=SymLogNorm(linthresh=10e-4, vmin=-80, vmax=80),
+    norm=SymLogNorm(linthresh=10e-4, vmin=-1, vmax=1),
     cbar_kws={"label": "coefficients' values"},
     cmap="seismic_r",
 )
@@ -166,6 +206,13 @@ plt.title(
 plt.tight_layout()
 
 # %%
+# In the present example :class:`~sklearn.linear_model.ElasticNet` yields the
+# best score and captures the most of the predictive features, yet still fails
+# at finding all the true components. Notice that both
+# :class:`~sklearn.linear_model.ElasticNet` and
+# :class:`~sklearn.linear_model.ARDRegression` result in a less sparse model
+# than a :class:`~sklearn.linear_model.Lasso`.
+#
 # Conclusions
 # -----------
 #
@@ -173,22 +220,19 @@ plt.tight_layout()
 # effectively but does not perform well with highly correlated features. Indeed,
 # if several correlated features contribute to the target,
 # :class:`~sklearn.linear_model.Lasso` would end up selecting a single one of
-# them.
-#
-# :class:`~sklearn.linear_model.ARDRegression` is better when handling gaussian
-# noise, which translates in a slightly better score than Lasso, but is still
-# unable to handle correlated features and requires a large amount of time due
-# to fitting a prior.
+# them. In the case of sparse yet non-correlated features, a
+# :class:`~sklearn.linear_model.Lasso` model would be more suitable.
 #
 # :class:`~sklearn.linear_model.ElasticNet` introduces some sparsity on the
 # coefficients and shrinks their values to zero. Thus, in the presence of
-# correlated features that contribute to the target, the model is still be able
-# to reduce their weights without setting them exactly to zero. This results in
-# a less sparse model than a pure l1-penalty.
+# correlated features that contribute to the target, the model is still able to
+# reduce their weights without setting them exactly to zero. This results in a
+# less sparse model than a pure :class:`~sklearn.linear_model.Lasso` and may
+# capture non-predictive features as well.
 #
-# In this case, :class:`~sklearn.linear_model.ElasticNet` yields the model with
-# the best score. In the case of sparse yet non-correlated features, a
-# :class:`~sklearn.linear_model.Lasso` model would be more suitable.
+# :class:`~sklearn.linear_model.ARDRegression` is better when handling gaussian
+# noise, but is still unable to handle correlated features and requires a larger
+# amount of time due to fitting a prior.
 #
 # References
 # ----------
