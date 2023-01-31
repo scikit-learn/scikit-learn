@@ -371,16 +371,26 @@ def _pandas_arff_parser(
 
     default_read_csv_kwargs = {
         "header": None,
+        "index_col": False,  # always force pandas to not use the first column as index
         "na_values": ["?"],  # missing values are represented by `?`
         "comment": "%",  # skip line starting by `%` since they are comments
         "quotechar": '"',  # delimiter to use for quoted strings
-        "names": [name for name in openml_columns_info],
-        "dtype": dtypes,
         "skipinitialspace": True,  # skip spaces after delimiter to follow ARFF specs
         "escapechar": "\\",
     }
     read_csv_kwargs = {**default_read_csv_kwargs, **(read_csv_kwargs or {})}
     frame = pd.read_csv(gzip_file, **read_csv_kwargs)
+    try:
+        # Setting the columns while reading the file will select the N first columns
+        # and not raise a ParserError. Instead, we set the columns after reading the
+        # file and raise a ParserError if the number of columns does not match the
+        # number of columns in the metadata given by OpenML.
+        frame.columns = [name for name in openml_columns_info]
+    except ValueError as exc:
+        raise pd.errors.ParserError(
+            "The number of columns provided by OpenML does not match the number of "
+            "columns inferred by pandas when reading the file."
+        ) from exc
 
     columns_to_select = feature_names_to_select + target_names_to_select
     columns_to_keep = [col for col in frame.columns if col in columns_to_select]
