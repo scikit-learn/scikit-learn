@@ -97,24 +97,27 @@ cdef class TreeBuilder:
         cnp.ndarray y,
         cnp.ndarray sample_weight
     ):
-        """Check input dtype, layout and format"""
+        """Check input dtype, layout and format."""
         if issparse(X):
-            # csc is fortran by default
+            # since sparse arrays are represented by three 1D arrays, they are all
+            # fortran by default
             X = X.tocsc()
             X.sort_indices()
 
             # if we need to copy to convert the datatype, then do it using fortran
             if X.data.dtype != DTYPE:
-                X.data = np.asfortranarray(X.data, dtype=DTYPE)
+                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
 
             if X.indices.dtype != np.int32 or X.indptr.dtype != np.int32:
                 raise ValueError("No support for np.int64 index based "
                                  "sparse matrices")
-        else:
+        elif X.data.dtype != DTYPE:
             # since we have to copy we will make it fortran for efficiency
+            X = np.asfortranarray(X, dtype=DTYPE)
+        elif not X.flags.contiguous:
             # moreover fortran is used during fitting because it is more
             # efficient for looping over samples
-            X = np.asfortranarray(X, dtype=DTYPE)
+            raise ValueError("Dense arrays must be represented in fortran format.")
 
         if y.dtype != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
@@ -122,9 +125,8 @@ cdef class TreeBuilder:
         if (sample_weight is not None and
             (sample_weight.dtype != DOUBLE or
             not sample_weight.flags.contiguous)):
-                # sample weight should be contiguous array
-                sample_weight = np.ascontiguousarray(sample_weight,
-                                                     dtype=DOUBLE)
+                sample_weight = np.asarray(sample_weight, dtype=DOUBLE,
+                                           order="C")
 
         return X, y, sample_weight
 
