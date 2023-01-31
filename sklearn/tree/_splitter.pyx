@@ -686,7 +686,7 @@ cdef class DensePartitioner:
     Note that this partitioner is agnostic to the splitting strategy (best vs. random).
     """
     cdef:
-        const DTYPE_t[:, :] X
+        const DTYPE_t[::1, :] X
         cdef SIZE_t[::1] samples
         cdef DTYPE_t[::1] feature_values
         cdef SIZE_t start
@@ -694,7 +694,7 @@ cdef class DensePartitioner:
 
     def __init__(
         self,
-        const DTYPE_t[:, :] X,
+        const DTYPE_t[::1, :] X,
         SIZE_t[::1] samples,
         DTYPE_t[::1] feature_values,
     ):
@@ -714,7 +714,7 @@ cdef class DensePartitioner:
         cdef:
             SIZE_t i
             DTYPE_t[::1] Xf = self.feature_values
-            const DTYPE_t[:, :] X = self.X
+            const DTYPE_t[::1, :] X = self.X
             SIZE_t[::1] samples = self.samples
 
         # Sort samples along that feature; by
@@ -735,7 +735,7 @@ cdef class DensePartitioner:
         cdef:
             SIZE_t p
             DTYPE_t current_feature_value
-            const DTYPE_t[:, :] X = self.X
+            const DTYPE_t[::1, :] X = self.X
             SIZE_t[::1] samples = self.samples
             DTYPE_t min_feature_value = X[samples[self.start], current_feature]
             DTYPE_t max_feature_value = min_feature_value
@@ -797,7 +797,7 @@ cdef class DensePartitioner:
             SIZE_t p = self.start
             SIZE_t partition_end = self.end
             SIZE_t[::1] samples = self.samples
-            const DTYPE_t[:, :] X = self.X
+            const DTYPE_t[::1, :] X = self.X
 
         while p < partition_end:
             if X[samples[p], best_feature] <= best_threshold:

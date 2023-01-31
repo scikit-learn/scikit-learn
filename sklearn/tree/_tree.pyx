@@ -91,22 +91,28 @@ cdef class TreeBuilder:
         """Build a decision tree from the training set (X, y)."""
         pass
 
-    cdef inline _check_input(self, object X, cnp.ndarray y,
-                             cnp.ndarray sample_weight):
+    cdef inline _check_input(
+        self,
+        object X,
+        cnp.ndarray y,
+        cnp.ndarray sample_weight
+    ):
         """Check input dtype, layout and format"""
         if issparse(X):
+            # csc is fortran by default
             X = X.tocsc()
             X.sort_indices()
 
-            if X.data.dtype != DTYPE:
-                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+            # if X.data.dtype != DTYPE:
+            X.data = np.asfortranarray(X.data, dtype=DTYPE)
 
             if X.indices.dtype != np.int32 or X.indptr.dtype != np.int32:
                 raise ValueError("No support for np.int64 index based "
                                  "sparse matrices")
-
-        elif X.dtype != DTYPE:
+        else:
             # since we have to copy we will make it fortran for efficiency
+            # moreover fortran is used during fitting because it is more
+            # efficient for looping over samples
             X = np.asfortranarray(X, dtype=DTYPE)
 
         if y.dtype != DOUBLE or not y.flags.contiguous:
