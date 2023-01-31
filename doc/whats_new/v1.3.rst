@@ -169,10 +169,6 @@ Changelog
   dissimilarity is not a metric and cannot be supported by the BallTree.
   :pr:`25417` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| :class:`neural_network.MLPRegressor`
-  MLPEstimator respect `max_iter` when `warm_start` is on.
-  :pr:`25443` by :user:`Marvin Krawutschke <Marvvxi>`.
-
 :mod:`sklearn.pipeline`
 .......................
 

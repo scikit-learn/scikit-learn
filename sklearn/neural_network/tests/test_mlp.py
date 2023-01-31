@@ -354,7 +354,7 @@ def test_learning_rate_warmstart():
         if learning_rate == "constant":
             assert prev_eta == post_eta
         elif learning_rate == "invscaling":
-            assert mlp.learning_rate_init == post_eta
+            assert mlp.learning_rate_init / pow(8 + 1, mlp.power_t) == post_eta
 
 
 def test_multilabel_classification():
@@ -891,7 +891,7 @@ def test_mlp_loading_from_joblib_partial_fit(tmp_path):
 
     # finetuned model learned the new target
     predicted_value = load_estimator.predict(fine_tune_features)
-    assert_allclose(predicted_value, fine_tune_target, rtol=1e-3)
+    assert_allclose(predicted_value, fine_tune_target, rtol=1e-4)
 
 
 @pytest.mark.parametrize("Estimator", [MLPClassifier, MLPRegressor])
@@ -929,13 +929,16 @@ def test_mlp_warm_start_with_early_stopping(MLPEstimator):
 
 
 @pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
-def test_mlp_warm_start_no_convergence(MLPEstimator):
+@pytest.mark.parametrize("solver", ["sgd", "adam", "lbfgs"])
+def test_mlp_warm_start_no_convergence(MLPEstimator, solver):
     """Check that we stop the number of iteration at `max_iter` when warm starting.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/24764
     """
-    model = MLPEstimator(warm_start=True, early_stopping=False, max_iter=10)
+    model = MLPEstimator(
+        solver=solver, warm_start=True, early_stopping=False, max_iter=10
+    )
 
     with pytest.warns(ConvergenceWarning):
         model.fit(X_iris, y_iris)
