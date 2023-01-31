@@ -1119,14 +1119,14 @@ def check_X_y(
         input_name="X",
     )
 
-    y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric, estimator=estimator)
+    y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric, estimator=estimator, allow_nd=allow_nd)
 
     check_consistent_length(X, y)
 
     return X, y
 
 
-def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
+def _check_y(y, multi_output=False, y_numeric=False, estimator=None, allow_nd=False):
     """Isolated part of check_X_y dedicated to y validation"""
     if multi_output:
         y = check_array(
@@ -1137,6 +1137,7 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
             dtype=None,
             input_name="y",
             estimator=estimator,
+            allow_nd=allow_nd,
         )
     else:
         estimator_name = _check_estimator_name(estimator)
