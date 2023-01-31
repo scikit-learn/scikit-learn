@@ -36,7 +36,7 @@ Changelog
   :pr:`25500` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.neural_network`
-............................
+.............................
 
 - |Fix| :class:`neural_network.MLPRegressor` and :class:`neural_network.MLPClassifier`
   reports the right `n_iter_` when `warm_start=True`. It corresponds to the number
