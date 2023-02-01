@@ -700,7 +700,7 @@ cdef class Tree:
             with gil:
                 raise MemoryError()
 
-    cdef int _resize_c(self, size_t capacity=SIZE_MAX) nogil except -1:
+    cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) nogil except -1:
         """Guts of _resize
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -709,7 +709,7 @@ cdef class Tree:
         if capacity == self.capacity and self.nodes != NULL:
             return 0
 
-        if capacity == SIZE_MAX:
+        if <size_t> capacity == SIZE_MAX:
             if self.capacity == 0:
                 capacity = 3  # default initial value
             else:
