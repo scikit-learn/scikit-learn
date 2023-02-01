@@ -781,25 +781,53 @@ class PartialDependenceDisplay:
     def _get_color_dict_from_values(
         self, value_list, categorical_or_continuous: str, cmap_name: str = "Spectral"
     ):
-        colors_dict = {}
+        color_dict = {}
         if categorical_or_continuous == "categorical":
             mapping = {
                 np.unique(value_list)[i]: f"C{i}"
                 for i in range(len(np.unique(value_list)))
             }
-            colors_dict["color_list"] = [
+            color_dict["color_list"] = [
                 mapping[value_list[i]] for i in range(len(value_list))
             ]
-            colors_dict["categorical_mapping"] = mapping
+            color_dict["categorical_mapping"] = mapping
         elif categorical_or_continuous == "continuous":
             cmap = mpl.cm.get_cmap(cmap_name)
             norm = mpl.colors.Normalize(vmin=value_list.min(), vmax=value_list.max())
-            colors_dict["color_list"] = [
+            color_dict["color_list"] = [
                 mpl.colors.to_hex(cmap(norm(value))) for value in value_list
             ]
-            colors_dict["norm"] = norm
-            colors_dict["cmap"] = cmap
-        return colors_dict
+            color_dict["norm"] = norm
+            color_dict["cmap"] = cmap
+        return color_dict
+
+    def _check_if_colors_by_feature(self, ice_lines_kw, preds):
+        # case 1: color can be a single color for all lines given as a str for all lines
+        color_dict = {}
+        if isinstance(ice_lines_kw["color"], str):
+            color_dict["color_list"] = np.repeat(ice_lines_kw["color"], preds.shape[0])
+        # case 2: color can be given as a list values for which color is created
+        elif isinstance(ice_lines_kw["color"], (list, np.ndarray, pd.Series)):
+            value_list = np.array(ice_lines_kw["color"])
+            # case 2.1 Sequence of str -> categorical
+            if isinstance(value_list[0], str):
+                color_dict = self._get_color_dict_from_values(value_list, "categorical")
+                color_dict["type"] = "categorical"
+            # case 2.1 Sequence of floats/int -> continuous
+            elif isinstance(value_list[0], (float, int)):
+                color_dict = self._get_color_dict_from_values(value_list, "continuous")
+                color_dict["type"] = "continuous"
+            else:
+                raise ValueError(
+                    "Please only use string or numerical values for color selection"
+                )
+        else:
+            raise ValueError(
+                "undefined format for color. Please pass either"
+                "a str or a list of strings/numerical"
+            )
+        ice_lines_kw["color_dict"] = color_dict
+        return ice_lines_kw
 
     def _plot_ice_lines(
         self,
@@ -840,31 +868,10 @@ class PartialDependenceDisplay:
             n_ice_to_plot,
             replace=False,
         )
-        color_dict = None
-        # case 1: color can be a single color for all lines given as a str for all lines
-        if isinstance(ice_lines_kw["color"], str):
-            color_list = np.repeat(ice_lines_kw["color"], preds.shape[0])
-        # case 2: color can be given as a list values for which color is created
-        elif isinstance(ice_lines_kw["color"], (list, np.ndarray, pd.Series)):
-            value_list = np.array(ice_lines_kw["color"])
-            # case 2.1 Sequence of str -> categorical
-            if isinstance(value_list[0], str):
-                color_dict = self._get_color_dict_from_values(value_list, "categorical")
-                color_dict["type"] = "categorical"
-                color_list = color_dict["color_list"]
-            # case 2.1 Sequence of floats/int -> continuous
-            elif isinstance(value_list[0], (float, int)):
-                color_dict = self._get_color_dict_from_values(value_list, "continuous")
-                color_list = color_dict["color_list"]
-                color_dict["type"] = "continuous"
-            else:
-                raise ValueError(
-                    "Please only use string or numerical values forcolor selection"
-                )
-        else:
-            raise ValueError("undefined format for color")
+
         individual_line_kw = ice_lines_kw.copy()
-        ice_lines_kw["color_dict"] = color_dict
+        ice_lines_kw = self._check_if_colors_by_feature(ice_lines_kw, preds)
+        color_list = ice_lines_kw["color_dict"]["color_list"]
         ice_lines_subsampled = preds[ice_lines_idx, :]
         # plot the subsampled ice
         for ice_idx, ice in enumerate(ice_lines_subsampled):
@@ -1168,6 +1175,8 @@ class PartialDependenceDisplay:
         last_ax_idx_not_none = np.argwhere(self.axes_.flatten() != None)[-1][
             0
         ]  # is not None, doesn't work here
+        if color_dict.get("type", None) is None:
+            return None
         if color_dict["type"] == "categorical":
             custom_handles = []
             custom_labels = []
@@ -1534,6 +1543,8 @@ class PartialDependenceDisplay:
 
                 default_heatmap_kw = {}
                 heatmap_kw = {**default_heatmap_kw, **heatmap_kw}
+                # In order to not pass the color dict as a **kwargs to plot
+                # we remove it here
                 ice_lines_kw.pop("color_dict", None)
                 self._plot_one_way_partial_dependence(
                     kind_plot,
@@ -1564,7 +1575,6 @@ class PartialDependenceDisplay:
                     cat[0] and cat[1],
                     heatmap_kw,
                 )
-        if ice_lines_kw.get("color_dict", None) is not None:
-            self.add_individual_line_color_info(ice_lines_kw["color_dict"])
+        self.add_individual_line_color_info(ice_lines_kw["color_dict"])
 
         return self
