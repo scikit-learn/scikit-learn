@@ -3,7 +3,9 @@ import warnings
 from itertools import chain
 from math import ceil
 
+import matplotlib as mpl
 import numpy as np
+import pandas as pd
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
@@ -775,6 +777,29 @@ class PartialDependenceDisplay:
             return ceil(n_samples * self.subsample)
         return n_samples
 
+    def _get_color_dict_from_values(
+        self, value_list, categorical_or_continuous: str, cmap: str = None
+    ):
+        colors_dict = {}
+        if categorical_or_continuous == "categorical":
+            mapping = {
+                np.unique(value_list)[i]: f"C{i}"
+                for i in range(len(np.unique(value_list)))
+            }
+            colors_dict["color_list"] = [
+                mapping[value_list[i]] for i in range(len(value_list))
+            ]
+            colors_dict["categorical_mapping"] = mapping
+        elif categorical_or_continuous == "continuous":
+            cmap = mpl.cm.get_cmap(cmap)
+            norm = mpl.colors.Normalize(vmin=value_list.min(), vmax=value_list.max())
+            colors_dict["color_list"] = [
+                mpl.colors.to_hex(cmap(norm(value))) for value in value_list
+            ]
+            colors_dict["norm"] = norm
+            colors_dict["cmap"] = cmap
+        return colors_dict
+
     def _plot_ice_lines(
         self,
         preds,
@@ -783,7 +808,7 @@ class PartialDependenceDisplay:
         ax,
         pd_plot_idx,
         n_total_lines_by_plot,
-        individual_line_kw,
+        ice_lines_kw,
     ):
         """Plot the ICE lines.
 
@@ -804,7 +829,7 @@ class PartialDependenceDisplay:
             matching 2D position in the grid layout.
         n_total_lines_by_plot : int
             The total number of lines expected to be plot on the axis.
-        individual_line_kw : dict
+        ice_lines_kw : dict
             Dict with keywords passed when plotting the ICE lines.
         """
         rng = check_random_state(self.random_state)
@@ -814,12 +839,38 @@ class PartialDependenceDisplay:
             n_ice_to_plot,
             replace=False,
         )
+        color_dict = None
+        # case 1: color can be a single color for all lines given as a str for all lines
+        if isinstance(ice_lines_kw["color"], str):
+            color_list = np.repeat(ice_lines_kw["color"], preds.shape[0])
+        # case 2: color can be given as a list values for which color is created
+        elif isinstance(ice_lines_kw["color"], (list, np.ndarray, pd.Series)):
+            value_list = np.array(ice_lines_kw["color"])
+            # case 2.1 Sequence of str -> categorical
+            if isinstance(value_list[0], str):
+                color_dict = self._get_color_dict_from_values(value_list, "categorical")
+                color_dict["type"] = "categorical"
+                color_list = color_dict["color_list"]
+            # case 2.1 Sequence of floats/int -> continuous
+            elif isinstance(value_list[0], (float, int)):
+                color_dict = self._get_color_dict_from_values(value_list, "continuous")
+                color_list = color_dict["color_list"]
+                color_dict["type"] = "continuous"
+            else:
+                raise ValueError(
+                    "Please only use string or numerical values forcolor selection"
+                )
+        else:
+            raise ValueError("undefined format for color")
+        individual_line_kw = ice_lines_kw.copy()
+        ice_lines_kw["color_dict"] = color_dict
         ice_lines_subsampled = preds[ice_lines_idx, :]
         # plot the subsampled ice
         for ice_idx, ice in enumerate(ice_lines_subsampled):
             line_idx = np.unravel_index(
                 pd_plot_idx * n_total_lines_by_plot + ice_idx, self.lines_.shape
             )
+            individual_line_kw["color"] = color_list[ice_lines_idx[ice_idx]]
             self.lines_[line_idx] = ax.plot(
                 feature_values, ice.ravel(), **individual_line_kw
             )[0]
