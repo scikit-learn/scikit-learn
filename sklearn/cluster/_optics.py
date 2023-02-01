@@ -90,6 +90,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
+        .. note::
+           `'kulsinski'` is deprecated from SciPy 1.9 and will removed in SciPy 1.11.
+
     p : float, default=2
         Parameter for the Minkowski metric from
         :class:`~sklearn.metrics.pairwise_distances`. When p = 1, this is
@@ -423,6 +426,22 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
     return core_distances
 
 
+@validate_params(
+    {
+        "X": [np.ndarray, "sparse matrix"],
+        "min_samples": [
+            Interval(Integral, 2, None, closed="left"),
+            Interval(Real, 0, 1, closed="both"),
+        ],
+        "max_eps": [Interval(Real, 0, None, closed="both")],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "p": [Interval(Real, 0, None, closed="right"), None],
+        "metric_params": [dict, None],
+        "algorithm": [StrOptions({"auto", "brute", "ball_tree", "kd_tree"})],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+    }
+)
 def compute_optics_graph(
     X, *, min_samples, max_eps, metric, p, metric_params, algorithm, leaf_size, n_jobs
 ):
@@ -432,7 +451,7 @@ def compute_optics_graph(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features), or \
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features), or \
             (n_samples, n_samples) if metric='precomputed'
         A feature array, or array of distances between samples if
         metric='precomputed'.
@@ -472,6 +491,9 @@ def compute_optics_graph(
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
+
+        .. note::
+           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     p : int, default=2
         Parameter for the Minkowski metric from
@@ -695,6 +717,24 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     return labels
 
 
+@validate_params(
+    {
+        "reachability": [np.ndarray],
+        "predecessor": [np.ndarray],
+        "ordering": [np.ndarray],
+        "min_samples": [
+            Interval(Integral, 1, None, closed="neither"),
+            Interval(Real, 0, 1, closed="both"),
+        ],
+        "min_cluster_size": [
+            Interval(Integral, 1, None, closed="neither"),
+            Interval(Real, 0, 1, closed="both"),
+            None,
+        ],
+        "xi": [Interval(Real, 0, 1, closed="both")],
+        "predecessor_correction": ["boolean"],
+    }
+)
 def cluster_optics_xi(
     *,
     reachability,

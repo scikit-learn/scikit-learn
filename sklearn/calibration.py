@@ -14,7 +14,6 @@ from functools import partial
 
 from math import log
 import numpy as np
-from joblib import Parallel
 
 from scipy.special import expit
 from scipy.special import xlogy
@@ -36,7 +35,7 @@ from .utils import (
 )
 
 from .utils.multiclass import check_classification_targets
-from .utils.fixes import delayed
+from .utils.parallel import delayed, Parallel
 from .utils._param_validation import StrOptions, HasMethods, Hidden
 from .utils.validation import (
     _check_fit_params,
