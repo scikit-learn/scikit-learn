@@ -6,6 +6,7 @@ from math import ceil
 import matplotlib as mpl
 import numpy as np
 import pandas as pd
+from matplotlib.lines import Line2D
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
@@ -778,7 +779,7 @@ class PartialDependenceDisplay:
         return n_samples
 
     def _get_color_dict_from_values(
-        self, value_list, categorical_or_continuous: str, cmap: str = None
+        self, value_list, categorical_or_continuous: str, cmap_name: str = "Spectral"
     ):
         colors_dict = {}
         if categorical_or_continuous == "categorical":
@@ -791,7 +792,7 @@ class PartialDependenceDisplay:
             ]
             colors_dict["categorical_mapping"] = mapping
         elif categorical_or_continuous == "continuous":
-            cmap = mpl.cm.get_cmap(cmap)
+            cmap = mpl.cm.get_cmap(cmap_name)
             norm = mpl.colors.Normalize(vmin=value_list.min(), vmax=value_list.max())
             colors_dict["color_list"] = [
                 mpl.colors.to_hex(cmap(norm(value))) for value in value_list
@@ -1163,6 +1164,32 @@ class PartialDependenceDisplay:
                 ax.set_xlabel(self.feature_names[feature_idx[0]])
             ax.set_ylabel(self.feature_names[feature_idx[1]])
 
+    def add_individual_line_color_info(self, color_dict):
+        last_ax_idx_not_none = np.argwhere(self.axes_.flatten() != None)[-1][
+            0
+        ]  # is not None, doesn't work here
+        if color_dict["type"] == "categorical":
+            custom_handles = []
+            custom_labels = []
+
+            for category, color in color_dict["categorical_mapping"].items():
+                custom_handles.append(Line2D([0], [0], color=color, lw=1))
+                custom_labels.append(category)
+            # make legend disappear for all plots but the last
+            for ax in self.axes_.flatten()[:last_ax_idx_not_none]:
+                ax.legend().remove()
+            h, l = self.axes_.flatten()[
+                last_ax_idx_not_none
+            ].get_legend_handles_labels()
+            self.axes_.flatten()[last_ax_idx_not_none].legend(
+                h + custom_handles, l + custom_labels, bbox_to_anchor=(1, 0.95)
+            )
+        elif color_dict["type"]:
+            mpl.pyplot.colorbar(
+                mpl.cm.ScalarMappable(norm=color_dict["norm"], cmap=color_dict["cmap"]),
+                ax=self.axes_.flatten()[last_ax_idx_not_none],
+            )
+
     def plot(
         self,
         *,
@@ -1507,7 +1534,7 @@ class PartialDependenceDisplay:
 
                 default_heatmap_kw = {}
                 heatmap_kw = {**default_heatmap_kw, **heatmap_kw}
-
+                ice_lines_kw.pop("color_dict", None)
                 self._plot_one_way_partial_dependence(
                     kind_plot,
                     preds,
@@ -1537,5 +1564,7 @@ class PartialDependenceDisplay:
                     cat[0] and cat[1],
                     heatmap_kw,
                 )
+        if ice_lines_kw.get("color_dict", None) is not None:
+            self.add_individual_line_color_info(ice_lines_kw["color_dict"])
 
         return self
