@@ -61,27 +61,35 @@ def _oas(X, *, assume_centered=False):
     n_samples, n_features = X.shape
 
     emp_cov = empirical_covariance(X, assume_centered=assume_centered)
-    trace_emp_cov = np.trace(emp_cov)
 
     # The shrinkage is defined as:
     # shrinkage = min(
-    # trace(S**2) + trace(S)**2) / ((n + 1) (trace(S**2) - trace(S)**2 / p), 1
+    # trace(S @ S.T) + trace(S)**2) / ((n + 1) (trace(S @ S.T) - trace(S)**2 / p), 1
     # )
     # where n and p are n_samples and n_features, respectively (cf. Eq. 23 in [1]).
     # The factor 2 / p is omitted since it does not impact the value of the estimator
     # for large p.
-    trace_squared_emp_cov = trace_emp_cov**2
-    trace_emp_cov_squared = np.trace(emp_cov**2)
-    num = trace_emp_cov_squared + trace_squared_emp_cov
-    den = (n_samples + 1) * (trace_emp_cov_squared - trace_squared_emp_cov / n_features)
-    shrinkage = 1.0 if den == 0 else max(0, min(num / den, 1.0))
+
+    # Instead of computing trace(S)**2, we can compute the average of the squared
+    # elements of S that is equal to trace(S)**2 / p**2.
+    # See the definition of the Frobenius norm:
+    # https://en.wikipedia.org/wiki/Matrix_norm#Frobenius_norm
+    alpha = np.mean(emp_cov**2)
+    mu = np.trace(emp_cov) / n_features
+    mu_squared = mu**2
+
+    # The factor 1 / p**2 will cancel out since it is in both the numerator and
+    # denominator
+    num = alpha + mu_squared
+    den = (n_samples + 1) * (alpha - mu_squared / n_features)
+    shrinkage = 1.0 if den == 0 else min(num / den, 1.0)
 
     # The shrunk covariance is defined as:
     # (1 - shrinkage) * S + shrinkage * F (cf. Eq. 4 in [1])
     # where S is the empirical covariance and F is the shrinkage target defined as
     # F = trace(S) / n_features * np.identity(n_features) (cf. Eq. 3 in [1])
     shrunk_cov = (1.0 - shrinkage) * emp_cov
-    shrunk_cov.flat[:: n_features + 1] += shrinkage * trace_emp_cov / n_features
+    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
 
     return shrunk_cov, shrinkage
 
