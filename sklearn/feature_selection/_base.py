@@ -18,7 +18,7 @@ from ..utils import (
     safe_sqr,
 )
 from ..utils._tags import _safe_tags
-from ..utils.validation import _check_feature_names_in
+from ..utils.validation import _check_feature_names_in, check_is_fitted
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
@@ -163,6 +163,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self)
         input_features = _check_feature_names_in(self, input_features)
         return input_features[self.get_support()]
 
