@@ -38,7 +38,6 @@ import numpy as np
 from scipy.sparse import issparse, csr_matrix
 from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
 
-
 cdef void _middle_term_sparse_sparse_64(
     const DTYPE_t[:] X_data,
     const SPARSE_INDEX_TYPE_t[:] X_indices,
