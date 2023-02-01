@@ -200,6 +200,10 @@ class _SetOutputMixin:
             if not hasattr(cls, method) or key not in auto_wrap_output_keys:
                 continue
             cls._sklearn_auto_wrap_output_keys.add(key)
+
+            # Only wrap methods defined by cls itself
+            if method not in cls.__dict__:
+                continue
             wrapped_method = _wrap_method_output(getattr(cls, method), key)
             setattr(cls, method, wrapped_method)
 

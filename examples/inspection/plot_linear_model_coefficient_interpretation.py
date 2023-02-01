@@ -3,25 +3,35 @@
 Common pitfalls in the interpretation of coefficients of linear models
 ======================================================================
 
-In linear models, the target value is modeled as
-a linear combination of the features (see the :ref:`linear_model` User Guide
-section for a description of a set of linear models available in
-scikit-learn).
-Coefficients in multiple linear models represent the relationship between the
-given feature, :math:`X_i` and the target, :math:`y`, assuming that all the
-other features remain constant (`conditional dependence
-<https://en.wikipedia.org/wiki/Conditional_dependence>`_).
-This is different from plotting :math:`X_i` versus :math:`y` and fitting a
-linear relationship: in that case all possible values of the other features are
-taken into account in the estimation (marginal dependence).
+In linear models, the target value is modeled as a linear combination of the
+features (see the :ref:`linear_model` User Guide section for a description of a
+set of linear models available in scikit-learn). Coefficients in multiple linear
+models represent the relationship between the given feature, :math:`X_i` and the
+target, :math:`y`, assuming that all the other features remain constant
+(`conditional dependence
+<https://en.wikipedia.org/wiki/Conditional_dependence>`_). This is different
+from plotting :math:`X_i` versus :math:`y` and fitting a linear relationship: in
+that case all possible values of the other features are taken into account in
+the estimation (marginal dependence).
 
 This example will provide some hints in interpreting coefficient in linear
 models, pointing at problems that arise when either the linear model is not
 appropriate to describe the dataset, or when features are correlated.
 
+.. note::
+
+    Keep in mind that the features :math:`X` and the outcome :math:`y` are in
+    general the result of a data generating process that is unknown to us.
+    Machine learning models are trained to approximate the unobserved
+    mathematical function that links :math:`X` to :math:`y` from sample data. As
+    a result, any interpretation made about a model may not necessarily
+    generalize to the true data generating process. This is especially true when
+    the model is of bad quality or when the sample data is not representative of
+    the population.
+
 We will use data from the `"Current Population Survey"
-<https://www.openml.org/d/534>`_ from 1985 to predict
-wage as a function of various features such as experience, age, or education.
+<https://www.openml.org/d/534>`_ from 1985 to predict wage as a function of
+various features such as experience, age, or education.
 
 .. contents::
    :local:
@@ -704,6 +714,31 @@ plt.subplots_adjust(left=0.3)
 # We observe that the AGE and EXPERIENCE coefficients are varying a lot
 # depending of the fold.
 #
+# Wrong causal interpretation
+# ---------------------------
+#
+# Policy makers might want to know the effect of education on wage to assess
+# whether or not a certain policy designed to entice people to pursue more
+# education would make economic sense. While Machine Learning models are great
+# for measuring statistical associations, they are generally unable to infer
+# causal effects.
+#
+# It might be tempting to look at the coefficient of education on wage from our
+# last model (or any model for that matter) and conclude that it captures the
+# true effect of a change in the standardized education variable on wages.
+#
+# Unfortunately there are likely unobserved confounding variables that either
+# inflate or deflate that coefficient. A confounding variable is a variable that
+# causes both EDUCATION and WAGE. One example of such variable is ability.
+# Presumably, more able people are more likely to pursue education while at the
+# same time being more likely to earn a higher hourly wage at any level of
+# education. In this case, ability induces a positive `Omitted Variable Bias
+# <https://en.wikipedia.org/wiki/Omitted-variable_bias>`_ (OVB) on the EDUCATION
+# coefficient, thereby exaggerating the effect of education on wages.
+#
+# See the :ref:`sphx_glr_auto_examples_inspection_plot_causal_interpretation.py`
+# for a simulated case of ability OVB.
+#
 # Lessons learned
 # ---------------
 #
@@ -719,3 +754,7 @@ plt.subplots_adjust(left=0.3)
 #   coefficients could significantly vary from one another.
 # * Inspecting coefficients across the folds of a cross-validation loop
 #   gives an idea of their stability.
+# * Coefficients are unlikely to have any causal meaning. They tend
+#   to be biased by unobserved confounders.
+# * Inspection tools may not necessarily provide insights on the true
+#   data generating process.

@@ -13,6 +13,7 @@ from ..._loss.loss import (
     _LOSSES,
     BaseLoss,
     HalfBinomialLoss,
+    HalfGammaLoss,
     HalfMultinomialLoss,
     HalfPoissonLoss,
     PinballLoss,
@@ -43,6 +44,7 @@ _LOSSES = _LOSSES.copy()
 _LOSSES.update(
     {
         "poisson": HalfPoissonLoss,
+        "gamma": HalfGammaLoss,
         "quantile": PinballLoss,
         "binary_crossentropy": HalfBinomialLoss,
         "categorical_crossentropy": HalfMultinomialLoss,
@@ -258,9 +260,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if not np.any(is_categorical):
             return None, None
 
-        # compute the known categories in the training data. We need to do
-        # that here instead of in the BinMapper because in case of early
-        # stopping, the mapper only gets a fraction of the training data.
+        # Compute the known categories in the training data. We cannot do this
+        # in the BinMapper because it only gets a fraction of the training data
+        # when early stopping is enabled.
         known_categories = []
 
         for f_idx in range(n_features):
@@ -278,13 +280,16 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if categories.size > self.max_bins:
                     raise ValueError(
                         f"Categorical feature {feature_name} is expected to "
-                        f"have a cardinality <= {self.max_bins}"
+                        f"have a cardinality <= {self.max_bins} but actually "
+                        f"has a cardinality of {categories.size}."
                     )
 
                 if (categories >= self.max_bins).any():
                     raise ValueError(
                         f"Categorical feature {feature_name} is expected to "
-                        f"be encoded with values < {self.max_bins}"
+                        f"be encoded with values < {self.max_bins} but the "
+                        "largest value for the encoded categories is "
+                        f"{categories.max()}."
                     )
             else:
                 categories = None
@@ -1201,13 +1206,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'absolute_error', 'poisson', 'quantile'}, \
+    loss : {'squared_error', 'absolute_error', 'gamma', 'poisson', 'quantile'}, \
             default='squared_error'
         The loss function to use in the boosting process. Note that the
-        "squared error" and "poisson" losses actually implement
-        "half least squares loss" and "half poisson deviance" to simplify the
-        computation of the gradient. Furthermore, "poisson" loss internally
-        uses a log-link and requires ``y >= 0``.
+        "squared error", "gamma" and "poisson" losses actually implement
+        "half least squares loss", "half gamma deviance" and "half poisson
+        deviance" to simplify the computation of the gradient. Furthermore,
+        "gamma" and "poisson" losses internally use a log-link, "gamma"
+        requires ``y > 0`` and "poisson" requires ``y >= 0``.
         "quantile" uses the pinball loss.
 
         .. versionchanged:: 0.23
@@ -1215,6 +1221,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         .. versionchanged:: 1.1
            Added option 'quantile'.
+
+        .. versionchanged:: 1.3
+           Added option 'gamma'.
 
     quantile : float, default=None
         If loss is "quantile", this parameter specifies which quantile to be estimated
@@ -1415,7 +1424,15 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     _parameter_constraints: dict = {
         **BaseHistGradientBoosting._parameter_constraints,
         "loss": [
-            StrOptions({"squared_error", "absolute_error", "poisson", "quantile"}),
+            StrOptions(
+                {
+                    "squared_error",
+                    "absolute_error",
+                    "poisson",
+                    "gamma",
+                    "quantile",
+                }
+            ),
             BaseLoss,
         ],
         "quantile": [Interval(Real, 0, 1, closed="both"), None],
@@ -1511,7 +1528,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         # Just convert y to the expected dtype
         self.n_trees_per_iteration_ = 1
         y = y.astype(Y_DTYPE, copy=False)
-        if self.loss == "poisson":
+        if self.loss == "gamma":
+            # Ensure y > 0
+            if not np.all(y > 0):
+                raise ValueError("loss='gamma' requires strictly positive y.")
+        elif self.loss == "poisson":
             # Ensure y >= 0 and sum(y) > 0
             if not (np.all(y >= 0) and np.sum(y) > 0):
                 raise ValueError(

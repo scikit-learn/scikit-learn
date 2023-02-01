@@ -18,8 +18,6 @@ from numbers import Integral
 
 import numpy as np
 
-from joblib import Parallel
-
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
@@ -36,7 +34,7 @@ from ..utils.validation import column_or_1d
 from ..utils._param_validation import StrOptions
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -232,6 +230,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     See Also
@@ -451,6 +450,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         if self.voting == "soft" and not self.flatten_transform:
             raise ValueError(
                 "get_feature_names_out is not supported when `voting='soft'` and "
@@ -534,6 +534,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     See Also
@@ -645,6 +646,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         _check_feature_names_in(self, input_features, generate_names=False)
         class_name = self.__class__.__name__.lower()
         return np.asarray(
