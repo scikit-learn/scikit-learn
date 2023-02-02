@@ -162,7 +162,7 @@ Changelog
   When `zero_division=np.nan` and
   there is a zero division, the metric is undefined and is excluded from averaging.
   When not used for averages, the value returned is `np.nan`.
-  :pr:`TODO` by :user:`Marc Torrellas Socastro <marctorsoc>`.
+  :pr:`25531` by :user:`Marc Torrellas Socastro <marctorsoc>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
