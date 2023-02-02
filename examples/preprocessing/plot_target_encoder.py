@@ -207,18 +207,23 @@ fig, (ax1, ax2) = plt.subplots(
     1, 2, figsize=(12, 8), sharey=True, constrained_layout=True
 )
 xticks = range(len(results_df))
+name_to_color = dict(
+    zip((r["preprocessor"] for r in results), ["C0", "C1", "C2", "C3", "C4"])
+)
 
 for subset, ax in zip(["test", "train"], [ax1, ax2]):
+    mean, std = f"rmse_{subset}_mean", f"rmse_{subset}_std"
+    data = results_df[[mean, std]].sort_values(mean)
     ax.bar(
         x=xticks,
-        height=results_df[f"rmse_{subset}_mean"],
-        yerr=results_df[f"rmse_{subset}_std"],
+        height=data[mean],
+        yerr=data[std],
         width=0.9,
-        color=["C0", "C1", "C2", "C3", "C4"],
+        color=[name_to_color[name] for name in data.index],
     )
     ax.set(
         title=f"RMSE ({subset.title()} Scores)",
         xlabel="Encoding Scheme",
         xticks=xticks,
-        xticklabels=results_df.index,
+        xticklabels=data.index,
     )
