@@ -63,7 +63,10 @@ y.value_counts().sort_index()
 # * :class:`~sklearn.multiclass.OutputCodeClassifier`: trains a set of binary
 #   classifiers where each classifier is trained to distinguish between
 #   a set of classes from the rest of the classes. The set of classes is
-#   defined by a codebook, which is randomly generated in scikit-learn.
+#   defined by a codebook, which is randomly generated in scikit-learn. This
+#   method expose a parameter `code_size` to control the size of the codebook.
+#   We set it above one since we are not interested by compressing the class
+#   representation.
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.multiclass import (
