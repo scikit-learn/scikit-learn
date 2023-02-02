@@ -114,6 +114,12 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Feature| :class:`ensemble.HistGradientBoostingRegressor` now supports
+  the Gamma deviance loss via `loss="gamma"`.
+  Using the Gamma deviance as loss function comes in handy for modelling skewed
+  distributed, strictly positive valued targets.
+  :pr:`22409` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Feature| Compute a custom out-of-bag score by passing a callable to
   :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
