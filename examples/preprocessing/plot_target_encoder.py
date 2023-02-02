@@ -123,7 +123,7 @@ for name, categorical_preprocessor in categorical_preprocessors:
 
 # %%
 # Native Categorical Feature Support
-# ----------------------------------
+# ==================================
 # In this section, we build and evaluate a pipeline that uses native categorical
 # feature support in :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
 # which only supports up to 255 unique categories. In our dataset, the most of
@@ -175,15 +175,18 @@ evaluate_model_and_store("mixed_target", mixed_pipe)
 # --------------------
 # In this section, we display the results for all the encoders. When evaluating the
 # predictive performance on the test set, dropping the categories perform the
-# worst and the target encoders performs the best.
+# worst and the target encoders performs the best. This can be explained
+# as follows:
+#
 # - Dropping the categorical features makes the pipeline less expressive and
 #   underfitting as a result;
 # - Due to the high cardinality and to reduce the training time, the one-hot
 #   encoding scheme uses `max_categories=20` which prevents the features from
 #   expanding too much, which can result in underfitting.
-# - The one-hot encoding scheme makes the pipeline overfitting as the larger
-#   number of features explodes with rare category occurrences that are correlated
-#   with the target by chance (on the training set only);
+# - If we had not set `max_categories=20`, the one-hot encoding scheme would have
+#   likely made the pipeline overfitting as the number of features explodes with rare
+#   category occurrences that are correlated with the target by chance (on the training
+#   set only);
 # - The ordinal encoding imposes an arbitrary order to the features which are then
 #   treated as numerical values by the
 #   :class:`~sklearn.ensemble.HistGradientBoostingRegressor`. Since this
