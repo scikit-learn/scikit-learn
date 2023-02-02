@@ -39,6 +39,7 @@ jobs:
       displayName: Install linters
     - bash: |
         ./build_tools/linting.sh
+      displayName: Run linters
 
 - template: build_tools/azure/posix.yml
   parameters:
