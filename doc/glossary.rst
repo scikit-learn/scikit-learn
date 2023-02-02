@@ -1679,11 +1679,11 @@ functions or non-estimator constructors.
         is called with ``n_estimators`` or ``max_iter`` set to `M`, the model
         will train `M - N` new estimators.
 
-        Other models have a different behavior. They all expose a ``max_iter``
-        parameter. The reported ``n_iter_`` corresponds to the number of
-        iteration done during the last call to ``fit`` and will be at most
-        ``max_iter``. Thus, we do not consider the state of the estimator since
-        the initialization.
+        Other models, usually using gradient-based solvers, have a different
+        behavior. They all expose a ``max_iter`` parameter. The reported
+        ``n_iter_`` corresponds to the number of iteration done during the last
+        call to ``fit`` and will be at most ``max_iter``. Thus, we do not
+        consider the state of the estimator since the initialization.
 
         :term:`partial_fit` also retains the model between calls, but differs:
         with ``warm_start`` the parameters change and the data is
