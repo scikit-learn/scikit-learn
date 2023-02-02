@@ -1253,7 +1253,12 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
     tol : float, default=1e-4
         Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
-        'cholesky'.
+        'cholesky'. For an 'lsqr' solver `tol` is set as `atol` and `btol` of `lsmr`,
+        which specifies conditions involving the residuals and norms of the matrix and
+        its coefficients. For the 'sparse_cg' solver, the relative or absolute
+        residual should be smaller than `tol`. For 'sag' and 'saga' solvers, the
+        change of `coef` should be smaller than `tol`. For an 'lbfgs' solver,
+        the residual should be smaller than `tol`.
 
         .. versionchanged:: 1.2
            Default value changed from 1e-3 to 1e-4 for consistency with other linear
