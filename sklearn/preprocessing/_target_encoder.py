@@ -122,16 +122,16 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     >>> enc_auto = TargetEncoder(smooth="auto")
     >>> X_trans = enc_auto.fit_transform(X, y)
 
-    A high `smooth` parameter puts more weight on global mean on the categorical
-    encodings:
+    >>> # A high `smooth` parameter puts more weight on global mean on the categorical
+    >>> # encodings:
     >>> enc_high_smooth = TargetEncoder(smooth=5000.0).fit(X, y)
     >>> enc_high_smooth.encoding_mean_
     44...
     >>> enc_high_smooth.encodings_
     [array([44..., 44..., 44...])]
 
-    On the other hand, a low `smooth` parameter puts more weight on target conditioned
-    on the value of the categorical:
+    >>> # On the other hand, a low `smooth` parameter puts more weight on target
+    >>> # conditioned on the value of the categorical:
     >>> enc_no_smooth = TargetEncoder(smooth=1.0).fit(X, y)
     >>> enc_no_smooth.encodings_
     [array([20..., 80..., 43...])]
