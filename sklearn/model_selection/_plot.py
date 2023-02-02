@@ -536,7 +536,7 @@ class ValidationCurveDisplay:
     ... )
     >>> display = ValidationCurveDisplay(
     ...     param_name=param_name, param_range=param_range,
-    ...     train_scores=train_scores, test_scores=test_scores
+    ...     train_scores=train_scores, test_scores=test_scores, score_name="Score"
     ... )
     >>> display.plot(log_scale=True)
     <...>

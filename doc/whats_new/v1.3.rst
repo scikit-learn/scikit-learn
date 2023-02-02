@@ -159,8 +159,8 @@ Changelog
 ..............................
 
 - |Feature| Added the class :class:`model_selection.ValidationCurveDisplay`
-  that allows to make easy plotting of validation curves obtained by the
-  function :func:`model_selection.validation_curve`.
+  that allows easy plotting of validation curves obtainned by the function
+  :func:`model_selection.validation_curve`.
   :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.naive_bayes`

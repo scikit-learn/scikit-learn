@@ -81,6 +81,7 @@ The function :func:`validation_curve` can help in this case::
 
   >>> train_scores, valid_scores = validation_curve(
   ...     SVC(kernel="linear"), X, y, param_name="C", param_range=np.logspace(-7, 3, 3),
+  ...     log_scale=True
   ... )
   >>> train_scores
   array([[0.90..., 0.94..., 0.91..., 0.89..., 0.92...],
