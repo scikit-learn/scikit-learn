@@ -81,7 +81,6 @@ The function :func:`validation_curve` can help in this case::
 
   >>> train_scores, valid_scores = validation_curve(
   ...     SVC(kernel="linear"), X, y, param_name="C", param_range=np.logspace(-7, 3, 3),
-  ...     log_scale=True
   ... )
   >>> train_scores
   array([[0.90..., 0.94..., 0.91..., 0.89..., 0.92...],
@@ -121,7 +120,8 @@ to :func:`validation_curve` to generate and plot the validation curve:
       X, y = load_iris(return_X_y=True)
       X, y = shuffle(X, y, random_state=0)
       ValidationCurveDisplay.from_estimator(
-         SVC(kernel="linear"), X, y, param_name="C", param_range=np.logspace(-7, 3, 10))
+         SVC(kernel="linear"), X, y, param_name="C", param_range=np.logspace(-7, 3, 10),
+         log_scale=True)
 
 .. _learning_curve:
 
