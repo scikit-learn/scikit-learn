@@ -155,6 +155,15 @@ Changelog
 - |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
   :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Feature| Adds `zero_division=np.nan` to multiple classification
+  metrics: :func:`precision_score`, :func:`recall_score`, :func:`f1_score`,
+  :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
+  :func:`classification_report`.
+  When `zero_division=np.nan` and
+  there is a zero division, the metric is undefined and is excluded from averaging.
+  When not used for averages, the value returned is `np.nan`.
+  :pr:`TODO` by :user:`Marc Torrellas Socastro <marctorsoc>`.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
