@@ -172,33 +172,8 @@ evaluate_model_and_store("mixed_target", mixed_pipe)
 
 # %%
 # Plotting the Results
-# --------------------
-# In this section, we display the results for all the encoders. When evaluating the
-# predictive performance on the test set, dropping the categories perform the
-# worst and the target encoders performs the best. This can be explained
-# as follows:
-#
-# - Dropping the categorical features makes the pipeline less expressive and
-#   underfitting as a result;
-# - Due to the high cardinality and to reduce the training time, the one-hot
-#   encoding scheme uses `max_categories=20` which prevents the features from
-#   expanding too much, which can result in underfitting.
-# - If we had not set `max_categories=20`, the one-hot encoding scheme would have
-#   likely made the pipeline overfitting as the number of features explodes with rare
-#   category occurrences that are correlated with the target by chance (on the training
-#   set only);
-# - The ordinal encoding imposes an arbitrary order to the features which are then
-#   treated as numerical values by the
-#   :class:`~sklearn.ensemble.HistGradientBoostingRegressor`. Since this
-#   model groups numerical features in 256 bins per feature, many unrelated categories
-#   can be grouped together and as a result overall pipeline can underfit;
-# - When using the target encoder, the same binning happens, but since the encoded
-#   values are statistically ordered by marginal association with the target variable,
-#   the binning use by the :class:`~sklearn.ensemble.HistGradientBoostingRegressor`
-#   makes sense and leads to good results: the combination of smoothed target
-#   encoding and binning works as a good regularizing strategy against overfitting while
-#   not limiting the expressiveness of the pipeline too much.
-
+# ====================
+# In this section, we display the results by plotting the test and train scores:
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -230,3 +205,29 @@ for subset, ax in zip(["test", "train"], [ax1, ax2]):
         xticks=xticks,
         xticklabels=data.index,
     )
+
+# %%
+# When evaluating the predictive performance on the test set, dropping the
+# categories perform the worst and the target encoders performs the best. This
+# can be explained as follows:
+#
+# - Dropping the categorical features makes the pipeline less expressive and
+#   underfitting as a result;
+# - Due to the high cardinality and to reduce the training time, the one-hot
+#   encoding scheme uses `max_categories=20` which prevents the features from
+#   expanding too much, which can result in underfitting.
+# - If we had not set `max_categories=20`, the one-hot encoding scheme would have
+#   likely made the pipeline overfitting as the number of features explodes with rare
+#   category occurrences that are correlated with the target by chance (on the training
+#   set only);
+# - The ordinal encoding imposes an arbitrary order to the features which are then
+#   treated as numerical values by the
+#   :class:`~sklearn.ensemble.HistGradientBoostingRegressor`. Since this
+#   model groups numerical features in 256 bins per feature, many unrelated categories
+#   can be grouped together and as a result overall pipeline can underfit;
+# - When using the target encoder, the same binning happens, but since the encoded
+#   values are statistically ordered by marginal association with the target variable,
+#   the binning use by the :class:`~sklearn.ensemble.HistGradientBoostingRegressor`
+#   makes sense and leads to good results: the combination of smoothed target
+#   encoding and binning works as a good regularizing strategy against
+#   overfitting while not limiting the expressiveness of the pipeline too much.
