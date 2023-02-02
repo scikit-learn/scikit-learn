@@ -377,6 +377,7 @@ def _pandas_arff_parser(
         "quotechar": '"',  # delimiter to use for quoted strings
         "skipinitialspace": True,  # skip spaces after delimiter to follow ARFF specs
         "escapechar": "\\",
+        "dtype": dtypes,
     }
     read_csv_kwargs = {**default_read_csv_kwargs, **(read_csv_kwargs or {})}
     frame = pd.read_csv(gzip_file, **read_csv_kwargs)
