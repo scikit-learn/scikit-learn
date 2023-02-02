@@ -38,39 +38,39 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.parallel import delayed, Parallel
-from ..utils.fixes import parse_version, sp_version
+from ..utils.fixes import parse_version, sp_base_version, sp_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
+
+SCIPY_METRICS = [
+    "braycurtis",
+    "canberra",
+    "chebyshev",
+    "correlation",
+    "cosine",
+    "dice",
+    "hamming",
+    "jaccard",
+    "mahalanobis",
+    "matching",
+    "minkowski",
+    "rogerstanimoto",
+    "russellrao",
+    "seuclidean",
+    "sokalmichener",
+    "sokalsneath",
+    "sqeuclidean",
+    "yule",
+]
+if sp_base_version < parse_version("1.11"):
+    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
+    SCIPY_METRICS += ["kulsinski"]
 
 VALID_METRICS = dict(
     ball_tree=BallTree.valid_metrics,
     kd_tree=KDTree.valid_metrics,
     # The following list comes from the
     # sklearn.metrics.pairwise doc string
-    brute=sorted(
-        set(PAIRWISE_DISTANCE_FUNCTIONS).union(
-            [
-                "braycurtis",
-                "canberra",
-                "chebyshev",
-                "correlation",
-                "cosine",
-                "dice",
-                "hamming",
-                "jaccard",
-                "kulsinski",
-                "mahalanobis",
-                "matching",
-                "minkowski",
-                "rogerstanimoto",
-                "russellrao",
-                "seuclidean",
-                "sokalmichener",
-                "sokalsneath",
-                "sqeuclidean",
-                "yule",
-            ]
-        )
-    ),
+    brute=sorted(set(PAIRWISE_DISTANCE_FUNCTIONS).union(SCIPY_METRICS)),
 )
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
