@@ -45,14 +45,12 @@ Before a release
 
 **Permissions**
 
-The release manager requires a set of permissions on top of the usual
-permissions given to maintainers, which includes:
+The release manager must be a *maintainer* of ``scikit-learn`` to be able to
+publish on ``pypi.org`` and ``test.pypi.org``.
 
-- *maintainer* role on ``scikit-learn`` projects on ``pypi.org`` and
-  ``test.pypi.org``, separately.
-- become a member of the *scikit-learn* team on conda-forge by editing the
-  ``recipe/meta.yaml`` file on
-  ``https://github.com/conda-forge/scikit-learn-feedstock``
+The release manager must be a *maintainer* of the ``conda-forge/scikit-learn-feedstock``
+repository. This can be changed by editing the ``recipe/meta.yaml`` file in the
+first release pull-request.
 
 .. _preparing_a_release_pr:
 
@@ -153,7 +151,7 @@ should be excluded.
 
      - After having dropped or picked commit, **do no exit** but paste the content
        of the `git-rebase-todo` message in the PR.
-       This file is located at `.git/rebase-merge/git-rebase-todo`).
+       This file is located at `.git/rebase-merge/git-rebase-todo`.
 
      - Save and exit, starting the interactive rebase.
 
