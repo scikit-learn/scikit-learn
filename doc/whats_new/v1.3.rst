@@ -47,7 +47,7 @@ Changes impacting all modules
     engine optimized for OpenCL enabled GPUs.
   - TODO: add more here
 
-  :pr:`24497` by :user:`ogrisel`, :user:`fcharras` and :user:`betatim`.
+  :pr:`25535` by :user:`ogrisel`, :user:`fcharras` and :user:`betatim`.
 
 - |Enhancement| The `get_feature_names_out` method of the following classes now
   raises a `NotFittedError` if the instance is not fitted. This ensures the error is
