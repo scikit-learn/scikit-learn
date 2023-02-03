@@ -155,7 +155,7 @@ Changelog
 - |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
   :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
 
-- |Enhancement| :func:`metric.haversine_distances` can now compute pairwise distances.
+- |API| adding :func:`metric.paired_haversine_distances` to compute pairwise haversine distances.
   :pr:`22705` by :user:`Jona Sassenhagen <jona-sassenhagen>` and :user:`Charles Patel <acharles7>`.
 
 :mod:`sklearn.naive_bayes`

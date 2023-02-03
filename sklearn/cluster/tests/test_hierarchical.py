@@ -238,7 +238,8 @@ def test_agglomerative_clustering(global_random_seed):
     # Test using another metric than euclidean works with linkage complete
     for metric in PAIRED_DISTANCES.keys():
         if metric == "haversine":
-            continue  # doesn't work with the squared connectivity matrix
+            # haversine always has 2 features, lon and lat, and thus doesn't work here
+            continue
         # Compare our (structured) implementation to scipy
         clustering = AgglomerativeClustering(
             n_clusters=10,
