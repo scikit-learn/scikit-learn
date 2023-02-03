@@ -905,7 +905,10 @@ def test_partial_dependence_sample_weight_ind_equals_one(estimator):
         (LogisticRegression, binary_classification_data),
     ],
 )
-def test_partial_dependece_equals_sample_weights_same_as_none(estimator, data):
+def test_partial_dependece_equivalence_equal_sample_weight(estimator, data):
+    """Check that `sample_weight=None` is equivalent to having equal
+    weights.
+    """
     est = estimator()
     (X, y), n_targets = data
     est.fit(X, y)
