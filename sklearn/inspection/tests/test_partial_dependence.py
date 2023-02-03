@@ -85,14 +85,14 @@ iris = load_iris()
 @pytest.mark.parametrize("grid_resolution", (5, 10))
 @pytest.mark.parametrize("features", ([1], [1, 2]))
 @pytest.mark.parametrize("kind", ("average", "individual", "both"))
-def test_output_shape(estimator, method, data, grid_resolution, features, kind):
+def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
     # Check that partial_dependence has consistent output shape for different
     # kinds of estimators:
     # - classifiers with binary and multiclass settings
     # - regressors
     # - multi-task regressors
 
-    est = estimator()
+    est = Estimator()
 
     # n_target corresponds to the number of classes (1 for binary classif) or
     # the number of tasks / outputs in multi task settings. It's equal to 1 for
@@ -457,14 +457,14 @@ def test_partial_dependence_easy_target(est, power):
         sklearn.ensemble.RandomForestClassifier,
     ),
 )
-def test_multiclass_multioutput(estimator):
+def test_multiclass_multioutput(Estimator):
     # Make sure error is raised for multiclass-multioutput classifiers
 
     # make multiclass-multioutput dataset
     X, y = make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
     y = np.array([y, y]).T
 
-    est = estimator()
+    est = Estimator()
     est.fit(X, y)
 
     with pytest.raises(
