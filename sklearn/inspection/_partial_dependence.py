@@ -444,11 +444,10 @@ def partial_dependence(
             )
         method = "brute"
 
-    if method == "recursion":
-        if sample_weight is not None:
-            raise ValueError(
-                "The 'recursion' method can only be applied when sample_weight is None."
-            )
+    if method == "recursion" and sample_weight is not None:
+        raise ValueError(
+            "The 'recursion' method can only be applied when sample_weight is None."
+        )
 
     if method == "auto":
         if sample_weight is not None:
