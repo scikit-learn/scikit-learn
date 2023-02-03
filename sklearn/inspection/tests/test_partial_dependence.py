@@ -919,14 +919,13 @@ def test_partial_dependece_equivalence_equal_sample_weight(Estimator, data):
     est.fit(X, y)
     sample_weight = np.ones_like(y)
 
-    pdp_nsw = partial_dependence(est, X=X, features=[1, 2], kind="average")
-    pdp_sw = partial_dependence(
-        est, X=X, features=[1, 2], kind="average", sample_weight=sample_weight
-    )
-    assert_allclose(pdp_nsw["average"], pdp_sw["average"])
-    pdp_sw2 = partial_dependence(
-        est, X=X, features=[1, 2], kind="average", sample_weight=2 * sample_weight
-    )
+    sample_weight, params = None, {"X": X, "features": [1, 2], "kind": "average"}
+    pdp_sw_none = partial_dependence(est, **params, sample_weight=sample_weight)
+    sample_weight = np.ones_like(y)
+    pdp_sw_unit = partial_dependence(est, est, **params, sample_weight=sample_weight)
+    assert_allclose(pdp_sw_none["average"], pdp_sw_unit["average"])
+    sample_weight = 2 * np.ones_like(y)
+    pdp_sw_doubling = partial_dependence(est, **params, sample_weight=sample_weight)
     assert_allclose(pdp_nsw["average"], pdp_sw2["average"])
 
 
