@@ -877,7 +877,7 @@ def test_partial_dependence_sample_weight_ind_equals_one(estimator):
     pipe = make_pipeline(preprocessor, estimator).fit(X, y)
 
     for sample_weight_ind_equals_one in [0, 1, -1]:
-        sample_weight = np.zeros(len(X))
+        sample_weight = np.zeros_like(y)
         sample_weight[sample_weight_ind_equals_one] = 1
         pdp_sw = partial_dependence(
             pipe,
