@@ -234,10 +234,10 @@ leaf_size : positive int, default=40
 metric : str or DistanceMetric object, default='minkowski'
     Metric to use for distance computation. Default is "minkowski", which
     results in the standard Euclidean distance when p = 2. A list of valid metrics for {BinaryTree} is given by
-    :class:`~sklearn.neighbors.{BinaryTree}.get_valid_metrics`. See the documentation of `scipy.spatial.distance
+    :meth:`{BinaryTree}.valid_metric`. See the documentation of `scipy.spatial.distance
     <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and the
     metrics listed in :class:`~sklearn.metrics.pairwise.distance_metrics` for
-    more information.
+    more information on any individual metric.
 
 Additional keywords are passed to the distance metric class.
 Note: Callable functions in the metric parameter are NOT supported for KDTree
@@ -978,12 +978,13 @@ cdef class BinaryTree:
             self.node_bounds.base,
         )
 
-    def get_valid_metrics(self):
+    @property
+    def valid_metric(self):
         """Get list of valid distance metrics.
 
         Returns
         -------
-        valid_metrics: list of str
+        valid_metric: list of str
             List of valid metrics.
         """
         return self.valid_metrics
