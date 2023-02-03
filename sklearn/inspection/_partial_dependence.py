@@ -20,7 +20,7 @@ from ..utils import _safe_indexing
 from ..utils import _safe_assign
 from ..utils import _determine_key_type
 from ..utils import _get_column_indices
-from ..utils import column_or_1d, check_consistent_length
+from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_is_fitted
 from ..utils import Bunch
 from ..tree import DecisionTreeRegressor
@@ -218,6 +218,7 @@ def partial_dependence(
     X,
     features,
     *,
+    sample_weight=None,
     categorical_features=None,
     feature_names=None,
     response_method="auto",
@@ -225,7 +226,6 @@ def partial_dependence(
     grid_resolution=100,
     method="auto",
     kind="average",
-    sample_weight=None,
 ):
     """Partial dependence of ``features``.
 
@@ -268,6 +268,13 @@ def partial_dependence(
     features : array-like of {int, str}
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights for doing weighted means when averaging the model output.
+        If `None`, then samples are equally weighted.
+        Note that `sample_weight` does not change the individual predictions.
+
+        .. versionadded:: 1.3
 
     categorical_features : array-like of shape (n_features,) or shape \
             (n_categorical_features,), dtype={bool, int, str}, default=None
@@ -349,14 +356,6 @@ def partial_dependence(
 
         .. versionadded:: 0.24
 
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights for doing weighted means when averaging the model output.
-        If `None`, then samples are equally weighted.
-
-        Note that `sample_weight` does not change the individual predictions.
-
-        .. versionadded:: 1.3
-
     Returns
     -------
     predictions : :class:`~sklearn.utils.Bunch`
@@ -367,26 +366,26 @@ def partial_dependence(
             The predictions for all the points in the grid for all
             samples in X. This is also known as Individual
             Conditional Expectation (ICE).
-            Only available when ``kind='individual'`` or ``kind='both'``.
+            Only available when `kind='individual'` or `kind='both'`.
 
         average : ndarray of shape (n_outputs, len(values[0]), \
                 len(values[1]), ...)
             The predictions for all the points in the grid, averaged
             over all samples in X (or over the training data if
-            ``method`` is 'recursion').
-            Only available when ``kind='average'`` or ``kind='both'``.
+            `method` is 'recursion').
+            Only available when `kind='average'` or `kind='both'`.
 
         values : seq of 1d ndarrays
             The values with which the grid has been created. The generated
-            grid is a cartesian product of the arrays in ``values``.
-            ``len(values) == len(features)``. The size of each array
-            ``values[j]`` is either ``grid_resolution``, or the number of
-            unique values in ``X[:, j]``, whichever is smaller.
+            grid is a cartesian product of the arrays in `values`.
+            `len(values) == len(features)`. The size of each array
+            `values[j]` is either `grid_resolution`, or the number of
+            unique values in `X[:, j]`, whichever is smaller.
 
-        ``n_outputs`` corresponds to the number of classes in a multi-class
+        `n_outputs` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
-        For classical regression and binary classification ``n_outputs==1``.
-        ``n_values_feature_j`` corresponds to the size ``values[j]``.
+        For classical regression and binary classification `n_outputs==1`.
+        `n_values_feature_j` corresponds to the size `values[j]`.
 
     See Also
     --------
@@ -409,7 +408,7 @@ def partial_dependence(
         raise ValueError("'estimator' must be a fitted regressor or classifier.")
 
     if is_classifier(estimator) and isinstance(estimator.classes_[0], np.ndarray):
-        raise ValueError("Multiclass-multioutput estimators are not supported.")
+        raise ValueError("Multiclass-multioutput estimators are not supported")
 
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
@@ -440,7 +439,7 @@ def partial_dependence(
     if kind != "average":
         if method == "recursion":
             raise ValueError(
-                "The 'recursion' method only applies when 'kind' is set to 'average'."
+                "The 'recursion' method only applies when 'kind' is set to 'average'"
             )
         method = "brute"
 
@@ -497,8 +496,7 @@ def partial_dependence(
             )
 
     if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
-        check_consistent_length(X, sample_weight)
+        sample_weight = _check_sample_weight(sample_weight, X)
 
     if _determine_key_type(features, accept_slice=False) == "int":
         # _get_column_indices() supports negative indexing. Here, we limit

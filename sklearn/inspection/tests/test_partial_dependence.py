@@ -66,7 +66,7 @@ iris = load_iris()
 
 
 @pytest.mark.parametrize(
-    "estimator, method, data",
+    "Estimator, method, data",
     [
         (GradientBoostingClassifier, "auto", binary_classification_data),
         (GradientBoostingClassifier, "auto", multiclass_classification_data),
@@ -276,7 +276,7 @@ def test_partial_dependence_helpers(est, method, target_feature):
 
     if method == "brute":
         pdp, predictions = _partial_dependence_brute(
-            est, grid, features, X, response_method="auto", sample_weight=None
+            est, grid, features, X, response_method="auto"
         )
     else:
         pdp = _partial_dependence_recursion(est, grid, features)
@@ -447,7 +447,7 @@ def test_partial_dependence_easy_target(est, power):
 
 
 @pytest.mark.parametrize(
-    "estimator",
+    "Estimator",
     (
         sklearn.tree.DecisionTreeClassifier,
         sklearn.tree.ExtraTreeClassifier,
@@ -822,14 +822,14 @@ def test_partial_dependence_unfitted(estimator):
 
 
 @pytest.mark.parametrize(
-    "estimator, data",
+    "Estimator, data",
     [
         (LinearRegression, multioutput_regression_data),
         (LogisticRegression, binary_classification_data),
     ],
 )
-def test_kind_average_and_average_of_individual(estimator, data):
-    est = estimator()
+def test_kind_average_and_average_of_individual(Estimator, data):
+    est = Estimator()
     (X, y), n_targets = data
     est.fit(X, y)
 
@@ -846,7 +846,7 @@ def test_kind_average_and_average_of_individual(estimator, data):
         (LogisticRegression, binary_classification_data),
     ],
 )
-def test_partial_dependence_kind_individual_ignores_sample_weight(estimator, data):
+def test_partial_dependence_kind_individual_ignores_sample_weight(Estimator, data):
     est = Estimator()
     (X, y), n_targets = data
     sample_weight = [1] + [0] * (len(X) - 1)
@@ -869,33 +869,38 @@ def test_partial_dependence_kind_individual_ignores_sample_weight(estimator, dat
         GradientBoostingClassifier(),
     ],
 )
-def test_partial_dependence_sample_weight_ind_equals_one(estimator):
+@pytest.mark.parametrize("non_null_weight_idx", [0, 1, -1])
+def test_partial_dependence_non_null_weight_idx(estimator, non_null_weight_idx):
+    """Check that if we pass a `sample_weight` of zeros with only one index with
+    sample weight equals one, then the average `partial_dependece` with this
+    `sample_weight` is equal to the individual `partial_dependece` of the
+    corresponding index.
+    """
     X, y = iris.data, iris.target
     preprocessor = make_column_transformer(
         (StandardScaler(), [0, 2]), (RobustScaler(), [1, 3])
     )
     pipe = make_pipeline(preprocessor, estimator).fit(X, y)
 
-    for sample_weight_ind_equals_one in [0, 1, -1]:
-        sample_weight = np.zeros_like(y)
-        sample_weight[sample_weight_ind_equals_one] = 1
-        pdp_sw = partial_dependence(
-            pipe,
-            X,
-            [2, 3],
-            kind="average",
-            sample_weight=sample_weight,
-            grid_resolution=10,
+    sample_weight = np.zeros_like(y)
+    sample_weight[non_null_weight_idx] = 1
+    pdp_sw = partial_dependence(
+        pipe,
+        X,
+        [2, 3],
+        kind="average",
+        sample_weight=sample_weight,
+        grid_resolution=10,
+    )
+    pdp_ind = partial_dependence(
+        pipe, X, [2, 3], kind="individual", grid_resolution=10
+    )
+    output_dim = 1 if is_regressor(pipe) else len(np.unique(y))
+    for i in range(output_dim):
+        assert_allclose(
+            pdp_ind["individual"][i][non_null_weight_idx],
+            pdp_sw["average"][i],
         )
-        pdp_ind = partial_dependence(
-            pipe, X, [2, 3], kind="individual", grid_resolution=10
-        )
-        output_dim = 1 if is_regressor(pipe) else len(np.unique(y))
-        for i in range(output_dim):
-            assert_allclose(
-                pdp_ind["individual"][i][sample_weight_ind_equals_one],
-                pdp_sw["average"][i],
-            )
 
 
 @pytest.mark.parametrize(
@@ -905,7 +910,7 @@ def test_partial_dependence_sample_weight_ind_equals_one(estimator):
         (LogisticRegression, binary_classification_data),
     ],
 )
-def test_partial_dependece_equivalence_equal_sample_weight(estimator, data):
+def test_partial_dependece_equivalence_equal_sample_weight(Estimator, data):
     """Check that `sample_weight=None` is equivalent to having equal
     weights.
     """
