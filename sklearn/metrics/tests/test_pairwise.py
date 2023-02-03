@@ -112,7 +112,7 @@ def test_pairwise_distances(global_dtype):
     S2 = haversine_distances(X, Y)
     assert_allclose(S, S2)
 
-    # compare paired to pairwise implementations
+    # test that the two functions computing haversine give the same results where they should
     X = rng.randn(5, 2)
     Y = np.tile(X[0, :], (5, 1))
     S = haversine_distances(X, Y[0].reshape(1, -1)).ravel()
