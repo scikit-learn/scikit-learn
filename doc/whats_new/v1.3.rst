@@ -131,7 +131,7 @@ Changelog
   :pr:`25186` by :user:`Felipe Breve Siola <fsiola>`.
 
 - |Enhancement| :class:`ensemble.BaggingClassifier` and
-  :class:`ensemble.BaggingRegressor` exposes the `allow_nan` tag from the
+  :class:`ensemble.BaggingRegressor` expose the `allow_nan` tag from the
   underlying estimator. :pr:`25506` by `Thomas Fan`_.
 
 :mod:`sklearn.exception`
