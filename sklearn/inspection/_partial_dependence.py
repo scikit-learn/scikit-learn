@@ -351,7 +351,7 @@ def partial_dependence(
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights for doing weighted means when averaging the model output.
-        If None, then samples are equally weighted.
+        If `None`, then samples are equally weighted.
 
         Note that `sample_weight` does not change the individual predictions.
 
