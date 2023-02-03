@@ -840,14 +840,14 @@ def test_kind_average_and_average_of_individual(estimator, data):
 
 
 @pytest.mark.parametrize(
-    "estimator, data",
+    "Estimator, data",
     [
         (LinearRegression, multioutput_regression_data),
         (LogisticRegression, binary_classification_data),
     ],
 )
 def test_partial_dependence_kind_individual_ignores_sample_weight(estimator, data):
-    est = estimator()
+    est = Estimator()
     (X, y), n_targets = data
     sample_weight = [1] + [0] * (len(X) - 1)
     est.fit(X, y)
@@ -899,7 +899,7 @@ def test_partial_dependence_sample_weight_ind_equals_one(estimator):
 
 
 @pytest.mark.parametrize(
-    "estimator, data",
+    "Estimator, data",
     [
         (LinearRegression, multioutput_regression_data),
         (LogisticRegression, binary_classification_data),
@@ -909,10 +909,10 @@ def test_partial_dependece_equivalence_equal_sample_weight(estimator, data):
     """Check that `sample_weight=None` is equivalent to having equal
     weights.
     """
-    est = estimator()
+    est = Estimator()
     (X, y), n_targets = data
     est.fit(X, y)
-    sample_weight = np.ones(len(X))
+    sample_weight = np.ones_like(y)
 
     pdp_nsw = partial_dependence(est, X=X, features=[1, 2], kind="average")
     pdp_sw = partial_dependence(
@@ -926,9 +926,12 @@ def test_partial_dependece_equivalence_equal_sample_weight(estimator, data):
 
 
 def test_partial_dependence_sample_weight_size_error():
+    """Check that we raise an error when the size of `sample_weight` is not
+    consistent with `X` and `y`.
+    """
     est = LogisticRegression()
     (X, y), n_targets = binary_classification_data
-    sample_weight = np.ones(len(X))
+    sample_weight = np.ones_like(y)
     est.fit(X, y)
 
     with pytest.raises(
@@ -941,9 +944,12 @@ def test_partial_dependence_sample_weight_size_error():
 
 
 def test_partial_dependence_sample_weight_with_recursion():
+    """Check that we raise an error when `sample_weight` is provided with
+    `"recursion"` method.
+    """
     est = RandomForestRegressor()
     (X, y), n_targets = regression_data
-    sample_weight = np.ones(len(X))
+    sample_weight = np.ones_like(y)
     est.fit(X, y, sample_weight=sample_weight)
 
     with pytest.raises(ValueError, match="'recursion' method can only be applied when"):
