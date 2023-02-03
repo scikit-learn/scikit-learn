@@ -985,12 +985,14 @@ def test_deprecated_base_estimator_has_decision_function():
 
 
 @pytest.mark.parametrize(
-    "bagging",
+    "bagging, expected_allow_nan",
     [
-        BaggingClassifier(HistGradientBoostingClassifier(max_iter=1), n_estimators=1),
-        BaggingRegressor(HistGradientBoostingRegressor(max_iter=1), n_estimators=1),
+        (BaggingClassifier(HistGradientBoostingClassifier(max_iter=1)), True),
+        (BaggingRegressor(HistGradientBoostingRegressor(max_iter=1)), True),
+        (BaggingClassifier(LogisticRegression()), False),
+        (BaggingRegressor(SVR()), False),
     ],
 )
-def test_bagging_allow_nan_tag(bagging):
+def test_bagging_allow_nan_tag(bagging, expected_allow_nan):
     """Check that bagging inherits allow_nan tag."""
-    assert bagging._get_tags()["allow_nan"]
+    assert bagging._get_tags()["allow_nan"] == expected_allow_nan
