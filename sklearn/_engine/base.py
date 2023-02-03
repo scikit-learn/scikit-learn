@@ -11,7 +11,6 @@ SKLEARN_ENGINES_ENTRY_POINT = "sklearn_engines"
 
 
 class EngineSpec:
-
     __slots__ = ["name", "provider_name", "module_name", "engine_qualname"]
 
     def __init__(self, name, provider_name, module_name, engine_qualname):

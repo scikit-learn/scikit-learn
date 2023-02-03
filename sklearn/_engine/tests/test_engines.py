@@ -30,6 +30,7 @@ class FakeEngineHolder:
 # Dummy classes used to test engine resolution
 class DefaultEngine:
     engine_name = "test-engine"
+
     def __init__(self, estimator):
         self.estimator = estimator
 
@@ -39,6 +40,7 @@ class DefaultEngine:
 
 class NeverAcceptsEngine:
     engine_name = "test-engine"
+
     def __init__(self, estimator):
         self.estimator = estimator
 
@@ -48,6 +50,7 @@ class NeverAcceptsEngine:
 
 class AlwaysAcceptsEngine:
     engine_name = "test-engine"
+
     def __init__(self, estimator):
         self.estimator = estimator
 
