@@ -1892,7 +1892,7 @@ def pairwise_distances_chunked(
         "Y": [np.ndarray, None],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
         "n_jobs": [Integral, None],
-        "force_all_finite": ["boolean"],
+        "force_all_finite": ["boolean", StrOptions({"allow-nan"})],
     }
 )
 def pairwise_distances(
