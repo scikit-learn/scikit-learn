@@ -1552,7 +1552,7 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
 
 
 def test_nan_euclidean_support():
-    # Test input containing NaN.
+    """Check that `nan_euclidean` is lenient with `nan` values."""
 
     X = [[0, 1], [1, np.nan], [2, 3], [3, 5]]
     pairwise_distances(X, X, metric="nan_euclidean")
