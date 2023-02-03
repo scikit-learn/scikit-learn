@@ -30,7 +30,6 @@ from .utils.validation import check_is_fitted
 from .utils.validation import _get_feature_names
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils._param_validation import validate_parameter_constraints
-from ._config import get_config
 from ._engine import get_engine_classes
 
 
