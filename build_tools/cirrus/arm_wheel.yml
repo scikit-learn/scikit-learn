@@ -82,8 +82,8 @@ wheels_upload_task:
   env:
     # XXX: Need to encrypt keys in the CirrusCI interface
     # https://cirrus-ci.org/guide/writing-tasks/#encrypted-variables
-    # SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[...]
-    # SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ENCRYPTED[...]
+    SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[8f20120b18a07d8a11192b98bff1f562883558e1f4c53f8ead1577113785a4105ee6f14ad9b5dacf1803c19c4913fe1c]
+    SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ENCRYPTED[8fade46af37fa645e57bd1ee21683337aa369ba56f6307ce13889f1e74df94e5bdd21d323baac21e332fd87b8949659a]
     ARTIFACTS_PATH: wheelhouse
   upload_script: |
     conda install curl unzip -y
