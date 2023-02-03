@@ -81,6 +81,7 @@ wheels_upload_task:
   only_if: $CIRRUS_PR == ""
   env:
     # XXX: Need to encrypt keys in the CirrusCI interface
+    # https://cirrus-ci.org/guide/writing-tasks/#encrypted-variables
     # SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[...]
     # SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ENCRYPTED[...]
     ARTIFACTS_PATH: wheelhouse
