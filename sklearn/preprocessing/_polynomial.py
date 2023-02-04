@@ -32,6 +32,53 @@ __all__ = [
 ]
 
 
+def _append_expansion(X, to_stack, interaction_only, deg, n_features):
+    """Helper function for creating and appending sparse expansion matrices"""
+
+    total_nnz = _calc_total_nnz(X.indptr, interaction_only, deg)
+    expanded_col = _calc_expanded_nnz(n_features, interaction_only, deg)
+
+    if expanded_col == 0:
+        return
+    assert expanded_col > 0
+
+    # This only checks whether each block needs 64bit integers upon
+    # expansion. We prefer to keep 32bit integers where we can,
+    # since currently CSR construction downcasts when possible, so
+    # we'n_features prefer to avoid an unnecessary cast. The dtype may still
+    # change in the concatenation process if needed.
+    # See: https://github.com/scipy/scipy/issues/16569
+    max_indices = expanded_col - 1
+    max_indptr = total_nnz
+    max_int32 = np.iinfo(np.int32).max
+    needs_int64 = max(max_indices, max_indptr) > max_int32
+    index_dtype = np.int64 if needs_int64 else np.int32
+
+    # Result of the expansion, modified in place by the
+    # `_csr_polynomial_expansion` routine.
+    expanded_data = np.empty(shape=total_nnz, dtype=X.data.dtype)
+    expanded_indices = np.ndarray(shape=total_nnz, dtype=index_dtype)
+    expanded_indptr = np.ndarray(shape=X.indptr.shape[0], dtype=index_dtype)
+    _csr_polynomial_expansion(
+        X.data,
+        X.indices,
+        X.indptr,
+        X.shape[1],
+        expanded_data,
+        expanded_indices,
+        expanded_indptr,
+        interaction_only,
+        deg,
+    )
+    to_stack.append(
+        sparse.csr_matrix(
+            (expanded_data, expanded_indices, expanded_indptr),
+            shape=(X.indptr.shape[0] - 1, expanded_col),
+            dtype=X.dtype,
+        )
+    )
+
+
 class PolynomialFeatures(TransformerMixin, BaseEstimator):
     """Generate polynomial and interaction features.
 
@@ -373,48 +420,12 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 to_stack.append(X)
 
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
-                total_nnz = _calc_total_nnz(X.indptr, self.interaction_only, deg)
-                expanded_col = _calc_expanded_nnz(
-                    n_features, self.interaction_only, deg
-                )
-
-                if expanded_col == 0:
-                    break
-                assert expanded_col > 0
-
-                # This only checks whether each block needs 64bit integers upon
-                # expansion. We prefer to keep 32bit integers where we can,
-                # since currently CSR construction downcasts when possible, so
-                # we'n_features prefer to avoid an unnecessary cast. The dtype may still
-                # change in the concatenation process if needed.
-                # See: https://github.com/scipy/scipy/issues/16569
-                max_indices = expanded_col - 1
-                max_indptr = total_nnz
-                needs_int64 = max(max_indices, max_indptr) > max_int32
-                index_dtype = np.int64 if needs_int64 else np.int32
-
-                # Result of the expansion, modified in place by the
-                # `_csr_polynomial_expansion` routine.
-                expanded_data = np.empty(shape=total_nnz, dtype=X.data.dtype)
-                expanded_indices = np.ndarray(shape=total_nnz, dtype=index_dtype)
-                expanded_indptr = np.ndarray(shape=X.indptr.shape[0], dtype=index_dtype)
-                _csr_polynomial_expansion(
-                    X.data,
-                    X.indices,
-                    X.indptr,
-                    X.shape[1],
-                    expanded_data,
-                    expanded_indices,
-                    expanded_indptr,
-                    self.interaction_only,
-                    deg,
-                )
-                to_stack.append(
-                    sparse.csr_matrix(
-                        (expanded_data, expanded_indices, expanded_indptr),
-                        shape=(X.indptr.shape[0] - 1, expanded_col),
-                        dtype=X.dtype,
-                    )
+                _append_expansion(
+                    X=X,
+                    to_stack=to_stack,
+                    interaction_only=self.interaction_only,
+                    deg=deg,
+                    n_features=n_features,
                 )
             if len(to_stack) == 0:
                 # edge case: deal with empty matrix
