@@ -22,6 +22,12 @@ from ..utils._param_validation import StrOptions
 from sklearn.metrics._pairwise_distances_reduction import ArgKminLabels
 
 
+def _adjusted_metric(metric, p=None):
+    if metric == "minkowski" and p == 2:
+        metric = "euclidean"
+    return metric
+
+
 class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     """Classifier implementing the k-nearest neighbors vote.
 
@@ -294,14 +300,11 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         if self.weights == "uniform":
             # TODO: systematize this mapping of metric for
             # PairwiseDistancesReductions.
-            metric = (
-                "euclidean"
-                if self.metric == "minkowski" and self.p == 2
-                else self.metric
-            )
+            metric = _adjusted_metric(self.metric, self.p)
             if (
                 self.algorithm == "brute"
                 and ArgKminLabels.is_usable_for(X, self._fit_X, metric)
+                # TODO: Implement efficient multi-output solution
                 and not self.outputs_2d_
             ):
                 probabilities = ArgKminLabels.compute(
@@ -310,6 +313,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     k=self.n_neighbors,
                     weights=self.weights,
                     labels=self._y,
+                    unique_labels=self.classes_,
                     metric=metric,
                     metric_kwargs=self.metric_params,
                 )

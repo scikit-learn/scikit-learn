@@ -32,8 +32,10 @@ from sklearn.utils.fixes import threadpool_limits
 
 cpdef enum WeightingStrategy:
     uniform = 0
+    # TODO: Implement the following options, most likely in
+    # `weighted_histogram_mode`
     distance = 1
-    other = 2
+    callable = 2
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 from ._argkmin cimport ArgKmin{{name_suffix}}, EuclideanArgKmin{{name_suffix}}
@@ -45,6 +47,7 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
     """
     cdef:
         const ITYPE_t[:] labels,
+        const ITYPE_t[:] unique_labels
         DTYPE_t[:, :] label_weights
         cpp_map[ITYPE_t, ITYPE_t] labels_to_index
         WeightingStrategy weight_type
@@ -57,6 +60,7 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
         ITYPE_t k,
         weights,
         labels,
+        unique_labels,
         str metric="euclidean",
         chunk_size=None,
         dict metric_kwargs=None,
@@ -84,6 +88,7 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
             strategy=strategy,
             weights=weights,
             labels=labels,
+            unique_labels=unique_labels,
         )
 
         # Limit the number of threads in second level of nested parallelism for BLAS
@@ -100,6 +105,7 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
         self,
         DatasetsPair{{name_suffix}} datasets_pair,
         const ITYPE_t[:] labels,
+        const ITYPE_t[:] unique_labels,
         chunk_size=None,
         strategy=None,
         ITYPE_t k=1,
@@ -117,10 +123,10 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
         elif weights == "distance":
             self.weight_type = WeightingStrategy.distance
         else:
-            self.weight_type = WeightingStrategy.other
+            self.weight_type = WeightingStrategy.callable
         self.labels = labels
 
-        cdef ITYPE_t[:] unique_labels = np.unique(labels)
+        self.unique_labels = unique_labels
 
         cdef ITYPE_t idx, label
         # Map from set of unique labels to their indices in `label_weights`
@@ -146,6 +152,7 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
         cdef:
             ITYPE_t y_idx, label, label_index, multi_output_index
             DTYPE_t label_weight = 1
+            # TODO: Implement other WeightingStrategy values
             bint use_distance_weighting = (
                 self.weight_type == WeightingStrategy.distance
             )
