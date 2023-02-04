@@ -137,7 +137,7 @@ def _hdbscan_brute(
     distance_matrix /= alpha
 
     max_distance = metric_params.get("max_distance", 0.0)
-    if isspmatrix_csr(distance_matrix):
+    if issparse(distance_matrix) and distance_matrix.format != "csr":
         # we need CSR format to avoid a conversion in `_brute_mst` when calling
         # `csgraph.connected_components`
         distance_matrix = distance_matrix.tocsr()
