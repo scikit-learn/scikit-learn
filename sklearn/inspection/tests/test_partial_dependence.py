@@ -935,9 +935,7 @@ def test_partial_dependence_sample_weight_size_error():
     sample_weight = np.ones_like(y)
     est.fit(X, y)
 
-    with pytest.raises(
-        ValueError, match="sample_weight.shape =="
-    ):
+    with pytest.raises(ValueError, match="sample_weight.shape =="):
 
         partial_dependence(
             est, X, features=[0], sample_weight=sample_weight[1:], grid_resolution=10
