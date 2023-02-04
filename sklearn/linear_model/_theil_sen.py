@@ -15,13 +15,13 @@ import numpy as np
 from scipy import linalg
 from scipy.special import binom
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from ._base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
 from ..utils._param_validation import Interval
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
