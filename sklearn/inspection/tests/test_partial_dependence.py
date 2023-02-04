@@ -920,7 +920,7 @@ def test_partial_dependece_equivalence_equal_sample_weight(Estimator, data):
     sample_weight, params = None, {"X": X, "features": [1, 2], "kind": "average"}
     pdp_sw_none = partial_dependence(est, **params, sample_weight=sample_weight)
     sample_weight = np.ones_like(y)
-    pdp_sw_unit = partial_dependence(est, est, **params, sample_weight=sample_weight)
+    pdp_sw_unit = partial_dependence(est, **params, sample_weight=sample_weight)
     assert_allclose(pdp_sw_none["average"], pdp_sw_unit["average"])
     sample_weight = 2 * np.ones_like(y)
     pdp_sw_doubling = partial_dependence(est, **params, sample_weight=sample_weight)
@@ -937,7 +937,7 @@ def test_partial_dependence_sample_weight_size_error():
     est.fit(X, y)
 
     with pytest.raises(
-        ValueError, match="input variables with inconsistent numbers of samples"
+        ValueError, match="sample_weight.shape == (49,), expected (50,)!"
     ):
 
         partial_dependence(
