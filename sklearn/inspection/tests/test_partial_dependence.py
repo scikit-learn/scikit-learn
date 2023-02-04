@@ -892,9 +892,7 @@ def test_partial_dependence_non_null_weight_idx(estimator, non_null_weight_idx):
         sample_weight=sample_weight,
         grid_resolution=10,
     )
-    pdp_ind = partial_dependence(
-        pipe, X, [2, 3], kind="individual", grid_resolution=10
-    )
+    pdp_ind = partial_dependence(pipe, X, [2, 3], kind="individual", grid_resolution=10)
     output_dim = 1 if is_regressor(pipe) else len(np.unique(y))
     for i in range(output_dim):
         assert_allclose(
@@ -926,7 +924,7 @@ def test_partial_dependece_equivalence_equal_sample_weight(Estimator, data):
     assert_allclose(pdp_sw_none["average"], pdp_sw_unit["average"])
     sample_weight = 2 * np.ones_like(y)
     pdp_sw_doubling = partial_dependence(est, **params, sample_weight=sample_weight)
-    assert_allclose(pdp_nsw["average"], pdp_sw2["average"])
+    assert_allclose(pdp_sw_none["average"], pdp_sw_doubling["average"])
 
 
 def test_partial_dependence_sample_weight_size_error():

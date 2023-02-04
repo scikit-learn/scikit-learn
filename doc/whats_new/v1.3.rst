@@ -146,9 +146,6 @@ Changelog
 :mod:`sklearn.impute`
 .....................
 
-- |Fix| :class:`feature_extraction.FeatureHasher` raises an informative error
-  when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
-
 - |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
   :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
 
