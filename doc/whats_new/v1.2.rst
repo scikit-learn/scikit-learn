@@ -373,7 +373,7 @@ Changelog
   and :pr:`22965` by :user:`Meekail Zain <micky774>`.
 
 - |Enhancement| :class:`cluster.Birch` now preserves dtype for `numpy.float32`
-  inputs. :pr:`22968` by :user:`Meekail Zain <micky774>`.
+  inputs. :pr:`22968` by `Meekail Zain <micky774>`.
 
 - |Enhancement| :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans`
   now accept a new `'auto'` option for `n_init` which changes the number of
