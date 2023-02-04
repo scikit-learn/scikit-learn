@@ -20,11 +20,13 @@ ctypedef fused INDEX_B_t:
     cnp.int32_t
     cnp.int64_t
 
+# TODO: use `cnp.{int,float}{32,64}` when cython#5230 is resolved:
+# https://github.com/cython/cython/issues/5230
 ctypedef fused DATA_t:
-    cnp.float32_t
-    cnp.float64_t
-    cnp.int32_t
-    cnp.int64_t
+    float
+    double
+    int
+    long
 
 cdef inline cnp.int64_t _deg2_column(
     cnp.int64_t n_features,
@@ -48,7 +50,7 @@ cdef inline cnp.int64_t _deg2_column(
         # would result in an integer overflow.
         # Here, we take advantage of `PyLong` for arbitrary precision.
         with gil:
-            col = <INDEX_B_t> py_deg2_column(n_features, i, j, interaction_only)
+            return <cnp.int64_t> py_deg2_column(n_features, i, j, interaction_only)
     else:
         if interaction_only:
             return n_features * i - (i**2 + 3 * i) / 2 - 1 + j
@@ -86,7 +88,7 @@ cdef inline cnp.int64_t _deg3_column(
         # would result in an integer overflow.
         # Here, we take advantage of `PyLong` for arbitrary precision.
         with gil:
-            return <INDEX_B_t> py_deg3_column(n_features, i, j, k, interaction_only)
+            return <cnp.int64_t> py_deg3_column(n_features, i, j, k, interaction_only)
     if interaction_only:
         return (
             (3 * n_features**2 * i - 3 * n_features * i**2 + i**3
@@ -188,13 +190,13 @@ cpdef void _csr_polynomial_expansion(
 
     Parameters
     ----------
-    data : nd-array
+    data : memory view on nd-array
         The "data" attribute of the input CSR matrix.
 
-    indices : nd-array
+    indices : memory view on nd-array
         The "indices" attribute of the input CSR matrix.
 
-    indptr : nd-array
+    indptr : memory view on nd-array
         The "indptr" attribute of the input CSR matrix.
 
     n_features : int
