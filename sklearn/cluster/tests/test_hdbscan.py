@@ -78,6 +78,17 @@ def test_hdbscan_distance_matrix():
     score = fowlkes_mallows_score(y, labels)
     assert score >= 0.98
 
+    msg = r"The precomputed distance matrix.*has shape"
+    with pytest.raises(ValueError, match=msg):
+        HDBSCAN(metric="precomputed", copy=True).fit_predict(X)
+
+    msg = r"The precomputed distance matrix.*values"
+    # Ensure the matrix is not symmetric
+    D[0, 1] = 10
+    D[1, 0] = 1
+    with pytest.raises(ValueError, match=msg):
+        HDBSCAN(metric="precomputed").fit_predict(D)
+
 
 def test_hdbscan_sparse_distance_matrix():
     D = distance.squareform(distance.pdist(X))
