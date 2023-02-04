@@ -2261,35 +2261,39 @@ def test_regressor_predict_on_arraylikes():
     assert_allclose(est.predict([[0, 2.5]]), [6])
 
 
-def test_nan_euclidean_support():
-    # Test input containing NaN.
+@pytest.mark.parametrize(
+    "Estimator, params, fit_predict_type",
+    [
+        (neighbors.KNeighborsClassifier, {"n_neighbors": 2}, ".fit.predict"),
+        (neighbors.KNeighborsRegressor, {"n_neighbors": 2}, ".fit.predict"),
+        (neighbors.RadiusNeighborsRegressor, {}, ".fit.predict"),
+        (neighbors.RadiusNeighborsClassifier, {}, ".fit.predict"),
+        (neighbors.NearestCentroid, {}, ".fit.predict"),
+        (neighbors.KNeighborsTransformer, {"n_neighbors": 2}, ".fit_transform"),
+        (neighbors.RadiusNeighborsTransformer, {"radius": 1.5}, ".fit_transform"),
+        (neighbors.LocalOutlierFactor, {"n_neighbors": 1}, ".fit_predict"),
+        (neighbors.NearestNeighbors, {"n_neighbors": 1}, ".fit.kneighbors")
+    ],
+)
+def test_nan_euclidean_support(Estimator, params, fit_predict_type):
+    """Check that the different neighbor estimators are lenient towards `nan`
+    values if using `metric="nan_euclidean"`.
+    """
 
     X = [[0, 1], [1, np.nan], [2, 3], [3, 5]]
     y = [0, 0, 1, 1]
 
-    model = neighbors.NearestCentroid(metric="nan_euclidean")
-    model.fit(X, y).predict(X)
+    params.update({"metric": "nan_euclidean"})
+    model = Estimator().set_params(**params)
 
-    model = neighbors.KNeighborsTransformer(metric="nan_euclidean", n_neighbors=2)
-    model.fit_transform(X).toarray()
+    if fit_predict_type == ".fit.predict":
+        output = model.fit(X, y).predict(X)
+    elif fit_predict_type == ".fit_transform":
+        output = model.fit_transform(X).toarray()
+    elif fit_predict_type == ".fit_predict":
+        output = model.fit_predict(X)
+    elif fit_predict_type == ".fit.kneighbors":
+        output = model.fit(X).kneighbors(X)
 
-    model = neighbors.RadiusNeighborsTransformer(metric="nan_euclidean", radius=1.5)
-    model.fit_transform(X).toarray()
-
-    model = neighbors.LocalOutlierFactor(metric="nan_euclidean", n_neighbors=1)
-    model.fit_predict(X)
-
-    model = neighbors.RadiusNeighborsClassifier(metric="nan_euclidean")
-    model.fit(X, y).predict(X)
-
-    model = neighbors.RadiusNeighborsRegressor(metric="nan_euclidean")
-    model.fit(X, y).predict(X)
-
-    model = neighbors.NearestNeighbors(metric="nan_euclidean", n_neighbors=2)
-    model.fit(X, y).radius_neighbors(X)
-
-    model = neighbors.KNeighborsRegressor(metric="nan_euclidean", n_neighbors=2)
-    model.fit(X, y).predict(X)
-
-    model = neighbors.KNeighborsClassifier(metric="nan_euclidean", n_neighbors=2)
-    model.fit(X, y).predict(X)
+    # Checking if some output is None
+    assert (~np.isnan(output)).all()

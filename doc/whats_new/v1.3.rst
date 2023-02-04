@@ -131,8 +131,11 @@ Changelog
 :mod:`sklearn.neighbors`
 ........................
 
-- |Fix| :class:`neighbors.NearestNeighbors` and other similar neighbors searches
-  now work with `metric="nan_euclidean"` as expected.
+- |Enhancement| :class:`neighbors.NearestNeighbors`, :class:`KNeighborsClassifier`,
+  :class:`KNeighborsRegressor`, :class:`RadiusNeighborsClassifier`,
+  :class:`RadiusNeighborsRegressor`, :class:`KNeighborsTransformer`,
+  :class:`RadiusNeighborsTransformer`, and :class:`LocalOutlierFactor`
+  now work with `metric="nan_euclidean"`, supporting `nan` inputs.
   :pr:`25330` by :user:`Carlo Lemos <vitaliset>`.
 
 :mod:`sklearn.neural_network`

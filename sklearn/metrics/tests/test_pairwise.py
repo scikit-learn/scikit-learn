@@ -1551,10 +1551,15 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
     assert_allclose(dist, expected_dist)
 
 
-def test_nan_euclidean_support():
+@pytest.mark.parametrize(
+    "pairwise_distances_func",
+    [pairwise_distances, pairwise_distances_argmin, pairwise_distances_argmin_min],
+)
+def test_nan_euclidean_support(pairwise_distances_func):
     """Check that `nan_euclidean` is lenient with `nan` values."""
 
     X = [[0, 1], [1, np.nan], [2, 3], [3, 5]]
-    pairwise_distances(X, X, metric="nan_euclidean")
-    pairwise_distances_argmin(X, X, metric="nan_euclidean")
-    pairwise_distances_argmin_min(X, X, metric="nan_euclidean")
+    output = pairwise_distances_func(X, X, metric="nan_euclidean")
+
+    # Checking if some output is None
+    assert (~np.isnan(output)).all()
