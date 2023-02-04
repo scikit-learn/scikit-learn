@@ -13,7 +13,7 @@ from numbers import Integral, Real
 from warnings import warn
 
 import numpy as np
-from scipy.sparse import csgraph, issparse, isspmatrix_csr
+from scipy.sparse import csgraph, issparse
 
 from ...base import BaseEstimator, ClusterMixin
 from ...metrics import pairwise_distances
@@ -21,8 +21,13 @@ from ...metrics._dist_metrics import DistanceMetric
 from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
 from ...utils.validation import _assert_all_finite, _allclose_dense_sparse
-from ._linkage import label, mst_from_distance_matrix, mst_from_data_matrix
 from ._reachability import mutual_reachability_graph
+from ._linkage import (
+    make_single_linkage,
+    mst_from_mutual_reachability,
+    mst_from_data_matrix,
+    MST_edge_dtype,
+)
 from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_cut
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
@@ -48,7 +53,7 @@ _OUTLIER_ENCODING = {
 
 def _brute_mst(mutual_reachability, min_samples):
     if not issparse(mutual_reachability):
-        return mst_from_distance_matrix(mutual_reachability)
+        return mst_from_mutual_reachability(mutual_reachability)
 
     # Check connected component on mutual reachability
     # If more than one component, it means that even if the distance matrix X
@@ -70,7 +75,11 @@ def _brute_mst(mutual_reachability, min_samples):
     # Compute the minimum spanning tree for the sparse graph
     sparse_min_spanning_tree = csgraph.minimum_spanning_tree(mutual_reachability)
     rows, cols = sparse_min_spanning_tree.nonzero()
-    return np.vstack((rows, cols, sparse_min_spanning_tree.data)).T
+    mst = np.core.records.fromarrays(
+        [rows, cols, sparse_min_spanning_tree.data],
+        dtype=MST_edge_dtype,
+    )
+    return mst
 
 
 def _tree_to_labels(
@@ -100,10 +109,10 @@ def _tree_to_labels(
 
 def _process_mst(min_spanning_tree):
     # Sort edges of the min_spanning_tree by weight
-    row_order = np.argsort(min_spanning_tree.T[2])
-    min_spanning_tree = min_spanning_tree[row_order, :]
+    row_order = np.argsort(min_spanning_tree["distance"])
+    min_spanning_tree = min_spanning_tree[row_order]
     # Convert edge list into standard hierarchical clustering format
-    return label(min_spanning_tree)
+    return make_single_linkage(min_spanning_tree)
 
 
 def _hdbscan_brute(
@@ -149,7 +158,7 @@ def _hdbscan_brute(
     )
     min_spanning_tree = _brute_mst(mutual_reachability_, min_samples=min_samples)
     # Warn if the MST couldn't be constructed around the missing distances
-    if np.isinf(min_spanning_tree.T[2]).any():
+    if np.isinf(min_spanning_tree["distance"]).any():
         warn(
             "The minimum spanning tree contains edge weights with value "
             "infinity. Potentially, you are missing too many distances "
@@ -157,7 +166,6 @@ def _hdbscan_brute(
             "size.",
             UserWarning,
         )
-
     return _process_mst(min_spanning_tree)
 
 
@@ -191,7 +199,6 @@ def _hdbscan_prims(
 
     # Mutual reachability distance is implicit in mst_from_data_matrix
     min_spanning_tree = mst_from_data_matrix(X, core_distances, dist_metric, alpha)
-
     return _process_mst(min_spanning_tree)
 
 
