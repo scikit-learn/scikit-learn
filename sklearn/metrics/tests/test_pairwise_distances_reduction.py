@@ -670,6 +670,7 @@ def test_argkminlabels_factory_method_wrong_usages():
 
     weights = "uniform"
     labels = rng.randint(low=0, high=10, size=100)
+    unique_labels = np.unique(labels)
 
     msg = (
         "Only float64 or float32 datasets pairs are supported at this time, "
@@ -683,6 +684,7 @@ def test_argkminlabels_factory_method_wrong_usages():
             metric=metric,
             weights=weights,
             labels=labels,
+            unique_labels=unique_labels,
         )
 
     msg = (
@@ -697,21 +699,40 @@ def test_argkminlabels_factory_method_wrong_usages():
             metric=metric,
             weights=weights,
             labels=labels,
+            unique_labels=unique_labels,
         )
 
     with pytest.raises(ValueError, match="k == -1, must be >= 1."):
         ArgKminLabels.compute(
-            X=X, Y=Y, k=-1, metric=metric, weights=weights, labels=labels
+            X=X,
+            Y=Y,
+            k=-1,
+            metric=metric,
+            weights=weights,
+            labels=labels,
+            unique_labels=unique_labels,
         )
 
     with pytest.raises(ValueError, match="k == 0, must be >= 1."):
         ArgKminLabels.compute(
-            X=X, Y=Y, k=0, metric=metric, weights=weights, labels=labels
+            X=X,
+            Y=Y,
+            k=0,
+            metric=metric,
+            weights=weights,
+            labels=labels,
+            unique_labels=unique_labels,
         )
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
         ArgKminLabels.compute(
-            X=X, Y=Y, k=k, metric="wrong metric", weights=weights, labels=labels
+            X=X,
+            Y=Y,
+            k=k,
+            metric="wrong metric",
+            weights=weights,
+            labels=labels,
+            unique_labels=unique_labels,
         )
 
     with pytest.raises(
@@ -724,6 +745,7 @@ def test_argkminlabels_factory_method_wrong_usages():
             metric=metric,
             weights=weights,
             labels=labels,
+            unique_labels=unique_labels,
         )
 
     with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
@@ -734,6 +756,7 @@ def test_argkminlabels_factory_method_wrong_usages():
             metric=metric,
             weights=weights,
             labels=labels,
+            unique_labels=unique_labels,
         )
 
     non_existent_weights_strategy = "non_existent_weights_strategy"
@@ -749,6 +772,7 @@ def test_argkminlabels_factory_method_wrong_usages():
             metric=metric,
             weights=non_existent_weights_strategy,
             labels=labels,
+            unique_labels=unique_labels,
         )
 
     # TODO: introduce assertions on UserWarnings once the Euclidean specialisation
