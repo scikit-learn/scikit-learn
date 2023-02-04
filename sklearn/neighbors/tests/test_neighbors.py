@@ -2272,7 +2272,7 @@ def test_regressor_predict_on_arraylikes():
         (neighbors.KNeighborsTransformer, {"n_neighbors": 2}, ".fit_transform"),
         (neighbors.RadiusNeighborsTransformer, {"radius": 1.5}, ".fit_transform"),
         (neighbors.LocalOutlierFactor, {"n_neighbors": 1}, ".fit_predict"),
-        (neighbors.NearestNeighbors, {"n_neighbors": 1}, ".fit.kneighbors")
+        (neighbors.NearestNeighbors, {"n_neighbors": 1}, ".fit.kneighbors"),
     ],
 )
 def test_nan_euclidean_support(Estimator, params, fit_predict_type):
