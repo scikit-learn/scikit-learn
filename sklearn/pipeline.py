@@ -14,7 +14,6 @@ from itertools import islice
 
 import numpy as np
 from scipy import sparse
-from joblib import Parallel
 
 from .base import clone, TransformerMixin
 from .preprocessing import FunctionTransformer
@@ -30,7 +29,7 @@ from .utils.validation import check_is_fitted
 from .utils import check_pandas_support
 from .utils._param_validation import HasMethods, Hidden
 from .utils._set_output import _safe_set_output, _get_output_config
-from .utils.fixes import delayed
+from .utils.parallel import delayed, Parallel
 from .exceptions import NotFittedError
 
 from .utils.metaestimators import _BaseComposition
@@ -995,6 +994,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when
+        `X` has feature names that are all strings.
+
+        .. versionadded:: 1.3
+
     See Also
     --------
     make_union : Convenience function for simplified feature union
@@ -1296,6 +1301,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         # X is passed to all transformers so we just delegate to the first one
         return self.transformer_list[0][1].n_features_in_
+
+    @property
+    def feature_names_in_(self):
+        """Names of features seen during :term:`fit`."""
+        # X is passed to all transformers -- delegate to the first one
+        return self.transformer_list[0][1].feature_names_in_
 
     def __sklearn_is_fitted__(self):
         # Delegate whether feature union was fitted

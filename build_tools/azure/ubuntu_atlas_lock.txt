@@ -22,7 +22,7 @@ pluggy==1.0.0
     # via pytest
 py==1.11.0
     # via pytest-forked
-pytest==7.2.0
+pytest==7.2.1
     # via
     #   -r build_tools/azure/ubuntu_atlas_requirements.txt
     #   pytest-forked
