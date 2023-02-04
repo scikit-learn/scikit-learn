@@ -12,7 +12,7 @@
 
 import numpy as np
 cimport numpy as cnp
-
+from cython cimport floating
 ctypedef cnp.npy_float32 DTYPE_t          # Type of X
 ctypedef cnp.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef cnp.npy_intp SIZE_t              # Type for indices and counters
@@ -99,6 +99,6 @@ cdef class TreeBuilder:
     cdef SIZE_t max_depth               # Maximal tree depth
     cdef double min_impurity_decrease   # Impurity threshold for early stopping
 
-    cpdef build(self, Tree tree, object X, cnp.ndarray y,
-                cnp.ndarray sample_weight=*)
-    cdef _check_input(self, object X, cnp.ndarray y, cnp.ndarray sample_weight)
+    cpdef build(self, Tree tree, object X, const floating[:] y,
+                const floating[:] sample_weight=*)
+    cdef _check_input(self, object X, const floating[:] y, const floating[:] sample_weight)

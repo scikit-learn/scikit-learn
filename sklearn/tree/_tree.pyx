@@ -13,7 +13,7 @@
 # License: BSD 3 clause
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
-
+from cython cimport floating
 from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
@@ -86,13 +86,13 @@ NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 cdef class TreeBuilder:
     """Interface for different tree building strategies."""
 
-    cpdef build(self, Tree tree, object X, cnp.ndarray y,
-                cnp.ndarray sample_weight=None):
+    cpdef build(self, Tree tree, object X, const floating[:] y,
+                const floating[:] sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
         pass
 
-    cdef inline _check_input(self, object X, cnp.ndarray y,
-                             cnp.ndarray sample_weight):
+    cdef inline _check_input(self, object X, const floating[:] y,
+                             const floating[:] sample_weight):
         """Check input dtype, layout and format"""
         if issparse(X):
             X = X.tocsc()
@@ -109,16 +109,16 @@ cdef class TreeBuilder:
             # since we have to copy we will make it fortran for efficiency
             X = np.asfortranarray(X, dtype=DTYPE)
 
-        if y.dtype != DOUBLE or not y.flags.contiguous:
+        if y.base.dtype != DOUBLE or not y.base.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         if (sample_weight is not None and
-            (sample_weight.dtype != DOUBLE or
-            not sample_weight.flags.contiguous)):
+            (sample_weight.base.dtype != DOUBLE or
+            not sample_weight.base.flags.contiguous)):
                 sample_weight = np.asarray(sample_weight, dtype=DOUBLE,
                                            order="C")
 
-        return X, y, sample_weight
+        return X, y.base, sample_weight.base
 
 # Depth first builder ---------------------------------------------------------
 # A record on the stack for depth-first tree growing
@@ -144,12 +144,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
 
-    cpdef build(self, Tree tree, object X, cnp.ndarray y,
-                cnp.ndarray sample_weight=None):
+    cpdef build(self, Tree tree, object X, const floating[:] y,
+                const floating[:] sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
-        X, y, sample_weight = self._check_input(X, y, sample_weight)
+        X, _y, _sample_weight = self._check_input(X, y, sample_weight)
 
         # Initial capacity
         cdef int init_capacity
@@ -170,7 +170,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double min_impurity_decrease = self.min_impurity_decrease
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight)
+        splitter.init(X, _y, _sample_weight)
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -335,19 +335,19 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
 
-    cpdef build(self, Tree tree, object X, cnp.ndarray y,
-                cnp.ndarray sample_weight=None):
+    cpdef build(self, Tree tree, object X, const floating[:] y,
+                const floating[:] sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
-        X, y, sample_weight = self._check_input(X, y, sample_weight)
+        X, _y, _sample_weight = self._check_input(X, y, sample_weight)
 
         # Parameters
         cdef Splitter splitter = self.splitter
         cdef SIZE_t max_leaf_nodes = self.max_leaf_nodes
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight)
+        splitter.init(X, _y, _sample_weight)
 
         cdef vector[FrontierRecord] frontier
         cdef FrontierRecord record
