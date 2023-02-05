@@ -316,7 +316,7 @@ inter-dependent. For example, two estimators that share the same
 we discuss cloning. This point is important to keep in mind when debugging.
 
 If we had passed an integer to the `random_state` parameter of the
-:class:`~sklearn.ensemble.RandomForestClassifier`, we would have obtained the
+:class:`~sklearn.linear_model.SGDClassifier`, we would have obtained the
 same models, and thus the same scores each time. When we pass an integer, the
 same RNG is used across all calls to `fit`. What internally happens is that
 even though the RNG is consumed when `fit` is called, it is always reset to

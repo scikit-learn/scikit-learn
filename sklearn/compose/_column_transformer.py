@@ -12,7 +12,6 @@ from collections import Counter
 
 import numpy as np
 from scipy import sparse
-from joblib import Parallel
 
 from ..base import clone, TransformerMixin
 from ..utils._estimator_html_repr import _VisualBlock
@@ -26,7 +25,7 @@ from ..utils._set_output import _get_output_config, _safe_set_output
 from ..utils import check_pandas_support
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted, _check_feature_names_in
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 
 __all__ = ["ColumnTransformer", "make_column_transformer", "make_column_selector"]
@@ -83,9 +82,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         transformed and combined in the output, and the non-specified
         columns are dropped. (default of ``'drop'``).
         By specifying ``remainder='passthrough'``, all remaining columns that
-        were not specified in `transformers` will be automatically passed
-        through. This subset of columns is concatenated with the output of
-        the transformers.
+        were not specified in `transformers`, but present in the data passed
+        to `fit` will be automatically passed through. This subset of columns
+        is concatenated with the output of the transformers. For dataframes,
+        extra columns not seen during `fit` will be excluded from the output
+        of `transform`.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support :term:`fit` and :term:`transform`.
