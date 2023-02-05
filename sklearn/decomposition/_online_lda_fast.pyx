@@ -9,8 +9,7 @@ from libc.math cimport exp, fabs, log
 from numpy.math cimport EULER
 
 
-def mean_change(cnp.ndarray[ndim=1, dtype=floating] arr_1,
-                cnp.ndarray[ndim=1, dtype=floating] arr_2):
+def mean_change(const floating[:] arr_1, const floating[:] arr_2):
     """Calculate the mean difference between two arrays.
 
     Equivalent to np.abs(arr_1 - arr2).mean().
@@ -28,9 +27,11 @@ def mean_change(cnp.ndarray[ndim=1, dtype=floating] arr_1,
     return total / size
 
 
-def _dirichlet_expectation_1d(cnp.ndarray[ndim=1, dtype=floating] doc_topic,
-                              floating doc_topic_prior,
-                              cnp.ndarray[ndim=1, dtype=floating] out):
+def _dirichlet_expectation_1d(
+    floating[:] doc_topic,
+    floating doc_topic_prior,
+    floating[:] out
+):
     """Dirichlet expectation for a single sample:
         exp(E[log(theta)]) for theta ~ Dir(doc_topic)
     after adding doc_topic_prior to doc_topic, in-place.
@@ -56,7 +57,7 @@ def _dirichlet_expectation_1d(cnp.ndarray[ndim=1, dtype=floating] doc_topic,
         out[i] = exp(psi(doc_topic[i]) - psi_total)
 
 
-def _dirichlet_expectation_2d(cnp.ndarray[ndim=2, dtype=floating] arr):
+def _dirichlet_expectation_2d(const floating[:, :] arr):
     """Dirichlet expectation for multiple samples:
     E[log(theta)] for theta ~ Dir(arr).
 
@@ -66,7 +67,7 @@ def _dirichlet_expectation_2d(cnp.ndarray[ndim=2, dtype=floating] arr):
     the exp and doesn't add in the prior.
     """
     cdef floating row_total, psi_row_total
-    cdef cnp.ndarray[ndim=2, dtype=floating] d_exp
+    cdef floating[:, :] d_exp
     cdef cnp.npy_intp i, j, n_rows, n_cols
 
     n_rows = arr.shape[0]
@@ -82,7 +83,7 @@ def _dirichlet_expectation_2d(cnp.ndarray[ndim=2, dtype=floating] arr):
         for j in range(n_cols):
             d_exp[i, j] = psi(arr[i, j]) - psi_row_total
 
-    return d_exp
+    return d_exp.base
 
 
 # Psi function for positive arguments. Optimized for speed, not accuracy.
@@ -107,4 +108,4 @@ cdef floating psi(floating x) nogil:
     result += log(x) - .5 * r
     r = r * r
     result -= r * ((1./12.) - r * ((1./120.) - r * (1./252.)))
-    return result;
+    return result

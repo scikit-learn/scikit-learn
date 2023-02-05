@@ -6,7 +6,6 @@ from math import ceil
 import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
-from joblib import Parallel
 
 from .. import partial_dependence
 from .._pd_utils import _check_feature_names, _get_feature_index
@@ -16,7 +15,7 @@ from ...utils import check_array
 from ...utils import check_matplotlib_support  # noqa
 from ...utils import check_random_state
 from ...utils import _safe_indexing
-from ...utils.fixes import delayed
+from ...utils.parallel import delayed, Parallel
 from ...utils._encode import _unique
 
 

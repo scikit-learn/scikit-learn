@@ -1,4 +1,3 @@
-import types
 import warnings
 import pickle
 import re
@@ -243,6 +242,8 @@ def _yield_transformer_checks(transformer):
     yield partial(check_transformer_general, readonly_memmap=True)
     if not _safe_tags(transformer, key="stateless"):
         yield check_transformers_unfitted
+    else:
+        yield check_transformers_unfitted_stateless
     # Dependent on external solvers and hence accessing the iter
     # param is non-trivial.
     external_solver = [
@@ -1552,6 +1553,21 @@ def check_transformers_unfitted(name, transformer):
         ),
     ):
         transformer.transform(X)
+
+
+@ignore_warnings(category=FutureWarning)
+def check_transformers_unfitted_stateless(name, transformer):
+    """Check that using transform without prior fitting
+    doesn't raise a NotFittedError for stateless transformers.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(20, 5))
+    X = _enforce_estimator_tags_X(transformer, X)
+
+    transformer = clone(transformer)
+    X_trans = transformer.transform(X)
+
+    assert X_trans.shape[0] == X.shape[0]
 
 
 def _check_transformer(name, transformer_orig, X, y):
@@ -3280,18 +3296,25 @@ def check_parameters_default_constructible(name, Estimator):
                 tuple,
                 type(None),
                 type,
-                types.FunctionType,
-                joblib.Memory,
             }
             # Any numpy numeric such as np.int32.
             allowed_types.update(np.core.numerictypes.allTypes.values())
-            assert type(init_param.default) in allowed_types, (
+
+            allowed_value = (
+                type(init_param.default) in allowed_types
+                or
+                # Although callables are mutable, we accept them as argument
+                # default value and trust that neither the implementation of
+                # the callable nor of the estimator changes the state of the
+                # callable.
+                callable(init_param.default)
+            )
+
+            assert allowed_value, (
                 f"Parameter '{init_param.name}' of estimator "
                 f"'{Estimator.__name__}' is of type "
-                f"{type(init_param.default).__name__} which is not "
-                "allowed. All init parameters have to be immutable to "
-                "make cloning possible. Therefore we restrict the set of "
-                "legal types to "
+                f"{type(init_param.default).__name__} which is not allowed. "
+                f"'{init_param.name}' must be a callable or must be of type "
                 f"{set(type.__name__ for type in allowed_types)}."
             )
             if init_param.name not in params.keys():
