@@ -148,8 +148,8 @@ in the kernel and by the regularization parameter alpha of KRR.
 
 The figure shows that both methods learn reasonable models of the target
 function. GPR correctly identifies the periodicity of the function to be
-roughly :math:`2*\pi` (6.28), while KRR chooses the doubled periodicity
-:math:`4*\pi` . Besides
+roughly :math:`2\pi` (6.28), while KRR chooses the doubled periodicity
+:math:`4\pi`. Besides
 that, GPR provides reasonable confidence bounds on the prediction which are not
 available for KRR. A major difference between the two methods is the time
 required for fitting and predicting: while fitting KRR is fast in principle,
