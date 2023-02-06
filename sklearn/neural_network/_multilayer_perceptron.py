@@ -1374,10 +1374,10 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
-        score is not improving. If set to true, it will automatically set
-        aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least ``tol`` for
-        ``n_iter_no_change`` consecutive epochs.
+        score is not improving. If set to True, it will automatically set
+        aside ``validation_fraction`` of training data as validation and
+        terminate training when validation score is not improving by at
+        least ``tol`` for ``n_iter_no_change`` consecutive epochs.
         Only effective when solver='sgd' or 'adam'.
 
     validation_fraction : float, default=0.1
