@@ -1665,7 +1665,7 @@ class KMeans(_BaseKMeans, EngineAwareMixin):
         self.n_iter_ = best_n_iter
         return self
 
-    def predict(self, X, sample_weight=None):
+    def predict(self, X, sample_weight="deprecated"):
         """Predict the closest cluster each sample in X belongs to.
 
         In the vector quantization literature, `cluster_centers_` is called
@@ -1681,6 +1681,10 @@ class KMeans(_BaseKMeans, EngineAwareMixin):
             The weights for each observation in X. If None, all observations
             are assigned equal weight.
 
+            .. deprecated:: 1.3
+               The parameter `sample_weight` is deprecated in version 1.3
+               and will be removed in 1.5.
+
         Returns
         -------
         labels : ndarray of shape (n_samples,)
@@ -1688,6 +1692,16 @@ class KMeans(_BaseKMeans, EngineAwareMixin):
         """
         check_is_fitted(self)
         engine = self._get_engine(X, sample_weight=sample_weight)
+        if isinstance(sample_weight, str) and sample_weight == "deprecated":
+            # Caller left the default value of sample_weight unchanged.
+            sample_weight = None
+        else:
+            # Caller explicitly passed sample_weight, so we warn.
+            warnings.warn(
+                "'sample_weight' was deprecated in version 1.3 and "
+                "will be removed in 1.5.",
+                FutureWarning,
+            )
         X, sample_weight = engine.prepare_prediction(X, sample_weight)
         return engine.get_labels(X, sample_weight)
 
