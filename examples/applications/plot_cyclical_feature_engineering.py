@@ -774,6 +774,8 @@ _ = ax.legend()
 #
 # Let us finally get a more quantative look at the prediction errors of those
 # three models using the true vs predicted demand scatter plots:
+from sklearn.metrics import PredictionErrorDisplay
+
 fig, axes = plt.subplots(ncols=3, figsize=(12, 4), sharey=True)
 fig.suptitle("Non-linear regression models")
 predictions = [
@@ -787,15 +789,15 @@ labels = [
     "Gradient Boosted Trees",
 ]
 for ax, pred, label in zip(axes, predictions, labels):
-    ax.scatter(y.iloc[test_0].values, pred, alpha=0.3, label=label)
-    ax.plot([0, 1], [0, 1], "--", label="Perfect model")
-    ax.set(
-        xlim=(0, 1),
-        ylim=(0, 1),
-        xlabel="True demand",
-        ylabel="Predicted demand",
+    PredictionErrorDisplay.from_predictions(
+        y_true=y.iloc[test_0].values,
+        y_pred=pred,
+        kind="actual_vs_predicted",
+        subsample=500,
+        random_state=0,
+        ax=ax,
     )
-    ax.legend()
+    ax.legend([label, "Perfect model"])
 
 plt.show()
 # %%
