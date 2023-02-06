@@ -118,8 +118,7 @@ cdef class TreeBuilder:
                 sample_weight = np.asarray(sample_weight, dtype=DOUBLE,
                                            order="C")
 
-        sample_weight_exists = sample_weight is not None and sample_weight.size > 0
-        return X, y.base, sample_weight.base if sample_weight_exists else None
+        return X, y, sample_weight
 
 # Depth first builder ---------------------------------------------------------
 # A record on the stack for depth-first tree growing
@@ -609,12 +608,12 @@ cdef class Tree:
         def __get__(self):
             return self._get_value_ndarray()[:self.node_count]
 
-    def __cinit__(self, int n_features, SIZE_t[:] n_classes, int n_outputs):
+    def __cinit__(self, int n_features, cnp.ndarray n_classes, int n_outputs):
         """Constructor."""
         cdef SIZE_t dummy = 0
         size_t_dtype = np.array(dummy).dtype
 
-        n_classes = _check_n_classes(n_classes.base, size_t_dtype)
+        n_classes = _check_n_classes(n_classes, size_t_dtype)
 
         # Input/Output layout
         self.n_features = n_features
