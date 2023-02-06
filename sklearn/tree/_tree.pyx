@@ -109,7 +109,7 @@ cdef class TreeBuilder:
             # since we have to copy we will make it fortran for efficiency
             X = np.asfortranarray(X, dtype=DTYPE)
 
-        if y.dtype != DOUBLE or not y.flags.contiguous:
+        if y.base.dtype != DOUBLE or not y.base.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         if (sample_weight is not None and
