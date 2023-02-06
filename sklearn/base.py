@@ -1030,7 +1030,7 @@ class EngineAwareMixin:
             configured_providers = get_config()["engine_provider"]
             # Special case: the default engine can be selected
             # when no provider is explicitly configured and it is not an error
-            # to keep using it when nothing is explicitly configured
+            # to keep using it when nothing is explicitly configured.
             if (
                 self._engine_provider != "default"
                 and self._engine_provider not in configured_providers
