@@ -17,6 +17,7 @@ def test_config_context():
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
         "engine_provider": (),
+        "engine_attributes": "engine_types",
         "transform_output": "default",
     }
 
@@ -34,6 +35,7 @@ def test_config_context():
             "pairwise_dist_chunk_size": 256,
             "enable_cython_pairwise_dist": True,
             "engine_provider": (),
+            "engine_attributes": "engine_types",
             "transform_output": "default",
         }
     assert get_config()["assume_finite"] is False
@@ -68,6 +70,7 @@ def test_config_context():
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
         "engine_provider": (),
+        "engine_attributes": "engine_types",
         "transform_output": "default",
     }
 
