@@ -16,10 +16,10 @@ For more information about the :class:`TargetEncoder` see the
   :class:`TargetEncoder` uses a cross validation scheme in
   :meth:`~TargetEncoder.fit_transform` to prevent leaking the target during training.
   In :meth:`~TargetEncoder.fit_transform`, the data is split according to the `cv`
-  parameter. Categorical encodings are learned from split and used to encode the other
-  split. Afterwards, a final categorical encoding is learned from all the data, which
-  is then used to encode data during :meth:`~TargetEncoder.transform`. This means that
-  `fit(X, y).transform(X)` does not equal `fit_transform(X, y)`.
+  parameter. Categorical encodings are learned from one split and used to encode the
+  other split. Afterwards, a final categorical encoding is learned from all the data,
+  which is then used to encode data during :meth:`~TargetEncoder.transform`. This means
+  that `fit(X, y).transform(X)` does not equal `fit_transform(X, y)`.
 """
 
 # %%

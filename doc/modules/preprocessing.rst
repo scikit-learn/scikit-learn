@@ -848,11 +848,11 @@ binary classification target, the target encoding is given by:
 .. math::
     S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_y}{n}
 
-where :math:`S_i` is the encoding for category :math:`i`, :math:`n_{iY}` is
-the number of observations with :math:`Y=1` with category :math:`i`,
-:math:`n_i` is the , :math:`n_y` is the number of observations with :math:`Y=1`,
-:math:`n` is the number of observations, and :math:`\lambda_i` is a shrinkage
-factor. The shrinkage factor is given by:
+where :math:`S_i` is the encoding for category :math:`i`, :math:`n_{iY}` is the
+number of observations with :math:`Y=1` with category :math:`i`, :math:`n_i` is
+the number of observations with category :math:`i`, :math:`n_y` is the number of
+observations with :math:`Y=1`, :math:`n` is the number of observations, and
+:math:`\lambda_i` is a shrinkage factor. The shrinkage factor is given by:
 
 .. math::
     \lambda_i = \frac{n_i}{m + n_i}
@@ -876,7 +876,7 @@ where :math:`L_i` is the set of observations for which :math:`X=X_i` and
   :class:`TargetEncoder` uses a cross validation scheme in
   :meth:`~TargetEncoder.fit_transform` to prevent leaking the target during training.
   In :meth:`~TargetEncoder.fit_transform`, the data is split according to the `cv`
-  parameter. Categorical encodings are learned from split and used to encode the other
+  parameter. Categorical encodings are learned from one split and used to encode the other
   split. Afterwards, a final categorical encoding is learned from all the data, which
   is then used to encode data during :meth:`~TargetEncoder.transform`. This means that
   `fit(X, y).transform(X)` does not equal `fit_transform(X, y)`.
