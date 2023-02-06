@@ -128,9 +128,8 @@ should be excluded. As an example, instructions are given for the `1.2.2` releas
 
     .. prompt:: bash $
 
-        git checkout main
-        git pull upstream main:main
-        git checkout -b release-1.2.2 main
+        git fetch upstream/main
+        git checkout -b release-1.2.2 upstream/main
         git push -u fork release-1.2.2:release-1.2.2
 
  - Create a **draft** PR to the `upstream/1.2.X` branch (not to `upstream/main`)
