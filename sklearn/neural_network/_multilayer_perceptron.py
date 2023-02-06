@@ -1302,7 +1302,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
-        If the solver is 'lbfgs', the classifier will not use minibatch.
+        If the solver is 'lbfgs', the regressor will not use minibatch.
         When set to "auto", `batch_size=min(200, n_samples)`.
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default='constant'
