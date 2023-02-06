@@ -823,7 +823,7 @@ class PartialDependenceDisplay:
                 )
         else:
             raise ValueError(
-                "undefined format for color. Please pass either"
+                "Undefined type for color attribute. Please pass either"
                 "a str or a list of strings/numerical"
             )
         ice_lines_kw["color_dict"] = color_dict
