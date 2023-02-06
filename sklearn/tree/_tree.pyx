@@ -91,7 +91,8 @@ cdef class TreeBuilder:
         """Build a decision tree from the training set (X, y)."""
         pass
 
-    cdef inline _check_input(self, object X, const DOUBLE_t[:] sample_weight):
+    cdef inline _check_input(self, object X, const DOUBLE_t[:, ::1] y,
+                             const DOUBLE_t[:] sample_weight):
         """Check input dtype, layout and format"""
         if issparse(X):
             X = X.tocsc()
@@ -108,6 +109,9 @@ cdef class TreeBuilder:
             # since we have to copy we will make it fortran for efficiency
             X = np.asfortranarray(X, dtype=DTYPE)
 
+        if y.dtype != DOUBLE or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=DOUBLE)
+
         if (sample_weight is not None and
             (sample_weight.base.dtype != DOUBLE or
             not sample_weight.base.flags.contiguous)):
@@ -115,7 +119,7 @@ cdef class TreeBuilder:
                                            order="C")
 
         sample_weight_exists = sample_weight is not None and sample_weight.size > 0
-        return X, sample_weight.base if sample_weight_exists else None
+        return X, y.base, sample_weight.base if sample_weight_exists else None
 
 # Depth first builder ---------------------------------------------------------
 # A record on the stack for depth-first tree growing
@@ -146,7 +150,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
-        X, sample_weight = self._check_input(X, sample_weight)
+        X, y, sample_weight = self._check_input(X, y, sample_weight)
 
         # Initial capacity
         cdef int init_capacity
@@ -337,7 +341,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
-        X, sample_weight = self._check_input(X, sample_weight)
+        X, y, sample_weight = self._check_input(X, y, sample_weight)
 
         # Parameters
         cdef Splitter splitter = self.splitter
@@ -605,12 +609,12 @@ cdef class Tree:
         def __get__(self):
             return self._get_value_ndarray()[:self.node_count]
 
-    def __cinit__(self, int n_features, cnp.ndarray n_classes, int n_outputs):
+    def __cinit__(self, int n_features, SIZE_t[:] n_classes, int n_outputs):
         """Constructor."""
         cdef SIZE_t dummy = 0
         size_t_dtype = np.array(dummy).dtype
 
-        n_classes = _check_n_classes(n_classes, size_t_dtype)
+        n_classes = _check_n_classes(n_classes.base, size_t_dtype)
 
         # Input/Output layout
         self.n_features = n_features

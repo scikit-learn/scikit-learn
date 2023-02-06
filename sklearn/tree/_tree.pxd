@@ -101,4 +101,4 @@ cdef class TreeBuilder:
 
     cpdef build(self, Tree tree, object X, const DOUBLE_t[:, ::1] y,
                 const DOUBLE_t[:] sample_weight=*)
-    cdef _check_input(self, object X, const DOUBLE_t[:] sample_weight)
+    cdef _check_input(self, object X, const DOUBLE_t[:, ::1] y, const DOUBLE_t[:] sample_weight)
