@@ -1028,7 +1028,7 @@ class EngineAwareMixin:
         """
         if hasattr(self, "_engine_provider") and not reset:
             configured_providers = get_config()["engine_provider"]
-            # Dpecial case: the default engine can be selected
+            # Special case: the default engine can be selected
             # when no provider is explicitly configured and it is not an error
             # to keep using it when nothing is explicitly configured
             if (
