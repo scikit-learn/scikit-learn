@@ -1939,13 +1939,13 @@ def pairwise_distances(
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_X, n_samples_X) or \
+    X : ndarray of shape (n_samples_X, n_samples_X) or \
             (n_samples_X, n_features)
         Array of pairwise distances between samples, or a feature array.
         The shape of the array should be (n_samples_X, n_samples_X) if
         metric == "precomputed" and (n_samples_X, n_features) otherwise.
 
-    Y : array-like of shape (n_samples_Y, n_features), default=None
+    Y : ndarray of shape (n_samples_Y, n_features), default=None
         An optional second feature array. Only allowed if
         metric != "precomputed".
 
