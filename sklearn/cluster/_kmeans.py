@@ -40,7 +40,6 @@ from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
 from ..utils._param_validation import validate_params
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..exceptions import ConvergenceWarning
 from ._k_means_common import CHUNK_SIZE
 from ._k_means_common import _inertia_dense
@@ -783,9 +782,7 @@ def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True)
     else:
         _labels = lloyd_iter_chunked_dense
         _inertia = _inertia_dense
-        X = ReadonlyArrayWrapper(X)
 
-    centers = ReadonlyArrayWrapper(centers)
     _labels(
         X,
         sample_weight,
@@ -1600,7 +1597,7 @@ def _mini_batch_step(
         )
     else:
         _minibatch_update_dense(
-            ReadonlyArrayWrapper(X),
+            X,
             sample_weight,
             centers,
             centers_new,

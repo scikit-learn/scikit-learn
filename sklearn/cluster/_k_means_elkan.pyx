@@ -187,8 +187,8 @@ def init_bounds_sparse(
 
 
 def elkan_iter_chunked_dense(
-        floating[:, ::1] X,                      # IN READ-ONLY
-        floating[::1] sample_weight,             # IN READ-ONLY
+        const floating[:, ::1] X,                # IN READ-ONLY
+        const floating[::1] sample_weight,       # IN READ-ONLY
         floating[:, ::1] centers_old,            # IN
         floating[:, ::1] centers_new,            # OUT
         floating[::1] weight_in_clusters,        # OUT
@@ -350,8 +350,8 @@ def elkan_iter_chunked_dense(
 
 
 cdef void _update_chunk_dense(
-        floating[:, ::1] X,                      # IN READ-ONLY
-        floating[::1] sample_weight,             # IN READ-ONLY
+        const floating[:, ::1] X,                # IN READ-ONLY
+        const floating[::1] sample_weight,       # IN READ-ONLY
         floating[:, ::1] centers_old,            # IN
         floating[:, ::1] center_half_distances,  # IN
         floating[::1] distance_next_center,      # IN

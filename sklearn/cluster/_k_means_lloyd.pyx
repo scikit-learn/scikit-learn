@@ -22,13 +22,13 @@ from ._k_means_common cimport _average_centers, _center_shift
 
 
 def lloyd_iter_chunked_dense(
-        floating[:, ::1] X,                # IN READ-ONLY
-        floating[::1] sample_weight,       # IN READ-ONLY
-        floating[:, ::1] centers_old,      # IN
-        floating[:, ::1] centers_new,      # OUT
-        floating[::1] weight_in_clusters,  # OUT
-        int[::1] labels,                   # OUT
-        floating[::1] center_shift,        # OUT
+        const floating[:, ::1] X,           # IN
+        const floating[::1] sample_weight,  # IN
+        const floating[:, ::1] centers_old, # IN
+        floating[:, ::1] centers_new,       # OUT
+        floating[::1] weight_in_clusters,   # OUT
+        int[::1] labels,                    # OUT
+        floating[::1] center_shift,         # OUT
         int n_threads,
         bint update_centers=True):
     """Single iteration of K-means lloyd algorithm with dense input.
@@ -161,9 +161,9 @@ def lloyd_iter_chunked_dense(
 
 
 cdef void _update_chunk_dense(
-        floating[:, ::1] X,                   # IN READ-ONLY
-        floating[::1] sample_weight,          # IN READ-ONLY
-        floating[:, ::1] centers_old,         # IN
+        const floating[:, ::1] X,             # IN READ-ONLY
+        const floating[::1] sample_weight,    # IN READ-ONLY
+        const floating[:, ::1] centers_old,   # IN
         floating[::1] centers_squared_norms,  # IN
         int[::1] labels,                      # OUT
         floating *centers_new,                # OUT
@@ -214,13 +214,13 @@ cdef void _update_chunk_dense(
 
 
 def lloyd_iter_chunked_sparse(
-        X,                                 # IN
-        floating[::1] sample_weight,       # IN
-        floating[:, ::1] centers_old,      # IN
-        floating[:, ::1] centers_new,      # OUT
-        floating[::1] weight_in_clusters,  # OUT
-        int[::1] labels,                   # OUT
-        floating[::1] center_shift,        # OUT
+        X,                                   # IN
+        const floating[::1] sample_weight,   # IN
+        const floating[:, ::1] centers_old,  # IN
+        floating[:, ::1] centers_new,        # OUT
+        floating[::1] weight_in_clusters,    # OUT
+        int[::1] labels,                     # OUT
+        floating[::1] center_shift,          # OUT
         int n_threads,
         bint update_centers=True):
     """Single iteration of K-means lloyd algorithm with sparse input.
@@ -362,8 +362,8 @@ cdef void _update_chunk_sparse(
         floating[::1] X_data,                 # IN
         int[::1] X_indices,                   # IN
         int[::1] X_indptr,                    # IN
-        floating[::1] sample_weight,          # IN
-        floating[:, ::1] centers_old,         # IN
+        const floating[::1] sample_weight,    # IN
+        const floating[:, ::1] centers_old,   # IN
         floating[::1] centers_squared_norms,  # IN
         int[::1] labels,                      # OUT
         floating *centers_new,                # OUT

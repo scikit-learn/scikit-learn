@@ -53,9 +53,9 @@ def _euclidean_dense_dense_wrapper(floating[::1] a, floating[::1] b,
 
 
 cdef floating _euclidean_sparse_dense(
-        floating[::1] a_data,  # IN
-        int[::1] a_indices,    # IN
-        floating[::1] b,       # IN
+        const floating[::1] a_data,  # IN
+        const int[::1] a_indices,    # IN
+        const floating[::1] b,       # IN
         floating b_squared_norm,
         bint squared) nogil:
     """Euclidean distance between a sparse and b dense"""
@@ -78,9 +78,9 @@ cdef floating _euclidean_sparse_dense(
 
 
 def _euclidean_sparse_dense_wrapper(
-        floating[::1] a_data,
-        int[::1] a_indices,
-        floating[::1] b,
+        const floating[::1] a_data,
+        const int[::1] a_indices,
+        const floating[::1] b,
         floating b_squared_norm,
         bint squared):
     """Wrapper of _euclidean_sparse_dense for testing purpose"""
@@ -89,10 +89,10 @@ def _euclidean_sparse_dense_wrapper(
 
 
 cpdef floating _inertia_dense(
-        floating[:, ::1] X,           # IN READ-ONLY
-        floating[::1] sample_weight,  # IN READ-ONLY
-        floating[:, ::1] centers,     # IN
-        int[::1] labels,              # IN
+        const floating[:, ::1] X,           # IN READ-ONLY
+        const floating[::1] sample_weight,  # IN READ-ONLY
+        const floating[:, ::1] centers,     # IN
+        const int[::1] labels,              # IN
         int n_threads,
         int single_label=-1,
 ):
@@ -122,10 +122,10 @@ cpdef floating _inertia_dense(
 
 
 cpdef floating _inertia_sparse(
-        X,                            # IN
-        floating[::1] sample_weight,  # IN
-        floating[:, ::1] centers,     # IN
-        int[::1] labels,              # IN
+        X,                                  # IN
+        const floating[::1] sample_weight,  # IN
+        const floating[:, ::1] centers,     # IN
+        const int[::1] labels,              # IN
         int n_threads,
         int single_label=-1,
 ):
@@ -162,12 +162,12 @@ cpdef floating _inertia_sparse(
 
 
 cpdef void _relocate_empty_clusters_dense(
-        floating[:, ::1] X,                # IN READ-ONLY
-        floating[::1] sample_weight,       # IN READ-ONLY
-        floating[:, ::1] centers_old,      # IN
-        floating[:, ::1] centers_new,      # INOUT
-        floating[::1] weight_in_clusters,  # INOUT
-        int[::1] labels):                  # IN
+        const floating[:, ::1] X,           # IN READ-ONLY
+        const floating[::1] sample_weight,  # IN READ-ONLY
+        const floating[:, ::1] centers_old, # IN
+        floating[:, ::1] centers_new,       # INOUT
+        floating[::1] weight_in_clusters,   # INOUT
+        int[::1] labels):                   # IN
     """Relocate centers which have no sample assigned to them."""
     cdef:
         int[::1] empty_clusters = np.where(np.equal(weight_in_clusters, 0))[0].astype(np.int32)
@@ -206,8 +206,8 @@ cpdef void _relocate_empty_clusters_sparse(
         floating[::1] X_data,              # IN
         int[::1] X_indices,                # IN
         int[::1] X_indptr,                 # IN
-        floating[::1] sample_weight,       # IN
-        floating[:, ::1] centers_old,      # IN
+        const floating[::1] sample_weight, # IN
+        const floating[:, ::1] centers_old,# IN
         floating[:, ::1] centers_new,      # INOUT
         floating[::1] weight_in_clusters,  # INOUT
         int[::1] labels):                  # IN
@@ -274,9 +274,9 @@ cdef void _average_centers(
 
 
 cdef void _center_shift(
-        floating[:, ::1] centers_old,  # IN
-        floating[:, ::1] centers_new,  # IN
-        floating[::1] center_shift):   # OUT
+        const floating[:, ::1] centers_old,  # IN
+        const floating[:, ::1] centers_new,  # IN
+        floating[::1] center_shift):         # OUT
     """Compute shift between old and new centers."""
     cdef:
         int n_clusters = centers_old.shape[0]
