@@ -813,6 +813,24 @@ def test_csr_polynomial_expansion_index_overflow_non_regression():
         dtype=dtype,
     )
     pf = PolynomialFeatures(interaction_only=True, include_bias=False, degree=2)
+
+    # Calculate the number of combinations a-priori, and if needed check for
+    # the correct ValueError and terminate the test early.
+    num_combinations = pf._num_combinations(
+        n_features=n_features,
+        min_degree=0,
+        max_degree=2,
+        interaction_only=pf.interaction_only,
+        include_bias=pf.include_bias,
+    )
+    if num_combinations > np.iinfo(np.intp).max:
+        msg = (
+            "The output that would result from the current configuration is too large"
+            " to be indexed"
+        )
+        with pytest.raises(ValueError, match=msg):
+            pf.fit(X)
+        return
     X_trans = pf.fit_transform(X)
     row_nonzero, col_nonzero = X_trans.nonzero()
     second_degree_idx = (
@@ -880,6 +898,24 @@ def test_csr_polynomial_expansion_index_overflow(
     pf = PolynomialFeatures(
         interaction_only=interaction_only, include_bias=include_bias, degree=degree
     )
+
+    # Calculate the number of combinations a-priori, and if needed check for
+    # the correct ValueError and terminate the test early.
+    num_combinations = pf._num_combinations(
+        n_features=n_features,
+        min_degree=0,
+        max_degree=degree,
+        interaction_only=pf.interaction_only,
+        include_bias=pf.include_bias,
+    )
+    if num_combinations > np.iinfo(np.intp).max:
+        msg = (
+            "The output that would result from the current configuration is too large"
+            " to be indexed"
+        )
+        with pytest.raises(ValueError, match=msg):
+            pf.fit(X)
+        return
 
     # `scipy.sparse.hstack` breaks in scipy<1.9.2 when
     # `n_output_features_ > max_int32`. Test that we provide
