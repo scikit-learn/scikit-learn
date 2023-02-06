@@ -128,7 +128,10 @@ print(f"Lasso r^2 on test data : {r2_score_lasso:.3f}")
 #
 # An ARD regression is the bayesian version of the Lasso. It can produce
 # interval estimates for all of the parameters, including the error variance, if
-# required. It is a suitable option when the signals have gaussian noise.
+# required. It is a suitable option when the signals have gaussian noise. See
+# the example :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py` for a
+# comparison of :class:`~sklearn.linear_model.ARDRegression` and
+# :class:`~sklearn.linear_model.BayesianRidge`regressors.
 
 from sklearn.linear_model import ARDRegression
 
