@@ -17,7 +17,7 @@ from cpython cimport Py_INCREF, PyObject, PyTypeObject
 from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
-from libc.stdint cimport SIZE_MAX
+from libc.stdint cimport INTPTR_MAX
 from libc.math cimport isnan
 from libcpp.vector cimport vector
 from libcpp.algorithm cimport pop_heap
@@ -245,7 +245,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                          weighted_n_node_samples,
                                          split.missing_go_to_left)
 
-                if node_id == SIZE_MAX:
+                if node_id == INTPTR_MAX:
                     rc = -1
                     break
 
@@ -476,7 +476,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  split.feature, split.threshold, impurity, n_node_samples,
                                  weighted_n_node_samples,
                                  split.missing_go_to_left)
-        if node_id == SIZE_MAX:
+        if node_id == INTPTR_MAX:
             return -1
 
         # compute values also for split nodes (might become leafs later).
@@ -707,7 +707,7 @@ cdef class Tree:
             with gil:
                 raise MemoryError()
 
-    cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) nogil except -1:
+    cdef int _resize_c(self, SIZE_t capacity=INTPTR_MAX) nogil except -1:
         """Guts of _resize
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -716,7 +716,7 @@ cdef class Tree:
         if capacity == self.capacity and self.nodes != NULL:
             return 0
 
-        if capacity == SIZE_MAX:
+        if capacity == INTPTR_MAX:
             if self.capacity == 0:
                 capacity = 3  # default initial value
             else:
@@ -753,7 +753,7 @@ cdef class Tree:
 
         if node_id >= self.capacity:
             if self._resize_c() != 0:
-                return SIZE_MAX
+                return INTPTR_MAX
 
         cdef Node* node = &self.nodes[node_id]
         node.impurity = impurity
@@ -1785,7 +1785,7 @@ cdef _build_pruned_tree(
                 node.impurity, node.n_node_samples,
                 node.weighted_n_node_samples, node.missing_go_to_left)
 
-            if new_node_id == SIZE_MAX:
+            if new_node_id == INTPTR_MAX:
                 rc = -1
                 break
 
