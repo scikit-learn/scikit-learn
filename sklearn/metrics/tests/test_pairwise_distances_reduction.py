@@ -669,7 +669,7 @@ def test_argkminlabels_factory_method_wrong_usages():
     metric = "euclidean"
 
     weights = "uniform"
-    labels = rng.randint(low=0, high=10, size=100, dtype=np.intp)
+    labels = rng.randint(low=0, high=10, size=100)
     unique_labels = np.unique(labels)
 
     msg = (
