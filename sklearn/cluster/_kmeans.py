@@ -345,8 +345,9 @@ def k_means(
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-        When `n_init='auto'`, the number of runs will be 10 if using
-        `init='random'`, and 1 if using `init='kmeans++'`.
+
+         When n_init='auto', the number of runs depends on the value of init:
+         10 if usinginit='random', 1 if using init='kmeans++
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
