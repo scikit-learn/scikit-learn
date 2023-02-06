@@ -1420,6 +1420,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         The minimum loss reached by the solver throughout fitting.
         If `early_stopping=True`, this attribute is set to `None`. Refer to
         the `best_validation_score_` fitted attribute instead.
+        Only accessible when solver='sgd' or 'adam'
 
     loss_curve_ : list of shape (`n_iter_`,)
         Loss value evaluated at the end of each training step.
