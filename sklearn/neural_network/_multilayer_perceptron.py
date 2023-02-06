@@ -1365,7 +1365,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         previous solution. See :term:`the Glossary <warm_start>`.
 
     momentum : float, default=0.9
-        Momentum for gradient descent update.  Should be between 0 and 1. Only
+        Momentum for gradient descent update. Should be between 0 and 1. Only
         used when solver='sgd'.
 
     nesterovs_momentum : bool, default=True
