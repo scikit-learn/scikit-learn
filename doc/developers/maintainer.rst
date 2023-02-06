@@ -17,7 +17,9 @@ Before a release
 
 1. Update authors table:
 
-   Create a token on GitHub's page with the following permission: ``read:org``.
+   Create a `classic token on GitHub <https://github.com/settings/tokens/new>`_
+   with the ``read:org`` following permission.
+
    Run the following script, entering the token in:
    .. prompt:: bash $
 
@@ -45,8 +47,12 @@ Before a release
 
 **Permissions**
 
-The release manager must be a *maintainer* of ``scikit-learn`` to be able to
-publish on ``pypi.org`` and ``test.pypi.org``.
+The release manager must be a *maintainer* of the ``scikit-learn/scikit-learn``
+repository to be able to publish on ``pypi.org`` and ``test.pypi.org``
+(via a manual trigger of a dedicated Github Actions workflow).
+
+The release manager does not need extra permissions on ``pypi.org`` to publish a
+release in particular.
 
 The release manager must be a *maintainer* of the ``conda-forge/scikit-learn-feedstock``
 repository. This can be changed by editing the ``recipe/meta.yaml`` file in the
@@ -107,16 +113,18 @@ under the ``doc/whats_new/`` folder so PRs that target the next version can
 contribute their changelog entries to this file in parallel to the release
 process.
 
-Minor version release and bug-fix release
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Minor version release (also known as bug-fix release)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The minor releases should include bug fixes and some relevant documentation
 changes only. Any PR resulting in a behavior change which is not a bug fix
-should be excluded.
+should be excluded. As an example, instructions are given for the `1.2.2` release.
 
- - Create a branch, **on your own fork** (here referred to as `fork`) for the release.
-   For instance, to release `1.2.2` create the `release-1.2.2` branch
-   from `main` with:
+ - If needed, create a commit reordering the changelog section for the release.
+   This must be done via a PR targeting on ``main``.
+
+ - Create a branch, **on your own fork** (here referred to as `fork`) for the release
+   from `upstream/main`.
 
     .. prompt:: bash $
 
@@ -125,7 +133,7 @@ should be excluded.
         git checkout -b release-1.2.2 main
         git push -u fork release-1.2.2:release-1.2.2
 
- - Create a PR to the `upstream/1.2.X` branch (not to `upstream/main`)
+ - Create a **draft** PR to the `upstream/1.2.X` branch (not to `upstream/main`)
    with all the desired changes.
 
  - Do not push anything on that branch yet.
@@ -144,10 +152,16 @@ should be excluded.
      - **Do not remove lines but drop commit by replace** ``pick`` **with** ``drop``
 
      - Commits to pick for bug-fix release *generally* are prefixed with: `FIX`, `CI`,
-       `DOC`
+       `DOC`. They should at least include all the commits of the merged PRs
+       that were milestoned for this release on GitHub and/or documented as such in
+       the changelog. It's likely that some bugfixes were documented in the
+       changelog of the main major release instead of the next bugfix release,
+       in which case, the matching changelog entries will need to be moved,
+       first in the `main` branch then backported in the release PR.
 
      - Commits to drop for bug-fix release *generally* are prefixed with: `FEAT`,
-       `MAINT`, `ENH`, `API`
+       `MAINT`, `ENH`, `API`. Reasons for not including them is to prevent change of
+       behavior (which only must feature in breaking or major releases).
 
      - After having dropped or picked commit, **do no exit** but paste the content
        of the `git-rebase-todo` message in the PR.
@@ -157,12 +171,20 @@ should be excluded.
 
      - Resolve merge conflicts when they happen.
 
- - Create a commit reordering the changelog.
+ - Force push the result of the rebase and the extra release commits to the release PR:
 
- - Create a commit updating the version number i.e. ``sklearn.__version__``.
+   .. prompt:: bash $
 
-Copy the :ref:`release_checklist` template and paste it in the description of the
-Pull Request to track progress.
+       git push -f fork release-1.2.2:release-1.2.2
+
+ - Copy the :ref:`release_checklist` template and paste it in the description of the
+   Pull Request to track progress.
+
+ - Review all the commits included in the release to make sure that they do not
+   introduce any new feature. We should not blindly trust the commit message prefixes.
+
+ - Remove the draft status of the release PR and invite other maintainers to review the
+   list of included commits.
 
 .. _making_a_release:
 
