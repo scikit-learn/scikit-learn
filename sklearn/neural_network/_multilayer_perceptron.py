@@ -1420,21 +1420,24 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         The minimum loss reached by the solver throughout fitting.
         If `early_stopping=True`, this attribute is set to `None`. Refer to
         the `best_validation_score_` fitted attribute instead.
-        Only accessible when solver='sgd' or 'adam'
+        Only accessible when solver='sgd' or 'adam'.
 
     loss_curve_ : list of shape (`n_iter_`,)
         Loss value evaluated at the end of each training step.
         The ith element in the list represents the loss at the ith iteration.
+        Only accessible when solver='sgd' or 'adam'.
 
     validation_scores_ : list of shape (`n_iter_`,) or None
         The score at each iteration on a held-out validation set. The score
         reported is the R2 score. Only available if `early_stopping=True`,
         otherwise the attribute is set to `None`.
+        Only accessible when solver='sgd' or 'adam'.
 
     best_validation_score_ : float or None
         The best validation score (i.e. R2 score) that triggered the
         early stopping. Only available if `early_stopping=True`, otherwise the
         attribute is set to `None`.
+        Only accessible when solver='sgd' or 'adam'.
 
     t_ : int
         The number of training samples seen by the solver during fitting.
