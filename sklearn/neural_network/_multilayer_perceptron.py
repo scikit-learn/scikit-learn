@@ -1404,7 +1404,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     max_fun : int, default=15000
         Only used when solver='lbfgs'. Maximum number of function calls.
-        The solver iterates until convergence (determined by 'tol'), number
+        The solver iterates until convergence (determined by ``tol``), number
         of iterations reaches max_iter, or this number of function calls.
         Note that number of function calls will be greater than or equal to
         the number of iterations for the MLPRegressor.
