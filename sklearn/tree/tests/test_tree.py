@@ -2559,3 +2559,28 @@ def test_missing_values_is_resilience(make_data, Tree):
 
     # Score is still 90 percent of the tree's score that had no missing values
     assert missing_score >= 0.9 * non_missing_score
+
+
+def test_missing_value_is_predictive():
+    """Checks that adding tree uses missing value to split on when it is informative."""
+    rng = np.random.RandomState(0)
+    n_samples = 1000
+
+    X = rng.standard_normal(size=(n_samples, 10))
+    y = rng.randint(0, high=2, size=n_samples)
+
+    # Create a predictive feature using `y` and with some noise
+    X_random_mask = rng.choice([False, True], size=n_samples, p=[0.95, 0.05])
+    y_mask = y.copy().astype(bool)
+    y_mask[X_random_mask] = ~y_mask[X_random_mask]
+
+    X_predictive = rng.standard_normal(size=n_samples)
+    X_predictive[y_mask] = np.nan
+
+    X[:, 5] = X_predictive
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    tree = DecisionTreeClassifier(random_state=0).fit(X_train, y_train)
+
+    assert tree.score(X_train, y_train) >= 0.85
+    assert tree.score(X_test, y_test) >= 0.85
