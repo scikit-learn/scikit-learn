@@ -294,3 +294,24 @@ def test_missing_engine_raises():
     with config_context(engine_provider=(NeverAcceptsEngine, AlsoAlwaysAcceptsEngine)):
         engine = est._get_engine(X, reset=True)
         assert isinstance(engine, AlsoAlwaysAcceptsEngine)
+
+
+def test_default_engine_always_works():
+    """Check that an estimator that uses the default engine works, even when
+    no engines are explicitly configured.
+    """
+    # Values aren't important, just need something to pass as argument
+    # to _get_engine
+    X = [[1, 2], [3, 4]]
+
+    est = FakeEstimator()
+
+    with config_context(engine_provider=NeverAcceptsEngine):
+        engine = est._get_engine(X)
+        assert isinstance(engine, DefaultEngine)
+
+    assert est._engine_class == DefaultEngine
+
+    # With no explicit config, the default engine should still be selected
+    engine = est._get_engine(X)
+    assert isinstance(engine, DefaultEngine)
