@@ -239,7 +239,7 @@ or store training examples.
     .. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
       <https://www.researchgate.net/publication/221114584_Random_Fourier_Approximations_for_Skewed_Multiplicative_Histogram_Kernels>`_
       Li, F., Ionescu, C., and Sminchisescu, C.
-      - Pattern Recognition,  DAGM 2010, Lecture Notes in Computer Science. 
+      - Pattern Recognition,  DAGM 2010, Lecture Notes in Computer Science.
     .. [VZ2010] `"Efficient additive kernels via explicit feature maps"
       <https://www.robots.ox.ac.uk/~vgg/publications/2011/Vedaldi11/vedaldi11.pdf>`_
       Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010
@@ -250,7 +250,7 @@ or store training examples.
       <10.1145/2487575.2487591>`
       Pham, N., & Pagh, R. - 2013
     .. [CCF2002] `"Finding frequent items in data streams"
-      <http://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CharikarCF.pdf>`_
+      <https://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CharikarCF.pdf>`_
       Charikar, M., Chen, K., & Farach-Colton - 2002
     .. [WIKICS] `"Wikipedia: Count sketch"
       <https://en.wikipedia.org/wiki/Count_sketch>`_

@@ -21,13 +21,13 @@ from collections import Counter
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel, logger
+from joblib import logger
 
 from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
@@ -112,7 +112,7 @@ def cross_validate(
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`.Fold` is used. These splitters are instantiated
+        other cases, :class:`KFold` is used. These splitters are instantiated
         with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -758,7 +758,7 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
     """
     if isinstance(scorer, dict):
         # will cache method calls if needed. scorer() returns a dict
-        scorer = _MultimetricScorer(**scorer)
+        scorer = _MultimetricScorer(scorers=scorer, raise_exc=(error_score == "raise"))
 
     try:
         if y_test is None:
@@ -766,19 +766,37 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
         else:
             scores = scorer(estimator, X_test, y_test)
     except Exception:
-        if error_score == "raise":
+        if isinstance(scorer, _MultimetricScorer):
+            # If `_MultimetricScorer` raises exception, the `error_score`
+            # parameter is equal to "raise".
             raise
         else:
-            if isinstance(scorer, _MultimetricScorer):
-                scores = {name: error_score for name in scorer._scorers}
+            if error_score == "raise":
+                raise
             else:
                 scores = error_score
-            warnings.warn(
-                "Scoring failed. The score on this train-test partition for "
-                f"these parameters will be set to {error_score}. Details: \n"
-                f"{format_exc()}",
-                UserWarning,
-            )
+                warnings.warn(
+                    "Scoring failed. The score on this train-test partition for "
+                    f"these parameters will be set to {error_score}. Details: \n"
+                    f"{format_exc()}",
+                    UserWarning,
+                )
+
+    # Check non-raised error messages in `_MultimetricScorer`
+    if isinstance(scorer, _MultimetricScorer):
+        exception_messages = [
+            (name, str_e) for name, str_e in scores.items() if isinstance(str_e, str)
+        ]
+        if exception_messages:
+            # error_score != "raise"
+            for name, str_e in exception_messages:
+                scores[name] = error_score
+                warnings.warn(
+                    "Scoring failed. The score on this train-test partition for "
+                    f"these parameters will be set to {error_score}. Details: \n"
+                    f"{str_e}",
+                    UserWarning,
+                )
 
     error_msg = "scoring must return a number, got %s (%s) instead. (scorer=%s)"
     if isinstance(scores, dict):

@@ -754,7 +754,7 @@ The primal problem can be equivalently formulated as
 
 .. math::
 
-    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}\max(0, |y_i - (w^T \phi(x_i) + b)| - \varepsilon),
+    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}^{n}\max(0, |y_i - (w^T \phi(x_i) + b)| - \varepsilon),
 
 where we make use of the epsilon-insensitive loss, i.e. errors of less than
 :math:`\varepsilon` are ignored. This is the form that is directly optimized

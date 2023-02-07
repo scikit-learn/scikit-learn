@@ -19,6 +19,7 @@ from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
     _DEFAULT_TAGS,
 )
+from .exceptions import InconsistentVersionWarning
 from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils.validation import _check_y
@@ -38,6 +39,9 @@ def clone(estimator, *, safe=True):
     without actually copying attached data. It returns a new estimator
     with the same parameters that has not been fitted on any data.
 
+    .. versionchanged:: 1.3
+        Delegates to `estimator.__sklearn_clone__` if the method exists.
+
     Parameters
     ----------
     estimator : {list, tuple, set} of estimator instance or a single \
@@ -45,7 +49,8 @@ def clone(estimator, *, safe=True):
         The estimator or group of estimators to be cloned.
     safe : bool, default=True
         If safe is False, clone will fall back to a deep copy on objects
-        that are not estimators.
+        that are not estimators. Ignored if `estimator.__sklearn_clone__`
+        exists.
 
     Returns
     -------
@@ -61,6 +66,14 @@ def clone(estimator, *, safe=True):
     return different results from the original estimator. More details can be
     found in :ref:`randomness`.
     """
+    if hasattr(estimator, "__sklearn_clone__") and not inspect.isclass(estimator):
+        return estimator.__sklearn_clone__()
+    return _clone_parametrized(estimator, safe=safe)
+
+
+def _clone_parametrized(estimator, *, safe=True):
+    """Default implementation of clone. See :func:`sklearn.base.clone` for details."""
+
     estimator_type = type(estimator)
     # XXX: not handling dictionaries
     if estimator_type in (list, tuple, set, frozenset):
@@ -218,6 +231,9 @@ class BaseEstimator:
 
         return self
 
+    def __sklearn_clone__(self):
+        return _clone_parametrized(self)
+
     def __repr__(self, N_CHAR_MAX=700):
         # N_CHAR_MAX is the (approximate) maximum number of non-blank
         # characters to render. We pass it as an optional parameter to ease
@@ -271,9 +287,20 @@ class BaseEstimator:
         return repr_
 
     def __getstate__(self):
+        if getattr(self, "__slots__", None):
+            raise TypeError(
+                "You cannot use `__slots__` in objects inheriting from "
+                "`sklearn.base.BaseEstimator`."
+            )
+
         try:
             state = super().__getstate__()
+            if state is None:
+                # For Python 3.11+, empty instance (no `__slots__`,
+                # and `__dict__`) will return a state equal to `None`.
+                state = self.__dict__.copy()
         except AttributeError:
+            # Python < 3.11
             state = self.__dict__.copy()
 
         if type(self).__module__.startswith("sklearn."):
@@ -286,15 +313,11 @@ class BaseEstimator:
             pickle_version = state.pop("_sklearn_version", "pre-0.18")
             if pickle_version != __version__:
                 warnings.warn(
-                    "Trying to unpickle estimator {0} from version {1} when "
-                    "using version {2}. This might lead to breaking code or "
-                    "invalid results. Use at your own risk. "
-                    "For more info please refer to:\n"
-                    "https://scikit-learn.org/stable/model_persistence.html"
-                    "#security-maintainability-limitations".format(
-                        self.__class__.__name__, pickle_version, __version__
+                    InconsistentVersionWarning(
+                        estimator_name=self.__class__.__name__,
+                        current_sklearn_version=__version__,
+                        original_sklearn_version=pickle_version,
                     ),
-                    UserWarning,
                 )
         try:
             super().__setstate__(state)
@@ -808,9 +831,13 @@ class BiclusterMixin:
 class TransformerMixin(_SetOutputMixin):
     """Mixin class for all transformers in scikit-learn.
 
-    If :term:`get_feature_names_out` is defined and `auto_wrap_output` is True,
-    then `BaseEstimator` will automatically wrap `transform` and `fit_transform` to
-    follow the `set_output` API. See the :ref:`developer_api_set_output` for details.
+    If :term:`get_feature_names_out` is defined, then `BaseEstimator` will
+    automatically wrap `transform` and `fit_transform` to follow the `set_output`
+    API. See the :ref:`developer_api_set_output` for details.
+
+    :class:`base.OneToOneFeatureMixin` and
+    :class:`base.ClassNamePrefixFeaturesOutMixin` are helpful mixins for
+    defining :term:`get_feature_names_out`.
     """
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -847,11 +874,11 @@ class TransformerMixin(_SetOutputMixin):
             return self.fit(X, y, **fit_params).transform(X)
 
 
-class _OneToOneFeatureMixin:
+class OneToOneFeatureMixin:
     """Provides `get_feature_names_out` for simple transformers.
 
-    Assumes there's a 1-to-1 correspondence between input features
-    and output features.
+    This mixin assumes there's a 1-to-1 correspondence between input features
+    and output features, such as :class:`~preprocessing.StandardScaler`.
     """
 
     def get_feature_names_out(self, input_features=None):
@@ -874,17 +901,29 @@ class _OneToOneFeatureMixin:
         feature_names_out : ndarray of str objects
             Same as input features.
         """
+        check_is_fitted(self, "n_features_in_")
         return _check_feature_names_in(self, input_features)
 
 
-class _ClassNamePrefixFeaturesOutMixin:
+class ClassNamePrefixFeaturesOutMixin:
     """Mixin class for transformers that generate their own names by prefixing.
 
-    Assumes that `_n_features_out` is defined for the estimator.
+    This mixin is useful when the transformer needs to generate its own feature
+    names out, such as :class:`~decomposition.PCA`. For example, if
+    :class:`~decomposition.PCA` outputs 3 features, then the generated feature
+    names out are: `["pca0", "pca1", "pca2"]`.
+
+    This mixin assumes that a `_n_features_out` attribute is defined when the
+    transformer is fitted. `_n_features_out` is the number of output features
+    that the transformer will return in `transform` of `fit_transform`.
     """
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
+
+        The feature names out will prefixed by the lowercased class name. For
+        example, if the transformer outputs 3 features, then the feature names
+        out are: `["class_name0", "class_name1", "class_name2"]`.
 
         Parameters
         ----------

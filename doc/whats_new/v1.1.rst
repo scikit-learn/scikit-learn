@@ -2,6 +2,30 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_1_3:
+
+Version 1.1.3
+=============
+
+**October 2022**
+
+This bugfix release only includes fixes for compatibility with the latest
+SciPy release >= 1.9.2. Notable changes include:
+
+- |Fix| Include `msvcp140.dll` in the scikit-learn wheels since it has been
+  removed in the latest SciPy wheels.
+  :pr:`24631` by :user:`Chiara Marmo <cmarmo>`.
+
+- |Enhancement| Create wheels for Python 3.11.
+  :pr:`24446` by :user:`Chiara Marmo <cmarmo>`.
+
+Other bug fixes will be available in the next 1.2 release, which will be
+released in the coming weeks.
+
+Note that support for 32-bit Python on Windows has been dropped in this release. This
+is due to the fact that SciPy 1.9.2 also dropped the support for that platform.
+Windows users are advised to install the 64-bit version of Python instead.
+
 .. _changes_1_1_2:
 
 Version 1.1.2
@@ -376,7 +400,7 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |MajorFeature| :class:`BisectingKMeans` introducing Bisecting K-Means algorithm
+- |MajorFeature| :class:`cluster.BisectingKMeans` introducing Bisecting K-Means algorithm
   :pr:`20031` by :user:`Michal Krawczyk <michalkrawczyk>`,
   :user:`Tom Dupre la Tour <TomDLT>`
   and :user:`Jérémie du Boisberranger <jeremiedbb>`.

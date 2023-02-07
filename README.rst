@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|Azure|_ |Travis|_ |Codecov|_ |CircleCI|_ |Nightly wheels|_ |Black|_ |PythonVersion|_ |PyPi|_ |DOI|_ |Benchmark|_
+|Azure|_ |Travis|_ |CirrusCI|_ |Codecov|_ |CircleCI|_ |Nightly wheels|_ |Black|_ |PythonVersion|_ |PyPi|_ |DOI|_ |Benchmark|_
 
 .. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=main
 .. _Azure: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=main
@@ -10,6 +10,9 @@
 
 .. |Travis| image:: https://api.travis-ci.com/scikit-learn/scikit-learn.svg?branch=main
 .. _Travis: https://app.travis-ci.com/github/scikit-learn/scikit-learn
+
+.. |CirrusCI| image:: https://img.shields.io/cirrus/github/scikit-learn/scikit-learn/main?label=Cirrus%20CI
+.. _CirrusCI: https://cirrus-ci.com/github/scikit-learn/scikit-learn/main
 
 .. |Codecov| image:: https://codecov.io/gh/scikit-learn/scikit-learn/branch/main/graph/badge.svg?token=Pk8G9gg3y9
 .. _Codecov: https://codecov.io/gh/scikit-learn/scikit-learn
@@ -37,11 +40,11 @@
 .. |SciPyMinVersion| replace:: 1.3.2
 .. |JoblibMinVersion| replace:: 1.1.1
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0
-.. |MatplotlibMinVersion| replace:: 3.1.2
+.. |MatplotlibMinVersion| replace:: 3.1.3
 .. |Scikit-ImageMinVersion| replace:: 0.16.2
 .. |PandasMinVersion| replace:: 1.0.5
 .. |SeabornMinVersion| replace:: 0.9.0
-.. |PytestMinVersion| replace:: 5.0.1
+.. |PytestMinVersion| replace:: 5.3.1
 .. |PlotlyMinVersion| replace:: 5.10.0
 
 .. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo.png

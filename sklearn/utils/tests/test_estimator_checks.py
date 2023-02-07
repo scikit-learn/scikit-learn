@@ -36,6 +36,7 @@ from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
 from sklearn.utils.metaestimators import available_if
+from sklearn.utils.estimator_checks import check_decision_proba_consistency
 from sklearn.utils._param_validation import Interval, StrOptions
 
 from sklearn.utils.estimator_checks import (
@@ -314,6 +315,43 @@ class NotInvariantSampleOrder(BaseEstimator):
         return X[:, 0]
 
 
+class OneClassSampleErrorClassifier(BaseBadClassifier):
+    """Classifier allowing to trigger different behaviors when `sample_weight` reduces
+    the number of classes to 1."""
+
+    def __init__(self, raise_when_single_class=False):
+        self.raise_when_single_class = raise_when_single_class
+
+    def fit(self, X, y, sample_weight=None):
+        X, y = check_X_y(
+            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+        )
+
+        self.has_single_class_ = False
+        self.classes_, y = np.unique(y, return_inverse=True)
+        n_classes_ = self.classes_.shape[0]
+        if n_classes_ < 2 and self.raise_when_single_class:
+            self.has_single_class_ = True
+            raise ValueError("normal class error")
+
+        # find the number of class after trimming
+        if sample_weight is not None:
+            if isinstance(sample_weight, np.ndarray) and len(sample_weight) > 0:
+                n_classes_ = np.count_nonzero(np.bincount(y, sample_weight))
+            if n_classes_ < 2:
+                self.has_single_class_ = True
+                raise ValueError("Nonsensical Error")
+
+        return self
+
+    def predict(self, X):
+        check_is_fitted(self)
+        X = check_array(X)
+        if self.has_single_class_:
+            return np.zeros(X.shape[0])
+        return np.ones(X.shape[0])
+
+
 class LargeSparseNotSupportedClassifier(BaseEstimator):
     def fit(self, X, y):
         X, y = self._validate_data(
@@ -405,7 +443,7 @@ class EstimatorMissingDefaultTags(BaseEstimator):
 class RequiresPositiveXRegressor(LinearRegression):
     def fit(self, X, y):
         X, y = self._validate_data(X, y, multi_output=True)
-        if (X <= 0).any():
+        if (X < 0).any():
             raise ValueError("negative X values not supported!")
         return super().fit(X, y)
 
@@ -561,6 +599,16 @@ def test_check_estimator():
     with raises(AssertionError, match=msg):
         check_estimator(NoSparseClassifier())
 
+    # check for classifiers reducing to less than two classes via sample weights
+    name = OneClassSampleErrorClassifier.__name__
+    msg = (
+        f"{name} failed when fitted on one label after sample_weight "
+        "trimming. Error message is not explicit, it should have "
+        "'class'."
+    )
+    with raises(AssertionError, match=msg):
+        check_estimator(OneClassSampleErrorClassifier())
+
     # Large indices test on bad estimator
     msg = (
         "Estimator LargeSparseNotSupportedClassifier doesn't seem to "
@@ -584,11 +632,7 @@ def test_check_estimator():
 
     # doesn't error on binary_only tagged estimator
     check_estimator(TaggedBinaryClassifier())
-
-    # Check regressor with requires_positive_X estimator tag
-    msg = "negative X values not supported!"
-    with raises(ValueError, match=msg):
-        check_estimator(RequiresPositiveXRegressor())
+    check_estimator(RequiresPositiveXRegressor())
 
     # Check regressor with requires_positive_y estimator tag
     msg = "negative y values not supported!"
@@ -1159,3 +1203,13 @@ def test_check_outlier_contamination():
         detector = OutlierDetectorWithConstraint()
         with raises(AssertionError, match=err_msg):
             check_outlier_contamination(detector.__class__.__name__, detector)
+
+
+def test_decision_proba_tie_ranking():
+    """Check that in case with some probabilities ties, we relax the
+    ranking comparison with the decision function.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24025
+    """
+    estimator = SGDClassifier(loss="log_loss")
+    check_decision_proba_consistency("SGDClassifier", estimator)
