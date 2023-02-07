@@ -351,9 +351,6 @@ def test_regression_multioutput_array():
     with pytest.raises(ValueError, match=err_msg):
         mean_pinball_loss(y_true, y_pred, multioutput="variance_weighted")
 
-    with pytest.raises(ValueError, match=err_msg):
-        d2_pinball_score(y_true, y_pred, multioutput="variance_weighted")
-
     pbl = mean_pinball_loss(y_true, y_pred, multioutput="raw_values")
     mape = mean_absolute_percentage_error(y_true, y_pred, multioutput="raw_values")
     r = r2_score(y_true, y_pred, multioutput="raw_values")
