@@ -109,6 +109,9 @@ cdef class TreeBuilder:
             # since we have to copy we will make it fortran for efficiency
             X = np.asfortranarray(X, dtype=DTYPE)
 
+        # TODO: This check for y seems to be redundant, as it is also
+        #  present in the BaseDecisionTree's fit method, and therefore
+        #  can be removed.
         if y.base.dtype != DOUBLE or not y.base.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
