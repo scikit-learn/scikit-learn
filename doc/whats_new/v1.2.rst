@@ -27,6 +27,13 @@ Changes impacting all modules
 Changelog
 ---------
 
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.BisectingKMeans`, preventing `fit` to randomly
+  fail due to a permutation of the labels when running multiple inits.
+  :pr:`25563` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
