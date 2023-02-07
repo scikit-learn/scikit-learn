@@ -103,20 +103,6 @@ jobs:
             python: 311
             platform_id: macosx_x86_64
 
-          # MacOS arm64
-          - os: macos-latest
-            python: 38
-            platform_id: macosx_arm64
-          - os: macos-latest
-            python: 39
-            platform_id: macosx_arm64
-          - os: macos-latest
-            python: 310
-            platform_id: macosx_arm64
-          - os: macos-latest
-            python: 311
-            platform_id: macosx_arm64
-
     steps:
       - name: Checkout scikit-learn
         uses: actions/checkout@v3
@@ -221,5 +207,6 @@ jobs:
           # Secret variables need to be mapped to environment variables explicitly
           SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
           SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
+          ARTIFACTS_PATH: dist/artifact
         # Force a replacement if the remote file already exists
         run: bash build_tools/github/upload_anaconda.sh
