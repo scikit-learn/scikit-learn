@@ -108,12 +108,26 @@ def get_engine_classes(engine_name, default, verbose=False):
     match the name of enabled engine providers, as well as, ad-hoc providers
     in the form of engine classes in the list of enabled engine providers.
 
-    Returns
-    -------
-    For each matching provider the "name" and the engine class
-    is yielded. The "name" corresponds to the entry in the
-    `engine_provider` configuration. It can be a string or
-    a class for ad-hoc providers.
+    Parameters
+    ----------
+    engine_name : str
+        The name of the algorithm for which to find engine classes.
+
+    default : class
+        The default engine class to use if no other provider is found.
+
+    verbose : bool, default=False
+        If True, print the name of the engine classes that are tried.
+
+    Yields
+    ------
+    provider : str or class
+        The "name" of each matching provider. The "name" corresponds to the
+        entry in the `engine_provider` configuration. It can be a string or a
+        class for programmatically registered ad-hoc providers.
+
+    engine_class :
+        The engine class that implements the algorithm for the given provider.
     """
     provider_names = get_config()["engine_provider"]
 
