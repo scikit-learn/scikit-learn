@@ -614,8 +614,8 @@ def make_regression(
     --------
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(
-    >>>     n_samples=5, n_features=2, n_informative=0, noise=1, random_state=42
-    >>> )
+    ...     n_samples=5, n_features=2, n_informative=0, noise=1, random_state=42
+    ... )
     >>> X
     array([[ 0.49671415, -0.1382643 ],
         [ 1.57921282,  0.76743473],
