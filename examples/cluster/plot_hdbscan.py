@@ -231,7 +231,7 @@ PARAM = (
 )
 hdb = HDBSCAN()
 hdb.fit(X)
-fig, axes = plt.subplots(3, 1, figsize=(10, 12))
+fig, axes = plt.subplots(len(PARAM), 1, figsize=(10, 12))
 for i, param in enumerate(PARAM):
     labels = hdb.dbscan_clustering(**param)
 
