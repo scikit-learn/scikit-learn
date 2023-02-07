@@ -613,17 +613,15 @@ def make_regression(
     Examples
     --------
     >>> from sklearn.datasets import make_regression
-    >>> X, y = make_regression(
-    ...     n_samples=5, n_features=2, n_informative=0, noise=1, random_state=42
-    ... )
+    >>> X, y = make_regression(n_samples=5, n_features=2, noise=1, random_state=42)
     >>> X
     array([[ 0.49671415, -0.1382643 ],
-        [ 1.57921282,  0.76743473],
         [ 0.64768854,  1.52302986],
+        [-0.23415337, -0.23413696],
         [-0.46947439,  0.54256004],
-        [-0.23415337, -0.23413696]])
+        [ 1.57921282,  0.76743473]])
     >>> y
-    array([-0.46341769, -1.91328024, -0.46572975, -1.72491783,  0.24196227])
+    array([  6.73763609,  37.79636891, -10.27658818,   0.40174828,   42.22684334])
     """
     n_informative = min(n_features, n_informative)
     generator = check_random_state(random_state)
