@@ -128,6 +128,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.r2_score",
     "sklearn.metrics.roc_curve",
     "sklearn.metrics.zero_one_loss",
+    "sklearn.metrics.f1_score",
     "sklearn.model_selection.train_test_split",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",

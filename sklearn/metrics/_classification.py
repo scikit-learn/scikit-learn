@@ -23,6 +23,7 @@ the lower the better.
 # License: BSD 3 clause
 
 
+from numbers import Integral, Real
 import warnings
 import numpy as np
 
@@ -40,7 +41,7 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import StrOptions, validate_params
+from ..utils._param_validation import StrOptions, Interval, validate_params
 from ..exceptions import UndefinedMetricWarning
 
 from ._base import _check_pos_label_consistency
@@ -1038,6 +1039,23 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         return n_samples - score
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "labels": ["array-like", None],
+        "pos_label": [Integral, str],
+        "average": [
+            StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
+            None,
+        ],
+        "sample_weight": ["array-like", None],
+        "zero_division": [
+            Interval(Integral, 0, 1, closed="both"),
+            StrOptions({"warn"}),
+        ],
+    }
+)
 def f1_score(
     y_true,
     y_pred,
