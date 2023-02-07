@@ -18,5 +18,5 @@ source activate upload
 conda install -y anaconda-client
 
 # Force a replacement if the remote file already exists
-anaconda -t $ANACONDA_TOKEN upload --force -u $ANACONDA_ORG dist/artifact/*
+anaconda -t $ANACONDA_TOKEN upload --force -u $ANACONDA_ORG $ARTIFACTS_PATH/*
 echo "Index: https://pypi.anaconda.org/$ANACONDA_ORG/simple"
