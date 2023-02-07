@@ -98,6 +98,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.metrics._pairwise_distances_reduction._datasets_pair",
     "sklearn.metrics._pairwise_distances_reduction._middle_term_computer",
     "sklearn.metrics._pairwise_distances_reduction._base",
+    "sklearn.metrics._pairwise_distances_reduction._pairwise_distances",
     "sklearn.metrics._pairwise_distances_reduction._argkmin",
     "sklearn.metrics._pairwise_distances_reduction._radius_neighbors",
     "sklearn.metrics._pairwise_fast",
@@ -339,6 +340,12 @@ extension_config = {
         },
         {
             "sources": ["_base.pyx.tp", "_base.pxd.tp"],
+            "language": "c++",
+            "include_np": True,
+            "extra_compile_args": ["-std=c++11"],
+        },
+        {
+            "sources": ["_pairwise_distances.pyx.tp", "_pairwise_distances.pxd.tp"],
             "language": "c++",
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],

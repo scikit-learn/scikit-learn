@@ -25,6 +25,8 @@ cdef class DatasetsPair{{name_suffix}}:
         {{DistanceMetric}} distance_metric
         ITYPE_t n_features
 
+        readonly bint X_is_Y
+
     cdef ITYPE_t n_samples_X(self) nogil
 
     cdef ITYPE_t n_samples_Y(self) nogil

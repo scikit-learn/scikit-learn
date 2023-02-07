@@ -89,13 +89,18 @@
 from ._dispatcher import (
     BaseDistancesReductionDispatcher,
     ArgKmin,
+    PairwiseDistances,
     RadiusNeighbors,
     sqeuclidean_row_norms,
 )
 
+from ._pairwise_distances import _precompute_metric_params
+
 __all__ = [
     "BaseDistancesReductionDispatcher",
     "ArgKmin",
+    "PairwiseDistances",
     "RadiusNeighbors",
     "sqeuclidean_row_norms",
+    "_precompute_metric_params",
 ]

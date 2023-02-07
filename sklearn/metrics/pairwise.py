@@ -28,11 +28,15 @@ from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils._mask import _get_mask
 from ..utils.parallel import delayed, Parallel
-from ..utils.fixes import sp_base_version, sp_version, parse_version
+from ..utils.fixes import sp_base_version, parse_version
 from ..utils._param_validation import validate_params
 
-from ._pairwise_distances_reduction import ArgKmin
-from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from ._pairwise_distances_reduction import (
+    ArgKmin,
+    PairwiseDistances,
+    _precompute_metric_params,
+)
+from ._pairwise_fast import _chi2_kernel_fast
 from ..exceptions import DataConversionWarning
 
 
@@ -338,6 +342,21 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     float32, norms needs to be recomputed on upcast chunks.
     TODO: use a float64 accumulator in row_norms to avoid the latter.
     """
+    metric = "sqeuclidean" if squared else "euclidean"
+    if PairwiseDistances.is_usable_for(X, Y, metric):
+        metric_kwargs = {}
+        if X_norm_squared is not None:
+            metric_kwargs["X_norm_squared"] = np.ravel(X_norm_squared)
+
+        if Y_norm_squared is not None:
+            metric_kwargs["Y_norm_squared"] = np.ravel(Y_norm_squared)
+
+        return PairwiseDistances.compute(X, Y, metric, metric_kwargs=metric_kwargs)
+
+    # XXX: the following code is still used for list-of-lists of numbers which
+    # aren't converted to numpy arrays in validation steps done in `check_array`.
+    # TODO: convert list-of-lists to numpy arrays in `check_array`.
+    # See: https://github.com/scikit-learn/scikit-learn/issues/24745
     if X_norm_squared is not None:
         if X_norm_squared.dtype == np.float32:
             XX = None
@@ -881,6 +900,15 @@ def haversine_distances(X, Y=None):
     array([[    0.        , 11099.54035582],
            [11099.54035582,     0.        ]])
     """
+
+    if PairwiseDistances.is_usable_for(X, Y, metric="haversine"):
+        return PairwiseDistances.compute(X, Y, metric="haversine")
+
+    # XXX: the following code is still used for list-of-lists of numbers which
+    # aren't converted to numpy arrays in validation steps done in `check_array`.
+    # TODO: convert list-of-lists to numpy arrays in `check_array`.
+    # See: https://github.com/scikit-learn/scikit-learn/issues/24745
+
     from ..metrics import DistanceMetric
 
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
@@ -954,20 +982,30 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
 
     X, Y = check_pairwise_arrays(X, Y)
 
+    if issparse(X):
+        X = csr_matrix(X, copy=False)
+        # This also sorts indices in-place.
+        X.sum_duplicates()
+
+    if issparse(Y):
+        Y = csr_matrix(Y, copy=False)
+        # This also sorts indices in-place.
+        Y.sum_duplicates()
+
+    if sum_over_features and PairwiseDistances.is_usable_for(X, Y, metric="manhattan"):
+        return PairwiseDistances.compute(X, Y, metric="manhattan")
+
+    # XXX: the following code is still used for list-of-lists of numbers which
+    # aren't converted to numpy arrays in validation steps done in `check_array`
+    # and for supporting `sum_over_features` which we should probably remove.
+    # TODO: convert list-of-lists to numpy arrays in `check_array`.
+    # See: https://github.com/scikit-learn/scikit-learn/issues/24745
+    # TODO: remove `sum_over_features`, see:
+    # https://github.com/scikit-learn/scikit-learn/issues/24597
+
     if issparse(X) or issparse(Y):
         if not sum_over_features:
-            raise TypeError(
-                "sum_over_features=%r not supported for sparse matrices"
-                % sum_over_features
-            )
-
-        X = csr_matrix(X, copy=False)
-        Y = csr_matrix(Y, copy=False)
-        X.sum_duplicates()  # this also sorts indices in-place
-        Y.sum_duplicates()
-        D = np.zeros((X.shape[0], Y.shape[0]))
-        _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
-        return D
+            raise TypeError("sum_over_features=False not supported for sparse matrices")
 
     if sum_over_features:
         return distance.cdist(X, Y, "cityblock")
@@ -1687,32 +1725,6 @@ def _check_chunk_size(reduced, chunk_size):
         )
 
 
-def _precompute_metric_params(X, Y, metric=None, **kwds):
-    """Precompute data-derived metric parameters if not provided."""
-    if metric == "seuclidean" and "V" not in kwds:
-        # There is a bug in scipy < 1.5 that will cause a crash if
-        # X.dtype != np.double (float64). See PR #15730
-        dtype = np.float64 if sp_version < parse_version("1.5") else None
-        if X is Y:
-            V = np.var(X, axis=0, ddof=1, dtype=dtype)
-        else:
-            raise ValueError(
-                "The 'V' parameter is required for the seuclidean metric "
-                "when Y is passed."
-            )
-        return {"V": V}
-    if metric == "mahalanobis" and "VI" not in kwds:
-        if X is Y:
-            VI = np.linalg.inv(np.cov(X.T)).T
-        else:
-            raise ValueError(
-                "The 'VI' parameter is required for the mahalanobis metric "
-                "when Y is passed."
-            )
-        return {"VI": VI}
-    return {}
-
-
 def pairwise_distances_chunked(
     X,
     Y=None,
@@ -2008,6 +2020,17 @@ def pairwise_distances(
             % (metric, _VALID_METRICS)
         )
 
+    if PairwiseDistances.is_usable_for(X, X if Y is None else Y, metric=metric):
+        # This is an adaptor for one "sqeuclidean" specification.
+        # For this backend, we can directly use "sqeuclidean".
+        if kwds.get("squared", False) and metric == "euclidean":
+            metric = "sqeuclidean"
+            kwds = {}
+
+        return PairwiseDistances.compute(
+            X, X if Y is None else Y, metric=metric, metric_kwargs=kwds
+        )
+
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
             X, Y, precomputed=True, force_all_finite=force_all_finite
@@ -2026,6 +2049,11 @@ def pairwise_distances(
             _pairwise_callable, metric=metric, force_all_finite=force_all_finite, **kwds
         )
     else:
+        # XXX: the following code is still used for list-of-lists of numbers which
+        # aren't converted to numpy arrays in validation steps done in `check_array`.
+        # TODO: convert list-of-lists to numpy arrays in `check_array`.
+        # See: https://github.com/scikit-learn/scikit-learn/issues/24745
+
         if issparse(X) or issparse(Y):
             raise TypeError("scipy distance metrics do not support sparse matrices.")
 

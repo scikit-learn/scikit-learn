@@ -1,3 +1,5 @@
+import copy
+
 {{py:
 
 implementation_specific_values = [
@@ -91,18 +93,24 @@ cdef class DatasetsPair{{name_suffix}}:
         datasets_pair: DatasetsPair{{name_suffix}}
             The suited DatasetsPair{{name_suffix}} implementation.
         """
-        # Y_norm_squared might be propagated down to DatasetsPairs
-        # via metrics_kwargs when the Euclidean specialisations
-        # can't be used. To prevent Y_norm_squared to be passed
+        # X_norm_squared and Y_norm_squared might be propagated
+        # down to DatasetsPairs via metrics_kwargs when the Euclidean
+        # specialisations can't be used.
+        # To prevent X_norm_squared and Y_norm_squared to be passed
         # down to DistanceMetrics (whose constructors would raise
-        # a RuntimeError), we pop it here.
+        # a RuntimeError), we pop them here.
         if metric_kwargs is not None:
+            # Copying metric_kwargs not to pop "X_norm_squared"
+            # and "Y_norm_squared" where they are used
+            metric_kwargs = copy.copy(metric_kwargs)
+            metric_kwargs.pop("X_norm_squared", None)
             metric_kwargs.pop("Y_norm_squared", None)
         cdef:
             {{DistanceMetric}} distance_metric = {{DistanceMetric}}.get_metric(
                 metric,
                 **(metric_kwargs or {})
             )
+            bint X_is_Y = X is Y
 
         # Metric-specific checks that do not replace nor duplicate `check_array`.
         distance_metric._validate_data(X)
@@ -112,15 +120,15 @@ cdef class DatasetsPair{{name_suffix}}:
         Y_is_sparse = issparse(Y)
 
         if not X_is_sparse and not Y_is_sparse:
-            return DenseDenseDatasetsPair{{name_suffix}}(X, Y, distance_metric)
+            return DenseDenseDatasetsPair{{name_suffix}}(X, Y, distance_metric, X_is_Y)
 
         if X_is_sparse and Y_is_sparse:
-            return SparseSparseDatasetsPair{{name_suffix}}(X, Y, distance_metric)
+            return SparseSparseDatasetsPair{{name_suffix}}(X, Y, distance_metric, X_is_Y)
 
         if X_is_sparse and not Y_is_sparse:
-            return SparseDenseDatasetsPair{{name_suffix}}(X, Y, distance_metric)
+            return SparseDenseDatasetsPair{{name_suffix}}(X, Y, distance_metric, X_is_Y)
 
-        return DenseSparseDatasetsPair{{name_suffix}}(X, Y, distance_metric)
+        return DenseSparseDatasetsPair{{name_suffix}}(X, Y, distance_metric, X_is_Y)
 
     @classmethod
     def unpack_csr_matrix(cls, X: csr_matrix):
@@ -130,8 +138,9 @@ cdef class DatasetsPair{{name_suffix}}:
         X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
         return X_data, X_indices, X_indptr
 
-    def __init__(self, {{DistanceMetric}} distance_metric, ITYPE_t n_features):
+    def __init__(self, {{DistanceMetric}} distance_metric, ITYPE_t n_features, bint X_is_Y):
         self.distance_metric = distance_metric
+        self.X_is_Y = X_is_Y
         self.n_features = n_features
 
     cdef ITYPE_t n_samples_X(self) nogil:
@@ -179,8 +188,9 @@ cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         const {{INPUT_DTYPE_t}}[:, ::1] X,
         const {{INPUT_DTYPE_t}}[:, ::1] Y,
         {{DistanceMetric}} distance_metric,
+        bint X_is_Y,
     ):
-        super().__init__(distance_metric, n_features=X.shape[1])
+        super().__init__(distance_metric, n_features=X.shape[1], X_is_Y=X_is_Y)
         # Arrays have already been checked
         self.X = X
         self.Y = Y
@@ -219,8 +229,8 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         between two vectors of (X, Y).
     """
 
-    def __init__(self, X, Y, {{DistanceMetric}} distance_metric):
-        super().__init__(distance_metric, n_features=X.shape[1])
+    def __init__(self, X, Y, {{DistanceMetric}} distance_metric, bint X_is_Y):
+        super().__init__(distance_metric, n_features=X.shape[1], X_is_Y=X_is_Y)
 
         self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
         self.Y_data, self.Y_indices, self.Y_indptr = self.unpack_csr_matrix(Y)
@@ -279,8 +289,8 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         between two vectors of (X, Y).
     """
 
-    def __init__(self, X, Y, {{DistanceMetric}} distance_metric):
-        super().__init__(distance_metric, n_features=X.shape[1])
+    def __init__(self, X, Y, {{DistanceMetric}} distance_metric, bint X_is_Y):
+        super().__init__(distance_metric, n_features=X.shape[1], X_is_Y=X_is_Y)
 
         self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
 
@@ -377,10 +387,10 @@ cdef class DenseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         between two vectors of (X, Y).
     """
 
-    def __init__(self, X, Y, {{DistanceMetric}} distance_metric):
-        super().__init__(distance_metric, n_features=X.shape[1])
+    def __init__(self, X, Y, {{DistanceMetric}} distance_metric, bint X_is_Y):
+        super().__init__(distance_metric, n_features=X.shape[1], X_is_Y=X_is_Y)
         # Swapping arguments on the constructor
-        self.datasets_pair = SparseDenseDatasetsPair{{name_suffix}}(Y, X, distance_metric)
+        self.datasets_pair = SparseDenseDatasetsPair{{name_suffix}}(Y, X, distance_metric, X_is_Y)
 
     @final
     cdef ITYPE_t n_samples_X(self) nogil:

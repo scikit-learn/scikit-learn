@@ -13,6 +13,12 @@ from ._argkmin import (
     ArgKmin64,
     ArgKmin32,
 )
+
+from ._pairwise_distances import (
+    PairwiseDistances64,
+    PairwiseDistances32,
+)
+
 from ._radius_neighbors import (
     RadiusNeighbors64,
     RadiusNeighbors32,
@@ -167,6 +173,132 @@ class BaseDistancesReductionDispatcher:
         """
 
 
+class PairwiseDistances(BaseDistancesReductionDispatcher):
+    """Compute the pairwise distances matrix for two sets of vectors.
+
+    The distance function `dist` depends on the values of the `metric`
+    and `metric_kwargs` parameters.
+
+    This class only computes the pairwise distances matrix without
+    applying any reduction on it. It shares most of the underlying
+    code infrastructure with reducing variants to leverage
+    cache-aware chunking and multi-thread parallelism.
+
+    This class is not meant to be instantiated, one should only use
+    its :meth:`compute` classmethod which handles allocation and
+    deallocation consistently.
+    """
+
+    @classmethod
+    def is_usable_for(cls, X, Y, metric) -> bool:
+        Y = X if Y is None else Y
+        return metric != "sqeuclidean" and super().is_usable_for(X, Y, metric)
+
+    @classmethod
+    def compute(
+        cls,
+        X,
+        Y,
+        metric="euclidean",
+        chunk_size=None,
+        metric_kwargs=None,
+        strategy=None,
+    ):
+        """Return pairwise distances matrix for the given arguments.
+
+        Parameters
+        ----------
+        X : ndarray or CSR matrix of shape (n_samples_X, n_features)
+            Input data.
+
+        Y : ndarray or CSR matrix of shape (n_samples_Y, n_features)
+            Input data.
+
+        metric : str, default='euclidean'
+            The distance metric to use.
+            For a list of available metrics, see the documentation of
+            :class:`~sklearn.metrics.DistanceMetric`.
+
+        chunk_size : int, default=None,
+            The number of vectors per chunk. If None (default) looks-up in
+            scikit-learn configuration for `pairwise_dist_chunk_size`,
+            and use 256 if it is not set.
+
+        metric_kwargs : dict, default=None
+            Keyword arguments to pass to specified metric function.
+
+        strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
+            The chunking strategy defining which dataset parallelization are made on.
+
+            For both strategies the computations happens with two nested loops,
+            respectively on chunks of X and chunks of Y.
+            Strategies differs on which loop (outer or inner) is made to run
+            in parallel with the Cython `prange` construct:
+
+              - 'parallel_on_X' dispatches chunks of X uniformly on threads.
+                Each thread then iterates on all the chunks of Y. This strategy is
+                embarrassingly parallel and comes with no datastructures
+                synchronisation.
+
+              - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
+                Each thread processes all the chunks of X in turn. This strategy is
+                a sequence of embarrassingly parallel subtasks (the inner loop on Y
+                chunks) with intermediate datastructures synchronisation at each
+                iteration of the sequential outer loop on X chunks.
+
+              - 'auto' relies on a simple heuristic to choose between
+                'parallel_on_X' and 'parallel_on_Y': when `X.shape[0]` is large enough,
+                'parallel_on_X' is usually the most efficient strategy.
+                When `X.shape[0]` is small but `Y.shape[0]` is large, 'parallel_on_Y'
+                brings more opportunity for parallelism and is therefore more efficient.
+
+              - None (default) looks-up in scikit-learn configuration for
+                `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
+
+        Returns
+        -------
+        pairwise_distances_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+            The pairwise distances matrix.
+
+        Notes
+        -----
+        This public classmethod is responsible for introspecting the arguments
+        values to dispatch to the private dtype-specialized implementation of
+        :class:`PairwiseDistances`.
+
+        All temporarily allocated datastructures necessary for the concrete
+        implementation are therefore freed when this classmethod returns.
+
+        This allows entirely decoupling the API entirely from the
+        implementation details whilst maintaining RAII.
+        """
+        Y = X if Y is None else Y
+        if X.dtype == Y.dtype == np.float64:
+            return PairwiseDistances64.compute(
+                X=X,
+                Y=Y,
+                metric=metric,
+                chunk_size=chunk_size,
+                metric_kwargs=metric_kwargs,
+                strategy=strategy,
+            )
+
+        if X.dtype == Y.dtype == np.float32:
+            return PairwiseDistances32.compute(
+                X=X,
+                Y=Y,
+                metric=metric,
+                chunk_size=chunk_size,
+                metric_kwargs=metric_kwargs,
+                strategy=strategy,
+            )
+
+        raise ValueError(
+            "Only float64 or float32 datasets pairs are supported, but "
+            f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
+        )
+
+
 class ArgKmin(BaseDistancesReductionDispatcher):
     """Compute the argkmin of row vectors of X on the ones of Y.
 
@@ -242,7 +374,7 @@ class ArgKmin(BaseDistancesReductionDispatcher):
                 'parallel_on_X' and 'parallel_on_Y': when `X.shape[0]` is large enough,
                 'parallel_on_X' is usually the most efficient strategy.
                 When `X.shape[0]` is small but `Y.shape[0]` is large, 'parallel_on_Y'
-                brings more opportunity for parallelism and is therefore more efficient
+                brings more opportunity for parallelism and is therefore more efficient.
 
               - None (default) looks-up in scikit-learn configuration for
                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
@@ -381,9 +513,7 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
                 'parallel_on_X' and 'parallel_on_Y': when `X.shape[0]` is large enough,
                 'parallel_on_X' is usually the most efficient strategy.
                 When `X.shape[0]` is small but `Y.shape[0]` is large, 'parallel_on_Y'
-                brings more opportunity for parallelism and is therefore more efficient
-                despite the synchronization step at each iteration of the outer loop
-                on chunks of `X`.
+                brings more opportunity for parallelism and is therefore more efficient.
 
               - None (default) looks-up in scikit-learn configuration for
                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
