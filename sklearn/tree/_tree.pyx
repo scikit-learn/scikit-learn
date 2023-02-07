@@ -1141,7 +1141,7 @@ cdef class Tree:
         arr = PyArray_NewFromDescr(<PyTypeObject *> np.ndarray,
                                    <cnp.dtype> NODE_DTYPE, 1, shape,
                                    strides, <void*> self.nodes,
-                                   cnp.NPY_DEFAULT, None)
+                                   cnp.NPY_ARRAY_DEFAULT, None)
         Py_INCREF(self)
         if PyArray_SetBaseObject(arr.base, <PyObject*> self) < 0:
             raise ValueError("Can't initialize array.")
