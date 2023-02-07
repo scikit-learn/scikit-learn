@@ -2024,7 +2024,9 @@ def pairwise_distances(
         # This is an adaptor for one "sqeuclidean" specification.
         # For this backend, we can directly use "sqeuclidean".
         if kwds.get("squared", False) and metric == "euclidean":
-            metric = "sqeuclidean"
+            # TODO: use 'sqeuclidean' instead of 'euclidean'
+            # with EuclideanPairwiseDistance
+            metric = "euclidean"
             kwds = {}
 
         return PairwiseDistances.compute(
