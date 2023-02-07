@@ -1339,7 +1339,7 @@ def d2_pinball_score(
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     alpha : float, default=0.5
