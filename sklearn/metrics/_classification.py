@@ -23,7 +23,7 @@ the lower the better.
 # License: BSD 3 clause
 
 
-from numbers import Integral, Real
+from numbers import Integral
 import warnings
 import numpy as np
 
@@ -1044,7 +1044,7 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         "y_true": ["array-like", "sparse matrix"],
         "y_pred": ["array-like", "sparse matrix"],
         "labels": ["array-like", None],
-        "pos_label": [Integral, str],
+        "pos_label": [Integral, str, None],
         "average": [
             StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
             None,
