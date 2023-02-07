@@ -23,6 +23,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils._param_validation import Interval, HasMethods, StrOptions
 from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
+from ..utils._tags import _safe_tags
 from ..utils.parallel import delayed, Parallel
 
 
@@ -981,6 +982,14 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         return decisions
 
+    def _more_tags(self):
+        if self.estimator is None:
+            estimator = DecisionTreeClassifier()
+        else:
+            estimator = self.estimator
+
+        return {"allow_nan": _safe_tags(estimator, "allow_nan")}
+
 
 class BaggingRegressor(RegressorMixin, BaseBagging):
     """A Bagging regressor.
@@ -1261,3 +1270,10 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
         self.oob_prediction_ = predictions
         self.oob_score_ = r2_score(y, predictions)
+
+    def _more_tags(self):
+        if self.estimator is None:
+            estimator = DecisionTreeRegressor()
+        else:
+            estimator = self.estimator
+        return {"allow_nan": _safe_tags(estimator, "allow_nan")}

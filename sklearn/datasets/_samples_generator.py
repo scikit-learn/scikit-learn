@@ -6,7 +6,7 @@ Generate samples of synthetic data sets.
 #          G. Louppe, J. Nothman
 # License: BSD 3 clause
 
-from numbers import Integral
+from numbers import Integral, Real
 import numbers
 import array
 import warnings
@@ -39,6 +39,25 @@ def _generate_hypercube(samples, dimensions, rng):
     return out
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_informative": [Interval(Integral, 1, None, closed="left")],
+        "n_redundant": [Interval(Integral, 0, None, closed="left")],
+        "n_repeated": [Interval(Integral, 0, None, closed="left")],
+        "n_classes": [Interval(Integral, 1, None, closed="left")],
+        "n_clusters_per_class": [Interval(Integral, 1, None, closed="left")],
+        "weights": ["array-like", None],
+        "flip_y": [Interval(Real, 0, 1, closed="both")],
+        "class_sep": [Interval(Real, 0, None, closed="neither")],
+        "hypercube": ["boolean"],
+        "shift": [Interval(Real, None, None, closed="neither"), "array-like", None],
+        "scale": [Interval(Real, 0, None, closed="neither"), "array-like", None],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_classification(
     n_samples=100,
     n_features=20,
