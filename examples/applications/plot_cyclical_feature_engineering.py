@@ -793,11 +793,11 @@ for ax, pred, label in zip(axes, predictions, labels):
         y_true=y.iloc[test_0].values,
         y_pred=pred,
         kind="actual_vs_predicted",
-        subsample=500,
+        scatter_kwargs={"alpha": 0.3},
         random_state=0,
         ax=ax,
     )
-    ax.legend([label, "Perfect model"])
+    ax.legend(["Perfect model", label])
 
 plt.show()
 # %%
