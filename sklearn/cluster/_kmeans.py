@@ -426,6 +426,12 @@ class KMeansCythonEngine:
 
     def prepare_prediction(self, X, sample_weight):
         X = self.estimator._check_test_data(X)
+
+        # The deprecation check and raising the warning happens in the estimator,
+        # so we just have to handle the case of a string being passed in.
+        if sample_weight == "deprecated":
+            sample_weight = None
+
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         return X, sample_weight
 
@@ -1687,6 +1693,14 @@ class KMeans(_BaseKMeans, EngineAwareMixin):
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
+
+        if not (isinstance(sample_weight, str) and sample_weight == "deprecated"):
+            warnings.warn(
+                "'sample_weight' was deprecated in version 1.3 and "
+                "will be removed in 1.5.",
+                FutureWarning,
+            )
+
         engine = self._get_engine(X, sample_weight=sample_weight)
         X, sample_weight = engine.prepare_prediction(X, sample_weight)
         return engine.get_labels(X, sample_weight)
