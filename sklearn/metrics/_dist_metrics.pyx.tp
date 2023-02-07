@@ -1636,7 +1636,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         self.size = self.mat.shape[0]
 
-        # we need vec as a work buffer
+        # we need to create a buffer to compute distances per feature
         self.buffer = np.zeros(self.size, dtype=DTYPE)
 
     def __setstate__(self, state):
