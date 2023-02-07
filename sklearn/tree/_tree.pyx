@@ -572,11 +572,11 @@ cdef class Tree:
 
     property children_left:
         def __get__(self):
-            return self._get_node_ndarray()['left_child'][:self.node_count]
+            return np.asarray(self._get_node_ndarray())['left_child'][:self.node_count]
 
     property children_right:
         def __get__(self):
-            return self._get_node_ndarray()['right_child'][:self.node_count]
+            return np.asarray(self._get_node_ndarray())['right_child'][:self.node_count]
 
     property n_leaves:
         def __get__(self):
@@ -586,27 +586,27 @@ cdef class Tree:
 
     property feature:
         def __get__(self):
-            return self._get_node_ndarray()['feature'][:self.node_count]
+            return np.asarray(self._get_node_ndarray())['feature'][:self.node_count]
 
     property threshold:
         def __get__(self):
-            return self._get_node_ndarray()['threshold'][:self.node_count]
+            return np.asarray(self._get_node_ndarray())['threshold'][:self.node_count]
 
     property impurity:
         def __get__(self):
-            return self._get_node_ndarray()['impurity'][:self.node_count]
+            return np.asarray(self._get_node_ndarray())['impurity'][:self.node_count]
 
     property n_node_samples:
         def __get__(self):
-            return self._get_node_ndarray()['n_node_samples'][:self.node_count]
+            return np.asarray(self._get_node_ndarray())['n_node_samples'][:self.node_count]
 
     property weighted_n_node_samples:
         def __get__(self):
-            return self._get_node_ndarray()['weighted_n_node_samples'][:self.node_count]
+            return np.asarray(self._get_node_ndarray())['weighted_n_node_samples'][:self.node_count]
 
     property value:
         def __get__(self):
-            return self._get_value_ndarray()[:self.node_count]
+            return np.asarray(self._get_value_ndarray())[:self.node_count]
 
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
@@ -656,8 +656,8 @@ cdef class Tree:
         # capacity is inferred during the __setstate__ using nodes
         d["max_depth"] = self.max_depth
         d["node_count"] = self.node_count
-        d["nodes"] = self._get_node_ndarray()
-        d["values"] = self._get_value_ndarray()
+        d["nodes"] = np.asarray(self._get_node_ndarray())
+        d["values"] = np.asarray(self._get_value_ndarray())
         return d
 
     def __setstate__(self, d):
@@ -685,9 +685,12 @@ cdef class Tree:
         self.capacity = node_ndarray.shape[0]
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
-        nodes = memcpy(self.nodes, (<cnp.ndarray> node_ndarray).data,
+
+        cdef Node[::1] node_memory_view = node_ndarray
+        cdef DOUBLE_t[:, :, ::1] value_memory_view = value_ndarray
+        nodes = memcpy(self.nodes, &node_memory_view[0],
                        self.capacity * sizeof(Node))
-        value = memcpy(self.value, (<cnp.ndarray> value_ndarray).data,
+        value = memcpy(self.value, &value_memory_view[0, 0, 0],
                        self.capacity * self.value_stride * sizeof(double))
 
     cdef int _resize(self, SIZE_t capacity) nogil except -1:
@@ -775,22 +778,22 @@ cdef class Tree:
 
         return node_id
 
-    cpdef cnp.ndarray predict(self, object X):
+    cpdef predict(self, object X):
         """Predict target for X."""
-        out = self._get_value_ndarray().take(self.apply(X), axis=0,
-                                             mode='clip')
+        out_memory_view = np.asarray(self._get_value_ndarray())
+        out = out_memory_view.take(self.apply(X), axis=0, mode='clip')
         if self.n_outputs == 1:
             out = out.reshape(X.shape[0], self.max_n_classes)
         return out
 
-    cpdef cnp.ndarray apply(self, object X):
+    cpdef apply(self, object X):
         """Finds the terminal region (=leaf node) for each sample in X."""
         if issparse(X):
-            return self._apply_sparse_csr(X)
+            return np.asarray(self._apply_sparse_csr(X))
         else:
-            return self._apply_dense(X)
+            return np.asarray(self._apply_dense(X))
 
-    cdef inline cnp.ndarray _apply_dense(self, object X):
+    cdef inline SIZE_t[:] _apply_dense(self, object X):
         """Finds the terminal region (=leaf node) for each sample in X."""
 
         # Check input
@@ -806,8 +809,7 @@ cdef class Tree:
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize output
-        cdef cnp.ndarray[SIZE_t] out = np.zeros((n_samples,), dtype=np.intp)
-        cdef SIZE_t* out_ptr = <SIZE_t*> out.data
+        cdef SIZE_t[:] out = np.zeros((n_samples,), dtype=np.intp)
 
         # Initialize auxiliary data-structure
         cdef Node* node = NULL
@@ -824,11 +826,11 @@ cdef class Tree:
                     else:
                         node = &self.nodes[node.right_child]
 
-                out_ptr[i] = <SIZE_t>(node - self.nodes)  # node offset
+                out[i] = <SIZE_t>(node - self.nodes)  # node offset
 
         return out
 
-    cdef inline cnp.ndarray _apply_sparse_csr(self, object X):
+    cdef inline SIZE_t[:] _apply_sparse_csr(self, object X):
         """Finds the terminal region (=leaf node) for each sample in sparse X.
         """
         # Check input
@@ -840,21 +842,15 @@ cdef class Tree:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef cnp.ndarray[ndim=1, dtype=DTYPE_t] X_data_ndarray = X.data
-        cdef cnp.ndarray[ndim=1, dtype=INT32_t] X_indices_ndarray  = X.indices
-        cdef cnp.ndarray[ndim=1, dtype=INT32_t] X_indptr_ndarray  = X.indptr
-
-        cdef DTYPE_t* X_data = <DTYPE_t*>X_data_ndarray.data
-        cdef INT32_t* X_indices = <INT32_t*>X_indices_ndarray.data
-        cdef INT32_t* X_indptr = <INT32_t*>X_indptr_ndarray.data
+        cdef const DTYPE_t[:] X_data = X.data
+        cdef const INT32_t[:] X_indices  = X.indices
+        cdef const INT32_t[:] X_indptr  = X.indptr
 
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t n_features = X.shape[1]
 
         # Initialize output
-        cdef cnp.ndarray[SIZE_t, ndim=1] out = np.zeros((n_samples,),
-                                                        dtype=np.intp)
-        cdef SIZE_t* out_ptr = <SIZE_t*> out.data
+        cdef SIZE_t[:] out = np.zeros((n_samples,), dtype=np.intp)
 
         # Initialize auxiliary data-structure
         cdef DTYPE_t feature_value = 0.
@@ -895,7 +891,7 @@ cdef class Tree:
                     else:
                         node = &self.nodes[node.right_child]
 
-                out_ptr[i] = <SIZE_t>(node - self.nodes)  # node offset
+                out[i] = <SIZE_t>(node - self.nodes)  # node offset
 
             # Free auxiliary arrays
             free(X_sample)
@@ -926,13 +922,10 @@ cdef class Tree:
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize output
-        cdef cnp.ndarray[SIZE_t] indptr = np.zeros(n_samples + 1, dtype=np.intp)
-        cdef SIZE_t* indptr_ptr = <SIZE_t*> indptr.data
-
-        cdef cnp.ndarray[SIZE_t] indices = np.zeros(n_samples *
-                                                    (1 + self.max_depth),
-                                                    dtype=np.intp)
-        cdef SIZE_t* indices_ptr = <SIZE_t*> indices.data
+        cdef SIZE_t[:] indptr = np.zeros(n_samples + 1, dtype=np.intp)
+        cdef SIZE_t[:] indices = np.zeros(
+            n_samples * (1 + self.max_depth), dtype=np.intp
+        )
 
         # Initialize auxiliary data-structure
         cdef Node* node = NULL
@@ -941,13 +934,13 @@ cdef class Tree:
         with nogil:
             for i in range(n_samples):
                 node = self.nodes
-                indptr_ptr[i + 1] = indptr_ptr[i]
+                indptr[i + 1] = indptr[i]
 
                 # Add all external nodes
                 while node.left_child != _TREE_LEAF:
                     # ... and node.right_child != _TREE_LEAF:
-                    indices_ptr[indptr_ptr[i + 1]] = <SIZE_t>(node - self.nodes)
-                    indptr_ptr[i + 1] += 1
+                    indices[indptr[i + 1]] = <SIZE_t>(node - self.nodes)
+                    indptr[i + 1] += 1
 
                     if X_ndarray[i, node.feature] <= node.threshold:
                         node = &self.nodes[node.left_child]
@@ -955,12 +948,11 @@ cdef class Tree:
                         node = &self.nodes[node.right_child]
 
                 # Add the leave node
-                indices_ptr[indptr_ptr[i + 1]] = <SIZE_t>(node - self.nodes)
-                indptr_ptr[i + 1] += 1
+                indices[indptr[i + 1]] = <SIZE_t>(node - self.nodes)
+                indptr[i + 1] += 1
 
         indices = indices[:indptr[n_samples]]
-        cdef cnp.ndarray[SIZE_t] data = np.ones(shape=len(indices),
-                                                dtype=np.intp)
+        cdef SIZE_t[:] data = np.ones(shape=len(indices), dtype=np.intp)
         out = csr_matrix((data, indices, indptr),
                          shape=(n_samples, self.node_count))
 
@@ -978,25 +970,18 @@ cdef class Tree:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef cnp.ndarray[ndim=1, dtype=DTYPE_t] X_data_ndarray = X.data
-        cdef cnp.ndarray[ndim=1, dtype=INT32_t] X_indices_ndarray  = X.indices
-        cdef cnp.ndarray[ndim=1, dtype=INT32_t] X_indptr_ndarray  = X.indptr
-
-        cdef DTYPE_t* X_data = <DTYPE_t*>X_data_ndarray.data
-        cdef INT32_t* X_indices = <INT32_t*>X_indices_ndarray.data
-        cdef INT32_t* X_indptr = <INT32_t*>X_indptr_ndarray.data
+        cdef const DTYPE_t[:] X_data = X.data
+        cdef const INT32_t[:] X_indices  = X.indices
+        cdef const INT32_t[:] X_indptr  = X.indptr
 
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t n_features = X.shape[1]
 
         # Initialize output
-        cdef cnp.ndarray[SIZE_t] indptr = np.zeros(n_samples + 1, dtype=np.intp)
-        cdef SIZE_t* indptr_ptr = <SIZE_t*> indptr.data
-
-        cdef cnp.ndarray[SIZE_t] indices = np.zeros(n_samples *
-                                                    (1 + self.max_depth),
-                                                    dtype=np.intp)
-        cdef SIZE_t* indices_ptr = <SIZE_t*> indices.data
+        cdef SIZE_t[:] indptr = np.zeros(n_samples + 1, dtype=np.intp)
+        cdef SIZE_t[:] indices = np.zeros(
+            n_samples * (1 + self.max_depth), dtype=np.intp
+        )
 
         # Initialize auxiliary data-structure
         cdef DTYPE_t feature_value = 0.
@@ -1018,7 +1003,7 @@ cdef class Tree:
 
             for i in range(n_samples):
                 node = self.nodes
-                indptr_ptr[i + 1] = indptr_ptr[i]
+                indptr[i + 1] = indptr[i]
 
                 for k in range(X_indptr[i], X_indptr[i + 1]):
                     feature_to_sample[X_indices[k]] = i
@@ -1028,8 +1013,8 @@ cdef class Tree:
                 while node.left_child != _TREE_LEAF:
                     # ... and node.right_child != _TREE_LEAF:
 
-                    indices_ptr[indptr_ptr[i + 1]] = <SIZE_t>(node - self.nodes)
-                    indptr_ptr[i + 1] += 1
+                    indices[indptr[i + 1]] = <SIZE_t>(node - self.nodes)
+                    indptr[i + 1] += 1
 
                     if feature_to_sample[node.feature] == i:
                         feature_value = X_sample[node.feature]
@@ -1043,16 +1028,15 @@ cdef class Tree:
                         node = &self.nodes[node.right_child]
 
                 # Add the leave node
-                indices_ptr[indptr_ptr[i + 1]] = <SIZE_t>(node - self.nodes)
-                indptr_ptr[i + 1] += 1
+                indices[indptr[i + 1]] = <SIZE_t>(node - self.nodes)
+                indptr[i + 1] += 1
 
             # Free auxiliary arrays
             free(X_sample)
             free(feature_to_sample)
 
         indices = indices[:indptr[n_samples]]
-        cdef cnp.ndarray[SIZE_t] data = np.ones(shape=len(indices),
-                                                dtype=np.intp)
+        cdef SIZE_t[:] data = np.ones(shape=len(indices), dtype=np.intp)
         out = csr_matrix((data, indices, indptr),
                          shape=(n_samples, self.node_count))
 
@@ -1095,9 +1079,7 @@ cdef class Tree:
 
         cdef double normalizer = 0.
 
-        cdef cnp.ndarray[cnp.float64_t, ndim=1] importances
-        importances = np.zeros((self.n_features,))
-        cdef DOUBLE_t* importance_data = <DOUBLE_t*>importances.data
+        cdef cnp.float64_t[:] importances = np.zeros((self.n_features,))
 
         with nogil:
             while node != end_node:
@@ -1106,24 +1088,24 @@ cdef class Tree:
                     left = &nodes[node.left_child]
                     right = &nodes[node.right_child]
 
-                    importance_data[node.feature] += (
+                    importances[node.feature] += (
                         node.weighted_n_node_samples * node.impurity -
                         left.weighted_n_node_samples * left.impurity -
                         right.weighted_n_node_samples * right.impurity)
                 node += 1
 
-        importances /= nodes[0].weighted_n_node_samples
+        importances = np.divide(importances, nodes[0].weighted_n_node_samples)
 
         if normalize:
             normalizer = np.sum(importances)
 
             if normalizer > 0.0:
                 # Avoid dividing by zero (e.g., when root is pure)
-                importances /= normalizer
+                importances = np.divide(importances, normalizer)
 
-        return importances
+        return np.asarray(importances)
 
-    cdef cnp.ndarray _get_value_ndarray(self):
+    cdef DOUBLE_t[:, :, ::1] _get_value_ndarray(self):
         """Wraps value as a 3-d NumPy array.
 
         The array keeps a reference to this Tree, which manages the underlying
@@ -1133,14 +1115,14 @@ cdef class Tree:
         shape[0] = <cnp.npy_intp> self.node_count
         shape[1] = <cnp.npy_intp> self.n_outputs
         shape[2] = <cnp.npy_intp> self.max_n_classes
-        cdef cnp.ndarray arr
+        cdef DOUBLE_t[:, :, ::1] arr
         arr = cnp.PyArray_SimpleNewFromData(3, shape, cnp.NPY_DOUBLE, self.value)
         Py_INCREF(self)
-        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+        if PyArray_SetBaseObject(arr.base, <PyObject*> self) < 0:
             raise ValueError("Can't initialize array.")
         return arr
 
-    cdef cnp.ndarray _get_node_ndarray(self):
+    cdef Node[::1] _get_node_ndarray(self):
         """Wraps nodes as a NumPy struct array.
 
         The array keeps a reference to this Tree, which manages the underlying
@@ -1151,14 +1133,14 @@ cdef class Tree:
         shape[0] = <cnp.npy_intp> self.node_count
         cdef cnp.npy_intp strides[1]
         strides[0] = sizeof(Node)
-        cdef cnp.ndarray arr
+        cdef Node[::1] arr
         Py_INCREF(NODE_DTYPE)
-        arr = PyArray_NewFromDescr(<PyTypeObject *> cnp.ndarray,
+        arr = PyArray_NewFromDescr(<PyTypeObject *> np.ndarray,
                                    <cnp.dtype> NODE_DTYPE, 1, shape,
                                    strides, <void*> self.nodes,
                                    cnp.NPY_DEFAULT, None)
         Py_INCREF(self)
-        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+        if PyArray_SetBaseObject(arr.base, <PyObject*> self) < 0:
             raise ValueError("Can't initialize array.")
         return arr
 
@@ -1688,10 +1670,8 @@ def ccp_pruning_path(Tree orig_tree):
 
     cdef:
         UINT32_t total_items = path_finder.count
-        cnp.ndarray ccp_alphas = np.empty(shape=total_items,
-                                          dtype=np.float64)
-        cnp.ndarray impurities = np.empty(shape=total_items,
-                                          dtype=np.float64)
+        DOUBLE_t[:] ccp_alphas = np.empty(shape=total_items, dtype=np.float64)
+        DOUBLE_t[:] impurities = np.empty(shape=total_items, dtype=np.float64)
         UINT32_t count = 0
 
     while count < total_items:
@@ -1699,7 +1679,10 @@ def ccp_pruning_path(Tree orig_tree):
         impurities[count] = path_finder.impurities[count]
         count += 1
 
-    return {'ccp_alphas': ccp_alphas, 'impurities': impurities}
+    return {
+        'ccp_alphas': np.asarray(ccp_alphas),
+        'impurities': np.asarray(impurities),
+    }
 
 
 cdef struct BuildPrunedRecord:
