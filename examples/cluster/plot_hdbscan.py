@@ -195,7 +195,6 @@ for i, param in enumerate(PARAM):
 # ^^^^^^^^^^^^^
 # `min_samples` is the number of samples in a neighborhood for a point to
 # be considered as a core point, including the point itself.
-
 # `min_samples` defaults to `min_cluster_size`.
 # Similarly to `min_cluster_size`, larger values for `min_samples` increase
 # the model's robustness to noise, but risks ignoring or discarding
@@ -211,5 +210,29 @@ fig, axes = plt.subplots(3, 1, figsize=(10, 12))
 for i, param in enumerate(PARAM):
     hdb = HDBSCAN(**param).fit(X)
     labels = hdb.labels_
+
+    plot(X, labels, hdb.probabilities_, param, ax=axes[i])
+
+# %%
+# `dbscan_clustering`
+# ^^^^^^^^^^^^^^^^^^^
+# During `fit`, `HDBSCAN` builds a single-linkage tree which encodes the
+# clustering of all points across all values of :class:`~cluster.DBSCAN`'s
+# `eps` parameter.
+# We can thus plot and evaluate these clusterings efficiently without fully
+# recomputing intermediate values such as core-distances, mutual-reachability,
+# and the minimum spanning tree. All we need to do is specify the `cut_distance`
+# (equivalent to `eps`) we want to cluster with.
+
+PARAM = (
+    {"cut_distance": 0.1},
+    {"cut_distance": 0.5},
+    {"cut_distance": 1.0},
+)
+hdb = HDBSCAN()
+hdb.fit(X)
+fig, axes = plt.subplots(len(PARAM), 1, figsize=(10, 12))
+for i, param in enumerate(PARAM):
+    labels = hdb.dbscan_clustering(**param)
 
     plot(X, labels, hdb.probabilities_, param, ax=axes[i])
