@@ -32,7 +32,7 @@ from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
 
-# Encodings are arbitray but must be strictly negative.
+# Encodings are arbitrary but must be strictly negative.
 # The current encodings are chosen as extensions to the -1 noise label.
 # Avoided enums so that the end user only deals with simple labels.
 _OUTLIER_ENCODING = {
