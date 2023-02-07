@@ -797,6 +797,7 @@ for ax, pred, label in zip(axes, predictions, labels):
         random_state=0,
         ax=ax,
     )
+    ax.set(xlabel="Predicted demand", ylabel="True demand")
     ax.legend(["Perfect model", label])
 
 plt.show()
