@@ -462,36 +462,12 @@ ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT = [
     est for est in _tested_estimators() if hasattr(est, "get_feature_names_out")
 ]
 
-WHITELISTED_FAILING_ESTIMATORS = [
-    "DictVectorizer",
-    "GaussianRandomProjection",
-    "GenericUnivariateSelect",
-    "KBinsDiscretizer",
-    "MissingIndicator",
-    "RFE",
-    "RFECV",
-    "SelectFdr",
-    "SelectFpr",
-    "SelectFromModel",
-    "SelectFwe",
-    "SelectKBest",
-    "SelectPercentile",
-    "SequentialFeatureSelector",
-    "SparseRandomProjection",
-    "SplineTransformer",
-    "VarianceThreshold",
-]
-
 
 @pytest.mark.parametrize(
     "estimator", ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT, ids=_get_check_estimator_ids
 )
 def test_estimators_get_feature_names_out_error(estimator):
     estimator_name = estimator.__class__.__name__
-    if estimator_name in WHITELISTED_FAILING_ESTIMATORS:
-        return pytest.xfail(
-            reason=f"{estimator_name} is not failing with a consistent NotFittedError"
-        )
     _set_checking_parameters(estimator)
     check_get_feature_names_out_error(estimator_name, estimator)
 
