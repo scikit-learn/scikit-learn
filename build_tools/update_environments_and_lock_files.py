@@ -251,7 +251,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "doc_min_dependencies",
-        "folder": "build_tools/github",
+        "folder": "build_tools/circle",
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies_without_coverage
@@ -286,7 +286,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "doc",
-        "folder": "build_tools/github",
+        "folder": "build_tools/circle",
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies_without_coverage
@@ -305,6 +305,8 @@ conda_build_metadata_list = [
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
             "python": "3.9",
+            # XXX: sphinx > 6.0 does not correctly generate searchindex.js
+            "sphinx": "6.0.0",
         },
     },
     {

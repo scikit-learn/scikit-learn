@@ -4,8 +4,14 @@ set -e
 # pipefail is necessary to propagate exit codes
 set -o pipefail
 
+black --check --diff .
+echo -e "No problem detected by black\n"
+
 flake8 --show-source .
 echo -e "No problem detected by flake8\n"
+
+mypy sklearn/
+echo -e "No problem detected by mypy\n"
 
 # For docstrings and warnings of deprecated attributes to be rendered
 # properly, the property decorator must come before the deprecated decorator
