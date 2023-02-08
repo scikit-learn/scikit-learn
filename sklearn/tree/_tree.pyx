@@ -1120,12 +1120,12 @@ cdef class Tree:
         shape[0] = <cnp.npy_intp> self.node_count
         shape[1] = <cnp.npy_intp> self.n_outputs
         shape[2] = <cnp.npy_intp> self.max_n_classes
-        cdef DOUBLE_t[:, :, ::1] arr
+        cdef cnp.ndarray arr
         arr = cnp.PyArray_SimpleNewFromData(3, shape, cnp.NPY_DOUBLE, self.value)
         Py_INCREF(self)
-        if PyArray_SetBaseObject(arr.base, <PyObject*> self) < 0:
+        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
             raise ValueError("Can't initialize array.")
-        return np.asarray(arr)
+        return arr
 
     cdef cnp.ndarray _get_node_ndarray(self):
         """Wraps nodes as a NumPy struct array.
@@ -1138,16 +1138,16 @@ cdef class Tree:
         shape[0] = <cnp.npy_intp> self.node_count
         cdef cnp.npy_intp strides[1]
         strides[0] = sizeof(Node)
-        cdef Node[::1] arr
+        cdef cnp.ndarray arr
         Py_INCREF(NODE_DTYPE)
         arr = PyArray_NewFromDescr(<PyTypeObject *> cnp.ndarray,
                                    <cnp.dtype> NODE_DTYPE, 1, shape,
                                    strides, <void*> self.nodes,
                                    cnp.NPY_ARRAY_DEFAULT, None)
         Py_INCREF(self)
-        if PyArray_SetBaseObject(arr.base, <PyObject*> self) < 0:
+        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
             raise ValueError("Can't initialize array.")
-        return np.asarray(arr)
+        return arr
 
     def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
                                    int[::1] target_features,
