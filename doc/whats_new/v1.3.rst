@@ -96,13 +96,6 @@ Changelog
 - |Feature| A `__sklearn_clone__` protocol is now available to override the
   default behavior of :func:`base.clone`. :pr:`24568` by `Thomas Fan`_.
 
-:mod:`sklearn.calibration`
-..........................
-
-- |Fix| A deprecation warning is raised when using the "base_estimator__" prefix
-  to set parameters of the estimator used in :class:`calibration.CalibratedClassifierCV`.
-  :pr:`25477` by :user:`Tim Head <betatim>`.
-
 :mod:`sklearn.cluster`
 ......................
 
@@ -142,12 +135,6 @@ Changelog
   to load an estimator trained with scikit-learn 1.2 to make it predict with
   scikit-learn 1.3: retraining with scikit-learn 1.3 is required.
   :pr:`25186` by :user:`Felipe Breve Siola <fsiola>`.
-
-- |Fix| A deprecation warning is raised when using the "base_estimator__" prefix
-  to set parameters of the estimator used in :class:`ensemble.AdaBoostClassifier`,
-  :class:`ensemble.AdaBoostRegressor`, :class:`ensemble.BaggingClassifier`,
-  and :class:`ensemble.BaggingRegressor`.
-  :pr:`25477` by :user:`Tim Head <betatim>`.
 
 - |Enhancement| :class:`ensemble.BaggingClassifier` and
   :class:`ensemble.BaggingRegressor` expose the `allow_nan` tag from the

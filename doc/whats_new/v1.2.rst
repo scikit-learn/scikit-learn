@@ -27,6 +27,22 @@ Changes impacting all modules
 Changelog
 ---------
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| A deprecation warning is raised when using the "base_estimator__" prefix
+  to set parameters of the estimator used in :class:`calibration.CalibratedClassifierCV`.
+  :pr:`25477` by :user:`Tim Head <betatim>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| A deprecation warning is raised when using the "base_estimator__" prefix
+  to set parameters of the estimator used in :class:`ensemble.AdaBoostClassifier`,
+  :class:`ensemble.AdaBoostRegressor`, :class:`ensemble.BaggingClassifier`,
+  and :class:`ensemble.BaggingRegressor`.
+  :pr:`25477` by :user:`Tim Head <betatim>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
