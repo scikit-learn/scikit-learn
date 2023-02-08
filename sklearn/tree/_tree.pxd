@@ -62,14 +62,14 @@ cdef class Tree:
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 
-    cdef DOUBLE_t[:, :, ::1] _get_value_ndarray(self)
-    cdef Node[::1] _get_node_ndarray(self)
+    cdef cnp.ndarray _get_value_ndarray(self)
+    cdef cnp.ndarray _get_node_ndarray(self)
 
     cpdef predict(self, object X)
 
     cpdef apply(self, object X)
-    cdef SIZE_t[:] _apply_dense(self, object X)
-    cdef SIZE_t[:] _apply_sparse_csr(self, object X)
+    cdef cnp.ndarray _apply_dense(self, object X)
+    cdef cnp.ndarray _apply_sparse_csr(self, object X)
 
     cpdef object decision_path(self, object X)
     cdef object _decision_path_dense(self, object X)

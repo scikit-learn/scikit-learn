@@ -575,11 +575,11 @@ cdef class Tree:
 
     property children_left:
         def __get__(self):
-            return np.asarray(self._get_node_ndarray())['left_child'][:self.node_count]
+            return self._get_node_ndarray()['left_child'][:self.node_count]
 
     property children_right:
         def __get__(self):
-            return np.asarray(self._get_node_ndarray())['right_child'][:self.node_count]
+            return self._get_node_ndarray()['right_child'][:self.node_count]
 
     property n_leaves:
         def __get__(self):
@@ -589,27 +589,27 @@ cdef class Tree:
 
     property feature:
         def __get__(self):
-            return np.asarray(self._get_node_ndarray())['feature'][:self.node_count]
+            return self._get_node_ndarray()['feature'][:self.node_count]
 
     property threshold:
         def __get__(self):
-            return np.asarray(self._get_node_ndarray())['threshold'][:self.node_count]
+            return self._get_node_ndarray()['threshold'][:self.node_count]
 
     property impurity:
         def __get__(self):
-            return np.asarray(self._get_node_ndarray())['impurity'][:self.node_count]
+            return self._get_node_ndarray()['impurity'][:self.node_count]
 
     property n_node_samples:
         def __get__(self):
-            return np.asarray(self._get_node_ndarray())['n_node_samples'][:self.node_count]
+            return self._get_node_ndarray()['n_node_samples'][:self.node_count]
 
     property weighted_n_node_samples:
         def __get__(self):
-            return np.asarray(self._get_node_ndarray())['weighted_n_node_samples'][:self.node_count]
+            return self._get_node_ndarray()['weighted_n_node_samples'][:self.node_count]
 
     property value:
         def __get__(self):
-            return np.asarray(self._get_value_ndarray())[:self.node_count]
+            return self._get_value_ndarray()[:self.node_count]
 
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
@@ -659,8 +659,8 @@ cdef class Tree:
         # capacity is inferred during the __setstate__ using nodes
         d["max_depth"] = self.max_depth
         d["node_count"] = self.node_count
-        d["nodes"] = np.asarray(self._get_node_ndarray())
-        d["values"] = np.asarray(self._get_value_ndarray())
+        d["nodes"] = self._get_node_ndarray()
+        d["values"] = self._get_value_ndarray()
         return d
 
     def __setstate__(self, d):
@@ -783,8 +783,8 @@ cdef class Tree:
 
     cpdef predict(self, object X):
         """Predict target for X."""
-        out_memory_view = np.asarray(self._get_value_ndarray())
-        out = out_memory_view.take(self.apply(X), axis=0, mode='clip')
+        out = self._get_value_ndarray().take(self.apply(X), axis=0,
+                                             mode='clip')
         if self.n_outputs == 1:
             out = out.reshape(X.shape[0], self.max_n_classes)
         return out
@@ -792,11 +792,11 @@ cdef class Tree:
     cpdef apply(self, object X):
         """Finds the terminal region (=leaf node) for each sample in X."""
         if issparse(X):
-            return np.asarray(self._apply_sparse_csr(X))
+            return self._apply_sparse_csr(X)
         else:
-            return np.asarray(self._apply_dense(X))
+            return self._apply_dense(X)
 
-    cdef inline SIZE_t[:] _apply_dense(self, object X):
+    cdef inline cnp.ndarray _apply_dense(self, object X):
         """Finds the terminal region (=leaf node) for each sample in X."""
 
         # Check input
@@ -831,9 +831,9 @@ cdef class Tree:
 
                 out[i] = <SIZE_t>(node - self.nodes)  # node offset
 
-        return out
+        return np.asarray(out)
 
-    cdef inline SIZE_t[:] _apply_sparse_csr(self, object X):
+    cdef inline cnp.ndarray _apply_sparse_csr(self, object X):
         """Finds the terminal region (=leaf node) for each sample in sparse X.
         """
         # Check input
@@ -900,7 +900,7 @@ cdef class Tree:
             free(X_sample)
             free(feature_to_sample)
 
-        return out
+        return np.asarray(out)
 
     cpdef object decision_path(self, object X):
         """Finds the decision path (=node) for each sample in X."""
@@ -1082,7 +1082,7 @@ cdef class Tree:
 
         cdef double normalizer = 0.
 
-        cdef cnp.float64_t[:] importances = np.zeros((self.n_features,))
+        cdef cnp.float64_t[:] importances = np.zeros(self.n_features)
 
         with nogil:
             while node != end_node:
@@ -1097,18 +1097,20 @@ cdef class Tree:
                         right.weighted_n_node_samples * right.impurity)
                 node += 1
 
-        importances = np.divide(importances, nodes[0].weighted_n_node_samples)
+        for i in range(self.n_features):
+            importances[i] /= nodes[0].weighted_n_node_samples
 
         if normalize:
             normalizer = np.sum(importances)
 
             if normalizer > 0.0:
                 # Avoid dividing by zero (e.g., when root is pure)
-                importances = np.divide(importances, normalizer)
+                for i in range(self.n_features):
+                    importances[i] /= normalizer
 
         return np.asarray(importances)
 
-    cdef DOUBLE_t[:, :, ::1] _get_value_ndarray(self):
+    cdef cnp.ndarray _get_value_ndarray(self):
         """Wraps value as a 3-d NumPy array.
 
         The array keeps a reference to this Tree, which manages the underlying
@@ -1123,9 +1125,9 @@ cdef class Tree:
         Py_INCREF(self)
         if PyArray_SetBaseObject(arr.base, <PyObject*> self) < 0:
             raise ValueError("Can't initialize array.")
-        return arr
+        return np.asarray(arr)
 
-    cdef Node[::1] _get_node_ndarray(self):
+    cdef cnp.ndarray _get_node_ndarray(self):
         """Wraps nodes as a NumPy struct array.
 
         The array keeps a reference to this Tree, which manages the underlying
@@ -1145,7 +1147,7 @@ cdef class Tree:
         Py_INCREF(self)
         if PyArray_SetBaseObject(arr.base, <PyObject*> self) < 0:
             raise ValueError("Can't initialize array.")
-        return arr
+        return np.asarray(arr)
 
     def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
                                    int[::1] target_features,
