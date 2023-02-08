@@ -71,6 +71,11 @@ def cythonize_extensions(extension):
         os.environ.get("SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES", "0") != "0"
     )
 
+    # Additional checks for Cython
+    generate_cython_annotations = (
+        os.environ.get("SKLEARN_GENERATE_CYTHON_ANNOTATIONS", "0") != "0"
+    )
+
     compiler_directives = {
         "language_level": 3,
         "boundscheck": cython_enable_debug_directives,
@@ -102,6 +107,7 @@ def cythonize_extensions(extension):
             "SKLEARN_OPENMP_PARALLELISM_ENABLED": sklearn._OPENMP_SUPPORTED
         },
         compiler_directives=compiler_directives,
+        annotate=generate_cython_annotations,
     )
 
 
