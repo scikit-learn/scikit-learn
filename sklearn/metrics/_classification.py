@@ -23,7 +23,7 @@ the lower the better.
 # License: BSD 3 clause
 
 
-from numbers import Integral
+from numbers import Integral, Real
 import warnings
 import numpy as np
 
