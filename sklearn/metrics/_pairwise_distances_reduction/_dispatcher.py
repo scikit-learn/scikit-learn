@@ -14,7 +14,7 @@ from ._argkmin import (
     ArgKmin32,
 )
 
-from ._ArgKminClassMode import (
+from ._argkminclassmode import (
     ArgKminClassMode64,
     ArgKminClassMode32,
 )
