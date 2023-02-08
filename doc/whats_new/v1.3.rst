@@ -214,6 +214,13 @@ Changelog
   during `transform` with no prior call to `fit` or `fit_transform`.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |Enhancement| :meth:`LabelSpreading.fit` and :meth:`LabelPropagation.fit` now
+  accepts sparse metrics.
+  :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
