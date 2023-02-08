@@ -852,7 +852,9 @@ cdef class CyLossFunction:
         gradient : array of shape (n_samples,)
             Element-wise gradients.
         """
-        pass
+        self.loss(y_true, raw_prediction, sample_weight, loss_out, n_threads)
+        self.gradient(y_true, raw_prediction, sample_weight, gradient_out, n_threads)
+        return np.asarray(loss_out), np.asarray(gradient_out)
 
     def gradient_hessian(
         self,
@@ -899,7 +901,7 @@ else:
     with_param = ", self." + param
 }}
 
-cdef class {{name}}:
+cdef class {{name}}(CyLossFunction):
     """{{docstring}}"""
 
     {{if param is not None}}
@@ -1029,19 +1031,6 @@ cdef class {{name}}:
                 hessian_out[i] = sample_weight[i] * dbl2.val2
 
         return np.asarray(gradient_out), np.asarray(hessian_out)
-
-    def loss_gradient(
-        self,
-        const Y_DTYPE_C[::1] y_true,          # IN
-        const Y_DTYPE_C[::1] raw_prediction,  # IN
-        const Y_DTYPE_C[::1] sample_weight,   # IN
-        G_DTYPE_C[::1] loss_out,              # OUT
-        G_DTYPE_C[::1] gradient_out,          # OUT
-        int n_threads=1
-    ):
-        self.loss(y_true, raw_prediction, sample_weight, loss_out, n_threads)
-        self.gradient(y_true, raw_prediction, sample_weight, gradient_out, n_threads)
-        return np.asarray(loss_out), np.asarray(gradient_out)
 
 {{endfor}}
 
