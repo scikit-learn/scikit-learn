@@ -103,6 +103,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.covariance.empirical_covariance",
     "sklearn.covariance.shrunk_covariance",
     "sklearn.datasets.fetch_california_housing",
+    "sklearn.datasets.fetch_kddcup99",
     "sklearn.datasets.make_classification",
     "sklearn.datasets.make_sparse_coded_signal",
     "sklearn.decomposition.sparse_encode",
@@ -117,6 +118,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.cluster.contingency_matrix",
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
+    "sklearn.metrics.d2_pinball_score",
     "sklearn.metrics.det_curve",
     "sklearn.metrics.hamming_loss",
     "sklearn.metrics.mean_absolute_error",
@@ -151,6 +153,7 @@ def test_function_param_validation(func_module):
 
 PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.cluster.affinity_propagation", "sklearn.cluster.AffinityPropagation"),
+    ("sklearn.cluster.spectral_clustering", "sklearn.cluster.SpectralClustering"),
     ("sklearn.covariance.ledoit_wolf", "sklearn.covariance.LedoitWolf"),
     ("sklearn.covariance.oas", "sklearn.covariance.OAS"),
     ("sklearn.decomposition.dict_learning", "sklearn.decomposition.DictionaryLearning"),
