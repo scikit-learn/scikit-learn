@@ -284,26 +284,13 @@ def test_silhouette_nonzero_diag(dtype):
         silhouette_samples(dists, labels, metric="precomputed")
 
 
-def test_silhouette_samples_sparse_csr():
-    """Check that silhouette_samples works for sparse matrices correctly"""
-    X = np.array([[0.2, 0.1, 0.1, 0.2, 0.1, 1.6, 0.2, 0.1]], dtype=np.float32).T
-    y = [0, 0, 0, 0, 1, 1, 1, 1]
-    pdist_dense = pairwise_distances(X)
-    pdist_sparse = csr_matrix(pdist_dense)
-    assert issparse(pdist_sparse)
-    sparse_out = silhouette_samples(pdist_sparse, y, metric="precomputed")
-    dense_out = silhouette_samples(pdist_dense, y, metric="precomputed")
-    assert_allclose(sparse_out, dense_out)
-
-
-@pytest.mark.parametrize("to_sparse", (csc_matrix, dok_matrix, lil_matrix))
+@pytest.mark.parametrize("to_sparse", (csr_matrix, csc_matrix, dok_matrix, lil_matrix))
 def test_silhouette_samples_sparse(to_sparse):
     """Check that silhouette_samples works for sparse matrices correctly"""
     X = np.array([[0.2, 0.1, 0.1, 0.2, 0.1, 1.6, 0.2, 0.1]], dtype=np.float32).T
     y = [0, 0, 0, 0, 1, 1, 1, 1]
     pdist_dense = pairwise_distances(X)
     pdist_sparse = to_sparse(pdist_dense)
-    assert pdist_sparse.format != "csr"
     assert issparse(pdist_sparse)
     sparse_out = silhouette_samples(pdist_sparse, y, metric="precomputed")
     dense_out = silhouette_samples(pdist_dense, y, metric="precomputed")

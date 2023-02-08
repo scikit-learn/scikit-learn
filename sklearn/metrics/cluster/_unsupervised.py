@@ -139,9 +139,6 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
 
     for i in range(n_chunk_samples):
         if D_chunk_is_sparse:
-            if D_chunk.format != "csr":
-                D_chunk = D_chunk.tocsr()
-
             indptr = D_chunk.indptr
             indices = D_chunk.indices[indptr[i] : indptr[i + 1]]
             sample_weights = D_chunk.data[indptr[i] : indptr[i + 1]]
