@@ -952,6 +952,8 @@ def export_text(
         - if a list, the number of items should be the same as in
           `decition_tree.classes_` and will be used.
 
+        .. versionadded:: 1.3
+
     max_depth : int, default=10
         Only the first max_depth levels of the tree are exported.
         Truncated branches will be marked with "...".
@@ -995,15 +997,15 @@ def export_text(
     check_is_fitted(decision_tree)
     tree_ = decision_tree.tree_
     if is_classifier(decision_tree):
-        if class_names is not None and len(class_names) != len(decision_tree.classes_):
+        if class_names is None:
+            class_names = decision_tree.classes_
+        elif len(class_names) != len(decision_tree.classes_):
             raise ValueError(
-                "When `class_names` is not None, it should be a list containing as"
+                "When `class_names` is a list, it should contain as"
                 " many items as `decision_tree.classes_`. Got"
                 f" {len(class_names)} while the tree was fitted with"
                 f" {len(decision_tree.classes_)} classes."
             )
-        elif class_names is None:
-            class_names = decision_tree.classes_
     right_child_fmt = "{} {} <= {}\n"
     left_child_fmt = "{} {} >  {}\n"
     truncation_fmt = "{} {}\n"
