@@ -1201,8 +1201,8 @@ def fbeta_score(
     The F-beta score is the weighted harmonic mean of precision and recall,
     reaching its optimal value at 1 and its worst value at 0.
 
-    The `beta` parameter represents the ratio of recall to
-    precision. `beta > 1` gives more weight to recall, while
+    The `beta` parameter represents the ratio of recall importance to
+    precision importance. `beta > 1` gives more weight to recall, while
     `beta < 1` favors precision. For example, `beta = 2` makes recall
     twice as important as precision, while `beta = 0.5` does the opposite.
 
