@@ -20,6 +20,7 @@ from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
 from ..metrics._pairwise_distances_reduction import ArgKminClassMode
 from ..utils._param_validation import StrOptions
+from sklearn.neighbors._base import _check_precomputed
 
 
 def _adjusted_metric(metric, p=None):
@@ -302,12 +303,21 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             # TODO: systematize this mapping of metric for
             # PairwiseDistancesReductions.
             metric = _adjusted_metric(self.metric, self.p)
+            if self.metric == "precomputed":
+                X = _check_precomputed(X)
+            else:
+                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+
+            check_is_fitted(self, "_fit_method")
             if (
                 self._fit_method == "brute"
                 and ArgKminClassMode.is_usable_for(X, self._fit_X, metric)
                 # TODO: Implement efficient multi-output solution
                 and not self.outputs_2d_
             ):
+                metric_kwargs = self.metric_params or {}
+                if metric == "minkowski":
+                    metric_kwargs["p"] = self.p
                 probabilities = ArgKminClassMode.compute(
                     X,
                     self._fit_X,
@@ -316,7 +326,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     labels=self._y,
                     unique_labels=self.classes_,
                     metric=metric,
-                    metric_kwargs=self.metric_params,
+                    metric_kwargs=metric_kwargs,
                 )
                 return probabilities
 

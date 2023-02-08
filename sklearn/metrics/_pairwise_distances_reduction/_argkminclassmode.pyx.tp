@@ -130,9 +130,6 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
 
         cdef ITYPE_t idx, label
         # Map from set of unique labels to their indices in `label_weights`
-        for idx, label in enumerate(unique_labels):
-            self.labels_to_index.insert(cpp_pair[ITYPE_t, ITYPE_t](label, idx))
-
         # Buffer used in building a histogram for one-pass weighted mode
         self.label_weights = np.zeros(
             (self.n_samples_X, unique_labels.shape[0]), dtype=DTYPE,
@@ -167,8 +164,7 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
                 label_weight = 1 / distances[jdx]
             y_idx = indices[jdx]
             label = self.labels[y_idx]
-            label_index = self.labels_to_index[label]
-            self.label_weights[sample_index][label_index] += label_weight
+            self.label_weights[sample_index][label] += label_weight
         return
 
     cdef void _parallel_on_X_prange_iter_finalize(
