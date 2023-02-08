@@ -14,9 +14,9 @@ from ._argkmin import (
     ArgKmin32,
 )
 
-from ._argkminlabels import (
-    ArgKminLabels64,
-    ArgKminLabels32,
+from ._ArgKminClassMode import (
+    ArgKminClassMode64,
+    ArgKminClassMode32,
 )
 
 from ._radius_neighbors import (
@@ -455,13 +455,13 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
         )
 
 
-class ArgKminLabels(BaseDistancesReductionDispatcher):
+class ArgKminClassMode(BaseDistancesReductionDispatcher):
     """Compute the argkmin of row vectors of X on the ones of Y with labels.
 
     For each row vector of X, computes the indices of k first the rows
     vectors of Y with the smallest distances. Computes weighted mode of labels.
 
-    ArgKminLabels is typically used to perform bruteforce k-nearest neighbors
+    ArgKminClassMode is typically used to perform bruteforce k-nearest neighbors
     queries when the weighted mode of the labels for the k-nearest neighbors
     are required, such as in `predict` methods.
 
@@ -594,18 +594,13 @@ class ArgKminLabels(BaseDistancesReductionDispatcher):
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
-        # Note (jjerphan): Some design thoughts for future extensions.
-        # This factory comes to handle specialisations for the given arguments.
-        # For future work, this might can be an entrypoint to specialise operations
-        # for various backend and/or hardware and/or datatypes, and/or fused
-        # {sparse, dense}-datasetspair etc.
         if weights not in {"uniform", "distance"}:
             raise ValueError(
                 "Only the 'uniform' or 'distance' weights options are supported"
                 f" at this time. Got: {weights=}."
             )
         if X.dtype == Y.dtype == np.float64:
-            return ArgKminLabels64.compute(
+            return ArgKminClassMode64.compute(
                 X=X,
                 Y=Y,
                 k=k,
@@ -619,7 +614,7 @@ class ArgKminLabels(BaseDistancesReductionDispatcher):
             )
 
         if X.dtype == Y.dtype == np.float32:
-            return ArgKminLabels32.compute(
+            return ArgKminClassMode32.compute(
                 X=X,
                 Y=Y,
                 k=k,
