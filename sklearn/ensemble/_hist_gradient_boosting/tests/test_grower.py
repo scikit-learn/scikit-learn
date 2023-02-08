@@ -250,11 +250,11 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins, constant_hessian,
     if n_samples >= min_samples_leaf:
         for node in predictor.nodes:
             if node["is_leaf"]:
-                assert node["count"] >= min_samples_leaf
+                assert node["weighted_n_node_samples"] >= min_samples_leaf
     else:
         assert predictor.nodes.shape[0] == 1
         assert predictor.nodes[0]["is_leaf"]
-        assert predictor.nodes[0]["count"] == n_samples
+        assert predictor.nodes[0]["weighted_n_node_samples"] == n_samples
 
 
 @pytest.mark.parametrize("n_samples, min_samples_leaf", [(99, 50), (100, 50)])
@@ -376,7 +376,7 @@ def test_missing_value_predict_only():
     while not node["is_leaf"]:
         left = predictor.nodes[node["left"]]
         right = predictor.nodes[node["right"]]
-        node = left if left["count"] > right["count"] else right
+        node = left if left["weighted_n_node_samples"] > right["weighted_n_node_samples"] else right
 
     prediction_main_path = node["value"]
 
@@ -466,14 +466,14 @@ def test_grow_tree_categories():
     categories = [np.array([4, 9], dtype=X_DTYPE)]
     predictor = grower.make_predictor(binning_thresholds=categories)
     root = predictor.nodes[0]
-    assert root["count"] == 23
+    assert root["weighted_n_node_samples"] == 23
     assert root["depth"] == 0
     assert root["is_categorical"]
 
     left, right = predictor.nodes[root["left"]], predictor.nodes[root["right"]]
 
     # arbitrary validation, but this means ones go to the left.
-    assert left["count"] >= right["count"]
+    assert left["weighted_n_node_samples"] >= right["weighted_n_node_samples"]
 
     # check binned category value (1)
     expected_binned_cat_bitset = [2**1] + [0] * 7
