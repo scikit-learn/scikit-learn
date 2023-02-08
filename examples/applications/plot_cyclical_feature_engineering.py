@@ -794,7 +794,6 @@ for ax, pred, label in zip(axes, predictions, labels):
         y_pred=pred,
         kind="actual_vs_predicted",
         scatter_kwargs={"alpha": 0.3},
-        random_state=0,
         ax=ax,
     )
     ax.set(xlabel="Predicted demand", ylabel="True demand")
