@@ -13,7 +13,7 @@ from scipy.spatial.distance import cdist
 from sklearn.metrics._pairwise_distances_reduction import (
     BaseDistancesReductionDispatcher,
     ArgKmin,
-    ArgKminLabels,
+    ArgKminClassMode,
     RadiusNeighbors,
     sqeuclidean_row_norms,
 )
@@ -661,7 +661,7 @@ def test_argkmin_factory_method_wrong_usages():
         ArgKmin.compute(X=X, Y=Y, k=k, metric=metric, metric_kwargs=metric_kwargs)
 
 
-def test_argkminlabels_factory_method_wrong_usages():
+def test_argkminclassmode_factory_method_wrong_usages():
     rng = np.random.RandomState(1)
     X = rng.rand(100, 10)
     Y = rng.rand(100, 10)
@@ -677,7 +677,7 @@ def test_argkminlabels_factory_method_wrong_usages():
         "got: X.dtype=float32 and Y.dtype=float64"
     )
     with pytest.raises(ValueError, match=msg):
-        ArgKminLabels.compute(
+        ArgKminClassMode.compute(
             X=X.astype(np.float32),
             Y=Y,
             k=k,
@@ -692,7 +692,7 @@ def test_argkminlabels_factory_method_wrong_usages():
         "got: X.dtype=float64 and Y.dtype=int32"
     )
     with pytest.raises(ValueError, match=msg):
-        ArgKminLabels.compute(
+        ArgKminClassMode.compute(
             X=X,
             Y=Y.astype(np.int32),
             k=k,
@@ -703,7 +703,7 @@ def test_argkminlabels_factory_method_wrong_usages():
         )
 
     with pytest.raises(ValueError, match="k == -1, must be >= 1."):
-        ArgKminLabels.compute(
+        ArgKminClassMode.compute(
             X=X,
             Y=Y,
             k=-1,
@@ -714,7 +714,7 @@ def test_argkminlabels_factory_method_wrong_usages():
         )
 
     with pytest.raises(ValueError, match="k == 0, must be >= 1."):
-        ArgKminLabels.compute(
+        ArgKminClassMode.compute(
             X=X,
             Y=Y,
             k=0,
@@ -725,7 +725,7 @@ def test_argkminlabels_factory_method_wrong_usages():
         )
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
-        ArgKminLabels.compute(
+        ArgKminClassMode.compute(
             X=X,
             Y=Y,
             k=k,
@@ -738,7 +738,7 @@ def test_argkminlabels_factory_method_wrong_usages():
     with pytest.raises(
         ValueError, match=r"Buffer has wrong number of dimensions \(expected 2, got 1\)"
     ):
-        ArgKminLabels.compute(
+        ArgKminClassMode.compute(
             X=np.array([1.0, 2.0]),
             Y=Y,
             k=k,
@@ -749,7 +749,7 @@ def test_argkminlabels_factory_method_wrong_usages():
         )
 
     with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
-        ArgKminLabels.compute(
+        ArgKminClassMode.compute(
             X=np.asfortranarray(X),
             Y=Y,
             k=k,
@@ -765,7 +765,7 @@ def test_argkminlabels_factory_method_wrong_usages():
         f"Got: weights='{non_existent_weights_strategy}'."
     )
     with pytest.raises(ValueError, match=message):
-        ArgKminLabels.compute(
+        ArgKminClassMode.compute(
             X=X,
             Y=Y,
             k=k,
@@ -776,7 +776,7 @@ def test_argkminlabels_factory_method_wrong_usages():
         )
 
     # TODO: introduce assertions on UserWarnings once the Euclidean specialisation
-    # of ArgKminLabels is supported.
+    # of ArgKminClassMode is supported.
 
 
 def test_radius_neighbors_factory_method_wrong_usages():

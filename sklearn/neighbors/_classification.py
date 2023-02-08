@@ -18,8 +18,8 @@ import warnings
 from ._base import _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
+from ..metrics._pairwise_distances_reduction import ArgKminClassMode
 from ..utils._param_validation import StrOptions
-from sklearn.metrics._pairwise_distances_reduction import ArgKminLabels
 
 
 def _adjusted_metric(metric, p=None):
@@ -236,7 +236,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             Class labels for each data sample.
         """
         if self.weights == "uniform":
-            if self.algorithm == "brute" and ArgKminLabels.is_usable_for(
+            if self.algorithm == "brute" and ArgKminClassMode.is_usable_for(
                 X, self._fit_X, self.metric
             ):
                 probabilities = self.predict_proba(X)
@@ -303,11 +303,11 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             metric = _adjusted_metric(self.metric, self.p)
             if (
                 self.algorithm == "brute"
-                and ArgKminLabels.is_usable_for(X, self._fit_X, metric)
+                and ArgKminClassMode.is_usable_for(X, self._fit_X, metric)
                 # TODO: Implement efficient multi-output solution
                 and not self.outputs_2d_
             ):
-                probabilities = ArgKminLabels.compute(
+                probabilities = ArgKminClassMode.compute(
                     X,
                     self._fit_X,
                     k=self.n_neighbors,

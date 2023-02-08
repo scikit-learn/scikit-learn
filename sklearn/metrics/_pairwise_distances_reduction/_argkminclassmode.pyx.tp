@@ -38,12 +38,12 @@ cpdef enum WeightingStrategy:
     callable = 2
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
-from ._argkmin cimport ArgKmin{{name_suffix}}, EuclideanArgKmin{{name_suffix}}
+from ._argkmin cimport ArgKmin{{name_suffix}}
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}
 
-cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
+cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
     """
-    {{name_suffix}}bit implementation of ArgKminLabel.
+    {{name_suffix}}bit implementation of ArgKminClassMode.
     """
     cdef:
         const ITYPE_t[:] labels,
@@ -70,7 +70,7 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
 
         This classmethod is responsible for introspecting the arguments
         values to dispatch to the most appropriate implementation of
-        :class:`ArgKminLabels{{name_suffix}}`.
+        :class:`ArgKminClassMode{{name_suffix}}`.
 
         This allows decoupling the API entirely from the implementation details
         whilst maintaining RAII: all temporarily allocated datastructures necessary
@@ -81,7 +81,7 @@ cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
         """
         # Use a generic implementation that handles most scipy
         # metrics by computing the distances between 2 vectors at a time.
-        pda = ArgKminLabels{{name_suffix}}(
+        pda = ArgKminClassMode{{name_suffix}}(
             datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
             k=k,
             chunk_size=chunk_size,
