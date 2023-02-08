@@ -145,7 +145,7 @@ cdef class PairwiseDistances{{name_suffix}}:
             (self.n_samples_X, self.n_samples_Y), dtype={{INPUT_DTYPE}},
         )
 
-    cdef void _parallel_on_X(self):
+    cdef void _parallel_on_X(self) nogil:
 
         cdef:
             ITYPE_t n_X = self.n_samples_X
@@ -156,7 +156,7 @@ cdef class PairwiseDistances{{name_suffix}}:
             for j in range(n_Y):
                 self.pairwise_distances_matrix[i, j] = self.datasets_pair.dist(i, j)
 
-    cdef void _parallel_on_Y(self):
+    cdef void _parallel_on_Y(self) nogil:
 
         cdef:
             ITYPE_t n_X = self.n_samples_X

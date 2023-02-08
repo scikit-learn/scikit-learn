@@ -32,9 +32,9 @@ cdef class PairwiseDistances{{name_suffix}}:
 
         {{INPUT_DTYPE_t}}[:, ::1] pairwise_distances_matrix
 
-    cdef void _parallel_on_X(self)
+    cdef void _parallel_on_X(self) nogil
 
-    cdef void _parallel_on_Y(self)
+    cdef void _parallel_on_Y(self) nogil
 
 
 {{endfor}}
