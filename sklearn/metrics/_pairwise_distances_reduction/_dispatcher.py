@@ -594,11 +594,6 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
-        # Note (jjerphan): Some design thoughts for future extensions.
-        # This factory comes to handle specialisations for the given arguments.
-        # For future work, this might can be an entrypoint to specialise operations
-        # for various backend and/or hardware and/or datatypes, and/or fused
-        # {sparse, dense}-datasetspair etc.
         if weights not in {"uniform", "distance"}:
             raise ValueError(
                 "Only the 'uniform' or 'distance' weights options are supported"
