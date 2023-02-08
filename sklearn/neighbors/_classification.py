@@ -12,7 +12,7 @@ from numbers import Integral
 import numpy as np
 from ..utils.fixes import _mode
 from ..utils.extmath import weighted_mode
-from ..utils.validation import _is_arraylike, _num_samples
+from ..utils.validation import _is_arraylike, _num_samples, check_is_fitted
 
 import warnings
 from ._base import _get_weights
@@ -235,6 +235,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
+        check_is_fitted(self, "_fit_method")
         if self.weights == "uniform":
             if self._fit_method == "brute" and ArgKminClassMode.is_usable_for(
                 X, self._fit_X, self.metric
