@@ -1044,7 +1044,7 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         "y_true": ["array-like", "sparse matrix"],
         "y_pred": ["array-like", "sparse matrix"],
         "labels": ["array-like", None],
-        "pos_label": [Real, str, "boolean"],
+        "pos_label": [Real, str, "boolean", None],
         "average": [
             StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
             None,
@@ -1101,7 +1101,7 @@ def f1_score(
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
-    pos_label : int, float, bool or str, default=1
+    pos_label : int, float, bool, str or None, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
