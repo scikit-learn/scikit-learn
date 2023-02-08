@@ -619,7 +619,7 @@ Infrastructure support
 ----------------------
 
 - We would also like to thank `Microsoft Azure
-  <https://azure.microsoft.com/en-us/>`_, `Travis Cl <https://travis-ci.org/>`_,
+  <https://azure.microsoft.com/en-us/>`_, `Cirrus Cl <https://cirrus-ci.org>`_,
   `CircleCl <https://circleci.com/>`_ for free CPU time on their Continuous
   Integration servers, and `Anaconda Inc. <https://www.anaconda.com>`_ for the
   storage they provide for our staging and nightly builds.
