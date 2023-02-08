@@ -949,8 +949,9 @@ def export_text(
         Only relevant for classification and not supported for multi-output.
 
         - if `None`, the class names are delegated to `decision_tree.classes_`;
-        - if a list, the number of items should be the same as in
-          `decition_tree.classes_` and will be used.
+        - if a list, then `class_names` will be used as class names instead
+          of `decision_tree.classes_`. The length of `class_names` must match
+          the length of `decision_tree.classes_`.
 
         .. versionadded:: 1.3
 
