@@ -39,7 +39,7 @@ Changelog
 
 - |Fix| Fixes a bug in :class:`compose.ColumnTransformer` which now supports
   empty selection of columns when `set_output(transform="pandas")`.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`25570` by `Thomas Fan`_.
 
 :mod:`sklearn.isotonic`
 .......................
