@@ -299,16 +299,14 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
+        check_is_fitted(self, "_fit_method")
         if self.weights == "uniform":
             # TODO: systematize this mapping of metric for
             # PairwiseDistancesReductions.
             metric = _adjusted_metric(self.metric, self.p)
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
-            else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
 
-            check_is_fitted(self, "_fit_method")
             if (
                 self._fit_method == "brute"
                 and ArgKminClassMode.is_usable_for(X, self._fit_X, metric)
