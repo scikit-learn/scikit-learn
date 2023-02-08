@@ -812,7 +812,7 @@ cdef class Tree:
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize output
-        cdef SIZE_t[:] out = np.zeros((n_samples,), dtype=np.intp)
+        cdef SIZE_t[:] out = np.zeros(n_samples, dtype=np.intp)
 
         # Initialize auxiliary data-structure
         cdef Node* node = NULL
@@ -853,7 +853,7 @@ cdef class Tree:
         cdef SIZE_t n_features = X.shape[1]
 
         # Initialize output
-        cdef SIZE_t[:] out = np.zeros((n_samples,), dtype=np.intp)
+        cdef SIZE_t[:] out = np.zeros(n_samples, dtype=np.intp)
 
         # Initialize auxiliary data-structure
         cdef DTYPE_t feature_value = 0.
