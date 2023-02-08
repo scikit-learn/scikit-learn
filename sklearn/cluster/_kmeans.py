@@ -345,8 +345,8 @@ def k_means(
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-        When `n_init='auto'`, the number of runs will be 10 if using
-        `init='random'`, and 1 if using `init='kmeans++'`.
+        When `n_init='auto'`, the number of runs depends on the value of init:
+        10 if using `init='random'`, 1 if using `init='kmeans++'`.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -1208,8 +1208,8 @@ class KMeans(_BaseKMeans):
         in terms of inertia. Several runs are recommended for sparse
         high-dimensional problems (see :ref:`kmeans_sparse_high_dim`).
 
-        When `n_init='auto'`, the number of runs will be 10 if using
-        `init='random'`, and 1 if using `init='kmeans++'`.
+        When `n_init='auto'`, the number of runs depends on the value of init:
+        10 if using `init='random'`, 1 if using `init='kmeans++'`.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -1736,8 +1736,8 @@ class MiniBatchKMeans(_BaseKMeans):
         recommended for sparse high-dimensional problems (see
         :ref:`kmeans_sparse_high_dim`).
 
-        When `n_init='auto'`, the number of runs will be 3 if using
-        `init='random'`, and 1 if using `init='kmeans++'`.
+        When `n_init='auto'`, the number of runs depends on the value of init:
+        3 if using `init='random'`, 1 if using `init='kmeans++'`.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
