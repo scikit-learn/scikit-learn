@@ -34,7 +34,7 @@ cimport numpy as cnp
 
 cdef class SequentialDataset{{name_suffix}}:
     cdef int current_index
-    cdef cnp.ndarray index
+    cdef int[::1] index
     cdef int *index_data_ptr
     cdef Py_ssize_t n_samples
     cdef cnp.uint32_t seed
@@ -53,24 +53,24 @@ cdef class SequentialDataset{{name_suffix}}:
 
 
 cdef class ArrayDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
-    cdef cnp.ndarray X
-    cdef cnp.ndarray Y
-    cdef cnp.ndarray sample_weights
+    cdef const {{c_type}}[:, ::1] X
+    cdef const {{c_type}}[::1] Y
+    cdef const {{c_type}}[::1] sample_weights
     cdef Py_ssize_t n_features
     cdef cnp.npy_intp X_stride
     cdef {{c_type}} *X_data_ptr
     cdef {{c_type}} *Y_data_ptr
-    cdef cnp.ndarray feature_indices
+    cdef const int[::1] feature_indices
     cdef int *feature_indices_ptr
     cdef {{c_type}} *sample_weight_data
 
 
 cdef class CSRDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
-    cdef cnp.ndarray X_data
-    cdef cnp.ndarray X_indptr
-    cdef cnp.ndarray X_indices
-    cdef cnp.ndarray Y
-    cdef cnp.ndarray sample_weights
+    cdef const {{c_type}}[::1] X_data
+    cdef const int[::1] X_indptr
+    cdef const int[::1] X_indices
+    cdef const {{c_type}}[::1] Y
+    cdef const {{c_type}}[::1] sample_weights
     cdef {{c_type}} *X_data_ptr
     cdef int *X_indptr_ptr
     cdef int *X_indices_ptr
