@@ -120,6 +120,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.confusion_matrix",
     "sklearn.metrics.d2_pinball_score",
     "sklearn.metrics.det_curve",
+    "sklearn.metrics.f1_score",
     "sklearn.metrics.hamming_loss",
     "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.mean_squared_error",
