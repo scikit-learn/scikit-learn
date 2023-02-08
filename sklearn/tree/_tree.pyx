@@ -781,7 +781,7 @@ cdef class Tree:
 
         return node_id
 
-    cpdef predict(self, object X):
+    cpdef cnp.ndarray predict(self, object X):
         """Predict target for X."""
         out = self._get_value_ndarray().take(self.apply(X), axis=0,
                                              mode='clip')
@@ -789,7 +789,7 @@ cdef class Tree:
             out = out.reshape(X.shape[0], self.max_n_classes)
         return out
 
-    cpdef apply(self, object X):
+    cpdef cnp.ndarray apply(self, object X):
         """Finds the terminal region (=leaf node) for each sample in X."""
         if issparse(X):
             return self._apply_sparse_csr(X)
@@ -1140,7 +1140,7 @@ cdef class Tree:
         strides[0] = sizeof(Node)
         cdef Node[::1] arr
         Py_INCREF(NODE_DTYPE)
-        arr = PyArray_NewFromDescr(<PyTypeObject *> np.ndarray,
+        arr = PyArray_NewFromDescr(<PyTypeObject *> cnp.ndarray,
                                    <cnp.dtype> NODE_DTYPE, 1, shape,
                                    strides, <void*> self.nodes,
                                    cnp.NPY_ARRAY_DEFAULT, None)

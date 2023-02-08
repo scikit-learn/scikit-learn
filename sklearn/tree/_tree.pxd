@@ -65,9 +65,9 @@ cdef class Tree:
     cdef cnp.ndarray _get_value_ndarray(self)
     cdef cnp.ndarray _get_node_ndarray(self)
 
-    cpdef predict(self, object X)
+    cpdef cnp.ndarray predict(self, object X)
 
-    cpdef apply(self, object X)
+    cpdef cnp.ndarray apply(self, object X)
     cdef cnp.ndarray _apply_dense(self, object X)
     cdef cnp.ndarray _apply_sparse_csr(self, object X)
 
