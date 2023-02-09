@@ -16,7 +16,7 @@ from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
 from ..utils import check_array, check_random_state
-from ..utils._param_validation import Interval, validate_params
+from ..utils._param_validation import Hidden, Interval, validate_params
 from ..base import BaseEstimator
 
 __all__ = [
@@ -338,6 +338,18 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
     return patches
 
 
+@validate_params(
+    {
+        "image": [np.ndarray],
+        "patch_size": [tuple, list],
+        "max_patches": [
+            Interval(Real, left=0, right=1, closed="neither"),
+            Interval(Integral, left=1, right=None, closed="left"),
+            None,
+        ],
+        "random_state": ["random_state"],
+    }
+)
 def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None):
     """Reshape a 2D image into a collection of patches.
 
@@ -435,6 +447,7 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
         return patches
 
 
+@validate_params({"patches": [np.ndarray], "image_size": [tuple, Hidden(list)]})
 def reconstruct_from_patches_2d(patches, image_size):
     """Reconstruct the image from all of its patches.
 

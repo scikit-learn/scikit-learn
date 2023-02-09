@@ -345,8 +345,8 @@ def k_means(
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-        When `n_init='auto'`, the number of runs will be 10 if using
-        `init='random'`, and 1 if using `init='kmeans++'`.
+        When `n_init='auto'`, the number of runs depends on the value of init:
+        10 if using `init='random'`, 1 if using `init='kmeans++'`.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -1032,7 +1032,7 @@ class _BaseKMeans(
         """
         return self.fit(X, sample_weight=sample_weight).labels_
 
-    def predict(self, X, sample_weight=None):
+    def predict(self, X, sample_weight="deprecated"):
         """Predict the closest cluster each sample in X belongs to.
 
         In the vector quantization literature, `cluster_centers_` is called
@@ -1048,6 +1048,10 @@ class _BaseKMeans(
             The weights for each observation in X. If None, all observations
             are assigned equal weight.
 
+            .. deprecated:: 1.3
+               The parameter `sample_weight` is deprecated in version 1.3
+               and will be removed in 1.5.
+
         Returns
         -------
         labels : ndarray of shape (n_samples,)
@@ -1056,7 +1060,15 @@ class _BaseKMeans(
         check_is_fitted(self)
 
         X = self._check_test_data(X)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        if not (isinstance(sample_weight, str) and sample_weight == "deprecated"):
+            warnings.warn(
+                "'sample_weight' was deprecated in version 1.3 and "
+                "will be removed in 1.5.",
+                FutureWarning,
+            )
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        else:
+            sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
 
         labels = _labels_inertia_threadpool_limit(
             X,
@@ -1196,8 +1208,8 @@ class KMeans(_BaseKMeans):
         in terms of inertia. Several runs are recommended for sparse
         high-dimensional problems (see :ref:`kmeans_sparse_high_dim`).
 
-        When `n_init='auto'`, the number of runs will be 10 if using
-        `init='random'`, and 1 if using `init='kmeans++'`.
+        When `n_init='auto'`, the number of runs depends on the value of init:
+        10 if using `init='random'`, 1 if using `init='kmeans++'`.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -1724,8 +1736,8 @@ class MiniBatchKMeans(_BaseKMeans):
         recommended for sparse high-dimensional problems (see
         :ref:`kmeans_sparse_high_dim`).
 
-        When `n_init='auto'`, the number of runs will be 3 if using
-        `init='random'`, and 1 if using `init='kmeans++'`.
+        When `n_init='auto'`, the number of runs depends on the value of init:
+        3 if using `init='random'`, 1 if using `init='kmeans++'`.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
