@@ -449,7 +449,10 @@ cdef class ClassificationCriterion(Criterion):
             child to the left child.
         """
         cdef SIZE_t pos = self.pos
-        cdef SIZE_t end = self.end - self.n_missing
+        # The missing samples are assumed to be in
+        # self.sample_indices[-self.n_missing:] or
+        # self.sample_indices[end_non_missing:self.end].
+        cdef SIZE_t end_non_missing = self.end - self.n_missing
 
         cdef const SIZE_t[:] sample_indices = self.sample_indices
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
@@ -467,7 +470,7 @@ cdef class ClassificationCriterion(Criterion):
         # and that sum_total is known, we are going to update
         # sum_left from the direction that require the least amount
         # of computations, i.e. from pos to new_pos or from end to new_po.
-        if (new_pos - pos) <= (end - new_pos):
+        if (new_pos - pos) <= (end_non_missing - new_pos):
             for p in range(pos, new_pos):
                 i = sample_indices[p]
 
@@ -482,7 +485,7 @@ cdef class ClassificationCriterion(Criterion):
         else:
             self.reverse_reset()
 
-            for p in range(end - 1, new_pos - 1, -1):
+            for p in range(end_non_missing - 1, new_pos - 1, -1):
                 i = sample_indices[p]
 
                 if sample_weight is not None:
@@ -831,8 +834,9 @@ cdef class RegressionCriterion(Criterion):
         cdef:
             SIZE_t i
             SIZE_t n_bytes = self.n_outputs * sizeof(double)
+            bint has_missing = self.n_missing != 0
 
-        if self.n_missing != 0 and put_missing_in_1:
+        if has_missing and put_missing_in_1:
             memcpy(&sum_1[0], &self.sum_missing[0], n_bytes)
             for i in range(self.n_outputs):
                 sum_2[i] = self.sum_total[i] - self.sum_missing[i]
@@ -874,7 +878,11 @@ cdef class RegressionCriterion(Criterion):
         cdef const SIZE_t[:] sample_indices = self.sample_indices
 
         cdef SIZE_t pos = self.pos
-        cdef SIZE_t end = self.end - self.n_missing
+
+        # The missing samples are assumed to be in
+        # self.sample_indices[-self.n_missing:] or
+        # self.sample_indices[end_non_missing:self.end].
+        cdef SIZE_t end_non_missing = self.end - self.n_missing
         cdef SIZE_t i
         cdef SIZE_t p
         cdef SIZE_t k
@@ -887,7 +895,7 @@ cdef class RegressionCriterion(Criterion):
         # and that sum_total is known, we are going to update
         # sum_left from the direction that require the least amount
         # of computations, i.e. from pos to new_pos or from end to new_pos.
-        if (new_pos - pos) <= (end - new_pos):
+        if (new_pos - pos) <= (end_non_missing - new_pos):
             for p in range(pos, new_pos):
                 i = sample_indices[p]
 
@@ -901,7 +909,7 @@ cdef class RegressionCriterion(Criterion):
         else:
             self.reverse_reset()
 
-            for p in range(end - 1, new_pos - 1, -1):
+            for p in range(end_non_missing - 1, new_pos - 1, -1):
                 i = sample_indices[p]
 
                 if sample_weight is not None:
