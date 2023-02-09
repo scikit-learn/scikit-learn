@@ -8,20 +8,19 @@ import numpy as np
 cimport numpy as cnp
 
 cnp.import_array()
-ctypedef cnp.float64_t DOUBLE
 
 
 def expected_mutual_information(contingency, int n_samples):
     """Calculate the expected mutual information for two labelings."""
     cdef int R, C
-    cdef DOUBLE N, gln_N, emi, term2, term3, gln
-    cdef cnp.ndarray[DOUBLE] gln_a, gln_b, gln_Na, gln_Nb, gln_nij, log_Nnij
-    cdef cnp.ndarray[DOUBLE] nijs, term1
-    cdef cnp.ndarray[DOUBLE] log_a, log_b
-    cdef cnp.ndarray[cnp.int32_t] a, b
+    cdef cnp.float64_t N, gln_N, emi, term2, term3, gln
+    cdef cnp.float64_t[:] gln_a, gln_b, gln_Na, gln_Nb, gln_nij, log_Nnij
+    cdef cnp.float64_t[:] nijs, term1
+    cdef cnp.float64_t[:] log_a, log_b
+    cdef cnp.int32_t[:] a, b
     #cdef np.ndarray[int, ndim=2] start, end
     R, C = contingency.shape
-    N = <DOUBLE>n_samples
+    N = <cnp.float64_t>n_samples
     a = np.ravel(contingency.sum(axis=1).astype(np.int32, copy=False))
     b = np.ravel(contingency.sum(axis=0).astype(np.int32, copy=False))
 
@@ -35,7 +34,7 @@ def expected_mutual_information(contingency, int n_samples):
     nijs = np.arange(0, max(np.max(a), np.max(b)) + 1, dtype='float')
     nijs[0] = 1  # Stops divide by zero warnings. As its not used, no issue.
     # term1 is nij / N
-    term1 = nijs / N
+    term1 = nijs.base / N
     # term2 is log((N*nij) / (a * b)) == log(N * nij) - log(a * b)
     log_a = np.log(a)
     log_b = np.log(b)
@@ -43,12 +42,12 @@ def expected_mutual_information(contingency, int n_samples):
     log_Nnij = np.log(N) + np.log(nijs)
     # term3 is large, and involved many factorials. Calculate these in log
     # space to stop overflows.
-    gln_a = gammaln(a + 1)
-    gln_b = gammaln(b + 1)
-    gln_Na = gammaln(N - a + 1)
-    gln_Nb = gammaln(N - b + 1)
+    gln_a = gammaln(a.base + 1)
+    gln_b = gammaln(b.base + 1)
+    gln_Na = gammaln(N - a.base + 1)
+    gln_Nb = gammaln(N - b.base + 1)
     gln_N = gammaln(N + 1)
-    gln_nij = gammaln(nijs + 1)
+    gln_nij = gammaln(nijs.base + 1)
     # start and end values for nij terms for each summation.
     start = np.array([[v - N + w for w in b] for v in a], dtype='int')
     start = np.maximum(start, 1)
