@@ -169,6 +169,11 @@ Changelog
   dissimilarity is not a metric and cannot be supported by the BallTree.
   :pr:`25417` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| Implemented new `PairwiseDistanceReduction` backend for
+  `KNeighborsClassifier.predict` and `KNeighborsClassifier.predict_proba`,
+  resulting in significantly faster performance for general metrics.
+  :pr:`24076` by :user:`Meekail Zain <micky774>`, :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
