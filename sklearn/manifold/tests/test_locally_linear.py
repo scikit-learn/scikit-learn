@@ -1,4 +1,5 @@
 from itertools import product
+import re
 
 import numpy as np
 from sklearn.utils._testing import (
@@ -10,7 +11,7 @@ import pytest
 
 from sklearn import neighbors, manifold
 from sklearn.datasets import make_blobs
-from sklearn.manifold._locally_linear import barycenter_kneighbors_graph
+from sklearn.manifold._locally_linear import barycenter_kneighbors_graph, null_space
 from sklearn.utils._testing import ignore_warnings
 
 eigen_solvers = ["dense", "arpack"]
@@ -169,3 +170,120 @@ def test_get_feature_names_out():
     assert_array_equal(
         [f"locallylinearembedding{i}" for i in range(n_components)], names
     )
+
+
+# tests to cover ValueErrors raised due to invalid args, or combinations of args
+def test_null_space_invalid_solver_err():
+    M = np.array([[1, 2], [3, 4]])
+    k = 2
+    eigen_solver = "arpackk"
+    err_msg = "Unrecognized eigen_solver '%s'" % eigen_solver
+    with pytest.raises(ValueError, match=err_msg):
+        null_space(M, k, k_skip=1, eigen_solver=eigen_solver)
+
+
+def test_locally_linear_embedding_invalid_solver_err():
+    rand = np.random.RandomState(0)
+    X = rand.randint(0, 100, size=(20, 3))
+    n_neighbors = 10
+    n_components = 2
+    eigen_solver = "arpackk"
+    err_msg = "unrecognized eigen_solver '%s'" % eigen_solver
+    with pytest.raises(ValueError, match=err_msg):
+        manifold.locally_linear_embedding(
+            X,
+            n_neighbors=n_neighbors,
+            n_components=n_components,
+            eigen_solver=eigen_solver,
+        )
+
+
+def test_locally_linear_embedding_invalid_method_err():
+    rand = np.random.RandomState(0)
+    X = rand.randint(0, 100, size=(20, 3))
+    n_neighbors = 10
+    n_components = 2
+    method = "standardd"
+    err_msg = "unrecognized method '%s'" % method
+    with pytest.raises(ValueError, match=err_msg):
+        manifold.locally_linear_embedding(
+            X,
+            n_neighbors=n_neighbors,
+            n_components=n_components,
+            method=method,
+        )
+
+
+def test_locally_linear_embedding_invalid_output_dim_err():
+    rand = np.random.RandomState(0)
+    X = rand.randint(0, 100, size=(20, 3))
+    n_neighbors = 10
+    n_components = 4
+    err_msg = "output dimension must be less than or equal to input dimension"
+    with pytest.raises(ValueError, match=err_msg):
+        manifold.locally_linear_embedding(
+            X,
+            n_neighbors=n_neighbors,
+            n_components=n_components,
+        )
+
+
+def test_locally_linear_embedding_invalid_n_neighbors_err():
+    rand = np.random.RandomState(0)
+    X = rand.randint(0, 100, size=(20, 5))
+    n_components = 4
+    n_neighbors = 20
+    err_msg = "Expected n_neighbors <= n_samples"
+    with pytest.raises(ValueError, match=err_msg):
+        manifold.locally_linear_embedding(
+            X,
+            n_neighbors=n_neighbors,
+            n_components=n_components,
+        )
+
+
+# def test_locally_linear_embedding_negative_n_neighbors_err():
+#     rand = np.random.RandomState(0)
+#     X = rand.randint(0, 100, size=(20, 3))
+#     n_components = 10
+#     n_neighbors = -1
+#     err_msg = "n_neighbors must be positive"
+#     with pytest.raises(ValueError, match=err_msg):
+#         manifold.locally_linear_embedding(
+#             X,
+#             n_neighbors=n_neighbors,
+#             n_components=n_components,
+#         )
+
+
+def test_locally_linear_embedding_hessian_invalid_n_neighbors_err():
+    rand = np.random.RandomState(0)
+    X = rand.randint(0, 100, size=(20, 20))
+    method = "hessian"
+    n_neighbors = 10
+    n_components = 10
+    err_msg = (
+        "for method='hessian', n_neighbors must be greater than "
+        "[n_components * (n_components + 3) / 2]"
+    )
+    err_msg = re.escape(err_msg)
+    with pytest.raises(ValueError, match=err_msg):
+        manifold.locally_linear_embedding(
+            X,
+            n_neighbors=n_neighbors,
+            n_components=n_components,
+            method=method,
+        )
+
+
+def test_locally_linear_embedding_modified_invalid_n_neighbors_err():
+    rand = np.random.RandomState(0)
+    X = rand.randint(0, 100, size=(20, 20))
+    method = "modified"
+    n_neighbors = 5
+    n_components = 10
+    err_msg = "modified LLE requires n_neighbors >= n_components"
+    with pytest.raises(ValueError, match=err_msg):
+        manifold.locally_linear_embedding(
+            X, n_neighbors=n_neighbors, n_components=n_components, method=method
+        )
