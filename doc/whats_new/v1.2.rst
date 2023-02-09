@@ -34,6 +34,13 @@ Changelog
   fail due to a permutation of the labels when running multiple inits.
   :pr:`25563` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixes a bug in :class:`compose.ColumnTransformer` which now supports
+  empty selection of columns when `set_output(transform="pandas")`.
+  :pr:`25570` by `Thomas Fan`_.
+
 :mod:`sklearn.isotonic`
 .......................
 
