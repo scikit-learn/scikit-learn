@@ -251,13 +251,13 @@ cdef inline int node_split_best(
     cdef SIZE_t[::1] constant_features = splitter.constant_features
     cdef SIZE_t n_features = splitter.n_features
 
-    cdef DTYPE_t[::1] Xf = splitter.feature_values
+    cdef DTYPE_t[::1] feature_values = splitter.feature_values
     cdef SIZE_t max_features = splitter.max_features
     cdef SIZE_t min_samples_leaf = splitter.min_samples_leaf
     cdef double min_weight_leaf = splitter.min_weight_leaf
     cdef UINT32_t* random_state = &splitter.rand_r_state
 
-    cdef SplitRecord best, current
+    cdef SplitRecord best_split, current_split
     cdef double current_proxy_improvement = -INFINITY
     cdef double best_proxy_improvement = -INFINITY
 
@@ -275,7 +275,7 @@ cdef inline int node_split_best(
     # n_total_constants = n_known_constants + n_found_constants
     cdef SIZE_t n_total_constants = n_known_constants
 
-    _init_split(&best, end)
+    _init_split(&best_split, end)
 
     partitioner.init_node_split(start, end)
 
@@ -321,10 +321,10 @@ cdef inline int node_split_best(
         # f_j in the interval [n_known_constants, f_i - n_found_constants[
         f_j += n_found_constants
         # f_j in the interval [n_total_constants, f_i[
-        current.feature = features[f_j]
-        partitioner.sort_samples_and_feature_values(current.feature)
+        current_split.feature = features[f_j]
+        partitioner.sort_samples_and_feature_values(current_split.feature)
 
-        if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
+        if feature_values[end - 1] <= feature_values[start] + FEATURE_THRESHOLD:
             features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
 
             n_found_constants += 1
@@ -335,6 +335,8 @@ cdef inline int node_split_best(
         features[f_i], features[f_j] = features[f_j], features[f_i]
 
         # Evaluate all splits
+        # The criterion has a view into the samples that was sorted by the partitioner.
+        # The criterion will use that ordering when evaluting the splits.
         criterion.reset()
         p = start
 
@@ -344,14 +346,14 @@ cdef inline int node_split_best(
             if p >= end:
                 continue
 
-            current.pos = p
+            current_split.pos = p
 
             # Reject if min_samples_leaf is not guaranteed
-            if (((current.pos - start) < min_samples_leaf) or
-                    ((end - current.pos) < min_samples_leaf)):
+            if (((current_split.pos - start) < min_samples_leaf) or
+                    ((end - current_split.pos) < min_samples_leaf)):
                 continue
 
-            criterion.update(current.pos)
+            criterion.update(current_split.pos)
 
             # Reject if min_weight_leaf is not satisfied
             if ((criterion.weighted_n_left < min_weight_leaf) or
@@ -363,26 +365,35 @@ cdef inline int node_split_best(
             if current_proxy_improvement > best_proxy_improvement:
                 best_proxy_improvement = current_proxy_improvement
                 # sum of halves is used to avoid infinite value
-                current.threshold = Xf[p_prev] / 2.0 + Xf[p] / 2.0
+                current_split.threshold = (
+                    feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
+                )
 
                 if (
-                    current.threshold == Xf[p] or
-                    current.threshold == INFINITY or
-                    current.threshold == -INFINITY
+                    current_split.threshold == feature_values[p] or
+                    current_split.threshold == INFINITY or
+                    current_split.threshold == -INFINITY
                 ):
-                    current.threshold = Xf[p_prev]
+                    current_split.threshold = feature_values[p_prev]
 
-                best = current  # copy
+                best_split = current_split  # copy
 
-    # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-    if best.pos < end:
-        partitioner.partition_samples_final(best.pos, best.threshold, best.feature)
+    # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
+    if best_split.pos < end:
+        partitioner.partition_samples_final(
+            best_split.pos,
+            best_split.threshold,
+            best_split.feature
+        )
         criterion.reset()
-        criterion.update(best.pos)
-        criterion.children_impurity(&best.impurity_left,
-                                    &best.impurity_right)
-        best.improvement = criterion.impurity_improvement(
-            impurity, best.impurity_left, best.impurity_right)
+        criterion.update(best_split.pos)
+        criterion.children_impurity(&best_split.impurity_left,
+                                    &best_split.impurity_right)
+        best_split.improvement = criterion.impurity_improvement(
+            impurity,
+            best_split.impurity_left,
+            best_split.impurity_right
+        )
 
     # Respect invariant for constant features: the original order of
     # element in features[:n_known_constants] must be preserved for sibling
@@ -395,7 +406,7 @@ cdef inline int node_split_best(
            sizeof(SIZE_t) * n_found_constants)
 
     # Return values
-    split[0] = best
+    split[0] = best_split
     n_constant_features[0] = n_total_constants
     return 0
 
@@ -539,7 +550,7 @@ cdef inline int node_split_random(
     cdef double min_weight_leaf = splitter.min_weight_leaf
     cdef UINT32_t* random_state = &splitter.rand_r_state
 
-    cdef SplitRecord best, current
+    cdef SplitRecord best_split, current_split
     cdef double current_proxy_improvement = - INFINITY
     cdef double best_proxy_improvement = - INFINITY
 
@@ -556,7 +567,7 @@ cdef inline int node_split_random(
     cdef DTYPE_t min_feature_value
     cdef DTYPE_t max_feature_value
 
-    _init_split(&best, end)
+    _init_split(&best_split, end)
 
     partitioner.init_node_split(start, end)
 
@@ -601,15 +612,15 @@ cdef inline int node_split_random(
         f_j += n_found_constants
         # f_j in the interval [n_total_constants, f_i[
 
-        current.feature = features[f_j]
+        current_split.feature = features[f_j]
 
         # Find min, max
         partitioner.find_min_max(
-            current.feature, &min_feature_value, &max_feature_value
+            current_split.feature, &min_feature_value, &max_feature_value
         )
 
         if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
-            features[f_j], features[n_total_constants] = features[n_total_constants], current.feature
+            features[f_j], features[n_total_constants] = features[n_total_constants], current_split.feature
 
             n_found_constants += 1
             n_total_constants += 1
@@ -619,24 +630,26 @@ cdef inline int node_split_random(
         features[f_i], features[f_j] = features[f_j], features[f_i]
 
         # Draw a random threshold
-        current.threshold = rand_uniform(min_feature_value,
-                                         max_feature_value,
-                                         random_state)
+        current_split.threshold = rand_uniform(min_feature_value,
+                                               max_feature_value,
+                                               random_state)
 
-        if current.threshold == max_feature_value:
-            current.threshold = min_feature_value
+        if current_split.threshold == max_feature_value:
+            current_split.threshold = min_feature_value
 
         # Partition
-        current.pos = partitioner.partition_samples(current.threshold)
+        current_split.pos = partitioner.partition_samples(current_split.threshold)
 
         # Reject if min_samples_leaf is not guaranteed
-        if (((current.pos - start) < min_samples_leaf) or
-                ((end - current.pos) < min_samples_leaf)):
+        if (((current_split.pos - start) < min_samples_leaf) or
+                ((end - current_split.pos) < min_samples_leaf)):
             continue
 
         # Evaluate split
+        # The criterion has a view into the samples that was partitioned by the
+        # partitioner. The criterion will use the parition to evaluting the split.
         criterion.reset()
-        criterion.update(current.pos)
+        criterion.update(current_split.pos)
 
         # Reject if min_weight_leaf is not satisfied
         if ((criterion.weighted_n_left < min_weight_leaf) or
@@ -647,21 +660,21 @@ cdef inline int node_split_random(
 
         if current_proxy_improvement > best_proxy_improvement:
             best_proxy_improvement = current_proxy_improvement
-            best = current  # copy
+            best_split = current_split  # copy
 
-    # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-    if best.pos < end:
-        if current.feature != best.feature:
+    # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
+    if best_split.pos < end:
+        if current_split.feature != best_split.feature:
             partitioner.partition_samples_final(
-                best.pos, best.threshold, best.feature
+                best_split.pos, best_split.threshold, best_split.feature
             )
 
         criterion.reset()
-        criterion.update(best.pos)
-        criterion.children_impurity(&best.impurity_left,
-                                    &best.impurity_right)
-        best.improvement = criterion.impurity_improvement(
-            impurity, best.impurity_left, best.impurity_right)
+        criterion.update(best_split.pos)
+        criterion.children_impurity(&best_split.impurity_left,
+                                    &best_split.impurity_right)
+        best_split.improvement = criterion.impurity_improvement(
+            impurity, best_split.impurity_left, best_split.impurity_right)
 
     # Respect invariant for constant features: the original order of
     # element in features[:n_known_constants] must be preserved for sibling
@@ -674,7 +687,7 @@ cdef inline int node_split_random(
            sizeof(SIZE_t) * n_found_constants)
 
     # Return values
-    split[0] = best
+    split[0] = best_split
     n_constant_features[0] = n_total_constants
     return 0
 
@@ -762,10 +775,10 @@ cdef class DensePartitioner:
         while p[0] + 1 < self.end and Xf[p[0] + 1] <= Xf[p[0]] + FEATURE_THRESHOLD:
             p[0] += 1
 
-        # (p + 1 >= end) or (Xf[p + 1] > X[p])
+        p_prev[0] = p[0]
+
+        # By adding 1, we have (Xf[p] >= end) or (Xf[p] > Xf[p - 1])
         p[0] += 1
-        # (p >= end) or (X[p, current.feature] > X[p - 1, current.feature])
-        p_prev[0] = p[0] - 1
 
     cdef inline SIZE_t partition_samples(self, double current_threshold) nogil:
         """Partition samples for feature_values at the current_threshold."""
