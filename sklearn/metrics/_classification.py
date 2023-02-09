@@ -2568,6 +2568,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     else:
         raise ValueError("{0} is not supported".format(y_type))
 
+
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -2698,6 +2699,7 @@ def log_loss(
         y_pred = np.append(1 - y_pred, y_pred, axis=1)
 
     # Check if dimensions are consistent.
+    transformed_labels = check_array(transformed_labels)
     if len(lb.classes_) != y_pred.shape[1]:
         if labels is None:
             raise ValueError(
