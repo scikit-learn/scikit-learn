@@ -335,8 +335,8 @@ cdef inline int node_split_best(
         features[f_i], features[f_j] = features[f_j], features[f_i]
 
         # Evaluate all splits
-        # The criterion has a view into the samples that was sorted by the partitioner.
-        # The criterion will use that ordering when evaluating the splits.
+        # At this point, the criterion has a view into the samples that was sorted
+        # by the partitioner. The criterion will use that ordering when evaluating the splits.
         criterion.reset()
         p = start
 
@@ -646,8 +646,8 @@ cdef inline int node_split_random(
             continue
 
         # Evaluate split
-        # The criterion has a view into the samples that was partitioned by the
-        # partitioner. The criterion will use the parition to evaluating the split.
+        # At this point, the criterion has a view into the samples that was partitioned
+        # by the partitioner. The criterion will use the parition to evaluating the split.
         criterion.reset()
         criterion.update(current_split.pos)
 
