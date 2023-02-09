@@ -211,8 +211,6 @@ WARNING: Do not edit `sklearn/_loss/_loss.pyx` file directly, as it is generated
 #      checking like None -> np.empty().
 #
 # Note: We require 1-dim ndarrays to be contiguous.
-# TODO: Use const memoryviews with fused types with Cython 3.0 where
-#       appropriate (arguments marked by "# IN").
 
 from cython.parallel import parallel, prange
 import numpy as np
@@ -754,10 +752,6 @@ cdef class CyLossFunction:
         """
         pass
 
-    # Note: With Cython 3.0, fused types can be used together with const:
-    #       const Y_DTYPE_C double[::1] y_true
-    # See release notes 3.0.0 alpha1
-    # https://cython.readthedocs.io/en/latest/src/changes.html#alpha-1-2020-04-12
     def loss(
         self,
         const Y_DTYPE_C[::1] y_true,          # IN
