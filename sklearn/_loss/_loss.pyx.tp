@@ -211,8 +211,6 @@ WARNING: Do not edit `sklearn/_loss/_loss.pyx` file directly, as it is generated
 #      checking like None -> np.empty().
 #
 # Note: We require 1-dim ndarrays to be contiguous.
-# TODO: Use const memoryviews with fused types with Cython 3.0 where
-#       appropriate (arguments marked by "# IN").
 
 from cython.parallel import parallel, prange
 import numpy as np
@@ -245,8 +243,8 @@ cdef inline double log1pexp(double x) nogil:
 
 cdef inline void sum_exp_minus_max(
     const int i,
-    Y_DTYPE_C[:, :] raw_prediction,  # IN
-    Y_DTYPE_C *p                     # OUT
+    const Y_DTYPE_C[:, :] raw_prediction,  # IN
+    Y_DTYPE_C *p                           # OUT
 ) nogil:
     # Thread local buffers are used to stores results of this function via p.
     # The results are stored as follows:
@@ -754,15 +752,11 @@ cdef class CyLossFunction:
         """
         pass
 
-    # Note: With Cython 3.0, fused types can be used together with const:
-    #       const Y_DTYPE_C double[::1] y_true
-    # See release notes 3.0.0 alpha1
-    # https://cython.readthedocs.io/en/latest/src/changes.html#alpha-1-2020-04-12
     def loss(
         self,
-        Y_DTYPE_C[::1] y_true,          # IN
-        Y_DTYPE_C[::1] raw_prediction,  # IN
-        Y_DTYPE_C[::1] sample_weight,   # IN
+        const Y_DTYPE_C[::1] y_true,          # IN
+        const Y_DTYPE_C[::1] raw_prediction,  # IN
+        const Y_DTYPE_C[::1] sample_weight,   # IN
         G_DTYPE_C[::1] loss_out,        # OUT
         int n_threads=1
     ):
@@ -790,9 +784,9 @@ cdef class CyLossFunction:
 
     def gradient(
         self,
-        Y_DTYPE_C[::1] y_true,          # IN
-        Y_DTYPE_C[::1] raw_prediction,  # IN
-        Y_DTYPE_C[::1] sample_weight,   # IN
+        const Y_DTYPE_C[::1] y_true,          # IN
+        const Y_DTYPE_C[::1] raw_prediction,  # IN
+        const Y_DTYPE_C[::1] sample_weight,   # IN
         G_DTYPE_C[::1] gradient_out,    # OUT
         int n_threads=1
     ):
@@ -820,9 +814,9 @@ cdef class CyLossFunction:
 
     def loss_gradient(
         self,
-        Y_DTYPE_C[::1] y_true,          # IN
-        Y_DTYPE_C[::1] raw_prediction,  # IN
-        Y_DTYPE_C[::1] sample_weight,   # IN
+        const Y_DTYPE_C[::1] y_true,          # IN
+        const Y_DTYPE_C[::1] raw_prediction,  # IN
+        const Y_DTYPE_C[::1] sample_weight,   # IN
         G_DTYPE_C[::1] loss_out,        # OUT
         G_DTYPE_C[::1] gradient_out,    # OUT
         int n_threads=1
@@ -858,9 +852,9 @@ cdef class CyLossFunction:
 
     def gradient_hessian(
         self,
-        Y_DTYPE_C[::1] y_true,          # IN
-        Y_DTYPE_C[::1] raw_prediction,  # IN
-        Y_DTYPE_C[::1] sample_weight,   # IN
+        const Y_DTYPE_C[::1] y_true,          # IN
+        const Y_DTYPE_C[::1] raw_prediction,  # IN
+        const Y_DTYPE_C[::1] sample_weight,   # IN
         G_DTYPE_C[::1] gradient_out,    # OUT
         G_DTYPE_C[::1] hessian_out,     # OUT
         int n_threads=1
@@ -920,10 +914,10 @@ cdef class {{name}}(CyLossFunction):
 
     def loss(
         self,
-        Y_DTYPE_C[::1] y_true,          # IN
-        Y_DTYPE_C[::1] raw_prediction,  # IN
-        Y_DTYPE_C[::1] sample_weight,   # IN
-        G_DTYPE_C[::1] loss_out,        # OUT
+        const Y_DTYPE_C[::1] y_true,          # IN
+        const Y_DTYPE_C[::1] raw_prediction,  # IN
+        const Y_DTYPE_C[::1] sample_weight,   # IN
+        G_DTYPE_C[::1] loss_out,              # OUT
         int n_threads=1
     ):
         cdef:
@@ -946,11 +940,11 @@ cdef class {{name}}(CyLossFunction):
     {{if closs_grad is not None}}
     def loss_gradient(
         self,
-        Y_DTYPE_C[::1] y_true,          # IN
-        Y_DTYPE_C[::1] raw_prediction,  # IN
-        Y_DTYPE_C[::1] sample_weight,   # IN
-        G_DTYPE_C[::1] loss_out,        # OUT
-        G_DTYPE_C[::1] gradient_out,    # OUT
+        const Y_DTYPE_C[::1] y_true,          # IN
+        const Y_DTYPE_C[::1] raw_prediction,  # IN
+        const Y_DTYPE_C[::1] sample_weight,   # IN
+        G_DTYPE_C[::1] loss_out,              # OUT
+        G_DTYPE_C[::1] gradient_out,          # OUT
         int n_threads=1
     ):
         cdef:
@@ -978,10 +972,10 @@ cdef class {{name}}(CyLossFunction):
 
     def gradient(
         self,
-        Y_DTYPE_C[::1] y_true,          # IN
-        Y_DTYPE_C[::1] raw_prediction,  # IN
-        Y_DTYPE_C[::1] sample_weight,   # IN
-        G_DTYPE_C[::1] gradient_out,    # OUT
+        const Y_DTYPE_C[::1] y_true,          # IN
+        const Y_DTYPE_C[::1] raw_prediction,  # IN
+        const Y_DTYPE_C[::1] sample_weight,   # IN
+        G_DTYPE_C[::1] gradient_out,          # OUT
         int n_threads=1
     ):
         cdef:
@@ -1003,11 +997,11 @@ cdef class {{name}}(CyLossFunction):
 
     def gradient_hessian(
         self,
-        Y_DTYPE_C[::1] y_true,          # IN
-        Y_DTYPE_C[::1] raw_prediction,  # IN
-        Y_DTYPE_C[::1] sample_weight,   # IN
-        G_DTYPE_C[::1] gradient_out,    # OUT
-        G_DTYPE_C[::1] hessian_out,     # OUT
+        const Y_DTYPE_C[::1] y_true,          # IN
+        const Y_DTYPE_C[::1] raw_prediction,  # IN
+        const Y_DTYPE_C[::1] sample_weight,   # IN
+        G_DTYPE_C[::1] gradient_out,          # OUT
+        G_DTYPE_C[::1] hessian_out,           # OUT
         int n_threads=1
     ):
         cdef:
@@ -1056,10 +1050,10 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
     # opposite are welcome.
     def loss(
         self,
-        Y_DTYPE_C[::1] y_true,           # IN
-        Y_DTYPE_C[:, :] raw_prediction,  # IN
-        Y_DTYPE_C[::1] sample_weight,    # IN
-        G_DTYPE_C[::1] loss_out,         # OUT
+        const Y_DTYPE_C[::1] y_true,           # IN
+        const Y_DTYPE_C[:, :] raw_prediction,  # IN
+        const Y_DTYPE_C[::1] sample_weight,    # IN
+        G_DTYPE_C[::1] loss_out,               # OUT
         int n_threads=1
     ):
         cdef:
@@ -1116,11 +1110,11 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
 
     def loss_gradient(
         self,
-        Y_DTYPE_C[::1] y_true,           # IN
-        Y_DTYPE_C[:, :] raw_prediction,  # IN
-        Y_DTYPE_C[::1] sample_weight,    # IN
-        G_DTYPE_C[::1] loss_out,         # OUT
-        G_DTYPE_C[:, :] gradient_out,    # OUT
+        const Y_DTYPE_C[::1] y_true,           # IN
+        const Y_DTYPE_C[:, :] raw_prediction,  # IN
+        const Y_DTYPE_C[::1] sample_weight,    # IN
+        G_DTYPE_C[::1] loss_out,               # OUT
+        G_DTYPE_C[:, :] gradient_out,          # OUT
         int n_threads=1
     ):
         cdef:
@@ -1178,10 +1172,10 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
 
     def gradient(
         self,
-        Y_DTYPE_C[::1] y_true,           # IN
-        Y_DTYPE_C[:, :] raw_prediction,  # IN
-        Y_DTYPE_C[::1] sample_weight,    # IN
-        G_DTYPE_C[:, :] gradient_out,    # OUT
+        const Y_DTYPE_C[::1] y_true,           # IN
+        const Y_DTYPE_C[:, :] raw_prediction,  # IN
+        const Y_DTYPE_C[::1] sample_weight,    # IN
+        G_DTYPE_C[:, :] gradient_out,          # OUT
         int n_threads=1
     ):
         cdef:
@@ -1227,11 +1221,11 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
 
     def gradient_hessian(
         self,
-        Y_DTYPE_C[::1] y_true,           # IN
-        Y_DTYPE_C[:, :] raw_prediction,  # IN
-        Y_DTYPE_C[::1] sample_weight,    # IN
-        G_DTYPE_C[:, :] gradient_out,    # OUT
-        G_DTYPE_C[:, :] hessian_out,     # OUT
+        const Y_DTYPE_C[::1] y_true,           # IN
+        const Y_DTYPE_C[:, :] raw_prediction,  # IN
+        const Y_DTYPE_C[::1] sample_weight,    # IN
+        G_DTYPE_C[:, :] gradient_out,          # OUT
+        G_DTYPE_C[:, :] hessian_out,           # OUT
         int n_threads=1
     ):
         cdef:
@@ -1285,11 +1279,11 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
     # diagonal (in the classes) approximation as implemented above.
     def gradient_proba(
         self,
-        Y_DTYPE_C[::1] y_true,           # IN
-        Y_DTYPE_C[:, :] raw_prediction,  # IN
-        Y_DTYPE_C[::1] sample_weight,    # IN
-        G_DTYPE_C[:, :] gradient_out,    # OUT
-        G_DTYPE_C[:, :] proba_out,       # OUT
+        const Y_DTYPE_C[::1] y_true,           # IN
+        const Y_DTYPE_C[:, :] raw_prediction,  # IN
+        const Y_DTYPE_C[::1] sample_weight,    # IN
+        G_DTYPE_C[:, :] gradient_out,          # OUT
+        G_DTYPE_C[:, :] proba_out,             # OUT
         int n_threads=1
     ):
         cdef:

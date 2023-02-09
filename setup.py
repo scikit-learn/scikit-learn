@@ -269,7 +269,7 @@ extension_config = {
         {"sources": ["_isotonic.pyx"], "include_np": True},
     ],
     "_loss": [
-        {"sources": ["_loss.pyx.tp"], "include_np": True},
+        {"sources": ["_loss.pyx.tp"]},
     ],
     "cluster": [
         {"sources": ["_dbscan_inner.pyx"], "language": "c++", "include_np": True},
