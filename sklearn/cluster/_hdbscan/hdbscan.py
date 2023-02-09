@@ -32,7 +32,8 @@ from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
 
-# Encodings are arbitray, but chosen as extensions to the -1 noise label.
+# Encodings are arbitrary but must be strictly negative.
+# The current encodings are chosen as extensions to the -1 noise label.
 # Avoided enums so that the end user only deals with simple labels.
 _OUTLIER_ENCODING = {
     "infinite": {
@@ -368,7 +369,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         Outliers are labeled as follows:
         - Noisy samples are given the label -1.
         - Samples with infinite elements (+/- np.inf) are given the label -2.
-        - Samples with missing data are given the label -3.
+        - Samples with missing data are given the label -3, even if they
+          also have infinite elements.
 
     probabilities_ : ndarray of shape (n_samples,)
         The strength with which each sample is a member of its assigned
@@ -670,7 +672,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             self._single_linkage_tree_ = remap_single_linkage_tree(
                 self._single_linkage_tree_,
                 internal_to_raw,
-                non_finite=infinite_index + missing_index,
+                # There may be overlap for points w/ both `np.inf` and `np.nan`
+                non_finite=set(infinite_index + missing_index),
             )
             new_labels = np.empty(self._raw_data.shape[0], dtype=np.int32)
             new_labels[finite_index] = self.labels_
@@ -771,12 +774,24 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         Returns
         -------
         labels : ndarray of shape (n_samples,)
-            An array of cluster labels, one per datapoint. Unclustered points
-            are assigned the label -1.
+            An array of cluster labels, one per datapoint.
+            Outliers are labeled as follows:
+            - Noisy samples are given the label -1.
+            - Samples with infinite elements (+/- np.inf) are given the label -2.
+            - Samples with missing data are given the label -3, even if they
+              also have infinite elements.
         """
-        return labelling_at_cut(
+        labels = labelling_at_cut(
             self._single_linkage_tree_, cut_distance, min_cluster_size
         )
+        # Infer indices from labels generated during `fit`
+        infinite_index = self.labels_ == _OUTLIER_ENCODING["infinite"]["label"]
+        missing_index = self.labels_ == _OUTLIER_ENCODING["missing"]["label"]
+
+        # Overwrite infinite/missing outlier samples (otherwise simple noise)
+        labels[infinite_index] = _OUTLIER_ENCODING["infinite"]["label"]
+        labels[missing_index] = _OUTLIER_ENCODING["missing"]["label"]
+        return labels
 
     def _more_tags(self):
         return {"allow_nan": self.metric != "precomputed"}
