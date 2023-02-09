@@ -184,6 +184,8 @@ cdef void _gemm(BLAS_Order order, BLAS_Trans ta, BLAS_Trans tb, int m, int n,
                 int k, floating alpha, const floating *A, int lda, const floating *B,
                 int ldb, floating beta, floating *C, int ldc) nogil:
     """C := alpha * op(A).op(B) + beta * C"""
+    # TODO: Remove the pointer casts bellow once SciPy uses const-qualification.
+    # See: https://github.com/scipy/scipy/issues/14262
     cdef:
         char ta_ = ta
         char tb_ = tb
