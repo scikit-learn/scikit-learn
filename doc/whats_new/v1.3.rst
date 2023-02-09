@@ -210,7 +210,7 @@ Changelog
 ...................
 
 - |MajorFeature| :class:`tree.DecisionTreeRegressor` and
-  :class:`tree.DecisionTreeClassifier` supports missing values when
+  :class:`tree.DecisionTreeClassifier` support missing values when
   `splitter='best'` and criterion is `gini`, `entropy`, or `log_loss`,
   for classification or `squared_error`, `friedman_mse`, or `poisson`
   for regression. :pr:`23595` by `Thomas Fan`_.
