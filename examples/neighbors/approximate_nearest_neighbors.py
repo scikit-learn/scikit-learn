@@ -156,30 +156,26 @@ transformers = [
 
 for dataset_name, (X, y) in datasets:
 
-    msg = "Benchmarking on %s:" % dataset_name
-    print("\n%s\n%s" % (msg, "-" * len(msg)))
+    msg = f"Benchmarking on {dataset_name}:"
+    print(f"\n{msg}\n" + str("-" * len(msg)))
 
     for transformer_name, transformer in transformers:
         longest = np.max([len(name) for name, model in transformers])
-        whitespaces = " " * (longest - len(transformer_name))
         start = time.time()
         transformer.fit(X)
         fit_duration = time.time() - start
-        print("%s: %s%.3f sec (fit)" % (transformer_name, whitespaces, fit_duration))
+        print(f"{transformer_name:<{longest}} {fit_duration:.3f} sec (fit)")
         start = time.time()
         Xt = transformer.transform(X)
         transform_duration = time.time() - start
-        print(
-            "%s: %s%.3f sec (transform)"
-            % (transformer_name, whitespaces, transform_duration)
-        )
+        print(f"{transformer_name:<{longest}} {transform_duration:.3f} sec (transform)")
         if transformer_name == "PyNNDescentTransformer":
             start = time.time()
             Xt = transformer.transform(X)
             transform_duration = time.time() - start
             print(
-                "%s: %s%.3f sec (transform)"
-                % (transformer_name, whitespaces, transform_duration)
+                f"{transformer_name:<{longest}} {transform_duration:.3f} sec"
+                " (transform)"
             )
 
 # %%
@@ -187,23 +183,23 @@ for dataset_name, (X, y) in datasets:
 #
 #     Benchmarking on MNIST_10000:
 #     ----------------------------
-#     KNeighborsTransformer:  0.007 sec (fit)
-#     KNeighborsTransformer:  1.139 sec (transform)
-#     NMSlibTransformer:      0.208 sec (fit)
-#     NMSlibTransformer:      0.315 sec (transform)
-#     PyNNDescentTransformer: 4.823 sec (fit)
-#     PyNNDescentTransformer: 4.884 sec (transform)
-#     PyNNDescentTransformer: 0.744 sec (transform)
+#     KNeighborsTransformer  0.007 sec (fit)
+#     KNeighborsTransformer  1.139 sec (transform)
+#     NMSlibTransformer      0.208 sec (fit)
+#     NMSlibTransformer      0.315 sec (transform)
+#     PyNNDescentTransformer 4.823 sec (fit)
+#     PyNNDescentTransformer 4.884 sec (transform)
+#     PyNNDescentTransformer 0.744 sec (transform)
 #
 #     Benchmarking on MNIST_20000:
 #     ----------------------------
-#     KNeighborsTransformer:  0.011 sec (fit)
-#     KNeighborsTransformer:  5.769 sec (transform)
-#     NMSlibTransformer:      0.733 sec (fit)
-#     NMSlibTransformer:      1.077 sec (transform)
-#     PyNNDescentTransformer: 14.448 sec (fit)
-#     PyNNDescentTransformer: 7.103 sec (transform)
-#     PyNNDescentTransformer: 1.759 sec (transform)
+#     KNeighborsTransformer  0.011 sec (fit)
+#     KNeighborsTransformer  5.769 sec (transform)
+#     NMSlibTransformer      0.733 sec (fit)
+#     NMSlibTransformer      1.077 sec (transform)
+#     PyNNDescentTransformer 14.448 sec (fit)
+#     PyNNDescentTransformer 7.103 sec (transform)
+#     PyNNDescentTransformer 1.759 sec (transform)
 #
 # Notice that the `PyNNDescentTransformer` takes more time during the first
 # `fit` and the first `transform` due to the overhead of the numba just in time
@@ -248,18 +244,17 @@ i_ax = 0
 
 for dataset_name, (X, y) in datasets:
 
-    msg = "Benchmarking on %s:" % dataset_name
-    print("\n%s\n%s" % (msg, "-" * len(msg)))
+    msg = f"Benchmarking on {dataset_name}:"
+    print(f"\n{msg}\n" + str("-" * len(msg)))
 
     for transformer_name, transformer in transformers:
         longest = np.max([len(name) for name, model in transformers])
-        whitespaces = " " * (longest - len(transformer_name))
         start = time.time()
         Xt = transformer.fit_transform(X)
         transform_duration = time.time() - start
         print(
-            "%s: %s%.3f sec (fit_transform)"
-            % (transformer_name, whitespaces, transform_duration)
+            f"{transformer_name:<{longest}} {transform_duration:.3f} sec"
+            " (fit_transform)"
         )
 
         # plot TSNE embedding which should be very similar across methods
@@ -284,15 +279,15 @@ plt.show()
 #
 #     Benchmarking on MNIST_10000:
 #     ----------------------------
-#     TSNE with internal NearestNeighbors: 24.828 sec (fit_transform)
-#     TSNE with KNeighborsTransformer:     20.111 sec (fit_transform)
-#     TSNE with NMSlibTransformer:         21.757 sec (fit_transform)
+#     TSNE with internal NearestNeighbors 24.828 sec (fit_transform)
+#     TSNE with KNeighborsTransformer     20.111 sec (fit_transform)
+#     TSNE with NMSlibTransformer         21.757 sec (fit_transform)
 #
 #     Benchmarking on MNIST_20000:
 #     ----------------------------
-#     TSNE with internal NearestNeighbors: 51.955 sec (fit_transform)
-#     TSNE with KNeighborsTransformer:     50.994 sec (fit_transform)
-#     TSNE with NMSlibTransformer:         43.536 sec (fit_transform)
+#     TSNE with internal NearestNeighbors 51.955 sec (fit_transform)
+#     TSNE with KNeighborsTransformer     50.994 sec (fit_transform)
+#     TSNE with NMSlibTransformer         43.536 sec (fit_transform)
 #
 # We can observe that the default :class:`~sklearn.manifold.TSNE` estimator with
 # its internal :class:`~sklearn.neighbors.NearestNeighbors` implementation is
