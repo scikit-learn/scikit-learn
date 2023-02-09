@@ -15,7 +15,7 @@ from scipy.linalg import LinAlgError, qr, svd
 from scipy.sparse import csc_matrix
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils import check_random_state, as_float_array
 from ..metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from ..neighbors import kneighbors_graph, NearestNeighbors
@@ -190,6 +190,7 @@ def discretize(
     return labels
 
 
+@validate_params({"affinity": ["array-like", "sparse matrix"]})
 def spectral_clustering(
     affinity,
     *,
