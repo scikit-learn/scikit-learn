@@ -2568,7 +2568,15 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     else:
         raise ValueError("{0} is not supported".format(y_type))
 
-
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "normalize": ["boolean"],
+        "sample_weight": ["array-like", None],
+        "labels": ["array-like", None],
+    }
+)
 def log_loss(
     y_true, y_pred, *, eps="auto", normalize=True, sample_weight=None, labels=None
 ):
@@ -2647,10 +2655,8 @@ def log_loss(
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616...
     """
-    y_pred = check_array(
-        y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
-    )
-    eps = np.finfo(y_pred.dtype).eps if eps == "auto" else eps
+
+    eps = np.finfo(np.asarray(y_pred).dtype).eps if eps == "auto" else eps
 
     check_consistent_length(y_pred, y_true, sample_weight)
     lb = LabelBinarizer()
@@ -2692,7 +2698,6 @@ def log_loss(
         y_pred = np.append(1 - y_pred, y_pred, axis=1)
 
     # Check if dimensions are consistent.
-    transformed_labels = check_array(transformed_labels)
     if len(lb.classes_) != y_pred.shape[1]:
         if labels is None:
             raise ValueError(
