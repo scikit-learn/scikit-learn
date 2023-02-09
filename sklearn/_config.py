@@ -137,8 +137,9 @@ def set_config(
         .. versionadded:: 1.2
 
     skip_parameter_validation : bool, default=None
-        If True, parameter validation of public estimators and functions will be
-        skipped. It can save time in some situations but can lead to potential crashes.
+        If True, disable the validation of the hyper-parameters of estimators and
+        arguments passed to public functions. It can save time in some situations but
+        can lead to potential crashes.
 
         .. versionadded:: 1.3
 
@@ -261,8 +262,9 @@ def config_context(
         .. versionadded:: 1.2
 
     skip_parameter_validation : bool, default=None
-        If True, parameter validation of public estimators and functions will be
-        skipped. It can save time in some situations but can lead to potential crashes.
+        If True, disable the validation of the hyper-parameters of estimators and
+        arguments passed to public functions. It can save time in some situations but
+        can lead to potential crashes.
 
         .. versionadded:: 1.3
 
