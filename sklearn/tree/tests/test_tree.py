@@ -2436,16 +2436,17 @@ def test_missing_values_on_equal_nodes_no_missing(criterion):
 
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
 def test_missing_values_best_splitter_three_classes(criterion):
-    """Missing values uniquely defines a class in three classes."""
+    """Test when missing values is uniquely present in a class among 3 classes."""
+    missing_values_class = 0
     X = np.array([[np.nan] * 4 + [0, 1, 2, 3, 8, 9, 11, 12]]).T
-    y = np.array([0] * 4 + [1] * 4 + [2] * 4)
-
+    y = np.array([missing_values_class] * 4 + [1] * 4 + [2] * 4)
     dtc = DecisionTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
     dtc.fit(X, y)
 
     X_test = np.array([[np.nan, 3, 12]]).T
     y_nan_pred = dtc.predict(X_test)
-    assert_array_equal(y_nan_pred, [0, 1, 2])
+    # Missing values necessarily are associated the observed class.
+    assert_array_equal(y_nan_pred, [missing_values_class, 1, 2])
 
 
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
@@ -2457,7 +2458,9 @@ def test_missing_values_best_splitter_to_left(criterion):
     dtc = DecisionTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
     dtc.fit(X, y)
 
-    y_pred = dtc.predict(np.array([[np.nan, 4, np.nan]]).T)
+    X_test = np.array([[np.nan, 4, np.nan]]).T
+    y_pred = dtc.predict(X_test)
+
     assert_array_equal(y_pred, [0, 1, 0])
 
 
@@ -2470,7 +2473,11 @@ def test_missing_values_best_splitter_to_right(criterion):
     dtc = DecisionTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
     dtc.fit(X, y)
 
-    y_pred = dtc.predict(np.array([[np.nan, 1.2, 4.8]]).T)
+    X_test = np.array([[np.nan, 1.2, 4.8]]).T
+    y_pred = dtc.predict(X_test)
+
+    # Missing value goes to the class at the right (here 1) because the implementation
+    # searches right first.
     assert_array_equal(y_pred, [1, 0, 1])
 
 
@@ -2485,7 +2492,8 @@ def test_missing_values_missing_both_classes_has_nan(criterion):
     X_test = np.array([[np.nan, 2.3, 34.2]]).T
     y_pred = dtc.predict(X_test)
 
-    # Missing value goes right because the implementation searches right first
+    # Missing value goes to the class at the right (here 1) because the implementation
+    # searches right first.
     assert_array_equal(y_pred, [1, 0, 1])
 
 
@@ -2547,18 +2555,18 @@ def test_missing_values_is_resilience(make_data, Tree):
     )
 
     # Train tree with missing values
-    tree_with_missing = Tree(random_state=0)
+    tree_with_missing = Tree(random_state=rng)
     tree_with_missing.fit(X_missing_train, y_train)
-    missing_score = tree_with_missing.score(X_missing_test, y_test)
+    score_with_missing = tree_with_missing.score(X_missing_test, y_test)
 
-    # Train tree without missing
+    # Train tree without missing values
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    tree = Tree(random_state=0)
+    tree = Tree(random_state=rng)
     tree.fit(X_train, y_train)
-    non_missing_score = tree.score(X_test, y_test)
+    score_without_missing = tree.score(X_test, y_test)
 
     # Score is still 90 percent of the tree's score that had no missing values
-    assert missing_score >= 0.9 * non_missing_score
+    assert score_with_missing >= 0.9 * score_without_missing
 
 
 def test_missing_value_is_predictive():
@@ -2579,8 +2587,8 @@ def test_missing_value_is_predictive():
 
     X[:, 5] = X_predictive
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    tree = DecisionTreeClassifier(random_state=0).fit(X_train, y_train)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
+    tree = DecisionTreeClassifier(random_state=rng).fit(X_train, y_train)
 
     assert tree.score(X_train, y_train) >= 0.85
     assert tree.score(X_test, y_test) >= 0.85

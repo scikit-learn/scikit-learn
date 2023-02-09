@@ -355,7 +355,6 @@ cdef inline int node_split_best(
         partitioner.sort_samples_and_feature_values(current.feature)
         n_missing = partitioner.n_missing
 
-        end_non_missing = end - n_missing
         if (
             end_non_missing == start or  # all values are missing
             Xf[end_non_missing - 1] <= Xf[start] + FEATURE_THRESHOLD
@@ -375,7 +374,7 @@ cdef inline int node_split_best(
 
         # If there are missing values, then we search twice.
         # The first search will have all the missing values going to the right node.
-        # The second search will have all the misisng values going to the left node.
+        # The second search will have all the missing values going to the left node.
         # If there are no missing values, then we search only once.
         n_searches = 2 if has_missing else 1
 
@@ -886,7 +885,10 @@ cdef class DensePartitioner:
             DTYPE_t[::1] Xf = self.feature_values
             SIZE_t end_non_missing = self.end - self.n_missing
 
-        while p[0] + 1 < end_non_missing and Xf[p[0] + 1] <= Xf[p[0]] + FEATURE_THRESHOLD:
+        while (
+            p[0] + 1 < end_non_missing and
+            Xf[p[0] + 1] <= Xf[p[0]] + FEATURE_THRESHOLD:
+        )
             p[0] += 1
 
         # (p + 1 >= end) or (Xf[p + 1] > X[p])
