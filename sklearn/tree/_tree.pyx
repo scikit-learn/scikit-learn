@@ -86,13 +86,22 @@ NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 cdef class TreeBuilder:
     """Interface for different tree building strategies."""
 
-    cpdef build(self, Tree tree, object X, const DOUBLE_t[:, ::1] y,
-                const DOUBLE_t[:] sample_weight=None):
+    cpdef build(
+        self,
+        Tree tree,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight=None,
+    ):
         """Build a decision tree from the training set (X, y)."""
         pass
 
-    cdef inline _check_input(self, object X, const DOUBLE_t[:, ::1] y,
-                             const DOUBLE_t[:] sample_weight):
+    cdef inline _check_input(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight,
+    ):
         """Check input dtype, layout and format"""
         if issparse(X):
             X = X.tocsc()
@@ -147,8 +156,13 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
 
-    cpdef build(self, Tree tree, object X, const DOUBLE_t[:, ::1] y,
-                const DOUBLE_t[:] sample_weight=None):
+    cpdef build(
+        self,
+        Tree tree,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight=None,
+    ):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
@@ -338,8 +352,13 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
 
-    cpdef build(self, Tree tree, object X, const DOUBLE_t[:, ::1] y,
-                const DOUBLE_t[:] sample_weight=None):
+    cpdef build(
+        self,
+        Tree tree,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight=None,
+    ):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
