@@ -123,7 +123,7 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
 
     Parameters
     ----------
-    D_chunk : array-like of shape (n_chunk_samples, n_samples)
+    D_chunk : {array-like, sparse CSR matrix} of shape (n_chunk_samples, n_samples)
         Precomputed distances for a chunk.
     start : int
         First index in the chunk.
@@ -187,7 +187,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_a, n_samples_a) if metric == \
+    X : {array-like, sparse matrix} of shape (n_samples_a, n_samples_a) if metric == \
             "precomputed" or (n_samples_a, n_features) otherwise
         An array of pairwise distances between samples, or a feature array.
 
