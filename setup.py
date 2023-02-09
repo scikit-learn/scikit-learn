@@ -111,6 +111,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.svm._libsvm_sparse",
     "sklearn.svm._newrand",
     "sklearn.tree._splitter",
+    "sklearn.tree._tree",
     "sklearn.tree._utils",
     "sklearn.utils._cython_blas",
     "sklearn.utils._fast_dict",
