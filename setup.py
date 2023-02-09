@@ -111,6 +111,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.svm._libsvm_sparse",
     "sklearn.svm._newrand",
     "sklearn.tree._splitter",
+    "sklearn.tree._tree",
     "sklearn.tree._utils",
     "sklearn.utils._cython_blas",
     "sklearn.utils._fast_dict",
@@ -268,7 +269,7 @@ extension_config = {
         {"sources": ["_isotonic.pyx"], "include_np": True},
     ],
     "_loss": [
-        {"sources": ["_loss.pyx.tp"], "include_np": True},
+        {"sources": ["_loss.pyx.tp"]},
     ],
     "cluster": [
         {"sources": ["_dbscan_inner.pyx"], "language": "c++", "include_np": True},
