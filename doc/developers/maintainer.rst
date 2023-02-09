@@ -21,6 +21,7 @@ Before a release
    with the ``read:org`` following permission.
 
    Run the following script, entering the token in:
+
    .. prompt:: bash $
 
        cd build_tools; make authors; cd ..
@@ -119,9 +120,6 @@ Minor version release (also known as bug-fix release)
 The minor releases should include bug fixes and some relevant documentation
 changes only. Any PR resulting in a behavior change which is not a bug fix
 should be excluded. As an example, instructions are given for the `1.2.2` release.
-
- - If needed, create a commit reordering the changelog section for the release.
-   This must be done via a PR targeting on ``main``.
 
  - Create a branch, **on your own fork** (here referred to as `fork`) for the release
    from `upstream/main`.
