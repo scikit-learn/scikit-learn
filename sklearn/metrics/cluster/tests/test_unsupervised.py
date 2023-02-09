@@ -292,9 +292,9 @@ def test_silhouette_samples_sparse(to_sparse):
     pdist_dense = pairwise_distances(X)
     pdist_sparse = to_sparse(pdist_dense)
     assert issparse(pdist_sparse)
-    sparse_out = silhouette_samples(pdist_sparse, y, metric="precomputed")
-    dense_out = silhouette_samples(pdist_dense, y, metric="precomputed")
-    assert_allclose(sparse_out, dense_out)
+    output_with_sparse_input = silhouette_samples(pdist_sparse, y, metric="precomputed")
+    output_with_dense_input = silhouette_samples(pdist_dense, y, metric="precomputed")
+    assert_allclose(output_with_sparse_input, output_with_dense_input)
 
 
 def assert_raises_on_only_one_label(func):
