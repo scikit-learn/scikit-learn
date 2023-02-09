@@ -237,7 +237,7 @@ metric : str or DistanceMetric object, default='minkowski'
     :meth:`{BinaryTree}.valid_metric`. See the documentation of `scipy.spatial.distance
     <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and the
     metrics listed in :class:`~sklearn.metrics.pairwise.distance_metrics` for
-    more information on any individual metric.
+    more information on any distance metric.
 
 Additional keywords are passed to the distance metric class.
 Note: Callable functions in the metric parameter are NOT supported for KDTree
@@ -982,13 +982,14 @@ cdef class BinaryTree:
     def valid_metric(self):
         """Get list of valid distance metrics.
 
+        .. versionadded:: 1.3
+
         Returns
         -------
         valid_metric: list of str
-            List of valid metrics.
+            List of valid distance metrics.
         """
         return self.valid_metrics
-
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) nogil except -1:
