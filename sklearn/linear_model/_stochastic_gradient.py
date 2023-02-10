@@ -28,7 +28,7 @@ from ..utils.parallel import delayed, Parallel
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
-from ._sgd_fast import _plain_sgd
+from ._sgd_fast import _plain_sgd32, _plain_sgd64
 from ..utils import compute_class_weight
 from ._sgd_fast import Hinge
 from ._sgd_fast import SquaredHinge
@@ -182,19 +182,25 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         return PENALTY_TYPES[penalty]
 
     def _allocate_parameter_mem(
-        self, n_classes, n_features, coef_init=None, intercept_init=None, one_class=0
+        self,
+        n_classes,
+        n_features,
+        input_dtype,
+        coef_init=None,
+        intercept_init=None,
+        one_class=0,
     ):
         """Allocate mem for parameters; initialize if provided."""
         if n_classes > 2:
             # allocate coef_ for multi-class
             if coef_init is not None:
-                coef_init = np.asarray(coef_init, order="C")
+                coef_init = np.asarray(coef_init, dtype=input_dtype, order="C")
                 if coef_init.shape != (n_classes, n_features):
                     raise ValueError("Provided ``coef_`` does not match dataset. ")
                 self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros(
-                    (n_classes, n_features), dtype=np.float64, order="C"
+                    (n_classes, n_features), dtype=input_dtype, order="C"
                 )
 
             # allocate intercept_ for multi-class
@@ -208,13 +214,13 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             # allocate coef_
             if coef_init is not None:
-                coef_init = np.asarray(coef_init, dtype=np.float64, order="C")
+                coef_init = np.asarray(coef_init, dtype=input_dtype, order="C")
                 coef_init = coef_init.ravel()
                 if coef_init.shape != (n_features,):
                     raise ValueError("Provided coef_init does not match dataset.")
                 self.coef_ = coef_init
             else:
-                self.coef_ = np.zeros(n_features, dtype=np.float64, order="C")
+                self.coef_ = np.zeros(n_features, dtype=input_dtype, order="C")
 
             # allocate intercept_
             if intercept_init is not None:
@@ -238,7 +244,9 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         # initialize average parameters
         if self.average > 0:
             self._standard_coef = self.coef_
-            self._average_coef = np.zeros(self.coef_.shape, dtype=np.float64, order="C")
+            self._average_coef = np.zeros(
+                self.coef_.shape, dtype=input_dtype, order="C"
+            )
             if one_class:
                 self._standard_intercept = 1 - self.offset_
             else:
@@ -443,6 +451,7 @@ def fit_binary(
 
     tol = est.tol if est.tol is not None else -np.inf
 
+    _plain_sgd = _get_plain_sgd_function(x_dtype=X.dtype)
     coef, intercept, average_coef, average_intercept, n_iter_ = _plain_sgd(
         coef,
         intercept,
@@ -482,6 +491,10 @@ def fit_binary(
             est._average_intercept[i] = average_intercept
 
     return coef, intercept, n_iter_
+
+
+def _get_plain_sgd_function(x_dtype):
+    return _plain_sgd64 if x_dtype == np.float64 else _plain_sgd32
 
 
 class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
@@ -580,7 +593,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             X,
             y,
             accept_sparse="csr",
-            dtype=np.float64,
+            dtype=[np.float64, np.float32],
             order="C",
             accept_large_sparse=False,
             reset=first_call,
@@ -600,7 +613,11 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
             self._allocate_parameter_mem(
-                n_classes, n_features, coef_init, intercept_init
+                n_classes=n_classes,
+                n_features=n_features,
+                input_dtype=X.dtype,
+                coef_init=coef_init,
+                intercept_init=intercept_init,
             )
         elif n_features != self.coef_.shape[-1]:
             raise ValueError(
@@ -1438,7 +1455,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             accept_sparse="csr",
             copy=False,
             order="C",
-            dtype=np.float64,
+            dtype=[np.float64, np.float32],
             accept_large_sparse=False,
             reset=first_call,
         )
@@ -1450,9 +1467,15 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         # Allocate datastructures from input arguments
         if first_call:
-            self._allocate_parameter_mem(1, n_features, coef_init, intercept_init)
+            self._allocate_parameter_mem(
+                n_classes=1,
+                n_features=n_features,
+                input_dtype=X.dtype,
+                coef_init=coef_init,
+                intercept_init=intercept_init,
+            )
         if self.average > 0 and getattr(self, "_average_coef", None) is None:
-            self._average_coef = np.zeros(n_features, dtype=np.float64, order="C")
+            self._average_coef = np.zeros(n_features, dtype=X.dtype, order="C")
             self._average_intercept = np.zeros(1, dtype=np.float64, order="C")
 
         self._fit_regressor(
@@ -1665,6 +1688,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             average_coef = None  # Not used
             average_intercept = [0]  # Not used
 
+        _plain_sgd = _get_plain_sgd_function(x_dtype=X.dtype)
         coef, intercept, average_coef, average_intercept, self.n_iter_ = _plain_sgd(
             coef,
             intercept[0],
@@ -2197,7 +2221,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         # The One-Class SVM uses the SGD implementation with
         # y=np.ones(n_samples).
         n_samples = X.shape[0]
-        y = np.ones(n_samples, dtype=np.float64, order="C")
+        y = np.ones(n_samples, dtype=X.dtype, order="C")
 
         dataset, offset_decay = make_dataset(X, y, sample_weight)
 
@@ -2237,6 +2261,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             average_coef = None  # Not used
             average_intercept = [0]  # Not used
 
+        _plain_sgd = _get_plain_sgd_function(x_dtype=X.dtype)
         coef, intercept, average_coef, average_intercept, self.n_iter_ = _plain_sgd(
             coef,
             intercept[0],
@@ -2304,7 +2329,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             X,
             None,
             accept_sparse="csr",
-            dtype=np.float64,
+            dtype=[np.float64, np.float32],
             order="C",
             accept_large_sparse=False,
             reset=first_call,
@@ -2319,7 +2344,14 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         # the SGD implementation and offset is the offset of the One-Class SVM
         # optimization problem.
         if getattr(self, "coef_", None) is None or coef_init is not None:
-            self._allocate_parameter_mem(1, n_features, coef_init, offset_init, 1)
+            self._allocate_parameter_mem(
+                n_classes=1,
+                n_features=n_features,
+                input_dtype=X.dtype,
+                coef_init=coef_init,
+                intercept_init=offset_init,
+                one_class=1,
+            )
         elif n_features != self.coef_.shape[-1]:
             raise ValueError(
                 "Number of features %d does not match previous data %d."
@@ -2327,7 +2359,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             )
 
         if self.average and getattr(self, "_average_coef", None) is None:
-            self._average_coef = np.zeros(n_features, dtype=np.float64, order="C")
+            self._average_coef = np.zeros(n_features, dtype=X.dtype, order="C")
             self._average_intercept = np.zeros(1, dtype=np.float64, order="C")
 
         self.loss_function_ = self._get_loss_function(loss)
