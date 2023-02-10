@@ -376,7 +376,11 @@ def test_missing_value_predict_only():
     while not node["is_leaf"]:
         left = predictor.nodes[node["left"]]
         right = predictor.nodes[node["right"]]
-        node = left if left["weighted_n_node_samples"] > right["weighted_n_node_samples"] else right
+        node = (
+            left
+            if left["weighted_n_node_samples"] > right["weighted_n_node_samples"]
+            else right
+        )
 
     prediction_main_path = node["value"]
 

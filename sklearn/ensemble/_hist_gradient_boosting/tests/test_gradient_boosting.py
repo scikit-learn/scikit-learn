@@ -792,7 +792,7 @@ def test_sample_weight_effect(problem, duplication):
     "sample_weight_distribution", ("poisson", "exponential", "uniform")
 )
 def test_sample_weight_leaf_weighted_nodes_classification_random(
-    sample_weight_distribution
+    sample_weight_distribution,
 ):
     # Ensures that the `weighted_n_node_samples` for each node in the predictor
     # tree is the sum of `sample_weights` whose samples belong in that node
@@ -801,17 +801,16 @@ def test_sample_weight_leaf_weighted_nodes_classification_random(
     X, y = make_classification(n_samples=n_samples, random_state=0)
 
     if sample_weight_distribution == "poisson":
-        sample_weight = np.random.RandomState(0).poisson(lam=1 + 4*y)
+        sample_weight = np.random.RandomState(0).poisson(lam=1 + 4 * y)
     elif sample_weight_distribution == "exponential":
-        sample_weight = np.random.RandomState(0).exponential(scale=1 + 4*y)
+        sample_weight = np.random.RandomState(0).exponential(scale=1 + 4 * y)
     else:
-        sample_weight = np.random.RandomState(0).uniform(high=1 + 4*y)
+        sample_weight = np.random.RandomState(0).uniform(high=1 + 4 * y)
 
-    hgbc = (
-        HistGradientBoostingClassifier(random_state=0, min_samples_leaf=1, max_depth=1)
-        .fit(X, y, sample_weight)
-    )
-    
+    hgbc = HistGradientBoostingClassifier(
+        random_state=0, min_samples_leaf=1, max_depth=1
+    ).fit(X, y, sample_weight)
+
     for predictor in hgbc._predictors:
         nodes = predictor[0].nodes
         feat_idx = int(nodes[0][2])
@@ -832,16 +831,15 @@ def test_sample_weight_leaf_weighted_nodes_classification_two_values(
     # tree is the sum of `sample_weights` whose samples belong in that node
 
     n_samples = 1000
-    X = np.array(n_samples*[0] + n_samples*[1]).reshape(-1, 1)
-    y = np.array(n_samples*[0] + n_samples*[1])
+    X = np.array(n_samples * [0] + n_samples * [1]).reshape(-1, 1)
+    y = np.array(n_samples * [0] + n_samples * [1])
 
-    sample_weight = n_samples*[left_sample_weight] + n_samples*[right_sample_weight]
+    sample_weight = n_samples * [left_sample_weight] + n_samples * [right_sample_weight]
 
-    hgbc = (
-        HistGradientBoostingClassifier(min_samples_leaf=1, max_depth=1)
-        .fit(X, y, sample_weight)
+    hgbc = HistGradientBoostingClassifier(min_samples_leaf=1, max_depth=1).fit(
+        X, y, sample_weight
     )
-    
+
     for predictor in hgbc._predictors:
         nodes = predictor[0].nodes
 
