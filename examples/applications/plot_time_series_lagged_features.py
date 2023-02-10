@@ -5,8 +5,13 @@ Lagged Features for Time Series Forecasting
 
 This example demonstrates how pandas-engineered lagged features can be used
 for time series forecasting with
-:class:`sklearn.ensemble.HistGradientBoostingRegressor` on the Bike Sharing
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor` on the Bike Sharing
 Demand dataset.
+
+See the example on
+:ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
+for some data exploration on this dataset and a demo on periodic feature
+engineering.
 
 """
 
@@ -16,28 +21,14 @@ Demand dataset.
 #
 # We start by loading the data from the OpenML repository.
 from sklearn.datasets import fetch_openml
-import warnings
-
-warnings.filterwarnings("ignore")
-
-bike_sharing = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True)
-df = bike_sharing.frame
-df
-
-# %%
-# Let us take a quick look at the types of features present in the dataset.
 import numpy as np
 import pandas as pd
 
-df.dtypes
-
-# %%
-# Before we can dive deeper into the data, we need to identify if there
-# are any missing values present in the dataset.
-print(df.isna().sum())
-print("========================")
-print("Total Missing Values = {}".format(df.isna().sum().sum()))
-print("========================")
+bike_sharing = fetch_openml(
+    "Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas"
+)
+df = bike_sharing.frame
+df
 
 # %%
 # Next, we take a look at the statistical summary of the dataset
@@ -185,8 +176,8 @@ y = lagged_df["count"]
 print("X shape: {}\ny shape: {}".format(X.shape, y.shape))
 
 # %%
-# Naive Regression of the Next Hour Bike Demand
-# ---------------------------------------------
+# Naive evaluation of the next hour bike demand regression
+# --------------------------------------------------------
 # Let's randomly split our tabularized dataset to train a gradient
 # boosting regression tree (GBRT) model and evaluate it using Mean
 # Absolute Percentage Error (MAPE).
@@ -222,7 +213,6 @@ ts_cv = TimeSeriesSplit(
     test_size=3000,  # for 2 or 3 digits of precision in scores
 )
 all_splits = list(ts_cv.split(X, y))
-print(len(all_splits))
 
 # %%
 # Training the model and evaluating its performance based on MAPE.
@@ -252,6 +242,7 @@ cv_mape_scores
 # Let's report the mean CV scores and their standard deviation from now on.
 print(f"CV MAPE: {cv_mape_scores.mean():.3f} ± {cv_mape_scores.std():.3f}")
 
+# %%
 # To get a finer evaluation of our models we can compute and report several
 # cross-validation metrics at once using a dedicated helper function:
 from time import perf_counter
@@ -362,6 +353,7 @@ gbrt_percentile_95 = HistGradientBoostingRegressor(
 gbrt_percentile_95.fit(X_train, y_train)
 percentile_95_predictions = gbrt_percentile_95.predict(X_test)
 
+# %%
 last_hours = slice(-96, None)
 fig, ax = plt.subplots(figsize=(15, 7))
 plt.title("Predictions by regression models")
