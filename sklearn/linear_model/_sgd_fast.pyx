@@ -421,8 +421,6 @@ def _plain_sgd(const double[::1] weights,
         The maximum number of iterations (epochs).
     tol: double
         The tolerance for the stopping criterion.
-    dataset : SequentialDataset
-        A concrete ``SequentialDataset`` object.
     fit_intercept : int
         Whether or not to fit the intercept (1 or 0).
     verbose : int

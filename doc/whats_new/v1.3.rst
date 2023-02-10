@@ -206,6 +206,14 @@ Changelog
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| Adds a `class_names` parameter to
+  :func:`tree.export_text`. This allows specifying the parameter `class_names`
+  for each target class in ascending numerical order.
+  :pr:`25387` by :user:`William M <Akbeeh>` and :user:`crispinlogan <crispinlogan>`.
+
 :mod:`sklearn.utils`
 ....................
 

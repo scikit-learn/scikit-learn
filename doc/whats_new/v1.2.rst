@@ -27,12 +27,35 @@ Changes impacting all modules
 Changelog
 ---------
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| A deprecation warning is raised when using the `base_estimator__` prefix
+  to set parameters of the estimator used in :class:`calibration.CalibratedClassifierCV`.
+  :pr:`25477` by :user:`Tim Head <betatim>`.
+
 :mod:`sklearn.cluster`
 ......................
 
 - |Fix| Fixed a bug in :class:`cluster.BisectingKMeans`, preventing `fit` to randomly
   fail due to a permutation of the labels when running multiple inits.
   :pr:`25563` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixes a bug in :class:`compose.ColumnTransformer` which now supports
+  empty selection of columns when `set_output(transform="pandas")`.
+  :pr:`25570` by `Thomas Fan`_.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| A deprecation warning is raised when using the `base_estimator__` prefix
+  to set parameters of the estimator used in :class:`ensemble.AdaBoostClassifier`,
+  :class:`ensemble.AdaBoostRegressor`, :class:`ensemble.BaggingClassifier`,
+  and :class:`ensemble.BaggingRegressor`.
+  :pr:`25477` by :user:`Tim Head <betatim>`.
 
 :mod:`sklearn.isotonic`
 .......................
