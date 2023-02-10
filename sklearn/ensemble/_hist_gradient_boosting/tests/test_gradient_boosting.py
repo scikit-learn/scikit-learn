@@ -788,6 +788,68 @@ def test_sample_weight_effect(problem, duplication):
     assert np.allclose(est_sw._raw_predict(X_dup), est_dup._raw_predict(X_dup))
 
 
+@pytest.mark.parametrize(
+    "sample_weight_distribution", ("poisson", "exponential", "uniform")
+)
+def test_sample_weight_leaf_weighted_nodes_classification_random(
+    sample_weight_distribution
+):
+    # Ensures that the `weighted_n_node_samples` for each node in the predictor
+    # tree is the sum of `sample_weights` whose samples belong in that node
+
+    n_samples = 1000
+    X, y = make_classification(n_samples=n_samples, random_state=0)
+
+    if sample_weight_distribution == "poisson":
+        sample_weight = np.random.RandomState(0).poisson(lam=1 + 4*y)
+    elif sample_weight_distribution == "exponential":
+        sample_weight = np.random.RandomState(0).exponential(scale=1 + 4*y)
+    else:
+        sample_weight = np.random.RandomState(0).uniform(high=1 + 4*y)
+
+    hgbc = (
+        HistGradientBoostingClassifier(random_state=0, min_samples_leaf=1, max_depth=1)
+        .fit(X, y, sample_weight)
+    )
+    
+    for predictor in hgbc._predictors:
+        nodes = predictor[0].nodes
+        feat_idx = int(nodes[0][2])
+        num_tresh = nodes[0][3]
+
+        assert nodes[0][1] == np.sum(sample_weight)
+        assert nodes[1][1] == np.sum(sample_weight[X[:, feat_idx] < num_tresh])
+        assert nodes[2][1] == np.sum(sample_weight[X[:, feat_idx] >= num_tresh])
+
+
+@pytest.mark.parametrize(
+    "left_sample_weight, right_sample_weight", [(2.5, 7.5), (1, 1), (0.5, 0.5)]
+)
+def test_sample_weight_leaf_weighted_nodes_classification_two_values(
+    left_sample_weight, right_sample_weight
+):
+    # Ensures that the `weighted_n_node_samples` for each node in the predictor
+    # tree is the sum of `sample_weights` whose samples belong in that node
+
+    n_samples = 1000
+    X = np.array(n_samples*[0] + n_samples*[1]).reshape(-1, 1)
+    y = np.array(n_samples*[0] + n_samples*[1])
+
+    sample_weight = n_samples*[left_sample_weight] + n_samples*[right_sample_weight]
+
+    hgbc = (
+        HistGradientBoostingClassifier(min_samples_leaf=1, max_depth=1)
+        .fit(X, y, sample_weight)
+    )
+    
+    for predictor in hgbc._predictors:
+        nodes = predictor[0].nodes
+
+        assert nodes[0][1] == (left_sample_weight + right_sample_weight) * n_samples
+        assert nodes[1][1] == left_sample_weight * n_samples
+        assert nodes[2][1] == right_sample_weight * n_samples
+
+
 @pytest.mark.parametrize("Loss", (HalfSquaredError, AbsoluteError))
 def test_sum_hessians_are_sample_weight(Loss):
     # For losses with constant hessians, the sum_hessians field of the
