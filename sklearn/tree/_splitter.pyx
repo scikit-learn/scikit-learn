@@ -376,7 +376,8 @@ cdef inline int node_split_best(
                 ):
                     current_split.threshold = feature_values[p_prev]
 
-                best_split = current_split  # copy
+                # This creates a SplitRecord copy
+                best_split = current_split
 
     # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
     if best_split.pos < end:
@@ -387,8 +388,9 @@ cdef inline int node_split_best(
         )
         criterion.reset()
         criterion.update(best_split.pos)
-        criterion.children_impurity(&best_split.impurity_left,
-                                    &best_split.impurity_right)
+        criterion.children_impurity(
+            &best_split.impurity_left, &best_split.impurity_right
+        )
         best_split.improvement = criterion.impurity_improvement(
             impurity,
             best_split.impurity_left,
@@ -630,9 +632,11 @@ cdef inline int node_split_random(
         features[f_i], features[f_j] = features[f_j], features[f_i]
 
         # Draw a random threshold
-        current_split.threshold = rand_uniform(min_feature_value,
-                                               max_feature_value,
-                                               random_state)
+        current_split.threshold = rand_uniform(
+            min_feature_value,
+            max_feature_value,
+            random_state,
+        )
 
         if current_split.threshold == max_feature_value:
             current_split.threshold = min_feature_value
@@ -671,10 +675,12 @@ cdef inline int node_split_random(
 
         criterion.reset()
         criterion.update(best_split.pos)
-        criterion.children_impurity(&best_split.impurity_left,
-                                    &best_split.impurity_right)
+        criterion.children_impurity(
+            &best_split.impurity_left, &best_split.impurity_right
+        )
         best_split.improvement = criterion.impurity_improvement(
-            impurity, best_split.impurity_left, best_split.impurity_right)
+            impurity, best_split.impurity_left, best_split.impurity_right
+        )
 
     # Respect invariant for constant features: the original order of
     # element in features[:n_known_constants] must be preserved for sibling
