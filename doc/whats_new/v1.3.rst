@@ -140,6 +140,12 @@ Changelog
   :class:`ensemble.BaggingRegressor` expose the `allow_nan` tag from the
   underlying estimator. :pr:`25506` by `Thomas Fan`_.
 
+- |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now take the user-supplied
+  `sample_weight` into account at `fit` time, so each node in the estimator's
+  predictors stores and uses the weighted sample count.
+  :pr:`25431` by `Andrew Wang <Andrew-Wang-IB45>.`
+
 :mod:`sklearn.exception`
 ........................
 - |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
