@@ -14,9 +14,9 @@ from ..utils._param_validation import Interval, StrOptions
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """Target Encoder for regression and classification targets.
 
-    Each category is encoded based on its effect on the target. The encoding
-    scheme mixes the global target mean with the target mean conditioned on
-    the value of the category. [MIC]_
+    Each category is encoded based on its marginal average association with the
+    target The encoding scheme mixes the global target mean with the target mean
+    conditioned on the value of the category. [MIC]_
 
     Read more in the :ref:`User Guide <target_encoder>`.
 
