@@ -5,6 +5,7 @@ import pytest
 
 from sklearn.preprocessing import TargetEncoder, LabelEncoder
 from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
 
 
 def _encode_target(X_int, y_int, n_categories, smooth):
@@ -66,9 +67,11 @@ def test_encoding(categories, unknown_value, seed, smooth, target_type):
         y_int = rng.randint(low=0, high=2, size=n_samples)
         target_names = np.array(["cat", "dog"], dtype=object)
         y_input = target_names[y_int]
+        cv = StratifiedKFold(n_splits=3)
     else:  # target_type == continuous
         y_int = rng.uniform(low=-10, high=20, size=n_samples)
         y_input = y_int
+        cv = KFold(n_splits=3)
 
     shuffled_idx = rng.permutation(n_samples)
     X_int = X_int[shuffled_idx]
@@ -78,13 +81,13 @@ def test_encoding(categories, unknown_value, seed, smooth, target_type):
 
     # Get encodings for cv splits to validate `fit_transform`
     expected_X_fit_transform = np.empty_like(X_int, dtype=np.float64)
-    kfold = KFold(n_splits=3)
-    for train_idx, test_idx in kfold.split(X_input):
+
+    for train_idx, test_idx in cv.split(X_int, y_input):
         X_, y_ = X_int[train_idx, 0], y_int[train_idx]
         cur_encodings = _encode_target(X_, y_, n_categories, smooth)
         expected_X_fit_transform[test_idx, 0] = cur_encodings[X_int[test_idx, 0]]
 
-    target_encoder = TargetEncoder(smooth=smooth, categories=categories, cv=kfold)
+    target_encoder = TargetEncoder(smooth=smooth, categories=categories, cv=3)
 
     X_fit_transform = target_encoder.fit_transform(X_input, y_input)
 
@@ -213,12 +216,15 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
     if target_type == "binary-str":
         y_input = np.array(["a", "b", "a", "a", "b", "b", "a", "b"])
         y_int = LabelEncoder().fit_transform(y_input)
+        cv = StratifiedKFold(2)
     elif target_type == "binary-ints":
         y_input = np.array([3, 4, 3, 3, 3, 4, 4, 4])
         y_int = LabelEncoder().fit_transform(y_input)
+        cv = StratifiedKFold(2)
     else:
         y_input = np.array([3.0, 5.1, 2.4, 3.5, 4.1, 5.5, 10.3, 7.3], dtype=np.float32)
         y_int = y_input
+        cv = KFold(2)
     y_mean = np.mean(y_int)
     categories = [[0, 1, 2], [0, 1]]
 
@@ -245,12 +251,11 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
     else:
         X_input = X_int
 
-    cv_splits = [([0, 2, 4, 6], [1, 3, 5, 7]), ([1, 3, 5, 7], [0, 2, 4, 6])]
-
+    print(cv)
     # manually compute encoding for fit_transform
     expected_X_fit_transform = np.empty_like(X_int, dtype=np.float64)
     for f_idx, cats in enumerate(categories):
-        for train_idx, test_idx in cv_splits:
+        for train_idx, test_idx in cv.split(X_int, y_int):
             X_, y_ = X_int[train_idx, f_idx], y_int[train_idx]
             current_encoding = _encode_target(X_, y_, len(cats), smooth)
             expected_X_fit_transform[test_idx, f_idx] = current_encoding[
@@ -272,7 +277,7 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
         dtype=np.float64,
     )
 
-    enc = TargetEncoder(smooth=smooth, cv=cv_splits)
+    enc = TargetEncoder(smooth=smooth, cv=2)
     X_fit_transform = enc.fit_transform(X_input, y_input)
     assert_allclose(X_fit_transform, expected_X_fit_transform)
 

@@ -1,6 +1,6 @@
 import numpy as np
 
-from numbers import Real
+from numbers import Real, Integral
 
 from ._encoders import _BaseEncoder
 from ..base import OneToOneFeatureMixin
@@ -64,14 +64,10 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         larger `smooth` value will put more weight on the global target mean.
         If `"auto"`, then `smooth` is set to an empirical bayes estimate.
 
-    cv : int, cross-validation generator or an iterable, default=None
-        Determines the cross-validation splitting strategy used in
-        :meth:`fit_transform`. Possible inputs for cv are:
-
-        - `None`, to use the default 5-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+    cv : int, default=5
+        Determines the number of folds in the cross-validation strategy used in
+        :meth:`fit_transform`. For classification targets, `StratifiedKFold` is used
+        and for continuous targets, `KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various cross-validation
         strategies that can be used here.
@@ -141,7 +137,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "categories": [StrOptions({"auto"}), list],
         "target_type": [StrOptions({"auto", "continuous", "binary"})],
         "smooth": [StrOptions({"auto"}), Interval(Real, 0, None, closed="left")],
-        "cv": ["cv_object"],
+        "cv": [Interval(Integral, 2, None, closed="left")],
     }
 
     def __init__(self, categories="auto", target_type="auto", smooth="auto", cv=5):
@@ -195,11 +191,16 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_trans : ndarray of shape (n_samples, n_features)
             Transformed input.
         """
-        from ..model_selection._split import check_cv  # avoid circular import
+        from ..model_selection import KFold, StratifiedKFold  # avoid circular import
 
         self._validate_params()
         X_ordinal, X_known_mask, y, n_categories = self._fit_encodings_all(X, y)
-        cv = check_cv(self.cv)
+
+        if self.target_type_ == "continuous":
+            cv = KFold(self.cv)
+        else:
+            cv = StratifiedKFold(self.cv)
+
         X_out = np.empty_like(X_ordinal, dtype=np.float64)
         X_unknown_mask = ~X_known_mask
 
