@@ -8,14 +8,15 @@ from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 
 
-def _encode_target(X_int, y_int, n_categories, smooth):
+def _encode_target(X_ordinal, y_int, n_categories, smooth):
+    """Simple Python implementation of target encoding."""
     cur_encodings = np.zeros(n_categories, dtype=np.float64)
     y_mean = np.mean(y_int)
 
     if smooth == "auto":
         y_variance = np.var(y_int)
         for c in range(n_categories):
-            y_subset = y_int[X_int == c]
+            y_subset = y_int[X_ordinal == c]
             n_i = y_subset.shape[0]
 
             if n_i == 0:
@@ -30,7 +31,7 @@ def _encode_target(X_int, y_int, n_categories, smooth):
         return cur_encodings
     else:  # float
         for c in range(n_categories):
-            y_subset = y_int[X_int == c]
+            y_subset = y_int[X_ordinal == c]
             current_sum = np.sum(y_subset) + y_mean * smooth
             current_cnt = y_subset.shape[0] + smooth
             cur_encodings[c] = current_sum / current_cnt
@@ -52,14 +53,14 @@ def _encode_target(X_int, y_int, n_categories, smooth):
 def test_encoding(categories, unknown_value, seed, smooth, target_type):
     """Check encoding for binary and continuous targets."""
 
-    X_int = np.array([[0] * 20 + [1] * 30 + [2] * 40], dtype=np.int64).T
+    X_ordinal = np.array([[0] * 20 + [1] * 30 + [2] * 40], dtype=np.int64).T
     n_categories = 3
-    n_samples = X_int.shape[0]
+    n_samples = X_ordinal.shape[0]
 
     if isinstance(categories, str) and categories == "auto":
-        X_input = X_int
+        X_input = X_ordinal
     else:
-        X_input = categories[0][X_int]
+        X_input = categories[0][X_ordinal]
 
     rng = np.random.RandomState(seed)
 
@@ -74,18 +75,18 @@ def test_encoding(categories, unknown_value, seed, smooth, target_type):
         cv = KFold(n_splits=3)
 
     shuffled_idx = rng.permutation(n_samples)
-    X_int = X_int[shuffled_idx]
+    X_ordinal = X_ordinal[shuffled_idx]
     X_input = X_input[shuffled_idx]
     y_input = y_input[shuffled_idx]
     y_int = y_int[shuffled_idx]
 
     # Get encodings for cv splits to validate `fit_transform`
-    expected_X_fit_transform = np.empty_like(X_int, dtype=np.float64)
+    expected_X_fit_transform = np.empty_like(X_ordinal, dtype=np.float64)
 
-    for train_idx, test_idx in cv.split(X_int, y_input):
-        X_, y_ = X_int[train_idx, 0], y_int[train_idx]
+    for train_idx, test_idx in cv.split(X_ordinal, y_input):
+        X_, y_ = X_ordinal[train_idx, 0], y_int[train_idx]
         cur_encodings = _encode_target(X_, y_, n_categories, smooth)
-        expected_X_fit_transform[test_idx, 0] = cur_encodings[X_int[test_idx, 0]]
+        expected_X_fit_transform[test_idx, 0] = cur_encodings[X_ordinal[test_idx, 0]]
 
     target_encoder = TargetEncoder(smooth=smooth, categories=categories, cv=3)
 
@@ -97,7 +98,7 @@ def test_encoding(categories, unknown_value, seed, smooth, target_type):
 
     # compute encodings for all data to validate `transform`
     y_mean = np.mean(y_int)
-    expected_encodings = _encode_target(X_int[:, 0], y_int, n_categories, smooth)
+    expected_encodings = _encode_target(X_ordinal[:, 0], y_int, n_categories, smooth)
     assert_allclose(target_encoder.encodings_[0], expected_encodings)
     assert target_encoder.encoding_mean_ == pytest.approx(y_mean)
 
@@ -210,7 +211,7 @@ def test_feature_names_out_set_output():
 @pytest.mark.parametrize("target_type", ["binary-ints", "binary-str", "continuous"])
 def test_multiple_features_quick(to_pandas, smooth, target_type):
     """Check target encoder with multiple features."""
-    X_int = np.array(
+    X_ordinal = np.array(
         [[1, 1], [0, 1], [1, 1], [2, 1], [1, 0], [0, 1], [1, 0], [0, 0]], dtype=np.int64
     )
     if target_type == "binary-str":
@@ -242,30 +243,30 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
         # convert second feature to an object
         X_input = pd.DataFrame(
             {
-                "feat0": X_int[:, 0],
-                "feat1": np.array(["cat", "dog"], dtype=object)[X_int[:, 1]],
+                "feat0": X_ordinal[:, 0],
+                "feat1": np.array(["cat", "dog"], dtype=object)[X_ordinal[:, 1]],
             }
         )
         # "snake" is unknown
         X_test = pd.DataFrame({"feat0": X_test[:, 0], "feat1": ["dog", "cat", "snake"]})
     else:
-        X_input = X_int
+        X_input = X_ordinal
 
     print(cv)
     # manually compute encoding for fit_transform
-    expected_X_fit_transform = np.empty_like(X_int, dtype=np.float64)
+    expected_X_fit_transform = np.empty_like(X_ordinal, dtype=np.float64)
     for f_idx, cats in enumerate(categories):
-        for train_idx, test_idx in cv.split(X_int, y_int):
-            X_, y_ = X_int[train_idx, f_idx], y_int[train_idx]
+        for train_idx, test_idx in cv.split(X_ordinal, y_int):
+            X_, y_ = X_ordinal[train_idx, f_idx], y_int[train_idx]
             current_encoding = _encode_target(X_, y_, len(cats), smooth)
             expected_X_fit_transform[test_idx, f_idx] = current_encoding[
-                X_int[test_idx, f_idx]
+                X_ordinal[test_idx, f_idx]
             ]
 
     # manually compute encoding for transform
     expected_encodings = []
     for f_idx, cats in enumerate(categories):
-        current_encoding = _encode_target(X_int[:, f_idx], y_int, len(cats), smooth)
+        current_encoding = _encode_target(X_ordinal[:, f_idx], y_int, len(cats), smooth)
         expected_encodings.append(current_encoding)
 
     expected_X_test_transform = np.array(
