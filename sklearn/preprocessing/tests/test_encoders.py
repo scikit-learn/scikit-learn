@@ -2003,3 +2003,25 @@ def test_predefined_categories_dtype():
     for n, cat in enumerate(enc.categories_):
         assert cat.dtype == object
         assert_array_equal(categories[n], cat)
+
+
+def test_drop_idx_infrequent_categories():
+    """Check drop_idx is defined correctly with infrequent categories.
+
+    Non-regression test for gh-XXXXX.
+    """
+    X = np.array(
+        [["a"] * 2 + ["b"] * 4 + ["c"] * 4 + ["d"] * 4 + ["e"] * 4], dtype=object
+    ).T
+    enc = OneHotEncoder(min_frequency=4, sparse_output=False, drop="first").fit(X)
+    assert enc.categories_[0][enc.drop_idx_[0]] == "b"
+
+    X = np.array([["a"] * 2 + ["b"] * 2 + ["c"] * 10], dtype=object).T
+    enc = OneHotEncoder(min_frequency=4, sparse_output=False, drop="if_binary").fit(X)
+    assert enc.categories_[0][enc.drop_idx_[0]] == "c"
+
+    X = np.array(
+        [["a"] * 2 + ["b"] * 4 + ["c"] * 4 + ["d"] * 4 + ["e"] * 4], dtype=object
+    ).T
+    enc = OneHotEncoder(min_frequency=4, sparse_output=False, drop=["d"]).fit(X)
+    assert enc.categories_[0][enc.drop_idx_[0]] == "d"
