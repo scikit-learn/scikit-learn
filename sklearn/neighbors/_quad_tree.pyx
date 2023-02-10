@@ -52,7 +52,7 @@ cdef class _QuadTree:
         # Parameters of the tree
         self.n_dimensions = n_dimensions
         self.verbose = verbose
-        self.n_cells_per_cell = 2 ** self.n_dimensions
+        self.n_cells_per_cell = <int> (2 ** self.n_dimensions)
 
         # Inner structures
         self.max_depth = 0
@@ -587,7 +587,7 @@ cdef class _QuadTree:
         if capacity == self.capacity and self.cells != NULL:
             return 0
 
-        if capacity == SIZE_MAX:
+        if <size_t> capacity == SIZE_MAX:
             if self.capacity == 0:
                 capacity = 9  # default initial value to min
             else:
