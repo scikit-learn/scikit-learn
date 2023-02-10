@@ -455,7 +455,6 @@ extension_config = {
         },
         {"sources": ["_random.pyx"], "include_np": True},
         {"sources": ["_logistic_sigmoid.pyx"], "include_np": True},
-        {"sources": ["_readonly_array_wrapper.pyx"], "include_np": True},
         {"sources": ["_typedefs.pyx"], "include_np": True},
         {"sources": ["_heap.pyx"], "include_np": True},
         {"sources": ["_sorting.pyx"], "include_np": True},
