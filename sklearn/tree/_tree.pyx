@@ -708,8 +708,8 @@ cdef class Tree:
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
 
-        cdef Node[::1] node_memory_view = node_ndarray
-        cdef DOUBLE_t[:, :, ::1] value_memory_view = value_ndarray
+        cdef const Node[::1] node_memory_view = node_ndarray
+        cdef const DOUBLE_t[:, :, ::1] value_memory_view = value_ndarray
         nodes = memcpy(self.nodes, &node_memory_view[0],
                        self.capacity * sizeof(Node))
         value = memcpy(self.value, &value_memory_view[0, 0, 0],

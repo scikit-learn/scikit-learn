@@ -21,6 +21,8 @@ from joblib.numpy_pickle import NumpyPickler
 from sklearn.random_projection import _sparse_random_matrix
 
 from sklearn.dummy import DummyRegressor
+from sklearn.datasets import fetch_california_housing
+from sklearn.inspection import PartialDependenceDisplay
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
@@ -60,7 +62,6 @@ from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
 from sklearn.tree._classes import DENSE_SPLITTERS, SPARSE_SPLITTERS
-
 
 CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
@@ -2406,3 +2407,25 @@ def test_splitter_serializable(Splitter):
     splitter_back = pickle.loads(splitter_serialize)
     assert splitter_back.max_features == max_features
     assert isinstance(splitter_back, Splitter)
+
+
+def test_tree_deserialization_from_read_only_buffer():
+    # Non-regression test for the issue:
+    # https://github.com/scikit-learn/scikit-learn/issues/25584
+    # This test helps to ensure that the Tree module is able to
+    # successfully deserialize data from read only buffers.
+    X, y = fetch_california_housing(return_X_y=True, as_frame=True)
+    features = ["MedInc", "AveOccup", "HouseAge", "AveRooms"]
+    est = DecisionTreeRegressor()
+    est.fit(X, y)
+
+    PartialDependenceDisplay.from_estimator(
+        est,
+        X,
+        features,
+        kind="individual",
+        subsample=50,
+        n_jobs=3,
+        grid_resolution=20,
+        random_state=0,
+    )
