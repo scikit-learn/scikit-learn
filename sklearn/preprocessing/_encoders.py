@@ -568,20 +568,30 @@ class OneHotEncoder(_BaseEncoder):
         """Compute the drop indices associated with `self.categories_`.
 
         If `self.drop` is:
-        - `None`, returns `None`.
-        - `'first'`, returns all zeros to drop the first category.
-        - `'if_binary'`, returns zero if the category is binary and `None`
+        - `None`, No categories have dropped.
+        - `'first'`, All zeros to drop the first category.
+        - `'if_binary'`, All zeros if the category is binary and `None`
           otherwise.
-        - array-like, returns the indices of the categories that match the
+        - array-like, The indices of the categories that match the
           categories in `self.drop`. If the dropped category is an infrequent
           category, then the index for the infrequent category is used. This
           means that the entire infrequent category is dropped.
+
+        This methods defines a public `drop_idx_` and a private `_drop_idx_internal`.
+
+        - `drop_idx_`: Public facing API that references the drop category in
+          `self.categories_`.
+        - `_drop_idx_internal`: Used internally to drop categories *after* the
+          infrequent categories are grouped together.
+
+        If there are no infrequent categories or drop is `None`, then
+        `drop_idx_=_drop_idx_internal`
         """
         if self.drop is None:
-            return None
+            drop_idx_internal = None
         elif isinstance(self.drop, str):
             if self.drop == "first":
-                return np.zeros(len(self.categories_), dtype=object)
+                drop_idx_internal = np.zeros(len(self.categories_), dtype=object)
             elif self.drop == "if_binary":
                 n_features_out_no_drop = [len(cat) for cat in self.categories_]
                 if self._infrequent_enabled:
@@ -590,7 +600,7 @@ class OneHotEncoder(_BaseEncoder):
                             continue
                         n_features_out_no_drop[i] -= infreq_idx.size - 1
 
-                return np.array(
+                drop_idx_internal = np.array(
                     [
                         0 if n_features_out == 2 else None
                         for n_features_out in n_features_out_no_drop
@@ -647,7 +657,31 @@ class OneHotEncoder(_BaseEncoder):
                     )
                 )
                 raise ValueError(msg)
-            return np.array(drop_indices, dtype=object)
+            drop_idx_internal = np.array(drop_indices, dtype=object)
+
+        # `_drop_idx_internal` are the categories to drop *after* the infrequent
+        # categories are grouped together. If there are no infrequent categories,
+        # then `drop_idx_` = `_drop_idx_internal` or drop is not set.
+        self._drop_idx_internal = drop_idx_internal
+
+        if not self._infrequent_enabled or drop_idx_internal is None:
+            self.drop_idx_ = self._drop_idx_internal
+        else:
+            # If there are infrequent categories, then we need to map `drop_idx`
+            # back to the categories seen in `self.categories_`
+            drop_idx_ = []
+            for feature_idx, drop_idx in enumerate(drop_idx_internal):
+                default_to_infrequent = self._default_to_infrequent_mappings[
+                    feature_idx
+                ]
+                if drop_idx is None or default_to_infrequent is None:
+                    orig_drop_idx = drop_idx
+                else:
+                    orig_drop_idx = np.where(default_to_infrequent == drop_idx)[0][0]
+
+                drop_idx_.append(orig_drop_idx)
+
+            self.drop_idx_ = np.asarray(drop_idx_, dtype=object)
 
     def _identify_infrequent(self, category_count, n_samples, col_idx):
         """Compute the infrequent indices.
@@ -809,16 +843,19 @@ class OneHotEncoder(_BaseEncoder):
 
     def _remove_dropped_categories(self, categories, i):
         """Remove dropped categories."""
-        if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
-            return np.delete(categories, self.drop_idx_[i])
+        if (
+            self._drop_idx_internal is not None
+            and self._drop_idx_internal[i] is not None
+        ):
+            return np.delete(categories, self._drop_idx_internal[i])
         return categories
 
     def _compute_n_features_outs(self):
         """Compute the n_features_out for each input feature."""
         output = [len(cats) for cats in self.categories_]
 
-        if self.drop_idx_ is not None:
-            for i, drop_idx in enumerate(self.drop_idx_):
+        if self._drop_idx_internal is not None:
+            for i, drop_idx in enumerate(self._drop_idx_internal):
                 if drop_idx is not None:
                     output[i] -= 1
 
@@ -875,7 +912,7 @@ class OneHotEncoder(_BaseEncoder):
             self._fit_infrequent_category_mapping(
                 fit_results["n_samples"], fit_results["category_counts"]
             )
-        self.drop_idx_ = self._compute_drop_idx()
+        self._compute_drop_idx()
         self._n_features_outs = self._compute_n_features_outs()
         return self
 
@@ -914,8 +951,8 @@ class OneHotEncoder(_BaseEncoder):
 
         n_samples, n_features = X_int.shape
 
-        if self.drop_idx_ is not None:
-            to_drop = self.drop_idx_.copy()
+        if self._drop_idx_internal is not None:
+            to_drop = self._drop_idx_internal.copy()
             # We remove all the dropped categories from mask, and decrement all
             # categories that occur after them to avoid an empty column.
             keep_cells = X_int != to_drop
@@ -1014,7 +1051,7 @@ class OneHotEncoder(_BaseEncoder):
             # category. In this case we just fill the column with this
             # unique category value.
             if n_categories == 0:
-                X_tr[:, i] = self.categories_[i][self.drop_idx_[i]]
+                X_tr[:, i] = self.categories_[i][self._drop_idx_internal[i]]
                 j += n_categories
                 continue
             sub = X[:, j : j + n_categories]
@@ -1031,14 +1068,19 @@ class OneHotEncoder(_BaseEncoder):
                 if unknown.any():
                     # if categories were dropped then unknown categories will
                     # be mapped to the dropped category
-                    if self.drop_idx_ is None or self.drop_idx_[i] is None:
+                    if (
+                        self._drop_idx_internal is None
+                        or self._drop_idx_internal[i] is None
+                    ):
                         found_unknown[i] = unknown
                     else:
-                        X_tr[unknown, i] = self.categories_[i][self.drop_idx_[i]]
+                        X_tr[unknown, i] = self.categories_[i][
+                            self._drop_idx_internal[i]
+                        ]
             else:
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():
-                    if self.drop_idx_ is None:
+                    if self._drop_idx_internal is None:
                         all_zero_samples = np.flatnonzero(dropped)
                         raise ValueError(
                             f"Samples {all_zero_samples} can not be inverted "
@@ -1047,7 +1089,7 @@ class OneHotEncoder(_BaseEncoder):
                         )
                     # we can safely assume that all of the nulls in each column
                     # are the dropped value
-                    drop_idx = self.drop_idx_[i]
+                    drop_idx = self._drop_idx_internal[i]
                     X_tr[dropped, i] = transformed_features[i][drop_idx]
 
             j += n_categories
