@@ -23,7 +23,7 @@ from ..utils import (
 )
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import _deterministic_vector_sign_flip
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
@@ -141,6 +141,17 @@ def _set_diag(laplacian, value, norm_laplacian):
     return laplacian
 
 
+@validate_params(
+    {
+        "adjacency": ["array-like", "sparse matrix"],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
+        "random_state": ["random_state", None],
+        "eigen_tol": [StrOptions({"auto"}), Interval(Real, 0, None, closed="left")],
+        "norm_laplacian": ["boolean"],
+        "drop_first": ["boolean"],
+    }
+)
 def spectral_embedding(
     adjacency,
     *,
@@ -257,11 +268,6 @@ def spectral_embedding(
 
     if eigen_solver is None:
         eigen_solver = "arpack"
-    elif eigen_solver not in ("arpack", "lobpcg", "amg"):
-        raise ValueError(
-            "Unknown value for eigen_solver: '%s'."
-            "Should be 'amg', 'arpack', or 'lobpcg'" % eigen_solver
-        )
 
     random_state = check_random_state(random_state)
 
