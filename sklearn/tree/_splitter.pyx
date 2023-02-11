@@ -354,6 +354,7 @@ cdef inline int node_split_best(
         current.feature = features[f_j]
         partitioner.sort_samples_and_feature_values(current.feature)
         n_missing = partitioner.n_missing
+        end_non_missing = end - n_missing
 
         if (
             end_non_missing == start or  # all values are missing
@@ -887,8 +888,8 @@ cdef class DensePartitioner:
 
         while (
             p[0] + 1 < end_non_missing and
-            Xf[p[0] + 1] <= Xf[p[0]] + FEATURE_THRESHOLD:
-        )
+            Xf[p[0] + 1] <= Xf[p[0]] + FEATURE_THRESHOLD
+        ):
             p[0] += 1
 
         # (p + 1 >= end) or (Xf[p + 1] > X[p])
