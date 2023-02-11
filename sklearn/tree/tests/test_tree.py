@@ -2409,10 +2409,10 @@ def test_splitter_serializable(Splitter):
 
 
 def test_tree_deserialization_from_read_only_buffer(tmpdir):
-    # Non-regression test for the issue:
-    # https://github.com/scikit-learn/scikit-learn/issues/25584
-    # This test helps to ensure that the Tree module is able to
-    # successfully deserialize data from read only buffers.
+    """Check that Trees can be deserialized with read only buffers.
+
+    Non-regression test for gh-25584.
+    """
     pickle_path = str(tmpdir.join("clf.joblib"))
     clf = DecisionTreeClassifier(random_state=0)
     clf.fit(X_small, y_small)
