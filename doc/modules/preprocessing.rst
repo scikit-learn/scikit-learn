@@ -873,13 +873,8 @@ where :math:`L_i` is the set of observations for which :math:`X=X_i` and
 :math:`n_i` is the cardinality of :math:`L_i`.
 
 .. note::
-  :class:`TargetEncoder` uses a cross validation scheme in
-  :meth:`~TargetEncoder.fit_transform` to prevent leaking the target during training.
-  In :meth:`~TargetEncoder.fit_transform`, the data is split according to the `cv`
-  parameter. Categorical encodings are learned from one split and used to encode the other
-  split. Afterwards, a final categorical encoding is learned from all the data, which
-  is then used to encode data during :meth:`~TargetEncoder.transform`. This means that
-  `fit(X, y).transform(X)` does not equal `fit_transform(X, y)`.
+  `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because of the use
+  internal use of cross-validation in this estimator.
 
 .. topic:: Examples:
 

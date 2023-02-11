@@ -21,13 +21,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     Read more in the :ref:`User Guide <target_encoder>`.
 
     .. note::
-        :class:`TargetEncoder` uses a cross validation scheme in
-        :meth:`fit_transform` to prevent leaking the target during training. In
-        :meth:`fit_transform`, the data is split according to the `cv` parameter.
-        Categorical encodings are learned from one split and used to encode the other
-        split. Afterwards, a final categorical encoding is learned from all the data,
-        which is then used to encode data during :meth:`transform`. This means that
-        `fit(X, y).transform(X)` does not equal `fit_transform(X, y)`.
+        `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because of the
+        use internal use of cross-validation in this estimator. See the
+        :ref:`User Guide <target_encoder>`. for details.
 
     .. versionadded:: 1.3
 
@@ -176,13 +172,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """Fit :class:`TargetEncoder` and transform X with the target encoding.
 
         .. note::
-            :class:`TargetEncoder` uses a cross validation scheme in
-            :meth:`fit_transform` to prevent leaking the target during training. In
-            :meth:`fit_transform`, the data is split according to the `cv` parameter.
-            Categorical encodings are learned from split and used to encode the other
-            split. Afterwards, a final categorical encoding is learned from all the
-            data, which is then used to encode data during :meth:`transform`. This
-            means that `fit(X, y).transform(X)` does not equal `fit_transform(X, y)`.
+            `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because of the
+            use internal use of cross-validation in this estimator. See the
+            :ref:`User Guide <target_encoder>`. for details.
 
         Parameters
         ----------
@@ -230,6 +222,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     def transform(self, X):
         """Transform X with the target encoding.
+
+        .. note::
+            `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because of the
+            use internal use of cross-validation in this estimator. See the
+            :ref:`User Guide <target_encoder>`. for details.
 
         Parameters
         ----------
