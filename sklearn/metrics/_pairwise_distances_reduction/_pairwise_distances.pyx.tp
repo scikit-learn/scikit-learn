@@ -120,6 +120,8 @@ cdef class PairwiseDistances{{name_suffix}}:
                                f"or 'auto', but currently strategy='{self.strategy}'.")
 
         if strategy == 'auto':
+            # TODO: inspect if the current heuristic is relevant
+            # for PairwiseDistances
             # This is a simple heuristic whose constant for the
             # comparison has been chosen based on experiments.
             # parallel_on_X has less synchronization overhead than

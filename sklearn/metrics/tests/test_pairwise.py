@@ -155,12 +155,10 @@ def test_pairwise_distances(global_dtype):
     S2 = manhattan_distances(X_sparse.tobsr(), Y_sparse.tocoo())
     assert_allclose(S, S2)
 
-    # pairwise_distances must preserves dtypes for the manhattan distance metric
     assert S.dtype == S2.dtype == global_dtype
 
     S2 = manhattan_distances(X, Y)
     assert_allclose(S, S2)
-    # manhattan_distances must preserves dtypes
     assert S.dtype == S2.dtype == global_dtype
 
     # Test with scipy.spatial.distance metric, with a kwd
@@ -778,6 +776,16 @@ def test_euclidean_distances_with_norms(global_dtype, y_array_constr):
     assert_allclose(D2, D1)
     assert_allclose(D3, D1)
     assert_allclose(D4, D1)
+
+    # check we get the wrong answer with wrong {X,Y}_norm_squared
+    wrong_D = euclidean_distances(
+        X,
+        Y,
+        X_norm_squared=np.zeros_like(X_norm_sq),
+        Y_norm_squared=np.zeros_like(Y_norm_sq),
+    )
+    with pytest.raises(AssertionError):
+        assert_allclose(wrong_D, D1)
 
 
 def test_euclidean_distances_norm_shapes():

@@ -2020,7 +2020,9 @@ def pairwise_distances(
             % (metric, _VALID_METRICS)
         )
 
-    if PairwiseDistances.is_usable_for(X, X if Y is None else Y, metric=metric):
+    if PairwiseDistances.is_usable_for(
+        X, X if Y is None else Y, metric=metric, metric_kwargs=kwds
+    ):
         # This is an adaptor for one "sqeuclidean" specification.
         # For this backend, we can directly use "sqeuclidean".
         if kwds.get("squared", False) and metric == "euclidean":

@@ -7,6 +7,7 @@ from typing import List
 from scipy.sparse import isspmatrix_csr
 
 from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
+from ...utils._openmp_helpers import _openmp_effective_n_threads
 
 from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
 from ._argkmin import (
@@ -181,8 +182,10 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
 
     This class only computes the pairwise distances matrix without
     applying any reduction on it. It shares most of the underlying
-    code infrastructure with reducing variants to leverage
-    cache-aware chunking and multi-thread parallelism.
+    code infrastructure with reducing variants to leverage multi-thread
+    parallelism. However contrary to the reducing variants, no chunking
+    is applied to allow for contiguous write access to the final distance
+    array that is not expected to fit in the CPU cache in general.
 
     This class is not meant to be instantiated, one should only use
     its :meth:`compute` classmethod which handles allocation and
@@ -190,9 +193,27 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
     """
 
     @classmethod
-    def is_usable_for(cls, X, Y, metric) -> bool:
+    def is_usable_for(cls, X, Y, metric, metric_kwargs=None) -> bool:
+
+        effective_n_threads = _openmp_effective_n_threads()
+
+        def is_euclidean(metric, metric_kwargs):
+            metric_kwargs = metric_kwargs or dict()
+            euclidean_metrics = [
+                "euclidean",
+                "sqeuclidean",
+                "l2",
+            ]
+            return metric in euclidean_metrics or (
+                metric == "minkowski" and metric_kwargs.get("p") == 2
+            )
+
         Y = X if Y is None else Y
-        return metric != "sqeuclidean" and super().is_usable_for(X, Y, metric)
+        return (
+            not is_euclidean(metric, metric_kwargs)
+            and super().is_usable_for(X, Y, metric)
+            and effective_n_threads != 1
+        )
 
     @classmethod
     def compute(
@@ -219,29 +240,24 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
             For a list of available metrics, see the documentation of
             :class:`~sklearn.metrics.DistanceMetric`.
 
-        chunk_size : int, default=None,
-            The number of vectors per chunk. If None (default) looks-up in
-            scikit-learn configuration for `pairwise_dist_chunk_size`,
-            and use 256 if it is not set.
-
         metric_kwargs : dict, default=None
             Keyword arguments to pass to specified metric function.
 
         strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
-            The chunking strategy defining which dataset parallelization are made on.
+            The strategy defining which dataset parallelization are made on.
 
             For both strategies the computations happens with two nested loops,
-            respectively on chunks of X and chunks of Y.
+            respectively on rows of X and rows of Y.
             Strategies differs on which loop (outer or inner) is made to run
             in parallel with the Cython `prange` construct:
 
-              - 'parallel_on_X' dispatches chunks of X uniformly on threads.
-                Each thread then iterates on all the chunks of Y. This strategy is
+              - 'parallel_on_X' dispatches rows of X uniformly on threads.
+                Each thread then iterates on all the rows of Y. This strategy is
                 embarrassingly parallel and comes with no datastructures
                 synchronisation.
 
-              - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
-                Each thread processes all the chunks of X in turn. This strategy is
+              - 'parallel_on_Y' dispatches rows of Y uniformly on threads.
+                Each thread processes all the rows of X in turn. This strategy is
                 a sequence of embarrassingly parallel subtasks (the inner loop on Y
                 chunks) with intermediate datastructures synchronisation at each
                 iteration of the sequential outer loop on X chunks.
@@ -267,7 +283,7 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
         :class:`PairwiseDistances`.
 
         All temporarily allocated datastructures necessary for the concrete
-        implementation are therefore freed when this classmethod returns.
+        implementations are therefore freed when this classmethod returns.
 
         This allows entirely decoupling the API entirely from the
         implementation details whilst maintaining RAII.
@@ -342,11 +358,6 @@ class ArgKmin(BaseDistancesReductionDispatcher):
             The distance metric to use for argkmin.
             For a list of available metrics, see the documentation of
             :class:`~sklearn.metrics.DistanceMetric`.
-
-        chunk_size : int, default=None,
-            The number of vectors per chunk. If None (default) looks-up in
-            scikit-learn configuration for `pairwise_dist_chunk_size`,
-            and use 256 if it is not set.
 
         metric_kwargs : dict, default=None
             Keyword arguments to pass to specified metric function.
@@ -513,7 +524,9 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
                 'parallel_on_X' and 'parallel_on_Y': when `X.shape[0]` is large enough,
                 'parallel_on_X' is usually the most efficient strategy.
                 When `X.shape[0]` is small but `Y.shape[0]` is large, 'parallel_on_Y'
-                brings more opportunity for parallelism and is therefore more efficient.
+                brings more opportunity for parallelism and is therefore more efficient
+                despite the synchronization step at each iteration of the outer loop
+                on chunks of `X`.
 
               - None (default) looks-up in scikit-learn configuration for
                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
