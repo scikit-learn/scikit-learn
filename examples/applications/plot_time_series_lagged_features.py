@@ -43,47 +43,12 @@ summary = (
 summary
 
 # %%
-# Taking a look at the total count of rented bikes for the first
-# week in our dataset.
+# Let us look at the count of the seasons `fall`, `spring`, `summer`
+# and `winter` present in the dataset to confirm they are balanced.
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-bike_count = df["count"]
-bike_count[: 7 * 24].plot(figsize=(15, 6))
-_ = plt.title("First week of bike rental count data")
-
-# %%
-# Next, let us look at the fraction of the rented fleet vs the number
-# number of hours.
-fig, ax = plt.subplots(figsize=(12, 4))
-bike_count.hist(bins=30, ax=ax)
-_ = ax.set(
-    xlabel="Fraction of rented fleet demand",
-    ylabel="Number of hours",
-)
-
-# %%
-# Let us look at the count of the seasons `fall`, `spring`, `summer`
-# and `winter` present in the dataset.
-plt.figure(figsize=(15, 10))
-ax = sns.countplot(data=df, x="season")
-
-bbox_args = dict(boxstyle="round", fc="0.9")
-for p in ax.patches:
-    ax.annotate(
-        "{:.0f}".format(p.get_height()),
-        (p.get_x() + 0.3, p.get_height() + 75),
-        color="black",
-        bbox=bbox_args,
-        fontsize=15,
-    )
-
-plt.title("Count for Season", fontsize=20)
-plt.xlabel("Season", fontsize=15)
-plt.ylabel("Count", fontsize=15)
-plt.xticks(fontsize=10)
-plt.yticks(fontsize=10)
-plt.show()
+df["season"].value_counts()
 
 # %%
 # To check for outliers in the features of the dataset we create box-plots
@@ -386,6 +351,8 @@ _ = ax.legend()
 # %%
 # Looking at the performance of non-linear regression models vs
 # perfect models:
+from sklearn.metrics import PredictionErrorDisplay
+
 fig, axes = plt.subplots(ncols=3, figsize=(15, 6), sharey=True)
 fig.suptitle("Non-linear regression models")
 predictions = [
@@ -399,15 +366,15 @@ labels = [
     "95th percentile",
 ]
 for ax, pred, label in zip(axes, predictions, labels):
-    ax.scatter(pred, y_test.values, alpha=0.3, label=label)
-    ax.plot([0, y.max()], [0, y.max()], "--", label="Perfect model")
-    ax.set(
-        xlim=(0, y.max()),
-        ylim=(0, y.max()),
-        xlabel="Predicted demand",
-        ylabel="True demand",
+    PredictionErrorDisplay.from_predictions(
+        y_true=y_test.values,
+        y_pred=pred,
+        kind="residual_vs_predicted",
+        scatter_kwargs={"alpha": 0.3},
+        ax=ax,
     )
-    ax.legend()
+    ax.set(xlabel="Predicted demand", ylabel="True demand")
+    ax.legend(["Perfect model", label])
 
 plt.show()
 
@@ -421,5 +388,5 @@ plt.show()
 # gives a better Mean Average Percentage Error (MAPE) rate than the naive
 # method. We also analyzed the predictive uncertainty of our model via
 # Quantile Regression. Predictions based on the 5th, 50th and 95th
-# percentile using `loss="quantile"` provide us with a better understanding
-# of the forecasts made by our time series regression model.
+# percentile using `loss="quantile"` provide us with a quantitative estimate
+# of the uncertainty of the forecasts made by our time series regression model.
