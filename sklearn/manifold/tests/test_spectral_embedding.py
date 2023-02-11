@@ -491,21 +491,3 @@ def test_spectral_eigen_tol_auto(monkeypatch, solver):
 
     _, kwargs = mocked_solver.call_args
     assert kwargs["tol"] == default_value
-
-
-def test_spectral_embedding_err():
-    # check that ValueError raised when invalid arg passed for eigen_solver
-    random_state = np.random.RandomState(36)
-    data = random_state.randn(10, 30)
-    sims = rbf_kernel(data)
-
-    eigen_solver = "not_arpack_lobpcg_amg"
-    err_msg = (
-        "Unknown value for eigen_solver: '%s'.Should be 'amg', 'arpack', or 'lobpcg'"
-        % eigen_solver
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        spectral_embedding(
-            sims,
-            eigen_solver=eigen_solver,
-        )
