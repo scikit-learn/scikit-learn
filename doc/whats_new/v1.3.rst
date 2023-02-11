@@ -155,6 +155,16 @@ Changelog
 - |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
   :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Efficiency| :func:`pairwise.pairwise_distances` performances has been improved
+  when OpenMP runs with n_threads > 1.
+  :pr:`25561` by :user:`Julien Jerphanion <jjerphan>` and
+  :user:`Vincent Maladiere <Vincent-Maladiere>`.
+
+- |Feature| :func:`pairwise.pairwise_distances` now support CSR-CSR, Dense-CSR and
+  CSR-Dense computations.
+  :pr:`25561` by :user:`Julien Jerphanion <jjerphan>` and
+  :user:`Vincent Maladiere <Vincent-Maladiere>`.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
