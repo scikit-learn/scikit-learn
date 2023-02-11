@@ -100,7 +100,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     See Also
     --------
     OrdinalEncoder : Performs an ordinal (integer) encoding of the categorical features.
-    OneHotEncoder : Performs a one-hot encoding of categorical features.
+        Contrary to TargetEncoder, this encoding is not supervised. Treating the
+        resulting encoding as a numerical features therefore lead arbitrarily
+        ordered values and therefore typically lead to lower predictive performance
+        when used as preprocessing for a classifier or regressor.
+    OneHotEncoder : Performs a one-hot encoding of categorical features. This
+        unsupervised encoding is better suited for low cardinality categorical
+        variables as it generate one new feature per unique category.
 
     References
     ----------

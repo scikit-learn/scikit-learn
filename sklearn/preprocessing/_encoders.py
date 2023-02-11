@@ -1184,8 +1184,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     See Also
     --------
-    OneHotEncoder : Performs a one-hot encoding of categorical features.
-    TargetEncoder : Encodes categorical features using the target.
+    OneHotEncoder : Performs a one-hot encoding of categorical features. This encoding
+        is suitable for low to medium cardinality categorical variables, both in
+        supervised and unsupervised settings.
+    TargetEncoder : Encodes categorical features using supervised signal
+        in a classification or regression pipeline. This encoding is typically
+        suitable for high cardinality categorical variables.
     LabelEncoder : Encodes target labels with values between 0 and
         ``n_classes-1``.
 
