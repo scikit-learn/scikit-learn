@@ -136,7 +136,8 @@ have the same interface; we'll show an example of using the KD Tree here:
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
 for more information on the options available for nearest neighbors searches,
 including specification of query strategies, distance metrics, etc. For a list
-of valid metrics use :meth:`KDTree.valid_metric` and :meth:`BallTree.valid_metric`:
+of valid metrics use :meth:`KDTree.valid_metrics` and :meth:`BallTree.valid_metrics`:
+
     >>> from sklearn.neighbors import KDTree, BallTree
     >>> KDTree.valid_metrics())
     ['euclidean', 'l2', 'minkowski', 'p', 'manhattan', 'cityblock', 'l1', 'chebyshev', 'infinity']
@@ -145,6 +146,7 @@ of valid metrics use :meth:`KDTree.valid_metric` and :meth:`BallTree.valid_metri
     'seuclidean', 'mahalanobis', 'wminkowski', 'hamming', 'canberra', 'braycurtis', 'matching',
     'jaccard', 'dice', 'kulsinski', 'rogerstanimoto', 'russellrao', 'sokalmichener', 'sokalsneath',
     'haversine', 'pyfunc']
+
 .. _classification:
 
 Nearest Neighbors Classification
