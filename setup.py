@@ -120,7 +120,6 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.utils._logistic_sigmoid",
     "sklearn.utils._openmp_helpers",
     "sklearn.utils._random",
-    "sklearn.utils._readonly_array_wrapper",
     "sklearn.utils._seq_dataset",
     "sklearn.utils._sorting",
     "sklearn.utils._typedefs",
