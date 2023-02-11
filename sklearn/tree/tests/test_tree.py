@@ -2418,4 +2418,10 @@ def test_tree_deserialization_from_read_only_buffer(tmpdir):
     clf.fit(X_small, y_small)
 
     joblib.dump(clf, pickle_path)
-    joblib.load(pickle_path, mmap_mode="r")
+    loaded_clf = joblib.load(pickle_path, mmap_mode="r")
+
+    assert_tree_equal(
+        loaded_clf.tree_,
+        clf.tree_,
+        "The trees of the original and loaded classifiers are not equal.",
+    )
