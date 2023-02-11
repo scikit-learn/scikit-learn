@@ -105,7 +105,7 @@ plt.show()
 # variable, one could intuitively use any regression model. However, we do
 # not have the usual `(X_train, y_train)` dataset. Instead, we just have
 # the `y_train` demand data sequentially organized by time.
-count = bike_count
+count = df["count"]
 lagged_df = pd.concat(
     [
         count,
