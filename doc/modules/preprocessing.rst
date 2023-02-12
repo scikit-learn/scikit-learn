@@ -872,24 +872,28 @@ For continuous targets, the formulation is similar to binary classification:
 where :math:`L_i` is the set of observations for which :math:`X=X_i` and
 :math:`n_i` is the cardinality of :math:`L_i`.
 
-A cross validation scheme is used in `fit_transform` to prevent the target from
-leaking and helps stop the machine learning model from over-fitting. Note that
-`fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because of the cross
-validation scheme used in `fit_transform`. In `fit_transform`, the training data
-is split into multiple folds and encodes each fold by using the encodings trained
-on the other folds. After cross validation is complete in `fit_transform`, the
-target encoder learns one final encoding on the whole training set. This final
-encoding is used to encode categories in `transform`. The following diagram
-shows the cross validation scheme in `fit_transform` with the default `cv=5`:
+A cross validation scheme is used in :meth:`~TargetEncoder.fit_transform` to
+prevent the target from leaking and helps stop the machine learning model from
+over-fitting. Note that `fit(X, y).transform(X)` does not equal
+`fit_transform(X, y)` because of the cross validation scheme used in
+:meth:`~TargetEncoder.fit_transform`. In :meth:`~TargetEncoder.fit_transform`,
+the training data is split into multiple folds and encodes each fold by using
+the encodings trained on the other folds. After cross validation is complete in
+:meth:`~TargetEncoder.fit_transform`, the target encoder learns one final
+encoding on the whole training set. This final encoding is used to encode
+categories in :meth:`~TargetEncoder.transform`. The following diagram shows the
+cross validation scheme in :meth:`~TargetEncoder.fit_transform` with the default
+`cv=5`:
 
 .. image:: ../images/target_encoder_cross_validation.svg
    :width: 600
    :align: center
 
-Note that the `fit` method itself does **not** use any cross validation schemes and
-learns one encoding on the entire training set, which is used to encode categories in
-`transform`. The one encoding in `fit` is the same as the final encoding learned in
-`fit_transform`.
+The :meth:`~TargetEncoder.fit` method does **not** use any cross validation
+schemes and learns one encoding on the entire training set, which is used to
+encode categories in :meth:`~TargetEncoder.transform`.
+:meth:`~TargetEncoder.fit`'s one encoding is the same as the final encoding
+learned in :meth:`~TargetEncoder.fit_transform`.
 
 .. topic:: Examples:
 
