@@ -41,7 +41,7 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import StrOptions, Options, validate_params
+from ..utils._param_validation import StrOptions, Options, Interval, validate_params
 from ..exceptions import UndefinedMetricWarning
 
 from ._base import _check_pos_label_consistency
@@ -2573,6 +2573,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     {
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
+        "eps": [StrOptions({"eps"}), Interval(Real, 0, 1, closed="neither")],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
         "labels": ["array-like", None],
@@ -2656,7 +2657,9 @@ def log_loss(
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616...
     """
-
+    y_pred = check_array(
+        y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+    )
     eps = np.finfo(np.asarray(y_pred).dtype).eps if eps == "auto" else eps
 
     check_consistent_length(y_pred, y_true, sample_weight)
