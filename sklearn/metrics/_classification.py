@@ -2573,7 +2573,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     {
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
-        "eps": [StrOptions({"eps"}), Interval(Real, 0, 1, closed="neither")],
+        "eps": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="neither")],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
         "labels": ["array-like", None],
