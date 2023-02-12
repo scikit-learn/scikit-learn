@@ -76,28 +76,6 @@ plt.subplot(224)
 create_boxplot("windspeed", "red")
 
 # %%
-# Exploring the hourly count of bikes over weekdays:
-plt.figure(figsize=(15, 10))
-sns.pointplot(x=df["hour"].astype(int), y=df["count"], hue=df["weekday"].astype(int))
-plt.title("Hourly Count for Weekdays", fontsize=20)
-plt.xlabel("Hour", fontsize=15)
-plt.ylabel("Count", fontsize=15)
-plt.xticks(fontsize=10)
-plt.yticks(fontsize=10)
-plt.show()
-
-# %%
-# Exploring the hourly count of bikes over different seasons:
-plt.figure(figsize=(15, 10))
-sns.pointplot(x=df["hour"].astype(int), y=df["count"], hue=df["season"])
-plt.title("Hourly Count for Seasons", fontsize=20)
-plt.xlabel("Hour", fontsize=15)
-plt.ylabel("Count", fontsize=15)
-plt.xticks(fontsize=10)
-plt.yticks(fontsize=10)
-plt.show()
-
-# %%
 # Generating Pandas-Engineered Lagged Features
 # --------------------------------------------
 # Let's consider the problem of predicting the demand at the
@@ -145,7 +123,12 @@ print("X shape: {}\ny shape: {}".format(X.shape, y.shape))
 # --------------------------------------------------------
 # Let's randomly split our tabularized dataset to train a gradient
 # boosting regression tree (GBRT) model and evaluate it using Mean
-# Absolute Percentage Error (MAPE).
+# Absolute Percentage Error (MAPE). If our model is aimed at forecasting
+# (i.e., predicting future data from past data), we should not use training
+# data that are ulterior to the testing data. In time series machine learning
+# the "i.i.d" (independent and identically distributed) assumption does not
+# hold true as the data points are not independent and have a temporal
+# relationship.
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import HistGradientBoostingRegressor
 
@@ -190,10 +173,11 @@ y_pred = model.predict(X_test)
 mean_absolute_percentage_error(y_test, y_pred)
 
 # %%
-# The error rate of this model is better than our naive shuffling
-# train-test split. This is quite expected but maybe the first split
-# is easier to predict (more regular) than the others. Let's assess this
-# variability of our error evaluation with proper cross-validation:
+# The generalization error measured via a shuffled trained test split
+# is too optimistic. The generalization via a time-based split is likely to
+# be more representative of the true performance of the regression model.
+# Let's assess this variability of our error evaluation with proper
+# cross-validation:
 from sklearn.model_selection import cross_val_score
 
 cv_mape_scores = -cross_val_score(
@@ -319,6 +303,7 @@ gbrt_percentile_95.fit(X_train, y_train)
 percentile_95_predictions = gbrt_percentile_95.predict(X_test)
 
 # %%
+# We can now take a look at the predictions made by the regression models:
 last_hours = slice(-96, None)
 fig, ax = plt.subplots(figsize=(15, 7))
 plt.title("Predictions by regression models")
@@ -349,6 +334,26 @@ ax.fill_between(
 _ = ax.legend()
 
 # %%
+# Here it's interesting to notice that the blue area between the 5% and 95%
+# percentile estimators has a width that varies with the time of the day:
+# - At night, the blue band is much narrower: the pair of models is quite
+#   certain that there will be a small number of bike rentals. And furthermore
+#   these seem correct in the sense that the actual demand stays in that blue
+#   band.
+# - During the day, the blue band is much wider: the uncertainty grows, probably
+#   because of the variability of the weather that can have a very large impact,
+#   especially on a week-end day.
+# - We can also see that during week-days, the commute pattern is still visible in
+#   the 5% and 95% estimations.
+# - Finally, it is expected that 10% of the time, the actual demand does not lie
+#   between the 5% and 95% percentile estimates. On this test span, the actual
+#   demand seems to be higher, especially during the rush ours. It might reveal that
+#   our 95% percentile estimator underestimates the demand peaks. This could be be
+#   quantitatively confirmed by computing empirical coverage numbers as done in
+#   the `calibration of confidence intervals
+#   <https://scikit-learn.org/stable/auto_examples/ensemble/plot_gradient_boosting \
+#   _quantile.html#calibration-of-the-confidence-interval>`_.
+#
 # Looking at the performance of non-linear regression models vs
 # perfect models:
 from sklearn.metrics import PredictionErrorDisplay
@@ -379,14 +384,21 @@ for ax, pred, label in zip(axes, predictions, labels):
 plt.show()
 
 # %%
-# Concluding Remarks
+# Conclusion
 # ------------------
 # Through this example we explored time series forecasting using lagged
 # features. We compared a naive regression (using the standardized
 # `train_test_split`) with a proper time series evaluation strategy using
-# `TimeSeriesSplit`. We observed that the model trained using `TimeSerieSplit`
-# gives a better Mean Average Percentage Error (MAPE) rate than the naive
-# method. We also analyzed the predictive uncertainty of our model via
-# Quantile Regression. Predictions based on the 5th, 50th and 95th
-# percentile using `loss="quantile"` provide us with a quantitative estimate
+# `TimeSeriesSplit`. We observed that the model trained using `train_test_split`
+# produce an overly optimistic Mean Average Percentage Error (MAPE). The
+# results produced from the time-based split better represent the performance
+# of our time-series regression model. We also analyzed the predictive uncertainty
+# of our model via Quantile Regression. Predictions based on the 5th, 50th and
+# 95th percentile using `loss="quantile"` provide us with a quantitative estimate
 # of the uncertainty of the forecasts made by our time series regression model.
+# Uncertainty estimation can also be performed using `mapie`, that provides an
+# implementation based on recent work on conformal prediction methods and
+# estimates both aleatoric and epistemic uncertainty at the same time. The
+# functionalities provided by `sktime` can be used to extend scikit-learn
+# estimators by making use of recursive time series forecasting, that enables
+# dynamic predictions of future values.
