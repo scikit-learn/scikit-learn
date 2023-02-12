@@ -336,6 +336,7 @@ _ = ax.legend()
 # %%
 # Here it's interesting to notice that the blue area between the 5% and 95%
 # percentile estimators has a width that varies with the time of the day:
+#
 # - At night, the blue band is much narrower: the pair of models is quite
 #   certain that there will be a small number of bike rentals. And furthermore
 #   these seem correct in the sense that the actual demand stays in that blue
@@ -398,7 +399,7 @@ plt.show()
 # of the uncertainty of the forecasts made by our time series regression model.
 # Uncertainty estimation can also be performed using `mapie`, that provides an
 # implementation based on recent work on conformal prediction methods and
-# estimates both aleatoric and epistemic uncertainty at the same time. The
-# functionalities provided by `sktime` can be used to extend scikit-learn
-# estimators by making use of recursive time series forecasting, that enables
-# dynamic predictions of future values.
+# estimates both aleatoric and epistemic uncertainty at the same time.
+# Furthermore, functionalities provided by `sktime` can be used to extend
+# scikit-learn estimators by making use of recursive time series forecasting,
+# that enables dynamic predictions of future values.
