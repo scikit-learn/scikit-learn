@@ -32,7 +32,6 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import MinMaxScaler, scale
 from scipy.sparse import csr_matrix
 
-from sklearn.utils._tags import _safe_tags
 from sklearn.utils._testing import ignore_warnings, set_random_state
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
@@ -994,12 +993,8 @@ def test_mlp_classifier_with_sample_and_class_weights(weighted_class):
 def check_class_weight_same_as_in_estimator_checks():
     """Conduct the same test as check_class_weight_classifiers in estimator_checks.py"""
     classifier_orig = MLPClassifier()
-    if _safe_tags(classifier_orig, key="binary_only"):
-        problems = [2]
-    else:
-        problems = [2, 3]
 
-    for n_centers in problems:
+    for n_centers in (2, 3):
         # create a very noisy dataset
         X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20)
         X_train, X_test, y_train, y_test = train_test_split(
@@ -1022,5 +1017,4 @@ def check_class_weight_same_as_in_estimator_checks():
         y_pred = classifier.predict(X_test)
         # XXX: Generally can use 0.89 here. On Windows, LinearSVC gets
         #      0.88 (Issue #9111)
-        if not _safe_tags(classifier_orig, key="poor_score"):
-            assert np.mean(y_pred == 0) > 0.87
+        assert np.mean(y_pred == 0) > 0.87
