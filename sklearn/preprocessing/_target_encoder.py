@@ -21,8 +21,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     Read more in the :ref:`User Guide <target_encoder>`.
 
     .. note::
-        `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because of the
-        use internal use of cross-validation in this estimator. See the
+        `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
+        cross-validation scheme is used in `fit_transform` for encoding. See the
         :ref:`User Guide <target_encoder>`. for details.
 
     .. versionadded:: 1.3
@@ -172,8 +172,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """Fit :class:`TargetEncoder` and transform X with the target encoding.
 
         .. note::
-            `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because of the
-            use internal use of cross-validation in this estimator. See the
+            `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
+            cross-validation scheme is used in `fit_transform` for encoding. See the
             :ref:`User Guide <target_encoder>`. for details.
 
         Parameters
@@ -224,8 +224,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """Transform X with the target encoding.
 
         .. note::
-            `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because of the
-            use internal use of cross-validation in this estimator. See the
+            `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
+            cross-validation scheme is used in `fit_transform` for encoding. See the
             :ref:`User Guide <target_encoder>`. for details.
 
         Parameters

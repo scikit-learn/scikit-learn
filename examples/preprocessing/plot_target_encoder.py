@@ -11,8 +11,8 @@ for handling categorical features: :class:`TargetEncoder`,
 :class:`OrdinalEncoder`, :class:`OneHotEncoder` and dropping the category.
 
 .. note::
-    `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because of the use
-    internal use of cross-validation in this estimator. See the
+    `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
+    cross-validation scheme is used in `fit_transform` for encoding. See the
     :ref:`User Guide <target_encoder>`. for details.
 """
 
