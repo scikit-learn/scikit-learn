@@ -32,6 +32,7 @@ SGD implementation
 WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
 """
 
+from cython cimport floating
 import numpy as np
 from time import time
 
@@ -389,6 +390,110 @@ cdef class SquaredEpsilonInsensitive(Regression):
 
     def __reduce__(self):
         return SquaredEpsilonInsensitive, (self.epsilon,)
+
+
+ctypedef fused DatasetType:
+    SequentialDataset32
+    SequentialDataset64
+
+
+def _plain_sgd(
+    const floating[::1] weights,
+    double intercept,
+    const floating[::1] average_weights,
+    double average_intercept,
+    LossFunction loss,
+    int penalty_type,
+    double alpha,
+    double C,
+    double l1_ratio,
+    DatasetType dataset,
+    const unsigned char[::1] validation_mask,
+    bint early_stopping,
+    validation_score_cb,
+    int n_iter_no_change,
+    unsigned int max_iter,
+    double tol,
+    int fit_intercept,
+    int verbose,
+    bint shuffle,
+    cnp.uint32_t seed,
+    double weight_pos,
+    double weight_neg,
+    int learning_rate,
+    double eta0,
+    double power_t,
+    bint one_class,
+    double t=1.0,
+    double intercept_decay=1.0,
+    int average=0,
+):
+    """SGD for generic loss functions and penalties with optional averaging"""
+    if floating is float:
+        return _plain_sgd32(
+            weights=weights,
+            intercept=intercept,
+            average_weights=average_weights,
+            average_intercept=average_intercept,
+            loss=loss,
+            penalty_type=penalty_type,
+            alpha=alpha,
+            C=C,
+            l1_ratio=l1_ratio,
+            dataset=dataset,
+            validation_mask=validation_mask,
+            early_stopping=early_stopping,
+            validation_score_cb=validation_score_cb,
+            n_iter_no_change=n_iter_no_change,
+            max_iter=max_iter,
+            tol=tol,
+            fit_intercept=fit_intercept,
+            verbose=verbose,
+            shuffle=shuffle,
+            seed=seed,
+            weight_pos=weight_pos,
+            weight_neg=weight_neg,
+            learning_rate=learning_rate,
+            eta0=eta0,
+            power_t=power_t,
+            one_class=one_class,
+            t=t,
+            intercept_decay=intercept_decay,
+            average=average,
+        )
+    else:
+        return _plain_sgd64(
+            weights=weights,
+            intercept=intercept,
+            average_weights=average_weights,
+            average_intercept=average_intercept,
+            loss=loss,
+            penalty_type=penalty_type,
+            alpha=alpha,
+            C=C,
+            l1_ratio=l1_ratio,
+            dataset=dataset,
+            validation_mask=validation_mask,
+            early_stopping=early_stopping,
+            validation_score_cb=validation_score_cb,
+            n_iter_no_change=n_iter_no_change,
+            max_iter=max_iter,
+            tol=tol,
+            fit_intercept=fit_intercept,
+            verbose=verbose,
+            shuffle=shuffle,
+            seed=seed,
+            weight_pos=weight_pos,
+            weight_neg=weight_neg,
+            learning_rate=learning_rate,
+            eta0=eta0,
+            power_t=power_t,
+            one_class=one_class,
+            t=t,
+            intercept_decay=intercept_decay,
+            average=average,
+        )
+
 
 {{for name_suffix, c_type, np_type in dtypes}}
 

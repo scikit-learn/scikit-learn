@@ -28,7 +28,7 @@ from ..utils.parallel import delayed, Parallel
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
-from ._sgd_fast import _plain_sgd32, _plain_sgd64
+from ._sgd_fast import _plain_sgd
 from ..utils import compute_class_weight
 from ._sgd_fast import Hinge
 from ._sgd_fast import SquaredHinge
@@ -451,7 +451,6 @@ def fit_binary(
 
     tol = est.tol if est.tol is not None else -np.inf
 
-    _plain_sgd = _get_plain_sgd_function(x_dtype=X.dtype)
     coef, intercept, average_coef, average_intercept, n_iter_ = _plain_sgd(
         coef,
         intercept,
@@ -491,10 +490,6 @@ def fit_binary(
             est._average_intercept[i] = average_intercept
 
     return coef, intercept, n_iter_
-
-
-def _get_plain_sgd_function(x_dtype):
-    return _plain_sgd64 if x_dtype == np.float64 else _plain_sgd32
 
 
 class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
@@ -1688,7 +1683,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             average_coef = None  # Not used
             average_intercept = [0]  # Not used
 
-        _plain_sgd = _get_plain_sgd_function(x_dtype=X.dtype)
         coef, intercept, average_coef, average_intercept, self.n_iter_ = _plain_sgd(
             coef,
             intercept[0],
@@ -2261,7 +2255,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             average_coef = None  # Not used
             average_intercept = [0]  # Not used
 
-        _plain_sgd = _get_plain_sgd_function(x_dtype=X.dtype)
         coef, intercept, average_coef, average_intercept, self.n_iter_ = _plain_sgd(
             coef,
             intercept[0],
