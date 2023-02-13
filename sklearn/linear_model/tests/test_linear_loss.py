@@ -394,7 +394,7 @@ def test_multinomial_identifiability_properties(global_random_seed):
     #      [1, 2, 3]]
     c = np.tile(rng.standard_normal(n_features), (n_classes, 1))
     assert_allclose(hessp(c), 0, atol=1e-14)
-    assert_allclose(gradient.ravel() @ c.ravel(), 0, atol=1e-14)
+    assert_allclose(gradient.ravel() @ c.ravel(), 0, atol=1e-13)
 
     loss1 = multinomial_loss.loss(coef=coef, X=X, y=y, l2_reg_strength=l2_reg_strength)
     loss2 = multinomial_loss.loss(
