@@ -4,6 +4,9 @@ on:
   issues:
     types: unassigned
 
+permissions:
+  issues: write
+
 jobs:
   one:
     runs-on: ubuntu-latest

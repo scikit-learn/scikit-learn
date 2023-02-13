@@ -1,5 +1,9 @@
 name: CircleCI artifacts redirector
 on: [status]
+
+permissions:
+  statuses: write
+
 jobs:
   circleci_artifacts_redirector_job:
     runs-on: ubuntu-latest
