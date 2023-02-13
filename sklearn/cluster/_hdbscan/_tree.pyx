@@ -2,26 +2,28 @@
 # Authors: Leland McInnes
 # License: 3-clause BSD
 
-import numpy as np
 
-cimport numpy as np
+cimport numpy as cnp
 
 import cython
+import numpy as np
 
 
-cdef np.double_t INFTY = np.inf
+cdef cnp.double_t INFTY = np.inf
 
 
-cdef list bfs_from_hierarchy(np.ndarray[np.double_t, ndim=2] hierarchy,
-                             np.intp_t bfs_root):
+cdef list bfs_from_hierarchy(
+    cnp.ndarray[cnp.double_t, ndim=2] hierarchy,
+    cnp.intp_t bfs_root
+):
     """
     Perform a breadth first search on a tree in scipy hclust format.
     """
 
     cdef list to_process
-    cdef np.intp_t max_node
-    cdef np.intp_t num_points
-    cdef np.intp_t dim
+    cdef cnp.intp_t max_node
+    cdef cnp.intp_t num_points
+    cdef cnp.intp_t dim
 
     dim = hierarchy.shape[0]
     max_node = 2 * dim
@@ -41,8 +43,8 @@ cdef list bfs_from_hierarchy(np.ndarray[np.double_t, ndim=2] hierarchy,
     return result
 
 
-cpdef np.ndarray condense_tree(np.ndarray[np.double_t, ndim=2] hierarchy,
-                               np.intp_t min_cluster_size=10):
+cpdef cnp.ndarray condense_tree(cnp.ndarray[cnp.double_t, ndim=2] hierarchy,
+                               cnp.intp_t min_cluster_size=10):
     """Condense a tree according to a minimum cluster size. This is akin
     to the runt pruning procedure of Stuetzle. The result is a much simpler
     tree that is easier to visualize. We include extra information on the
@@ -65,23 +67,23 @@ cpdef np.ndarray condense_tree(np.ndarray[np.double_t, ndim=2] hierarchy,
         and child_size in each row providing a tree structure.
     """
 
-    cdef np.intp_t root
-    cdef np.intp_t num_points
-    cdef np.intp_t next_label
+    cdef cnp.intp_t root
+    cdef cnp.intp_t num_points
+    cdef cnp.intp_t next_label
     cdef list node_list
     cdef list result_list
 
-    cdef np.ndarray[np.intp_t, ndim=1] relabel
-    cdef np.ndarray[np.int_t, ndim=1] ignore
-    cdef np.ndarray[np.double_t, ndim=1] children
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] relabel
+    cdef cnp.ndarray[cnp.int_t, ndim=1] ignore
+    cdef cnp.ndarray[cnp.double_t, ndim=1] children
 
-    cdef np.intp_t node
-    cdef np.intp_t sub_node
-    cdef np.intp_t left
-    cdef np.intp_t right
+    cdef cnp.intp_t node
+    cdef cnp.intp_t sub_node
+    cdef cnp.intp_t left
+    cdef cnp.intp_t right
     cdef double lambda_value
-    cdef np.intp_t left_count
-    cdef np.intp_t right_count
+    cdef cnp.intp_t left_count
+    cdef cnp.intp_t right_count
 
     root = 2 * hierarchy.shape[0]
     num_points = root // 2 + 1
@@ -99,20 +101,20 @@ cpdef np.ndarray condense_tree(np.ndarray[np.double_t, ndim=2] hierarchy,
             continue
 
         children = hierarchy[node - num_points]
-        left = <np.intp_t> children[0]
-        right = <np.intp_t> children[1]
+        left = <cnp.intp_t> children[0]
+        right = <cnp.intp_t> children[1]
         if children[2] > 0.0:
             lambda_value = 1.0 / children[2]
         else:
             lambda_value = INFTY
 
         if left >= num_points:
-            left_count = <np.intp_t> hierarchy[left - num_points][3]
+            left_count = <cnp.intp_t> hierarchy[left - num_points][3]
         else:
             left_count = 1
 
         if right >= num_points:
-            right_count = <np.intp_t> hierarchy[right - num_points][3]
+            right_count = <cnp.intp_t> hierarchy[right - num_points][3]
         else:
             right_count = 1
 
@@ -162,31 +164,31 @@ cpdef np.ndarray condense_tree(np.ndarray[np.double_t, ndim=2] hierarchy,
                                         ('child_size', np.intp)])
 
 
-cpdef dict compute_stability(np.ndarray condensed_tree):
+cpdef dict compute_stability(cnp.ndarray condensed_tree):
 
-    cdef np.ndarray[np.double_t, ndim=1] result_arr
-    cdef np.ndarray sorted_child_data
-    cdef np.ndarray[np.intp_t, ndim=1] sorted_children
-    cdef np.ndarray[np.double_t, ndim=1] sorted_lambdas
+    cdef cnp.ndarray[cnp.double_t, ndim=1] result_arr
+    cdef cnp.ndarray sorted_child_data
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] sorted_children
+    cdef cnp.ndarray[cnp.double_t, ndim=1] sorted_lambdas
 
-    cdef np.ndarray[np.intp_t, ndim=1] parents
-    cdef np.ndarray[np.intp_t, ndim=1] sizes
-    cdef np.ndarray[np.double_t, ndim=1] lambdas
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] parents
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] sizes
+    cdef cnp.ndarray[cnp.double_t, ndim=1] lambdas
 
-    cdef np.intp_t child
-    cdef np.intp_t parent
-    cdef np.intp_t child_size
-    cdef np.intp_t result_index
-    cdef np.intp_t current_child
-    cdef np.float64_t lambda_
-    cdef np.float64_t min_lambda
+    cdef cnp.intp_t child
+    cdef cnp.intp_t parent
+    cdef cnp.intp_t child_size
+    cdef cnp.intp_t result_index
+    cdef cnp.intp_t current_child
+    cdef cnp.float64_t lambda_
+    cdef cnp.float64_t min_lambda
 
-    cdef np.ndarray[np.double_t, ndim=1] births_arr
-    cdef np.double_t *births
+    cdef cnp.ndarray[cnp.double_t, ndim=1] births_arr
+    cdef cnp.double_t *births
 
-    cdef np.intp_t largest_child = condensed_tree['child'].max()
-    cdef np.intp_t smallest_cluster = condensed_tree['parent'].min()
-    cdef np.intp_t num_clusters = (condensed_tree['parent'].max() -
+    cdef cnp.intp_t largest_child = condensed_tree['child'].max()
+    cdef cnp.intp_t smallest_cluster = condensed_tree['parent'].min()
+    cdef cnp.intp_t num_clusters = (condensed_tree['parent'].max() -
                                    smallest_cluster + 1)
 
     if largest_child < smallest_cluster:
@@ -195,7 +197,7 @@ cpdef dict compute_stability(np.ndarray condensed_tree):
     sorted_child_data = np.sort(condensed_tree[['child', 'lambda_val']],
                                 axis=0)
     births_arr = np.nan * np.ones(largest_child + 1, dtype=np.double)
-    births = (<np.double_t *> births_arr.data)
+    births = (<cnp.double_t *> births_arr.data)
     sorted_children = sorted_child_data['child'].copy()
     sorted_lambdas = sorted_child_data['lambda_val'].copy()
 
@@ -207,7 +209,7 @@ cpdef dict compute_stability(np.ndarray condensed_tree):
     min_lambda = 0
 
     for row in range(sorted_child_data.shape[0]):
-        child = <np.intp_t> sorted_children[row]
+        child = <cnp.intp_t> sorted_children[row]
         lambda_ = sorted_lambdas[row]
 
         if child == current_child:
@@ -242,10 +244,10 @@ cpdef dict compute_stability(np.ndarray condensed_tree):
     return dict(result_pre_dict)
 
 
-cdef list bfs_from_cluster_tree(np.ndarray tree, np.intp_t bfs_root):
+cdef list bfs_from_cluster_tree(cnp.ndarray tree, cnp.intp_t bfs_root):
 
     cdef list result
-    cdef np.ndarray[np.intp_t, ndim=1] to_process
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] to_process
 
     result = []
     to_process = np.array([bfs_root], dtype=np.intp)
@@ -257,25 +259,25 @@ cdef list bfs_from_cluster_tree(np.ndarray tree, np.intp_t bfs_root):
     return result
 
 
-cdef max_lambdas(np.ndarray tree):
+cdef max_lambdas(cnp.ndarray tree):
 
-    cdef np.ndarray sorted_parent_data
-    cdef np.ndarray[np.intp_t, ndim=1] sorted_parents
-    cdef np.ndarray[np.double_t, ndim=1] sorted_lambdas
+    cdef cnp.ndarray sorted_parent_data
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] sorted_parents
+    cdef cnp.ndarray[cnp.double_t, ndim=1] sorted_lambdas
 
-    cdef np.intp_t parent
-    cdef np.intp_t current_parent
-    cdef np.float64_t lambda_
-    cdef np.float64_t max_lambda
+    cdef cnp.intp_t parent
+    cdef cnp.intp_t current_parent
+    cdef cnp.float64_t lambda_
+    cdef cnp.float64_t max_lambda
 
-    cdef np.ndarray[np.double_t, ndim=1] deaths_arr
-    cdef np.double_t *deaths
+    cdef cnp.ndarray[cnp.double_t, ndim=1] deaths_arr
+    cdef cnp.double_t *deaths
 
-    cdef np.intp_t largest_parent = tree['parent'].max()
+    cdef cnp.intp_t largest_parent = tree['parent'].max()
 
     sorted_parent_data = np.sort(tree[['parent', 'lambda_val']], axis=0)
     deaths_arr = np.zeros(largest_parent + 1, dtype=np.double)
-    deaths = (<np.double_t *> deaths_arr.data)
+    deaths = (<cnp.double_t *> deaths_arr.data)
     sorted_parents = sorted_parent_data['parent']
     sorted_lambdas = sorted_parent_data['lambda_val']
 
@@ -283,7 +285,7 @@ cdef max_lambdas(np.ndarray tree):
     max_lambda = 0
 
     for row in range(sorted_parent_data.shape[0]):
-        parent = <np.intp_t> sorted_parents[row]
+        parent = <cnp.intp_t> sorted_parents[row]
         lambda_ = sorted_lambdas[row]
 
         if parent == current_parent:
@@ -304,20 +306,20 @@ cdef max_lambdas(np.ndarray tree):
 
 cdef class TreeUnionFind (object):
 
-    cdef np.ndarray _data_arr
-    cdef np.intp_t[:, ::1] _data
-    cdef np.ndarray is_component
+    cdef cnp.ndarray _data_arr
+    cdef cnp.intp_t[:, ::1] _data
+    cdef cnp.ndarray is_component
 
     def __init__(self, size):
         self._data_arr = np.zeros((size, 2), dtype=np.intp)
         self._data_arr.T[0] = np.arange(size)
-        self._data = (<np.intp_t[:size, :2:1]> (
-            <np.intp_t *> self._data_arr.data))
+        self._data = (<cnp.intp_t[:size, :2:1]> (
+            <cnp.intp_t *> self._data_arr.data))
         self.is_component = np.ones(size, dtype=bool)
 
-    cdef union_(self, np.intp_t x, np.intp_t y):
-        cdef np.intp_t x_root = self.find(x)
-        cdef np.intp_t y_root = self.find(y)
+    cdef union_(self, cnp.intp_t x, cnp.intp_t y):
+        cdef cnp.intp_t x_root = self.find(x)
+        cdef cnp.intp_t y_root = self.find(y)
 
         if self._data[x_root, 1] < self._data[y_root, 1]:
             self._data[x_root, 0] = y_root
@@ -329,20 +331,20 @@ cdef class TreeUnionFind (object):
 
         return
 
-    cdef find(self, np.intp_t x):
+    cdef find(self, cnp.intp_t x):
         if self._data[x, 0] != x:
             self._data[x, 0] = self.find(self._data[x, 0])
             self.is_component[x] = False
         return self._data[x, 0]
 
-    cdef np.ndarray[np.intp_t, ndim=1] components(self):
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] components(self):
         return self.is_component.nonzero()[0]
 
 
-cpdef np.ndarray[np.intp_t, ndim=1] labelling_at_cut(
-        np.ndarray linkage,
-        np.double_t cut,
-        np.intp_t min_cluster_size):
+cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
+        cnp.ndarray linkage,
+        cnp.double_t cut,
+        cnp.intp_t min_cluster_size):
     """Given a single linkage tree and a cut value, return the
     vector of cluster labels at that cut value. This is useful
     for Robust Single Linkage, and extracting DBSCAN results
@@ -367,30 +369,30 @@ cpdef np.ndarray[np.intp_t, ndim=1] labelling_at_cut(
         a label of -1 denotes a noise assignment.
     """
 
-    cdef np.intp_t root
-    cdef np.intp_t num_points
-    cdef np.ndarray[np.intp_t, ndim=1] result_arr
-    cdef np.ndarray[np.intp_t, ndim=1] unique_labels
-    cdef np.ndarray[np.intp_t, ndim=1] cluster_size
-    cdef np.intp_t *result
+    cdef cnp.intp_t root
+    cdef cnp.intp_t num_points
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] result_arr
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] unique_labels
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] cluster_size
+    cdef cnp.intp_t *result
     cdef TreeUnionFind union_find
-    cdef np.intp_t n
-    cdef np.intp_t cluster
-    cdef np.intp_t cluster_id
+    cdef cnp.intp_t n
+    cdef cnp.intp_t cluster
+    cdef cnp.intp_t cluster_id
 
     root = 2 * linkage.shape[0]
     num_points = root // 2 + 1
 
     result_arr = np.empty(num_points, dtype=np.intp)
-    result = (<np.intp_t *> result_arr.data)
+    result = (<cnp.intp_t *> result_arr.data)
 
-    union_find = TreeUnionFind(<np.intp_t> root + 1)
+    union_find = TreeUnionFind(<cnp.intp_t> root + 1)
 
     cluster = num_points
     for row in linkage:
         if row[2] < cut:
-            union_find.union_(<np.intp_t> row[0], cluster)
-            union_find.union_(<np.intp_t> row[1], cluster)
+            union_find.union_(<cnp.intp_t> row[0], cluster)
+            union_find.union_(<cnp.intp_t> row[1], cluster)
         cluster += 1
 
     cluster_size = np.zeros(cluster, dtype=np.intp)
@@ -416,24 +418,24 @@ cpdef np.ndarray[np.intp_t, ndim=1] labelling_at_cut(
     return result_arr
 
 
-cdef np.ndarray[np.intp_t, ndim=1] do_labelling(
-        np.ndarray tree,
+cdef cnp.ndarray[cnp.intp_t, ndim=1] do_labelling(
+        cnp.ndarray tree,
         set clusters,
         dict cluster_label_map,
-        np.intp_t allow_single_cluster,
-        np.double_t cluster_selection_epsilon):
+        cnp.intp_t allow_single_cluster,
+        cnp.double_t cluster_selection_epsilon):
 
-    cdef np.intp_t root_cluster
-    cdef np.ndarray[np.intp_t, ndim=1] result_arr
-    cdef np.ndarray[np.intp_t, ndim=1] parent_array
-    cdef np.ndarray[np.intp_t, ndim=1] child_array
-    cdef np.ndarray[np.double_t, ndim=1] lambda_array
-    cdef np.intp_t *result
+    cdef cnp.intp_t root_cluster
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] result_arr
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] parent_array
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] child_array
+    cdef cnp.ndarray[cnp.double_t, ndim=1] lambda_array
+    cdef cnp.intp_t *result
     cdef TreeUnionFind union_find
-    cdef np.intp_t parent
-    cdef np.intp_t child
-    cdef np.intp_t n
-    cdef np.intp_t cluster
+    cdef cnp.intp_t parent
+    cdef cnp.intp_t child
+    cdef cnp.intp_t n
+    cdef cnp.intp_t cluster
 
     child_array = tree['child']
     parent_array = tree['parent']
@@ -441,7 +443,7 @@ cdef np.ndarray[np.intp_t, ndim=1] do_labelling(
 
     root_cluster = parent_array.min()
     result_arr = np.empty(root_cluster, dtype=np.intp)
-    result = (<np.intp_t *> result_arr.data)
+    result = (<cnp.intp_t *> result_arr.data)
 
     union_find = TreeUnionFind(parent_array.max() + 1)
 
@@ -475,20 +477,20 @@ cdef np.ndarray[np.intp_t, ndim=1] do_labelling(
     return result_arr
 
 
-cdef get_probabilities(np.ndarray tree, dict cluster_map, np.ndarray labels):
+cdef get_probabilities(cnp.ndarray tree, dict cluster_map, cnp.ndarray labels):
 
-    cdef np.ndarray[np.double_t, ndim=1] result
-    cdef np.ndarray[np.double_t, ndim=1] deaths
-    cdef np.ndarray[np.double_t, ndim=1] lambda_array
-    cdef np.ndarray[np.intp_t, ndim=1] child_array
-    cdef np.ndarray[np.intp_t, ndim=1] parent_array
-    cdef np.intp_t root_cluster
-    cdef np.intp_t n
-    cdef np.intp_t point
-    cdef np.intp_t cluster_num
-    cdef np.intp_t cluster
-    cdef np.double_t max_lambda
-    cdef np.double_t lambda_
+    cdef cnp.ndarray[cnp.double_t, ndim=1] result
+    cdef cnp.ndarray[cnp.double_t, ndim=1] deaths
+    cdef cnp.ndarray[cnp.double_t, ndim=1] lambda_array
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] child_array
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] parent_array
+    cdef cnp.intp_t root_cluster
+    cdef cnp.intp_t n
+    cdef cnp.intp_t point
+    cdef cnp.intp_t cluster_num
+    cdef cnp.intp_t cluster
+    cdef cnp.double_t max_lambda
+    cdef cnp.double_t lambda_
 
     child_array = tree['child']
     parent_array = tree['parent']
@@ -519,7 +521,7 @@ cdef get_probabilities(np.ndarray tree, dict cluster_map, np.ndarray labels):
     return result
 
 
-cpdef list recurse_leaf_dfs(np.ndarray cluster_tree, np.intp_t current_node):
+cpdef list recurse_leaf_dfs(cnp.ndarray cluster_tree, cnp.intp_t current_node):
     children = cluster_tree[cluster_tree['parent'] == current_node]['child']
     if len(children) == 0:
         return [current_node,]
@@ -527,13 +529,13 @@ cpdef list recurse_leaf_dfs(np.ndarray cluster_tree, np.intp_t current_node):
         return sum([recurse_leaf_dfs(cluster_tree, child) for child in children], [])
 
 
-cpdef list get_cluster_tree_leaves(np.ndarray cluster_tree):
+cpdef list get_cluster_tree_leaves(cnp.ndarray cluster_tree):
     if cluster_tree.shape[0] == 0:
         return []
     root = cluster_tree['parent'].min()
     return recurse_leaf_dfs(cluster_tree, root)
 
-cpdef np.intp_t traverse_upwards(np.ndarray cluster_tree, np.double_t cluster_selection_epsilon, np.intp_t leaf, np.intp_t allow_single_cluster):
+cpdef cnp.intp_t traverse_upwards(cnp.ndarray cluster_tree, cnp.double_t cluster_selection_epsilon, cnp.intp_t leaf, cnp.intp_t allow_single_cluster):
 
     root = cluster_tree['parent'].min()
     parent = cluster_tree[cluster_tree['child'] == leaf]['parent']
@@ -549,7 +551,7 @@ cpdef np.intp_t traverse_upwards(np.ndarray cluster_tree, np.double_t cluster_se
     else:
         return traverse_upwards(cluster_tree, cluster_selection_epsilon, parent, allow_single_cluster)
 
-cpdef set epsilon_search(set leaves, np.ndarray cluster_tree, np.double_t cluster_selection_epsilon, np.intp_t allow_single_cluster):
+cpdef set epsilon_search(set leaves, cnp.ndarray cluster_tree, cnp.double_t cluster_selection_epsilon, cnp.intp_t allow_single_cluster):
 
     selected_clusters = list()
     processed = list()
@@ -570,7 +572,7 @@ cpdef set epsilon_search(set leaves, np.ndarray cluster_tree, np.double_t cluste
     return set(selected_clusters)
 
 @cython.wraparound(True)
-cpdef tuple get_clusters(np.ndarray tree, dict stability,
+cpdef tuple get_clusters(cnp.ndarray tree, dict stability,
                          cluster_selection_method='eom',
                          allow_single_cluster=False,
                          cluster_selection_epsilon=0.0,
@@ -616,17 +618,17 @@ cpdef tuple get_clusters(np.ndarray tree, dict stability,
         The cluster coherence strengths of each cluster.
     """
     cdef list node_list
-    cdef np.ndarray cluster_tree
-    cdef np.ndarray child_selection
+    cdef cnp.ndarray cluster_tree
+    cdef cnp.ndarray child_selection
     cdef dict is_cluster
     cdef dict cluster_sizes
     cdef float subtree_stability
-    cdef np.intp_t node
-    cdef np.intp_t sub_node
-    cdef np.intp_t cluster
-    cdef np.intp_t num_points
-    cdef np.ndarray labels
-    cdef np.double_t max_lambda
+    cdef cnp.intp_t node
+    cdef cnp.intp_t sub_node
+    cdef cnp.intp_t cluster
+    cdef cnp.intp_t num_points
+    cdef cnp.ndarray labels
+    cdef cnp.double_t max_lambda
 
     # Assume clusters are ordered by numeric id equivalent to
     # a topological sort of the tree; This is valid given the
