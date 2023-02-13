@@ -41,7 +41,8 @@ cdef inline cnp.int64_t _deg2_column(
     # This is a conservative upper bound for the maximum value before the
     # intermediate computation i**2 + 3*i overflows.
     # Corresponds to to i**2 + 3*i = maxint32
-    cdef cnp.int64_t MAX_SAFE_INDEX_DEG2 = <cnp.int64_t> sqrt(LONG_MAX) - 4
+    # i = sqrt(maxint32) - 4
+    cdef cnp.int64_t MAX_SAFE_INDEX_DEG2 = 46340
 
     if max(i, j) > MAX_SAFE_INDEX_DEG2 or i > LONG_MAX // n_features :
         # In this case, the Cython implementation
@@ -167,11 +168,10 @@ cpdef cnp.int64_t _calc_total_nnz(
     return total_nnz
 
 
-# TODO: `const`-qualify data, indices and indptr when Cython>=3.0 is released.
 cpdef void _csr_polynomial_expansion(
-    DATA_t[:] data,                 # IN READ-ONLY
-    INDEX_A_t[:] indices,           # IN READ-ONLY
-    INDEX_A_t[:] indptr,            # IN READ-ONLY
+    const DATA_t[:] data,                 # IN READ-ONLY
+    const INDEX_A_t[:] indices,           # IN READ-ONLY
+    const INDEX_A_t[:] indptr,            # IN READ-ONLY
     INDEX_A_t n_features,
     DATA_t[:] result_data,          # OUT
     INDEX_B_t[:] result_indices,    # OUT
