@@ -46,9 +46,9 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
     {{name_suffix}}bit implementation of ArgKminClassMode.
     """
     cdef:
-        const ITYPE_t[:] labels,
+        const ITYPE_t[:] class_membership,
         const ITYPE_t[:] unique_labels
-        DTYPE_t[:, :] label_weights
+        DTYPE_t[:, :] class_scores
         cpp_map[ITYPE_t, ITYPE_t] labels_to_index
         WeightingStrategy weight_type
 
@@ -59,14 +59,14 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
         Y,
         ITYPE_t k,
         weights,
-        labels,
+        class_membership,
         unique_labels,
         str metric="euclidean",
         chunk_size=None,
         dict metric_kwargs=None,
         str strategy=None,
     ):
-        """Compute the argkmin reduction with labels.
+        """Compute the argkmin reduction with class_membership.
 
         This classmethod is responsible for introspecting the arguments
         values to dispatch to the most appropriate implementation of
@@ -87,7 +87,7 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
             chunk_size=chunk_size,
             strategy=strategy,
             weights=weights,
-            labels=labels,
+            class_membership=class_membership,
             unique_labels=unique_labels,
         )
 
@@ -104,7 +104,7 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
     def __init__(
         self,
         DatasetsPair{{name_suffix}} datasets_pair,
-        const ITYPE_t[:] labels,
+        const ITYPE_t[:] class_membership,
         const ITYPE_t[:] unique_labels,
         chunk_size=None,
         strategy=None,
@@ -124,19 +124,19 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
             self.weight_type = WeightingStrategy.distance
         else:
             self.weight_type = WeightingStrategy.callable
-        self.labels = labels
+        self.class_membership = class_membership
 
         self.unique_labels = unique_labels
 
-        cdef ITYPE_t idx, label
-        # Map from set of unique labels to their indices in `label_weights`
+        cdef ITYPE_t idx, neighbor_class_idx
+        # Map from set of unique labels to their indices in `class_scores`
         # Buffer used in building a histogram for one-pass weighted mode
-        self.label_weights = np.zeros(
+        self.class_scores = np.zeros(
             (self.n_samples_X, unique_labels.shape[0]), dtype=DTYPE,
         )
 
     def _finalize_results(self):
-        probabilities = np.asarray(self.label_weights)
+        probabilities = np.asarray(self.class_scores)
         probabilities /= probabilities.sum(axis=1, keepdims=True)
         return probabilities
 
@@ -147,24 +147,24 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
         DTYPE_t* distances,
    ) nogil:
         cdef:
-            ITYPE_t y_idx, label, label_index, multi_output_index
-            DTYPE_t label_weight = 1
+            ITYPE_t neighbor_idx, neighbor_class_idx, label_index, multi_output_index
+            DTYPE_t score_incr = 1
             # TODO: Implement other WeightingStrategy values
             bint use_distance_weighting = (
                 self.weight_type == WeightingStrategy.distance
             )
 
         # Iterate through the sample k-nearest neighbours
-        for jdx in range(self.k):
-            # Absolute indice of the jdx-th Nearest Neighbors
+        for neighbor_rank in range(self.k):
+            # Absolute indice of the neighbor_rank-th Nearest Neighbors
             # in range [0, n_samples_Y)
             # TODO: inspect if it worth permuting this condition
             # and the for-loop above for improved branching.
             if use_distance_weighting:
-                label_weight = 1 / distances[jdx]
-            y_idx = indices[jdx]
-            label = self.labels[y_idx]
-            self.label_weights[sample_index][label] += label_weight
+                score_incr = 1 / distances[neighbor_rank]
+            neighbor_idx = indices[neighbor_rank]
+            neighbor_class_idx = self.class_membership[neighbor_idx]
+            self.class_scores[sample_index][neighbor_class_idx] += score_incr
         return
 
     cdef void _parallel_on_X_prange_iter_finalize(

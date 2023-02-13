@@ -23,10 +23,13 @@ from ..utils._param_validation import StrOptions
 from sklearn.neighbors._base import _check_precomputed
 
 
-def _adjusted_metric(metric, p=None):
-    if metric == "minkowski" and p == 2:
-        metric = "euclidean"
-    return metric
+def _adjusted_metric(metric, metric_kwargs, p=None):
+    metric_kwargs = metric_kwargs or {}
+    if metric == "minkowski":
+        metric_kwargs["p"] = p
+        if p == 2:
+            metric = "euclidean"
+    return metric, metric_kwargs
 
 
 class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
@@ -303,9 +306,13 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         if self.weights == "uniform":
             # TODO: systematize this mapping of metric for
             # PairwiseDistancesReductions.
-            metric = _adjusted_metric(self.metric, self.p)
+            metric, metric_kwargs = _adjusted_metric(
+                metric=self.metric, metric_kwargs=self.metric_params, p=self.p
+            )
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
+            else:
+                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
 
             if (
                 self._fit_method == "brute"
@@ -313,9 +320,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                 # TODO: Implement efficient multi-output solution
                 and not self.outputs_2d_
             ):
-                metric_kwargs = self.metric_params or {}
-                if metric == "minkowski":
-                    metric_kwargs["p"] = self.p
                 probabilities = ArgKminClassMode.compute(
                     X,
                     self._fit_X,

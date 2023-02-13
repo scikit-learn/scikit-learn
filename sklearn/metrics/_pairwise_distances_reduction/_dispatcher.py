@@ -532,8 +532,13 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
             The weights applied over the `labels` of `Y` when computing the
             weighted mode of the labels.
 
-        labels : ndarray
-            The labels of `Y` to be used in labeling `X`.
+        class_membership : ndarray
+            An array containing the index of the class membership of the
+            associated samples in `Y`. This is used in labeling `X`.
+
+        unique_classes : ndarray
+            An array containing all unique indices contained in the
+            corresponding `class_membership` array.
 
         metric : str, default='euclidean'
             The distance metric to use. For a list of available metrics, see
@@ -605,7 +610,7 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
                 Y=Y,
                 k=k,
                 weights=weights,
-                labels=np.array(labels, dtype=np.intp),
+                class_membership=np.array(labels, dtype=np.intp),
                 unique_labels=np.array(unique_labels, dtype=np.intp),
                 metric=metric,
                 chunk_size=chunk_size,
@@ -619,7 +624,7 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
                 Y=Y,
                 k=k,
                 weights=weights,
-                labels=np.array(labels, dtype=np.intp),
+                class_membership=np.array(labels, dtype=np.intp),
                 unique_labels=np.array(unique_labels, dtype=np.intp),
                 metric=metric,
                 chunk_size=chunk_size,
