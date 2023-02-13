@@ -44,7 +44,7 @@ def _append_expansion(X, to_stack, interaction_only, deg, n_features):
 
     # This only checks whether each block needs 64bit integers upon
     # expansion. We prefer to keep 32bit integers where we can,
-    # since currently SciPy's CSR construction downcasts when possible, 
+    # since currently SciPy's CSR construction downcasts when possible,
     # so we prefer to avoid an unnecessary cast. The dtype may still
     # change in the concatenation process if needed.
     # See: https://github.com/scipy/scipy/issues/16569

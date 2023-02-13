@@ -48,7 +48,7 @@ cdef inline cnp.int64_t _deg2_column(
     # The second condition checks to ensure the intermediate calculation
     # i * n_features doesn't overflow. This check is necessary since in
     # general i < n_features, and thus serves as a more conservative check.
-    if max(i, j) > MAX_SAFE_INDEX_DEG2 or i > LONG_MAX // n_features :
+    if max(i, j) > MAX_SAFE_INDEX_DEG2 or i > LONG_MAX // n_features:
         # In this case, the Cython implementation
         # would result in an integer overflow.
         # Here, we take advantage of `PyLong` for arbitrary precision.
