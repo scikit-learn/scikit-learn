@@ -2168,3 +2168,51 @@ def test_sgd_error_on_zero_validation_weight():
 def test_sgd_verbose(Estimator):
     """non-regression test for gh #25249"""
     Estimator(verbose=1).fit(X, Y)
+
+
+@pytest.mark.parametrize(
+    "sgd_class",
+    [
+        SGDClassifier,
+        SparseSGDClassifier,
+        SGDRegressor,
+        SparseSGDRegressor,
+        SGDOneClassSVM,
+        SparseSGDOneClassSVM,
+    ],
+)
+@pytest.mark.parametrize("data_type", (np.float32, np.float64))
+def test_sgd_dtype_match(sgd_class, data_type):
+    _X = X.astype(data_type)
+    _Y = np.array(Y, dtype=data_type)
+    sgd_model = sgd_class(random_state=42)
+    sgd_model.fit(_X, _Y)
+    assert sgd_model.coef_.dtype == data_type
+
+
+@pytest.mark.parametrize(
+    "sgd_class",
+    [
+        # SGDClassifier,
+        # SparseSGDClassifier,
+        # SGDRegressor,
+        # SparseSGDRegressor,
+        # SGDOneClassSVM,
+        SparseSGDOneClassSVM,
+    ],
+)
+def test_sgd_numerical_consistency(sgd_class):
+    random_state = 42
+    X_64 = X.astype(dtype=np.float64)
+    Y_64 = np.array(Y, dtype=np.float64)
+
+    X_32 = X.astype(dtype=np.float32)
+    Y_32 = np.array(Y, dtype=np.float32)
+
+    sgd_64 = sgd_class(random_state=random_state)
+    sgd_64.fit(X_64, Y_64)
+
+    sgd_32 = sgd_class(random_state=random_state)
+    sgd_32.fit(X_32, Y_32)
+
+    assert_allclose(sgd_64.coef_, sgd_32.coef_)
