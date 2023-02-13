@@ -153,6 +153,27 @@ Changelog
 - |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
   :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Enhancement| :class:`linear_model.LogisticRegression`,
+  :class:`linear_model.LogisticRegressionCV`, :class:`linear_model.GammaRegressor`,
+  :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor` got
+  a new solver `solver="newton-lsmr"`. This is a 2nd order (Newton) optimisation
+  routine that uses the iterative LSMR algorithm: To find the Newton direction in each
+  step, the 2nd order equation is cast as a least squares problem and solved
+  iteratively, therefore called iteratively reweighted least squares (IRLS), via LSMR.
+  Due to using LSMR, only matrix-vector multiplications are used and sparse matrices
+  are supported as well. Especially for multiclass problems it might be worth a try.
+  :pr:`25462` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Enhancement| :class:`linear_model.GammaRegressor`,
+  :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor`
+  as well as :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` can reach higher precision with the lbfgs solver, in particular when `tol` is set
+  to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
+  :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.metrics`
 ......................
 
