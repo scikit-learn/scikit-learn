@@ -205,12 +205,14 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
             # allocate intercept_ for multi-class
             if intercept_init is not None:
-                intercept_init = np.asarray(intercept_init, order="C")
+                intercept_init = np.asarray(
+                    intercept_init, order="C", dtype=input_dtype
+                )
                 if intercept_init.shape != (n_classes,):
                     raise ValueError("Provided intercept_init does not match dataset.")
                 self.intercept_ = intercept_init
             else:
-                self.intercept_ = np.zeros(n_classes, dtype=np.float64, order="C")
+                self.intercept_ = np.zeros(n_classes, dtype=input_dtype, order="C")
         else:
             # allocate coef_
             if coef_init is not None:
@@ -224,7 +226,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
             # allocate intercept_
             if intercept_init is not None:
-                intercept_init = np.asarray(intercept_init, dtype=np.float64)
+                intercept_init = np.asarray(intercept_init, dtype=input_dtype)
                 if intercept_init.shape != (1,) and intercept_init.shape != ():
                     raise ValueError("Provided intercept_init does not match dataset.")
                 if one_class:
@@ -237,9 +239,9 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                     )
             else:
                 if one_class:
-                    self.offset_ = np.zeros(1, dtype=np.float64, order="C")
+                    self.offset_ = np.zeros(1, dtype=input_dtype, order="C")
                 else:
-                    self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
+                    self.intercept_ = np.zeros(1, dtype=input_dtype, order="C")
 
         # initialize average parameters
         if self.average > 0:
@@ -253,7 +255,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 self._standard_intercept = self.intercept_
 
             self._average_intercept = np.zeros(
-                self._standard_intercept.shape, dtype=np.float64, order="C"
+                self._standard_intercept.shape, dtype=input_dtype, order="C"
             )
 
     def _make_validation_split(self, y, sample_mask):
@@ -1471,7 +1473,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             )
         if self.average > 0 and getattr(self, "_average_coef", None) is None:
             self._average_coef = np.zeros(n_features, dtype=X.dtype, order="C")
-            self._average_intercept = np.zeros(1, dtype=np.float64, order="C")
+            self._average_intercept = np.zeros(1, dtype=X.dtype, order="C")
 
         self._fit_regressor(
             X, y, alpha, C, loss, learning_rate, sample_weight, max_iter
@@ -2353,7 +2355,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         if self.average and getattr(self, "_average_coef", None) is None:
             self._average_coef = np.zeros(n_features, dtype=X.dtype, order="C")
-            self._average_intercept = np.zeros(1, dtype=np.float64, order="C")
+            self._average_intercept = np.zeros(1, dtype=X.dtype, order="C")
 
         self.loss_function_ = self._get_loss_function(loss)
         if not hasattr(self, "t_"):
