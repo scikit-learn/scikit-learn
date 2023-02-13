@@ -66,6 +66,11 @@ DEF ADAPTIVE = 4
 DEF PA1 = 5
 DEF PA2 = 6
 
+# Fused type for the Dataset
+ctypedef fused DatasetType:
+    SequentialDataset32
+    SequentialDataset64
+
 
 
 # ----------------------------------------
@@ -391,12 +396,6 @@ cdef class SquaredEpsilonInsensitive(Regression):
     def __reduce__(self):
         return SquaredEpsilonInsensitive, (self.epsilon,)
 
-
-ctypedef fused DatasetType:
-    SequentialDataset32
-    SequentialDataset64
-
-
 def _plain_sgd(
     const floating[::1] weights,
     double intercept,
@@ -493,7 +492,6 @@ def _plain_sgd(
             intercept_decay=intercept_decay,
             average=average,
         )
-
 
 {{for name_suffix, c_type, np_type in dtypes}}
 
