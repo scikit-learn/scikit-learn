@@ -14,6 +14,8 @@ import numpy as np
 from cython cimport floating
 from numpy.math cimport isnan
 
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+
 cnp.import_array()
 
 ctypedef fused integral:
@@ -27,13 +29,14 @@ def csr_row_norms(X):
     """Squared L2 norm of each row in CSR matrix X."""
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-    return _csr_row_norms(X.data, X.indices, X.indptr)
+        n_threads = _openmp_effective_n_threads()
+    return _sqeuclidean_row_norms_sparse(X.data, X.indptr, n_threads)
 
 
-def _csr_row_norms(
+def _sqeuclidean_row_norms_sparse(
     const floating[::1] X_data,
-    const integral[::1] X_indices,
     const integral[::1] X_indptr,
+    const integral[::1] n_threads,
 ):
     cdef:
         integral n_samples = X_indptr.shape[0] - 1
@@ -44,12 +47,11 @@ def _csr_row_norms(
 
     cdef floating[::1] norms = np.zeros(n_samples, dtype=dtype)
 
-    with nogil:
-        for i in range(n_samples):
-            for j in range(X_indptr[i], X_indptr[i + 1]):
-                norms[i] += X_data[j] * X_data[j]
+    for i in prange(n_samples, schedule='static', nogil=True, num_threads=n_threads):
+        for j in range(X_indptr[i], X_indptr[i + 1]):
+            squared_row_norms[i] += X_data[j] * X_data[j]
 
-    return np.asarray(norms)
+    return np.asarray(squared_row_norms)
 
 
 def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
