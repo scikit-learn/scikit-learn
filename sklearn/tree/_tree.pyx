@@ -683,9 +683,10 @@ cdef class Tree:
         self.capacity = node_ndarray.shape[0]
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
-        nodes = memcpy(self.nodes, (<cnp.ndarray> node_ndarray).data,
+
+        nodes = memcpy(self.nodes, cnp.PyArray_DATA(node_ndarray),
                        self.capacity * sizeof(Node))
-        value = memcpy(self.value, (<cnp.ndarray> value_ndarray).data,
+        value = memcpy(self.value, cnp.PyArray_DATA(value_ndarray),
                        self.capacity * self.value_stride * sizeof(double))
 
     cdef int _resize(self, SIZE_t capacity) nogil except -1:
