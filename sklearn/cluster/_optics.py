@@ -90,6 +90,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
+        .. note::
+           `'kulsinski'` is deprecated from SciPy 1.9 and will removed in SciPy 1.11.
+
     p : float, default=2
         Parameter for the Minkowski metric from
         :class:`~sklearn.metrics.pairwise_distances`. When p = 1, this is
@@ -488,6 +491,9 @@ def compute_optics_graph(
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
+
+        .. note::
+           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     p : int, default=2
         Parameter for the Minkowski metric from
