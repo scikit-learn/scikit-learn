@@ -153,6 +153,13 @@ Changelog
 - |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
   :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Enhancement| :class:`SGDClassifier`, :class:`SGDRegressor` and
+  :class:`SGDOneClassSVM` now preserve dtype for `numpy.float32`.
+  :pr:`25587` by :user:`Omar Salman <OmarManzoor>`
+
 :mod:`sklearn.metrics`
 ......................
 
