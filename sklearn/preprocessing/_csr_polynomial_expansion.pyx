@@ -11,20 +11,21 @@ import numpy as np
 ctypedef cnp.int8_t FLAG_t
 
 
+# TODO: use `cnp.{int,float}{32,64}` when cython#5230 is resolved:
+# https://github.com/cython/cython/issues/5230
+ctypedef fused DATA_t:
+    float
+    double
+    int
+    long
 # INDEX_{A,B}_t are defined to generate a proper Cartesian product
 # of types through Cython fused-type expansion.
 ctypedef fused INDEX_A_t:
-    cnp.int32_t
-    cnp.int64_t
+    int
+    long
 ctypedef fused INDEX_B_t:
-    cnp.int32_t
-    cnp.int64_t
-
-ctypedef fused DATA_t:
-    cnp.int32_t
-    cnp.int64_t
-    cnp.float32_t
-    cnp.float64_t
+    int
+    long
 
 cdef inline cnp.int64_t _deg2_column(
     cnp.int64_t n_features,
