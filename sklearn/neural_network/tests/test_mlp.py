@@ -990,31 +990,31 @@ def test_mlp_classifier_with_sample_and_class_weights(weighted_class):
     assert (class_weighted_score != sample_weighted_score).sum() == 0
 
 
-def check_class_weight_same_as_in_estimator_checks():
+@pytest.mark.parametrize("n_centers", [2, 3])
+def check_class_weight_same_as_in_estimator_checks(n_centers):
     """Conduct the same test as check_class_weight_classifiers in estimator_checks.py"""
     classifier_orig = MLPClassifier()
 
-    for n_centers in (2, 3):
-        # create a very noisy dataset
-        X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20)
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.5, random_state=0
-        )
+    # create a very noisy dataset
+    X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.5, random_state=0
+    )
 
-        n_centers = len(np.unique(y_train))
+    n_centers = len(np.unique(y_train))
 
-        if n_centers == 2:
-            class_weight = {0: 1000, 1: 0.0001}
-        else:
-            class_weight = {0: 1000, 1: 0.0001, 2: 0.0001}
+    if n_centers == 2:
+        class_weight = {0: 1000, 1: 0.0001}
+    else:
+        class_weight = {0: 1000, 1: 0.0001, 2: 0.0001}
 
-        classifier = clone(classifier_orig)
-        classifier.set_params(max_iter=1000)
-        classifier.set_params(n_iter_no_change=20)
+    classifier = clone(classifier_orig)
+    classifier.set_params(max_iter=1000)
+    classifier.set_params(n_iter_no_change=20)
 
-        set_random_state(classifier)
-        classifier.fit(X_train, y_train, class_weight=class_weight)
-        y_pred = classifier.predict(X_test)
-        # XXX: Generally can use 0.89 here. On Windows, LinearSVC gets
-        #      0.88 (Issue #9111)
-        assert np.mean(y_pred == 0) > 0.87
+    set_random_state(classifier)
+    classifier.fit(X_train, y_train, class_weight=class_weight)
+    y_pred = classifier.predict(X_test)
+    # XXX: Generally can use 0.89 here. On Windows, LinearSVC gets
+    #      0.88 (Issue #9111)
+    assert np.mean(y_pred == 0) > 0.87
