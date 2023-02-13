@@ -326,12 +326,12 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         )
 
 
-def _prepare_fit_binary(est, y, i):
+def _prepare_fit_binary(est, y, i, input_dtye):
     """Initialization for fit_binary.
 
     Returns y, coef, intercept, average_coef, average_intercept.
     """
-    y_i = np.ones(y.shape, dtype=np.float64, order="C")
+    y_i = np.ones(y.shape, dtype=input_dtye, order="C")
     y_i[y != est.classes_[i]] = -1.0
     average_intercept = 0
     average_coef = None
@@ -426,7 +426,7 @@ def fit_binary(
     # if average is not true, average_coef, and average_intercept will be
     # unused
     y_i, coef, intercept, average_coef, average_intercept = _prepare_fit_binary(
-        est, y, i
+        est, y, i, input_dtye=X.dtype
     )
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
 
@@ -609,7 +609,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         self._expanded_class_weight = compute_class_weight(
             self.class_weight, classes=self.classes_, y=y
         )
-        sample_weight = _check_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
             self._allocate_parameter_mem(
@@ -1459,11 +1459,11 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             accept_large_sparse=False,
             reset=first_call,
         )
-        y = y.astype(np.float64, copy=False)
+        y = y.astype(X.dtype, copy=False)
 
         n_samples, n_features = X.shape
 
-        sample_weight = _check_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         # Allocate datastructures from input arguments
         if first_call:
@@ -2338,7 +2338,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         n_features = X.shape[1]
 
         # Allocate datastructures from input arguments
-        sample_weight = _check_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         # We use intercept = 1 - offset where intercept is the intercept of
         # the SGD implementation and offset is the offset of the One-Class SVM
