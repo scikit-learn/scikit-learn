@@ -90,14 +90,15 @@ def test_hdbscan_distance_matrix():
         HDBSCAN(metric="precomputed").fit_predict(D)
 
 
-def test_hdbscan_sparse_distance_matrix():
+@pytest.mark.parametrize("sparse_constructor", [sparse.csr_matrix, sparse.csc_matrix])
+def test_hdbscan_sparse_distance_matrix(sparse_constructor):
     D = distance.squareform(distance.pdist(X))
     D /= np.max(D)
 
     threshold = stats.scoreatpercentile(D.flatten(), 50)
 
     D[D >= threshold] = 0.0
-    D = sparse.csr_matrix(D)
+    D = sparse_constructor(D)
     D.eliminate_zeros()
 
     labels = HDBSCAN(metric="precomputed").fit_predict(D)
