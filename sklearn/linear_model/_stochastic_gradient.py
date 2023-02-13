@@ -1365,7 +1365,8 @@ class SGDClassifier(BaseSGDClassifier):
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
-            }
+            },
+            "preserves_dtype": [np.float64, np.float32],
         }
 
 
@@ -2016,7 +2017,8 @@ class SGDRegressor(BaseSGDRegressor):
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
-            }
+            },
+            "preserves_dtype": [np.float64, np.float32],
         }
 
 
@@ -2570,5 +2572,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 )
-            }
+            },
+            "preserves_dtype": [np.float64, np.float32],
         }
