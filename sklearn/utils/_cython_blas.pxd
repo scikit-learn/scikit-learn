@@ -37,5 +37,5 @@ cdef void _ger(BLAS_Order, int, int, floating, floating*, int, floating*, int,
 
 # BLASLevel 3 ################################################################
 cdef void _gemm(BLAS_Order, BLAS_Trans, BLAS_Trans, int, int, int, floating,
-                floating*, int, floating*, int, floating, floating*,
+                const floating*, int, const floating*, int, floating, floating*,
                 int) nogil
