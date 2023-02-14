@@ -37,7 +37,7 @@ def csr_row_norms(X):
 def _sqeuclidean_row_norms_sparse(
     const floating[::1] X_data,
     const integral[::1] X_indptr,
-    const int n_threads,
+    int n_threads,
 ):
     cdef:
         integral n_samples = X_indptr.shape[0] - 1
