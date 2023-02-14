@@ -52,7 +52,7 @@ import seaborn as sns
 
 plt.figure(figsize=(15, 10))
 sns.pointplot(x=df["hour"].astype(int), y=df["count"], hue=df["weekday"].astype(int))
-plt.title("Hourly Count for Weekdays", fontsize=20)
+plt.title("Hourly Count for Different Days of the Week", fontsize=20)
 plt.xlabel("Hour", fontsize=15)
 plt.ylabel("Count", fontsize=15)
 plt.xticks(fontsize=10)
