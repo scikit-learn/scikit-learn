@@ -35,7 +35,6 @@ df = bike_sharing.frame
 # demand around the middle of the days:
 import matplotlib.pyplot as plt
 
-
 fig, ax = plt.subplots(figsize=(12, 4))
 average_week_demand = df.groupby(["weekday", "hour"])["count"].mean()
 average_week_demand.plot(ax=ax)
@@ -46,6 +45,30 @@ _ = ax.set(
     xlabel="Time of the week",
     ylabel="Number of bike rentals",
 )
+
+# %%
+# Let us explore the hourly count of bikes over different days of the week:
+import seaborn as sns
+
+plt.figure(figsize=(15, 10))
+sns.pointplot(x=df["hour"].astype(int), y=df["count"], hue=df["weekday"].astype(int))
+plt.title("Hourly Count for Weekdays", fontsize=20)
+plt.xlabel("Hour", fontsize=15)
+plt.ylabel("Count", fontsize=15)
+plt.xticks(fontsize=10)
+plt.yticks(fontsize=10)
+plt.show()
+
+# %%
+# Exploring the hourly count of bikes over different seasons:
+plt.figure(figsize=(15, 10))
+sns.pointplot(x=df["hour"].astype(int), y=df["count"], hue=df["season"])
+plt.title("Hourly Count for Seasons", fontsize=20)
+plt.xlabel("Hour", fontsize=15)
+plt.ylabel("Count", fontsize=15)
+plt.xticks(fontsize=10)
+plt.yticks(fontsize=10)
+plt.show()
 
 # %%
 #
