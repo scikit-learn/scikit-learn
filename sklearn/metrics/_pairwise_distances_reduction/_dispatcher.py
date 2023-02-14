@@ -204,8 +204,9 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
                 "sqeuclidean",
                 "l2",
             ]
+            # TODO: pass `p` as a standalone argument instead of a metric_kwargs.
             return metric in euclidean_metrics or (
-                metric == "minkowski" and metric_kwargs.get("p") == 2
+                metric == "minkowski" and metric_kwargs.get("p", 2) == 2
             )
 
         Y = X if Y is None else Y
@@ -221,7 +222,6 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
         X,
         Y,
         metric="euclidean",
-        chunk_size=None,
         metric_kwargs=None,
         strategy=None,
     ):
@@ -259,8 +259,7 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
               - 'parallel_on_Y' dispatches rows of Y uniformly on threads.
                 Each thread processes all the rows of X in turn. This strategy is
                 a sequence of embarrassingly parallel subtasks (the inner loop on Y
-                chunks) with intermediate datastructures synchronisation at each
-                iteration of the sequential outer loop on X chunks.
+                chunks) with no intermediate datastructures synchronisation.
 
               - 'auto' relies on a simple heuristic to choose between
                 'parallel_on_X' and 'parallel_on_Y': when `X.shape[0]` is large enough,
@@ -294,7 +293,6 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
                 X=X,
                 Y=Y,
                 metric=metric,
-                chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,
                 strategy=strategy,
             )
@@ -304,7 +302,6 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
                 X=X,
                 Y=Y,
                 metric=metric,
-                chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,
                 strategy=strategy,
             )
@@ -358,6 +355,11 @@ class ArgKmin(BaseDistancesReductionDispatcher):
             The distance metric to use for argkmin.
             For a list of available metrics, see the documentation of
             :class:`~sklearn.metrics.DistanceMetric`.
+
+        chunk_size : int, default=None,
+            The number of vectors per chunk. If None (default) looks-up in
+            scikit-learn configuration for `pairwise_dist_chunk_size`,
+            and use 256 if it is not set.
 
         metric_kwargs : dict, default=None
             Keyword arguments to pass to specified metric function.

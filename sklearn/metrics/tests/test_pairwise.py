@@ -173,6 +173,12 @@ def test_pairwise_distances(global_dtype):
     S2 = pairwise_distances(X, metric=minkowski, **kwds)
     assert_allclose(S, S2)
 
+    # Test PairwiseDistance
+    kwds = {"p": 3.0}
+    S = pairwise_distances(X, metric="minkowski", **kwds)
+    S2 = pairwise_distances(X, metric=minkowski, **kwds)
+    assert_allclose(S, S2)
+
     # Test that a value error is raised if the metric is unknown
     with pytest.raises(ValueError):
         pairwise_distances(X, Y, metric="blah")

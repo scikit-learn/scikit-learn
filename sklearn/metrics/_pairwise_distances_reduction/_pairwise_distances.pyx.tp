@@ -54,7 +54,6 @@ cdef class PairwiseDistances{{name_suffix}}:
         X,
         Y,
         str metric="euclidean",
-        chunk_size=None,
         dict metric_kwargs=None,
         str strategy=None,
     ):
