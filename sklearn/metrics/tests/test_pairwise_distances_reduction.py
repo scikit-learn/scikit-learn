@@ -1402,3 +1402,39 @@ def test_sqeuclidean_row_norms(
     with pytest.raises(ValueError):
         X = np.asfortranarray(X)
         sqeuclidean_row_norms(X, num_threads=num_threads)
+
+
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_pairwise_distances_is_usable_for(
+    global_random_seed,
+    dtype,
+    monkeypatch,
+):
+    rng = np.random.RandomState(global_random_seed)
+    n_samples, n_features = 100, 10
+    X = rng.rand(n_samples, n_features).astype(dtype)
+
+    assert not PairwiseDistances.is_usable_for(X, X, metric="euclidean")
+    assert not PairwiseDistances.is_usable_for(X, X, metric="minkowski")
+    assert not PairwiseDistances.is_usable_for(
+        X, X, metric="minkowski", metric_kwargs={"p": 2}
+    )
+    assert PairwiseDistances.is_usable_for(
+        X, X, metric="minkowski", metric_kwargs={"p": 3}
+    )
+
+    def mock_openmp_effective_n_threads():
+        return 4
+
+    monkeypatch.setattr(
+        "sklearn.utils._openmp_helpers._openmp_effective_n_threads",
+        mock_openmp_effective_n_threads,
+    )
+
+    controler = threadpoolctl.ThreadpoolController()
+
+    with controler.limit(limits=1, user_api=None):
+        assert not PairwiseDistances.is_usable_for(X, X, metric="manhattan")
+
+    with controler.limit(limits=2, user_api=None):
+        assert PairwiseDistances.is_usable_for(X, X, metric="manhattan")
