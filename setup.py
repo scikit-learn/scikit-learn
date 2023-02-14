@@ -111,6 +111,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.svm._libsvm_sparse",
     "sklearn.svm._newrand",
     "sklearn.tree._splitter",
+    "sklearn.tree._tree",
     "sklearn.tree._utils",
     "sklearn.utils._cython_blas",
     "sklearn.utils._fast_dict",
@@ -119,7 +120,6 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.utils._logistic_sigmoid",
     "sklearn.utils._openmp_helpers",
     "sklearn.utils._random",
-    "sklearn.utils._readonly_array_wrapper",
     "sklearn.utils._seq_dataset",
     "sklearn.utils._sorting",
     "sklearn.utils._typedefs",
@@ -268,7 +268,7 @@ extension_config = {
         {"sources": ["_isotonic.pyx"], "include_np": True},
     ],
     "_loss": [
-        {"sources": ["_loss.pyx.tp"], "include_np": True},
+        {"sources": ["_loss.pyx.tp"]},
     ],
     "cluster": [
         {"sources": ["_dbscan_inner.pyx"], "language": "c++", "include_np": True},
@@ -454,7 +454,6 @@ extension_config = {
         },
         {"sources": ["_random.pyx"], "include_np": True},
         {"sources": ["_logistic_sigmoid.pyx"], "include_np": True},
-        {"sources": ["_readonly_array_wrapper.pyx"], "include_np": True},
         {"sources": ["_typedefs.pyx"], "include_np": True},
         {"sources": ["_heap.pyx"], "include_np": True},
         {"sources": ["_sorting.pyx"], "include_np": True},
