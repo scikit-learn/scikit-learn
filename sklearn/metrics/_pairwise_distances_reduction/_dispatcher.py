@@ -209,12 +209,19 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
                 metric == "minkowski" and metric_kwargs.get("p", 2) == 2
             )
 
+        manhattan_metrics = ["cityblock", "l1", "manhattan"]
+
         Y = X if Y is None else Y
-        return (
+
+        is_usable = (
             not is_euclidean(metric, metric_kwargs)
             and super().is_usable_for(X, Y, metric)
             and effective_n_threads != 1
         )
+        manhattan_single_thread_guard = (
+            metric in manhattan_metrics and effective_n_threads == 1
+        )
+        return is_usable or manhattan_single_thread_guard
 
     @classmethod
     def compute(

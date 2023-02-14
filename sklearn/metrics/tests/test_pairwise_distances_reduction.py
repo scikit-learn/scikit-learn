@@ -1414,6 +1414,14 @@ def test_pairwise_distances_is_usable_for(
     n_samples, n_features = 100, 10
     X = rng.rand(n_samples, n_features).astype(dtype)
 
+    def mock_openmp_effective_n_threads():
+        return 4
+
+    monkeypatch.setattr(
+        "sklearn.utils._openmp_helpers._openmp_effective_n_threads",
+        mock_openmp_effective_n_threads,
+    )
+
     assert not PairwiseDistances.is_usable_for(X, X, metric="euclidean")
     assert not PairwiseDistances.is_usable_for(X, X, metric="minkowski")
     assert not PairwiseDistances.is_usable_for(
@@ -1421,14 +1429,6 @@ def test_pairwise_distances_is_usable_for(
     )
     assert PairwiseDistances.is_usable_for(
         X, X, metric="minkowski", metric_kwargs={"p": 3}
-    )
-
-    def mock_openmp_effective_n_threads():
-        return 4
-
-    monkeypatch.setattr(
-        "sklearn.utils._openmp_helpers._openmp_effective_n_threads",
-        mock_openmp_effective_n_threads,
     )
 
     controler = threadpoolctl.ThreadpoolController()
