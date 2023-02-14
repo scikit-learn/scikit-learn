@@ -46,7 +46,7 @@ def _sqeuclidean_row_norms_sparse(
 
     dtype = np.float32 if floating is float else np.float64
 
-    cdef floating[::1] norms = np.zeros(n_samples, dtype=dtype)
+    cdef floating[::1] squared_row_norms = np.zeros(n_samples, dtype=dtype)
 
     for i in prange(n_samples, schedule='static', nogil=True, num_threads=n_threads):
         for j in range(X_indptr[i], X_indptr[i + 1]):
