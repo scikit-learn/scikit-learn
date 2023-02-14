@@ -1,8 +1,6 @@
-from pytest import xfail, hookimpl
+from pytest import hookimpl
 
 from sklearn import config_context
-
-from sklearn.exceptions import NotSupportedByEngineError
 
 
 # TODO: document this pytest plugin + write a tutorial on how to develop a new plugin
@@ -26,13 +24,5 @@ def pytest_pyfunc_call(pyfuncitem):
         return
 
     with config_context(engine_provider=engine_provider):
-        try:
-            outcome = yield
-            outcome.get_result()
-        except NotSupportedByEngineError:
-            xfail(
-                reason=(
-                    "This test cover features that are not supported by the "
-                    f"engine provided by {engine_provider}."
-                )
-            )
+        outcome = yield
+        outcome.get_result()
