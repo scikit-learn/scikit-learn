@@ -200,10 +200,22 @@ from sklearn.metrics import mean_pinball_loss
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 
+(
+    model_names_list,
+    mape_list,
+    rmse_list,
+    mae_list,
+    mean_pinball_05_loss_list,
+    mean_pinball_50_loss_list,
+    mean_pinball_95_loss_list,
+    time_list,
+) = ([], [], [], [], [], [], [], [])
 
-def evaluate(model, X, y, cv):
+
+def evaluate_and_store_results(model, X, y, cv):
     def score_func(estimator, X, y):
         y_pred = estimator.predict(X)
+
         return {
             "mean_absolute_percentage_error": mean_absolute_percentage_error(y, y_pred),
             "root_mean_squared_error": np.sqrt(mean_squared_error(y, y_pred)),
@@ -222,19 +234,38 @@ def evaluate(model, X, y, cv):
         scoring=score_func,
     )
     toc = perf_counter()
+
     for key, value in cv_results.items():
         if key.startswith("test_"):
-            print(f"{key[5:]}: {value.mean():.3f} ± {value.std():.3f}")
-    print(f"\ndone in {toc - tic:.3f} s")
+            if key.endswith("percentage_error"):
+                mape_list.append(f"{value.mean():.3f} ± {value.std():.3f}")
+            if key.endswith("squared_error"):
+                rmse_list.append(f"{value.mean():.3f} ± {value.std():.3f}")
+            if key.endswith("absolute_error"):
+                mae_list.append(f"{value.mean():.3f} ± {value.std():.3f}")
+            if key.endswith("05_loss"):
+                mean_pinball_05_loss_list.append(
+                    f"{value.mean():.3f} ± {value.std():.3f}"
+                )
+            if key.endswith("50_loss"):
+                mean_pinball_50_loss_list.append(
+                    f"{value.mean():.3f} ± {value.std():.3f}"
+                )
+            if key.endswith("95_loss"):
+                mean_pinball_95_loss_list.append(
+                    f"{value.mean():.3f} ± {value.std():.3f}"
+                )
+
+    time_list.append(f"{toc - tic:.3f} s")
 
 
 gbrt_mse = HistGradientBoostingRegressor(loss="squared_error")
-evaluate(gbrt_mse, X, y, cv=ts_cv)
+evaluate_and_store_results(gbrt_mse, X, y, cv=ts_cv)
 
 # %%
 # Model evaluation using `loss="poisson"`
 gbrt_poisson = HistGradientBoostingRegressor(loss="poisson")
-evaluate(gbrt_poisson, X, y, cv=ts_cv)
+evaluate_and_store_results(gbrt_poisson, X, y, cv=ts_cv)
 
 # %%
 # Modeling Predictive Uncertainty via Quantile Regression
@@ -256,17 +287,33 @@ evaluate(gbrt_poisson, X, y, cv=ts_cv)
 #
 # The conditional 5th percentile (a.k.a. 0.05-quantile) can be estimated with:
 gbrt_percentile_05 = HistGradientBoostingRegressor(loss="quantile", quantile=0.05)
-evaluate(gbrt_percentile_05, X, y, cv=ts_cv)
+evaluate_and_store_results(gbrt_percentile_05, X, y, cv=ts_cv)
 
 # %%
 # The conditional median (0.50-quantile) can be estimated with:
 gbrt_median = HistGradientBoostingRegressor(loss="quantile", quantile=0.5)
-evaluate(gbrt_median, X, y, cv=ts_cv)
+evaluate_and_store_results(gbrt_median, X, y, cv=ts_cv)
 
 # %%
 # And finally the 0.95 quantile:
 gbrt_percentile_95 = HistGradientBoostingRegressor(loss="quantile", quantile=0.95)
-evaluate(gbrt_percentile_95, X, y, cv=ts_cv)
+evaluate_and_store_results(gbrt_percentile_95, X, y, cv=ts_cv)
+
+# %%
+# We can now compare the performance of the different models we trained
+dataframe_dict = {
+    "Models": model_names_list,
+    "MAPE": mape_list,
+    "RMSE": rmse_list,
+    "MAE": mae_list,
+    "Mean Pinball 05 Loss": mean_pinball_05_loss_list,
+    "Mean Pinball 50 Loss": mean_pinball_50_loss_list,
+    "Mean Pinball 95 Loss": mean_pinball_95_loss_list,
+    "Time": time_list,
+}
+
+df_model_comparison = pd.DataFrame(dataframe_dict)
+df_model_comparison
 
 # %%
 # A Qualitative Look at the Predictions
@@ -352,11 +399,11 @@ _ = ax.legend()
 #   our 95% percentile estimator underestimates the demand peaks. This could be be
 #   quantitatively confirmed by computing empirical coverage numbers as done in
 #   the `calibration of confidence intervals
-#   <https://scikit-learn.org/stable/auto_examples/ensemble/plot_gradient_boosting \
+#   <https://scikit-learn.org/stable/auto_examples/ensemble/plot_gradient_boosting\
 #   _quantile.html#calibration-of-the-confidence-interval>`_.
 #
 # Looking at the performance of non-linear regression models vs
-# perfect models:
+# the best models:
 from sklearn.metrics import PredictionErrorDisplay
 
 fig, axes = plt.subplots(ncols=3, figsize=(15, 6), sharey=True)
@@ -380,7 +427,7 @@ for ax, pred, label in zip(axes, predictions, labels):
         ax=ax,
     )
     ax.set(xlabel="Predicted demand", ylabel="True demand")
-    ax.legend(["Perfect model", label])
+    ax.legend(["Best model", label])
 
 plt.show()
 
