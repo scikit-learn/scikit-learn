@@ -236,8 +236,8 @@ metric : str or DistanceMetric object, default='minkowski'
     results in the standard Euclidean distance when p = 2.
     A list of valid metrics for {BinaryTree} is given by
     :meth:`{BinaryTree}.valid_metrics`.
-    See the documentation of `scipy.spatial.distance    <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and the
-    metrics listed in :class:`~sklearn.metrics.pairwise.distance_metrics` for
+    See the documentation of `scipy.spatial.distance
+    <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and the    metrics listed in :class:`~sklearn.metrics.pairwise.distance_metrics` for
     more information on any distance metric.
 
 Additional keywords are passed to the distance metric class.
