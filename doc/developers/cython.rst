@@ -80,7 +80,7 @@ Tips to ease development
 * It is helpful to use ``gdb`` to debug. In order to do so, one must use a Python interpreter built with debug support
   (debug symbols and proper optimization). To create a new conda environment with a source-built interpreter:
 
-  .. code-block:: cmd
+  .. code-block:: bash
 
          git clone https://github.com/python/cpython.git
          conda create -n debug-scikit-dev
