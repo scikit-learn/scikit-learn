@@ -387,7 +387,7 @@ class ArgKmin(BaseDistancesReductionDispatcher):
                 'parallel_on_X' and 'parallel_on_Y': when `X.shape[0]` is large enough,
                 'parallel_on_X' is usually the most efficient strategy.
                 When `X.shape[0]` is small but `Y.shape[0]` is large, 'parallel_on_Y'
-                brings more opportunity for parallelism and is therefore more efficient.
+                brings more opportunity for parallelism and is therefore more efficient
 
               - None (default) looks-up in scikit-learn configuration for
                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
