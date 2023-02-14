@@ -1056,6 +1056,7 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         "zero_division": [
             Options(Integral, {0, 1}),
             StrOptions({"warn"}),
+            Options(Real, {np.nan}),
         ],
     }
 )
