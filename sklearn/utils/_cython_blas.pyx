@@ -181,30 +181,32 @@ cpdef _ger_memview(floating alpha, floating[::1] x, floating[::1] y,
 ################
 
 cdef void _gemm(BLAS_Order order, BLAS_Trans ta, BLAS_Trans tb, int m, int n,
-                int k, floating alpha, floating *A, int lda, floating *B,
+                int k, floating alpha, const floating *A, int lda, const floating *B,
                 int ldb, floating beta, floating *C, int ldc) nogil:
     """C := alpha * op(A).op(B) + beta * C"""
+    # TODO: Remove the pointer casts below once SciPy uses const-qualification.
+    # See: https://github.com/scipy/scipy/issues/14262
     cdef:
         char ta_ = ta
         char tb_ = tb
     if order == RowMajor:
         if floating is float:
-            sgemm(&tb_, &ta_, &n, &m, &k, &alpha, B,
-                  &ldb, A, &lda, &beta, C, &ldc)
+            sgemm(&tb_, &ta_, &n, &m, &k, &alpha, <float*>B,
+                  &ldb, <float*>A, &lda, &beta, C, &ldc)
         else:
-            dgemm(&tb_, &ta_, &n, &m, &k, &alpha, B,
-                  &ldb, A, &lda, &beta, C, &ldc)
+            dgemm(&tb_, &ta_, &n, &m, &k, &alpha, <double*>B,
+                  &ldb, <double*>A, &lda, &beta, C, &ldc)
     else:
         if floating is float:
-            sgemm(&ta_, &tb_, &m, &n, &k, &alpha, A,
-                  &lda, B, &ldb, &beta, C, &ldc)
+            sgemm(&ta_, &tb_, &m, &n, &k, &alpha, <float*>A,
+                  &lda, <float*>B, &ldb, &beta, C, &ldc)
         else:
-            dgemm(&ta_, &tb_, &m, &n, &k, &alpha, A,
-                  &lda, B, &ldb, &beta, C, &ldc)
+            dgemm(&ta_, &tb_, &m, &n, &k, &alpha, <double*>A,
+                  &lda, <double*>B, &ldb, &beta, C, &ldc)
 
 
 cpdef _gemm_memview(BLAS_Trans ta, BLAS_Trans tb, floating alpha,
-                    floating[:, :] A, floating[:, :] B, floating beta,
+                    const floating[:, :] A, const floating[:, :] B, floating beta,
                     floating[:, :] C):
     cdef:
         int m = A.shape[0] if ta == NoTrans else A.shape[1]
