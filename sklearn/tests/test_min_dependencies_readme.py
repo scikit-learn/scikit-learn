@@ -70,14 +70,19 @@ def test_min_dependencies_pyproject_toml():
 
     build_requirements = pyproject_toml["build-system"]["requires"]
 
+    pyproject_build_min_versions = {}
     for requirement in build_requirements:
         if ">=" in requirement:
             package, version = requirement.split(">=")
             package = package.lower()
+            pyproject_build_min_versions[package] = version
 
-            version = parse_version(version)
-            expected_min_version = parse_version(dependent_packages[package][0])
+    # Only scipy and cython are listed in pyproject.toml
+    # NumPy is more complex using oldest-supported-numpy.
+    assert set(["scipy", "cython"]) == set(pyproject_build_min_versions)
 
-            assert (
-                version == expected_min_version
-            ), f"{package} has a mismatched version"
+    for package, version in pyproject_build_min_versions.items():
+        version = parse_version(version)
+        expected_min_version = parse_version(dependent_packages[package][0])
+
+        assert version == expected_min_version, f"{package} has a mismatched version"
