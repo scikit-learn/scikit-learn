@@ -15,6 +15,27 @@ from libc.math cimport log as ln
 cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
 
+def _simultaneous_sort(
+    floating[:] values,
+    cnp.intp_t[:] indices,
+    kind=None,
+):
+    """Interface for testing purposes."""
+    cdef cnp.intp_t size = indices.shape[0]
+
+    if kind is None:
+        kind = "introsort"
+
+    if kind == "introsort":
+        return simultaneous_introsort(&values[0], &indices[0], size)
+
+    if kind == "quicksort":
+        return simultaneous_quick_sort(&values[0], &indices[0], size)
+
+    if kind == "heapsort":
+        return simultaneous_heapsort(&values[0], &indices[0], size)
+
+
 cdef inline void _simultaneous_swap(
     floating* values,
     cnp.intp_t* indices,
