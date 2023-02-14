@@ -46,8 +46,8 @@ from sklearn.metrics import brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
 
 from sklearn.metrics._classification import _check_targets
-from sklearn.metrics._classification import _nan_average
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.utils.extmath import _nanaverage
 
 from scipy.spatial.distance import hamming as sp_hamming
 
@@ -723,6 +723,11 @@ def test_cohen_kappa():
     assert_almost_equal(
         cohen_kappa_score(y1, y2, weights="quadratic"), 0.9541, decimal=4
     )
+
+
+def test_matthews_corrcoef_nan():
+    assert matthews_corrcoef([0], [1]) == 0.0
+    assert matthews_corrcoef([0, 0], [0, 1]) == 0.0
 
 
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
@@ -1766,7 +1771,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
             average="macro",
             zero_division=zero_division,
         ),
-        _nan_average(f2, weights=None),
+        _nanaverage(f2, weights=None),
     )
 
     p, r, f, s = precision_recall_fscore_support(
@@ -1795,7 +1800,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
         fbeta_score(
             y_true, y_pred, beta=2, average="weighted", zero_division=zero_division
         ),
-        _nan_average(f2, weights=support),
+        _nanaverage(f2, weights=support),
     )
 
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average="samples")
@@ -1841,10 +1846,11 @@ def test_precision_recall_f1_no_labels(beta, average, zero_division):
     )
     assert s is None
 
+    # if zero_division = nan, check that all metrics are nan and exit
     if np.isnan(zero_division):
         for metric in [p, r, f, fbeta]:
             assert np.isnan(metric)
-            return
+        return
 
     zero_division = float(zero_division)
     assert_almost_equal(p, zero_division)

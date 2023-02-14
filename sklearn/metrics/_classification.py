@@ -36,6 +36,7 @@ from ..utils import assert_all_finite
 from ..utils import check_array
 from ..utils import check_consistent_length
 from ..utils import column_or_1d
+from ..utils.extmath import _nanaverage
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
@@ -143,32 +144,6 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
         return np.dot(sample_score, sample_weight)
     else:
         return sample_score.sum()
-
-
-def _nan_average(scores, weights):
-    """
-    Wrapper to combine np.average and np.nanmean, so np.nan values are ignored
-    from the average and weights can be passed. Note that when possible,
-    we delegate to the prime methods.
-    """
-
-    if len(scores) == 0:
-        return np.nan
-
-    mask = np.isnan(scores)
-    if mask.all():
-        return np.nan
-
-    if weights is None:
-        return np.nanmean(scores)
-
-    weights = np.array(weights, copy=False)
-    scores, weights = scores[~mask], weights[~mask]
-    try:
-        return np.average(scores, weights=weights)
-    except ZeroDivisionError:
-        # this is when all weights are zero, then ignore them
-        return np.average(scores)
 
 
 @validate_params(
@@ -1153,6 +1128,9 @@ def f1_score(
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
 
+        .. versionadded:: 1.3
+           `np.nan` option was added.
+
     Returns
     -------
     f1_score : float or array of float, shape = [n_unique_labels]
@@ -1175,7 +1153,7 @@ def f1_score(
     In such cases, by default the metric will be set to 0, as will f-score,
     and ``UndefinedMetricWarning`` will be raised. This behavior can be
     modified with ``zero_division``. Note that if `zero_division` is np.nan,
-    scores being np.nan will be ignored for averaging.
+    scores being `np.nan` will be ignored for averaging.
 
     References
     ----------
@@ -1312,6 +1290,9 @@ def fbeta_score(
         Notes:
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
+
+        .. versionadded:: 1.3
+           `np.nan` option was added.
 
     Returns
     -------
@@ -1587,6 +1568,9 @@ def precision_recall_fscore_support(
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
 
+        .. versionadded:: 1.3
+           `np.nan` option was added.
+
     Returns
     -------
     precision : float (if average is not None) or array of float, shape =\
@@ -1698,10 +1682,12 @@ def precision_recall_fscore_support(
     elif beta == 0:
         f_score = precision
     else:
-        # set to zero_division_value if denom 0
-        # OR if BOTH precision and recall are ill-defined
+        # The score is defined as:
+        # score = (1 + beta**2) * precision * recall / (beta**2 * precision + recall)
+        # We set to `zero_division_value` if the denominator is 0 **or** if **both**
+        # precision and recall are ill-defined.
         denom = beta2 * precision + recall
-        mask = (denom == 0.0) | ((pred_sum + true_sum) == 0)
+        mask = np.isclose(denom, 0) | np.isclose(pred_sum + true_sum, 0)
         denom[mask] = 1  # avoid division by 0
         f_score = (1 + beta2) * precision * recall / denom
         f_score[mask] = zero_division_value
@@ -1716,9 +1702,9 @@ def precision_recall_fscore_support(
 
     if average is not None:
         assert average != "binary" or len(precision) == 1
-        precision = _nan_average(precision, weights=weights)
-        recall = _nan_average(recall, weights=weights)
-        f_score = _nan_average(f_score, weights=weights)
+        precision = _nanaverage(precision, weights=weights)
+        recall = _nanaverage(recall, weights=weights)
+        f_score = _nanaverage(f_score, weights=weights)
         true_sum = None  # return no support
 
     return precision, recall, f_score, true_sum
@@ -1967,12 +1953,15 @@ def precision_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0 or 1 or np.nan, default="warn"
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division.
 
         Notes:
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
+
+        .. versionadded:: 1.3
+           `np.nan` option was added.
 
     Returns
     -------
@@ -2122,6 +2111,9 @@ def recall_score(
         Notes:
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
+
+        .. versionadded:: 1.3
+           `np.nan` option was added.
 
     Returns
     -------
@@ -2329,6 +2321,9 @@ def classification_report(
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division. If set to
         "warn", this acts as 0, but warnings are also raised.
+
+        .. versionadded:: 1.3
+           `np.nan` option was added.
 
     Returns
     -------
