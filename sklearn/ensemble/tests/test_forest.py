@@ -1812,6 +1812,6 @@ def test_read_only_buffer(monkeypatch):
 def test_raises_descriptive_bootstrap_error():
     X, y = datasets.load_wine(return_X_y=True)
     forest = RandomForestClassifier(max_samples=1e-4, class_weight="balanced_subsample")
-    warn_msg = "round(`max_samples` * `n_samples`) must be >= 1"
+    warn_msg = "round\(`max_samples` \* `n_samples`\) must be >= 1"
     with pytest.raises(ValueError, match=warn_msg):
         forest.fit(X, y)
