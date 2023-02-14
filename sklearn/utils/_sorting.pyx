@@ -89,7 +89,7 @@ cdef inline void simultaneous_introsort(
     _simultaneous_introsort(values, indices, size, maxd)
 
 
-cdef int simultaneous_quick_sort(
+cdef void simultaneous_quick_sort(
     floating* values,
     cnp.intp_t* indices,
     cnp.intp_t size,
@@ -158,7 +158,7 @@ cdef int simultaneous_quick_sort(
             simultaneous_quick_sort(values + pivot_idx + 1,
                                     indices + pivot_idx + 1,
                                     size - pivot_idx - 1)
-    return 0
+
 
 # Introsort with median of 3 pivot selection and 3-way partition function
 # (robust to repeated elements, e.g. lots of zero features).
