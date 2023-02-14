@@ -23,7 +23,7 @@ the lower the better.
 # License: BSD 3 clause
 
 
-from numbers import Integral, Real
+from numbers import Real
 import warnings
 import numpy as np
 
@@ -1054,9 +1054,8 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Integral, {0, 1}),
             StrOptions({"warn"}),
-            Options(Real, {np.nan}),
+            Options(Real, {1.0, 0.0, np.nan}),
         ],
     }
 )
