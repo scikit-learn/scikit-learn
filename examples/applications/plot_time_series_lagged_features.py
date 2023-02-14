@@ -212,7 +212,7 @@ from sklearn.metrics import mean_squared_error
 ) = ([], [], [], [], [], [], [], [])
 
 
-def evaluate_and_store_results(model, X, y, cv):
+def evaluate_and_store_results(names, model, X, y, cv):
     def score_func(estimator, X, y):
         y_pred = estimator.predict(X)
 
@@ -234,6 +234,8 @@ def evaluate_and_store_results(model, X, y, cv):
         scoring=score_func,
     )
     toc = perf_counter()
+
+    model_names_list.append(names)
 
     for key, value in cv_results.items():
         if key.startswith("test_"):
@@ -260,12 +262,12 @@ def evaluate_and_store_results(model, X, y, cv):
 
 
 gbrt_mse = HistGradientBoostingRegressor(loss="squared_error")
-evaluate_and_store_results(gbrt_mse, X, y, cv=ts_cv)
+evaluate_and_store_results("gbrt_mse", gbrt_mse, X, y, cv=ts_cv)
 
 # %%
 # Model evaluation using `loss="poisson"`
 gbrt_poisson = HistGradientBoostingRegressor(loss="poisson")
-evaluate_and_store_results(gbrt_poisson, X, y, cv=ts_cv)
+evaluate_and_store_results("gbrt_poisson", gbrt_poisson, X, y, cv=ts_cv)
 
 # %%
 # Modeling Predictive Uncertainty via Quantile Regression
@@ -287,17 +289,17 @@ evaluate_and_store_results(gbrt_poisson, X, y, cv=ts_cv)
 #
 # The conditional 5th percentile (a.k.a. 0.05-quantile) can be estimated with:
 gbrt_percentile_05 = HistGradientBoostingRegressor(loss="quantile", quantile=0.05)
-evaluate_and_store_results(gbrt_percentile_05, X, y, cv=ts_cv)
+evaluate_and_store_results("gbrt_percentile_05", gbrt_percentile_05, X, y, cv=ts_cv)
 
 # %%
 # The conditional median (0.50-quantile) can be estimated with:
 gbrt_median = HistGradientBoostingRegressor(loss="quantile", quantile=0.5)
-evaluate_and_store_results(gbrt_median, X, y, cv=ts_cv)
+evaluate_and_store_results("gbrt_median", gbrt_median, X, y, cv=ts_cv)
 
 # %%
 # And finally the 0.95 quantile:
 gbrt_percentile_95 = HistGradientBoostingRegressor(loss="quantile", quantile=0.95)
-evaluate_and_store_results(gbrt_percentile_95, X, y, cv=ts_cv)
+evaluate_and_store_results("gbrt_percentile_95", gbrt_percentile_95, X, y, cv=ts_cv)
 
 # %%
 # We can now compare the performance of the different models we trained
