@@ -776,7 +776,7 @@ _ = ax.legend()
 # three models using the true vs predicted demand scatter plots:
 from sklearn.metrics import PredictionErrorDisplay
 
-fig, axes = plt.subplots(ncols=3, figsize=(12, 4), sharey=True)
+fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 8), sharey=True)
 fig.suptitle("Non-linear regression models")
 predictions = [
     one_hot_poly_predictions,
@@ -788,16 +788,17 @@ labels = [
     "Splines + polynomial kernel",
     "Gradient Boosted Trees",
 ]
-for ax, pred, label in zip(axes, predictions, labels):
-    PredictionErrorDisplay.from_predictions(
-        y_true=y.iloc[test_0].values,
-        y_pred=pred,
-        kind="actual_vs_predicted",
-        scatter_kwargs={"alpha": 0.3},
-        ax=ax,
-    )
-    ax.set(xlabel="Predicted demand", ylabel="True demand")
-    ax.legend(["Perfect model", label])
+kind = ["actual_vs_predicted", "residual_vs_predicted"]
+for i in range(2):
+    for ax, pred, label in zip(axes[i], predictions, labels):
+        PredictionErrorDisplay.from_predictions(
+            y_true=y.iloc[test_0].values,
+            y_pred=pred,
+            kind=kind[i],
+            scatter_kwargs={"alpha": 0.3},
+            ax=ax,
+        )
+        ax.legend(["Perfect model", label])
 
 plt.show()
 # %%
