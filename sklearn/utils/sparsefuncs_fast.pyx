@@ -29,7 +29,7 @@ def csr_row_norms(X):
     """Squared L2 norm of each row in CSR matrix X."""
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-        n_threads = _openmp_effective_n_threads()
+    n_threads = _openmp_effective_n_threads()
     return _sqeuclidean_row_norms_sparse(X.data, X.indptr, n_threads)
 
 
