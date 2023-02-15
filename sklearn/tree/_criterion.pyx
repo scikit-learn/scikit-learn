@@ -950,11 +950,8 @@ cdef class MAE(RegressionCriterion):
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
-        cdef void** left_child
-        cdef void** right_child
-
-        left_child = <void**> self.left_child.data
-        right_child = <void**> self.right_child.data
+        cdef void** left_child = <void**> cnp.PyArray_DATA(self.left_child)
+        cdef void** right_child = <void**> cnp.PyArray_DATA(self.right_child)
 
         for k in range(self.n_outputs):
             (<WeightedMedianCalculator> left_child[k]).reset()
@@ -991,8 +988,8 @@ cdef class MAE(RegressionCriterion):
         cdef DOUBLE_t value
         cdef DOUBLE_t weight
 
-        cdef void** left_child = <void**> self.left_child.data
-        cdef void** right_child = <void**> self.right_child.data
+        cdef void** left_child = <void**> cnp.PyArray_DATA(self.left_child)
+        cdef void** right_child = <void**> cnp.PyArray_DATA(self.right_child)
 
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
@@ -1024,8 +1021,8 @@ cdef class MAE(RegressionCriterion):
 
         cdef DOUBLE_t value
         cdef DOUBLE_t weight
-        cdef void** left_child = <void**> self.left_child.data
-        cdef void** right_child = <void**> self.right_child.data
+        cdef void** left_child = <void**> cnp.PyArray_DATA(self.left_child)
+        cdef void** right_child = <void**> cnp.PyArray_DATA(self.right_child)
 
         # reverse reset the WeightedMedianCalculators, right should have no
         # elements and left should have all elements.
@@ -1049,8 +1046,8 @@ cdef class MAE(RegressionCriterion):
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
         cdef const SIZE_t[:] sample_indices = self.sample_indices
 
-        cdef void** left_child = <void**> self.left_child.data
-        cdef void** right_child = <void**> self.right_child.data
+        cdef void** left_child = <void**> cnp.PyArray_DATA(self.left_child)
+        cdef void** right_child = <void**> cnp.PyArray_DATA(self.right_child)
 
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
@@ -1147,8 +1144,8 @@ cdef class MAE(RegressionCriterion):
         cdef DOUBLE_t impurity_left = 0.0
         cdef DOUBLE_t impurity_right = 0.0
 
-        cdef void** left_child = <void**> self.left_child.data
-        cdef void** right_child = <void**> self.right_child.data
+        cdef void** left_child = <void**> cnp.PyArray_DATA(self.left_child)
+        cdef void** right_child = <void**> cnp.PyArray_DATA(self.right_child)
 
         for k in range(self.n_outputs):
             median = (<WeightedMedianCalculator> left_child[k]).get_median()
