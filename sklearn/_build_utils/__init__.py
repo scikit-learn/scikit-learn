@@ -40,7 +40,6 @@ def cythonize_extensions(extension):
     """Check that a recent Cython is available and cythonize extensions"""
     _check_cython_version()
     from Cython.Build import cythonize
-    import Cython
 
     # Fast fail before cythonization if compiler fails compiling basic test
     # code even without OpenMP
