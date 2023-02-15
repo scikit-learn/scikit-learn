@@ -47,7 +47,8 @@ _ = ax.set(
 )
 
 # %%
-# Let us explore the hourly count of bikes over different days of the week:
+# Let us explore the hourly count of bikes over different days of the when
+# taking the average over the whole year::
 import seaborn as sns
 
 plt.figure(figsize=(15, 10))
