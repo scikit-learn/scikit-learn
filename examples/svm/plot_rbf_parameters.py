@@ -160,7 +160,7 @@ gamma_2d_range = [1e-1, 1, 1e1]
 classifiers = []
 for C in C_2d_range:
     for gamma in gamma_2d_range:
-        clf = SVC(C=C, gamma=gamma)
+        clf = SVC(C=C, gamma=gamma, random_state=42)
         clf.fit(X_2d, y_2d)
         classifiers.append((C, gamma, clf))
 
