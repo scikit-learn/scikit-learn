@@ -1759,3 +1759,28 @@ def test_boolean_series_remains_boolean():
 
     assert res.dtype == expected.dtype
     assert_array_equal(res, expected)
+
+
+def test_custom_asarray():
+    """Check that a custom `asarray` function can be used during validation"""
+    est = BaseEstimator()
+
+    # This "special" asarray method converts elements of the input array
+    # to ints before creating a numpy array. Mostly so we can be sure it
+    # and not the standard asarray, was used for the data validation.
+    def my_asarray(array, copy=False, **kwargs):
+        converted = []
+        for row in array:
+            r = []
+            for element in row:
+                r.append(int(element))
+            converted.append(r)
+
+        if copy:
+            return np.array(converted, **kwargs)
+        else:
+            return np.asarray(converted, **kwargs)
+
+    x = est._validate_data([["1", "2", "3"], ["4", "5", "6"]], asarray=my_asarray)
+
+    assert x.dtype == int
