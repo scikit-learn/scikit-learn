@@ -1765,7 +1765,7 @@ def test_boolean_series_remains_boolean():
 @pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
 def test_check_array_array_api_has_non_finite(array_namespace):
     """Checks that Array API arrays checks non-finite correctly."""
-    xp = pytest.importorskip("numpy.array_api")
+    xp = pytest.importorskip(array_namespace)
 
     X_nan = xp.asarray([[xp.nan, 1, 0], [0, xp.nan, 3]], dtype=xp.float32)
     with config_context(array_api_dispatch=True):
