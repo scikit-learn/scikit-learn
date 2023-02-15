@@ -29,7 +29,7 @@ all_SparseRandomProjection: List[Any] = [SparseRandomProjection]
 all_DenseRandomProjection: List[Any] = [GaussianRandomProjection]
 all_RandomProjection = all_SparseRandomProjection + all_DenseRandomProjection
 
-
+This project is just for github Tuotoria learning for Github and Git
 # Make some random data with uniformly located non zero entries with
 # Gaussian distributed values
 def make_sparse_random_data(n_samples, n_features, n_nonzeros, random_state=0):
