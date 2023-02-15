@@ -21,7 +21,7 @@ from .utils._tags import (
 )
 from .exceptions import InconsistentVersionWarning
 from .utils.validation import check_X_y
-from .utils.validation import check_array
+from .utils.validation import check_array, _check_array
 from .utils.validation import _check_y
 from .utils.validation import _num_features
 from .utils.validation import _check_feature_names_in
@@ -574,7 +574,7 @@ class BaseEstimator:
         if no_val_X and no_val_y:
             raise ValueError("Validation should be done on X, y or both.")
         elif not no_val_X and no_val_y:
-            X = check_array(X, input_name="X", **check_params)
+            X = _check_array(X, input_name="X", **check_params)
             out = X
         elif no_val_X and not no_val_y:
             y = _check_y(y, **check_params)
@@ -588,10 +588,10 @@ class BaseEstimator:
                 check_X_params, check_y_params = validate_separately
                 if "estimator" not in check_X_params:
                     check_X_params = {**default_check_params, **check_X_params}
-                X = check_array(X, input_name="X", **check_X_params)
+                X = _check_array(X, input_name="X", **check_X_params)
                 if "estimator" not in check_y_params:
                     check_y_params = {**default_check_params, **check_y_params}
-                y = check_array(y, input_name="y", **check_y_params)
+                y = _check_array(y, input_name="y", **check_y_params)
             else:
                 X, y = check_X_y(X, y, **check_params)
             out = X, y
