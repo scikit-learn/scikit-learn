@@ -69,7 +69,7 @@ Changelog
 ....................
 
 - |Fix| Fixes a bug in :func:`utils.check_array` which now correctly performs
-  non-finite validation with the Array API specification. :pr:`xxxxx` by
+  non-finite validation with the Array API specification. :pr:`25619` by
   `Thomas Fan`_.
 
 .. _changes_1_2_1:
