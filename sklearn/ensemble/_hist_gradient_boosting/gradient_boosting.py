@@ -272,6 +272,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if missing.any():
                     categories = categories[~missing]
 
+                # Treat negative categories as missing values
                 negative_categories = categories < 0
                 if categories.any():
                     categories = categories[~negative_categories]
