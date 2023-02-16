@@ -21,7 +21,7 @@ from .utils._tags import (
 )
 from .exceptions import InconsistentVersionWarning
 from .utils.validation import check_X_y
-from .utils.validation import check_array, _check_array
+from .utils.validation import _check_array
 from .utils.validation import _check_y
 from .utils.validation import _num_features
 from .utils.validation import _check_feature_names_in
