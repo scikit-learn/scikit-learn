@@ -131,7 +131,7 @@ Changelog
 
 - |Feature| :class:`ensemble.HistGradientBoostingRegressor` and
   :class:`ensemble.HistGradientBoostingClassifier` treats negative values
-  as missing values for categorical features. :pr:`xxxxx` by `Thomas Fan`_.
+  as missing values for categorical features. :pr:`25629` by `Thomas Fan`_.
 
 - |Efficiency| :class:`ensemble.IsolationForest` predict time is now faster
   (typically by a factor of 8 or more). Internally, the estimator now precomputes
