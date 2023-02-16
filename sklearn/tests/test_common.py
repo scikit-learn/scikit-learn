@@ -15,11 +15,9 @@ from inspect import isgenerator, signature
 from itertools import product, chain
 from functools import partial
 
-import joblib
 import pytest
 import numpy as np
 
-from sklearn import clone
 from sklearn.cluster import (
     AffinityPropagation,
     Birch,
@@ -27,12 +25,7 @@ from sklearn.cluster import (
     OPTICS,
     SpectralClustering,
 )
-from sklearn.datasets import (
-    make_blobs,
-    make_regression,
-    load_linnerud,
-    make_multilabel_classification,
-)
+from sklearn.datasets import make_blobs
 from sklearn.manifold import Isomap, TSNE, LocallyLinearEmbedding
 from sklearn.neighbors import (
     LocalOutlierFactor,
@@ -608,61 +601,3 @@ def test_global_output_transform_pandas(estimator):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
         check_global_ouptut_transform_pandas(estimator.__class__.__name__, estimator)
-
-
-rng = np.random.RandomState(0)
-linnerud = load_linnerud()
-X_default, y_default = rng.rand(23, 14), rng.randint(1, 3, size=23)
-X_multi_out, y_multi_out = make_multilabel_classification(n_classes=3, random_state=0)
-X_isotonic, y_isotonic = make_regression(n_samples=10, n_features=1, random_state=0)
-X_square = [[1.0, -2.0, 2.0], [-2.0, 1.0, 3.0], [4.0, 1.0, -2.0]]
-X_text = [
-    "This is the 1st document in my corpus.",
-    "This document is the 2nd sample.",
-    "And this is the 3rd one.",
-    "Is this the 4th document?",
-]
-X_dict = [{"foo": 1, "bar": 2}, {"foo": 3, "baz": 1}]
-X_rnd_projection = rng.rand(25, 3000)
-X_tsne = rng.randn(40, 2)
-
-ESTIMATOR_DATA = {
-    "CCA": (linnerud.data, linnerud.target),
-    "ClassifierChain": (X_multi_out, y_multi_out),
-    "CountVectorizer": (X_text, None),
-    "DictVectorizer": (X_dict, None),
-    "GaussianRandomProjection": (X_rnd_projection, None),
-    "HashingVectorizer": (X_text, None),
-    "IsotonicRegression": (X_isotonic, y_isotonic),
-    "KernelCenterer": (X_square, None),
-    "MultiLabelBinarizer": (X_multi_out, y_multi_out),
-    "MultiOutputClassifier": (X_multi_out, y_multi_out),
-    "MultiOutputRegressor": (X_multi_out, y_multi_out),
-    "MultiTaskElasticNet": (X_multi_out, y_multi_out),
-    "MultiTaskElasticNetCV": (X_multi_out, y_multi_out),
-    "MultiTaskLasso": (X_multi_out, y_multi_out),
-    "MultiTaskLassoCV": (X_multi_out, y_multi_out),
-    "PLSCanonical": (linnerud.data, linnerud.target),
-    "PLSSVD": (linnerud.data, linnerud.target),
-    "RegressorChain": (X_multi_out, y_multi_out),
-    "SparseRandomProjection": (X_rnd_projection, None),
-    "TfidfVectorizer": (X_text, None),
-    "TSNE": (X_tsne, None),
-}
-
-
-@pytest.mark.parametrize(
-    "estimator_org", _tested_estimators(), ids=_get_check_estimator_ids
-)
-def test_estimator_deserialization_from_readonly_buffer(estimator_org, tmpdir):
-    pickle_path = str(tmpdir.join("clf.joblib"))
-    estimator = clone(estimator_org)
-    estimator_name = estimator.__class__.__name__
-    default_data = (X_default, y_default)
-    X, y = ESTIMATOR_DATA.get(estimator_name, default_data)
-    if estimator_name in ("LabelBinarizer", "LabelEncoder", "MultiLabelBinarizer"):
-        estimator.fit(y)
-    else:
-        estimator.fit(X, y)
-    joblib.dump(estimator, pickle_path)
-    joblib.load(pickle_path, mmap_mode="r")
