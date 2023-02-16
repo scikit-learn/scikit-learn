@@ -24,12 +24,12 @@ from ._k_means_common cimport _center_shift
 
 
 def init_bounds_dense(
-        floating[:, ::1] X,                      # IN READ-ONLY
-        floating[:, ::1] centers,                # IN
-        floating[:, ::1] center_half_distances,  # IN
-        int[::1] labels,                         # OUT
-        floating[::1] upper_bounds,              # OUT
-        floating[:, ::1] lower_bounds,           # OUT
+        const floating[:, ::1] X,                      # IN
+        const floating[:, ::1] centers,                # IN
+        const floating[:, ::1] center_half_distances,  # IN
+        int[::1] labels,                               # OUT
+        floating[::1] upper_bounds,                    # OUT
+        floating[:, ::1] lower_bounds,                 # OUT
         int n_threads):
     """Initialize upper and lower bounds for each sample for dense input data.
 
@@ -100,12 +100,12 @@ def init_bounds_dense(
 
 
 def init_bounds_sparse(
-        X,                                       # IN
-        floating[:, ::1] centers,                # IN
-        floating[:, ::1] center_half_distances,  # IN
-        int[::1] labels,                         # OUT
-        floating[::1] upper_bounds,              # OUT
-        floating[:, ::1] lower_bounds,           # OUT
+        X,                                             # IN
+        const floating[:, ::1] centers,                # IN
+        const floating[:, ::1] center_half_distances,  # IN
+        int[::1] labels,                               # OUT
+        floating[::1] upper_bounds,                    # OUT
+        floating[:, ::1] lower_bounds,                 # OUT
         int n_threads):
     """Initialize upper and lower bounds for each sample for sparse input data.
 
@@ -187,17 +187,17 @@ def init_bounds_sparse(
 
 
 def elkan_iter_chunked_dense(
-        floating[:, ::1] X,                      # IN READ-ONLY
-        floating[::1] sample_weight,             # IN READ-ONLY
-        floating[:, ::1] centers_old,            # IN
-        floating[:, ::1] centers_new,            # OUT
-        floating[::1] weight_in_clusters,        # OUT
-        floating[:, ::1] center_half_distances,  # IN
-        floating[::1] distance_next_center,      # IN
-        floating[::1] upper_bounds,              # INOUT
-        floating[:, ::1] lower_bounds,           # INOUT
-        int[::1] labels,                         # INOUT
-        floating[::1] center_shift,              # OUT
+        const floating[:, ::1] X,                      # IN
+        const floating[::1] sample_weight,             # IN
+        const floating[:, ::1] centers_old,            # IN
+        floating[:, ::1] centers_new,                  # OUT
+        floating[::1] weight_in_clusters,              # OUT
+        const floating[:, ::1] center_half_distances,  # IN
+        const floating[::1] distance_next_center,      # IN
+        floating[::1] upper_bounds,                    # INOUT
+        floating[:, ::1] lower_bounds,                 # INOUT
+        int[::1] labels,                               # INOUT
+        floating[::1] center_shift,                    # OUT
         int n_threads,
         bint update_centers=True):
     """Single iteration of K-means Elkan algorithm with dense input.
@@ -350,16 +350,16 @@ def elkan_iter_chunked_dense(
 
 
 cdef void _update_chunk_dense(
-        floating[:, ::1] X,                      # IN READ-ONLY
-        floating[::1] sample_weight,             # IN READ-ONLY
-        floating[:, ::1] centers_old,            # IN
-        floating[:, ::1] center_half_distances,  # IN
-        floating[::1] distance_next_center,      # IN
-        int[::1] labels,                         # INOUT
-        floating[::1] upper_bounds,              # INOUT
-        floating[:, ::1] lower_bounds,           # INOUT
-        floating *centers_new,                   # OUT
-        floating *weight_in_clusters,            # OUT
+        const floating[:, ::1] X,                      # IN
+        const floating[::1] sample_weight,             # IN
+        const floating[:, ::1] centers_old,            # IN
+        const floating[:, ::1] center_half_distances,  # IN
+        const floating[::1] distance_next_center,      # IN
+        int[::1] labels,                               # INOUT
+        floating[::1] upper_bounds,                    # INOUT
+        floating[:, ::1] lower_bounds,                 # INOUT
+        floating *centers_new,                         # OUT
+        floating *weight_in_clusters,                  # OUT
         bint update_centers) nogil:
     """K-means combined EM step for one dense data chunk.
 
@@ -423,17 +423,17 @@ cdef void _update_chunk_dense(
 
 
 def elkan_iter_chunked_sparse(
-        X,                                       # IN
-        floating[::1] sample_weight,             # IN
-        floating[:, ::1] centers_old,            # IN
-        floating[:, ::1] centers_new,            # OUT
-        floating[::1] weight_in_clusters,        # OUT
-        floating[:, ::1] center_half_distances,  # IN
-        floating[::1] distance_next_center,      # IN
-        floating[::1] upper_bounds,              # INOUT
-        floating[:, ::1] lower_bounds,           # INOUT
-        int[::1] labels,                         # INOUT
-        floating[::1] center_shift,              # OUT
+        X,                                             # IN
+        const floating[::1] sample_weight,             # IN
+        const floating[:, ::1] centers_old,            # IN
+        floating[:, ::1] centers_new,                  # OUT
+        floating[::1] weight_in_clusters,              # OUT
+        const floating[:, ::1] center_half_distances,  # IN
+        const floating[::1] distance_next_center,      # IN
+        floating[::1] upper_bounds,                    # INOUT
+        floating[:, ::1] lower_bounds,                 # INOUT
+        int[::1] labels,                               # INOUT
+        floating[::1] center_shift,                    # OUT
         int n_threads,
         bint update_centers=True):
     """Single iteration of K-means Elkan algorithm with sparse input.
@@ -596,19 +596,19 @@ def elkan_iter_chunked_sparse(
 
 
 cdef void _update_chunk_sparse(
-        floating[::1] X_data,                    # IN
-        int[::1] X_indices,                      # IN
-        int[::1] X_indptr,                       # IN
-        floating[::1] sample_weight,             # IN
-        floating[:, ::1] centers_old,            # IN
-        floating[::1] centers_squared_norms,     # IN
-        floating[:, ::1] center_half_distances,  # IN
-        floating[::1] distance_next_center,      # IN
-        int[::1] labels,                         # INOUT
-        floating[::1] upper_bounds,              # INOUT
-        floating[:, ::1] lower_bounds,           # INOUT
-        floating *centers_new,                   # OUT
-        floating *weight_in_clusters,            # OUT
+        const floating[::1] X_data,                    # IN
+        const int[::1] X_indices,                      # IN
+        const int[::1] X_indptr,                       # IN
+        const floating[::1] sample_weight,             # IN
+        const floating[:, ::1] centers_old,            # IN
+        const floating[::1] centers_squared_norms,     # IN
+        const floating[:, ::1] center_half_distances,  # IN
+        const floating[::1] distance_next_center,      # IN
+        int[::1] labels,                               # INOUT
+        floating[::1] upper_bounds,                    # INOUT
+        floating[:, ::1] lower_bounds,                 # INOUT
+        floating *centers_new,                         # OUT
+        floating *weight_in_clusters,                  # OUT
         bint update_centers) nogil:
     """K-means combined EM step for one sparse data chunk.
 
