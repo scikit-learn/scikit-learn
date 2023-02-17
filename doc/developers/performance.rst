@@ -325,9 +325,11 @@ standalone function in a ``.pyx`` file, add static type declarations and
 then use Cython to generate a C program suitable to be compiled as a
 Python extension module.
 
-The official documentation available at http://docs.cython.org/ contains
-a tutorial and reference guide for developing such a module. In the
-following we will just highlight a couple of tricks that we found
+The official documentation available at http://docs.cython.org/ contains a
+tutorial and reference guide for developing such a module. For more information
+see :ref:`cython`.
+
+In the following we will just highlight a couple of tricks that we found
 important in practice on the existing cython codebase in the scikit-learn
 project.
 
