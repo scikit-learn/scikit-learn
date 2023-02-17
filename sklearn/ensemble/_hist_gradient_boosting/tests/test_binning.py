@@ -95,8 +95,9 @@ def test_map_to_bins(max_bins):
         _find_binning_thresholds(DATA[:, i], max_bins=max_bins) for i in range(2)
     ]
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order="F")
+    is_categorical = np.zeros(2, dtype=np.uint8)
     last_bin_idx = max_bins
-    _map_to_bins(DATA, bin_thresholds, last_bin_idx, n_threads, binned)
+    _map_to_bins(DATA, bin_thresholds, is_categorical, last_bin_idx, n_threads, binned)
     assert binned.shape == DATA.shape
     assert binned.dtype == np.uint8
     assert binned.flags.f_contiguous
@@ -361,6 +362,27 @@ def test_categorical_feature(n_bins):
     # happens in practice. This check is only for illustration purpose.
     X = np.array([[-1, 100]], dtype=X_DTYPE).T
     expected_trans = np.array([[0, 6]]).T
+    assert_array_equal(bin_mapper.transform(X), expected_trans)
+
+
+def test_categorical_feature_negative_missing():
+    """Make sure bin mapper treats negative categories as missing values."""
+    X = np.array(
+        [[4] * 500 + [1] * 3 + [5] * 10 + [-1] * 3 + [np.nan] * 4], dtype=X_DTYPE
+    ).T
+    bin_mapper = _BinMapper(
+        n_bins=4,
+        is_categorical=np.array([True]),
+        known_categories=[np.array([1, 4, 5], dtype=X_DTYPE)],
+    ).fit(X)
+
+    assert bin_mapper.n_bins_non_missing_ == [3]
+
+    X = np.array([[-1, 1, 3, 5, np.nan]], dtype=X_DTYPE).T
+
+    # Negative categories are considered missing
+    # All missing values are mapped to n_bins_non_missing_ which is 3.
+    expected_trans = np.array([[3, 0, 1, 2, 3]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
 
 
