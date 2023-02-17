@@ -155,14 +155,25 @@ def is_multilabel(y):
     if hasattr(y, "__array__") or isinstance(y, Sequence) or is_array_api:
         # DeprecationWarning will be replaced by ValueError, see NEP 34
         # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
+        check_y_kwargs = dict(
+            accept_sparse=True,
+            allow_nd=True,
+            force_all_finite=False,
+            ensure_2d=False,
+            ensure_min_samples=0,
+            ensure_min_features=0,
+        )
         with warnings.catch_warnings():
             warnings.simplefilter("error", np.VisibleDeprecationWarning)
             try:
-                y = xp.asarray(y)
-            except (np.VisibleDeprecationWarning, ValueError):
+                y = check_array(y, dtype=None, **check_y_kwargs)
+            except (np.VisibleDeprecationWarning, ValueError) as e:
+                if str(e).startswith("Complex data not supported"):
+                    raise
+
                 # dtype=object should be provided explicitly for ragged arrays,
                 # see NEP 34
-                y = xp.asarray(y, dtype=object)
+                y = check_array(y, dtype=object, **check_y_kwargs)
 
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
@@ -180,7 +191,7 @@ def is_multilabel(y):
         labels = xp.unique_values(y)
 
         return len(labels) < 3 and (
-            y.dtype.kind in "biu" or _is_integral_float(labels)  # bool, int, uint
+            y.dtype.kind in "Obiu" or _is_integral_float(labels)  # bool, int, uint
         )
 
 
@@ -302,15 +313,27 @@ def type_of_target(y, input_name=""):
     # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
     # We therefore catch both deprecation (NumPy < 1.24) warning and
     # value error (NumPy >= 1.24).
+    check_y_kwargs = dict(
+        accept_sparse=True,
+        allow_nd=True,
+        force_all_finite=False,
+        ensure_2d=False,
+        ensure_min_samples=0,
+        ensure_min_features=0,
+    )
+
     with warnings.catch_warnings():
         warnings.simplefilter("error", np.VisibleDeprecationWarning)
         if not issparse(y):
             try:
-                y = xp.asarray(y)
-            except (np.VisibleDeprecationWarning, ValueError):
+                y = check_array(y, dtype=None, **check_y_kwargs)
+            except (np.VisibleDeprecationWarning, ValueError) as e:
+                if str(e).startswith("Complex data not supported"):
+                    raise
+
                 # dtype=object should be provided explicitly for ragged arrays,
                 # see NEP 34
-                y = xp.asarray(y, dtype=object)
+                y = check_array(y, dtype=object, **check_y_kwargs)
 
     # The old sequence of sequences format
     try:
@@ -340,8 +363,10 @@ def type_of_target(y, input_name=""):
             return "binary"  # []
         # 2-D empty array: [[]]
         return "unknown"
-    if not issparse(y) and y.dtype == object and not isinstance(y.flat[0], str):
-        # [obj_1] and not ["label_1"]
+
+    y_is_sparse = issparse(y)
+    if not y_is_sparse and y.dtype == object and not isinstance(y.flat[0], str):
+        # [obj_1] and not ["label_1"] or not [1] or not [1.0]
         return "unknown"
 
     # Check if multioutput
