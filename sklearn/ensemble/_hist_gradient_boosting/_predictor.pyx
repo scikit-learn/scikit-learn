@@ -14,7 +14,7 @@ from ._bitset cimport in_bitset_2d_memoryview
 
 
 def _predict_from_raw_data(  # raw data = non-binned data
-        node_struct [:] nodes,
+        const node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
         const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
         const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
@@ -34,7 +34,7 @@ def _predict_from_raw_data(  # raw data = non-binned data
 
 
 cdef inline Y_DTYPE_C _predict_one_from_raw_data(
-        node_struct [:] nodes,
+        const node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
         const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
         const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
