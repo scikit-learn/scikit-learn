@@ -156,9 +156,10 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Feature| Implementation of :func:`inspection.metric_threshold_curve`. This
-  function the threshold-dependent metric of interest for each threshold in a
-  threshold grid. :pr:`25639` by :user:`Carlo Lemos <vitaliset>`.
+- |MajorFeature| :func:`inspection.metric_threshold_curve` has been added to
+  measure the relationship between the threshold used by a binary classifier
+  for a given threshold-dependent function. :pr:`25639` by
+  :user:`Carlo Lemos <vitaliset>`.
 
 :mod:`sklearn.metrics`
 ......................
