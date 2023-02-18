@@ -29,8 +29,7 @@ Let's consider the following trained binary classification model::
   >>> X_train_clf, X_train_thr, y_train_clf, y_train_thr = train_test_split(
   ...     X_train_clf, y_train_clf, random_state=42, stratify=y_train_clf)
   ...
-  >>> model = RandomForestClassifier(random_state=42)
-  >>> model.fit(X_train_clf, y_train_clf)
+  >>> model = RandomForestClassifier(random_state=42).fit(X_train_clf, y_train_clf)
   ...
   >>> fbeta_score(y_test, model.predict(X_test), beta=2)
   0.462...
