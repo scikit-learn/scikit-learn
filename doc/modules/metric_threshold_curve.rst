@@ -1,5 +1,5 @@
 
-.. _permutation_importance:
+.. _metric_threshold_curve:
 
 Metric threshold curve
 ======================
