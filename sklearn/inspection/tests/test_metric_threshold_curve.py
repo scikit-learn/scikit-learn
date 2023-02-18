@@ -69,5 +69,5 @@ def test_metric_threshold_curve_end_points(metric):
 
     metric_values, _ = metric_threshold_curve(y_true, y_pred, metric)
 
-    assert metric_values[0] == metric(y_true, (y_pred > min_pred)*1)
-    assert metric_values[-1] == metric(y_true, (y_pred > max_pred)*1)
+    assert metric_values[0] == metric(y_true, (y_pred > min_pred) * 1)
+    assert metric_values[-1] == metric(y_true, (y_pred > max_pred) * 1)

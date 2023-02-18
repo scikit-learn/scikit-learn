@@ -25,21 +25,24 @@ from ..metrics._base import _check_pos_label_consistency
         "y_true": ["array-like"],
         "y_score": ["array-like"],
         "score_func": [callable],
-        "threshold_grid": [Interval(Integral, 3, None, closed="left"),
-                           "array-like",
-                           None],
+        "threshold_grid": [
+            Interval(Integral, 3, None, closed="left"),
+            "array-like",
+            None,
+        ],
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
     }
 )
 def metric_threshold_curve(
-        y_true,
-        y_score,
-        score_func,
-        *,
-        threshold_grid=101,
-        pos_label=None,
-        sample_weight=None):
+    y_true,
+    y_score,
+    score_func,
+    *,
+    threshold_grid=101,
+    pos_label=None,
+    sample_weight=None,
+):
     """Compute the threshold-dependent metric of interest per threshold.
 
     Note: this implementation is restricted to the binary classification task.
