@@ -47,6 +47,10 @@ def metric_threshold_curve(
 
     Note: this implementation is restricted to the binary classification task.
 
+    Read more in the :ref:`User Guide <metric_threshold_curve>`.
+
+    .. versionadded:: 1.3
+
     Parameters
     ----------
     y_true : array-like of shape (n_samples,), default=None
@@ -84,7 +88,7 @@ def metric_threshold_curve(
     --------
     precision_recall_curve : Compute precision-recall pairs for different
         probability thresholds.
-    det_curve: Compute error rates for different probability thresholds.
+    det_curve : Compute error rates for different probability thresholds.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
 
     Examples

@@ -650,9 +650,9 @@ Kernels:
    :toctree: generated/
    :template: function.rst
 
-   inspection.metric_threshold_curve
    inspection.partial_dependence
    inspection.permutation_importance
+   inspection.metric_threshold_curve
 
 Plotting
 --------

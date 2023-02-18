@@ -27,6 +27,6 @@ to diagnose issues with model performance.
 
 .. toctree::
 
-    modules/metric_threshold_curve
     modules/partial_dependence
     modules/permutation_importance
+    modules/metric_threshold_curve
