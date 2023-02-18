@@ -108,13 +108,6 @@ def metric_threshold_curve(
     assert_all_finite(y_true)
     assert_all_finite(y_score)
 
-    # Check if we have enough values to create the curve
-    if isinstance(threshold_grid, int):
-        if threshold_grid <= 2:
-            raise ValueError(
-                f"threshold_grid={threshold_grid} should be > 2."
-            )
-
     # Filter out zero-weighted samples, as they should not impact the result
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
