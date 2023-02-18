@@ -47,10 +47,10 @@ look into the behaviour of that metric with::
   ...
   >>> best_thr = thresholds[np.argmax(f2_values)]
   >>> best_thr
-  ... 0.21
-  ...
+  0.21
+
   >>> new_predict_test = (model.predict_proba(X_test)[:, 1] > best_thr).astype(int)
   >>> fbeta_score(y_test, new_predict_test, beta=2)
-  ... 0.719...
+  0.719...
 
 Note that the new choosen threshold optimizes the f2 score in the test set.
