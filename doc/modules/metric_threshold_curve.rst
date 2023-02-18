@@ -14,6 +14,7 @@ when we change the decision threshold.
 
 Let's consider the following trained binary classification model::
 
+  >>> import numpy as np
   >>> import matplotlib.pyplot as plt
   >>> from sklearn.datasets import make_classification
   >>> from sklearn.ensemble import RandomForestClassifier
