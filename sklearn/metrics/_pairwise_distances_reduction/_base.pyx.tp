@@ -224,7 +224,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         )
 
     @final
-    cdef void _parallel_on_X(self) nogil:
+    cdef void _parallel_on_X(self) noexcept nogil:
         """Perform computation and reduction in parallel on chunks of X.
 
         This strategy dispatches tasks statically on threads. Each task
@@ -291,7 +291,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         return
 
     @final
-    cdef void _parallel_on_Y(self) nogil:
+    cdef void _parallel_on_Y(self) noexcept nogil:
         """Perform computation and reduction in parallel on chunks of Y.
 
         This strategy is a sequence of embarrassingly parallel subtasks:
@@ -368,7 +368,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         """Compute the pairwise distances on two chunks of X and Y and reduce them.
 
         This is THE core computational method of BaseDistancesReduction{{name_suffix}}.
@@ -386,14 +386,14 @@ cdef class BaseDistancesReduction{{name_suffix}}:
 
     # Placeholder methods which can be implemented
 
-    cdef void compute_exact_distances(self) nogil:
+    cdef void compute_exact_distances(self) noexcept nogil:
         """Convert rank-preserving distances to exact distances or recompute them."""
         return
 
     cdef void _parallel_on_X_parallel_init(
         self,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         """Allocate datastructures used in a thread given its number."""
         return
 
@@ -402,7 +402,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         ITYPE_t thread_num,
         ITYPE_t X_start,
         ITYPE_t X_end,
-    ) nogil:
+    ) noexcept nogil:
         """Initialize datastructures used in a thread given its number.
 
         In this method, EuclideanDistance specialisations of subclass of
@@ -425,7 +425,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         """Initialize datastructures just before the _compute_and_reduce_distances_on_chunks.
 
         In this method, EuclideanDistance specialisations of subclass of
@@ -446,20 +446,20 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         ITYPE_t thread_num,
         ITYPE_t X_start,
         ITYPE_t X_end,
-    ) nogil:
+    ) noexcept nogil:
         """Interact with datastructures after a reduction on chunks."""
         return
 
     cdef void _parallel_on_X_parallel_finalize(
         self,
         ITYPE_t thread_num
-    ) nogil:
+    ) noexcept nogil:
         """Interact with datastructures after executing all the reductions."""
         return
 
     cdef void _parallel_on_Y_init(
         self,
-    ) nogil:
+    ) noexcept nogil:
         """Allocate datastructures used in all threads."""
         return
 
@@ -468,7 +468,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         ITYPE_t thread_num,
         ITYPE_t X_start,
         ITYPE_t X_end,
-    ) nogil:
+    ) noexcept nogil:
         """Initialize datastructures used in a thread given its number.
 
         In this method, EuclideanDistance specialisations of subclass of
@@ -491,7 +491,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         """Initialize datastructures just before the _compute_and_reduce_distances_on_chunks.
 
         In this method, EuclideanDistance specialisations of subclass of
@@ -511,13 +511,13 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
-    ) nogil:
+    ) noexcept nogil:
         """Update thread datastructures before leaving a parallel region."""
         return
 
     cdef void _parallel_on_Y_finalize(
         self,
-    ) nogil:
+    ) noexcept nogil:
         """Update datastructures after executing all the reductions."""
         return
 
