@@ -13,6 +13,7 @@ from pytest import importorskip
 import numpy as np
 import scipy.sparse as sp
 
+from sklearn._config import config_context
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import SkipTest
@@ -1759,3 +1760,19 @@ def test_boolean_series_remains_boolean():
 
     assert res.dtype == expected.dtype
     assert_array_equal(res, expected)
+
+
+@pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
+def test_check_array_array_api_has_non_finite(array_namespace):
+    """Checks that Array API arrays checks non-finite correctly."""
+    xp = pytest.importorskip(array_namespace)
+
+    X_nan = xp.asarray([[xp.nan, 1, 0], [0, xp.nan, 3]], dtype=xp.float32)
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match="Input contains NaN."):
+            check_array(X_nan)
+
+    X_inf = xp.asarray([[xp.inf, 1, 0], [0, xp.inf, 3]], dtype=xp.float32)
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match="infinity or a value too large"):
+            check_array(X_inf)
