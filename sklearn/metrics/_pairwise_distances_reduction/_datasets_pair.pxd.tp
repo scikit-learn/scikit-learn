@@ -25,13 +25,13 @@ cdef class DatasetsPair{{name_suffix}}:
         {{DistanceMetric}} distance_metric
         ITYPE_t n_features
 
-    cdef ITYPE_t n_samples_X(self) nogil
+    cdef ITYPE_t n_samples_X(self) noexcept nogil
 
-    cdef ITYPE_t n_samples_Y(self) nogil
+    cdef ITYPE_t n_samples_Y(self) noexcept nogil
 
-    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil
+    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil
 
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil
 
 
 cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
