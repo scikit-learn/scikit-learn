@@ -26,7 +26,6 @@ from ..utils import (
     _safe_indexing,
     check_random_state,
     column_or_1d,
-    compute_sample_weight,
     gen_batches,
     shuffle,
 )
@@ -444,7 +443,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         intercept_init = intercept_init.astype(dtype, copy=False)
         return coef_init, intercept_init
 
-    def _fit(self, X, y, incremental=False, sample_weight=None, class_weight=None):
+    def _fit(self, X, y, incremental=False, sample_weight=None):
         # Make sure self.hidden_layer_sizes is a list
         hidden_layer_sizes = self.hidden_layer_sizes
         if not hasattr(hidden_layer_sizes, "__iter__"):
@@ -468,10 +467,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # Ensure y is 2D
         if y.ndim == 1:
             y = y.reshape((-1, 1))
-
-        # Handle class weights, and it only applies to MLPClassifier
-        if isinstance(self, MLPClassifier) and class_weight is not None:
-            sample_weight *= compute_sample_weight(class_weight, y)
 
         self.n_outputs_ = y.shape[1]
 
@@ -789,7 +784,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 self.best_loss_ = self.loss_curve_[-1]
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, sample_weight=None, class_weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model to data matrix X and target(s) y.
 
         Parameters
@@ -804,26 +799,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         sample_weight : array-like of shape (n_samples,)
             The sample weights.
 
-        class_weight : dict, list of dicts, "balanced", or None
-            Only applicable to MLPClassifier.
-
-            Weights associated with classes in the form ``{class_label: weight}``.
-            If not given, all classes are supposed to have weight one. For
-            multi-output problems, a list of dicts can be provided in the same
-            order as the columns of y.
-
-            Note that for multioutput (including multilabel) weights should be
-            defined for each class of every column in its own dict. For example,
-            for four-class multilabel classification weights should be
-            [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}] instead of
-            [{1:1}, {2:5}, {3:1}, {4:1}].
-
-            The "balanced" mode uses the values of y to automatically adjust
-            weights inversely proportional to class frequencies in the input data:
-            ``n_samples / (n_classes * np.bincount(y))``.
-
-            For multi-output, the weights of each column of y will be multiplied.
-
         Returns
         -------
         self : object
@@ -837,7 +812,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             y,
             incremental=False,
             sample_weight=sample_weight,
-            class_weight=class_weight,
         )
 
     def _check_solver(self):
@@ -1290,7 +1264,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     @available_if(lambda est: est._check_solver())
     @_fit_context(prefer_skip_nested_validation=True)
-    def partial_fit(self, X, y, classes=None, sample_weight=None, class_weight=None):
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Update the model with a single iteration over the given data.
 
         Parameters
@@ -1312,26 +1286,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         sample_weight : array-like of shape (n_samples,)
             The sample weights.
 
-        class_weight : dict, list of dicts, "balanced", or None
-            Only applicable to MLPClassifier
-
-            Weights associated with classes in the form ``{class_label: weight}``.
-            If not given, all classes are supposed to have weight one. For
-            multi-output problems, a list of dicts can be provided in the same
-            order as the columns of y.
-
-            Note that for multioutput (including multilabel) weights should be
-            defined for each class of every column in its own dict. For example,
-            for four-class multilabel classification weights should be
-            [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}] instead of
-            [{1:1}, {2:5}, {3:1}, {4:1}].
-
-            The "balanced" mode uses the values of y to automatically adjust
-            weights inversely proportional to class frequencies in the input data:
-            ``n_samples / (n_classes * np.bincount(y))``.
-
-            For multi-output, the weights of each column of y will be multiplied.
-
         Returns
         -------
         self : object
@@ -1349,7 +1303,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             y,
             incremental=True,
             sample_weight=sample_weight,
-            class_weight=class_weight,
         )
 
     def predict_log_proba(self, X):
