@@ -865,7 +865,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 transformer_names = [
                     t[0] for t in self._iter(fitted=True, replace_strings=True)
                 ]
-                feature_names_outs = [X.columns for X in Xs]
+                # Selection of columns might be empty.
+                # Hence feature names are filtered for non-emptiness.
+                feature_names_outs = [X.columns for X in Xs if X.shape[1] != 0]
                 names_out = self._add_prefix_for_feature_names_out(
                     list(zip(transformer_names, feature_names_outs))
                 )
