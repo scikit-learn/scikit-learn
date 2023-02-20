@@ -93,7 +93,8 @@ plt.plot(
 plt.xlabel("n_features / n_samples")
 plt.ylabel("Classification accuracy")
 
-plt.legend(loc="center right", prop={"size": 12})
+plt.legend(loc="lower left")
+plt.ylim((0.65, 1.0))
 plt.suptitle(
     "LDA (Linear Discriminant Analysis) vs. "
     + "\n"
