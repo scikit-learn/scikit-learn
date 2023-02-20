@@ -358,10 +358,11 @@ def test_categorical_feature(n_bins):
     expected_trans = np.array([[0, 1, 2, n_bins - 1, 3, 4, 5]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
 
-    # For unknown categories, the mapping is incorrect / undefined. This never
-    # happens in practice. This check is only for illustration purpose.
-    X = np.array([[-1, 100]], dtype=X_DTYPE).T
-    expected_trans = np.array([[0, 6]]).T
+    # For negative categories, the mapping goes to the missing bin (n_bins -1)
+    # Unknown positive categories does not happen in practice and tested
+    # for illustration purpose.
+    X = np.array([[-4, -1, 100]], dtype=X_DTYPE).T
+    expected_trans = np.array([[n_bins - 1, n_bins - 1, 6]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
 
 
