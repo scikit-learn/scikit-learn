@@ -1936,20 +1936,36 @@ def assert_is_subtree(tree, subtree):
             )
 
 
-def check_apply_path_readonly(name):
-    X_readonly = create_memmap_backed_data(X_small.astype(tree._tree.DTYPE, copy=False))
+@pytest.mark.parametrize("name", ALL_TREES)
+@pytest.mark.parametrize("splitter", ["best", "random"])
+@pytest.mark.parametrize("X_format", ["dense", "csr", "csc"])
+def test_apply_path_readonly_all_trees(name, splitter, X_format):
+    dataset = DATASETS["clf_small"]
+    X_small = dataset["X"].astype(tree._tree.DTYPE, copy=False)
+    if X_format == "dense":
+        X_readonly = create_memmap_backed_data(X_small)
+    else:
+        X_readonly = dataset["X_sparse"]  # CSR
+        if X_format == "csc":
+            # Cheap CSR to CSC conversion
+            X_readonly = X_readonly.tocsc()
+
+        X_readonly.data = np.array(X_readonly.data, dtype=tree._tree.DTYPE)
+        (
+            X_readonly.data,
+            X_readonly.indices,
+            X_readonly.indptr,
+        ) = create_memmap_backed_data(
+            (X_readonly.data, X_readonly.indices, X_readonly.indptr)
+        )
+
     y_readonly = create_memmap_backed_data(np.array(y_small, dtype=tree._tree.DTYPE))
-    est = ALL_TREES[name]()
+    est = ALL_TREES[name](splitter=splitter)
     est.fit(X_readonly, y_readonly)
     assert_array_equal(est.predict(X_readonly), est.predict(X_small))
     assert_array_equal(
         est.decision_path(X_readonly).todense(), est.decision_path(X_small).todense()
     )
-
-
-@pytest.mark.parametrize("name", ALL_TREES)
-def test_apply_path_readonly_all_trees(name):
-    check_apply_path_readonly(name)
 
 
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse", "poisson"])
@@ -2390,3 +2406,22 @@ def test_splitter_serializable(Splitter):
     splitter_back = pickle.loads(splitter_serialize)
     assert splitter_back.max_features == max_features
     assert isinstance(splitter_back, Splitter)
+
+
+def test_tree_deserialization_from_read_only_buffer(tmpdir):
+    """Check that Trees can be deserialized with read only buffers.
+
+    Non-regression test for gh-25584.
+    """
+    pickle_path = str(tmpdir.join("clf.joblib"))
+    clf = DecisionTreeClassifier(random_state=0)
+    clf.fit(X_small, y_small)
+
+    joblib.dump(clf, pickle_path)
+    loaded_clf = joblib.load(pickle_path, mmap_mode="r")
+
+    assert_tree_equal(
+        loaded_clf.tree_,
+        clf.tree_,
+        "The trees of the original and loaded classifiers are not equal.",
+    )

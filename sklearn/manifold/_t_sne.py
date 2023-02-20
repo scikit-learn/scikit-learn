@@ -566,7 +566,7 @@ class TSNE(BaseEstimator):
         is used in other manifold learning algorithms. Larger datasets
         usually require a larger perplexity. Consider selecting a value
         between 5 and 50. Different values can result in significantly
-        different results. The perplexity must be less that the number
+        different results. The perplexity must be less than the number
         of samples.
 
     early_exaggeration : float, default=12.0
@@ -990,6 +990,8 @@ class TSNE(BaseEstimator):
                 svd_solver="randomized",
                 random_state=random_state,
             )
+            # Always output a numpy array, no matter what is configured globally
+            pca.set_output(transform="default")
             X_embedded = pca.fit_transform(X).astype(np.float32, copy=False)
             # PCA is rescaled so that PC1 has standard deviation 1e-4 which is
             # the default value for random initialization. See issue #18018.

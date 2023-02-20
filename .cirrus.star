@@ -10,6 +10,7 @@ def main(ctx):
         return []
 
     arm_wheel_yaml = "build_tools/cirrus/arm_wheel.yml"
+    arm_tests_yaml = "build_tools/cirrus/arm_tests.yml"
 
     # Nightly jobs always run
     if env.get("CIRRUS_CRON", "") == "nightly":
@@ -25,7 +26,10 @@ def main(ctx):
     response = http.get(url).json()
     commit_msg = response["message"]
 
-    if "[skip ci]" in commit_msg or ("[cd build]" not in commit_msg and "[cd build cirrus]" not in commit_msg):
+    if "[skip ci]" in commit_msg:
         return []
 
-    return fs.read(arm_wheel_yaml)
+    if "[cd build]" in commit_msg or "[cd build cirrus]" in commit_msg:
+        return fs.read(arm_wheel_yaml) + fs.read(arm_tests_yaml)
+
+    return fs.read(arm_tests_yaml)
