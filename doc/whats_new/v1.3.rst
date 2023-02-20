@@ -179,6 +179,15 @@ Changelog
   dissimilarity is not a metric and cannot be supported by the BallTree.
   :pr:`25417` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPRegressor` and :class:`neural_network.MLPClassifier`
+  reports the right `n_iter_` when `warm_start=True`. It corresponds to the number
+  of iterations performed on the current call to `fit` instead of the total number
+  of iterations performed since the initialization of the estimator.
+  :pr:`25443` by :user:`Marvin Krawutschke <Marvvxi>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
