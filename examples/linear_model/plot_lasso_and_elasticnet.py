@@ -29,7 +29,8 @@ compared with the ground-truth.
 #
 # We generate a dataset where the number of samples is lower than the total
 # number of features. This leads to a singular matrix that cannot be dealt with
-# an :ref:`ordinary_least_squares` as it requires some regularization.
+# an :ref:`ordinary_least_squares`. Introducing some regularization is a
+# technique to make the matrix non-singular and therefore, invertible.
 #
 # The target `y` is a linear combination with alternating signs of sinusoidal
 # signals. Only the 10 lowest out of the 100 frequencies in `X` are used to
@@ -60,10 +61,8 @@ y = np.dot(X, true_coef)
 freqs[:n_informative]
 
 # %%
-# A random phase is introduced using `numpy.random.random_sample
-# <https://numpy.org/doc/stable/reference/random/generated/numpy.random.random_sample.html>`_
-# and some gaussian noise (implemented by `numpy.random.normal
-# <https://numpy.org/doc/stable/reference/random/generated/numpy.random.random_sample.html>`_)
+# A random phase is introduced using :func:`numpy.random.random_sample`
+# and some gaussian noise (implemented by :func:`numpy.random.normal`)
 # is added to both the features and the target.
 
 for i in range(n_features):
@@ -86,18 +85,22 @@ plt.xlabel("time")
 _ = plt.title("Superposition of sinusoidal signals")
 
 # %%
-# We split the data into train and test sets for simplicity. In practice one should
-# use a :class:`~sklearn.model_selection.TimeSeriesSplit` cross-validation to
-# estimate the variance of the test score. Here we set `shuffle="False"` to keep
-# the causality of the unseen data.
+# We split the data into train and test sets for simplicity. In practice one
+# should use a :class:`~sklearn.model_selection.TimeSeriesSplit`
+# cross-validation to estimate the variance of the test score. Here we set
+# `shuffle="False"` as we must not use training data that succeed the testing
+# data when dealing with data that have a temporal relationship.
 
 from sklearn.model_selection import train_test_split
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.5, shuffle=False
-)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, shuffle=False)
 
 # %%
+# In the following we compute the performance of three l1-based models in terms
+# of the goodness of fit :math:`R^2` score and the fitting time. Then we make a
+# plot to compare the sparsity of the estimated coefficients with respect to the
+# ground-truth coefficients and finally we analyze the previous results.
+#
 # Lasso
 # -----
 #
@@ -170,7 +173,7 @@ print(f"ElasticNet r^2 on test data : {r2_score_enet:.3f}")
 
 # %%
 # Plot and analysis of the results
-# ------------
+# --------------------------------
 #
 # In this section we use a heatmap to visualize the sparsity of the true
 # and estimated coefficients of the respective linear models.
