@@ -600,12 +600,12 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             X=X,
             ensure_2d=False,
             allow_nd=True,
-            ensure_min_samples=0,
-            ensure_min_features=0,
+            ensure_min_samples=1,
+            ensure_min_features=1,
             reset=False,
         )
         random_state = check_random_state(self.random_state)
-        img_height, img_width = X.shape[1:3]
+        n_imgs, img_height, img_width = X.shape[:3]
         if self.patch_size is None:
             patch_size = img_height // 10, img_width // 10
         else:
