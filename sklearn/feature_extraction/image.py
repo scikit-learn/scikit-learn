@@ -17,7 +17,7 @@ from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
-from ..utils._param_validation import Interval, validate_params
+from ..utils._param_validation import Hidden, Interval, validate_params
 
 __all__ = [
     "PatchExtractor",
@@ -447,6 +447,7 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
         return patches
 
 
+@validate_params({"patches": [np.ndarray], "image_size": [tuple, Hidden(list)]})
 def reconstruct_from_patches_2d(patches, image_size):
     """Reconstruct the image from all of its patches.
 

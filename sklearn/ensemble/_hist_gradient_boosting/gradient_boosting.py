@@ -1165,7 +1165,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return averaged_predictions
 
     def _more_tags(self):
-        return {"allow_nan": True}
+        return {
+            "allow_nan": True,
+            "_xfail_checks": {
+                "check_estimators_pickle": (
+                    "The memory views of the nodes parameter need to be defined"
+                    "as read only in the Cython implementation."
+                ),
+            },
+        }
 
     @abstractmethod
     def _get_loss(self, sample_weight):

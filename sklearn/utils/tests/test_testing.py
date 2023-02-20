@@ -11,7 +11,6 @@ import pytest
 
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.metaestimators import available_if, if_delegate_has_method
-from sklearn.utils._readonly_array_wrapper import _test_sum
 from sklearn.utils._testing import (
     assert_raises,
     assert_no_warnings,
@@ -678,26 +677,6 @@ def test_create_memmap_backed_data(monkeypatch, aligned):
         ),
     ):
         create_memmap_backed_data([input_array, "not-an-array"], aligned=True)
-
-
-@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
-def test_memmap_on_contiguous_data(dtype):
-    """Test memory mapped array on contiguous memoryview."""
-    x = np.arange(10).astype(dtype)
-    assert x.flags["C_CONTIGUOUS"]
-    assert x.flags["ALIGNED"]
-
-    # _test_sum consumes contiguous arrays
-    # def _test_sum(NUM_TYPES[::1] x):
-    sum_origin = _test_sum(x)
-
-    # now on memory mapped data
-    # aligned=True so avoid https://github.com/joblib/joblib/issues/563
-    # without alignment, this can produce segmentation faults, see
-    # https://github.com/scikit-learn/scikit-learn/pull/21654
-    x_mmap = create_memmap_backed_data(x, mmap_mode="r+", aligned=True)
-    sum_mmap = _test_sum(x_mmap)
-    assert sum_mmap == pytest.approx(sum_origin, rel=1e-11)
 
 
 @pytest.mark.parametrize(
