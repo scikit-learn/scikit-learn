@@ -64,8 +64,8 @@ y.value_counts().sort_index()
 #   classifiers where each classifier is trained to distinguish between
 #   a set of classes from the rest of the classes. The set of classes is
 #   defined by a codebook, which is randomly generated in scikit-learn. This
-#   method expose a parameter `code_size` to control the size of the codebook.
-#   We set it above one since we are not interested by compressing the class
+#   method exposes a parameter `code_size` to control the size of the codebook.
+#   We set it above one since we are not interested in compressing the class
 #   representation.
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
@@ -109,23 +109,22 @@ _ = ax.set_title(
 )
 
 # %%
-# At a first glance, we can see that the build-in strategy of the decision
+# At a first glance, we can see that the built-in strategy of the decision
 # tree classifier is working quite well. One-vs-one and the error-correcting
-# output code strategies are also working even better. However, the
+# output code strategies are working even better. However, the
 # one-vs-rest strategy is not working as well as the other strategies.
 #
-# Indeed, these results are reproducing something reported in the literature
+# Indeed, these results reproduce something reported in the literature
 # as in [2]_. However, the story is not as simple as it seems.
 #
 # The importance of hyperparameters search
 # ----------------------------------------
 #
-# It was later shown in [3]_ that not enough care was taken in the optimization
-# of the hyperparameters of the classifiers and that the multiclass strategies
-# would be really close from each other if the hyperparameters were optimized.
+# It was later shown in [3]_ that the multiclass strategies would show similar
+# scores if the hyperparameters of the base classifiers are first optimized.
 #
-# We try to reproduce the above experiment by optimizing the hyperparameters,
-# at least the depth of the decision tree.
+# Here we try to reproduce such result by at least optimizing the depth of the
+# base decision tree.
 from sklearn.model_selection import GridSearchCV
 
 param_grid = {"max_depth": [3, 5, 8]}
@@ -158,7 +157,7 @@ plt.show()
 
 # %%
 # We can see that once the hyperparameters are optimized, all multiclass
-# strategies are performing similarly as discussed in [3]_.
+# strategies have similar performance as discussed in [3]_.
 #
 # Conclusion
 # ----------
@@ -166,7 +165,7 @@ plt.show()
 # We can get some intuition behind those results.
 #
 # First, the reason for which one-vs-one and error-correcting output code are
-# performing better when the hyperparameters are not optimized relies on the
+# outperforming the tree when the hyperparameters are not optimized relies on
 # fact that they ensemble a larger number of classifiers. The ensembling
 # improves the generalization performance. This is a bit similar why a bagging
 # classifier generally performs better than a single decision tree if no care
