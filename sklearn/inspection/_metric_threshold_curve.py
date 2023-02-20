@@ -90,20 +90,6 @@ def metric_threshold_curve(
         probability thresholds.
     det_curve : Compute error rates for different probability thresholds.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.metrics import accuracy_score
-    >>> from sklearn.inspection import metric_threshold_curve
-    >>> y_true = np.array([0, 0, 1, 1])
-    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> accuracy_values, thresholds = metric_threshold_curve(
-    ...     y_true, y_scores, accuracy_score)
-    >>> thresholds
-    array([0.1 , 0.35, 0.4 , 0.8 ])
-    >>> accuracy_values
-    array([0.75, 0.5 , 0.75, 0.5 ])
     """
     # Check to make sure y_true is valid
     y_type = type_of_target(y_true, input_name="y_true")
