@@ -1670,11 +1670,11 @@ functions or non-estimator constructors.
         is an interaction between ``warm_start`` and the parameter controlling
         the number of iterations of the estimator.
 
-        With ensemble estimators (i.e. estimators imported from :mod:`ensemble`),
+        For estimators imported from :mod:`ensemble`,
         ``warm_start`` will interact with ``n_estimators`` or ``max_iter``.
         For these models, the number of iterations, reported via
         ``len(estimators_)`` or ``n_iter_``, corresponds the total number of
-        estimators/iterations learn since the initialization of the model.
+        estimators/iterations learnt since the initialization of the model.
         Thus, if a model was already initialized with `N`` estimators, and `fit`
         is called with ``n_estimators`` or ``max_iter`` set to `M`, the model
         will train `M - N` new estimators.
