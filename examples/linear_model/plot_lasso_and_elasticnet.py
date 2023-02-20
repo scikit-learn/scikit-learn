@@ -34,7 +34,7 @@ compared with the ground-truth.
 # The target `y` is a linear combination with alternating signs of sinusoidal
 # signals. Only the 10 lowest out of the 100 frequencies in `X` are used to
 # generate `y`, while the rest of the features are not informative. This results
-# in a high dimentional sparse feature space, where some degree of
+# in a high dimensional sparse feature space, where some degree of
 # l1-penalization is necessary.
 
 import numpy as np
@@ -94,17 +94,14 @@ _ = plt.title("Superposition of sinusoidal signals")
 from sklearn.model_selection import train_test_split
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
-    test_size=0.5,
-    shuffle=False,
+    X, y, test_size=0.5, shuffle=False
 )
 
 # %%
 # Lasso
 # -----
 #
-# In this example we demo a :class:`~sklearn.linear_model.Lasso` with a fix
+# In this example we demo a :class:`~sklearn.linear_model.Lasso` with a fixed
 # value of the regularization parameter `alpha`. In practice, the optimal
 # parameter `alpha` should be selected by passing a
 # :class:`~sklearn.model_selection.TimeSeriesSplit` cross-validation strategy to a
@@ -149,7 +146,7 @@ print(f"ARD r^2 on test data : {r2_score_ard:.3f}")
 #
 # :class:`~sklearn.linear_model.ElasticNet` is a middle ground between
 # :class:`~sklearn.linear_model.Lasso` and :class:`~sklearn.linear_model.Ridge`,
-# as it combines a l1 and a l2-penalty. The ammount of regularization is
+# as it combines a l1 and a l2-penalty. The amount of regularization is
 # controlled by the two hyperparameters `l1_ratio` and `alpha`. For `l1_ratio =
 # 0` the penalty is pure l2 and the model is equivalent to a
 # :class:`~sklearn.linear_model.Ridge`. Similarly, `l1_ratio = 1` is a pure l1
@@ -172,7 +169,7 @@ r2_score_enet = r2_score(y_test, y_pred_enet)
 print(f"ElasticNet r^2 on test data : {r2_score_enet:.3f}")
 
 # %%
-# Plot results
+# Plot and analysis of the results
 # ------------
 #
 # In this section we use a heatmap to visualize the sparsity of the true
