@@ -90,7 +90,7 @@ def _dirichlet_expectation_2d(const floating[:, :] arr):
 #
 # After: J. Bernardo (1976). Algorithm AS 103: Psi (Digamma) Function.
 # https://www.uv.es/~bernardo/1976AppStatist.pdf
-cdef floating psi(floating x) nogil:
+cdef floating psi(floating x) noexcept nogil:
     if x <= 1e-6:
         # psi(x) = -EULER - 1/x + O(x)
         return -EULER - 1. / x
