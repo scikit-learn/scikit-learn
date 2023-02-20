@@ -166,11 +166,11 @@ Changelog
   :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred`
-  are not normalized. Starting from 1.4 this will raise an error.
+  are not normalized. Starting from 1.3 this will raise an error.
   :pr:`25299` by :user:`Omar Salman <OmarManzoor`.
 
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
-  removed in 1.3. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
+  removed in 1.4. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
