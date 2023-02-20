@@ -358,7 +358,7 @@ def test_categorical_feature(n_bins):
     expected_trans = np.array([[0, 1, 2, n_bins - 1, 3, 4, 5]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
 
-    # For negative categories, the mapping goes to the missing bin (n_bins -1)
+    # Negative categories are mapped to the missing bin (n_bins -1).
     # Unknown positive categories does not happen in practice and tested
     # for illustration purpose.
     X = np.array([[-4, -1, 100]], dtype=X_DTYPE).T
