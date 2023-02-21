@@ -2623,7 +2623,7 @@ def log_loss(
            equivalent to `np.finfo(y_pred.dtype).eps`.
 
         .. deprecated:: 1.3
-           eps is deprecated in 1.3 and will be removed in 1.4.
+           `eps` is deprecated in 1.3 and will be removed in 1.4.
 
     normalize : bool, default=True
         If true, return the mean loss per sample.
@@ -2737,7 +2737,7 @@ def log_loss(
     y_pred_sum = y_pred.sum(axis=1)
     if not np.isclose(y_pred_sum, 1, rtol=1e-15, atol=5 * eps).all():
         warnings.warn(
-            "The y_pred values do not sum to one. Starting from 1.3 this"
+            "The y_pred values do not sum to one. Starting from 1.4 this"
             "will result in an error.",
             UserWarning,
         )
