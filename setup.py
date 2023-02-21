@@ -201,11 +201,6 @@ class build_ext_subclass(build_ext):
 
         if sklearn._OPENMP_SUPPORTED:
             openmp_flag = get_openmp_flag(self.compiler)
-            print("#" * 80)
-            print("#" * 80)
-            print("OPENMP FLAG", openmp_flag)
-            print("#" * 80)
-            print("#" * 80)
 
             for e in self.extensions:
                 e.extra_compile_args += openmp_flag

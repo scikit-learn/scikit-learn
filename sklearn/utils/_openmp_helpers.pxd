@@ -12,7 +12,7 @@ cdef extern from *:
         #define USE_OPENMP 0
         struct omp_lock_t {
             int dummy;
-        };
+        } omp_lock_t;
         void omp_init_lock(omp_lock_t *lock) {}
         void omp_destroy_lock(omp_lock_t *lock) {}
         void omp_set_lock(omp_lock_t *lock) {}
