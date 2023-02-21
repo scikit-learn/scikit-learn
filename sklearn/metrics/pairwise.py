@@ -1888,8 +1888,8 @@ def pairwise_distances_chunked(
 
 @validate_params(
     {
-        "X": ["array-like"],
-        "Y": ["array-like", None],
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable, None],
         "n_jobs": [Integral, None],
         "force_all_finite": ["boolean", StrOptions({"allow-nan"})],
@@ -2032,7 +2032,11 @@ def pairwise_distances(
             warnings.warn(msg, DataConversionWarning)
 
         X, Y = check_pairwise_arrays(
-            X, Y, dtype=dtype, force_all_finite=force_all_finite
+            X,
+            Y,
+            dtype=dtype,
+            force_all_finite=force_all_finite,
+            accept_sparse=False,
         )
 
         # precompute data-derived metric params

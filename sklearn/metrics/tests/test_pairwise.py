@@ -4,6 +4,7 @@ from types import GeneratorType
 import numpy as np
 from numpy import linalg
 
+from scipy import sparse
 from scipy.sparse import dok_matrix, csr_matrix, issparse
 from scipy.spatial.distance import cosine, cityblock, minkowski
 from scipy.spatial.distance import cdist, pdist, squareform
@@ -189,6 +190,15 @@ def test_pairwise_distances(global_dtype):
     # Test that a value error is raised if the metric is unknown
     with pytest.raises(ValueError):
         pairwise_distances(X, Y, metric="blah")
+
+
+def test_pairwise_distances_not_supporting_sparse():
+    """Check that we raise an informative error when using `cdist` that does not support
+    sparse matrices."""
+    X = sparse.rand(10, 2, density=0.5)
+    Y = sparse.rand(10, 2, density=0.5)
+    with pytest.raises(TypeError, match="A sparse matrix was passed, but dense data"):
+        pairwise_distances(X, Y, metric="minkowski")
 
 
 # TODO(1.4): Remove test when `sum_over_features` parameter is removed
