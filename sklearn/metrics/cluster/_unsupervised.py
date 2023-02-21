@@ -134,21 +134,30 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     """
     n_chunk_samples = D_chunk.shape[0]
     # accumulate distances from each sample to each cluster
-    cluster_distances = np.zeros((n_chunk_samples, len(label_freqs)), dtype=D_chunk.dtype)
-    D_chunk_is_sparse = issparse(D_chunk)
+    cluster_distances = np.zeros(
+        (n_chunk_samples, len(label_freqs)), dtype=D_chunk.dtype
+    )
 
-    for i in range(n_chunk_samples):
-        if D_chunk_is_sparse:
+    if issparse(D_chunk):
+        if D_chunk.format != "csr":
+            raise TypeError(
+                "Expected CSR matrix. Please pass sparse matrix in CSR format."
+            )
+        for i in range(n_chunk_samples):
             indptr = D_chunk.indptr
             indices = D_chunk.indices[indptr[i] : indptr[i + 1]]
             sample_weights = D_chunk.data[indptr[i] : indptr[i + 1]]
             sample_labels = np.take(labels, indices)
-        else:
+            cluster_distances[i] += np.bincount(
+                sample_labels, weights=sample_weights, minlength=len(label_freqs)
+            )
+    else:
+        for i in range(n_chunk_samples):
             sample_weights = D_chunk[i]
             sample_labels = labels
-        cluster_distances[i] += np.bincount(
-            sample_labels, weights=sample_weights, minlength=len(label_freqs)
-        )
+            cluster_distances[i] += np.bincount(
+                sample_labels, weights=sample_weights, minlength=len(label_freqs)
+            )
 
     # intra_index selects intra-cluster distances within cluster_distances
     end = start + n_chunk_samples
