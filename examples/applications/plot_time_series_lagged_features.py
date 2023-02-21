@@ -46,7 +46,6 @@ summary
 # and `"winter"` present in the dataset to confirm they are balanced.
 
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 df["season"].value_counts()
 
