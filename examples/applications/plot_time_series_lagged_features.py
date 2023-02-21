@@ -28,7 +28,6 @@ bike_sharing = fetch_openml(
     "Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas"
 )
 df = bike_sharing.frame
-df
 
 # %%
 # Next, we take a look at the statistical summary of the dataset
