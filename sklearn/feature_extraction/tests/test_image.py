@@ -370,5 +370,6 @@ def test_patch_extractor_wrong_input():
     """Check that the patch_size is valid or if an error is raised."""
     faces = _make_images(orange_face)
     err_msg = "patch_size must be a tuple of two integers"
+    extractor = PatchExtractor(patch_size=(8, 8, 8))
     with pytest.raises(ValueError, match=err_msg):
-        PatchExtractor(patch_size=(8, 8, 8)).transform(faces)
+        extractor.transform(faces)
