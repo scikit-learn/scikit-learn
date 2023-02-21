@@ -42,8 +42,9 @@ summary = (
 summary
 
 # %%
-# Let us look at the count of the seasons `fall`, `spring`, `summer`
-# and `winter` present in the dataset to confirm they are balanced.
+# Let us look at the count of the seasons `"fall"`, `"spring"`, `"summer"`
+# and `"winter"` present in the dataset to confirm they are balanced.
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 
