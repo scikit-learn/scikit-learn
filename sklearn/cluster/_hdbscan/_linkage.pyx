@@ -42,7 +42,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
     -------
     mst : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
         The MST representation of the mutual-reahability graph. The MST is
-        represented as a collecteion of edges.
+        represented as a collection of edges.
     """
     cdef:
         # Note: we utilize ndarray's over memory-views to make use of numpy
@@ -59,16 +59,28 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
     mst = np.empty(n_samples - 1, dtype=MST_edge_dtype)
     current_labels = np.arange(n_samples, dtype=np.int64)
     current_node = 0
+    # Contains the minimum reachability of points to the built tree. This is
+    # iteratively updated with each node we add.
     min_reachability = np.full(n_samples, fill_value=np.infty, dtype=np.float64)
     for i in range(0, n_samples - 1):
+        # Sub-select nodes not-yet in the tree
         label_filter = current_labels != current_node
         current_labels = current_labels[label_filter]
+
+        # Compute the nodes' current min-reachability scores
         left = min_reachability[label_filter]
+        # Compute the nodes' mutual-reachability to current node
         right = mutual_reachability[current_node][current_labels]
+        # Update min-reachability, given the new mutual-reachability of all
+        # nodes from the current node.
         min_reachability = np.minimum(left, right)
 
+        # Find node with minimum-reachabiltiy
+        # Note we perform index-remapping via `current_labels` since it is a
+        # sub-selection and hence not 1-1
         new_node_index = np.argmin(min_reachability)
         new_node = current_labels[new_node_index]
+
         mst[i].current_node = current_node
         mst[i].next_node = new_node
         mst[i].distance = min_reachability[new_node_index]
@@ -228,7 +240,6 @@ cpdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] make_single_linkage(const MST
 
         current_node_cluster = U.fast_find(current_node)
         next_node_cluster = U.fast_find(next_node)
-
         # TODO: Update this to an array of structs (AoS).
         # Should be done simultaneously in _tree.pyx to ensure compatability.
         single_linkage[i][0] = <cnp.float64_t> current_node_cluster
