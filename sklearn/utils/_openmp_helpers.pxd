@@ -23,9 +23,9 @@ cdef extern from *:
     ctypedef struct omp_lock_t:
         pass
     
-    void omp_init_lock(omp_lock_t *lock) nogil
-    void omp_destroy_lock(omp_lock_t *lock) nogil
-    void omp_set_lock(omp_lock_t *lock) nogil
-    void omp_unset_lock(omp_lock_t *lock) nogil
+    void omp_init_lock(struct omp_lock_t *lock) nogil
+    void omp_destroy_lock(struct omp_lock_t *lock) nogil
+    void omp_set_lock(struct omp_lock_t *lock) nogil
+    void omp_unset_lock(struct omp_lock_t *lock) nogil
 
 cdef int _openmp_thread_num() noexcept nogil
