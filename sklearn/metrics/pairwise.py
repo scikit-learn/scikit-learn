@@ -1888,9 +1888,9 @@ def pairwise_distances_chunked(
 
 @validate_params(
     {
-        "X": [np.ndarray],
-        "Y": [np.ndarray, None],
-        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", None, "sparse matrix"],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable, None],
         "n_jobs": [Integral, None],
         "force_all_finite": ["boolean", StrOptions({"allow-nan"})],
     }
@@ -1939,13 +1939,13 @@ def pairwise_distances(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_X, n_samples_X) or \
+    X : {array-like or sparse matrix} of shape (n_samples_X, n_samples_X) or \
             (n_samples_X, n_features)
         Array of pairwise distances between samples, or a feature array.
         The shape of the array should be (n_samples_X, n_samples_X) if
         metric == "precomputed" and (n_samples_X, n_features) otherwise.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : {array-like or sparse matrix} of shape (n_samples_Y, n_features), default=None
         An optional second feature array. Only allowed if
         metric != "precomputed".
 
@@ -2020,11 +2020,11 @@ def pairwise_distances(
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
-    else:  # callable(metric):
+    elif callable(metric):
         func = partial(
             _pairwise_callable, metric=metric, force_all_finite=force_all_finite, **kwds
         )
-
+    else:
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
 
         if dtype == bool and (X.dtype != bool or (Y is not None and Y.dtype != bool)):
