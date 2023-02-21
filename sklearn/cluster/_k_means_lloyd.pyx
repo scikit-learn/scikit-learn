@@ -4,11 +4,11 @@
 # fused types and when the array may be read-only (for instance when it's
 # provided by the user). This is fixed in cython > 0.3.
 
-from ..utils._openmp_helpers cimport USE_OPENMP
 from ..utils._openmp_helpers cimport omp_lock_t
-
-if USE_OPENMP:
-    cimport openmp
+from ..utils._openmp_helpers cimport omp_init_lock
+from ..utils._openmp_helpers cimport omp_destroy_lock
+from ..utils._openmp_helpers cimport omp_set_lock
+from ..utils._openmp_helpers cimport omp_unset_lock
 
 from cython cimport floating
 from cython.parallel import prange, parallel
@@ -110,8 +110,7 @@ def lloyd_iter_chunked_dense(
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
-        if USE_OPENMP:
-            openmp.omp_init_lock(&lock)
+        omp_init_lock(&lock)
 
     with nogil, parallel(num_threads=n_threads):
         # thread local buffers
@@ -139,24 +138,22 @@ def lloyd_iter_chunked_dense(
 
         # reduction from local buffers.
         if update_centers:
-            if USE_OPENMP:
-                # The lock is necessary to avoid race conditions when aggregating
-                # info from different thread-local buffers.
-                openmp.omp_set_lock(&lock)
+            # The lock is necessary to avoid race conditions when aggregating
+            # info from different thread-local buffers.
+            omp_set_lock(&lock)
             for j in range(n_clusters):
                 weight_in_clusters[j] += weight_in_clusters_chunk[j]
                 for k in range(n_features):
                     centers_new[j, k] += centers_new_chunk[j * n_features + k]
-            if USE_OPENMP:
-                openmp.omp_unset_lock(&lock)
+
+            omp_unset_lock(&lock)
 
         free(centers_new_chunk)
         free(weight_in_clusters_chunk)
         free(pairwise_distances_chunk)
 
     if update_centers:
-        if USE_OPENMP:
-            openmp.omp_destroy_lock(&lock)
+        omp_destroy_lock(&lock)
         _relocate_empty_clusters_dense(X, sample_weight, centers_old,
                                     centers_new, weight_in_clusters, labels)
 
@@ -307,8 +304,7 @@ def lloyd_iter_chunked_sparse(
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
-        if USE_OPENMP:
-            openmp.omp_init_lock(&lock)
+        omp_init_lock(&lock)
 
     with nogil, parallel(num_threads=n_threads):
         # thread local buffers
@@ -336,23 +332,20 @@ def lloyd_iter_chunked_sparse(
 
         # reduction from local buffers.
         if update_centers:
-            if USE_OPENMP:
-                # The lock is necessary to avoid race conditions when aggregating
-                # info from different thread-local buffers.
-                openmp.omp_set_lock(&lock)
+            # The lock is necessary to avoid race conditions when aggregating
+            # info from different thread-local buffers.
+            omp_set_lock(&lock)
             for j in range(n_clusters):
                 weight_in_clusters[j] += weight_in_clusters_chunk[j]
                 for k in range(n_features):
                     centers_new[j, k] += centers_new_chunk[j * n_features + k]
-            if USE_OPENMP:
-                openmp.omp_unset_lock(&lock)
+            omp_unset_lock(&lock)
 
         free(centers_new_chunk)
         free(weight_in_clusters_chunk)
 
     if update_centers:
-        if USE_OPENMP:
-            openmp.omp_destroy_lock(&lock)
+        omp_destroy_lock(&lock)
         _relocate_empty_clusters_sparse(
             X_data, X_indices, X_indptr, sample_weight,
             centers_old, centers_new, weight_in_clusters, labels)
