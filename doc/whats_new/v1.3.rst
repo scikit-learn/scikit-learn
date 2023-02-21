@@ -165,10 +165,6 @@ Changelog
 - |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
   :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
 
-- |Fix| :func:`metric.pairwise_distances` now fails gracefully when passing sparse
-  matrices with a metric that does not support sparse representation.
-  :pr:`25515` by :user:`ashah002 <ashah002>`.
-
 :mod:`sklearn.naive_bayes`
 ..........................
 
