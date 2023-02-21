@@ -142,6 +142,9 @@ def set_config(
         It can save time in some situations but can lead to low level crashes and
         exceptions with confusing error messages.
 
+        Note that For data parameters, such as X and y, only type validation is skipped
+        but validation with `check_array` will continue to run.
+
         .. versionadded:: 1.3
 
     See Also
@@ -267,6 +270,9 @@ def config_context(
         fit method of estimators and for arguments passed to public helper functions.
         It can save time in some situations but can lead to low level crashes and
         exceptions with confusing error messages.
+
+        Note that For data parameters, such as X and y, only type validation is skipped
+        but validation with `check_array` will continue to run.
 
         .. versionadded:: 1.3
 
