@@ -72,7 +72,18 @@ plt.yticks(fontsize=10)
 plt.show()
 
 # %%
+# There appears to be some kind of mislabeling of the `"season"` feature
+# as such behaviour is not realistic.
+# 
+# We can confirm that the weather conditions do not match the corresponding
+# labels:
+df.groupby("season").median(numeric_only=True)
+
+# %%
 #
+# While interpreting the results this behaviour of the `"season"` feature
+# should be taken into account.
+# 
 # The target of the prediction problem is the absolute count of bike rentals on
 # a hourly basis:
 df["count"].max()
