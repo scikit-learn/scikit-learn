@@ -38,11 +38,14 @@ def _get_local_path(openml_path: str, data_home: str) -> str:
 
 
 def _retry_with_clean_cache(
-    openml_path: str, data_home: Optional[str], parser: Optional[str] = None
+    openml_path: str,
+    data_home: Optional[str],
+    no_retry_exception: Optional[Exception] = None,
 ) -> Callable:
     """If the first call to the decorated function fails, the local cached
     file is removed, and the function is called again. If ``data_home`` is
-    ``None``, then the function is called once.
+    ``None``, then the function is called once. We can provide a specific
+    exception to not retry on usign `no_retry_exception` parameter.
     """
 
     def decorator(f):
@@ -55,14 +58,10 @@ def _retry_with_clean_cache(
             except URLError:
                 raise
             except Exception as exc:
-                if parser is not None and parser == "pandas":
-                    # If we get a ParserError, then we don't want to retry and we raise
-                    # early. As we don't have a hard dependency on pandas, we need to
-                    # manually handle the exception instead of adding another `except`.
-                    from pandas.errors import ParserError
-
-                    if isinstance(exc, ParserError):
-                        raise
+                if no_retry_exception is not None and isinstance(
+                    exc, no_retry_exception
+                ):
+                    raise
                 warn("Invalid cache, redownloading file", RuntimeWarning)
                 local_path = _get_local_path(openml_path, data_home)
                 if os.path.exists(local_path):
@@ -634,9 +633,17 @@ def _download_data_to_bunch(
                 "values. Missing values are not supported for target columns."
             )
 
-    X, y, frame, categories = _retry_with_clean_cache(url, data_home, parser)(
-        _load_arff_response
-    )(
+    no_retry_exception = None
+    if parser == "pandas":
+        # If we get a ParserError with pandas, then we don't want to retry and we raise
+        # early.
+        from pandas.errors import ParserError
+
+        no_retry_exception = ParserError
+
+    X, y, frame, categories = _retry_with_clean_cache(
+        url, data_home, no_retry_exception
+    )(_load_arff_response)(
         url,
         data_home,
         parser=parser,
