@@ -421,9 +421,11 @@ plt.show()
 # of our model via Quantile Regression. Predictions based on the 5th, 50th and
 # 95th percentile using `loss="quantile"` provide us with a quantitative estimate
 # of the uncertainty of the forecasts made by our time series regression model.
-# Uncertainty estimation can also be performed using `mapie`, that provides an
-# implementation based on recent work on conformal prediction methods and
-# estimates both aleatoric and epistemic uncertainty at the same time.
-# Furthermore, functionalities provided by `sktime` can be used to extend
-# scikit-learn estimators by making use of recursive time series forecasting,
-# that enables dynamic predictions of future values.
+# Uncertainty estimation can also be performed
+# using `MAPIE<https://mapie.readthedocs.io/en/latest/index.html>`_,
+# that provides an implementation based on recent work on conformal prediction
+# methods and estimates both aleatoric and epistemic uncertainty at the same time.
+# Furthermore, functionalities provided
+# by `sktime<https://www.sktime.net/en/latest/users.html>`_
+# can be used to extend scikit-learn estimators by making use of recursive time
+# series forecasting, that enables dynamic predictions of future values.
