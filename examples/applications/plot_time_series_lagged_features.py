@@ -49,30 +49,6 @@ import seaborn as sns
 
 df["season"].value_counts()
 
-# %%
-# To check for outliers in the features of the dataset we create box-plots
-# for `temp`, `feel_temp`, `humidity` and `windspeed`.
-plt.figure(figsize=(15, 15))
-
-
-def create_boxplot(feature, color):
-    sns.boxplot(data=df[[feature]], color=color)
-    plt.title("Box Plot for " + feature.title(), fontsize=20)
-    plt.xticks(fontsize=10)
-    plt.yticks(fontsize=10)
-
-
-plt.subplot(221)
-create_boxplot("temp", "blue")
-
-plt.subplot(222)
-create_boxplot("feel_temp", "orange")
-
-plt.subplot(223)
-create_boxplot("humidity", "green")
-
-plt.subplot(224)
-create_boxplot("windspeed", "red")
 
 # %%
 # Generating Pandas-Engineered Lagged Features
