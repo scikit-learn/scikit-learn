@@ -251,11 +251,11 @@ evaluate_and_store_results("gbrt_poisson", gbrt_poisson, X, y, cv=ts_cv)
 # `Y|X` like the least squares and Poisson losses do, one could try to
 # estimate quantiles of the conditional distribution.
 #
-# `Y|X=xi` is expected to be a random variable for a given data point `xi`
+# :math:`Y|X=x_i` is expected to be a random variable for a given data point `xi`
 # because we expect that the number of rentals cannot be 100% accurately
 # predicted from the features. It can be influenced by other variables
 # not properly captured by the existing lagged features. For instance
-# whether or not it will rain in the next hour cannot be fully be anticipated
+# whether or not it will rain in the next hour cannot be fully anticipated
 # from the past hours bike rental data. This is what we call aleatoric
 # uncertainty.
 #
@@ -367,12 +367,12 @@ _ = ax.legend()
 #   band.
 # - During the day, the blue band is much wider: the uncertainty grows, probably
 #   because of the variability of the weather that can have a very large impact,
-#   especially on a week-end day.
+#   especially on week-ends.
 # - We can also see that during week-days, the commute pattern is still visible in
 #   the 5% and 95% estimations.
 # - Finally, it is expected that 10% of the time, the actual demand does not lie
 #   between the 5% and 95% percentile estimates. On this test span, the actual
-#   demand seems to be higher, especially during the rush ours. It might reveal that
+#   demand seems to be higher, especially during the rush hours. It might reveal that
 #   our 95% percentile estimator underestimates the demand peaks. This could be be
 #   quantitatively confirmed by computing empirical coverage numbers as done in
 #   the `calibration of confidence intervals
