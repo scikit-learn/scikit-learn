@@ -11,41 +11,75 @@ import numpy as np
 
 cdef cnp.double_t INFTY = np.inf
 
+CONDENSED_dtype = np.dtype([
+    ("parent", np.intp),
+    ("child", np.intp),
+    ("lambda_val", np.float64),
+    ("cluster_size", np.intp),
+])
+
+HIERARCHY_dtype = np.dtype([
+    ("left_child", np.intp),
+    ("right_child", np.intp),
+    ("lambda_val", np.float32),
+    ("cluster_size", np.intp),
+])
+
+ctypedef packed struct CONDENSED_t:
+    cnp.intp_t parent
+    cnp.intp_t child
+    cnp.double_t lambda_val
+    cnp.intp_t cluster_size
+
+ctypedef packed struct HIERARCHY_t:
+    cnp.intp_t left_child
+    cnp.intp_t right_child
+    cnp.float_t lambda_val
+    cnp.intp_t cluster_size
+
 
 cdef list bfs_from_hierarchy(
-    cnp.ndarray[cnp.double_t, ndim=2] hierarchy,
+    cnp.ndarray[HIERARCHY_t, ndim=1] hierarchy,
     cnp.intp_t bfs_root
 ):
     """
-    Perform a breadth first search on a tree in scipy hclust format.
+    Perform a breadth first search on a single linkage hierarchy in
+    scipy.cluster.hierarchy format.
     """
+    # NOTE: We keep `process_queue` as a list rather than a memory-view to
+    # retain semantics which make the below runtime algorithm convenient, such
+    # as not being required to preallocate space, and allowing easy checks to
+    # determine whether the list is emptey or not.
+    cdef list process_queue
+    cdef cnp.intp_t n_samples = hierarchy.shape[0] + 1
 
-    cdef list to_process
-    cdef cnp.intp_t max_node
-    cdef cnp.intp_t num_points
-    cdef cnp.intp_t dim
-
-    dim = hierarchy.shape[0]
-    max_node = 2 * dim
-    num_points = max_node - dim + 1
-
-    to_process = [bfs_root]
+    process_queue = [bfs_root]
     result = []
 
-    while to_process:
-        result.extend(to_process)
-        to_process = [x - num_points for x in
-                      to_process if x >= num_points]
-        if to_process:
-            to_process = hierarchy[to_process,
-                                   :2].flatten().astype(np.intp).tolist()
-
+    while process_queue:
+        result.extend(process_queue)
+        # By construction, node i is formed by the union of nodes
+        # hierarchy[i - n_samples, 0] and hierarchy[i - n_samples, 1]
+        process_queue = [
+            x - n_samples
+            for x in process_queue
+            if x >= n_samples
+        ]
+        if process_queue:
+            process_queue = (
+                hierarchy[process_queue, :2]
+                .flatten()
+                .astype(np.intp)
+                .tolist()
+            )
     return result
 
 
-cpdef cnp.ndarray condense_tree(cnp.ndarray[cnp.double_t, ndim=2] hierarchy,
-                               cnp.intp_t min_cluster_size=10):
-    """Condense a tree according to a minimum cluster size. This is akin
+cpdef cnp.ndarray condense_tree(
+    cnp.ndarray[cnp.double_t, ndim=2] hierarchy,
+    cnp.intp_t min_cluster_size=10
+):
+    """Condense an MST according to a minimum cluster size. This is akin
     to the runt pruning procedure of Stuetzle. The result is a much simpler
     tree that is easier to visualize. We include extra information on the
     lambda value at which individual points depart clusters for later
@@ -64,13 +98,13 @@ cpdef cnp.ndarray condense_tree(cnp.ndarray[cnp.double_t, ndim=2] hierarchy,
     -------
     condensed_tree : numpy recarray
         Effectively an edgelist with a parent, child, lambda_val
-        and child_size in each row providing a tree structure.
+        and cluster_size in each row providing a tree structure.
     """
 
-    cdef cnp.intp_t root
-    cdef cnp.intp_t num_points
-    cdef cnp.intp_t next_label
-    cdef list node_list
+    cdef cnp.intp_t root = 2 * hierarchy.shape[0]
+    cdef cnp.intp_t num_points = root // 2 + 1
+    cdef cnp.intp_t next_label = num_points + 1
+    cdef list node_list = bfs_from_hierarchy(hierarchy, root)
     cdef list result_list
 
     cdef cnp.ndarray[cnp.intp_t, ndim=1] relabel
@@ -82,14 +116,9 @@ cpdef cnp.ndarray condense_tree(cnp.ndarray[cnp.double_t, ndim=2] hierarchy,
     cdef cnp.intp_t left
     cdef cnp.intp_t right
     cdef double lambda_value
+    cdef double distance
     cdef cnp.intp_t left_count
     cdef cnp.intp_t right_count
-
-    root = 2 * hierarchy.shape[0]
-    num_points = root // 2 + 1
-    next_label = num_points + 1
-
-    node_list = bfs_from_hierarchy(hierarchy, root)
 
     relabel = np.empty(root + 1, dtype=np.intp)
     relabel[root] = num_points
@@ -97,27 +126,32 @@ cpdef cnp.ndarray condense_tree(cnp.ndarray[cnp.double_t, ndim=2] hierarchy,
     ignore = np.zeros(len(node_list), dtype=int)
 
     for node in node_list:
+        # Guarantee that node is a cluster node of interest
         if ignore[node] or node < num_points:
             continue
 
         children = hierarchy[node - num_points]
         left = <cnp.intp_t> children[0]
         right = <cnp.intp_t> children[1]
-        if children[2] > 0.0:
-            lambda_value = 1.0 / children[2]
+        distance = children[2]
+        if distance > 0.0:
+            lambda_value = 1.0 / distance
         else:
             lambda_value = INFTY
 
+        # Guarantee that left is a cluster node
         if left >= num_points:
             left_count = <cnp.intp_t> hierarchy[left - num_points][3]
         else:
             left_count = 1
 
+        # Guarantee that right is a cluster node
         if right >= num_points:
             right_count = <cnp.intp_t> hierarchy[right - num_points][3]
         else:
             right_count = 1
 
+        # Each child is regarded as a proper cluster
         if left_count >= min_cluster_size and right_count >= min_cluster_size:
             relabel[left] = next_label
             next_label += 1
@@ -129,6 +163,7 @@ cpdef cnp.ndarray condense_tree(cnp.ndarray[cnp.double_t, ndim=2] hierarchy,
             result_list.append((relabel[node], relabel[right], lambda_value,
                                 right_count))
 
+        # Each child is regarded as a collection of single-sample clusters
         elif left_count < min_cluster_size and right_count < min_cluster_size:
             for sub_node in bfs_from_hierarchy(hierarchy, left):
                 if sub_node < num_points:
@@ -142,6 +177,8 @@ cpdef cnp.ndarray condense_tree(cnp.ndarray[cnp.double_t, ndim=2] hierarchy,
                                         lambda_value, 1))
                 ignore[sub_node] = True
 
+        # One child is a collection of single-sample clusters, while the other
+        # is a persistance of the parent node cluster
         elif left_count < min_cluster_size:
             relabel[right] = relabel[node]
             for sub_node in bfs_from_hierarchy(hierarchy, left):
@@ -150,6 +187,8 @@ cpdef cnp.ndarray condense_tree(cnp.ndarray[cnp.double_t, ndim=2] hierarchy,
                                         lambda_value, 1))
                 ignore[sub_node] = True
 
+        # One child is a collection of single-sample clusters, while the other
+        # is a persistance of the parent node cluster
         else:
             relabel[left] = relabel[node]
             for sub_node in bfs_from_hierarchy(hierarchy, right):
@@ -158,88 +197,71 @@ cpdef cnp.ndarray condense_tree(cnp.ndarray[cnp.double_t, ndim=2] hierarchy,
                                         lambda_value, 1))
                 ignore[sub_node] = True
 
-    return np.array(result_list, dtype=[('parent', np.intp),
-                                        ('child', np.intp),
-                                        ('lambda_val', float),
-                                        ('child_size', np.intp)])
+    return np.array(result_list, dtype=CONDENSED_dtype)
 
 
-cpdef dict compute_stability(cnp.ndarray condensed_tree):
+cpdef dict compute_stability(cnp.ndarray[CONDENSED_t, ndim=1] condensed_tree):
 
     cdef cnp.ndarray[cnp.double_t, ndim=1] result_arr
-    cdef cnp.ndarray sorted_child_data
+
+    cdef cnp.ndarray sorted_child_data = np.sort(
+        condensed_tree[['child', 'lambda_val']],
+        axis=0,
+    )
+
     cdef cnp.ndarray[cnp.intp_t, ndim=1] sorted_children
     cdef cnp.ndarray[cnp.double_t, ndim=1] sorted_lambdas
+    sorted_children = sorted_child_data['child']
+    sorted_lambdas = sorted_child_data['lambda_val']
 
     cdef cnp.ndarray[cnp.intp_t, ndim=1] parents
-    cdef cnp.ndarray[cnp.intp_t, ndim=1] sizes
-    cdef cnp.ndarray[cnp.double_t, ndim=1] lambdas
 
-    cdef cnp.intp_t child
     cdef cnp.intp_t parent
-    cdef cnp.intp_t child_size
+    cdef cnp.intp_t cluster_size
     cdef cnp.intp_t result_index
     cdef cnp.intp_t current_child
-    cdef cnp.float64_t lambda_
-    cdef cnp.float64_t min_lambda
+    cdef cnp.float64_t lambda_val
 
     cdef cnp.ndarray[cnp.double_t, ndim=1] births_arr
-    cdef cnp.double_t *births
+    cdef CONDENSED_t condensed_node
+
+    parents = condensed_tree['parent']
 
     cdef cnp.intp_t largest_child = condensed_tree['child'].max()
-    cdef cnp.intp_t smallest_cluster = condensed_tree['parent'].min()
-    cdef cnp.intp_t num_clusters = (condensed_tree['parent'].max() -
-                                   smallest_cluster + 1)
+    cdef cnp.intp_t smallest_cluster = parents.min()
+    cdef cnp.intp_t num_clusters = (
+        parents.max() - smallest_cluster + 1
+        )
 
     if largest_child < smallest_cluster:
         largest_child = smallest_cluster
 
-    sorted_child_data = np.sort(condensed_tree[['child', 'lambda_val']],
-                                axis=0)
-    births_arr = np.nan * np.ones(largest_child + 1, dtype=np.double)
-    births = (<cnp.double_t *> births_arr.data)
-    sorted_children = sorted_child_data['child'].copy()
-    sorted_lambdas = sorted_child_data['lambda_val'].copy()
+    births_arr = np.full(largest_child + 1, np.nan, dtype=np.double)
 
-    parents = condensed_tree['parent']
-    sizes = condensed_tree['child_size']
-    lambdas = condensed_tree['lambda_val']
+    for idx in range(sorted_children.shape[0]):
+        current_child = <cnp.intp_t> sorted_children[idx]
+        lambda_val = sorted_lambdas[idx]
+        births_arr[current_child] = lambda_val
 
-    current_child = -1
-    min_lambda = 0
-
-    for row in range(sorted_child_data.shape[0]):
-        child = <cnp.intp_t> sorted_children[row]
-        lambda_ = sorted_lambdas[row]
-
-        if child == current_child:
-            min_lambda = min(min_lambda, lambda_)
-        elif current_child != -1:
-            births[current_child] = min_lambda
-            current_child = child
-            min_lambda = lambda_
-        else:
-            # Initialize
-            current_child = child
-            min_lambda = lambda_
-
-    if current_child != -1:
-        births[current_child] = min_lambda
-    births[smallest_cluster] = 0.0
+    births_arr[smallest_cluster] = 0.0
 
     result_arr = np.zeros(num_clusters, dtype=np.double)
-
     for i in range(condensed_tree.shape[0]):
-        parent = parents[i]
-        lambda_ = lambdas[i]
-        child_size = sizes[i]
+        condensed_node = condensed_tree[i]
+
+        parent = condensed_node.parent
+        lambda_val = condensed_node.lambda_val
+        cluster_size = condensed_node.cluster_size
+
         result_index = parent - smallest_cluster
+        result_arr[result_index] += (lambda_val - births_arr[parent]) * cluster_size
 
-        result_arr[result_index] += (lambda_ - births[parent]) * child_size
-
-    result_pre_dict = np.vstack((np.arange(smallest_cluster,
-                                           condensed_tree['parent'].max() + 1),
-                                 result_arr)).T
+    result_pre_dict = np.vstack(
+        (
+            np.arange(smallest_cluster, parents.max() + 1),
+            result_arr
+        )
+    ).T
 
     return dict(result_pre_dict)
 
@@ -247,14 +269,14 @@ cpdef dict compute_stability(cnp.ndarray condensed_tree):
 cdef list bfs_from_cluster_tree(cnp.ndarray tree, cnp.intp_t bfs_root):
 
     cdef list result
-    cdef cnp.ndarray[cnp.intp_t, ndim=1] to_process
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] process_queue
 
     result = []
-    to_process = np.array([bfs_root], dtype=np.intp)
+    process_queue = np.array([bfs_root], dtype=np.intp)
 
-    while to_process.shape[0] > 0:
-        result.extend(to_process.tolist())
-        to_process = tree['child'][np.in1d(tree['parent'], to_process)]
+    while process_queue.shape[0] > 0:
+        result.extend(process_queue.tolist())
+        process_queue = tree['child'][np.isin(tree['parent'], process_queue)]
 
     return result
 
@@ -344,7 +366,8 @@ cdef class TreeUnionFind (object):
 cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
         cnp.ndarray linkage,
         cnp.double_t cut,
-        cnp.intp_t min_cluster_size):
+        cnp.intp_t min_cluster_size
+    ):
     """Given a single linkage tree and a cut value, return the
     vector of cluster labels at that cut value. This is useful
     for Robust Single Linkage, and extracting DBSCAN results
@@ -640,19 +663,19 @@ cpdef tuple get_clusters(cnp.ndarray tree, dict stability,
         node_list = sorted(stability.keys(), reverse=True)[:-1]
         # (exclude root)
 
-    cluster_tree = tree[tree['child_size'] > 1]
+    cluster_tree = tree[tree['cluster_size'] > 1]
     is_cluster = {cluster: True for cluster in node_list}
-    num_points = np.max(tree[tree['child_size'] == 1]['child']) + 1
+    num_points = np.max(tree[tree['cluster_size'] == 1]['child']) + 1
     max_lambda = np.max(tree['lambda_val'])
 
     if max_cluster_size is None:
         max_cluster_size = num_points + 1  # Set to a value that will never be triggered
-    cluster_sizes = {child: child_size for child, child_size
-                 in zip(cluster_tree['child'], cluster_tree['child_size'])}
+    cluster_sizes = {child: cluster_size for child, cluster_size
+                 in zip(cluster_tree['child'], cluster_tree['cluster_size'])}
     if allow_single_cluster:
         # Compute cluster size for the root node
         cluster_sizes[node_list[-1]] = np.sum(
-            cluster_tree[cluster_tree['parent'] == node_list[-1]]['child_size'])
+            cluster_tree[cluster_tree['parent'] == node_list[-1]]['cluster_size'])
 
     if cluster_selection_method == 'eom':
         for node in node_list:
