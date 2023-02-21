@@ -231,7 +231,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     .. [2] `Wikipedia entry on the Silhouette Coefficient
        <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
     """
-    X, labels = check_X_y(X, labels, accept_sparse=["csc", "csr"])
+    X, labels = check_X_y(X, labels, accept_sparse=["csr"])
 
     # Check for non-zero diagonal entries in precomputed distance matrix
     if metric == "precomputed":
