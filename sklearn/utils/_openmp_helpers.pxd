@@ -10,7 +10,7 @@ cdef extern from *:
         #include <omp.h>
     #else
         #define USE_OPENMP 0
-        typedef void omp_lock_t;
+        typedef int omp_lock_t;
 
         void omp_init_lock(omp_lock_t *lock) {}
         void omp_destroy_lock(omp_lock_t *lock) {}
