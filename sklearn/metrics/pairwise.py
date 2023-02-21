@@ -1888,8 +1888,8 @@ def pairwise_distances_chunked(
 
 @validate_params(
     {
-        "X": ["array-like", "sparse matrix"],
-        "Y": ["array-like", None, "sparse matrix"],
+        "X": ["array-like"],
+        "Y": ["array-like", None],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable, None],
         "n_jobs": [Integral, None],
         "force_all_finite": ["boolean", StrOptions({"allow-nan"})],
