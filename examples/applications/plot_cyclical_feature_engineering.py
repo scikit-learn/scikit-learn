@@ -798,7 +798,7 @@ for i in range(2):
             scatter_kwargs={"alpha": 0.3},
             ax=ax,
         )
-        ax.legend(["Perfect model", label])
+        ax.legend(["Best model", label])
 
 plt.show()
 # %%
