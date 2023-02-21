@@ -293,6 +293,12 @@ df_model_comparison = pd.DataFrame(dataframe_dict)
 df_model_comparison
 
 # %%
+# The minimal value for the Mean Pinball Loss is achieved by the GBRT
+# with the corresponding quantile. Similarly, the lowest RMSE is obtained
+# by the "gbrt_mse" model, as expected. A bit less intuitive, the best MAPE
+# corresponds to the "gbrt_poisson" model. This is due to the local nature of
+# the Poisson Loss normalization.
+#
 # A Qualitative Look at the Predictions
 # -------------------------------------
 # We can now visualize the performance of the model with regards
@@ -413,10 +419,13 @@ plt.show()
 # ------------------
 # Through this example we explored time series forecasting using lagged
 # features. We compared a naive regression (using the standardized
-# `train_test_split`) with a proper time series evaluation strategy using
-# `TimeSeriesSplit`. We observed that the model trained using `train_test_split`
-# produce an overly optimistic Mean Average Percentage Error (MAPE). The
-# results produced from the time-based split better represent the performance
+# :class:`~sklearn.model_selection.train_test_split`) with a proper time
+# series evaluation strategy using
+# :class:`~sklearn.model_selection.TimeSeriesSplit`. We observed that the
+# model trained using :class:`~sklearn.model_selection.train_test_split`,
+# having a default value of `shuffle` set to `True` produced an overly
+# optimistic Mean Average Percentage Error (MAPE). The results
+# produced from the time-based split better represent the performance
 # of our time-series regression model. We also analyzed the predictive uncertainty
 # of our model via Quantile Regression. Predictions based on the 5th, 50th and
 # 95th percentile using `loss="quantile"` provide us with a quantitative estimate
