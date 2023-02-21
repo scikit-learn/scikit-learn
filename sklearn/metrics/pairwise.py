@@ -2025,6 +2025,9 @@ def pairwise_distances(
             _pairwise_callable, metric=metric, force_all_finite=force_all_finite, **kwds
         )
     else:
+        if issparse(X) or issparse(Y):
+            raise TypeError("scipy distance metrics do not support sparse matrices.")
+
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
 
         if dtype == bool and (X.dtype != bool or (Y is not None and Y.dtype != bool)):
@@ -2032,11 +2035,7 @@ def pairwise_distances(
             warnings.warn(msg, DataConversionWarning)
 
         X, Y = check_pairwise_arrays(
-            X,
-            Y,
-            dtype=dtype,
-            force_all_finite=force_all_finite,
-            accept_sparse=False,
+            X, Y, dtype=dtype, force_all_finite=force_all_finite
         )
 
         # precompute data-derived metric params
