@@ -345,7 +345,7 @@ def k_means(
         n_init consecutive runs in terms of inertia.
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        10 if using `init='random'`, 1 if using `init='kmeans++'`.
+        10 if using `init='random'`, 1 if using `init='k-means++'`.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -1206,7 +1206,7 @@ class KMeans(_BaseKMeans):
         high-dimensional problems (see :ref:`kmeans_sparse_high_dim`).
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        10 if using `init='random'`, 1 if using `init='kmeans++'`.
+        10 if using `init='random'`, 1 if using `init='k-means++'`.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -1734,7 +1734,7 @@ class MiniBatchKMeans(_BaseKMeans):
         :ref:`kmeans_sparse_high_dim`).
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        3 if using `init='random'`, 1 if using `init='kmeans++'`.
+        3 if using `init='random'`, 1 if using `init='k-means++'`.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
