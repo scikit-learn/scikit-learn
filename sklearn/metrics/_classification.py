@@ -2623,7 +2623,7 @@ def log_loss(
            equivalent to `np.finfo(y_pred.dtype).eps`.
 
         .. deprecated:: 1.3
-           `eps` is deprecated in 1.3 and will be removed in 1.4.
+           `eps` is deprecated in 1.3 and will be removed in 1.5.
 
     normalize : bool, default=True
         If true, return the mean loss per sample.
@@ -2666,10 +2666,10 @@ def log_loss(
     if eps == "auto":
         eps = np.finfo(y_pred.dtype).eps
     else:
-        # TODO: Remove user defined eps in 1.4
+        # TODO: Remove user defined eps in 1.5
         warnings.warn(
             "Setting the eps parameter is deprecated and will "
-            "be removed in 1.4. Instead eps will always have"
+            "be removed in 1.5. Instead eps will always have"
             "a default value of `np.finfo(y_pred.dtype).eps`.",
             FutureWarning,
         )
