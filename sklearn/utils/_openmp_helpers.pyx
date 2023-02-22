@@ -1,7 +1,5 @@
-IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-    import os
-    cimport openmp
-    from joblib import cpu_count
+import os
+from joblib import cpu_count
 
 
 def _openmp_parallelism_enabled():
@@ -41,31 +39,20 @@ cpdef _openmp_effective_n_threads(n_threads=None):
     if n_threads == 0:
         raise ValueError("n_threads = 0 is invalid")
 
-    IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-        if os.getenv("OMP_NUM_THREADS"):
-            # Fall back to user provided number of threads making it possible
-            # to exceed the number of cpus.
-            max_n_threads = openmp.omp_get_max_threads()
-        else:
-            max_n_threads = min(openmp.omp_get_max_threads(), cpu_count())
-
-        if n_threads is None:
-            return max_n_threads
-        elif n_threads < 0:
-            return max(1, max_n_threads + n_threads + 1)
-
-        return n_threads
-    ELSE:
+    if not SKLEARN_OPENMP_PARALLELISM_ENABLED:
         # OpenMP disabled at build-time => sequential mode
         return 1
 
+    if os.getenv("OMP_NUM_THREADS"):
+        # Fall back to user provided number of threads making it possible
+        # to exceed the number of cpus.
+        max_n_threads = omp_get_max_threads()
+    else:
+        max_n_threads = min(omp_get_max_threads(), cpu_count())
 
-cdef inline int _openmp_thread_num() noexcept nogil:
-    """Return the number of the thread calling this function.
+    if n_threads is None:
+        return max_n_threads
+    elif n_threads < 0:
+        return max(1, max_n_threads + n_threads + 1)
 
-    If scikit-learn is built without OpenMP support, always return 0.
-    """
-    IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-        return openmp.omp_get_thread_num()
-    ELSE:
-        return 0
+    return n_threads
