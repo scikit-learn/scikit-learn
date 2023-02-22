@@ -87,6 +87,12 @@ def _get_response_values(
         y_pred = prediction_method(X)
         classes = estimator.classes_
 
+        if target_type == "multiclass" and prediction_method.__name__ != "predict":
+            raise ValueError(
+                "With multiclass target, the response method should be "
+                f"predict, got {prediction_method.__name__} instead."
+            )
+
         if pos_label is not None and pos_label not in classes.tolist():
             raise ValueError(
                 f"pos_label={pos_label} is not a valid label: It should be "
