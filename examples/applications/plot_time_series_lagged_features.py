@@ -381,9 +381,7 @@ _ = ax.legend()
 #   demand seems to be higher, especially during the rush hours. It might reveal that
 #   our 95% percentile estimator underestimates the demand peaks. This could be be
 #   quantitatively confirmed by computing empirical coverage numbers as done in
-#   the `calibration of confidence intervals
-#   <https://scikit-learn.org/stable/auto_examples/ensemble/plot_gradient_boosting\
-#   _quantile.html#calibration-of-the-confidence-interval>`_.
+#   the :ref:`calibration of confidence intervals <calibration-section>`.
 #
 # Looking at the performance of non-linear regression models vs
 # the best models:
