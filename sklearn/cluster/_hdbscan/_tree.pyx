@@ -272,9 +272,7 @@ cpdef dict compute_stability(cnp.ndarray[CONDENSED_t, ndim=1] condensed_tree):
     births_arr[smallest_cluster] = 0.0
 
     result_arr = np.zeros(num_clusters, dtype=np.float64)
-    for i in range(condensed_tree.shape[0]):
-        condensed_node = condensed_tree[i]
-
+    for condensed_node in condensed_tree:
         parent = condensed_node.parent
         lambda_val = condensed_node.lambda_val
         cluster_size = condensed_node.cluster_size
