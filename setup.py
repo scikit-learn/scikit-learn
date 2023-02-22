@@ -200,7 +200,7 @@ class build_ext_subclass(build_ext):
                 print(f"Using old NumPy C API (version 1.7) for extension {ext.name}")
 
         if sklearn._OPENMP_SUPPORTED:
-            openmp_flag = get_openmp_flag(self.compiler)
+            openmp_flag = get_openmp_flag()
 
             for e in self.extensions:
                 e.extra_compile_args += openmp_flag
