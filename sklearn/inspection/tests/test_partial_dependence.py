@@ -847,6 +847,7 @@ def test_kind_average_and_average_of_individual(Estimator, data):
     ],
 )
 def test_partial_dependence_kind_individual_ignores_sample_weight(Estimator, data):
+    """Check that `sample_weight` does not have any effect on reported ICE."""
     est = Estimator()
     (X, y), n_targets = data
     sample_weight = [1] + [0] * (len(X) - 1)
@@ -872,8 +873,8 @@ def test_partial_dependence_kind_individual_ignores_sample_weight(Estimator, dat
 @pytest.mark.parametrize("non_null_weight_idx", [0, 1, -1])
 def test_partial_dependence_non_null_weight_idx(estimator, non_null_weight_idx):
     """Check that if we pass a `sample_weight` of zeros with only one index with
-    sample weight equals one, then the average `partial_dependece` with this
-    `sample_weight` is equal to the individual `partial_dependece` of the
+    sample weight equals one, then the average `partial_dependence` with this
+    `sample_weight` is equal to the individual `partial_dependence` of the
     corresponding index.
     """
     X, y = iris.data, iris.target
@@ -908,9 +909,8 @@ def test_partial_dependence_non_null_weight_idx(estimator, non_null_weight_idx):
         (LogisticRegression, binary_classification_data),
     ],
 )
-def test_partial_dependece_equivalence_equal_sample_weight(Estimator, data):
-    """Check that `sample_weight=None` is equivalent to having equal
-    weights.
+def test_partial_dependence_equivalence_equal_sample_weight(Estimator, data):
+    """Check that `sample_weight=None` is equivalent to having equal weights."""
     """
     est = Estimator()
     (X, y), n_targets = data
