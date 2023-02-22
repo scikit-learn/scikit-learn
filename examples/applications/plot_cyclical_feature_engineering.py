@@ -776,7 +776,7 @@ _ = ax.legend()
 # three models using the true vs predicted demand scatter plots:
 from sklearn.metrics import PredictionErrorDisplay
 
-fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 8), sharey=True)
+fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 8), sharex=True, sharey=True)
 fig.suptitle("Non-linear regression models")
 predictions = [
     one_hot_poly_predictions,
@@ -788,17 +788,20 @@ labels = [
     "Splines + polynomial kernel",
     "Gradient Boosted Trees",
 ]
-kind = ["actual_vs_predicted", "residual_vs_predicted"]
-for i in range(2):
-    for ax, pred, label in zip(axes[i], predictions, labels):
-        PredictionErrorDisplay.from_predictions(
-            y_true=y.iloc[test_0].values,
+plot_kinds = ["actual_vs_predicted", "residual_vs_predicted"]
+for axis_idx, kind in enumerate(plot_kinds):
+    for ax, pred, label in zip(axes[axis_idx], predictions, labels):
+        disp = PredictionErrorDisplay.from_predictions(
+            y_true=y.iloc[test_0],
             y_pred=pred,
-            kind=kind[i],
+            kind=kind,
             scatter_kwargs={"alpha": 0.3},
             ax=ax,
         )
-        ax.legend(["Perfect model", label])
+        ax.set_xticks(np.linspace(0, 1, num=5))
+        ax.set_yticks(np.linspace(0, 1, num=5))
+        ax.set_aspect("equal", adjustable="box")
+        ax.legend(["Best model", label])
 
 plt.show()
 # %%
