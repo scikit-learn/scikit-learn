@@ -76,14 +76,18 @@ cdef list bfs_from_hierarchy(
 
 cdef inline void _shatter_cluster(
     cnp.ndarray[cnp.float64_t, ndim=2] hierarchy,
-    cnp.int_t[::1] ignore,
-    cnp.int_t[::1] relabel,
+    cnp.uint8_t[::1] ignore,
+    cnp.intp_t[::1] relabel,
     cnp.intp_t root,
     cnp.intp_t node,
     cnp.intp_t num_points,
     cnp.float64_t lambda_value,
     list result_list,
 ):
+    """Take what would be a cluster but has too few points and assign each of
+    its constituent points as single-sample clusters, removing them from
+    consideration.
+    """
     cdef cnp.intp_t sub_node
     for sub_node in bfs_from_hierarchy(hierarchy, root):
         if sub_node < num_points:
@@ -119,14 +123,14 @@ cpdef cnp.ndarray condense_tree(
     """
 
     cdef cnp.intp_t root = 2 * hierarchy.shape[0]
-    cdef cnp.intp_t num_points = root // 2 + 1
+    cdef cnp.intp_t num_points = hierarchy.shape[0] + 1
     cdef cnp.intp_t next_label = num_points + 1
     cdef list node_list = bfs_from_hierarchy(hierarchy, root)
     cdef list result_list
 
-    cdef cnp.ndarray[cnp.intp_t, ndim=1] relabel
-    cdef cnp.ndarray[cnp.int_t, ndim=1] ignore
-    cdef cnp.ndarray[cnp.float64_t, ndim=1] children
+    cdef cnp.intp_t[::1] relabel
+    cdef cnp.uint8_t[::1] ignore
+    cdef cnp.float64_t[::1] children
 
     cdef cnp.intp_t node
     cdef cnp.intp_t sub_node
@@ -140,7 +144,7 @@ cpdef cnp.ndarray condense_tree(
     relabel = np.empty(root + 1, dtype=np.intp)
     relabel[root] = num_points
     result_list = []
-    ignore = np.zeros(len(node_list), dtype=int)
+    ignore = np.zeros(len(node_list), dtype=np.uint8)
 
     for node in node_list:
         # Guarantee that node is a cluster node of interest
@@ -240,50 +244,34 @@ cpdef cnp.ndarray condense_tree(
 
 cpdef dict compute_stability(cnp.ndarray[CONDENSED_t, ndim=1] condensed_tree):
 
-    cdef cnp.ndarray[cnp.float64_t, ndim=1] result_arr
-
-    cdef cnp.ndarray sorted_child_data = np.sort(
-        condensed_tree[['child', 'lambda_val']],
-        axis=0,
-    )
-
-    cdef cnp.ndarray[cnp.intp_t, ndim=1] sorted_children
-    cdef cnp.ndarray[cnp.float64_t, ndim=1] sorted_lambdas
-    sorted_children = sorted_child_data['child']
-    sorted_lambdas = sorted_child_data['lambda_val']
-
+    cdef cnp.float64_t[::1] result_arr
     cdef cnp.ndarray[cnp.intp_t, ndim=1] parents
+    parents = condensed_tree['parent']
 
     cdef cnp.intp_t parent
     cdef cnp.intp_t cluster_size
     cdef cnp.intp_t result_index
-    cdef cnp.intp_t current_child
     cdef cnp.float64_t lambda_val
 
-    cdef cnp.ndarray[cnp.float64_t, ndim=1] births_arr
+    cdef cnp.float64_t[::1] births_arr
     cdef CONDENSED_t condensed_node
 
-    parents = condensed_tree['parent']
 
     cdef cnp.intp_t largest_child = condensed_tree['child'].max()
     cdef cnp.intp_t smallest_cluster = parents.min()
-    cdef cnp.intp_t num_clusters = (
-        parents.max() - smallest_cluster + 1
-        )
+    cdef cnp.intp_t num_clusters = parents.max() - smallest_cluster + 1
 
-    if largest_child < smallest_cluster:
-        largest_child = smallest_cluster
+    largest_child = max(largest_child, smallest_cluster)
 
-    births_arr = np.full(largest_child + 1, np.nan, dtype=np.double)
+    births_arr = np.full(largest_child + 1, np.nan, dtype=np.float64)
 
-    for idx in range(sorted_children.shape[0]):
-        current_child = <cnp.intp_t> sorted_children[idx]
-        lambda_val = sorted_lambdas[idx]
-        births_arr[current_child] = lambda_val
+    for idx in range(condensed_tree.shape[0]):
+        condensed_node = condensed_tree[idx]
+        births_arr[condensed_node.child] = condensed_node.lambda_val
 
     births_arr[smallest_cluster] = 0.0
 
-    result_arr = np.zeros(num_clusters, dtype=np.double)
+    result_arr = np.zeros(num_clusters, dtype=np.float64)
     for i in range(condensed_tree.shape[0]):
         condensed_node = condensed_tree[i]
 
@@ -304,7 +292,7 @@ cpdef dict compute_stability(cnp.ndarray[CONDENSED_t, ndim=1] condensed_tree):
     return dict(result_pre_dict)
 
 
-cdef list bfs_from_cluster_tree(cnp.ndarray tree, cnp.intp_t bfs_root):
+cdef list bfs_from_cluster_tree(cnp.ndarray[CONDENSED_t, ndim=1] tree, cnp.intp_t bfs_root):
 
     cdef list result
     cdef cnp.ndarray[cnp.intp_t, ndim=1] process_queue
@@ -319,49 +307,35 @@ cdef list bfs_from_cluster_tree(cnp.ndarray tree, cnp.intp_t bfs_root):
     return result
 
 
-cdef max_lambdas(cnp.ndarray tree):
-
-    cdef cnp.ndarray sorted_parent_data
-    cdef cnp.ndarray[cnp.intp_t, ndim=1] sorted_parents
-    cdef cnp.ndarray[cnp.float64_t, ndim=1] sorted_lambdas
+cdef cnp.float64_t[::1] max_lambdas(cnp.ndarray[CONDENSED_t, ndim=1] tree):
 
     cdef cnp.intp_t parent
     cdef cnp.intp_t current_parent
     cdef cnp.float64_t lambda_
     cdef cnp.float64_t max_lambda
 
-    cdef cnp.ndarray[cnp.float64_t, ndim=1] deaths_arr
-    cdef cnp.float64_t *deaths
+    cdef cnp.float64_t[::1] deaths
 
     cdef cnp.intp_t largest_parent = tree['parent'].max()
 
-    sorted_parent_data = np.sort(tree[['parent', 'lambda_val']], axis=0)
-    deaths_arr = np.zeros(largest_parent + 1, dtype=np.double)
-    deaths = (<cnp.float64_t *> deaths_arr.data)
-    sorted_parents = sorted_parent_data['parent']
-    sorted_lambdas = sorted_parent_data['lambda_val']
+    deaths = np.zeros(largest_parent + 1, dtype=np.float64)
 
-    current_parent = -1
-    max_lambda = 0
+    current_parent = tree[0].parent
+    max_lambda = tree[0].lambda_val
 
-    for row in range(sorted_parent_data.shape[0]):
-        parent = <cnp.intp_t> sorted_parents[row]
-        lambda_ = sorted_lambdas[row]
+    for idx in range(1, tree.shape[0]):
+        parent = tree[idx].parent
+        lambda_ = tree[idx].lambda_val
 
         if parent == current_parent:
             max_lambda = max(max_lambda, lambda_)
-        elif current_parent != -1:
-            deaths[current_parent] = max_lambda
-            current_parent = parent
-            max_lambda = lambda_
         else:
-            # Initialize
+            deaths[current_parent] = max_lambda
             current_parent = parent
             max_lambda = lambda_
 
     deaths[current_parent] = max_lambda # value for last parent
-
-    return deaths_arr
+    return deaths
 
 
 cdef class TreeUnionFind (object):
@@ -416,7 +390,7 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
     linkage : ndarray (n_samples, 4)
         The single linkage tree in scipy.cluster.hierarchy format.
 
-    cut : double
+    cut : float
         The cut value at which to find clusters.
 
     min_cluster_size : int
@@ -450,10 +424,10 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
     union_find = TreeUnionFind(<cnp.intp_t> root + 1)
 
     cluster = num_points
-    for row in linkage:
-        if row[2] < cut:
-            union_find.union_(<cnp.intp_t> row[0], cluster)
-            union_find.union_(<cnp.intp_t> row[1], cluster)
+    for node in linkage:
+        if node[2] < cut:
+            union_find.union_(<cnp.intp_t> node[0], cluster)
+            union_find.union_(<cnp.intp_t> node[1], cluster)
         cluster += 1
 
     cluster_size = np.zeros(cluster, dtype=np.intp)
@@ -538,10 +512,10 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1] do_labelling(
     return result_arr
 
 
-cdef get_probabilities(cnp.ndarray tree, dict cluster_map, cnp.ndarray labels):
+cdef get_probabilities(cnp.ndarray[CONDENSED_t, ndim=1] tree, dict cluster_map, cnp.ndarray labels):
 
     cdef cnp.ndarray[cnp.float64_t, ndim=1] result
-    cdef cnp.ndarray[cnp.float64_t, ndim=1] deaths
+    cdef cnp.float64_t[::1] deaths
     cdef cnp.ndarray[cnp.float64_t, ndim=1] lambda_array
     cdef cnp.ndarray[cnp.intp_t, ndim=1] child_array
     cdef cnp.ndarray[cnp.intp_t, ndim=1] parent_array
