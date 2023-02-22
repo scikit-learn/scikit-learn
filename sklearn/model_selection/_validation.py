@@ -14,6 +14,7 @@ functions to validate the model.
 import warnings
 import numbers
 import time
+from collections import defaultdict
 from functools import partial
 from traceback import format_exc
 from contextlib import suppress
@@ -60,6 +61,7 @@ def cross_validate(
     pre_dispatch="2*n_jobs",
     return_train_score=False,
     return_estimator=False,
+    return_indices=False,
     error_score=np.nan,
 ):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
@@ -169,6 +171,11 @@ def cross_validate(
 
         .. versionadded:: 0.20
 
+    return_indices : bool, default=False
+        Whether to return the train-test indices selected for each split.
+
+        .. versionadded:: 1.3
+
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
@@ -207,6 +214,11 @@ def cross_validate(
                 The estimator objects for each cv split.
                 This is available only if ``return_estimator`` parameter
                 is set to ``True``.
+            ``indices``
+                The train/test indices for each cv split. A Python dictionary
+                is returned where the keys are either `"train"` or `"test"`
+                and the associated values are a list of NumPy arrays with the
+                indices.
 
     See Also
     --------
@@ -277,6 +289,7 @@ def cross_validate(
             return_train_score=return_train_score,
             return_times=True,
             return_estimator=return_estimator,
+            return_indices=return_indices,
             error_score=error_score,
         )
         for train, test in cv.split(X, y, groups)
@@ -298,6 +311,10 @@ def cross_validate(
 
     if return_estimator:
         ret["estimator"] = results["estimator"]
+
+    if return_indices:
+        ret["indices"] = defaultdict(list)
+        ret["indices"]["train"], ret["indices"]["test"] = zip(*results["indices"])
 
     test_scores_dict = _normalize_score_results(results["test_scores"])
     if return_train_score:
@@ -543,6 +560,7 @@ def _fit_and_score(
     return_n_test_samples=False,
     return_times=False,
     return_estimator=False,
+    return_indices=False,
     split_progress=None,
     candidate_progress=None,
     error_score=np.nan,
@@ -613,6 +631,9 @@ def _fit_and_score(
 
     return_estimator : bool, default=False
         Whether to return the fitted estimator.
+
+    return_indices : bool, default=False
+        Whether to return the train-test indices selected for each split.
 
     Returns
     -------
@@ -747,6 +768,8 @@ def _fit_and_score(
         result["parameters"] = parameters
     if return_estimator:
         result["estimator"] = estimator
+    if return_indices:
+        result["indices"] = (train, test)
     return result
 
 
