@@ -2737,7 +2737,7 @@ def log_loss(
     y_pred_sum = y_pred.sum(axis=1)
     if not np.isclose(y_pred_sum, 1, rtol=1e-15, atol=5 * eps).all():
         warnings.warn(
-            "The y_pred values do not sum to one. Starting from 1.4 this"
+            "The y_pred values do not sum to one. Starting from 1.5 this"
             "will result in an error.",
             UserWarning,
         )
