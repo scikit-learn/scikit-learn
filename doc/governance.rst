@@ -151,12 +151,24 @@ are made according to the following rules:
 * **Changes to the API principles and changes to dependencies or supported
   versions** happen via a :ref:`slep` and follows the decision-making process outlined above.
 
-* **Changes to the governance model** use the same decision process outlined above.
-
-
 If a veto -1 vote is cast on a lazy consensus, the proposer can appeal to the
 community and core developers and the change can be approved or rejected using
 the decision making procedure outlined above.
+
+Governance Model Changes
+------------------------
+
+Governance model changes occur through an enhancement proposal or a GitHub Pull
+Request. An enhancement proposal will go through the "decision-making process"
+described in the previous section. Alternatively, an author may propose a change
+directly to the governance model with a GitHub Pull Request. Logistically, an
+author can open a Draft Pull Request for feedback and follow up with a new
+revised Pull Request for voting. Once that author is happy with the state of the
+Pull Request, they can call for a vote on the public mailing list. During the
+one-month voting period, the Pull Request can not change. A Pull Request
+Approval will count as a positive vote, and a "Request Changes" review will
+count as a negative vote. If two-thirds of the votes are positive, then
+governance model change is accepted.
 
 .. _slep:
 
