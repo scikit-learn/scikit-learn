@@ -9,7 +9,7 @@ cdef inline int heap_push(
     ITYPE_t size,
     floating val,
     ITYPE_t val_idx,
-) nogil:
+) noexcept nogil:
     """Push a tuple (val, val_idx) onto a fixed-size max-heap.
 
     The max-heap is represented as a Structure of Arrays where:

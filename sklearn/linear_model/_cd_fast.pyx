@@ -35,18 +35,18 @@ cdef enum:
     RAND_R_MAX = 0x7FFFFFFF
 
 
-cdef inline UINT32_t rand_int(UINT32_t end, UINT32_t* random_state) nogil:
+cdef inline UINT32_t rand_int(UINT32_t end, UINT32_t* random_state) noexcept nogil:
     """Generate a random integer in [0; end)."""
     return our_rand_r(random_state) % end
 
 
-cdef inline floating fmax(floating x, floating y) nogil:
+cdef inline floating fmax(floating x, floating y) noexcept nogil:
     if x > y:
         return x
     return y
 
 
-cdef inline floating fsign(floating f) nogil:
+cdef inline floating fsign(floating f) noexcept nogil:
     if f == 0:
         return 0
     elif f > 0:
@@ -55,7 +55,7 @@ cdef inline floating fsign(floating f) nogil:
         return -1.0
 
 
-cdef floating abs_max(int n, floating* a) nogil:
+cdef floating abs_max(int n, floating* a) noexcept nogil:
     """np.max(np.abs(a))"""
     cdef int i
     cdef floating m = fabs(a[0])
@@ -67,7 +67,7 @@ cdef floating abs_max(int n, floating* a) nogil:
     return m
 
 
-cdef floating max(int n, floating* a) nogil:
+cdef floating max(int n, floating* a) noexcept nogil:
     """np.max(a)"""
     cdef int i
     cdef floating m = a[0]
@@ -79,7 +79,7 @@ cdef floating max(int n, floating* a) nogil:
     return m
 
 
-cdef floating diff_abs_max(int n, floating* a, floating* b) nogil:
+cdef floating diff_abs_max(int n, floating* a, floating* b) noexcept nogil:
     """np.max(np.abs(a - b))"""
     cdef int i
     cdef floating m = fabs(a[0] - b[0])
