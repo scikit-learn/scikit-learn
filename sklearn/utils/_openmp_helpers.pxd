@@ -1,8 +1,8 @@
-# Helpers to access OpenMP threads information
+# Helpers to safely access OpenMP routines
 #
-# Those interfaces act as indirections which allows the non-support of OpenMP
-# for implementations which have been written for it.
-
+# no-op implementations are provided for the case where OpenMP is not available.
+#
+# All calls to OpenMP routines should be cimported from this module.
 
 cdef extern from *:
     """
@@ -11,13 +11,13 @@ cdef extern from *:
         #define SKLEARN_OPENMP_PARALLELISM_ENABLED 1
     #else
         #define SKLEARN_OPENMP_PARALLELISM_ENABLED 0
-        typedef int omp_lock_t;
-        void omp_init_lock(omp_lock_t *lock) {}
-        void omp_destroy_lock(omp_lock_t *lock) {}
-        void omp_set_lock(omp_lock_t *lock) {}
-        void omp_unset_lock(omp_lock_t *lock) {}
-        int omp_get_thread_num() { return 0; }
-        int omp_get_max_threads() { return 1; }
+        #define omp_lock_t int
+        #define omp_init_lock(l) (void)0
+        #define omp_destroy_lock(l) (void)0
+        #define omp_set_lock(l) (void)0
+        #define omp_unset_lock(l) (void)0
+        #define omp_get_thread_num() 0
+        #define omp_get_max_threads() 1
     #endif
     """
     bint SKLEARN_OPENMP_PARALLELISM_ENABLED
