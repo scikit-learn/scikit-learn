@@ -4,18 +4,17 @@
 # fused types and when the array may be read-only (for instance when it's
 # provided by the user). This is fixed in cython > 0.3.
 
-from ..utils._openmp_helpers cimport omp_lock_t
-from ..utils._openmp_helpers cimport omp_init_lock
-from ..utils._openmp_helpers cimport omp_destroy_lock
-from ..utils._openmp_helpers cimport omp_set_lock
-from ..utils._openmp_helpers cimport omp_unset_lock
-
 from cython cimport floating
 from cython.parallel import prange, parallel
 from libc.stdlib cimport malloc, calloc, free
 from libc.string cimport memset
 from libc.float cimport DBL_MAX, FLT_MAX
 
+from ..utils._openmp_helpers cimport omp_lock_t
+from ..utils._openmp_helpers cimport omp_init_lock
+from ..utils._openmp_helpers cimport omp_destroy_lock
+from ..utils._openmp_helpers cimport omp_set_lock
+from ..utils._openmp_helpers cimport omp_unset_lock
 from ..utils.extmath import row_norms
 from ..utils._cython_blas cimport _gemm
 from ..utils._cython_blas cimport RowMajor, Trans, NoTrans

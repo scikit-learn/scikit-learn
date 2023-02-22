@@ -7,9 +7,8 @@ def _openmp_parallelism_enabled():
 
     It allows to retrieve at runtime the information gathered at compile time.
     """
-    # SKLEARN_OPENMP_PARALLELISM_ENABLED is resolved at compile time during
-    # cythonization. It is defined via the `compile_time_env` kwarg of the
-    # `cythonize` call and behaves like the `-D` option of the C preprocessor.
+    # SKLEARN_OPENMP_PARALLELISM_ENABLED is resolved at compile time and defined
+    # in _openmp_helpers.pxd as a boolean. This function exposes it to Python.
     return SKLEARN_OPENMP_PARALLELISM_ENABLED
 
 
