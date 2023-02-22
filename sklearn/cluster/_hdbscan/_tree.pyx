@@ -9,7 +9,7 @@ import cython
 import numpy as np
 
 
-cdef cnp.double_t INFTY = np.inf
+cdef cnp.float64_t INFTY = np.inf
 
 CONDENSED_dtype = np.dtype([
     ("parent", np.intp),
@@ -28,7 +28,7 @@ HIERARCHY_dtype = np.dtype([
 ctypedef packed struct CONDENSED_t:
     cnp.intp_t parent
     cnp.intp_t child
-    cnp.double_t lambda_val
+    cnp.float64_t lambda_val
     cnp.intp_t cluster_size
 
 ctypedef packed struct HIERARCHY_t:
@@ -39,7 +39,7 @@ ctypedef packed struct HIERARCHY_t:
 
 
 cdef list bfs_from_hierarchy(
-    cnp.ndarray[HIERARCHY_t, ndim=1] hierarchy,
+    cnp.ndarray[cnp.float64_t, ndim=2] hierarchy,
     cnp.intp_t bfs_root
 ):
     """
@@ -74,9 +74,26 @@ cdef list bfs_from_hierarchy(
             )
     return result
 
+cdef inline void _shatter_cluster(
+    cnp.ndarray[cnp.float64_t, ndim=2] hierarchy,
+    cnp.int_t[::1] ignore,
+    cnp.int_t[::1] relabel,
+    cnp.intp_t root,
+    cnp.intp_t node,
+    cnp.intp_t num_points,
+    cnp.float64_t lambda_value,
+    list result_list,
+):
+    cdef cnp.intp_t sub_node
+    for sub_node in bfs_from_hierarchy(hierarchy, root):
+        if sub_node < num_points:
+            result_list.append(
+                (relabel[node], sub_node, lambda_value, 1)
+            )
+        ignore[sub_node] = True
 
 cpdef cnp.ndarray condense_tree(
-    cnp.ndarray[cnp.double_t, ndim=2] hierarchy,
+    cnp.ndarray[cnp.float64_t, ndim=2] hierarchy,
     cnp.intp_t min_cluster_size=10
 ):
     """Condense an MST according to a minimum cluster size. This is akin
@@ -109,14 +126,14 @@ cpdef cnp.ndarray condense_tree(
 
     cdef cnp.ndarray[cnp.intp_t, ndim=1] relabel
     cdef cnp.ndarray[cnp.int_t, ndim=1] ignore
-    cdef cnp.ndarray[cnp.double_t, ndim=1] children
+    cdef cnp.ndarray[cnp.float64_t, ndim=1] children
 
     cdef cnp.intp_t node
     cdef cnp.intp_t sub_node
     cdef cnp.intp_t left
     cdef cnp.intp_t right
-    cdef double lambda_value
-    cdef double distance
+    cdef cnp.float64_t lambda_value
+    cdef cnp.float64_t distance
     cdef cnp.intp_t left_count
     cdef cnp.intp_t right_count
 
@@ -155,54 +172,75 @@ cpdef cnp.ndarray condense_tree(
         if left_count >= min_cluster_size and right_count >= min_cluster_size:
             relabel[left] = next_label
             next_label += 1
-            result_list.append((relabel[node], relabel[left], lambda_value,
-                                left_count))
+            result_list.append(
+                (relabel[node], relabel[left], lambda_value, left_count)
+            )
 
             relabel[right] = next_label
             next_label += 1
-            result_list.append((relabel[node], relabel[right], lambda_value,
-                                right_count))
+            result_list.append(
+                (relabel[node], relabel[right], lambda_value, right_count)
+            )
 
         # Each child is regarded as a collection of single-sample clusters
         elif left_count < min_cluster_size and right_count < min_cluster_size:
-            for sub_node in bfs_from_hierarchy(hierarchy, left):
-                if sub_node < num_points:
-                    result_list.append((relabel[node], sub_node,
-                                        lambda_value, 1))
-                ignore[sub_node] = True
-
-            for sub_node in bfs_from_hierarchy(hierarchy, right):
-                if sub_node < num_points:
-                    result_list.append((relabel[node], sub_node,
-                                        lambda_value, 1))
-                ignore[sub_node] = True
+            _shatter_cluster(
+                hierarchy=hierarchy,
+                ignore=ignore,
+                relabel=relabel,
+                root=left,
+                node=node,
+                num_points=num_points,
+                lambda_value=lambda_value,
+                result_list=result_list,
+            )
+            _shatter_cluster(
+                hierarchy=hierarchy,
+                ignore=ignore,
+                relabel=relabel,
+                root=right,
+                node=node,
+                num_points=num_points,
+                lambda_value=lambda_value,
+                result_list=result_list,
+            )
 
         # One child is a collection of single-sample clusters, while the other
         # is a persistance of the parent node cluster
         elif left_count < min_cluster_size:
             relabel[right] = relabel[node]
-            for sub_node in bfs_from_hierarchy(hierarchy, left):
-                if sub_node < num_points:
-                    result_list.append((relabel[node], sub_node,
-                                        lambda_value, 1))
-                ignore[sub_node] = True
+            _shatter_cluster(
+                hierarchy=hierarchy,
+                ignore=ignore,
+                relabel=relabel,
+                root=left,
+                node=node,
+                num_points=num_points,
+                lambda_value=lambda_value,
+                result_list=result_list,
+            )
 
         # One child is a collection of single-sample clusters, while the other
         # is a persistance of the parent node cluster
         else:
             relabel[left] = relabel[node]
-            for sub_node in bfs_from_hierarchy(hierarchy, right):
-                if sub_node < num_points:
-                    result_list.append((relabel[node], sub_node,
-                                        lambda_value, 1))
-                ignore[sub_node] = True
+            _shatter_cluster(
+                hierarchy=hierarchy,
+                ignore=ignore,
+                relabel=relabel,
+                root=right,
+                node=node,
+                num_points=num_points,
+                lambda_value=lambda_value,
+                result_list=result_list,
+            )
 
     return np.array(result_list, dtype=CONDENSED_dtype)
 
 
 cpdef dict compute_stability(cnp.ndarray[CONDENSED_t, ndim=1] condensed_tree):
 
-    cdef cnp.ndarray[cnp.double_t, ndim=1] result_arr
+    cdef cnp.ndarray[cnp.float64_t, ndim=1] result_arr
 
     cdef cnp.ndarray sorted_child_data = np.sort(
         condensed_tree[['child', 'lambda_val']],
@@ -210,7 +248,7 @@ cpdef dict compute_stability(cnp.ndarray[CONDENSED_t, ndim=1] condensed_tree):
     )
 
     cdef cnp.ndarray[cnp.intp_t, ndim=1] sorted_children
-    cdef cnp.ndarray[cnp.double_t, ndim=1] sorted_lambdas
+    cdef cnp.ndarray[cnp.float64_t, ndim=1] sorted_lambdas
     sorted_children = sorted_child_data['child']
     sorted_lambdas = sorted_child_data['lambda_val']
 
@@ -222,7 +260,7 @@ cpdef dict compute_stability(cnp.ndarray[CONDENSED_t, ndim=1] condensed_tree):
     cdef cnp.intp_t current_child
     cdef cnp.float64_t lambda_val
 
-    cdef cnp.ndarray[cnp.double_t, ndim=1] births_arr
+    cdef cnp.ndarray[cnp.float64_t, ndim=1] births_arr
     cdef CONDENSED_t condensed_node
 
     parents = condensed_tree['parent']
@@ -285,21 +323,21 @@ cdef max_lambdas(cnp.ndarray tree):
 
     cdef cnp.ndarray sorted_parent_data
     cdef cnp.ndarray[cnp.intp_t, ndim=1] sorted_parents
-    cdef cnp.ndarray[cnp.double_t, ndim=1] sorted_lambdas
+    cdef cnp.ndarray[cnp.float64_t, ndim=1] sorted_lambdas
 
     cdef cnp.intp_t parent
     cdef cnp.intp_t current_parent
     cdef cnp.float64_t lambda_
     cdef cnp.float64_t max_lambda
 
-    cdef cnp.ndarray[cnp.double_t, ndim=1] deaths_arr
-    cdef cnp.double_t *deaths
+    cdef cnp.ndarray[cnp.float64_t, ndim=1] deaths_arr
+    cdef cnp.float64_t *deaths
 
     cdef cnp.intp_t largest_parent = tree['parent'].max()
 
     sorted_parent_data = np.sort(tree[['parent', 'lambda_val']], axis=0)
     deaths_arr = np.zeros(largest_parent + 1, dtype=np.double)
-    deaths = (<cnp.double_t *> deaths_arr.data)
+    deaths = (<cnp.float64_t *> deaths_arr.data)
     sorted_parents = sorted_parent_data['parent']
     sorted_lambdas = sorted_parent_data['lambda_val']
 
@@ -365,7 +403,7 @@ cdef class TreeUnionFind (object):
 
 cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
         cnp.ndarray linkage,
-        cnp.double_t cut,
+        cnp.float64_t cut,
         cnp.intp_t min_cluster_size
     ):
     """Given a single linkage tree and a cut value, return the
@@ -446,13 +484,13 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1] do_labelling(
         set clusters,
         dict cluster_label_map,
         cnp.intp_t allow_single_cluster,
-        cnp.double_t cluster_selection_epsilon):
+        cnp.float64_t cluster_selection_epsilon):
 
     cdef cnp.intp_t root_cluster
     cdef cnp.ndarray[cnp.intp_t, ndim=1] result_arr
     cdef cnp.ndarray[cnp.intp_t, ndim=1] parent_array
     cdef cnp.ndarray[cnp.intp_t, ndim=1] child_array
-    cdef cnp.ndarray[cnp.double_t, ndim=1] lambda_array
+    cdef cnp.ndarray[cnp.float64_t, ndim=1] lambda_array
     cdef cnp.intp_t *result
     cdef TreeUnionFind union_find
     cdef cnp.intp_t parent
@@ -502,9 +540,9 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1] do_labelling(
 
 cdef get_probabilities(cnp.ndarray tree, dict cluster_map, cnp.ndarray labels):
 
-    cdef cnp.ndarray[cnp.double_t, ndim=1] result
-    cdef cnp.ndarray[cnp.double_t, ndim=1] deaths
-    cdef cnp.ndarray[cnp.double_t, ndim=1] lambda_array
+    cdef cnp.ndarray[cnp.float64_t, ndim=1] result
+    cdef cnp.ndarray[cnp.float64_t, ndim=1] deaths
+    cdef cnp.ndarray[cnp.float64_t, ndim=1] lambda_array
     cdef cnp.ndarray[cnp.intp_t, ndim=1] child_array
     cdef cnp.ndarray[cnp.intp_t, ndim=1] parent_array
     cdef cnp.intp_t root_cluster
@@ -512,8 +550,8 @@ cdef get_probabilities(cnp.ndarray tree, dict cluster_map, cnp.ndarray labels):
     cdef cnp.intp_t point
     cdef cnp.intp_t cluster_num
     cdef cnp.intp_t cluster
-    cdef cnp.double_t max_lambda
-    cdef cnp.double_t lambda_
+    cdef cnp.float64_t max_lambda
+    cdef cnp.float64_t lambda_
 
     child_array = tree['child']
     parent_array = tree['parent']
@@ -558,7 +596,7 @@ cpdef list get_cluster_tree_leaves(cnp.ndarray cluster_tree):
     root = cluster_tree['parent'].min()
     return recurse_leaf_dfs(cluster_tree, root)
 
-cpdef cnp.intp_t traverse_upwards(cnp.ndarray cluster_tree, cnp.double_t cluster_selection_epsilon, cnp.intp_t leaf, cnp.intp_t allow_single_cluster):
+cpdef cnp.intp_t traverse_upwards(cnp.ndarray cluster_tree, cnp.float64_t cluster_selection_epsilon, cnp.intp_t leaf, cnp.intp_t allow_single_cluster):
 
     root = cluster_tree['parent'].min()
     parent = cluster_tree[cluster_tree['child'] == leaf]['parent']
@@ -574,7 +612,7 @@ cpdef cnp.intp_t traverse_upwards(cnp.ndarray cluster_tree, cnp.double_t cluster
     else:
         return traverse_upwards(cluster_tree, cluster_selection_epsilon, parent, allow_single_cluster)
 
-cpdef set epsilon_search(set leaves, cnp.ndarray cluster_tree, cnp.double_t cluster_selection_epsilon, cnp.intp_t allow_single_cluster):
+cpdef set epsilon_search(set leaves, cnp.ndarray cluster_tree, cnp.float64_t cluster_selection_epsilon, cnp.intp_t allow_single_cluster):
 
     selected_clusters = list()
     processed = list()
@@ -651,7 +689,7 @@ cpdef tuple get_clusters(cnp.ndarray tree, dict stability,
     cdef cnp.intp_t cluster
     cdef cnp.intp_t num_points
     cdef cnp.ndarray labels
-    cdef cnp.double_t max_lambda
+    cdef cnp.float64_t max_lambda
 
     # Assume clusters are ordered by numeric id equivalent to
     # a topological sort of the tree; This is valid given the
