@@ -1830,7 +1830,7 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
 def _check_response_method(estimator, response_method):
     """Check if `response_method` is available in estimator and return it.
 
-    .. versionadded:: 1.1
+    .. versionadded:: 1.3
 
     Parameters
     ----------
