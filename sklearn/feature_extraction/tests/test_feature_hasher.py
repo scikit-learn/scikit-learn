@@ -3,9 +3,7 @@ from numpy.testing import assert_array_equal
 import pytest
 
 from sklearn.feature_extraction import FeatureHasher
-from sklearn.utils._testing import fails_if_pypy
-
-pytestmark = fails_if_pypy
+from sklearn.feature_extraction._hashing_fast import transform as _hashing_transform
 
 
 def test_feature_hasher_dicts():
@@ -45,11 +43,28 @@ def test_feature_hasher_strings():
         assert X.nnz == 6
 
 
+@pytest.mark.parametrize(
+    "raw_X",
+    [
+        ["my_string", "another_string"],
+        (x for x in ["my_string", "another_string"]),
+    ],
+    ids=["list", "generator"],
+)
+def test_feature_hasher_single_string(raw_X):
+    """FeatureHasher raises error when a sample is a single string.
+
+    Non-regression test for gh-13199.
+    """
+    msg = "Samples can not be a single string"
+
+    feature_hasher = FeatureHasher(n_features=10, input_type="string")
+    with pytest.raises(ValueError, match=msg):
+        feature_hasher.transform(raw_X)
+
+
 def test_hashing_transform_seed():
     # check the influence of the seed when computing the hashes
-    # import is here to avoid importing on pypy
-    from sklearn.feature_extraction._hashing_fast import transform as _hashing_transform
-
     raw_X = [
         ["foo", "bar", "baz", "foo".encode("ascii")],
         ["bar".encode("ascii"), "baz", "quux"],
@@ -111,39 +126,6 @@ def test_hash_empty_input():
     X = feature_hasher.transform(raw_X)
 
     assert_array_equal(X.A, np.zeros((len(raw_X), n_features)))
-
-
-def test_hasher_invalid_input():
-    raw_X = [[], (), iter(range(0))]
-
-    feature_hasher = FeatureHasher(input_type="gobbledygook")
-    with pytest.raises(ValueError):
-        feature_hasher.transform(raw_X)
-    feature_hasher = FeatureHasher(n_features=-1)
-    with pytest.raises(ValueError):
-        feature_hasher.transform(raw_X)
-    feature_hasher = FeatureHasher(n_features=0)
-    with pytest.raises(ValueError):
-        feature_hasher.transform(raw_X)
-    feature_hasher = FeatureHasher(n_features="ham")
-    with pytest.raises(TypeError):
-        feature_hasher.transform(raw_X)
-
-    feature_hasher = FeatureHasher(n_features=np.uint16(2**6))
-    with pytest.raises(ValueError):
-        feature_hasher.transform([])
-    with pytest.raises(Exception):
-        feature_hasher.transform([[5.5]])
-    with pytest.raises(Exception):
-        feature_hasher.transform([[None]])
-
-
-def test_hasher_set_params():
-    # Test delayed input validation in fit (useful for grid search).
-    hasher = FeatureHasher()
-    hasher.set_params(n_features=np.inf)
-    with pytest.raises(TypeError):
-        hasher.fit()
 
 
 def test_hasher_zeros():

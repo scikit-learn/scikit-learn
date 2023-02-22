@@ -1090,18 +1090,6 @@ def test_init_gradient_and_hessian_raises(loss, params, err_msg):
             "quantile == 0, must be > 0.",
         ),
         (PinballLoss, {"quantile": 1.1}, ValueError, "quantile == 1.1, must be < 1."),
-        (
-            HalfTweedieLoss,
-            {"power": None},
-            TypeError,
-            "power must be an instance of float, not NoneType.",
-        ),
-        (
-            HalfTweedieLoss,
-            {"power": np.inf},
-            ValueError,
-            "power == inf, must be < inf.",
-        ),
     ],
 )
 def test_loss_init_parameter_validation(loss, params, err_type, err_msg):

@@ -21,6 +21,10 @@ information on this dataset.
 # License: BSD 3 clause
 
 import matplotlib.pyplot as plt
+
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+
 from sklearn import datasets
 from sklearn.decomposition import PCA
 
@@ -63,10 +67,10 @@ ax.scatter(
 
 ax.set_title("First three PCA directions")
 ax.set_xlabel("1st eigenvector")
-ax.w_xaxis.set_ticklabels([])
+ax.xaxis.set_ticklabels([])
 ax.set_ylabel("2nd eigenvector")
-ax.w_yaxis.set_ticklabels([])
+ax.yaxis.set_ticklabels([])
 ax.set_zlabel("3rd eigenvector")
-ax.w_zaxis.set_ticklabels([])
+ax.zaxis.set_ticklabels([])
 
 plt.show()

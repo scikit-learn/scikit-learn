@@ -3,7 +3,7 @@ Testing for the tree module (sklearn.tree).
 """
 import copy
 import pickle
-from itertools import product
+from itertools import product, chain
 import struct
 import io
 import copyreg
@@ -59,9 +59,10 @@ from sklearn.tree._classes import CRITERIA_REG
 from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
+from sklearn.tree._classes import DENSE_SPLITTERS, SPARSE_SPLITTERS
 
 
-CLF_CRITERIONS = ("gini", "entropy")
+CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
 CLF_TREES = {
@@ -614,95 +615,6 @@ def test_error():
         est.fit([[0, 1, 2]], [0, 0, 0])
     with pytest.raises(ValueError, match="Some.*y are negative.*Poisson"):
         est.fit([[0, 1, 2]], [5, -0.1, 2])
-
-
-@pytest.mark.parametrize("name, Tree", ALL_TREES.items())
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"max_depth": -1}, ValueError, "max_depth == -1, must be >= 1"),
-        (
-            {"max_depth": 1.1},
-            TypeError,
-            "max_depth must be an instance of int",
-        ),
-        ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
-        ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
-        (
-            {"min_samples_leaf": "foo"},
-            TypeError,
-            "min_samples_leaf must be an instance of float",
-        ),
-        ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
-        (
-            {"min_samples_split": 0.0},
-            ValueError,
-            "min_samples_split == 0.0, must be > 0.0",
-        ),
-        (
-            {"min_samples_split": 1.1},
-            ValueError,
-            "min_samples_split == 1.1, must be <= 1.0",
-        ),
-        (
-            {"min_samples_split": "foo"},
-            TypeError,
-            "min_samples_split must be an instance of float",
-        ),
-        (
-            {"min_weight_fraction_leaf": -1},
-            ValueError,
-            "min_weight_fraction_leaf == -1, must be >= 0.0",
-        ),
-        (
-            {"min_weight_fraction_leaf": 0.6},
-            ValueError,
-            "min_weight_fraction_leaf == 0.6, must be <= 0.5",
-        ),
-        (
-            {"min_weight_fraction_leaf": "foo"},
-            TypeError,
-            "min_weight_fraction_leaf must be an instance of float",
-        ),
-        ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
-        ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
-        ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be <= 1.0"),
-        ({"max_features": "foobar"}, ValueError, "Invalid value for max_features."),
-        ({"max_leaf_nodes": 0}, ValueError, "max_leaf_nodes == 0, must be >= 2"),
-        (
-            {"max_leaf_nodes": 1.5},
-            TypeError,
-            "max_leaf_nodes must be an instance of int",
-        ),
-        (
-            {"min_impurity_decrease": -1},
-            ValueError,
-            "min_impurity_decrease == -1, must be >= 0.0",
-        ),
-        (
-            {"min_impurity_decrease": "foo"},
-            TypeError,
-            "min_impurity_decrease must be an instance of float",
-        ),
-        ({"ccp_alpha": -1.0}, ValueError, "ccp_alpha == -1.0, must be >= 0.0"),
-        (
-            {"ccp_alpha": "foo"},
-            TypeError,
-            "ccp_alpha must be an instance of float",
-        ),
-    ],
-)
-def test_tree_params_validation(name, Tree, params, err_type, err_msg):
-    """Check parameter validation in DecisionTreeClassifier, DecisionTreeRegressor,
-    ExtraTreeClassifier, and ExtraTreeRegressor.
-    """
-    if "Classifier" in name:
-        X, y = iris.data, iris.target
-    else:
-        X, y = diabetes.data, diabetes.target
-    est = Tree(**params)
-    with pytest.raises(err_type, match=err_msg):
-        est.fit(X, y)
 
 
 def test_min_samples_split():
@@ -1295,21 +1207,10 @@ def check_class_weight_errors(name):
     TreeClassifier = CLF_TREES[name]
     _y = np.vstack((y, np.array(y) * 2)).T
 
-    # Invalid preset string
-    clf = TreeClassifier(class_weight="the larch", random_state=0)
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-    with pytest.raises(ValueError):
-        clf.fit(X, _y)
-
-    # Not a list or preset for multi-output
-    clf = TreeClassifier(class_weight=1, random_state=0)
-    with pytest.raises(ValueError):
-        clf.fit(X, _y)
-
     # Incorrect length list for multi-output
     clf = TreeClassifier(class_weight=[{-1: 0.5, 1: 1.0}], random_state=0)
-    with pytest.raises(ValueError):
+    err_msg = "number of elements in class_weight should match number of outputs."
+    with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, _y)
 
 
@@ -1399,10 +1300,8 @@ def test_big_input():
     # Test if the warning for too large inputs is appropriate.
     X = np.repeat(10**40.0, 4).astype(np.float64).reshape(-1, 1)
     clf = DecisionTreeClassifier()
-    try:
+    with pytest.raises(ValueError, match="float32"):
         clf.fit(X, [0, 1, 0, 1])
-    except ValueError as e:
-        assert "float32" in str(e)
 
 
 def test_realloc():
@@ -2037,20 +1936,36 @@ def assert_is_subtree(tree, subtree):
             )
 
 
-def check_apply_path_readonly(name):
-    X_readonly = create_memmap_backed_data(X_small.astype(tree._tree.DTYPE, copy=False))
+@pytest.mark.parametrize("name", ALL_TREES)
+@pytest.mark.parametrize("splitter", ["best", "random"])
+@pytest.mark.parametrize("X_format", ["dense", "csr", "csc"])
+def test_apply_path_readonly_all_trees(name, splitter, X_format):
+    dataset = DATASETS["clf_small"]
+    X_small = dataset["X"].astype(tree._tree.DTYPE, copy=False)
+    if X_format == "dense":
+        X_readonly = create_memmap_backed_data(X_small)
+    else:
+        X_readonly = dataset["X_sparse"]  # CSR
+        if X_format == "csc":
+            # Cheap CSR to CSC conversion
+            X_readonly = X_readonly.tocsc()
+
+        X_readonly.data = np.array(X_readonly.data, dtype=tree._tree.DTYPE)
+        (
+            X_readonly.data,
+            X_readonly.indices,
+            X_readonly.indptr,
+        ) = create_memmap_backed_data(
+            (X_readonly.data, X_readonly.indices, X_readonly.indptr)
+        )
+
     y_readonly = create_memmap_backed_data(np.array(y_small, dtype=tree._tree.DTYPE))
-    est = ALL_TREES[name]()
+    est = ALL_TREES[name](splitter=splitter)
     est.fit(X_readonly, y_readonly)
     assert_array_equal(est.predict(X_readonly), est.predict(X_small))
     assert_array_equal(
         est.decision_path(X_readonly).todense(), est.decision_path(X_small).todense()
     )
-
-
-@pytest.mark.parametrize("name", ALL_TREES)
-def test_apply_path_readonly_all_trees(name):
-    check_apply_path_readonly(name)
 
 
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse", "poisson"])
@@ -2181,38 +2096,28 @@ def test_decision_tree_regressor_sample_weight_consistency(criterion):
     assert_allclose(tree1.predict(X), tree2.predict(X))
 
 
-# TODO: Remove in v1.2
-@pytest.mark.parametrize("Tree", REG_TREES.values())
-@pytest.mark.parametrize(
-    "old_criterion, new_criterion",
-    [
-        ("mse", "squared_error"),
-        ("mae", "absolute_error"),
-    ],
-)
-def test_criterion_deprecated(Tree, old_criterion, new_criterion):
-    tree = Tree(criterion=old_criterion)
-
-    with pytest.warns(
-        FutureWarning, match=f"Criterion '{old_criterion}' was deprecated"
-    ):
-        tree.fit(X, y)
-
-    tree_new = Tree(criterion=new_criterion).fit(X, y)
-    assert_allclose(tree.predict(X), tree_new.predict(X))
-
-
-@pytest.mark.parametrize("Tree", ALL_TREES.values())
-def test_n_features_deprecated(Tree):
-    # check that we raise a deprecation warning when accessing `n_features_`.
-    # FIXME: remove in 1.2
-    depr_msg = (
-        "The attribute `n_features_` is deprecated in 1.0 and will be "
-        "removed in 1.2. Use `n_features_in_` instead."
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, ExtraTreeClassifier])
+@pytest.mark.parametrize("n_classes", [2, 4])
+def test_criterion_entropy_same_as_log_loss(Tree, n_classes):
+    """Test that criterion=entropy gives same as log_loss."""
+    n_samples, n_features = 50, 5
+    X, y = datasets.make_classification(
+        n_classes=n_classes,
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=n_features,
+        n_redundant=0,
+        random_state=42,
     )
+    tree_log_loss = Tree(criterion="log_loss", random_state=43).fit(X, y)
+    tree_entropy = Tree(criterion="entropy", random_state=43).fit(X, y)
 
-    with pytest.warns(FutureWarning, match=depr_msg):
-        Tree().fit(X, y).n_features_
+    assert_tree_equal(
+        tree_log_loss.tree_,
+        tree_entropy.tree_,
+        f"{Tree!r} with criterion 'entropy' and 'log_loss' gave different trees.",
+    )
+    assert_allclose(tree_log_loss.predict(X), tree_entropy.predict(X))
 
 
 def test_different_endianness_pickle():
@@ -2483,3 +2388,40 @@ def test_max_features_auto_deprecated():
         )
         with pytest.warns(FutureWarning, match=msg):
             tree.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "Splitter", chain(DENSE_SPLITTERS.values(), SPARSE_SPLITTERS.values())
+)
+def test_splitter_serializable(Splitter):
+    """Check that splitters are serializable."""
+    rng = np.random.RandomState(42)
+    max_features = 10
+    n_outputs, n_classes = 2, np.array([3, 2], dtype=np.intp)
+
+    criterion = CRITERIA_CLF["gini"](n_outputs, n_classes)
+    splitter = Splitter(criterion, max_features, 5, 0.5, rng)
+    splitter_serialize = pickle.dumps(splitter)
+
+    splitter_back = pickle.loads(splitter_serialize)
+    assert splitter_back.max_features == max_features
+    assert isinstance(splitter_back, Splitter)
+
+
+def test_tree_deserialization_from_read_only_buffer(tmpdir):
+    """Check that Trees can be deserialized with read only buffers.
+
+    Non-regression test for gh-25584.
+    """
+    pickle_path = str(tmpdir.join("clf.joblib"))
+    clf = DecisionTreeClassifier(random_state=0)
+    clf.fit(X_small, y_small)
+
+    joblib.dump(clf, pickle_path)
+    loaded_clf = joblib.load(pickle_path, mmap_mode="r")
+
+    assert_tree_equal(
+        loaded_clf.tree_,
+        clf.tree_,
+        "The trees of the original and loaded classifiers are not equal.",
+    )

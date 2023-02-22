@@ -6,6 +6,7 @@ Generate samples of synthetic data sets.
 #          G. Louppe, J. Nothman
 # License: BSD 3 clause
 
+from numbers import Integral, Real
 import numbers
 import array
 import warnings
@@ -17,6 +18,7 @@ import scipy.sparse as sp
 
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
+from ..utils._param_validation import Interval, validate_params, Hidden, StrOptions
 from ..utils import shuffle as util_shuffle
 from ..utils.random import sample_without_replacement
 
@@ -37,6 +39,25 @@ def _generate_hypercube(samples, dimensions, rng):
     return out
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_informative": [Interval(Integral, 1, None, closed="left")],
+        "n_redundant": [Interval(Integral, 0, None, closed="left")],
+        "n_repeated": [Interval(Integral, 0, None, closed="left")],
+        "n_classes": [Interval(Integral, 1, None, closed="left")],
+        "n_clusters_per_class": [Interval(Integral, 1, None, closed="left")],
+        "weights": ["array-like", None],
+        "flip_y": [Interval(Real, 0, 1, closed="both")],
+        "class_sep": [Interval(Real, 0, None, closed="neither")],
+        "hypercube": ["boolean"],
+        "shift": [Interval(Real, None, None, closed="neither"), "array-like", None],
+        "scale": [Interval(Real, 0, None, closed="neither"), "array-like", None],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_classification(
     n_samples=100,
     n_features=20,
@@ -588,6 +609,19 @@ def make_regression(
     coef : ndarray of shape (n_features,) or (n_features, n_targets)
         The coefficient of the underlying linear model. It is returned only if
         coef is True.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_samples=5, n_features=2, noise=1, random_state=42)
+    >>> X
+    array([[ 0.4967..., -0.1382... ],
+        [ 0.6476...,  1.523...],
+        [-0.2341..., -0.2341...],
+        [-0.4694...,  0.5425...],
+        [ 1.579...,  0.7674...]])
+    >>> y
+    array([  6.737...,  37.79..., -10.27...,   0.4017...,   42.22...])
     """
     n_informative = min(n_features, n_informative)
     generator = check_random_state(random_state)
@@ -1241,6 +1275,18 @@ def make_low_rank_matrix(
 
 # TODO(1.3): Change argument `data_transposed` default from True to False.
 # TODO(1.3): Deprecate data_transposed, always return data not transposed.
+
+
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+        "data_transposed": ["boolean", Hidden(StrOptions({"warn"}))],
+    }
+)
 def make_sparse_coded_signal(
     n_samples,
     *,
@@ -1252,9 +1298,9 @@ def make_sparse_coded_signal(
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
-    Returns a matrix Y = DX, such that D is (n_features, n_components),
-    X is (n_components, n_samples) and each column of X has exactly
-    n_nonzero_coefs non-zero elements.
+    Returns a matrix `Y = DX`, such that `D` is of shape `(n_features, n_components)`,
+    `X` is of shape `(n_components, n_samples)` and each column of `X` has exactly
+    `n_nonzero_coefs` non-zero elements.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -1405,7 +1451,7 @@ def make_spd_matrix(n_dim, *, random_state=None):
 
     See Also
     --------
-    make_sparse_spd_matrix
+    make_sparse_spd_matrix: Generate a sparse symmetric definite positive matrix.
     """
     generator = check_random_state(random_state)
 
@@ -1532,9 +1578,9 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
 
     References
     ----------
-    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective",
-           Chapter 10, 2009.
-           http://seat.massey.ac.nz/personal/s.r.marsland/Code/10/lle.py
+    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective", 2nd edition,
+           Chapter 6, 2014.
+           https://homepages.ecs.vuw.ac.nz/~marslast/Code/Ch6/lle.py
     """
     generator = check_random_state(random_state)
 
@@ -1637,7 +1683,7 @@ def make_gaussian_quantiles(
         The number of features for each sample.
 
     n_classes : int, default=3
-        The number of classes
+        The number of classes.
 
     shuffle : bool, default=True
         Shuffle the samples.
@@ -1662,7 +1708,6 @@ def make_gaussian_quantiles(
     References
     ----------
     .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
-
     """
     if n_samples < n_classes:
         raise ValueError("n_samples must be at least n_classes")
@@ -1778,10 +1823,10 @@ def make_biclusters(
     col_sizes = generator.multinomial(n_cols, np.repeat(1.0 / n_clusters, n_clusters))
 
     row_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_clusters), row_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_clusters), row_sizes)]
     )
     col_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_clusters), col_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_clusters), col_sizes)]
     )
 
     result = np.zeros(shape, dtype=np.float64)
@@ -1881,10 +1926,10 @@ def make_checkerboard(
     )
 
     row_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_row_clusters), row_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_row_clusters), row_sizes)]
     )
     col_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_col_clusters), col_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_col_clusters), col_sizes)]
     )
 
     result = np.zeros(shape, dtype=np.float64)

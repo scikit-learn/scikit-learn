@@ -15,7 +15,7 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import safe_mask
 
-from sklearn.datasets import make_classification, make_regression
+from sklearn.datasets import make_classification, make_regression, load_iris
 from sklearn.feature_selection import (
     chi2,
     f_classif,
@@ -440,6 +440,14 @@ def test_select_kbest_all():
     univariate_filter = SelectKBest(f_classif, k="all")
     X_r = univariate_filter.fit(X, y).transform(X)
     assert_array_equal(X, X_r)
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/24949
+    X_r2 = (
+        GenericUnivariateSelect(f_classif, mode="k_best", param="all")
+        .fit(X, y)
+        .transform(X)
+    )
+    assert_array_equal(X_r, X_r2)
 
 
 @pytest.mark.parametrize("dtype_in", [np.float32, np.float64])
@@ -553,21 +561,6 @@ def test_select_percentile_regression_full():
     support = univariate_filter.get_support()
     gtruth = np.ones(20)
     assert_array_equal(support, gtruth)
-
-
-def test_invalid_percentile():
-    X, y = make_regression(
-        n_samples=10, n_features=20, n_informative=2, shuffle=False, random_state=0
-    )
-
-    with pytest.raises(ValueError):
-        SelectPercentile(percentile=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        SelectPercentile(percentile=101).fit(X, y)
-    with pytest.raises(ValueError):
-        GenericUnivariateSelect(mode="percentile", param=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        GenericUnivariateSelect(mode="percentile", param=101).fit(X, y)
 
 
 def test_select_kbest_regression():
@@ -829,32 +822,12 @@ def test_nans():
         assert_array_equal(select.get_support(indices=True), np.array([1, 2]))
 
 
-def test_score_func_error():
-    X = [[0, 1, 0], [0, -1, -1], [0, 0.5, 0.5]]
-    y = [1, 0, 1]
-
-    for SelectFeatures in [
-        SelectKBest,
-        SelectPercentile,
-        SelectFwe,
-        SelectFdr,
-        SelectFpr,
-        GenericUnivariateSelect,
-    ]:
-        with pytest.raises(TypeError):
-            SelectFeatures(score_func=10).fit(X, y)
-
-
 def test_invalid_k():
     X = [[0, 1, 0], [0, -1, -1], [0, 0.5, 0.5]]
     y = [1, 0, 1]
 
     with pytest.raises(ValueError):
-        SelectKBest(k=-1).fit(X, y)
-    with pytest.raises(ValueError):
         SelectKBest(k=4).fit(X, y)
-    with pytest.raises(ValueError):
-        GenericUnivariateSelect(mode="k_best", param=-1).fit(X, y)
     with pytest.raises(ValueError):
         GenericUnivariateSelect(mode="k_best", param=4).fit(X, y)
 
@@ -971,3 +944,41 @@ def test_mutual_info_regression():
     gtruth = np.zeros(10)
     gtruth[:2] = 1
     assert_array_equal(support, gtruth)
+
+
+def test_dataframe_output_dtypes():
+    """Check that the output datafarme dtypes are the same as the input.
+
+    Non-regression test for gh-24860.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X, y = load_iris(return_X_y=True, as_frame=True)
+    X = X.astype(
+        {
+            "petal length (cm)": np.float32,
+            "petal width (cm)": np.float64,
+        }
+    )
+    X["petal_width_binned"] = pd.cut(X["petal width (cm)"], bins=10)
+
+    column_order = X.columns
+
+    def selector(X, y):
+        ranking = {
+            "sepal length (cm)": 1,
+            "sepal width (cm)": 2,
+            "petal length (cm)": 3,
+            "petal width (cm)": 4,
+            "petal_width_binned": 5,
+        }
+        return np.asarray([ranking[name] for name in column_order])
+
+    univariate_filter = SelectKBest(selector, k=3).set_output(transform="pandas")
+    output = univariate_filter.fit_transform(X, y)
+
+    assert_array_equal(
+        output.columns, ["petal length (cm)", "petal width (cm)", "petal_width_binned"]
+    )
+    for name, dtype in output.dtypes.items():
+        assert dtype == X.dtypes[name]

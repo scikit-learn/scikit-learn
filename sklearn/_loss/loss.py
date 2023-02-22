@@ -37,7 +37,6 @@ from .link import (
     MultinomialLogit,
 )
 from ..utils import check_scalar
-from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils.stats import _weighted_percentile
 
 
@@ -185,10 +184,6 @@ class BaseLoss:
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
             raw_prediction = raw_prediction.squeeze(1)
 
-        y_true = ReadonlyArrayWrapper(y_true)
-        raw_prediction = ReadonlyArrayWrapper(raw_prediction)
-        if sample_weight is not None:
-            sample_weight = ReadonlyArrayWrapper(sample_weight)
         return self.closs.loss(
             y_true=y_true,
             raw_prediction=raw_prediction,
@@ -250,10 +245,6 @@ class BaseLoss:
         if gradient_out.ndim == 2 and gradient_out.shape[1] == 1:
             gradient_out = gradient_out.squeeze(1)
 
-        y_true = ReadonlyArrayWrapper(y_true)
-        raw_prediction = ReadonlyArrayWrapper(raw_prediction)
-        if sample_weight is not None:
-            sample_weight = ReadonlyArrayWrapper(sample_weight)
         return self.closs.loss_gradient(
             y_true=y_true,
             raw_prediction=raw_prediction,
@@ -303,10 +294,6 @@ class BaseLoss:
         if gradient_out.ndim == 2 and gradient_out.shape[1] == 1:
             gradient_out = gradient_out.squeeze(1)
 
-        y_true = ReadonlyArrayWrapper(y_true)
-        raw_prediction = ReadonlyArrayWrapper(raw_prediction)
-        if sample_weight is not None:
-            sample_weight = ReadonlyArrayWrapper(sample_weight)
         return self.closs.gradient(
             y_true=y_true,
             raw_prediction=raw_prediction,
@@ -371,10 +358,6 @@ class BaseLoss:
         if hessian_out.ndim == 2 and hessian_out.shape[1] == 1:
             hessian_out = hessian_out.squeeze(1)
 
-        y_true = ReadonlyArrayWrapper(y_true)
-        raw_prediction = ReadonlyArrayWrapper(raw_prediction)
-        if sample_weight is not None:
-            sample_weight = ReadonlyArrayWrapper(sample_weight)
         return self.closs.gradient_hessian(
             y_true=y_true,
             raw_prediction=raw_prediction,
@@ -731,14 +714,6 @@ class HalfTweedieLoss(BaseLoss):
     """
 
     def __init__(self, sample_weight=None, power=1.5):
-        check_scalar(
-            power,
-            "power",
-            target_type=numbers.Real,
-            include_boundaries="neither",
-            min_val=-np.inf,
-            max_val=np.inf,
-        )
         super().__init__(
             closs=CyHalfTweedieLoss(power=float(power)),
             link=LogLink(),
@@ -1009,10 +984,6 @@ class HalfMultinomialLoss(BaseLoss):
         elif proba_out is None:
             proba_out = np.empty_like(gradient_out)
 
-        y_true = ReadonlyArrayWrapper(y_true)
-        raw_prediction = ReadonlyArrayWrapper(raw_prediction)
-        if sample_weight is not None:
-            sample_weight = ReadonlyArrayWrapper(sample_weight)
         return self.closs.gradient_proba(
             y_true=y_true,
             raw_prediction=raw_prediction,

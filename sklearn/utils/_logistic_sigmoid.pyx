@@ -1,10 +1,9 @@
 from libc.math cimport log, exp
 
-import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 
-np.import_array()
-ctypedef np.float64_t DTYPE_t
+cnp.import_array()
+ctypedef cnp.float64_t DTYPE_t
 
 
 cdef inline DTYPE_t _inner_log_logistic_sigmoid(const DTYPE_t x):

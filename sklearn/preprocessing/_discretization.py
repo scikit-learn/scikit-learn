@@ -4,18 +4,20 @@
 # License: BSD
 
 
-import numbers
+from numbers import Integral
 import numpy as np
 import warnings
 
 from . import OneHotEncoder
 
 from ..base import BaseEstimator, TransformerMixin
+from ..utils._param_validation import Hidden, Interval, StrOptions, Options
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_random_state
 from ..utils.validation import _check_feature_names_in
-from ..utils.validation import check_scalar
+from ..utils.validation import _check_sample_weight
+from ..utils.stats import _weighted_percentile
 from ..utils import _safe_indexing
 
 
@@ -152,6 +154,19 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  1.5]])
     """
 
+    _parameter_constraints: dict = {
+        "n_bins": [Interval(Integral, 2, None, closed="left"), "array-like"],
+        "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
+        "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
+        "dtype": [Options(type, {np.float64, np.float32}), None],
+        "subsample": [
+            Interval(Integral, 1, None, closed="left"),
+            None,
+            Hidden(StrOptions({"warn"})),
+        ],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         n_bins=5,
@@ -169,7 +184,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.subsample = subsample
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """
         Fit the estimator.
 
@@ -182,24 +197,24 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Ignored. This parameter exists only for compatibility with
             :class:`~sklearn.pipeline.Pipeline`.
 
+        sample_weight : ndarray of shape (n_samples,)
+            Contains weight values to be associated with each sample.
+            Only possible when `strategy` is set to `"quantile"`.
+
+            .. versionadded:: 1.3
+
         Returns
         -------
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         X = self._validate_data(X, dtype="numeric")
 
-        supported_dtype = (np.float64, np.float32)
-        if self.dtype in supported_dtype:
+        if self.dtype in (np.float64, np.float32):
             output_dtype = self.dtype
-        elif self.dtype is None:
+        else:  # self.dtype is None
             output_dtype = X.dtype
-        else:
-            raise ValueError(
-                "Valid options for 'dtype' are "
-                f"{supported_dtype + (None,)}. Got dtype={self.dtype} "
-                " instead."
-            )
 
         n_samples, n_features = X.shape
 
@@ -214,39 +229,30 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         FutureWarning,
                     )
             else:
-                self.subsample = check_scalar(
-                    self.subsample, "subsample", numbers.Integral, min_val=1
-                )
                 rng = check_random_state(self.random_state)
                 if n_samples > self.subsample:
                     subsample_idx = rng.choice(
                         n_samples, size=self.subsample, replace=False
                     )
                     X = _safe_indexing(X, subsample_idx)
-        elif self.strategy != "quantile" and isinstance(
-            self.subsample, numbers.Integral
-        ):
+        elif self.strategy != "quantile" and isinstance(self.subsample, Integral):
             raise ValueError(
                 f"Invalid parameter for `strategy`: {self.strategy}. "
                 '`subsample` must be used with `strategy="quantile"`.'
             )
 
-        valid_encode = ("onehot", "onehot-dense", "ordinal")
-        if self.encode not in valid_encode:
+        elif sample_weight is not None and self.strategy == "uniform":
             raise ValueError(
-                "Valid options for 'encode' are {}. Got encode={!r} instead.".format(
-                    valid_encode, self.encode
-                )
-            )
-        valid_strategy = ("uniform", "quantile", "kmeans")
-        if self.strategy not in valid_strategy:
-            raise ValueError(
-                "Valid options for 'strategy' are {}. "
-                "Got strategy={!r} instead.".format(valid_strategy, self.strategy)
+                "`sample_weight` was provided but it cannot be "
+                "used with strategy='uniform'. Got strategy="
+                f"{self.strategy!r} instead."
             )
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         bin_edges = np.zeros(n_features, dtype=object)
         for jj in range(n_features):
@@ -266,8 +272,16 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             elif self.strategy == "quantile":
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
-
+                if sample_weight is None:
+                    bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
+                else:
+                    bin_edges[jj] = np.asarray(
+                        [
+                            _weighted_percentile(column, sample_weight, q)
+                            for q in quantiles
+                        ],
+                        dtype=np.float64,
+                    )
             elif self.strategy == "kmeans":
                 from ..cluster import KMeans  # fixes import loops
 
@@ -277,7 +291,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
                 # 1D k-means procedure
                 km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
-                centers = km.fit(column[:, None]).cluster_centers_[:, 0]
+                centers = km.fit(
+                    column[:, None], sample_weight=sample_weight
+                ).cluster_centers_[:, 0]
                 # Must sort, centers may be unsorted even with sorted init
                 centers.sort()
                 bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
@@ -301,7 +317,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if "onehot" in self.encode:
             self._encoder = OneHotEncoder(
                 categories=[np.arange(i) for i in self.n_bins_],
-                sparse=self.encode == "onehot",
+                sparse_output=self.encode == "onehot",
                 dtype=output_dtype,
             )
             # Fit the OneHotEncoder with toy datasets
@@ -313,21 +329,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     def _validate_n_bins(self, n_features):
         """Returns n_bins_, the number of bins per feature."""
         orig_bins = self.n_bins
-        if isinstance(orig_bins, numbers.Number):
-            if not isinstance(orig_bins, numbers.Integral):
-                raise ValueError(
-                    "{} received an invalid n_bins type. "
-                    "Received {}, expected int.".format(
-                        KBinsDiscretizer.__name__, type(orig_bins).__name__
-                    )
-                )
-            if orig_bins < 2:
-                raise ValueError(
-                    "{} received an invalid number "
-                    "of bins. Received {}, expected at least 2.".format(
-                        KBinsDiscretizer.__name__, orig_bins
-                    )
-                )
+        if isinstance(orig_bins, Integral):
             return np.full(n_features, orig_bins, dtype=int)
 
         n_bins = check_array(orig_bins, dtype=int, copy=True, ensure_2d=False)
@@ -446,6 +448,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(self, input_features)
         if hasattr(self, "_encoder"):
             return self._encoder.get_feature_names_out(input_features)

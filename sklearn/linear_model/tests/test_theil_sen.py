@@ -206,16 +206,6 @@ def test_calc_breakdown_point():
     "param, ExceptionCls, match",
     [
         (
-            {"max_subpopulation": "hello"},
-            TypeError,
-            "max_subpopulation must be an instance of {float, int}",
-        ),
-        (
-            {"max_subpopulation": -1},
-            ValueError,
-            "max_subpopulation == -1, must be >= 1",
-        ),
-        (
             {"n_subsamples": 1},
             ValueError,
             re.escape("Invalid parameter since n_features+1 > n_subsamples (2 > 1)"),

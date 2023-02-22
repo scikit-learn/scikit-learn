@@ -8,18 +8,7 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.datasets import (
-    make_classification,
-    make_regression,
-)
-from sklearn.linear_model import (
-    LinearRegression,
-    LogisticRegression,
-)
-from sklearn.tree import DecisionTreeClassifier
-
 from sklearn.utils._testing import (
-    assert_allclose,
     assert_array_equal,
     assert_allclose_dense_sparse,
     assert_no_warnings,
@@ -34,6 +23,7 @@ from sklearn.utils import resample
 from sklearn.utils import safe_mask
 from sklearn.utils import column_or_1d
 from sklearn.utils import _safe_indexing
+from sklearn.utils import _safe_assign
 from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
 from sklearn.utils import _message_with_time, _print_elapsed_time
@@ -41,11 +31,7 @@ from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils import _to_object_array
 from sklearn.utils import _approximate_mode
-from sklearn.utils import _get_response_values
-from sklearn.utils._mocking import (
-    _MockEstimatorOnOffPrediction,
-    MockDataFrame,
-)
+from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
 
 # toy array
@@ -487,8 +473,13 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
 
     X = pd.DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
     subset = _safe_indexing(X, [0, 1], axis=0)
+    if hasattr(pd.errors, "SettingWithCopyWarning"):
+        SettingWithCopyWarning = pd.errors.SettingWithCopyWarning
+    else:
+        # backward compatibility for pandas < 1.5
+        SettingWithCopyWarning = pd.core.common.SettingWithCopyWarning
     with warnings.catch_warnings():
-        warnings.simplefilter("error", pd.core.common.SettingWithCopyWarning)
+        warnings.simplefilter("error", SettingWithCopyWarning)
         subset.iloc[0, 0] = 10
     # The original dataframe is unaffected by the assignment on the subset:
     assert X.iloc[0, 0] == 1
@@ -572,27 +563,20 @@ def test_gen_even_slices():
 
 
 @pytest.mark.parametrize(
-    ("row_bytes", "max_n_rows", "working_memory", "expected", "warn_msg"),
+    ("row_bytes", "max_n_rows", "working_memory", "expected"),
     [
-        (1024, None, 1, 1024, None),
-        (1024, None, 0.99999999, 1023, None),
-        (1023, None, 1, 1025, None),
-        (1025, None, 1, 1023, None),
-        (1024, None, 2, 2048, None),
-        (1024, 7, 1, 7, None),
-        (1024 * 1024, None, 1, 1, None),
-        (
-            1024 * 1024 + 1,
-            None,
-            1,
-            1,
-            "Could not adhere to working_memory config. Currently 1MiB, 2MiB required.",
-        ),
+        (1024, None, 1, 1024),
+        (1024, None, 0.99999999, 1023),
+        (1023, None, 1, 1025),
+        (1025, None, 1, 1023),
+        (1024, None, 2, 2048),
+        (1024, 7, 1, 7),
+        (1024 * 1024, None, 1, 1),
     ],
 )
-def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected, warn_msg):
-    warning = None if warn_msg is None else UserWarning
-    with pytest.warns(warning, match=warn_msg) as w:
+def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         actual = get_chunk_n_rows(
             row_bytes=row_bytes,
             max_n_rows=max_n_rows,
@@ -601,15 +585,39 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected, warn_
 
     assert actual == expected
     assert type(actual) is type(expected)
-    if warn_msg is None:
-        assert len(w) == 0
     with config_context(working_memory=working_memory):
-        with pytest.warns(warning, match=warn_msg) as w:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
             actual = get_chunk_n_rows(row_bytes=row_bytes, max_n_rows=max_n_rows)
         assert actual == expected
         assert type(actual) is type(expected)
-        if warn_msg is None:
-            assert len(w) == 0
+
+
+def test_get_chunk_n_rows_warns():
+    """Check that warning is raised when working_memory is too low."""
+    row_bytes = 1024 * 1024 + 1
+    max_n_rows = None
+    working_memory = 1
+    expected = 1
+
+    warn_msg = (
+        "Could not adhere to working_memory config. Currently 1MiB, 2MiB required."
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        actual = get_chunk_n_rows(
+            row_bytes=row_bytes,
+            max_n_rows=max_n_rows,
+            working_memory=working_memory,
+        )
+
+    assert actual == expected
+    assert type(actual) is type(expected)
+
+    with config_context(working_memory=working_memory):
+        with pytest.warns(UserWarning, match=warn_msg):
+            actual = get_chunk_n_rows(row_bytes=row_bytes, max_n_rows=max_n_rows)
+        assert actual == expected
+        assert type(actual) is type(expected)
 
 
 @pytest.mark.parametrize(
@@ -737,143 +745,35 @@ def test_to_object_array(sequence):
     assert out.ndim == 1
 
 
-@pytest.mark.parametrize("response_method", ["decision_function", "predict_proba"])
-def test_get_response_values_regressor_error(response_method):
-    """Check the error message with regressor an not supported response
-    method."""
-    my_estimator = _MockEstimatorOnOffPrediction(response_methods=[response_method])
-    X, y = "mocking_data", "mocking_target"
-    err_msg = f"{my_estimator.__class__.__name__} should be a classifier"
-    with pytest.raises(ValueError, match=err_msg):
-        _get_response_values(my_estimator, X, y, response_method=response_method)
+@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
+def test_safe_assign(array_type):
+    """Check that `_safe_assign` works as expected."""
+    rng = np.random.RandomState(0)
+    X_array = rng.randn(10, 5)
 
+    row_indexer = [1, 2]
+    values = rng.randn(len(row_indexer), X_array.shape[1])
+    X = _convert_container(X_array, array_type)
+    _safe_assign(X, values, row_indexer=row_indexer)
 
-@pytest.mark.parametrize("target_type", [None, "continuous"])
-def test_get_response_values_regressor(target_type):
-    """Check the behaviour of `_get_response_values` with regressor."""
-    X, y = make_regression(n_samples=10, random_state=0)
-    regressor = LinearRegression().fit(X, y)
-    y_pred, pos_label = _get_response_values(
-        regressor,
-        X,
-        y,
-        response_method="predict",
-        target_type=target_type,
+    assigned_portion = _safe_indexing(X, row_indexer, axis=0)
+    assert_allclose_dense_sparse(
+        assigned_portion, _convert_container(values, array_type)
     )
-    assert_array_equal(y_pred, regressor.predict(X))
-    assert pos_label is None
 
+    column_indexer = [1, 2]
+    values = rng.randn(X_array.shape[0], len(column_indexer))
+    X = _convert_container(X_array, array_type)
+    _safe_assign(X, values, column_indexer=column_indexer)
 
-@pytest.mark.parametrize(
-    "response_method",
-    ["predict_proba", "decision_function", "predict"],
-)
-def test_get_response_values_classifier_unknown_pos_label(response_method):
-    """Check that `_get_response_values` raises the proper error message with
-    classifier."""
-    X, y = make_classification(n_samples=10, n_classes=2, random_state=0)
-    classifier = LogisticRegression().fit(X, y)
-
-    # provide a `pos_label` which is not in `y`
-    err_msg = r"pos_label=whatever is not a valid label: It should be one of \[0 1\]"
-    with pytest.raises(ValueError, match=err_msg):
-        _get_response_values(
-            classifier,
-            X,
-            y,
-            response_method=response_method,
-            pos_label="whatever",
-        )
-
-
-def test_get_response_values_classifier_inconsistent_y_pred_for_binary_proba():
-    """Check that `_get_response_values` will raise an error when `y_pred` has a
-    single class with `predict_proba`."""
-    X, y_two_class = make_classification(n_samples=10, n_classes=2, random_state=0)
-    y_single_class = np.zeros_like(y_two_class)
-    classifier = DecisionTreeClassifier().fit(X, y_single_class)
-
-    err_msg = (
-        r"Got predict_proba of shape \(10, 1\), but need classifier with "
-        r"two classes"
+    assigned_portion = _safe_indexing(X, column_indexer, axis=1)
+    assert_allclose_dense_sparse(
+        assigned_portion, _convert_container(values, array_type)
     )
-    with pytest.raises(ValueError, match=err_msg):
-        _get_response_values(
-            classifier, X, y_two_class, response_method="predict_proba"
-        )
 
+    row_indexer, column_indexer = None, None
+    values = rng.randn(*X.shape)
+    X = _convert_container(X_array, array_type)
+    _safe_assign(X, values, column_indexer=column_indexer)
 
-@pytest.mark.parametrize("target_type", [None, "binary"])
-def test_get_response_values_binary_classifier_decision_function(target_type):
-    """Check the behaviour of `_get_response_values` with `decision_function`
-    and binary classifier."""
-    X, y = make_classification(
-        n_samples=10,
-        n_classes=2,
-        weights=[0.3, 0.7],
-        random_state=0,
-    )
-    classifier = LogisticRegression().fit(X, y)
-    response_method = "decision_function"
-
-    # default `pos_label`
-    y_pred, pos_label = _get_response_values(
-        classifier,
-        X,
-        y,
-        response_method=response_method,
-        pos_label=None,
-        target_type=target_type,
-    )
-    assert_allclose(y_pred, classifier.decision_function(X))
-    assert pos_label == 1
-
-    # when forcing `pos_label=classifier.classes_[0]`
-    y_pred, pos_label = _get_response_values(
-        classifier,
-        X,
-        y,
-        response_method=response_method,
-        pos_label=classifier.classes_[0],
-        target_type=target_type,
-    )
-    assert_allclose(y_pred, classifier.decision_function(X) * -1)
-    assert pos_label == 0
-
-
-@pytest.mark.parametrize("target_type", [None, "binary"])
-def test_get_response_values_binary_classifier_predict_proba(target_type):
-    """Check that `_get_response_values` with `predict_proba` and binary
-    classifier."""
-    X, y = make_classification(
-        n_samples=10,
-        n_classes=2,
-        weights=[0.3, 0.7],
-        random_state=0,
-    )
-    classifier = LogisticRegression().fit(X, y)
-    response_method = "predict_proba"
-
-    # default `pos_label`
-    y_pred, pos_label = _get_response_values(
-        classifier,
-        X,
-        y,
-        response_method=response_method,
-        pos_label=None,
-        target_type=target_type,
-    )
-    assert_allclose(y_pred, classifier.predict_proba(X)[:, 1])
-    assert pos_label == 1
-
-    # when forcing `pos_label=classifier.classes_[0]`
-    y_pred, pos_label = _get_response_values(
-        classifier,
-        X,
-        y,
-        response_method=response_method,
-        pos_label=classifier.classes_[0],
-        target_type=target_type,
-    )
-    assert_allclose(y_pred, classifier.predict_proba(X)[:, 0])
-    assert pos_label == 0
+    assert_allclose_dense_sparse(X, _convert_container(values, array_type))

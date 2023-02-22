@@ -21,6 +21,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 from collections.abc import Iterable
 from functools import partial
 from collections import Counter
+from traceback import format_exc
 
 import numpy as np
 import copy
@@ -49,6 +50,7 @@ from . import (
     jaccard_score,
     mean_absolute_percentage_error,
     matthews_corrcoef,
+    class_likelihood_ratios,
 )
 
 from .cluster import adjusted_rand_score
@@ -90,10 +92,16 @@ class _MultimetricScorer:
     ----------
     scorers : dict
         Dictionary mapping names to callable scorers.
+
+    raise_exc : bool, default=True
+        Whether to raise the exception in `__call__` or not. If set to `False`
+        a formatted string of the exception details is passed as result of
+        the failing scorer.
     """
 
-    def __init__(self, **scorers):
+    def __init__(self, *, scorers, raise_exc=True):
         self._scorers = scorers
+        self._raise_exc = raise_exc
 
     def __call__(self, estimator, *args, **kwargs):
         """Evaluate predicted target values."""
@@ -102,11 +110,18 @@ class _MultimetricScorer:
         cached_call = partial(_cached_call, cache)
 
         for name, scorer in self._scorers.items():
-            if isinstance(scorer, _BaseScorer):
-                score = scorer._score(cached_call, estimator, *args, **kwargs)
-            else:
-                score = scorer(estimator, *args, **kwargs)
-            scores[name] = score
+            try:
+                if isinstance(scorer, _BaseScorer):
+                    score = scorer._score(cached_call, estimator, *args, **kwargs)
+                else:
+                    score = scorer(estimator, *args, **kwargs)
+                scores[name] = score
+            except Exception as e:
+                if self._raise_exc:
+                    raise e
+                else:
+                    scores[name] = format_exc()
+
         return scores
 
     def _use_cache(self, estimator):
@@ -718,6 +733,20 @@ accuracy_scorer = make_scorer(accuracy_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
 matthews_corrcoef_scorer = make_scorer(matthews_corrcoef)
 
+
+def positive_likelihood_ratio(y_true, y_pred):
+    return class_likelihood_ratios(y_true, y_pred)[0]
+
+
+def negative_likelihood_ratio(y_true, y_pred):
+    return class_likelihood_ratios(y_true, y_pred)[1]
+
+
+positive_likelihood_ratio_scorer = make_scorer(positive_likelihood_ratio)
+neg_negative_likelihood_ratio_scorer = make_scorer(
+    negative_likelihood_ratio, greater_is_better=False
+)
+
 # Score functions that need decision values
 top_k_accuracy_scorer = make_scorer(
     top_k_accuracy_score, greater_is_better=True, needs_threshold=True
@@ -795,6 +824,8 @@ _SCORERS = dict(
     average_precision=average_precision_scorer,
     neg_log_loss=neg_log_loss_scorer,
     neg_brier_score=neg_brier_score_scorer,
+    positive_likelihood_ratio=positive_likelihood_ratio_scorer,
+    neg_negative_likelihood_ratio=neg_negative_likelihood_ratio_scorer,
     # Cluster metrics that use supervised evaluation
     adjusted_rand_score=adjusted_rand_scorer,
     rand_score=rand_scorer,

@@ -5,7 +5,7 @@ Wine recognition dataset
 
 **Data Set Characteristics:**
 
-    :Number of Instances: 178 (50 in each of three classes)
+    :Number of Instances: 178
     :Number of Attributes: 13 numeric, predictive attributes and the class
     :Attribute Information:
  		- Alcohol

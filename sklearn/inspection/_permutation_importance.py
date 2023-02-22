@@ -1,7 +1,6 @@
 """Permutation importance for estimators."""
 import numbers
 import numpy as np
-from joblib import Parallel
 
 from ..ensemble._bagging import _generate_indices
 from ..metrics import check_scoring
@@ -10,7 +9,7 @@ from ..model_selection._validation import _aggregate_score_dicts
 from ..utils import Bunch, _safe_indexing
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
@@ -33,7 +32,7 @@ def _calculate_permutation_scores(
     """Calculate score when `col_idx` is permuted."""
     random_state = check_random_state(random_state)
 
-    # Work on a copy of X to to ensure thread-safety in case of threading based
+    # Work on a copy of X to ensure thread-safety in case of threading based
     # parallelism. Furthermore, making a copy is also useful when the joblib
     # backend is 'loky' (default) or the old 'multiprocessing': in those cases,
     # if X is large it will be automatically be backed by a readonly memory map
@@ -58,7 +57,7 @@ def _calculate_permutation_scores(
         if hasattr(X_permuted, "iloc"):
             col = X_permuted.iloc[shuffling_idx, col_idx]
             col.index = X_permuted.index
-            X_permuted.iloc[:, col_idx] = col
+            X_permuted[X_permuted.columns[col_idx]] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
         scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
@@ -252,7 +251,7 @@ def permutation_importance(
         scorer = check_scoring(estimator, scoring=scoring)
     else:
         scorers_dict = _check_multimetric_scoring(estimator, scoring)
-        scorer = _MultimetricScorer(**scorers_dict)
+        scorer = _MultimetricScorer(scorers=scorers_dict)
 
     baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
 

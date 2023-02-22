@@ -1041,6 +1041,26 @@ def test_leave_group_out_changing_groups():
     assert 3 == LeaveOneGroupOut().get_n_splits(X, y=X, groups=groups)
 
 
+def test_leave_group_out_order_dependence():
+    # Check that LeaveOneGroupOut orders the splits according to the index
+    # of the group left out.
+    groups = np.array([2, 2, 0, 0, 1, 1])
+    X = np.ones(len(groups))
+
+    splits = iter(LeaveOneGroupOut().split(X, groups=groups))
+
+    expected_indices = [
+        ([0, 1, 4, 5], [2, 3]),
+        ([0, 1, 2, 3], [4, 5]),
+        ([2, 3, 4, 5], [0, 1]),
+    ]
+
+    for expected_train, expected_test in expected_indices:
+        train, test = next(splits)
+        assert_array_equal(train, expected_train)
+        assert_array_equal(test, expected_test)
+
+
 def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
     X = y = groups = np.ones(0)
     msg = re.escape("Found array with 0 sample(s)")
@@ -1197,33 +1217,6 @@ def test_train_test_split_errors():
         r"float in the \(0, 1\) range",
     ):
         train_test_split(range(10), train_size=11, test_size=1)
-
-
-@pytest.mark.parametrize(
-    "train_size,test_size",
-    [
-        (1.2, 0.8),
-        (1.0, 0.8),
-        (0.0, 0.8),
-        (-0.2, 0.8),
-        (0.8, 1.2),
-        (0.8, 1.0),
-        (0.8, 0.0),
-        (0.8, -0.2),
-    ],
-)
-def test_train_test_split_invalid_sizes1(train_size, test_size):
-    with pytest.raises(ValueError, match=r"should be .* in the \(0, 1\) range"):
-        train_test_split(range(10), train_size=train_size, test_size=test_size)
-
-
-@pytest.mark.parametrize(
-    "train_size,test_size",
-    [(-10, 0.8), (0, 0.8), (11, 0.8), (0.8, -10), (0.8, 0), (0.8, 11)],
-)
-def test_train_test_split_invalid_sizes2(train_size, test_size):
-    with pytest.raises(ValueError, match=r"should be either positive and smaller"):
-        train_test_split(range(10), train_size=train_size, test_size=test_size)
 
 
 @pytest.mark.parametrize(
@@ -1384,7 +1377,7 @@ def test_shufflesplit_reproducible():
     # Check that iterating twice on the ShuffleSplit gives the same
     # sequence of train-test when the random_state is given
     ss = ShuffleSplit(random_state=21)
-    assert_array_equal(list(a for a, b in ss.split(X)), list(a for a, b in ss.split(X)))
+    assert_array_equal([a for a, b in ss.split(X)], [a for a, b in ss.split(X)])
 
 
 def test_stratifiedshufflesplit_list_input():
