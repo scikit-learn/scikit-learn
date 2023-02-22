@@ -81,7 +81,7 @@ df.groupby("season").median(numeric_only=True)
 
 # %%
 #
-# While interpreting the results this behaviour of the `"season"` feature
+# When interpreting the results this behavior of the `"season"` feature
 # should be taken into account.
 #
 # The target of the prediction problem is the absolute count of bike rentals on
