@@ -360,7 +360,7 @@ cdef void _update_chunk_dense(
         floating[:, ::1] lower_bounds,                 # INOUT
         floating *centers_new,                         # OUT
         floating *weight_in_clusters,                  # OUT
-        bint update_centers) nogil:
+        bint update_centers) noexcept nogil:
     """K-means combined EM step for one dense data chunk.
 
     Compute the partial contribution of a single data chunk to the labels and
@@ -609,7 +609,7 @@ cdef void _update_chunk_sparse(
         floating[:, ::1] lower_bounds,                 # INOUT
         floating *centers_new,                         # OUT
         floating *weight_in_clusters,                  # OUT
-        bint update_centers) nogil:
+        bint update_centers) noexcept nogil:
     """K-means combined EM step for one sparse data chunk.
 
     Compute the partial contribution of a single data chunk to the labels and

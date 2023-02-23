@@ -39,17 +39,17 @@ cdef class SequentialDataset{{name_suffix}}:
     cdef Py_ssize_t n_samples
     cdef cnp.uint32_t seed
 
-    cdef void shuffle(self, cnp.uint32_t seed) nogil
-    cdef int _get_next_index(self) nogil
-    cdef int _get_random_index(self) nogil
+    cdef void shuffle(self, cnp.uint32_t seed) noexcept nogil
+    cdef int _get_next_index(self) noexcept nogil
+    cdef int _get_random_index(self) noexcept nogil
 
     cdef void _sample(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
                       int *nnz, {{c_type}} *y, {{c_type}} *sample_weight,
-                      int current_index) nogil
+                      int current_index) noexcept nogil
     cdef void next(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
-                   int *nnz, {{c_type}} *y, {{c_type}} *sample_weight) nogil
+                   int *nnz, {{c_type}} *y, {{c_type}} *sample_weight) noexcept nogil
     cdef int random(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
-                    int *nnz, {{c_type}} *y, {{c_type}} *sample_weight) nogil
+                    int *nnz, {{c_type}} *y, {{c_type}} *sample_weight) noexcept nogil
 
 
 cdef class ArrayDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
