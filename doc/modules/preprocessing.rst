@@ -729,14 +729,15 @@ separate categories::
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.
 
-.. _one_hot_encoder_infrequent_categories:
+.. _encoder_infrequent_categories:
 
 Infrequent categories
 ---------------------
 
-:class:`OneHotEncoder` supports aggregating infrequent categories into a single
-output for each feature. The parameters to enable the gathering of infrequent
-categories are `min_frequency` and `max_categories`.
+:class:`OneHotEncoder` and :class:`OrdinalEncoder` supports aggregating
+infrequent categories into a single output for each feature. The parameters to
+enable the gathering of infrequent categories are `min_frequency` and
+`max_categories`.
 
 1. `min_frequency` is either an  integer greater or equal to 1, or a float in
    the interval `(0.0, 1.0)`. If `min_frequency` is an integer, categories with
@@ -750,11 +751,23 @@ categories are `min_frequency` and `max_categories`.
    input feature. `max_categories` includes the feature that combines
    infrequent categories.
 
-In the following example, the categories, `'dog', 'snake'` are considered
-infrequent::
+In the following example with :class:`OrdinalEncoder`, the categories `'dog' and
+'snake'` are considered infrequent::
 
    >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 +
    ...               ['snake'] * 3], dtype=object).T
+   >>> enc = preprocessing.OrdinalEncoder(min_frequency=6).fit(X)
+   >>> enc.infrequent_categories_
+   [array(['dog', 'snake'], dtype=object)]
+   >>> enc.transform(np.array([['dog'], ['cat'], ['rabbit'], ['snake']]))
+   array([[2.],
+          [0.],
+          [1.],
+          [2.]])
+
+Simiarly, :class:`OneHotEncoder` can be configured the same way to group together
+infrequent categories::
+
    >>> enc = preprocessing.OneHotEncoder(min_frequency=6, sparse_output=False).fit(X)
    >>> enc.infrequent_categories_
    [array(['dog', 'snake'], dtype=object)]
