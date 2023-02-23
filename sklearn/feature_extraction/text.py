@@ -1052,6 +1052,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     max_features : int, default=None
         If not None, build a vocabulary that only consider the top
         max_features ordered by term frequency across the corpus.
+        Otherwise, all features are used.
 
         This parameter is ignored if vocabulary is not None.
 
