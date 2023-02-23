@@ -1289,6 +1289,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "encoded_missing_value": [Integral, type(np.nan)],
         "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
         "unknown_value": [Integral, type(np.nan), None],
+        "max_categories": [Interval(Integral, 1, None, closed="left"), None],
+        "min_frequency": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0, 1, closed="neither"),
+            None,
+        ],
     }
 
     def __init__(
