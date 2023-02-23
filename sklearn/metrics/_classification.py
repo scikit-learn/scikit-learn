@@ -23,6 +23,7 @@ the lower the better.
 # License: BSD 3 clause
 
 
+from numbers import Integral, Real
 import warnings
 import numpy as np
 
@@ -40,7 +41,7 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import StrOptions, Options, Interval, validate_params
 from ..exceptions import UndefinedMetricWarning
 
 from ._base import _check_pos_label_consistency
@@ -229,6 +230,15 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "labels": ["array-like", None],
+        "sample_weight": ["array-like", None],
+        "normalize": [StrOptions({"true", "pred", "all"}), None],
+    }
+)
 def confusion_matrix(
     y_true, y_pred, *, labels=None, sample_weight=None, normalize=None
 ):
@@ -337,9 +347,6 @@ def confusion_matrix(
 
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if normalize not in ["true", "pred", "all", None]:
-        raise ValueError("normalize must be one of {'true', 'pred', 'all', None}")
-
     n_labels = labels.size
     # If labels are not consecutive integers starting from zero, then
     # y_true and y_pred must be converted into index form
@@ -386,6 +393,15 @@ def confusion_matrix(
     return cm
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "sample_weight": ["array-like", None],
+        "labels": ["array-like", None],
+        "samplewise": ["boolean"],
+    }
+)
 def multilabel_confusion_matrix(
     y_true, y_pred, *, sample_weight=None, labels=None, samplewise=False
 ):
@@ -595,6 +611,15 @@ def multilabel_confusion_matrix(
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
+@validate_params(
+    {
+        "y1": ["array-like"],
+        "y2": ["array-like"],
+        "labels": ["array-like", None],
+        "weights": [StrOptions({"linear", "quadratic"}), None],
+        "sample_weight": ["array-like", None],
+    }
+)
 def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
@@ -615,10 +640,10 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
 
     Parameters
     ----------
-    y1 : array of shape (n_samples,)
+    y1 : array-like of shape (n_samples,)
         Labels assigned by the first annotator.
 
-    y2 : array of shape (n_samples,)
+    y2 : array-like of shape (n_samples,)
         Labels assigned by the second annotator. The kappa statistic is
         symmetric, so swapping ``y1`` and ``y2`` doesn't change the value.
 
@@ -660,15 +685,13 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     if weights is None:
         w_mat = np.ones([n_classes, n_classes], dtype=int)
         w_mat.flat[:: n_classes + 1] = 0
-    elif weights == "linear" or weights == "quadratic":
+    else:  # "linear" or "quadratic"
         w_mat = np.zeros([n_classes, n_classes], dtype=int)
         w_mat += np.arange(n_classes)
         if weights == "linear":
             w_mat = np.abs(w_mat - w_mat.T)
         else:
             w_mat = (w_mat - w_mat.T) ** 2
-    else:
-        raise ValueError("Unknown kappa weighting type.")
 
     k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
     return 1 - k
@@ -710,7 +733,7 @@ def jaccard_score(
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1016,6 +1039,23 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         return n_samples - score
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "labels": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
+        "average": [
+            StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
+            None,
+        ],
+        "sample_weight": ["array-like", None],
+        "zero_division": [
+            Options(Integral, {0, 1}),
+            StrOptions({"warn"}),
+        ],
+    }
+)
 def f1_score(
     y_true,
     y_pred,
@@ -1061,7 +1101,7 @@ def f1_score(
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool, str or None, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1209,7 +1249,7 @@ def fbeta_score(
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1469,7 +1509,7 @@ def precision_recall_fscore_support(
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1871,7 +1911,7 @@ def precision_score(
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -2012,7 +2052,7 @@ def recall_score(
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -2116,6 +2156,14 @@ def recall_score(
     return r
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "adjusted": ["boolean"],
+    }
+)
 def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=False):
     """Compute the balanced accuracy.
 
@@ -2131,10 +2179,10 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
 
     Parameters
     ----------
-    y_true : 1d array-like
+    y_true : array-like of shape (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : 1d array-like
+    y_pred : array-like of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -2420,6 +2468,13 @@ def classification_report(
         return report
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def hamming_loss(y_true, y_pred, *, sample_weight=None):
     """Compute the average Hamming loss.
 
@@ -2514,6 +2569,16 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
         raise ValueError("{0} is not supported".format(y_type))
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "eps": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both")],
+        "normalize": ["boolean"],
+        "sample_weight": ["array-like", None],
+        "labels": ["array-like", None],
+    }
+)
 def log_loss(
     y_true, y_pred, *, eps="auto", normalize=True, sample_weight=None, labels=None
 ):
@@ -2557,6 +2622,9 @@ def log_loss(
            The default value changed from `1e-15` to `"auto"` that is
            equivalent to `np.finfo(y_pred.dtype).eps`.
 
+        .. deprecated:: 1.3
+           `eps` is deprecated in 1.3 and will be removed in 1.5.
+
     normalize : bool, default=True
         If true, return the mean loss per sample.
         Otherwise, return the sum of the per-sample losses.
@@ -2595,7 +2663,16 @@ def log_loss(
     y_pred = check_array(
         y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
     )
-    eps = np.finfo(y_pred.dtype).eps if eps == "auto" else eps
+    if eps == "auto":
+        eps = np.finfo(y_pred.dtype).eps
+    else:
+        # TODO: Remove user defined eps in 1.5
+        warnings.warn(
+            "Setting the eps parameter is deprecated and will "
+            "be removed in 1.5. Instead eps will always have"
+            "a default value of `np.finfo(y_pred.dtype).eps`.",
+            FutureWarning,
+        )
 
     check_consistent_length(y_pred, y_true, sample_weight)
     lb = LabelBinarizer()
@@ -2658,6 +2735,12 @@ def log_loss(
 
     # Renormalize
     y_pred_sum = y_pred.sum(axis=1)
+    if not np.isclose(y_pred_sum, 1, rtol=1e-15, atol=5 * eps).all():
+        warnings.warn(
+            "The y_pred values do not sum to one. Starting from 1.5 this"
+            "will result in an error.",
+            UserWarning,
+        )
     y_pred = y_pred / y_pred_sum[:, np.newaxis]
     loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
@@ -2750,7 +2833,6 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     y_true_unique = np.unique(labels if labels is not None else y_true)
 
     if y_true_unique.size > 2:
-
         if pred_decision.ndim <= 1:
             raise ValueError(
                 "The shape of pred_decision cannot be 1d array"
@@ -2842,7 +2924,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    pos_label : int or str, default=None
+    pos_label : int, float, bool or str, default=None
         Label of the positive class. `pos_label` will be inferred in the
         following manner:
 

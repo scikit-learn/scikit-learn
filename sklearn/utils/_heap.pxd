@@ -11,4 +11,4 @@ cdef int heap_push(
     ITYPE_t size,
     floating val,
     ITYPE_t val_idx,
-) nogil
+) noexcept nogil

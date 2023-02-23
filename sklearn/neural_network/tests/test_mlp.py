@@ -752,7 +752,7 @@ def test_warm_start_full_iteration(MLPEstimator):
     clf.fit(X, y)
     assert max_iter == clf.n_iter_
     clf.fit(X, y)
-    assert 2 * max_iter == clf.n_iter_
+    assert max_iter == clf.n_iter_
 
 
 def test_n_iter_no_change():
@@ -894,6 +894,27 @@ def test_mlp_loading_from_joblib_partial_fit(tmp_path):
     assert_allclose(predicted_value, fine_tune_target, rtol=1e-4)
 
 
+@pytest.mark.parametrize("Estimator", [MLPClassifier, MLPRegressor])
+def test_preserve_feature_names(Estimator):
+    """Check that feature names are preserved when early stopping is enabled.
+
+    Feature names are required for consistency checks during scoring.
+
+    Non-regression test for gh-24846
+    """
+    pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(0)
+
+    X = pd.DataFrame(data=rng.randn(10, 2), columns=["colname_a", "colname_b"])
+    y = pd.Series(data=np.full(10, 1), name="colname_y")
+
+    model = Estimator(early_stopping=True, validation_fraction=0.2)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        model.fit(X, y)
+
+
 @pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
 def test_mlp_warm_start_with_early_stopping(MLPEstimator):
     """Check that early stopping works with warm start."""
@@ -905,3 +926,25 @@ def test_mlp_warm_start_with_early_stopping(MLPEstimator):
     mlp.set_params(max_iter=20)
     mlp.fit(X_iris, y_iris)
     assert len(mlp.validation_scores_) > n_validation_scores
+
+
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+@pytest.mark.parametrize("solver", ["sgd", "adam", "lbfgs"])
+def test_mlp_warm_start_no_convergence(MLPEstimator, solver):
+    """Check that we stop the number of iteration at `max_iter` when warm starting.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24764
+    """
+    model = MLPEstimator(
+        solver=solver, warm_start=True, early_stopping=False, max_iter=10
+    )
+
+    with pytest.warns(ConvergenceWarning):
+        model.fit(X_iris, y_iris)
+    assert model.n_iter_ == 10
+
+    model.set_params(max_iter=20)
+    with pytest.warns(ConvergenceWarning):
+        model.fit(X_iris, y_iris)
+    assert model.n_iter_ == 20

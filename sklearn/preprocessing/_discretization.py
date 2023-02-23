@@ -241,10 +241,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 '`subsample` must be used with `strategy="quantile"`.'
             )
 
-        elif sample_weight is not None and self.strategy != "quantile":
+        elif sample_weight is not None and self.strategy == "uniform":
             raise ValueError(
-                "`sample_weight` was provided but it can only be "
-                "used with strategy='quantile'. Got strategy="
+                "`sample_weight` was provided but it cannot be "
+                "used with strategy='uniform'. Got strategy="
                 f"{self.strategy!r} instead."
             )
 
@@ -291,7 +291,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
                 # 1D k-means procedure
                 km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
-                centers = km.fit(column[:, None]).cluster_centers_[:, 0]
+                centers = km.fit(
+                    column[:, None], sample_weight=sample_weight
+                ).cluster_centers_[:, 0]
                 # Must sort, centers may be unsorted even with sorted init
                 centers.sort()
                 bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
@@ -446,6 +448,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(self, input_features)
         if hasattr(self, "_encoder"):
             return self._encoder.get_feature_names_out(input_features)
