@@ -996,7 +996,10 @@ def make_blobs(
 
 @validate_params(
     {
+        "n_samples": [Interval(Integral, 1, None, closed="neither")],
         "n_features": [Interval(Integral, 5, None, closed="left")],
+        "noise": [Interval(Real, 0.0, None, closed="left")],
+        "random_state": ["random_state"],
     }
 )
 def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None):
