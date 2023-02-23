@@ -386,23 +386,6 @@ def test_average_precision_score_tied_values():
     assert average_precision_score(y_true, y_score) != 1.0
 
 
-@ignore_warnings
-def test_precision_recall_fscore_support_errors():
-    y_true, y_pred, _ = make_prediction(binary=True)
-
-    # Bad beta
-    with pytest.raises(ValueError):
-        precision_recall_fscore_support(y_true, y_pred, beta=-0.1)
-
-    # Bad pos_label
-    with pytest.raises(ValueError):
-        precision_recall_fscore_support(y_true, y_pred, pos_label=2, average="binary")
-
-    # Bad average option
-    with pytest.raises(ValueError):
-        precision_recall_fscore_support([0, 1, 2], [1, 2, 0], average="mega")
-
-
 def test_precision_recall_f_unused_pos_label():
     # Check warning that pos_label unused when set to non-default value
     # but average != 'binary'; even if data is binary.
