@@ -34,13 +34,13 @@ cdef class WeightVector{{name_suffix}}(object):
     cdef {{c_type}} sq_norm
 
     cdef void add(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
-                  int xnnz, {{c_type}} c) nogil
+                  int xnnz, {{c_type}} c) noexcept nogil
     cdef void add_average(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
-                          int xnnz, {{c_type}} c, {{c_type}} num_iter) nogil
+                          int xnnz, {{c_type}} c, {{c_type}} num_iter) noexcept nogil
     cdef {{c_type}} dot(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
-                    int xnnz) nogil
-    cdef void scale(self, {{c_type}} c) nogil
-    cdef void reset_wscale(self) nogil
-    cdef {{c_type}} norm(self) nogil
+                    int xnnz) noexcept nogil
+    cdef void scale(self, {{c_type}} c) noexcept nogil
+    cdef void reset_wscale(self) noexcept nogil
+    cdef {{c_type}} norm(self) noexcept nogil
 
 {{endfor}}
