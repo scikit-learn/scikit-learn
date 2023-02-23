@@ -68,7 +68,8 @@ Therefore, core contributors are given the following rights:
 
 New core contributors can be nominated by any existing core contributor.
 Once they have been nominated, there will be a vote by the current core contributors.
-Voting on new core contributors is one of the few activities that takes place on the project's private management list.
+Voting on new core contributors is one of the few activities that takes place on the
+project's private management list.
 While it is expected that most votes will be unanimous, a two-thirds majority of the
 cast votes is needed for acceptance of the candidate as new core contributor.
 The vote needs to be open for at least 2 and at most 4 weeks.
@@ -80,7 +81,8 @@ As *ultima ratio*, the technical committee is allowed to call for a vote to with
 the core contributor role from a current member.
 A 3/4 majority of all current core contributors is needed that this vote passes.
 It is open for exactly 4 weeks and is done on a private list.
-Core contributors that step back can, if they want to, be listed as emeritus core contributors on the public website.
+Core contributors that step back can, if they want to, be listed as emeritus core
+contributors on the public website.
 
 The list of core contributors, active and emeritus (with dates at
 which they became active) is public on the scikit-learn website.
