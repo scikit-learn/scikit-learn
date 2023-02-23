@@ -469,15 +469,14 @@ the base system and these steps will not be necessary.
 Alternative compilers
 =====================
 
-The command:
+The following command will build scikit-learn using your default C/C++ compiler.
 
 .. prompt:: bash $
 
     pip install --verbose --editable .
 
-will build scikit-learn using your default C/C++ compiler. If you want to build
-scikit-learn with another compiler handled by ``setuptools`` or by use the
-following command:
+If you want to build scikit-learn with another compiler handled by ``setuptools``,
+use the following command:
 
 .. prompt:: bash $
 
