@@ -118,7 +118,8 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
         completed_iterations += 1
     return tuple(my_mean), len(points_within), completed_iterations
 
-@validate_params({ "X": ["array-like"] })
+
+@validate_params({"X": ["array-like"]})
 def mean_shift(
     X,
     *,
