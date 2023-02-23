@@ -697,6 +697,23 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     return 1 - k
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "labels": ["array-like", None],
+        "pos_label": [Real, str, int, "boolean", None],
+        "average": [
+            StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
+            None,
+        ],
+        "sample_weight": ["array-like", None],
+        "zero_division": [
+            Options(Integral, {0, 1}),
+            StrOptions({"warn"}),
+        ],
+    }
+)
 def jaccard_score(
     y_true,
     y_pred,
