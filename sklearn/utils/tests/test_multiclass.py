@@ -346,6 +346,42 @@ def test_type_of_target_pandas_sparse():
         type_of_target(y)
 
 
+def test_type_of_target_pandas_nullable():
+    """Check that type_of_target works with pandas nullable dtypes."""
+    pd = pytest.importorskip("pandas")
+
+    for dtype in ["Int32", "Float32"]:
+        y_true = pd.Series([1, 0, 2, 3, 4], dtype=dtype)
+        assert type_of_target(y_true) == "multiclass"
+
+        y_true = pd.Series([1, 0, 1, 0], dtype=dtype)
+        assert type_of_target(y_true) == "binary"
+
+    y_true = pd.DataFrame([[1.4, 3.1], [3.1, 1.4]], dtype="Float32")
+    assert type_of_target(y_true) == "continuous-multioutput"
+
+    y_true = pd.DataFrame([[0, 1], [1, 1]], dtype="Int32")
+    assert type_of_target(y_true) == "multilabel-indicator"
+
+    y_true = pd.DataFrame([[1, 2], [3, 1]], dtype="Int32")
+    assert type_of_target(y_true) == "multiclass-multioutput"
+
+
+@pytest.mark.parametrize("dtype", ["Int64", "Float64", "boolean"])
+def test_unique_labels_pandas_nullable(dtype):
+    """Checks that unique_labels work with pandas nullable dtypes.
+
+    Non-regression test for gh-25634.
+    """
+    pd = pytest.importorskip("pandas")
+
+    y_true = pd.Series([1, 0, 0, 1, 0, 1, 1, 0, 1], dtype=dtype)
+    y_predicted = pd.Series([0, 0, 1, 1, 0, 1, 1, 1, 1], dtype="int64")
+
+    labels = unique_labels(y_true, y_predicted)
+    assert_array_equal(labels, [0, 1])
+
+
 def test_class_distribution():
     y = np.array(
         [

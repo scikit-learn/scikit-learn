@@ -1087,6 +1087,24 @@ def test_confusion_matrix_dtype():
     assert cm[1, 1] == -2
 
 
+@pytest.mark.parametrize("dtype", ["Int64", "Float64", "boolean"])
+def test_confusion_matrix_pandas_nullable(dtype):
+    """Checks that confusion_matrix works with pandas nullable dtypes.
+
+    Non-regression test for gh-25635.
+    """
+    pd = pytest.importorskip("pandas")
+
+    y_ndarray = np.array([1, 0, 0, 1, 0, 1, 1, 0, 1])
+    y_true = pd.Series(y_ndarray, dtype=dtype)
+    y_predicted = pd.Series([0, 0, 1, 1, 0, 1, 1, 1, 1], dtype="int64")
+
+    output = confusion_matrix(y_true, y_predicted)
+    expected_output = confusion_matrix(y_ndarray, y_predicted)
+
+    assert_array_equal(output, expected_output)
+
+
 def test_classification_report_multiclass():
     # Test performance report
     iris = datasets.load_iris()
