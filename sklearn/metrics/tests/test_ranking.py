@@ -1535,7 +1535,6 @@ def test_lrap_error_raised():
 @pytest.mark.parametrize("n_classes", (2, 5, 10))
 @pytest.mark.parametrize("random_state", range(1))
 def test_alternative_lrap_implementation(n_samples, n_classes, random_state):
-
     check_alternative_lrap_implementation(
         label_ranking_average_precision_score, n_classes, n_samples, random_state
     )
