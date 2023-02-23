@@ -167,7 +167,7 @@ revised Pull Request for voting. Once that author is happy with the state of the
 Pull Request, they can call for a vote on the public mailing list. During the
 one-month voting period, the Pull Request can not change. A Pull Request
 Approval will count as a positive vote, and a "Request Changes" review will
-count as a negative vote. If two-thirds of the votes are positive, then
+count as a negative vote. If two-thirds of the cast votes are positive, then
 the governance model change is accepted.
 
 .. _slep:
