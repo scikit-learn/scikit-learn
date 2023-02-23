@@ -3,24 +3,25 @@
 Comparing different clustering algorithms on toy datasets
 =========================================================
 
-This example shows characteristics of different
-clustering algorithms on datasets that are "interesting"
-but still in 2D. With the exception of the last dataset,
-the parameters of each of these dataset-algorithm pairs
-has been tuned to produce good clustering results. Some
-algorithms are more sensitive to parameter values than
-others.
+The following example shows the characteristic of 
+different clustering algorithms applied to different two 
+dimensional datasets.
 
-The last dataset is an example of a 'null' situation for
-clustering: the data is homogeneous, and there is no good
-clustering. For this example, the null dataset uses the
-same parameters as the dataset in the row above it, which
-represents a mismatch in the parameter values and the
-data structure.
+With the exception of the last dataset, the data are 
+parametrically generated in such a way that 
+the results of the respective clusterings turn out to 
+be clearly distinguishable for the human reader. The 
+aim is to give an intuition about how the different 
+algorithms work. (It should be noted, however, that 
+these impression might quickly turn invalid on 
+higher dimensional data). 
 
-While these examples give some intuition about the
-algorithms, this intuition might not apply to very high
-dimensional data.
+The last dataset on the other hand is just rectangular 
+noise, which can hold as the absence of any objectively 
+usefull inherent cluster in the data. Thus, any 
+clustering shown is a method artefact by the 
+respective cluster algorithm. 
+
 
 """
 
