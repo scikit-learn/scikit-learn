@@ -466,6 +466,46 @@ the base system and these steps will not be necessary.
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
 .. _Miniforge3: https://github.com/conda-forge/miniforge#miniforge3
 
+Alternative compilers
+=====================
+
+The command:
+
+.. prompt:: bash $
+
+    pip install --verbose --editable .
+
+will build scikit-learn using your default C/C++ compiler. If you want to build
+scikit-learn with another compiler handled by ``setuptools`` or by use the
+following command:
+
+.. prompt:: bash $
+
+    python setup.py build_ext --compiler=<compiler> -i build_clib --compiler=<compiler>
+
+To see the list of available compilers run:
+
+.. prompt:: bash $
+
+    python setup.py build_ext --help-compiler
+
+If your compiler is not listed here, you can specify it through some environment
+variables (does not work on windows). This `section
+<https://setuptools.pypa.io/en/stable/userguide/ext_modules.html#compiler-and-linker-options>`_
+of the setuptools documentation explains in details which environment variables
+are used by ``setuptools``, and at which stage of the compilation, to set the
+compiler and linker options.
+
+When setting these environment variables, it is advised to first check their
+``sysconfig`` counterparts variables and adapt them to your compiler. For instance::
+
+    import sysconfig
+    print(sysconfig.get_config_var('CC'))
+    print(sysconfig.get_config_var('LDFLAGS'))
+
+In addition, since Scikit-learn uses OpenMP, you need to include the appropriate OpenMP
+flag of your compiler into the ``CFLAGS`` and ``CPPFLAGS`` environment variables.
+
 Parallel builds
 ===============
 
