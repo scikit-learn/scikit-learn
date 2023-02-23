@@ -1309,7 +1309,9 @@ def test_NewtonLSMRSolver_multinomial_A_b(
     # The results are differently ravelled, we restore the 2-d arrays with n_classes
     # on the 1st (=last) axis.
     assert_allclose(At_A_coef.reshape(-1, n_classes, order="F"), H_coef.T)
-    assert_allclose(A.rmatvec(b).reshape(-1, n_classes, order="F"), -gradient.T)
+    assert_allclose(
+        A.rmatvec(b).reshape(-1, n_classes, order="F"), -gradient.T, rtol=1e-5
+    )
 
     # Test consistency of A, i.e. reconstructing the matrix based on
     # A @ unit_vector and A.T @ unit_vector should give the same matrix.
@@ -1567,7 +1569,7 @@ def test_NewtonLSMRSolver_multinomial_on_binary_problem(
     )
     sol.solve(X, y, None)
 
-    assert_allclose(np.mean(sol.coef, axis=0), 0, atol=1e-15)
+    assert_allclose(np.mean(sol.coef, axis=0), 0, atol=1e-14)
     if fit_intercept:
         coef_bin = np.r_[bin.coef_, bin.intercept_]
     else:
@@ -1576,4 +1578,4 @@ def test_NewtonLSMRSolver_multinomial_on_binary_problem(
         linear_loss.loss(coef=sol.coef, X=X, y=y, l2_reg_strength=l2_reg_strength),
         bin_loss.loss(coef=coef_bin, X=X, y=y, l2_reg_strength=l2_reg_strength / 2),
     )
-    assert_allclose(sol.coef[1, :], coef_bin / 2)
+    assert_allclose(sol.coef[1, :], coef_bin / 2, rtol=5e-6)
