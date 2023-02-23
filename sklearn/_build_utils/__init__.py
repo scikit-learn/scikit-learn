@@ -70,20 +70,22 @@ def cythonize_extensions(extension):
         os.environ.get("SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES", "0") != "0"
     )
 
+    compiler_directives = {
+        "language_level": 3,
+        "boundscheck": cython_enable_debug_directives,
+        "wraparound": False,
+        "initializedcheck": False,
+        "nonecheck": False,
+        "cdivision": True,
+    }
+
     return cythonize(
         extension,
         nthreads=n_jobs,
         compile_time_env={
             "SKLEARN_OPENMP_PARALLELISM_ENABLED": sklearn._OPENMP_SUPPORTED
         },
-        compiler_directives={
-            "language_level": 3,
-            "boundscheck": cython_enable_debug_directives,
-            "wraparound": False,
-            "initializedcheck": False,
-            "nonecheck": False,
-            "cdivision": True,
-        },
+        compiler_directives=compiler_directives,
     )
 
 

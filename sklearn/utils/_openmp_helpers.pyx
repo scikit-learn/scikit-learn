@@ -60,7 +60,7 @@ cpdef _openmp_effective_n_threads(n_threads=None):
         return 1
 
 
-cdef inline int _openmp_thread_num() nogil:
+cdef inline int _openmp_thread_num() noexcept nogil:
     """Return the number of the thread calling this function.
 
     If scikit-learn is built without OpenMP support, always return 0.

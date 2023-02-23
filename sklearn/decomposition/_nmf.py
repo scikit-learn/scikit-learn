@@ -890,25 +890,7 @@ def _fit_multiplicative_update(
         "X": ["array-like", "sparse matrix"],
         "W": ["array-like", None],
         "H": ["array-like", None],
-        "n_components": [Interval(Integral, 1, None, closed="left"), None],
-        "init": [
-            StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
-            None,
-        ],
         "update_H": ["boolean"],
-        "solver": [StrOptions({"mu", "cd"})],
-        "beta_loss": [
-            StrOptions({"frobenius", "kullback-leibler", "itakura-saito"}),
-            Real,
-        ],
-        "tol": [Interval(Real, 0, None, closed="left")],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "alpha_W": [Interval(Real, 0, None, closed="left")],
-        "alpha_H": [Interval(Real, 0, None, closed="left"), StrOptions({"same"})],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
-        "random_state": ["random_state"],
-        "verbose": ["verbose"],
-        "shuffle": ["boolean"],
     }
 )
 def non_negative_factorization(
@@ -1107,8 +1089,6 @@ def non_negative_factorization(
     >>> W, H, n_iter = non_negative_factorization(
     ...     X, n_components=2, init='random', random_state=0)
     """
-    X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
-
     est = NMF(
         n_components=n_components,
         init=init,
@@ -1123,6 +1103,9 @@ def non_negative_factorization(
         verbose=verbose,
         shuffle=shuffle,
     )
+    est._validate_params()
+
+    X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
 
     with config_context(assume_finite=True):
         W, H, n_iter = est._fit_transform(X, W=W, H=H, update_H=update_H)

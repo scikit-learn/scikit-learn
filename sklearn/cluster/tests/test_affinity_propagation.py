@@ -101,7 +101,7 @@ def test_affinity_propagation_no_copy():
 def test_affinity_propagation_affinity_shape():
     """Check the shape of the affinity matrix when using `affinity_propagation."""
     S = -euclidean_distances(X, squared=True)
-    err_msg = "S must be a square array"
+    err_msg = "The matrix of similarities must be a square array"
     with pytest.raises(ValueError, match=err_msg):
         affinity_propagation(S[:, :-1])
 

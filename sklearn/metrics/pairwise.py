@@ -15,7 +15,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from .. import config_context
 from ..utils.validation import _num_samples
@@ -27,8 +27,9 @@ from ..utils import is_scalar_nan
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils._mask import _get_mask
-from ..utils.fixes import delayed
-from ..utils.fixes import sp_version, parse_version
+from ..utils.parallel import delayed, Parallel
+from ..utils.fixes import sp_base_version, sp_version, parse_version
+from ..utils._param_validation import validate_params
 
 from ._pairwise_distances_reduction import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
@@ -277,7 +278,7 @@ def euclidean_distances(
 
     See Also
     --------
-    paired_distances : Distances betweens pairs of elements of X and Y.
+    paired_distances : Distances between pairs of elements of X and Y.
 
     Notes
     -----
@@ -643,6 +644,9 @@ def pairwise_distances_argmin_min(
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
+        .. note::
+           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
+
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
 
@@ -688,9 +692,12 @@ def pairwise_distances_argmin_min(
         values = values.flatten()
         indices = indices.flatten()
     else:
-        # TODO: once BaseDistanceReductionDispatcher supports distance metrics
-        # for boolean datasets, we won't need to fallback to
-        # pairwise_distances_chunked anymore.
+        # Joblib-based backend, which is used when user-defined callable
+        # are passed for metric.
+
+        # This won't be used in the future once PairwiseDistancesReductions support:
+        #   - DistanceMetrics which work on supposedly binary data
+        #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
 
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.
@@ -757,6 +764,9 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
+        .. note::
+           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
+
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
 
@@ -800,9 +810,12 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         )
         indices = indices.flatten()
     else:
-        # TODO: once BaseDistanceReductionDispatcher supports distance metrics
-        # for boolean datasets, we won't need to fallback to
-        # pairwise_distances_chunked anymore.
+        # Joblib-based backend, which is used when user-defined callable
+        # are passed for metric.
+
+        # This won't be used in the future once PairwiseDistancesReductions support:
+        #   - DistanceMetrics which work on supposedly binary data
+        #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
 
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.
@@ -1397,6 +1410,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
     return K
 
 
+@validate_params({"X": ["array-like"], "Y": ["array-like", None]})
 def additive_chi2_kernel(X, Y=None):
     """Compute the additive chi-squared kernel between observations in X and Y.
 
@@ -1417,7 +1431,7 @@ def additive_chi2_kernel(X, Y=None):
     X : array-like of shape (n_samples_X, n_features)
         A feature array.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : array-like of shape (n_samples_Y, n_features), default=None
         An optional second feature array. If `None`, uses `Y=X`.
 
     Returns
@@ -1445,8 +1459,6 @@ def additive_chi2_kernel(X, Y=None):
       International Journal of Computer Vision 2007
       https://hal.archives-ouvertes.fr/hal-00171412/document
     """
-    if issparse(X) or issparse(Y):
-        raise ValueError("additive_chi2 does not support sparse matrices.")
     X, Y = check_pairwise_arrays(X, Y)
     if (X < 0).any():
         raise ValueError("X contains negative values.")
@@ -1633,7 +1645,6 @@ _VALID_METRICS = [
     "dice",
     "hamming",
     "jaccard",
-    "kulsinski",
     "mahalanobis",
     "matching",
     "minkowski",
@@ -1648,6 +1659,9 @@ _VALID_METRICS = [
     "nan_euclidean",
     "haversine",
 ]
+if sp_base_version < parse_version("1.11"):
+    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
+    _VALID_METRICS += ["kulsinski"]
 
 _NAN_METRICS = ["nan_euclidean"]
 
@@ -1902,6 +1916,9 @@ def pairwise_distances(
       See the documentation for scipy.spatial.distance for details on these
       metrics. These metrics do not support sparse matrix inputs.
 
+    .. note::
+        `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
+
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
     valid scipy.spatial.distance metrics), the scikit-learn implementation
     will be used, which is faster and has support for sparse matrices (except
@@ -2037,7 +2054,6 @@ def pairwise_distances(
 PAIRWISE_BOOLEAN_FUNCTIONS = [
     "dice",
     "jaccard",
-    "kulsinski",
     "matching",
     "rogerstanimoto",
     "russellrao",
@@ -2045,6 +2061,9 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
     "sokalsneath",
     "yule",
 ]
+if sp_base_version < parse_version("1.11"):
+    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
+    PAIRWISE_BOOLEAN_FUNCTIONS += ["kulsinski"]
 
 # Helper functions - distance
 PAIRWISE_KERNEL_FUNCTIONS = {
