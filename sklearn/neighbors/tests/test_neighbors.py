@@ -2317,7 +2317,7 @@ def test_nan_euclidean_constant_input(Estimator, params):
         [np.nan, np.nan],
         [np.nan, np.nan],
         [np.nan, np.nan],
-        [np.nan, np.nan]
+        [np.nan, np.nan],
     ]
     X_const = [[0, 0], [0, 0], [0, 0], [0, 0]]
     y = [1, 2, 3, 4]
