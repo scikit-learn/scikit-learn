@@ -172,9 +172,6 @@ Changelog
   now work with `metric="nan_euclidean"`, supporting `nan` inputs.
   :pr:`25330` by :user:`Carlo Lemos <vitaliset>`.
 
-:mod:`sklearn.neural_network`
-.............................
-
 - |Fix| Remove support for `KulsinskiDistance` in :class:`neighbors.BallTree`. This
   dissimilarity is not a metric and cannot be supported by the BallTree.
   :pr:`25417` by :user:`Guillaume Lemaitre <glemaitre>`.

@@ -1554,8 +1554,21 @@ def test_nan_euclidean_support(pairwise_distances_func):
     X = [[0, 1], [1, np.nan], [2, 3], [3, 5]]
     output = pairwise_distances_func(X, X, metric="nan_euclidean")
 
-    # Checking if some output is None
-    assert (~np.isnan(output)).all()
+    assert not np.isnan(output).any()
+
+
+def test_nan_euclidean_constant_input_argmin():
+    """Check that the behavior of constant input is the same in the case of
+    full of nan vector and full of zero vector.
+    """
+
+    X_nan = [[np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]]
+    argmin_nan = pairwise_distances_argmin(X_nan, X_nan, metric="nan_euclidean")
+
+    X_const = [[np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]]
+    argmin_const = pairwise_distances_argmin(X_const, X_const, metric="nan_euclidean")
+
+    assert (argmin_nan == argmin_const).all()
 
 
 def test_sparse_manhattan_readonly_dataset():
