@@ -1835,6 +1835,13 @@ def test_ndcg_toy_examples(ignore_ties):
     assert ndcg_score(y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(1.0)
 
 
+def test_ndcg_score_descriptive_error_message_with_length_1():
+    y_true = np.array([[1]])
+    y_score = y_true
+    with pytest.raises(ValueError, match="Got length 1"):
+        ndcg_score(y_true, y_score)
+
+
 def test_ndcg_score():
     _, y_true = make_multilabel_classification(random_state=0, n_classes=10)
     y_score = -y_true + 1
