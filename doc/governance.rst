@@ -30,7 +30,7 @@ invest time and energy to improve the project for the greater community.
 Anyone can become a contributor, and contributions can take many forms:
 coding, reviewing pull request, communications, organization, triaging, replying
 to mails in the mailing list, etc.
-Every contributor is welcome to participate in `monthly core developer meetings
+Every contributor is welcome to participate in `monthly core contributor meetings
 <https://github.com/scikit-learn/administrative/tree/master/meeting_notes>`_.
 More details can be found in the :ref:`contributors guide <contributing>`.
 
@@ -87,6 +87,7 @@ which they became active) is public on the scikit-learn website.
 
 # TODO: remove/replace .. _communication_team:
 # TODO: replace core developer by core contributor in all files.
+# TODO: what to do with members of the contributor experience team, communication team?
 
 Technical Committee
 -------------------
@@ -96,10 +97,10 @@ participate in strategic planning, and approve changes to the governance model.
 The purpose of the TC is to ensure a smooth progress from the big-picture
 perspective. Indeed changes that impact the full project require a synthetic
 analysis and a consensus that is both explicit and informed. In cases that the
-core developer community (which includes the TC members) fails to reach such a
+core contributor community (which includes the TC members) fails to reach such a
 consensus in the required time frame, the TC is the entity to resolve the
 issue.
-Membership of the TC is by nomination by a core developer. A nomination will
+Membership of the TC is by nomination by a core contributor. A nomination will
 result in discussion which cannot take more than a month and then a vote by
 the core contributors which will stay open for a week. TC membership votes are
 subject to a two-third majority of all cast votes as well as a simple majority
@@ -122,8 +123,8 @@ Occasionally, sensitive discussion occurs on a private list.
 
 Scikit-learn uses a "consensus seeking" process for making decisions. The group
 tries to find a resolution that has no open objections among core contributors.
-At any point during the discussion, any core-developer can call for a vote, which will
-conclude one month from the call for the vote. Any vote must be backed by a
+At any point during the discussion, any core contributor can call for a vote, which
+will conclude one month from the call for the vote. Any vote must be backed by a
 :ref:`SLEP <slep>`. If no option can gather two thirds of the votes cast, the
 decision is escalated to the TC, which in turn will use consensus seeking with
 the fallback option of a simple majority vote if no consensus can be found
@@ -135,13 +136,13 @@ are made according to the following rules:
 
 * **Minor Documentation changes**, such as typo fixes, or addition / correction of a
   sentence, but no change of the scikit-learn.org landing page or the “about”
-  page: Requires +1 by a core developer, no -1 by a core developer (lazy
+  page: Requires +1 by a core contributor, no -1 by a core contributor (lazy
   consensus), happens on the issue or pull request page. Core contributors are
   expected to give “reasonable time” to others to give their opinion on the pull
   request if they're not confident others would agree.
 
 * **Code changes and major documentation changes**
-  require +1 by two core contributors, no -1 by a core developer (lazy
+  require +1 by two core contributors, no -1 by a core contributor (lazy
   consensus), happens on the issue of pull-request page.
 
 * **Changes to the API principles and changes to dependencies or supported
