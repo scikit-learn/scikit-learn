@@ -187,6 +187,12 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     @property
     def estimator_(self):
         """Estimator used to grow the ensemble."""
+        # Raise an attribute error for subclasses of that are not meant to
+        # expose an estimator_ attribute.
+        if not hasattr(self, "_estimator"):
+            raise AttributeError(
+                f"{self.__class__.__name__!r} object has no attribute 'estimator_'"
+            )
         return self._estimator
 
     def _make_estimator(self, append=True, random_state=None):
