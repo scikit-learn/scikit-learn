@@ -363,10 +363,8 @@ def type_of_target(y, input_name=""):
             return "binary"  # []
         # 2-D empty array: [[]]
         return "unknown"
-
-    y_is_sparse = issparse(y)
-    if not y_is_sparse and y.dtype == object and not isinstance(y.flat[0], str):
-        # [obj_1] and not ["label_1"] or not [1] or not [1.0]
+    if not issparse(y) and y.dtype == object and not isinstance(y.flat[0], str):
+        # [obj_1] and not ["label_1"]
         return "unknown"
 
     # Check if multioutput
