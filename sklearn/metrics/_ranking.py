@@ -1409,14 +1409,6 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     return (ranked * discount_sums).sum()
 
 
-def _check_length_greater_1(y_true: numpy.ndarray):
-    shape = y_true.shape
-    if len(shape) > 1 and shape[1] <= 1:
-        raise ValueError(
-            "Only lengths > 1 are supported. Got length {}".format(shape[1])
-        )
-
-
 def _check_dcg_target_type(y_true):
     y_type = type_of_target(y_true, input_name="y_true")
     supported_fmt = (
@@ -1699,7 +1691,11 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
             " version 1.4.",
             FutureWarning,
         )
-    _check_length_greater_1(y_true)
+    if y_true.ndim > 1 and y_true.shape[1] <= 1:
+        raise ValueError(
+            "Computing NDCG is only meaningful when there is more than 1 document. "
+            f"Got {y_true.shape[1]} instead."
+        )
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
     return np.average(gain, weights=sample_weight)

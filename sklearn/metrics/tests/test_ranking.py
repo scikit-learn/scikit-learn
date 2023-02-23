@@ -1834,11 +1834,15 @@ def test_ndcg_toy_examples(ignore_ties):
     assert ndcg_score(y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(1.0)
 
 
-def test_ndcg_score_descriptive_error_message_with_length_1():
-    y_true = np.array([[1]])
-    y_score = y_true
-    with pytest.raises(ValueError, match="Got length 1"):
-        ndcg_score(y_true, y_score)
+def test_ndcg_error_single_document():
+    """Check that we raise an informative error message when trying to
+    compute NDCG with a single document."""
+    err_msg = (
+        "Computing NDCG is only meaningful when there is more than 1 document. "
+        "Got 1 instead."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        ndcg_score([[1]], [[1]])
 
 
 def test_ndcg_score():
