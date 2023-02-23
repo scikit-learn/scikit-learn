@@ -118,7 +118,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
         completed_iterations += 1
     return tuple(my_mean), len(points_within), completed_iterations
 
-
+@validate_params({ "X": ["array-like"] })
 def mean_shift(
     X,
     *,
@@ -141,7 +141,7 @@ def mean_shift(
         Input data.
 
     bandwidth : float, default=None
-        Kernel bandwidth.
+        Kernel bandwidth. A float value > 0.
 
         If bandwidth is not given, it is determined using a heuristic based on
         the median of all pairwise distances. This will take quadratic time in
