@@ -43,6 +43,7 @@ from sklearn.linear_model._linear_loss import (
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
 from sklearn.model_selection import train_test_split
+from sklearn.utils.fixes import parse_version, sp_version
 
 
 SOLVERS = ["lbfgs", "newton-cholesky", "newton-lsmr"]
@@ -1261,6 +1262,10 @@ def test_newton_solver_verbosity(capsys, verbose):
         )
 
 
+@pytest.mark.skipif(
+    sp_version >= parse_version("1.4.0"),
+    reason="LinearOperator transpose needs scipy>=1.4.0",
+)
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("l2_reg_strength", [0, 1.5])
 def test_NewtonLSMRSolver_multinomial_A_b(
@@ -1330,6 +1335,10 @@ def test_NewtonLSMRSolver_multinomial_A_b(
     assert_allclose(A_matrix1, A_matrix2)
 
 
+@pytest.mark.skipif(
+    sp_version >= parse_version("1.4.0"),
+    reason="LinearOperator transpose needs scipy>=1.4.0",
+)
 @pytest.mark.parametrize("fit_intercept", (False, True))
 @pytest.mark.parametrize("with_sample_weight", (False, True))
 def test_NewtonLSMRSolver_multinomial_A_b_on_3_classes(
