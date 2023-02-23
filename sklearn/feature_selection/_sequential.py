@@ -58,8 +58,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         If the score is not incremented by at least `tol` between two
         consecutive feature additions or removals, stop adding or removing.
 
-        `tol` can be negative when removing features. It can be useful to reduce
-        the number of features at the cost of a small decrease in the score.
+        `tol` can be negative when removing features using `direction="backward"`.
+        It can be useful to reduce the number of features at the cost of a small
+        decrease in the score.
 
         `tol` is enabled only when `n_features_to_select` is `"auto"`.
 
