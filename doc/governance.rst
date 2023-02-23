@@ -131,8 +131,8 @@ conclude one month from the call for the vote. Any vote must be backed by a
 :ref:`SLEP <slep>`. If no option can gather two thirds of the votes cast, the
 decision is escalated to the TC, which in turn will use consensus seeking with
 the fallback option of a simple majority vote if no consensus can be found
-within a month. This is what we hereafter may refer to as “the decision making
-process”.
+within a month. This is what we hereafter may refer to as "**the decision making
+process**".
 
 Decisions (in addition to adding core developers and TC membership as above)
 are made according to the following rules:
@@ -159,7 +159,7 @@ Governance Model Changes
 ------------------------
 
 Governance model changes occur through an enhancement proposal or a GitHub Pull
-Request. An enhancement proposal will go through the "decision-making process"
+Request. An enhancement proposal will go through "**the decision-making process**"
 described in the previous section. Alternatively, an author may propose a change
 directly to the governance model with a GitHub Pull Request. Logistically, an
 author can open a Draft Pull Request for feedback and follow up with a new
