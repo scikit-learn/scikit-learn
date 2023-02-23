@@ -911,7 +911,7 @@ def test_partial_dependence_non_null_weight_idx(estimator, non_null_weight_idx):
 )
 def test_partial_dependence_equivalence_equal_sample_weight(Estimator, data):
     """Check that `sample_weight=None` is equivalent to having equal weights."""
-    """
+
     est = Estimator()
     (X, y), n_targets = data
     est.fit(X, y)

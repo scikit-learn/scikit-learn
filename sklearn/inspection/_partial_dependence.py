@@ -273,7 +273,8 @@ def partial_dependence(
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights for doing weighted means when averaging the model output.
-        If `None`, then samples are equally weighted.
+        If `None`, then samples are equally weighted. If `sample_weight` is not
+        `None`, then `method` will be set to `'brute'`.
         Note that `sample_weight` does not change the individual predictions.
 
         .. versionadded:: 1.3
@@ -341,7 +342,8 @@ def partial_dependence(
           computationally intensive.
 
         - `'auto'`: the `'recursion'` is used for estimators that support it,
-          and `'brute'` is used otherwise.
+          and `'brute'` is used otherwise. If `sample_weight` is not `None`,
+          then `'brute'` is used regardless of the estimator.
 
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the `'brute'` and `'recursion'` method.
