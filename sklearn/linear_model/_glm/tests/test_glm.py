@@ -253,7 +253,12 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
 
     model.fit(X, y)
 
-    rtol = 5e-5 if solver == "lbfgs" else 1e-9
+    if solver == "lbfgs":
+        rtol = 5e-5
+    elif solver == "newton-lsmr":
+        rtol = 5e-9
+    else:
+        rtol = 1e-9
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, coef, rtol=rtol)
 
