@@ -756,6 +756,8 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
     Will return a dict of floats if `scorer` is a dict, otherwise a single
     float is returned.
     """
+    from ..multioutput import _MultiOutputEstimator, _BaseChain
+
     if isinstance(scorer, dict):
         # will cache method calls if needed. scorer() returns a dict
         scorer = _MultimetricScorer(scorers=scorer, raise_exc=(error_score == "raise"))
@@ -799,22 +801,23 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
                 )
 
     error_msg = "scoring must return a number, got %s (%s) instead. (scorer=%s)"
-    if isinstance(scores, dict):
-        for name, score in scores.items():
-            if hasattr(score, "item"):
+    if not isinstance(estimator, (_MultiOutputEstimator, _BaseChain)):
+        if isinstance(scores, dict):
+            for name, score in scores.items():
+                if hasattr(score, "item"):
+                    with suppress(ValueError):
+                        # e.g. unwrap memmapped scalars
+                        score = score.item()
+                if not isinstance(score, numbers.Number):
+                    raise ValueError(error_msg % (score, type(score), name))
+                scores[name] = score
+        else:  # scalar
+            if hasattr(scores, "item"):
                 with suppress(ValueError):
                     # e.g. unwrap memmapped scalars
-                    score = score.item()
-            if not isinstance(score, numbers.Number):
-                raise ValueError(error_msg % (score, type(score), name))
-            scores[name] = score
-    else:  # scalar
-        if hasattr(scores, "item"):
-            with suppress(ValueError):
-                # e.g. unwrap memmapped scalars
-                scores = scores.item()
-        if not isinstance(scores, numbers.Number):
-            raise ValueError(error_msg % (scores, type(scores), scorer))
+                    scores = scores.item()
+            if not isinstance(scores, numbers.Number):
+                raise ValueError(error_msg % (scores, type(scores), scorer))
     return scores
 
 
