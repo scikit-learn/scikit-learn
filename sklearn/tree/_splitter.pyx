@@ -351,8 +351,8 @@ cdef inline int node_split_best(
         # f_j in the interval [n_known_constants, f_i - n_found_constants[
         f_j += n_found_constants
         # f_j in the interval [n_total_constants, f_i[
-        current.feature = features[f_j]
-        partitioner.sort_samples_and_feature_values(current.feature)
+        current_split.feature = features[f_j]
+        partitioner.sort_samples_and_feature_values(current_split.feature)
         n_missing = partitioner.n_missing
         end_non_missing = end - n_missing
 
@@ -411,8 +411,8 @@ cdef inline int node_split_best(
                 if n_left < min_samples_leaf or n_right < min_samples_leaf:
                     continue
 
-                current.pos = p
-                criterion.update(current.pos)
+                current_split.pos = p
+                criterion.update(current_split.pos)
 
                 # Reject if min_weight_leaf is not satisfied
                 if ((criterion.weighted_n_left < min_weight_leaf) or
@@ -425,32 +425,37 @@ cdef inline int node_split_best(
                     best_proxy_improvement = current_proxy_improvement
                     if p < end_non_missing:
                         # sum of halves is used to avoid infinite value
-                        current.threshold = Xf[p_prev] / 2.0 + Xf[p] / 2.0
+                        current_split.threshold = feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
 
                         if (
-                            current.threshold == Xf[p] or
-                            current.threshold == INFINITY or
-                            current.threshold == -INFINITY
+                            current_split.threshold == feature_values[p] or
+                            current_split.threshold == INFINITY or
+                            current_split.threshold == -INFINITY
                         ):
-                            current.threshold = Xf[p_prev]
+                            current_split.threshold = feature_values[p_prev]
                     else:
                         # if p >= end_non_missing, then we are evaluating the case
                         # where the missing values go right and non-missing values go left
-                        current.threshold = INFINITY
+                        current_split.threshold = INFINITY
 
-                    current.n_missing = n_missing
+                    current_split.n_missing = n_missing
                     if n_missing == 0:
-                        current.missing_go_to_left = n_left > n_right
+                        current_split.missing_go_to_left = n_left > n_right
                     else:
-                        current.missing_go_to_left = missing_go_to_left
+                        current_split.missing_go_to_left = missing_go_to_left
 
-                    best = current  # copy
+                    best_split = current_split  # copy
 
-    # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-    if best.pos <= end :
-        partitioner.partition_samples_final(best.pos, best.threshold, best.feature, best.n_missing)
-        criterion.init_missing(best.n_missing)
-        criterion.missing_go_to_left = best.missing_go_to_left
+    # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
+    if best_split.pos <= end :
+        partitioner.partition_samples_final(
+            best_split.pos,
+            best_split.threshold,
+            best_split.feature,
+            best_split.n_missing
+        )
+        criterion.init_missing(best_split.n_missing)
+        criterion.missing_go_to_left = best_split.missing_go_to_left
 
         criterion.reset()
         criterion.update(best_split.pos)
@@ -463,7 +468,7 @@ cdef inline int node_split_best(
             best_split.impurity_right
         )
 
-        shift_missing_values_to_left_if_required(&best, samples, end)
+        shift_missing_values_to_left_if_required(&best_split, samples, end)
 
     # Respect invariant for constant features: the original order of
     # element in features[:n_known_constants] must be preserved for sibling
@@ -825,7 +830,7 @@ cdef class DensePartitioner:
         Returns the number of missing values in feature_values.
         """
         cdef:
-            SIZE_t i
+            SIZE_t i, current_end
             DTYPE_t[::1] feature_values = self.feature_values
             const DTYPE_t[:, :] X = self.X
             SIZE_t[::1] samples = self.samples

@@ -404,6 +404,7 @@ cdef class ClassificationCriterion(Criterion):
             weighted_n_1[0] = 0.0
             weighted_n_2[0] = self.weighted_n_node_samples
 
+    cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -847,6 +848,7 @@ cdef class RegressionCriterion(Criterion):
             weighted_n_1[0] = 0.0
             weighted_n_2[0] = self.weighted_n_node_samples
 
+    cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start."""
         self.pos = self.start
         self._move_sums(
