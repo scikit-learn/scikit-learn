@@ -165,6 +165,13 @@ Changelog
 - |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
   :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
+  not normalized, instead of actually normalizing them in the metric. Starting from
+  1.5 this will raise an error. :pr:`25299` by :user:`Omar Salman <OmarManzoor`.
+
+- |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
+  removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
@@ -236,6 +243,9 @@ Changelog
   introduced to ensure stateless transformers don't raise `NotFittedError`
   during `transform` with no prior call to `fit` or `fit_transform`.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
+
+- |Enhancement| :func:`utils.multiclass.type_of_target` can identify pandas
+  nullable data types as classification targets. :pr:`25638` by `Thomas Fan`_.
 
 :mod:`sklearn.semi_supervised`
 ..............................
