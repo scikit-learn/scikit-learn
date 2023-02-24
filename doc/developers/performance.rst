@@ -344,7 +344,7 @@ Using OpenMP
 Since scikit-learn can be built without OpenMP, it's necessary to protect each
 direct call to OpenMP.
 
-The _openmp_helpers module, available in
+The `_openmp_helpers` module, available in
 `sklearn/utils/_openmp_helpers.pyx <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_openmp_helpers.pyx>`_
 provides protected versions of the OpenMP routines. To use OpenMP routines, they
 must be cimported from this module and not from the OpenMP library directly::
