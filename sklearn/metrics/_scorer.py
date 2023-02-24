@@ -21,6 +21,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 from collections.abc import Iterable
 from functools import partial
 from collections import Counter
+from traceback import format_exc
 
 import numpy as np
 import copy
@@ -91,10 +92,16 @@ class _MultimetricScorer:
     ----------
     scorers : dict
         Dictionary mapping names to callable scorers.
+
+    raise_exc : bool, default=True
+        Whether to raise the exception in `__call__` or not. If set to `False`
+        a formatted string of the exception details is passed as result of
+        the failing scorer.
     """
 
-    def __init__(self, **scorers):
+    def __init__(self, *, scorers, raise_exc=True):
         self._scorers = scorers
+        self._raise_exc = raise_exc
 
     def __call__(self, estimator, *args, **kwargs):
         """Evaluate predicted target values."""
@@ -103,11 +110,18 @@ class _MultimetricScorer:
         cached_call = partial(_cached_call, cache)
 
         for name, scorer in self._scorers.items():
-            if isinstance(scorer, _BaseScorer):
-                score = scorer._score(cached_call, estimator, *args, **kwargs)
-            else:
-                score = scorer(estimator, *args, **kwargs)
-            scores[name] = score
+            try:
+                if isinstance(scorer, _BaseScorer):
+                    score = scorer._score(cached_call, estimator, *args, **kwargs)
+                else:
+                    score = scorer(estimator, *args, **kwargs)
+                scores[name] = score
+            except Exception as e:
+                if self._raise_exc:
+                    raise e
+                else:
+                    scores[name] = format_exc()
+
         return scores
 
     def _use_cache(self, estimator):

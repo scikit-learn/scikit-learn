@@ -64,13 +64,12 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     direction : {'forward', 'backward'}, default='forward'
         Whether to perform forward selection or backward selection.
 
-    scoring : str, callable, list/tuple or dict, default=None
+    scoring : str or callable, default=None
         A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
-        NOTE that when using custom scorers, each scorer should return a single
-        value. Metric functions returning a list/array of values can be wrapped
-        into multiple scorers that return one value each.
+        NOTE that when using a custom scorer, it should return a single
+        value.
 
         If None, the estimator's score method is used.
 
@@ -156,14 +155,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         ],
         "tol": [None, Interval(Real, 0, None, closed="neither")],
         "direction": [StrOptions({"forward", "backward"})],
-        "scoring": [
-            None,
-            StrOptions(set(get_scorer_names())),
-            callable,
-            list,
-            dict,
-            tuple,
-        ],
+        "scoring": [None, StrOptions(set(get_scorer_names())), callable],
         "cv": ["cv_object"],
         "n_jobs": [None, Integral],
     }

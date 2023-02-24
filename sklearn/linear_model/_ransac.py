@@ -93,14 +93,7 @@ class RANSACRegressor(
         ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
         `min_samples` is chosen as ``X.shape[1] + 1``. This parameter is highly
         dependent upon the model, so if a `estimator` other than
-        :class:`linear_model.LinearRegression` is used, the user is
-        encouraged to provide a value.
-
-        .. deprecated:: 1.0
-           Not setting `min_samples` explicitly will raise an error in version
-           1.2 for models other than
-           :class:`~sklearn.linear_model.LinearRegression`. To keep the old
-           default behavior, set `min_samples=X.shape[1] + 1` explicitly.
+        :class:`linear_model.LinearRegression` is used, the user must provide a value.
 
     residual_threshold : float, default=None
         Maximum residual for a data sample to be classified as an inlier.
@@ -161,14 +154,6 @@ class RANSACRegressor(
         then this sample is classified as an outlier.
 
         .. versionadded:: 0.18
-
-        .. deprecated:: 1.0
-            The loss 'squared_loss' was deprecated in v1.0 and will be removed
-            in version 1.2. Use `loss='squared_error'` which is equivalent.
-
-        .. deprecated:: 1.0
-            The loss 'absolute_loss' was deprecated in v1.0 and will be removed
-            in version 1.2. Use `loss='absolute_error'` which is equivalent.
 
     random_state : int, RandomState instance, default=None
         The generator used to initialize the centers.
@@ -271,13 +256,7 @@ class RANSACRegressor(
         ],
         "stop_score": [Interval(Real, None, None, closed="both")],
         "stop_probability": [Interval(Real, 0, 1, closed="both")],
-        "loss": [
-            StrOptions(
-                {"absolute_error", "squared_error", "absolute_loss", "squared_loss"},
-                deprecated={"absolute_loss", "squared_loss"},
-            ),
-            callable,
-        ],
+        "loss": [StrOptions({"absolute_error", "squared_error"}), callable],
         "random_state": ["random_state"],
         "base_estimator": [
             HasMethods(["fit", "score", "predict"]),
@@ -375,13 +354,9 @@ class RANSACRegressor(
 
         if self.min_samples is None:
             if not isinstance(estimator, LinearRegression):
-                # FIXME: in 1.2, turn this warning into an error
-                warnings.warn(
-                    "From version 1.2, `min_samples` needs to be explicitly "
-                    "set otherwise an error will be raised. To keep the "
-                    "current behavior, you need to set `min_samples` to "
-                    f"`X.shape[1] + 1 that is {X.shape[1] + 1}",
-                    FutureWarning,
+                raise ValueError(
+                    "`min_samples` needs to be explicitly set when estimator "
+                    "is not a LinearRegression."
                 )
             min_samples = X.shape[1] + 1
         elif 0 < self.min_samples < 1:
@@ -400,30 +375,14 @@ class RANSACRegressor(
         else:
             residual_threshold = self.residual_threshold
 
-        # TODO: Remove absolute_loss in v1.2.
-        if self.loss in ("absolute_error", "absolute_loss"):
-            if self.loss == "absolute_loss":
-                warnings.warn(
-                    "The loss 'absolute_loss' was deprecated in v1.0 and will "
-                    "be removed in version 1.2. Use `loss='absolute_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
+        if self.loss == "absolute_error":
             if y.ndim == 1:
                 loss_function = lambda y_true, y_pred: np.abs(y_true - y_pred)
             else:
                 loss_function = lambda y_true, y_pred: np.sum(
                     np.abs(y_true - y_pred), axis=1
                 )
-        # TODO: Remove squared_loss in v1.2.
-        elif self.loss in ("squared_error", "squared_loss"):
-            if self.loss == "squared_loss":
-                warnings.warn(
-                    "The loss 'squared_loss' was deprecated in v1.0 and will "
-                    "be removed in version 1.2. Use `loss='squared_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
+        elif self.loss == "squared_error":
             if y.ndim == 1:
                 loss_function = lambda y_true, y_pred: (y_true - y_pred) ** 2
             else:

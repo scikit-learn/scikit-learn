@@ -357,6 +357,13 @@ def test_export_text_errors():
     err_msg = "feature_names must contain 2 elements, got 1"
     with pytest.raises(ValueError, match=err_msg):
         export_text(clf, feature_names=["a"])
+    err_msg = (
+        "When `class_names` is a list, it should contain as"
+        " many items as `decision_tree.classes_`. Got 1 while"
+        " the tree was fitted with 2 classes."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        export_text(clf, class_names=["a"])
     err_msg = "decimals must be >= 0, given -1"
     with pytest.raises(ValueError, match=err_msg):
         export_text(clf, decimals=-1)
@@ -393,6 +400,16 @@ def test_export_text():
     """
     ).lstrip()
     assert export_text(clf, feature_names=["a", "b"]) == expected_report
+
+    expected_report = dedent(
+        """
+    |--- feature_1 <= 0.00
+    |   |--- class: cat
+    |--- feature_1 >  0.00
+    |   |--- class: dog
+    """
+    ).lstrip()
+    assert export_text(clf, class_names=["cat", "dog"]) == expected_report
 
     expected_report = dedent(
         """

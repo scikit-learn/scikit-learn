@@ -116,9 +116,20 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     Attributes
     ----------
+    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
+        The child estimator template used to create the collection of
+        fitted sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
+
     base_estimator_ : ExtraTreeRegressor instance
         The child estimator template used to create the collection of
         fitted sub-estimators.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     estimators_ : list of ExtraTreeRegressor instances
         The collection of fitted sub-estimators.
@@ -144,13 +155,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
         (samples with decision function < 0) in training.
 
         .. versionadded:: 0.20
-
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -233,7 +237,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         warm_start=False,
     ):
         super().__init__(
-            base_estimator=ExtraTreeRegressor(
+            estimator=ExtraTreeRegressor(
                 max_features=1, splitter="random", random_state=random_state
             ),
             # here above max_features has no links with self.max_features
@@ -321,6 +325,16 @@ class IsolationForest(OutlierMixin, BaseBagging):
             max_depth=max_depth,
             sample_weight=sample_weight,
             check_input=False,
+        )
+
+        self._average_path_length_per_tree, self._decision_path_lengths = zip(
+            *[
+                (
+                    _average_path_length(tree.tree_.n_node_samples),
+                    tree.tree_.compute_node_depths(),
+                )
+                for tree in self.estimators_
+            ]
         )
 
         if self.contamination == "auto":
@@ -418,14 +432,13 @@ class IsolationForest(OutlierMixin, BaseBagging):
         check_is_fitted(self)
 
         # Check data
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = self._validate_data(X, accept_sparse="csr", dtype=np.float32, reset=False)
 
         # Take the opposite of the scores as bigger is better (here less
         # abnormal)
         return -self._compute_chunked_score_samples(X)
 
     def _compute_chunked_score_samples(self, X):
-
         n_samples = _num_samples(X)
 
         if self._max_features == X.shape[1]:
@@ -473,19 +486,21 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         depths = np.zeros(n_samples, order="f")
 
-        for tree, features in zip(self.estimators_, self.estimators_features_):
+        average_path_length_max_samples = _average_path_length([self._max_samples])
+
+        for tree_idx, (tree, features) in enumerate(
+            zip(self.estimators_, self.estimators_features_)
+        ):
             X_subset = X[:, features] if subsample_features else X
 
-            leaves_index = tree.apply(X_subset)
-            node_indicator = tree.decision_path(X_subset)
-            n_samples_leaf = tree.tree_.n_node_samples[leaves_index]
+            leaves_index = tree.apply(X_subset, check_input=False)
 
             depths += (
-                np.ravel(node_indicator.sum(axis=1))
-                + _average_path_length(n_samples_leaf)
+                self._decision_path_lengths[tree_idx][leaves_index]
+                + self._average_path_length_per_tree[tree_idx][leaves_index]
                 - 1.0
             )
-        denominator = len(self.estimators_) * _average_path_length([self.max_samples_])
+        denominator = len(self.estimators_) * average_path_length_max_samples
         scores = 2 ** (
             # For a single training sample, denominator and depth are 0.
             # Therefore, we set the score manually to 1.

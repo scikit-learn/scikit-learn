@@ -73,6 +73,6 @@ Videos
     Presentation using the online tutorial, 45 minutes.
 
 
-.. _Gael Varoquaux: http://gael-varoquaux.info
+.. _Gael Varoquaux: https://gael-varoquaux.info
 .. _Jake Vanderplas: http://www.vanderplas.com
 .. _Olivier Grisel: https://twitter.com/ogrisel

@@ -3,7 +3,7 @@ Testing for the tree module (sklearn.tree).
 """
 import copy
 import pickle
-from itertools import product
+from itertools import product, chain
 import struct
 import io
 import copyreg
@@ -59,6 +59,7 @@ from sklearn.tree._classes import CRITERIA_REG
 from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
+from sklearn.tree._classes import DENSE_SPLITTERS, SPARSE_SPLITTERS
 
 
 CLF_CRITERIONS = ("gini", "log_loss")
@@ -1935,20 +1936,36 @@ def assert_is_subtree(tree, subtree):
             )
 
 
-def check_apply_path_readonly(name):
-    X_readonly = create_memmap_backed_data(X_small.astype(tree._tree.DTYPE, copy=False))
+@pytest.mark.parametrize("name", ALL_TREES)
+@pytest.mark.parametrize("splitter", ["best", "random"])
+@pytest.mark.parametrize("X_format", ["dense", "csr", "csc"])
+def test_apply_path_readonly_all_trees(name, splitter, X_format):
+    dataset = DATASETS["clf_small"]
+    X_small = dataset["X"].astype(tree._tree.DTYPE, copy=False)
+    if X_format == "dense":
+        X_readonly = create_memmap_backed_data(X_small)
+    else:
+        X_readonly = dataset["X_sparse"]  # CSR
+        if X_format == "csc":
+            # Cheap CSR to CSC conversion
+            X_readonly = X_readonly.tocsc()
+
+        X_readonly.data = np.array(X_readonly.data, dtype=tree._tree.DTYPE)
+        (
+            X_readonly.data,
+            X_readonly.indices,
+            X_readonly.indptr,
+        ) = create_memmap_backed_data(
+            (X_readonly.data, X_readonly.indices, X_readonly.indptr)
+        )
+
     y_readonly = create_memmap_backed_data(np.array(y_small, dtype=tree._tree.DTYPE))
-    est = ALL_TREES[name]()
+    est = ALL_TREES[name](splitter=splitter)
     est.fit(X_readonly, y_readonly)
     assert_array_equal(est.predict(X_readonly), est.predict(X_small))
     assert_array_equal(
         est.decision_path(X_readonly).todense(), est.decision_path(X_small).todense()
     )
-
-
-@pytest.mark.parametrize("name", ALL_TREES)
-def test_apply_path_readonly_all_trees(name):
-    check_apply_path_readonly(name)
 
 
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse", "poisson"])
@@ -2101,41 +2118,6 @@ def test_criterion_entropy_same_as_log_loss(Tree, n_classes):
         f"{Tree!r} with criterion 'entropy' and 'log_loss' gave different trees.",
     )
     assert_allclose(tree_log_loss.predict(X), tree_entropy.predict(X))
-
-
-@pytest.mark.parametrize(
-    "old_criterion, new_criterion, Tree",
-    [
-        # TODO(1.2): Remove "mse" and "mae"
-        ("mse", "squared_error", DecisionTreeRegressor),
-        ("mse", "squared_error", ExtraTreeRegressor),
-        ("mae", "absolute_error", DecisionTreeRegressor),
-        ("mae", "absolute_error", ExtraTreeRegressor),
-    ],
-)
-def test_criterion_deprecated(old_criterion, new_criterion, Tree):
-    tree = Tree(criterion=old_criterion)
-
-    with pytest.warns(
-        FutureWarning, match=f"Criterion '{old_criterion}' was deprecated"
-    ):
-        tree.fit(X, y)
-
-    tree_new = Tree(criterion=new_criterion).fit(X, y)
-    assert_allclose(tree.predict(X), tree_new.predict(X))
-
-
-@pytest.mark.parametrize("Tree", ALL_TREES.values())
-def test_n_features_deprecated(Tree):
-    # check that we raise a deprecation warning when accessing `n_features_`.
-    # FIXME: remove in 1.2
-    depr_msg = (
-        "The attribute `n_features_` is deprecated in 1.0 and will be "
-        "removed in 1.2. Use `n_features_in_` instead."
-    )
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        Tree().fit(X, y).n_features_
 
 
 def test_different_endianness_pickle():
@@ -2406,3 +2388,40 @@ def test_max_features_auto_deprecated():
         )
         with pytest.warns(FutureWarning, match=msg):
             tree.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "Splitter", chain(DENSE_SPLITTERS.values(), SPARSE_SPLITTERS.values())
+)
+def test_splitter_serializable(Splitter):
+    """Check that splitters are serializable."""
+    rng = np.random.RandomState(42)
+    max_features = 10
+    n_outputs, n_classes = 2, np.array([3, 2], dtype=np.intp)
+
+    criterion = CRITERIA_CLF["gini"](n_outputs, n_classes)
+    splitter = Splitter(criterion, max_features, 5, 0.5, rng)
+    splitter_serialize = pickle.dumps(splitter)
+
+    splitter_back = pickle.loads(splitter_serialize)
+    assert splitter_back.max_features == max_features
+    assert isinstance(splitter_back, Splitter)
+
+
+def test_tree_deserialization_from_read_only_buffer(tmpdir):
+    """Check that Trees can be deserialized with read only buffers.
+
+    Non-regression test for gh-25584.
+    """
+    pickle_path = str(tmpdir.join("clf.joblib"))
+    clf = DecisionTreeClassifier(random_state=0)
+    clf.fit(X_small, y_small)
+
+    joblib.dump(clf, pickle_path)
+    loaded_clf = joblib.load(pickle_path, mmap_mode="r")
+
+    assert_tree_equal(
+        loaded_clf.tree_,
+        clf.tree_,
+        "The trees of the original and loaded classifiers are not equal.",
+    )

@@ -43,7 +43,7 @@ DEF PA2 = 6
 cdef class LossFunction:
     """Base class for convex loss functions"""
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         """Evaluate the loss function.
 
         Parameters
@@ -98,7 +98,7 @@ cdef class LossFunction:
         """
         return self.loss(p, y)
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         """Evaluate the derivative of the loss function with respect to
         the prediction `p`.
 
@@ -120,20 +120,20 @@ cdef class LossFunction:
 cdef class Regression(LossFunction):
     """Base class for loss functions for regression"""
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         return 0.
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         return 0.
 
 
 cdef class Classification(LossFunction):
     """Base class for loss functions for classification"""
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         return 0.
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         return 0.
 
 
@@ -145,7 +145,7 @@ cdef class ModifiedHuber(Classification):
     See T. Zhang 'Solving Large Scale Linear Prediction Problems Using
     Stochastic Gradient Descent', ICML'04.
     """
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         cdef double z = p * y
         if z >= 1.0:
             return 0.0
@@ -154,7 +154,7 @@ cdef class ModifiedHuber(Classification):
         else:
             return -4.0 * z
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         cdef double z = p * y
         if z >= 1.0:
             return 0.0
@@ -183,13 +183,13 @@ cdef class Hinge(Classification):
     def __init__(self, double threshold=1.0):
         self.threshold = threshold
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         cdef double z = p * y
         if z <= self.threshold:
             return self.threshold - z
         return 0.0
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         cdef double z = p * y
         if z <= self.threshold:
             return -y
@@ -215,13 +215,13 @@ cdef class SquaredHinge(Classification):
     def __init__(self, double threshold=1.0):
         self.threshold = threshold
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         cdef double z = self.threshold - p * y
         if z > 0:
             return z * z
         return 0.0
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         cdef double z = self.threshold - p * y
         if z > 0:
             return -2 * y * z
@@ -234,7 +234,7 @@ cdef class SquaredHinge(Classification):
 cdef class Log(Classification):
     """Logistic regression loss for binary classification with y in {-1, 1}"""
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         cdef double z = p * y
         # approximately equal and saves the computation of the log
         if z > 18:
@@ -243,7 +243,7 @@ cdef class Log(Classification):
             return -z
         return log(1.0 + exp(-z))
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         cdef double z = p * y
         # approximately equal and saves the computation of the log
         if z > 18.0:
@@ -258,10 +258,10 @@ cdef class Log(Classification):
 
 cdef class SquaredLoss(Regression):
     """Squared loss traditional used in linear regression."""
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         return 0.5 * (p - y) * (p - y)
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         return p - y
 
     def __reduce__(self):
@@ -282,7 +282,7 @@ cdef class Huber(Regression):
     def __init__(self, double c):
         self.c = c
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         cdef double r = p - y
         cdef double abs_r = fabs(r)
         if abs_r <= self.c:
@@ -290,7 +290,7 @@ cdef class Huber(Regression):
         else:
             return self.c * abs_r - (0.5 * self.c * self.c)
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         cdef double r = p - y
         cdef double abs_r = fabs(r)
         if abs_r <= self.c:
@@ -315,11 +315,11 @@ cdef class EpsilonInsensitive(Regression):
     def __init__(self, double epsilon):
         self.epsilon = epsilon
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         cdef double ret = fabs(y - p) - self.epsilon
         return ret if ret > 0 else 0
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         if y - p > self.epsilon:
             return -1
         elif p - y > self.epsilon:
@@ -342,11 +342,11 @@ cdef class SquaredEpsilonInsensitive(Regression):
     def __init__(self, double epsilon):
         self.epsilon = epsilon
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         cdef double ret = fabs(y - p) - self.epsilon
         return ret * ret if ret > 0 else 0
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         cdef double z
         z = y - p
         if z > self.epsilon:
@@ -360,19 +360,19 @@ cdef class SquaredEpsilonInsensitive(Regression):
         return SquaredEpsilonInsensitive, (self.epsilon,)
 
 
-def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
+def _plain_sgd(const double[::1] weights,
                double intercept,
-               cnp.ndarray[double, ndim=1, mode='c'] average_weights,
+               const double[::1] average_weights,
                double average_intercept,
                LossFunction loss,
                int penalty_type,
                double alpha, double C,
                double l1_ratio,
                SequentialDataset dataset,
-               cnp.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
+               const unsigned char[::1] validation_mask,
                bint early_stopping, validation_score_cb,
                int n_iter_no_change,
-               int max_iter, double tol, int fit_intercept,
+               unsigned int max_iter, double tol, int fit_intercept,
                int verbose, bint shuffle, cnp.uint32_t seed,
                double weight_pos, double weight_neg,
                int learning_rate, double eta0,
@@ -421,8 +421,6 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
         The maximum number of iterations (epochs).
     tol: double
         The tolerance for the stopping criterion.
-    dataset : SequentialDataset
-        A concrete ``SequentialDataset`` object.
     fit_intercept : int
         Whether or not to fit the intercept (1 or 0).
     verbose : int
@@ -479,10 +477,8 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
     cdef Py_ssize_t n_features = weights.shape[0]
 
     cdef WeightVector w = WeightVector(weights, average_weights)
-    cdef double* w_ptr = &weights[0]
     cdef double *x_data_ptr = NULL
     cdef int *x_ind_ptr = NULL
-    cdef double* ps_ptr = NULL
 
     # helper variables
     cdef int no_improvement_count = 0
@@ -500,24 +496,22 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
     cdef double sample_weight
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
+    cdef unsigned int train_count = n_samples - np.sum(validation_mask)
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
     cdef double optimal_init = 0.0
     cdef double dloss = 0.0
     cdef double MAX_DLOSS = 1e12
-    cdef double max_change = 0.0
-    cdef double max_weight = 0.0
 
     cdef long long sample_index
-    cdef unsigned char [:] validation_mask_view = validation_mask
 
     # q vector is only used for L1 regularization
-    cdef cnp.ndarray[double, ndim = 1, mode = "c"] q = None
+    cdef double[::1] q = None
     cdef double * q_data_ptr = NULL
     if penalty_type == L1 or penalty_type == ELASTICNET:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
-        q_data_ptr = <double * > q.data
+        q_data_ptr = &q[0]
     cdef double u = 0.0
 
     if penalty_type == L2:
@@ -548,7 +542,7 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
                              &y, &sample_weight)
 
                 sample_index = dataset.index_data_ptr[dataset.current_index]
-                if validation_mask_view[sample_index]:
+                if validation_mask[sample_index]:
                     # do not learn on the validation set
                     continue
 
@@ -630,21 +624,21 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
                 with gil:
                     print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
                           "Avg. loss: %f"
-                          % (w.norm(), weights.nonzero()[0].shape[0],
-                             intercept, count, sumloss / n_samples))
+                          % (w.norm(), np.nonzero(weights)[0].shape[0],
+                             intercept, count, sumloss / train_count))
                     print("Total training time: %.2f seconds."
                           % (time() - t_start))
 
             # floating-point under-/overflow check.
             if (not skl_isfinite(intercept)
-                or any_nonfinite(<double *>weights.data, n_features)):
+                or any_nonfinite(&weights[0], n_features)):
                 infinity = True
                 break
 
             # evaluate the score on the validation set
             if early_stopping:
                 with gil:
-                    score = validation_score_cb(weights, intercept)
+                    score = validation_score_cb(weights.base, intercept)
                 if tol > -INFINITY and score < best_score + tol:
                     no_improvement_count += 1
                 else:
@@ -653,7 +647,7 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
                     best_score = score
             # or evaluate the loss on the training set
             else:
-                if tol > -INFINITY and sumloss > best_loss - tol * n_samples:
+                if tol > -INFINITY and sumloss > best_loss - tol * train_count:
                     no_improvement_count += 1
                 else:
                     no_improvement_count = 0
@@ -679,17 +673,23 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
 
     w.reset_wscale()
 
-    return weights, intercept, average_weights, average_intercept, epoch + 1
+    return (
+        weights.base,
+        intercept,
+        None if average_weights is None else average_weights.base,
+        average_intercept,
+        epoch + 1
+    )
 
 
-cdef bint any_nonfinite(double *w, int n) nogil:
+cdef bint any_nonfinite(const double *w, int n) noexcept nogil:
     for i in range(n):
         if not skl_isfinite(w[i]):
             return True
     return 0
 
 
-cdef double sqnorm(double * x_data_ptr, int * x_ind_ptr, int xnnz) nogil:
+cdef double sqnorm(double * x_data_ptr, int * x_ind_ptr, int xnnz) noexcept nogil:
     cdef double x_norm = 0.0
     cdef int j
     cdef double z
@@ -700,7 +700,7 @@ cdef double sqnorm(double * x_data_ptr, int * x_ind_ptr, int xnnz) nogil:
 
 
 cdef void l1penalty(WeightVector w, double * q_data_ptr,
-                    int *x_ind_ptr, int xnnz, double u) nogil:
+                    int *x_ind_ptr, int xnnz, double u) noexcept nogil:
     """Apply the L1 penalty to each updated feature
 
     This implements the truncated gradient approach by

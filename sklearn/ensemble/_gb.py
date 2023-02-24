@@ -139,9 +139,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         **DecisionTreeRegressor._parameter_constraints,
         "learning_rate": [Interval(Real, 0.0, None, closed="left")],
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
-        "criterion": [
-            StrOptions({"friedman_mse", "squared_error", "mse"}, deprecated={"mse"})
-        ],
+        "criterion": [StrOptions({"friedman_mse", "squared_error"})],
         "subsample": [Interval(Real, 0.0, 1.0, closed="right")],
         "verbose": ["verbose"],
         "warm_start": ["boolean"],
@@ -277,22 +275,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         return raw_predictions
 
     def _check_params(self):
-        # TODO(1.2): Remove
-        if self.loss == "ls":
-            warnings.warn(
-                "The loss 'ls' was deprecated in v1.0 and "
-                "will be removed in version 1.2. Use 'squared_error'"
-                " which is equivalent.",
-                FutureWarning,
-            )
-        elif self.loss == "lad":
-            warnings.warn(
-                "The loss 'lad' was deprecated in v1.0 and "
-                "will be removed in version 1.2. Use "
-                "'absolute_error' which is equivalent.",
-                FutureWarning,
-            )
-
         # TODO(1.3): Remove
         if self.loss == "deviance":
             warnings.warn(
@@ -353,6 +335,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # do oob?
         if self.subsample < 1.0:
             self.oob_improvement_ = np.zeros((self.n_estimators), dtype=np.float64)
+            self.oob_scores_ = np.zeros((self.n_estimators), dtype=np.float64)
+            self.oob_score_ = np.nan
 
     def _clear_state(self):
         """Clear the state of the gradient boosting model."""
@@ -362,6 +346,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             del self.train_score_
         if hasattr(self, "oob_improvement_"):
             del self.oob_improvement_
+        if hasattr(self, "oob_scores_"):
+            del self.oob_scores_
+        if hasattr(self, "oob_score_"):
+            del self.oob_score_
         if hasattr(self, "init_"):
             del self.init_
         if hasattr(self, "_rng"):
@@ -387,10 +375,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 self.oob_improvement_ = np.resize(
                     self.oob_improvement_, total_n_estimators
                 )
+                self.oob_scores_ = np.resize(self.oob_scores_, total_n_estimators)
+                self.oob_score_ = np.nan
             else:
                 self.oob_improvement_ = np.zeros(
                     (total_n_estimators,), dtype=np.float64
                 )
+                self.oob_scores_ = np.zeros((total_n_estimators,), dtype=np.float64)
+                self.oob_score_ = np.nan
 
     def _is_initialized(self):
         return len(getattr(self, "estimators_", [])) > 0
@@ -435,15 +427,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        if self.criterion == "mse":
-            # TODO(1.2): Remove. By then it should raise an error.
-            warnings.warn(
-                "Criterion 'mse' was deprecated in v1.0 and will be "
-                "removed in version 1.2. Use `criterion='squared_error'` "
-                "which is equivalent.",
-                FutureWarning,
-            )
-
         self._validate_params()
 
         if not self.warm_start:
@@ -515,8 +498,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     try:
                         self.init_.fit(X, y, sample_weight=sample_weight)
                     except TypeError as e:
-                        # regular estimator without SW support
-                        raise ValueError(msg) from e
+                        if "unexpected keyword argument 'sample_weight'" in str(e):
+                            # regular estimator without SW support
+                            raise ValueError(msg) from e
+                        else:  # regular estimator whose input checking failed
+                            raise
                     except ValueError as e:
                         if (
                             "pass parameters to specific steps of "
@@ -577,8 +563,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             self.estimators_ = self.estimators_[:n_stages]
             self.train_score_ = self.train_score_[:n_stages]
             if hasattr(self, "oob_improvement_"):
+                # OOB scores were computed
                 self.oob_improvement_ = self.oob_improvement_[:n_stages]
-
+                self.oob_scores_ = self.oob_scores_[:n_stages]
+                self.oob_score_ = self.oob_scores_[-1]
         self.n_estimators_ = n_stages
         return self
 
@@ -628,12 +616,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # subsampling
             if do_oob:
                 sample_mask = _random_sample_mask(n_samples, n_inbag, random_state)
-                # OOB score before adding this stage
-                old_oob_score = loss_(
-                    y[~sample_mask],
-                    raw_predictions[~sample_mask],
-                    sample_weight[~sample_mask],
-                )
+                if i == 0:  # store the initial loss to compute the OOB score
+                    initial_loss = loss_(
+                        y[~sample_mask],
+                        raw_predictions[~sample_mask],
+                        sample_weight[~sample_mask],
+                    )
 
             # fit next stage of trees
             raw_predictions = self._fit_stage(
@@ -655,11 +643,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     raw_predictions[sample_mask],
                     sample_weight[sample_mask],
                 )
-                self.oob_improvement_[i] = old_oob_score - loss_(
+                self.oob_scores_[i] = loss_(
                     y[~sample_mask],
                     raw_predictions[~sample_mask],
                     sample_weight[~sample_mask],
                 )
+                previous_loss = initial_loss if i == 0 else self.oob_scores_[i - 1]
+                self.oob_improvement_[i] = previous_loss - self.oob_scores_[i]
+                self.oob_score_ = self.oob_scores_[-1]
             else:
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = loss_(y, raw_predictions, sample_weight)
@@ -862,16 +853,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         return leaves
 
-    # TODO(1.2): Remove
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `n_features_` was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use `n_features_in_` instead."
-    )
-    @property
-    def n_features_(self):
-        return self.n_features_in_
-
     # TODO(1.3): Remove
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
@@ -928,8 +909,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         and an increase in bias.
         Values must be in the range `(0.0, 1.0]`.
 
-    criterion : {'friedman_mse', 'squared_error', 'mse'}, \
-            default='friedman_mse'
+    criterion : {'friedman_mse', 'squared_error'}, default='friedman_mse'
         The function to measure the quality of a split. Supported criteria are
         'friedman_mse' for the mean squared error with improvement score by
         Friedman, 'squared_error' for mean squared error. The default value of
@@ -937,10 +917,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         approximation in some cases.
 
         .. versionadded:: 0.18
-
-        .. deprecated:: 1.0
-            Criterion 'mse' was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion='squared_error'` which is equivalent.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1112,7 +1088,19 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
-        Only available if ``subsample < 1.0``
+        Only available if ``subsample < 1.0``.
+
+    oob_scores_ : ndarray of shape (n_estimators,)
+        The full history of the loss (= deviance) values on the out-of-bag
+        samples. Only available if `subsample < 1.0`.
+
+        .. versionadded:: 1.3
+
+    oob_score_ : float
+        The last value of the loss (= deviance) on the out-of-bag samples. It is
+        the same as `oob_scores_[-1]`. Only available if `subsample < 1.0`.
+
+        .. versionadded:: 1.3
 
     train_score_ : ndarray of shape (n_estimators,)
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
@@ -1137,13 +1125,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
-
-    n_features_ : int
-        The number of data features.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1484,14 +1465,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         combination of the two. 'quantile' allows quantile regression (use
         `alpha` to specify the quantile).
 
-        .. deprecated:: 1.0
-            The loss 'ls' was deprecated in v1.0 and will be removed in
-            version 1.2. Use `loss='squared_error'` which is equivalent.
-
-        .. deprecated:: 1.0
-            The loss 'lad' was deprecated in v1.0 and will be removed in
-            version 1.2. Use `loss='absolute_error'` which is equivalent.
-
     learning_rate : float, default=0.1
         Learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
@@ -1511,8 +1484,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         and an increase in bias.
         Values must be in the range `(0.0, 1.0]`.
 
-    criterion : {'friedman_mse', 'squared_error', 'mse'}, \
-            default='friedman_mse'
+    criterion : {'friedman_mse', 'squared_error'}, default='friedman_mse'
         The function to measure the quality of a split. Supported criteria are
         "friedman_mse" for the mean squared error with improvement score by
         Friedman, "squared_error" for mean squared error. The default value of
@@ -1520,10 +1492,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         approximation in some cases.
 
         .. versionadded:: 0.18
-
-        .. deprecated:: 1.0
-            Criterion 'mse' was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion='squared_error'` which is equivalent.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1694,7 +1662,19 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
-        Only available if ``subsample < 1.0``
+        Only available if ``subsample < 1.0``.
+
+    oob_scores_ : ndarray of shape (n_estimators,)
+        The full history of the loss (= deviance) values on the out-of-bag
+        samples. Only available if `subsample < 1.0`.
+
+        .. versionadded:: 1.3
+
+    oob_score_ : float
+        The last value of the loss (= deviance) on the out-of-bag samples. It is
+        the same as `oob_scores_[-1]`. Only available if `subsample < 1.0`.
+
+        .. versionadded:: 1.3
 
     train_score_ : ndarray of shape (n_estimators,)
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
@@ -1719,13 +1699,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         The number of estimators as selected by early stopping (if
         ``n_iter_no_change`` is specified). Otherwise it is set to
         ``n_estimators``.
-
-    n_features_ : int
-        The number of data features.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1784,15 +1757,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     0.4...
     """
 
-    # TODO(1.2): remove "ls" and "lad"
     _parameter_constraints: dict = {
         **BaseGradientBoosting._parameter_constraints,
-        "loss": [
-            StrOptions(
-                {"squared_error", "ls", "absolute_error", "lad", "huber", "quantile"},
-                deprecated={"ls", "lad"},
-            )
-        ],
+        "loss": [StrOptions({"squared_error", "absolute_error", "huber", "quantile"})],
         "init": [StrOptions({"zero"}), None, HasMethods(["fit", "predict"])],
         "alpha": [Interval(Real, 0.0, 1.0, closed="neither")],
     }

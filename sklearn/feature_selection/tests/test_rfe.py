@@ -66,6 +66,8 @@ class MockClassifier:
 def test_rfe_features_importance():
     generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
 
@@ -85,6 +87,8 @@ def test_rfe_features_importance():
 def test_rfe():
     generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     X_sparse = sparse.csr_matrix(X)
     y = iris.target
@@ -140,6 +144,8 @@ def test_rfe_percent_n_features():
     # test that the results are the same
     generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
     # there are 10 features in the data. We select 40%.
@@ -157,6 +163,8 @@ def test_rfe_percent_n_features():
 def test_rfe_mockclassifier():
     generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
 
@@ -173,6 +181,8 @@ def test_rfe_mockclassifier():
 def test_rfecv():
     generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = list(iris.target)  # regression test: list should be supported
 
@@ -180,14 +190,6 @@ def test_rfecv():
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1)
     rfecv.fit(X, y)
     # non-regression test for missing worst feature:
-
-    # TODO: Remove in v1.2 when grid_scores_ is removed
-    msg = (
-        r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
-        r"favor of `cv_results_` and will be removed in version 1\.2."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        assert len(rfecv.grid_scores_) == X.shape[1]
 
     for key in rfecv.cv_results_.keys():
         assert len(rfecv.cv_results_[key]) == X.shape[1]
@@ -226,10 +228,6 @@ def test_rfecv():
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, scoring=test_scorer)
     rfecv.fit(X, y)
 
-    # TODO: Remove in v1.2 when grid_scores_ is removed
-    with pytest.warns(FutureWarning, match=msg):
-        assert_array_equal(rfecv.grid_scores_, np.ones(rfecv.grid_scores_.shape))
-
     # In the event of cross validation score ties, the expected behavior of
     # RFECV is to return the FEWEST features that maximize the CV score.
     # Because test_scorer always returns 1.0 in this example, RFECV should
@@ -239,10 +237,6 @@ def test_rfecv():
     # Same as the first two tests, but with step=2
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=2)
     rfecv.fit(X, y)
-
-    # TODO: Remove in v1.2 when grid_scores_ is removed
-    with pytest.warns(FutureWarning, match=msg):
-        assert len(rfecv.grid_scores_) == 6
 
     for key in rfecv.cv_results_.keys():
         assert len(rfecv.cv_results_[key]) == 6
@@ -276,14 +270,6 @@ def test_rfecv_mockclassifier():
     rfecv.fit(X, y)
     # non-regression test for missing worst feature:
 
-    # TODO: Remove in v1.2 when grid_scores_ is removed
-    msg = (
-        r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
-        r"favor of `cv_results_` and will be removed in version 1\.2."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        assert len(rfecv.grid_scores_) == X.shape[1]
-
     for key in rfecv.cv_results_.keys():
         assert len(rfecv.cv_results_[key]) == X.shape[1]
 
@@ -310,8 +296,8 @@ def test_rfecv_verbose_output():
     assert len(verbose_output.readline()) > 0
 
 
-def test_rfecv_cv_results_size():
-    generator = check_random_state(0)
+def test_rfecv_cv_results_size(global_random_seed):
+    generator = check_random_state(global_random_seed)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = list(iris.target)  # regression test: list should be supported
@@ -327,14 +313,6 @@ def test_rfecv_cv_results_size():
         rfecv.fit(X, y)
 
         score_len = np.ceil((X.shape[1] - min_features_to_select) / step) + 1
-
-        # TODO: Remove in v1.2 when grid_scores_ is removed
-        msg = (
-            r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
-            r"favor of `cv_results_` and will be removed in version 1\.2."
-        )
-        with pytest.warns(FutureWarning, match=msg):
-            assert len(rfecv.grid_scores_) == score_len
 
         for key in rfecv.cv_results_.keys():
             assert len(rfecv.cv_results_[key]) == score_len
@@ -352,9 +330,11 @@ def test_rfe_estimator_tags():
     assert score.min() > 0.7
 
 
-def test_rfe_min_step():
+def test_rfe_min_step(global_random_seed):
     n_features = 10
-    X, y = make_friedman1(n_samples=50, n_features=n_features, random_state=0)
+    X, y = make_friedman1(
+        n_samples=50, n_features=n_features, random_state=global_random_seed
+    )
     n_samples, n_features = X.shape
     estimator = SVR(kernel="linear")
 
@@ -374,7 +354,7 @@ def test_rfe_min_step():
     assert sel.support_.sum() == n_features // 2
 
 
-def test_number_of_subsets_of_features():
+def test_number_of_subsets_of_features(global_random_seed):
     # In RFE, 'number_of_subsets_of_features'
     # = the number of iterations in '_fit'
     # = max(ranking_)
@@ -398,7 +378,7 @@ def test_number_of_subsets_of_features():
     for n_features, n_features_to_select, step in zip(
         n_features_list, n_features_to_select_list, step_list
     ):
-        generator = check_random_state(43)
+        generator = check_random_state(global_random_seed)
         X = generator.normal(size=(100, n_features))
         y = generator.rand(100).round()
         rfe = RFE(
@@ -424,24 +404,11 @@ def test_number_of_subsets_of_features():
     n_features_list = [11, 10]
     step_list = [2, 2]
     for n_features, step in zip(n_features_list, step_list):
-        generator = check_random_state(43)
+        generator = check_random_state(global_random_seed)
         X = generator.normal(size=(100, n_features))
         y = generator.rand(100).round()
         rfecv = RFECV(estimator=SVC(kernel="linear"), step=step)
         rfecv.fit(X, y)
-
-        # TODO: Remove in v1.2 when grid_scores_ is removed
-        msg = (
-            r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
-            r"favor of `cv_results_` and will be removed in version 1\.2."
-        )
-        with pytest.warns(FutureWarning, match=msg):
-            assert len(rfecv.grid_scores_) == formula1(
-                n_features, n_features_to_select, step
-            )
-            assert len(rfecv.grid_scores_) == formula2(
-                n_features, n_features_to_select, step
-            )
 
         for key in rfecv.cv_results_.keys():
             assert len(rfecv.cv_results_[key]) == formula1(
@@ -452,8 +419,8 @@ def test_number_of_subsets_of_features():
             )
 
 
-def test_rfe_cv_n_jobs():
-    generator = check_random_state(0)
+def test_rfe_cv_n_jobs(global_random_seed):
+    generator = check_random_state(global_random_seed)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
@@ -462,23 +429,11 @@ def test_rfe_cv_n_jobs():
     rfecv.fit(X, y)
     rfecv_ranking = rfecv.ranking_
 
-    # TODO: Remove in v1.2 when grid_scores_ is removed
-    msg = (
-        r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
-        r"favor of `cv_results_` and will be removed in version 1\.2."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        rfecv_grid_scores = rfecv.grid_scores_
-
     rfecv_cv_results_ = rfecv.cv_results_
 
     rfecv.set_params(n_jobs=2)
     rfecv.fit(X, y)
     assert_array_almost_equal(rfecv.ranking_, rfecv_ranking)
-
-    # TODO: Remove in v1.2 when grid_scores_ is removed
-    with pytest.warns(FutureWarning, match=msg):
-        assert_array_almost_equal(rfecv.grid_scores_, rfecv_grid_scores)
 
     assert rfecv_cv_results_.keys() == rfecv.cv_results_.keys()
     for key in rfecv_cv_results_.keys():
@@ -528,7 +483,6 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
         ("auto", ValueError),
         ("random", AttributeError),
         (lambda x: x.importance, AttributeError),
-        ([0], ValueError),
     ],
 )
 @pytest.mark.parametrize("Selector", [RFE, RFECV])
@@ -577,8 +531,8 @@ def test_w_pipeline_2d_coef_():
     assert sfm.transform(data).shape[1] == 2
 
 
-def test_rfecv_std_and_mean():
-    generator = check_random_state(0)
+def test_rfecv_std_and_mean(global_random_seed):
+    generator = check_random_state(global_random_seed)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target

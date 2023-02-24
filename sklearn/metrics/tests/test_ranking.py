@@ -3,6 +3,7 @@ import pytest
 import numpy as np
 import warnings
 from scipy.sparse import csr_matrix
+from scipy import stats
 
 from sklearn import datasets
 from sklearn import svm
@@ -35,6 +36,7 @@ from sklearn.metrics import top_k_accuracy_score
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import label_binarize
 
 
 ###############################################################################
@@ -593,7 +595,7 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
         [out_0, out_1, out_2],
     )
 
-    # Compute unweighted results (default behaviour)
+    # Compute unweighted results (default behaviour is average="macro")
     result_unweighted = (out_0 + out_1 + out_2) / 3.0
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multi_class="ovr", labels=labels),
@@ -609,6 +611,68 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
         ),
         result_weighted,
     )
+
+
+@pytest.mark.parametrize(
+    "multi_class, average",
+    [
+        ("ovr", "macro"),
+        ("ovr", "micro"),
+        ("ovo", "macro"),
+    ],
+)
+def test_perfect_imperfect_chance_multiclass_roc_auc(multi_class, average):
+    y_true = np.array([3, 1, 2, 0])
+
+    # Perfect classifier (from a ranking point of view) has roc_auc_score = 1.0
+    y_perfect = [
+        [0.0, 0.0, 0.0, 1.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.75, 0.05, 0.05, 0.15],
+    ]
+    assert_almost_equal(
+        roc_auc_score(y_true, y_perfect, multi_class=multi_class, average=average),
+        1.0,
+    )
+
+    # Imperfect classifier has roc_auc_score < 1.0
+    y_imperfect = [
+        [0.0, 0.0, 0.0, 1.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+    assert (
+        roc_auc_score(y_true, y_imperfect, multi_class=multi_class, average=average)
+        < 1.0
+    )
+
+    # Chance level classifier has roc_auc_score = 5.0
+    y_chance = 0.25 * np.ones((4, 4))
+    assert roc_auc_score(
+        y_true, y_chance, multi_class=multi_class, average=average
+    ) == pytest.approx(0.5)
+
+
+def test_micro_averaged_ovr_roc_auc(global_random_seed):
+    seed = global_random_seed
+    # Let's generate a set of random predictions and matching true labels such
+    # that the predictions are not perfect. To make the problem more interesting,
+    # we use an imbalanced class distribution (by using different parameters
+    # in the Dirichlet prior (conjugate prior of the multinomial distribution).
+    y_pred = stats.dirichlet.rvs([2.0, 1.0, 0.5], size=1000, random_state=seed)
+    y_true = np.asarray(
+        [
+            stats.multinomial.rvs(n=1, p=y_pred_i, random_state=seed).argmax()
+            for y_pred_i in y_pred
+        ]
+    )
+    y_onehot = label_binarize(y_true, classes=[0, 1, 2])
+    fpr, tpr, _ = roc_curve(y_onehot.ravel(), y_pred.ravel())
+    roc_auc_by_hand = auc(fpr, tpr)
+    roc_auc_auto = roc_auc_score(y_true, y_pred, multi_class="ovr", average="micro")
+    assert roc_auc_by_hand == pytest.approx(roc_auc_auto)
 
 
 @pytest.mark.parametrize(
@@ -694,10 +758,10 @@ def test_roc_auc_score_multiclass_labels_error(msg, y_true, labels, multi_class)
         ),
         (
             (
-                r"average must be one of \('macro', 'weighted', None\) for "
+                r"average must be one of \('micro', 'macro', 'weighted', None\) for "
                 r"multiclass problems"
             ),
-            {"average": "micro", "multi_class": "ovr"},
+            {"average": "samples", "multi_class": "ovr"},
         ),
         (
             (
@@ -2051,3 +2115,29 @@ def test_label_ranking_avg_precision_score_should_allow_csr_matrix_for_y_true_in
     y_score = np.array([[0.5, 0.9, 0.6], [0, 0, 1]])
     result = label_ranking_average_precision_score(y_true, y_score)
     assert result == pytest.approx(2 / 3)
+
+
+@pytest.mark.parametrize(
+    "metric", [average_precision_score, det_curve, precision_recall_curve, roc_curve]
+)
+@pytest.mark.parametrize(
+    "classes", [(False, True), (0, 1), (0.0, 1.0), ("zero", "one")]
+)
+def test_ranking_metric_pos_label_types(metric, classes):
+    """Check that the metric works with different types of `pos_label`.
+
+    We can expect `pos_label` to be a bool, an integer, a float, a string.
+    No error should be raised for those types.
+    """
+    rng = np.random.RandomState(42)
+    n_samples, pos_label = 10, classes[-1]
+    y_true = rng.choice(classes, size=n_samples, replace=True)
+    y_proba = rng.rand(n_samples)
+    result = metric(y_true, y_proba, pos_label=pos_label)
+    if isinstance(result, float):
+        assert not np.isnan(result)
+    else:
+        metric_1, metric_2, thresholds = result
+        assert not np.isnan(metric_1).any()
+        assert not np.isnan(metric_2).any()
+        assert not np.isnan(thresholds).any()

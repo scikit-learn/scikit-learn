@@ -15,10 +15,9 @@ from ..base import (
     TransformerMixin,
     ClusterMixin,
     BaseEstimator,
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils.extmath import row_norms
-from ..utils import deprecated
 from ..utils._param_validation import Interval
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
@@ -358,7 +357,7 @@ class _CFSubcluster:
 
 
 class Birch(
-    _ClassNamePrefixFeaturesOutMixin, ClusterMixin, TransformerMixin, BaseEstimator
+    ClassNamePrefixFeaturesOutMixin, ClusterMixin, TransformerMixin, BaseEstimator
 ):
     """Implements the BIRCH clustering algorithm.
 
@@ -502,24 +501,6 @@ class Birch(
         self.compute_labels = compute_labels
         self.copy = copy
 
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "`fit_` is deprecated in 1.0 and will be removed in 1.2."
-    )
-    @property
-    def fit_(self):
-        return self._deprecated_fit
-
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "`partial_fit_` is deprecated in 1.0 and will be removed in 1.2."
-    )
-    @property
-    def partial_fit_(self):
-        return self._deprecated_partial_fit
-
     def fit(self, X, y=None):
         """
         Build a CF Tree for the input data.
@@ -540,8 +521,6 @@ class Birch(
 
         self._validate_params()
 
-        # TODO: Remove deprecated flags in 1.2
-        self._deprecated_fit, self._deprecated_partial_fit = True, False
         return self._fit(X, partial=False)
 
     def _fit(self, X, partial):
@@ -652,8 +631,6 @@ class Birch(
         """
         self._validate_params()
 
-        # TODO: Remove deprecated flags in 1.2
-        self._deprecated_partial_fit, self._deprecated_fit = True, False
         if X is None:
             # Perform just the final global clustering step.
             self._global_clustering()
