@@ -244,9 +244,6 @@ Changelog
   during `transform` with no prior call to `fit` or `fit_transform`.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
-- |Enhancement| :func:`utils.multiclass.type_of_target` can identify pandas
-  nullable data types as classification targets. :pr:`25638` by `Thomas Fan`_.
-
 :mod:`sklearn.semi_supervised`
 ..............................
 
