@@ -60,9 +60,9 @@ cdef class Tree:
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
                           double weighted_n_node_samples,
-                          unsigned char missing_go_to_left) nogil except -1
-    cdef int _resize(self, SIZE_t capacity) nogil except -1
-    cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
+                          unsigned char missing_go_to_left) except -1 nogil
+    cdef int _resize(self, SIZE_t capacity) except -1 nogil
+    cdef int _resize_c(self, SIZE_t capacity=*) except -1 nogil
 
     cdef cnp.ndarray _get_value_ndarray(self)
     cdef cnp.ndarray _get_node_ndarray(self)

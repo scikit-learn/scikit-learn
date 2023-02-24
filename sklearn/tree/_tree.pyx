@@ -328,7 +328,7 @@ cdef inline bool _compare_records(
 cdef inline void _add_to_frontier(
     FrontierRecord rec,
     vector[FrontierRecord]& frontier,
-) nogil:
+) noexcept nogil:
     """Adds record `rec` to the priority queue `frontier`."""
     frontier.push_back(rec)
     push_heap(frontier.begin(), frontier.end(), &_compare_records)
@@ -461,7 +461,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     SIZE_t start, SIZE_t end, double impurity,
                                     bint is_first, bint is_left, Node* parent,
                                     SIZE_t depth,
-                                    FrontierRecord* res) nogil except -1:
+                                    FrontierRecord* res) except -1 nogil:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef SIZE_t node_id
@@ -715,14 +715,12 @@ cdef class Tree:
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
 
-        cdef Node[::1] node_memory_view = node_ndarray
-        cdef DOUBLE_t[:, :, ::1] value_memory_view = value_ndarray
-        nodes = memcpy(self.nodes, &node_memory_view[0],
+        nodes = memcpy(self.nodes, cnp.PyArray_DATA(node_ndarray),
                        self.capacity * sizeof(Node))
-        value = memcpy(self.value, &value_memory_view[0, 0, 0],
+        value = memcpy(self.value, cnp.PyArray_DATA(value_ndarray),
                        self.capacity * self.value_stride * sizeof(double))
 
-    cdef int _resize(self, SIZE_t capacity) nogil except -1:
+    cdef int _resize(self, SIZE_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays.
 
@@ -734,7 +732,7 @@ cdef class Tree:
             with gil:
                 raise MemoryError()
 
-    cdef int _resize_c(self, SIZE_t capacity=INTPTR_MAX) nogil except -1:
+    cdef int _resize_c(self, SIZE_t capacity=INTPTR_MAX) except -1 nogil:
         """Guts of _resize
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -769,7 +767,7 @@ cdef class Tree:
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
                           double weighted_n_node_samples,
-                          unsigned char missing_go_to_left) nogil except -1:
+                          unsigned char missing_go_to_left) except -1 nogil:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -1428,16 +1426,16 @@ cdef class _CCPPruneController:
     """Base class used by build_pruned_tree_ccp and ccp_pruning_path
     to control pruning.
     """
-    cdef bint stop_pruning(self, DOUBLE_t effective_alpha) nogil:
+    cdef bint stop_pruning(self, DOUBLE_t effective_alpha) noexcept nogil:
         """Return 1 to stop pruning and 0 to continue pruning"""
         return 0
 
     cdef void save_metrics(self, DOUBLE_t effective_alpha,
-                           DOUBLE_t subtree_impurities) nogil:
+                           DOUBLE_t subtree_impurities) noexcept nogil:
         """Save metrics when pruning"""
         pass
 
-    cdef void after_pruning(self, unsigned char[:] in_subtree) nogil:
+    cdef void after_pruning(self, unsigned char[:] in_subtree) noexcept nogil:
         """Called after pruning"""
         pass
 
@@ -1451,12 +1449,12 @@ cdef class _AlphaPruner(_CCPPruneController):
         self.ccp_alpha = ccp_alpha
         self.capacity = 0
 
-    cdef bint stop_pruning(self, DOUBLE_t effective_alpha) nogil:
+    cdef bint stop_pruning(self, DOUBLE_t effective_alpha) noexcept nogil:
         # The subtree on the previous iteration has the greatest ccp_alpha
         # less than or equal to self.ccp_alpha
         return self.ccp_alpha < effective_alpha
 
-    cdef void after_pruning(self, unsigned char[:] in_subtree) nogil:
+    cdef void after_pruning(self, unsigned char[:] in_subtree) noexcept nogil:
         """Updates the number of leaves in subtree"""
         for i in range(in_subtree.shape[0]):
             if in_subtree[i]:
@@ -1476,7 +1474,7 @@ cdef class _PathFinder(_CCPPruneController):
 
     cdef void save_metrics(self,
                            DOUBLE_t effective_alpha,
-                           DOUBLE_t subtree_impurities) nogil:
+                           DOUBLE_t subtree_impurities) noexcept nogil:
         self.ccp_alphas[self.count] = effective_alpha
         self.impurities[self.count] = subtree_impurities
         self.count += 1

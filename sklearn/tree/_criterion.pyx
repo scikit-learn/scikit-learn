@@ -49,7 +49,7 @@ cdef class Criterion:
         const SIZE_t[:] sample_indices,
         SIZE_t start,
         SIZE_t end,
-    ) nogil except -1:
+    ) except -1 nogil:
         """Placeholder for a method which will initialize the criterion.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -75,7 +75,7 @@ cdef class Criterion:
         """
         pass
 
-    cdef void init_missing(self, SIZE_t n_missing) nogil:
+    cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
         """Initalize sum_missing if there are missing values.
 
         This method assumes that caller placed the missing samples in
@@ -88,21 +88,21 @@ cdef class Criterion:
         """
         pass
 
-    cdef int reset(self) nogil except -1:
+    cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
 
         This method must be implemented by the subclass.
         """
         pass
 
-    cdef int reverse_reset(self) nogil except -1:
+    cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end.
 
         This method must be implemented by the subclass.
         """
         pass
 
-    cdef int update(self, SIZE_t new_pos) nogil except -1:
+    cdef int update(self, SIZE_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left child.
 
         This updates the collected statistics by moving sample_indices[pos:new_pos]
@@ -116,7 +116,7 @@ cdef class Criterion:
         """
         pass
 
-    cdef double node_impurity(self) nogil:
+    cdef double node_impurity(self) noexcept nogil:
         """Placeholder for calculating the impurity of the node.
 
         Placeholder for a method which will evaluate the impurity of
@@ -127,7 +127,7 @@ cdef class Criterion:
         pass
 
     cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
+                                double* impurity_right) noexcept nogil:
         """Placeholder for calculating the impurity of children.
 
         Placeholder for a method which evaluates the impurity in
@@ -145,7 +145,7 @@ cdef class Criterion:
         """
         pass
 
-    cdef void node_value(self, double* dest) nogil:
+    cdef void node_value(self, double* dest) noexcept nogil:
         """Placeholder for storing the node value.
 
         Placeholder for a method which will compute the node value
@@ -158,7 +158,7 @@ cdef class Criterion:
         """
         pass
 
-    cdef double proxy_impurity_improvement(self) nogil:
+    cdef double proxy_impurity_improvement(self) noexcept nogil:
         """Compute a proxy of the impurity reduction.
 
         This method is used to speed up the search for the best split.
@@ -178,7 +178,7 @@ cdef class Criterion:
 
     cdef double impurity_improvement(self, double impurity_parent,
                                      double impurity_left,
-                                     double impurity_right) nogil:
+                                     double impurity_right) noexcept nogil:
         """Compute the improvement in impurity.
 
         This method computes the improvement in impurity when a split occurs.
@@ -275,7 +275,7 @@ cdef class ClassificationCriterion(Criterion):
         const SIZE_t[:] sample_indices,
         SIZE_t start,
         SIZE_t end
-    ) nogil except -1:
+    ) except -1 nogil:
         """Initialize the criterion.
 
         This initializes the criterion at node sample_indices[start:end] and children
@@ -337,7 +337,7 @@ cdef class ClassificationCriterion(Criterion):
         self.reset()
         return 0
 
-    cdef void init_missing(self, SIZE_t n_missing) nogil:
+    cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
         """Initalize sum_missing if there are missing values.
 
         This method assumes that caller placed the missing samples in
@@ -378,7 +378,7 @@ cdef class ClassificationCriterion(Criterion):
         double* weighted_n_1,
         double* weighted_n_2,
         bint put_missing_in_1,
-    ) nogil:
+    ) noexcept nogil:
         """Distrubute sum_missing, sum_total, and sum_missing into sum_1 and sum_2.
 
         If there are missing values and:
@@ -404,7 +404,6 @@ cdef class ClassificationCriterion(Criterion):
             weighted_n_1[0] = 0.0
             weighted_n_2[0] = self.weighted_n_node_samples
 
-    cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -420,7 +419,7 @@ cdef class ClassificationCriterion(Criterion):
         )
         return 0
 
-    cdef int reverse_reset(self) nogil except -1:
+    cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -436,7 +435,7 @@ cdef class ClassificationCriterion(Criterion):
         )
         return 0
 
-    cdef int update(self, SIZE_t new_pos) nogil except -1:
+    cdef int update(self, SIZE_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left child.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -505,14 +504,14 @@ cdef class ClassificationCriterion(Criterion):
         self.pos = new_pos
         return 0
 
-    cdef double node_impurity(self) nogil:
+    cdef double node_impurity(self) noexcept nogil:
         pass
 
     cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
+                                double* impurity_right) noexcept nogil:
         pass
 
-    cdef void node_value(self, double* dest) nogil:
+    cdef void node_value(self, double* dest) noexcept nogil:
         """Compute the node value of sample_indices[start:end] and save it into dest.
 
         Parameters
@@ -543,7 +542,7 @@ cdef class Entropy(ClassificationCriterion):
         cross-entropy = -\sum_{k=0}^{K-1} count_k log(count_k)
     """
 
-    cdef double node_impurity(self) nogil:
+    cdef double node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
 
         Evaluate the cross-entropy criterion as impurity of the current node,
@@ -565,7 +564,7 @@ cdef class Entropy(ClassificationCriterion):
         return entropy / self.n_outputs
 
     cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
+                                double* impurity_right) noexcept nogil:
         """Evaluate the impurity in children nodes.
 
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
@@ -617,7 +616,7 @@ cdef class Gini(ClassificationCriterion):
               = 1 - \sum_{k=0}^{K-1} count_k ** 2
     """
 
-    cdef double node_impurity(self) nogil:
+    cdef double node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
 
         Evaluate the Gini criterion as impurity of the current node,
@@ -643,7 +642,7 @@ cdef class Gini(ClassificationCriterion):
         return gini / self.n_outputs
 
     cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
+                                double* impurity_right) noexcept nogil:
         """Evaluate the impurity in children nodes.
 
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
@@ -741,7 +740,7 @@ cdef class RegressionCriterion(Criterion):
         const SIZE_t[:] sample_indices,
         SIZE_t start,
         SIZE_t end,
-    ) nogil except -1:
+    ) except -1 nogil:
         """Initialize the criterion.
 
         This initializes the criterion at node sample_indices[start:end] and children
@@ -784,7 +783,7 @@ cdef class RegressionCriterion(Criterion):
         self.reset()
         return 0
 
-    cdef void init_missing(self, SIZE_t n_missing) nogil:
+    cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
         """Initalize sum_missing if there are missing values.
 
         This method assumes that caller placed the missing samples in
@@ -823,7 +822,7 @@ cdef class RegressionCriterion(Criterion):
         double[::1] sum_2,
         double* weighted_n_1,
         double* weighted_n_2,
-        bint put_missing_in_1) nogil:
+        bint put_missing_in_1) noexcept nogil:
         """Distrubute sum_missing, sum_total, and sum_missing into sum_1 and sum_2.
 
         If there are missing values and:
@@ -848,7 +847,6 @@ cdef class RegressionCriterion(Criterion):
             weighted_n_1[0] = 0.0
             weighted_n_2[0] = self.weighted_n_node_samples
 
-    cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start."""
         self.pos = self.start
         self._move_sums(
@@ -860,7 +858,7 @@ cdef class RegressionCriterion(Criterion):
         )
         return 0
 
-    cdef int reverse_reset(self) nogil except -1:
+    cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end."""
         self.pos = self.end
         self._move_sums(
@@ -872,7 +870,7 @@ cdef class RegressionCriterion(Criterion):
         )
         return 0
 
-    cdef int update(self, SIZE_t new_pos) nogil except -1:
+    cdef int update(self, SIZE_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left."""
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
         cdef const SIZE_t[:] sample_indices = self.sample_indices
@@ -928,14 +926,14 @@ cdef class RegressionCriterion(Criterion):
         self.pos = new_pos
         return 0
 
-    cdef double node_impurity(self) nogil:
+    cdef double node_impurity(self) noexcept nogil:
         pass
 
     cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
+                                double* impurity_right) noexcept nogil:
         pass
 
-    cdef void node_value(self, double* dest) nogil:
+    cdef void node_value(self, double* dest) noexcept nogil:
         """Compute the node value of sample_indices[start:end] into dest."""
         cdef SIZE_t k
 
@@ -949,7 +947,7 @@ cdef class MSE(RegressionCriterion):
         MSE = var_left + var_right
     """
 
-    cdef double node_impurity(self) nogil:
+    cdef double node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
 
         Evaluate the MSE criterion as impurity of the current node,
@@ -965,7 +963,7 @@ cdef class MSE(RegressionCriterion):
 
         return impurity / self.n_outputs
 
-    cdef double proxy_impurity_improvement(self) nogil:
+    cdef double proxy_impurity_improvement(self) noexcept nogil:
         """Compute a proxy of the impurity reduction.
 
         This method is used to speed up the search for the best split.
@@ -997,7 +995,7 @@ cdef class MSE(RegressionCriterion):
                 proxy_impurity_right / self.weighted_n_right)
 
     cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
+                                double* impurity_right) noexcept nogil:
         """Evaluate the impurity in children nodes.
 
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
@@ -1049,6 +1047,8 @@ cdef class MAE(RegressionCriterion):
 
     cdef cnp.ndarray left_child
     cdef cnp.ndarray right_child
+    cdef void** left_child_ptr
+    cdef void** right_child_ptr
     cdef DOUBLE_t[::1] node_medians
 
     def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
@@ -1083,6 +1083,9 @@ cdef class MAE(RegressionCriterion):
             self.left_child[k] = WeightedMedianCalculator(n_samples)
             self.right_child[k] = WeightedMedianCalculator(n_samples)
 
+        self.left_child_ptr = <void**> cnp.PyArray_DATA(self.left_child)
+        self.right_child_ptr = <void**> cnp.PyArray_DATA(self.right_child)
+
     cdef int init(
         self,
         const DOUBLE_t[:, ::1] y,
@@ -1091,7 +1094,7 @@ cdef class MAE(RegressionCriterion):
         const SIZE_t[:] sample_indices,
         SIZE_t start,
         SIZE_t end,
-    ) nogil except -1:
+    ) except -1 nogil:
         """Initialize the criterion.
 
         This initializes the criterion at node sample_indices[start:end] and children
@@ -1110,11 +1113,8 @@ cdef class MAE(RegressionCriterion):
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
-        cdef void** left_child
-        cdef void** right_child
-
-        left_child = <void**> self.left_child.data
-        right_child = <void**> self.right_child.data
+        cdef void** left_child = self.left_child_ptr
+        cdef void** right_child = self.right_child_ptr
 
         for k in range(self.n_outputs):
             (<WeightedMedianCalculator> left_child[k]).reset()
@@ -1141,14 +1141,13 @@ cdef class MAE(RegressionCriterion):
         self.reset()
         return 0
 
-    cdef void init_missing(self, SIZE_t n_missing) nogil:
+    cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
         """Raise error if n_missing != 0."""
         if n_missing == 0:
             return
         with gil:
             raise ValueError("missing values is not supported for MAE.")
 
-    cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -1158,8 +1157,8 @@ cdef class MAE(RegressionCriterion):
         cdef DOUBLE_t value
         cdef DOUBLE_t weight
 
-        cdef void** left_child = <void**> self.left_child.data
-        cdef void** right_child = <void**> self.right_child.data
+        cdef void** left_child = self.left_child_ptr
+        cdef void** right_child = self.right_child_ptr
 
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
@@ -1179,7 +1178,7 @@ cdef class MAE(RegressionCriterion):
                                                                  weight)
         return 0
 
-    cdef int reverse_reset(self) nogil except -1:
+    cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -1191,8 +1190,8 @@ cdef class MAE(RegressionCriterion):
 
         cdef DOUBLE_t value
         cdef DOUBLE_t weight
-        cdef void** left_child = <void**> self.left_child.data
-        cdef void** right_child = <void**> self.right_child.data
+        cdef void** left_child = self.left_child_ptr
+        cdef void** right_child = self.right_child_ptr
 
         # reverse reset the WeightedMedianCalculators, right should have no
         # elements and left should have all elements.
@@ -1207,7 +1206,7 @@ cdef class MAE(RegressionCriterion):
                                                                 weight)
         return 0
 
-    cdef int update(self, SIZE_t new_pos) nogil except -1:
+    cdef int update(self, SIZE_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -1216,8 +1215,8 @@ cdef class MAE(RegressionCriterion):
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
         cdef const SIZE_t[:] sample_indices = self.sample_indices
 
-        cdef void** left_child = <void**> self.left_child.data
-        cdef void** right_child = <void**> self.right_child.data
+        cdef void** left_child = self.left_child_ptr
+        cdef void** right_child = self.right_child_ptr
 
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
@@ -1264,13 +1263,13 @@ cdef class MAE(RegressionCriterion):
         self.pos = new_pos
         return 0
 
-    cdef void node_value(self, double* dest) nogil:
+    cdef void node_value(self, double* dest) noexcept nogil:
         """Computes the node value of sample_indices[start:end] into dest."""
         cdef SIZE_t k
         for k in range(self.n_outputs):
             dest[k] = <double> self.node_medians[k]
 
-    cdef double node_impurity(self) nogil:
+    cdef double node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
 
         Evaluate the MAE criterion as impurity of the current node,
@@ -1295,7 +1294,7 @@ cdef class MAE(RegressionCriterion):
         return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
     cdef void children_impurity(self, double* p_impurity_left,
-                                double* p_impurity_right) nogil:
+                                double* p_impurity_right) noexcept nogil:
         """Evaluate the impurity in children nodes.
 
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
@@ -1314,8 +1313,8 @@ cdef class MAE(RegressionCriterion):
         cdef DOUBLE_t impurity_left = 0.0
         cdef DOUBLE_t impurity_right = 0.0
 
-        cdef void** left_child = <void**> self.left_child.data
-        cdef void** right_child = <void**> self.right_child.data
+        cdef void** left_child = self.left_child_ptr
+        cdef void** right_child = self.right_child_ptr
 
         for k in range(self.n_outputs):
             median = (<WeightedMedianCalculator> left_child[k]).get_median()
@@ -1351,7 +1350,7 @@ cdef class FriedmanMSE(MSE):
         improvement = n_left * n_right * diff^2 / (n_left + n_right)
     """
 
-    cdef double proxy_impurity_improvement(self) nogil:
+    cdef double proxy_impurity_improvement(self) noexcept nogil:
         """Compute a proxy of the impurity reduction.
 
         This method is used to speed up the search for the best split.
@@ -1378,7 +1377,7 @@ cdef class FriedmanMSE(MSE):
         return diff * diff / (self.weighted_n_left * self.weighted_n_right)
 
     cdef double impurity_improvement(self, double impurity_parent, double
-                                     impurity_left, double impurity_right) nogil:
+                                     impurity_left, double impurity_right) noexcept nogil:
         # Note: none of the arguments are used here
         cdef double total_sum_left = 0.0
         cdef double total_sum_right = 0.0
@@ -1418,7 +1417,7 @@ cdef class Poisson(RegressionCriterion):
     # children_impurity would only need to go over left xor right split, not
     # both. This could be faster.
 
-    cdef double node_impurity(self) nogil:
+    cdef double node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
 
         Evaluate the Poisson criterion as impurity of the current node,
@@ -1428,7 +1427,7 @@ cdef class Poisson(RegressionCriterion):
         return self.poisson_loss(self.start, self.end, self.sum_total,
                                  self.weighted_n_node_samples)
 
-    cdef double proxy_impurity_improvement(self) nogil:
+    cdef double proxy_impurity_improvement(self) noexcept nogil:
         """Compute a proxy of the impurity reduction.
 
         This method is used to speed up the search for the best split.
@@ -1475,7 +1474,7 @@ cdef class Poisson(RegressionCriterion):
         return - proxy_impurity_left - proxy_impurity_right
 
     cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
+                                double* impurity_right) noexcept nogil:
         """Evaluate the impurity in children nodes.
 
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
@@ -1495,7 +1494,7 @@ cdef class Poisson(RegressionCriterion):
                                       SIZE_t start,
                                       SIZE_t end,
                                       const double[::1] y_sum,
-                                      DOUBLE_t weight_sum) nogil:
+                                      DOUBLE_t weight_sum) noexcept nogil:
         """Helper function to compute Poisson loss (~deviance) of a given node.
         """
         cdef const DOUBLE_t[:, ::1] y = self.y
