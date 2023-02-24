@@ -814,6 +814,14 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     return fps, tps, y_score[threshold_idxs]
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "probas_pred": ["array-like"],
+        "pos_label": [Real, str, "boolean", None],
+        "sample_weight": ["array-like", None],
+    }
+)
 def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight=None):
     """Compute precision-recall pairs for different probability thresholds.
 

@@ -134,6 +134,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.multilabel_confusion_matrix",
     "sklearn.metrics.mutual_info_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
+    "sklearn.metrics.precision_recall_curve",
     "sklearn.metrics.precision_recall_fscore_support",
     "sklearn.metrics.r2_score",
     "sklearn.metrics.roc_curve",
