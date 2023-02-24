@@ -702,14 +702,14 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
         "y_true": ["array-like", "sparse matrix"],
         "y_pred": ["array-like", "sparse matrix"],
         "labels": ["array-like", None],
-        "pos_label": [Real, str, int, "boolean", None],
+        "pos_label": [Real, str, "boolean", None],
         "average": [
             StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
             None,
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Integral, {0, 1}),
+            Options(Real, {0, 1}),
             StrOptions({"warn"}),
         ],
     }
