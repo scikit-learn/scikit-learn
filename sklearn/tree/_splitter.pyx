@@ -425,7 +425,9 @@ cdef inline int node_split_best(
                     best_proxy_improvement = current_proxy_improvement
                     if p < end_non_missing:
                         # sum of halves is used to avoid infinite value
-                        current_split.threshold = feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
+                        current_split.threshold = (
+                            feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
+                        )
 
                         if (
                             current_split.threshold == feature_values[p] or
@@ -815,7 +817,9 @@ cdef class DensePartitioner:
         self.X = X
         self.samples = samples
         self.feature_values = feature_values
-        self.has_missings = _any_isnan_axis0(X)
+        # self.has_missings = _any_isnan_axis0(X)
+
+        self.has_missings = np.zeros(X.shape[1], dtype=np.bool_)
 
     cdef inline void init_node_split(self, SIZE_t start, SIZE_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""

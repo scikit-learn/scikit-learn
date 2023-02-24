@@ -15,6 +15,7 @@
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.math cimport fabs
+from cython cimport final
 
 import numpy as np
 cimport numpy as cnp
@@ -371,7 +372,8 @@ cdef class ClassificationCriterion(Criterion):
 
             self.weighted_n_missing += w
 
-    cdef void _move_sums(
+    @final
+    cdef inline void _move_sums(
         self,
         double[:, ::1] sum_1,
         double[:, ::1] sum_2,
@@ -817,7 +819,8 @@ cdef class RegressionCriterion(Criterion):
 
             self.weighted_n_missing += w
 
-    cdef void _move_sums(
+    @final
+    cdef inline void _move_sums(
         self,
         double[::1] sum_1,
         double[::1] sum_2,

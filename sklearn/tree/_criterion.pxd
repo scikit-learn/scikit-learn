@@ -86,7 +86,7 @@ cdef class ClassificationCriterion(Criterion):
     cdef double[:, ::1] sum_right   # Same as above, but for the right side of the split
     cdef double[:, ::1] sum_missing # Same as above, but for missing values in X
 
-    cdef void _move_sums(
+    cdef inline void _move_sums(
         self,
         double[:, ::1] sum_1,
         double[:, ::1] sum_2,
@@ -105,7 +105,7 @@ cdef class RegressionCriterion(Criterion):
     cdef double[::1] sum_right   # Same as above, but for the right side of the split
     cdef double[::1] sum_missing # Same as above, but for missing values in X
 
-    cdef void _move_sums(
+    cdef inline void _move_sums(
         self,
         double[::1] sum_1,
         double[::1] sum_2,
