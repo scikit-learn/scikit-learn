@@ -33,8 +33,8 @@ Calibration curves
 Calibration curves, also referred to as the *reliability diagrams* (Wilks 1995 [2]_),
 compare how well the probabilistic predictions of a binary classifier are calibrated.
 It plots the frequency of the positive label (to be more precise, an estimation of the
-*conditional event probability* :math:`P(Y=1|predict_proba)`) on the y-axis against the
-predicted probability :term:`predict_proba` of a model on the x-axis.
+*conditional event probability* :math:`P(Y=1|\text{predict\_proba})`) on the y-axis
+against the predicted probability :term:`predict_proba` of a model on the x-axis.
 The tricky part is to get values for the y-axis.
 In scikit-learn, this is accomplished by binning the predictions such that the x-axis
 represents the average predicted probability in each bin.
@@ -42,7 +42,7 @@ The y-axis is then the *fraction of positives* given the predictions of that bin
 the proportion of samples whose class is the positive class (in each bin).
 
 The top calibration curve plot is created with
-:func:`CalibrationDisplay.from_estimators`, which uses :func:`calibration_curve` to
+:func:`CalibrationDisplay.from_estimator`, which uses :func:`calibration_curve` to
 calculate the per bin average predicted probabilities and fraction of positives.
 :func:`CalibrationDisplay.from_estimator`
 takes as input a fitted classifier, which is used to calculate the predicted
@@ -60,10 +60,12 @@ by showing the number of samples in each predicted probability bin.
 
 .. currentmodule:: sklearn.linear_model
 
-:class:`LogisticRegression` returns well calibrated predictions by default as it is
-build the canonical link function for its loss, i.e. :ref:`log_loss`. This leads to
-the so-called **balance property**, see [7]_. In contrast to that, the other shown
-models return biased probabilities; with different biases per model:
+:class:`LogisticRegression` returns well calibrated predictions by default as it has a
+canonical link function for its loss, i.e. the logit-link for the :ref:`log_loss`.
+This leads to the so-called **balance property**, see [7]_ and
+:ref:`<logistic_regression>`.
+In contrast to that, the other shown models return biased probabilities; with
+different biases per model.
 
 .. currentmodule:: sklearn.naive_bayes
 
@@ -204,7 +206,7 @@ the classifier output for each binary class is normally distributed with
 the same variance [6]_. This can be a problem for highly imbalanced
 classification problems, where outputs do not have equal variance.
 
-In general this method is most effective for a setting of small sample size or when the
+In general this method is most effective for small sample sizes or when the
 un-calibrated model is under-confident and has similar calibration errors for both
 high and low outputs.
 
