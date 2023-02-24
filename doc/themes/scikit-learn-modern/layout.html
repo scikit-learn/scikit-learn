@@ -47,11 +47,11 @@
     <div id="sk-sidebar-wrapper" class="border-right">
       <div class="sk-sidebar-toc-wrapper">
         <div class="sk-sidebar-toc-logo">
-          {%- if logo %}
+          {%- if logo_url %}
           <a href="{{ pathto('index') }}">
             <img
               class="sk-brand-img"
-              src="{{ pathto('_static/' + logo, 1) }}"
+              src="{{ logo_url|e }}"
               alt="logo"/>
           </a>
           {%- endif %}
