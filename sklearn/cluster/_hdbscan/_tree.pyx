@@ -287,45 +287,39 @@ cdef cnp.float64_t[::1] max_lambdas(cnp.ndarray[HIERARCHY_t, ndim=1] tree):
     return deaths
 
 
-cdef class TreeUnionFind (object):
+cdef class TreeUnionFind:
 
-    cdef cnp.ndarray _data_arr
-    cdef cnp.intp_t[:, ::1] _data
-    cdef cnp.ndarray is_component
+    cdef cnp.intp_t[:, ::1] data
+    cdef cnp.uint8_t[::1] is_component
 
     def __init__(self, size):
-        self._data_arr = np.zeros((size, 2), dtype=np.intp)
-        self._data_arr.T[0] = np.arange(size)
-        self._data = (<cnp.intp_t[:size, :2:1]> (
-            <cnp.intp_t *> self._data_arr.data))
+        cdef cnp.ndarray[cnp.intp_t, ndim=2] data_arr
+        data_arr = np.zeros((size, 2), dtype=np.intp)
+        data_arr.T[0] = np.arange(size)
+        self.data = data_arr
         self.is_component = np.ones(size, dtype=bool)
 
-    cdef union_(self, cnp.intp_t x, cnp.intp_t y):
+    cdef void union(self, cnp.intp_t x, cnp.intp_t y):
         cdef cnp.intp_t x_root = self.find(x)
         cdef cnp.intp_t y_root = self.find(y)
 
-        if self._data[x_root, 1] < self._data[y_root, 1]:
-            self._data[x_root, 0] = y_root
-        elif self._data[x_root, 1] > self._data[y_root, 1]:
-            self._data[y_root, 0] = x_root
+        if self.data[x_root, 1] < self.data[y_root, 1]:
+            self.data[x_root, 0] = y_root
+        elif self.data[x_root, 1] > self.data[y_root, 1]:
+            self.data[y_root, 0] = x_root
         else:
-            self._data[y_root, 0] = x_root
-            self._data[x_root, 1] += 1
-
+            self.data[y_root, 0] = x_root
+            self.data[x_root, 1] += 1
         return
 
     cdef find(self, cnp.intp_t x):
-        if self._data[x, 0] != x:
-            self._data[x, 0] = self.find(self._data[x, 0])
+        if self.data[x, 0] != x:
+            self.data[x, 0] = self.find(self.data[x, 0])
             self.is_component[x] = False
-        return self._data[x, 0]
-
-    cdef cnp.ndarray[cnp.intp_t, ndim=1] components(self):
-        return self.is_component.nonzero()[0]
-
+        return self.data[x, 0]
 
 cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
-        cnp.ndarray linkage,
+        cnp.ndarray[cnp.float64_t, ndim=2] linkage,
         cnp.float64_t cut,
         cnp.intp_t min_cluster_size
     ):
@@ -355,28 +349,25 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
 
     cdef cnp.intp_t root
     cdef cnp.intp_t num_points
-    cdef cnp.ndarray[cnp.intp_t, ndim=1] result_arr
-    cdef cnp.ndarray[cnp.intp_t, ndim=1] unique_labels
-    cdef cnp.ndarray[cnp.intp_t, ndim=1] cluster_size
-    cdef cnp.intp_t *result
+    cdef cnp.intp_t[::1] unique_labels
+    cdef cnp.intp_t[::1] cluster_size
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] result
     cdef TreeUnionFind union_find
-    cdef cnp.intp_t n
-    cdef cnp.intp_t cluster
-    cdef cnp.intp_t cluster_id
+    cdef cnp.intp_t n, cluster, cluster_id
+    cdef dict cluster_label_map
 
     root = 2 * linkage.shape[0]
     num_points = root // 2 + 1
 
-    result_arr = np.empty(num_points, dtype=np.intp)
-    result = (<cnp.intp_t *> result_arr.data)
+    result = np.empty(num_points, dtype=np.intp)
 
-    union_find = TreeUnionFind(<cnp.intp_t> root + 1)
+    union_find = TreeUnionFind(root + 1)
 
     cluster = num_points
     for node in linkage:
         if node[2] < cut:
-            union_find.union_(<cnp.intp_t> node[0], cluster)
-            union_find.union_(<cnp.intp_t> node[1], cluster)
+            union_find.union(<cnp.intp_t> node[0], cluster)
+            union_find.union(<cnp.intp_t> node[1], cluster)
         cluster += 1
 
     cluster_size = np.zeros(cluster, dtype=np.intp)
@@ -387,7 +378,7 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
 
     cluster_label_map = {-1: -1}
     cluster_label = 0
-    unique_labels = np.unique(result_arr)
+    unique_labels = np.unique(result)
 
     for cluster in unique_labels:
         if cluster_size[cluster] < min_cluster_size:
@@ -399,35 +390,32 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
     for n in range(num_points):
         result[n] = cluster_label_map[result[n]]
 
-    return result_arr
+    return result
 
 
 cdef cnp.ndarray[cnp.intp_t, ndim=1] do_labelling(
-        cnp.ndarray tree,
+        cnp.ndarray[HIERARCHY_t, ndim=1] tree,
         set clusters,
         dict cluster_label_map,
-        cnp.intp_t allow_single_cluster,
+        cnp.uint8_t allow_single_cluster,
         cnp.float64_t cluster_selection_epsilon):
 
     cdef cnp.intp_t root_cluster
-    cdef cnp.ndarray[cnp.intp_t, ndim=1] result_arr
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] result
     cdef cnp.ndarray[cnp.intp_t, ndim=1] parents
     cdef cnp.ndarray[cnp.intp_t, ndim=1] children
     cdef cnp.ndarray[cnp.float64_t, ndim=1] lambdas
-    cdef cnp.intp_t *result
     cdef TreeUnionFind union_find
-    cdef cnp.intp_t parent
-    cdef cnp.intp_t child
-    cdef cnp.intp_t n
-    cdef cnp.intp_t cluster
+    cdef cnp.intp_t parent, child, cluster, n
+    cdef cnp.int64_t cluster_label, label
+    cdef cnp.intp_t NOISE = -1
 
     children = tree['right_node']
     parents = tree['left_node']
     lambdas = tree['lambda_val']
 
     root_cluster = parents.min()
-    result_arr = np.empty(root_cluster, dtype=np.intp)
-    result = (<cnp.intp_t *> result_arr.data)
+    result = np.empty(root_cluster, dtype=np.intp)
 
     union_find = TreeUnionFind(parents.max() + 1)
 
@@ -435,30 +423,23 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1] do_labelling(
         child = children[n]
         parent = parents[n]
         if child not in clusters:
-            union_find.union_(parent, child)
+            union_find.union(parent, child)
 
     for n in range(root_cluster):
         cluster = union_find.find(n)
-        if cluster < root_cluster:
-            result[n] = -1
-        elif cluster == root_cluster:
-            if len(clusters) == 1 and allow_single_cluster:
-                if cluster_selection_epsilon != 0.0:
-                    if tree['lambda_val'][tree['right_node'] == n] >= 1 / cluster_selection_epsilon :
-                        result[n] = cluster_label_map[cluster]
-                    else:
-                        result[n] = -1
-                elif tree['lambda_val'][tree['right_node'] == n] >= \
-                     tree['lambda_val'][tree['left_node'] == cluster].max():
-                    result[n] = cluster_label_map[cluster]
-                else:
-                    result[n] = -1
-            else:
-                result[n] = -1
-        else:
-            result[n] = cluster_label_map[cluster]
-
-    return result_arr
+        label = NOISE
+        if cluster != root_cluster:
+            label = cluster_label_map[cluster]
+            result[n] = label
+            continue
+        if len(clusters) == 1 and allow_single_cluster:
+            if cluster_selection_epsilon != 0.0:
+                if lambdas[children == n] >= 1 / cluster_selection_epsilon :
+                    label = cluster_label_map[cluster]
+            elif lambdas[children == n] >= lambdas[parents == cluster].max():
+                label = cluster_label_map[cluster]
+        result[n] = label
+    return result
 
 
 cdef get_probabilities(cnp.ndarray[HIERARCHY_t, ndim=1] tree, dict cluster_map, cnp.ndarray labels):
