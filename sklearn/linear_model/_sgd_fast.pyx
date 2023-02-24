@@ -36,17 +36,17 @@ cdef extern from *:
     #define PA1 5
     #define PA2 6
     """
-    const int NO_PENALTY = 0
-    const int L1 = 1
-    const int L2 = 2
-    const int ELASTICNET = 3
+    int NO_PENALTY = 0
+    int L1 = 1
+    int L2 = 2
+    int ELASTICNET = 3
 
-    const int CONSTANT = 1
-    const int OPTIMAL = 2
-    const int INVSCALING = 3
-    const int ADAPTIVE = 4
-    const int PA1 = 5
-    const int PA2 = 6
+    int CONSTANT = 1
+    int OPTIMAL = 2
+    int INVSCALING = 3
+    int ADAPTIVE = 4
+    int PA1 = 5
+    int PA2 = 6
 
 
 # ----------------------------------------
