@@ -68,7 +68,7 @@ cdef void update_center_dense(
         floating[:, ::1] centers_new,        # OUT
         floating[::1] weight_sums,           # INOUT
         const int[::1] labels,               # IN
-        int *indices) nogil:                 # TMP
+        int *indices) noexcept nogil:        # TMP
     """Update of a single center for dense MinibatchKMeans"""
     cdef:
         int n_samples = sample_weight.shape[0]
@@ -178,7 +178,7 @@ cdef void update_center_sparse(
         floating[:, ::1] centers_new,        # OUT
         floating[::1] weight_sums,           # INOUT
         const int[::1] labels,               # IN
-        int *indices) nogil:                 # TMP
+        int *indices) noexcept nogil:        # TMP
     """Update of a single center for sparse MinibatchKMeans"""
     cdef:
         int n_samples = sample_weight.shape[0]
