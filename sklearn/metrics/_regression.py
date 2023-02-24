@@ -976,6 +976,12 @@ def r2_score(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+    }
+)
 def max_error(y_true, y_pred):
     """
     The max_error metric calculates the maximum residual error.
