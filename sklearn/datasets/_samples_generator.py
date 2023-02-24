@@ -996,7 +996,7 @@ def make_blobs(
 
 @validate_params(
     {
-        "n_samples": [Interval(Integral, 1, None, closed="neither")],
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
         "n_features": [Interval(Integral, 5, None, closed="left")],
         "noise": [Interval(Real, 0.0, None, closed="left")],
         "random_state": ["random_state"],
