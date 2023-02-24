@@ -199,7 +199,7 @@ Changelog
 
 - |Fix| Improves error message in :class:`neural_network.MLPClassifier` and
   :class:`neural_network.MLPRegressor`, when `early_stopping=True` and
-  :meth:`partial_fit` is called. :pr:`xxxxx` by `Thomas Fan`_.
+  :meth:`partial_fit` is called. :pr:`25694` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
 ............................
