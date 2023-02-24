@@ -948,3 +948,16 @@ def test_mlp_warm_start_no_convergence(MLPEstimator, solver):
     with pytest.warns(ConvergenceWarning):
         model.fit(X_iris, y_iris)
     assert model.n_iter_ == 20
+
+
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_mlp_partial_fit_after_fit(MLPEstimator):
+    """Check partial fit does not fail after fit when early_stopping=True.
+
+    Non-regression test for gh-25693.
+    """
+    mlp = MLPRegressor(early_stopping=True, random_state=0).fit(X_iris, y_iris)
+
+    msg = "partial_fit does not support early_stopping=True"
+    with pytest.raises(ValueError, match=msg):
+        mlp.partial_fit(X_iris, y_iris)
