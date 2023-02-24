@@ -1263,7 +1263,7 @@ def test_newton_solver_verbosity(capsys, verbose):
 
 
 @pytest.mark.skipif(
-    sp_version >= parse_version("1.4.0"),
+    sp_version < parse_version("1.4.0"),
     reason="LinearOperator transpose needs scipy>=1.4.0",
 )
 @pytest.mark.parametrize("fit_intercept", [False, True])
@@ -1336,7 +1336,7 @@ def test_NewtonLSMRSolver_multinomial_A_b(
 
 
 @pytest.mark.skipif(
-    sp_version >= parse_version("1.4.0"),
+    sp_version < parse_version("1.4.0"),
     reason="LinearOperator transpose needs scipy>=1.4.0",
 )
 @pytest.mark.parametrize("fit_intercept", (False, True))
