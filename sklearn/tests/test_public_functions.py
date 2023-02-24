@@ -124,6 +124,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.hamming_loss",
     "sklearn.metrics.log_loss",
     "sklearn.metrics.mean_absolute_error",
+    "sklearn.metrics.mean_pinball_loss",
     "sklearn.metrics.mean_squared_error",
     "sklearn.metrics.mean_tweedie_deviance",
     "sklearn.metrics.median_absolute_error",
