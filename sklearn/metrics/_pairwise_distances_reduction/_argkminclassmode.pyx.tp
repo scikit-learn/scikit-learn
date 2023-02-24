@@ -25,7 +25,6 @@ cnp.import_array()
 
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 from ...utils._typedefs import ITYPE, DTYPE
-from ...utils._sorting cimport simultaneous_sort
 import numpy as np
 from scipy.sparse import issparse
 from sklearn.utils.fixes import threadpool_limits
@@ -175,14 +174,7 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
     ) nogil:
         cdef:
             ITYPE_t idx, sample_index
-        # Sorting the main heaps portion associated to `X[X_start:X_end]`
-        # in ascending order w.r.t the distances.
         for idx in range(X_end - X_start):
-            simultaneous_sort(
-                self.heaps_r_distances_chunks[thread_num] + idx * self.k,
-                self.heaps_indices_chunks[thread_num] + idx * self.k,
-                self.k
-            )
             # One-pass top-one weighted mode
             # Compute the absolute index in [0, n_samples_X)
             sample_index = X_start + idx
@@ -205,14 +197,7 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
                 free(self.heaps_r_distances_chunks[thread_num])
                 free(self.heaps_indices_chunks[thread_num])
 
-            # Sorting the main in ascending order w.r.t the distances.
-            # This is done in parallel sample-wise (no need for locks).
             for sample_index in prange(self.n_samples_X, schedule='static'):
-                simultaneous_sort(
-                    &self.argkmin_distances[sample_index, 0],
-                    &self.argkmin_indices[sample_index, 0],
-                    self.k,
-                )
                 self.weighted_histogram_mode(
                     sample_index,
                     &self.argkmin_indices[sample_index][0],
