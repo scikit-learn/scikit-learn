@@ -1462,6 +1462,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
             StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
             None,
         ],
+        "warn_for": [list, tuple, set],
         "sample_weight": ["array-like", None],
         "zero_division": [
             Options(Real, {0, 1}),
@@ -1557,7 +1558,7 @@ def precision_recall_fscore_support(
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-    warn_for : tuple or set, for internal use
+    warn_for : list, tuple or set, for internal use
         This determines which warnings will be made in the case that this
         function is being used to return only one of its metrics.
 
