@@ -605,15 +605,24 @@ class NewtonLSMRSolver(NewtonSolver):
             shape=n_features, fill_value=np.sqrt(self.l2_reg_strength), dtype=X.dtype
         )
 
-        # Initially, set Frobenius norm of A as if h = 1
-        # => ||A||^2 = ||X||^2 + sqrt(l2_reg_strength) ||sqrt(P)||^2
+        # In the inner_solve with LSMR, we set atol ~ 1 / ||A|| with the Frobenius norm
+        # ||A|| of A, see below. We track this in every iteration with self.A_norm. For
+        # the first call of inner_solve, we need an initial estimation of ||A||. We
+        # assume h = 1 and get
+        #     ||A||^2 = ||X||^2 + sqrt(l2_reg_strength) ||sqrt(P)||^2
         # if scipy.sparse.issparse(X):
         #     A_norm = scipy.sparse.linalg.norm(X) ** 2
         # else:
         #     A_norm = scipy.linalg.norm(X) ** 2
         # A_norm += scipy.linalg.norm(self.sqrt_P) ** 2
         # self.A_norm = np.sqrt(A_norm)
-        # As this all is a bit costly, we make life easier and start with 1:
+        #
+        # As this all is a bit costly, we make life easier and start with ||A|| = 1.
+        # This is a reasonable choice as it likely understimates ||A|| and therefore
+        # overestimates atol ~ 1 / ||A||, which means we start with a looser criterion
+        # in the first iteration => good!
+        # The underestimation of a ||A|| is given if ||X|| > 1. This is very likely the
+        # case for typical (e.g. standardized) X.
         self.A_norm = 1
         self.r_norm = 1
 
