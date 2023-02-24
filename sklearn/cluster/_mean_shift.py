@@ -142,9 +142,9 @@ def mean_shift(
         Input data.
 
     bandwidth : float, default=None
-        Kernel bandwidth. A float value > 0.
+        Kernel bandwidth. If not None, must be in the range [0, +inf).
 
-        If bandwidth is not given, it is determined using a heuristic based on
+        If None, the bandwidth is determined using a heuristic based on
         the median of all pairwise distances. This will take quadratic time in
         the number of samples. The sklearn.cluster.estimate_bandwidth function
         can be used to do this more efficiently.
