@@ -30,7 +30,7 @@ approximately 80% actually belong to the positive class.
 Calibration curves
 ------------------
 
-Calibration curves, also referred to as the *reliability diagrams* (Wilks 1995 [2]_),
+Calibration curves, also referred to as *reliability diagrams* (Wilks 1995 [2]_),
 compare how well the probabilistic predictions of a binary classifier are calibrated.
 It plots the frequency of the positive label (to be more precise, an estimation of the
 *conditional event probability* :math:`P(Y=1|\text{predict\_proba})`) on the y-axis
