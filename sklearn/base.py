@@ -661,7 +661,7 @@ class ClassifierMixin:
         Returns
         -------
         score : float
-            Mean accuracy of ``self.predict(X)`` wrt. `y`.
+            Mean accuracy of ``self.predict(X)`` w.r.t. `y`.
         """
         from .metrics import accuracy_score
 
@@ -705,7 +705,7 @@ class RegressorMixin:
         Returns
         -------
         score : float
-            :math:`R^2` of ``self.predict(X)`` wrt. `y`.
+            :math:`R^2` of ``self.predict(X)`` w.r.t. `y`.
 
         Notes
         -----
