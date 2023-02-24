@@ -79,7 +79,7 @@ def test_pca_sparse(global_random_seed, rtol, svd_solver, format, n_components, 
         pytest.skip("lobpcg and arpack don't support full solves")
     random_state = np.random.RandomState(global_random_seed)
     X = sp.sparse.random(
-        SPARSE_M, SPARSE_N, format=format, random_state=random_state
+        SPARSE_M, SPARSE_N, format=format, random_state=random_state, density=density
     )
     pca = PCA(n_components=n_components, svd_solver=svd_solver)
     pca.fit(X)
