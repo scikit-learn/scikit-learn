@@ -40,7 +40,7 @@ cdef extern from *:
     int L1 = 1
     int L2 = 2
     int ELASTICNET = 3
- 
+
     int CONSTANT = 1
     int OPTIMAL = 2
     int INVSCALING = 3
