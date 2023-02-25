@@ -3,16 +3,11 @@ Small collection of auxiliary functions that operate on arrays
 
 """
 
-cimport numpy as cnp
-import numpy as np
 from cython cimport floating
 from libc.math cimport fabs
 from libc.float cimport DBL_MAX, FLT_MAX
 
 from ._cython_blas cimport _copy, _rotg, _rot
-
-
-cnp.import_array()
 
 
 def min_pos(const floating[:] X):
