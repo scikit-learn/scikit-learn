@@ -642,7 +642,6 @@ def check_array(
     estimator=None,
     input_name="",
 ):
-
     """Input validation on an array, list, sparse matrix or similar.
 
     By default, the input is checked to be a non-empty 2D array containing
@@ -2002,7 +2001,7 @@ def _generate_get_feature_names_out(estimator, n_features_out, input_features=No
     )
 
 
-def _check_monotonic_cst(estimator, monotonic_cst=None):
+def _check_monotonic_cst(estimator, monotonic_cst=None, n_classes=1):
     """Check the monotonic constraints and return the corresponding array.
 
     This helper function should be used in the `fit` method of an estimator
@@ -2029,15 +2028,19 @@ def _check_monotonic_cst(estimator, monotonic_cst=None):
     Returns
     -------
     monotonic_cst : ndarray of int
-        Monotonic constraints for each feature.
+        Monotonic constraints for each feature. If n_classes > 1, then the
+        shape of the array is: (n_features, n_classes).
     """
     original_monotonic_cst = monotonic_cst
     if monotonic_cst is None or isinstance(monotonic_cst, dict):
         monotonic_cst = np.full(
-            shape=estimator.n_features_in_,
+            shape=(estimator.n_features_in_, n_classes),
             fill_value=0,
             dtype=np.int8,
+            order="F",
         )
+        if n_classes == 1:
+            monotonic_cst = monotonic_cst.ravel()
         if isinstance(original_monotonic_cst, dict):
             if not hasattr(estimator, "feature_names_in_"):
                 raise ValueError(
@@ -2061,6 +2064,7 @@ def _check_monotonic_cst(estimator, monotonic_cst=None):
             for feature_idx, feature_name in enumerate(estimator.feature_names_in_):
                 if feature_name in original_monotonic_cst:
                     cst = original_monotonic_cst[feature_name]
+                    # TODO: handle n_classes > 1
                     if cst not in [-1, 0, 1]:
                         raise ValueError(
                             f"monotonic_cst['{feature_name}'] must be either "
@@ -2075,10 +2079,30 @@ def _check_monotonic_cst(estimator, monotonic_cst=None):
                 f"values: {unexpected_cst.tolist()}."
             )
 
-        monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
+        monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8, order="F")
         if monotonic_cst.shape[0] != estimator.n_features_in_:
             raise ValueError(
                 f"monotonic_cst has shape {monotonic_cst.shape} but the input data "
                 f"X has {estimator.n_features_in_} features."
             )
+
+        if monotonic_cst.ndim > 2:
+            raise ValueError(
+                f"monotonic_cst has shape {monotonic_cst.shape} but it should be "
+                "at most 2-dimensional."
+            )
+        elif n_classes == 1 and monotonic_cst.ndim != 1:
+            raise ValueError(
+                "monotonic constraints for binary classification and regression should"
+                " be passed as a 1-dimensional array, while monotonic_cst has shape"
+                f" {monotonic_cst.shape}."
+            )
+        else:
+            if monotonic_cst.ndim != 2 or monotonic_cst.shape[1] != n_classes:
+                raise ValueError(
+                    "monotonic constraints for multiclass classification should be"
+                    " passed as an array with shape (n_features, n_classes), while"
+                    f" monotonic_cst has shape {monotonic_cst.shape} and"
+                    f" n_classes={n_classes}."
+                )
     return monotonic_cst

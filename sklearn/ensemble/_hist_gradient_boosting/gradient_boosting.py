@@ -161,16 +161,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.verbose = verbose
         self.random_state = random_state
 
-    def _validate_parameters(self):
-        """Validate parameters passed to __init__.
-
-        The parameters that are directly passed to the grower are checked in
-        TreeGrower."""
-        if self.monotonic_cst is not None and self.n_trees_per_iteration_ != 1:
-            raise ValueError(
-                "monotonic constraints are not supported for multiclass classification."
-            )
-
     def _finalize_sample_weight(self, sample_weight, y):
         """Finalize sample weight.
 
@@ -383,8 +373,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if not (self.warm_start and self._is_fitted()):
             self._random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
 
-        self._validate_parameters()
-        monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
+        monotonic_cst = _check_monotonic_cst(
+            self, self.monotonic_cst, n_classes=self.n_trees_per_iteration_
+        )
+        # XXX: move this to _check_monotonic_cst? This will impact other
+        # estimators that do not necessarily support multi-class or
+        # multi-output monotonicity constraints.
+        if self.n_trees_per_iteration_ == 1:
+            monotonic_cst = monotonic_cst.reshape(-1, 1)
 
         # used for validation in predict
         n_samples, self._n_features = X.shape
@@ -630,7 +626,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         )
 
         for iteration in range(begin_at_stage, self.max_iter):
-
             if self.verbose:
                 iteration_start_time = time()
                 print(
@@ -680,7 +675,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
                     is_categorical=self.is_categorical_,
-                    monotonic_cst=monotonic_cst,
+                    monotonic_cst=monotonic_cst[:, k],
                     interaction_cst=interaction_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
@@ -2017,8 +2012,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         # TODO(1.3): Remove "auto", "binary_crossentropy", "categorical_crossentropy"
         if self.loss in ("auto", "binary_crossentropy", "categorical_crossentropy"):
             warnings.warn(
-                f"The loss '{self.loss}' was deprecated in v1.1 and will be removed in "
-                "version 1.3. Use 'log_loss' which is equivalent.",
+                f"The loss '{self.loss}' was deprecated in v1.1 and will be removed"
+                " in version 1.3. Use 'log_loss' which is equivalent.",
                 FutureWarning,
             )
 

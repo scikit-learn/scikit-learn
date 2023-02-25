@@ -1,6 +1,7 @@
 import re
 import numpy as np
 import pytest
+from sklearn.base import clone
 
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
@@ -325,14 +326,7 @@ def test_monotonic_multiclass_classification(global_random_seed, use_feature_nam
 
     # TODO: use_feature_names=True is not tested yet
 
-    clf_cst = HistGradientBoostingClassifier(
-        learning_rate=1.0,
-        max_iter=5,
-        min_samples_leaf=1,
-        max_leaf_nodes=5,
-        monotonic_cst=monotonic_cst,
-        random_state=global_random_seed,
-    )
+    clf_cst = clone(clf).set_params(monotonic_cst=monotonic_cst)
     clf_cst.fit(X, y)
 
     # Feature 0
