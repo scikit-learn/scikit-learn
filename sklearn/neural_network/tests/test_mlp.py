@@ -919,11 +919,7 @@ def test_preserve_feature_names(Estimator):
 def test_mlp_warm_start_with_early_stopping(MLPEstimator):
     """Check that early stopping works with warm start."""
     mlp = MLPEstimator(
-        max_iter=10,
-        random_state=0,
-        warm_start=True,
-        early_stopping=True,
-        random_state=0,
+        max_iter=10, random_state=0, warm_start=True, early_stopping=True
     )
     mlp.fit(X_iris, y_iris)
     n_validation_scores = len(mlp.validation_scores_)
