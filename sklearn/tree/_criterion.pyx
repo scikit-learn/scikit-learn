@@ -1153,6 +1153,7 @@ cdef class MAE(RegressionCriterion):
         with gil:
             raise ValueError("missing values is not supported for MAE.")
 
+    cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
