@@ -765,6 +765,26 @@ In the following example with :class:`OrdinalEncoder`, the categories `'dog' and
           [1.],
           [2.]])
 
+:class:`OrdinalEncoder` can be configured with an encoding unknown categories and
+missing values, which can end up with up to 2 more unique integer codes. In the
+follow example, "a" and "d" are grouped together into a single category,
+unknown values are encoded as 2 and missing values are encoded as 3.
+
+  >>> X_train = np.array(
+  ...     [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3 + [np.nan]],
+  ...     dtype=object).T
+  >>> enc = preprocessing.OrdinalEncoder(
+  ...     handle_unknown="use_encoded_value", unknown_value=2,
+  ...     max_categories=2, encoded_missing_value=3)
+  >>> _ = enc.fit(X_train)
+  >>> X_test = np.array([["a"], ["b"], ["d"], ["e"], [np.nan]], dtype=object)
+  >>> enc.transform(X_test)
+  array([[1.],
+         [0.],
+         [1.],
+         [2.],
+         [3.]])
+
 Simiarly, :class:`OneHotEncoder` can be configured the same way to group together
 infrequent categories::
 

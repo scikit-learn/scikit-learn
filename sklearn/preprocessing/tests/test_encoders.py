@@ -2105,12 +2105,17 @@ def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
     """Test infrequent categories with a pandas DataFrame with multiple dtypes."""
 
     pd = pytest.importorskip("pandas")
+    categorical_dtype = pd.CategoricalDtype(["bird", "cat", "dog", "snake"])
     X = pd.DataFrame(
         {
             "str": ["a", "f", "c", "f", "f", "a", "c", "b", "b"],
             "int": [5, 3, 0, 10, 10, 12, 0, 3, 5],
+            "categorical": pd.Series(
+                ["dog"] * 4 + ["cat"] * 3 + ["snake"] + ["bird"],
+                dtype=categorical_dtype,
+            ),
         },
-        columns=["str", "int"],
+        columns=["str", "int", "categorical"],
     )
 
     ordinal = OrdinalEncoder(max_categories=3).fit(X)
@@ -2120,13 +2125,25 @@ def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
     # X[:, 1] 0, 3, 5, 10 has frequency 2 and 12 has frequency 1.
     # 0, 3, 12 will be considered infrequent because they are appear first when
     # sorted
+
+    # X[:, 2] "snake" and "bird" or infrequent
+
     assert_array_equal(ordinal.infrequent_categories_[0], ["a", "b"])
     assert_array_equal(ordinal.infrequent_categories_[1], [0, 3, 12])
+    assert_array_equal(ordinal.infrequent_categories_[2], ["bird", "snake"])
 
     X_test = pd.DataFrame(
-        {"str": ["a", "b", "f", "c"], "int": [12, 0, 10, 5]}, columns=["str", "int"]
+        {
+            "str": ["a", "b", "f", "c"],
+            "int": [12, 0, 10, 5],
+            "categorical": pd.Series(
+                ["cat"] + ["snake"] + ["bird"] + ["dog"],
+                dtype=categorical_dtype,
+            ),
+        },
+        columns=["str", "int", "categorical"],
     )
-    expected_trans = [[2, 2], [2, 2], [1, 1], [0, 0]]
+    expected_trans = [[2, 2, 0], [2, 2, 2], [1, 1, 2], [0, 0, 1]]
 
     X_trans = ordinal.transform(X_test)
     assert_allclose(X_trans, expected_trans)
@@ -2145,8 +2162,35 @@ def test_ordinal_encoder_infrequent_custom_mapping():
         encoded_missing_value=3,
     ).fit(X_train)
 
-    X_test = [["a"], ["b"], ["c"], ["d"], ["e"], [np.nan]]
+    X_test = np.array([["a"], ["b"], ["c"], ["d"], ["e"], [np.nan]], dtype=object)
     expected_trans = [[1], [0], [1], [1], [2], [3]]
 
     X_trans = ordinal.transform(X_test)
     assert_allclose(X_trans, expected_trans)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"max_categories": 6},
+        {"min_frequency": 2},
+    ],
+)
+def test_ordinal_encoder_all_frequent(kwargs):
+    """All categories are considered frequent have same encoding as default encoder."""
+    X_train = np.array(
+        [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object
+    ).T
+
+    adjusted_encoder = OrdinalEncoder(
+        **kwargs, handle_unknown="use_encoded_value", unknown_value=-1
+    ).fit(X_train)
+    default_encoder = OrdinalEncoder(
+        handle_unknown="use_encoded_value", unknown_value=-1
+    ).fit(X_train)
+
+    X_test = [["a"], ["b"], ["c"], ["d"], ["e"]]
+
+    assert_allclose(
+        adjusted_encoder.transform(X_test), default_encoder.transform(X_test)
+    )
