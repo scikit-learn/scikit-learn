@@ -14,6 +14,7 @@ from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._testing import assert_allclose
 
 n_threads = _openmp_effective_n_threads()
 
@@ -260,6 +261,104 @@ def test_predictions(global_random_seed, use_feature_names):
     X = np.c_[constant, sin]
     pred = gbdt.predict(X)
     assert ((np.diff(pred) <= 0) == (np.diff(sin) >= 0)).all()
+
+
+@pytest.mark.parametrize("use_feature_names", (True, False))
+def test_monotonic_multiclass_classification(global_random_seed, use_feature_names):
+    n_samples_train = 30
+    n_features = 3
+    n_classes = 3
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.normal(size=(n_samples_train, n_features))
+    y = rng.randint(0, n_classes, size=n_samples_train)
+
+    # Check that by default, none of the per-class predicted probabilities are
+    # monotonic w.r.t. the input features. This is expected since the data is
+    # totally random and the classifier should be able to overfit it when using
+    # the following hyperparameters:
+    clf = HistGradientBoostingClassifier(
+        learning_rate=1.0,
+        max_iter=10,
+        min_samples_leaf=1,
+        max_leaf_nodes=5,
+        random_state=global_random_seed,
+    )
+    clf.fit(X, y)
+    n_samples_test = n_samples_train * 3
+
+    def make_test_data(feature_idx):
+        X_test = np.repeat(np.median(X, axis=0).reshape(1, -1), n_samples_test, axis=0)
+        X_test[:, feature_idx] = np.linspace(
+            X[:, feature_idx].min() - 1, X[:, feature_idx].max() + 1, n_samples_test
+        )
+        return X_test
+
+    for feature_idx in range(n_features):
+        X_test = make_test_data(feature_idx)
+        proba = clf.predict_proba(X_test)
+        proba_diff = np.diff(proba, axis=0)
+        for class_idx in range(n_classes):
+            assert proba_diff[:, class_idx].min() < 0
+            assert proba_diff[:, class_idx].max() > 0
+
+    # Fit a classifier with different monotonic constraints for different pairs
+    # of features and classes:
+    monotonic_cst = np.zeros((n_features, n_classes), dtype=np.int8)
+
+    # Feature 0  has a positive impact of the first two classes and negative
+    # impact on the last class:
+    monotonic_cst[0, 0] = +1
+    monotonic_cst[0, 1] = +1
+    monotonic_cst[0, 2] = -1
+
+    # Feature 1 has a negative impact of the first classes and not constraint
+    # on the last classes:
+    monotonic_cst[1, 0] = -1
+
+    # Feature 2 is constrained to be monotonic for all classes, but because of
+    # the softmax inverse link function, it will be constrained to a constant
+    # impact on the predicted probabilities (neither increasing nor
+    # decreasing):
+    monotonic_cst[2, 0] = -1
+    monotonic_cst[2, 1] = -1
+    monotonic_cst[2, 2] = -1
+
+    # TODO: use_feature_names=True is not tested yet
+
+    clf_cst = HistGradientBoostingClassifier(
+        learning_rate=1.0,
+        max_iter=5,
+        min_samples_leaf=1,
+        max_leaf_nodes=5,
+        monotonic_cst=monotonic_cst,
+        random_state=global_random_seed,
+    )
+    clf_cst.fit(X, y)
+
+    # Feature 0
+    X_test = make_test_data(feature_idx=0)
+    proba_diff = np.diff(clf_cst.predict_proba(X_test), axis=0)
+    assert (proba_diff[:, 0] >= 0).all()  # increasing for class 0
+    assert (proba_diff[:, 1] >= 0).all()  # increasing for class 1
+    assert (proba_diff[:, 2] <= 0).all()  # decreasing for class 2
+
+    # Feature 1
+    X_test = make_test_data(feature_idx=1)
+    proba_diff = np.diff(clf_cst.predict_proba(X_test), axis=0)
+    # monotonically decreasing for class 0:
+    assert (proba_diff[:, 0] <= 0).all()
+    # non monotonic for class 1 and class 2:
+    assert proba_diff[:, 1].min() < 0
+    assert proba_diff[:, 1].max() > 0
+    assert proba_diff[:, 2].min() < 0
+    assert proba_diff[:, 2].max() > 0
+
+    # Feature 2
+    X_test = make_test_data(feature_idx=2)
+    proba_diff = np.diff(clf_cst.predict_proba(X_test), axis=0)
+    # over-constrained model: constant impact on the predicted probabilities
+    # for all classes:
+    assert_allclose(proba_diff, 0, atol=1e-7)
 
 
 def test_input_error():
