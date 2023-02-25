@@ -817,9 +817,7 @@ cdef class DensePartitioner:
         self.X = X
         self.samples = samples
         self.feature_values = feature_values
-        # self.has_missings = _any_isnan_axis0(X)
-
-        self.has_missings = np.zeros(X.shape[1], dtype=np.bool_)
+        self.has_missings = _any_isnan_axis0(X)
 
     cdef inline void init_node_split(self, SIZE_t start, SIZE_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
