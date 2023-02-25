@@ -620,9 +620,9 @@ cdef class DistanceMetric{{name_suffix}}:
         return dist
 
     def _pairwise_dense_dense(self, X, Y):
-        cdef cnp.ndarray[{{INPUT_DTYPE_t}}, ndim=2, mode='c'] Xarr
-        cdef cnp.ndarray[{{INPUT_DTYPE_t}}, ndim=2, mode='c'] Yarr
-        cdef cnp.ndarray[DTYPE_t, ndim=2, mode='c'] Darr
+        cdef const {{INPUT_DTYPE_t}}[:, ::1] Xarr
+        cdef const {{INPUT_DTYPE_t}}[:, ::1] Yarr
+        cdef DTYPE_t[:, ::1] Darr
 
         Xarr = np.asarray(X, dtype={{INPUT_DTYPE}}, order='C')
         self._validate_data(Xarr)
