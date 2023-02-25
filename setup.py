@@ -127,6 +127,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.utils._vector_sentinel",
     "sklearn.utils._isfinite",
     "sklearn.utils._weight_vector",
+    "sklearn.utils.arrayfuncs",
     "sklearn.utils.murmurhash",
 )
 
