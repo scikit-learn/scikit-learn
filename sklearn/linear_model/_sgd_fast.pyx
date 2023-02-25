@@ -20,20 +20,33 @@ from ..utils._seq_dataset cimport SequentialDataset64 as SequentialDataset
 
 cnp.import_array()
 
-# Penalty constants
-DEF NO_PENALTY = 0
-DEF L1 = 1
-DEF L2 = 2
-DEF ELASTICNET = 3
+cdef extern from *:
+    """
+    /* Penalty constants */
+    #define NO_PENALTY 0
+    #define L1 1
+    #define L2 2
+    #define ELASTICNET 3
 
-# Learning rate constants
-DEF CONSTANT = 1
-DEF OPTIMAL = 2
-DEF INVSCALING = 3
-DEF ADAPTIVE = 4
-DEF PA1 = 5
-DEF PA2 = 6
+    /* Learning rate constants */
+    #define CONSTANT 1
+    #define OPTIMAL 2
+    #define INVSCALING 3
+    #define ADAPTIVE 4
+    #define PA1 5
+    #define PA2 6
+    """
+    int NO_PENALTY = 0
+    int L1 = 1
+    int L2 = 2
+    int ELASTICNET = 3
 
+    int CONSTANT = 1
+    int OPTIMAL = 2
+    int INVSCALING = 3
+    int ADAPTIVE = 4
+    int PA1 = 5
+    int PA2 = 6
 
 
 # ----------------------------------------
