@@ -607,6 +607,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
         try:
+            self.n_iter_ = 0
             for it in range(self.max_iter):
                 if self.shuffle:
                     # Only shuffle the sample indices instead of X and y to
