@@ -77,7 +77,7 @@ Changelog
 
 - |Fix| :class:`preprocessing.OrdinalEncoder` now correctly supports
   `encoded_missing_value` or `unknown_value` set to a categories' cardinality
-  when there is missing values in the training data. :pr:`xxxxx` by `Thomas Fan`_.
+  when there is missing values in the training data. :pr:`25704` by `Thomas Fan`_.
 
 :mod:`sklearn.utils`
 ....................
