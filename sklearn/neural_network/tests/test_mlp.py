@@ -919,7 +919,11 @@ def test_preserve_feature_names(Estimator):
 def test_mlp_warm_start_with_early_stopping(MLPEstimator):
     """Check that early stopping works with warm start."""
     mlp = MLPEstimator(
-        max_iter=10, random_state=0, warm_start=True, early_stopping=True
+        max_iter=10,
+        random_state=0,
+        warm_start=True,
+        early_stopping=True,
+        random_state=0,
     )
     mlp.fit(X_iris, y_iris)
     n_validation_scores = len(mlp.validation_scores_)
@@ -937,7 +941,11 @@ def test_mlp_warm_start_no_convergence(MLPEstimator, solver):
     https://github.com/scikit-learn/scikit-learn/issues/24764
     """
     model = MLPEstimator(
-        solver=solver, warm_start=True, early_stopping=False, max_iter=10
+        solver=solver,
+        warm_start=True,
+        early_stopping=False,
+        max_iter=10,
+        random_state=0,
     )
 
     with pytest.warns(ConvergenceWarning):
