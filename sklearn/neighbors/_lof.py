@@ -240,7 +240,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features), default=None
             The query sample or samples to compute the Local Outlier Factor
-            w.r.t. to the training samples.
+            w.r.t. the training samples.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -343,7 +343,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
-            w.r.t. to the training samples.
+            w.r.t. the training samples.
 
         Returns
         -------
@@ -361,7 +361,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features), default=None
             The query sample or samples to compute the Local Outlier Factor
-            w.r.t. to the training samples. If None, makes prediction on the
+            w.r.t. the training samples. If None, makes prediction on the
             training data without considering them as their own neighbors.
 
         Returns
