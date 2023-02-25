@@ -785,7 +785,7 @@ unknown values are encoded as 2 and missing values are encoded as 3.
          [2.],
          [3.]])
 
-Simiarly, :class:`OneHotEncoder` can be configured the same way to group together
+Similarity, :class:`OneHotEncoder` can be configured the same way to group together
 infrequent categories::
 
    >>> enc = preprocessing.OneHotEncoder(min_frequency=6, sparse_output=False).fit(X)

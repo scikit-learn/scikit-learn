@@ -1202,6 +1202,11 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         infrequent categories along with the frequent categories. If `None`,
         there is no limit to the number of output features.
 
+        `max_categories` do **not** take into account missing or unknown
+        categories. Setting `unknown_value` or `encoded_missing_value` to an
+        integer will increase the number of unique integer codes by one each.
+        This can result in up to `max_categories + 2` integer codes.
+
         .. versionadded:: 1.3
             Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
 
