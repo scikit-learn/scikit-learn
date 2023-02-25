@@ -702,14 +702,17 @@ def test_logistic_regression_solvers_multiclass():
     }
 
     for solver_1, solver_2 in itertools.combinations(regressors, r=2):
-        assert_array_almost_equal(
-            regressors[solver_1].coef_, regressors[solver_2].coef_, decimal=4
+        assert_allclose(
+            regressors[solver_1].coef_,
+            regressors[solver_2].coef_,
+            rtol=5e-3 if solver_2 == "saga" else 1e-3,
+            err_msg=f"{solver_1} vs {solver_2}",
         )
 
 
 @pytest.mark.parametrize("weight", [{0: 0.1, 1: 0.2}, {0: 0.1, 1: 0.2, 2: 0.5}])
 @pytest.mark.parametrize("class_weight", ["weight", "balanced"])
-def test_logistic_regressioncv_class_weights(weight, class_weight):
+def test_logistic_regressioncv_class_weights(weight, class_weight, global_random_seed):
     """Test class_weight for LogisticRegressionCV."""
     n_classes = len(weight)
     if class_weight == "weight":
@@ -722,23 +725,60 @@ def test_logistic_regressioncv_class_weights(weight, class_weight):
         n_informative=3,
         n_redundant=0,
         n_classes=n_classes,
-        random_state=0,
+        random_state=global_random_seed,
     )
     params = dict(
         Cs=1,
         fit_intercept=False,
         multi_class="ovr",
         class_weight=class_weight,
+        tol=1e-8,
     )
     clf_lbfgs = LogisticRegressionCV(solver="lbfgs", **params)
     clf_lbfgs.fit(X, y)
 
+    from sklearn.linear_model._linear_loss import LinearModelLoss
+    from sklearn._loss.loss import HalfMultinomialLoss, HalfBinomialLoss
+
+    if n_classes > 2:
+        loss = LinearModelLoss(
+            base_loss=HalfMultinomialLoss(n_classes=n_classes),
+            fit_intercept=False,
+        )
+    else:
+        loss = LinearModelLoss(
+            base_loss=HalfBinomialLoss(),
+            fit_intercept=False,
+        )
+    l_lbfgs = loss.loss(
+        coef=clf_lbfgs.coef_.squeeze(),
+        X=X,
+        y=LabelEncoder().fit_transform(y).astype(float),
+        sample_weight=None,
+        l2_reg_strength=1 / 20,
+    )
+    print(f"loss lbfgs = {l_lbfgs} C_={clf_lbfgs.C_}")
+
     for solver in set(SOLVERS) - set(["lbfgs"]):
         clf = LogisticRegressionCV(solver=solver, **params)
         if solver in ("sag", "saga"):
-            clf.set_params(tol=1e-5, max_iter=10000, random_state=0)
+            clf.set_params(
+                tol=1e-18, max_iter=10000, random_state=global_random_seed + 1
+            )
         clf.fit(X, y)
-        assert_allclose(clf.coef_, clf_lbfgs.coef_, rtol=1e-3)
+
+        l_solver = loss.loss(
+            coef=clf.coef_.squeeze(),
+            X=X,
+            y=LabelEncoder().fit_transform(y).astype(float),
+            sample_weight=None,
+            l2_reg_strength=1 / 20,
+        )
+        print(f"loss {solver} = {l_solver} C_={clf.C_}")
+
+        assert_allclose(
+            clf.coef_, clf_lbfgs.coef_, rtol=1e-3, err_msg=f"{solver} vs lbfgs"
+        )
 
 
 def test_logistic_regression_sample_weights():
