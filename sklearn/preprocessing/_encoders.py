@@ -86,14 +86,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         self.categories_ = []
         category_counts = []
-        should_compute_counts = return_counts or self._infrequent_enabled
+        compute_counts = return_counts or self._infrequent_enabled
 
         for i in range(n_features):
             Xi = X_list[i]
 
             if self.categories == "auto":
-                result = _unique(Xi, return_counts=should_compute_counts)
-                if should_compute_counts:
+                result = _unique(Xi, return_counts=compute_counts)
+                if compute_counts:
                     cats, counts = result
                     category_counts.append(counts)
                 else:
@@ -140,7 +140,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                             " during fit".format(diff, i)
                         )
                         raise ValueError(msg)
-                if should_compute_counts:
+                if compute_counts:
                     category_counts.append(_get_counts(Xi, cats))
 
             self.categories_.append(cats)
