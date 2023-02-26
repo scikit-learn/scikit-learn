@@ -17,7 +17,6 @@ from sklearn.metrics._pairwise_distances_reduction import (
     RadiusNeighbors,
     sqeuclidean_row_norms,
 )
-
 from sklearn.metrics import euclidean_distances
 from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils._testing import (
@@ -1345,3 +1344,36 @@ def test_sqeuclidean_row_norms(
     with pytest.raises(ValueError):
         X = np.asfortranarray(X)
         sqeuclidean_row_norms(X, num_threads=num_threads)
+
+
+def test_argkminclassmode_strategy_consistent():
+    rng = np.random.RandomState(1)
+    X = rng.rand(100, 10)
+    Y = rng.rand(100, 10)
+    k = 5
+    metric = "euclidean"
+
+    weights = "uniform"
+    labels = rng.randint(low=0, high=10, size=100)
+    unique_labels = np.unique(labels)
+    results_X = ArgKminClassMode.compute(
+        X=X,
+        Y=Y,
+        k=k,
+        metric=metric,
+        weights=weights,
+        labels=labels,
+        unique_labels=unique_labels,
+        strategy="parallel_on_X",
+    )
+    results_Y = ArgKminClassMode.compute(
+        X=X,
+        Y=Y,
+        k=k,
+        metric=metric,
+        weights=weights,
+        labels=labels,
+        unique_labels=unique_labels,
+        strategy="parallel_on_Y",
+    )
+    assert_array_equal(results_X, results_Y)

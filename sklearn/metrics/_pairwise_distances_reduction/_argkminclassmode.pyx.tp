@@ -180,8 +180,8 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
             sample_index = X_start + idx
             self.weighted_histogram_mode(
                 sample_index,
-                &self.heaps_indices_chunks[thread_num][0],
-                &self.heaps_r_distances_chunks[thread_num][0],
+                &self.heaps_indices_chunks[thread_num][idx * self.k],
+                &self.heaps_r_distances_chunks[thread_num][idx * self.k],
             )
         return
 
