@@ -159,7 +159,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         handle_unknown="error",
         force_all_finite=True,
         warn_on_unknown=False,
-        ignore_category_idx=None,
+        ignore_category_indices=None,
     ):
         self._check_feature_names(X, reset=False)
         self._check_n_features(X, reset=False)
@@ -216,7 +216,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 UserWarning,
             )
 
-        self._map_infrequent_categories(X_int, X_mask, ignore_category_idx)
+        self._map_infrequent_categories(X_int, X_mask, ignore_category_indices)
         return X_int, X_mask
 
     @property
@@ -337,7 +337,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
             self._default_to_infrequent_mappings.append(mapping)
 
-    def _map_infrequent_categories(self, X_int, X_mask, ignore_category_idx):
+    def _map_infrequent_categories(self, X_int, X_mask, ignore_category_indices):
         """Map infrequent categories to integer representing the infrequent category.
 
         This modifies X_int in-place. Values that were invalid based on `X_mask`
@@ -352,7 +352,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         X_mask: ndarray of shape (n_samples, n_features)
             Bool mask for valid values in `X_int`.
 
-        ignore_category_idx : dict
+        ignore_category_indices : dict
             Dictionary mapping from feature_idx to category index to ignore.
             Ignored indexes will not be grouped and the original ordinal encoding
             will remain.
@@ -360,7 +360,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         if not self._infrequent_enabled:
             return
 
-        ignore_category_idx = ignore_category_idx or {}
+        ignore_category_indices = ignore_category_indices or {}
 
         for col_idx in range(X_int.shape[1]):
             infrequent_idx = self._infrequent_indices[col_idx]
@@ -381,9 +381,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             if mapping is None:
                 continue
 
-            if i in ignore_category_idx:
+            if i in ignore_category_indices:
                 # Update rows that are **not** ignored
-                rows_to_update = X_int[:, i] != ignore_category_idx[i]
+                rows_to_update = X_int[:, i] != ignore_category_indices[i]
             else:
                 rows_to_update = slice(None)
 
@@ -1463,7 +1463,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             X,
             handle_unknown=self.handle_unknown,
             force_all_finite="allow-nan",
-            ignore_category_idx=self._missing_indices,
+            ignore_category_indices=self._missing_indices,
         )
         X_trans = X_int.astype(self.dtype, copy=False)
 
