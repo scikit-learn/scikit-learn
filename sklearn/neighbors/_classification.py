@@ -329,6 +329,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     unique_labels=self.classes_,
                     metric=metric,
                     metric_kwargs=metric_kwargs,
+                    strategy="parallel_on_X",
                 )
                 return probabilities
 
