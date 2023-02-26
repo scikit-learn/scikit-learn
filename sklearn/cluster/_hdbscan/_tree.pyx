@@ -8,26 +8,19 @@ cimport numpy as cnp
 import cython
 import numpy as np
 
-
 cdef cnp.float64_t INFTY = np.inf
 cdef cnp.intp_t NOISE = -1
+
 
 HIERARCHY_dtype = np.dtype([
     ("left_node", np.intp),
     ("right_node", np.intp),
-    ("lambda_val", np.float64),
+    ("value", np.float64),
     ("cluster_size", np.intp),
 ])
 
-ctypedef packed struct HIERARCHY_t:
-    cnp.intp_t left_node
-    cnp.intp_t right_node
-    cnp.float64_t lambda_val
-    cnp.intp_t cluster_size
-
-
 cdef list bfs_from_hierarchy(
-    cnp.ndarray[cnp.float64_t, ndim=2] hierarchy,
+    cnp.ndarray[HIERARCHY_t, ndim=1] hierarchy,
     cnp.intp_t bfs_root
 ):
     """
@@ -40,7 +33,6 @@ cdef list bfs_from_hierarchy(
     # determine whether the list is emptey or not.
     cdef list process_queue
     cdef cnp.intp_t n_samples = hierarchy.shape[0] + 1
-
     process_queue = [bfs_root]
     result = []
 
@@ -54,16 +46,19 @@ cdef list bfs_from_hierarchy(
             if x >= n_samples
         ]
         if process_queue:
-            process_queue = (
-                hierarchy[process_queue, :2]
-                .flatten()
-                .astype(np.intp)
-                .tolist()
-            )
+            next_queue = []
+            for node in process_queue:
+                next_queue.extend(
+                    [
+                        hierarchy[node]["left_node"],
+                        hierarchy[node]["right_node"],
+                    ]
+                )
+            process_queue = next_queue
     return result
 
 cpdef cnp.ndarray condense_tree(
-    cnp.ndarray[cnp.float64_t, ndim=2] hierarchy,
+    cnp.ndarray[HIERARCHY_t, ndim=1] hierarchy,
     cnp.intp_t min_cluster_size=10
 ):
     """Condense an MST according to a minimum cluster size. This is akin
@@ -96,7 +91,7 @@ cpdef cnp.ndarray condense_tree(
 
         cnp.intp_t[::1] relabel
         cnp.uint8_t[::1] ignore
-        cnp.float64_t[::1] children
+        HIERARCHY_t children
 
         cnp.intp_t node, sub_node, left, right
         cnp.float64_t lambda_value, distance
@@ -113,9 +108,9 @@ cpdef cnp.ndarray condense_tree(
             continue
 
         children = hierarchy[node - num_points]
-        left = <cnp.intp_t> children[0]
-        right = <cnp.intp_t> children[1]
-        distance = children[2]
+        left = children.left_node
+        right = children.right_node
+        distance = children.value
         if distance > 0.0:
             lambda_value = 1.0 / distance
         else:
@@ -123,13 +118,13 @@ cpdef cnp.ndarray condense_tree(
 
         # Guarantee that left is a cluster node
         if left >= num_points:
-            left_count = <cnp.intp_t> hierarchy[left - num_points][3]
+            left_count = <cnp.intp_t> hierarchy[left - num_points].cluster_size
         else:
             left_count = 1
 
         # Guarantee that right is a cluster node
         if right >= num_points:
-            right_count = <cnp.intp_t> hierarchy[right - num_points][3]
+            right_count = <cnp.intp_t> hierarchy[right - num_points].cluster_size
         else:
             right_count = 1
 
@@ -208,14 +203,14 @@ cpdef dict compute_stability(cnp.ndarray[HIERARCHY_t, ndim=1] condensed_tree):
 
     for idx in range(condensed_tree.shape[0]):
         condensed_node = condensed_tree[idx]
-        births_arr[condensed_node.right_node] = condensed_node.lambda_val
+        births_arr[condensed_node.right_node] = condensed_node.value
 
     births_arr[smallest_cluster] = 0.0
 
     result = np.zeros(num_clusters, dtype=np.float64)
     for condensed_node in condensed_tree:
         parent = condensed_node.left_node
-        lambda_val = condensed_node.lambda_val
+        lambda_val = condensed_node.value
         cluster_size = condensed_node.cluster_size
 
         result_index = parent - smallest_cluster
@@ -259,11 +254,11 @@ cdef cnp.float64_t[::1] max_lambdas(cnp.ndarray[HIERARCHY_t, ndim=1] tree):
     deaths = np.zeros(largest_parent + 1, dtype=np.float64)
 
     current_parent = tree[0].left_node
-    max_lambda = tree[0].lambda_val
+    max_lambda = tree[0].value
 
     for idx in range(1, tree.shape[0]):
         parent = tree[idx].left_node
-        lambda_val = tree[idx].lambda_val
+        lambda_val = tree[idx].value
 
         if parent == current_parent:
             max_lambda = max(max_lambda, lambda_val)
@@ -308,7 +303,7 @@ cdef class TreeUnionFind:
         return self.data[x, 0]
 
 cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
-        cnp.ndarray[cnp.float64_t, ndim=2] linkage,
+        cnp.ndarray[HIERARCHY_t, ndim=1] linkage,
         cnp.float64_t cut,
         cnp.intp_t min_cluster_size
     ):
@@ -343,7 +338,7 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
         TreeUnionFind union_find
         cnp.intp_t n, cluster, cluster_id
         dict cluster_label_map
-        cnp.float64_t[:] node
+        HIERARCHY_t node
 
     root = 2 * linkage.shape[0]
     num_points = root // 2 + 1
@@ -354,9 +349,9 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
 
     cluster = num_points
     for node in linkage:
-        if node[2] < cut:
-            union_find.union(<cnp.intp_t> node[0], cluster)
-            union_find.union(<cnp.intp_t> node[1], cluster)
+        if node.value < cut:
+            union_find.union(node.left_node, cluster)
+            union_find.union(node.right_node, cluster)
         cluster += 1
 
     cluster_size = np.zeros(cluster, dtype=np.intp)
@@ -397,7 +392,7 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1] do_labelling(
 
     children = tree['right_node']
     parents = tree['left_node']
-    lambdas = tree['lambda_val']
+    lambdas = tree['value']
 
     root_cluster = parents.min()
     result = np.empty(root_cluster, dtype=np.intp)
@@ -442,7 +437,7 @@ cdef get_probabilities(
 
     children = tree['right_node']
     parents = tree['left_node']
-    lambdas = tree['lambda_val']
+    lambdas = tree['value']
 
     result = np.zeros(labels.shape[0])
     deaths = max_lambdas(tree)
@@ -506,7 +501,7 @@ cdef cnp.intp_t traverse_upwards(
         else:
             return leaf #return node closest to root
 
-    parent_eps = 1 / cluster_tree[cluster_tree['right_node'] == parent]['lambda_val']
+    parent_eps = 1 / cluster_tree[cluster_tree['right_node'] == parent]['value']
     if parent_eps > cluster_selection_epsilon:
         return parent
     else:
@@ -530,7 +525,7 @@ cdef set epsilon_search(
     cdef cnp.float64_t eps
 
     for leaf in leaves:
-        eps = 1 / cluster_tree['lambda_val'][cluster_tree['right_node'] == leaf][0]
+        eps = 1 / cluster_tree['value'][cluster_tree['right_node'] == leaf][0]
         if eps < cluster_selection_epsilon:
             if leaf not in processed:
                 epsilon_child = traverse_upwards(
@@ -619,7 +614,7 @@ cpdef tuple get_clusters(
     cluster_tree = tree[tree['cluster_size'] > 1]
     is_cluster = {cluster: True for cluster in node_list}
     num_points = np.max(tree[tree['cluster_size'] == 1]['right_node']) + 1
-    max_lambda = np.max(tree['lambda_val'])
+    max_lambda = np.max(tree['value'])
 
     if max_cluster_size is None:
         # Set to a value that will never be triggered

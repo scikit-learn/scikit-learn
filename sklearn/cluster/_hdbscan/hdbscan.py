@@ -21,6 +21,7 @@ from ...metrics._dist_metrics import DistanceMetric
 from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
 from ...utils.validation import _assert_all_finite
+from ._tree import HIERARCHY_dtype
 from ._linkage import (
     make_single_linkage,
     mst_from_mutual_reachability,
@@ -214,22 +215,24 @@ def remap_single_linkage_tree(tree, internal_to_raw, non_finite):
     outlier_count = len(non_finite)
     for i, (left, right, *_) in enumerate(tree):
         if left < finite_count:
-            tree[i, 0] = internal_to_raw[left]
+            tree[i]["left_node"] = internal_to_raw[left]
         else:
-            tree[i, 0] = left + outlier_count
+            tree[i]["left_node"] = left + outlier_count
         if right < finite_count:
-            tree[i, 1] = internal_to_raw[right]
+            tree[i]["right_node"] = internal_to_raw[right]
         else:
-            tree[i, 1] = right + outlier_count
+            tree[i]["right_node"] = right + outlier_count
 
-    outlier_tree = np.zeros((len(non_finite), 4))
-    last_cluster_id = tree[tree.shape[0] - 1][0:2].max()
-    last_cluster_size = tree[tree.shape[0] - 1][3]
+    outlier_tree = np.zeros(len(non_finite), dtype=HIERARCHY_dtype)
+    last_cluster_id = max(
+        tree[tree.shape[0] - 1]["left_node"], tree[tree.shape[0] - 1]["right_node"]
+    )
+    last_cluster_size = tree[tree.shape[0] - 1]["value"]
     for i, outlier in enumerate(non_finite):
         outlier_tree[i] = (outlier, last_cluster_id + 1, np.inf, last_cluster_size + 1)
         last_cluster_id += 1
         last_cluster_size += 1
-    tree = np.vstack([tree, outlier_tree])
+    tree = np.concatenate([tree, outlier_tree])
     return tree
 
 
