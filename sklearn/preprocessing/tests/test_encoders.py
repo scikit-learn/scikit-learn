@@ -2161,6 +2161,7 @@ def test_ordinal_encoder_infrequent_custom_mapping():
         max_categories=2,
         encoded_missing_value=3,
     ).fit(X_train)
+    assert_array_equal(ordinal.infrequent_categories_, [["a", "c", "d"]])
 
     X_test = np.array([["a"], ["b"], ["c"], ["d"], ["e"], [np.nan]], dtype=object)
     expected_trans = [[1], [0], [1], [1], [2], [3]]
@@ -2194,3 +2195,31 @@ def test_ordinal_encoder_all_frequent(kwargs):
     assert_allclose(
         adjusted_encoder.transform(X_test), default_encoder.transform(X_test)
     )
+
+
+def test_ordinal_encoder_missing_appears_frequent():
+    """Check behavior when missing value appears frequently."""
+    X = np.array(
+        [[np.nan] * 20 + ["dog"] * 10 + ["cat"] * 5 + ["snake"] + ["deer"]],
+        dtype=object,
+    ).T
+    ordinal = OrdinalEncoder(max_categories=3).fit(X)
+
+    X_test = np.array([["snake"] + ["cat"] + ["dog"] + [np.nan]], dtype=object).T
+    X_trans = ordinal.transform(X_test)
+    assert_allclose(X_trans, [[2], [0], [1], [np.nan]])
+
+
+def test_ordinal_encoder_missing_appears_infrequent():
+    """Check behavior when missing value appears infrequently."""
+    X = np.array(
+        [[np.nan] + ["dog"] * 10 + ["cat"] * 5 + ["snake"] + ["deer"]],
+        dtype=object,
+    ).T
+    ordinal = OrdinalEncoder(min_frequency=4).fit(X)
+
+    X_test = np.array(
+        [["snake"] + ["deer"] + [np.nan] + ["dog"] + ["cat"]], dtype=object
+    ).T
+    X_trans = ordinal.transform(X_test)
+    assert_allclose(X_trans, [[2], [2], [np.nan], [1], [0]])

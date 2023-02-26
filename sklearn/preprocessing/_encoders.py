@@ -67,7 +67,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return X_columns, n_samples, n_features
 
     def _fit(
-        self, X, handle_unknown="error", force_all_finite=True, return_counts=False
+        self,
+        X,
+        handle_unknown="error",
+        force_all_finite=True,
+        return_counts=False,
+        return_missing_indices=False,
+        ignore_missing_for_infrequent=False,
     ):
         self._check_infrequent_enabled()
         self._check_n_features(X, reset=True)
@@ -149,8 +155,22 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         if return_counts:
             output["category_counts"] = category_counts
 
+        missing_indices = {}
+        if return_missing_indices or ignore_missing_for_infrequent:
+            for feature_idx, categories_for_idx in enumerate(self.categories_):
+                for category_idx, category in enumerate(categories_for_idx):
+                    if is_scalar_nan(category):
+                        missing_indices[feature_idx] = category_idx
+                        break
+            output["missing_indices"] = missing_indices
+
         if self._infrequent_enabled:
-            self._fit_infrequent_category_mapping(n_samples, category_counts)
+            self._fit_infrequent_category_mapping(
+                n_samples,
+                category_counts,
+                ignore_missing_for_infrequent,
+                missing_indices,
+            )
         return output
 
     def _transform(
@@ -279,7 +299,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         output = np.flatnonzero(infrequent_mask)
         return output if output.size > 0 else None
 
-    def _fit_infrequent_category_mapping(self, n_samples, category_counts):
+    def _fit_infrequent_category_mapping(
+        self, n_samples, category_counts, ignore_missing_for_infrequent, missing_indices
+    ):
         """Fit infrequent categories.
 
         Defines the private attribute: `_default_to_infrequent_mappings`. For
@@ -308,22 +330,48 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         category_counts: list of ndarray
             `category_counts[i]` is the category counts corresponding to
             `self.categories_[i]`.
+        ignore_missing_for_infrequent : bool
+            If True, missing values will be ignored when computing infrequent
+            categories.
+        missing_indices : dict
+            Dict mapping from feature_idx to category index with a missing value.
+            This is only used when ignore_missing_for_infrequent is True
         """
+        # Remove missing value from counts, so it is not considered as infrequent
+        if ignore_missing_for_infrequent:
+            category_counts_ = []
+            for feature_idx, count in enumerate(category_counts):
+                if feature_idx in missing_indices:
+                    category_counts_.append(
+                        np.delete(count, missing_indices[feature_idx])
+                    )
+                else:
+                    category_counts_.append(count)
+        else:
+            category_counts_ = category_counts
+
         self._infrequent_indices = [
             self._identify_infrequent(category_count, n_samples, col_idx)
-            for col_idx, category_count in enumerate(category_counts)
+            for col_idx, category_count in enumerate(category_counts_)
         ]
 
         # compute mapping from default mapping to infrequent mapping
         self._default_to_infrequent_mappings = []
 
-        for cats, infreq_idx in zip(self.categories_, self._infrequent_indices):
+        for feature_idx, infreq_idx in enumerate(self._infrequent_indices):
+            cats = self.categories_[feature_idx]
             # no infrequent categories
             if infreq_idx is None:
                 self._default_to_infrequent_mappings.append(None)
                 continue
 
             n_cats = len(cats)
+            if feature_idx in missing_indices:
+                # Missing index was removed from ths category when computing
+                # infrequent indices, thus we need to decrease the number of
+                # total categories when considering the infrequent mapping.
+                n_cats -= 1
+
             # infrequent indices exist
             mapping = np.empty(n_cats, dtype=np.int64)
             n_infrequent_cats = infreq_idx.size
@@ -1382,7 +1430,14 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             )
 
         # `_fit` will only raise an error when `self.handle_unknown="error"`
-        self._fit(X, handle_unknown=self.handle_unknown, force_all_finite="allow-nan")
+        output = self._fit(
+            X,
+            handle_unknown=self.handle_unknown,
+            force_all_finite="allow-nan",
+            return_missing_indices=True,
+            ignore_missing_for_infrequent=True,
+        )
+        self._missing_indices = output["missing_indices"]
 
         cardinalities = [len(categories) for categories in self.categories_]
         if self._infrequent_enabled:
@@ -1401,14 +1456,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                         "values already used for encoding the "
                         "seen categories."
                     )
-
-        # stores the missing indices per category
-        self._missing_indices = {}
-        for cat_idx, categories_for_idx in enumerate(self.categories_):
-            for i, cat in enumerate(categories_for_idx):
-                if is_scalar_nan(cat):
-                    self._missing_indices[cat_idx] = i
-                    continue
 
         if self._missing_indices:
             if np.dtype(self.dtype).kind != "f" and is_scalar_nan(
