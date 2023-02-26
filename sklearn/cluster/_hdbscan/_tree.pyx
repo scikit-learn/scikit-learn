@@ -31,7 +31,7 @@ cdef list bfs_from_hierarchy(
     # retain semantics which make the below runtime algorithm convenient, such
     # as not being required to preallocate space, and allowing easy checks to
     # determine whether the list is emptey or not.
-    cdef list process_queue
+    cdef list process_queue, next_queue
     cdef cnp.intp_t n_samples = hierarchy.shape[0] + 1
     process_queue = [bfs_root]
     result = []
@@ -69,16 +69,16 @@ cpdef cnp.ndarray condense_tree(
 
     Parameters
     ----------
-    hierarchy : ndarray (n_samples, 4)
+    hierarchy : ndarray (n_samples,)
         A single linkage hierarchy in scipy.cluster.hierarchy format.
 
     min_cluster_size : int, optional (default 10)
-        The minimum size of clusters to consider. Smaller "runt"
-        clusters are pruned from the tree.
+        The minimum size of clusters to consider. Clusters smaler than this
+        are pruned from the tree.
 
     Returns
     -------
-    condensed_tree : numpy recarray
+    condensed_tree : ndarray (n_samples,)
         Effectively an edgelist with a parent, child, lambda_val
         and cluster_size in each row providing a tree structure.
     """
@@ -118,13 +118,13 @@ cpdef cnp.ndarray condense_tree(
 
         # Guarantee that left is a cluster node
         if left >= num_points:
-            left_count = <cnp.intp_t> hierarchy[left - num_points].cluster_size
+            left_count = hierarchy[left - num_points].cluster_size
         else:
             left_count = 1
 
         # Guarantee that right is a cluster node
         if right >= num_points:
-            right_count = <cnp.intp_t> hierarchy[right - num_points].cluster_size
+            right_count = hierarchy[right - num_points].cluster_size
         else:
             right_count = 1
 
@@ -226,11 +226,11 @@ cpdef dict compute_stability(cnp.ndarray[HIERARCHY_t, ndim=1] condensed_tree):
     return dict(result_pre_dict)
 
 
-cdef list bfs_from_cluster_tree(cnp.ndarray[HIERARCHY_t, ndim=1] tree, cnp.intp_t bfs_root):
+cdef list bfs_from_cluster_tree(cnp.ndarray[HIERARCHY_t, ndim=1] hierarchy, cnp.intp_t bfs_root):
 
     cdef list result
-    cdef cnp.ndarray[cnp.intp_t, ndim=1] process_queue, children = tree['right_node']
-    cdef cnp.intp_t[:] parents = tree['left_node']
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] process_queue, children = hierarchy['right_node']
+    cdef cnp.intp_t[:] parents = hierarchy['left_node']
 
     result = []
     process_queue = np.array([bfs_root], dtype=np.intp)
@@ -242,23 +242,23 @@ cdef list bfs_from_cluster_tree(cnp.ndarray[HIERARCHY_t, ndim=1] tree, cnp.intp_
     return result
 
 
-cdef cnp.float64_t[::1] max_lambdas(cnp.ndarray[HIERARCHY_t, ndim=1] tree):
+cdef cnp.float64_t[::1] max_lambdas(cnp.ndarray[HIERARCHY_t, ndim=1] hierarchy):
 
     cdef cnp.intp_t parent, current_parent
     cdef cnp.float64_t lambda_val, max_lambda
 
     cdef cnp.float64_t[::1] deaths
 
-    cdef cnp.intp_t largest_parent = tree['left_node'].max()
+    cdef cnp.intp_t largest_parent = hierarchy['left_node'].max()
 
     deaths = np.zeros(largest_parent + 1, dtype=np.float64)
 
-    current_parent = tree[0].left_node
-    max_lambda = tree[0].value
+    current_parent = hierarchy[0].left_node
+    max_lambda = hierarchy[0].value
 
-    for idx in range(1, tree.shape[0]):
-        parent = tree[idx].left_node
-        lambda_val = tree[idx].value
+    for idx in range(1, hierarchy.shape[0]):
+        parent = hierarchy[idx].left_node
+        lambda_val = hierarchy[idx].value
 
         if parent == current_parent:
             max_lambda = max(max_lambda, lambda_val)
@@ -378,7 +378,7 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
 
 
 cdef cnp.ndarray[cnp.intp_t, ndim=1] do_labelling(
-        cnp.ndarray[HIERARCHY_t, ndim=1] tree,
+        cnp.ndarray[HIERARCHY_t, ndim=1] hierarchy,
         set clusters,
         dict cluster_label_map,
         cnp.uint8_t allow_single_cluster,
@@ -390,16 +390,16 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1] do_labelling(
         cnp.intp_t root_cluster, parent, child, cluster, n
         cnp.int64_t cluster_label, label
 
-    children = tree['right_node']
-    parents = tree['left_node']
-    lambdas = tree['value']
+    children = hierarchy['right_node']
+    parents = hierarchy['left_node']
+    lambdas = hierarchy['value']
 
     root_cluster = parents.min()
     result = np.empty(root_cluster, dtype=np.intp)
 
     union_find = TreeUnionFind(parents.max() + 1)
 
-    for n in range(tree.shape[0]):
+    for n in range(hierarchy.shape[0]):
         child = children[n]
         parent = parents[n]
         if child not in clusters:
@@ -423,7 +423,7 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1] do_labelling(
 
 
 cdef get_probabilities(
-    cnp.ndarray[HIERARCHY_t, ndim=1] tree,
+    cnp.ndarray[HIERARCHY_t, ndim=1] hierarchy,
     dict cluster_map,
     cnp.intp_t[:] labels
 ):
@@ -435,15 +435,15 @@ cdef get_probabilities(
         cnp.intp_t n, point, cluster_num, cluster, root_cluster
         cnp.float64_t max_lambda, lambda_val
 
-    children = tree['right_node']
-    parents = tree['left_node']
-    lambdas = tree['value']
+    children = hierarchy['right_node']
+    parents = hierarchy['left_node']
+    lambdas = hierarchy['value']
 
     result = np.zeros(labels.shape[0])
-    deaths = max_lambdas(tree)
+    deaths = max_lambdas(hierarchy)
     root_cluster = parents.min()
 
-    for n in range(tree.shape[0]):
+    for n in range(hierarchy.shape[0]):
         point = children[n]
         if point >= root_cluster:
             continue
@@ -546,7 +546,7 @@ cdef set epsilon_search(
 
 @cython.wraparound(True)
 cpdef tuple get_clusters(
-    cnp.ndarray tree,
+    cnp.ndarray hierarchy,
     dict stability,
     cluster_selection_method='eom',
     cnp.uint8_t allow_single_cluster=False,
@@ -559,7 +559,7 @@ cpdef tuple get_clusters(
 
     Parameters
     ----------
-    tree : numpy recarray
+    hierarchy : ndarray (n_samples,)
         The condensed tree to extract flat clusters from
 
     stability : dict
@@ -593,13 +593,14 @@ cpdef tuple get_clusters(
     stabilities : ndarray (n_clusters,)
         The cluster coherence strengths of each cluster.
     """
-    cdef list node_list
-    cdef cnp.ndarray[HIERARCHY_t, ndim=1] cluster_tree
-    cdef cnp.uint8_t[:] child_selection
-    cdef cnp.ndarray[cnp.intp_t, ndim=1] labels
-    cdef dict is_cluster, cluster_sizes
-    cdef cnp.float64_t subtree_stability, max_lambda
-    cdef cnp.intp_t node, sub_node, cluster, num_points
+    cdef:
+        list node_list
+        cnp.ndarray[HIERARCHY_t, ndim=1] cluster_tree
+        cnp.uint8_t[:] child_selection
+        cnp.ndarray[cnp.intp_t, ndim=1] labels
+        dict is_cluster, cluster_sizes
+        cnp.float64_t subtree_stability, max_lambda
+        cnp.intp_t node, sub_node, cluster, num_points
 
     # Assume clusters are ordered by numeric id equivalent to
     # a topological sort of the tree; This is valid given the
@@ -611,10 +612,10 @@ cpdef tuple get_clusters(
         # exclude root
         node_list = sorted(stability.keys(), reverse=True)[:-1]
 
-    cluster_tree = tree[tree['cluster_size'] > 1]
+    cluster_tree = hierarchy[hierarchy['cluster_size'] > 1]
     is_cluster = {cluster: True for cluster in node_list}
-    num_points = np.max(tree[tree['cluster_size'] == 1]['right_node']) + 1
-    max_lambda = np.max(tree['value'])
+    num_points = np.max(hierarchy[hierarchy['cluster_size'] == 1]['right_node']) + 1
+    max_lambda = np.max(hierarchy['value'])
 
     if max_cluster_size is None:
         # Set to a value that will never be triggered
@@ -662,7 +663,7 @@ cpdef tuple get_clusters(
         if len(leaves) == 0:
             for c in is_cluster:
                 is_cluster[c] = False
-            is_cluster[tree['left_node'].min()] = True
+            is_cluster[hierarchy['left_node'].min()] = True
 
         if cluster_selection_epsilon != 0.0:
             selected_clusters = epsilon_search(leaves, cluster_tree, cluster_selection_epsilon, allow_single_cluster)
@@ -683,12 +684,12 @@ cpdef tuple get_clusters(
     reverse_cluster_map = {n: c for c, n in cluster_map.items()}
 
     labels = do_labelling(
-        tree,
+        hierarchy,
         clusters,
         cluster_map,
         allow_single_cluster,
         cluster_selection_epsilon
     )
-    probs = get_probabilities(tree, reverse_cluster_map, labels)
+    probs = get_probabilities(hierarchy, reverse_cluster_map, labels)
 
     return (labels, probs)
