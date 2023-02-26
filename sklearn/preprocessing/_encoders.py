@@ -72,7 +72,6 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         handle_unknown="error",
         force_all_finite=True,
         return_counts=False,
-        return_missing_indices=False,
         ignore_missing_for_infrequent=False,
     ):
         self._check_infrequent_enabled()
@@ -156,7 +155,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             output["category_counts"] = category_counts
 
         missing_indices = {}
-        if return_missing_indices or ignore_missing_for_infrequent:
+        if ignore_missing_for_infrequent:
             for feature_idx, categories_for_idx in enumerate(self.categories_):
                 for category_idx, category in enumerate(categories_for_idx):
                     if is_scalar_nan(category):
@@ -1430,14 +1429,13 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             )
 
         # `_fit` will only raise an error when `self.handle_unknown="error"`
-        output = self._fit(
+        fit_results = self._fit(
             X,
             handle_unknown=self.handle_unknown,
             force_all_finite="allow-nan",
-            return_missing_indices=True,
             ignore_missing_for_infrequent=True,
         )
-        self._missing_indices = output["missing_indices"]
+        self._missing_indices = fit_results["missing_indices"]
 
         cardinalities = [len(categories) for categories in self.categories_]
         if self._infrequent_enabled:
