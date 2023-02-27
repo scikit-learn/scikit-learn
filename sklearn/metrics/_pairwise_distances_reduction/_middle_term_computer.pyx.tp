@@ -73,9 +73,6 @@ cdef void _middle_term_sparse_sparse_64(
 
 {{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
-# TODO: compare this routine with the similar ones in SciPy, especially
-# `csr_matvects` which might implement a better algorithm.
-# See: https://github.com/scipy/scipy/blob/e58292e066ba2cb2f3d1e0563ca9314ff1f4f311/scipy/sparse/sparsetools/csr.h#L1139-L1175  # noqa
 cdef void _middle_term_sparse_dense_{{name_suffix}}(
     const DTYPE_t[:] X_data,
     const SPARSE_INDEX_TYPE_t[:] X_indices,
