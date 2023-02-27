@@ -17,7 +17,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import as_float_array, check_array, check_X_y, safe_sqr, safe_mask
 from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ._base import SelectorMixin
 
 
@@ -117,6 +117,12 @@ def f_oneway(*args):
     return f, prob
 
 
+@validate_params(
+    {
+        "X":["array-like","sparse matrix"],
+        "y":[np.ndarray],
+    }
+)
 def f_classif(X, y):
     """Compute the ANOVA F-value for the provided sample.
 
