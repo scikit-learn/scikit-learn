@@ -14,8 +14,8 @@ def expected_mutual_information(contingency, cnp.int64_t n_samples):
         cnp.float64_t emi = 0
         cnp.int64_t n_rows, n_cols
         cnp.float64_t term2, term3, gln
-        cnp.int64_t[::1] a, b
-        cnp.float64_t[::1] nijs, term1
+        cnp.int64_t[::1] a_view, b_view
+        cnp.float64_t[::1] nijs_view, term1
         cnp.float64_t[::1] gln_a, gln_b, gln_Na, gln_Nb, gln_Nnij, log_Nnij
         cnp.float64_t[::1] log_a, log_b
         Py_ssize_t i, j, nij
@@ -24,6 +24,8 @@ def expected_mutual_information(contingency, cnp.int64_t n_samples):
     n_rows, n_cols = contingency.shape
     a = np.ravel(contingency.sum(axis=1).astype(np.int64, copy=False))
     b = np.ravel(contingency.sum(axis=0).astype(np.int64, copy=False))
+    a_view = a
+    b_view = b
 
     # any labelling with zero entropy implies EMI = 0
     if a.size == 1 or b.size == 1:
@@ -34,8 +36,9 @@ def expected_mutual_information(contingency, cnp.int64_t n_samples):
     # While nijs[0] will never be used, having it simplifies the indexing.
     nijs = np.arange(0, max(np.max(a), np.max(b)) + 1, dtype='float')
     nijs[0] = 1  # Stops divide by zero warnings. As its not used, no issue.
+    nijs_view = nijs
     # term1 is nij / N
-    term1 = nijs.base / n_samples
+    term1 = nijs / n_samples
     # term2 is log((N*nij) / (a * b)) == log(N * nij) - log(a * b)
     log_a = np.log(a)
     log_b = np.log(b)
@@ -43,11 +46,11 @@ def expected_mutual_information(contingency, cnp.int64_t n_samples):
     log_Nnij = np.log(n_samples) + np.log(nijs)
     # term3 is large, and involved many factorials. Calculate these in log
     # space to stop overflows.
-    gln_a = gammaln(a.base + 1)
-    gln_b = gammaln(b.base + 1)
-    gln_Na = gammaln(n_samples - a.base + 1)
-    gln_Nb = gammaln(n_samples - b.base + 1)
-    gln_Nnij = gammaln(nijs.base + 1) + gammaln(n_samples + 1)
+    gln_a = gammaln(a + 1)
+    gln_b = gammaln(b + 1)
+    gln_Na = gammaln(n_samples - a + 1)
+    gln_Nb = gammaln(n_samples - b + 1)
+    gln_Nnij = gammaln(nijs + 1) + gammaln(n_samples + 1)
 
     # emi itself is a summation over the various values.
     for i in range(n_rows):
