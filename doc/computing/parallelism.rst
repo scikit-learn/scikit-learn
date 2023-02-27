@@ -130,6 +130,7 @@ for different values of `OMP_NUM_THREADS`::
     channel from Anaconda.org (i.e. the ones installed via ``conda install``)
     are linked by default with MKL.
 
+.. _oversubscription:
 
 Oversubscription: spawning too many threads
 ...........................................
