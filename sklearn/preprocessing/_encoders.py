@@ -288,6 +288,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         n_current_features = category_count.size - infrequent_mask.sum() + 1
         if self.max_categories is not None and self.max_categories < n_current_features:
+            # max_categories includes the one infrequent category
             frequent_category_count = self.max_categories - 1
             if frequent_category_count == 0:
                 # All categories are infrequent
