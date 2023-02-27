@@ -55,15 +55,15 @@ def expected_mutual_information(contingency, cnp.int64_t n_samples):
     # emi itself is a summation over the various values.
     for i in range(n_rows):
         for j in range(n_cols):
-            start = max(1, a[i] - n_samples + b[j])
-            end = min(a[i], b[j]) + 1
+            start = max(1, a_view[i] - n_samples + b_view[j])
+            end = min(a_view[i], b_view[j]) + 1
             for nij in range(start, end):
                 term2 = log_Nnij[nij] - log_a[i] - log_b[j]
                 # Numerators are positive, denominators are negative.
                 gln = (gln_a[i] + gln_b[j] + gln_Na[i] + gln_Nb[j]
-                     - gln_Nnij[nij] - lgamma(a[i] - nij + 1)
-                     - lgamma(b[j] - nij + 1)
-                     - lgamma(n_samples - a[i] - b[j] + nij + 1))
+                     - gln_Nnij[nij] - lgamma(a_view[i] - nij + 1)
+                     - lgamma(b_view[j] - nij + 1)
+                     - lgamma(n_samples - a_view[i] - b_view[j] + nij + 1))
                 term3 = exp(gln)
                 emi += (term1[nij] * term2 * term3)
     return emi
