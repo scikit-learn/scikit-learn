@@ -1242,7 +1242,7 @@ class PartialDependenceDisplay:
                 ax.set_xlabel(self.feature_names[feature_idx[0]])
             ax.set_ylabel(self.feature_names[feature_idx[1]])
 
-    def add_legend_colors_by_values(self, legend_dict):
+    def add_legend_or_cmap_for_individually_colored_ice_lines(self, legend_dict):
         last_ax_idx_not_none = np.argwhere(self.axes_.flatten() != None)[-1][
             0
         ]  # is not None, doesn't work here
@@ -1647,5 +1647,5 @@ class PartialDependenceDisplay:
                     cat[0] and cat[1],
                     heatmap_kw,
                 )
-        self.add_legend_colors_by_values(legend_dict)
+        self.add_legend_or_cmap_for_individually_colored_ice_lines(legend_dict)
         return self
