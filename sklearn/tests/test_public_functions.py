@@ -135,13 +135,13 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.mutual_info_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
     "sklearn.metrics.precision_recall_fscore_support",
+    "sklearn.metrics.precision_score",
     "sklearn.metrics.r2_score",
     "sklearn.metrics.roc_curve",
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.train_test_split",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",
-    "sklearn.metrics.precision_score",
 ]
 
 
