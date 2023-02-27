@@ -2123,8 +2123,8 @@ def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
     # considered infrequent because they appear first when sorted
 
     # X[:, 1] 0, 3, 5, 10 has frequency 2 and 12 has frequency 1.
-    # 0, 3, 12 will be considered infrequent because they are appear first when
-    # sorted
+    # 0, 3, 12 will be considered infrequent because they appear first when
+    # sorted.
 
     # X[:, 2] "snake" and "bird" or infrequent
 

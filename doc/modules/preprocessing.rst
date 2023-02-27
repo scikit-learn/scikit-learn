@@ -734,7 +734,7 @@ represented as a dict, not as scalars.
 Infrequent categories
 ---------------------
 
-:class:`OneHotEncoder` and :class:`OrdinalEncoder` supports aggregating
+:class:`OneHotEncoder` and :class:`OrdinalEncoder` support aggregating
 infrequent categories into a single output for each feature. The parameters to
 enable the gathering of infrequent categories are `min_frequency` and
 `max_categories`.
