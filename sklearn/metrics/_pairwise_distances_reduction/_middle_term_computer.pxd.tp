@@ -192,7 +192,7 @@ cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name
         const SPARSE_INDEX_TYPE_t[:] X_indices
         const SPARSE_INDEX_TYPE_t[:] X_indptr
 
-        const DTYPE_t[:, ::1] Y
+        const {{INPUT_DTYPE_t}}[:, ::1] Y
 
         bint c_ordered_middle_term
 
