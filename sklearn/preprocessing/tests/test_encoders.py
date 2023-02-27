@@ -2197,6 +2197,26 @@ def test_ordinal_encoder_all_frequent(kwargs):
     )
 
 
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"max_categories": 1},
+        {"min_frequency": 100},
+    ],
+)
+def test_ordinal_encoder_all_infrequent(kwargs):
+    """When all categories are infrequent, they are all encoded as zero."""
+    X_train = np.array(
+        [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object
+    ).T
+    encoder = OrdinalEncoder(
+        **kwargs, handle_unknown="use_encoded_value", unknown_value=-1
+    ).fit(X_train)
+
+    X_test = [["a"], ["b"], ["c"], ["d"], ["e"]]
+    assert_allclose(encoder.transform(X_test), [[0], [0], [0], [0], [-1]])
+
+
 def test_ordinal_encoder_missing_appears_frequent():
     """Check behavior when missing value appears frequently."""
     X = np.array(

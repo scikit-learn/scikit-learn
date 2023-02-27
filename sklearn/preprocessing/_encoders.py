@@ -288,11 +288,16 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         n_current_features = category_count.size - infrequent_mask.sum() + 1
         if self.max_categories is not None and self.max_categories < n_current_features:
-            # stable sort to preserve original count order
-            smallest_levels = np.argsort(category_count, kind="mergesort")[
-                : -self.max_categories + 1
-            ]
-            infrequent_mask[smallest_levels] = True
+            frequent_category_count = self.max_categories - 1
+            if frequent_category_count == 0:
+                # All categories are infrequent
+                infrequent_mask[:] = True
+            else:
+                # stable sort to preserve original count order
+                smallest_levels = np.argsort(category_count, kind="mergesort")[
+                    :-frequent_category_count
+                ]
+                infrequent_mask[smallest_levels] = True
 
         output = np.flatnonzero(infrequent_mask)
         return output if output.size > 0 else None
