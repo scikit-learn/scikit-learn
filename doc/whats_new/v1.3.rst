@@ -76,6 +76,32 @@ Changes impacting all modules
   by :user:`John Pangas <jpangas>`, :user:`Rahil Parikh <rprkh>` ,
   and :user:`Alex Buzenet <albuzenet>`.
 
+- |Feature| The following functions and estimators now support pairs of
+  sparse CSR matrices and dense datasets:
+
+  - :func:`sklearn.metrics.pairwise_distances_argmin`
+  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
+  - :class:`sklearn.cluster.AffinityPropagation`
+  - :class:`sklearn.cluster.Birch`
+  - :class:`sklearn.cluster.MeanShift`
+  - :class:`sklearn.cluster.OPTICS`
+  - :class:`sklearn.cluster.SpectralClustering`
+  - :func:`sklearn.feature_selection.mutual_info_regression`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neighbors.KNeighborsRegressor`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.neighbors.RadiusNeighborsRegressor`
+  - :class:`sklearn.neighbors.LocalOutlierFactor`
+  - :class:`sklearn.neighbors.NearestNeighbors`
+  - :class:`sklearn.manifold.Isomap`
+  - :class:`sklearn.manifold.LocallyLinearEmbedding`
+  - :class:`sklearn.manifold.TSNE`
+  - :func:`sklearn.manifold.trustworthiness`
+  - :class:`sklearn.semi_supervised.LabelPropagation`
+  - :class:`sklearn.semi_supervised.LabelSpreading`
+
+  :pr:`25044` by :user:`Julien Jerphanion <jjerphan>`.
+
 Changelog
 ---------
 
