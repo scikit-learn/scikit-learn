@@ -323,7 +323,7 @@ extension_config = {
         },
     ],
     "metrics.cluster": [
-        {"sources": ["_expected_mutual_info_fast.pyx"], "include_np": True},
+        {"sources": ["_expected_mutual_info_fast.pyx"]},
     ],
     "metrics._pairwise_distances_reduction": [
         {

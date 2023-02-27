@@ -7,9 +7,6 @@ from scipy.special import gammaln
 import numpy as np
 cimport numpy as cnp
 
-cnp.import_array()
-ctypedef cnp.float64_t DOUBLE
-
 
 def expected_mutual_information(contingency, cnp.int64_t n_samples):
     """Calculate the expected mutual information for two labelings."""
