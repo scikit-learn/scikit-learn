@@ -65,7 +65,12 @@ data, data_csr = make_sparse_random_data(n_samples, n_features, n_nonzeros)
 
 
 @pytest.mark.parametrize(
-    "n_samples, eps", [(100, 1.1), (100, 0.0), (100, -0.1), (0, 0.5)]
+    "n_samples, eps",
+    [
+        ([100, 110], [0.9, 1.1]),
+        ([90, 100], [0.1, 0.0]),
+        ([50, -40], [0.1, 0.2]),
+    ],
 )
 def test_invalid_jl_domain(n_samples, eps):
     with pytest.raises(ValueError):
@@ -206,15 +211,9 @@ def test_sparse_random_matrix():
 ###############################################################################
 
 
-@pytest.mark.parametrize("density", [1.1, 0, -0.1])
-def test_sparse_random_projection_transformer_invalid_density(density):
-    for RandomProjection in all_SparseRandomProjection:
-        with pytest.raises(ValueError):
-            RandomProjection(density=density).fit(data)
-
-
-@pytest.mark.parametrize("n_components, fit_data", [("auto", [[0, 1, 2]]), (-10, data)])
-def test_random_projection_transformer_invalid_input(n_components, fit_data):
+def test_random_projection_transformer_invalid_input():
+    n_components = "auto"
+    fit_data = [[0, 1, 2]]
     for RandomProjection in all_RandomProjection:
         with pytest.raises(ValueError):
             RandomProjection(n_components=n_components).fit(fit_data)

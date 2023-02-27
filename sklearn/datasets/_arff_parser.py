@@ -373,6 +373,7 @@ def _pandas_arff_parser(
         quotechar='"',  # delimiter to use for quoted strings
         names=[name for name in openml_columns_info],
         dtype=dtypes,
+        skipinitialspace=True,  # skip spaces after delimiter to follow ARFF specs
     )
 
     columns_to_select = feature_names_to_select + target_names_to_select
@@ -392,8 +393,12 @@ def _pandas_arff_parser(
     # `"'some string value'"` with pandas.
     single_quote_pattern = re.compile(r"^'(?P<contents>.*)'$")
 
-    def strip_quotes_regex(s):
-        return s.group("contents")
+    def strip_single_quotes(input_string):
+        match = re.search(single_quote_pattern, input_string)
+        if match is None:
+            return input_string
+
+        return match.group("contents")
 
     categorical_columns = [
         name
@@ -401,9 +406,8 @@ def _pandas_arff_parser(
         if pd.api.types.is_categorical_dtype(dtype)
     ]
     for col in categorical_columns:
-        frame[col].cat.categories = frame[col].cat.categories.str.replace(
-            single_quote_pattern, strip_quotes_regex, regex=True
-        )
+        frame[col] = frame[col].cat.rename_categories(strip_single_quotes)
+
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
 
     if output_arrays_type == "pandas":

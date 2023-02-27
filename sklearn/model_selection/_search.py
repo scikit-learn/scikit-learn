@@ -33,14 +33,14 @@ from ._validation import _insert_error_scores
 from ._validation import _normalize_score_results
 from ._validation import _warn_or_raise_about_fit_failures
 from ..exceptions import NotFittedError
-from joblib import Parallel
 from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
+from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._tags import _safe_tags
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.metaestimators import available_if
-from ..utils.fixes import delayed
-from ..metrics._scorer import _check_multimetric_scoring
+from ..utils.parallel import delayed, Parallel
+from ..metrics._scorer import _check_multimetric_scoring, get_scorer_names
 from ..metrics import check_scoring
 
 __all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV"]
@@ -371,6 +371,25 @@ def _estimator_has(attr):
 
 class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for hyper parameter search with cross-validation."""
+
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods(["fit"])],
+        "scoring": [
+            StrOptions(set(get_scorer_names())),
+            callable,
+            list,
+            tuple,
+            dict,
+            None,
+        ],
+        "n_jobs": [numbers.Integral, None],
+        "refit": ["boolean", str, callable],
+        "cv": ["cv_object"],
+        "verbose": ["verbose"],
+        "pre_dispatch": [numbers.Integral, str],
+        "error_score": [StrOptions({"raise"}), numbers.Real],
+        "return_train_score": ["boolean"],
+    }
 
     @abstractmethod
     def __init__(
@@ -768,6 +787,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             Instance of fitted estimator.
         """
+        self._validate_params()
         estimator = self.estimator
         refit_metric = "score"
 
@@ -965,9 +985,19 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             results["std_%s" % key_name] = array_stds
 
             if rank:
-                results["rank_%s" % key_name] = np.asarray(
-                    rankdata(-array_means, method="min"), dtype=np.int32
-                )
+                # When the fit/scoring fails `array_means` contains NaNs, we
+                # will exclude them from the ranking process and consider them
+                # as tied with the worst performers.
+                if np.isnan(array_means).all():
+                    # All fit/scoring routines failed.
+                    rank_result = np.ones_like(array_means, dtype=np.int32)
+                else:
+                    min_array_means = np.nanmin(array_means) - 1
+                    array_means = np.nan_to_num(array_means, nan=min_array_means)
+                    rank_result = rankdata(-array_means, method="min").astype(
+                        np.int32, copy=False
+                    )
+                results["rank_%s" % key_name] = rank_result
 
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
@@ -1100,6 +1130,10 @@ class GridSearchCV(BaseSearchCV):
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
+
+        See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
+        to see how to design a custom selection strategy using a callable
+        via `refit`.
 
         .. versionchanged:: 0.20
             Support for callable added.
@@ -1343,6 +1377,11 @@ class GridSearchCV(BaseSearchCV):
 
     _required_parameters = ["estimator", "param_grid"]
 
+    _parameter_constraints: dict = {
+        **BaseSearchCV._parameter_constraints,
+        "param_grid": [dict, list],
+    }
+
     def __init__(
         self,
         estimator,
@@ -1404,7 +1443,7 @@ class RandomizedSearchCV(BaseSearchCV):
     Parameters
     ----------
     estimator : estimator object
-        A object of that type is instantiated for each grid point.
+        An object of that type is instantiated for each grid point.
         This is assumed to implement the scikit-learn estimator interface.
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
@@ -1502,6 +1541,12 @@ class RandomizedSearchCV(BaseSearchCV):
 
     verbose : int
         Controls the verbosity: the higher, the more messages.
+
+        - >1 : the computation time for each fold and parameter candidate is
+          displayed;
+        - >2 : the score is also displayed;
+        - >3 : the fold and candidate parameter indexes are also displayed
+          together with the starting time of the computation.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
@@ -1712,6 +1757,13 @@ class RandomizedSearchCV(BaseSearchCV):
     """
 
     _required_parameters = ["estimator", "param_distributions"]
+
+    _parameter_constraints: dict = {
+        **BaseSearchCV._parameter_constraints,
+        "param_distributions": [dict, list],
+        "n_iter": [Interval(numbers.Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
 
     def __init__(
         self,

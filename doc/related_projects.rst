@@ -94,6 +94,11 @@ enhance the functionality of scikit-learn's estimators.
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes model visualization
   utilities.
 
+- `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_ 
+  Machine learning model evaluation made easy: plots, tables, HTML reports,
+  experiment tracking and Jupyter notebook analysis. Visual analysis, model
+  selection, evaluation and diagnostics.
+
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
   custom matplotlib visualizers for scikit-learn estimators to support visual feature
   analysis, model selection, evaluation, and diagnostics.
@@ -114,6 +119,10 @@ enhance the functionality of scikit-learn's estimators.
 - `sklearn-onnx <https://github.com/onnx/sklearn-onnx>`_ Serialization of many
   Scikit-learn pipelines to `ONNX <https://onnx.ai/>`_ for interchange and
   prediction.
+
+- `skops.io <https://skops.readthedocs.io/en/stable/persistence.html>`__ A
+  persistence model more secure than pickle, which can be used instead of
+  pickle in most common cases.
 
 - `sklearn2pmml <https://github.com/jpmml/sklearn2pmml>`_
   Serialization of a wide variety of scikit-learn estimators and transformers
@@ -296,7 +305,7 @@ Other packages useful for data analysis and machine learning.
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 
-- `PyMC <https://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
+- `PyMC <https://www.pymc.io/>`_ Bayesian statistical models and
   fitting algorithms.
 
 - `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
@@ -321,11 +330,13 @@ Recommendation Engine packages
 - `Spotlight <https://github.com/maciejkula/spotlight>`_ Pytorch-based
   implementation of deep recommender models.
 
-- `Surprise Lib <http://surpriselib.com/>`_ Library for explicit feedback
+- `Surprise Lib <https://surpriselib.com/>`_ Library for explicit feedback
   datasets.
 
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
+- `scikit-network <https://scikit-network.readthedocs.io/>`_ Machine learning on graphs.
 
 - `scikit-image <https://scikit-image.org/>`_ Image processing and computer
   vision in python.
@@ -346,7 +357,7 @@ Domain specific packages
 Translations of scikit-learn documentation
 ------------------------------------------
 
-Translation’s purpose is to ease reading and understanding in languages
+Translation's purpose is to ease reading and understanding in languages
 other than English. Its aim is to help people who do not understand English
 or have doubts about its interpretation. Additionally, some people prefer
 to read documentation in their native language, but please bear in mind that
@@ -365,10 +376,11 @@ and promote community efforts.
   (`source <https://github.com/mehrdad-dev/scikit-learn>`__)
 - `Spanish translation <https://qu4nt.github.io/sklearn-doc-es/>`_
   (`source <https://github.com/qu4nt/sklearn-doc-es>`__)
+- `Korean translation <https://panda5176.github.io/scikit-learn-korean/>`_
+  (`source <https://github.com/panda5176/scikit-learn-korean>`__)
 
 
 .. rubric:: Footnotes
 
 .. [#f1] following `linux documentation Disclaimer
    <https://www.kernel.org/doc/html/latest/translations/index.html#disclaimer>`__
-

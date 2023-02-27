@@ -218,20 +218,12 @@ def test_sparse_decision_function():
 
 def test_error():
     # Test that it gives proper exception on deficient input
-    # impossible value of C
-    with pytest.raises(ValueError):
-        svm.SVC(C=-1).fit(X, Y)
-
-    # impossible value of nu
-    clf = svm.NuSVC(nu=0.0)
-    with pytest.raises(ValueError):
-        clf.fit(X_sp, Y)
+    clf = svm.SVC()
 
     Y2 = Y[:-1]  # wrong dimensions for labels
     with pytest.raises(ValueError):
         clf.fit(X_sp, Y2)
 
-    clf = svm.SVC()
     clf.fit(X_sp, Y)
     assert_array_equal(clf.predict(T), true_result)
 

@@ -76,7 +76,8 @@
         "scipy": [],
         "cython": [],
         "joblib": [],
-        "threadpoolctl": []
+        "threadpoolctl": [],
+        "pandas": []
     },
 
     // Combinations of libraries/python versions can be excluded/included

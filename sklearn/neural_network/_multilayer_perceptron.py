@@ -6,6 +6,7 @@
 #          Jiyuan Qian
 # License: BSD 3 clause
 
+from numbers import Integral, Real
 import numpy as np
 
 from abc import ABCMeta, abstractmethod
@@ -22,6 +23,7 @@ from ..base import (
 from ..base import is_classifier
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
+from ..metrics import accuracy_score, r2_score
 from ..model_selection import train_test_split
 from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
@@ -35,6 +37,7 @@ from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
 from ..utils.metaestimators import available_if
+from ..utils._param_validation import StrOptions, Options, Interval
 
 
 _STOCHASTIC_SOLVERS = ["sgd", "adam"]
@@ -53,6 +56,41 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
     .. versionadded:: 0.18
     """
+
+    _parameter_constraints: dict = {
+        "hidden_layer_sizes": [
+            "array-like",
+            Interval(Integral, 1, None, closed="left"),
+        ],
+        "activation": [StrOptions({"identity", "logistic", "tanh", "relu"})],
+        "solver": [StrOptions({"lbfgs", "sgd", "adam"})],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "batch_size": [
+            StrOptions({"auto"}),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+        "learning_rate": [StrOptions({"constant", "invscaling", "adaptive"})],
+        "learning_rate_init": [Interval(Real, 0, None, closed="neither")],
+        "power_t": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "verbose": ["verbose"],
+        "warm_start": ["boolean"],
+        "momentum": [Interval(Real, 0, 1, closed="both")],
+        "nesterovs_momentum": ["boolean"],
+        "early_stopping": ["boolean"],
+        "validation_fraction": [Interval(Real, 0, 1, closed="left")],
+        "beta_1": [Interval(Real, 0, 1, closed="left")],
+        "beta_2": [Interval(Real, 0, 1, closed="left")],
+        "epsilon": [Interval(Real, 0, None, closed="neither")],
+        "n_iter_no_change": [
+            Interval(Integral, 1, None, closed="left"),
+            Options(Real, {np.inf}),
+        ],
+        "max_fun": [Interval(Integral, 1, None, closed="left")],
+    }
 
     @abstractmethod
     def __init__(
@@ -141,7 +179,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         return activations
 
-    def _forward_pass_fast(self, X):
+    def _forward_pass_fast(self, X, check_input=True):
         """Predict using the trained model
 
         This is the same as _forward_pass but does not record the activations
@@ -152,12 +190,16 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
+        check_input : bool, default=True
+            Perform input data validation or not.
+
         Returns
         -------
         y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The decision function of the samples for each class in the model.
         """
-        X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
+        if check_input:
+            X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
 
         # Initialize first layer
         activation = X
@@ -354,8 +396,11 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             if self.early_stopping:
                 self.validation_scores_ = []
                 self.best_validation_score_ = -np.inf
+                self.best_loss_ = None
             else:
                 self.best_loss_ = np.inf
+                self.validation_scores_ = None
+                self.best_validation_score_ = None
 
     def _init_coef(self, fan_in, fan_out, dtype):
         # Use the initialization method recommended by
@@ -381,8 +426,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             hidden_layer_sizes = [hidden_layer_sizes]
         hidden_layer_sizes = list(hidden_layer_sizes)
 
-        # Validate input parameters.
-        self._validate_hyperparameters()
         if np.any(np.array(hidden_layer_sizes) <= 0):
             raise ValueError(
                 "hidden_layer_sizes must be > 0, got %s." % hidden_layer_sizes
@@ -451,67 +494,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             )
 
         return self
-
-    def _validate_hyperparameters(self):
-        if not isinstance(self.shuffle, bool):
-            raise ValueError(
-                "shuffle must be either True or False, got %s." % self.shuffle
-            )
-        if self.max_iter <= 0:
-            raise ValueError("max_iter must be > 0, got %s." % self.max_iter)
-        if self.max_fun <= 0:
-            raise ValueError("max_fun must be > 0, got %s." % self.max_fun)
-        if self.alpha < 0.0:
-            raise ValueError("alpha must be >= 0, got %s." % self.alpha)
-        if (
-            self.learning_rate in ["constant", "invscaling", "adaptive"]
-            and self.learning_rate_init <= 0.0
-        ):
-            raise ValueError(
-                "learning_rate_init must be > 0, got %s." % self.learning_rate
-            )
-        if self.momentum > 1 or self.momentum < 0:
-            raise ValueError("momentum must be >= 0 and <= 1, got %s" % self.momentum)
-        if not isinstance(self.nesterovs_momentum, bool):
-            raise ValueError(
-                "nesterovs_momentum must be either True or False, got %s."
-                % self.nesterovs_momentum
-            )
-        if not isinstance(self.early_stopping, bool):
-            raise ValueError(
-                "early_stopping must be either True or False, got %s."
-                % self.early_stopping
-            )
-        if self.validation_fraction < 0 or self.validation_fraction >= 1:
-            raise ValueError(
-                "validation_fraction must be >= 0 and < 1, got %s"
-                % self.validation_fraction
-            )
-        if self.beta_1 < 0 or self.beta_1 >= 1:
-            raise ValueError("beta_1 must be >= 0 and < 1, got %s" % self.beta_1)
-        if self.beta_2 < 0 or self.beta_2 >= 1:
-            raise ValueError("beta_2 must be >= 0 and < 1, got %s" % self.beta_2)
-        if self.epsilon <= 0.0:
-            raise ValueError("epsilon must be > 0, got %s." % self.epsilon)
-        if self.n_iter_no_change <= 0:
-            raise ValueError(
-                "n_iter_no_change must be > 0, got %s." % self.n_iter_no_change
-            )
-
-        # raise ValueError if not registered
-        if self.activation not in ACTIVATIONS:
-            raise ValueError(
-                "The activation '%s' is not supported. Supported activations are %s."
-                % (self.activation, list(sorted(ACTIVATIONS)))
-            )
-        if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
-            raise ValueError("learning rate %s is not supported. " % self.learning_rate)
-        supported_solvers = _STOCHASTIC_SOLVERS + ["lbfgs"]
-        if self.solver not in supported_solvers:
-            raise ValueError(
-                "The solver %s is not supported.  Expected one of: %s"
-                % (self.solver, ", ".join(supported_solvers))
-            )
 
     def _fit_lbfgs(
         self, X, y, activations, deltas, coef_grads, intercept_grads, layer_units
@@ -617,7 +599,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if self.batch_size == "auto":
             batch_size = min(200, n_samples)
         else:
-            if self.batch_size < 1 or self.batch_size > n_samples:
+            if self.batch_size > n_samples:
                 warnings.warn(
                     "Got `batch_size` less than 1 or larger than "
                     "sample size. It is going to be clipped"
@@ -625,6 +607,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
         try:
+            self.n_iter_ = 0
             for it in range(self.max_iter):
                 if self.shuffle:
                     # Only shuffle the sample indices instead of X and y to
@@ -712,11 +695,12 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             # restore best weights
             self.coefs_ = self._best_coefs
             self.intercepts_ = self._best_intercepts
+            self.validation_scores_ = self.validation_scores_
 
     def _update_no_improvement_count(self, early_stopping, X_val, y_val):
         if early_stopping:
             # compute validation score, use that for stopping
-            self.validation_scores_.append(self.score(X_val, y_val))
+            self.validation_scores_.append(self._score(X_val, y_val))
 
             if self.verbose:
                 print("Validation score: %f" % self.validation_scores_[-1])
@@ -759,6 +743,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a trained MLP model.
         """
+        self._validate_params()
+
         return self._fit(X, y, incremental=False)
 
     def _check_solver(self):
@@ -769,25 +755,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 % self.solver
             )
         return True
-
-    @available_if(_check_solver)
-    def partial_fit(self, X, y):
-        """Update the model with a single iteration over the given data.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The input data.
-
-        y : ndarray of shape (n_samples,)
-            The target values.
-
-        Returns
-        -------
-        self : object
-            Trained MLP model.
-        """
-        return self._fit(X, y, incremental=True)
 
 
 class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
@@ -800,7 +767,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     Parameters
     ----------
-    hidden_layer_sizes : tuple, length = n_layers - 2, default=(100,)
+    hidden_layer_sizes : array-like of shape(n_layers - 2,), default=(100,)
         The ith element represents the number of neurons in the ith
         hidden layer.
 
@@ -962,11 +929,23 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     loss_ : float
         The current loss computed with the loss function.
 
-    best_loss_ : float
+    best_loss_ : float or None
         The minimum loss reached by the solver throughout fitting.
+        If `early_stopping=True`, this attribute is set ot `None`. Refer to
+        the `best_validation_score_` fitted attribute instead.
 
     loss_curve_ : list of shape (`n_iter_`,)
         The ith element in the list represents the loss at the ith iteration.
+
+    validation_scores_ : list of shape (`n_iter_`,) or None
+        The score at each iteration on a held-out validation set. The score
+        reported is the accuracy score. Only available if `early_stopping=True`,
+        otherwise the attribute is set to `None`.
+
+    best_validation_score_ : float or None
+        The best validation score (i.e. accuracy score) that triggered the
+        early stopping. Only available if `early_stopping=True`, otherwise the
+        attribute is set to `None`.
 
     t_ : int
         The number of training samples seen by the solver during fitting.
@@ -1173,12 +1152,21 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             The predicted classes.
         """
         check_is_fitted(self)
-        y_pred = self._forward_pass_fast(X)
+        return self._predict(X)
+
+    def _predict(self, X, check_input=True):
+        """Private predict method with optional input validation"""
+        y_pred = self._forward_pass_fast(X, check_input=check_input)
 
         if self.n_outputs_ == 1:
             y_pred = y_pred.ravel()
 
         return self._label_binarizer.inverse_transform(y_pred)
+
+    def _score(self, X, y):
+        """Private score method without input validation"""
+        # Input validation would remove feature names, so we disable it
+        return accuracy_score(y, self._predict(X, check_input=False))
 
     @available_if(lambda est: est._check_solver())
     def partial_fit(self, X, y, classes=None):
@@ -1205,6 +1193,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         self : object
             Trained MLP model.
         """
+        if not hasattr(self, "coefs_"):
+            self._validate_params()
+
         if _check_partial_fit_first_call(self, classes):
             self._label_binarizer = LabelBinarizer()
             if type_of_target(y).startswith("multilabel"):
@@ -1212,9 +1203,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             else:
                 self._label_binarizer.fit(classes)
 
-        super().partial_fit(X, y)
-
-        return self
+        return self._fit(X, y, incremental=True)
 
     def predict_log_proba(self, X):
         """Return the log of probability estimates.
@@ -1273,7 +1262,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     Parameters
     ----------
-    hidden_layer_sizes : tuple, length = n_layers - 2, default=(100,)
+    hidden_layer_sizes : array-like of shape(n_layers - 2,), default=(100,)
         The ith element represents the number of neurons in the ith
         hidden layer.
 
@@ -1314,7 +1303,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
-        If the solver is 'lbfgs', the classifier will not use minibatch.
+        If the solver is 'lbfgs', the regressor will not use minibatch.
         When set to "auto", `batch_size=min(200, n_samples)`.
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default='constant'
@@ -1377,7 +1366,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         previous solution. See :term:`the Glossary <warm_start>`.
 
     momentum : float, default=0.9
-        Momentum for gradient descent update.  Should be between 0 and 1. Only
+        Momentum for gradient descent update. Should be between 0 and 1. Only
         used when solver='sgd'.
 
     nesterovs_momentum : bool, default=True
@@ -1386,10 +1375,10 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
-        score is not improving. If set to true, it will automatically set
-        aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least ``tol`` for
-        ``n_iter_no_change`` consecutive epochs.
+        score is not improving. If set to True, it will automatically set
+        aside ``validation_fraction`` of training data as validation and
+        terminate training when validation score is not improving by at
+        least ``tol`` for ``n_iter_no_change`` consecutive epochs.
         Only effective when solver='sgd' or 'adam'.
 
     validation_fraction : float, default=0.1
@@ -1416,7 +1405,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     max_fun : int, default=15000
         Only used when solver='lbfgs'. Maximum number of function calls.
-        The solver iterates until convergence (determined by 'tol'), number
+        The solver iterates until convergence (determined by ``tol``), number
         of iterations reaches max_iter, or this number of function calls.
         Note that number of function calls will be greater than or equal to
         the number of iterations for the MLPRegressor.
@@ -1430,10 +1419,26 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     best_loss_ : float
         The minimum loss reached by the solver throughout fitting.
+        If `early_stopping=True`, this attribute is set to `None`. Refer to
+        the `best_validation_score_` fitted attribute instead.
+        Only accessible when solver='sgd' or 'adam'.
 
     loss_curve_ : list of shape (`n_iter_`,)
         Loss value evaluated at the end of each training step.
         The ith element in the list represents the loss at the ith iteration.
+        Only accessible when solver='sgd' or 'adam'.
+
+    validation_scores_ : list of shape (`n_iter_`,) or None
+        The score at each iteration on a held-out validation set. The score
+        reported is the R2 score. Only available if `early_stopping=True`,
+        otherwise the attribute is set to `None`.
+        Only accessible when solver='sgd' or 'adam'.
+
+    best_validation_score_ : float or None
+        The best validation score (i.e. R2 score) that triggered the
+        early stopping. Only available if `early_stopping=True`, otherwise the
+        attribute is set to `None`.
+        Only accessible when solver='sgd' or 'adam'.
 
     t_ : int
         The number of training samples seen by the solver during fitting.
@@ -1588,10 +1593,20 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             The predicted values.
         """
         check_is_fitted(self)
-        y_pred = self._forward_pass_fast(X)
+        return self._predict(X)
+
+    def _predict(self, X, check_input=True):
+        """Private predict method with optional input validation"""
+        y_pred = self._forward_pass_fast(X, check_input=check_input)
         if y_pred.shape[1] == 1:
             return y_pred.ravel()
         return y_pred
+
+    def _score(self, X, y):
+        """Private score method without input validation"""
+        # Input validation would remove feature names, so we disable it
+        y_pred = self._predict(X, check_input=False)
+        return r2_score(y, y_pred)
 
     def _validate_input(self, X, y, incremental, reset):
         X, y = self._validate_data(
@@ -1606,3 +1621,25 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
         return X, y
+
+    @available_if(lambda est: est._check_solver)
+    def partial_fit(self, X, y):
+        """Update the model with a single iteration over the given data.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input data.
+
+        y : ndarray of shape (n_samples,)
+            The target values.
+
+        Returns
+        -------
+        self : object
+            Trained MLP model.
+        """
+        if not hasattr(self, "coefs_"):
+            self._validate_params()
+
+        return self._fit(X, y, incremental=True)

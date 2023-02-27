@@ -51,6 +51,7 @@ class DictionaryLearningBenchmark(Transformer, Estimator, Benchmark):
             n_components=15,
             fit_algorithm=fit_algorithm,
             alpha=0.1,
+            transform_alpha=1,
             max_iter=20,
             tol=1e-16,
             random_state=0,

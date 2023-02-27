@@ -126,6 +126,23 @@ its ``coef_`` member::
     >>> reg.intercept_
     0.13636...
 
+Note that the class :class:`Ridge` allows for the user to specify that the
+solver be automatically chosen by setting `solver="auto"`. When this option
+is specified, :class:`Ridge` will choose between the `"lbfgs"`, `"cholesky"`,
+and `"sparse_cg"` solvers. :class:`Ridge` will begin checking the conditions
+shown in the following table from top to bottom. If the condition is true,
+the corresponding solver is chosen.
+
++-------------+----------------------------------------------------+
+| **Solver**  | **Condition**                                      |
++-------------+----------------------------------------------------+
+| 'lbfgs'     | The ``positive=True`` option is specified.         |
++-------------+----------------------------------------------------+
+| 'cholesky'  | The input array X is not sparse.                   |
++-------------+----------------------------------------------------+
+| 'sparse_cg' | None of the above conditions are fulfilled.        |
++-------------+----------------------------------------------------+
+
 
 Classification
 --------------
@@ -591,9 +608,9 @@ function of the norm of its coefficients.
 ::
 
    >>> from sklearn import linear_model
-   >>> reg = linear_model.LassoLars(alpha=.1, normalize=False)
+   >>> reg = linear_model.LassoLars(alpha=.1)
    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
-   LassoLars(alpha=0.1, normalize=False)
+   LassoLars(alpha=0.1)
    >>> reg.coef_
    array([0.6..., 0.        ])
 
@@ -777,9 +794,9 @@ is more robust to ill-posed problems.
 
     * Section 3.3 in Christopher M. Bishop: Pattern Recognition and Machine Learning, 2006
 
-    * David J. C. MacKay, `Bayesian Interpolation <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_, 1992.
+    * David J. C. MacKay, `Bayesian Interpolation <https://citeseerx.ist.psu.edu/doc_view/pid/b14c7cc3686e82ba40653c6dff178356a33e5e2c>`_, 1992.
 
-    * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
+    * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
 
 .. _automatic_relevance_determination:
 
@@ -819,11 +836,11 @@ Ridge Regression`_, see the example below.
 
     .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 7.2.1
 
-    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination <https://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
+    .. [2] David Wipf and Srikantan Nagarajan: `A New View of Automatic Relevance Determination <https://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
 
-    .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
+    .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
 
-    .. [4] Tristan Fletcher: `Relevance Vector Machines explained <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.651.8603&rep=rep1&type=pdf>`_
+    .. [4] Tristan Fletcher: `Relevance Vector Machines Explained <https://citeseerx.ist.psu.edu/doc_view/pid/3dc9d625404fdfef6eaccc3babddefe4c176abd4>`_
 
 
 .. _Logistic_regression:
@@ -831,24 +848,35 @@ Ridge Regression`_, see the example below.
 Logistic regression
 ===================
 
-Logistic regression, despite its name, is a linear model for classification
-rather than regression. Logistic regression is also known in the literature as
-logit regression, maximum-entropy classification (MaxEnt) or the log-linear
-classifier. In this model, the probabilities describing the possible outcomes
-of a single trial are modeled using a
-`logistic function <https://en.wikipedia.org/wiki/Logistic_function>`_.
+The logistic regression is implemented in :class:`LogisticRegression`. Despite
+its name, it is implemented as a linear model for classification rather than
+regression in terms of the scikit-learn/ML nomenclature. The logistic
+regression is also known in the literature as logit regression,
+maximum-entropy classification (MaxEnt) or the log-linear classifier. In this
+model, the probabilities describing the possible outcomes of a single trial
+are modeled using a `logistic function
+<https://en.wikipedia.org/wiki/Logistic_function>`_.
 
-Logistic regression is implemented in :class:`LogisticRegression`.
 This implementation can fit binary, One-vs-Rest, or multinomial logistic
 regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net
 regularization.
 
-.. note::
+.. note:: **Regularization**
 
     Regularization is applied by default, which is common in machine
     learning but not in statistics. Another advantage of regularization is
     that it improves numerical stability. No regularization amounts to
     setting C to a very high value.
+
+.. note:: **Logistic Regression as a special case of the Generalized Linear Models (GLM)**
+
+    Logistic regression is a special case of
+    :ref:`generalized_linear_models` with a Binomial / Bernoulli conditional
+    distribution and a Logit link. The numerical output of the logistic
+    regression, which is the predicted probability, can be used as a classifier
+    by applying a threshold (by default 0.5) to it. This is how it is
+    implemented in scikit-learn, so it expects a categorical target, making
+    the Logistic Regression a classifier.
 
 Binary Case
 -----------
@@ -937,7 +965,7 @@ Solvers
 -------
 
 The solvers implemented in the class :class:`LogisticRegression`
-are "liblinear", "newton-cg", "lbfgs", "sag" and "saga":
+are "lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag" and "saga":
 
 The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
 on the excellent C++ `LIBLINEAR library
@@ -951,7 +979,7 @@ classifiers. For :math:`\ell_1` regularization :func:`sklearn.svm.l1_min_c` allo
 calculate the lower bound for C in order to get a non "null" (all feature
 weights to zero) model.
 
-The "lbfgs", "sag" and "newton-cg" solvers only support :math:`\ell_2`
+The "lbfgs", "newton-cg" and "sag" solvers only support :math:`\ell_2`
 regularization or no regularization, and are found to converge faster for some
 high-dimensional data. Setting `multi_class` to "multinomial" with these solvers
 learns a true multinomial logistic regression model [5]_, which means that its
@@ -969,41 +997,53 @@ multinomial logistic regression. It is also the only solver that supports
 
 The "lbfgs" is an optimization algorithm that approximates the
 Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_, which belongs to
-quasi-Newton methods. The "lbfgs" solver is recommended for use for
-small data-sets but for larger datasets its performance suffers. [9]_
+quasi-Newton methods. As such, it can deal with a wide range of different training
+data and is therefore the default solver. Its performance, however, suffers on poorly
+scaled datasets and on datasets with one-hot encoded categorical features with rare
+categories.
+
+The "newton-cholesky" solver is an exact Newton solver that calculates the hessian
+matrix and solves the resulting linear system. It is a very good choice for
+`n_samples` >> `n_features`, but has a few shortcomings: Only :math:`\ell_2`
+regularization is supported. Furthermore, because the hessian matrix is explicitly
+computed, the memory usage has a quadratic dependency on `n_features` as well as on
+`n_classes`. As a consequence, only the one-vs-rest scheme is implemented for the
+multiclass case.
+
+For a comparison of some of these solvers, see [9]_.
 
 The following table summarizes the penalties supported by each solver:
 
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-|                              |                       **Solvers**                                        |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| **Penalties**                | **'liblinear'** | **'lbfgs'** | **'newton-cg'** | **'sag'** | **'saga'** |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| Multinomial + L2 penalty     |       no        |     yes     |       yes       |    yes    |    yes     |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| OVR + L2 penalty             |       yes       |     yes     |       yes       |    yes    |    yes     |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| Multinomial + L1 penalty     |       no        |     no      |       no        |    no     |    yes     |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| OVR + L1 penalty             |       yes       |     no      |       no        |    no     |    yes     |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| Elastic-Net                  |       no        |     no      |       no        |    no     |    yes     |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| No penalty ('none')          |       no        |     yes     |       yes       |    yes    |    yes     |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| **Behaviors**                |                                                                          |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| Penalize the intercept (bad) |       yes       |     no      |       no        |    no     |    no      |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| Faster for large datasets    |       no        |     no      |       no        |    yes    |    yes     |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| Robust to unscaled datasets  |       yes       |     yes     |       yes       |    no     |    no      |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
++------------------------------+-----------------+-------------+-----------------+-----------------------+-----------+------------+
+|                              |                       **Solvers**                                                                |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| **Penalties**                | **'lbfgs'** | **'liblinear'** | **'newton-cg'** | **'newton-cholesky'** | **'sag'** | **'saga'** |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| Multinomial + L2 penalty     |     yes     |       no        |       yes       |     no                |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| OVR + L2 penalty             |     yes     |       yes       |       yes       |     yes               |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| Multinomial + L1 penalty     |     no      |       no        |       no        |     no                |    no     |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| OVR + L1 penalty             |     no      |       yes       |       no        |     no                |    no     |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| Elastic-Net                  |     no      |       no        |       no        |     no                |    no     |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| No penalty ('none')          |     yes     |       no        |       yes       |     yes               |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| **Behaviors**                |                                                                                                  |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| Penalize the intercept (bad) |     no      |       yes       |       no        |     no                |    no     |    no      |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| Faster for large datasets    |     no      |       no        |       no        |     no                |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| Robust to unscaled datasets  |     yes     |       yes       |       yes       |     yes               |    no     |    no      |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 
 The "lbfgs" solver is used by default for its robustness. For large datasets
 the "saga" solver is usually faster.
 For large dataset, you may also consider using :class:`SGDClassifier`
-with 'log' loss, which might be even faster but requires more tuning.
+with `loss="log_loss"`, which might be even faster but requires more tuning.
 
 .. topic:: Examples:
 
@@ -1042,7 +1082,7 @@ with 'log' loss, which might be even faster but requires more tuning.
 
     It is possible to obtain the p-values and confidence intervals for
     coefficients in cases of regression without penalization. The `statsmodels
-    package <https://pypi.org/project/statsmodels/>` natively supports this.
+    package <https://pypi.org/project/statsmodels/>`_ natively supports this.
     Within sklearn, one could use bootstrapping instead as well.
 
 
@@ -1064,8 +1104,8 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 
     .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
 
-    .. [9] `"Performance Evaluation of Lbfgs vs other solvers"
-            <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
+    .. [9] Thomas P. Minka `"A comparison of numerical optimizers for logistic regression"
+           <https://tminka.github.io/papers/logreg/minka-logreg.pdf>`_
 
     .. [16] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
         "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
@@ -1073,8 +1113,10 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 
 .. _Generalized_linear_regression:
 
-Generalized Linear Regression
-=============================
+.. _Generalized_linear_models:
+
+Generalized Linear Models
+=========================
 
 Generalized Linear Models (GLM) extend linear models in two ways
 [10]_. First, the predicted values :math:`\hat{y}` are linked to a linear
@@ -1094,17 +1136,18 @@ The minimization problem becomes:
 where :math:`\alpha` is the L2 regularization penalty. When sample weights are
 provided, the average becomes a weighted average.
 
-The following table lists some specific EDMs and their unit deviance (all of
-these are instances of the Tweedie family):
+The following table lists some specific EDMs and their unit deviance :
 
-================= ===============================  ============================================
+================= ================================  ============================================
 Distribution       Target Domain                    Unit Deviance :math:`d(y, \hat{y})`
-================= ===============================  ============================================
-Normal            :math:`y \in (-\infty, \infty)`  :math:`(y-\hat{y})^2`
-Poisson           :math:`y \in [0, \infty)`        :math:`2(y\log\frac{y}{\hat{y}}-y+\hat{y})`
-Gamma             :math:`y \in (0, \infty)`        :math:`2(\log\frac{\hat{y}}{y}+\frac{y}{\hat{y}}-1)`
-Inverse Gaussian  :math:`y \in (0, \infty)`        :math:`\frac{(y-\hat{y})^2}{y\hat{y}^2}`
-================= ===============================  ============================================
+================= ================================  ============================================
+Normal            :math:`y \in (-\infty, \infty)`   :math:`(y-\hat{y})^2`
+Bernoulli         :math:`y \in \{0, 1\}`            :math:`2({y}\log\frac{y}{\hat{y}}+({1}-{y})\log\frac{{1}-{y}}{{1}-\hat{y}})`
+Categorical       :math:`y \in \{0, 1, ..., k\}`    :math:`2\sum_{i \in \{0, 1, ..., k\}} I(y = i) y_\text{i}\log\frac{I(y = i)}{\hat{I(y = i)}}`
+Poisson           :math:`y \in [0, \infty)`         :math:`2(y\log\frac{y}{\hat{y}}-y+\hat{y})`
+Gamma             :math:`y \in (0, \infty)`         :math:`2(\log\frac{y}{\hat{y}}+\frac{y}{\hat{y}}-1)`
+Inverse Gaussian  :math:`y \in (0, \infty)`         :math:`\frac{(y-\hat{y})^2}{y\hat{y}^2}`
+================= ================================  ============================================
 
 The Probability Density Functions (PDF) of these distributions are illustrated
 in the following figure,
@@ -1119,16 +1162,28 @@ in the following figure,
    distribution, but not for the Gamma distribution which has a strictly
    positive target domain.
 
+The Bernoulli distribution is a discrete probability distribution modelling a
+Bernoulli trial - an event that has only two mutually exclusive outcomes.
+The Categorical distribution is a generalization of the Bernoulli distribution
+for a categorical random variable. While a random variable in a Bernoulli
+distribution has two possible outcomes, a Categorical random variable can take
+on one of K possible categories, with the probability of each category
+specified separately.
+
 The choice of the distribution depends on the problem at hand:
 
 * If the target values :math:`y` are counts (non-negative integer valued) or
-  relative frequencies (non-negative), you might use a Poisson deviance
-  with log-link.
-* If the target values are positive valued and skewed, you might try a
-  Gamma deviance with log-link.
-* If the target values seem to be heavier tailed than a Gamma distribution,
-  you might try an Inverse Gaussian deviance (or even higher variance powers
-  of the Tweedie family).
+  relative frequencies (non-negative), you might use a Poisson distribution
+  with a log-link.
+* If the target values are positive valued and skewed, you might try a Gamma
+  distribution with a log-link.
+* If the target values seem to be heavier tailed than a Gamma distribution, you
+  might try an Inverse Gaussian distribution (or even higher variance powers of
+  the Tweedie family).
+* If the target values :math:`y` are probabilities, you can use the Bernoulli
+  distribution. The Bernoulli distribution with a logit link can be used for
+  binary classification. The Categorical distribution with a softmax link can be
+  used for multiclass classification.
 
 
 Examples of use cases include:
@@ -1139,10 +1194,16 @@ Examples of use cases include:
 * Risk modeling / insurance policy pricing:  number of claim events /
   policyholder per year (Poisson), cost per event (Gamma), total cost per
   policyholder per year (Tweedie / Compound Poisson Gamma).
+* Credit Default: probability that a loan can't be payed back (Bernouli).
+* Fraud Detection: probability that a financial transaction like a cash transfer
+  is a fraudulent transaction (Bernoulli).
 * Predictive maintenance: number of production interruption events per year
   (Poisson), duration of interruption (Gamma), total interruption time per year
   (Tweedie / Compound Poisson Gamma).
-
+* Medical Drug Testing: probability of curing a patient in a set of trials or
+  probability that a patient will experience side effects (Bernoulli).
+* News Classification: classification of news articles into three categories
+  namely Business News, Politics and Entertainment news (Categorical).
 
 .. topic:: References:
 

@@ -36,7 +36,7 @@ crucial to improve the communication in the project and limit the crowding
 of the issue tracker.
 
 Similarly to what has been decided in the `python project
-<https://devguide.python.org/triaging/#becoming-a-member-of-the-python-triage-team>`_,
+<https://devguide.python.org/triage/triage-team/#becoming-a-member-of-the-python-triage-team>`_,
 any contributor may become a member of the scikit-learn contributor experience team,
 after showing some continuity in participating to scikit-learn
 development (with pull requests and reviews).
@@ -72,7 +72,7 @@ the continued development of the project through ongoing engagement with the
 community. They have shown they can be trusted to maintain scikit-learn with
 care. Being a core developer allows contributors to more easily carry on
 with their project related activities by giving them direct access to the
-project’s repository and is represented as being an organization member on the
+project's repository and is represented as being an organization member on the
 scikit-learn `GitHub organization <https://github.com/orgs/scikit-learn/people>`_.
 Core developers are expected to review code
 contributions, can merge approved pull requests, can cast votes for and against
@@ -113,14 +113,14 @@ with the TC duties are expected to resign.
 The Technical Committee of scikit-learn consists of :user:`Thomas Fan
 <thomasjpfan>`, :user:`Alexandre Gramfort <agramfort>`, :user:`Olivier Grisel
 <ogrisel>`, :user:`Adrin Jalali <adrinjalali>`, :user:`Andreas Müller
-<amueller>`, :user:`Joel Nothman <jnothman>`, :user:`Gaël Varoquaux
-<GaelVaroquaux>` and :user:`Roman Yurchak <rth>`.
+<amueller>`, :user:`Joel Nothman <jnothman>` and :user:`Gaël Varoquaux
+<GaelVaroquaux>`.
 
 Decision Making Process
 =======================
 Decisions about the future of the project are made through discussion with all
 members of the community. All non-sensitive project management discussion takes
-place on the project contributors’ `mailing list <mailto:scikit-learn@python.org>`_
+place on the project contributors' `mailing list <mailto:scikit-learn@python.org>`_
 and the `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_.
 Occasionally, sensitive discussion occurs on a private list.
 
@@ -131,8 +131,8 @@ conclude one month from the call for the vote. Any vote must be backed by a
 :ref:`SLEP <slep>`. If no option can gather two thirds of the votes cast, the
 decision is escalated to the TC, which in turn will use consensus seeking with
 the fallback option of a simple majority vote if no consensus can be found
-within a month. This is what we hereafter may refer to as “the decision making
-process”.
+within a month. This is what we hereafter may refer to as "**the decision making
+process**".
 
 Decisions (in addition to adding core developers and TC membership as above)
 are made according to the following rules:
@@ -142,7 +142,7 @@ are made according to the following rules:
   page: Requires +1 by a core developer, no -1 by a core developer (lazy
   consensus), happens on the issue or pull request page. Core developers are
   expected to give “reasonable time” to others to give their opinion on the pull
-  request if they’re not confident others would agree.
+  request if they're not confident others would agree.
 
 * **Code changes and major documentation changes**
   require +1 by two core developers, no -1 by a core developer (lazy
@@ -151,12 +151,24 @@ are made according to the following rules:
 * **Changes to the API principles and changes to dependencies or supported
   versions** happen via a :ref:`slep` and follows the decision-making process outlined above.
 
-* **Changes to the governance model** use the same decision process outlined above.
-
-
 If a veto -1 vote is cast on a lazy consensus, the proposer can appeal to the
 community and core developers and the change can be approved or rejected using
 the decision making procedure outlined above.
+
+Governance Model Changes
+------------------------
+
+Governance model changes occur through an enhancement proposal or a GitHub Pull
+Request. An enhancement proposal will go through "**the decision-making process**"
+described in the previous section. Alternatively, an author may propose a change
+directly to the governance model with a GitHub Pull Request. Logistically, an
+author can open a Draft Pull Request for feedback and follow up with a new
+revised Pull Request for voting. Once that author is happy with the state of the
+Pull Request, they can call for a vote on the public mailing list. During the
+one-month voting period, the Pull Request can not change. A Pull Request
+Approval will count as a positive vote, and a "Request Changes" review will
+count as a negative vote. If two-thirds of the cast votes are positive, then
+the governance model change is accepted.
 
 .. _slep:
 
@@ -164,7 +176,7 @@ Enhancement proposals (SLEPs)
 ==============================
 For all votes, a proposal must have been made public and discussed before the
 vote. Such proposal must be a consolidated document, in the form of a
-‘Scikit-Learn Enhancement Proposal’ (SLEP), rather than a long discussion on an
+"Scikit-Learn Enhancement Proposal" (SLEP), rather than a long discussion on an
 issue. A SLEP must be submitted as a pull-request to
 `enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
 using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_.
