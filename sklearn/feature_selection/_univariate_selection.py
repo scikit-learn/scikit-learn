@@ -17,7 +17,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import as_float_array, check_array, check_X_y, safe_sqr, safe_mask
 from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ._base import SelectorMixin
 
 
@@ -167,6 +167,12 @@ def _chisquare(f_obs, f_exp):
     return chisq, special.chdtrc(k - 1, chisq)
 
 
+@validate_params(
+  {
+    "X":["array-like","sparse matrix"],
+    "y":["array-like"],
+  }      
+)
 def chi2(X, y):
     """Compute chi-squared stats between each non-negative feature and class.
 
