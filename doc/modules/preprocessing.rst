@@ -765,10 +765,12 @@ In the following example with :class:`OrdinalEncoder`, the categories `'dog' and
           [1.],
           [2.]])
 
-:class:`OrdinalEncoder` can be configured with an encoding unknown categories and
-missing values, which can end up with up to 2 more unique integer codes. In the
-follow example, "a" and "d" are grouped together into a single category,
-unknown values are encoded as 2 and missing values are encoded as 3.
+:class:`OrdinalEncoder`'s `max_categories` do **not** take into account missing
+or unknown categories. Setting `unknown_value` or `encoded_missing_value` to an
+integer will increase the number of unique integer codes by one each. This can
+result in up to `max_categories + 2` integer codes. In the follow example, "a"
+and "d" are grouped together into a single category, unknown values are encoded
+as 2 and missing values are encoded as 3.
 
   >>> X_train = np.array(
   ...     [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3 + [np.nan]],
