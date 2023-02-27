@@ -847,11 +847,11 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples,)
+    y_true : array-like of shape (n_samples,)
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    probas_pred : ndarray of shape (n_samples,)
+    probas_pred : array-like of shape (n_samples,)
         Target scores, can either be probability estimates of the positive
         class, or non-thresholded measure of decisions (as returned by
         `decision_function` on some classifiers).
