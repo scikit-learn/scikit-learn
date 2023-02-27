@@ -309,17 +309,19 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             metric, metric_kwargs = _adjusted_metric(
                 metric=self.metric, metric_kwargs=self.metric_params, p=self.p
             )
-            if self.metric == "precomputed":
-                X = _check_precomputed(X)
-            else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
-
             if (
                 self._fit_method == "brute"
                 and ArgKminClassMode.is_usable_for(X, self._fit_X, metric)
                 # TODO: Implement efficient multi-output solution
                 and not self.outputs_2d_
             ):
+                if self.metric == "precomputed":
+                    X = _check_precomputed(X)
+                else:
+                    X = self._validate_data(
+                        X, accept_sparse="csr", reset=False, order="C"
+                    )
+
                 probabilities = ArgKminClassMode.compute(
                     X,
                     self._fit_X,
