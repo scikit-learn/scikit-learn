@@ -40,7 +40,6 @@ from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
 from ..utils._param_validation import validate_params
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..exceptions import ConvergenceWarning
 from ._k_means_common import CHUNK_SIZE
 from ._k_means_common import _inertia_dense
@@ -345,8 +344,8 @@ def k_means(
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-        When `n_init='auto'`, the number of runs will be 10 if using
-        `init='random'`, and 1 if using `init='kmeans++'`.
+        When `n_init='auto'`, the number of runs depends on the value of init:
+        10 if using `init='random'`, 1 if using `init='k-means++'`.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -783,9 +782,7 @@ def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True)
     else:
         _labels = lloyd_iter_chunked_dense
         _inertia = _inertia_dense
-        X = ReadonlyArrayWrapper(X)
 
-    centers = ReadonlyArrayWrapper(centers)
     _labels(
         X,
         sample_weight,
@@ -1208,8 +1205,8 @@ class KMeans(_BaseKMeans):
         in terms of inertia. Several runs are recommended for sparse
         high-dimensional problems (see :ref:`kmeans_sparse_high_dim`).
 
-        When `n_init='auto'`, the number of runs will be 10 if using
-        `init='random'`, and 1 if using `init='kmeans++'`.
+        When `n_init='auto'`, the number of runs depends on the value of init:
+        10 if using `init='random'`, 1 if using `init='k-means++'`.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -1600,7 +1597,7 @@ def _mini_batch_step(
         )
     else:
         _minibatch_update_dense(
-            ReadonlyArrayWrapper(X),
+            X,
             sample_weight,
             centers,
             centers_new,
@@ -1736,8 +1733,8 @@ class MiniBatchKMeans(_BaseKMeans):
         recommended for sparse high-dimensional problems (see
         :ref:`kmeans_sparse_high_dim`).
 
-        When `n_init='auto'`, the number of runs will be 3 if using
-        `init='random'`, and 1 if using `init='kmeans++'`.
+        When `n_init='auto'`, the number of runs depends on the value of init:
+        3 if using `init='random'`, 1 if using `init='k-means++'`.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.

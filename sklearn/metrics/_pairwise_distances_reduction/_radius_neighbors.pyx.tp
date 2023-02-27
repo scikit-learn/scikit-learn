@@ -169,7 +169,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         cdef:
             ITYPE_t i, j
             DTYPE_t r_dist_i_j
@@ -198,7 +198,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         ITYPE_t thread_num,
         ITYPE_t X_start,
         ITYPE_t X_end,
-    ) nogil:
+    ) noexcept nogil:
 
         # As this strategy is embarrassingly parallel, we can set the
         # thread vectors' pointers to the main vectors'.
@@ -211,7 +211,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         ITYPE_t thread_num,
         ITYPE_t X_start,
         ITYPE_t X_end,
-    ) nogil:
+    ) noexcept nogil:
         cdef:
             ITYPE_t idx
 
@@ -226,7 +226,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
 
     cdef void _parallel_on_Y_init(
         self,
-    ) nogil:
+    ) noexcept nogil:
         cdef:
             ITYPE_t thread_num
         # As chunks of X are shared across threads, so must datastructures to avoid race
@@ -241,7 +241,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         self,
         ITYPE_t idx,
         ITYPE_t num_threads,
-    ) nogil:
+    ) noexcept nogil:
         cdef:
             ITYPE_t thread_num
             ITYPE_t idx_n_elements = 0
@@ -271,7 +271,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
 
     cdef void _parallel_on_Y_finalize(
         self,
-    ) nogil:
+    ) noexcept nogil:
         cdef:
             ITYPE_t idx
 
@@ -297,7 +297,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
 
         return
 
-    cdef void compute_exact_distances(self) nogil:
+    cdef void compute_exact_distances(self) noexcept nogil:
         """Convert rank-preserving distances to pairwise distances in parallel."""
         cdef:
             ITYPE_t i, j
@@ -405,7 +405,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
     cdef void _parallel_on_X_parallel_init(
         self,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         RadiusNeighbors{{name_suffix}}._parallel_on_X_parallel_init(self, thread_num)
         self.middle_term_computer._parallel_on_X_parallel_init(thread_num)
 
@@ -415,7 +415,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
         ITYPE_t thread_num,
         ITYPE_t X_start,
         ITYPE_t X_end,
-    ) nogil:
+    ) noexcept nogil:
         RadiusNeighbors{{name_suffix}}._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
         self.middle_term_computer._parallel_on_X_init_chunk(thread_num, X_start, X_end)
 
@@ -427,7 +427,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         RadiusNeighbors{{name_suffix}}._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             self,
             X_start, X_end,
@@ -441,7 +441,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
     @final
     cdef void _parallel_on_Y_init(
         self,
-    ) nogil:
+    ) noexcept nogil:
         RadiusNeighbors{{name_suffix}}._parallel_on_Y_init(self)
         self.middle_term_computer._parallel_on_Y_init()
 
@@ -451,7 +451,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
         ITYPE_t thread_num,
         ITYPE_t X_start,
         ITYPE_t X_end,
-    ) nogil:
+    ) noexcept nogil:
         RadiusNeighbors{{name_suffix}}._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
         self.middle_term_computer._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
 
@@ -463,7 +463,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         RadiusNeighbors{{name_suffix}}._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             self,
             X_start, X_end,
@@ -475,7 +475,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
         )
 
     @final
-    cdef void compute_exact_distances(self) nogil:
+    cdef void compute_exact_distances(self) noexcept nogil:
         if not self.use_squared_distances:
             RadiusNeighbors{{name_suffix}}.compute_exact_distances(self)
 
@@ -487,7 +487,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         cdef:
             ITYPE_t i, j
             DTYPE_t sqeuclidean_dist_i_j

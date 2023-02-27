@@ -40,7 +40,6 @@ def cythonize_extensions(extension):
     """Check that a recent Cython is available and cythonize extensions"""
     _check_cython_version()
     from Cython.Build import cythonize
-    import Cython
 
     # Fast fail before cythonization if compiler fails compiling basic test
     # code even without OpenMP
@@ -53,11 +52,9 @@ def cythonize_extensions(extension):
     # compilers are properly configured to build with OpenMP. This is expensive
     # and we only want to call this function once.
     # The result of this check is cached as a private attribute on the sklearn
-    # module (only at build-time) to be used twice:
-    # - First to set the value of SKLEARN_OPENMP_PARALLELISM_ENABLED, the
-    #   cython build-time variable passed to the cythonize() call.
-    # - Then in the build_ext subclass defined in the top-level setup.py file
-    #   to actually build the compiled extensions with OpenMP flags if needed.
+    # module (only at build-time) to be used in the build_ext subclass defined
+    # in the top-level setup.py file to actually build the compiled extensions
+    # with OpenMP flags if needed.
     sklearn._OPENMP_SUPPORTED = check_openmp_support()
 
     n_jobs = 1
@@ -80,27 +77,9 @@ def cythonize_extensions(extension):
         "cdivision": True,
     }
 
-    # TODO: once Cython 3 is released and we require Cython>=3 we should get
-    # rid of the `legacy_implicit_noexcept` directive.
-    # This should mostly consist in:
-    #
-    #   - ensuring nogil is at the end of function signature,
-    #   e.g. replace "nogil except -1" by "except -1 nogil".
-    #
-    #   - "noexcept"-qualifying Cython and externalized C interfaces
-    #   which aren't raising nor propagating exceptions.
-    #   See: https://cython.readthedocs.io/en/latest/src/userguide/language_basics.html#error-return-values  # noqa
-    #
-    # See: https://github.com/cython/cython/issues/5088 for more details
-    if parse(Cython.__version__) > parse("3.0.0a11"):
-        compiler_directives["legacy_implicit_noexcept"] = True
-
     return cythonize(
         extension,
         nthreads=n_jobs,
-        compile_time_env={
-            "SKLEARN_OPENMP_PARALLELISM_ENABLED": sklearn._OPENMP_SUPPORTED
-        },
         compiler_directives=compiler_directives,
     )
 

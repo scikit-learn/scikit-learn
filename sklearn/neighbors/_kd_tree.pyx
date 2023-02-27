@@ -82,7 +82,7 @@ cdef int init_node(BinaryTree tree, NodeData_t[::1] node_data, ITYPE_t i_node,
 
 
 cdef DTYPE_t min_rdist(BinaryTree tree, ITYPE_t i_node,
-                       DTYPE_t* pt) nogil except -1:
+                       DTYPE_t* pt) except -1 nogil:
     """Compute the minimum reduced-distance between a point and a node"""
     cdef ITYPE_t n_features = tree.data.shape[1]
     cdef DTYPE_t d, d_lo, d_hi, rdist=0.0
@@ -143,7 +143,7 @@ cdef DTYPE_t max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) except -1:
 
 
 cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
-                             DTYPE_t* min_dist, DTYPE_t* max_dist) nogil except -1:
+                             DTYPE_t* min_dist, DTYPE_t* max_dist) except -1 nogil:
     """Compute the minimum and maximum distance between a point and a node"""
     cdef ITYPE_t n_features = tree.data.shape[1]
 
