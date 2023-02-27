@@ -114,7 +114,7 @@ def bench_k_means(kmeans, name, data, labels):
 #
 # We will compare three approaches:
 #
-# * an initialization using `kmeans++`. This method is stochastic and we will
+# * an initialization using `k-means++`. This method is stochastic and we will
 #   run the initialization 4 times;
 # * a random initialization. This method is stochastic as well and we will run
 #   the initialization 4 times;

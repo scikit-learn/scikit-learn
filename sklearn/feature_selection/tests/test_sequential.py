@@ -278,3 +278,39 @@ def test_no_y_validation_model_fit(y):
 
     with pytest.raises((TypeError, ValueError)):
         sfs.fit(X, y)
+
+
+def test_forward_neg_tol_error():
+    """Check that we raise an error when tol<0 and direction='forward'"""
+    X, y = make_regression(n_features=10, random_state=0)
+    sfs = SequentialFeatureSelector(
+        LinearRegression(),
+        n_features_to_select="auto",
+        direction="forward",
+        tol=-1e-3,
+    )
+
+    with pytest.raises(ValueError, match="tol must be positive"):
+        sfs.fit(X, y)
+
+
+def test_backward_neg_tol():
+    """Check that SequentialFeatureSelector works negative tol
+
+    non-regression test for #25525
+    """
+    X, y = make_regression(n_features=10, random_state=0)
+    lr = LinearRegression()
+    initial_score = lr.fit(X, y).score(X, y)
+
+    sfs = SequentialFeatureSelector(
+        lr,
+        n_features_to_select="auto",
+        direction="backward",
+        tol=-1e-3,
+    )
+    Xr = sfs.fit_transform(X, y)
+    new_score = lr.fit(Xr, y).score(Xr, y)
+
+    assert 0 < sfs.get_support().sum() < X.shape[1]
+    assert new_score < initial_score
