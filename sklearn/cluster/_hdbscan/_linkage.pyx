@@ -201,14 +201,8 @@ cpdef cnp.ndarray[HIERARCHY_t, ndim=1] make_single_linkage(const MST_edge_t[::1]
 
     Returns
     -------
-    single_linkage : ndarray of shape (n_samples - 1, 4)
-        The single-linkage tree tree (dendrogram) built from the MST. Each
-        of the array represents the following:
-
-        - left node/cluster
-        - right node/cluster
-        - distance
-        - new cluster size
+    single_linkage : ndarray of shape (n_samples - 1,), dtype=HIERARCHY_dtype
+        The single-linkage tree tree (dendrogram) built from the MST.
     """
     cdef:
         cnp.ndarray[HIERARCHY_t, ndim=1] single_linkage

@@ -33,6 +33,7 @@ cdef list bfs_from_hierarchy(
     # determine whether the list is emptey or not.
     cdef list process_queue, next_queue
     cdef cnp.intp_t n_samples = hierarchy.shape[0] + 1
+    cdef cnp.intp_t node
     process_queue = [bfs_root]
     result = []
 
@@ -50,8 +51,8 @@ cdef list bfs_from_hierarchy(
             for node in process_queue:
                 next_queue.extend(
                     [
-                        hierarchy[node]["left_node"],
-                        hierarchy[node]["right_node"],
+                        hierarchy[node].left_node,
+                        hierarchy[node].right_node,
                     ]
                 )
             process_queue = next_queue
@@ -69,7 +70,7 @@ cpdef cnp.ndarray condense_tree(
 
     Parameters
     ----------
-    hierarchy : ndarray (n_samples,)
+    hierarchy : ndarray of shape (n_samples,), dtype=HIERARCHY_dtype
         A single linkage hierarchy in scipy.cluster.hierarchy format.
 
     min_cluster_size : int, optional (default 10)
@@ -78,7 +79,7 @@ cpdef cnp.ndarray condense_tree(
 
     Returns
     -------
-    condensed_tree : ndarray (n_samples,)
+    condensed_tree : ndarray of shape (n_samples,), dtype=HIERARCHY_dtype
         Effectively an edgelist with a parent, child, lambda_val
         and cluster_size in each row providing a tree structure.
     """
@@ -191,6 +192,8 @@ cpdef dict compute_stability(cnp.ndarray[HIERARCHY_t, ndim=1] condensed_tree):
         cnp.intp_t parent, cluster_size, result_index
         cnp.float64_t lambda_val
         HIERARCHY_t condensed_node
+        cnp.float64_t[:, :] result_pre_dict
+
 
     parents = condensed_tree['left_node']
     cdef cnp.intp_t largest_child = condensed_tree['right_node'].max()
@@ -226,7 +229,10 @@ cpdef dict compute_stability(cnp.ndarray[HIERARCHY_t, ndim=1] condensed_tree):
     return dict(result_pre_dict)
 
 
-cdef list bfs_from_cluster_tree(cnp.ndarray[HIERARCHY_t, ndim=1] hierarchy, cnp.intp_t bfs_root):
+cdef list bfs_from_cluster_tree(
+    cnp.ndarray[HIERARCHY_t, ndim=1] hierarchy,
+    cnp.intp_t bfs_root,
+):
 
     cdef list result
     cdef cnp.ndarray[cnp.intp_t, ndim=1] process_queue, children = hierarchy['right_node']
@@ -244,7 +250,7 @@ cdef list bfs_from_cluster_tree(cnp.ndarray[HIERARCHY_t, ndim=1] hierarchy, cnp.
 
 cdef cnp.float64_t[::1] max_lambdas(cnp.ndarray[HIERARCHY_t, ndim=1] hierarchy):
 
-    cdef cnp.intp_t parent, current_parent
+    cdef cnp.intp_t parent, current_parent, idx
     cdef cnp.float64_t lambda_val, max_lambda
 
     cdef cnp.float64_t[::1] deaths
@@ -296,7 +302,7 @@ cdef class TreeUnionFind:
             self.data[x_root, 1] += 1
         return
 
-    cdef find(self, cnp.intp_t x):
+    cdef cnp.intp_t find(self, cnp.intp_t x):
         if self.data[x, 0] != x:
             self.data[x, 0] = self.find(self.data[x, 0])
             self.is_component[x] = False
@@ -314,7 +320,7 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
 
     Parameters
     ----------
-    linkage : ndarray (n_samples, 4)
+    linkage : ndarray of shape (n_samples,), dtype=HIERARCHY_dtype
         The single linkage tree in scipy.cluster.hierarchy format.
 
     cut : float
@@ -326,7 +332,7 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
 
     Returns
     -------
-    labels : ndarray (n_samples,)
+    labels : ndarray of shape (n_samples,)
         The cluster labels for each point in the data set;
         a label of -1 denotes a noise assignment.
     """
@@ -336,7 +342,7 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1] labelling_at_cut(
         cnp.intp_t[::1] unique_labels, cluster_size
         cnp.ndarray[cnp.intp_t, ndim=1] result
         TreeUnionFind union_find
-        cnp.intp_t n, cluster, cluster_id
+        cnp.intp_t n, cluster, cluster_id, cluster_label
         dict cluster_label_map
         HIERARCHY_t node
 
@@ -422,7 +428,7 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1] do_labelling(
     return result
 
 
-cdef get_probabilities(
+cdef cnp.ndarray[cnp.float64_t, ndim=1] get_probabilities(
     cnp.ndarray[HIERARCHY_t, ndim=1] hierarchy,
     dict cluster_map,
     cnp.intp_t[:] labels
@@ -493,6 +499,8 @@ cdef cnp.intp_t traverse_upwards(
 ):
 
     cdef cnp.intp_t root, parent
+    cdef cnp.float64_t parent_eps
+
     root = cluster_tree['left_node'].min()
     parent = cluster_tree[cluster_tree['right_node'] == leaf]['left_node']
     if parent == root:
@@ -559,7 +567,7 @@ cpdef tuple get_clusters(
 
     Parameters
     ----------
-    hierarchy : ndarray (n_samples,)
+    hierarchy : ndarray of shape (n_samples,), dtype=HIERARCHY_dtype
         The condensed tree to extract flat clusters from
 
     stability : dict
@@ -584,10 +592,10 @@ cpdef tuple get_clusters(
 
     Returns
     -------
-    labels : ndarray (n_samples,)
+    labels : ndarray of shape (n_samples,)
         An integer array of cluster labels, with -1 denoting noise.
 
-    probabilities : ndarray (n_samples,)
+    probabilities : ndarray of shape (n_samples,)
         The cluster membership strength of each sample.
 
     stabilities : ndarray (n_clusters,)
@@ -601,6 +609,7 @@ cpdef tuple get_clusters(
         dict is_cluster, cluster_sizes
         cnp.float64_t subtree_stability, max_lambda
         cnp.intp_t node, sub_node, cluster, num_points
+        cnp.ndarray[cnp.float64_t, ndim=1] probs
 
     # Assume clusters are ordered by numeric id equivalent to
     # a topological sort of the tree; This is valid given the
