@@ -305,6 +305,14 @@ def mean_pinball_loss(
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+    }
+)
 def mean_absolute_percentage_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
