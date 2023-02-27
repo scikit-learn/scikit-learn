@@ -140,5 +140,4 @@ def test_estimator_attribute_error(model):
     y = [0, 1]
     model.fit(X, y)
 
-    with pytest.raises(AttributeError, match="has no attribute 'estimator_'"):
-        model.estimator_
+    assert not hasattr(model, "estimator_")
