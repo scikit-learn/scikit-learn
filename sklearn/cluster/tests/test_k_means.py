@@ -646,7 +646,8 @@ def test_kmeans_predict(
 
     # re-predict labels for training set using fit_predict
     pred = km.fit_predict(X)
-    assert_array_equal(pred, labels)
+    # check same labels up to a permutation
+    assert_allclose(v_measure_score(pred, labels), 1.0)
 
     # predict centroid labels
     pred = km.predict(km.cluster_centers_)
