@@ -167,7 +167,6 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             self._fit_infrequent_category_mapping(
                 n_samples,
                 category_counts,
-                return_and_ignore_missing_for_infrequent,
                 missing_indices,
             )
         return output
@@ -299,7 +298,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return output if output.size > 0 else None
 
     def _fit_infrequent_category_mapping(
-        self, n_samples, category_counts, ignore_missing_for_infrequent, missing_indices
+        self, n_samples, category_counts, missing_indices
     ):
         """Fit infrequent categories.
 
@@ -329,15 +328,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         category_counts: list of ndarray
             `category_counts[i]` is the category counts corresponding to
             `self.categories_[i]`.
-        ignore_missing_for_infrequent : bool
-            If True, missing values will be ignored when computing infrequent
-            categories.
         missing_indices : dict
             Dict mapping from feature_idx to category index with a missing value.
-            This is only used when ignore_missing_for_infrequent is True
         """
         # Remove missing value from counts, so it is not considered as infrequent
-        if ignore_missing_for_infrequent:
+        if missing_indices:
             category_counts_ = []
             for feature_idx, count in enumerate(category_counts):
                 if feature_idx in missing_indices:
