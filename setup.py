@@ -309,7 +309,7 @@ extension_config = {
     ],
     "linear_model": [
         {"sources": ["_cd_fast.pyx"], "include_np": True},
-        {"sources": ["_sgd_fast.pyx"], "include_np": True},
+        {"sources": ["_sgd_fast.pyx.tp"], "include_np": True},
         {"sources": ["_sag_fast.pyx.tp"], "include_np": True},
     ],
     "manifold": [
