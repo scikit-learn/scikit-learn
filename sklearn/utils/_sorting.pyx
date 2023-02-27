@@ -41,7 +41,7 @@ cdef inline void _simultaneous_swap(
     cnp.intp_t* indices,
     cnp.intp_t i,
     cnp.intp_t j,
-) nogil:
+) noexcept nogil:
     # Helper for sort
     values[i], values[j] = values[j], values[i]
     indices[i], indices[j] = indices[j], indices[i]
@@ -49,7 +49,7 @@ cdef inline void _simultaneous_swap(
 cdef inline floating _median3(
     floating* values,
     cnp.intp_t size,
-) nogil:
+) noexcept nogil:
     # Median of three pivot selection, after Bentley and McIlroy (1993).
     # Engineering a sort function. SP&E. Requires 8/3 comparisons on average.
     cdef floating a = values[0], b = values[size / 2], c = values[size - 1]
@@ -73,7 +73,7 @@ cdef inline void _sift_down(
     cnp.intp_t* indices,
     cnp.intp_t start,
     cnp.intp_t end,
-) nogil:
+) noexcept nogil:
     # Restore heap order in values[start:end] by moving the max element to start.
     cdef cnp.intp_t child, maxind, root
 
@@ -101,7 +101,7 @@ cdef inline void simultaneous_introsort(
     floating* values,
     cnp.intp_t* indices,
     cnp.intp_t size,
-) nogil:
+) noexcept nogil:
     # Sort a Structure of Arrays pointed consisting of arrays of values and indices,
     # simultaneously, based on the values. Algorithm: Introsort (Musser, SP&E, 1997).
     if size == 0:
@@ -114,7 +114,7 @@ cdef void simultaneous_quick_sort(
     floating* values,
     cnp.intp_t* indices,
     cnp.intp_t size,
-) nogil:
+) noexcept nogil:
     """
     Perform a recursive quicksort on the values array as to sort them ascendingly.
     This simultaneously performs the swaps on both the values and the indices arrays.
@@ -188,7 +188,7 @@ cdef void _simultaneous_introsort(
     cnp.intp_t* indices,
     cnp.intp_t size,
     int maxd,
-) nogil:
+) noexcept nogil:
     cdef floating pivot
     cdef cnp.intp_t i, l, r
 
@@ -223,7 +223,7 @@ cdef void simultaneous_heapsort(
     floating* values,
     cnp.intp_t* indices,
     cnp.intp_t size,
-) nogil:
+) noexcept nogil:
     cdef cnp.intp_t start, end
 
     # heapify

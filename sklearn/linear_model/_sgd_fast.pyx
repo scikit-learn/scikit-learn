@@ -20,20 +20,33 @@ from ..utils._seq_dataset cimport SequentialDataset64 as SequentialDataset
 
 cnp.import_array()
 
-# Penalty constants
-DEF NO_PENALTY = 0
-DEF L1 = 1
-DEF L2 = 2
-DEF ELASTICNET = 3
+cdef extern from *:
+    """
+    /* Penalty constants */
+    #define NO_PENALTY 0
+    #define L1 1
+    #define L2 2
+    #define ELASTICNET 3
 
-# Learning rate constants
-DEF CONSTANT = 1
-DEF OPTIMAL = 2
-DEF INVSCALING = 3
-DEF ADAPTIVE = 4
-DEF PA1 = 5
-DEF PA2 = 6
+    /* Learning rate constants */
+    #define CONSTANT 1
+    #define OPTIMAL 2
+    #define INVSCALING 3
+    #define ADAPTIVE 4
+    #define PA1 5
+    #define PA2 6
+    """
+    int NO_PENALTY = 0
+    int L1 = 1
+    int L2 = 2
+    int ELASTICNET = 3
 
+    int CONSTANT = 1
+    int OPTIMAL = 2
+    int INVSCALING = 3
+    int ADAPTIVE = 4
+    int PA1 = 5
+    int PA2 = 6
 
 
 # ----------------------------------------
@@ -43,7 +56,7 @@ DEF PA2 = 6
 cdef class LossFunction:
     """Base class for convex loss functions"""
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         """Evaluate the loss function.
 
         Parameters
@@ -98,7 +111,7 @@ cdef class LossFunction:
         """
         return self.loss(p, y)
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         """Evaluate the derivative of the loss function with respect to
         the prediction `p`.
 
@@ -120,20 +133,20 @@ cdef class LossFunction:
 cdef class Regression(LossFunction):
     """Base class for loss functions for regression"""
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         return 0.
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         return 0.
 
 
 cdef class Classification(LossFunction):
     """Base class for loss functions for classification"""
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         return 0.
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         return 0.
 
 
@@ -145,7 +158,7 @@ cdef class ModifiedHuber(Classification):
     See T. Zhang 'Solving Large Scale Linear Prediction Problems Using
     Stochastic Gradient Descent', ICML'04.
     """
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         cdef double z = p * y
         if z >= 1.0:
             return 0.0
@@ -154,7 +167,7 @@ cdef class ModifiedHuber(Classification):
         else:
             return -4.0 * z
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         cdef double z = p * y
         if z >= 1.0:
             return 0.0
@@ -183,13 +196,13 @@ cdef class Hinge(Classification):
     def __init__(self, double threshold=1.0):
         self.threshold = threshold
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         cdef double z = p * y
         if z <= self.threshold:
             return self.threshold - z
         return 0.0
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         cdef double z = p * y
         if z <= self.threshold:
             return -y
@@ -215,13 +228,13 @@ cdef class SquaredHinge(Classification):
     def __init__(self, double threshold=1.0):
         self.threshold = threshold
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         cdef double z = self.threshold - p * y
         if z > 0:
             return z * z
         return 0.0
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         cdef double z = self.threshold - p * y
         if z > 0:
             return -2 * y * z
@@ -234,7 +247,7 @@ cdef class SquaredHinge(Classification):
 cdef class Log(Classification):
     """Logistic regression loss for binary classification with y in {-1, 1}"""
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         cdef double z = p * y
         # approximately equal and saves the computation of the log
         if z > 18:
@@ -243,7 +256,7 @@ cdef class Log(Classification):
             return -z
         return log(1.0 + exp(-z))
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         cdef double z = p * y
         # approximately equal and saves the computation of the log
         if z > 18.0:
@@ -258,10 +271,10 @@ cdef class Log(Classification):
 
 cdef class SquaredLoss(Regression):
     """Squared loss traditional used in linear regression."""
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         return 0.5 * (p - y) * (p - y)
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         return p - y
 
     def __reduce__(self):
@@ -282,7 +295,7 @@ cdef class Huber(Regression):
     def __init__(self, double c):
         self.c = c
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         cdef double r = p - y
         cdef double abs_r = fabs(r)
         if abs_r <= self.c:
@@ -290,7 +303,7 @@ cdef class Huber(Regression):
         else:
             return self.c * abs_r - (0.5 * self.c * self.c)
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         cdef double r = p - y
         cdef double abs_r = fabs(r)
         if abs_r <= self.c:
@@ -315,11 +328,11 @@ cdef class EpsilonInsensitive(Regression):
     def __init__(self, double epsilon):
         self.epsilon = epsilon
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         cdef double ret = fabs(y - p) - self.epsilon
         return ret if ret > 0 else 0
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         if y - p > self.epsilon:
             return -1
         elif p - y > self.epsilon:
@@ -342,11 +355,11 @@ cdef class SquaredEpsilonInsensitive(Regression):
     def __init__(self, double epsilon):
         self.epsilon = epsilon
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef double loss(self, double p, double y) noexcept nogil:
         cdef double ret = fabs(y - p) - self.epsilon
         return ret * ret if ret > 0 else 0
 
-    cdef double dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) noexcept nogil:
         cdef double z
         z = y - p
         if z > self.epsilon:
@@ -682,14 +695,14 @@ def _plain_sgd(const double[::1] weights,
     )
 
 
-cdef bint any_nonfinite(const double *w, int n) nogil:
+cdef bint any_nonfinite(const double *w, int n) noexcept nogil:
     for i in range(n):
         if not skl_isfinite(w[i]):
             return True
     return 0
 
 
-cdef double sqnorm(double * x_data_ptr, int * x_ind_ptr, int xnnz) nogil:
+cdef double sqnorm(double * x_data_ptr, int * x_ind_ptr, int xnnz) noexcept nogil:
     cdef double x_norm = 0.0
     cdef int j
     cdef double z
@@ -700,7 +713,7 @@ cdef double sqnorm(double * x_data_ptr, int * x_ind_ptr, int xnnz) nogil:
 
 
 cdef void l1penalty(WeightVector w, double * q_data_ptr,
-                    int *x_ind_ptr, int xnnz, double u) nogil:
+                    int *x_ind_ptr, int xnnz, double u) noexcept nogil:
     """Apply the L1 penalty to each updated feature
 
     This implements the truncated gradient approach by

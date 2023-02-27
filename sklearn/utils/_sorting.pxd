@@ -6,16 +6,16 @@ cdef void simultaneous_quick_sort(
     floating* values,
     cnp.intp_t* indices,
     cnp.intp_t size,
-) nogil
+) noexcept nogil
 
 cdef void simultaneous_introsort(
     floating* values,
     cnp.intp_t* indices,
     cnp.intp_t size,
-) nogil
+) noexcept nogil
 
 cdef void simultaneous_heapsort(
     floating* values,
     cnp.intp_t* indices,
     cnp.intp_t size,
-) nogil
+) noexcept nogil
