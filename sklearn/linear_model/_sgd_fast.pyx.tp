@@ -40,7 +40,8 @@ from libc.math cimport exp, log, pow, fabs
 cimport numpy as cnp
 from numpy.math cimport INFINITY
 cdef extern from "_sgd_fast_helpers.h":
-    bint skl_isfinite(double) nogil
+    bint skl_isfinite32(float) nogil
+    bint skl_isfinite64(double) nogil
 
 from ..utils._weight_vector cimport WeightVector32, WeightVector64
 from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
@@ -68,11 +69,12 @@ cdef extern from *:
     int L2 = 2
     int ELASTICNET = 3
 
-# Fused type for the Dataset
-ctypedef fused DatasetType:
-    SequentialDataset32
-    SequentialDataset64
-
+    int CONSTANT = 1
+    int OPTIMAL = 2
+    int INVSCALING = 3
+    int ADAPTIVE = 4
+    int PA1 = 5
+    int PA2 = 6
 
 
 # ----------------------------------------
@@ -398,74 +400,6 @@ cdef class SquaredEpsilonInsensitive(Regression):
     def __reduce__(self):
         return SquaredEpsilonInsensitive, (self.epsilon,)
 
-def _plain_sgd(
-    const floating[::1] weights,
-    double intercept,
-    const floating[::1] average_weights,
-    double average_intercept,
-    LossFunction loss,
-    int penalty_type,
-    double alpha,
-    double C,
-    double l1_ratio,
-    DatasetType dataset,
-    const unsigned char[::1] validation_mask,
-    bint early_stopping,
-    validation_score_cb,
-    int n_iter_no_change,
-    unsigned int max_iter,
-    double tol,
-    int fit_intercept,
-    int verbose,
-    bint shuffle,
-    cnp.uint32_t seed,
-    double weight_pos,
-    double weight_neg,
-    int learning_rate,
-    double eta0,
-    double power_t,
-    bint one_class,
-    double t=1.0,
-    double intercept_decay=1.0,
-    int average=0,
-):
-    """
-    SGD function to call the respective float32 or float64 variant
-    based on the input
-    """
-    plain_sgd_function = _plain_sgd32 if floating is float else _plain_sgd64
-    return plain_sgd_function(
-        weights=weights,
-        intercept=intercept,
-        average_weights=average_weights,
-        average_intercept=average_intercept,
-        loss=loss,
-        penalty_type=penalty_type,
-        alpha=alpha,
-        C=C,
-        l1_ratio=l1_ratio,
-        dataset=dataset,
-        validation_mask=validation_mask,
-        early_stopping=early_stopping,
-        validation_score_cb=validation_score_cb,
-        n_iter_no_change=n_iter_no_change,
-        max_iter=max_iter,
-        tol=tol,
-        fit_intercept=fit_intercept,
-        verbose=verbose,
-        shuffle=shuffle,
-        seed=seed,
-        weight_pos=weight_pos,
-        weight_neg=weight_neg,
-        learning_rate=learning_rate,
-        eta0=eta0,
-        power_t=power_t,
-        one_class=one_class,
-        t=t,
-        intercept_decay=intercept_decay,
-        average=average,
-    )
-
 {{for name_suffix, c_type, np_type in dtypes}}
 
 def _plain_sgd{{name_suffix}}(
@@ -679,12 +613,12 @@ def _plain_sgd{{name_suffix}}(
                     class_weight = weight_neg
 
                 if learning_rate == PA1:
-                    update = sqnorm{{name_suffix}}(x_data_ptr, x_ind_ptr, xnnz)
+                    update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                     if update == 0:
                         continue
                     update = min(C, loss.loss(p, y) / update)
                 elif learning_rate == PA2:
-                    update = sqnorm{{name_suffix}}(x_data_ptr, x_ind_ptr, xnnz)
+                    update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                     update = loss.loss(p, y) / (update + 0.5 / C)
                 else:
                     dloss = loss.dloss(p, y)
@@ -748,8 +682,8 @@ def _plain_sgd{{name_suffix}}(
                           % (time() - t_start))
 
             # floating-point under-/overflow check.
-            if (not skl_isfinite{{name_suffix}}(intercept)
-                or any_nonfinite{{name_suffix}}(&weights[0], n_features)):
+            if (not skl_isfinite(intercept)
+                or any_nonfinite(&weights[0], n_features)):
                 infinity = True
                 break
 
@@ -802,21 +736,22 @@ def _plain_sgd{{name_suffix}}(
 {{endfor}}
 
 
-{{for name_suffix, c_type, np_type in dtypes}}
+cdef inline bint skl_isfinite(floating w) noexcept nogil:
+    if floating is float:
+        return skl_isfinite32(w)
+    else:
+        return skl_isfinite64(w)
 
-cdef bint any_nonfinite{{name_suffix}}(const {{c_type}} *w, int n) noexcept nogil:
+
+cdef inline bint any_nonfinite(const floating *w, int n) noexcept nogil:
     for i in range(n):
-        if not skl_isfinite{{name_suffix}}(w[i]):
+        if not skl_isfinite(w[i]):
             return True
     return 0
 
-{{endfor}}
 
-
-{{for name_suffix, c_type, np_type in dtypes}}
-
-cdef double sqnorm{{name_suffix}}(
-    {{c_type}} * x_data_ptr,
+cdef inline double sqnorm(
+    floating * x_data_ptr,
     int * x_ind_ptr,
     int xnnz,
 ) noexcept nogil:
@@ -827,8 +762,6 @@ cdef double sqnorm{{name_suffix}}(
         z = x_data_ptr[j]
         x_norm += z * z
     return x_norm
-
-{{endfor}}
 
 
 {{for name_suffix, c_type, np_type in dtypes}}
