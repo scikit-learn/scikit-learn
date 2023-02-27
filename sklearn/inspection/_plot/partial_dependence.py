@@ -5,7 +5,6 @@ from math import ceil
 
 import matplotlib as mpl
 import numpy as np
-import pandas as pd
 from matplotlib.lines import Line2D
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
@@ -20,6 +19,117 @@ from ...utils import check_random_state
 from ...utils import _safe_indexing
 from ...utils.parallel import delayed, Parallel
 from ...utils._encode import _unique
+
+
+def get_categorical_colors_and_mapping(value_list, palette="classic"):
+    """
+    Derives a list of color and color mapping from the passed value list.
+
+    Parameters
+    ----------
+    value_list : array-like of shape (n_samples,) of str
+        Names of the categorical values by which the ICE lines are colored
+    palette: str
+        name of the matplotlib color palette
+
+    Returns
+    -------
+    list of colors, dictionary where the value are mapped to a color
+    """
+    mapping = {v: f"C{i}" for i, v in enumerate(np.unique(value_list))}
+    color_list = [mapping[value_list[i]] for i in range(len(value_list))]
+    return color_list, mapping
+
+
+def get_continuous_colors_and_cmap_norm(value_list, palette="viridis"):
+    """
+
+
+    Parameters
+    ----------
+    value_list : array-like of shape (n_samples,) of int or float
+        Numerical values by which the ICE lines are colored
+    palette: str
+        Name of the matplotlib color palette
+
+    Returns
+    -------
+    list of colors
+    norm: mpl.colors.Normalize
+    """
+    cmap = mpl.cm.get_cmap(palette)
+    norm = mpl.colors.Normalize(vmin=value_list.min(), vmax=value_list.max())
+    color_list = [mpl.colors.to_hex(cmap(norm(value))) for value in value_list]
+    return color_list, norm
+
+
+def list_of_values_passed_for_ice_line_colors(ice_lines_kw=None):
+    """
+    Checks if the user passed a list of values by which the individual ice lines
+    should be colored
+
+    Parameters
+    ----------
+    ice_lines_kw : dict, default=None
+            Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
+            For ICE lines in the one-way partial dependence plots.
+
+    Returns
+    -------
+    True if list of values is passed, False else
+    """
+    # case 1: no color is given by the user
+    if ice_lines_kw is None:
+        return False
+    elif "color" not in ice_lines_kw.keys():
+        return False
+    # case 2: Tuple as color is not valid, but will throw matplotlib error later on
+    elif isinstance(ice_lines_kw["color"], tuple):
+        return False
+    # case 3: color argument can be a single color for all lines
+    elif np.array(ice_lines_kw["color"]).size == 1:
+        return False
+    # case 4: list of values is passed
+    else:
+        return True
+
+
+def get_color_list_and_legend_dict(ice_lines_kw):
+    """
+    Derives a color list and accompanying legend info from the user input.
+
+    Parameters
+    ----------
+    ice_lines_kw : dict
+            Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
+            For ICE lines in the one-way partial dependence plots.
+
+    Returns
+    -------
+    color list: List of colors
+    legend_dict: Dictionary containing info to create a legend to
+        identify individual colored lines
+    """
+
+    legend_dict = {}
+    value_list = ice_lines_kw["color"]
+    # case 1 Sequence of str -> categorical
+    if isinstance(value_list[0], str):
+        color_list, mapping = get_categorical_colors_and_mapping(
+            value_list, ice_lines_kw.get("palette", "classic")
+        )
+        legend_dict["mapping"] = mapping
+    # case 2 Sequence of floats/int -> continuous
+    elif isinstance(value_list[0], (float, int)):
+        color_list, norm = get_continuous_colors_and_cmap_norm(
+            value_list, ice_lines_kw.get("palette", "viridis")
+        )
+        legend_dict["norm"] = norm
+    else:
+        raise ValueError(
+            "Please only use string or numerical values for color selection"
+        )
+    return color_list, legend_dict
 
 
 class PartialDependenceDisplay:
@@ -778,57 +888,6 @@ class PartialDependenceDisplay:
             return ceil(n_samples * self.subsample)
         return n_samples
 
-    def _get_color_dict_from_values(
-        self, value_list, categorical_or_continuous: str, cmap_name: str = "Spectral"
-    ):
-        color_dict = {}
-        if categorical_or_continuous == "categorical":
-            mapping = {
-                np.unique(value_list)[i]: f"C{i}"
-                for i in range(len(np.unique(value_list)))
-            }
-            color_dict["color_list"] = [
-                mapping[value_list[i]] for i in range(len(value_list))
-            ]
-            color_dict["categorical_mapping"] = mapping
-        elif categorical_or_continuous == "continuous":
-            cmap = mpl.cm.get_cmap(cmap_name)
-            norm = mpl.colors.Normalize(vmin=value_list.min(), vmax=value_list.max())
-            color_dict["color_list"] = [
-                mpl.colors.to_hex(cmap(norm(value))) for value in value_list
-            ]
-            color_dict["norm"] = norm
-            color_dict["cmap"] = cmap
-        return color_dict
-
-    def _check_if_colors_by_feature(self, ice_lines_kw, preds):
-        # case 1: color can be a single color for all lines given as a str for all lines
-        color_dict = {}
-        if isinstance(ice_lines_kw["color"], str):
-            color_dict["color_list"] = np.repeat(ice_lines_kw["color"], preds.shape[0])
-        # case 2: color can be given as a list values for which color is created
-        elif isinstance(ice_lines_kw["color"], (list, np.ndarray, pd.Series)):
-            value_list = np.array(ice_lines_kw["color"])
-            # case 2.1 Sequence of str -> categorical
-            if isinstance(value_list[0], str):
-                color_dict = self._get_color_dict_from_values(value_list, "categorical")
-                color_dict["type"] = "categorical"
-            # case 2.1 Sequence of floats/int -> continuous
-            elif isinstance(value_list[0], (float, int)):
-                color_dict = self._get_color_dict_from_values(value_list, "continuous")
-                color_dict["type"] = "continuous"
-            else:
-                raise ValueError(
-                    "Please only use string or numerical values for color selection"
-                )
-        else:
-            raise ValueError(
-                "Undefined type for color attribute. Please pass either"
-                "a str or a list of strings/numerical"
-            )
-        ice_lines_kw["color_dict"] = color_dict
-        return ice_lines_kw
-
     def _plot_ice_lines(
         self,
         preds,
@@ -837,7 +896,7 @@ class PartialDependenceDisplay:
         ax,
         pd_plot_idx,
         n_total_lines_by_plot,
-        ice_lines_kw,
+        individual_line_kw,
     ):
         """Plot the ICE lines.
 
@@ -858,7 +917,7 @@ class PartialDependenceDisplay:
             matching 2D position in the grid layout.
         n_total_lines_by_plot : int
             The total number of lines expected to be plot on the axis.
-        ice_lines_kw : dict
+        individual_line_kw : dict
             Dict with keywords passed when plotting the ICE lines.
         """
         rng = check_random_state(self.random_state)
@@ -869,18 +928,30 @@ class PartialDependenceDisplay:
             replace=False,
         )
 
-        individual_line_kw = ice_lines_kw.copy()
-        ice_lines_kw = self._check_if_colors_by_feature(ice_lines_kw, preds)
-        color_list = ice_lines_kw["color_dict"]["color_list"]
+        individual_line_kw_copied = (
+            individual_line_kw.copy()
+        )  # copy, so that color list can be deleted and won't throw
+        # an error when passed to ax.plot()
+        color_list = individual_line_kw.get("color_list", None)
+        if color_list:
+            if len(color_list) != preds.shape[0]:
+                raise ValueError(
+                    "When coloring individual ICE lines, dimension of values passed"
+                    " and number of sampleshas to agree. But there are"
+                    f" {preds.shape[0]} samples and {len(color_list)} valuesfor"
+                    " coloring"
+                )
+            del individual_line_kw_copied["color_list"]
         ice_lines_subsampled = preds[ice_lines_idx, :]
-        # plot the subsampled ice
+        # plot the subsampled ice lines
         for ice_idx, ice in enumerate(ice_lines_subsampled):
             line_idx = np.unravel_index(
                 pd_plot_idx * n_total_lines_by_plot + ice_idx, self.lines_.shape
             )
-            individual_line_kw["color"] = color_list[ice_lines_idx[ice_idx]]
+            if color_list:
+                individual_line_kw_copied["color"] = color_list[ice_lines_idx[ice_idx]]
             self.lines_[line_idx] = ax.plot(
-                feature_values, ice.ravel(), **individual_line_kw
+                feature_values, ice.ravel(), **individual_line_kw_copied
             )[0]
 
     def _plot_average_dependence(
@@ -1171,33 +1242,33 @@ class PartialDependenceDisplay:
                 ax.set_xlabel(self.feature_names[feature_idx[0]])
             ax.set_ylabel(self.feature_names[feature_idx[1]])
 
-    def add_individual_line_color_info(self, color_dict):
+    def add_legend_colors_by_values(self, legend_dict):
         last_ax_idx_not_none = np.argwhere(self.axes_.flatten() != None)[-1][
             0
         ]  # is not None, doesn't work here
-        if color_dict.get("type", None) is None:
+        if legend_dict is None:
             return None
-        if color_dict["type"] == "categorical":
-            custom_handles = []
-            custom_labels = []
+        else:
+            if "mapping" in legend_dict.keys():
+                # make legend disappear for all plots but the last
+                for ax in self.axes_.flatten()[:last_ax_idx_not_none]:
+                    ax.legend().remove()
+                h, l = self.axes_.flatten()[
+                    last_ax_idx_not_none
+                ].get_legend_handles_labels()
+                for category, color in legend_dict["mapping"].items():
+                    h.append(Line2D([0], [0], color=color, lw=1))
+                    l.append(category)
 
-            for category, color in color_dict["categorical_mapping"].items():
-                custom_handles.append(Line2D([0], [0], color=color, lw=1))
-                custom_labels.append(category)
-            # make legend disappear for all plots but the last
-            for ax in self.axes_.flatten()[:last_ax_idx_not_none]:
-                ax.legend().remove()
-            h, l = self.axes_.flatten()[
-                last_ax_idx_not_none
-            ].get_legend_handles_labels()
-            self.axes_.flatten()[last_ax_idx_not_none].legend(
-                h + custom_handles, l + custom_labels, bbox_to_anchor=(1, 0.95)
-            )
-        elif color_dict["type"]:
-            mpl.pyplot.colorbar(
-                mpl.cm.ScalarMappable(norm=color_dict["norm"], cmap=color_dict["cmap"]),
-                ax=self.axes_.flatten()[last_ax_idx_not_none],
-            )
+                self.axes_.flatten()[last_ax_idx_not_none].legend(
+                    h, l, bbox_to_anchor=(1, 0.95)
+                )
+            elif "norm" in legend_dict.keys():
+                cmap = mpl.cm.get_cmap(legend_dict["palette"])
+                mpl.pyplot.colorbar(
+                    mpl.cm.ScalarMappable(norm=legend_dict["norm"], cmap=cmap),
+                    ax=self.axes_.flatten()[last_ax_idx_not_none],
+                )
 
     def plot(
         self,
@@ -1477,7 +1548,9 @@ class PartialDependenceDisplay:
 
         self.deciles_vlines_ = np.empty_like(self.axes_, dtype=object)
         self.deciles_hlines_ = np.empty_like(self.axes_, dtype=object)
-
+        if list_of_values_passed_for_ice_line_colors(ice_lines_kw):
+            color_list, legend_dict = get_color_list_and_legend_dict(ice_lines_kw)
+            ice_lines_kw["color_list"] = color_list
         for pd_plot_idx, (axi, feature_idx, cat, pd_result, kind_plot) in enumerate(
             zip(
                 self.axes_.ravel(),
@@ -1545,7 +1618,6 @@ class PartialDependenceDisplay:
                 heatmap_kw = {**default_heatmap_kw, **heatmap_kw}
                 # In order to not pass the color dict as a **kwargs to plot
                 # we remove it here
-                ice_lines_kw.pop("color_dict", None)
                 self._plot_one_way_partial_dependence(
                     kind_plot,
                     preds,
@@ -1575,6 +1647,5 @@ class PartialDependenceDisplay:
                     cat[0] and cat[1],
                     heatmap_kw,
                 )
-        self.add_individual_line_color_info(ice_lines_kw["color_dict"])
-
+        self.add_legend_colors_by_values(legend_dict)
         return self
