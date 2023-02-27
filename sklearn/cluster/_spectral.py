@@ -190,7 +190,16 @@ def discretize(
     return labels
 
 
-@validate_params({"affinity": ["array-like", "sparse matrix"]})
+@validate_params({"affinity": ["array-like", "sparse matrix"],
+                  "n_clusters":[Interval(Integral, 1, None, closed="left")],
+                  "n_components":[Interval(Integral, 1, None, closed="left"), None],
+                  "eigen_solver":[None,"arpack", "lobpcg","amg"],
+                  "random_state":["random_state"],
+                  "n_init": [Interval(Integral, 1, None, closed="left")],
+                  "eigen_tol": [Interval(Real, 0.0, None, closed="left"),StrOptions({"auto"}),],
+                  "assign_labels":["kmeans", "discretize", "cluster_qr"],
+                  "verbose": ["verbose"],
+                  })
 def spectral_clustering(
     affinity,
     *,
