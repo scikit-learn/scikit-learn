@@ -571,7 +571,7 @@ cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         # Flush the thread dist_middle_terms_chunks to 0.0
         fill(
             self.dist_middle_terms_chunks[thread_num].begin(),
@@ -586,7 +586,7 @@ cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         # Flush the thread dist_middle_terms_chunks to 0.0
         fill(
             self.dist_middle_terms_chunks[thread_num].begin(),
@@ -601,7 +601,7 @@ cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         cdef:
             DTYPE_t *dist_middle_terms = (
                 self.dist_middle_terms_chunks[thread_num].data()

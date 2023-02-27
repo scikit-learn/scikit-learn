@@ -203,7 +203,7 @@ cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num
-    ) nogil
+    ) noexcept nogil
 
     cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
         self,
@@ -212,7 +212,7 @@ cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num
-    ) nogil
+    ) noexcept nogil
 
     cdef DTYPE_t * _compute_dist_middle_terms(
         self,
@@ -221,6 +221,6 @@ cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
-    ) nogil
+    ) noexcept nogil
 
 {{endfor}}
