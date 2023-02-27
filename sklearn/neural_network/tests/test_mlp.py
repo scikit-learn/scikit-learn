@@ -941,6 +941,7 @@ def test_mlp_warm_start_no_convergence(MLPEstimator, solver):
         warm_start=True,
         early_stopping=False,
         max_iter=10,
+        n_iter_no_change=np.inf,
         random_state=0,
     )
 
