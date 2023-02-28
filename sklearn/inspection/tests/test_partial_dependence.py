@@ -850,8 +850,8 @@ def test_partial_dependence_bunch_values_deprecated():
     pdp_avg = partial_dependence(est, X=X, features=[1, 2], kind="average")
 
     msg = (
-        "Key: 'values', is deprecated in 1.1 and will be "
-        "removed in 1.3. Please use 'pdp_values' instead"
+        "Key: 'values', is deprecated in 1.3 and will be "
+        "removed in 1.5. Please use 'pdp_values' instead"
     )
 
     with warnings.catch_warnings():
