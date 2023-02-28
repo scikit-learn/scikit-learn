@@ -119,8 +119,8 @@ def f_oneway(*args):
 
 @validate_params(
     {
-        "X":["array-like","sparse matrix"],
-        "y":[np.ndarray],
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
     }
 )
 def f_classif(X, y):
@@ -133,7 +133,7 @@ def f_classif(X, y):
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The set of regressors that will be tested sequentially.
 
-    y : ndarray of shape (n_samples,)
+    y : array-like of shape (n_samples,)
         The target vector.
 
     Returns
