@@ -956,7 +956,7 @@ def test_mlp_partial_fit_after_fit(MLPEstimator):
 
     Non-regression test for gh-25693.
     """
-    mlp = MLPREstimator(early_stopping=True, random_state=0).fit(X_iris, y_iris)
+    mlp = MLPEstimator(early_stopping=True, random_state=0).fit(X_iris, y_iris)
 
     msg = "partial_fit does not support early_stopping=True"
     with pytest.raises(ValueError, match=msg):
