@@ -410,10 +410,10 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
         "X": ["array-like", "sparse matrix"],
         "y": ["array-like", "sparse matrix"],
         "f": [str, HasMethods(["write"])],
-        "zero_based": [bool],
+        "zero_based": ["boolean"],
         "comment": [str, bytes, None],
         "query_id": ["array-like", None],
-        "multilabel": [bool],
+        "multilabel": ["boolean"],
     }
 )
 def dump_svmlight_file(
