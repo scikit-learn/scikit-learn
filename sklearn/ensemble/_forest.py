@@ -119,7 +119,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     if isinstance(max_samples, Real):
         result = round(n_samples * max_samples)
         if result < 1:
-            raise ValueError("round(`max_samples` * `n_samples`) must be >= 1")
+            raise ValueError("round(max_samples * n_samples) must be >= 1")
         return result
 
 

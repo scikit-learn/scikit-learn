@@ -29,6 +29,10 @@ random sampling procedures.
   `transform_algorithm` is not the same as `fit_algorithm` and the number of iterations
   is small. :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
 
+  - |Fix| :meth:`ensemble.RandomForestClassifier.fit` raises a `ValueError` 
+  when `max_samples` is a float and `round(n_samples * max_samples) < 1`.
+  :pr:`25601` by :user:`Jan Fidor <JanFidor>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -140,7 +144,8 @@ Changelog
   :class:`ensemble.BaggingRegressor` expose the `allow_nan` tag from the
   underlying estimator. :pr:`25506` by `Thomas Fan`_.
 
-- |Fix| :class:`ensemble.RandomForestClassifier` raise more descriptive ValueError when round(n_samples * max_samples) < 1
+- |Fix| :meth:`ensemble.RandomForestClassifier.fit` raises a more descriptive `ValueError` 
+  when `max_samples` is a float and `round(n_samples * max_samples) < 1`.
   :pr:`25601` by :user:`Jan Fidor <JanFidor>`.
 
 :mod:`sklearn.exception`
