@@ -173,6 +173,12 @@ def _chisquare(f_obs, f_exp):
     return chisq, special.chdtrc(k - 1, chisq)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+    }
+)
 def chi2(X, y):
     """Compute chi-squared stats between each non-negative feature and class.
 
