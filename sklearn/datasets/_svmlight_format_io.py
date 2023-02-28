@@ -25,6 +25,7 @@ import scipy.sparse as sp
 from .. import __version__
 
 from ..utils import check_array, IS_PYPY
+from ..utils._param_validation import validate_params,StrOptions
 
 if not IS_PYPY:
     from ._svmlight_format_fast import (
@@ -403,7 +404,15 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
         y_is_sp,
     )
 
-
+@validate_params({
+    "X":["array-like","sparse matrix"],
+    "y":["array-like","sparse matrix"],
+    "f":[str,StrOptions({"file"})],
+    "zero_based":[bool,True],
+    "comment":[str,None],
+    "query_id":["array-like",None],
+    "multilabel":[bool,False],
+})
 def dump_svmlight_file(
     X,
     y,

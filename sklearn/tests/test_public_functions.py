@@ -107,6 +107,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.make_classification",
     "sklearn.datasets.make_friedman1",
     "sklearn.datasets.make_sparse_coded_signal",
+    "sklearn.datasets.dump_svmlight_file",
     "sklearn.decomposition.sparse_encode",
     "sklearn.feature_extraction.grid_to_graph",
     "sklearn.feature_extraction.img_to_graph",
