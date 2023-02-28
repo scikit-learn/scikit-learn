@@ -575,7 +575,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 )
 
         # early_stopping in partial_fit doesn't make sense
-        early_stopping = self.early_stopping and not incremental
+        if self.early_stopping and incremental:
+            raise ValueError("partial_fit does not support early_stopping=True")
+        early_stopping = self.early_stopping
         if early_stopping:
             # don't stratify in multilabel classification
             should_stratify = is_classifier(self) and self.n_outputs_ == 1

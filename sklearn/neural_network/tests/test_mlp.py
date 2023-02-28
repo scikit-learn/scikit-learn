@@ -926,3 +926,16 @@ def test_mlp_warm_start_with_early_stopping(MLPEstimator):
     mlp.set_params(max_iter=20)
     mlp.fit(X_iris, y_iris)
     assert len(mlp.validation_scores_) > n_validation_scores
+
+
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_mlp_partial_fit_after_fit(MLPEstimator):
+    """Check partial fit does not fail after fit when early_stopping=True.
+
+    Non-regression test for gh-25693.
+    """
+    mlp = MLPEstimator(early_stopping=True, random_state=0).fit(X_iris, y_iris)
+
+    msg = "partial_fit does not support early_stopping=True"
+    with pytest.raises(ValueError, match=msg):
+        mlp.partial_fit(X_iris, y_iris)
