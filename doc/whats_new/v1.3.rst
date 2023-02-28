@@ -77,7 +77,7 @@ Changes impacting all modules
   and :user:`Alex Buzenet <albuzenet>`.
 
 - |Feature| The following functions and estimators now support pairs of
-  sparse CSR matrices and dense datasets:
+  sparse CSR matrices and dense NumPy arrays for datasets:
 
   - :func:`sklearn.metrics.pairwise_distances_argmin`
   - :func:`sklearn.metrics.pairwise_distances_argmin_min`
