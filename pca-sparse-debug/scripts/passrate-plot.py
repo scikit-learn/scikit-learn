@@ -17,7 +17,7 @@ def passrate_by(x):
     sums = passes.sum()
     return sums / counts
 
-fig, axes = plt.subplots(2, 2, figsize=(10, 10), dpi=200)
+fig, axes = plt.subplots(2, 2, figsize=(10, 10), dpi=300)
 
 ax=axes[0][0]
 seed = passrate_by('seed').hist(ax=ax)

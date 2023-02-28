@@ -14,7 +14,7 @@ def mismatch_by(x):
     gb = df.groupby(x)
     return gb['rate'].mean()
 
-fig, axes = plt.subplots(2, 2, figsize=(10, 10), dpi=200)
+fig, axes = plt.subplots(2, 2, figsize=(10, 10), dpi=300)
 
 ax=axes[0][0]
 seed = mismatch_by('seed').hist(ax=ax)

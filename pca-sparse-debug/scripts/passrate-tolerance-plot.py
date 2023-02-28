@@ -23,7 +23,7 @@ def formatter(x):
     else:
         return format(x, ".0e")
 gb.index = gb.index.set_levels(map(formatter, gb.index.levels[1]), level=1)
-fig, axes = plt.subplots(1, 4, figsize=(24, 4), dpi=200)
+fig, axes = plt.subplots(1, 4, figsize=(24, 4), dpi=300)
 fig.suptitle('Test pass rate by solver and relative tolerance', fontsize=20)
 for solver, ax in zip(gb.index.levels[0], axes.flat):
     bar = gb[solver].plot.bar(ax=ax)

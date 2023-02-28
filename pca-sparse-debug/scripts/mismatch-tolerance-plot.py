@@ -25,7 +25,7 @@ def formatter(x):
         return format(x, ".0e")
 gb.index = gb.index.set_levels(map(formatter, gb.index.levels[1]), level=1)
 solvers = gb.index.levels[0]
-fig, axes = plt.subplots(1, len(solvers), figsize=(24, 4), dpi=200)
+fig, axes = plt.subplots(1, len(solvers), figsize=(24, 4), dpi=300)
 fig.suptitle('Elementwise mismatch rate by solver and relative tolerance', fontsize=20)
 for solver, ax in zip(solvers, axes.flat):
     bar = gb[solver].plot.bar(ax=ax)
