@@ -115,7 +115,7 @@ METRIC_MAPPING{{name_suffix}} = {
     'pyfunc': PyFuncDistance{{name_suffix}},
 }
 
-cdef inline cnp.ndarray _buffer_to_ndarray{{name_suffix}}(const {{INPUT_DTYPE_t}}* x, cnp.npy_intp n):
+cdef inline object _buffer_to_ndarray{{name_suffix}}(const {{INPUT_DTYPE_t}}* x, cnp.npy_intp n):
     # Wrap a memory buffer with an ndarray. Warning: this is not robust.
     # In particular, if x is deallocated before the returned array goes
     # out of scope, this could cause memory errors.  Since there is not
@@ -620,9 +620,9 @@ cdef class DistanceMetric{{name_suffix}}:
         return dist
 
     def _pairwise_dense_dense(self, X, Y):
-        cdef cnp.ndarray[{{INPUT_DTYPE_t}}, ndim=2, mode='c'] Xarr
-        cdef cnp.ndarray[{{INPUT_DTYPE_t}}, ndim=2, mode='c'] Yarr
-        cdef cnp.ndarray[DTYPE_t, ndim=2, mode='c'] Darr
+        cdef const {{INPUT_DTYPE_t}}[:, ::1] Xarr
+        cdef const {{INPUT_DTYPE_t}}[:, ::1] Yarr
+        cdef DTYPE_t[:, ::1] Darr
 
         Xarr = np.asarray(X, dtype={{INPUT_DTYPE}}, order='C')
         self._validate_data(Xarr)
@@ -2806,10 +2806,9 @@ cdef class PyFuncDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         const {{INPUT_DTYPE_t}}* x2,
         ITYPE_t size,
     ) except -1 with gil:
-        cdef cnp.ndarray x1arr
-        cdef cnp.ndarray x2arr
-        x1arr = _buffer_to_ndarray{{name_suffix}}(x1, size)
-        x2arr = _buffer_to_ndarray{{name_suffix}}(x2, size)
+        cdef:
+            object x1arr = _buffer_to_ndarray{{name_suffix}}(x1, size)
+            object x2arr = _buffer_to_ndarray{{name_suffix}}(x2, size)
         d = self.func(x1arr, x2arr, **self.kwargs)
         try:
             # Cython generates code here that results in a TypeError
