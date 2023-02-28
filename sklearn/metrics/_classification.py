@@ -885,6 +885,13 @@ def jaccard_score(
     return np.average(jaccard, weights=weights)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     """Compute the Matthews correlation coefficient (MCC).
 
@@ -905,10 +912,10 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
+    y_true : array-like of shape (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : array, shape = [n_samples]
+    y_pred : array-like of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
     sample_weight : array-like of shape (n_samples,), default=None

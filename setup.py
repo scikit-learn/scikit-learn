@@ -95,6 +95,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.manifold._barnes_hut_tsne",
     "sklearn.manifold._utils",
     "sklearn.metrics.cluster._expected_mutual_info_fast",
+    "sklearn.metrics._dist_metrics",
     "sklearn.metrics._pairwise_distances_reduction._datasets_pair",
     "sklearn.metrics._pairwise_distances_reduction._middle_term_computer",
     "sklearn.metrics._pairwise_distances_reduction._base",
@@ -201,7 +202,7 @@ class build_ext_subclass(build_ext):
                 print(f"Using old NumPy C API (version 1.7) for extension {ext.name}")
 
         if sklearn._OPENMP_SUPPORTED:
-            openmp_flag = get_openmp_flag(self.compiler)
+            openmp_flag = get_openmp_flag()
 
             for e in self.extensions:
                 e.extra_compile_args += openmp_flag
