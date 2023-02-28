@@ -1,3 +1,4 @@
+import itertools
 import re
 import warnings
 from collections import defaultdict
@@ -901,53 +902,24 @@ def test_format_agnosticism(
         **compute_parameters,
     )
 
-    dist, indices = Dispatcher.compute(
-        X_csr,
-        Y_csr,
-        parameter,
-        chunk_size=50,
-        return_distance=True,
-        **compute_parameters,
-    )
-    ASSERT_RESULT[(Dispatcher, dtype)](
-        dist_dense,
-        dist,
-        indices_dense,
-        indices,
-        **check_parameters,
-    )
-
-    dist, indices = Dispatcher.compute(
-        X_csr,
-        Y,
-        parameter,
-        chunk_size=50,
-        return_distance=True,
-        **compute_parameters,
-    )
-    ASSERT_RESULT[(Dispatcher, dtype)](
-        dist_dense,
-        dist,
-        indices_dense,
-        indices,
-        **check_parameters,
-    )
-
-    dist, indices = Dispatcher.compute(
-        X,
-        Y_csr,
-        parameter,
-        chunk_size=50,
-        return_distance=True,
-        **compute_parameters,
-    )
-    ASSERT_RESULT[(Dispatcher, dtype)](
-        dist_dense,
-        dist,
-        indices_dense,
-        indices,
-        **check_parameters,
-    )
+    for _X, _Y in itertools.product((X, X_csr), (Y, Y_csr)):
+        if _X is X and _Y is Y:
+            continue
+        dist, indices = Dispatcher.compute(
+            _X,
+            _Y,
+            parameter,
+            chunk_size=50,
+            return_distance=True,
+            **compute_parameters,
+        )
+        ASSERT_RESULT[(Dispatcher, dtype)](
+            dist_dense,
+            dist,
+            indices_dense,
+            indices,
+            **check_parameters,
+        )
 
 
 @pytest.mark.parametrize(
@@ -1084,7 +1056,7 @@ def test_pairwise_distances_argkmin(
             row_idx, argkmin_indices_ref[row_idx]
         ]
 
-    for _X, _Y in [(X, Y), (X_csr, Y_csr)]:
+    for _X, _Y in itertools.product((X, X_csr), (Y, Y_csr)):
         argkmin_distances, argkmin_indices = ArgKmin.compute(
             _X,
             _Y,
