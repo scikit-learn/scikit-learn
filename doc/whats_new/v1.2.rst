@@ -72,6 +72,13 @@ Changelog
   when the global configuration sets `transform_output="pandas"`.
   :pr:`25500` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.OrdinalEncoder` now correctly supports
+  `encoded_missing_value` or `unknown_value` set to a categories' cardinality
+  when there is missing values in the training data. :pr:`25704` by `Thomas Fan`_.
+
 :mod:`sklearn.utils`
 ....................
 
