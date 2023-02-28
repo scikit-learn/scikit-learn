@@ -554,9 +554,9 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         self.random_state = random_state
 
     def fit(self, X, y=None):
-        """Only validates estimator's parameters.
+        """Only validate the parameters of the estimator.
 
-        This method allows to: (i) validate the estimator's parameters and
+        This method allows to: (i) validate the parameters of the estimator  and
         (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
