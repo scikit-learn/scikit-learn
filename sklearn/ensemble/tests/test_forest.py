@@ -16,6 +16,7 @@ import itertools
 from itertools import combinations
 from itertools import product
 from typing import Dict, Any
+import re
 
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -1808,10 +1809,10 @@ def test_read_only_buffer(monkeypatch):
     clf = RandomForestClassifier(n_jobs=2, random_state=rng)
     cross_val_score(clf, X, y, cv=2)
 
-
-def test_raises_descriptive_bootstrap_error():
+@pytest.mark.parametrize("class_weight", ["balanced_subsample", None])
+def test_raises_bootstrap_error_when_max_samples_too_low():
     X, y = datasets.load_wine(return_X_y=True)
     forest = RandomForestClassifier(max_samples=1e-4, class_weight="balanced_subsample")
-    warn_msg = "round\\(`max_samples` \\* `n_samples`\\) must be >= 1"
+    warn_msg = re.escape("round(max_samples * n_samples) must be >= 1")
     with pytest.raises(ValueError, match=warn_msg):
         forest.fit(X, y)
