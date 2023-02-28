@@ -25,7 +25,7 @@ import scipy.sparse as sp
 from .. import __version__
 
 from ..utils import check_array, IS_PYPY
-from ..utils._param_validation import validate_params, StrOptions, HasMethods
+from ..utils._param_validation import validate_params, HasMethods
 
 if not IS_PYPY:
     from ._svmlight_format_fast import (
