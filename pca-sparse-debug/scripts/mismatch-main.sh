@@ -11,6 +11,9 @@ LOGFILE=$DATADIR/$BASENAME.log
 CSVFILE=$DATADIR/$BASENAME.csv
 PLOTFILE=$PLOTDIR/$BASENAME.png
 
+mkdir -p $DATADIR
+mkdir -p $PLOTDIR
+
 bash $SCRIPTDIR/mismatch-log.sh > $LOGFILE || true
 bash $SCRIPTDIR/mismatch-csv.sh $LOGFILE > $CSVFILE
 python $SCRIPTDIR/mismatch-plot.py $CSVFILE $PLOTFILE

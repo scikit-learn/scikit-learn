@@ -11,6 +11,9 @@ LOGFILE=$DATADIR/$BASENAME.log
 CSVFILE=$DATADIR/$BASENAME.csv
 PLOTFILE=$PLOTDIR/$BASENAME.png
 
+mkdir -p $DATADIR
+mkdir -p $PLOTDIR
+
 bash $SCRIPTDIR/passrate-log.sh > $LOGFILE || true
 bash $SCRIPTDIR/passrate-csv.sh $LOGFILE > $CSVFILE
 python $SCRIPTDIR/passrate-plot.py $CSVFILE $PLOTFILE
