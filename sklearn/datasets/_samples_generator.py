@@ -6,7 +6,7 @@ Generate samples of synthetic data sets.
 #          G. Louppe, J. Nothman
 # License: BSD 3 clause
 
-from numbers import Integral
+from numbers import Integral, Real
 import numbers
 import array
 import warnings
@@ -39,6 +39,25 @@ def _generate_hypercube(samples, dimensions, rng):
     return out
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_informative": [Interval(Integral, 1, None, closed="left")],
+        "n_redundant": [Interval(Integral, 0, None, closed="left")],
+        "n_repeated": [Interval(Integral, 0, None, closed="left")],
+        "n_classes": [Interval(Integral, 1, None, closed="left")],
+        "n_clusters_per_class": [Interval(Integral, 1, None, closed="left")],
+        "weights": ["array-like", None],
+        "flip_y": [Interval(Real, 0, 1, closed="both")],
+        "class_sep": [Interval(Real, 0, None, closed="neither")],
+        "hypercube": ["boolean"],
+        "shift": [Interval(Real, None, None, closed="neither"), "array-like", None],
+        "scale": [Interval(Real, 0, None, closed="neither"), "array-like", None],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_classification(
     n_samples=100,
     n_features=20,
@@ -590,6 +609,19 @@ def make_regression(
     coef : ndarray of shape (n_features,) or (n_features, n_targets)
         The coefficient of the underlying linear model. It is returned only if
         coef is True.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_samples=5, n_features=2, noise=1, random_state=42)
+    >>> X
+    array([[ 0.4967..., -0.1382... ],
+        [ 0.6476...,  1.523...],
+        [-0.2341..., -0.2341...],
+        [-0.4694...,  0.5425...],
+        [ 1.579...,  0.7674...]])
+    >>> y
+    array([  6.737...,  37.79..., -10.27...,   0.4017...,   42.22...])
     """
     n_informative = min(n_features, n_informative)
     generator = check_random_state(random_state)
@@ -962,6 +994,14 @@ def make_blobs(
         return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 5, None, closed="left")],
+        "noise": [Interval(Real, 0.0, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+)
 def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None):
     """Generate the "Friedman #1" regression problem.
 
@@ -1012,9 +1052,6 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None
     .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
            pages 123-140, 1996.
     """
-    if n_features < 5:
-        raise ValueError("n_features must be at least five.")
-
     generator = check_random_state(random_state)
 
     X = generator.uniform(size=(n_samples, n_features))

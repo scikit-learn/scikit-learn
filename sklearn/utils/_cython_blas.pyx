@@ -18,7 +18,7 @@ from scipy.linalg.cython_blas cimport sgemm, dgemm
 ################
 
 cdef floating _dot(int n, floating *x, int incx,
-                   floating *y, int incy) nogil:
+                   floating *y, int incy) noexcept nogil:
     """x.T.y"""
     if floating is float:
         return sdot(&n, x, &incx, y, &incy)
@@ -30,7 +30,7 @@ cpdef _dot_memview(floating[::1] x, floating[::1] y):
     return _dot(x.shape[0], &x[0], 1, &y[0], 1)
 
 
-cdef floating _asum(int n, floating *x, int incx) nogil:
+cdef floating _asum(int n, floating *x, int incx) noexcept nogil:
     """sum(|x_i|)"""
     if floating is float:
         return sasum(&n, x, &incx)
@@ -43,7 +43,7 @@ cpdef _asum_memview(floating[::1] x):
 
 
 cdef void _axpy(int n, floating alpha, floating *x, int incx,
-                floating *y, int incy) nogil:
+                floating *y, int incy) noexcept nogil:
     """y := alpha * x + y"""
     if floating is float:
         saxpy(&n, &alpha, x, &incx, y, &incy)
@@ -55,7 +55,7 @@ cpdef _axpy_memview(floating alpha, floating[::1] x, floating[::1] y):
     _axpy(x.shape[0], alpha, &x[0], 1, &y[0], 1)
 
 
-cdef floating _nrm2(int n, floating *x, int incx) nogil:
+cdef floating _nrm2(int n, floating *x, int incx) noexcept nogil:
     """sqrt(sum((x_i)^2))"""
     if floating is float:
         return snrm2(&n, x, &incx)
@@ -67,7 +67,7 @@ cpdef _nrm2_memview(floating[::1] x):
     return _nrm2(x.shape[0], &x[0], 1)
 
 
-cdef void _copy(int n, floating *x, int incx, floating *y, int incy) nogil:
+cdef void _copy(int n, floating *x, int incx, floating *y, int incy) noexcept nogil:
     """y := x"""
     if floating is float:
         scopy(&n, x, &incx, y, &incy)
@@ -79,7 +79,7 @@ cpdef _copy_memview(floating[::1] x, floating[::1] y):
     _copy(x.shape[0], &x[0], 1, &y[0], 1)
 
 
-cdef void _scal(int n, floating alpha, floating *x, int incx) nogil:
+cdef void _scal(int n, floating alpha, floating *x, int incx) noexcept nogil:
     """x := alpha * x"""
     if floating is float:
         sscal(&n, &alpha, x, &incx)
@@ -91,7 +91,7 @@ cpdef _scal_memview(floating alpha, floating[::1] x):
     _scal(x.shape[0], alpha, &x[0], 1)
 
 
-cdef void _rotg(floating *a, floating *b, floating *c, floating *s) nogil:
+cdef void _rotg(floating *a, floating *b, floating *c, floating *s) noexcept nogil:
     """Generate plane rotation"""
     if floating is float:
         srotg(a, b, c, s)
@@ -105,7 +105,7 @@ cpdef _rotg_memview(floating a, floating b, floating c, floating s):
 
 
 cdef void _rot(int n, floating *x, int incx, floating *y, int incy,
-               floating c, floating s) nogil:
+               floating c, floating s) noexcept nogil:
     """Apply plane rotation"""
     if floating is float:
         srot(&n, x, &incx, y, &incy, &c, &s)
@@ -123,7 +123,7 @@ cpdef _rot_memview(floating[::1] x, floating[::1] y, floating c, floating s):
 
 cdef void _gemv(BLAS_Order order, BLAS_Trans ta, int m, int n, floating alpha,
                 floating *A, int lda, floating *x, int incx,
-                floating beta, floating *y, int incy) nogil:
+                floating beta, floating *y, int incy) noexcept nogil:
     """y := alpha * op(A).x + beta * y"""
     cdef char ta_ = ta
     if order == RowMajor:
@@ -151,7 +151,7 @@ cpdef _gemv_memview(BLAS_Trans ta, floating alpha, floating[:, :] A,
 
 
 cdef void _ger(BLAS_Order order, int m, int n, floating alpha, floating *x,
-               int incx, floating *y, int incy, floating *A, int lda) nogil:
+               int incx, floating *y, int incy, floating *A, int lda) noexcept nogil:
     """A := alpha * x.y.T + A"""
     if order == RowMajor:
         if floating is float:
@@ -181,30 +181,32 @@ cpdef _ger_memview(floating alpha, floating[::1] x, floating[::1] y,
 ################
 
 cdef void _gemm(BLAS_Order order, BLAS_Trans ta, BLAS_Trans tb, int m, int n,
-                int k, floating alpha, floating *A, int lda, floating *B,
-                int ldb, floating beta, floating *C, int ldc) nogil:
+                int k, floating alpha, const floating *A, int lda, const floating *B,
+                int ldb, floating beta, floating *C, int ldc) noexcept nogil:
     """C := alpha * op(A).op(B) + beta * C"""
+    # TODO: Remove the pointer casts below once SciPy uses const-qualification.
+    # See: https://github.com/scipy/scipy/issues/14262
     cdef:
         char ta_ = ta
         char tb_ = tb
     if order == RowMajor:
         if floating is float:
-            sgemm(&tb_, &ta_, &n, &m, &k, &alpha, B,
-                  &ldb, A, &lda, &beta, C, &ldc)
+            sgemm(&tb_, &ta_, &n, &m, &k, &alpha, <float*>B,
+                  &ldb, <float*>A, &lda, &beta, C, &ldc)
         else:
-            dgemm(&tb_, &ta_, &n, &m, &k, &alpha, B,
-                  &ldb, A, &lda, &beta, C, &ldc)
+            dgemm(&tb_, &ta_, &n, &m, &k, &alpha, <double*>B,
+                  &ldb, <double*>A, &lda, &beta, C, &ldc)
     else:
         if floating is float:
-            sgemm(&ta_, &tb_, &m, &n, &k, &alpha, A,
-                  &lda, B, &ldb, &beta, C, &ldc)
+            sgemm(&ta_, &tb_, &m, &n, &k, &alpha, <float*>A,
+                  &lda, <float*>B, &ldb, &beta, C, &ldc)
         else:
-            dgemm(&ta_, &tb_, &m, &n, &k, &alpha, A,
-                  &lda, B, &ldb, &beta, C, &ldc)
+            dgemm(&ta_, &tb_, &m, &n, &k, &alpha, <double*>A,
+                  &lda, <double*>B, &ldb, &beta, C, &ldc)
 
 
 cpdef _gemm_memview(BLAS_Trans ta, BLAS_Trans tb, floating alpha,
-                    floating[:, :] A, floating[:, :] B, floating beta,
+                    const floating[:, :] A, const floating[:, :] B, floating beta,
                     floating[:, :] C):
     cdef:
         int m = A.shape[0] if ta == NoTrans else A.shape[1]

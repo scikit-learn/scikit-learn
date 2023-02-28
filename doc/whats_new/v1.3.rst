@@ -90,6 +90,12 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Enhancement| All selectors in :mod:`sklearn.feature_selection` will preserve
+  a DataFrame's dtype when transformed. :pr:`25102` by `Thomas Fan`_.
+
 :mod:`sklearn.base`
 ...................
 
@@ -114,6 +120,12 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Feature| :class:`ensemble.HistGradientBoostingRegressor` now supports
+  the Gamma deviance loss via `loss="gamma"`.
+  Using the Gamma deviance as loss function comes in handy for modelling skewed
+  distributed, strictly positive valued targets.
+  :pr:`22409` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Feature| Compute a custom out-of-bag score by passing a callable to
   :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
@@ -129,6 +141,10 @@ Changelog
   to load an estimator trained with scikit-learn 1.2 to make it predict with
   scikit-learn 1.3: retraining with scikit-learn 1.3 is required.
   :pr:`25186` by :user:`Felipe Breve Siola <fsiola>`.
+
+- |Enhancement| :class:`ensemble.BaggingClassifier` and
+  :class:`ensemble.BaggingRegressor` expose the `allow_nan` tag from the
+  underlying estimator. :pr:`25506` by `Thomas Fan`_.
 
 :mod:`sklearn.exception`
 ........................
@@ -151,11 +167,25 @@ Changelog
   and the `values` key will be removed in 1.5.
   :pr:`21809` by `Thomas Fan`_.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Enhancement| :class:`SGDClassifier`, :class:`SGDRegressor` and
+  :class:`SGDOneClassSVM` now preserve dtype for `numpy.float32`.
+  :pr:`25587` by :user:`Omar Salman <OmarManzoor>`
+
 :mod:`sklearn.metrics`
 ......................
 
 - |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
   :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
+
+- |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
+  not normalized, instead of actually normalizing them in the metric. Starting from
+  1.5 this will raise an error. :pr:`25299` by :user:`Omar Salman <OmarManzoor`.
+
+- |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
+  removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -170,6 +200,15 @@ Changelog
 - |Fix| Remove support for `KulsinskiDistance` in :class:`neighbors.BallTree`. This
   dissimilarity is not a metric and cannot be supported by the BallTree.
   :pr:`25417` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPRegressor` and :class:`neural_network.MLPClassifier`
+  reports the right `n_iter_` when `warm_start=True`. It corresponds to the number
+  of iterations performed on the current call to `fit` instead of the total number
+  of iterations performed since the initialization of the estimator.
+  :pr:`25443` by :user:`Marvin Krawutschke <Marvvxi>`.
 
 :mod:`sklearn.pipeline`
 .......................
@@ -204,6 +243,14 @@ Changelog
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| Adds a `class_names` parameter to
+  :func:`tree.export_text`. This allows specifying the parameter `class_names`
+  for each target class in ascending numerical order.
+  :pr:`25387` by :user:`William M <Akbeeh>` and :user:`crispinlogan <crispinlogan>`.
+
 :mod:`sklearn.utils`
 ....................
 
@@ -211,6 +258,16 @@ Changelog
   introduced to ensure stateless transformers don't raise `NotFittedError`
   during `transform` with no prior call to `fit` or `fit_transform`.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
+
+- |Enhancement| :func:`utils.multiclass.type_of_target` can identify pandas
+  nullable data types as classification targets. :pr:`25638` by `Thomas Fan`_.
+
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |Enhancement| :meth:`LabelSpreading.fit` and :meth:`LabelPropagation.fit` now
+  accepts sparse metrics.
+  :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
 
 Code and Documentation Contributors
 -----------------------------------
