@@ -110,6 +110,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.svm._libsvm",
     "sklearn.svm._libsvm_sparse",
     "sklearn.svm._newrand",
+    "sklearn.tree._criterion",
     "sklearn.tree._splitter",
     "sklearn.tree._tree",
     "sklearn.tree._utils",
@@ -125,6 +126,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.utils._typedefs",
     "sklearn.utils._vector_sentinel",
     "sklearn.utils._weight_vector",
+    "sklearn.utils.arrayfuncs",
     "sklearn.utils.murmurhash",
 )
 
@@ -307,7 +309,7 @@ extension_config = {
     ],
     "linear_model": [
         {"sources": ["_cd_fast.pyx"], "include_np": True},
-        {"sources": ["_sgd_fast.pyx"], "include_np": True},
+        {"sources": ["_sgd_fast.pyx.tp"], "include_np": True},
         {"sources": ["_sag_fast.pyx.tp"], "include_np": True},
     ],
     "manifold": [
@@ -438,7 +440,7 @@ extension_config = {
     "utils": [
         {"sources": ["sparsefuncs_fast.pyx"], "include_np": True},
         {"sources": ["_cython_blas.pyx"]},
-        {"sources": ["arrayfuncs.pyx"], "include_np": True},
+        {"sources": ["arrayfuncs.pyx"]},
         {
             "sources": ["murmurhash.pyx", join("src", "MurmurHash3.cpp")],
             "include_dirs": ["src"],
