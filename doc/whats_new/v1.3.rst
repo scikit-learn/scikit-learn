@@ -76,8 +76,11 @@ Changes impacting all modules
   by :user:`John Pangas <jpangas>`, :user:`Rahil Parikh <rprkh>` ,
   and :user:`Alex Buzenet <albuzenet>`.
 
-- |Feature| The following functions and estimators now support pairs of
-  sparse CSR matrices and dense NumPy arrays for datasets:
+- |Enhancement| A multi-threaded routine for pair of datasets consisting
+  of a sparse CSR matrix and a dense NumPy array has been introduced.
+
+  The following estimators now either support this new case or have
+  better performance for this case:
 
   - :func:`sklearn.metrics.pairwise_distances_argmin`
   - :func:`sklearn.metrics.pairwise_distances_argmin_min`
@@ -99,6 +102,9 @@ Changes impacting all modules
   - :func:`sklearn.manifold.trustworthiness`
   - :class:`sklearn.semi_supervised.LabelPropagation`
   - :class:`sklearn.semi_supervised.LabelSpreading`
+
+  For instance, :meth:`sklearn.NearestNeighbors.kneighbors` is up to 2
+  times faster for this case now on laptops.
 
   :pr:`25044` by :user:`Julien Jerphanion <jjerphan>`.
 
