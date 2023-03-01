@@ -57,6 +57,13 @@ Changelog
   and :class:`ensemble.BaggingRegressor`.
   :pr:`25477` by :user:`Tim Head <betatim>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| Fixed a regression where a negative `tol` would not be accepted any more by
+  :class:`feature_selection.SequentialFeatureSelector`.
+  :pr:`25664` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
@@ -64,6 +71,13 @@ Changelog
   :meth:`isotonic.IsotonicRegression.predict` would return a pandas DataFrame
   when the global configuration sets `transform_output="pandas"`.
   :pr:`25500` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.OrdinalEncoder` now correctly supports
+  `encoded_missing_value` or `unknown_value` set to a categories' cardinality
+  when there is missing values in the training data. :pr:`25704` by `Thomas Fan`_.
 
 :mod:`sklearn.utils`
 ....................
@@ -189,6 +203,10 @@ Changelog
 - |Fix| :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPRegressor`
   no longer raise warnings when fitting data with feature names.
   :pr:`24873` by :user:`Tim Head <betatim>`.
+
+- |Fix| Improves error message in :class:`neural_network.MLPClassifier` and
+  :class:`neural_network.MLPRegressor`, when `early_stopping=True` and
+  :meth:`partial_fit` is called. :pr:`25694` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
 ............................

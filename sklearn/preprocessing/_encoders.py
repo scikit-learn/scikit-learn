@@ -1446,6 +1446,18 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 if infrequent is not None:
                     cardinalities[feature_idx] -= len(infrequent)
 
+        # stores the missing indices per category
+        self._missing_indices = {}
+        for cat_idx, categories_for_idx in enumerate(self.categories_):
+            for i, cat in enumerate(categories_for_idx):
+                if is_scalar_nan(cat):
+                    self._missing_indices[cat_idx] = i
+
+                    # missing values are not considered part of the cardinality
+                    # when considering unknown categories or encoded_missing_value
+                    cardinalities[cat_idx] -= 1
+                    continue
+
         if self.handle_unknown == "use_encoded_value":
             for cardinality in cardinalities:
                 if 0 <= self.unknown_value < cardinality:

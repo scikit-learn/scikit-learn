@@ -426,7 +426,7 @@ cdef class _QuadTree:
 
         # Check whether we can use this node as a summary
         # It's a summary node if the angular size as measured from the point
-        # is relatively small (w.r.t. to theta) or if it is a leaf node.
+        # is relatively small (w.r.t. theta) or if it is a leaf node.
         # If it can be summarized, we use the cell center of mass
         # Otherwise, we go a higher level of resolution and into the leaves.
         if cell.is_leaf or (
