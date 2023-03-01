@@ -75,7 +75,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         self,
         ITYPE_t idx,
         ITYPE_t num_threads,
-    ) nogil
+    ) noexcept nogil
 
 
 cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}}):

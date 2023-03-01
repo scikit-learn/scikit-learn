@@ -12,12 +12,7 @@ import warnings
 from .pre_build_helpers import compile_test_program
 
 
-def get_openmp_flag(compiler):
-    if hasattr(compiler, "compiler"):
-        compiler = compiler.compiler[0]
-    else:
-        compiler = compiler.__class__.__name__
-
+def get_openmp_flag():
     if sys.platform == "win32":
         return ["/openmp"]
     elif sys.platform == "darwin" and "openmp" in os.getenv("CPPFLAGS", ""):
@@ -66,7 +61,7 @@ def check_openmp_support():
             if flag.startswith(("-L", "-Wl,-rpath", "-l", "-Wl,--sysroot=/"))
         ]
 
-    extra_postargs = get_openmp_flag
+    extra_postargs = get_openmp_flag()
 
     openmp_exception = None
     try:

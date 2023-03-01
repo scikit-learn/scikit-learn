@@ -66,8 +66,8 @@ if sp_base_version < parse_version("1.11"):
     SCIPY_METRICS += ["kulsinski"]
 
 VALID_METRICS = dict(
-    ball_tree=BallTree.valid_metrics,
-    kd_tree=KDTree.valid_metrics,
+    ball_tree=BallTree._valid_metrics,
+    kd_tree=KDTree._valid_metrics,
     # The following list comes from the
     # sklearn.metrics.pairwise doc string
     brute=sorted(set(PAIRWISE_DISTANCE_FUNCTIONS).union(SCIPY_METRICS)),
