@@ -344,27 +344,18 @@ Using OpenMP
 Since scikit-learn can be built without OpenMP, it's necessary to protect each
 direct call to OpenMP.
 
-There are some helpers in
+The `_openmp_helpers` module, available in
 `sklearn/utils/_openmp_helpers.pyx <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_openmp_helpers.pyx>`_
-that you can reuse for the main useful functionalities and already have the
-necessary protection to be built without OpenMP.
+provides protected versions of the OpenMP routines. To use OpenMP routines, they
+must be cimported from this module and not from the OpenMP library directly::
 
-If the helpers are not enough, you need to protect your OpenMP code using the
-following syntax::
-
-  # importing OpenMP
-  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-      cimport openmp
-
-  # calling OpenMP
-  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-      max_threads = openmp.omp_get_max_threads()
-  ELSE:
-      max_threads = 1
+  from sklearn.utils._openmp_helpers cimport omp_get_max_threads
+  max_threads = omp_get_max_threads()
 
 .. note::
 
-   Protecting the parallel loop, ``prange``, is already done by cython.
+   The parallel loop, `prange`, is already protected by cython and can be used directly
+   from `cython.parallel`.
 
 
 .. _profiling-compiled-extension:
