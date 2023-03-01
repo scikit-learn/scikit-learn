@@ -1125,3 +1125,69 @@ def test_partial_dependence_display_kind_centered_interaction(
     )
 
     assert all([ln._y[0] == 0.0 for ln in disp.lines_.ravel() if ln is not None])
+
+
+@pytest.mark.parametrize(
+    "kind",
+    ["individual", "both", ["individual", "both"]],
+)
+def test_partial_dependence_display_ice_colored_lines_legend(
+    pyplot,
+    kind,
+    clf_diabetes,
+    diabetes,
+):
+    """Check that we properly center ICE and PD when passing kind as a string and as a
+    list."""
+    categories = ["color1", "color2", "color3", "color4"]
+    categorical_feature_for_color_test = [
+        categories[i] for i in np.random.randint(0, 4, diabetes.data.shape[0])
+    ]
+    disp = PartialDependenceDisplay.from_estimator(
+        clf_diabetes,
+        diabetes.data,
+        [0, 2],
+        kind=kind,
+        centered=True,
+        subsample=5,
+        ice_lines_kw={"color": categorical_feature_for_color_test},
+    )
+    # Check that only last ax contains legend
+    for ax in disp.axes_.flatten()[:-1]:
+        assert ax.get_legend() is None
+    legend_lines = disp.axes_.flatten()[-1].get_legend().get_lines()
+    if kind == "both":
+        assert len(legend_lines) == len(categories) + 1
+    # As of the current version if kind is a list that contain "both" the average
+    # isn't added to the legend even without individual coloring
+    else:
+        assert len(legend_lines) == len(categories)
+
+
+@pytest.mark.parametrize(
+    "coloring_values, expected_error",
+    [
+        ([1, 2, 3], ValueError),
+        ([1, "abc"], ValueError),
+        (
+            [(1, 2, 3) for i in range(50)],
+            ValueError,
+        )  # 50 for the samples in diabetes data, as the data can't be accessed
+        # in the parametrize decorator
+    ],
+)
+def test_partial_dependence_display_ice_colored_lines_invalid_inputs(
+    pyplot, clf_diabetes, diabetes, coloring_values, expected_error
+):
+    """Check that we properly center ICE and PD when passing kind as a string and as a
+    list."""
+    with pytest.raises(expected_error):
+        PartialDependenceDisplay.from_estimator(
+            clf_diabetes,
+            diabetes.data,
+            [0, 2],
+            kind="both",
+            centered=True,
+            subsample=5,
+            ice_lines_kw={"color": coloring_values},
+        )
