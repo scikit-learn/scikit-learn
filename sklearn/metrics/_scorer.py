@@ -65,6 +65,7 @@ from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
 from ..base import is_regressor
+from ..utils._param_validation import validate_params
 
 
 def _cached_call(cache, estimator, method, *args, **kwargs):
@@ -402,6 +403,11 @@ class _ThresholdScorer(_BaseScorer):
         return ", needs_threshold=True"
 
 
+@validate_params(
+    {
+        "scoring": [str, callable],
+    }
+)
 def get_scorer(scoring):
     """Get a scorer from string.
 
