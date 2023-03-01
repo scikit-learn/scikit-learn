@@ -371,14 +371,45 @@ display = PartialDependenceDisplay.from_estimator(
 )
 print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle("ICE and PDP representations", fontsize=16)
-
 # %%
 # We see that the ICE for the temperature feature gives us some additional information:
 # Some of the ICE lines are flat while some others show a decrease of the dependence
 # for temperature above 35 degrees Celsius. We observe a similar pattern for the
 # humidity feature: some of the ICEs lines show a sharp decrease when the humidity is
 # above 80%.
-#
+
+# If we want to dig deeper and get more information out of the ICE lines we can color
+# them by a feature of our choice. Here we show the coloring
+# by the cateogrical workingday feature and by the numerical hour feature
+
+display = PartialDependenceDisplay.from_estimator(
+    hgbdt_model,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+    ice_lines_kw={"color": X_train["workingday"], "palette": "Accent"},
+)
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle(
+    "ICE and PDP representations \n colored by the categorical workingday feature",
+    fontsize=16,
+)
+
+display = PartialDependenceDisplay.from_estimator(
+    hgbdt_model,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+    ice_lines_kw={"color": X_train["hour"], "palette": "seismic"},
+)
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle(
+    "ICE and PDP representations \n colored by the continuous windspeed feature",
+    fontsize=16,
+)
+
 # Not all ICE lines are parallel, this indicates that the model finds
 # interactions between features. We can repeat the experiment by constraining the
 # gradient boosting model to not use any interactions between features using the
