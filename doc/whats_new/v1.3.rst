@@ -76,12 +76,12 @@ Changes impacting all modules
   by :user:`John Pangas <jpangas>`, :user:`Rahil Parikh <rprkh>` ,
   and :user:`Alex Buzenet <albuzenet>`.
 
-- |Enhancement| A multi-threaded routine for pair of datasets consisting
-  of a sparse CSR matrix and a dense NumPy array has been introduced.
+- |Enhancement| Added a multi-threaded Cython routine to the compute squared
+  Euclidean distances (sometimes followed by a fused reduction operation) for a
+  pair of datasets consisting of a sparse CSR matrix and a dense NumPy.
 
-  The following estimators now either support this new case or have
-  better performance for this case:
-
+  This can improve the performance following functions and estimators.
+  
   - :func:`sklearn.metrics.pairwise_distances_argmin`
   - :func:`sklearn.metrics.pairwise_distances_argmin_min`
   - :class:`sklearn.cluster.AffinityPropagation`
@@ -103,8 +103,12 @@ Changes impacting all modules
   - :class:`sklearn.semi_supervised.LabelPropagation`
   - :class:`sklearn.semi_supervised.LabelSpreading`
 
-  For instance, :meth:`sklearn.NearestNeighbors.kneighbors` is up to 2
-  times faster for this case now on laptops.
+  A typical example of this performance improvement happens when passing a sparse
+  CSR matrix to the `predict` or `transform` method of estimators that rely on
+  a dense numpy representation to store their fitted parameters (or the reverse).
+
+  For instance, :meth:`sklearn.NearestNeighbors.kneighbors` is up to 2 times faster
+  for this case now on commonly available laptops.
 
   :pr:`25044` by :user:`Julien Jerphanion <jjerphan>`.
 
