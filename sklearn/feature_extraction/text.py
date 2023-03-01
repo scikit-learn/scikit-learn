@@ -996,9 +996,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
 
-        If None, no stop words will be used. max_df can be set to a value
-        in the range [0.7, 1.0) to automatically detect and filter stop
-        words based on intra corpus document frequency of terms.
+        If None, no stop words will be used. In this case, setting `max_df`
+        to a higher value, such as in the range (0.7, 1.0), can automatically detect
+        and filter stop words based on intra corpus document frequency of terms.
 
     token_pattern : str or None, default=r"(?u)\\b\\w\\w+\\b"
         Regular expression denoting what constitutes a "token", only used
@@ -1051,7 +1051,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     max_features : int, default=None
         If not None, build a vocabulary that only consider the top
-        max_features ordered by term frequency across the corpus.
+        `max_features` ordered by term frequency across the corpus.
+        Otherwise, all features are used.
 
         This parameter is ignored if vocabulary is not None.
 
@@ -1833,9 +1834,9 @@ class TfidfVectorizer(CountVectorizer):
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
 
-        If None, no stop words will be used. max_df can be set to a value
-        in the range [0.7, 1.0) to automatically detect and filter stop
-        words based on intra corpus document frequency of terms.
+        If None, no stop words will be used. In this case, setting `max_df`
+        to a higher value, such as in the range (0.7, 1.0), can automatically detect
+        and filter stop words based on intra corpus document frequency of terms.
 
     token_pattern : str, default=r"(?u)\\b\\w\\w+\\b"
         Regular expression denoting what constitutes a "token", only used
@@ -1873,7 +1874,8 @@ class TfidfVectorizer(CountVectorizer):
 
     max_features : int, default=None
         If not None, build a vocabulary that only consider the top
-        max_features ordered by term frequency across the corpus.
+        `max_features` ordered by term frequency across the corpus.
+        Otherwise, all features are used.
 
         This parameter is ignored if vocabulary is not None.
 
