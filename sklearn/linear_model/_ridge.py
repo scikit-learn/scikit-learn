@@ -962,8 +962,23 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         For 'lbfgs' solver, the default value is 15000.
 
     tol : float, default=1e-4
-        Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
-        'cholesky'.
+        Precision of the solution. Note that `tol` depends on the solver:
+
+        - 'auto': see lbfgs, sag, cholesky, sparse_cg.
+
+        - 'svd': `tol` has no impact.
+
+        - 'cholesky': `tol` has no impact.
+
+        - 'sparse_cg': relative or absolute residuals smaller than `tol`.
+
+        - 'lsqr': `tol` is set as atol and btol of scipy.sparse.linalg.lsqr,
+          which control the norm of the residual vector in terms of the norms of
+          matrix and coefficients.
+
+        - 'sag' and 'saga': change of coef smaller than `tol`.
+
+        - 'lbfgs': (projected) gradient=residual smaller than `tol`.
 
         .. versionchanged:: 1.2
            Default value changed from 1e-3 to 1e-4 for consistency with other linear
@@ -1253,12 +1268,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
     tol : float, default=1e-4
         Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
-        'cholesky'. For an 'lsqr' solver `tol` is set as `atol` and `btol` of `lsmr`,
-        which specifies conditions involving the residuals and norms of the matrix and
-        its coefficients. For the 'sparse_cg' solver, the relative or absolute
-        residual should be smaller than `tol`. For 'sag' and 'saga' solvers, the
-        change of `coef` should be smaller than `tol`. For an 'lbfgs' solver,
-        the residual should be smaller than `tol`.
+        'cholesky'.
 
         .. versionchanged:: 1.2
            Default value changed from 1e-3 to 1e-4 for consistency with other linear
