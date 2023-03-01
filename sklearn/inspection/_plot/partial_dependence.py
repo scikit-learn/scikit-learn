@@ -21,7 +21,7 @@ from ...utils.parallel import delayed, Parallel
 from ...utils._encode import _unique
 
 
-def get_categorical_colors_and_mapping(value_list, palette="classic"):
+def get_categorical_colors_and_mapping(value_list, palette="tab10"):
     """
     Derives a list of color and color mapping from the passed value list.
 
@@ -36,7 +36,13 @@ def get_categorical_colors_and_mapping(value_list, palette="classic"):
     -------
     list of colors, dictionary where the value are mapped to a color
     """
-    mapping = {v: f"C{i}" for i, v in enumerate(np.unique(value_list))}
+    color_palette = [
+        mpl.colors.to_hex(rgba_color)
+        for rgba_color in mpl.cm.get_cmap(
+            name=palette, lut=len(np.unique(value_list))
+        ).colors
+    ]
+    mapping = {v: color_palette[i] for i, v in enumerate(np.unique(value_list))}
     color_list = [mapping[value_list[i]] for i in range(len(value_list))]
     return color_list, mapping
 
@@ -112,23 +118,27 @@ def get_color_list_and_legend_dict(ice_lines_kw):
     """
 
     legend_dict = {}
-    value_list = ice_lines_kw["color"]
+    value_list = np.array(ice_lines_kw["color"])
     # case 1 Sequence of str -> categorical
-    if isinstance(value_list[0], str):
+    if isinstance(value_list[0], (str, bool, np.object_)):
         color_list, mapping = get_categorical_colors_and_mapping(
-            value_list, ice_lines_kw.get("palette", "classic")
+            value_list, ice_lines_kw.get("palette", "tab10")
         )
         legend_dict["mapping"] = mapping
     # case 2 Sequence of floats/int -> continuous
-    elif isinstance(value_list[0], (float, int)):
+    elif isinstance(value_list[0], (float, int, np.integer, np.float_)):
         color_list, norm = get_continuous_colors_and_cmap_norm(
             value_list, ice_lines_kw.get("palette", "viridis")
         )
         legend_dict["norm"] = norm
+        legend_dict["palette"] = ice_lines_kw.get("palette", "viridis")
     else:
         raise ValueError(
-            "Please only use string or numerical values for color selection"
+            f"{type(value_list[0])} is not a valid type for values to color ICE lines"
+            "Please only use string, bool or numerical to color ICE lines"
         )
+    if "palette" in ice_lines_kw.keys():
+        del ice_lines_kw["palette"]
     return color_list, legend_dict
 
 
@@ -936,10 +946,10 @@ class PartialDependenceDisplay:
         if color_list:
             if len(color_list) != preds.shape[0]:
                 raise ValueError(
-                    "When coloring individual ICE lines, dimension of values passed"
-                    " and number of sampleshas to agree. But there are"
-                    f" {preds.shape[0]} samples and {len(color_list)} valuesfor"
-                    " coloring"
+                    "When coloring individual ICE lines, number of values passed"
+                    "and number of samples has to agree. But there are"
+                    f"{preds.shape[0]} samples and {len(color_list)} values passed for"
+                    "coloring"
                 )
             del individual_line_kw_copied["color_list"]
         ice_lines_subsampled = preds[ice_lines_idx, :]
@@ -1261,7 +1271,7 @@ class PartialDependenceDisplay:
                     l.append(category)
 
                 self.axes_.flatten()[last_ax_idx_not_none].legend(
-                    h, l, bbox_to_anchor=(1, 0.95)
+                    h, l, loc="center left", bbox_to_anchor=(1, 0.9)
                 )
             elif "norm" in legend_dict.keys():
                 cmap = mpl.cm.get_cmap(legend_dict["palette"])
@@ -1647,5 +1657,6 @@ class PartialDependenceDisplay:
                     cat[0] and cat[1],
                     heatmap_kw,
                 )
-        self.add_legend_or_cmap_for_individually_colored_ice_lines(legend_dict)
+        if list_of_values_passed_for_ice_line_colors(ice_lines_kw):
+            self.add_legend_or_cmap_for_individually_colored_ice_lines(legend_dict)
         return self
