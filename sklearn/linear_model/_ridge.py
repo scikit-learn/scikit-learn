@@ -1267,8 +1267,23 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         The default value is determined by scipy.sparse.linalg.
 
     tol : float, default=1e-4
-        Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
-        'cholesky'.
+        Precision of the solution. Note that `tol` depends on the solver:
+
+        - 'auto': see lbfgs, sag, cholesky, sparse_cg.
+
+        - 'svd': `tol` has no impact.
+
+        - 'cholesky': `tol` has no impact.
+
+        - 'sparse_cg': relative or absolute residuals smaller than `tol`.
+
+        - 'lsqr': `tol` is set as atol and btol of scipy.sparse.linalg.lsqr,
+          which control the norm of the residual vector in terms of the norms of
+          matrix and coefficients.
+
+        - 'sag' and 'saga': change of coef smaller than `tol`.
+
+        - 'lbfgs': (projected) gradient=residual smaller than `tol`.
 
         .. versionchanged:: 1.2
            Default value changed from 1e-3 to 1e-4 for consistency with other linear
