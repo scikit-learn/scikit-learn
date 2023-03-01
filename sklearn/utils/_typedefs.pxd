@@ -2,7 +2,9 @@
 cimport numpy as cnp
 
 # Commonly used types
-# These are redefinitions of the ones defined by numpy and exposed by cython in
+# These are redefinitions of the ones defined by numpy in
+# https://github.com/numpy/numpy/blob/main/numpy/__init__.pxd
+# and exposed by cython in
 # https://github.com/cython/cython/blob/master/Cython/Includes/numpy/__init__.pxd.
 # It will eventually avoid having to always include the numpy headers even when we
 # would only use it for the types. (TODO don't cimport numpy in this extension)
