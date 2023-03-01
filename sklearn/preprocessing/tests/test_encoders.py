@@ -2008,7 +2008,7 @@ def test_predefined_categories_dtype():
 def test_drop_idx_infrequent_categories():
     """Check drop_idx is defined correctly with infrequent categories.
 
-    Non-regression test for gh-XXXXX.
+    Non-regression test for gh-25550.
     """
     X = np.array(
         [["a"] * 2 + ["b"] * 4 + ["c"] * 4 + ["d"] * 4 + ["e"] * 4], dtype=object
