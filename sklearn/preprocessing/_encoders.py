@@ -270,6 +270,10 @@ class OneHotEncoder(_BaseEncoder):
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 
+        When `max_categories` or `min_frequency` is configured to group
+        infrequent categories, the dropping behavior is handled after the
+        grouping.
+
         .. versionadded:: 0.21
            The parameter `drop` was added in 0.21.
 
