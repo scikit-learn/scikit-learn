@@ -36,6 +36,13 @@ class MockClass4:
     pass
 
 
+class MockClass5(MockClass1):
+    """Inherit from deprecated class but overwrite __init__"""
+
+    def __init__(self):
+        pass
+
+
 @deprecated()
 def mock_function():
     return 10
@@ -48,6 +55,8 @@ def test_deprecated():
         MockClass2().method()
     with pytest.warns(FutureWarning, match="deprecated"):
         MockClass3()
+    with pytest.warns(FutureWarning, match="qwerty"):
+        MockClass5()
     with pytest.warns(FutureWarning, match="deprecated"):
         val = mock_function()
     assert val == 10
@@ -56,10 +65,11 @@ def test_deprecated():
 def test_is_deprecated():
     # Test if _is_deprecated helper identifies wrapping via deprecated
     # NOTE it works only for class methods and functions
-    assert _is_deprecated(MockClass1.__init__)
+    assert _is_deprecated(MockClass1.__new__)
     assert _is_deprecated(MockClass2().method)
     assert _is_deprecated(MockClass3.__init__)
     assert not _is_deprecated(MockClass4.__init__)
+    assert _is_deprecated(MockClass5.__new__)
     assert _is_deprecated(mock_function)
 
 

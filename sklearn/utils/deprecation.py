@@ -60,17 +60,16 @@ class deprecated:
         if self.extra:
             msg += "; %s" % self.extra
 
-        # FIXME: we should probably reset __new__ for full generality
-        init = cls.__init__
+        new = cls.__new__
 
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
-            return init(*args, **kwargs)
+            return new(*args, **kwargs)
 
-        cls.__init__ = wrapped
+        cls.__new__ = wrapped
 
-        wrapped.__name__ = "__init__"
-        wrapped.deprecated_original = init
+        wrapped.__name__ = "__new__"
+        wrapped.deprecated_original = new
 
         return cls
 
