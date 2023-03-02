@@ -31,7 +31,7 @@ Changelog
 ...................
 
 - |Fix| When `set_output(transform="pandas")`, :class:`base.TransformerMixin` maintains
-  the index if the :term:`transform` output is already a DataFrame. :pr:`xxxxx` by
+  the index if the :term:`transform` output is already a DataFrame. :pr:`25747` by
   `Thomas Fan`_.
 
 :mod:`sklearn.calibration`
