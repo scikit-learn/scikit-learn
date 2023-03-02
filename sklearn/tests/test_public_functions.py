@@ -123,6 +123,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
     "sklearn.metrics.d2_pinball_score",
+    "sklearn.metrics.dcg_score",
     "sklearn.metrics.det_curve",
     "sklearn.metrics.f1_score",
     "sklearn.metrics.hamming_loss",

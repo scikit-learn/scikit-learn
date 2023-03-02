@@ -34,7 +34,7 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import validate_params, StrOptions
+from ..utils._param_validation import validate_params, StrOptions, Interval, Integral
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
@@ -1438,6 +1438,16 @@ def _check_dcg_target_type(y_true):
         )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "k": [Interval(Integral, 1, None, closed="left"), None],
+        "log_base": [Interval(Real, 0.0, None, closed="neither")],
+        "sample_weight": ["array-like", None],
+        "ignore_ties": ["boolean"],
+    }
+)
 def dcg_score(
     y_true, y_score, *, k=None, log_base=2, sample_weight=None, ignore_ties=False
 ):
@@ -1454,11 +1464,11 @@ def dcg_score(
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples, n_labels)
+    y_true : array-like of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
         to be ranked.
 
-    y_score : ndarray of shape (n_samples, n_labels)
+    y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
