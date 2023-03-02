@@ -1224,6 +1224,13 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     return np.average(coverage, weights=sample_weight)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_score": ["array-like"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     """Compute Ranking loss measure.
 
