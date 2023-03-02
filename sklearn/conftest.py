@@ -11,7 +11,7 @@ from _pytest.doctest import DoctestItem
 from sklearn.utils import _IS_32BIT
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
-from sklearn.utils.fixes import sp_base_version
+from sklearn.utils.fixes import sp_version
 from sklearn.utils.fixes import parse_version
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.datasets import fetch_20newsgroups_vectorized
@@ -29,7 +29,7 @@ if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
         "at least pytest >= {} installed.".format(PYTEST_MIN_VERSION)
     )
 
-scipy_datasets_require_network = sp_base_version >= parse_version("1.10")
+scipy_datasets_require_network = sp_version >= parse_version("1.10")
 
 
 def raccoon_face_or_skip():
