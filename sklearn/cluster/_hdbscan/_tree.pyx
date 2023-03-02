@@ -235,7 +235,9 @@ cdef list bfs_from_cluster_tree(
 ):
 
     cdef list result
-    cdef cnp.ndarray[cnp.intp_t, ndim=1] process_queue, children = hierarchy['right_node']
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] process_queue, children
+    children = hierarchy['right_node']
+
     cdef cnp.intp_t[:] parents = hierarchy['left_node']
 
     result = []
@@ -573,10 +575,10 @@ cpdef tuple get_clusters(
     stability : dict
         A dictionary mapping cluster_ids to stability values
 
-    cluster_selection_method : string, optional (default 'eom')
+    cluster_selection_method : {"eom", "leaf"}
         The method of selecting clusters. The default is the
-        Excess of Mass algorithm specified by 'eom'. The alternate
-        option is 'leaf'.
+        Excess of Mass algorithm specified by "eom". The alternate
+        option is "leaf".
 
     allow_single_cluster : boolean, optional (default False)
         Whether to allow a single cluster to be selected by the
@@ -640,11 +642,15 @@ cpdef tuple get_clusters(
 
     if cluster_selection_method == 'eom':
         for node in node_list:
-            child_selection = (cluster_tree['left_node'] == node)
+            child_selection = cluster_tree['left_node'] == node
             subtree_stability = np.sum([
                 stability[child] for
-                child in cluster_tree['right_node'][child_selection]])
-            if subtree_stability > stability[node] or cluster_sizes[node] > max_cluster_size:
+                child in cluster_tree['right_node'][child_selection]]
+            )
+            if (
+                subtree_stability > stability[node]
+                or cluster_sizes[node] > max_cluster_size
+            ):
                 is_cluster[node] = False
                 stability[node] = subtree_stability
             else:
@@ -656,18 +662,26 @@ cpdef tuple get_clusters(
             eom_clusters = [c for c in is_cluster if is_cluster[c]]
             selected_clusters = []
             # first check if eom_clusters only has root node, which skips epsilon check.
-            if (len(eom_clusters) == 1 and eom_clusters[0] == cluster_tree['left_node'].min()):
+            if (
+                len(eom_clusters) == 1
+                and eom_clusters[0] == cluster_tree['left_node'].min()
+            ):
                 if allow_single_cluster:
                     selected_clusters = eom_clusters
             else:
-                selected_clusters = epsilon_search(set(eom_clusters), cluster_tree, cluster_selection_epsilon, allow_single_cluster)
+                selected_clusters = epsilon_search(
+                    set(eom_clusters),
+                    cluster_tree,
+                    cluster_selection_epsilon,
+                    allow_single_cluster
+                )
             for c in is_cluster:
                 if c in selected_clusters:
                     is_cluster[c] = True
                 else:
                     is_cluster[c] = False
 
-    elif cluster_selection_method == 'leaf':
+    else:
         leaves = set(get_cluster_tree_leaves(cluster_tree))
         if len(leaves) == 0:
             for c in is_cluster:
@@ -675,7 +689,12 @@ cpdef tuple get_clusters(
             is_cluster[hierarchy['left_node'].min()] = True
 
         if cluster_selection_epsilon != 0.0:
-            selected_clusters = epsilon_search(leaves, cluster_tree, cluster_selection_epsilon, allow_single_cluster)
+            selected_clusters = epsilon_search(
+                leaves,
+                cluster_tree,
+                cluster_selection_epsilon,
+                allow_single_cluster
+            )
         else:
             selected_clusters = leaves
 
@@ -684,11 +703,8 @@ cpdef tuple get_clusters(
                     is_cluster[c] = True
                 else:
                     is_cluster[c] = False
-    else:
-        raise ValueError('Invalid Cluster Selection Method: %s\n'
-                         'Should be one of: "eom", "leaf"\n')
 
-    clusters = set([c for c in is_cluster if is_cluster[c]])
+    clusters = {c for c in is_cluster if is_cluster[c]}
     cluster_map = {c: n for n, c in enumerate(sorted(list(clusters)))}
     reverse_cluster_map = {n: c for c, n in cluster_map.items()}
 
