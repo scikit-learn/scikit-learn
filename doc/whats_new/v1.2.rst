@@ -27,6 +27,13 @@ Changes impacting all modules
 Changelog
 ---------
 
+:mod:`sklearn.base`
+...................
+
+- |Fix| When `set_output(transform="pandas")`, :class:`base.TransformerMixin` maintains
+  the index if the :term:`transform` output is already a DataFrame. :pr:`xxxxx` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
