@@ -278,7 +278,7 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
     expected = """SimpleImputer(missing_values=0)"""
     assert imputer.__repr__() == expected
 
-    # Defaults to np.NaN, trying with float('NaN')
+    # Defaults to np.nan, trying with float('NaN')
     imputer = SimpleImputer(missing_values=float("NaN"))
     expected = """SimpleImputer()"""
     assert imputer.__repr__() == expected
