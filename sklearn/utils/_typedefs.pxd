@@ -14,14 +14,11 @@ cimport numpy as cnp
 # receive values from a numpy array of dtype np.float64, the type float64_t must be
 # used.
 #
-# TODO: Stop defining custom types locally of globally like DTYPE_t and friends and
-# use these consistantly throughout the codebase.
+# TODO: Stop defining custom types locally or globally like DTYPE_t and friends and
+# use these consistently throughout the codebase.
+# NOTE: Extend this list as needed when converting more cython extensions.
 ctypedef unsigned char bool_t
 ctypedef Py_ssize_t intp_t
-ctypedef size_t uintp_t
-ctypedef signed int int32_t
-ctypedef signed long long int64_t
-ctypedef float float32_t
 ctypedef double float64_t
 
 
