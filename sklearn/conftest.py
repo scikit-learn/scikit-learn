@@ -11,6 +11,7 @@ from _pytest.doctest import DoctestItem
 from sklearn.utils import _IS_32BIT
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
+from sklearn.utils.fixes import sp_base_version
 from sklearn.utils.fixes import parse_version
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.datasets import fetch_20newsgroups_vectorized
@@ -28,6 +29,29 @@ if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
         "at least pytest >= {} installed.".format(PYTEST_MIN_VERSION)
     )
 
+scipy_datasets_require_network = sp_base_version >= parse_version("1.10")
+
+
+def raccoon_face_or_skip():
+    if scipy_datasets_require_network:
+        run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
+        from scipy.datasets import face
+
+        try:
+            return face(gray=True)
+        except ImportError as e:
+            if run_network_tests:
+                raise ValueError(
+                    "pooch is required when SKLEARN_SKIP_NETWORK_TESTS=0"
+                ) from e
+            pytest.skip("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
+
+    else:
+        from scipy.misc import face
+
+        return face(gray=True)
+
+
 dataset_fetchers = {
     "fetch_20newsgroups_fxt": fetch_20newsgroups,
     "fetch_20newsgroups_vectorized_fxt": fetch_20newsgroups_vectorized,
@@ -37,6 +61,9 @@ dataset_fetchers = {
     "fetch_olivetti_faces_fxt": fetch_olivetti_faces,
     "fetch_rcv1_fxt": fetch_rcv1,
 }
+
+if scipy_datasets_require_network:
+    dataset_fetchers["raccoon_face_fxt"] = raccoon_face_or_skip
 
 _SKIP32_MARK = pytest.mark.skipif(
     environ.get("SKLEARN_RUN_FLOAT32_TESTS", "0") != "1",
@@ -75,6 +102,7 @@ fetch_covtype_fxt = _fetch_fixture(fetch_covtype)
 fetch_kddcup99_fxt = _fetch_fixture(fetch_kddcup99)
 fetch_olivetti_faces_fxt = _fetch_fixture(fetch_olivetti_faces)
 fetch_rcv1_fxt = _fetch_fixture(fetch_rcv1)
+raccoon_face_fxt = pytest.fixture(raccoon_face_or_skip)
 
 
 def pytest_collection_modifyitems(config, items):
