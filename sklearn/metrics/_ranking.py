@@ -21,7 +21,7 @@ the lower the better.
 
 import warnings
 from functools import partial
-from numbers import Real
+from numbers import Real, Integral
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
@@ -34,7 +34,7 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import validate_params, StrOptions, Interval, Integral
+from ..utils._param_validation import validate_params, StrOptions, Interval
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
