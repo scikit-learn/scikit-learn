@@ -10,7 +10,7 @@ over the internet, all details are available on the official website:
 
 from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
-from ..utils._param_validation import validate_params, HasMethods
+from ..utils._param_validation import validate_params
 import logging
 
 import numpy as np
