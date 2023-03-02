@@ -814,6 +814,14 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     return fps, tps, y_score[threshold_idxs]
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "probas_pred": ["array-like"],
+        "pos_label": [Real, str, "boolean", None],
+        "sample_weight": ["array-like", None],
+    }
+)
 def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight=None):
     """Compute precision-recall pairs for different probability thresholds.
 
@@ -839,11 +847,11 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples,)
+    y_true : array-like of shape (n_samples,)
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    probas_pred : ndarray of shape (n_samples,)
+    probas_pred : array-like of shape (n_samples,)
         Target scores, can either be probability estimates of the positive
         class, or non-thresholded measure of decisions (as returned by
         `decision_function` on some classifiers).
@@ -1216,6 +1224,13 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     return np.average(coverage, weights=sample_weight)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_score": ["array-like"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     """Compute Ranking loss measure.
 
@@ -1234,10 +1249,10 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
 
     Parameters
     ----------
-    y_true : {ndarray, sparse matrix} of shape (n_samples, n_labels)
+    y_true : {array-like, sparse matrix} of shape (n_samples, n_labels)
         True binary labels in binary indicator format.
 
-    y_score : ndarray of shape (n_samples, n_labels)
+    y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
