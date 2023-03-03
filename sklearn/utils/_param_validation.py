@@ -367,6 +367,9 @@ class Interval(_Constraint):
     type : {numbers.Integral, numbers.Real, "real_not_int"}
         The set of numbers in which to set the interval.
 
+        If "real_not_int", only reals that don't have the integer type
+        are allowed. For example 1.0 is allowed but 1 is not.
+
     left : float or int or None
         The left bound of the interval. None means left bound is -∞.
 
