@@ -109,6 +109,10 @@ Changelog
   :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
   is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
+- |Feature| The `sample_weight` parameter now will be used to initialize centroids
+  in :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans`
+  if `init` is set to "random".
+  :pr:`25752` by :user:`Gleb Levitski <glevv>`.
 
 :mod:`sklearn.decomposition`
 ............................
