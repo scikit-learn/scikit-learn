@@ -1277,6 +1277,7 @@ def test_predict_does_not_change_cluster_centers(is_sparse):
     y_pred2 = kmeans.predict(X)
     assert_array_equal(y_pred1, y_pred2)
 
+
 def test_sample_weight_init():
     """Check that sample weight is used during init."""
     X, _ = make_blobs(n_samples=200, n_features=10, centers=10, random_state=0)
