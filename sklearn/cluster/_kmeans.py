@@ -1006,7 +1006,7 @@ class _BaseKMeans(
                 n_samples,
                 size=n_clusters,
                 replace=False,
-                p=sample_weight/sample_weight.sum()
+                p=sample_weight / sample_weight.sum(),
             )
             centers = X[seeds]
         elif _is_arraylike_not_scalar(self.init):
