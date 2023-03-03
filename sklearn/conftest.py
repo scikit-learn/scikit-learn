@@ -2,6 +2,8 @@ from os import environ
 from functools import wraps
 import platform
 import sys
+from contextlib import suppress
+from unittest import SkipTest
 
 import pytest
 import numpy as np
@@ -36,21 +38,19 @@ def raccoon_face_or_skip():
     # SciPy >= 1.10 requires network to access to get data
     if scipy_datasets_require_network:
         run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
-        from scipy.datasets import face
+        if not run_network_tests:
+            raise SkipTest("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
 
         try:
-            return face(gray=True)
-        except ImportError as e:
-            if run_network_tests:
-                raise ValueError(
-                    "pooch is required when SKLEARN_SKIP_NETWORK_TESTS=0"
-                ) from e
-            pytest.skip("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
+            import pooch  # noqa
+        except ImportError:
+            raise SkipTest("test requires pooch to be installed")
 
+        from scipy.datasets import face
     else:
         from scipy.misc import face
 
-        return face(gray=True)
+    return face(gray=True)
 
 
 dataset_fetchers = {
@@ -144,7 +144,8 @@ def pytest_collection_modifyitems(config, items):
     worker_id = environ.get("PYTEST_XDIST_WORKER", "gw0")
     if worker_id == "gw0" and run_network_tests:
         for name in datasets_to_download:
-            dataset_fetchers[name]()
+            with suppress(SkipTest):
+                dataset_fetchers[name]()
 
     for item in items:
         # Known failure on with GradientBoostingClassifier on ARM64
