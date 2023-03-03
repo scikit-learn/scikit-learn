@@ -17,7 +17,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import as_float_array, check_array, check_X_y, safe_sqr, safe_mask
 from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ._base import SelectorMixin
 
 
@@ -117,6 +117,12 @@ def f_oneway(*args):
     return f, prob
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+    }
+)
 def f_classif(X, y):
     """Compute the ANOVA F-value for the provided sample.
 
@@ -127,7 +133,7 @@ def f_classif(X, y):
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The set of regressors that will be tested sequentially.
 
-    y : ndarray of shape (n_samples,)
+    y : array-like of shape (n_samples,)
         The target vector.
 
     Returns
@@ -167,12 +173,18 @@ def _chisquare(f_obs, f_exp):
     return chisq, special.chdtrc(k - 1, chisq)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+    }
+)
 def chi2(X, y):
     """Compute chi-squared stats between each non-negative feature and class.
 
-    This score can be used to select the n_features features with the
+    This score can be used to select the `n_features` features with the
     highest values for the test chi-squared statistic from X, which must
-    contain only non-negative features such as booleans or frequencies
+    contain only **non-negative features** such as booleans or frequencies
     (e.g., term counts in document classification), relative to the classes.
 
     Recall that the chi-square test measures dependence between stochastic

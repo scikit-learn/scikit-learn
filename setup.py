@@ -70,6 +70,7 @@ DEFINE_MACRO_NUMPY_C_API = (
 USE_NEWEST_NUMPY_C_API = (
     "sklearn.__check_build._check_build",
     "sklearn._loss._loss",
+    "sklearn._isotonic",
     "sklearn.cluster._dbscan_inner",
     "sklearn.cluster._hierarchical_fast",
     "sklearn.cluster._k_means_common",
@@ -78,6 +79,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.cluster._k_means_minibatch",
     "sklearn.datasets._svmlight_format_fast",
     "sklearn.decomposition._cdnmf_fast",
+    "sklearn.decomposition._online_lda_fast",
     "sklearn.ensemble._gradient_boosting",
     "sklearn.ensemble._hist_gradient_boosting._gradient_boosting",
     "sklearn.ensemble._hist_gradient_boosting.histogram",
@@ -93,6 +95,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.manifold._barnes_hut_tsne",
     "sklearn.manifold._utils",
     "sklearn.metrics.cluster._expected_mutual_info_fast",
+    "sklearn.metrics._dist_metrics",
     "sklearn.metrics._pairwise_distances_reduction._datasets_pair",
     "sklearn.metrics._pairwise_distances_reduction._middle_term_computer",
     "sklearn.metrics._pairwise_distances_reduction._base",
@@ -102,23 +105,30 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.neighbors._ball_tree",
     "sklearn.neighbors._kd_tree",
     "sklearn.neighbors._partition_nodes",
+    "sklearn.neighbors._quad_tree",
+    "sklearn.preprocessing._csr_polynomial_expansion",
+    "sklearn.svm._liblinear",
+    "sklearn.svm._libsvm",
+    "sklearn.svm._libsvm_sparse",
+    "sklearn.svm._newrand",
+    "sklearn.tree._criterion",
     "sklearn.tree._splitter",
+    "sklearn.tree._tree",
     "sklearn.tree._utils",
     "sklearn.utils._cython_blas",
     "sklearn.utils._fast_dict",
-    "sklearn.utils._openmp_helpers",
-    "sklearn.utils._weight_vector",
-    "sklearn.utils._random",
-    "sklearn.utils._logistic_sigmoid",
-    "sklearn.utils._readonly_array_wrapper",
-    "sklearn.utils._typedefs",
     "sklearn.utils._heap",
-    "sklearn.utils._sorting",
-    "sklearn.utils._vector_sentinel",
     "sklearn.utils._isfinite",
+    "sklearn.utils._logistic_sigmoid",
+    "sklearn.utils._openmp_helpers",
+    "sklearn.utils._random",
+    "sklearn.utils._seq_dataset",
+    "sklearn.utils._sorting",
+    "sklearn.utils._typedefs",
+    "sklearn.utils._vector_sentinel",
+    "sklearn.utils._weight_vector",
+    "sklearn.utils.arrayfuncs",
     "sklearn.utils.murmurhash",
-    "sklearn.svm._newrand",
-    "sklearn._isotonic",
 )
 
 
@@ -192,7 +202,7 @@ class build_ext_subclass(build_ext):
                 print(f"Using old NumPy C API (version 1.7) for extension {ext.name}")
 
         if sklearn._OPENMP_SUPPORTED:
-            openmp_flag = get_openmp_flag(self.compiler)
+            openmp_flag = get_openmp_flag()
 
             for e in self.extensions:
                 e.extra_compile_args += openmp_flag
@@ -261,7 +271,7 @@ extension_config = {
         {"sources": ["_isotonic.pyx"], "include_np": True},
     ],
     "_loss": [
-        {"sources": ["_loss.pyx.tp"], "include_np": True},
+        {"sources": ["_loss.pyx.tp"]},
     ],
     "cluster": [
         {"sources": ["_dbscan_inner.pyx"], "language": "c++", "include_np": True},
@@ -300,7 +310,7 @@ extension_config = {
     ],
     "linear_model": [
         {"sources": ["_cd_fast.pyx"], "include_np": True},
-        {"sources": ["_sgd_fast.pyx"], "include_np": True},
+        {"sources": ["_sgd_fast.pyx.tp"], "include_np": True},
         {"sources": ["_sag_fast.pyx.tp"], "include_np": True},
     ],
     "manifold": [
@@ -418,15 +428,20 @@ extension_config = {
         },
     ],
     "tree": [
-        {"sources": ["_tree.pyx"], "language": "c++", "include_np": True},
-        {"sources": ["_splitter.pyx"], "include_np": True},
-        {"sources": ["_criterion.pyx"], "include_np": True},
-        {"sources": ["_utils.pyx"], "include_np": True},
+        {
+            "sources": ["_tree.pyx"],
+            "language": "c++",
+            "include_np": True,
+            "optimization_level": "O3",
+        },
+        {"sources": ["_splitter.pyx"], "include_np": True, "optimization_level": "O3"},
+        {"sources": ["_criterion.pyx"], "include_np": True, "optimization_level": "O3"},
+        {"sources": ["_utils.pyx"], "include_np": True, "optimization_level": "O3"},
     ],
     "utils": [
         {"sources": ["sparsefuncs_fast.pyx"], "include_np": True},
         {"sources": ["_cython_blas.pyx"]},
-        {"sources": ["arrayfuncs.pyx"], "include_np": True},
+        {"sources": ["arrayfuncs.pyx"]},
         {
             "sources": ["murmurhash.pyx", join("src", "MurmurHash3.cpp")],
             "include_dirs": ["src"],
@@ -442,7 +457,6 @@ extension_config = {
         },
         {"sources": ["_random.pyx"], "include_np": True},
         {"sources": ["_logistic_sigmoid.pyx"], "include_np": True},
-        {"sources": ["_readonly_array_wrapper.pyx"], "include_np": True},
         {"sources": ["_typedefs.pyx"], "include_np": True},
         {"sources": ["_heap.pyx"], "include_np": True},
         {"sources": ["_sorting.pyx"], "include_np": True},
@@ -503,15 +517,14 @@ def configure_extension_modules():
 
     is_pypy = platform.python_implementation() == "PyPy"
     np_include = numpy.get_include()
+    default_optimization_level = "O2"
 
-    optimization_level = "O2"
     if os.name == "posix":
-        default_extra_compile_args = [f"-{optimization_level}"]
         default_libraries = ["m"]
     else:
-        default_extra_compile_args = [f"/{optimization_level}"]
         default_libraries = []
 
+    default_extra_compile_args = []
     build_with_debug_symbols = (
         os.environ.get("SKLEARN_BUILD_ENABLE_DEBUG_SYMBOLS", "0") != "0"
     )
@@ -574,6 +587,14 @@ def configure_extension_modules():
             extra_compile_args = (
                 extension.get("extra_compile_args", []) + default_extra_compile_args
             )
+            optimization_level = extension.get(
+                "optimization_level", default_optimization_level
+            )
+            if os.name == "posix":
+                extra_compile_args.append(f"-{optimization_level}")
+            else:
+                extra_compile_args.append(f"/{optimization_level}")
+
             libraries_ext = extension.get("libraries", []) + default_libraries
 
             new_ext = Extension(

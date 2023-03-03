@@ -52,11 +52,9 @@ def cythonize_extensions(extension):
     # compilers are properly configured to build with OpenMP. This is expensive
     # and we only want to call this function once.
     # The result of this check is cached as a private attribute on the sklearn
-    # module (only at build-time) to be used twice:
-    # - First to set the value of SKLEARN_OPENMP_PARALLELISM_ENABLED, the
-    #   cython build-time variable passed to the cythonize() call.
-    # - Then in the build_ext subclass defined in the top-level setup.py file
-    #   to actually build the compiled extensions with OpenMP flags if needed.
+    # module (only at build-time) to be used in the build_ext subclass defined
+    # in the top-level setup.py file to actually build the compiled extensions
+    # with OpenMP flags if needed.
     sklearn._OPENMP_SUPPORTED = check_openmp_support()
 
     n_jobs = 1
@@ -70,20 +68,19 @@ def cythonize_extensions(extension):
         os.environ.get("SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES", "0") != "0"
     )
 
+    compiler_directives = {
+        "language_level": 3,
+        "boundscheck": cython_enable_debug_directives,
+        "wraparound": False,
+        "initializedcheck": False,
+        "nonecheck": False,
+        "cdivision": True,
+    }
+
     return cythonize(
         extension,
         nthreads=n_jobs,
-        compile_time_env={
-            "SKLEARN_OPENMP_PARALLELISM_ENABLED": sklearn._OPENMP_SUPPORTED
-        },
-        compiler_directives={
-            "language_level": 3,
-            "boundscheck": cython_enable_debug_directives,
-            "wraparound": False,
-            "initializedcheck": False,
-            "nonecheck": False,
-            "cdivision": True,
-        },
+        compiler_directives=compiler_directives,
     )
 
 
