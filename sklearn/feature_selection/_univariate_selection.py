@@ -255,8 +255,8 @@ def chi2(X, y):
     {
         "X": ["array-like", "sparse matrix"],
         "y": ["array-like"],
-        "center": [bool],
-        "force_finite": [bool],
+        "center": ["boolean"],
+        "force_finite": ["boolean"],
     }
 )
 def r_regression(X, y, *, center=True, force_finite=True):
