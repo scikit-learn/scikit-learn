@@ -90,6 +90,12 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Enhancement| All selectors in :mod:`sklearn.feature_selection` will preserve
+  a DataFrame's dtype when transformed. :pr:`25102` by `Thomas Fan`_.
+
 :mod:`sklearn.base`
 ...................
 
@@ -147,17 +153,48 @@ Changelog
   inconsistent with the sckit-learn verion the estimator was pickled with.
   :pr:`25297` by `Thomas Fan`_.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |API| :class:`feature_extraction.image.PatchExtractor` now follows the
+  transformer API of scikit-learn. This class is defined as a stateless transformer
+  meaning that it is note required to call `fit` before calling `transform`.
+  Parameter validation only happens at `fit` time.
+  :pr:`24230` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.impute`
 .....................
 
 - |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
   :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |API| :func:`inspection.partial_dependence` returns a :class:`utils.Bunch` with
+  new key: `grid_values`. The `values` key is deprecated in favor of `grid_values`
+  and the `values` key will be removed in 1.5.
+  :pr:`21809` and :pr:`25732` by `Thomas Fan`_.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Enhancement| :class:`SGDClassifier`, :class:`SGDRegressor` and
+  :class:`SGDOneClassSVM` now preserve dtype for `numpy.float32`.
+  :pr:`25587` by :user:`Omar Salman <OmarManzoor>`
+
 :mod:`sklearn.metrics`
 ......................
 
 - |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
   :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
+
+- |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
+  not normalized, instead of actually normalizing them in the metric. Starting from
+  1.5 this will raise an error. :pr:`25299` by :user:`Omar Salman <OmarManzoor`.
+
+- |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
+  removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -172,6 +209,15 @@ Changelog
 - |Fix| Remove support for `KulsinskiDistance` in :class:`neighbors.BallTree`. This
   dissimilarity is not a metric and cannot be supported by the BallTree.
   :pr:`25417` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPRegressor` and :class:`neural_network.MLPClassifier`
+  reports the right `n_iter_` when `warm_start=True`. It corresponds to the number
+  of iterations performed on the current call to `fit` instead of the total number
+  of iterations performed since the initialization of the estimator.
+  :pr:`25443` by :user:`Marvin Krawutschke <Marvvxi>`.
 
 :mod:`sklearn.pipeline`
 .......................
@@ -221,6 +267,9 @@ Changelog
   introduced to ensure stateless transformers don't raise `NotFittedError`
   during `transform` with no prior call to `fit` or `fit_transform`.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
+
+- |Enhancement| :func:`utils.multiclass.type_of_target` can identify pandas
+  nullable data types as classification targets. :pr:`25638` by `Thomas Fan`_.
 
 :mod:`sklearn.semi_supervised`
 ..............................
