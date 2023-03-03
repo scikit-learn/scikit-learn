@@ -117,10 +117,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return max_samples
 
     if isinstance(max_samples, Real):
-        result = round(n_samples * max_samples)
-        if result < 1:
-            raise ValueError("round(max_samples * n_samples) must be >= 1")
-        return result
+        return max(round(n_samples * max_samples), 1)
 
 
 def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
