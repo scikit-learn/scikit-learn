@@ -33,6 +33,7 @@ scipy_datasets_require_network = sp_version >= parse_version("1.10")
 
 
 def raccoon_face_or_skip():
+    # SciPy >= 1.10 requires network to access to get data
     if scipy_datasets_require_network:
         run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
         from scipy.datasets import face
