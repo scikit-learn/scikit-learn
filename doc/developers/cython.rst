@@ -47,7 +47,7 @@ Tips to ease development
          print(f"{test_val=}")
 
 * scikit-learn codebase is a bit of a zero of (fused) types (re)definitions, and there's `ongoing work to simplify
-  and unify that across the codebase <>`_. For now, make sure you understand which concrete types are used ultimately.
+  and unify that across the codebase <https://github.com/scikit-learn/scikit-learn/issues/25572>`_. For now, make sure you understand which concrete types are used ultimately.
 
 * It is helpful to use ``gdb`` to debug. In order to do so, one must use a Python interpreter built with debug support
   (debug symbols and proper optimization). To create a new conda environment (which you might need to deactivate and
@@ -140,7 +140,8 @@ Basics
 
 * Understand that ``nogil`` declarations are just hints: when declaring the ``cdef`` functions as nogil,
   means that they can be called without holding the GIL, but it does not release the GIL when entering them.
-  You have to do that yourself, explicitly, either using an explicit context manager:
+  You have to do that yourself either by passing ``nogil=True`` to ``cython.parallel.prange`` explicitly,
+  or by using an explicit context manager:
 
 .. code-block:: cython
 
@@ -154,6 +155,4 @@ Basics
 
         return 0
 
-  Or by passing ``nogil=True`` to ``cython.parallel.prange``.
-
-  This item is based on `this comment from Stefan's Benhel <https://github.com/cython/cython/issues/2798#issuecomment-459971828>`_
+This item is based on `this comment from Stéfan's Benhel <https://github.com/cython/cython/issues/2798#issuecomment-459971828>`_
