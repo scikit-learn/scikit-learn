@@ -110,7 +110,7 @@ Changelog
   is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 - |Feature| The `sample_weight` parameter now will be used to initialize centroids
-  in :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans`
+  in :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans` and :class:`cluster.MiniBatchKMeans`
   if `init` is set to "random".
   :pr:`25752` by :user:`Gleb Levitski <glevv>`.
 
