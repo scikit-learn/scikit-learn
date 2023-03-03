@@ -333,7 +333,8 @@ def k_means(
           clustering in a smart way to speed up convergence. See section
           Notes in k_init for more details.
         - `'random'`: choose `n_clusters` observations (rows) at random from data
-          for the initial centroids.
+          for the initial centroids. If `sample_weight` is not None, they will
+          be used for non-uniform sampling of centroids according to passed weights.
         - If an array is passed, it should be of shape `(n_clusters, n_features)`
           and gives the initial centers.
         - If a callable is passed, it should take arguments `X`, `n_clusters` and a
@@ -939,7 +940,14 @@ class _BaseKMeans(
         return X
 
     def _init_centroids(
-        self, X, x_squared_norms, init, random_state, init_size=None, n_centroids=None
+        self,
+        X,
+        x_squared_norms,
+        init,
+        random_state,
+        init_size=None,
+        n_centroids=None,
+        sample_weight=None,
     ):
         """Compute the initial centroids.
 
@@ -969,6 +977,10 @@ class _BaseKMeans(
             If left to 'None' the number of centroids will be equal to
             number of clusters to form (self.n_clusters)
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight. Used only if 'init' is set to 'random'.
+
         Returns
         -------
         centers : ndarray of shape (n_clusters, n_features)
@@ -990,7 +1002,12 @@ class _BaseKMeans(
                 x_squared_norms=x_squared_norms,
             )
         elif isinstance(init, str) and init == "random":
-            seeds = random_state.permutation(n_samples)[:n_clusters]
+            seeds = random_state.choice(
+                n_samples,
+                size=n_clusters,
+                replace=False,
+                p=sample_weight/sample_weight.sum()
+            )
             centers = X[seeds]
         elif _is_arraylike_not_scalar(self.init):
             centers = init
@@ -1191,7 +1208,8 @@ class KMeans(_BaseKMeans):
         among them.
 
         'random': choose `n_clusters` observations (rows) at random from data
-        for the initial centroids.
+        for the initial centroids. If `sample_weight` is not None, they will be used
+        for non-uniform sampling of centroids according to passed weights.
 
         If an array is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
@@ -1468,7 +1486,11 @@ class KMeans(_BaseKMeans):
         for i in range(self._n_init):
             # Initialize centers
             centers_init = self._init_centroids(
-                X, x_squared_norms=x_squared_norms, init=init, random_state=random_state
+                X,
+                x_squared_norms=x_squared_norms,
+                init=init,
+                random_state=random_state,
+                sample_weight=sample_weight,
             )
             if self.verbose:
                 print("Initialization complete")
@@ -1667,7 +1689,8 @@ class MiniBatchKMeans(_BaseKMeans):
         among them.
 
         'random': choose `n_clusters` observations (rows) at random from data
-        for the initial centroids.
+        for the initial centroids. If `sample_weight` is not None, they will be used
+        for non-uniform sampling of centroids according to passed weights.
 
         If an array is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
@@ -2070,6 +2093,7 @@ class MiniBatchKMeans(_BaseKMeans):
                 init=init,
                 random_state=random_state,
                 init_size=self._init_size,
+                sample_weight=sample_weight,
             )
 
             # Compute inertia on a validation set.
@@ -2220,6 +2244,7 @@ class MiniBatchKMeans(_BaseKMeans):
                 init=init,
                 random_state=self._random_state,
                 init_size=self._init_size,
+                sample_weight=sample_weight,
             )
 
             # Initialize counts
