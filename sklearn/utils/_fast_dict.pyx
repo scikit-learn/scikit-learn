@@ -75,23 +75,6 @@ cdef class IntFloatDict:
             value = values[idx]
             yield key, value
 
-    def to_arrays(self):
-        """Return the key, value representation of the IntFloatDict
-           object.
-
-           Returns
-           =======
-           keys : ndarray, shape (n_items, ), dtype=int
-                The indices of the data points
-           values : ndarray, shape (n_items, ), dtype=float
-                The values of the data points
-        """
-        cdef int size = self.my_map.size()
-        cdef ITYPE_t[:] keys = np.empty(size, dtype=np.intp)
-        cdef DTYPE_t[:] values = np.empty(size, dtype=np.float64)
-        self._to_arrays(keys, values)
-        return keys, values
-
     cdef _to_arrays(self, ITYPE_t [:] keys, DTYPE_t [:] values):
         # Internal version of to_arrays that takes already-initialized arrays
         cdef cpp_map[ITYPE_t, DTYPE_t].iterator it = self.my_map.begin()
