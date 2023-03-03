@@ -23,6 +23,7 @@ the lower the better.
 # License: BSD 3 clause
 
 
+from numbers import Integral, Real
 import warnings
 import numpy as np
 
@@ -40,7 +41,7 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import StrOptions, validate_params
+from ..utils._param_validation import StrOptions, Options, Interval, validate_params
 from ..exceptions import UndefinedMetricWarning
 
 from ._base import _check_pos_label_consistency
@@ -696,6 +697,23 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     return 1 - k
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "labels": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
+        "average": [
+            StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
+            None,
+        ],
+        "sample_weight": ["array-like", None],
+        "zero_division": [
+            Options(Real, {0, 1}),
+            StrOptions({"warn"}),
+        ],
+    }
+)
 def jaccard_score(
     y_true,
     y_pred,
@@ -732,7 +750,7 @@ def jaccard_score(
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -867,6 +885,13 @@ def jaccard_score(
     return np.average(jaccard, weights=weights)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     """Compute the Matthews correlation coefficient (MCC).
 
@@ -887,10 +912,10 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
+    y_true : array-like of shape (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : array, shape = [n_samples]
+    y_pred : array-like of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -1038,6 +1063,23 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         return n_samples - score
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "labels": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
+        "average": [
+            StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
+            None,
+        ],
+        "sample_weight": ["array-like", None],
+        "zero_division": [
+            Options(Integral, {0, 1}),
+            StrOptions({"warn"}),
+        ],
+    }
+)
 def f1_score(
     y_true,
     y_pred,
@@ -1083,7 +1125,7 @@ def f1_score(
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool, str or None, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1231,7 +1273,7 @@ def fbeta_score(
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1433,6 +1475,25 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     return labels
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "beta": [Interval(Real, 0.0, None, closed="both")],
+        "labels": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
+        "average": [
+            StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
+            None,
+        ],
+        "warn_for": [list, tuple, set],
+        "sample_weight": ["array-like", None],
+        "zero_division": [
+            Options(Real, {0, 1}),
+            StrOptions({"warn"}),
+        ],
+    }
+)
 def precision_recall_fscore_support(
     y_true,
     y_pred,
@@ -1491,7 +1552,7 @@ def precision_recall_fscore_support(
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1521,7 +1582,7 @@ def precision_recall_fscore_support(
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-    warn_for : tuple or set, for internal use
+    warn_for : list, tuple or set, for internal use
         This determines which warnings will be made in the case that this
         function is being used to return only one of its metrics.
 
@@ -1598,8 +1659,6 @@ def precision_recall_fscore_support(
      array([2, 2, 2]))
     """
     _check_zero_division(zero_division)
-    if beta < 0:
-        raise ValueError("beta should be >=0 in the F-beta score")
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
     # Calculate tp_sum, pred_sum, true_sum ###
@@ -1852,6 +1911,23 @@ def class_likelihood_ratios(
     return positive_likelihood_ratio, negative_likelihood_ratio
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "labels": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
+        "average": [
+            StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
+            None,
+        ],
+        "sample_weight": ["array-like", None],
+        "zero_division": [
+            Options(Real, {0, 1}),
+            StrOptions({"warn"}),
+        ],
+    }
+)
 def precision_score(
     y_true,
     y_pred,
@@ -1893,7 +1969,7 @@ def precision_score(
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -2034,7 +2110,7 @@ def recall_score(
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -2551,6 +2627,16 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
         raise ValueError("{0} is not supported".format(y_type))
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "eps": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both")],
+        "normalize": ["boolean"],
+        "sample_weight": ["array-like", None],
+        "labels": ["array-like", None],
+    }
+)
 def log_loss(
     y_true, y_pred, *, eps="auto", normalize=True, sample_weight=None, labels=None
 ):
@@ -2594,6 +2680,9 @@ def log_loss(
            The default value changed from `1e-15` to `"auto"` that is
            equivalent to `np.finfo(y_pred.dtype).eps`.
 
+        .. deprecated:: 1.3
+           `eps` is deprecated in 1.3 and will be removed in 1.5.
+
     normalize : bool, default=True
         If true, return the mean loss per sample.
         Otherwise, return the sum of the per-sample losses.
@@ -2632,7 +2721,16 @@ def log_loss(
     y_pred = check_array(
         y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
     )
-    eps = np.finfo(y_pred.dtype).eps if eps == "auto" else eps
+    if eps == "auto":
+        eps = np.finfo(y_pred.dtype).eps
+    else:
+        # TODO: Remove user defined eps in 1.5
+        warnings.warn(
+            "Setting the eps parameter is deprecated and will "
+            "be removed in 1.5. Instead eps will always have"
+            "a default value of `np.finfo(y_pred.dtype).eps`.",
+            FutureWarning,
+        )
 
     check_consistent_length(y_pred, y_true, sample_weight)
     lb = LabelBinarizer()
@@ -2695,6 +2793,12 @@ def log_loss(
 
     # Renormalize
     y_pred_sum = y_pred.sum(axis=1)
+    if not np.isclose(y_pred_sum, 1, rtol=1e-15, atol=5 * eps).all():
+        warnings.warn(
+            "The y_pred values do not sum to one. Starting from 1.5 this"
+            "will result in an error.",
+            UserWarning,
+        )
     y_pred = y_pred / y_pred_sum[:, np.newaxis]
     loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
@@ -2878,7 +2982,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    pos_label : int or str, default=None
+    pos_label : int, float, bool or str, default=None
         Label of the positive class. `pos_label` will be inferred in the
         following manner:
 

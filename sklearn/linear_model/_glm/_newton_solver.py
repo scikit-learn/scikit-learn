@@ -88,7 +88,7 @@ class NewtonSolver(ABC):
         Newton step.
 
     gradient : ndarray of shape coef.shape
-        Gradient of the loss wrt. the coefficients.
+        Gradient of the loss w.r.t. the coefficients.
 
     gradient_old : ndarray of shape coef.shape
         Gradient of previous iteration.
