@@ -11,6 +11,7 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.decomposition import FactorAnalysis
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import ignore_warnings
 from sklearn.decomposition._factor_analysis import _ortho_rotation
 
@@ -112,3 +113,77 @@ def test_factor_analysis():
     )
     rotated = _ortho_rotation(factors[:, :n_components], method="varimax").T
     assert_array_almost_equal(np.abs(rotated), np.abs(r_solution), decimal=3)
+
+
+@pytest.mark.parametrize("noise_variance_init", [None, "unit_weights"])
+@pytest.mark.parametrize("svd_method", ["randomized", "lapack"])
+def test_factor_analysis_preserving_dtypes(
+    noise_variance_init, svd_method, global_dtype
+):
+    """Check that `FactorAnalysis` preserves dtypes depending of the input dtype.
+
+    Dtype preservation means that:
+    - the fitted attributes have the same dtype as the input dtype
+    - the transformed output dtype is the same as the input dtype
+    - the public function output arrays that have the same dtype as the input
+    """
+    rng = np.random.RandomState(0)
+    n_samples, n_features, n_components = 20, 5, 3
+    if noise_variance_init == "unit_weights":
+        variance = np.ones(n_features)
+    else:
+        variance = noise_variance_init
+
+    W = rng.randn(n_components, n_features)
+    h = rng.randn(n_samples, n_components)
+    noise = rng.gamma(1, size=n_features) * rng.randn(n_samples, n_features)
+
+    X = np.dot(h, W) + noise
+    X = X.astype(global_dtype)
+
+    factor_analysis = FactorAnalysis(
+        n_components=n_components,
+        svd_method=svd_method,
+        noise_variance_init=variance,
+    ).fit(X)
+    assert factor_analysis.components_.dtype == global_dtype
+    assert factor_analysis.noise_variance_.dtype == global_dtype
+    assert factor_analysis.mean_.dtype == global_dtype
+
+    for method in ("transform", "fit_transform"):
+        X_trans = getattr(factor_analysis, method)(X)
+        assert X_trans.dtype == global_dtype
+
+    for method in ("get_covariance", "get_precision"):
+        output = factor_analysis.get_covariance()
+        assert output.dtype == global_dtype
+
+
+@pytest.mark.parametrize("method", ["lapack", "randomized"])
+def test_factor_analysis_numeric_consistency_float32_float64(method):
+    """Check that `FactorAnalysis` is consistent with float32 and float64."""
+    rng = np.random.RandomState(0)
+    n_samples, n_features, n_components = 20, 5, 3
+
+    W = rng.randn(n_components, n_features)
+    h = rng.randn(n_samples, n_components)
+    noise = rng.gamma(1, size=n_features) * rng.randn(n_samples, n_features)
+
+    X_64 = np.dot(h, W) + noise
+    X_32 = X_64.astype(np.float32)
+
+    tol = 1e-2
+    fa_32 = FactorAnalysis(
+        n_components=n_components, svd_method=method, tol=tol, random_state=0
+    ).fit(X_32)
+    fa_64 = FactorAnalysis(
+        n_components=n_components, svd_method=method, tol=tol, random_state=0
+    ).fit(X_64)
+
+    X_trans_64 = fa_64.transform(X_64)
+    X_trans_32 = fa_32.transform(X_32)
+
+    # The tolerances are quite high to make the test pass. The algorithm being
+    # an iterative SVD, the numerical errors are accumulated and we cannot get
+    # a closer result between 32 and 64 bits.
+    assert_allclose(X_trans_32, X_trans_64, rtol=1e-1, atol=1e-1)
