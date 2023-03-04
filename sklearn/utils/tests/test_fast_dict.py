@@ -33,6 +33,8 @@ def test_int_float_dict_argmin():
 
 
 def test_to_arrays():
+    # Test that an IntFloatDict is converted into arrays
+    # of keys and values correctly
     keys_in = np.array([1, 2, 3], dtype=np.intp)
     values_in = np.array([4, 5, 6], dtype=np.float64)
 

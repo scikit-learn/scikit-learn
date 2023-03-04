@@ -87,10 +87,10 @@ cdef class IntFloatDict:
                 The values of the data points
         """
         cdef int size = self.my_map.size()
-        cdef ITYPE_t[:] keys = np.empty(size, dtype=np.intp)
-        cdef DTYPE_t[:] values = np.empty(size, dtype=np.float64)
+        keys = np.empty(size, dtype=np.intp)
+        values = np.empty(size, dtype=np.float64)
         self._to_arrays(keys, values)
-        return np.asarray(keys), np.asarray(values)
+        return keys, values
 
     cdef _to_arrays(self, ITYPE_t [:] keys, DTYPE_t [:] values):
         # Internal version of to_arrays that takes already-initialized arrays
