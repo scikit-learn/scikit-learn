@@ -1256,7 +1256,7 @@ class PartialDependenceDisplay:
         else:
             pd_results_ = []
             for kind_plot, pd_result in zip(kind, self.pd_results):
-                current_results = {"pdp_values": pd_result["pdp_values"]}
+                current_results = {"grid_values": pd_result["grid_values"]}
 
                 if kind_plot in ("individual", "both"):
                     preds = pd_result.individual
@@ -1274,7 +1274,7 @@ class PartialDependenceDisplay:
             # get global min and max average predictions of PD grouped by plot type
             pdp_lim = {}
             for kind_plot, pdp in zip(kind, pd_results_):
-                values = pdp["pdp_values"]
+                values = pdp["grid_values"]
                 preds = pdp.average if kind_plot == "average" else pdp.individual
                 min_pd = preds[self.target_idx].min()
                 max_pd = preds[self.target_idx].max()
@@ -1402,7 +1402,7 @@ class PartialDependenceDisplay:
         ):
             avg_preds = None
             preds = None
-            feature_values = pd_result["pdp_values"]
+            feature_values = pd_result["grid_values"]
             if kind_plot == "individual":
                 preds = pd_result.individual
             elif kind_plot == "average":
