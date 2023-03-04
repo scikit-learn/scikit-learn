@@ -127,6 +127,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.dcg_score",
     "sklearn.metrics.det_curve",
     "sklearn.metrics.f1_score",
+    "sklearn.metrics.get_scorer",
     "sklearn.metrics.hamming_loss",
     "sklearn.metrics.jaccard_score",
     "sklearn.metrics.label_ranking_loss",
@@ -151,7 +152,6 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.model_selection.train_test_split",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",
-    "sklearn.metrics.get_scorer",
 ]
 
 

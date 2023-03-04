@@ -405,7 +405,7 @@ class _ThresholdScorer(_BaseScorer):
 
 @validate_params(
     {
-        "scoring": [str, callable],
+        "scoring": [str, callable, None],
     }
 )
 def get_scorer(scoring):
