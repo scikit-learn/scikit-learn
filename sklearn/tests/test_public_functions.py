@@ -115,6 +115,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_extraction.image.reconstruct_from_patches_2d",
     "sklearn.feature_selection.chi2",
     "sklearn.feature_selection.f_classif",
+    "sklearn.feature_selection.f_regression",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
     "sklearn.metrics.average_precision_score",
@@ -148,7 +149,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.model_selection.train_test_split",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",
-    "sklearn.feature_selection.f_regression",
+    
 ]
 
 
