@@ -191,18 +191,18 @@ class BisectingKMeans(_BaseKMeans):
     --------
     >>> from sklearn.cluster import BisectingKMeans
     >>> import numpy as np
-    >>> X = np.array([[1, 2], [1, 4], [1, 0],
-    ...               [10, 2], [10, 4], [10, 0],
-    ...               [10, 6], [10, 8], [10, 10]])
+    >>> X = np.array([[1, 1], [10, 1], [3, 1],
+    ...               [10, 0], [2, 1], [10, 2],
+    ...               [10, 8], [10, 9], [10, 10]])
     >>> bisect_means = BisectingKMeans(n_clusters=3, random_state=0).fit(X)
     >>> bisect_means.labels_
-    array([2, 2, 2, 0, 0, 0, 1, 1, 1], dtype=int32)
+    array([0, 1, 0, 1, 0, 1, 2, 2, 2], dtype=int32)
     >>> bisect_means.predict([[0, 0], [12, 3]])
-    array([2, 0], dtype=int32)
+    array([0, 2], dtype=int32)
     >>> bisect_means.cluster_centers_
-    array([[10.,  2.],
-           [10.,  8.],
-           [ 1., 2.]])
+    array([[ 2., 1.],
+           [10., 1.],
+           [10., 9.]])
     """
 
     _parameter_constraints: dict = {
