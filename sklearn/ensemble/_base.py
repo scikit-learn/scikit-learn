@@ -161,16 +161,16 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         if self.estimator is not None:
-            self._estimator = self.estimator
+            self.estimator_ = self.estimator
         elif self.base_estimator not in [None, "deprecated"]:
             warnings.warn(
                 "`base_estimator` was renamed to `estimator` in version 1.2 and "
                 "will be removed in 1.4.",
                 FutureWarning,
             )
-            self._estimator = self.base_estimator
+            self.estimator_ = self.base_estimator
         else:
-            self._estimator = default
+            self.estimator_ = default
 
     # TODO(1.4): remove
     # mypy error: Decorated property not supported
@@ -181,13 +181,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     @property
     def base_estimator_(self):
         """Estimator used to grow the ensemble."""
-        return self._estimator
-
-    # TODO(1.4): remove
-    @property
-    def estimator_(self):
-        """Estimator used to grow the ensemble."""
-        return self._estimator
+        return self.estimator_
 
     def _make_estimator(self, append=True, random_state=None):
         """Make and configure a copy of the `estimator_` attribute.

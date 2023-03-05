@@ -533,7 +533,7 @@ general only be determined at runtime.
 The current set of estimator tags are:
 
 allow_nan (default=False)
-    whether the estimator supports data with missing values encoded as np.NaN
+    whether the estimator supports data with missing values encoded as np.nan
 
 binary_only (default=False)
     whether estimator supports binary classification but lacks multi-class

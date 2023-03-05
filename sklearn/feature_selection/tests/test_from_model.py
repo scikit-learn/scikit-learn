@@ -532,8 +532,8 @@ def test_fit_accepts_nan_inf():
     model = SelectFromModel(estimator=clf)
 
     nan_data = data.copy()
-    nan_data[0] = np.NaN
-    nan_data[1] = np.Inf
+    nan_data[0] = np.nan
+    nan_data[1] = np.inf
 
     model.fit(data, y)
 
@@ -546,8 +546,8 @@ def test_transform_accepts_nan_inf():
     model = SelectFromModel(estimator=clf)
     model.fit(nan_data, y)
 
-    nan_data[0] = np.NaN
-    nan_data[1] = np.Inf
+    nan_data[0] = np.nan
+    nan_data[1] = np.inf
 
     model.transform(nan_data)
 

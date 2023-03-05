@@ -153,11 +153,35 @@ Changelog
   inconsistent with the sckit-learn verion the estimator was pickled with.
   :pr:`25297` by `Thomas Fan`_.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |API| :class:`feature_extraction.image.PatchExtractor` now follows the
+  transformer API of scikit-learn. This class is defined as a stateless transformer
+  meaning that it is note required to call `fit` before calling `transform`.
+  Parameter validation only happens at `fit` time.
+  :pr:`24230` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.impute`
 .....................
 
 - |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
   :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |API| :func:`inspection.partial_dependence` returns a :class:`utils.Bunch` with
+  new key: `grid_values`. The `values` key is deprecated in favor of `grid_values`
+  and the `values` key will be removed in 1.5.
+  :pr:`21809` and :pr:`25732` by `Thomas Fan`_.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Enhancement| :class:`SGDClassifier`, :class:`SGDRegressor` and
+  :class:`SGDOneClassSVM` now preserve dtype for `numpy.float32`.
+  :pr:`25587` by :user:`Omar Salman <OmarManzoor>`
 
 :mod:`sklearn.metrics`
 ......................
