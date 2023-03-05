@@ -25,7 +25,7 @@ cdef floating _euclidean_dense_dense(
         const floating* b,  # IN
         int n_features,
         bint squared
-) nogil:
+) noexcept nogil:
     """Euclidean distance between a dense and b dense"""
     cdef:
         int i
@@ -62,7 +62,7 @@ cdef floating _euclidean_sparse_dense(
         const floating[::1] b,       # IN
         floating b_squared_norm,
         bint squared
-) nogil:
+) noexcept nogil:
     """Euclidean distance between a sparse and b dense"""
     cdef:
         int nnz = a_indices.shape[0]

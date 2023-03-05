@@ -974,6 +974,30 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         """
         return self._transform(X)
 
+    def fit_transform(self, X, y, sample_weight=None):
+        """Fit the estimators and return the predictions for X for each estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if all underlying estimators
+            support sample weights.
+
+        Returns
+        -------
+        y_preds : ndarray of shape (n_samples, n_estimators)
+            Prediction outputs for each estimator.
+        """
+        return super().fit_transform(X, y, sample_weight=sample_weight)
+
     def _sk_visual_block_(self):
         # If final_estimator's default changes then this should be
         # updated.
