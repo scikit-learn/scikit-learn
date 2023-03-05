@@ -201,8 +201,8 @@ class BisectingKMeans(_BaseKMeans):
     array([0, 2], dtype=int32)
     >>> bisect_means.cluster_centers_
     array([[ 2., 1.],
-           [10., 1.],
-           [10., 9.]])
+           [10., 9.],
+           [10., 1.]])
     """
 
     _parameter_constraints: dict = {
