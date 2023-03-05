@@ -107,11 +107,14 @@ Changelog
 
 - |API| The `sample_weight` parameter in `predict` for
   :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
-  is now deprecated and will be removed in v1.5.
+  is now deprecated and will be removed in v1.5. 
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
-- |Feature| The `sample_weight` parameter now will be used to initialize centroids
-  in :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans` and :class:`cluster.MiniBatchKMeans`
-  if `init` is set to "random".
+
+- |Feature| The `sample_weight` parameter now will be used in centroids
+  initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
+  and :class:`cluster.MiniBatchKMeans` if `init` parameter is set to "random".
+  This change will break backward compatibility, since numbers generated
+  from same random seeds will be different.
   :pr:`25752` by :user:`Gleb Levitski <glevv>`.
 
 :mod:`sklearn.decomposition`
