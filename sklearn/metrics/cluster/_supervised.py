@@ -953,7 +953,6 @@ def adjusted_mutual_info_score(
         return 1.0
 
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
     # Calculate the expected value for the mutual information

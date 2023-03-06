@@ -222,7 +222,7 @@ class TweedieDistribution(ExponentialDispersionModel):
 
         if power <= 0:
             # Extreme Stable or Normal distribution
-            self._lower_bound = DistributionBoundary(-np.Inf, inclusive=False)
+            self._lower_bound = DistributionBoundary(-np.inf, inclusive=False)
         elif 0 < power < 1:
             raise ValueError(
                 "Tweedie distribution is only defined for power<=0 and power>=1."
