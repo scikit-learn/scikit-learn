@@ -129,6 +129,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.utils._weight_vector",
     "sklearn.utils.arrayfuncs",
     "sklearn.utils.murmurhash",
+    "sklearn.utils.sparsefuncs_fast",
 )
 
 
