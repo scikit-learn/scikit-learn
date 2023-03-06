@@ -1,4 +1,3 @@
-import types
 import warnings
 import pickle
 import re
@@ -130,6 +129,7 @@ def _yield_checks(estimator):
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
     yield check_estimators_pickle
+    yield partial(check_estimators_pickle, readonly_memmap=True)
 
     yield check_estimator_get_tags_default_keys
 
@@ -1871,7 +1871,7 @@ def check_nonsquare_error(name, estimator_orig):
 
 
 @ignore_warnings
-def check_estimators_pickle(name, estimator_orig):
+def check_estimators_pickle(name, estimator_orig, readonly_memmap=False):
     """Test that we can pickle all estimators."""
     check_methods = ["predict", "transform", "decision_function", "predict_proba"]
 
@@ -1900,16 +1900,19 @@ def check_estimators_pickle(name, estimator_orig):
     set_random_state(estimator)
     estimator.fit(X, y)
 
-    # pickle and unpickle!
-    pickled_estimator = pickle.dumps(estimator)
-    module_name = estimator.__module__
-    if module_name.startswith("sklearn.") and not (
-        "test_" in module_name or module_name.endswith("_testing")
-    ):
-        # strict check for sklearn estimators that are not implemented in test
-        # modules.
-        assert b"version" in pickled_estimator
-    unpickled_estimator = pickle.loads(pickled_estimator)
+    if readonly_memmap:
+        unpickled_estimator = create_memmap_backed_data(estimator)
+    else:
+        # pickle and unpickle!
+        pickled_estimator = pickle.dumps(estimator)
+        module_name = estimator.__module__
+        if module_name.startswith("sklearn.") and not (
+            "test_" in module_name or module_name.endswith("_testing")
+        ):
+            # strict check for sklearn estimators that are not implemented in test
+            # modules.
+            assert b"version" in pickled_estimator
+        unpickled_estimator = pickle.loads(pickled_estimator)
 
     result = dict()
     for method in check_methods:
@@ -3297,18 +3300,25 @@ def check_parameters_default_constructible(name, Estimator):
                 tuple,
                 type(None),
                 type,
-                types.FunctionType,
-                joblib.Memory,
             }
             # Any numpy numeric such as np.int32.
             allowed_types.update(np.core.numerictypes.allTypes.values())
-            assert type(init_param.default) in allowed_types, (
+
+            allowed_value = (
+                type(init_param.default) in allowed_types
+                or
+                # Although callables are mutable, we accept them as argument
+                # default value and trust that neither the implementation of
+                # the callable nor of the estimator changes the state of the
+                # callable.
+                callable(init_param.default)
+            )
+
+            assert allowed_value, (
                 f"Parameter '{init_param.name}' of estimator "
                 f"'{Estimator.__name__}' is of type "
-                f"{type(init_param.default).__name__} which is not "
-                "allowed. All init parameters have to be immutable to "
-                "make cloning possible. Therefore we restrict the set of "
-                "legal types to "
+                f"{type(init_param.default).__name__} which is not allowed. "
+                f"'{init_param.name}' must be a callable or must be of type "
                 f"{set(type.__name__ for type in allowed_types)}."
             )
             if init_param.name not in params.keys():
