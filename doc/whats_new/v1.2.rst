@@ -86,6 +86,9 @@ Changelog
   non-finite validation with the Array API specification. :pr:`25619` by
   `Thomas Fan`_.
 
+- |Fix| :func:`utils.multiclass.type_of_target` can identify pandas
+  nullable data types as classification targets. :pr:`25638` by `Thomas Fan`_.
+
 .. _changes_1_2_1:
 
 Version 1.2.1
