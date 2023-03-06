@@ -85,8 +85,8 @@ Tips to ease development
          # This generates a HTML report (`source.html`) for `source.c`.
          cythonX --annotate source.pyx
 
-Tips for performances
-^^^^^^^^^^^^^^^^^^^^^
+Tips for performance
+^^^^^^^^^^^^^^^^^^^^
 
 * Understand the GIL in context for CPython (which problems it solves, what are its limitations) and get a good
   understanding of when Cython will be mapped to C code free of interactions with CPython, when it will not, and when
@@ -109,43 +109,6 @@ Tips for performances
 * In doubt, read the generated C or C++ code if you can: "The fewer C instructions and indirections for a line of
   Cython code, the better" is a good rule of thumb.
 
-Cython Internals
-----------------
-
-Concrete method dispatch implementation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-* In most cases, concrete method dispatch is performed **at runtime using virtual tables**
-  (i.e. static C-array of pointers to a given types of function, used at runtime to known which
-  function to call from an instance). This is costly because there is a double indirection.
-
-* In some cases, concrete method dispatch is performed **statically** (a function is called
-  directly by a pointer dereference). This is less costly, especially if there are rooms
-  for this function to be inline.
-
-Known Limitations
-^^^^^^^^^^^^^^^^^
-
-* No template for types exist in Cython, alternatives are:
-
-  * using fused-types
-  * using Tempita, a small preprocessing language to expand Cython source
-
-* Multiple inheritance is not possible for extension types
-
-* No concept similar to interfaces or traits exist
-
-* Currently it is impossible to inherit and override a method which has a fused type in its signature
-
-* No type covariance or type contravariance exist
-
-* Structs cannot be created using constructor syntax with `nogil` `issue and workaround <https://github.com/cython/cython/issues/1642>`_
-
-Performances improvements will come with `Cython 3.0 which has been released soon in beta <https://github.com/cython/cython/issues/4022#issuecomment-1445210880>`_
-
-Basics
-^^^^^^
-
 * Understand that ``nogil`` declarations are just hints: when declaring the ``cdef`` functions as nogil,
   means that they can be called without holding the GIL, but it does not release the GIL when entering them.
   You have to do that yourself either by passing ``nogil=True`` to ``cython.parallel.prange`` explicitly,
@@ -164,3 +127,25 @@ Basics
         return 0
 
 This item is based on `this comment from Stéfan's Benhel <https://github.com/cython/cython/issues/2798#issuecomment-459971828>`_
+
+
+Using OpenMP
+^^^^^^^^^^^^
+
+Since scikit-learn can be built without OpenMP, it's necessary to protect each
+direct call to OpenMP.
+
+The `_openmp_helpers` module, available in
+`sklearn/utils/_openmp_helpers.pyx <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_openmp_helpers.pyx>`_
+provides protected versions of the OpenMP routines. To use OpenMP routines, they
+must be ``cimported`` from this module and not from the OpenMP library directly::
+
+.. code-block:: cython
+
+   from sklearn.utils._openmp_helpers cimport omp_get_max_threads
+   max_threads = omp_get_max_threads()
+
+.. note::
+
+   The parallel loop, `prange`, is already protected by cython and can be used directly
+   from `cython.parallel`.

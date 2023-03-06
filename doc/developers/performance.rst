@@ -313,8 +313,8 @@ For more details, see the docstrings of the magics, using ``%memit?`` and
 ``%mprun?``.
 
 
-Performance tips for the Cython developer
-=========================================
+Using Cython
+============
 
 If profiling of the Python code reveals that the Python interpreter
 overhead is larger by one order of magnitude or more than the cost of the
@@ -325,39 +325,8 @@ standalone function in a ``.pyx`` file, add static type declarations and
 then use Cython to generate a C program suitable to be compiled as a
 Python extension module.
 
-The official documentation available at http://docs.cython.org/ contains a
-tutorial and reference guide for developing such a module. For more information
-see :ref:`cython`.
-
-In the following we will just highlight a couple of tricks that we found
-important in practice on the existing cython codebase in the scikit-learn
-project.
-
-TODO: html report, type declarations, bound checks, division by zero checks,
-memory alignment, direct blas calls...
-
-- https://www.youtube.com/watch?v=gMvkiQ-gOW8
-- https://conference.scipy.org/proceedings/SciPy2009/paper_1/
-- https://conference.scipy.org/proceedings/SciPy2009/paper_2/
-
-Using OpenMP
-------------
-
-Since scikit-learn can be built without OpenMP, it's necessary to protect each
-direct call to OpenMP.
-
-The `_openmp_helpers` module, available in
-`sklearn/utils/_openmp_helpers.pyx <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_openmp_helpers.pyx>`_
-provides protected versions of the OpenMP routines. To use OpenMP routines, they
-must be cimported from this module and not from the OpenMP library directly::
-
-  from sklearn.utils._openmp_helpers cimport omp_get_max_threads
-  max_threads = omp_get_max_threads()
-
-.. note::
-
-   The parallel loop, `prange`, is already protected by cython and can be used directly
-   from `cython.parallel`.
+The `Cython's documentation <http://docs.cython.org/>`_ contains a tutorial and
+reference guide for developing such a module. For more information see :ref:`cython`.
 
 
 .. _profiling-compiled-extension:
