@@ -73,7 +73,7 @@ def test_bayesian_ridge_score_values():
         alpha_2=alpha_2,
         lambda_1=lambda_1,
         lambda_2=lambda_2,
-        n_iter=1,
+        max_iter=1,
         fit_intercept=False,
         compute_score=True,
     )
@@ -292,3 +292,31 @@ def test_dtype_correctness(Estimator):
     coef_32 = model.fit(X.astype(np.float32), y).coef_
     coef_64 = model.fit(X.astype(np.float64), y).coef_
     np.testing.assert_allclose(coef_32, coef_64, rtol=1e-4)
+
+
+def test_bayesian_ridge_n_iter_deprecated():
+    # check the deprecation warning of n_iter
+    # TODO(1.5) remove
+    depr_msg = (
+        "'n_iter' was renamed to 'max_iter' in version 1.3 and will be removed in 1.5"
+    )
+    X, y = diabetes.data, diabetes.target
+    est = BayesianRidge(n_iter=5)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        est.fit(X, y)
+
+
+def test_bayesian_ridge_max_iter_and_n_iter_both_set():
+    # TODO(1.5) remove
+    """Check that a ValueError is raised when both `max_iter` and `n_iter` are set."""
+    err_msg = (
+        "Both `n_iter` and `max_iter` attributes were set. Attribute"
+        " `n_iter` was deprecated in version 1.3 and will be removed in"
+        " 1.5. To avoid this error, only set the `max_iter` attribute."
+    )
+    X, y = diabetes.data, diabetes.target
+    est = BayesianRidge(n_iter=5, max_iter=5)
+
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, y)
