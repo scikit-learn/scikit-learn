@@ -64,7 +64,9 @@ class deprecated:
 
         def wrapped(cls, *args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
-            return new(cls)
+            if new is object.__new__:
+                return object.__new__(cls)
+            return new(cls, *args, **kwargs)
 
         cls.__new__ = wrapped
 

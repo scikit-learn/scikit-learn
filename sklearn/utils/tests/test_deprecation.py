@@ -37,10 +37,19 @@ class MockClass4:
 
 
 class MockClass5(MockClass1):
-    """Inherit from deprecated class but overwrite __init__"""
+    """Inherit from deprecated class but does not call super().__init__."""
 
     def __init__(self, a):
         self.a = a
+
+
+@deprecated("a message")
+class MockClass6:
+    """A deprecated class that overrides __new__."""
+
+    def __new__(cls, *args, **kwargs):
+        assert len(args) > 0
+        return super().__new__(cls)
 
 
 @deprecated()
@@ -57,6 +66,8 @@ def test_deprecated():
         MockClass3()
     with pytest.warns(FutureWarning, match="qwerty"):
         MockClass5(42)
+    with pytest.warns(FutureWarning, match="a message"):
+        MockClass6(42)
     with pytest.warns(FutureWarning, match="deprecated"):
         val = mock_function()
     assert val == 10
