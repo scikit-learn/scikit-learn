@@ -960,10 +960,15 @@ def non_negative_factorization(
 
     W : array-like of shape (n_samples, n_components), default=None
         If init='custom', it is used as initial guess for the solution.
+        If update_H=False, it is initialised as an array of zeros, unless
+        `solver='mu'`, then it is filled with values calculated by
+        `np.sqrt(X.mean() / self._n_components)`.
+        If `None`, uses the initialisation method specified in `init`.
 
     H : array-like of shape (n_components, n_features), default=None
         If init='custom', it is used as initial guess for the solution.
         If update_H=False, it is used as a constant, to solve for W only.
+        If `None`, uses the initialisation method specified in `init`.
 
     n_components : int, default=None
         Number of components, if n_components is not set all features
@@ -1587,10 +1592,15 @@ class NMF(_BaseNMF):
 
         W : array-like of shape (n_samples, n_components)
             If init='custom', it is used as initial guess for the solution.
+            If update_H=False, it is initialised as an array of zeros, unless
+            `solver='mu'`, then it is filled with values calculated by
+            `np.sqrt(X.mean() / self._n_components)`.
+            If `None`, uses the initialisation method specified in `init`.
 
         H : array-like of shape (n_components, n_features)
             If init='custom', it is used as initial guess for the solution.
             If update_H=False, it is used as a constant, to solve for W only.
+            If `None`, uses the initialisation method specified in `init`.
 
         update_H : bool, default=True
             If True, both W and H will be estimated from initial guesses,
