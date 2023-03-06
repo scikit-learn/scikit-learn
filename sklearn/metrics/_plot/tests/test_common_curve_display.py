@@ -48,20 +48,20 @@ def test_display_curve_error_non_binary(pyplot, data, Display):
     [
         (
             "predict_proba",
-            "response method predict_proba is not defined in MyClassifier",
+            "MyClassifier has none of the following attributes: predict_proba.",
         ),
         (
             "decision_function",
-            "response method decision_function is not defined in MyClassifier",
+            "MyClassifier has none of the following attributes: decision_function.",
         ),
         (
             "auto",
-            "response method decision_function or predict_proba is not "
-            "defined in MyClassifier",
+            "MyClassifier has none of the following attributes: predict_proba,"
+            " decision_function.",
         ),
         (
             "bad_method",
-            "response_method must be 'predict_proba', 'decision_function' or 'auto'",
+            "MyClassifier has none of the following attributes: bad_method.",
         ),
     ],
 )
@@ -86,7 +86,7 @@ def test_display_curve_error_no_response(
 
     clf = MyClassifier().fit(X, y)
 
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(AttributeError, match=msg):
         Display.from_estimator(clf, X, y, response_method=response_method)
 
 

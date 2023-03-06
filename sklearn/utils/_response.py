@@ -1,16 +1,13 @@
 import numpy as np
 
-from .multiclass import type_of_target
 from .validation import _check_response_method
 
 
 def _get_response_values(
     estimator,
     X,
-    y_true,
     response_method,
     pos_label=None,
-    target_type=None,
 ):
     """Compute the response values of a classifier or a regressor.
 
@@ -34,9 +31,6 @@ def _get_response_values(
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    y_true : array-like of shape (n_samples,)
-        The true label.
-
     response_method : {"predict_proba", "decision_function", "predict"} or \
             list of such str
         Specifies the response method to use get prediction from an estimator
@@ -52,13 +46,6 @@ def _get_response_values(
         The class considered as the positive class when computing
         the metrics. By default, `estimators.classes_[1]` is
         considered as the positive class.
-
-    target_type : str, default=None
-        The type of the target `y` as returned by
-        :func:`~sklearn.utils.multiclass.type_of_target`. If `None`, the type
-        will be inferred by calling :func:`~sklearn.utils.multiclass.type_of_target`.
-        Providing the type of the target could save time by avoid calling the
-        :func:`~sklearn.utils.multiclass.type_of_target` function.
 
     Returns
     -------
@@ -81,15 +68,15 @@ def _get_response_values(
     from sklearn.base import is_classifier  # noqa
 
     if is_classifier(estimator):
-        if target_type is None:
-            target_type = type_of_target(y_true)
         prediction_method = _check_response_method(estimator, response_method)
         y_pred = prediction_method(X)
         classes = estimator.classes_
 
+        target_type = "binary" if len(classes) <= 2 else "multiclass"
+
         if target_type == "multiclass" and prediction_method.__name__ != "predict":
             raise ValueError(
-                "With multiclass target, the response method should be "
+                "With a multiclass estimator, the response method should be "
                 f"predict, got {prediction_method.__name__} instead."
             )
 

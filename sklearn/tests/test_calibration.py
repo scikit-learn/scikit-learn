@@ -624,7 +624,7 @@ def test_calibration_display_validation(pyplot, iris_data, iris_data_binary):
     with pytest.raises(ValueError, match=msg):
         CalibrationDisplay.from_estimator(reg, X, y)
 
-    clf = LinearSVC().fit(X, y)
+    clf = LinearSVC().fit(X_binary, y_binary)
     msg = "has none of the following attributes: predict_proba."
     with pytest.raises(AttributeError, match=msg):
         CalibrationDisplay.from_estimator(clf, X, y)
@@ -642,7 +642,7 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
     y_prob = clf.predict_proba(X)
 
     if constructor_name == "from_estimator":
-        msg = "The target y is not binary. Got multiclass type of target."
+        msg = "Estimator must be a binary classifier."
         with pytest.raises(ValueError, match=msg):
             CalibrationDisplay.from_estimator(clf, X, y)
     else:

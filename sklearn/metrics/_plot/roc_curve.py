@@ -1,4 +1,4 @@
-from .base import _get_response
+from .base import _get_response_binary
 
 from .. import auc
 from .. import roc_curve
@@ -231,9 +231,9 @@ class RocCurveDisplay:
 
         name = estimator.__class__.__name__ if name is None else name
 
-        y_pred, pos_label = _get_response(
-            X,
+        y_pred, pos_label = _get_response_binary(
             estimator,
+            X,
             response_method=response_method,
             pos_label=pos_label,
         )

@@ -1292,17 +1292,18 @@ class CalibrationDisplay:
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
 
-        target_type = type_of_target(y)
         if not is_classifier(estimator):
             raise ValueError("'estimator' should be a fitted classifier.")
+
+        check_is_fitted(estimator)
+        if len(estimator.classes_) != 2:
+            raise ValueError("Estimator must be a binary classifier.")
 
         y_prob, pos_label = _get_response_values(
             estimator,
             X,
-            y,
             response_method="predict_proba",
             pos_label=pos_label,
-            target_type=target_type,
         )
 
         name = name if name is not None else estimator.__class__.__name__

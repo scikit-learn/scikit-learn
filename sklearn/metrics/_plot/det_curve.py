@@ -1,6 +1,6 @@
 import scipy as sp
 
-from .base import _get_response
+from .base import _get_response_binary
 
 from .. import det_curve
 from .._base import _check_pos_label_consistency
@@ -168,9 +168,9 @@ class DetCurveDisplay:
 
         name = estimator.__class__.__name__ if name is None else name
 
-        y_pred, pos_label = _get_response(
-            X,
+        y_pred, pos_label = _get_response_binary(
             estimator,
+            X,
             response_method,
             pos_label=pos_label,
         )
