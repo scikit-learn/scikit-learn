@@ -95,6 +95,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.manifold._barnes_hut_tsne",
     "sklearn.manifold._utils",
     "sklearn.metrics.cluster._expected_mutual_info_fast",
+    "sklearn.metrics._dist_metrics",
     "sklearn.metrics._pairwise_distances_reduction._datasets_pair",
     "sklearn.metrics._pairwise_distances_reduction._middle_term_computer",
     "sklearn.metrics._pairwise_distances_reduction._base",
@@ -126,6 +127,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.utils._typedefs",
     "sklearn.utils._vector_sentinel",
     "sklearn.utils._weight_vector",
+    "sklearn.utils.arrayfuncs",
     "sklearn.utils.murmurhash",
 )
 
@@ -200,7 +202,7 @@ class build_ext_subclass(build_ext):
                 print(f"Using old NumPy C API (version 1.7) for extension {ext.name}")
 
         if sklearn._OPENMP_SUPPORTED:
-            openmp_flag = get_openmp_flag(self.compiler)
+            openmp_flag = get_openmp_flag()
 
             for e in self.extensions:
                 e.extra_compile_args += openmp_flag
@@ -308,7 +310,7 @@ extension_config = {
     ],
     "linear_model": [
         {"sources": ["_cd_fast.pyx"], "include_np": True},
-        {"sources": ["_sgd_fast.pyx"], "include_np": True},
+        {"sources": ["_sgd_fast.pyx.tp"], "include_np": True},
         {"sources": ["_sag_fast.pyx.tp"], "include_np": True},
     ],
     "manifold": [
@@ -439,7 +441,7 @@ extension_config = {
     "utils": [
         {"sources": ["sparsefuncs_fast.pyx"], "include_np": True},
         {"sources": ["_cython_blas.pyx"]},
-        {"sources": ["arrayfuncs.pyx"], "include_np": True},
+        {"sources": ["arrayfuncs.pyx"]},
         {
             "sources": ["murmurhash.pyx", join("src", "MurmurHash3.cpp")],
             "include_dirs": ["src"],

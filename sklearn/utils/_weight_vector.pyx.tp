@@ -98,9 +98,9 @@ cdef class WeightVector{{name_suffix}}(object):
         """
         cdef int j
         cdef int idx
-        cdef {{c_type}} val
-        cdef {{c_type}} innerprod = 0.0
-        cdef {{c_type}} xsqnorm = 0.0
+        cdef double val
+        cdef double innerprod = 0.0
+        cdef double xsqnorm = 0.0
 
         # the next two lines save a factor of 2!
         cdef {{c_type}} wscale = self.wscale
@@ -137,10 +137,10 @@ cdef class WeightVector{{name_suffix}}(object):
         """
         cdef int j
         cdef int idx
-        cdef {{c_type}} val
-        cdef {{c_type}} mu = 1.0 / num_iter
-        cdef {{c_type}} average_a = self.average_a
-        cdef {{c_type}} wscale = self.wscale
+        cdef double val
+        cdef double mu = 1.0 / num_iter
+        cdef double average_a = self.average_a
+        cdef double wscale = self.wscale
         cdef {{c_type}}* aw_data_ptr = self.aw_data_ptr
 
         for j in range(xnnz):
@@ -174,7 +174,7 @@ cdef class WeightVector{{name_suffix}}(object):
         """
         cdef int j
         cdef int idx
-        cdef {{c_type}} innerprod = 0.0
+        cdef double innerprod = 0.0
         cdef {{c_type}}* w_data_ptr = self.w_data_ptr
         for j in range(xnnz):
             idx = x_ind_ptr[j]

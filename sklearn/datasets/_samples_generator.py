@@ -994,6 +994,14 @@ def make_blobs(
         return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 5, None, closed="left")],
+        "noise": [Interval(Real, 0.0, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+)
 def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None):
     """Generate the "Friedman #1" regression problem.
 
@@ -1044,9 +1052,6 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None
     .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
            pages 123-140, 1996.
     """
-    if n_features < 5:
-        raise ValueError("n_features must be at least five.")
-
     generator = check_random_state(random_state)
 
     X = generator.uniform(size=(n_samples, n_features))
