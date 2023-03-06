@@ -7,8 +7,9 @@ cimport numpy as cnp
 # and exposed by cython in
 # https://github.com/cython/cython/blob/master/Cython/Includes/numpy/__init__.pxd.
 # It will eventually avoid having to always include the numpy headers even when we
-# would only use it for the types. (TODO don't cimport numpy in this extension)
-# 
+# would only use it for the types.
+# TODO: don't cimport numpy in this extension.
+#
 # When used to declare variables that will receive values from numpy arrays, it
 # should match the dtype of the array. For example, to declare a variable that will
 # receive values from a numpy array of dtype np.float64, the type float64_t must be
