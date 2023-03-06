@@ -65,7 +65,7 @@ Contributor Experience Team
 
 The contributor experience team improves the experience of contributors by
 helping with the triage of the issues and pull requests, as well as noticing
-any repeating patters where people might struggle, and to help with improving
+any repeating patterns where people might struggle, and to help with improving
 those aspects of the project.
 
 To this end, they have the required permissions on github to label and close
