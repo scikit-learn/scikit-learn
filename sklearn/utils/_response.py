@@ -69,7 +69,6 @@ def _get_response_values(
 
     if is_classifier(estimator):
         prediction_method = _check_response_method(estimator, response_method)
-        y_pred = prediction_method(X)
         classes = estimator.classes_
 
         target_type = "binary" if len(classes) <= 2 else "multiclass"
@@ -88,6 +87,7 @@ def _get_response_values(
         elif pos_label is None and target_type == "binary":
             pos_label = pos_label if pos_label is not None else classes[-1]
 
+        y_pred = prediction_method(X)
         if prediction_method.__name__ == "predict_proba":
             if target_type == "binary" and y_pred.shape[1] <= 2:
                 if y_pred.shape[1] == 2:
