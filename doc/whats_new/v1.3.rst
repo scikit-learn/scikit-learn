@@ -186,6 +186,13 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Efficiency| The computation of the expected mutual information in
+  :func:`metrics.adjusted_mutual_info_score` is now faster when the number of
+  unique labels is large and its memory usage is reduced in general.
+  :pr:`25713` by :user:`Kshitij Mathur <Kshitij68>`,
+  :user:`Guillaume Lemaitre <glemaitre>`, :user:`Omar Salman <OmarManzoor>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 - |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
   :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
 
