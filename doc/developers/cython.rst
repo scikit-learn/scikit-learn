@@ -46,7 +46,7 @@ Tips to ease development
 
          print(f"{test_val=}")
 
-* scikit-learn codebase is a bit of a zero of (fused) types (re)definitions, and there's `ongoing work to simplify
+* scikit-learn codebase has a lot of non-unified (fused) types (re)definitions. There currently is `ongoing work to simplify
   and unify that across the codebase <https://github.com/scikit-learn/scikit-learn/issues/25572>`_. For now, make sure you understand which concrete types are used ultimately.
 
 * It is helpful to use ``gdb`` to debug. In order to do so, one must use a Python interpreter built with debug support
