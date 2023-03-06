@@ -115,6 +115,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_extraction.image.reconstruct_from_patches_2d",
     "sklearn.feature_selection.chi2",
     "sklearn.feature_selection.f_classif",
+    "sklearn.feature_selection.f_regression",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
     "sklearn.metrics.average_precision_score",
