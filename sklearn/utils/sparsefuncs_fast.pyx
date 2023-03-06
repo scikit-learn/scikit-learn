@@ -116,20 +116,20 @@ def _csr_mean_variance_axis0(
         integral i, col_ind
         cnp.float64_t diff
         # means[j] contains the mean of feature j
-        cnp.float64_t[:] means = np.zeros(n_features)
+        cnp.float64_t[::1] means = np.zeros(n_features)
         # variances[j] contains the variance of feature j
-        cnp.float64_t[:] variances = np.zeros(n_features)
+        cnp.float64_t[::1] variances = np.zeros(n_features)
 
-        cnp.float64_t[:] sum_weights = np.full(
+        cnp.float64_t[::1] sum_weights = np.full(
             fill_value=np.sum(weights, dtype=np.float64), shape=n_features
         )
-        cnp.float64_t[:] sum_weights_nz = np.zeros(shape=n_features)
-        cnp.float64_t[:] correction = np.zeros(shape=n_features)
+        cnp.float64_t[::1] sum_weights_nz = np.zeros(shape=n_features)
+        cnp.float64_t[::1] correction = np.zeros(shape=n_features)
 
-        cnp.uint64_t[:] counts = np.full(
+        cnp.uint64_t[::1] counts = np.full(
             fill_value=weights.shape[0], shape=n_features, dtype=np.uint64
         )
-        cnp.uint64_t[:] counts_nz = np.zeros(shape=n_features, dtype=np.uint64)
+        cnp.uint64_t[::1] counts_nz = np.zeros(shape=n_features, dtype=np.uint64)
 
     for row_ind in range(len(X_indptr) - 1):
         for i in range(X_indptr[row_ind], X_indptr[row_ind + 1]):
@@ -249,20 +249,20 @@ def _csc_mean_variance_axis0(
         unsigned long long feature_idx, col_ind
         cnp.float64_t diff
         # means[j] contains the mean of feature j
-        cnp.float64_t[:] means = np.zeros(n_features)
+        cnp.float64_t[::1] means = np.zeros(n_features)
         # variances[j] contains the variance of feature j
-        cnp.float64_t[:] variances = np.zeros(n_features)
+        cnp.float64_t[::1] variances = np.zeros(n_features)
 
-        cnp.float64_t[:] sum_weights = np.full(
+        cnp.float64_t[::1] sum_weights = np.full(
             fill_value=np.sum(weights, dtype=np.float64), shape=n_features
         )
-        cnp.float64_t[:] sum_weights_nz = np.zeros(shape=n_features)
-        cnp.float64_t[:] correction = np.zeros(shape=n_features)
+        cnp.float64_t[::1] sum_weights_nz = np.zeros(shape=n_features)
+        cnp.float64_t[::1] correction = np.zeros(shape=n_features)
 
-        cnp.uint64_t[:] counts = np.full(
+        cnp.uint64_t[::1] counts = np.full(
             fill_value=weights.shape[0], shape=n_features, dtype=np.uint64
         )
-        cnp.uint64_t[:] counts_nz = np.zeros(shape=n_features, dtype=np.uint64)
+        cnp.uint64_t[::1] counts_nz = np.zeros(shape=n_features, dtype=np.uint64)
 
     for col_ind in range(n_features):
         for i in range(X_indptr[col_ind], X_indptr[col_ind + 1]):
@@ -414,10 +414,10 @@ def _incr_mean_variance_axis0(
         # new = the current increment
         # updated = the aggregated stats
         # when arrays, they are indexed by i per-feature
-        floating[:] new_mean
-        floating[:] new_var
-        floating[:] updated_mean
-        floating[:] updated_var
+        floating[::1] new_mean
+        floating[::1] new_var
+        floating[::1] updated_mean
+        floating[::1] updated_var
 
     if floating is float:
         dtype = np.float32
@@ -430,9 +430,9 @@ def _incr_mean_variance_axis0(
     updated_var = np.zeros_like(new_mean, dtype=dtype)
 
     cdef:
-        floating[:] new_n
-        floating[:] updated_n
-        floating[:] last_over_new_n
+        floating[::1] new_n
+        floating[::1] updated_n
+        floating[::1] last_over_new_n
 
     # Obtain new stats first
     updated_n = np.zeros(shape=n_features, dtype=dtype)
