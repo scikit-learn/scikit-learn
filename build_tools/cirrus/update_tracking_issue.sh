@@ -4,6 +4,7 @@ if [[ "$CIRRUS_CRON" != "nightly" ]]; then
     exit 0
 fi
 
+# TEST_PASSED is either "true" or "false"
 TEST_PASSED="$1"
 
 python -m venv .venv
