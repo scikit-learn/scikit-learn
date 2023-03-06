@@ -417,8 +417,9 @@ def get_scorer(scoring):
 
     Parameters
     ----------
-    scoring : str or callable
+    scoring : str, callable or None
         Scoring method as string. If callable it is returned as is.
+        If None, returns None.
 
     Returns
     -------
