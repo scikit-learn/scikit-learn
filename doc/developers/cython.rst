@@ -65,16 +65,24 @@ Tips to ease development
          make EXTRA_CFLAGS='-DPy_DEBUG' -j<num_cores>
          make install
 
-  * You might find this alias handy:
+  * You might find this alias to compile individual Cython extension handy:
 
     .. code-block::
 
+         # You might want to add this alias to your shell script config.
          alias cythonX="cython -X language_level=3 -X boundscheck=False -X wraparound=False -X initializedcheck=False -X nonecheck=False -X cdivision=True"
 
-  * which you can use with:
+         # This generates `source.c` as as if you had recompiled scikit-learn entirely.
+         cythonX --annotate source.pyx
+
+  * Using the ``--annotate`` option with this flag allows generating a HTML report of code annotation.
+    This report reports interactions with the CPython interpreter on a line-by-line basis.
+    Interactions with the CPython interpreter must be avoided as much as possible.
+    For more information, please refer to `this section of Cython's tutorial <https://cython.readthedocs.io/en/latest/src/tutorial/cython_tutorial.html#primes>`_
 
     .. code-block::
 
+         # This generates a HTML report (`source.html`) for `source.c`.
          cythonX --annotate source.pyx
 
 Tips for performances
