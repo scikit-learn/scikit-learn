@@ -610,10 +610,10 @@ def _check_multimetric_scoring(estimator, scoring):
 
 @validate_params(
     {
-        "score_func":[callable],
-        "greater_is_better":["boolean"],
-        "needs_proba":["boolean"],
-        "needs_threshold":["boolean"],
+        "score_func": [callable],
+        "greater_is_better": ["boolean"],
+        "needs_proba": ["boolean"],
+        "needs_threshold": ["boolean"],
     }
 )
 def make_scorer(
@@ -807,9 +807,11 @@ class _DeprecatedScorers(dict):
 
     def __getitem__(self, item):
         warnings.warn(
-            "sklearn.metrics.SCORERS is deprecated and will be removed in v1.3. "
-            "Please use sklearn.metrics.get_scorer_names to get a list of available "
-            "scorers and sklearn.metrics.get_metric to get scorer.",
+            (
+                "sklearn.metrics.SCORERS is deprecated and will be removed in v1.3."
+                " Please use sklearn.metrics.get_scorer_names to get a list of"
+                " available scorers and sklearn.metrics.get_metric to get scorer."
+            ),
             FutureWarning,
         )
         return super().__getitem__(item)
