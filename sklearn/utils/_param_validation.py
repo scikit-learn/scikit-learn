@@ -433,9 +433,9 @@ class Interval(_Constraint):
                 )
         else:
             if self.left is not None and not isinstance(self.left, Real):
-                raise TypeError(f"Expecting left to be a real number.")
+                raise TypeError("Expecting left to be a real number.")
             if self.right is not None and not isinstance(self.right, Real):
-                raise TypeError(f"Expecting right to be a real number.")
+                raise TypeError("Expecting right to be a real number.")
 
         if self.right is not None and self.left is not None and self.right <= self.left:
             raise ValueError(
