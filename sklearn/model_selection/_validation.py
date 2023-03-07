@@ -215,7 +215,7 @@ def cross_validate(
                 This is available only if ``return_estimator`` parameter
                 is set to ``True``.
             ``indices``
-                The train/test indices for each cv split. A Python dictionary
+                The train/test indices for each cv split. A dictionary
                 is returned where the keys are either `"train"` or `"test"`
                 and the associated values are a list of NumPy arrays with the
                 indices.
@@ -313,7 +313,7 @@ def cross_validate(
         ret["estimator"] = results["estimator"]
 
     if return_indices:
-        ret["indices"] = defaultdict(list)
+        ret["indices"] = {}
         ret["indices"]["train"], ret["indices"]["test"] = zip(*results["indices"])
 
     test_scores_dict = _normalize_score_results(results["test_scores"])
