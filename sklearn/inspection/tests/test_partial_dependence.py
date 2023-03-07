@@ -871,18 +871,13 @@ def test_mixed_type_categorical():
     """Check that we raise a proper error when a column has mixed types and
     the sorting of `np.unique` will fail."""
     X = np.array(["A", "B", "C", np.nan], dtype=object).reshape(-1, 1)
+    y = np.array([0, 1, 0, 1])
 
-    percentiles, is_categorical, grid_resolution = (
-        (0.05, 0.95),
-        [
-            True,
-        ],
-        30,
-    )
-    with pytest.raises(ValueError, match="The column #0 contains mixed data type"):
-        _grid_from_X(
-            X,
-            percentiles=percentiles,
-            is_categorical=is_categorical,
-            grid_resolution=grid_resolution,
-        )
+    from sklearn.preprocessing import OrdinalEncoder
+
+    clf = make_pipeline(
+        OrdinalEncoder(encoded_missing_value=-1),
+        LogisticRegression(),
+    ).fit(X, y)
+    with pytest.raises(ValueError, match="The column #0 contains mixed data types"):
+        partial_dependence(clf, X, features=[0])
