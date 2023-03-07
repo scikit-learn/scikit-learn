@@ -79,6 +79,15 @@ Changelog
   `encoded_missing_value` or `unknown_value` set to a categories' cardinality
   when there is missing values in the training data. :pr:`25704` by `Thomas Fan`_.
 
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed a regression in :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier` and
+  :class:`tree.ExtraTreeRegressor` where an error was no longer raised in version
+  1.2 when `min_sample_split=1`.
+  :pr:`25744` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.utils`
 ....................
 
@@ -146,10 +155,14 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Fix| Fix an inconsistency in :func:`datasets.fetch_openml` between liac-arff
+- |Fix| Fixes an inconsistency in :func:`datasets.fetch_openml` between liac-arff
   and pandas parser when a leading space is introduced after the delimiter.
   The ARFF specs requires to ignore the leading space.
   :pr:`25312` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fixes a bug in :func:`datasets.fetch_openml` when using `parser="pandas"`
+  where single quote and backslash escape characters were not properly handled.
+  :pr:`25511` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.decomposition`
 ............................
