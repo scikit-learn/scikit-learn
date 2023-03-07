@@ -122,6 +122,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.auc",
     "sklearn.metrics.average_precision_score",
     "sklearn.metrics.balanced_accuracy_score",
+    "sklearn.metrics.brier_score_loss",
     "sklearn.metrics.cluster.contingency_matrix",
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
