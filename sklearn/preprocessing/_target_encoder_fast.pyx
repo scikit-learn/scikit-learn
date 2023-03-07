@@ -1,7 +1,7 @@
 cimport cython
 from libc.math cimport isnan
 from libc.string cimport memset
-from libc.stdlib cimport malloc, free
+from libcpp.vector cimport vector
 
 cimport numpy as cnp
 import numpy as np
@@ -45,11 +45,12 @@ def _fit_encoding_fast(
         list encodings = []
         double[::1] current_encoding
         # Gives access to encodings without gil
-        double** encoding_ptrs = <double**>malloc(sizeof(double*) * n_features)
+        vector[double*] encoding_vec
+    encoding_vec.resize(n_features)
 
     for feat_idx in range(n_features):
         current_encoding = np.empty(shape=n_categories[feat_idx], dtype=np.float64)
-        encoding_ptrs[feat_idx] = &current_encoding[0]
+        encoding_vec[feat_idx] = &current_encoding[0]
         encodings.append(np.asarray(current_encoding))
 
     with nogil:
@@ -69,9 +70,7 @@ def _fit_encoding_fast(
                 counts[X_int_tmp] += 1.0
 
             for cat_idx in range(n_cats):
-                encoding_ptrs[feat_idx][cat_idx] = sums[cat_idx] / counts[cat_idx]
-
-    free(encoding_ptrs)
+                encoding_vec[feat_idx][cat_idx] = sums[cat_idx] / counts[cat_idx]
 
     return encodings
 
@@ -104,11 +103,13 @@ def _fit_encoding_fast_auto_smooth(
         list encodings = []
         double[::1] current_encoding
         # Gives access to encodings without gil
-        double** encoding_ptrs = <double**>malloc(sizeof(double*) * n_features)
+        vector[double*] encoding_vec
+
+    encoding_vec.resize(n_features)
 
     for feat_idx in range(n_features):
         current_encoding = np.empty(shape=n_categories[feat_idx], dtype=np.float64)
-        encoding_ptrs[feat_idx] = &current_encoding[0]
+        encoding_vec[feat_idx] = &current_encoding[0]
         encodings.append(np.asarray(current_encoding))
 
     # TODO: parallelize this with OpenMP prange. When n_features >= n_threads, it's
@@ -156,11 +157,10 @@ def _fit_encoding_fast_auto_smooth(
                     # A nan can happen when:
                     # 1. counts[cat_idx] == 0
                     # 2. y_variance == 0 and sum_of_squared_diffs[cat_idx] == 0
-                    encoding_ptrs[feat_idx][cat_idx] = y_mean
+                    encoding_vec[feat_idx][cat_idx] = y_mean
                 else:
-                    encoding_ptrs[feat_idx][cat_idx] = (
+                    encoding_vec[feat_idx][cat_idx] = (
                         lambda_ * means[cat_idx] + (1 - lambda_) * y_mean
                     )
 
-    free(encoding_ptrs)
     return encodings
