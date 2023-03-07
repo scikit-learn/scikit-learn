@@ -608,6 +608,14 @@ def _check_multimetric_scoring(estimator, scoring):
     return scorers
 
 
+@validate_params(
+    {
+        "score_func": [callable],
+        "greater_is_better": ["boolean"],
+        "needs_proba": ["boolean"],
+        "needs_threshold": ["boolean"],
+    }
+)
 def make_scorer(
     score_func,
     *,

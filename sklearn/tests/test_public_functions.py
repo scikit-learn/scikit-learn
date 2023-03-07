@@ -136,6 +136,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.jaccard_score",
     "sklearn.metrics.label_ranking_loss",
     "sklearn.metrics.log_loss",
+    "sklearn.metrics.make_scorer",
     "sklearn.metrics.matthews_corrcoef",
     "sklearn.metrics.max_error",
     "sklearn.metrics.mean_absolute_error",
