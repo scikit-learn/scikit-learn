@@ -895,6 +895,10 @@ encode categories in :meth:`~TargetEncoder.transform`.
 :meth:`~TargetEncoder.fit`'s one encoding is the same as the final encoding
 learned in :meth:`~TargetEncoder.fit_transform`.
 
+.. note::
+  :class:`TargetEncoder` considers missing values, such as `np.nan` or `None`,
+  as another category and encodes them like any other category.
+
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`

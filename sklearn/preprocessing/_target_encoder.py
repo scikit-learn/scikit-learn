@@ -19,6 +19,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     the global target mean with the target mean conditioned on the value of the
     category. [MIC]_
 
+    :class:`TargetEncoder` considers missing values, such as `np.nan` or `None`,
+    as another category and encodes them like any other category.
+
     Read more in the :ref:`User Guide <target_encoder>`.
 
     .. note::
