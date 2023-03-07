@@ -69,8 +69,16 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         :meth:`fit_transform`. For classification targets, `StratifiedKFold` is used
         and for continuous targets, `KFold` is used.
 
-        Refer :ref:`User Guide <cross_validation>` for the various cross-validation
-        strategies that can be used here.
+    shuffle : bool, default=True
+        Whether to shuffle the data in :meth:`fit_transform` before splitting into
+        batches. Note that the samples within each split will not be shuffled.
+
+    random_state : int, RandomState instance or None, default=None
+        When `shuffle` is True, `random_state` affects the ordering of the
+        indices, which controls the randomness of each fold. Otherwise, this
+        parameter has no effect.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -144,13 +152,25 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "target_type": [StrOptions({"auto", "continuous", "binary"})],
         "smooth": [StrOptions({"auto"}), Interval(Real, 0, None, closed="left")],
         "cv": [Interval(Integral, 2, None, closed="left")],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
     }
 
-    def __init__(self, categories="auto", target_type="auto", smooth="auto", cv=5):
+    def __init__(
+        self,
+        categories="auto",
+        target_type="auto",
+        smooth="auto",
+        cv=5,
+        shuffle=True,
+        random_state=None,
+    ):
         self.categories = categories
         self.smooth = smooth
         self.target_type = target_type
         self.cv = cv
+        self.shuffle = shuffle
+        self.random_state = random_state
 
     def fit(self, X, y):
         """Fit the :class:`TargetEncoder` to X and y.
@@ -202,9 +222,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         # overlapping validation folds, otherwise the fit_transform output will
         # not be well-specified.
         if self.target_type_ == "continuous":
-            cv = KFold(self.cv)
+            cv = KFold(self.cv, shuffle=self.shuffle, random_state=self.random_state)
         else:
-            cv = StratifiedKFold(self.cv)
+            cv = StratifiedKFold(
+                self.cv, shuffle=self.shuffle, random_state=self.random_state
+            )
 
         X_out = np.empty_like(X_ordinal, dtype=np.float64)
         X_unknown_mask = ~X_known_mask

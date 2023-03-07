@@ -6,6 +6,9 @@ import pytest
 from sklearn.preprocessing import TargetEncoder, LabelEncoder
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import ShuffleSplit
+from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import RandomForestRegressor
 
 
 def _encode_target(X_ordinal, y_int, n_categories, smooth):
@@ -68,11 +71,11 @@ def test_encoding(categories, unknown_value, seed, smooth, target_type):
         y_int = rng.randint(low=0, high=2, size=n_samples)
         target_names = np.array(["cat", "dog"], dtype=object)
         y_input = target_names[y_int]
-        cv = StratifiedKFold(n_splits=3)
+        cv = StratifiedKFold(n_splits=3, random_state=0, shuffle=True)
     else:  # target_type == continuous
         y_int = rng.uniform(low=-10, high=20, size=n_samples)
         y_input = y_int
-        cv = KFold(n_splits=3)
+        cv = KFold(n_splits=3, random_state=0, shuffle=True)
 
     shuffled_idx = rng.permutation(n_samples)
     X_ordinal = X_ordinal[shuffled_idx]
@@ -88,7 +91,9 @@ def test_encoding(categories, unknown_value, seed, smooth, target_type):
         cur_encodings = _encode_target(X_, y_, n_categories, smooth)
         expected_X_fit_transform[test_idx, 0] = cur_encodings[X_ordinal[test_idx, 0]]
 
-    target_encoder = TargetEncoder(smooth=smooth, categories=categories, cv=3)
+    target_encoder = TargetEncoder(
+        smooth=smooth, categories=categories, cv=3, random_state=0
+    )
 
     X_fit_transform = target_encoder.fit_transform(X_input, y_input)
 
@@ -136,9 +141,9 @@ def test_encoding(categories, unknown_value, seed, smooth, target_type):
 @pytest.mark.parametrize("smooth", [4.0, "auto"])
 def test_custom_categories(X, categories, smooth):
     """Custom categories with unknown categories that are not in training data."""
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(0)
     y = rng.uniform(low=-10, high=20, size=X.shape[0])
-    enc = TargetEncoder(categories=categories, smooth=smooth).fit(X, y)
+    enc = TargetEncoder(categories=categories, smooth=smooth, random_state=0).fit(X, y)
 
     # The last element is unknown and encoded as the mean
     y_mean = y.mean()
@@ -195,8 +200,10 @@ def test_feature_names_out_set_output():
     X_df = pd.DataFrame({"A": ["a", "b"] * 10, "B": [1, 2] * 10})
     y = [1, 2] * 10
 
-    enc_default = TargetEncoder(cv=2, smooth=3.0).set_output(transform="default")
-    enc_pandas = TargetEncoder(cv=2, smooth=3.0).set_output(transform="pandas")
+    enc_default = TargetEncoder(cv=2, smooth=3.0, random_state=0)
+    enc_default.set_output(transform="default")
+    enc_pandas = TargetEncoder(cv=2, smooth=3.0, random_state=0)
+    enc_pandas.set_output(transform="pandas")
 
     X_default = enc_default.fit_transform(X_df, y)
     X_pandas = enc_pandas.fit_transform(X_df, y)
@@ -217,15 +224,15 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
     if target_type == "binary-str":
         y_input = np.array(["a", "b", "a", "a", "b", "b", "a", "b"])
         y_int = LabelEncoder().fit_transform(y_input)
-        cv = StratifiedKFold(2)
+        cv = StratifiedKFold(2, random_state=0, shuffle=True)
     elif target_type == "binary-ints":
         y_input = np.array([3, 4, 3, 3, 3, 4, 4, 4])
         y_int = LabelEncoder().fit_transform(y_input)
-        cv = StratifiedKFold(2)
+        cv = StratifiedKFold(2, random_state=0, shuffle=True)
     else:
         y_input = np.array([3.0, 5.1, 2.4, 3.5, 4.1, 5.5, 10.3, 7.3], dtype=np.float32)
         y_int = y_input
-        cv = KFold(2)
+        cv = KFold(2, random_state=0, shuffle=True)
     y_mean = np.mean(y_int)
     categories = [[0, 1, 2], [0, 1]]
 
@@ -277,7 +284,7 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
         dtype=np.float64,
     )
 
-    enc = TargetEncoder(smooth=smooth, cv=2)
+    enc = TargetEncoder(smooth=smooth, cv=2, random_state=0)
     X_fit_transform = enc.fit_transform(X_input, y_input)
     assert_allclose(X_fit_transform, expected_X_fit_transform)
 
@@ -304,7 +311,7 @@ def test_constant_target_and_feature(y, y_mean, smooth):
     X = np.array([[1] * 20]).T
     n_samples = X.shape[0]
 
-    enc = TargetEncoder(cv=2, smooth=smooth)
+    enc = TargetEncoder(cv=2, smooth=smooth, random_state=0)
     X_trans = enc.fit_transform(X, y)
     assert_allclose(X_trans, np.repeat([[y_mean]], n_samples, axis=0))
     assert enc.encodings_[0][0] == pytest.approx(y_mean)
@@ -313,3 +320,49 @@ def test_constant_target_and_feature(y, y_mean, smooth):
     X_test = np.array([[1], [0]])
     X_test_trans = enc.transform(X_test)
     assert_allclose(X_test_trans, np.repeat([[y_mean]], 2, axis=0))
+
+
+def test_fit_transform_not_associated_withy_if_ordinal_categorical_is_not(
+    global_random_seed,
+):
+    cardinality = 30  # not too large, otherwise we need a very large n_samples
+    n_samples = 3000
+    rng = np.random.RandomState(global_random_seed)
+    y_train = rng.normal(size=n_samples)
+    X_train = rng.randint(0, cardinality, size=n_samples).reshape(-1, 1)
+
+    # Sort by y_train to attempt to cause a leak
+    y_sorted_indices = y_train.argsort()
+    y_train = y_train[y_sorted_indices]
+    X_train = X_train[y_sorted_indices]
+
+    target_encoder = TargetEncoder(shuffle=True, random_state=global_random_seed)
+    X_encoded_train_shuffled = target_encoder.fit_transform(X_train, y_train)
+
+    target_encoder = TargetEncoder(shuffle=False)
+    X_encoded_train_no_shuffled = target_encoder.fit_transform(X_train, y_train)
+
+    # Check that no information about y_train has leaked into X_train:
+    regressor = RandomForestRegressor(
+        n_estimators=10, min_samples_leaf=20, random_state=global_random_seed
+    )
+
+    # It's impossible to learn a good predictive model on the training set when
+    # using the original representation X_train or the target encoded
+    # representation with shuffled inner CV. For the latter, no information
+    # about y_train has inadvertently leaked into the prior used to generate
+    # `X_encoded_train_shuffled`:
+    cv = ShuffleSplit(n_splits=50, random_state=global_random_seed)
+    assert cross_val_score(regressor, X_train, y_train, cv=cv).mean() < 0.1
+    assert (
+        cross_val_score(regressor, X_encoded_train_shuffled, y_train, cv=cv).mean()
+        < 0.1
+    )
+
+    # Without the inner CV shuffling, a lot of information about y_train goes into the
+    # the per-fold y_train.mean() priors: shrinkage is no longer effective in this
+    # case and would no longer be able to prevent downstream over-fitting.
+    assert (
+        cross_val_score(regressor, X_encoded_train_no_shuffled, y_train, cv=cv).mean()
+        > 0.5
+    )
