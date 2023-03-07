@@ -1,6 +1,7 @@
 cimport cython
 from libc.math cimport isnan
 from libc.string cimport memset
+from libc.stdlib cimport malloc, free
 
 cimport numpy as cnp
 import numpy as np
@@ -33,7 +34,6 @@ def _fit_encoding_fast(
          categorical attributes in classification and prediction problems"
     """
     cdef:
-        list encodings = []
         cnp.int64_t sample_idx, feat_idx, cat_idx, n_cats
         INT_DTYPE X_int_tmp
         int n_samples = X_int.shape[0]
@@ -42,26 +42,37 @@ def _fit_encoding_fast(
         cnp.int64_t max_n_cats = np.max(n_categories)
         double[::1] sums = np.empty(max_n_cats, dtype=np.float64)
         double[::1] counts = np.empty(max_n_cats, dtype=np.float64)
+        list encodings = []
+        double[::1] current_encoding
+        # Gives access to encodings without gil
+        double** encoding_ptrs = <double**>malloc(sizeof(double*) * n_features)
 
     for feat_idx in range(n_features):
-        n_cats = n_categories[feat_idx]
+        current_encoding = np.empty(shape=n_categories[feat_idx], dtype=np.float64)
+        encoding_ptrs[feat_idx] = &current_encoding[0]
+        encodings.append(np.asarray(current_encoding))
 
-        for cat_idx in range(n_cats):
-            sums[cat_idx] = smooth_sum
-            counts[cat_idx] = smooth
+    with nogil:
+        for feat_idx in range(n_features):
+            n_cats = n_categories[feat_idx]
 
-        for sample_idx in range(n_samples):
-            X_int_tmp = X_int[sample_idx, feat_idx]
-            # -1 are unknown categories, which are not counted
-            if X_int_tmp == -1:
-                continue
-            sums[X_int_tmp] += y[sample_idx]
-            counts[X_int_tmp] += 1.0
+            for cat_idx in range(n_cats):
+                sums[cat_idx] = smooth_sum
+                counts[cat_idx] = smooth
 
-        current_encoding = np.empty(shape=n_cats, dtype=np.float64)
-        for cat_idx in range(n_cats):
-            current_encoding[cat_idx] = sums[cat_idx] / counts[cat_idx]
-        encodings.append(current_encoding)
+            for sample_idx in range(n_samples):
+                X_int_tmp = X_int[sample_idx, feat_idx]
+                # -1 are unknown categories, which are not counted
+                if X_int_tmp == -1:
+                    continue
+                sums[X_int_tmp] += y[sample_idx]
+                counts[X_int_tmp] += 1.0
+
+            for cat_idx in range(n_cats):
+                encoding_ptrs[feat_idx][cat_idx] = sums[cat_idx] / counts[cat_idx]
+
+    free(encoding_ptrs)
+
     return encodings
 
 
@@ -80,9 +91,9 @@ def _fit_encoding_fast_auto_smooth(
          categorical attributes in classification and prediction problems"
     """
     cdef:
-        list encodings = []
         cnp.int64_t sample_idx, feat_idx, cat_idx, n_cats
         INT_DTYPE X_int_tmp
+        double diff
         int n_samples = X_int.shape[0]
         int n_features = X_int.shape[1]
         cnp.int64_t max_n_cats = np.max(n_categories)
@@ -90,53 +101,66 @@ def _fit_encoding_fast_auto_smooth(
         cnp.int64_t[::1] counts = np.empty(max_n_cats, dtype=np.int64)
         double[::1] sum_of_squared_diffs = np.empty(max_n_cats, dtype=np.float64)
         double lambda_
+        list encodings = []
+        double[::1] current_encoding
+        # Gives access to encodings without gil
+        double** encoding_ptrs = <double**>malloc(sizeof(double*) * n_features)
+
+    for feat_idx in range(n_features):
+        current_encoding = np.empty(shape=n_categories[feat_idx], dtype=np.float64)
+        encoding_ptrs[feat_idx] = &current_encoding[0]
+        encodings.append(np.asarray(current_encoding))
 
     # TODO: parallelize this with OpenMP prange. When n_features >= n_threads, it's
     # probably good to parallelize the outer loop. When n_features is too small,
     # then it would probably better to parallelize the nested loops on n_samples and
     # n_cats, but the code to handle thread-local temporary variables might be
     # significantly more complex.
-    for feat_idx in range(n_features):
-        n_cats = n_categories[feat_idx]
+    with nogil:
+        for feat_idx in range(n_features):
+            n_cats = n_categories[feat_idx]
 
-        for cat_idx in range(n_cats):
-            means[cat_idx] = 0.0
-            counts[cat_idx] = 0
-            sum_of_squared_diffs[cat_idx] = 0.0
+            for cat_idx in range(n_cats):
+                means[cat_idx] = 0.0
+                counts[cat_idx] = 0
+                sum_of_squared_diffs[cat_idx] = 0.0
 
-        # first pass to compute the mean
-        for sample_idx in range(n_samples):
-            X_int_tmp = X_int[sample_idx, feat_idx]
+            # first pass to compute the mean
+            for sample_idx in range(n_samples):
+                X_int_tmp = X_int[sample_idx, feat_idx]
 
-            # -1 are unknown categories, which are not counted
-            if X_int_tmp == -1:
-                continue
-            counts[X_int_tmp] += 1
-            means[X_int_tmp] += y[sample_idx]
+                # -1 are unknown categories, which are not counted
+                if X_int_tmp == -1:
+                    continue
+                counts[X_int_tmp] += 1
+                means[X_int_tmp] += y[sample_idx]
 
-        for cat_idx in range(n_cats):
-            means[cat_idx] /= counts[cat_idx]
+            for cat_idx in range(n_cats):
+                means[cat_idx] /= counts[cat_idx]
 
-        # second pass to compute the sum of squared differences
-        for sample_idx in range(n_samples):
-            X_int_tmp = X_int[sample_idx, feat_idx]
-            if X_int_tmp == -1:
-                continue
-            diff = y[sample_idx] - means[X_int_tmp]
-            sum_of_squared_diffs[X_int_tmp] += diff * diff
+            # second pass to compute the sum of squared differences
+            for sample_idx in range(n_samples):
+                X_int_tmp = X_int[sample_idx, feat_idx]
+                if X_int_tmp == -1:
+                    continue
+                diff = y[sample_idx] - means[X_int_tmp]
+                sum_of_squared_diffs[X_int_tmp] += diff * diff
 
-        current_encoding = np.empty(shape=n_cats, dtype=np.float64)
-        for cat_idx in range(n_cats):
-            lambda_ = (
-                y_variance * counts[cat_idx] /
-                (y_variance * counts[cat_idx] + sum_of_squared_diffs[cat_idx] / counts[cat_idx])
-            )
-            if isnan(lambda_):
-                # A nan can happen when:
-                # 1. counts[cat_idx] == 0
-                # 2. y_variance == 0 and sum_of_squared_diffs[cat_idx] == 0
-                current_encoding[cat_idx] = y_mean
-            else:
-                current_encoding[cat_idx] = lambda_ * means[cat_idx] + (1 - lambda_) * y_mean
-        encodings.append(current_encoding)
+            for cat_idx in range(n_cats):
+                lambda_ = (
+                    y_variance * counts[cat_idx] /
+                    (y_variance * counts[cat_idx] + sum_of_squared_diffs[cat_idx] /
+                     counts[cat_idx])
+                )
+                if isnan(lambda_):
+                    # A nan can happen when:
+                    # 1. counts[cat_idx] == 0
+                    # 2. y_variance == 0 and sum_of_squared_diffs[cat_idx] == 0
+                    encoding_ptrs[feat_idx][cat_idx] = y_mean
+                else:
+                    encoding_ptrs[feat_idx][cat_idx] = (
+                        lambda_ * means[cat_idx] + (1 - lambda_) * y_mean
+                    )
+
+    free(encoding_ptrs)
     return encodings
