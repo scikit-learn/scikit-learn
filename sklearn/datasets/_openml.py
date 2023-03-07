@@ -37,10 +37,15 @@ def _get_local_path(openml_path: str, data_home: str) -> str:
     return os.path.join(data_home, "openml.org", openml_path + ".gz")
 
 
-def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Callable:
+def _retry_with_clean_cache(
+    openml_path: str,
+    data_home: Optional[str],
+    no_retry_exception: Optional[Exception] = None,
+) -> Callable:
     """If the first call to the decorated function fails, the local cached
     file is removed, and the function is called again. If ``data_home`` is
-    ``None``, then the function is called once.
+    ``None``, then the function is called once. We can provide a specific
+    exception to not retry on usign `no_retry_exception` parameter.
     """
 
     def decorator(f):
@@ -52,7 +57,11 @@ def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Calla
                 return f(*args, **kw)
             except URLError:
                 raise
-            except Exception:
+            except Exception as exc:
+                if no_retry_exception is not None and isinstance(
+                    exc, no_retry_exception
+                ):
+                    raise
                 warn("Invalid cache, redownloading file", RuntimeWarning)
                 local_path = _get_local_path(openml_path, data_home)
                 if os.path.exists(local_path):
@@ -216,7 +225,7 @@ def _get_json_content_from_openml_api(
         An exception otherwise.
     """
 
-    @_retry_with_clean_cache(url, data_home)
+    @_retry_with_clean_cache(url, data_home=data_home)
     def _load_json():
         with closing(
             _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
@@ -492,20 +501,39 @@ def _load_arff_response(
             "and retry..."
         )
 
-    gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
-    with closing(gzip_file):
+    def _open_url_and_load_gzip_file(url, data_home, n_retries, delay, arff_params):
+        gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
+        with closing(gzip_file):
+            return load_arff_from_gzip_file(gzip_file, **arff_params)
 
-        X, y, frame, categories = load_arff_from_gzip_file(
-            gzip_file,
-            parser=parser,
-            output_type=output_type,
-            openml_columns_info=openml_columns_info,
-            feature_names_to_select=feature_names_to_select,
-            target_names_to_select=target_names_to_select,
-            shape=shape,
+    arff_params = dict(
+        parser=parser,
+        output_type=output_type,
+        openml_columns_info=openml_columns_info,
+        feature_names_to_select=feature_names_to_select,
+        target_names_to_select=target_names_to_select,
+        shape=shape,
+    )
+    try:
+        X, y, frame, categories = _open_url_and_load_gzip_file(
+            url, data_home, n_retries, delay, arff_params
         )
+    except Exception as exc:
+        if parser == "pandas":
+            from pandas.errors import ParserError
 
-        return X, y, frame, categories
+            if isinstance(exc, ParserError):
+                # A parsing error could come from providing the wrong quotechar
+                # to pandas. By default, we use a double quote. Thus, we retry
+                # with a single quote before to raise the error.
+                arff_params["read_csv_kwargs"] = {"quotechar": "'"}
+                X, y, frame, categories = _open_url_and_load_gzip_file(
+                    url, data_home, n_retries, delay, arff_params
+                )
+            else:
+                raise
+
+    return X, y, frame, categories
 
 
 def _download_data_to_bunch(
@@ -605,9 +633,17 @@ def _download_data_to_bunch(
                 "values. Missing values are not supported for target columns."
             )
 
-    X, y, frame, categories = _retry_with_clean_cache(url, data_home)(
-        _load_arff_response
-    )(
+    no_retry_exception = None
+    if parser == "pandas":
+        # If we get a ParserError with pandas, then we don't want to retry and we raise
+        # early.
+        from pandas.errors import ParserError
+
+        no_retry_exception = ParserError
+
+    X, y, frame, categories = _retry_with_clean_cache(
+        url, data_home, no_retry_exception
+    )(_load_arff_response)(
         url,
         data_home,
         parser=parser,
