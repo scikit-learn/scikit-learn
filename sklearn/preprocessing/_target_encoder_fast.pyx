@@ -122,7 +122,7 @@ def _fit_encoding_fast_auto_smooth(
             X_int_tmp = X_int[sample_idx, feat_idx]
             if X_int_tmp == -1:
                 continue
-            diff = pow(y[sample_idx] - means[X_int_tmp]
+            diff = y[sample_idx] - means[X_int_tmp]
             sum_of_squared_diffs[X_int_tmp] += diff * diff
 
         current_encoding = np.empty(shape=n_cats, dtype=np.float64)
