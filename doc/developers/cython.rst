@@ -65,7 +65,7 @@ Tips to ease development
          make EXTRA_CFLAGS='-DPy_DEBUG' -j<num_cores>
          make install
 
-  * You might find this alias to compile individual Cython extension handy:
+* You might find this alias to compile individual Cython extension handy:
 
     .. code-block::
 
@@ -75,9 +75,10 @@ Tips to ease development
          # This generates `source.c` as as if you had recompiled scikit-learn entirely.
          cythonX --annotate source.pyx
 
-  * Using the ``--annotate`` option with this flag allows generating a HTML report of code annotation.
+* Using the ``--annotate`` option with this flag allows generating a HTML report of code annotation.
     This report reports interactions with the CPython interpreter on a line-by-line basis.
-    Interactions with the CPython interpreter must be avoided as much as possible.
+    Interactions with the CPython interpreter must be avoided as much as possible in
+    the computationally intensive sections of the algorithms.
     For more information, please refer to `this section of Cython's tutorial <https://cython.readthedocs.io/en/latest/src/tutorial/cython_tutorial.html#primes>`_
 
     .. code-block::
@@ -110,7 +111,7 @@ Tips for performance
   Cython code, the better" is a good rule of thumb.
 
 * Understand that ``nogil`` declarations are just hints: when declaring the ``cdef`` functions as nogil,
-  means that they can be called without holding the GIL, but it does not release the GIL when entering them.
+  it means that they can be called without holding the GIL, but it does not release the GIL when entering them.
   You have to do that yourself either by passing ``nogil=True`` to ``cython.parallel.prange`` explicitly,
   or by using an explicit context manager:
 
@@ -139,7 +140,7 @@ direct call to OpenMP.
 The `_openmp_helpers` module, available in
 `sklearn/utils/_openmp_helpers.pyx <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_openmp_helpers.pyx>`_
 provides protected versions of the OpenMP routines. To use OpenMP routines, they
-must be ``cimported`` from this module and not from the OpenMP library directly::
+must be ``cimported`` from this module and not from the OpenMP library directly:
 
 .. code-block:: cython
 
