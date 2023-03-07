@@ -64,6 +64,14 @@ Changelog
   :class:`feature_selection.SequentialFeatureSelector`.
   :pr:`25664` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.inspection`
+.........................
+- |Fix| Raise a more informative error message in :func:`inspection.partial_dependence`
+  when dealing with mixed data type categories that cannot be sorted by
+  :func:`numpy.unique`. This problem usually happen when categories are `str` and
+  missing values are present using `np.nan`.
+  :pr:`xxxxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
