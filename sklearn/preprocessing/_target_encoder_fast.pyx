@@ -46,8 +46,8 @@ def _fit_encoding_fast(
         double[::1] current_encoding
         # Gives access to encodings without gil
         vector[double*] encoding_vec
-    encoding_vec.resize(n_features)
 
+    encoding_vec.resize(n_features)
     for feat_idx in range(n_features):
         current_encoding = np.empty(shape=n_categories[feat_idx], dtype=np.float64)
         encoding_vec[feat_idx] = &current_encoding[0]
@@ -106,7 +106,6 @@ def _fit_encoding_fast_auto_smooth(
         vector[double*] encoding_vec
 
     encoding_vec.resize(n_features)
-
     for feat_idx in range(n_features):
         current_encoding = np.empty(shape=n_categories[feat_idx], dtype=np.float64)
         encoding_vec[feat_idx] = &current_encoding[0]
