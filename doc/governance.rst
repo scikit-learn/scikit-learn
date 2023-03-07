@@ -38,9 +38,8 @@ Core Contributors
 -----------------
 
 All core contributor members have the same voting rights and right to propose
-new members to any of the roles listed below. In order to join one of the roles
-bellow. Their membership is represented as being an organization member on the
-scikit-learn `GitHub organization
+new members to any of the roles listed below. Their membership is represented
+as being an organization member on the scikit-learn `GitHub organization
 <https://github.com/orgs/scikit-learn/people>`_.
 
 They are also more than welcome to join our `monthly core contributor meetings
@@ -53,8 +52,8 @@ mailing list. While it is expected that most votes will be unanimous, a
 two-thirds majority of the cast votes is enough. The vote needs to be open for
 at least 1 week.
 
-Contributors that have not contributed to the project, corresponding to their
-role, in the past 12 months will be asked if they want to become emeritus
+Core contributors that have not contributed to the project, corresponding to
+their role, in the past 12 months will be asked if they want to become emeritus
 members and recant their rights until they become active again. The list of
 members, active and emeritus (with dates at which they became active) is public
 on the scikit-learn website.
@@ -64,20 +63,13 @@ Contributor Experience Team
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The contributor experience team improves the experience of contributors by
-helping with the triage of the issues and pull requests, as well as noticing
-any repeating patters where people might struggle, and to help with improving
-those aspects of the project.
+helping with the triage of issues and pull requests, as well as noticing any
+repeating patters where people might struggle, and to help with improving those
+aspects of the project.
 
 To this end, they have the required permissions on github to label and close
 issues. :ref:`Their work <bug_triaging>` is crucial to improve the
 communication in the project and limit the crowding of the issue tracker.
-
-Similarly to what has been decided in the `python project
-<https://devguide.python.org/triage/triage-team/#becoming-a-member-of-the-python-triage-team>`_,
-any contributor may become a member of the scikit-learn contributor experience
-team, after showing some continuity in participating to scikit-learn
-development (with pull requests and reviews). They need to be nominated by an
-existing member to become a member.
 
 .. _communication_team:
 
