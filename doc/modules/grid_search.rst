@@ -660,8 +660,8 @@ Robustness to failure
 Some parameter settings may result in a failure to ``fit`` one or more folds
 of the data.  By default, this will cause the entire search to fail, even if
 some parameter settings could be fully evaluated. Setting ``error_score=0``
-(or `=np.NaN`) will make the procedure robust to such failure, issuing a
-warning and setting the score for that fold to 0 (or `NaN`), but completing
+(or `=np.nan`) will make the procedure robust to such failure, issuing a
+warning and setting the score for that fold to 0 (or `nan`), but completing
 the search.
 
 .. _alternative_cv:
