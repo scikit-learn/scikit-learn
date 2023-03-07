@@ -117,6 +117,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_selection.chi2",
     "sklearn.feature_selection.f_classif",
     "sklearn.feature_selection.f_regression",
+    "sklearn.feature_selection.mutual_info_classif",
     "sklearn.feature_selection.r_regression",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
