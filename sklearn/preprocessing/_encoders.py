@@ -670,7 +670,7 @@ class OneHotEncoder(_BaseEncoder):
 
         if not self._infrequent_enabled or drop_idx_after_grouping is None:
             # If there are no infrequent categories or no category is dropped,
-            # then drop_idx is the same as _drop_idx_after_grouping
+            # then `drop_idx`` is the same as `_drop_idx_after_grouping``
             self.drop_idx_ = self._drop_idx_after_grouping
         else:
             # If there are infrequent categories, then we need to map `drop_idx`
