@@ -1300,15 +1300,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         # `_fit` will only raise an error when `self.handle_unknown="error"`
         self._fit(X, handle_unknown=self.handle_unknown, force_all_finite="allow-nan")
 
-        if self.handle_unknown == "use_encoded_value":
-            for feature_cats in self.categories_:
-                if 0 <= self.unknown_value < len(feature_cats):
-                    raise ValueError(
-                        "The used value for unknown_value "
-                        f"{self.unknown_value} is one of the "
-                        "values already used for encoding the "
-                        "seen categories."
-                    )
+        cardinalities = [len(categories) for categories in self.categories_]
 
         # stores the missing indices per category
         self._missing_indices = {}
@@ -1316,7 +1308,21 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             for i, cat in enumerate(categories_for_idx):
                 if is_scalar_nan(cat):
                     self._missing_indices[cat_idx] = i
+
+                    # missing values are not considered part of the cardinality
+                    # when considering unknown categories or encoded_missing_value
+                    cardinalities[cat_idx] -= 1
                     continue
+
+        if self.handle_unknown == "use_encoded_value":
+            for cardinality in cardinalities:
+                if 0 <= self.unknown_value < cardinality:
+                    raise ValueError(
+                        "The used value for unknown_value "
+                        f"{self.unknown_value} is one of the "
+                        "values already used for encoding the "
+                        "seen categories."
+                    )
 
         if self._missing_indices:
             if np.dtype(self.dtype).kind != "f" and is_scalar_nan(
@@ -1336,9 +1342,9 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 # known category
                 invalid_features = [
                     cat_idx
-                    for cat_idx, categories_for_idx in enumerate(self.categories_)
+                    for cat_idx, cardinality in enumerate(cardinalities)
                     if cat_idx in self._missing_indices
-                    and 0 <= self.encoded_missing_value < len(categories_for_idx)
+                    and 0 <= self.encoded_missing_value < cardinality
                 ]
 
                 if invalid_features:

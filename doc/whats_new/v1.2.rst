@@ -57,6 +57,22 @@ Changelog
   and :class:`ensemble.BaggingRegressor`.
   :pr:`25477` by :user:`Tim Head <betatim>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| Fixed a regression where a negative `tol` would not be accepted any more by
+  :class:`feature_selection.SequentialFeatureSelector`.
+  :pr:`25664` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| Raise a more informative error message in :func:`inspection.partial_dependence`
+  when dealing with mixed data type categories that cannot be sorted by
+  :func:`numpy.unique`. This problem usually happen when categories are `str` and
+  missing values are present using `np.nan`.
+  :pr:`25774` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
@@ -65,12 +81,31 @@ Changelog
   when the global configuration sets `transform_output="pandas"`.
   :pr:`25500` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.OrdinalEncoder` now correctly supports
+  `encoded_missing_value` or `unknown_value` set to a categories' cardinality
+  when there is missing values in the training data. :pr:`25704` by `Thomas Fan`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed a regression in :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier` and
+  :class:`tree.ExtraTreeRegressor` where an error was no longer raised in version
+  1.2 when `min_sample_split=1`.
+  :pr:`25744` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.utils`
 ....................
 
 - |Fix| Fixes a bug in :func:`utils.check_array` which now correctly performs
   non-finite validation with the Array API specification. :pr:`25619` by
   `Thomas Fan`_.
+
+- |Fix| :func:`utils.multiclass.type_of_target` can identify pandas
+  nullable data types as classification targets. :pr:`25638` by `Thomas Fan`_.
 
 .. _changes_1_2_1:
 
@@ -129,10 +164,14 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Fix| Fix an inconsistency in :func:`datasets.fetch_openml` between liac-arff
+- |Fix| Fixes an inconsistency in :func:`datasets.fetch_openml` between liac-arff
   and pandas parser when a leading space is introduced after the delimiter.
   The ARFF specs requires to ignore the leading space.
   :pr:`25312` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fixes a bug in :func:`datasets.fetch_openml` when using `parser="pandas"`
+  where single quote and backslash escape characters were not properly handled.
+  :pr:`25511` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -189,6 +228,10 @@ Changelog
 - |Fix| :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPRegressor`
   no longer raise warnings when fitting data with feature names.
   :pr:`24873` by :user:`Tim Head <betatim>`.
+
+- |Fix| Improves error message in :class:`neural_network.MLPClassifier` and
+  :class:`neural_network.MLPRegressor`, when `early_stopping=True` and
+  :meth:`partial_fit` is called. :pr:`25694` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
 ............................

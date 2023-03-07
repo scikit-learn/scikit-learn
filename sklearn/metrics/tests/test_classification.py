@@ -386,23 +386,6 @@ def test_average_precision_score_tied_values():
     assert average_precision_score(y_true, y_score) != 1.0
 
 
-@ignore_warnings
-def test_precision_recall_fscore_support_errors():
-    y_true, y_pred, _ = make_prediction(binary=True)
-
-    # Bad beta
-    with pytest.raises(ValueError):
-        precision_recall_fscore_support(y_true, y_pred, beta=-0.1)
-
-    # Bad pos_label
-    with pytest.raises(ValueError):
-        precision_recall_fscore_support(y_true, y_pred, pos_label=2, average="binary")
-
-    # Bad average option
-    with pytest.raises(ValueError):
-        precision_recall_fscore_support([0, 1, 2], [1, 2, 0], average="mega")
-
-
 def test_precision_recall_f_unused_pos_label():
     # Check warning that pos_label unused when set to non-default value
     # but average != 'binary'; even if data is binary.
@@ -1077,6 +1060,24 @@ def test_confusion_matrix_dtype():
     cm = confusion_matrix(y, y, sample_weight=weight)
     assert cm[0, 0] == 9223372036854775807
     assert cm[1, 1] == -2
+
+
+@pytest.mark.parametrize("dtype", ["Int64", "Float64", "boolean"])
+def test_confusion_matrix_pandas_nullable(dtype):
+    """Checks that confusion_matrix works with pandas nullable dtypes.
+
+    Non-regression test for gh-25635.
+    """
+    pd = pytest.importorskip("pandas")
+
+    y_ndarray = np.array([1, 0, 0, 1, 0, 1, 1, 0, 1])
+    y_true = pd.Series(y_ndarray, dtype=dtype)
+    y_predicted = pd.Series([0, 0, 1, 1, 0, 1, 1, 1, 1], dtype="int64")
+
+    output = confusion_matrix(y_true, y_predicted)
+    expected_output = confusion_matrix(y_ndarray, y_predicted)
+
+    assert_array_equal(output, expected_output)
 
 
 def test_classification_report_multiclass():
@@ -2477,19 +2478,29 @@ def test_log_loss():
     loss = log_loss(y_true, y_pred, normalize=False)
     assert_almost_equal(loss, 0.6904911 * 6, decimal=6)
 
+    user_warning_msg = "y_pred values do not sum to one"
     # check eps and handling of absolute zero and one probabilities
     y_pred = np.asarray(y_pred) > 0.5
-    loss = log_loss(y_true, y_pred, normalize=True, eps=0.1)
-    assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, 0.1, 0.9)))
+    with pytest.warns(FutureWarning):
+        loss = log_loss(y_true, y_pred, normalize=True, eps=0.1)
+    with pytest.warns(UserWarning, match=user_warning_msg):
+        assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, 0.1, 0.9)))
 
     # binary case: check correct boundary values for eps = 0
-    assert log_loss([0, 1], [0, 1], eps=0) == 0
-    assert log_loss([0, 1], [0, 0], eps=0) == np.inf
-    assert log_loss([0, 1], [1, 1], eps=0) == np.inf
+    with pytest.warns(FutureWarning):
+        assert log_loss([0, 1], [0, 1], eps=0) == 0
+    with pytest.warns(FutureWarning):
+        assert log_loss([0, 1], [0, 0], eps=0) == np.inf
+    with pytest.warns(FutureWarning):
+        assert log_loss([0, 1], [1, 1], eps=0) == np.inf
 
     # multiclass case: check correct boundary values for eps = 0
-    assert log_loss([0, 1, 2], [[1, 0, 0], [0, 1, 0], [0, 0, 1]], eps=0) == 0
-    assert log_loss([0, 1, 2], [[0, 0.5, 0.5], [0, 1, 0], [0, 0, 1]], eps=0) == np.inf
+    with pytest.warns(FutureWarning):
+        assert log_loss([0, 1, 2], [[1, 0, 0], [0, 1, 0], [0, 0, 1]], eps=0) == 0
+    with pytest.warns(FutureWarning):
+        assert (
+            log_loss([0, 1, 2], [[0, 0.5, 0.5], [0, 1, 0], [0, 0, 1]], eps=0) == np.inf
+        )
 
     # raise error if number of classes are not equal.
     y_true = [1, 0, 2]
@@ -2500,7 +2511,8 @@ def test_log_loss():
     # case when y_true is a string array object
     y_true = ["ham", "spam", "spam", "ham"]
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
-    loss = log_loss(y_true, y_pred)
+    with pytest.warns(UserWarning, match=user_warning_msg):
+        loss = log_loss(y_true, y_pred)
     assert_almost_equal(loss, 1.0383217, decimal=6)
 
     # test labels option
@@ -2528,7 +2540,8 @@ def test_log_loss():
     # ensure labels work when len(np.unique(y_true)) != y_pred.shape[1]
     y_true = [1, 2, 2]
     y_score2 = [[0.2, 0.7, 0.3], [0.6, 0.5, 0.3], [0.3, 0.9, 0.1]]
-    loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
+    with pytest.warns(UserWarning, match=user_warning_msg):
+        loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
     assert_almost_equal(loss, 1.0630345, decimal=6)
 
 
@@ -2568,7 +2581,8 @@ def test_log_loss_pandas_input():
     for TrueInputType, PredInputType in types:
         # y_pred dataframe, y_true series
         y_true, y_pred = TrueInputType(y_tr), PredInputType(y_pr)
-        loss = log_loss(y_true, y_pred)
+        with pytest.warns(UserWarning, match="y_pred values do not sum to one"):
+            loss = log_loss(y_true, y_pred)
         assert_almost_equal(loss, 1.0383217, decimal=6)
 
 

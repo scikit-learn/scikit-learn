@@ -155,7 +155,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     # Itakura-Saito divergence
     elif beta == 0:
         div = X_data / WH_data
-        res = np.sum(div) - np.product(X.shape) - np.sum(np.log(div))
+        res = np.sum(div) - np.prod(X.shape) - np.sum(np.log(div))
 
     # beta-divergence, beta not in (0, 1, 2)
     else:
