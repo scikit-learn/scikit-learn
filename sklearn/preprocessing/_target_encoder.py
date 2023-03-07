@@ -14,9 +14,10 @@ from ..utils._param_validation import Interval, StrOptions
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """Target Encoder for regression and classification targets.
 
-    Each category is encoded based on its marginal average association with the
-    target The encoding scheme mixes the global target mean with the target mean
-    conditioned on the value of the category. [MIC]_
+    Each category is encoded based on a shrinked estimate of the average target
+    values for observations belonging to the category. The encoding scheme mixes
+    the global target mean with the target mean conditioned on the value of the
+    category. [MIC]_
 
     Read more in the :ref:`User Guide <target_encoder>`.
 
@@ -58,7 +59,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     smooth : "auto" or float, default="auto"
         The amount of mixing of the categorical encoding with the global target mean. A
         larger `smooth` value will put more weight on the global target mean.
-        If `"auto"`, then `smooth` is set to an empirical bayes estimate.
+        If `"auto"`, then `smooth` is set to an empirical Bayes estimate.
 
     cv : int, default=5
         Determines the number of folds in the cross-validation strategy used in
@@ -112,7 +113,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     Examples
     --------
-    With `smooth="auto"`, the smoothing parameter is set to an empirical bayes estimate:
+    With `smooth="auto"`, the smoothing parameter is set to an empirical Bayes estimate:
     >>> import numpy as np
     >>> from sklearn.preprocessing import TargetEncoder
     >>> X = np.array([["dog"] * 20 + ["cat"] * 30 + ["snake"] * 38], dtype=object).T
@@ -194,6 +195,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self._validate_params()
         X_ordinal, X_known_mask, y, n_categories = self._fit_encodings_all(X, y)
 
+        # The cv splitter is voluntarily restricted to *KFold to enforce non
+        # overlapping validation folds, otherwise the fit_transform output will
+        # not be well-specified.
         if self.target_type_ == "continuous":
             cv = KFold(self.cv)
         else:

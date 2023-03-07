@@ -252,7 +252,6 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
     else:
         X_input = X_ordinal
 
-    print(cv)
     # manually compute encoding for fit_transform
     expected_X_fit_transform = np.empty_like(X_ordinal, dtype=np.float64)
     for f_idx, cats in enumerate(categories):

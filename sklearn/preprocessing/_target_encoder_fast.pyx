@@ -91,6 +91,11 @@ def _fit_encoding_fast_auto_smooth(
         double[::1] sum_of_squared_diffs = np.empty(max_n_cats, dtype=np.float64)
         double lambda_
 
+    # TODO: parallelize this with OpenMP prange. When n_features >= n_threads, it's
+    # probably good to parallelize the outer loop. When n_features is too small,
+    # then it would probably better to parallelize the nested loops on n_samples and
+    # n_cats, but the code to handle thread-local temporary variables might be
+    # significantly more complex.
     for feat_idx in range(n_features):
         n_cats = n_categories[feat_idx]
 
@@ -117,7 +122,8 @@ def _fit_encoding_fast_auto_smooth(
             X_int_tmp = X_int[sample_idx, feat_idx]
             if X_int_tmp == -1:
                 continue
-            sum_of_squared_diffs[X_int_tmp] += pow(y[sample_idx] - means[X_int_tmp], 2.0)
+            diff = pow(y[sample_idx] - means[X_int_tmp]
+            sum_of_squared_diffs[X_int_tmp] += diff * diff
 
         current_encoding = np.empty(shape=n_cats, dtype=np.float64)
         for cat_idx in range(n_cats):

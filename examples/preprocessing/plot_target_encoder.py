@@ -194,7 +194,7 @@ for subset, ax in zip(["test", "train"], [ax1, ax2]):
         color=[name_to_color[name] for name in data.index],
     )
     ax.set(
-        title=f"RMSE ({subset.title()} Scores)",
+        title=f"RMSE ({subset.title()})",
         xlabel="Encoding Scheme",
         xticks=xticks,
         xticklabels=data.index,
