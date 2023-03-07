@@ -665,16 +665,13 @@ class OneHotEncoder(_BaseEncoder):
             drop_idx_after_grouping = np.array(drop_indices, dtype=object)
 
         # `_drop_idx_after_grouping` are the categories to drop *after* the infrequent
-        # categories are grouped together.
+        # categories are grouped together. If needed, we remap `drop_idx` back
+        # to the categories seen in `self.categories_`.
         self._drop_idx_after_grouping = drop_idx_after_grouping
 
         if not self._infrequent_enabled or drop_idx_after_grouping is None:
-            # If there are no infrequent categories or no category is dropped,
-            # then `drop_idx`` is the same as `_drop_idx_after_grouping``
             self.drop_idx_ = self._drop_idx_after_grouping
         else:
-            # If there are infrequent categories, then we need to map `drop_idx`
-            # back to the categories seen in `self.categories_`
             drop_idx_ = []
             for feature_idx, drop_idx in enumerate(drop_idx_after_grouping):
                 default_to_infrequent = self._default_to_infrequent_mappings[
