@@ -1,5 +1,5 @@
 cimport cython
-from libc.math cimport pow, isnan
+from libc.math cimport isnan
 from libc.string cimport memset
 
 cimport numpy as cnp
