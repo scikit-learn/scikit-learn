@@ -836,3 +836,19 @@ def test_kind_average_and_average_of_individual(Estimator, data):
     pdp_ind = partial_dependence(est, X=X, features=[1, 2], kind="individual")
     avg_ind = np.mean(pdp_ind["individual"], axis=1)
     assert_allclose(avg_ind, pdp_avg["average"])
+
+
+def test_mixed_type_categorical():
+    """Check that we raise a proper error when a column has mixed types and
+    the sorting of `np.unique` will fail."""
+    X = np.array(["A", "B", "C", np.nan], dtype=object).reshape(-1, 1)
+    y = np.array([0, 1, 0, 1])
+
+    from sklearn.preprocessing import OrdinalEncoder
+
+    clf = make_pipeline(
+        OrdinalEncoder(encoded_missing_value=-1),
+        LogisticRegression(),
+    ).fit(X, y)
+    with pytest.raises(ValueError, match="The column #0 contains mixed data types"):
+        partial_dependence(clf, X, features=[0])

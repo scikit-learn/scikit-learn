@@ -87,8 +87,20 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
         raise ValueError("'grid_resolution' must be strictly greater than 1.")
 
     values = []
+    # TODO: we should handle missing values (i.e. `np.nan`) specifically and store them
+    # in a different Bunch attribute.
     for feature, is_cat in enumerate(is_categorical):
-        uniques = np.unique(_safe_indexing(X, feature, axis=1))
+        try:
+            uniques = np.unique(_safe_indexing(X, feature, axis=1))
+        except TypeError as exc:
+            # `np.unique` will fail in the presence of `np.nan` and `str` categories
+            # due to sorting. Temporary, we reraise an error explaining the problem.
+            raise ValueError(
+                f"The column #{feature} contains mixed data types. Finding unique "
+                "categories fail due to sorting. It usually means that the column "
+                "contains `np.nan` values together with `str` categories. Such use "
+                "case is not yet supported in scikit-learn."
+            ) from exc
         if is_cat or uniques.shape[0] < grid_resolution:
             # Use the unique values either because:
             # - feature has low resolution use unique values
