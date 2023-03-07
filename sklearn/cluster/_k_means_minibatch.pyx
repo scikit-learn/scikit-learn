@@ -8,12 +8,12 @@ from libc.stdlib cimport malloc, free
 
 
 def _minibatch_update_dense(
-        floating[:, ::1] X,            # IN READ-ONLY
-        floating[::1] sample_weight,   # IN READ-ONLY
-        floating[:, ::1] centers_old,  # IN
-        floating[:, ::1] centers_new,  # OUT
-        floating[::1] weight_sums,     # INOUT
-        int[::1] labels,               # IN
+        const floating[:, ::1] X,            # IN
+        const floating[::1] sample_weight,   # IN
+        const floating[:, ::1] centers_old,  # IN
+        floating[:, ::1] centers_new,        # OUT
+        floating[::1] weight_sums,           # INOUT
+        const int[::1] labels,               # IN
         int n_threads):
     """Update of the centers for dense MiniBatchKMeans.
 
@@ -62,13 +62,13 @@ def _minibatch_update_dense(
 
 cdef void update_center_dense(
         int cluster_idx,
-        floating[:, ::1] X,            # IN READ-ONLY
-        floating[::1] sample_weight,   # IN READ-ONLY
-        floating[:, ::1] centers_old,  # IN
-        floating[:, ::1] centers_new,  # OUT
-        floating[::1] weight_sums,     # INOUT
-        int[::1] labels,               # IN
-        int *indices) nogil:           # TMP
+        const floating[:, ::1] X,            # IN
+        const floating[::1] sample_weight,   # IN
+        const floating[:, ::1] centers_old,  # IN
+        floating[:, ::1] centers_new,        # OUT
+        floating[::1] weight_sums,           # INOUT
+        const int[::1] labels,               # IN
+        int *indices) noexcept nogil:        # TMP
     """Update of a single center for dense MinibatchKMeans"""
     cdef:
         int n_samples = sample_weight.shape[0]
@@ -113,12 +113,12 @@ cdef void update_center_dense(
 
 
 def _minibatch_update_sparse(
-        X,                             # IN
-        floating[::1] sample_weight,   # IN
-        floating[:, ::1] centers_old,  # IN
-        floating[:, ::1] centers_new,  # OUT
-        floating[::1] weight_sums,     # INOUT
-        int[::1] labels,               # IN
+        X,                                   # IN
+        const floating[::1] sample_weight,   # IN
+        const floating[:, ::1] centers_old,  # IN
+        floating[:, ::1] centers_new,        # OUT
+        floating[::1] weight_sums,           # INOUT
+        const int[::1] labels,               # IN
         int n_threads):
     """Update of the centers for sparse MiniBatchKMeans.
 
@@ -170,15 +170,15 @@ def _minibatch_update_sparse(
 
 cdef void update_center_sparse(
         int cluster_idx,
-        floating[::1] X_data,          # IN
-        int[::1] X_indices,            # IN
-        int[::1] X_indptr,             # IN
-        floating[::1] sample_weight,   # IN
-        floating[:, ::1] centers_old,  # IN
-        floating[:, ::1] centers_new,  # OUT
-        floating[::1] weight_sums,     # INOUT
-        int[::1] labels,               # IN
-        int *indices) nogil:           # TMP
+        const floating[::1] X_data,          # IN
+        const int[::1] X_indices,            # IN
+        const int[::1] X_indptr,             # IN
+        const floating[::1] sample_weight,   # IN
+        const floating[:, ::1] centers_old,  # IN
+        floating[:, ::1] centers_new,        # OUT
+        floating[::1] weight_sums,           # INOUT
+        const int[::1] labels,               # IN
+        int *indices) noexcept nogil:        # TMP
     """Update of a single center for sparse MinibatchKMeans"""
     cdef:
         int n_samples = sample_weight.shape[0]

@@ -534,10 +534,6 @@ a.sk-documentation-index-anchor:hover {
 
 /* toc  */
 
-div.sk-sidebar-toc-logo {
-  height: 52px;
-}
-
 .sk-toc-active {
   font-weight: bold;
 }
@@ -549,6 +545,7 @@ div.sk-sidebar-toc-wrapper {
   overflow-y: scroll;
   height: 100vh;
   padding-right: 1.75rem;
+  padding-top: 52px;
 
   /* Hide scrollbar for IE and Edge */
   -ms-overflow-style: none;
@@ -892,14 +889,6 @@ img.align-right, figure.align-right,
   clear: right;
   float: right;
   margin-left: 1em;
-}
-
-a.brackets::after, span.brackets > a::after {
-  content: "]";
-}
-
-a.brackets::before, span.brackets > a::before {
-    content: "[";
 }
 
 /* copybutton */

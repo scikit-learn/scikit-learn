@@ -1498,6 +1498,63 @@ def test_neighbors_validate_parameters(Estimator):
         nbrs.predict([[]])
 
 
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        neighbors.KNeighborsClassifier,
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+        neighbors.RadiusNeighborsRegressor,
+    ],
+)
+@pytest.mark.parametrize("n_features", [2, 100])
+@pytest.mark.parametrize("algorithm", ["auto", "brute"])
+def test_neighbors_minkowski_semimetric_algo_warn(Estimator, n_features, algorithm):
+    """
+    Validation of all classes extending NeighborsBase with
+    Minkowski semi-metrics (i.e. when 0 < p < 1). That proper
+    Warning is raised for `algorithm="auto"` and "brute".
+    """
+    X = rng.random_sample((10, n_features))
+    y = np.ones(10)
+
+    model = Estimator(p=0.1, algorithm=algorithm)
+    msg = (
+        "Mind that for 0 < p < 1, Minkowski metrics are not distance"
+        " metrics. Continuing the execution with `algorithm='brute'`."
+    )
+    with pytest.warns(UserWarning, match=msg):
+        model.fit(X, y)
+
+    assert model._fit_method == "brute"
+
+
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        neighbors.KNeighborsClassifier,
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+        neighbors.RadiusNeighborsRegressor,
+    ],
+)
+@pytest.mark.parametrize("n_features", [2, 100])
+@pytest.mark.parametrize("algorithm", ["kd_tree", "ball_tree"])
+def test_neighbors_minkowski_semimetric_algo_error(Estimator, n_features, algorithm):
+    """Check that we raise a proper error if `algorithm!='brute'` and `p<1`."""
+    X = rng.random_sample((10, 2))
+    y = np.ones(10)
+
+    model = Estimator(algorithm=algorithm, p=0.1)
+    msg = (
+        f'algorithm="{algorithm}" does not support 0 < p < 1 for '
+        "the Minkowski metric. To resolve this problem either "
+        'set p >= 1 or algorithm="brute".'
+    )
+    with pytest.raises(ValueError, match=msg):
+        model.fit(X, y)
+
+
 # TODO: remove when NearestNeighbors methods uses parameter validation mechanism
 def test_nearest_neighbors_validate_params():
     """Validate parameter of NearestNeighbors."""

@@ -1,5 +1,6 @@
 import warnings
 
+import re
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
@@ -16,7 +17,7 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.base import is_regressor
 from sklearn.pipeline import make_pipeline
-from sklearn.metrics import mean_poisson_deviance
+from sklearn.metrics import mean_gamma_deviance, mean_poisson_deviance
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.compose import make_column_transformer
@@ -58,12 +59,8 @@ def _make_dumb_dataset(n_samples):
     "params, err_msg",
     [
         (
-            {"interaction_cst": "string"},
-            "",
-        ),
-        (
             {"interaction_cst": [0, 1]},
-            "Interaction constraints must be None or an iterable of iterables",
+            "Interaction constraints must be a sequence of tuples or lists",
         ),
         (
             {"interaction_cst": [{0, 9999}]},
@@ -251,8 +248,64 @@ def test_absolute_error_sample_weight():
     gbdt.fit(X, y, sample_weight=sample_weight)
 
 
+@pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 1.0, 2.0])])
+def test_gamma_y_positive(y):
+    # Test that ValueError is raised if any y_i <= 0.
+    err_msg = r"loss='gamma' requires strictly positive y."
+    gbdt = HistGradientBoostingRegressor(loss="gamma", random_state=0)
+    with pytest.raises(ValueError, match=err_msg):
+        gbdt.fit(np.zeros(shape=(len(y), 1)), y)
+
+
+def test_gamma():
+    # For a Gamma distributed target, we expect an HGBT trained with the Gamma deviance
+    # (loss) to give better results than an HGBT with any other loss function, measured
+    # in out-of-sample Gamma deviance as metric/score.
+    # Note that squared error could potentially predict negative values which is
+    # invalid (np.inf) for the Gamma deviance. A Poisson HGBT (having a log link)
+    # does not have that defect.
+    # Important note: It seems that a Poisson HGBT almost always has better
+    # out-of-sample performance than the Gamma HGBT, measured in Gamma deviance.
+    # LightGBM shows the same behaviour. Hence, we only compare to a squared error
+    # HGBT, but not to a Poisson deviance HGBT.
+    rng = np.random.RandomState(42)
+    n_train, n_test, n_features = 500, 100, 20
+    X = make_low_rank_matrix(
+        n_samples=n_train + n_test,
+        n_features=n_features,
+        random_state=rng,
+    )
+    # We create a log-linear Gamma model. This gives y.min ~ 1e-2, y.max ~ 1e2
+    coef = rng.uniform(low=-10, high=20, size=n_features)
+    # Numpy parametrizes gamma(shape=k, scale=theta) with mean = k * theta and
+    # variance = k * theta^2. We parametrize it instead with mean = exp(X @ coef)
+    # and variance = dispersion * mean^2 by setting k = 1 / dispersion,
+    # theta =  dispersion * mean.
+    dispersion = 0.5
+    y = rng.gamma(shape=1 / dispersion, scale=dispersion * np.exp(X @ coef))
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=n_test, random_state=rng
+    )
+    gbdt_gamma = HistGradientBoostingRegressor(loss="gamma", random_state=123)
+    gbdt_mse = HistGradientBoostingRegressor(loss="squared_error", random_state=123)
+    dummy = DummyRegressor(strategy="mean")
+    for model in (gbdt_gamma, gbdt_mse, dummy):
+        model.fit(X_train, y_train)
+
+    for X, y in [(X_train, y_train), (X_test, y_test)]:
+        loss_gbdt_gamma = mean_gamma_deviance(y, gbdt_gamma.predict(X))
+        # We restrict the squared error HGBT to predict at least the minimum seen y at
+        # train time to make it strictly positive.
+        loss_gbdt_mse = mean_gamma_deviance(
+            y, np.maximum(np.min(y_train), gbdt_mse.predict(X))
+        )
+        loss_dummy = mean_gamma_deviance(y, dummy.predict(X))
+        assert loss_gbdt_gamma < loss_dummy
+        assert loss_gbdt_gamma < loss_gbdt_mse
+
+
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
-def test_asymmetric_error(quantile):
+def test_quantile_asymmetric_error(quantile):
     """Test quantile regression for asymmetric distributed targets."""
     n_samples = 10_000
     rng = np.random.RandomState(42)
@@ -979,13 +1032,26 @@ def test_categorical_encoding_strategies():
     # influence predictions too much with max_iter = 1
     assert 0.49 < y.mean() < 0.51
 
-    clf_cat = HistGradientBoostingClassifier(
-        max_iter=1, max_depth=1, categorical_features=[False, True]
-    )
+    native_cat_specs = [
+        [False, True],
+        [1],
+    ]
+    try:
+        import pandas as pd
 
-    # Using native categorical encoding, we get perfect predictions with just
-    # one split
-    assert cross_val_score(clf_cat, X, y).mean() == 1
+        X = pd.DataFrame(X, columns=["f_0", "f_1"])
+        native_cat_specs.append(["f_1"])
+    except ImportError:
+        pass
+
+    for native_cat_spec in native_cat_specs:
+        clf_cat = HistGradientBoostingClassifier(
+            max_iter=1, max_depth=1, categorical_features=native_cat_spec
+        )
+
+        # Using native categorical encoding, we get perfect predictions with just
+        # one split
+        assert cross_val_score(clf_cat, X, y).mean() == 1
 
     # quick sanity check for the bitset: 0, 2, 4 = 2**0 + 2**2 + 2**4 = 21
     expected_left_bitset = [21, 0, 0, 0, 0, 0, 0, 0]
@@ -1022,24 +1088,36 @@ def test_categorical_encoding_strategies():
     "categorical_features, monotonic_cst, expected_msg",
     [
         (
-            ["hello", "world"],
+            [b"hello", b"world"],
             None,
-            "categorical_features must be an array-like of bools or array-like of "
-            "ints.",
+            re.escape(
+                "categorical_features must be an array-like of bool, int or str, "
+                "got: bytes40."
+            ),
+        ),
+        (
+            np.array([b"hello", 1.3], dtype=object),
+            None,
+            re.escape(
+                "categorical_features must be an array-like of bool, int or str, "
+                "got: bytes, float."
+            ),
         ),
         (
             [0, -1],
             None,
-            (
-                r"categorical_features set as integer indices must be in "
-                r"\[0, n_features - 1\]"
+            re.escape(
+                "categorical_features set as integer indices must be in "
+                "[0, n_features - 1]"
             ),
         ),
         (
             [True, True, False, False, True],
             None,
-            r"categorical_features set as a boolean mask must have shape "
-            r"\(n_features,\)",
+            re.escape(
+                "categorical_features set as a boolean mask must have shape "
+                "(n_features,)"
+            ),
         ),
         (
             [True, True, False, False],
@@ -1066,6 +1144,39 @@ def test_categorical_spec_errors(
 @pytest.mark.parametrize(
     "Est", (HistGradientBoostingClassifier, HistGradientBoostingRegressor)
 )
+def test_categorical_spec_errors_with_feature_names(Est):
+    pd = pytest.importorskip("pandas")
+    n_samples = 10
+    X = pd.DataFrame(
+        {
+            "f0": range(n_samples),
+            "f1": range(n_samples),
+            "f2": [1.0] * n_samples,
+        }
+    )
+    y = [0, 1] * (n_samples // 2)
+
+    est = Est(categorical_features=["f0", "f1", "f3"])
+    expected_msg = re.escape(
+        "categorical_features has a item value 'f3' which is not a valid "
+        "feature name of the training data."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        est.fit(X, y)
+
+    est = Est(categorical_features=["f0", "f1"])
+    expected_msg = re.escape(
+        "categorical_features should be passed as an array of integers or "
+        "as a boolean mask when the model is fitted on data without feature "
+        "names."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        est.fit(X.to_numpy(), y)
+
+
+@pytest.mark.parametrize(
+    "Est", (HistGradientBoostingClassifier, HistGradientBoostingRegressor)
+)
 @pytest.mark.parametrize("categorical_features", ([False, False], []))
 @pytest.mark.parametrize("as_array", (True, False))
 def test_categorical_spec_no_categories(Est, categorical_features, as_array):
@@ -1082,20 +1193,37 @@ def test_categorical_spec_no_categories(Est, categorical_features, as_array):
 @pytest.mark.parametrize(
     "Est", (HistGradientBoostingClassifier, HistGradientBoostingRegressor)
 )
-def test_categorical_bad_encoding_errors(Est):
+@pytest.mark.parametrize(
+    "use_pandas, feature_name", [(False, "at index 0"), (True, "'f0'")]
+)
+def test_categorical_bad_encoding_errors(Est, use_pandas, feature_name):
     # Test errors when categories are encoded incorrectly
 
     gb = Est(categorical_features=[True], max_bins=2)
 
-    X = np.array([[0, 1, 2]]).T
+    if use_pandas:
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame({"f0": [0, 1, 2]})
+    else:
+        X = np.array([[0, 1, 2]]).T
     y = np.arange(3)
-    msg = "Categorical feature at index 0 is expected to have a cardinality <= 2"
+    msg = (
+        f"Categorical feature {feature_name} is expected to have a "
+        "cardinality <= 2 but actually has a cardinality of 3."
+    )
     with pytest.raises(ValueError, match=msg):
         gb.fit(X, y)
 
-    X = np.array([[0, 2]]).T
+    if use_pandas:
+        X = pd.DataFrame({"f0": [0, 2]})
+    else:
+        X = np.array([[0, 2]]).T
     y = np.arange(2)
-    msg = "Categorical feature at index 0 is expected to be encoded with values < 2"
+    msg = (
+        f"Categorical feature {feature_name} is expected to be encoded "
+        "with values < 2 but the largest value for the encoded categories "
+        "is 2.0."
+    )
     with pytest.raises(ValueError, match=msg):
         gb.fit(X, y)
 
@@ -1128,6 +1256,10 @@ def test_uint8_predict(Est):
     [
         (None, 931, None),
         ([{0, 1}], 2, [{0, 1}]),
+        ("pairwise", 2, [{0, 1}]),
+        ("pairwise", 4, [{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}]),
+        ("no_interactions", 2, [{0}, {1}]),
+        ("no_interactions", 4, [{0}, {1}, {2}, {3}]),
         ([(1, 0), [5, 1]], 6, [{0, 1}, {1, 5}, {2, 3, 4}]),
     ],
 )

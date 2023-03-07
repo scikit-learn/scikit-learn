@@ -25,6 +25,7 @@ import scipy.sparse as sp
 from .. import __version__
 
 from ..utils import check_array, IS_PYPY
+from ..utils._param_validation import validate_params, HasMethods
 
 if not IS_PYPY:
     from ._svmlight_format_fast import (
@@ -85,11 +86,14 @@ def load_svmlight_file(
 
     Parameters
     ----------
-    f : str, file-like or int
+    f : str, path-like, file-like or int
         (Path to) a file to load. If a path ends in ".gz" or ".bz2", it will
         be uncompressed on the fly. If an integer is passed, it is assumed to
         be a file descriptor. A file-like or file descriptor will not be closed
         by this function. A file-like object must be opened in binary mode.
+
+        .. versionchanged:: 1.2
+           Path-like objects are now accepted.
 
     n_features : int, default=None
         The number of features to use. If None, it will be inferred. This
@@ -182,8 +186,10 @@ def load_svmlight_file(
 def _gen_open(f):
     if isinstance(f, int):  # file descriptor
         return io.open(f, "rb", closefd=False)
+    elif isinstance(f, os.PathLike):
+        f = os.fspath(f)
     elif not isinstance(f, str):
-        raise TypeError("expected {str, int, file-like}, got %s" % type(f))
+        raise TypeError("expected {str, int, path-like, file-like}, got %s" % type(f))
 
     _, ext = os.path.splitext(f)
     if ext == ".gz":
@@ -249,12 +255,15 @@ def load_svmlight_files(
 
     Parameters
     ----------
-    files : array-like, dtype=str, file-like or int
+    files : array-like, dtype=str, path-like, file-like or int
         (Paths of) files to load. If a path ends in ".gz" or ".bz2", it will
         be uncompressed on the fly. If an integer is passed, it is assumed to
         be a file descriptor. File-likes and file descriptors will not be
         closed by this function. File-like objects must be opened in binary
         mode.
+
+        .. versionchanged:: 1.2
+           Path-like objects are now accepted.
 
     n_features : int, default=None
         The number of features to use. If None, it will be inferred from the
@@ -396,6 +405,17 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
     )
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", "sparse matrix"],
+        "f": [str, HasMethods(["write"])],
+        "zero_based": ["boolean"],
+        "comment": [str, bytes, None],
+        "query_id": ["array-like", None],
+        "multilabel": ["boolean"],
+    }
+)
 def dump_svmlight_file(
     X,
     y,
@@ -420,7 +440,7 @@ def dump_svmlight_file(
         Training vectors, where `n_samples` is the number of samples and
         `n_features` is the number of features.
 
-    y : {array-like, sparse matrix}, shape = [n_samples (, n_labels)]
+    y : {array-like, sparse matrix}, shape = (n_samples,) or (n_samples, n_labels)
         Target values. Class labels must be an
         integer or float, or array-like objects of integer or float for
         multilabel classifications.
@@ -434,7 +454,7 @@ def dump_svmlight_file(
         Whether column indices should be written zero-based (True) or one-based
         (False).
 
-    comment : str, default=None
+    comment : str or bytes, default=None
         Comment to insert at the top of the file. This should be either a
         Unicode string, which will be encoded as UTF-8, or an ASCII byte
         string.
@@ -451,7 +471,7 @@ def dump_svmlight_file(
         https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html).
 
         .. versionadded:: 0.17
-           parameter *multilabel* to support multilabel datasets.
+           parameter `multilabel` to support multilabel datasets.
     """
     if comment is not None:
         # Convert comment string to list of lines in UTF-8.
@@ -498,7 +518,13 @@ def dump_svmlight_file(
         if hasattr(X, "sort_indices"):
             X.sort_indices()
 
-    if query_id is not None:
+    if query_id is None:
+        # NOTE: query_id is passed to Cython functions using a fused type on query_id.
+        # Yet as of Cython>=3.0, memory views can't be None otherwise the runtime
+        # would not known which concrete implementation to dispatch the Python call to.
+        # TODO: simplify interfaces and implementations in _svmlight_format_fast.pyx.
+        query_id = np.array([], dtype=np.int32)
+    else:
         query_id = np.asarray(query_id)
         if query_id.shape[0] != y.shape[0]:
             raise ValueError(

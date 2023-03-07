@@ -17,6 +17,7 @@ from scipy import linalg
 from .. import config_context
 from ..base import BaseEstimator
 from ..utils import check_array
+from ..utils._param_validation import validate_params
 from ..utils.extmath import fast_logdet
 from ..metrics.pairwise import pairwise_distances
 
@@ -48,6 +49,12 @@ def log_likelihood(emp_cov, precision):
     return log_likelihood_
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "assume_centered": ["boolean"],
+    }
+)
 def empirical_covariance(X, *, assume_centered=False):
     """Compute the Maximum likelihood covariance estimator.
 

@@ -7,6 +7,7 @@ from inspect import signature
 from numbers import Integral
 from numbers import Real
 import operator
+import re
 import warnings
 
 import numpy as np
@@ -14,6 +15,14 @@ from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
 
 from .validation import _is_arraylike_not_scalar
+
+
+class InvalidParameterError(ValueError, TypeError):
+    """Custom exception to be raised when the parameter of a class/method/function
+    does not have a valid type or value.
+    """
+
+    # Inherits from ValueError and TypeError to keep backward compatibility.
 
 
 def validate_parameter_constraints(parameter_constraints, params, caller_name):
@@ -50,13 +59,6 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
     caller_name : str
         The name of the estimator or function or method that called this function.
     """
-    if len(set(parameter_constraints) - set(params)) != 0:
-        raise ValueError(
-            f"The parameter constraints {list(parameter_constraints)}"
-            " contain unexpected parameters"
-            f" {set(parameter_constraints) - set(params)}"
-        )
-
     for param_name, param_val in params.items():
         # We allow parameters to not have a constraint so that third party estimators
         # can inherit from sklearn estimators without having to necessarily use the
@@ -92,7 +94,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
                     f" {constraints[-1]}"
                 )
 
-            raise ValueError(
+            raise InvalidParameterError(
                 f"The {param_name!r} parameter of {caller_name} must be"
                 f" {constraints_str}. Got {param_val!r} instead."
             )
@@ -185,7 +187,20 @@ def validate_params(parameter_constraints):
             validate_parameter_constraints(
                 parameter_constraints, params, caller_name=func.__qualname__
             )
-            return func(*args, **kwargs)
+
+            try:
+                return func(*args, **kwargs)
+            except InvalidParameterError as e:
+                # When the function is just a wrapper around an estimator, we allow
+                # the function to delegate validation to the estimator, but we replace
+                # the name of the estimator by the name of the function in the error
+                # message to avoid confusion.
+                msg = re.sub(
+                    r"parameter of \w+ must be",
+                    f"parameter of {func.__qualname__} must be",
+                    str(e),
+                )
+                raise InvalidParameterError(msg) from e
 
         return wrapper
 
@@ -349,8 +364,11 @@ class Interval(_Constraint):
 
     Parameters
     ----------
-    type : {numbers.Integral, numbers.Real}
+    type : {numbers.Integral, numbers.Real, "real_not_int"}
         The set of numbers in which to set the interval.
+
+        If "real_not_int", only reals that don't have the integer type
+        are allowed. For example 1.0 is allowed but 1 is not.
 
     left : float or int or None
         The left bound of the interval. None means left bound is -∞.
@@ -377,14 +395,6 @@ class Interval(_Constraint):
     `[0, +∞) U {+∞}`.
     """
 
-    @validate_params(
-        {
-            "type": [type],
-            "left": [Integral, Real, None],
-            "right": [Integral, Real, None],
-            "closed": [StrOptions({"left", "right", "both", "neither"})],
-        }
-    )
     def __init__(self, type, left, right, *, closed):
         super().__init__()
         self.type = type
@@ -395,6 +405,18 @@ class Interval(_Constraint):
         self._check_params()
 
     def _check_params(self):
+        if self.type not in (Integral, Real, "real_not_int"):
+            raise ValueError(
+                "type must be either numbers.Integral, numbers.Real or 'real_not_int'."
+                f" Got {self.type} instead."
+            )
+
+        if self.closed not in ("left", "right", "both", "neither"):
+            raise ValueError(
+                "closed must be either 'left', 'right', 'both' or 'neither'. "
+                f"Got {self.closed} instead."
+            )
+
         if self.type is Integral:
             suffix = "for an interval over the integers."
             if self.left is not None and not isinstance(self.left, Integral):
@@ -409,6 +431,11 @@ class Interval(_Constraint):
                 raise ValueError(
                     f"right can't be None when closed == {self.closed} {suffix}"
                 )
+        else:
+            if self.left is not None and not isinstance(self.left, Real):
+                raise TypeError("Expecting left to be a real number.")
+            if self.right is not None and not isinstance(self.right, Real):
+                raise TypeError("Expecting right to be a real number.")
 
         if self.right is not None and self.left is not None and self.right <= self.left:
             raise ValueError(
@@ -432,8 +459,13 @@ class Interval(_Constraint):
             return False
         return True
 
+    def _has_valid_type(self, val):
+        if self.type == "real_not_int":
+            return isinstance(val, Real) and not isinstance(val, Integral)
+        return isinstance(val, self.type)
+
     def is_satisfied_by(self, val):
-        if not isinstance(val, self.type):
+        if not self._has_valid_type(val):
             return False
 
         return val in self
@@ -868,6 +900,14 @@ def generate_valid_param(constraint):
         return None
 
     if isinstance(constraint, _InstancesOf):
+        if constraint.type is np.ndarray:
+            # special case for ndarray since it can't be instantiated without arguments
+            return np.array([1, 2, 3])
+
+        if constraint.type in (Integral, Real):
+            # special case for Integral and Real since they are abstract classes
+            return 1
+
         return constraint.type()
 
     if isinstance(constraint, _Booleans):

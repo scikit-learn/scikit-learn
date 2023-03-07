@@ -42,7 +42,7 @@ from sklearn.feature_extraction.image import extract_patches_2d
 
 print("Learning the dictionary... ")
 rng = np.random.RandomState(0)
-kmeans = MiniBatchKMeans(n_clusters=81, random_state=rng, verbose=True)
+kmeans = MiniBatchKMeans(n_clusters=81, random_state=rng, verbose=True, n_init=3)
 patch_size = (20, 20)
 
 buffer = []

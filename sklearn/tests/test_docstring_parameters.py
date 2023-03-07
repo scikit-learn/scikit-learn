@@ -11,6 +11,10 @@ from inspect import signature
 
 import numpy as np
 
+# make it possible to discover experimental estimators when calling `all_estimators`
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa
+
 import sklearn
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import check_docstring_parameters
@@ -306,6 +310,8 @@ def test_fit_docstring_attributes(name, Estimator):
         est.fit(y)
     elif "2dlabels" in est._get_tags()["X_types"]:
         est.fit(np.c_[y, y])
+    elif "3darray" in est._get_tags()["X_types"]:
+        est.fit(X[np.newaxis, ...], y)
     else:
         est.fit(X, y)
 
