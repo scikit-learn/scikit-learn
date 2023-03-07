@@ -572,7 +572,7 @@ class OneHotEncoder(_BaseEncoder):
         """Compute the drop indices associated with `self.categories_`.
 
         If `self.drop` is:
-        - `None`, No categories have dropped.
+        - `None`, No categories have been dropped.
         - `'first'`, All zeros to drop the first category.
         - `'if_binary'`, All zeros if the category is binary and `None`
           otherwise.
@@ -589,7 +589,7 @@ class OneHotEncoder(_BaseEncoder):
           infrequent categories are grouped together.
 
         If there are no infrequent categories or drop is `None`, then
-        `drop_idx_=_drop_idx_internal`
+        `drop_idx_=_drop_idx_internal`.
         """
         if self.drop is None:
             drop_idx_internal = None
@@ -665,7 +665,7 @@ class OneHotEncoder(_BaseEncoder):
 
         # `_drop_idx_internal` are the categories to drop *after* the infrequent
         # categories are grouped together. If there are no infrequent categories,
-        # then `drop_idx_` = `_drop_idx_internal` or drop is not set.
+        # then `drop_idx_=_drop_idx_internal` or drop is not set.
         self._drop_idx_internal = drop_idx_internal
 
         if not self._infrequent_enabled or drop_idx_internal is None:
