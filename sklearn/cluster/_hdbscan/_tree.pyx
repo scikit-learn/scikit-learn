@@ -86,7 +86,7 @@ cpdef cnp.ndarray condense_tree(
     relabel = np.empty(root + 1, dtype=np.intp)
     relabel[root] = n_samples
     result_list = []
-    ignore = np.zeros(len(node_list), dtype=np.uint8)
+    ignore = np.zeros(len(node_list), dtype=bool)
 
     for node in node_list:
         if ignore[node] or node < n_samples:
@@ -169,7 +169,6 @@ cpdef dict compute_stability(cnp.ndarray condensed_tree):
         cnp.float64_t[::1] result, births
         cnp.ndarray condensed_node
         cnp.intp_t[:] parents = condensed_tree['parent']
-        cnp.intp_t[:] children = condensed_tree['child']
         cnp.float64_t[:] lambdas = condensed_tree['lambda_val']
         cnp.intp_t[:] sizes = condensed_tree['child_size']
 
@@ -192,9 +191,6 @@ cpdef dict compute_stability(cnp.ndarray condensed_tree):
     births = np.nan * np.ones(largest_child + 1, dtype=np.float64)
     current_child = -1
     min_lambda = 0
-
-    births = np.nan * np.ones(largest_child + 1, dtype=np.float64_t)
-
     for idx in range(condensed_tree.shape[0]):
         child = sorted_children[idx]
         lambda_val = sorted_lambdas[idx]
@@ -210,6 +206,8 @@ cpdef dict compute_stability(cnp.ndarray condensed_tree):
             current_child = child
             min_lambda = lambda_val
 
+    if current_child != -1:
+        births[current_child] = min_lambda
     births[smallest_cluster] = 0.0
 
     result = np.zeros(num_clusters, dtype=np.float64)
