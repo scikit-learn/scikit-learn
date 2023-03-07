@@ -160,8 +160,10 @@ object to the same sample.
 
 .. topic:: References:
 
-    .. [2] Chen et al., "Shrinkage Algorithms for MMSE Covariance Estimation",
-           IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
+    .. [2] :arxiv:`"Shrinkage algorithms for MMSE covariance estimation.",
+           Chen, Y., Wiesel, A., Eldar, Y. C., & Hero, A. O.
+           IEEE Transactions on Signal Processing, 58(10), 5016-5029, 2010.
+           <0907.4698>`
 
 .. topic:: Examples:
 

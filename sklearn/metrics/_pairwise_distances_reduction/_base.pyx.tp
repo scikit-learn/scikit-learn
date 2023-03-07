@@ -21,7 +21,7 @@ from cython.parallel cimport parallel, prange
 from libcpp.vector cimport vector
 
 from ...utils._cython_blas cimport _dot
-from ...utils._openmp_helpers cimport _openmp_thread_num
+from ...utils._openmp_helpers cimport omp_get_thread_num
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 import numpy as np
@@ -32,6 +32,7 @@ from sklearn import get_config
 from sklearn.utils import check_scalar
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
+from ...utils.sparsefuncs_fast import _sqeuclidean_row_norms_sparse
 
 cnp.import_array()
 
@@ -88,7 +89,7 @@ cdef DTYPE_t[::1] _sqeuclidean_row_norms32_dense(
         )
 
     with nogil, parallel(num_threads=num_threads):
-        thread_num = _openmp_thread_num()
+        thread_num = omp_get_thread_num()
 
         for i in prange(n, schedule='static'):
             # Upcasting the i-th row of X from float32 to float64
@@ -99,23 +100,6 @@ cdef DTYPE_t[::1] _sqeuclidean_row_norms32_dense(
                 d, X_i_upcast[thread_num].data(), 1,
                 X_i_upcast[thread_num].data(), 1,
             )
-
-    return squared_row_norms
-
-
-cdef DTYPE_t[::1] _sqeuclidean_row_norms64_sparse(
-    const DTYPE_t[:] X_data,
-    const SPARSE_INDEX_TYPE_t[:] X_indptr,
-    ITYPE_t num_threads,
-):
-    cdef:
-        ITYPE_t n = X_indptr.shape[0] - 1
-        SPARSE_INDEX_TYPE_t X_i_ptr, idx = 0
-        DTYPE_t[::1] squared_row_norms = np.zeros(n, dtype=DTYPE)
-
-    for idx in prange(n, schedule='static', nogil=True, num_threads=num_threads):
-        for X_i_ptr in range(X_indptr[idx], X_indptr[idx+1]):
-            squared_row_norms[idx] += X_data[X_i_ptr] * X_data[X_i_ptr]
 
     return squared_row_norms
 
@@ -131,10 +115,10 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms{{name_suffix}}(
 ):
     if issparse(X):
         # TODO: remove this instruction which is a cast in the float32 case
-        # by moving squared row norms computations in MiddleTermComputer. 
+        # by moving squared row norms computations in MiddleTermComputer.
         X_data = np.asarray(X.data, dtype=DTYPE)
         X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
-        return _sqeuclidean_row_norms64_sparse(X_data, X_indptr, num_threads)
+        return _sqeuclidean_row_norms_sparse(X_data, X_indptr, num_threads)
     else:
         return _sqeuclidean_row_norms{{name_suffix}}_dense(X, num_threads)
 
@@ -224,7 +208,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         )
 
     @final
-    cdef void _parallel_on_X(self) nogil:
+    cdef void _parallel_on_X(self) noexcept nogil:
         """Perform computation and reduction in parallel on chunks of X.
 
         This strategy dispatches tasks statically on threads. Each task
@@ -245,7 +229,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
             ITYPE_t thread_num
 
         with nogil, parallel(num_threads=self.chunks_n_threads):
-            thread_num = _openmp_thread_num()
+            thread_num = omp_get_thread_num()
 
             # Allocating thread datastructures
             self._parallel_on_X_parallel_init(thread_num)
@@ -291,7 +275,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         return
 
     @final
-    cdef void _parallel_on_Y(self) nogil:
+    cdef void _parallel_on_Y(self) noexcept nogil:
         """Perform computation and reduction in parallel on chunks of Y.
 
         This strategy is a sequence of embarrassingly parallel subtasks:
@@ -324,7 +308,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
                 X_end = X_start + self.X_n_samples_chunk
 
             with nogil, parallel(num_threads=self.chunks_n_threads):
-                thread_num = _openmp_thread_num()
+                thread_num = omp_get_thread_num()
 
                 # Initializing datastructures used in this thread
                 self._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
@@ -368,7 +352,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         """Compute the pairwise distances on two chunks of X and Y and reduce them.
 
         This is THE core computational method of BaseDistancesReduction{{name_suffix}}.
@@ -386,14 +370,14 @@ cdef class BaseDistancesReduction{{name_suffix}}:
 
     # Placeholder methods which can be implemented
 
-    cdef void compute_exact_distances(self) nogil:
+    cdef void compute_exact_distances(self) noexcept nogil:
         """Convert rank-preserving distances to exact distances or recompute them."""
         return
 
     cdef void _parallel_on_X_parallel_init(
         self,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         """Allocate datastructures used in a thread given its number."""
         return
 
@@ -402,7 +386,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         ITYPE_t thread_num,
         ITYPE_t X_start,
         ITYPE_t X_end,
-    ) nogil:
+    ) noexcept nogil:
         """Initialize datastructures used in a thread given its number.
 
         In this method, EuclideanDistance specialisations of subclass of
@@ -425,7 +409,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         """Initialize datastructures just before the _compute_and_reduce_distances_on_chunks.
 
         In this method, EuclideanDistance specialisations of subclass of
@@ -446,20 +430,20 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         ITYPE_t thread_num,
         ITYPE_t X_start,
         ITYPE_t X_end,
-    ) nogil:
+    ) noexcept nogil:
         """Interact with datastructures after a reduction on chunks."""
         return
 
     cdef void _parallel_on_X_parallel_finalize(
         self,
         ITYPE_t thread_num
-    ) nogil:
+    ) noexcept nogil:
         """Interact with datastructures after executing all the reductions."""
         return
 
     cdef void _parallel_on_Y_init(
         self,
-    ) nogil:
+    ) noexcept nogil:
         """Allocate datastructures used in all threads."""
         return
 
@@ -468,7 +452,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         ITYPE_t thread_num,
         ITYPE_t X_start,
         ITYPE_t X_end,
-    ) nogil:
+    ) noexcept nogil:
         """Initialize datastructures used in a thread given its number.
 
         In this method, EuclideanDistance specialisations of subclass of
@@ -491,7 +475,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
-    ) nogil:
+    ) noexcept nogil:
         """Initialize datastructures just before the _compute_and_reduce_distances_on_chunks.
 
         In this method, EuclideanDistance specialisations of subclass of
@@ -511,13 +495,13 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
-    ) nogil:
+    ) noexcept nogil:
         """Update thread datastructures before leaving a parallel region."""
         return
 
     cdef void _parallel_on_Y_finalize(
         self,
-    ) nogil:
+    ) noexcept nogil:
         """Update datastructures after executing all the reductions."""
         return
 
