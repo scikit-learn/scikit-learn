@@ -326,7 +326,8 @@ then use Cython to generate a C program suitable to be compiled as a
 Python extension module.
 
 The `Cython's documentation <http://docs.cython.org/>`_ contains a tutorial and
-reference guide for developing such a module. For more information see :ref:`cython`.
+reference guide for developing such a module.
+For more information about developing in Cython for scikit-learn, see :ref:`cython`.
 
 
 .. _profiling-compiled-extension:
@@ -346,6 +347,28 @@ Easy profiling without special compilation options use yep:
 
 - https://pypi.org/project/yep/
 - https://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
+
+Using a debugger, gdb
+---------------------
+
+* It is helpful to use ``gdb`` to debug. In order to do so, one must use
+  a Python interpreter built with debug support (debug symbols and proper
+  optimization). To create a new conda environment (which you might need
+  to deactivate and reactivate after building/installing) with a source-built
+  CPython interpreter:
+
+  .. code-block:: bash
+
+         git clone https://github.com/python/cpython.git
+         conda create -n debug-scikit-dev
+         conda activate debug-scikit-dev
+         cd cpython
+         mkdir debug
+         cd debug
+         ../configure --prefix=$CONDA_PREFIX --with-pydebug
+         make EXTRA_CFLAGS='-DPy_DEBUG' -j<num_cores>
+         make install
+
 
 Using gprof
 -----------

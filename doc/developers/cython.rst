@@ -3,10 +3,7 @@
 Cython Best Practices, Conventions and Knowledge
 ================================================
 
-This documents:
-
-* technical aspects of Cython which aren't currently present in Cython's documentation
-* tips to develop Cython code in scikit-learn
+This documents tips to develop Cython code in scikit-learn.
 
 Tips for developing with Cython in scikit-learn
 -----------------------------------------------
@@ -17,7 +14,7 @@ Tips to ease development
 * Time spent reading `Cython's documentation <https://cython.readthedocs.io/en/latest/>`_ is not time lost.
 
 * If you intend to use OpenMP: On MacOS, system's distribution of ``clang`` does not implement OpenMP.
-  You can install the ``compilers`` package available on ``conda-forge`` which comes with implementations of OpenMP.
+  You can install the ``compilers`` package available on ``conda-forge`` which comes with an implementation of OpenMP.
 
 * Activating `checks <https://github.com/scikit-learn/scikit-learn/blob/62a017efa047e9581ae7df8bbaa62cf4c0544ee4/sklearn/_build_utils/__init__.py#L68-L87>`_ might help. E.g. for activating boundscheck use:
 
@@ -46,24 +43,10 @@ Tips to ease development
 
          print(f"{test_val=}")
 
-* scikit-learn codebase has a lot of non-unified (fused) types (re)definitions. There currently is `ongoing work to simplify
-  and unify that across the codebase <https://github.com/scikit-learn/scikit-learn/issues/25572>`_. For now, make sure you understand which concrete types are used ultimately.
-
-* It is helpful to use ``gdb`` to debug. In order to do so, one must use a Python interpreter built with debug support
-  (debug symbols and proper optimization). To create a new conda environment (which you might need to deactivate and
-  reactivate conda after building/installing) with a source-built CPython interpreter:
-
-  .. code-block:: bash
-
-         git clone https://github.com/python/cpython.git
-         conda create -n debug-scikit-dev
-         conda activate debug-scikit-dev
-         cd cpython
-         mkdir debug
-         cd debug
-         ../configure --prefix=$CONDA_PREFIX --with-pydebug
-         make EXTRA_CFLAGS='-DPy_DEBUG' -j<num_cores>
-         make install
+* scikit-learn codebase has a lot of non-unified (fused) types (re)definitions.
+  There currently is `ongoing work to simplify and unify that across the codebase
+  <https://github.com/scikit-learn/scikit-learn/issues/25572>`_.
+  For now, make sure you understand which concrete types are used ultimately.
 
 * You might find this alias to compile individual Cython extension handy:
 
@@ -76,7 +59,7 @@ Tips to ease development
          cythonX --annotate source.pyx
 
 * Using the ``--annotate`` option with this flag allows generating a HTML report of code annotation.
-    This report reports interactions with the CPython interpreter on a line-by-line basis.
+    This report indicates interactions with the CPython interpreter on a line-by-line basis.
     Interactions with the CPython interpreter must be avoided as much as possible in
     the computationally intensive sections of the algorithms.
     For more information, please refer to `this section of Cython's tutorial <https://cython.readthedocs.io/en/latest/src/tutorial/cython_tutorial.html#primes>`_
@@ -89,17 +72,18 @@ Tips to ease development
 Tips for performance
 ^^^^^^^^^^^^^^^^^^^^
 
-* Understand the GIL in context for CPython (which problems it solves, what are its limitations) and get a good
-  understanding of when Cython will be mapped to C code free of interactions with CPython, when it will not, and when
-  it cannot (e.g. presence of interactions with Python objects, which include functions). In this regard,
-  `PEP073 <https://peps.python.org/pep-0703/>`_ provides a good overview and context and pathways for removal.
+* Understand the GIL in context for CPython (which problems it solves, what are its limitations)
+  and get a good understanding of when Cython will be mapped to C code free of interactions with
+  CPython, when it will not, and when it cannot (e.g. presence of interactions with Python
+  objects, which include functions). In this regard, `PEP073 <https://peps.python.org/pep-0703/>`_
+  provides a good overview and context and pathways for removal.
 
 * Make sure you have deactivated `checks <https://github.com/scikit-learn/scikit-learn/blob/62a017efa047e9581ae7df8bbaa62cf4c0544ee4/sklearn/_build_utils/__init__.py#L68-L87>`_.
 
-* Always prefer memoryviews instead over ``cnp.ndarray`` when possible: memoryview are lightweight.
+* Always prefer memoryviews instead over ``cnp.ndarray`` when possible: memoryviews are lightweight.
 
-* Avoid memoryview slicing: memoryview slicing might be costly or misleading in some cases and we better not use it IMO,
-  even if handling fewer dimensions in some context would be preferable.
+* Avoid memoryview slicing: memoryview slicing might be costly or misleading in some cases and
+  we better not use it, even if handling fewer dimensions in some context would be preferable.
 
 * Decorate final classes or methods with ``@final`` (this allows removing virtual tables when needed)
 
@@ -107,23 +91,22 @@ Tips for performance
 
 * Make sure your Cython compilation units `use NumPy recent C API <https://github.com/scikit-learn/scikit-learn/blob/62a017efa047e9581ae7df8bbaa62cf4c0544ee4/setup.py#L64-L70>`_.
 
-* In doubt, read the generated C or C++ code if you can: "The fewer C instructions and indirections for a line of
-  Cython code, the better" is a good rule of thumb.
+* In doubt, read the generated C or C++ code if you can: "The fewer C instructions and indirections
+  for a line of Cython code, the better" is a good rule of thumb.
 
-* Understand that ``nogil`` declarations are just hints: when declaring the ``cdef`` functions as nogil,
-  it means that they can be called without holding the GIL, but it does not release the GIL when entering them.
-  You have to do that yourself either by passing ``nogil=True`` to ``cython.parallel.prange`` explicitly,
-  or by using an explicit context manager:
+* Understand that ``nogil`` declarations are just hints: when declaring the ``cdef`` functions
+  as nogil, it means that they can be called without holding the GIL, but it does not release
+  the GIL when entering them. You have to do that yourself either by passing ``nogil=True`` to
+  ``cython.parallel.prange`` explicitly, or by using an explicit context manager:
 
 .. code-block:: cython
 
    cdef inline void my_func(self) nogil:
 
-        # Some logic interacting with CPython, e.g. allocating arrays via
-        # NumPy.
+        # Some logic interacting with CPython, e.g. allocating arrays via NumPy.
 
         with nogil:
-            #
+            # The code here is run as is it were written in C.
 
         return 0
 
@@ -147,7 +130,6 @@ must be ``cimported`` from this module and not from the OpenMP library directly:
    from sklearn.utils._openmp_helpers cimport omp_get_max_threads
    max_threads = omp_get_max_threads()
 
-.. note::
 
-   The parallel loop, `prange`, is already protected by cython and can be used directly
-   from `cython.parallel`.
+The parallel loop, `prange`, is already protected by cython and can be used directly
+from `cython.parallel`.
