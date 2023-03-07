@@ -419,13 +419,13 @@ def mutual_info_classif(
 
     Parameters
     ----------
-    X : array-like or sparse matrix, shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Feature matrix.
 
     y : array-like of shape (n_samples,)
         Target vector.
 
-    discrete_features : {'auto', bool, array-like}, default='auto'
+    discrete_features : 'auto', bool or array-like, default='auto'
         If bool, then determines whether to consider all features discrete
         or continuous. If array, then it should be either a boolean mask
         with shape (n_features,) or array with indices of discrete features.
