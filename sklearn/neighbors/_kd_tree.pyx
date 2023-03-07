@@ -32,8 +32,7 @@ cdef class KDTree(BinaryTree):
 cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes,
                        ITYPE_t n_features) except -1:
     """Allocate arrays needed for the KD Tree"""
-    tree.node_bounds_arr = np.zeros((2, n_nodes, n_features), dtype=DTYPE)
-    tree.node_bounds = tree.node_bounds_arr
+    tree.node_bounds = np.zeros((2, n_nodes, n_features), dtype=DTYPE)
     return 0
 
 
@@ -83,7 +82,7 @@ cdef int init_node(BinaryTree tree, NodeData_t[::1] node_data, ITYPE_t i_node,
 
 
 cdef DTYPE_t min_rdist(BinaryTree tree, ITYPE_t i_node,
-                       DTYPE_t* pt) nogil except -1:
+                       DTYPE_t* pt) except -1 nogil:
     """Compute the minimum reduced-distance between a point and a node"""
     cdef ITYPE_t n_features = tree.data.shape[1]
     cdef DTYPE_t d, d_lo, d_hi, rdist=0.0
@@ -144,7 +143,7 @@ cdef DTYPE_t max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) except -1:
 
 
 cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
-                             DTYPE_t* min_dist, DTYPE_t* max_dist) nogil except -1:
+                             DTYPE_t* min_dist, DTYPE_t* max_dist) except -1 nogil:
     """Compute the minimum and maximum distance between a point and a node"""
     cdef ITYPE_t n_features = tree.data.shape[1]
 
@@ -160,10 +159,8 @@ cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
             d_hi = pt[j] - tree.node_bounds[1, i_node, j]
             d = (d_lo + fabs(d_lo)) + (d_hi + fabs(d_hi))
             min_dist[0] = fmax(min_dist[0], 0.5 * d)
-            max_dist[0] = fmax(max_dist[0],
-                               fabs(pt[j] - tree.node_bounds[0, i_node, j]))
-            max_dist[0] = fmax(max_dist[0],
-                               fabs(pt[j] - tree.node_bounds[1, i_node, j]))
+            max_dist[0] = fmax(max_dist[0], fabs(d_lo))
+            max_dist[0] = fmax(max_dist[0], fabs(d_hi))
     else:
         # as above, use the fact that x + abs(x) = 2 * max(x, 0)
         for j in range(n_features):

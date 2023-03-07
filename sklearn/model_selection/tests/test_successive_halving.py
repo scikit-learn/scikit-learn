@@ -52,6 +52,75 @@ class FastClassifier(DummyClassifier):
         return params
 
 
+class SometimesFailClassifier(DummyClassifier):
+    def __init__(
+        self,
+        strategy="stratified",
+        random_state=None,
+        constant=None,
+        n_estimators=10,
+        fail_fit=False,
+        fail_predict=False,
+        a=0,
+    ):
+        self.fail_fit = fail_fit
+        self.fail_predict = fail_predict
+        self.n_estimators = n_estimators
+        self.a = a
+
+        super().__init__(
+            strategy=strategy, random_state=random_state, constant=constant
+        )
+
+    def fit(self, X, y):
+        if self.fail_fit:
+            raise Exception("fitting failed")
+        return super().fit(X, y)
+
+    def predict(self, X):
+        if self.fail_predict:
+            raise Exception("predict failed")
+        return super().predict(X)
+
+
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.FitFailedWarning")
+@pytest.mark.filterwarnings("ignore:Scoring failed:UserWarning")
+@pytest.mark.filterwarnings("ignore:One or more of the:UserWarning")
+@pytest.mark.parametrize("HalvingSearch", (HalvingGridSearchCV, HalvingRandomSearchCV))
+@pytest.mark.parametrize("fail_at", ("fit", "predict"))
+def test_nan_handling(HalvingSearch, fail_at):
+    """Check the selection of the best scores in presence of failure represented by
+    NaN values."""
+    n_samples = 1_000
+    X, y = make_classification(n_samples=n_samples, random_state=0)
+
+    search = HalvingSearch(
+        SometimesFailClassifier(),
+        {f"fail_{fail_at}": [False, True], "a": range(3)},
+        resource="n_estimators",
+        max_resources=6,
+        min_resources=1,
+        factor=2,
+    )
+
+    search.fit(X, y)
+
+    # estimators that failed during fit/predict should always rank lower
+    # than ones where the fit/predict succeeded
+    assert not search.best_params_[f"fail_{fail_at}"]
+    scores = search.cv_results_["mean_test_score"]
+    ranks = search.cv_results_["rank_test_score"]
+
+    # some scores should be NaN
+    assert np.isnan(scores).any()
+
+    unique_nan_ranks = np.unique(ranks[np.isnan(scores)])
+    # all NaN scores should have the same rank
+    assert unique_nan_ranks.shape[0] == 1
+    # NaNs should have the lowest rank
+    assert (unique_nan_ranks[0] >= ranks).all()
+
+
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
     "aggressive_elimination,"
@@ -333,7 +402,6 @@ def test_random_search_discrete_distributions(
 @pytest.mark.parametrize(
     "params, expected_error_message",
     [
-        ({"scoring": {"accuracy", "accuracy"}}, "Multimetric scoring is not supported"),
         (
             {"resource": "not_a_parameter"},
             "Cannot use resource=not_a_parameter which is not supported",
@@ -342,15 +410,9 @@ def test_random_search_discrete_distributions(
             {"resource": "a", "max_resources": 100},
             "Cannot use parameter a as the resource since it is part of",
         ),
-        ({"max_resources": "not_auto"}, "max_resources must be either"),
-        ({"max_resources": 100.5}, "max_resources must be either"),
-        ({"max_resources": -10}, "max_resources must be either"),
-        ({"min_resources": "bad str"}, "min_resources must be either"),
-        ({"min_resources": 0.5}, "min_resources must be either"),
-        ({"min_resources": -10}, "min_resources must be either"),
         (
             {"max_resources": "auto", "resource": "b"},
-            "max_resources can only be 'auto' if resource='n_samples'",
+            "resource can only be 'n_samples' when max_resources='auto'",
         ),
         (
             {"min_resources": 15, "max_resources": 14},
@@ -358,7 +420,6 @@ def test_random_search_discrete_distributions(
         ),
         ({"cv": KFold(shuffle=True)}, "must yield consistent folds"),
         ({"cv": ShuffleSplit()}, "must yield consistent folds"),
-        ({"refit": "whatever"}, "refit is expected to be a boolean"),
     ],
 )
 def test_input_errors(Est, params, expected_error_message):
@@ -379,8 +440,6 @@ def test_input_errors(Est, params, expected_error_message):
             {"n_candidates": "exhaust", "min_resources": "exhaust"},
             "cannot be both set to 'exhaust'",
         ),
-        ({"n_candidates": "bad"}, "either 'exhaust' or a positive integer"),
-        ({"n_candidates": 0}, "either 'exhaust' or a positive integer"),
     ],
 )
 def test_input_errors_randomized(params, expected_error_message):

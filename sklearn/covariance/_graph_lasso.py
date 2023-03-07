@@ -13,7 +13,6 @@ import time
 from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
-from joblib import Parallel
 
 from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
@@ -23,7 +22,7 @@ from ..utils.validation import (
     check_random_state,
     check_scalar,
 )
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import Interval, StrOptions
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -136,7 +135,7 @@ def graphical_lasso(
         If verbose is True, the objective function and dual gap are
         printed at each iteration.
 
-    return_costs : bool, default=Flase
+    return_costs : bool, default=False
         If return_costs is True, the objective function and dual gap
         at each iteration are returned.
 

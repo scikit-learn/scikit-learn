@@ -206,5 +206,5 @@ plt.show()
 #        1996.
 # .. [3] `Obtaining calibrated probability estimates from decision trees and
 #        naive Bayesian classifiers
-#        <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.29.3039&rep=rep1&type=pdf>`_
+#        <https://citeseerx.ist.psu.edu/doc_view/pid/4f67a122ec3723f08ad5cbefecad119b432b3304>`_
 #        Zadrozny, Bianca, and Charles Elkan. Icml. Vol. 1. 2001.

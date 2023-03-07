@@ -41,7 +41,7 @@ cdef inline DTYPE_t euclidean_dist{{name_suffix}}(
     const {{INPUT_DTYPE_t}}* x1,
     const {{INPUT_DTYPE_t}}* x2,
     ITYPE_t size,
-) nogil except -1:
+) except -1 nogil:
     cdef DTYPE_t tmp, d=0
     cdef cnp.intp_t j
     for j in range(size):
@@ -54,7 +54,7 @@ cdef inline DTYPE_t euclidean_rdist{{name_suffix}}(
     const {{INPUT_DTYPE_t}}* x1,
     const {{INPUT_DTYPE_t}}* x2,
     ITYPE_t size,
-) nogil except -1:
+) except -1 nogil:
     cdef DTYPE_t tmp, d=0
     cdef cnp.intp_t j
     for j in range(size):
@@ -63,11 +63,11 @@ cdef inline DTYPE_t euclidean_rdist{{name_suffix}}(
     return d
 
 
-cdef inline DTYPE_t euclidean_dist_to_rdist{{name_suffix}}(const {{INPUT_DTYPE_t}} dist) nogil except -1:
+cdef inline DTYPE_t euclidean_dist_to_rdist{{name_suffix}}(const {{INPUT_DTYPE_t}} dist) except -1 nogil:
     return dist * dist
 
 
-cdef inline DTYPE_t euclidean_rdist_to_dist{{name_suffix}}(const {{INPUT_DTYPE_t}} dist) nogil except -1:
+cdef inline DTYPE_t euclidean_rdist_to_dist{{name_suffix}}(const {{INPUT_DTYPE_t}} dist) except -1 nogil:
     return sqrt(dist)
 
 
@@ -79,8 +79,8 @@ cdef class DistanceMetric{{name_suffix}}:
     # Because we don't expect to instantiate a lot of these objects, the
     # extra memory overhead of this setup should not be an issue.
     cdef DTYPE_t p
-    cdef DTYPE_t[::1] vec
-    cdef DTYPE_t[:, ::1] mat
+    cdef const DTYPE_t[::1] vec
+    cdef const DTYPE_t[:, ::1] mat
     cdef ITYPE_t size
     cdef object func
     cdef object kwargs
@@ -90,14 +90,14 @@ cdef class DistanceMetric{{name_suffix}}:
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
         ITYPE_t size,
-    ) nogil except -1
+    ) except -1 nogil
 
     cdef DTYPE_t rdist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
         ITYPE_t size,
-    ) nogil except -1
+    ) except -1 nogil
 
     cdef DTYPE_t dist_csr(
         self,
@@ -110,7 +110,7 @@ cdef class DistanceMetric{{name_suffix}}:
         const SPARSE_INDEX_TYPE_t x2_start,
         const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
-    ) nogil except -1
+    ) except -1 nogil
 
     cdef DTYPE_t rdist_csr(
         self,
@@ -123,7 +123,7 @@ cdef class DistanceMetric{{name_suffix}}:
         const SPARSE_INDEX_TYPE_t x2_start,
         const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
-    ) nogil except -1
+    ) except -1 nogil
 
     cdef int pdist(
         self,
@@ -145,7 +145,7 @@ cdef class DistanceMetric{{name_suffix}}:
         const SPARSE_INDEX_TYPE_t[:] x1_indptr,
         const ITYPE_t size,
         DTYPE_t[:, ::1] D,
-    ) nogil except -1
+    ) except -1 nogil
 
     cdef int cdist_csr(
         self,
@@ -157,10 +157,10 @@ cdef class DistanceMetric{{name_suffix}}:
         const SPARSE_INDEX_TYPE_t[:] x2_indptr,
         const ITYPE_t size,
         DTYPE_t[:, ::1] D,
-    ) nogil except -1
+    ) except -1 nogil
 
-    cdef DTYPE_t _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) nogil except -1
+    cdef DTYPE_t _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil
 
-    cdef DTYPE_t _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) nogil except -1
+    cdef DTYPE_t _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil
 
 {{endfor}}

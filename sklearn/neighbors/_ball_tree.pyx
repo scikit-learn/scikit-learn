@@ -11,7 +11,7 @@ VALID_METRICS = ['EuclideanDistance', 'SEuclideanDistance',
                  'MahalanobisDistance', 'HammingDistance',
                  'CanberraDistance', 'BrayCurtisDistance',
                  'JaccardDistance', 'MatchingDistance',
-                 'DiceDistance', 'KulsinskiDistance',
+                 'DiceDistance',
                  'RogersTanimotoDistance', 'RussellRaoDistance',
                  'SokalMichenerDistance', 'SokalSneathDistance',
                  'PyFuncDistance', 'HaversineDistance']
@@ -38,8 +38,7 @@ cdef class BallTree(BinaryTree):
 cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes,
                        ITYPE_t n_features) except -1:
     """Allocate arrays needed for the KD Tree"""
-    tree.node_bounds_arr = np.zeros((1, n_nodes, n_features), dtype=DTYPE)
-    tree.node_bounds = tree.node_bounds_arr
+    tree.node_bounds = np.zeros((1, n_nodes, n_features), dtype=DTYPE)
     return 0
 
 
@@ -101,7 +100,7 @@ cdef int init_node(BinaryTree tree, NodeData_t[::1] node_data, ITYPE_t i_node,
 
 
 cdef inline DTYPE_t min_dist(BinaryTree tree, ITYPE_t i_node,
-                             DTYPE_t* pt) nogil except -1:
+                             DTYPE_t* pt) except -1 nogil:
     """Compute the minimum distance between a point and a node"""
     cdef DTYPE_t dist_pt = tree.dist(pt, &tree.node_bounds[0, i_node, 0],
                                      tree.data.shape[1])
@@ -117,7 +116,7 @@ cdef inline DTYPE_t max_dist(BinaryTree tree, ITYPE_t i_node,
 
 
 cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
-                             DTYPE_t* min_dist, DTYPE_t* max_dist) nogil except -1:
+                             DTYPE_t* min_dist, DTYPE_t* max_dist) except -1 nogil:
     """Compute the minimum and maximum distance between a point and a node"""
     cdef DTYPE_t dist_pt = tree.dist(pt, &tree.node_bounds[0, i_node, 0],
                                      tree.data.shape[1])
@@ -128,7 +127,7 @@ cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
 
 
 cdef inline DTYPE_t min_rdist(BinaryTree tree, ITYPE_t i_node,
-                              DTYPE_t* pt) nogil except -1:
+                              DTYPE_t* pt) except -1 nogil:
     """Compute the minimum reduced-distance between a point and a node"""
     if tree.euclidean:
         return euclidean_dist_to_rdist(min_dist(tree, i_node, pt))

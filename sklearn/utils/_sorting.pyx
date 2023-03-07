@@ -5,7 +5,7 @@ cdef inline void dual_swap(
     ITYPE_t *iarr,
     ITYPE_t a,
     ITYPE_t b,
-) nogil:
+) noexcept nogil:
     """Swap the values at index a and b of both darr and iarr"""
     cdef floating dtmp = darr[a]
     darr[a] = darr[b]
@@ -20,7 +20,7 @@ cdef int simultaneous_sort(
     floating* values,
     ITYPE_t* indices,
     ITYPE_t size,
-) nogil:
+) noexcept nogil:
     """
     Perform a recursive quicksort on the values array as to sort them ascendingly.
     This simultaneously performs the swaps on both the values and the indices arrays.
