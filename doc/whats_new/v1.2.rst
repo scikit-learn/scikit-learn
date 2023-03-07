@@ -70,7 +70,7 @@ Changelog
   when dealing with mixed data type categories that cannot be sorted by
   :func:`numpy.unique`. This problem usually happen when categories are `str` and
   missing values are present using `np.nan`.
-  :pr:`xxxxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`25774` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.isotonic`
 .......................
