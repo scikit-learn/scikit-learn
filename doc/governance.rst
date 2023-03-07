@@ -42,7 +42,7 @@ new members to any of the roles listed below. Their membership is represented
 as being an organization member on the scikit-learn `GitHub organization
 <https://github.com/orgs/scikit-learn/people>`_.
 
-They are also more than welcome to join our `monthly core contributor meetings
+They are also welcome to join our `monthly core contributor meetings
 <https://github.com/scikit-learn/administrative/tree/master/meeting_notes>`_.
 
 New members can be nominated by any existing member. Once they have been
