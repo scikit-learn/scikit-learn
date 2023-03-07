@@ -58,6 +58,8 @@ members and recant their rights until they become active again. The list of
 members, active and emeritus (with dates at which they became active) is public
 on the scikit-learn website.
 
+The following teams form the core contributors group.
+
 
 Contributor Experience Team
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
