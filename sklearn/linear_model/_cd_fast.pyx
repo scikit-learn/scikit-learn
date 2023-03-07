@@ -90,13 +90,12 @@ cdef floating diff_abs_max(int n, floating* a, floating* b) noexcept nogil:
             m = d
     return m
 
-# TODO: use const fused typed memoryview where possible when Cython 0.29.33 is used.
 def enet_coordinate_descent(
-    cnp.ndarray[floating, ndim=1, mode='c'] w,
+    floating[::1] w,
     floating alpha,
     floating beta,
-    cnp.ndarray[floating, ndim=2, mode='fortran'] X,
-    cnp.ndarray[floating, ndim=1, mode='c'] y,
+    const floating[::1, :] X,
+    const floating[::1] y,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -157,6 +156,8 @@ def enet_coordinate_descent(
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef floating * X_ptr = <floating *> &X[0, 0]
+    cdef floating * y_ptr = <floating *> &y[0]
 
     if alpha == 0 and beta == 0:
         warnings.warn("Coordinate descent with no regularization may lead to "
@@ -164,12 +165,12 @@ def enet_coordinate_descent(
 
     with nogil:
         # R = y - np.dot(X, w)
-        _copy(n_samples, &y[0], 1, &R[0], 1)
-        _gemv(ColMajor, NoTrans, n_samples, n_features, -1.0, &X[0, 0],
+        _copy(n_samples, y_ptr, 1, &R[0], 1)
+        _gemv(ColMajor, NoTrans, n_samples, n_features, -1.0, X_ptr,
               n_samples, &w[0], 1, 1.0, &R[0], 1)
 
         # tol *= np.dot(y, y)
-        tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
+        tol *= _dot(n_samples, y_ptr, 1, y_ptr, 1)
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -187,10 +188,10 @@ def enet_coordinate_descent(
 
                 if w_ii != 0.0:
                     # R += w_ii * X[:,ii]
-                    _axpy(n_samples, w_ii, &X[0, ii], 1, &R[0], 1)
+                    _axpy(n_samples, w_ii, <floating *> &X[0, ii], 1, &R[0], 1)
 
                 # tmp = (X[:,ii]*R).sum()
-                tmp = _dot(n_samples, &X[0, ii], 1, &R[0], 1)
+                tmp = _dot(n_samples, <floating *> &X[0, ii], 1, &R[0], 1)
 
                 if positive and tmp < 0:
                     w[ii] = 0.0
@@ -200,7 +201,9 @@ def enet_coordinate_descent(
 
                 if w[ii] != 0.0:
                     # R -=  w[ii] * X[:,ii] # Update residual
-                    _axpy(n_samples, -w[ii], &X[0, ii], 1, &R[0], 1)
+                    _axpy(
+                        n_samples, -w[ii], <floating *> &X[0, ii], 1, &R[0], 1
+                    )
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
@@ -218,7 +221,7 @@ def enet_coordinate_descent(
                 # XtA = np.dot(X.T, R) - beta * w
                 _copy(n_features, &w[0], 1, &XtA[0], 1)
                 _gemv(ColMajor, Trans,
-                      n_samples, n_features, 1.0, &X[0, 0], n_samples,
+                      n_samples, n_features, 1.0, X_ptr, n_samples,
                       &R[0], 1,
                       -beta, &XtA[0], 1)
 
@@ -245,7 +248,7 @@ def enet_coordinate_descent(
 
                 # np.dot(R.T, y)
                 gap += (alpha * l1_norm
-                        - const * _dot(n_samples, &R[0], 1, &y[0], 1)
+                        - const * _dot(n_samples, &R[0], 1, y_ptr, 1)
                         + 0.5 * beta * (1 + const ** 2) * (w_norm2))
 
                 if gap < tol:
@@ -273,17 +276,16 @@ def enet_coordinate_descent(
     return np.asarray(w), gap, tol, n_iter + 1
 
 
-# TODO: use const fused typed memoryview where possible when Cython 0.29.33 is used.
 def sparse_enet_coordinate_descent(
-    cnp.ndarray[floating, ndim=1, mode='c'] w,
+    floating[::1] w,
     floating alpha,
     floating beta,
-    cnp.ndarray[floating, ndim=1, mode='c'] X_data,
+    const floating[::1] X_data,
     const int[::1] X_indices,
     const int[::1] X_indptr,
-    cnp.ndarray[floating, ndim=1, mode='c'] y,
-    cnp.ndarray[floating, ndim=1, mode='c'] sample_weight,
-    cnp.ndarray[floating, ndim=1, mode='c'] X_mean,
+    const floating[::1] y,
+    const floating[::1] sample_weight,
+    const floating[::1] X_mean,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -340,7 +342,7 @@ def sparse_enet_coordinate_descent(
     # R = y - Zw, weighted version R = sample_weight * (y - Zw)
     cdef floating[::1] R
     cdef floating[::1] XtA
-    cdef floating[::1] yw
+    cdef const floating[::1] yw
 
     if floating is float:
         dtype = np.float32
@@ -381,6 +383,9 @@ def sparse_enet_coordinate_descent(
         yw = np.multiply(sample_weight, y)
         R = yw.copy()
 
+    cdef floating * y_ptr = <floating *> &y[0]
+    cdef floating * yw_ptr = <floating *> &yw[0]
+
     with nogil:
         # center = (X_mean != 0).any()
         for ii in range(n_features):
@@ -419,7 +424,7 @@ def sparse_enet_coordinate_descent(
 
         # tol *= np.dot(y, y)
         # with sample weights: tol *= y @ (sw * y)
-        tol *= _dot(n_samples, &y[0], 1, &yw[0], 1)
+        tol *= _dot(n_samples, y_ptr, 1, yw_ptr, 1)
 
         for n_iter in range(max_iter):
 
@@ -546,7 +551,7 @@ def sparse_enet_coordinate_descent(
                 gap += (alpha * l1_norm - const * _dot(
                             n_samples,
                             &R[0], 1,
-                            &y[0], 1
+                            y_ptr, 1
                             )
                         + 0.5 * beta * (1 + const ** 2) * w_norm2)
 
@@ -565,14 +570,13 @@ def sparse_enet_coordinate_descent(
     return np.asarray(w), gap, tol, n_iter + 1
 
 
-# TODO: use const fused typed memoryview where possible when Cython 0.29.33 is used.
 def enet_coordinate_descent_gram(
-    cnp.ndarray[floating, ndim=1, mode='c'] w,
+    floating[::1] w,
     floating alpha,
     floating beta,
-    cnp.ndarray[floating, ndim=2, mode='c'] Q,
-    cnp.ndarray[floating, ndim=1, mode='c'] q,
-    cnp.ndarray[floating, ndim=1] y,
+    const floating[:, ::1] Q,
+    const floating[::1] q,
+    const floating[:] y,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -633,8 +637,8 @@ def enet_coordinate_descent_gram(
 
     cdef floating y_norm2 = np.dot(y, y)
     cdef floating* w_ptr = &w[0]
-    cdef floating* Q_ptr = &Q[0, 0]
-    cdef floating* q_ptr = &q[0]
+    cdef floating* Q_ptr = <floating *> &Q[0, 0]
+    cdef floating* q_ptr = <floating *> &q[0]
     cdef floating* H_ptr = &H[0]
     cdef floating* XtA_ptr = &XtA[0]
     tol = tol * y_norm2
@@ -736,14 +740,12 @@ def enet_coordinate_descent_gram(
 
     return np.asarray(w), gap, tol, n_iter + 1
 
-# TODO: use const fused typed memoryview where possible when Cython 0.29.33 is used.
 def enet_coordinate_descent_multi_task(
-    cnp.ndarray[floating, ndim=2, mode='fortran'] W,
+    const floating[::1, :] W,
     floating l1_reg,
     floating l2_reg,
-    # TODO: use const qualified fused-typed memoryview when Cython 3.0 is used.
-    cnp.ndarray[floating, ndim=2, mode='fortran'] X,
-    cnp.ndarray[floating, ndim=2, mode='fortran'] Y,
+    const floating[::1, :] X,
+    const floating[::1, :] Y,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -807,8 +809,8 @@ def enet_coordinate_descent_multi_task(
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
-    cdef floating* X_ptr = &X[0, 0]
-    cdef floating* Y_ptr = &Y[0, 0]
+    cdef floating* X_ptr = <floating *> &X[0, 0]
+    cdef floating* Y_ptr = <floating *> &Y[0, 0]
 
     if l1_reg == 0:
         warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
@@ -843,7 +845,7 @@ def enet_coordinate_descent_multi_task(
                     continue
 
                 # w_ii = W[:, ii] # Store previous value
-                _copy(n_tasks, &W[0, ii], 1, &w_ii[0], 1)
+                _copy(n_tasks, <floating *> &W[0, ii], 1, &w_ii[0], 1)
 
                 # Using Numpy:
                 # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
@@ -872,9 +874,9 @@ def enet_coordinate_descent_multi_task(
                 nn = _nrm2(n_tasks, &tmp[0], 1)
 
                 # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
-                _copy(n_tasks, &tmp[0], 1, &W[0, ii], 1)
+                _copy(n_tasks, &tmp[0], 1, <floating *> &W[0, ii], 1)
                 _scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
-                      &W[0, ii], 1)
+                      <floating *> &W[0, ii], 1)
 
                 # Using numpy:
                 # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :])
@@ -890,12 +892,12 @@ def enet_coordinate_descent_multi_task(
                               &R[0, jj], 1)
 
                 # update the maximum absolute coefficient update
-                d_w_ii = diff_abs_max(n_tasks, &W[0, ii], &w_ii[0])
+                d_w_ii = diff_abs_max(n_tasks, <floating *> &W[0, ii], &w_ii[0])
 
                 if d_w_ii > d_w_max:
                     d_w_max = d_w_ii
 
-                W_ii_abs_max = abs_max(n_tasks, &W[0, ii])
+                W_ii_abs_max = abs_max(n_tasks, <floating *> &W[0, ii])
                 if W_ii_abs_max > w_max:
                     w_max = W_ii_abs_max
 
@@ -923,7 +925,7 @@ def enet_coordinate_descent_multi_task(
                 # R_norm = linalg.norm(R, ord='fro')
                 # w_norm = linalg.norm(W, ord='fro')
                 R_norm = _nrm2(n_samples * n_tasks, &R[0, 0], 1)
-                w_norm = _nrm2(n_features * n_tasks, &W[0, 0], 1)
+                w_norm = _nrm2(n_features * n_tasks, <floating *> &W[0, 0], 1)
                 if (dual_norm_XtA > l1_reg):
                     const =  l1_reg / dual_norm_XtA
                     A_norm = R_norm * const
@@ -933,12 +935,12 @@ def enet_coordinate_descent_multi_task(
                     gap = R_norm ** 2
 
                 # ry_sum = np.sum(R * y)
-                ry_sum = _dot(n_samples * n_tasks, &R[0, 0], 1, &Y[0, 0], 1)
+                ry_sum = _dot(n_samples * n_tasks, &R[0, 0], 1, Y_ptr, 1)
 
                 # l21_norm = np.sqrt(np.sum(W ** 2, axis=0)).sum()
                 l21_norm = 0.0
                 for ii in range(n_features):
-                    l21_norm += _nrm2(n_tasks, &W[0, ii], 1)
+                    l21_norm += _nrm2(n_tasks, <floating *> &W[0, ii], 1)
 
                 gap += l1_reg * l21_norm - const * ry_sum + \
                      0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
