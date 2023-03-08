@@ -115,7 +115,7 @@ Changelog
 
 - |API| The `data_transposed` argument of :func:`datasets.make_sparse_coded_signal`
   is deprecated and will be removed in v1.5.
-  :pr:`25781` by :user:`Jérémie du Boisberranger`.
+  :pr:`25784` by :user:`Jérémie du Boisberranger`.
 
 :mod:`sklearn.decomposition`
 ............................
