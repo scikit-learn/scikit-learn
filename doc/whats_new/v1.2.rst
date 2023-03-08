@@ -84,6 +84,10 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Fix| :attr:`preprocessing.OneHotEncoder.drop_idx_` now properly 
+  references the dropped category in the `categories_` attribute
+  when there are infrequent categories. :pr:`25589` by `Thomas Fan`_.
+
 - |Fix| :class:`preprocessing.OrdinalEncoder` now correctly supports
   `encoded_missing_value` or `unknown_value` set to a categories' cardinality
   when there is missing values in the training data. :pr:`25704` by `Thomas Fan`_.
