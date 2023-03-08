@@ -109,12 +109,11 @@ def test_docstring_parameters():
                     "Error for __init__ of %s in %s:\n%s" % (cls, name, w[0])
                 )
 
-            cls_init = getattr(cls, "__init__", None)
-
-            if _is_deprecated(cls_init):
+            # Skip checks on deprecated classes
+            if _is_deprecated(cls.__new__):
                 continue
-            elif cls_init is not None:
-                this_incorrect += check_docstring_parameters(cls.__init__, cdoc)
+
+            this_incorrect += check_docstring_parameters(cls.__init__, cdoc)
 
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
