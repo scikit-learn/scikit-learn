@@ -209,8 +209,6 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
                 metric == "minkowski" and metric_kwargs.get("p", 2) == 2
             )
 
-        manhattan_metrics = ["cityblock", "l1", "manhattan"]
-
         Y = X if Y is None else Y
 
         is_usable = (
@@ -218,10 +216,11 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
             and super().is_usable_for(X, Y, metric)
             and effective_n_threads != 1
         )
-        manhattan_single_thread_guard = (
-            metric in manhattan_metrics and effective_n_threads == 1
-        )
-        return is_usable or manhattan_single_thread_guard
+
+        # We need to rely on `PairwiseDistances` for manhattan anyway because
+        # the implementation of manhattan distances on sparse data has been removed.
+        manhattan_metrics = ["cityblock", "l1", "manhattan"]
+        return is_usable or metric in manhattan_metrics
 
     @classmethod
     def compute(

@@ -1414,27 +1414,29 @@ def test_pairwise_distances_is_usable_for(
     n_samples, n_features = 100, 10
     X = rng.rand(n_samples, n_features).astype(dtype)
 
-    def mock_openmp_effective_n_threads():
-        return 4
-
+    # We monkey patch this interface to test the expected behavior
+    # when the machine running the test only uses one thread.
     monkeypatch.setattr(
         "sklearn.utils._openmp_helpers._openmp_effective_n_threads",
-        mock_openmp_effective_n_threads,
+        lambda _: 4,
     )
 
+    # Equivalent specifications of the Euclidean metric.
+    # TODO: support Euclidean metric.
     assert not PairwiseDistances.is_usable_for(X, X, metric="euclidean")
     assert not PairwiseDistances.is_usable_for(X, X, metric="minkowski")
     assert not PairwiseDistances.is_usable_for(
         X, X, metric="minkowski", metric_kwargs={"p": 2}
     )
+
     assert PairwiseDistances.is_usable_for(
         X, X, metric="minkowski", metric_kwargs={"p": 3}
     )
 
-    controler = threadpoolctl.ThreadpoolController()
+    controller = threadpoolctl.ThreadpoolController()
 
-    with controler.limit(limits=1, user_api=None):
-        assert not PairwiseDistances.is_usable_for(X, X, metric="manhattan")
+    with controller.limit(limits=1, user_api=None):
+        assert PairwiseDistances.is_usable_for(X, X, metric="manhattan")
 
-    with controler.limit(limits=2, user_api=None):
+    with controller.limit(limits=2, user_api=None):
         assert PairwiseDistances.is_usable_for(X, X, metric="manhattan")
