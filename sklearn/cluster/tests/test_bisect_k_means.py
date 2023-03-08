@@ -135,7 +135,9 @@ def test_sample_weight_init_bisect(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     X = rng.rand(20, 2)
     sample_weight = rng.uniform(size=20)
-    kmeans = BisectingKMeans(n_clusters=3, random_state=global_random_seed, init="random")
+    kmeans = BisectingKMeans(
+        n_clusters=3, random_state=global_random_seed, init="random"
+    )
     clusters_weighted = kmeans.fit(X, sample_weight=sample_weight).cluster_centers_
     clusters = kmeans.fit(X).cluster_centers_
     assert (clusters_weighted != clusters).any()
