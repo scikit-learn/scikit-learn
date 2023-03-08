@@ -1431,7 +1431,8 @@ class KMeans(_BaseKMeans):
 
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight.
+            are assigned equal weight. If `init` is set to 'random' weight
+            will also be used to initialize centroids.
 
             .. versionadded:: 0.20
 
@@ -2039,7 +2040,8 @@ class MiniBatchKMeans(_BaseKMeans):
 
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight.
+            are assigned equal weight. If `init` is set to 'random' weight
+            will also be used to initialize centroids.
 
             .. versionadded:: 0.20
 
@@ -2195,7 +2197,8 @@ class MiniBatchKMeans(_BaseKMeans):
 
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight.
+            are assigned equal weight. If `init` is set to 'random' weight
+            will also be used to initialize centroids.
 
         Returns
         -------
