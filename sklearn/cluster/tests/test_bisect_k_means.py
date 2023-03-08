@@ -130,13 +130,12 @@ def test_float32_float64_equivalence(is_sparse):
     assert_array_equal(km32.labels_, km64.labels_)
 
 
-def test_sample_weight_init_bisect():
+def test_sample_weight_init_bisect(global_random_seed):
     """Check that sample weight is used during init."""
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.rand(20, 2)
     sample_weight = rng.uniform(size=20)
-    kmeans = BisectingKMeans(n_clusters=3, random_state=0, init="random")
+    kmeans = BisectingKMeans(n_clusters=3, random_state=global_random_seed, init="random")
     y_pred_sw = kmeans.fit(X, sample_weight=sample_weight).cluster_centers_
-    kmeans = BisectingKMeans(n_clusters=3, random_state=0, init="random")
     y_pred = kmeans.fit(X).cluster_centers_
     assert (y_pred_sw != y_pred).any()
