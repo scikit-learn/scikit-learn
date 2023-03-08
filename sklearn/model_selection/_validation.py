@@ -14,7 +14,6 @@ functions to validate the model.
 import warnings
 import numbers
 import time
-from collections import defaultdict
 from functools import partial
 from traceback import format_exc
 from contextlib import suppress
@@ -215,10 +214,10 @@ def cross_validate(
                 This is available only if ``return_estimator`` parameter
                 is set to ``True``.
             ``indices``
-                The train/test indices for each cv split. A Python dictionary
+                The train/test indices for each cv split. A dictionary
                 is returned where the keys are either `"train"` or `"test"`
                 and the associated values are a list of NumPy arrays with the
-                indices.
+                indices. Available only if `return_indices=True`.
 
     See Also
     --------
@@ -272,6 +271,11 @@ def cross_validate(
     else:
         scorers = _check_multimetric_scoring(estimator, scoring)
 
+    indices = cv.split(X, y, groups)
+    if return_indices:
+        # materialize the indices since we need to store them in the returned dict
+        indices = list(indices)
+
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
@@ -289,10 +293,9 @@ def cross_validate(
             return_train_score=return_train_score,
             return_times=True,
             return_estimator=return_estimator,
-            return_indices=return_indices,
             error_score=error_score,
         )
-        for train, test in cv.split(X, y, groups)
+        for train, test in indices
     )
 
     _warn_or_raise_about_fit_failures(results, error_score)
@@ -313,8 +316,8 @@ def cross_validate(
         ret["estimator"] = results["estimator"]
 
     if return_indices:
-        ret["indices"] = defaultdict(list)
-        ret["indices"]["train"], ret["indices"]["test"] = zip(*results["indices"])
+        ret["indices"] = {}
+        ret["indices"]["train"], ret["indices"]["test"] = zip(*indices)
 
     test_scores_dict = _normalize_score_results(results["test_scores"])
     if return_train_score:
@@ -560,7 +563,6 @@ def _fit_and_score(
     return_n_test_samples=False,
     return_times=False,
     return_estimator=False,
-    return_indices=False,
     split_progress=None,
     candidate_progress=None,
     error_score=np.nan,
@@ -631,9 +633,6 @@ def _fit_and_score(
 
     return_estimator : bool, default=False
         Whether to return the fitted estimator.
-
-    return_indices : bool, default=False
-        Whether to return the train-test indices selected for each split.
 
     Returns
     -------
@@ -768,8 +767,6 @@ def _fit_and_score(
         result["parameters"] = parameters
     if return_estimator:
         result["estimator"] = estimator
-    if return_indices:
-        result["indices"] = (train, test)
     return result
 
 

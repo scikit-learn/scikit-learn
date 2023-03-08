@@ -221,7 +221,7 @@ following keys -
 ``return_train_score`` is set to ``False`` by default to save computation time.
 To evaluate the scores on the training set as well you need to set it to
 ``True``. You may also retain the estimator fitted on each training set by
-setting ``return_estimator=True``. On the same line of thought, you may set
+setting ``return_estimator=True``. Similarly, you may set
 `return_indices=True` to retain the training and testing indices used to split
 the dataset into train and test sets for each cv split.
 
