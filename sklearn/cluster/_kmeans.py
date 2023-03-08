@@ -977,7 +977,7 @@ class _BaseKMeans(
             If left to 'None' the number of centroids will be equal to
             number of clusters to form (self.n_clusters)
 
-        sample_weight : array-like of shape (n_samples,), default=None
+        sample_weight : ndarray of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight. Used only if 'init' is set to 'random'.
 
