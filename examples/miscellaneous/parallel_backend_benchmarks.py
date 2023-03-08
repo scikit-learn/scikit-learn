@@ -23,6 +23,8 @@ For more information see the :ref:`User Guide <parallelism>`.
 # %%
 import sys
 import joblib
+import loky
+import sklearn
 
 try:
     import dask
@@ -36,11 +38,34 @@ except ImportError:
     print("The package 'ray' is required to run this example.")
     sys.exit()
 
-print(joblib.__version__)
-print(dask.__version__)
-print(ray.__version__)
+print(f"scikit-learn version: {sklearn.__version__}")
+print(f"joblib version: {joblib.__version__}")
+print(f"dask version: {dask.__version__}")
+print(f"ray version: {ray.__version__}")
+print(f"loky version: {loky.__version__}")
 
 # %%
+# Sample output::
+#
+#     scikit-learn version: 1.2.1
+#     joblib version: 1.2.0
+#     dask version: 2023.2.0
+#     ray version: 2.2.0
+#     loky version: 3.3.0
+#
+# This script automatically adapts to the maximum number of physical cores on
+# the host. In the case of the present example, it was originally run on a
+# laptop with 4 of them.
+
+# %%
+N_CORES = joblib.cpu_count(only_physical_cores=True)
+print(f"number of physical cores: {N_CORES}")
+
+# %%
+# Sample output::
+#
+#     number of physical cores: 4
+#
 # We build a classification task using
 # :class:`~sklearn.datasets.make_classification` and cross-validate an
 # :class:`~sklearn.ensemble.HistGradientBoostingClassifier` with default
@@ -67,7 +92,7 @@ cv = ShuffleSplit(n_splits=100, random_state=0)
 # %%
 # The computional time can still be reduced by optimizing the number of CPUs
 # used via the parameter `n_jobs`.
-
+#
 # In the case of the `~sklearn.model_selection.cross_validate` function,
 # `n_jobs=None` sets the number of workers in a :obj:`joblib.parallel_backend`
 # context. For such function, the parallelization consists in training the
