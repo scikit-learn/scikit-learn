@@ -94,7 +94,7 @@ Tips for performance
 * In doubt, read the generated C or C++ code if you can: "The fewer C instructions and indirections
   for a line of Cython code, the better" is a good rule of thumb.
 
-* Understand that ``nogil`` declarations are just hints: when declaring the ``cdef`` functions
+* ``nogil`` declarations are just hints: when declaring the ``cdef`` functions
   as nogil, it means that they can be called without holding the GIL, but it does not release
   the GIL when entering them. You have to do that yourself either by passing ``nogil=True`` to
   ``cython.parallel.prange`` explicitly, or by using an explicit context manager:
