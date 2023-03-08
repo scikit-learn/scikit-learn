@@ -103,6 +103,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.covariance.empirical_covariance",
     "sklearn.covariance.shrunk_covariance",
     "sklearn.datasets.dump_svmlight_file",
+    "sklearn.datasets.fetch_20newsgroups",
     "sklearn.datasets.fetch_california_housing",
     "sklearn.datasets.fetch_covtype",
     "sklearn.datasets.fetch_kddcup99",
