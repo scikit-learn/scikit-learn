@@ -2020,9 +2020,7 @@ def pairwise_distances(
             % (metric, _VALID_METRICS)
         )
 
-    if PairwiseDistances.is_usable_for(
-        X, X if Y is None else Y, metric=metric, metric_kwargs=kwds
-    ):
+    if PairwiseDistances.is_usable_for(X, Y, metric=metric, metric_kwargs=kwds):
         # This is an adaptor for one "sqeuclidean" specification.
         # For this backend, we can directly use "sqeuclidean".
         if kwds.get("squared", False) and metric == "euclidean":
@@ -2031,9 +2029,17 @@ def pairwise_distances(
             metric = "euclidean"
             kwds = {}
 
-        return PairwiseDistances.compute(
-            X, X if Y is None else Y, metric=metric, metric_kwargs=kwds
-        )
+        if issparse(X):
+            X = csr_matrix(X, copy=False)
+            # This also sorts indices in-place.
+            X.sum_duplicates()
+
+        if issparse(Y):
+            Y = csr_matrix(Y, copy=False)
+            # This also sorts indices in-place.
+            Y.sum_duplicates()
+
+        return PairwiseDistances.compute(X, Y, metric=metric, metric_kwargs=kwds)
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
