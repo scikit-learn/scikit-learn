@@ -217,7 +217,7 @@ def cross_validate(
                 The train/test indices for each cv split. A dictionary
                 is returned where the keys are either `"train"` or `"test"`
                 and the associated values are a list of NumPy arrays with the
-                indices.
+                indices. Available only if `return_indices=True`.
 
     See Also
     --------
