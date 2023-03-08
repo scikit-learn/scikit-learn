@@ -2401,13 +2401,13 @@ def test_learning_curve_partial_fit_regressors():
     learning_curve(MLPRegressor(), X, y, exploit_incremental_learning=True, cv=2)
 
 
-def test_cross_validate_return_indices():
+def test_cross_validate_return_indices(global_random_seed):
     """Check the behaviour of `return_indices` in `cross_validate`."""
     X, y = load_iris(return_X_y=True)
     clf = SVC(gamma="auto")
     grid = GridSearchCV(clf, param_grid={"C": [1, 10]})
 
-    cv = KFold(n_splits=3, shuffle=False)
+    cv = KFold(n_splits=3, shuffle=True, random_state=global_random_seed)
     cv_results = cross_validate(grid, X, y, cv=cv, n_jobs=2, return_indices=False)
     assert "indices" not in cv_results
 
@@ -2421,5 +2421,6 @@ def test_cross_validate_return_indices():
     assert_array_equal([indices.size for indices in train_indices], 100)
     assert_array_equal([indices.size for indices in test_indices], 50)
 
-    assert_array_equal(np.unique(np.concatenate(train_indices)), np.arange(y.size))
-    assert_array_equal(np.concatenate(test_indices), np.arange(y.size))
+    for split_idx, (expected_train_idx, expected_test_idx) in enumerate(cv.split(X, y)):
+        assert_array_equal(train_indices[split_idx], expected_train_idx)
+        assert_array_equal(test_indices[split_idx], expected_test_idx)
