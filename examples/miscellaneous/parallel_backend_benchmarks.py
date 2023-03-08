@@ -120,6 +120,11 @@ def bench(n_jobs_grid, backend):
 
 
 # %%
+# The scikit-learn parallelization API relies on the `loky` backend, as it is
+# joblib's default backend. Here we additionally benchmark on the `threading`,
+# `dask` and `ray` backends. The latter two require to be init as follows:
+
+# %%
 from ray.util.joblib import register_ray
 from dask.distributed import Client
 
@@ -127,11 +132,6 @@ client = Client(processes=False)  # init local dask client
 ray.shutdown()  # in case there is a previously open ray session
 ray.init(num_cpus=N_CORES)
 register_ray()
-
-# %%
-# The scikit-learn parallelization API relies on the `loky` backend, as it is
-# joblib's default backend. Here we additionally benchmark on the `threading`,
-# `dask` and `ray` backends.
 
 # %%
 import numpy as np
