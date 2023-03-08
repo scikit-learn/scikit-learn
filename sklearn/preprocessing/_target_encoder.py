@@ -58,7 +58,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             type used for modeling. For example, if the target consistent of integers
             between 0 and 100, then :func:`~sklearn.utils.multiclass.type_of_target`
             will infer the target as `"multiclass"`. In this case, setting
-            `target_type="continuous"` will the target as a regression problem. The
+            `target_type="continuous"` will understand the target as a regression problem. The
             `target_type_` attribute gives the target type used by the encoder.
 
     smooth : "auto" or float, default="auto"
