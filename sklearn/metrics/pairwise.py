@@ -2025,8 +2025,8 @@ def pairwise_distances(
         # For this backend, we can directly use "sqeuclidean".
         if kwds.get("squared", False) and metric == "euclidean":
             # TODO: use 'sqeuclidean' instead of 'euclidean'
-            # with EuclideanPairwiseDistance
-            metric = "euclidean"
+            # with EuclideanPairwiseDistances
+            metric = "sqeuclidean"
             kwds = {}
 
         if issparse(X):
