@@ -14,7 +14,7 @@ detrimental to performance to run multiple copies of some estimators or
 functions in parallel (see :ref:`oversubscription`).
 
 To run this notebook locally, you may need to install dask and ray. These
-packages can be installed with `pip install dask-ml "ray[default]"`.
+packages can be installed with `pip install dask "ray[default]"`.
 
 For more information see the :ref:`User Guide <parallelism>`.
 
@@ -105,12 +105,12 @@ from joblib import parallel_backend
 from sklearn.model_selection import cross_validate
 
 
-def bench(jobs, backend):
+def bench(n_jobs_grid, backend):
     durations = []
     msg = f"Benchmarking on {backend}:"
     print(f"\n{msg}\n" + str("-" * len(msg)))
-    for n_jobs in jobs:
-        with parallel_backend(backend, n_jobs=n_jobs):
+    for n_jobs in n_jobs_grid:
+        with parallel_backend(backend, n_jobs=int(n_jobs)):
             tic = time()
             cross_validate(hist_gbdt, X, y, cv=cv)
             toc = time()
@@ -125,7 +125,7 @@ from dask.distributed import Client
 
 client = Client(processes=False)  # init local dask client
 ray.shutdown()  # in case there is a previously open ray session
-ray.init(num_cpus=32)
+ray.init(num_cpus=N_CORES)
 register_ray()
 
 # %%
@@ -136,11 +136,11 @@ register_ray()
 # %%
 import numpy as np
 
-jobs = [1, 2, 3, 4, 5, 8, 16, 32]
+n_jobs_grid = 2 ** np.arange(np.log2(N_CORES).astype(np.int32) + 1)
 results = []
 
 for backend in ["loky", "threading", "dask", "ray"]:
-    durations = bench(jobs, backend)
+    durations = bench(n_jobs_grid, backend)
     results.append(
         dict(
             backend=backend,
@@ -155,45 +155,25 @@ for backend in ["loky", "threading", "dask", "ray"]:
 #     ---------------------
 #     n_jobs: 1   elapsed time: 45.015 sec
 #     n_jobs: 2   elapsed time: 17.751 sec
-#     n_jobs: 3   elapsed time: 11.140 sec
 #     n_jobs: 4   elapsed time: 9.403 sec
-#     n_jobs: 5   elapsed time: 9.384 sec
-#     n_jobs: 8   elapsed time: 10.896 sec
-#     n_jobs: 16  elapsed time: 8.808 sec
-#     n_jobs: 32  elapsed time: 11.410 sec
 #
 #     Benchmarking on threading:
 #     --------------------------
 #     n_jobs: 1   elapsed time: 45.032 sec
 #     n_jobs: 2   elapsed time: 106.694 sec
-#     n_jobs: 3   elapsed time: 98.651 sec
 #     n_jobs: 4   elapsed time: 97.991 sec
-#     n_jobs: 5   elapsed time: 107.621 sec
-#     n_jobs: 8   elapsed time: 111.208 sec
-#     n_jobs: 16  elapsed time: 114.035 sec
-#     n_jobs: 32  elapsed time: 112.787 sec
 #
 #     Benchmarking on dask:
 #     ---------------------
 #     n_jobs: 1   elapsed time: 40.938 sec
 #     n_jobs: 2   elapsed time: 19.351 sec
-#     n_jobs: 3   elapsed time: 15.012 sec
 #     n_jobs: 4   elapsed time: 12.925 sec
-#     n_jobs: 5   elapsed time: 12.968 sec
-#     n_jobs: 8   elapsed time: 11.780 sec
-#     n_jobs: 16  elapsed time: 14.506 sec
-#     n_jobs: 32  elapsed time: 20.232 sec
 #
 #     Benchmarking on ray:
 #     --------------------
-#     n_jobs: 1   elapsed time: 110.725 sec
-#     n_jobs: 2   elapsed time: 111.477 sec
-#     n_jobs: 3   elapsed time: 110.871 sec
-#     n_jobs: 4   elapsed time: 110.623 sec
-#     n_jobs: 5   elapsed time: 110.852 sec
-#     n_jobs: 8   elapsed time: 3133.999 sec
-#     n_jobs: 16  elapsed time: 89.752 sec
-#     n_jobs: 32  elapsed time: 95.225 sec
+#     n_jobs: 1   elapsed time: 41.569 sec
+#     n_jobs: 2   elapsed time: 15.271 sec
+#     n_jobs: 4   elapsed time: 11.742 sec
 
 # %%
 # One can additionally plot the speedup as a function of the number of workers
@@ -205,17 +185,17 @@ import seaborn as sns
 
 from matplotlib import pyplot as plt
 
-ax = sns.lineplot(x=jobs, y=jobs, color="black", label="linear growth")
+ax = sns.lineplot(x=n_jobs_grid, y=n_jobs_grid, color="black", label="linear growth")
 
 for result in results:
     backend, durations = list(result.values())
     speedup = durations[0] / durations
     label = f"{backend}"
-    sns.lineplot(x=jobs, y=speedup, marker="o", ax=ax, label=label)
+    sns.lineplot(x=n_jobs_grid, y=speedup, marker="o", ax=ax, label=label)
 
 ax.set(xscale="log", yscale="log")
-ax.set_xticks(jobs)
-ax.set_xticklabels(jobs)
+ax.set_xticks(n_jobs_grid)
+ax.set_xticklabels(n_jobs_grid)
 ax.set_xlabel("number of jobs")
 ax.set_ylabel("speedup")
 ax.set_title("Speedup by backend and task type")
