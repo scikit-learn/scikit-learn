@@ -35,7 +35,7 @@ cdef void _predict_regression_tree_inplace_fast_dense(
     Py_ssize_t n_samples,
     Py_ssize_t n_features,
     cnp.float64_t[:, :] out
-) nogil:
+) noexcept nogil:
     """Predicts output for regression tree and stores it in ``out[i, k]``.
 
     This function operates directly on the data arrays of the tree

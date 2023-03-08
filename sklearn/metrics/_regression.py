@@ -216,6 +216,15 @@ def mean_absolute_error(
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+    }
+)
 def mean_pinball_loss(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
 ):
@@ -285,22 +294,25 @@ def mean_pinball_loss(
     sign = (diff >= 0).astype(diff.dtype)
     loss = alpha * sign * diff - (1 - alpha) * (1 - sign) * diff
     output_errors = np.average(loss, weights=sample_weight, axis=0)
-    if isinstance(multioutput, str):
-        if multioutput == "raw_values":
-            return output_errors
-        elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
-            multioutput = None
-        else:
-            raise ValueError(
-                "multioutput is expected to be 'raw_values' "
-                "or 'uniform_average' but we got %r"
-                " instead." % multioutput
-            )
+
+    if isinstance(multioutput, str) and multioutput == "raw_values":
+        return output_errors
+
+    if isinstance(multioutput, str) and multioutput == "uniform_average":
+        # pass None as weights to np.average: uniform mean
+        multioutput = None
 
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+    }
+)
 def mean_absolute_percentage_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
@@ -976,6 +988,12 @@ def r2_score(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+    }
+)
 def max_error(y_true, y_pred):
     """
     The max_error metric calculates the maximum residual error.
@@ -1304,6 +1322,18 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     return 1 - numerator / denominator
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average"}),
+            "array-like",
+        ],
+    }
+)
 def d2_pinball_score(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
 ):
@@ -1327,7 +1357,7 @@ def d2_pinball_score(
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     alpha : float, default=0.5
@@ -1434,15 +1464,9 @@ def d2_pinball_score(
         if multioutput == "raw_values":
             # return scores individually
             return output_scores
-        elif multioutput == "uniform_average":
+        else:  # multioutput == "uniform_average"
             # passing None as weights to np.average results in uniform mean
             avg_weights = None
-        else:
-            raise ValueError(
-                "multioutput is expected to be 'raw_values' "
-                "or 'uniform_average' but we got %r"
-                " instead." % multioutput
-            )
     else:
         avg_weights = multioutput
 
