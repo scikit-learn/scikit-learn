@@ -20,7 +20,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     category. [MIC]_
 
     :class:`TargetEncoder` considers missing values, such as `np.nan` or `None`,
-    as another category and encodes them like any other category.
+    as another category and encodes them like any other category. Categories
+    that are not seen during :meth:`fit` are encoded with the target mean, i.e.
+    `target_mean_`.
 
     Read more in the :ref:`User Guide <target_encoder>`.
 
@@ -94,7 +96,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     target_type_ : str
         Type of target.
 
-    encoding_mean_ : float
+    target_mean_ : float
         The overall mean of the target. This value is only used in :meth:`transform`
         to encode categories.
 
@@ -135,7 +137,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     >>> # A high `smooth` parameter puts more weight on global mean on the categorical
     >>> # encodings:
     >>> enc_high_smooth = TargetEncoder(smooth=5000.0).fit(X, y)
-    >>> enc_high_smooth.encoding_mean_
+    >>> enc_high_smooth.target_mean_
     44...
     >>> enc_high_smooth.encodings_
     [array([44..., 44..., 44...])]
@@ -277,7 +279,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             ~X_valid,
             slice(None),
             self.encodings_,
-            self.encoding_mean_,
+            self.target_mean_,
         )
         return X_out
 
@@ -305,7 +307,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:  # continuous
             y = _check_y(y, y_numeric=True, estimator=self)
 
-        self.encoding_mean_ = np.mean(y)
+        self.target_mean_ = np.mean(y)
 
         X_ordinal, X_known_mask = self._transform(
             X, handle_unknown="ignore", force_all_finite="allow-nan"
@@ -318,11 +320,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         if self.smooth == "auto":
             y_variance = np.var(y)
             self.encodings_ = _fit_encoding_fast_auto_smooth(
-                X_ordinal, y, n_categories, self.encoding_mean_, y_variance
+                X_ordinal, y, n_categories, self.target_mean_, y_variance
             )
         else:
             self.encodings_ = _fit_encoding_fast(
-                X_ordinal, y, n_categories, self.smooth, self.encoding_mean_
+                X_ordinal, y, n_categories, self.smooth, self.target_mean_
             )
 
         return X_ordinal, X_known_mask, y, n_categories

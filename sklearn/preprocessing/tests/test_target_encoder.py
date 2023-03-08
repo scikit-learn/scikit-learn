@@ -105,7 +105,7 @@ def test_encoding(categories, unknown_value, seed, smooth, target_type):
     y_mean = np.mean(y_int)
     expected_encodings = _encode_target(X_ordinal[:, 0], y_int, n_categories, smooth)
     assert_allclose(target_encoder.encodings_[0], expected_encodings)
-    assert target_encoder.encoding_mean_ == pytest.approx(y_mean)
+    assert target_encoder.target_mean_ == pytest.approx(y_mean)
 
     X_test = np.array([[0, 1, 2]], dtype=np.int64).T
     expected_X_test_transform = np.concatenate(
@@ -315,7 +315,7 @@ def test_constant_target_and_feature(y, y_mean, smooth):
     X_trans = enc.fit_transform(X, y)
     assert_allclose(X_trans, np.repeat([[y_mean]], n_samples, axis=0))
     assert enc.encodings_[0][0] == pytest.approx(y_mean)
-    assert enc.encoding_mean_ == pytest.approx(y_mean)
+    assert enc.target_mean_ == pytest.approx(y_mean)
 
     X_test = np.array([[1], [0]])
     X_test_trans = enc.transform(X_test)

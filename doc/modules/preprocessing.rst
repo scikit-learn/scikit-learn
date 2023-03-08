@@ -897,7 +897,9 @@ learned in :meth:`~TargetEncoder.fit_transform`.
 
 .. note::
   :class:`TargetEncoder` considers missing values, such as `np.nan` or `None`,
-  as another category and encodes them like any other category.
+  as another category and encodes them like any other category. Categories
+  that are not seen during `fit` are encoded with the target mean, i.e.
+  `target_mean_`.
 
 .. topic:: Examples:
 
