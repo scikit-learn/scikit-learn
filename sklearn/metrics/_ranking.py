@@ -420,7 +420,7 @@ def roc_auc_score(
         Otherwise, this determines the type of averaging performed on the data.
         Note: multiclass ROC AUC currently only handles the 'macro' and
         'weighted' averages. For multiclass targets, `average=None` is only
-        implemented for `multi_class='ovo'` and `average='micro'` is only
+        implemented for `multi_class='ovr'` and `average='micro'` is only
         implemented for `multi_class='ovr'`.
 
         ``'micro'``:
