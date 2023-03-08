@@ -300,10 +300,6 @@ def fetch_20newsgroups(
         data.data = data_lst
         data.target = np.array(target)
         data.filenames = np.array(filenames)
-    else:
-        raise ValueError(
-            "subset can only be 'train', 'test' or 'all', got '%s'" % subset
-        )
 
     fdescr = load_descr("twenty_newsgroups.rst")
 
