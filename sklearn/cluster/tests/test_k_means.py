@@ -1282,9 +1282,11 @@ def test_predict_does_not_change_cluster_centers(is_sparse):
 def test_sample_weight_init(Estimator, global_random_seed):
     """Check that sample weight is used during init."""
     rng = np.random.RandomState(global_random_seed)
-    X, _ = make_blobs(n_samples=200, n_features=10, centers=10, random_state=global_random_seed)
+    X, _ = make_blobs(
+        n_samples=200, n_features=10, centers=10, random_state=global_random_seed
+    )
     sample_weight = rng.uniform(size=200)
     kmeans = Estimator(random_state=global_random_seed, init="random")
-    y_pred_sw = kmeans.fit(X, sample_weight=sample_weight).cluster_centers_
-    y_pred = kmeans.fit(X).cluster_centers_
-    assert (y_pred_sw != y_pred).any()
+    clusters_weighted = kmeans.fit(X, sample_weight=sample_weight).cluster_centers_
+    clusters = kmeans.fit(X).cluster_centers_
+    assert (clusters_weighted != clusters).any()
