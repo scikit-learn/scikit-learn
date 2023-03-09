@@ -94,9 +94,9 @@ continued development of the project through ongoing engagement with the
 community. They have shown they can be trusted to maintain scikit-learn with
 care. Being a maintainer allows contributors to more easily carry on with their
 project related activities by giving them direct access to the project's
-repository. Maintainers are expected to review code contributions, can merge
-approved pull requests, can cast votes for and against merging a pull-request,
-and are usually involved in deciding major changes to the API.
+repository. Maintainers are expected to review code contributions, merge
+approved pull requests, cast votes for and against merging a pull-request,
+and to be involved in deciding major changes to the API.
 
 Technical Committee
 -------------------
