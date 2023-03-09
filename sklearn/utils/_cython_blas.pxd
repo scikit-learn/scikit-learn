@@ -14,7 +14,7 @@ cpdef enum BLAS_Trans:
 # BLAS Level 1 ################################################################
 cdef floating _dot(int, const floating*, int, const floating*, int) noexcept nogil
 
-cdef floating _asum(int, floating*, int) noexcept nogil
+cdef floating _asum(int, const floating*, int) noexcept nogil
 
 cdef void _axpy(int, floating, const floating*, int, floating*, int) noexcept nogil
 
@@ -30,10 +30,10 @@ cdef void _rot(int, floating*, int, floating*, int, floating, floating) noexcept
 
 # BLAS Level 2 ################################################################
 cdef void _gemv(BLAS_Order, BLAS_Trans, int, int, floating, const floating*, int,
-                floating*, int, floating, floating*, int) noexcept nogil
+                const floating*, int, floating, floating*, int) noexcept nogil
 
-cdef void _ger(BLAS_Order, int, int, floating, floating*, int, floating*, int,
-               floating*, int) noexcept nogil
+cdef void _ger(BLAS_Order, int, int, floating, const floating*, int, const floating*,
+               int, floating*, int) noexcept nogil
 
 # BLASLevel 3 ################################################################
 cdef void _gemm(BLAS_Order, BLAS_Trans, BLAS_Trans, int, int, int, floating,
