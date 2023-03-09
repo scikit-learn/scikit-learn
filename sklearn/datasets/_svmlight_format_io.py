@@ -49,11 +49,11 @@ else:
         "f": [
             str,
             Interval(Integral, 0, None, closed="left"),
-            HasMethods("write"),
+            os.PathLike,
             HasMethods("open"),
         ],
         "n_features": [Interval(Integral, 1, None, closed="left"), None],
-        "dtype": "no_validation",
+        "dtype": "no_validation",  # delegate validation to numpy
         "multilabel": ["boolean"],
         "zero_based": ["boolean", StrOptions({"auto"})],
         "query_id": ["boolean"],
