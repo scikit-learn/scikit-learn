@@ -87,8 +87,20 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
         raise ValueError("'grid_resolution' must be strictly greater than 1.")
 
     values = []
+    # TODO: we should handle missing values (i.e. `np.nan`) specifically and store them
+    # in a different Bunch attribute.
     for feature, is_cat in enumerate(is_categorical):
-        uniques = np.unique(_safe_indexing(X, feature, axis=1))
+        try:
+            uniques = np.unique(_safe_indexing(X, feature, axis=1))
+        except TypeError as exc:
+            # `np.unique` will fail in the presence of `np.nan` and `str` categories
+            # due to sorting. Temporary, we reraise an error explaining the problem.
+            raise ValueError(
+                f"The column #{feature} contains mixed data types. Finding unique "
+                "categories fail due to sorting. It usually means that the column "
+                "contains `np.nan` values together with `str` categories. Such use "
+                "case is not yet supported in scikit-learn."
+            ) from exc
         if is_cat or uniques.shape[0] < grid_resolution:
             # Use the unique values either because:
             # - feature has low resolution use unique values
@@ -369,14 +381,14 @@ def partial_dependence(
 
             .. deprecated:: 1.3
                 The key `values` has been deprecated in 1.3 and will be removed
-                in 1.5 in favor of `pdp_values`. See `pdp_values` for details
+                in 1.5 in favor of `grid_values`. See `grid_values` for details
                 about the `values` attribute.
 
-        pdp_values : seq of 1d ndarrays
+        grid_values : seq of 1d ndarrays
             The values with which the grid has been created. The generated
-            grid is a cartesian product of the arrays in ``pdp_values``.
-            ``len(pdp_values) == len(features)``. The size of each array
-            ``pdp_values[j]`` is either ``grid_resolution``, or the number of
+            grid is a cartesian product of the arrays in ``grid_values`` where
+            ``len(grid_values) == len(features)``. The size of each array
+            ``grid_values[j]`` is either ``grid_resolution``, or the number of
             unique values in ``X[:, j]``, whichever is smaller.
 
             .. versionadded:: 1.3
@@ -384,7 +396,7 @@ def partial_dependence(
         ``n_outputs`` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
         For classical regression and binary classification ``n_outputs==1``.
-        ``n_values_feature_j`` corresponds to the size ``pdp_values[j]``.
+        ``n_values_feature_j`` corresponds to the size ``grid_values[j]``.
 
     See Also
     --------
@@ -561,10 +573,10 @@ def partial_dependence(
 
     msg = (
         "Key: 'values', is deprecated in 1.3 and will be removed in 1.5. "
-        "Please use 'pdp_values' instead."
+        "Please use 'grid_values' instead."
     )
     pdp_results._set_deprecated(
-        values, new_key="pdp_values", deprecated_key="values", warning_message=msg
+        values, new_key="grid_values", deprecated_key="values", warning_message=msg
     )
 
     if kind == "average":

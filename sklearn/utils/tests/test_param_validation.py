@@ -662,3 +662,10 @@ def test_third_party_estimator():
     # does not raise, even though "b" is not in the constraints dict and "a" is not
     # a parameter of the estimator.
     ThirdPartyEstimator(b=0).fit()
+
+
+def test_interval_real_not_int():
+    """Check for the type "real_not_int" in the Interval constraint."""
+    constraint = Interval("real_not_int", 0, 1, closed="both")
+    assert constraint.is_satisfied_by(1.0)
+    assert not constraint.is_satisfied_by(1)

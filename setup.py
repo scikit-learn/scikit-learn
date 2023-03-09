@@ -90,6 +90,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.ensemble._hist_gradient_boosting.common",
     "sklearn.ensemble._hist_gradient_boosting.utils",
     "sklearn.feature_extraction._hashing_fast",
+    "sklearn.linear_model._cd_fast",
     "sklearn.linear_model._sag_fast",
     "sklearn.linear_model._sgd_fast",
     "sklearn.manifold._barnes_hut_tsne",
@@ -129,6 +130,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.utils._weight_vector",
     "sklearn.utils.arrayfuncs",
     "sklearn.utils.murmurhash",
+    "sklearn.utils.sparsefuncs_fast",
 )
 
 
