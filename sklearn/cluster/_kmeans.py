@@ -194,7 +194,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, sample_weight, random_state
         The index location of the chosen centers in the data array X. For a
         given index and center, X[index] = center.
     """
-        n_samples, n_features = X.shape
+    n_samples, n_features = X.shape
 
     centers = np.empty((n_clusters, n_features), dtype=X.dtype)
 
