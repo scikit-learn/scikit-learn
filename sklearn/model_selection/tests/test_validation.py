@@ -63,7 +63,7 @@ from sklearn.neural_network import MLPRegressor
 
 from sklearn.impute import SimpleImputer
 
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, scale
 from sklearn.pipeline import Pipeline
 
 from io import StringIO
@@ -2404,14 +2404,14 @@ def test_learning_curve_partial_fit_regressors():
 def test_cross_validate_return_indices(global_random_seed):
     """Check the behaviour of `return_indices` in `cross_validate`."""
     X, y = load_iris(return_X_y=True)
-    clf = SVC(gamma="auto")
-    grid = GridSearchCV(clf, param_grid={"C": [1, 10]})
+    X = scale(X)  # scale features for better convergence
+    estimator = LogisticRegression()
 
     cv = KFold(n_splits=3, shuffle=True, random_state=global_random_seed)
-    cv_results = cross_validate(grid, X, y, cv=cv, n_jobs=2, return_indices=False)
+    cv_results = cross_validate(estimator, X, y, cv=cv, n_jobs=2, return_indices=False)
     assert "indices" not in cv_results
 
-    cv_results = cross_validate(grid, X, y, cv=cv, n_jobs=2, return_indices=True)
+    cv_results = cross_validate(estimator, X, y, cv=cv, n_jobs=2, return_indices=True)
     assert "indices" in cv_results
     train_indices = cv_results["indices"]["train"]
     test_indices = cv_results["indices"]["test"]
