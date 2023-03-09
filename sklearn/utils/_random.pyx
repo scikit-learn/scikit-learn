@@ -12,6 +12,7 @@ The module contains:
 """
 import numpy as np
 cimport numpy as cnp
+cnp.import_array()
 
 from . import check_random_state
 
