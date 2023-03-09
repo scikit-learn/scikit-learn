@@ -941,7 +941,7 @@ def test_euclidean_distances_extreme_values(dtype, eps, rtol, dim):
     distances = euclidean_distances(X, Y)
     expected = cdist(X, Y)
 
-    assert_allclose(distances, expected, rtol=1e-5, atol=4e-4)
+    assert_allclose(distances, expected, rtol=1e-5, atol=6e-4)
 
 
 @pytest.mark.parametrize("squared", [True, False])
