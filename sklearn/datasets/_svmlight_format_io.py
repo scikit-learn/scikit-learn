@@ -50,7 +50,7 @@ else:
             str,
             Interval(Integral, 0, None, closed="left"),
             os.PathLike,
-            HasMethods("open"),
+            HasMethods("read"),
         ],
         "n_features": [Interval(Integral, 1, None, closed="left"), None],
         "dtype": "no_validation",  # delegate validation to numpy
