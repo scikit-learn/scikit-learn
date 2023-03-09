@@ -94,8 +94,7 @@ class BisectingKMeans(_BaseKMeans):
         Notes in k_init for more details.
 
         'random': choose `n_clusters` observations (rows) at random from data
-        for the initial centroids. If `sample_weight` is not None, they will be used
-        for non-uniform sampling of centroids according to passed weights.
+        for the initial centroids.
 
         If a callable is passed, it should take arguments X, n_clusters and a
         random state and return an initialization.
@@ -367,8 +366,8 @@ class BisectingKMeans(_BaseKMeans):
 
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight. If `init` is set to 'random' weight
-            will also be used to initialize centroids.
+            are assigned equal weight. If not None, weights will be used in
+            initializations of centroids as well as fitting clusters.
 
         Returns
         -------
