@@ -776,17 +776,17 @@ _ = ax.legend()
 # three models using the true vs predicted demand scatter plots:
 from sklearn.metrics import PredictionErrorDisplay
 
-fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 8), sharex=True, sharey="row")
-fig.suptitle("Non-linear regression models")
+fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(13, 7), sharex=True, sharey="row")
+fig.suptitle("Non-linear regression models", y=1.0)
 predictions = [
     one_hot_poly_predictions,
     cyclic_spline_poly_predictions,
     gbrt_predictions,
 ]
 labels = [
-    "One hot + polynomial kernel",
-    "Splines + polynomial kernel",
-    "Gradient Boosted Trees",
+    "One hot +\npolynomial kernel",
+    "Splines +\npolynomial kernel",
+    "Gradient Boosted\nTrees",
 ]
 plot_kinds = ["actual_vs_predicted", "residual_vs_predicted"]
 for axis_idx, kind in enumerate(plot_kinds):
@@ -799,10 +799,15 @@ for axis_idx, kind in enumerate(plot_kinds):
             ax=ax,
         )
         ax.set_xticks(np.linspace(0, 1, num=5))
-        ax.set_yticks(np.linspace(0, 1, num=5))
+        if axis_idx == 0:
+            ax.set_yticks(np.linspace(0, 1, num=5))
+            ax.legend(
+                ["Best model", label],
+                loc="upper center",
+                bbox_to_anchor=(0.5, 1.3),
+                ncol=2,
+            )
         ax.set_aspect("equal", adjustable="box")
-        ax.legend(["Best model", label])
-
 plt.show()
 # %%
 # This visualization confirms the conclusions we draw on the previous plot.
