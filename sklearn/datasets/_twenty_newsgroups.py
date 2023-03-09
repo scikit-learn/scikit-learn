@@ -345,6 +345,17 @@ def fetch_20newsgroups(
     return data
 
 
+@validate_params(
+    {
+        "subset": [StrOptions({"train", "test", "all"})],
+        "remove": [tuple],
+        "data_home": [str, None],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+        "normalize": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def fetch_20newsgroups_vectorized(
     *,
     subset="train",
