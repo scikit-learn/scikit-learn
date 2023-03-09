@@ -7,31 +7,23 @@
 Version 1.2.2
 =============
 
-**In development**
-
-The following estimators and functions, when fit with the same data and
-parameters, may produce different models from the previous version. This often
-occurs due to changes in the modelling logic (bug fixes or enhancements), or in
-random sampling procedures.
-
-Changed models
---------------
-
--
-
-Changes impacting all modules
------------------------------
-
--
+**March 2023**
 
 Changelog
 ---------
 
+:mod:`sklearn.base`
+...................
+
+- |Fix| When `set_output(transform="pandas")`, :class:`base.TransformerMixin` maintains
+  the index if the :term:`transform` output is already a DataFrame. :pr:`25747` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
-- |Fix| A deprecation warning is raised when using the `base_estimator__` prefix
-  to set parameters of the estimator used in :class:`calibration.CalibratedClassifierCV`.
+- |Fix| A deprecation warning is raised when using the `base_estimator__` prefix to
+  set parameters of the estimator used in :class:`calibration.CalibratedClassifierCV`.
   :pr:`25477` by :user:`Tim Head <betatim>`.
 
 :mod:`sklearn.cluster`
@@ -64,6 +56,15 @@ Changelog
   :class:`feature_selection.SequentialFeatureSelector`.
   :pr:`25664` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| Raise a more informative error message in :func:`inspection.partial_dependence`
+  when dealing with mixed data type categories that cannot be sorted by
+  :func:`numpy.unique`. This problem usually happen when categories are `str` and
+  missing values are present using `np.nan`.
+  :pr:`25774` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
@@ -75,9 +76,22 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Fix| :attr:`preprocessing.OneHotEncoder.drop_idx_` now properly 
+  references the dropped category in the `categories_` attribute
+  when there are infrequent categories. :pr:`25589` by `Thomas Fan`_.
+
 - |Fix| :class:`preprocessing.OrdinalEncoder` now correctly supports
   `encoded_missing_value` or `unknown_value` set to a categories' cardinality
   when there is missing values in the training data. :pr:`25704` by `Thomas Fan`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed a regression in :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier` and
+  :class:`tree.ExtraTreeRegressor` where an error was no longer raised in version
+  1.2 when `min_sample_split=1`.
+  :pr:`25744` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.utils`
 ....................
@@ -85,6 +99,9 @@ Changelog
 - |Fix| Fixes a bug in :func:`utils.check_array` which now correctly performs
   non-finite validation with the Array API specification. :pr:`25619` by
   `Thomas Fan`_.
+
+- |Fix| :func:`utils.multiclass.type_of_target` can identify pandas
+  nullable data types as classification targets. :pr:`25638` by `Thomas Fan`_.
 
 .. _changes_1_2_1:
 
@@ -143,10 +160,14 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Fix| Fix an inconsistency in :func:`datasets.fetch_openml` between liac-arff
+- |Fix| Fixes an inconsistency in :func:`datasets.fetch_openml` between liac-arff
   and pandas parser when a leading space is introduced after the delimiter.
   The ARFF specs requires to ignore the leading space.
   :pr:`25312` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fixes a bug in :func:`datasets.fetch_openml` when using `parser="pandas"`
+  where single quote and backslash escape characters were not properly handled.
+  :pr:`25511` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -976,57 +997,69 @@ Code and Documentation Contributors
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.1, including:
 
-2357juan, 3lLobo, Adam J. Stewart, Adam Li, Aditya Anulekh, Adrin Jalali, Aiko,
-Akshita Prasanth, Alessandro Miola, Alex, Alexandr, Alexandre Perez-Lebel, aman
-kumar, Amit Bera, Andreas Grivas, Andreas Mueller, András Simon,
-angela-maennel, Aniket Shirsat, Antony Lee, anupam, Apostolos Tsetoglou,
-Aravindh R, Artur Hermano, Arturo Amor, Ashwin Mathur, avm19, b0rxington, Badr
+2357juan, 3lLobo, Adam J. Stewart, Adam Kania, Adam Li, Aditya Anulekh, Admir
+Demiraj, adoublet, Adrin Jalali, Ahmedbgh, Aiko, Akshita Prasanth, Ala-Na,
+Alessandro Miola, Alex, Alexandr, Alexandre Perez-Lebel, Alex Buzenet, Ali H.
+El-Kassas, aman kumar, Amit Bera, András Simon, Andreas Grivas, Andreas
+Mueller, Andrew Wang, angela-maennel, Aniket Shirsat, Anthony22-dev, Antony
+Lee, anupam, Apostolos Tsetoglou, Aravindh R, Artur Hermano, Arturo Amor,
+as-90, ashah002, Ashwin Mathur, avm19, Azaria Gebremichael, b0rxington, Badr
 MOUFAD, Bardiya Ak, Bartłomiej Gońda, BdeGraaff, Benjamin Bossan, Benjamin
 Carter, berkecanrizai, Bernd Fritzke, Bhoomika, Biswaroop Mitra, Brandon TH
-Chen, Brett Cannon, Bsh, carlo, Carlos Ramos Carreño, ceh, chalulu, Charles
-Zablit, Chiara Marmo, Christian Lorentzen, Christian Ritter, christianwaldmann,
-Christine P. Chai, Claudio Salvatore Arcidiacono, Clément Verrier,
-crispinlogan, Da-Lan, DanGonite57, Daniela Fernandes, DanielGaerber, darioka,
-Darren Nguyen, David Gilbertson, David Poznik, david-cortes, Denis, Dev Khant,
-Dhanshree Arora, Diadochokinetic, diederikwp, Dimitri Papadopoulos Orfanos,
-drewhogg, Duarte OC, Dwight Lindquist, Eden Brekke, Edoardo Abati, Eleanore
-Denies, EliaSchiavon, ErmolaevPA, Fabrizio Damicelli, fcharras, Flynn,
+Chen, Brett Cannon, Bsh, cache-missing, carlo, Carlos Ramos Carreño, ceh,
+chalulu, Changyao Chen, Charles Zablit, Chiara Marmo, Christian Lorentzen,
+Christian Ritter, Christian Veenhuis, christianwaldmann, Christine P. Chai,
+Claudio Salvatore Arcidiacono, Clément Verrier, crispinlogan, Da-Lan,
+DanGonite57, Daniela Fernandes, DanielGaerber, darioka, Darren Nguyen,
+davidblnc, david-cortes, David Gilbertson, David Poznik, Dayne, Dea María
+Léon, Denis, Dev Khant, Dhanshree Arora, Diadochokinetic, diederikwp, Dimitri
+Papadopoulos Orfanos, Dimitris Litsidis, drewhogg, Duarte OC, Dwight Lindquist,
+Eden Brekke, Edern, Edoardo Abati, Eleanore Denies, EliaSchiavon, Emir,
+ErmolaevPA, Fabrizio Damicelli, fcharras, Felipe Siola, Flynn,
 francesco-tuveri, Franck Charras, ftorres16, Gael Varoquaux, Geevarghese
-George, GeorgiaMayDay, Gianr Lazz, Gleb Levitski, Glòria Macià Muñoz, Guillaume
-Lemaitre, Guillem García Subies, Guitared, gunesbayir, Hansin Ahuja, Hao Chun
-Chang, Harsh Agrawal, harshit5674, hasan-yaman, Henry Sorsky, henrymooresc,
-Hristo Vrigazov, htsedebenham, humahn, i-aki-y, Ido M, Iglesys, Iliya Zhechev,
-Irene, Ivan Sedykh, ivanllt, jakirkham, Jason G, Jiten Sidhpura, jkarolczak,
-John Koumentis, John P, John Pangas, johnthagen, Jordan Fleming, Joshua Choo
-Yun Keat, Jovan Stojanovic, João David, Juan Carlos Alfaro Jiménez, Juan Felipe
-Arias, juanfe88, Julien Jerphanion, jygerardy, Jérémie du Boisberranger,
-Kanishk Sachdev, Kanissh, Kendall, Kenneth Prabakaran, Kento Nozawa, kernc,
-Kevin Roice, Kian Eliasi, Kilian Kluge, Kilian Lieret, Kirandevraj, Kraig,
-krishna kumar, krishna vamsi, Kshitij Kapadni, Kshitij Mathur, Lauren Burke,
-lingyi1110, Lisa Casino, Loic Esteve, Luciano Mantovani, Lucy Liu, Léonard
-Binet, m. bou, Maascha, Madhura Jayaratne, madinak, Maksym, Malte S. Kurz,
-Mansi Agrawal, Marco Edward Gorelli, Marco Wurps, Maren Westermann, Maria
-Telenczuk, martin-kokos, mathurinm, mauroantonioserrano, Maxi Marufo, Maxim
-Smolskiy, Maxwell, Meekail Zain, Mehgarg, mehmetcanakbay, Mia Bajić, Michael
-Flaks, Michael Hornstein, Michel de Ruiter, Michelle Paradis, Misa Ogura,
-Moritz Wilksch, mrastgoo, Naipawat Poolsawat, Naoise Holohan, Nass, Nathan
-Jacobi, Nguyễn Văn Diễn, Nihal Thukarama Rao, Nikita Jare, Nima Sarajpoor,
-nima10khodaveisi, nitinramvelraj, Nwanna-Joseph, Nymark Kho, o-holman, Olivier
-Grisel, Olle Lukowski, Omar Hassoun, Omar Salman, osman tamer, Oyindamola
-Olatunji, PAB, Pandata, Paulo Sergio  Soares, Petar Mlinarić, Peter Jansson,
-Peter Steinbach, Philipp Jung, Piet Brömmel, priyam kakati, puhuk, Rachel
-Freeland, Rachit Keerti Das, Rafal Wojdyla, Rahil Parikh, ram vikram singh,
+George, genvalen, GeorgiaMayDay, Gianr Lazz, Gleb Levitski, Glòria Macià
+Muñoz, Guillaume Lemaitre, Guillem García Subies, Guitared, gunesbayir,
+Haesun Park, Hansin Ahuja, Hao Chun Chang, Harsh Agrawal, harshit5674,
+hasan-yaman, henrymooresc, Henry Sorsky, Hristo Vrigazov, htsedebenham, humahn,
+i-aki-y, Ian Thompson, Ido M, Iglesys, Iliya Zhechev, Irene, ivanllt, Ivan
+Sedykh, Jack McIvor, jakirkham, JanFidor, Jason G, Jérémie du Boisberranger,
+Jiten Sidhpura, jkarolczak, João David, JohnathanPi, John Koumentis, John P,
+John Pangas, johnthagen, Jordan Fleming, Joshua Choo Yun Keat, Jovan
+Stojanovic, Juan Carlos Alfaro Jiménez, juanfe88, Juan Felipe Arias,
+JuliaSchoepp, Julien Jerphanion, jygerardy, ka00ri, Kanishk Sachdev, Kanissh,
+Kaushik Amar Das, Kendall, Kenneth Prabakaran, Kento Nozawa, kernc, Kevin
+Roice, Kian Eliasi, Kilian Kluge, Kilian Lieret, Kirandevraj, Kraig, krishna
+kumar, krishna vamsi, Kshitij Kapadni, Kshitij Mathur, Lauren Burke, Léonard
+Binet, lingyi1110, Lisa Casino, Logan Thomas, Loic Esteve, Luciano Mantovani,
+Lucy Liu, Maascha, Madhura Jayaratne, madinak, Maksym, Malte S. Kurz, Mansi
+Agrawal, Marco Edward Gorelli, Marco Wurps, Maren Westermann, Maria Telenczuk,
+Mario Kostelac, martin-kokos, Marvin Krawutschke, Masanori Kanazu, mathurinm,
+Matt Haberland, mauroantonioserrano, Max Halford, Maxi Marufo, maximeSaur,
+Maxim Smolskiy, Maxwell, m. bou, Meekail Zain, Mehgarg, mehmetcanakbay, Mia
+Bajić, Michael Flaks, Michael Hornstein, Michel de Ruiter, Michelle Paradis,
+Mikhail Iljin, Misa Ogura, Moritz Wilksch, mrastgoo, Naipawat Poolsawat, Naoise
+Holohan, Nass, Nathan Jacobi, Nawazish Alam, Nguyễn Văn Diễn, Nicola
+Fanelli, Nihal Thukarama Rao, Nikita Jare, nima10khodaveisi, Nima Sarajpoor,
+nitinramvelraj, NNLNR, npache, Nwanna-Joseph, Nymark Kho, o-holman, Olivier
+Grisel, Olle Lukowski, Omar Hassoun, Omar Salman, osman tamer, ouss1508,
+Oyindamola Olatunji, PAB, Pandata, partev, Paulo Sergio  Soares, Petar
+Mlinarić, Peter Jansson, Peter Steinbach, Philipp Jung, Piet Brömmel, Pooja
+M, Pooja Subramaniam, priyam kakati, puhuk, Rachel Freeland, Rachit Keerti Das,
+Rafal Wojdyla, Raghuveer Bhat, Rahil Parikh, Ralf Gommers, ram vikram singh,
 Ravi Makhija, Rehan Guha, Reshama Shaikh, Richard Klima, Rob Crockett, Robert
 Hommes, Robert Juergens, Robin Lenz, Rocco Meli, Roman4oo, Ross Barnowski,
 Rowan Mankoo, Rudresh Veerkhare, Rushil Desai, Sabri Monaf Sabri, Safikh,
 Safiuddin Khaja, Salahuddin, Sam Adam Day, Sandra Yojana Meneses, Sandro
-Ephrem, Sangam, SangamSwadik, SarahRemus, SavkoMax, Scott Gigante, Scott
-Gustafson, Sean Atukorala, sec65, SELEE, seljaks, Shane, shellyfung, Shinsuke
-Mori, Shoaib Khan, Shogo Hida, Shrankhla Srivastava, Shuangchi He, Simon,
-Srinath Kailasa, Stefanie Molin, stellalin7, Steve Schmerler, Steven Van
-Vaerenbergh, Stéphane Collot, Sven Stehle, the-syd-sre, TheDevPanda, Thomas
-Bonald, Thomas Germer, Thomas J. Fan, Ti-Ion, Tim Head, Timofei Kornev,
-toastedyeast, Tobias Pitters, Tom Dupré la Tour, Tom Mathews, Tom McTiernan,
-tspeng, Tyler Egashira, Valentin Laurent, Varun Jain, Vera Komeyer, Vicente
-Reyes-Puerta, Vincent M, Vishal, wattai, wchathura, WEN Hao, x110, Xiao Yuan,
-Xunius, yanhong-zhao-ef, Z Adil Khwaja
+Ephrem, Sangam, SangamSwadik, SANJAI_3, SarahRemus, Sashka Warner, SavkoMax,
+Scott Gigante, Scott Gustafson, Sean Atukorala, sec65, SELEE, seljaks, Shady el
+Gewily, Shane, shellyfung, Shinsuke Mori, Shiva chauhan, Shoaib Khan, Shogo
+Hida, Shrankhla Srivastava, Shuangchi He, Simon, sonnivs, Sortofamudkip,
+Srinath Kailasa, Stanislav (Stanley) Modrak, Stefanie Molin, stellalin7,
+Stéphane Collot, Steven Van Vaerenbergh, Steve Schmerler, Sven Stehle, Tabea
+Kossen, TheDevPanda, the-syd-sre, Thijs van Weezel, Thomas Bonald, Thomas
+Germer, Thomas J. Fan, Ti-Ion, Tim Head, Timofei Kornev, toastedyeast, Tobias
+Pitters, Tom Dupré la Tour, tomiock, Tom Mathews, Tom McTiernan, tspeng, Tyler
+Egashira, Valentin Laurent, Varun Jain, Vera Komeyer, Vicente Reyes-Puerta,
+Vinayak Mehta, Vincent M, Vishal, Vyom Pathak, wattai, wchathura, WEN Hao,
+William M, x110, Xiao Yuan, Xunius, yanhong-zhao-ef, Yusuf Raji, Z Adil Khwaja,
+zeeshan lone

@@ -110,12 +110,24 @@ Changelog
   is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |API| The `data_transposed` argument of :func:`datasets.make_sparse_coded_signal`
+  is deprecated and will be removed in v1.5.
+  :pr:`25784` by :user:`Jérémie du Boisberranger`.
+
 :mod:`sklearn.decomposition`
 ............................
 
 - |Enhancement| :class:`decomposition.DictionaryLearning` now accepts the parameter
   `callback` for consistency with the function :func:`decomposition.dict_learning`.
   :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Efficiency| :class:`decomposition.MiniBatchDictionaryLearning` and
+  :class:`decomposition.MiniBatchSparsePCA` are now faster for small batch sizes by
+  avoiding duplicate validations.
+  :pr:`25490` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -192,6 +204,13 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Efficiency| The computation of the expected mutual information in
+  :func:`metrics.adjusted_mutual_info_score` is now faster when the number of
+  unique labels is large and its memory usage is reduced in general.
+  :pr:`25713` by :user:`Kshitij Mathur <Kshitij68>`,
+  :user:`Guillaume Lemaitre <glemaitre>`, :user:`Omar Salman <OmarManzoor>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 - |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
   :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
 
@@ -201,6 +220,13 @@ Changelog
 
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| :func:`model_selection.cross_validate` accepts a new parameter
+  `return_indices` to return the train-test indices of each cv split.
+  :pr:`25659` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -274,8 +300,11 @@ Changelog
   during `transform` with no prior call to `fit` or `fit_transform`.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
-- |Enhancement| :func:`utils.multiclass.type_of_target` can identify pandas
-  nullable data types as classification targets. :pr:`25638` by `Thomas Fan`_.
+- |API| A `FutureWarning` is now raised when instantiating a class which inherits from
+  a deprecated base class (i.e. decorated by :class:`utils.deprecated`) and which
+  overrides the `__init__` method.
+  :pr:`25733` by :user:`Brigitta Sipőcz <bsipocz>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.semi_supervised`
 ..............................
