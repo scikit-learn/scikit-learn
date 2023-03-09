@@ -160,7 +160,7 @@ def kmeans_plusplus(
     return centers, indices
 
 
-def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
+def _kmeans_plusplus(X, n_clusters, x_squared_norms, sample_weight, random_state, n_local_trials=None):
     """Computational component for initialization of n_clusters by
     k-means++. Prior validation of data is assumed.
 
@@ -194,7 +194,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
         The index location of the chosen centers in the data array X. For a
         given index and center, X[index] = center.
     """
-    n_samples, n_features = X.shape
+        n_samples, n_features = X.shape
 
     centers = np.empty((n_clusters, n_features), dtype=X.dtype)
 
@@ -206,7 +206,9 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
         n_local_trials = 2 + int(np.log(n_clusters))
 
     # Pick first center randomly and track index of point
-    center_id = random_state.randint(n_samples)
+    center_id = random_state.choice(
+        n_samples, replace=False, p=sample_weight
+    )
     indices = np.full(n_clusters, -1, dtype=int)
     if sp.issparse(X):
         centers[0] = X[center_id].toarray()
@@ -218,16 +220,18 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
     closest_dist_sq = _euclidean_distances(
         centers[0, np.newaxis], X, Y_norm_squared=x_squared_norms, squared=True
     )
-    current_pot = closest_dist_sq.sum()
+    current_pot = closest_dist_sq @ sample_weight
 
     # Pick the remaining n_clusters-1 points
     for c in range(1, n_clusters):
         # Choose center candidates by sampling with probability proportional
         # to the squared distance to the closest existing center
-        rand_vals = random_state.uniform(size=n_local_trials) * current_pot
-        candidate_ids = np.searchsorted(stable_cumsum(closest_dist_sq), rand_vals)
-        # XXX: numerical imprecision can result in a candidate_id out of range
-        np.clip(candidate_ids, None, closest_dist_sq.size - 1, out=candidate_ids)
+        candidate_ids = random_state.choice(
+            n_samples,
+            size=n_local_trials,
+            replace=False,
+            p=sample_weight * closest_dist_sq / current_pot,
+        )
 
         # Compute distances to center candidates
         distance_to_candidates = _euclidean_distances(
@@ -236,7 +240,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
 
         # update closest distances squared and potential for each candidate
         np.minimum(closest_dist_sq, distance_to_candidates, out=distance_to_candidates)
-        candidates_pot = distance_to_candidates.sum(axis=1)
+        candidates_pot = distance_to_candidates @ sample_weight.reshape(-1, 1)
 
         # Decide which candidate is the best
         best_candidate = np.argmin(candidates_pot)
@@ -252,7 +256,6 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
         indices[c] = best_candidate
 
     return centers, indices
-
 
 ###############################################################################
 # K-means batch estimation by EM (expectation maximization)
@@ -323,7 +326,8 @@ def k_means(
 
     sample_weight : array-like of shape (n_samples,), default=None
         The weights for each observation in `X`. If `None`, all observations
-        are assigned equal weight.
+        are assigned equal weight. If not None, weights will be used in
+        initializations of centroids as well as fitting clusters.
 
     init : {'k-means++', 'random'}, callable or array-like of shape \
             (n_clusters, n_features), default='k-means++'
@@ -333,8 +337,7 @@ def k_means(
           clustering in a smart way to speed up convergence. See section
           Notes in k_init for more details.
         - `'random'`: choose `n_clusters` observations (rows) at random from data
-          for the initial centroids. If `sample_weight` is not None, they will
-          be used for non-uniform sampling of centroids according to passed weights.
+          for the initial centroids.
         - If an array is passed, it should be of shape `(n_clusters, n_features)`
           and gives the initial centers.
         - If a callable is passed, it should take arguments `X`, `n_clusters` and a
@@ -979,7 +982,7 @@ class _BaseKMeans(
 
         sample_weight : ndarray of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight. Used only if 'init' is set to 'random'.
+            are assigned equal weight.
 
         Returns
         -------
@@ -1001,6 +1004,7 @@ class _BaseKMeans(
                 n_clusters,
                 random_state=random_state,
                 x_squared_norms=x_squared_norms,
+                sample_weight=sample_weight,
             )
         elif isinstance(init, str) and init == "random":
             seeds = random_state.choice(
@@ -1209,8 +1213,7 @@ class KMeans(_BaseKMeans):
         among them.
 
         'random': choose `n_clusters` observations (rows) at random from data
-        for the initial centroids. If `sample_weight` is not None, they will be used
-        for non-uniform sampling of centroids according to passed weights.
+        for the initial centroids.
 
         If an array is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
@@ -1431,8 +1434,8 @@ class KMeans(_BaseKMeans):
 
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight. If `init` is set to 'random' weight
-            will also be used to initialize centroids.
+            are assigned equal weight. If not None, weights will be used in
+            initializations of centroids as well as fitting clusters.
 
             .. versionadded:: 0.20
 
@@ -1691,8 +1694,7 @@ class MiniBatchKMeans(_BaseKMeans):
         among them.
 
         'random': choose `n_clusters` observations (rows) at random from data
-        for the initial centroids. If `sample_weight` is not None, they will be used
-        for non-uniform sampling of centroids according to passed weights.
+        for the initial centroids.
 
         If an array is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
@@ -2040,8 +2042,8 @@ class MiniBatchKMeans(_BaseKMeans):
 
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight. If `init` is set to 'random' weight
-            will also be used to initialize centroids.
+            are assigned equal weight. If not None, weights will be used in
+            initializations of centroids as well as fitting clusters.
 
             .. versionadded:: 0.20
 
@@ -2197,8 +2199,8 @@ class MiniBatchKMeans(_BaseKMeans):
 
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight. If `init` is set to 'random' weight
-            will also be used to initialize centroids.
+            are assigned equal weight. If not None, weights will be used in
+            initializations of centroids as well as fitting clusters.
 
         Returns
         -------
