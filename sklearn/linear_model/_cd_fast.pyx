@@ -24,8 +24,6 @@ from ..utils._random cimport our_rand_r
 ctypedef cnp.float64_t DOUBLE
 ctypedef cnp.uint32_t UINT32_t
 
-cnp.import_array()
-
 # The following two functions are shamelessly copied from the tree code.
 
 cdef enum:
