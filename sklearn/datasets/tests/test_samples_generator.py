@@ -10,6 +10,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -497,7 +498,6 @@ def test_make_sparse_coded_signal():
         n_features=10,
         n_nonzero_coefs=3,
         random_state=0,
-        data_transposed=False,
     )
     assert Y.shape == (5, 10), "Y shape mismatch"
     assert D.shape == (8, 10), "D shape mismatch"
@@ -508,6 +508,8 @@ def test_make_sparse_coded_signal():
     assert_allclose(np.sqrt((D**2).sum(axis=1)), np.ones(D.shape[0]))
 
 
+# TODO(1.5): remove
+@ignore_warnings(category=FutureWarning)
 def test_make_sparse_coded_signal_transposed():
     Y, D, X = make_sparse_coded_signal(
         n_samples=5,
@@ -526,13 +528,18 @@ def test_make_sparse_coded_signal_transposed():
     assert_allclose(np.sqrt((D**2).sum(axis=0)), np.ones(D.shape[1]))
 
 
-# TODO(1.3): remove
-def test_make_sparse_code_signal_warning():
+# TODO(1.5): remove
+def test_make_sparse_code_signal_deprecation_warning():
     """Check the message for future deprecation."""
-    warn_msg = "The default value of data_transposed will change from True to False"
+    warn_msg = "data_transposed was deprecated in version 1.3"
     with pytest.warns(FutureWarning, match=warn_msg):
         make_sparse_coded_signal(
-            n_samples=1, n_components=1, n_features=1, n_nonzero_coefs=1, random_state=0
+            n_samples=1,
+            n_components=1,
+            n_features=1,
+            n_nonzero_coefs=1,
+            random_state=0,
+            data_transposed=True,
         )
 
 

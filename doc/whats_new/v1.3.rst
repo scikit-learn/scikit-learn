@@ -110,6 +110,13 @@ Changelog
   is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |API| The `data_transposed` argument of :func:`datasets.make_sparse_coded_signal`
+  is deprecated and will be removed in v1.5.
+  :pr:`25784` by :user:`Jérémie du Boisberranger`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -286,6 +293,12 @@ Changelog
   introduced to ensure stateless transformers don't raise `NotFittedError`
   during `transform` with no prior call to `fit` or `fit_transform`.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
+
+- |API| A `FutureWarning` is now raised when instantiating a class which inherits from
+  a deprecated base class (i.e. decorated by :class:`utils.deprecated`) and which
+  overrides the `__init__` method.
+  :pr:`25733` by :user:`Brigitta Sipőcz <bsipocz>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.semi_supervised`
 ..............................
