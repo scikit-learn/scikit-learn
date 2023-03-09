@@ -55,7 +55,7 @@ cdef inline floating fsign(floating f) noexcept nogil:
         return -1.0
 
 
-cdef floating abs_max(int n, floating* a) noexcept nogil:
+cdef floating abs_max(int n, const floating* a) noexcept nogil:
     """np.max(np.abs(a))"""
     cdef int i
     cdef floating m = fabs(a[0])
@@ -79,7 +79,7 @@ cdef floating max(int n, floating* a) noexcept nogil:
     return m
 
 
-cdef floating diff_abs_max(int n, floating* a, floating* b) noexcept nogil:
+cdef floating diff_abs_max(int n, const floating* a, floating* b) noexcept nogil:
     """np.max(np.abs(a - b))"""
     cdef int i
     cdef floating m = fabs(a[0] - b[0])
