@@ -58,7 +58,7 @@ else:
         "zero_based": ["boolean", StrOptions({"auto"})],
         "query_id": ["boolean"],
         "offset": [Interval(Integral, 0, None, closed="left")],
-        "length": {Interval(Integral, -1, None, closed="left")},
+        "length": [Interval(Integral, -1, None, closed="left")],
     }
 )
 def load_svmlight_file(
