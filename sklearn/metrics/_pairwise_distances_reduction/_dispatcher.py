@@ -194,7 +194,29 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
 
     @classmethod
     def is_usable_for(cls, X, Y, metric, metric_kwargs=None) -> bool:
+        """Return True if the dispatcher can be used for the
+        given parameters.
 
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
+            Input data.
+
+        Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
+            Input data.
+
+        metric : str, default='euclidean'
+            The distance metric to use.
+            For a list of available metrics, see the documentation of
+            :class:`~sklearn.metrics.DistanceMetric`.
+
+        metric_kwargs : dict, default=None
+            Keyword arguments to pass to specified metric function.
+
+        Returns
+        -------
+        True if the dispatcher can be used, else False.
+        """
         effective_n_threads = _openmp_effective_n_threads()
 
         def is_euclidean(metric, metric_kwargs):
