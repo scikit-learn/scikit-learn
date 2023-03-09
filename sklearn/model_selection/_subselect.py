@@ -363,23 +363,6 @@ class Refitter:
         A dict with keys as column headers and values as columns, as generated from
         fitting a GridSearchCV or RandomSearchCV object. See ``GridSearchCV`` or
         ``RandomSearchCV``, respectively, for more details.
-    scoring : str
-        The scoring metric of interest. Must be one of the scoring metrics
-        specified in ``GridSearchCV`` or ``RandomSearchCV``.
-
-        NOTE
-
-        For multi-metric evaluation, the scores for all the scorers are
-        available in the ``cv_results_`` dict at the keys ending with that
-        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
-        above. ('split0_test_precision', 'mean_train_precision' etc.)
-
-        Compatible scoring metrics must be monotonically increasing such that the best
-        score is always the one with the highest value. For error metric scorers, this
-        can typically be addressed by using the negated variant of the scoring metric
-        of interest, i.e. ``scoring='neg_mean_squared_error'``. If this is not the case
-        or a custom scorer is used, it must be wrapped with ``make_scorer`` to ensure
-        that the ``greater_is_better`` parameter is set to ``True``.
 
     References
     ----------
