@@ -26,7 +26,7 @@ from ..base import (
 )
 from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import _euclidean_distances
-from ..utils.extmath import row_norms, stable_cumsum
+from ..utils.extmath import row_norms
 from ..utils.fixes import threadpool_limits
 from ..utils.fixes import threadpool_info
 from ..utils.sparsefuncs_fast import assign_rows_csr
