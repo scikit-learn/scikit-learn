@@ -1430,10 +1430,8 @@ def test_pairwise_distances_is_usable_for(
         X, X, metric="minkowski", metric_kwargs={"p": 3}
     ) == (_openmp_effective_n_threads() != 1)
 
-    controller = threadpoolctl.ThreadpoolController()
-
-    with controller.limit(limits=1, user_api=None):
+    with threadpoolctl.threadpool_limits(limits=1, user_api=None):
         assert PairwiseDistances.is_usable_for(X, X, metric="manhattan")
 
-    with controller.limit(limits=2, user_api=None):
+    with threadpoolctl.threadpool_limits(limits=2, user_api=None):
         assert PairwiseDistances.is_usable_for(X, X, metric="manhattan")
