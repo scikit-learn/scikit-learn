@@ -160,7 +160,9 @@ def kmeans_plusplus(
     return centers, indices
 
 
-def _kmeans_plusplus(X, n_clusters, x_squared_norms, sample_weight, random_state, n_local_trials=None):
+def _kmeans_plusplus(
+    X, n_clusters, x_squared_norms, sample_weight, random_state, n_local_trials=None
+):
     """Computational component for initialization of n_clusters by
     k-means++. Prior validation of data is assumed.
 
@@ -206,9 +208,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, sample_weight, random_state
         n_local_trials = 2 + int(np.log(n_clusters))
 
     # Pick first center randomly and track index of point
-    center_id = random_state.choice(
-        n_samples, replace=False, p=sample_weight
-    )
+    center_id = random_state.choice(n_samples, replace=False, p=sample_weight)
     indices = np.full(n_clusters, -1, dtype=int)
     if sp.issparse(X):
         centers[0] = X[center_id].toarray()
@@ -256,6 +256,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, sample_weight, random_state
         indices[c] = best_candidate
 
     return centers, indices
+
 
 ###############################################################################
 # K-means batch estimation by EM (expectation maximization)
