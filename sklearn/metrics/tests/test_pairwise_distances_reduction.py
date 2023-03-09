@@ -20,6 +20,7 @@ from sklearn.metrics._pairwise_distances_reduction import (
 )
 
 from sklearn.metrics import euclidean_distances
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils._testing import (
     assert_array_equal,
@@ -1414,13 +1415,6 @@ def test_pairwise_distances_is_usable_for(
     n_samples, n_features = 100, 10
     X = rng.rand(n_samples, n_features).astype(dtype)
 
-    # We monkey patch this interface to test the expected behavior
-    # when the machine running the test only uses one thread.
-    monkeypatch.setattr(
-        "sklearn.utils._openmp_helpers._openmp_effective_n_threads",
-        lambda _: 4,
-    )
-
     # Equivalent specifications of the Euclidean metric.
     # TODO: support Euclidean metric.
     assert not PairwiseDistances.is_usable_for(X, X, metric="euclidean")
@@ -1429,9 +1423,12 @@ def test_pairwise_distances_is_usable_for(
         X, X, metric="minkowski", metric_kwargs={"p": 2}
     )
 
+    # PairwiseDistances must not be used for sequential execution because
+    # They are not yet competitive with the previous joblib-based back-end.
+    # TODO: make PairwiseDistances competitive for sequential execution.
     assert PairwiseDistances.is_usable_for(
         X, X, metric="minkowski", metric_kwargs={"p": 3}
-    )
+    ) == (_openmp_effective_n_threads() != 1)
 
     controller = threadpoolctl.ThreadpoolController()
 
