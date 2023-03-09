@@ -37,6 +37,16 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
             [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 1, 1, 1]],
             [0, 1, 1, 1],
         ),
+        (
+            "kmeans",
+            [[0, 0, 0, 0], [1, 1, 1, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
+            [1, 0, 3, 1],
+        ),
+        (
+            "kmeans",
+            [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
+            [1, 1, 1, 1],
+        ),
     ],
 )
 def test_fit_transform(strategy, expected, sample_weight):
@@ -51,13 +61,13 @@ def test_valid_n_bins():
     assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(int)
 
 
-@pytest.mark.parametrize("strategy", ["uniform", "kmeans"])
+@pytest.mark.parametrize("strategy", ["uniform"])
 def test_kbinsdiscretizer_wrong_strategy_with_weights(strategy):
     """Check that we raise an error when the wrong strategy is used."""
     sample_weight = np.ones(shape=(len(X)))
     est = KBinsDiscretizer(n_bins=3, strategy=strategy)
     err_msg = (
-        "`sample_weight` was provided but it can only be used with strategy='quantile'."
+        "`sample_weight` was provided but it cannot be used with strategy='uniform'."
     )
     with pytest.raises(ValueError, match=err_msg):
         est.fit(X, sample_weight=sample_weight)
@@ -130,6 +140,11 @@ def test_invalid_n_bins_array():
         #       `sample_weight = [1, 1, 1, 1]` are currently not equivalent.
         #       This problem has been adressed in issue :
         #       https://github.com/scikit-learn/scikit-learn/issues/17370
+        (
+            "kmeans",
+            [[0, 0, 0, 0], [0, 1, 1, 0], [1, 1, 1, 1], [1, 2, 2, 2]],
+            [1, 0, 3, 1],
+        ),
     ],
 )
 def test_fit_transform_n_bins_array(strategy, expected, sample_weight):
@@ -157,9 +172,10 @@ def test_kbinsdiscretizer_effect_sample_weight():
     assert_allclose(est.transform(X), [[0.0], [1.0], [2.0], [2.0], [2.0], [2.0]])
 
 
-def test_kbinsdiscretizer_no_mutating_sample_weight():
+@pytest.mark.parametrize("strategy", ["kmeans", "quantile"])
+def test_kbinsdiscretizer_no_mutating_sample_weight(strategy):
     """Make sure that `sample_weight` is not changed in place."""
-    est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy="quantile")
+    est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=strategy)
     sample_weight = np.array([1, 3, 1, 2], dtype=np.float64)
     sample_weight_copy = np.copy(sample_weight)
     est.fit(X, sample_weight=sample_weight)

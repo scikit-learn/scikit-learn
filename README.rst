@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|Azure|_ |Travis|_ |Codecov|_ |CircleCI|_ |Nightly wheels|_ |Black|_ |PythonVersion|_ |PyPi|_ |DOI|_ |Benchmark|_
+|Azure|_ |CirrusCI|_ |Codecov|_ |CircleCI|_ |Nightly wheels|_ |Black|_ |PythonVersion|_ |PyPi|_ |DOI|_ |Benchmark|_
 
 .. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=main
 .. _Azure: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=main
@@ -8,8 +8,8 @@
 .. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/main.svg?style=shield&circle-token=:circle-token
 .. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
 
-.. |Travis| image:: https://api.travis-ci.com/scikit-learn/scikit-learn.svg?branch=main
-.. _Travis: https://app.travis-ci.com/github/scikit-learn/scikit-learn
+.. |CirrusCI| image:: https://img.shields.io/cirrus/github/scikit-learn/scikit-learn/main?label=Cirrus%20CI
+.. _CirrusCI: https://cirrus-ci.com/github/scikit-learn/scikit-learn/main
 
 .. |Codecov| image:: https://codecov.io/gh/scikit-learn/scikit-learn/branch/main/graph/badge.svg?token=Pk8G9gg3y9
 .. _Codecov: https://codecov.io/gh/scikit-learn/scikit-learn

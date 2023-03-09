@@ -3,38 +3,22 @@ Small collection of auxiliary functions that operate on arrays
 
 """
 
-cimport numpy as cnp
-import  numpy as np
 from cython cimport floating
 from libc.math cimport fabs
 from libc.float cimport DBL_MAX, FLT_MAX
 
 from ._cython_blas cimport _copy, _rotg, _rot
 
-ctypedef cnp.float64_t DOUBLE
 
-
-cnp.import_array()
-
-
-def min_pos(cnp.ndarray X):
+def min_pos(const floating[:] X):
     """Find the minimum value of an array over positive values
 
     Returns the maximum representable value of the input dtype if none of the
     values are positive.
     """
-    if X.dtype == np.float32:
-        return _min_pos[float](<float *> X.data, X.size)
-    elif X.dtype == np.float64:
-        return _min_pos[double](<double *> X.data, X.size)
-    else:
-        raise ValueError('Unsupported dtype for array X')
-
-
-cdef floating _min_pos(floating* X, Py_ssize_t size):
     cdef Py_ssize_t i
     cdef floating min_val = FLT_MAX if floating is float else DBL_MAX
-    for i in range(size):
+    for i in range(X.size):
         if 0. < X[i] < min_val:
             min_val = X[i]
     return min_val
@@ -46,7 +30,7 @@ cdef floating _min_pos(floating* X, Py_ssize_t size):
 # n = rows
 #
 # TODO: put transpose as an option
-def cholesky_delete(cnp.ndarray[floating, ndim=2] L, int go_out):
+def cholesky_delete(const floating[:, :] L, int go_out):
    cdef:
       int n = L.shape[0]
       int m = L.strides[0]

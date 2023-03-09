@@ -392,22 +392,36 @@ for centroids to be the mean of the points within a given region. These
 candidates are then filtered in a post-processing stage to eliminate
 near-duplicates to form the final set of centroids.
 
-Given a candidate centroid :math:`x_i` for iteration :math:`t`, the candidate
+The position of centroid candidates is iteratively adjusted using a technique called hill 
+climbing, which finds local maxima of the estimated probability density. 
+Given a candidate centroid :math:`x` for iteration :math:`t`, the candidate
 is updated according to the following equation:
 
 .. math::
 
-    x_i^{t+1} = m(x_i^t)
+    x^{t+1} = x^t + m(x^t)
 
-Where :math:`N(x_i)` is the neighborhood of samples within a given distance
-around :math:`x_i` and :math:`m` is the *mean shift* vector that is computed for each
+Where :math:`m` is the *mean shift* vector that is computed for each
 centroid that points towards a region of the maximum increase in the density of points.
-This is computed using the following equation, effectively updating a centroid
-to be the mean of the samples within its neighborhood:
+To compute :math:`m` we define :math:`N(x)` as the neighborhood of samples within
+a given distance around :math:`x`. Then :math:`m` is computed using the following
+equation, effectively updating a centroid to be the mean of the samples within
+its neighborhood:
 
 .. math::
 
-    m(x_i) = \frac{\sum_{x_j \in N(x_i)}K(x_j - x_i)x_j}{\sum_{x_j \in N(x_i)}K(x_j - x_i)}
+    m(x) = \frac{1}{|N(x)|} \sum_{x_j \in N(x)}x_j - x
+
+In general, the equation for :math:`m` depends on a kernel used for density estimation. 
+The generic formula is:
+
+.. math::
+
+    m(x) = \frac{\sum_{x_j \in N(x)}K(x_j - x)x_j}{\sum_{x_j \in N(x)}K(x_j - x)} - x
+
+In our implementation, :math:`K(x)` is equal to 1 if :math:`x` is small enough and is 
+equal to 0 otherwise. Effectively :math:`K(y - x)` indicates whether :math:`y` is in
+the neighborhood of :math:`x`.
 
 The algorithm automatically sets the number of clusters, instead of relying on a
 parameter ``bandwidth``, which dictates the size of the region to search through.

@@ -18,7 +18,7 @@ SCIPY_MIN_VERSION = "1.3.2"
 JOBLIB_MIN_VERSION = "1.1.1"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
 PYTEST_MIN_VERSION = "5.3.1"
-CYTHON_MIN_VERSION = "0.29.24"
+CYTHON_MIN_VERSION = "0.29.33"
 
 
 # 'build' and 'install' is included to have structured metadata for CI.
@@ -51,7 +51,7 @@ dependent_packages = {
     "plotly": ("5.10.0", "docs, examples"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("1.2.1", "maintenance"),
+    "conda-lock": ("1.3.0", "maintenance"),
 }
 
 

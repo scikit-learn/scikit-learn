@@ -93,7 +93,10 @@ n_inliers = n_samples - n_outliers
 # the SGDOneClassSVM must be used in a pipeline with a kernel approximation
 # to give similar results to the OneClassSVM
 anomaly_algorithms = [
-    ("Robust covariance", EllipticEnvelope(contamination=outliers_fraction)),
+    (
+        "Robust covariance",
+        EllipticEnvelope(contamination=outliers_fraction, random_state=42),
+    ),
     ("One-Class SVM", svm.OneClassSVM(nu=outliers_fraction, kernel="rbf", gamma=0.1)),
     (
         "One-Class SVM (SGD)",
