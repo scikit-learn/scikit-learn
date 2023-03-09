@@ -100,7 +100,7 @@ Scoring                                Function                                 
 'r2'                                   :func:`metrics.r2_score`
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
 'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
-'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
+'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`     should not be used when there is actaul 0 in the data
 'd2_absolute_error_score'              :func:`metrics.d2_absolute_error_score`
 'd2_pinball_score'                     :func:`metrics.d2_pinball_score`
 'd2_tweedie_score'                     :func:`metrics.d2_tweedie_score`
