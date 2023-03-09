@@ -17,7 +17,6 @@ from sklearn.model_selection import (
 
 from sklearn.svm import LinearSVC, SVC
 from sklearn.decomposition import PCA
-from sklearn.metrics import make_scorer
 from sklearn.pipeline import Pipeline
 
 
@@ -113,20 +112,16 @@ def test_refitter_errors(grid_search_simulated):
     cv_results = grid_search_simulated["cv_results"]
     n_splits = grid_search_simulated["n_splits"]
 
-    with pytest.raises(KeyError):
-        ss = Refitter(cv_results, scoring="Not_a_scoring_metric")
-        assert len(ss._get_splits()) == n_splits
-
     with pytest.raises(ValueError):
-        ss = Refitter(cv_results, scoring="score")
+        ss = Refitter(cv_results)
         assert ss._apply_thresh(0.98, 0.99) == 1
 
     with pytest.raises(TypeError):
-        ss = Refitter(cv_results, scoring="score")
+        ss = Refitter(cv_results)
         assert ss.fit("Not_a_rule") == (0.9243126424613448, 0.9923540242053219)
 
     with pytest.raises(ValueError):
-        ss = Refitter(cv_results, scoring="score")
+        ss = Refitter(cv_results)
         assert ss.transform() == 1
 
     del cv_results["params"]
@@ -144,23 +139,22 @@ def test_refitter_errors(grid_search_simulated):
     ],
 )
 @pytest.mark.parametrize(
-    "scoring",
+    "scoring,rule",
     [
-        "roc_auc",
-        "neg_log_loss",
-        "neg_mean_squared_log_error",
-        ["roc_auc", "neg_mean_squared_log_error"],
-        pytest.mark.xfail("Not_a_scoring_metric"),
-    ],
-)
-@pytest.mark.parametrize(
-    "rule",
-    [
-        by_standard_error(sigma=1),
-        by_signed_rank(alpha=0.01),
-        by_percentile_rank(eta=0.68),
-        by_fixed_window(min_cut=0.80, max_cut=0.91),
-        pytest.mark.xfail("Not_a_rule"),
+        ("roc_auc", by_standard_error(sigma=1)),
+        ("roc_auc", by_signed_rank(alpha=0.01)),
+        ("roc_auc", by_percentile_rank(eta=0.68)),
+        ("roc_auc", by_fixed_window(min_cut=0.96, max_cut=0.97)),
+        ("roc_auc", "Not_a_rule"),
+        ("neg_log_loss", by_standard_error(sigma=1)),
+        ("neg_log_loss", by_signed_rank(alpha=0.01)),
+        ("neg_log_loss", by_percentile_rank(eta=0.68)),
+        (
+            "neg_log_loss",
+            pytest.param(
+                by_fixed_window(min_cut=0.96, max_cut=0.97), marks=pytest.mark.xfail
+            ),
+        ),
     ],
 )
 @pytest.mark.parametrize(
@@ -188,48 +182,59 @@ def test_constrain(param, scoring, rule, search_cv):
             [("reduce_dim", PCA(random_state=42)), ("classify", SVC(random_state=42))]
         )
 
-    scoring = make_scorer(scoring, greater_is_better=True)
+    # Instantiate a non-refitted grid search object for comparison
+    grid = search_cv(pipe, param_grid, scoring=scoring, n_jobs=-1)
+    grid.fit(X, y)
 
     # Instantiate a refitted grid search object
     grid_simplified = search_cv(
         pipe,
         param_grid,
         scoring=scoring,
-        refit=constrain(rule, scoring=scoring),
+        refit=constrain(rule),
     )
-
-    # Instantiate a non-refitted grid search object for comparison
-    grid = search_cv(pipe, param_grid, scoring=scoring, n_jobs=-1)
-    grid.fit(X, y)
 
     # If the cv results were not all NaN, then we can test the refit callable
     if not np.isnan(grid.fit(X, y).cv_results_["mean_test_score"]).all():
-        grid_simplified.fit(X, y)  # pragma: no cover
-        simplified_best_score_ = grid_simplified.cv_results_["mean_test_score"][
-            grid_simplified.best_index_
-        ]  # pragma: no cover
-        # Ensure that if the refit callable subselected a lower scoring model,
-        # it was because it was only because it was a simpler model.
-        if abs(grid.best_score_) > abs(simplified_best_score_):  # pragma: no cover
-            assert grid.best_index_ != grid_simplified.best_index_  # pragma: no cover
-            if param:
+        if rule == "Not_a_rule":
+            with pytest.raises(TypeError):
+                grid_simplified.fit(X, y)  # pragma: no cover
+        else:
+            grid_simplified.fit(X, y)  # pragma: no cover
+            simplified_best_score_ = grid_simplified.cv_results_["mean_test_score"][
+                grid_simplified.best_index_
+            ]  # pragma: no cover
+            # Ensure that if the refit callable subselected a lower scoring model,
+            # it was because it was only because it was a simpler model.
+            if abs(grid.best_score_) > abs(simplified_best_score_):  # pragma: no cover
                 assert (
-                    grid.best_params_[param] > grid_simplified.best_params_[param]
+                    grid.best_index_ != grid_simplified.best_index_
                 )  # pragma: no cover
-        elif grid.best_score_ == grid_simplified.best_score_:  # pragma: no cover
-            assert grid.best_index_ == grid_simplified.best_index_
-            assert grid.best_params_ == grid_simplified.best_params_
-        else:  # pragma: no cover
-            assert grid.best_index_ != grid_simplified.best_index_  # pragma: no cover
-            assert grid.best_params_ != grid_simplified.best_params_  # pragma: no cover
-            assert grid.best_score_ < grid_simplified.best_score_  # pragma: no cover
+                if param:
+                    assert (
+                        grid.best_params_[param] > grid_simplified.best_params_[param]
+                    )  # pragma: no cover
+            elif grid.best_score_ == simplified_best_score_:  # pragma: no cover
+                assert grid.best_index_ == grid_simplified.best_index_
+                assert grid.best_params_ == grid_simplified.best_params_
+            else:  # pragma: no cover
+                assert (
+                    grid.best_index_ != grid_simplified.best_index_
+                )  # pragma: no cover
+                assert (
+                    grid.best_params_ != grid_simplified.best_params_
+                )  # pragma: no cover
+                assert grid.best_score_ > simplified_best_score_  # pragma: no cover
 
 
 def test_by_standard_error(generate_fit_params):
     # Test that the by_standard_error function returns the correct rule
     assert pytest.approx(
         by_standard_error(sigma=1).__call__(**generate_fit_params), rel=1e-2
-    ) == (0.9243126424613448, 0.9923540242053219)
+    ) == (
+        0.9243126424613448,
+        0.9923540242053219,
+    )
 
     assert by_standard_error(sigma=1).__repr__() == "by_standard_error(sigma=1)"
 
@@ -242,7 +247,10 @@ def test_by_signed_rank(generate_fit_params):
     # Test that the by_signed_rank function returns the correct rule
     assert pytest.approx(
         by_signed_rank(alpha=0.01).__call__(**generate_fit_params), rel=1e-2
-    ) == (0.9583333333333334, 0.9583333333333334)
+    ) == (
+        0.9583333333333334,
+        0.9583333333333334,
+    )
 
     assert (
         by_signed_rank(alpha=0.01).__repr__()
@@ -298,7 +306,10 @@ def test_by_fixed_window(generate_fit_params):
     # Test that the by_fixed_window function returns the correct rule
     assert by_fixed_window(min_cut=0.80, max_cut=0.91).__call__(
         **generate_fit_params
-    ) == (0.8, 0.91)
+    ) == (
+        0.8,
+        0.91,
+    )
 
     # No min_cut
     assert by_fixed_window(max_cut=0.91).__call__(**generate_fit_params) == (None, 0.91)

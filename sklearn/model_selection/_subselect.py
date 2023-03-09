@@ -423,10 +423,9 @@ class Refitter:
     3
     """
 
-    def __init__(self, cv_results_: Dict, scoring: str = "score"):
+    def __init__(self, cv_results_: Dict):
         self.cv_results_ = cv_results_
         self.cv_results_constrained_ = cv_results_.copy()
-        self.scoring = scoring
 
     def _get_splits(self) -> List[str]:
         """Extracts CV splits corresponding to the specified ``scoring`` metric."""
@@ -441,10 +440,10 @@ class Refitter:
         _splits = [
             i
             for i in list(self.cv_results_constrained_.keys())
-            if f"test_{self.scoring}" in i and i.startswith("split")
+            if "test_score" in i and i.startswith("split")
         ]
         if len(_splits) == 0:
-            raise KeyError(f"Scoring metric {self.scoring} not found in cv grid.")
+            raise KeyError("No splits found in cv grid.")
         else:
             return _splits
 
@@ -654,7 +653,7 @@ class Refitter:
         return self._apply_thresh(self.min_cut, self.max_cut)
 
 
-def _wrap_refit(cv_results_: Dict, selector: Callable, scoring: str = "score") -> int:
+def _wrap_refit(cv_results_: Dict, selector: Callable) -> int:
     """A wrapper function for the ``Refitter`` class.
 
     Should not be called directly. See the :class:``~sklearn.model_selection.Refitter``
@@ -668,10 +667,6 @@ def _wrap_refit(cv_results_: Dict, selector: Callable, scoring: str = "score") -
     selector : Callable
         Function that returns the lower and upper bounds of an acceptable performance
         window.
-    scoring : str
-        The scoring metric used to select the best model. Default is "score", and only
-        needs to be changed in the case of multiple scoring metrics or a custom scoring
-        function.
 
     Returns
     -------
@@ -679,13 +674,13 @@ def _wrap_refit(cv_results_: Dict, selector: Callable, scoring: str = "score") -
         The index of the best model under the performance constraints conferred by a
         ``selector``.
     """
-    ss = Refitter(cv_results_, scoring=scoring)
+    ss = Refitter(cv_results_)
     [min_cut, max_cut] = ss.fit(selector)
     print(f"Min: {min_cut}\nMax: {max_cut}")
     return ss.transform()
 
 
-def constrain(selector: Callable, scoring: str = "score") -> Callable:
+def constrain(selector: Callable) -> Callable:
     """Callable returning the best index with constraints conferred by a ``selector``.
 
     Intended to be used as the ``refit`` parameter in ``GridSearchCV`` or
@@ -696,10 +691,6 @@ def constrain(selector: Callable, scoring: str = "score") -> Callable:
     selector : callable
         Function that returns the lower and upper bounds of an acceptable performance
         window.
-    scoring : str
-        The scoring metric used to select the best model. Default is "score", and only
-        needs to be changed in the case of multiple scoring metrics or a custom scoring
-        function.
 
     Returns
     -------
@@ -739,5 +730,5 @@ def constrain(selector: Callable, scoring: str = "score") -> Callable:
     {'reduce_dim__n_components': 12}
     """
     # avoid returning a closure in a return statement to avoid pickling issues
-    best_index_callable = partial(_wrap_refit, selector=selector, scoring=scoring)
+    best_index_callable = partial(_wrap_refit, selector=selector)
     return best_index_callable
