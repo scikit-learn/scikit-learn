@@ -83,11 +83,11 @@ cdef void _middle_term_sparse_dense_{{name_suffix}}(
     ITYPE_t Y_start,
     ITYPE_t Y_end,
     bint c_ordered_middle_term,
-    DTYPE_t * D,
+    DTYPE_t * dist_middle_terms,
 ) nogil:
-    # This routine assumes that D points to the first element of a
-    # zeroed buffer of length at least equal to n_X × n_Y, conceptually
-    # representing a 2-d C-ordered array.
+    # This routine assumes that dist_middle_terms is a pointer to the first element
+    # of a zeroed buffer of length at least equal to n_X × n_Y, conceptually
+    # representing a 2-d C-ordered of F-ordered array.
     cdef:
         ITYPE_t i, j, k
         ITYPE_t n_X = X_end - X_start
@@ -99,7 +99,7 @@ cdef void _middle_term_sparse_dense_{{name_suffix}}(
             k = i * n_Y + j if c_ordered_middle_term else j * n_X + i
             for X_i_ptr in range(X_indptr[X_start+i], X_indptr[X_start+i+1]):
                 X_i_col_idx = X_indices[X_i_ptr]
-                D[k] += -2 * X_data[X_i_ptr] * Y[Y_start + j, X_i_col_idx]
+                dist_middle_terms[k] += -2 * X_data[X_i_ptr] * Y[Y_start + j, X_i_col_idx]
 
 
 cdef class MiddleTermComputer{{name_suffix}}:
@@ -183,7 +183,14 @@ cdef class MiddleTermComputer{{name_suffix}}:
                 c_ordered_middle_term=True
             )
         if not X_is_sparse and Y_is_sparse:
+            # NOTE: The Dense-Sparse case is implement via the Sparse-Dense case.
+            #
+            # To do so:
+            #    - X (dense) and Y (sparse) are swapped
+            #    - the distance middle term is seen as F-ordered for consistency
+            #      (c_ordered_middle_term = False)
             return SparseDenseMiddleTermComputer{{name_suffix}}(
+                # Mind that X and Y are swapped here.
                 Y,
                 X,
                 effective_n_threads,
@@ -572,7 +579,8 @@ cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) noexcept nogil:
-        # Flush the thread dist_middle_terms_chunks to 0.0
+        # Fill the thread's dist_middle_terms_chunks with 0.0 before
+        # computing its elements in _compute_dist_middle_terms.
         fill(
             self.dist_middle_terms_chunks[thread_num].begin(),
             self.dist_middle_terms_chunks[thread_num].end(),
@@ -587,7 +595,8 @@ cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) noexcept nogil:
-        # Flush the thread dist_middle_terms_chunks to 0.0
+        # Fill the thread's dist_middle_terms_chunks with 0.0 before
+        # computing its elements in _compute_dist_middle_terms.
         fill(
             self.dist_middle_terms_chunks[thread_num].begin(),
             self.dist_middle_terms_chunks[thread_num].end(),
@@ -607,15 +616,22 @@ cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name
                 self.dist_middle_terms_chunks[thread_num].data()
             )
 
+        # For the dense-sparse case, we use the sparse-dense case
+        # with dist_middle_terms seen as F-ordered.
+        # Hence we swap indices pointers here.
+        if not self.c_ordered_middle_term:
+            X_start, Y_start = Y_start, X_start
+            X_end, Y_end = Y_end, X_end
+
         _middle_term_sparse_dense_{{name_suffix}}(
             self.X_data,
             self.X_indices,
             self.X_indptr,
-            X_start if self.c_ordered_middle_term else Y_start,
-            X_end if self.c_ordered_middle_term else Y_end,
+            X_start,
+            X_end,
             self.Y,
-            Y_start if self.c_ordered_middle_term else X_start,
-            Y_end if self.c_ordered_middle_term else X_end,
+            Y_start,
+            Y_end,
             self.c_ordered_middle_term,
             dist_middle_terms,
         )

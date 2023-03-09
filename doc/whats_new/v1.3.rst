@@ -80,8 +80,8 @@ Changes impacting all modules
   Euclidean distances (sometimes followed by a fused reduction operation) for a
   pair of datasets consisting of a sparse CSR matrix and a dense NumPy.
 
-  This can improve the performance following functions and estimators.
-  
+  This can improve the performance of following functions and estimators:
+
   - :func:`sklearn.metrics.pairwise_distances_argmin`
   - :func:`sklearn.metrics.pairwise_distances_argmin_min`
   - :class:`sklearn.cluster.AffinityPropagation`
@@ -105,7 +105,7 @@ Changes impacting all modules
 
   A typical example of this performance improvement happens when passing a sparse
   CSR matrix to the `predict` or `transform` method of estimators that rely on
-  a dense numpy representation to store their fitted parameters (or the reverse).
+  a dense NumPy representation to store their fitted parameters (or the reverse).
 
   For instance, :meth:`sklearn.NearestNeighbors.kneighbors` is up to 2 times faster
   for this case now on commonly available laptops.

@@ -194,6 +194,10 @@ cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name
 
         const {{INPUT_DTYPE_t}}[:, ::1] Y
 
+        # We treat the dense-sparse case with the sparse-dense case by simply
+        # treating the dist_middle_terms as F-ordered and by swapping arguments.
+        # This attribute is meant to encode the case and adapt the logic
+        # accordingly.
         bint c_ordered_middle_term
 
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
