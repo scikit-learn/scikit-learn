@@ -193,8 +193,8 @@ for backend in ["loky", "threading", "dask", "ray"]:
 
 # %%
 import seaborn as sns
-
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 
 ax = sns.lineplot(x=n_jobs_grid, y=n_jobs_grid, color="black", label="linear growth")
 
@@ -205,6 +205,7 @@ for result in results:
     sns.lineplot(x=n_jobs_grid, y=speedup, marker="o", ax=ax, label=label)
 
 ax.set(xscale="log", yscale="log")
+ax.xaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
 ax.set_xticks(n_jobs_grid)
 ax.set_xticklabels(n_jobs_grid)
 ax.set_xlabel("number of jobs")
