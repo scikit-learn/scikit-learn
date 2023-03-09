@@ -959,11 +959,16 @@ def non_negative_factorization(
         Constant matrix.
 
     W : array-like of shape (n_samples, n_components), default=None
-        If init='custom', it is used as initial guess for the solution.
+        If `init='custom'`, it is used as initial guess for the solution.
+        If `update_H=False`, it is initialised as an array of zeros, unless
+        `solver='mu'`, then it is filled with values calculated by
+        `np.sqrt(X.mean() / self._n_components)`.
+        If `None`, uses the initialisation method specified in `init`.
 
     H : array-like of shape (n_components, n_features), default=None
-        If init='custom', it is used as initial guess for the solution.
-        If update_H=False, it is used as a constant, to solve for W only.
+        If `init='custom'`, it is used as initial guess for the solution.
+        If `update_H=False`, it is used as a constant, to solve for W only.
+        If `None`, uses the initialisation method specified in `init`.
 
     n_components : int, default=None
         Number of components, if n_components is not set all features
@@ -984,8 +989,8 @@ def non_negative_factorization(
         - 'nndsvdar': NNDSVD with zeros filled with small random values
           (generally faster, less accurate alternative to NNDSVDa
           for when sparsity is not desired)
-        - 'custom': use custom matrices W and H if `update_H=True`. If
-          `update_H=False`, then only custom matrix H is used.
+        - 'custom': If `update_H=True`, use custom matrices W and H which must both
+          be provided. If `update_H=False`, then only custom matrix H is used.
 
         .. versionchanged:: 0.23
             The default value of `init` changed from 'random' to None in 0.23.
@@ -1327,7 +1332,7 @@ class NMF(_BaseNMF):
           otherwise random.
 
         - `'random'`: non-negative random matrices, scaled with:
-          sqrt(X.mean() / n_components)
+          `sqrt(X.mean() / n_components)`
 
         - `'nndsvd'`: Nonnegative Double Singular Value Decomposition (NNDSVD)
           initialization (better for sparseness)
@@ -1339,7 +1344,7 @@ class NMF(_BaseNMF):
           (generally faster, less accurate alternative to NNDSVDa
           for when sparsity is not desired)
 
-        - `'custom'`: use custom matrices W and H
+        - `'custom'`: Use custom matrices `W` and `H` which must both be provided.
 
         .. versionchanged:: 1.1
             When `init=None` and n_components is less than n_samples and n_features
@@ -1545,11 +1550,13 @@ class NMF(_BaseNMF):
         y : Ignored
             Not used, present for API consistency by convention.
 
-        W : array-like of shape (n_samples, n_components)
-            If init='custom', it is used as initial guess for the solution.
+        W : array-like of shape (n_samples, n_components), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `None`, uses the initialisation method specified in `init`.
 
-        H : array-like of shape (n_components, n_features)
-            If init='custom', it is used as initial guess for the solution.
+        H : array-like of shape (n_components, n_features), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `None`, uses the initialisation method specified in `init`.
 
         Returns
         -------
@@ -1585,12 +1592,17 @@ class NMF(_BaseNMF):
 
         y : Ignored
 
-        W : array-like of shape (n_samples, n_components)
-            If init='custom', it is used as initial guess for the solution.
+        W : array-like of shape (n_samples, n_components), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `update_H=False`, it is initialised as an array of zeros, unless
+            `solver='mu'`, then it is filled with values calculated by
+            `np.sqrt(X.mean() / self._n_components)`.
+            If `None`, uses the initialisation method specified in `init`.
 
-        H : array-like of shape (n_components, n_features)
-            If init='custom', it is used as initial guess for the solution.
-            If update_H=False, it is used as a constant, to solve for W only.
+        H : array-like of shape (n_components, n_features), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `update_H=False`, it is used as a constant, to solve for W only.
+            If `None`, uses the initialisation method specified in `init`.
 
         update_H : bool, default=True
             If True, both W and H will be estimated from initial guesses,
@@ -1765,7 +1777,7 @@ class MiniBatchNMF(_BaseNMF):
           (generally faster, less accurate alternative to NNDSVDa
           for when sparsity is not desired).
 
-        - `'custom'`: use custom matrices `W` and `H`
+        - `'custom'`: Use custom matrices `W` and `H` which must both be provided.
 
     batch_size : int, default=1024
         Number of samples in each mini-batch. Large batch sizes
@@ -2124,9 +2136,11 @@ class MiniBatchNMF(_BaseNMF):
 
         W : array-like of shape (n_samples, n_components), default=None
             If `init='custom'`, it is used as initial guess for the solution.
+            If `None`, uses the initialisation method specified in `init`.
 
         H : array-like of shape (n_components, n_features), default=None
             If `init='custom'`, it is used as initial guess for the solution.
+            If `None`, uses the initialisation method specified in `init`.
 
         Returns
         -------
@@ -2162,11 +2176,16 @@ class MiniBatchNMF(_BaseNMF):
             Data matrix to be decomposed.
 
         W : array-like of shape (n_samples, n_components), default=None
-            If init='custom', it is used as initial guess for the solution.
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `update_H=False`, it is initialised as an array of zeros, unless
+            `solver='mu'`, then it is filled with values calculated by
+            `np.sqrt(X.mean() / self._n_components)`.
+            If `None`, uses the initialisation method specified in `init`.
 
         H : array-like of shape (n_components, n_features), default=None
-            If init='custom', it is used as initial guess for the solution.
-            If update_H=False, it is used as a constant, to solve for W only.
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `update_H=False`, it is used as a constant, to solve for W only.
+            If `None`, uses the initialisation method specified in `init`.
 
         update_H : bool, default=True
             If True, both W and H will be estimated from initial guesses,
