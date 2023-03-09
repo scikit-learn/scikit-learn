@@ -112,10 +112,12 @@ Changelog
 
 - |Feature| The `sample_weight` parameter now will be used in centroids
   initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
-  and :class:`cluster.MiniBatchKMeans` if `init` parameter is set to "random".
+  and :class:`cluster.MiniBatchKMeans`.
   This change will break backward compatibility, since numbers generated
   from same random seeds will be different.
-  :pr:`25752` by :user:`Gleb Levitski <glevv>`.
+  :pr:`25752` by :user:`Gleb Levitski <glevv>`,
+  :user:`Jérémie du Boisberranger <jeremiedbb>`,
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.datasets`
 .......................
