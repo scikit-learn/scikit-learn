@@ -17,7 +17,10 @@ def test_three_clusters(bisecting_strategy, init):
         [[1, 1], [10, 1], [3, 1], [10, 0], [2, 1], [10, 2], [10, 8], [10, 9], [10, 10]]
     )
     bisect_means = BisectingKMeans(
-        n_clusters=3, random_state=0, bisecting_strategy=bisecting_strategy, init=init,
+        n_clusters=3,
+        random_state=0,
+        bisecting_strategy=bisecting_strategy,
+        init=init,
     )
     bisect_means.fit(X)
 
