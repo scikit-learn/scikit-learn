@@ -100,11 +100,11 @@ cv = ShuffleSplit(n_splits=100, random_state=0)
 # The computional time can still be reduced by optimizing the number of CPUs
 # used via the parameter `n_jobs`.
 #
-# In the case of the `~sklearn.model_selection.cross_validate` function,
-# `n_jobs=None` sets the number of workers in a :obj:`joblib.parallel_backend`
-# context. For such function, the parallelization consists in training the
-# estimator and computing the score in parallel over the cross-validation
-# splits.
+# In the case of the `~sklearn.model_selection.cross_validate` function, the
+# default `n_jobs=None` allows us to set the number of workers within a
+# :obj:`joblib.parallel_backend` context manager. For such function, the
+# parallelization consists in training the estimator and computing the score in
+# parallel over the cross-validation splits.
 
 # %%
 from time import time
@@ -141,7 +141,7 @@ ray.init(num_cpus=N_CORES)  # init ray client
 register_ray()
 
 # %%
-# We define a grid of number of workers to evaluate in powers of 2. To avoid
+# We define a grid of the number of workers spaced in powers of 2. To avoid
 # oversubscription, the grid's maximal value is set to be `N_CORES`.
 
 # %%
