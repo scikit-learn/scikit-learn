@@ -1287,7 +1287,7 @@ def test_sample_weight_init(Estimator, init, global_random_seed):
         n_samples=200, n_features=10, centers=10, random_state=global_random_seed
     )
     sample_weight = rng.uniform(size=200)
-    kmeans = Estimator(random_state=global_random_seed, init="random")
+    kmeans = Estimator(random_state=global_random_seed, init=init)
     clusters_weighted = kmeans.fit(X, sample_weight=sample_weight).cluster_centers_
     clusters = kmeans.fit(X).cluster_centers_
     assert (clusters_weighted != clusters).any()
