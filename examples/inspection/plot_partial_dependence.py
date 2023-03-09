@@ -406,7 +406,7 @@ display = PartialDependenceDisplay.from_estimator(
 )
 print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle(
-    "ICE and PDP representations \n colored by the continuous windspeed feature",
+    "ICE and PDP representations \n colored by the continuous hour feature",
     fontsize=16,
 )
 
