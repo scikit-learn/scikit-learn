@@ -23,6 +23,14 @@ Tips to ease development
          export SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES=1
 
 * `Start from scratch in a notebook <https://cython.readthedocs.io/en/latest/src/quickstart/build.html#using-the-jupyter-notebook>`_ to understand how to use Cython and to get feedback on your work quickly.
+  If you plan to use OpenMP for your implementations in your Jupyter Notebook, do add extra compiler and linkers arguments in the Cython magic.
+
+  .. code-block:: python
+
+         # For GCC and for clang
+         %%cython --compile-args=-fopenmp --link-args=-fopenmp
+         # For Microsoft's compilers
+         %%cython --compile-args=/openmp --link-args=/openmp
 
 * To debug C code (e.g. a segfault), do use ``gdb`` with:
 
