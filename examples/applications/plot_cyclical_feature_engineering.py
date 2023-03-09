@@ -776,7 +776,7 @@ _ = ax.legend()
 # three models using the true vs predicted demand scatter plots:
 from sklearn.metrics import PredictionErrorDisplay
 
-fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 8), sharex=True, sharey=True)
+fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 8), sharex=True, sharey="row")
 fig.suptitle("Non-linear regression models")
 predictions = [
     one_hot_poly_predictions,
