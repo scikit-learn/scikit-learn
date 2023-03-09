@@ -13,10 +13,10 @@ assuming that it is always a good thing. In some cases it can be highly
 detrimental to performance to run multiple copies of some estimators or
 functions in parallel (see :ref:`oversubscription`).
 
-To run this notebook locally, you may need to install dask and ray. These
-packages can be installed with `pip install dask "ray[default]"`.
+You may need to install dask and ray to run this notebook. These packages can be
+installed with `pip install dask "ray[default]"`.
 
-For more information see the :ref:`User Guide <parallelism>`.
+For more information on parallelism, see the :ref:`User Guide <parallelism>`.
 
 """
 
@@ -38,6 +38,12 @@ except ImportError:
     print("The package 'ray' is required to run this example.")
     sys.exit()
 
+# %%
+# This script was originally run using the following versions for python and the
+# relevant packages:
+
+# %%
+print(f"python version: {sys.version.split(' ')[0]}")
 print(f"scikit-learn version: {sklearn.__version__}")
 print(f"joblib version: {joblib.__version__}")
 print(f"dask version: {dask.__version__}")
@@ -47,14 +53,15 @@ print(f"loky version: {loky.__version__}")
 # %%
 # Sample output::
 #
+#     python version: 3.9.16
 #     scikit-learn version: 1.2.1
 #     joblib version: 1.2.0
 #     dask version: 2023.2.0
 #     ray version: 2.2.0
 #     loky version: 3.3.0
 #
-# This script automatically adapts to the maximum number of physical cores on
-# the host. In the case of the present example, it was originally run on a
+# This script also automatically adapts to the maximum number of physical cores
+# on the host. In the case of the present example, it was originally run on a
 # laptop with 4 of them.
 
 # %%
@@ -66,7 +73,7 @@ print(f"number of physical cores: {N_CORES}")
 #
 #     number of physical cores: 4
 #
-# We build a classification task using
+# Once settled the specification, we build a classification task using
 # :class:`~sklearn.datasets.make_classification` and cross-validate an
 # :class:`~sklearn.ensemble.HistGradientBoostingClassifier` with default
 # parameters on top of it.
@@ -122,16 +129,20 @@ def bench(n_jobs_grid, backend):
 # %%
 # The scikit-learn parallelization API relies on the `loky` backend, as it is
 # joblib's default backend. Here we additionally benchmark on the `threading`,
-# `dask` and `ray` backends. The latter two require to be init as follows:
+# `dask` and `ray` backends. The last two require to be init as follows:
 
 # %%
 from ray.util.joblib import register_ray
 from dask.distributed import Client
 
-client = Client(processes=False)  # init local dask client
+client = Client(processes=False)  # init dask client
 ray.shutdown()  # in case there is a previously open ray session
-ray.init(num_cpus=N_CORES)
+ray.init(num_cpus=N_CORES)  # init ray client
 register_ray()
+
+# %%
+# We define a grid of number of workers to evaluate in powers of 2. To avoid
+# oversubscription, the grid's maximal value is set to be `N_CORES`.
 
 # %%
 import numpy as np
