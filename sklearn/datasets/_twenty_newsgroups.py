@@ -527,11 +527,6 @@ def fetch_20newsgroups_vectorized(
     elif subset == "all":
         data = sp.vstack((X_train, X_test)).tocsr()
         target = np.concatenate((data_train.target, data_test.target))
-    else:
-        raise ValueError(
-            "%r is not a valid subset: should be one of ['train', 'test', 'all']"
-            % subset
-        )
 
     fdescr = load_descr("twenty_newsgroups.rst")
 
