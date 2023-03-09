@@ -154,7 +154,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         "estimator": [HasMethods(["fit"])],
         "n_features_to_select": [
             StrOptions({"auto", "warn"}, deprecated={"warn"}),
-            Interval(Real, 0, 1, closed="right"),
+            Interval("real_not_int", 0, 1, closed="right"),
             Interval(Integral, 0, None, closed="neither"),
             Hidden(None),
         ],

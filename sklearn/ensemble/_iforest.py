@@ -206,7 +206,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         "max_samples": [
             StrOptions({"auto"}),
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="right"),
+            Interval("real_not_int", 0, 1, closed="right"),
         ],
         "contamination": [
             StrOptions({"auto"}),

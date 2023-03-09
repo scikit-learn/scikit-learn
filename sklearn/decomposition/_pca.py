@@ -363,7 +363,7 @@ class PCA(_BasePCA):
     _parameter_constraints: dict = {
         "n_components": [
             Interval(Integral, 0, None, closed="left"),
-            Interval(Real, 0, 1, closed="neither"),
+            Interval("real_not_int", 0, 1, closed="neither"),
             StrOptions({"mle"}),
             None,
         ],

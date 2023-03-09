@@ -233,7 +233,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
     _parameter_constraints: dict = {
         "min_samples": [
             Interval(Integral, 2, None, closed="left"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval("real_not_int", 0, 1, closed="both"),
         ],
         "max_eps": [Interval(Real, 0, None, closed="both")],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
@@ -245,7 +245,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         "predecessor_correction": ["boolean"],
         "min_cluster_size": [
             Interval(Integral, 2, None, closed="left"),
-            Interval(Real, 0, 1, closed="right"),
+            Interval("real_not_int", 0, 1, closed="right"),
             None,
         ],
         "algorithm": [StrOptions({"auto", "brute", "ball_tree", "kd_tree"})],
@@ -431,7 +431,7 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
         "X": [np.ndarray, "sparse matrix"],
         "min_samples": [
             Interval(Integral, 2, None, closed="left"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval("real_not_int", 0, 1, closed="both"),
         ],
         "max_eps": [Interval(Real, 0, None, closed="both")],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
@@ -723,12 +723,12 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
         "predecessor": [np.ndarray],
         "ordering": [np.ndarray],
         "min_samples": [
-            Interval(Integral, 1, None, closed="neither"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval(Integral, 2, None, closed="left"),
+            Interval("real_not_int", 0, 1, closed="both"),
         ],
         "min_cluster_size": [
-            Interval(Integral, 1, None, closed="neither"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval(Integral, 2, None, closed="left"),
+            Interval("real_not_int", 0, 1, closed="both"),
             None,
         ],
         "xi": [Interval(Real, 0, 1, closed="both")],

@@ -7,7 +7,7 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
-from numbers import Integral, Real
+from numbers import Integral
 from joblib import effective_n_jobs
 
 
@@ -187,12 +187,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         "estimator": [HasMethods(["fit"])],
         "n_features_to_select": [
             None,
-            Interval(Real, 0, 1, closed="right"),
+            Interval("real_not_int", 0, 1, closed="right"),
             Interval(Integral, 0, None, closed="neither"),
         ],
         "step": [
             Interval(Integral, 0, None, closed="neither"),
-            Interval(Real, 0, 1, closed="neither"),
+            Interval("real_not_int", 0, 1, closed="neither"),
         ],
         "verbose": ["verbose"],
         "importance_getter": [str, callable],

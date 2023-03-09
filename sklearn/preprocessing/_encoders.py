@@ -3,7 +3,7 @@
 # License: BSD 3 clause
 
 import numbers
-from numbers import Integral, Real
+from numbers import Integral
 import warnings
 
 import numpy as np
@@ -493,7 +493,7 @@ class OneHotEncoder(_BaseEncoder):
         "max_categories": [Interval(Integral, 1, None, closed="left"), None],
         "min_frequency": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="neither"),
+            Interval("real_not_int", 0, 1, closed="neither"),
             None,
         ],
         "sparse": [Hidden(StrOptions({"deprecated"})), "boolean"],  # deprecated

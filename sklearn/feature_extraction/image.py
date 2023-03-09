@@ -343,8 +343,8 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
         "image": [np.ndarray],
         "patch_size": [tuple, list],
         "max_patches": [
-            Interval(Real, left=0, right=1, closed="neither"),
-            Interval(Integral, left=1, right=None, closed="left"),
+            Interval("real_not_int", 0, 1, closed="neither"),
+            Interval(Integral, 1, None, closed="left"),
             None,
         ],
         "random_state": ["random_state"],
@@ -542,7 +542,7 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         "patch_size": [tuple, None],
         "max_patches": [
             None,
-            Interval(Real, 0, 1, closed="neither"),
+            Interval("real_not_int", 0, 1, closed="neither"),
             Interval(Integral, 1, None, closed="left"),
         ],
         "random_state": ["random_state"],

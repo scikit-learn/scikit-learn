@@ -236,7 +236,7 @@ class RANSACRegressor(
         "estimator": [HasMethods(["fit", "score", "predict"]), None],
         "min_samples": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval("real_not_int", 0, 1, closed="both"),
             None,
         ],
         "residual_threshold": [Interval(Real, 0, None, closed="left"), None],

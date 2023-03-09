@@ -2464,12 +2464,12 @@ def check_cv(cv=5, y=None, *, classifier=False):
 @validate_params(
     {
         "test_size": [
-            Interval(numbers.Real, 0, 1, closed="neither"),
+            Interval("real_not_int", 0, 1, closed="neither"),
             Interval(numbers.Integral, 1, None, closed="left"),
             None,
         ],
         "train_size": [
-            Interval(numbers.Real, 0, 1, closed="neither"),
+            Interval("real_not_int", 0, 1, closed="neither"),
             Interval(numbers.Integral, 1, None, closed="left"),
             None,
         ],

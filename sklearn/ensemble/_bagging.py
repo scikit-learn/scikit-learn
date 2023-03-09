@@ -8,7 +8,7 @@ import itertools
 import numbers
 import numpy as np
 from abc import ABCMeta, abstractmethod
-from numbers import Integral, Real
+from numbers import Integral
 from warnings import warn
 from functools import partial
 
@@ -248,11 +248,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "max_samples": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="right"),
+            Interval("real_not_int", 0, 1, closed="right"),
         ],
         "max_features": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="right"),
+            Interval("real_not_int", 0, 1, closed="right"),
         ],
         "bootstrap": ["boolean"],
         "bootstrap_features": ["boolean"],

@@ -15,7 +15,7 @@ import array
 from collections import defaultdict
 from collections.abc import Mapping
 from functools import partial
-from numbers import Integral, Real
+from numbers import Integral
 from operator import itemgetter
 import re
 import unicodedata
@@ -1148,11 +1148,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         "ngram_range": [tuple],
         "analyzer": [StrOptions({"word", "char", "char_wb"}), callable],
         "max_df": [
-            Interval(Real, 0, 1, closed="both"),
+            Interval("real_not_int", 0, 1, closed="both"),
             Interval(Integral, 1, None, closed="left"),
         ],
         "min_df": [
-            Interval(Real, 0, 1, closed="both"),
+            Interval("real_not_int", 0, 1, closed="both"),
             Interval(Integral, 1, None, closed="left"),
         ],
         "max_features": [Interval(Integral, 1, None, closed="left"), None],
