@@ -10,6 +10,7 @@ from sklearn.datasets import load_iris
 from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.inspection._plot.partial_dependence import get_color_list_and_legend_dict
 from sklearn.linear_model import LinearRegression
 from sklearn.utils._testing import _convert_container
 from sklearn.compose import make_column_transformer
@@ -1179,8 +1180,8 @@ def test_partial_dependence_display_ice_colored_lines_legend(
 def test_partial_dependence_display_ice_colored_lines_invalid_inputs(
     pyplot, clf_diabetes, diabetes, coloring_values, expected_error
 ):
-    """Check that we properly center ICE and PD when passing kind as a string and as a
-    list."""
+    """Check that error is thrown when invalid inputs are passed
+    to color individual ICE lines."""
     with pytest.raises(expected_error):
         PartialDependenceDisplay.from_estimator(
             clf_diabetes,
@@ -1191,3 +1192,16 @@ def test_partial_dependence_display_ice_colored_lines_invalid_inputs(
             subsample=5,
             ice_lines_kw={"color": coloring_values},
         )
+
+
+@pytest.mark.parametrize(
+    "color",
+    [None, (2, 3), ("red", "green"), ["category1"]],
+)
+def test_partial_dependence_color_list_legend_dict_none_individual_ICE_lines(color):
+    """
+    Make sure that inputs which are not values for the individual colors return None
+    """
+    color_list, legend_dict = get_color_list_and_legend_dict(color, None)
+    assert color_list is None
+    assert legend_dict is None
