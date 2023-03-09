@@ -107,18 +107,18 @@ Tips for performance
   the GIL when entering them. You have to do that yourself either by passing ``nogil=True`` to
   ``cython.parallel.prange`` explicitly, or by using an explicit context manager:
 
-.. code-block:: cython
+    .. code-block:: cython
 
-   cdef inline void my_func(self) nogil:
+       cdef inline void my_func(self) nogil:
 
-        # Some logic interacting with CPython, e.g. allocating arrays via NumPy.
+            # Some logic interacting with CPython, e.g. allocating arrays via NumPy.
 
-        with nogil:
-            # The code here is run as is it were written in C.
+            with nogil:
+                # The code here is run as is it were written in C.
 
-        return 0
+            return 0
 
-This item is based on `this comment from Stéfan's Benhel <https://github.com/cython/cython/issues/2798#issuecomment-459971828>`_
+  This item is based on `this comment from Stéfan's Benhel <https://github.com/cython/cython/issues/2798#issuecomment-459971828>`_
 
 * Direct calls to BLAS routines are possible via interfaces defined in ``sklearn.utils._cython_blas``.
 
