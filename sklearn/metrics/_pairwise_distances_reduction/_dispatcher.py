@@ -211,16 +211,16 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
 
         Y = X if Y is None else Y
 
-        is_usable = (
-            not is_euclidean(metric, metric_kwargs)
-            and super().is_usable_for(X, Y, metric)
-            and effective_n_threads != 1
-        )
-
         # We need to rely on `PairwiseDistances` for manhattan anyway because
         # the implementation of manhattan distances on sparse data has been removed.
         manhattan_metrics = ["cityblock", "l1", "manhattan"]
-        return is_usable or metric in manhattan_metrics
+
+        is_usable = super().is_usable_for(X, Y, metric) and (
+            (not is_euclidean(metric, metric_kwargs) and effective_n_threads != 1)
+            or metric in manhattan_metrics
+        )
+
+        return is_usable
 
     @classmethod
     def compute(
