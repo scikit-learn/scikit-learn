@@ -8,7 +8,8 @@ from sklearn.metrics import v_measure_score
 
 
 @pytest.mark.parametrize("bisecting_strategy", ["biggest_inertia", "largest_cluster"])
-def test_three_clusters(bisecting_strategy):
+@pytest.mark.parametrize("init", ["k-means++", "random"])
+def test_three_clusters(bisecting_strategy, init):
     """Tries to perform bisect k-means for three clusters to check
     if splitting data is performed correctly.
     """
@@ -16,7 +17,7 @@ def test_three_clusters(bisecting_strategy):
         [[1, 1], [10, 1], [3, 1], [10, 0], [2, 1], [10, 2], [10, 8], [10, 9], [10, 10]]
     )
     bisect_means = BisectingKMeans(
-        n_clusters=3, random_state=0, bisecting_strategy=bisecting_strategy
+        n_clusters=3, random_state=0, bisecting_strategy=bisecting_strategy, init=init,
     )
     bisect_means.fit(X)
 
