@@ -67,10 +67,10 @@ Tips to ease development
          cythonX --annotate source.pyx
 
 * Using the ``--annotate`` option with this flag allows generating a HTML report of code annotation.
-    This report indicates interactions with the CPython interpreter on a line-by-line basis.
-    Interactions with the CPython interpreter must be avoided as much as possible in
-    the computationally intensive sections of the algorithms.
-    For more information, please refer to `this section of Cython's tutorial <https://cython.readthedocs.io/en/latest/src/tutorial/cython_tutorial.html#primes>`_
+  This report indicates interactions with the CPython interpreter on a line-by-line basis.
+  Interactions with the CPython interpreter must be avoided as much as possible in
+  the computationally intensive sections of the algorithms.
+  For more information, please refer to `this section of Cython's tutorial <https://cython.readthedocs.io/en/latest/src/tutorial/cython_tutorial.html#primes>`_
 
     .. code-block::
 
