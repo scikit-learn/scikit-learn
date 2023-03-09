@@ -110,6 +110,13 @@ Changelog
   is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |API| The `data_transposed` argument of :func:`datasets.make_sparse_coded_signal`
+  is deprecated and will be removed in v1.5.
+  :pr:`25784` by :user:`Jérémie du Boisberranger`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -120,7 +127,7 @@ Changelog
 - |Efficiency| :class:`decomposition.MiniBatchDictionaryLearning` and
   :class:`decomposition.MiniBatchSparsePCA` are now faster for small batch sizes by
   avoiding duplicate validations.
-  :pr:`25490` by :user:`Jérémie du Boisberranger <jeremiedbb>`. 
+  :pr:`25490` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -208,6 +215,13 @@ Changelog
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| :func:`model_selection.cross_validate` accepts a new parameter
+  `return_indices` to return the train-test indices of each cv split.
+  :pr:`25659` by :user:`Guillaume Lemaitre <glemaitre>`.
+  
 - |MajorFeature| :class:`model_selection.Refitter` is a new refit callable factory for
   subselecting models from `GridSearchCV` or `RandomSearchCV`.
   :pr:`22573` by :user:`Derek Pisner <dPys>` and :user:`Joel Nothman <jnothman>`.

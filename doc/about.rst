@@ -73,6 +73,13 @@ past, but no longer have communication responsibilities:
 
 .. include:: communication_team_emeritus.rst
 
+Emeritus Contributor Experience Team
+------------------------------------
+
+The following people have been active in the contributor experience team in the
+past:
+
+.. include:: contributor_experience_team_emeritus.rst
 
 .. _citing-scikit-learn:
 
