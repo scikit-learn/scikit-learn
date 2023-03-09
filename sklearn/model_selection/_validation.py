@@ -214,10 +214,10 @@ def cross_validate(
                 This is available only if ``return_estimator`` parameter
                 is set to ``True``.
             ``indices``
-                The train/test indices for each cv split. A dictionary
+                The train/test positional indices for each cv split. A dictionary
                 is returned where the keys are either `"train"` or `"test"`
-                and the associated values are a list of NumPy arrays with the
-                indices. Available only if `return_indices=True`.
+                and the associated values are a list of integer-dtyped NumPy
+                arrays with the indices. Available only if `return_indices=True`.
 
     See Also
     --------
