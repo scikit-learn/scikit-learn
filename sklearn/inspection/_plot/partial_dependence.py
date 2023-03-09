@@ -4,7 +4,6 @@ from itertools import chain
 from math import ceil
 
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.lines import Line2D
 from scipy import sparse
@@ -1144,7 +1143,6 @@ class PartialDependenceDisplay:
         """
         if categorical:
             import matplotlib.pyplot as plt
-
             default_im_kw = dict(interpolation="nearest", cmap="viridis")
             im_kw = {**default_im_kw, **heatmap_kw}
 
@@ -1255,7 +1253,6 @@ class PartialDependenceDisplay:
                 mpl.cm.ScalarMappable(norm=legend_dict["norm"], cmap=cmap),
                 ax=self.axes_.flatten()[last_ax_idx_not_none],
             )
-        plt.tight_layout()
 
     def plot(
         self,
