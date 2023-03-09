@@ -174,7 +174,7 @@ def test_sample_statistics(kernel):
 
     y_mean, y_cov = gpr.predict(X2, return_cov=True)
 
-    samples = gpr.sample_y(X2, 300000)
+    samples = gpr.sample_y(X2, 300000, random_state=0)
 
     # More digits accuracy would require many more samples
     assert_almost_equal(y_mean, np.mean(samples, 1), 1)
@@ -368,8 +368,8 @@ def test_y_multioutput():
         assert_almost_equal(y_std_1d, y_std_2d[..., target])
         assert_almost_equal(y_cov_1d, y_cov_2d[..., target])
 
-    y_sample_1d = gpr.sample_y(X2, n_samples=10)
-    y_sample_2d = gpr_2d.sample_y(X2, n_samples=10)
+    y_sample_1d = gpr.sample_y(X2, n_samples=10, random_state=0)
+    y_sample_2d = gpr_2d.sample_y(X2, n_samples=10, random_state=0)
 
     assert y_sample_1d.shape == (5, 10)
     assert y_sample_2d.shape == (5, 2, 10)
@@ -769,8 +769,25 @@ def test_sample_y_shapes(normalize_y, n_targets):
 
     model.fit(X_train, y_train)
 
-    y_samples = model.sample_y(X_test, n_samples=n_samples_y_test)
+    y_samples = model.sample_y(X_test, n_samples=n_samples_y_test, random_state=0)
     assert y_samples.shape == y_test_shape
+
+
+# TODO(1.5): Remove test when default changes
+def test_sample_y_emit_warning():
+    """Check that sample_y raises a warning if it uses the default parameter.
+
+    This is a test in association with issue:
+    https://github.com/scikit-learn/scikit-learn/issues/25767
+    """
+    kernel = RBF(length_scale=1)
+    gpr = GaussianProcessRegressor(kernel=kernel)
+
+    warning_message = (
+        "The default value of random_state will change from 0 to None in 1.5"
+    )
+    with pytest.warns(FutureWarning, match=warning_message):
+        _ = gpr.sample_y(X)
 
 
 class CustomKernel(C):
