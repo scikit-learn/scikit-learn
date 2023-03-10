@@ -8,10 +8,12 @@ PAPER         =
 BUILDDIR      = _build
 
 # Disable multiple jobs on OSX
+# FIXME: disable completely the parallel build to investigate the EOFError and
+# OSError observe in CircleCI
 ifeq ($(shell uname), Darwin)
 	SPHINX_NUMJOBS ?= 1
 else
-	SPHINX_NUMJOBS ?= auto
+	SPHINX_NUMJOBS ?= 1
 endif
 
 ifneq ($(EXAMPLES_PATTERN),)
