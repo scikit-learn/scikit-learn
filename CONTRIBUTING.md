@@ -3,7 +3,7 @@ Contributing to scikit-learn
 ============================
 
 The latest contributing guide is available in the repository at
-`doc/developers/contributing.rst`, or online at:
+`doc/developers/contributing.rst` or online at:
 
 https://scikit-learn.org/dev/developers/contributing.html
 
@@ -38,5 +38,5 @@ Quick links
 Code of Conduct
 ---------------
 
-We abide by the principles of openness, respect, and consideration of others
+We always abide by the principles of openness, respect, and consideration of others
 of the Python Software Foundation: https://www.python.org/psf/codeofconduct/.
