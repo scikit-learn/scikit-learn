@@ -47,8 +47,8 @@ bikes = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True, parser="pa
 X, y = bikes.data.copy(), bikes.target
 
 # We use only a subset of the data to speed up the example.
-X = X.iloc[::4, :]
-y = y[::4, :]
+X = X.iloc[::5, :]
+y = y[::5]
 
 # %%
 # The feature `"weather"` has a particularity: the category `"heavy_rain"` is a rare
