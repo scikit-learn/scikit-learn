@@ -1278,10 +1278,6 @@ def make_low_rank_matrix(
     return np.dot(np.dot(u, s), v.T)
 
 
-# TODO(1.3): Change argument `data_transposed` default from True to False.
-# TODO(1.3): Deprecate data_transposed, always return data not transposed.
-
-
 @validate_params(
     {
         "n_samples": [Interval(Integral, 1, None, closed="left")],
@@ -1289,7 +1285,7 @@ def make_low_rank_matrix(
         "n_features": [Interval(Integral, 1, None, closed="left")],
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
-        "data_transposed": ["boolean", Hidden(StrOptions({"warn"}))],
+        "data_transposed": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 )
 def make_sparse_coded_signal(
@@ -1299,7 +1295,7 @@ def make_sparse_coded_signal(
     n_features,
     n_nonzero_coefs,
     random_state=None,
-    data_transposed="warn",
+    data_transposed="deprecated",
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
@@ -1328,10 +1324,16 @@ def make_sparse_coded_signal(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    data_transposed : bool, default=True
-        By default, Y, D and X are transposed.
+    data_transposed : bool, default=False
+        By default, Y, D and X are not transposed.
 
         .. versionadded:: 1.1
+
+        .. versionchanged:: 1.3
+            Default value changed from True to False.
+
+        .. deprecated:: 1.3
+            `data_transposed` is deprecated and will be removed in 1.5.
 
     Returns
     -------
@@ -1367,14 +1369,15 @@ def make_sparse_coded_signal(
     # encode signal
     Y = np.dot(D, X)
 
+    # TODO(1.5) remove data_transposed
     # raise warning if data_transposed is not passed explicitly
-    if data_transposed == "warn":
-        data_transposed = True
+    if data_transposed != "deprecated":
         warnings.warn(
-            "The default value of data_transposed will change from True to False in"
-            " version 1.3",
+            "data_transposed was deprecated in version 1.3 and will be removed in 1.5.",
             FutureWarning,
         )
+    else:
+        data_transposed = False
 
     # transpose if needed
     if not data_transposed:

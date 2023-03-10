@@ -532,7 +532,7 @@ features = ("temp", "humidity")
 pdp = partial_dependence(
     hgbdt_model, X_train, features=features, kind="average", grid_resolution=10
 )
-XX, YY = np.meshgrid(pdp["values"][0], pdp["values"][1])
+XX, YY = np.meshgrid(pdp["grid_values"][0], pdp["grid_values"][1])
 Z = pdp.average[0].T
 ax = fig.add_subplot(projection="3d")
 fig.add_axes(ax)
