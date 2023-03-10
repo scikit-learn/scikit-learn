@@ -287,7 +287,7 @@ def _gram_omp(
         "X": [np.ndarray],
         "y": [np.ndarray],
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
-        "tol": [Interval(Real, 1, None, closed="left"), None],
+        "tol": [Interval(Real, 1.0, None, closed="left"), None],
         "precompute": ["boolean", StrOptions({"auto"})],
         "copy_X": ["boolean"],
         "return_path": ["boolean"],
