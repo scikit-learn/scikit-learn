@@ -138,6 +138,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.get_scorer",
     "sklearn.metrics.hamming_loss",
     "sklearn.metrics.jaccard_score",
+    "sklearn.metrics.label_ranking_average_precision_score",
     "sklearn.metrics.label_ranking_loss",
     "sklearn.metrics.log_loss",
     "sklearn.metrics.make_scorer",
