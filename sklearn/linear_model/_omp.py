@@ -18,6 +18,7 @@ from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array
 from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import validate_params
 from ..model_selection import check_cv
 
 premature = (
@@ -281,6 +282,18 @@ def _gram_omp(
         return gamma, indices[:n_active], n_active
 
 
+@validate_params(
+    {
+        "X": [np.ndarray],
+        "y": [np.ndarray],
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 1, None, closed="left")],
+        "precompute": [bool, StrOptions({"auto"})],
+        "copy_X": [bool],
+        "return_path": [bool],
+        "return_n_iter": [bool],
+    }
+)
 def orthogonal_mp(
     X,
     y,
