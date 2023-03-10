@@ -1045,6 +1045,7 @@ def test_calibration_with_non_sample_aligned_fit_param(data):
 
     class TestClassifier(LogisticRegression):
         def fit(self, X, y, sample_weight=None, fit_param=None):
+            assert fit_param is not None
             return super().fit(X, y, sample_weight=sample_weight)
 
     CalibratedClassifierCV(estimator=TestClassifier()).fit(

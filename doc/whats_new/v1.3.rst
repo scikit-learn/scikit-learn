@@ -107,6 +107,12 @@ Changelog
 - |Feature| A `__sklearn_clone__` protocol is now available to override the
   default behavior of :func:`base.clone`. :pr:`24568` by `Thomas Fan`_.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| :class:`calibration.CalibratedClassifierCV` now does not enforce sample
+  alignment on `fit_params`. :pr:`25805` by `Adrin Jalali`_.
+
 :mod:`sklearn.cluster`
 ......................
 
