@@ -350,6 +350,9 @@ Changelog
   :pr:`25733` by :user:`Brigitta Sipőcz <bsipocz>` and
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :func:`utils.validation.check_array` now suports extension arrays with object
+  dtypes by return an ndarray with object dtype. :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.semi_supervised`
 ..............................
 
