@@ -395,7 +395,7 @@ a.sk-footer-funding-link:hover {
   width: 100%;
 }
 
-/* Enables section links to be visible when linked */
+/* Enables section links to be visible when anchor-linked */
 section[id]::before {
   display: block;
   height: 52px;
