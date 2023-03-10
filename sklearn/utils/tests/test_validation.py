@@ -1780,7 +1780,12 @@ def test_check_array_array_api_has_non_finite(array_namespace):
 
 @pytest.mark.parametrize(
     "extension_dtype, regular_dtype",
-    [("boolean", "bool"), ("Int64", "int64"), ("Float64", "float64")],
+    [
+        ("boolean", "bool"),
+        ("Int64", "int64"),
+        ("Float64", "float64"),
+        ("category", "object"),
+    ],
 )
 @pytest.mark.parametrize("include_object", [True, False])
 def test_check_array_multiple_extensions(
