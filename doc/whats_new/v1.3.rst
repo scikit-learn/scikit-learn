@@ -107,8 +107,8 @@ Changes impacting all modules
   CSR matrix to the `predict` or `transform` method of estimators that rely on
   a dense NumPy representation to store their fitted parameters (or the reverse).
 
-  For instance, :meth:`sklearn.NearestNeighbors.kneighbors` is up to 2 times faster
-  for this case now on commonly available laptops.
+  For instance, :meth:`sklearn.NearestNeighbors.kneighbors` is now up to 2 times faster
+  for this case on commonly available laptops.
 
   :pr:`25044` by :user:`Julien Jerphanion <jjerphan>`.
 

@@ -86,7 +86,7 @@ cdef void _middle_term_sparse_dense_{{name_suffix}}(
     DTYPE_t * dist_middle_terms,
 ) nogil:
     # This routine assumes that dist_middle_terms is a pointer to the first element
-    # of a zeroed buffer of length at least equal to n_X × n_Y, conceptually
+    # of a buffer filled with zeros of length at least equal to n_X × n_Y, conceptually
     # representing a 2-d C-ordered of F-ordered array.
     cdef:
         ITYPE_t i, j, k
