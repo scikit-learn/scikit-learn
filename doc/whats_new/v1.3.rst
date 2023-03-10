@@ -29,6 +29,11 @@ random sampling procedures.
   `transform_algorithm` is not the same as `fit_algorithm` and the number of iterations
   is small. :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Fix| Treat more consistently small values in the `W` and `H` matrices during the
+  `fit` and `transform` steps of :class:`decomposition.NMF` and
+  :class:`decomposition.MiniBatchNMF` which can produce different results than previous
+  versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -75,6 +80,42 @@ Changes impacting all modules
   :pr:`25294`, :pr:`25308`, :pr:`25291`, :pr:`25367`, :pr:`25402`,
   by :user:`John Pangas <jpangas>`, :user:`Rahil Parikh <rprkh>` ,
   and :user:`Alex Buzenet <albuzenet>`.
+
+- |Enhancement| Added a multi-threaded Cython routine to the compute squared
+  Euclidean distances (sometimes followed by a fused reduction operation) for a
+  pair of datasets consisting of a sparse CSR matrix and a dense NumPy.
+
+  This can improve the performance of following functions and estimators:
+
+  - :func:`sklearn.metrics.pairwise_distances_argmin`
+  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
+  - :class:`sklearn.cluster.AffinityPropagation`
+  - :class:`sklearn.cluster.Birch`
+  - :class:`sklearn.cluster.MeanShift`
+  - :class:`sklearn.cluster.OPTICS`
+  - :class:`sklearn.cluster.SpectralClustering`
+  - :func:`sklearn.feature_selection.mutual_info_regression`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neighbors.KNeighborsRegressor`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.neighbors.RadiusNeighborsRegressor`
+  - :class:`sklearn.neighbors.LocalOutlierFactor`
+  - :class:`sklearn.neighbors.NearestNeighbors`
+  - :class:`sklearn.manifold.Isomap`
+  - :class:`sklearn.manifold.LocallyLinearEmbedding`
+  - :class:`sklearn.manifold.TSNE`
+  - :func:`sklearn.manifold.trustworthiness`
+  - :class:`sklearn.semi_supervised.LabelPropagation`
+  - :class:`sklearn.semi_supervised.LabelSpreading`
+
+  A typical example of this performance improvement happens when passing a sparse
+  CSR matrix to the `predict` or `transform` method of estimators that rely on
+  a dense NumPy representation to store their fitted parameters (or the reverse).
+
+  For instance, :meth:`sklearn.NearestNeighbors.kneighbors` is now up to 2 times faster
+  for this case on commonly available laptops.
+
+  :pr:`25044` by :user:`Julien Jerphanion <jjerphan>`.
 
 Changelog
 ---------
@@ -128,6 +169,11 @@ Changelog
   :class:`decomposition.MiniBatchSparsePCA` are now faster for small batch sizes by
   avoiding duplicate validations.
   :pr:`25490` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Treat more consistently small values in the `W` and `H` matrices during the
+  `fit` and `transform` steps of :class:`decomposition.NMF` and
+  :class:`decomposition.MiniBatchNMF` which can produce different results than previous
+  versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
 
 :mod:`sklearn.ensemble`
 .......................
