@@ -6,7 +6,7 @@ Generate samples of synthetic data sets.
 #          G. Louppe, J. Nothman
 # License: BSD 3 clause
 
-from numbers import Integral
+from numbers import Integral, Real
 import numbers
 import array
 import warnings
@@ -39,6 +39,25 @@ def _generate_hypercube(samples, dimensions, rng):
     return out
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_informative": [Interval(Integral, 1, None, closed="left")],
+        "n_redundant": [Interval(Integral, 0, None, closed="left")],
+        "n_repeated": [Interval(Integral, 0, None, closed="left")],
+        "n_classes": [Interval(Integral, 1, None, closed="left")],
+        "n_clusters_per_class": [Interval(Integral, 1, None, closed="left")],
+        "weights": ["array-like", None],
+        "flip_y": [Interval(Real, 0, 1, closed="both")],
+        "class_sep": [Interval(Real, 0, None, closed="neither")],
+        "hypercube": ["boolean"],
+        "shift": [Interval(Real, None, None, closed="neither"), "array-like", None],
+        "scale": [Interval(Real, 0, None, closed="neither"), "array-like", None],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_classification(
     n_samples=100,
     n_features=20,
@@ -590,6 +609,19 @@ def make_regression(
     coef : ndarray of shape (n_features,) or (n_features, n_targets)
         The coefficient of the underlying linear model. It is returned only if
         coef is True.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_samples=5, n_features=2, noise=1, random_state=42)
+    >>> X
+    array([[ 0.4967..., -0.1382... ],
+        [ 0.6476...,  1.523...],
+        [-0.2341..., -0.2341...],
+        [-0.4694...,  0.5425...],
+        [ 1.579...,  0.7674...]])
+    >>> y
+    array([  6.737...,  37.79..., -10.27...,   0.4017...,   42.22...])
     """
     n_informative = min(n_features, n_informative)
     generator = check_random_state(random_state)
@@ -962,6 +994,14 @@ def make_blobs(
         return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 5, None, closed="left")],
+        "noise": [Interval(Real, 0.0, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+)
 def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None):
     """Generate the "Friedman #1" regression problem.
 
@@ -1012,9 +1052,6 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None
     .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
            pages 123-140, 1996.
     """
-    if n_features < 5:
-        raise ValueError("n_features must be at least five.")
-
     generator = check_random_state(random_state)
 
     X = generator.uniform(size=(n_samples, n_features))
@@ -1241,10 +1278,6 @@ def make_low_rank_matrix(
     return np.dot(np.dot(u, s), v.T)
 
 
-# TODO(1.3): Change argument `data_transposed` default from True to False.
-# TODO(1.3): Deprecate data_transposed, always return data not transposed.
-
-
 @validate_params(
     {
         "n_samples": [Interval(Integral, 1, None, closed="left")],
@@ -1252,7 +1285,7 @@ def make_low_rank_matrix(
         "n_features": [Interval(Integral, 1, None, closed="left")],
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
-        "data_transposed": ["boolean", Hidden(StrOptions({"warn"}))],
+        "data_transposed": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 )
 def make_sparse_coded_signal(
@@ -1262,7 +1295,7 @@ def make_sparse_coded_signal(
     n_features,
     n_nonzero_coefs,
     random_state=None,
-    data_transposed="warn",
+    data_transposed="deprecated",
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
@@ -1291,10 +1324,16 @@ def make_sparse_coded_signal(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    data_transposed : bool, default=True
-        By default, Y, D and X are transposed.
+    data_transposed : bool, default=False
+        By default, Y, D and X are not transposed.
 
         .. versionadded:: 1.1
+
+        .. versionchanged:: 1.3
+            Default value changed from True to False.
+
+        .. deprecated:: 1.3
+            `data_transposed` is deprecated and will be removed in 1.5.
 
     Returns
     -------
@@ -1330,14 +1369,15 @@ def make_sparse_coded_signal(
     # encode signal
     Y = np.dot(D, X)
 
+    # TODO(1.5) remove data_transposed
     # raise warning if data_transposed is not passed explicitly
-    if data_transposed == "warn":
-        data_transposed = True
+    if data_transposed != "deprecated":
         warnings.warn(
-            "The default value of data_transposed will change from True to False in"
-            " version 1.3",
+            "data_transposed was deprecated in version 1.3 and will be removed in 1.5.",
             FutureWarning,
         )
+    else:
+        data_transposed = False
 
     # transpose if needed
     if not data_transposed:
