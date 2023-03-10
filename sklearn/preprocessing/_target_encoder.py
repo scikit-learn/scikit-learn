@@ -128,6 +128,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     Examples
     --------
     With `smooth="auto"`, the smoothing parameter is set to an empirical Bayes estimate:
+
     >>> import numpy as np
     >>> from sklearn.preprocessing import TargetEncoder
     >>> X = np.array([["dog"] * 20 + ["cat"] * 30 + ["snake"] * 38], dtype=object).T

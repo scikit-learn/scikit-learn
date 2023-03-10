@@ -322,7 +322,7 @@ def test_constant_target_and_feature(y, y_mean, smooth):
     assert_allclose(X_test_trans, np.repeat([[y_mean]], 2, axis=0))
 
 
-def test_fit_transform_not_associated_withy_if_ordinal_categorical_is_not(
+def test_fit_transform_not_associated_with_y_if_ordinal_categorical_is_not(
     global_random_seed,
 ):
     cardinality = 30  # not too large, otherwise we need a very large n_samples
