@@ -1811,8 +1811,8 @@ def test_read_only_buffer(monkeypatch):
 
 @pytest.mark.parametrize("class_weight", ["balanced_subsample", None])
 def test_round_samples_to_one_when_samples_too_low(class_weight):
-    """
-    Check low max_samples works and is rounded to one.
+    """Check low max_samples works and is rounded to one.
+
     Non-regression test for gh-24037.
     """
     X, y = datasets.load_wine(return_X_y=True)
