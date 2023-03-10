@@ -553,15 +553,11 @@ def test_pairwise_distances_reduction_is_usable_for():
         np.asfortranarray(X), Y, metric
     )
 
-    # We prefer not to use those implementations for fused sparse-dense when
-    # metric="(sq)euclidean" because it's not yet the most efficient one on
-    # all configurations of datasets.
-    # See: https://github.com/scikit-learn/scikit-learn/pull/23585#issuecomment-1247996669  # noqa
-    # TODO: implement specialisation for (sq)euclidean on fused sparse-dense
-    # using sparse-dense routines for matrix-vector multiplications.
-    assert not BaseDistancesReductionDispatcher.is_usable_for(
-        X_csr, Y, metric="euclidean"
+    assert BaseDistancesReductionDispatcher.is_usable_for(X_csr, Y, metric="euclidean")
+    assert BaseDistancesReductionDispatcher.is_usable_for(
+        X, Y_csr, metric="sqeuclidean"
     )
+
     assert BaseDistancesReductionDispatcher.is_usable_for(
         X_csr, Y_csr, metric="sqeuclidean"
     )
@@ -1060,7 +1056,7 @@ def test_pairwise_distances_argkmin(
             row_idx, argkmin_indices_ref[row_idx]
         ]
 
-    for _X, _Y in [(X, Y), (X_csr, Y_csr)]:
+    for _X, _Y in itertools.product((X, X_csr), (Y, Y_csr)):
         argkmin_distances, argkmin_indices = ArgKmin.compute(
             _X,
             _Y,

@@ -6,7 +6,7 @@ cdef floating _euclidean_dense_dense(
     const floating*,
     int,
     bint
-) nogil
+) noexcept nogil
 
 cdef floating _euclidean_sparse_dense(
     const floating[::1],
@@ -14,7 +14,7 @@ cdef floating _euclidean_sparse_dense(
     const floating[::1],
     floating, 
     bint
-) nogil
+) noexcept nogil
 
 cpdef void _relocate_empty_clusters_dense(
     const floating[:, ::1],
