@@ -497,6 +497,7 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
             # TODO: Support CSR matrices.
             and not issparse(X)
             and not issparse(Y)
+            # TODO: implement Euclidean specialization with GEMM.
             and metric not in ("euclidean", "sqeuclidean")
         )
 
