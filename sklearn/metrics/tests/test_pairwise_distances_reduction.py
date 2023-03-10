@@ -660,12 +660,12 @@ def test_argkmin_factory_method_wrong_usages():
         ArgKmin.compute(X=X, Y=Y, k=k, metric=metric, metric_kwargs=metric_kwargs)
 
 
-def test_argkminclassmode_factory_method_wrong_usages():
+def test_argkmin_classmode_factory_method_wrong_usages():
     rng = np.random.RandomState(1)
     X = rng.rand(100, 10)
     Y = rng.rand(100, 10)
     k = 5
-    metric = "euclidean"
+    metric = "manhattan"
 
     weights = "uniform"
     labels = rng.randint(low=0, high=10, size=100)
@@ -1346,12 +1346,12 @@ def test_sqeuclidean_row_norms(
         sqeuclidean_row_norms(X, num_threads=num_threads)
 
 
-def test_argkminclassmode_strategy_consistent():
+def test_argkmin_classmode_strategy_consistent():
     rng = np.random.RandomState(1)
     X = rng.rand(100, 10)
     Y = rng.rand(100, 10)
     k = 5
-    metric = "euclidean"
+    metric = "manhattan"
 
     weights = "uniform"
     labels = rng.randint(low=0, high=10, size=100)
