@@ -238,6 +238,9 @@ Changelog
   and the `values` key will be removed in 1.5.
   :pr:`21809` and :pr:`25732` by `Thomas Fan`_.
 
+- |FIX| Fixes :func:`utils.validation.check_array` to properly convert pandas
+  extension arrays. :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
