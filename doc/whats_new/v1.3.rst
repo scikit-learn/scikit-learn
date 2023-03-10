@@ -204,6 +204,10 @@ Changelog
   :class:`ensemble.BaggingRegressor` expose the `allow_nan` tag from the
   underlying estimator. :pr:`25506` by `Thomas Fan`_.
 
+- |Fix| :meth:`ensemble.RandomForestClassifier.fit` sets `max_samples = 1`
+  when `max_samples` is a float and `round(n_samples * max_samples) < 1`.
+  :pr:`25601` by :user:`Jan Fidor <JanFidor>`.
+
 :mod:`sklearn.exception`
 ........................
 - |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
