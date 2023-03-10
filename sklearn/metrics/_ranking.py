@@ -1074,6 +1074,13 @@ def roc_curve(
     return fpr, tpr, thresholds
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_score": ["array-like"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None):
     """Compute ranking-based average precision.
 
@@ -1091,10 +1098,10 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
 
     Parameters
     ----------
-    y_true : {ndarray, sparse matrix} of shape (n_samples, n_labels)
+    y_true : {array-like, sparse matrix} of shape (n_samples, n_labels)
         True binary labels in binary indicator format.
 
-    y_score : ndarray of shape (n_samples, n_labels)
+    y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
