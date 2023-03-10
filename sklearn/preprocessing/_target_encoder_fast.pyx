@@ -70,7 +70,10 @@ def _fit_encoding_fast(
                 counts[X_int_tmp] += 1.0
 
             for cat_idx in range(n_cats):
-                encoding_vec[feat_idx][cat_idx] = sums[cat_idx] / counts[cat_idx]
+                if counts[cat_idx] == 0:
+                    encoding_vec[feat_idx][cat_idx] = y_mean
+                else:
+                    encoding_vec[feat_idx][cat_idx] = sums[cat_idx] / counts[cat_idx]
 
     return encodings
 

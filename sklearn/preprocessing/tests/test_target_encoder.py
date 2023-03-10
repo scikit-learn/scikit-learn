@@ -366,3 +366,20 @@ def test_fit_transform_not_associated_withy_if_ordinal_categorical_is_not(
         cross_val_score(regressor, X_encoded_train_no_shuffled, y_train, cv=cv).mean()
         > 0.5
     )
+
+
+def test_smooth_zero():
+    """Check edge case with zero smoothing and cv does not contain category."""
+    X = np.array([[0, 0, 0, 0, 0, 1, 1, 1, 1, 1]]).T
+    y = np.array([2.1, 4.3, 1.2, 3.1, 1.0, 9.0, 10.3, 14.2, 13.3, 15.0])
+
+    enc = TargetEncoder(smooth=0.0, shuffle=False, cv=2)
+    X_trans = enc.fit_transform(X, y)
+
+    # With cv = 2, category 0 does not exist in the second half, thus
+    # it will be encoded as the mean of the second half
+    assert_allclose(X_trans[0], np.mean(y[5:]))
+
+    # category 1 does nto exist in the first half, thus it will be encoded as
+    # the mean of the first half
+    assert_allclose(X_trans[-1], np.mean(y[:5]))

@@ -145,8 +145,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     >>> # On the other hand, a low `smooth` parameter puts more weight on target
     >>> # conditioned on the value of the categorical:
-    >>> enc_no_smooth = TargetEncoder(smooth=1.0).fit(X, y)
-    >>> enc_no_smooth.encodings_
+    >>> enc_low_smooth = TargetEncoder(smooth=1.0).fit(X, y)
+    >>> enc_low_smooth.encodings_
     [array([20..., 80..., 43...])]
     """
 
