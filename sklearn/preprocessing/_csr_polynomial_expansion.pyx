@@ -84,7 +84,7 @@ cdef inline cnp.int64_t _deg3_column(
     # that i<=d.
     # Corresponds to 3 * n_features**2 * d + d**3 = maxint32
     # when n_features == d.
-    cdef cnp.int64_t MAX_SAFE_INDEX_DEG3 = <cnp.int64_t> pow(LONG_MAX, 1/3)/4
+    cdef cnp.int64_t MAX_SAFE_INDEX_DEG3 = <cnp.int64_t> pow(LONG_MAX / 4, 1/3)
 
     # The second condition checks to ensure the intermediate calculation
     # 3 * i * n_features**2 doesn't overflow. This check is necessary since in
