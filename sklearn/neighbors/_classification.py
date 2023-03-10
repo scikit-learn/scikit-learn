@@ -331,6 +331,14 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     unique_labels=self.classes_,
                     metric=metric,
                     metric_kwargs=metric_kwargs,
+                    # `strategy="parallel_on_X"` has in practice be shown
+                    # to be more efficient than `strategy="parallel_on_Y``
+                    # on many combination of datasets.
+                    # Hence, we choose to enforce it here.
+                    # For more information, see:
+                    # https://github.com/scikit-learn/scikit-learn/pull/24076#issuecomment-1445258342  # noqa
+                    # TODO: adapt the heuristic for `strategy="auto"` for
+                    # `ArgKminClassMode` and use `strategy="auto"`.
                     strategy="parallel_on_X",
                 )
                 return probabilities
