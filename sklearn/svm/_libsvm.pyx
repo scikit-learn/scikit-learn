@@ -181,12 +181,12 @@ def fit(
 
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     set_problem(
-        &problem,
-        <char*> &X[0, 0],
-        <char*> &Y[0],
-        <char*> &sample_weight[0],
-        <cnp.npy_intp*> X.shape,
-        kernel_index,
+        problem=&problem,
+        X=<char*> &X[0, 0],
+        Y=<char*> &Y[0],
+        sample_weight=<char*> &sample_weight[0],
+        dims=<cnp.npy_intp*> X.shape,
+        kernel_type=kernel_index,
     )
     if problem.x == NULL:
         raise MemoryError("Seems we've run out of memory")
@@ -194,27 +194,27 @@ def fit(
         class_weight.shape[0], dtype=np.int32
     )
     set_parameter(
-        &param,
-        svm_type,
-        kernel_index,
-        degree,
-        gamma,
-        coef0,
-        nu,
-        cache_size,
-        C,
-        tol,
-        epsilon,
-        shrinking,
-        probability,
-        <int> class_weight.shape[0],
-        <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
-        <char*> &class_weight[0] if class_weight.size > 0 else NULL,
-        max_iter,
-        random_seed,
+        param=&param,
+        svm_type=svm_type,
+        kernel_type=kernel_index,
+        degree=degree,
+        gamma=gamma,
+        coef0=coef0,
+        nu=nu,
+        cache_size=cache_size,
+        C=C,
+        eps=tol,
+        p=epsilon,
+        shrinking=shrinking,
+        probability=probability,
+        nr_weight=<int> class_weight.shape[0],
+        weight_label=<char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
+        weight=<char*> &class_weight[0] if class_weight.size > 0 else NULL,
+        max_iter=max_iter,
+        random_seed=random_seed,
     )
 
-    error_msg = svm_check_parameter(&problem, &param)
+    error_msg = svm_check_parameter(prob=&problem, param=&param)
     if error_msg:
         # for SVR: epsilon is called p in libsvm
         error_repl = error_msg.decode('utf-8').replace("p < 0", "epsilon < 0")
@@ -224,27 +224,42 @@ def fit(
     # this does the real work
     cdef int fit_status = 0
     with nogil:
-        model = svm_train(&problem, &param, &fit_status, &blas_functions)
+        model = svm_train(
+            prob=&problem,
+            param=&param,
+            status=&fit_status,
+            blas_functions=&blas_functions,
+        )
 
     # from here until the end, we just copy the data returned by
     # svm_train
-    SV_len  = get_l(model)
-    n_class = get_nr(model)
+    SV_len  = get_l(model=model)
+    n_class = get_nr(model=model)
 
     cdef int[::1] n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.intc)
-    copy_n_iter(<char*> &n_iter[0], model)
+    copy_n_iter(data=<char*> &n_iter[0], model=model)
 
     cdef cnp.float64_t[:, ::1] sv_coef = np.empty((n_class-1, SV_len), dtype=np.float64)
-    copy_sv_coef(<char*> &sv_coef[0, 0] if sv_coef.size > 0 else NULL, model)
+    copy_sv_coef(
+        data=<char*> &sv_coef[0, 0] if sv_coef.size > 0 else NULL,
+        model=model,
+    )
 
     # the intercept is just model.rho but with sign changed
     cdef cnp.float64_t[::1] intercept = np.empty(
         int((n_class*(n_class-1))/2), dtype=np.float64
     )
-    copy_intercept(<char*> &intercept[0], model, <cnp.npy_intp*> intercept.shape)
+    copy_intercept(
+        data=<char*> &intercept[0],
+        model=model,
+        dims=<cnp.npy_intp*> intercept.shape,
+    )
 
     cdef cnp.int32_t[::1] support = np.empty(SV_len, dtype=np.int32)
-    copy_support(<char*> &support[0] if support.size > 0 else NULL, model)
+    copy_support(
+        data=<char*> &support[0] if support.size > 0 else NULL,
+        model=model,
+    )
 
     # copy model.SV
     cdef cnp.float64_t[:, ::1] support_vectors
@@ -254,15 +269,18 @@ def fit(
     else:
         support_vectors = np.empty((SV_len, X.shape[1]), dtype=np.float64)
         copy_SV(
-            <char*> &support_vectors[0, 0] if support_vectors.size > 0 else NULL,
-            model,
-            <cnp.npy_intp*> support_vectors.shape,
+            data=<char*> &support_vectors[0, 0] if support_vectors.size > 0 else NULL,
+            model=model,
+            dims=<cnp.npy_intp*> support_vectors.shape,
         )
 
     cdef cnp.int32_t[::1] n_class_SV
     if svm_type == 0 or svm_type == 1:
         n_class_SV = np.empty(n_class, dtype=np.int32)
-        copy_nSV(<char*> &n_class_SV[0] if n_class_SV.size > 0 else NULL, model)
+        copy_nSV(
+            data=<char*> &n_class_SV[0] if n_class_SV.size > 0 else NULL,
+            model=model,
+        )
     else:
         # OneClass and SVR are considered to have 2 classes
         n_class_SV = np.array([SV_len, SV_len], dtype=np.int32)
@@ -273,16 +291,24 @@ def fit(
         if svm_type < 2: # SVC and NuSVC
             probA = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
             probB = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
-            copy_probB(<char*> &probB[0], model, <cnp.npy_intp*> probB.shape)
+            copy_probB(
+                data=<char*> &probB[0],
+                model=model,
+                dims=<cnp.npy_intp*> probB.shape,
+            )
         else:
             probA = np.empty(1, dtype=np.float64)
             probB = np.empty(0, dtype=np.float64)
-        copy_probA(<char*> &probA[0], model, <cnp.npy_intp*> probA.shape)
+        copy_probA(
+            data=<char*> &probA[0],
+            model=model,
+            dims=<cnp.npy_intp*> probA.shape,
+        )
     else:
         probA = np.empty(0, dtype=np.float64)
         probB = np.empty(0, dtype=np.float64)
 
-    svm_free_and_destroy_model(&model)
+    svm_free_and_destroy_model(model_ptr_ptr=&model)
     free(problem.x)
 
     return (
@@ -325,24 +351,24 @@ cdef void set_predict_params(
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
 
     set_parameter(
-        param,
-        svm_type,
-        kernel_index,
-        degree,
-        gamma,
-        coef0,
-        nu,
-        cache_size,
-        C,
-        tol,
-        epsilon,
-        shrinking,
-        probability,
-        nr_weight,
-        weight_label,
-        weight,
-        max_iter,
-        random_seed,
+        param=param,
+        svm_type=svm_type,
+        kernel_type=kernel_index,
+        degree=degree,
+        gamma=gamma,
+        coef0=coef0,
+        nu=nu,
+        cache_size=cache_size,
+        C=C,
+        eps=tol,
+        p=epsilon,
+        shrinking=shrinking,
+        probability=probability,
+        nr_weight=nr_weight,
+        weight_label=weight_label,
+        weight=weight,
+        max_iter=max_iter,
+        random_seed=random_seed,
     )
 
 
@@ -423,17 +449,17 @@ def predict(
     )
 
     set_predict_params(
-        &param,
-        svm_type,
-        kernel,
-        degree,
-        gamma,
-        coef0,
-        cache_size,
-        0,
-        <int>class_weight.shape[0],
-        <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
-        <char*> &class_weight[0] if class_weight.size > 0 else NULL,
+        param=&param,
+        svm_type=svm_type,
+        kernel=kernel,
+        degree=degree,
+        gamma=gamma,
+        coef0=coef0,
+        cache_size=cache_size,
+        probability=0,
+        nr_weight=<int>class_weight.shape[0],
+        weight_label=<char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
+        weight=<char*> &class_weight[0] if class_weight.size > 0 else NULL,
     )
     model = set_model(
         &param,
@@ -456,11 +482,11 @@ def predict(
         dec_values = np.empty(X.shape[0])
         with nogil:
             rv = copy_predict(
-                <char*> &X[0, 0],
-                model,
-                <cnp.npy_intp*> X.shape,
-                <char*> &dec_values[0],
-                &blas_functions,
+                predict=<char*> &X[0, 0],
+                model=model,
+                predict_dims=<cnp.npy_intp*> X.shape,
+                dec_values=<char*> &dec_values[0],
+                blas_functions=&blas_functions,
             )
         if rv < 0:
             raise MemoryError("We've run out of memory")
@@ -556,45 +582,45 @@ def predict_proba(
     cdef int rv
 
     set_predict_params(
-        &param,
-        svm_type,
-        kernel,
-        degree,
-        gamma,
-        coef0,
-        cache_size,
-        1,
-        <int> class_weight.shape[0],
-        <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
-        <char*> &class_weight[0] if class_weight.size > 0 else NULL,
+        param=&param,
+        svm_type=svm_type,
+        kernel=kernel,
+        degree=degree,
+        gamma=gamma,
+        coef0=coef0,
+        cache_size=cache_size,
+        probability=1,
+        nr_weight=<int> class_weight.shape[0],
+        weight_label=<char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
+        weight=<char*> &class_weight[0] if class_weight.size > 0 else NULL,
     )
     model = set_model(
-        &param,
-        <int> nSV.shape[0],
-        <char*> &SV[0, 0] if SV.size > 0 else NULL,
-        <cnp.npy_intp*> SV.shape,
-        <char*> &support[0],
-        <cnp.npy_intp*> support.shape,
-        <cnp.npy_intp*> sv_coef.strides,
-        <char*> &sv_coef[0, 0],
-        <char*> &intercept[0],
-        <char*> &nSV[0],
-        <char*> &probA[0] if probA.size > 0 else NULL,
-        <char*> &probB[0] if probB.size > 0 else NULL,
+        param=&param,
+        nr_class=<int> nSV.shape[0],
+        SV=<char*> &SV[0, 0] if SV.size > 0 else NULL,
+        SV_dims=<cnp.npy_intp*> SV.shape,
+        support=<char*> &support[0],
+        support_dims=<cnp.npy_intp*> support.shape,
+        sv_coef_strides=<cnp.npy_intp*> sv_coef.strides,
+        sv_coef=<char*> &sv_coef[0, 0],
+        rho=<char*> &intercept[0],
+        nSV=<char*> &nSV[0],
+        probA=<char*> &probA[0] if probA.size > 0 else NULL,
+        probB=<char*> &probB[0] if probB.size > 0 else NULL,
     )
 
-    cdef cnp.npy_intp n_class = get_nr(model)
+    cdef cnp.npy_intp n_class = get_nr(model=model)
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     try:
         dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
         with nogil:
             rv = copy_predict_proba(
-                <char*> &X[0, 0],
-                model,
-                <cnp.npy_intp*> X.shape,
-                <char*> &dec_values[0, 0],
-                &blas_functions,
+                predict=<char*> &X[0, 0],
+                model=model,
+                predict_dims=<cnp.npy_intp*> X.shape,
+                dec_values=<char*> &dec_values[0, 0],
+                blas_functions=&blas_functions,
             )
         if rv < 0:
             raise MemoryError("We've run out of memory")
@@ -686,38 +712,38 @@ def decision_function(
     cdef int rv
 
     set_predict_params(
-        &param,
-        svm_type,
-        kernel,
-        degree,
-        gamma,
-        coef0,
-        cache_size,
-        0,
-        <int> class_weight.shape[0],
-        <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
-        <char*> &class_weight[0] if class_weight.size > 0 else NULL,
+        param=&param,
+        svm_type=svm_type,
+        kernel=kernel,
+        degree=degree,
+        gamma=gamma,
+        coef0=coef0,
+        cache_size=cache_size,
+        probability=0,
+        nr_weight=<int> class_weight.shape[0],
+        weight_label=<char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
+        weight=<char*> &class_weight[0] if class_weight.size > 0 else NULL,
     )
 
     model = set_model(
-        &param,
-        <int> nSV.shape[0],
-        <char*> &SV[0, 0] if SV.size > 0 else NULL,
-        <cnp.npy_intp*> SV.shape,
-        <char*> &support[0],
-        <cnp.npy_intp*> support.shape,
-        <cnp.npy_intp*> sv_coef.strides,
-        <char*> &sv_coef[0, 0],
-        <char*> &intercept[0],
-        <char*> &nSV[0],
-        <char*> &probA[0] if probA.size > 0 else NULL,
-        <char*> &probB[0] if probB.size > 0 else NULL,
+        param=&param,
+        nr_class=<int> nSV.shape[0],
+        SV=<char*> &SV[0, 0] if SV.size > 0 else NULL,
+        SV_dims=<cnp.npy_intp*> SV.shape,
+        support=<char*> &support[0],
+        support_dims=<cnp.npy_intp*> support.shape,
+        sv_coef_strides=<cnp.npy_intp*> sv_coef.strides,
+        sv_coef=<char*> &sv_coef[0, 0],
+        rho=<char*> &intercept[0],
+        nSV=<char*> &nSV[0],
+        probA=<char*> &probA[0] if probA.size > 0 else NULL,
+        probB=<char*> &probB[0] if probB.size > 0 else NULL,
     )
 
     if svm_type > 1:
         n_class = 1
     else:
-        n_class = get_nr(model)
+        n_class = get_nr(model=model)
         n_class = n_class * (n_class - 1) // 2
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
@@ -725,12 +751,12 @@ def decision_function(
         dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
         with nogil:
             rv = copy_predict_values(
-                <char*> &X[0, 0],
-                model,
-                <cnp.npy_intp*> X.shape,
-                <char*> &dec_values[0, 0],
-                n_class,
-                &blas_functions,
+                predict=<char*> &X[0, 0],
+                model=model,
+                predict_dims=<cnp.npy_intp*> X.shape,
+                dec_values=<char*> &dec_values[0, 0],
+                nr_class=n_class,
+                blas_functions=&blas_functions,
             )
         if rv < 0:
             raise MemoryError("We've run out of memory")
@@ -861,12 +887,12 @@ def cross_validation(
     # set problem
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     set_problem(
-        &problem,
-        <char*> &X[0, 0],
-        <char*> &Y[0],
-        <char*> &sample_weight[0] if sample_weight.size > 0 else NULL,
-        <cnp.npy_intp*> X.shape,
-        kernel_index,
+        problem=&problem,
+        X=<char*> &X[0, 0],
+        Y=<char*> &Y[0],
+        sample_weight=<char*> &sample_weight[0] if sample_weight.size > 0 else NULL,
+        dims=<cnp.npy_intp*> X.shape,
+        kernel_type=kernel_index,
     )
     if problem.x == NULL:
         raise MemoryError("Seems we've run out of memory")
@@ -876,27 +902,27 @@ def cross_validation(
 
     # set parameters
     set_parameter(
-        &param,
-        svm_type,
-        kernel_index,
-        degree,
-        gamma,
-        coef0,
-        nu,
-        cache_size,
-        C,
-        tol,
-        tol,
-        shrinking,
-        probability,
-        <int> class_weight.shape[0],
-        <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
-        <char*> &class_weight[0] if class_weight.size > 0 else NULL,
-        max_iter,
-        random_seed,
+        param=&param,
+        svm_type=svm_type,
+        kernel_type=kernel_index,
+        degree=degree,
+        gamma=gamma,
+        coef0=coef0,
+        nu=nu,
+        cache_size=cache_size,
+        C=C,
+        eps=tol,
+        p=tol,
+        shrinking=shrinking,
+        probability=probability,
+        nr_weight=<int> class_weight.shape[0],
+        weight_label=<char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
+        weight=<char*> &class_weight[0] if class_weight.size > 0 else NULL,
+        max_iter=max_iter,
+        random_seed=random_seed,
     )
 
-    error_msg = svm_check_parameter(&problem, &param);
+    error_msg = svm_check_parameter(prob=&problem, param=&param);
     if error_msg:
         raise ValueError(error_msg)
 
@@ -907,11 +933,11 @@ def cross_validation(
         target = np.empty((X.shape[0]), dtype=np.float64)
         with nogil:
             svm_cross_validation(
-                &problem,
-                &param,
-                n_fold,
-                <double *> &target[0],
-                &blas_functions,
+                prob=&problem,
+                param=&param,
+                nr_fold=n_fold,
+                target=<double *> &target[0],
+                blas_functions=&blas_functions,
             )
     finally:
         free(problem.x)
