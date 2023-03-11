@@ -26,7 +26,7 @@ from ..base import (
 )
 from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import _euclidean_distances
-from ..utils.extmath import row_norms
+from ..utils.extmath import row_norms, stable_cumsum
 from ..utils.fixes import threadpool_limits
 from ..utils.fixes import threadpool_info
 from ..utils.sparsefuncs_fast import assign_rows_csr
@@ -70,7 +70,13 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
     }
 )
 def kmeans_plusplus(
-    X, n_clusters, *, sample_weight=None, x_squared_norms=None, random_state=None, n_local_trials=None
+    X,
+    n_clusters,
+    *,
+    sample_weight=None,
+    x_squared_norms=None,
+    random_state=None,
+    n_local_trials=None,
 ):
     """Init n_clusters seeds according to k-means++.
 
@@ -234,7 +240,9 @@ def _kmeans_plusplus(
         # Choose center candidates by sampling with probability proportional
         # to the squared distance to the closest existing center
         rand_vals = random_state.uniform(size=n_local_trials) * current_pot
-        candidate_ids = np.searchsorted(stable_cumsum(sample_weight * closest_dist_sq), rand_vals)
+        candidate_ids = np.searchsorted(
+            stable_cumsum(sample_weight * closest_dist_sq), rand_vals
+        )
         # XXX: numerical imprecision can result in a candidate_id out of range
         np.clip(candidate_ids, None, closest_dist_sq.size - 1, out=candidate_ids)
 
