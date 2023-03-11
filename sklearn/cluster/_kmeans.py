@@ -63,13 +63,14 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
     {
         "X": ["array-like", "sparse matrix"],
         "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "sample_weight": ["array-like", None],
         "x_squared_norms": ["array-like", None],
         "random_state": ["random_state"],
         "n_local_trials": [Interval(Integral, 1, None, closed="left"), None],
     }
 )
 def kmeans_plusplus(
-    X, n_clusters, *, x_squared_norms=None, random_state=None, n_local_trials=None
+    X, n_clusters, *, sample_weight=None, x_squared_norms=None, random_state=None, n_local_trials=None
 ):
     """Init n_clusters seeds according to k-means++.
 
@@ -132,6 +133,7 @@ def kmeans_plusplus(
     """
     # Check data
     check_array(X, accept_sparse="csr", dtype=[np.float64, np.float32])
+    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
     if X.shape[0] < n_clusters:
         raise ValueError(
@@ -154,7 +156,7 @@ def kmeans_plusplus(
 
     # Call private k-means++
     centers, indices = _kmeans_plusplus(
-        X, n_clusters, x_squared_norms, random_state, n_local_trials
+        X, n_clusters, x_squared_norms, sample_weight, random_state, n_local_trials
     )
 
     return centers, indices
@@ -173,6 +175,11 @@ def _kmeans_plusplus(
 
     n_clusters : int
         The number of seeds to choose.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        The weights for each observation in `X`. If `None`, all observations
+        are assigned equal weight. If not None, weights will be used in
+        initializations of centroids as well as fitting clusters.
 
     x_squared_norms : ndarray of shape (n_samples,)
         Squared Euclidean norm of each data point.
