@@ -92,10 +92,10 @@ def test_mcd_issue1127():
     mcd.fit(X)
 
 
-def test_mcd_issue3367():
+def test_mcd_issue3367(global_random_seed):
     # Check that MCD completes when the covariance matrix is singular
     # i.e. one of the rows and columns are all zeros
-    rand_gen = np.random.RandomState(0)
+    rand_gen = np.random.RandomState(global_random_seed)
 
     # Think of these as the values for X and Y -> 10 values between -5 and 5
     data_values = np.linspace(-5, 5, 10).tolist()
