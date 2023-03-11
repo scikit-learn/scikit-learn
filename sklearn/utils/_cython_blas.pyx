@@ -17,77 +17,77 @@ from scipy.linalg.cython_blas cimport sgemm, dgemm
 # BLAS Level 1 #
 ################
 
-cdef floating _dot(int n, floating *x, int incx,
-                   floating *y, int incy) noexcept nogil:
+cdef floating _dot(int n, const floating *x, int incx,
+                   const floating *y, int incy) noexcept nogil:
     """x.T.y"""
     if floating is float:
-        return sdot(&n, x, &incx, y, &incy)
+        return sdot(&n, <float *> x, &incx, <float *> y, &incy)
     else:
-        return ddot(&n, x, &incx, y, &incy)
+        return ddot(&n, <double *> x, &incx, <double *> y, &incy)
 
 
-cpdef _dot_memview(floating[::1] x, floating[::1] y):
+cpdef _dot_memview(const floating[::1] x, const floating[::1] y):
     return _dot(x.shape[0], &x[0], 1, &y[0], 1)
 
 
-cdef floating _asum(int n, floating *x, int incx) noexcept nogil:
+cdef floating _asum(int n, const floating *x, int incx) noexcept nogil:
     """sum(|x_i|)"""
     if floating is float:
-        return sasum(&n, x, &incx)
+        return sasum(&n, <float *> x, &incx)
     else:
-        return dasum(&n, x, &incx)
+        return dasum(&n, <double *> x, &incx)
 
 
-cpdef _asum_memview(floating[::1] x):
+cpdef _asum_memview(const floating[::1] x):
     return _asum(x.shape[0], &x[0], 1)
 
 
-cdef void _axpy(int n, floating alpha, floating *x, int incx,
+cdef void _axpy(int n, floating alpha, const floating *x, int incx,
                 floating *y, int incy) noexcept nogil:
     """y := alpha * x + y"""
     if floating is float:
-        saxpy(&n, &alpha, x, &incx, y, &incy)
+        saxpy(&n, &alpha, <float *> x, &incx, y, &incy)
     else:
-        daxpy(&n, &alpha, x, &incx, y, &incy)
+        daxpy(&n, &alpha, <double *> x, &incx, y, &incy)
 
 
-cpdef _axpy_memview(floating alpha, floating[::1] x, floating[::1] y):
+cpdef _axpy_memview(floating alpha, const floating[::1] x, floating[::1] y):
     _axpy(x.shape[0], alpha, &x[0], 1, &y[0], 1)
 
 
-cdef floating _nrm2(int n, floating *x, int incx) noexcept nogil:
+cdef floating _nrm2(int n, const floating *x, int incx) noexcept nogil:
     """sqrt(sum((x_i)^2))"""
     if floating is float:
-        return snrm2(&n, x, &incx)
+        return snrm2(&n, <float *> x, &incx)
     else:
-        return dnrm2(&n, x, &incx)
+        return dnrm2(&n, <double *> x, &incx)
 
 
-cpdef _nrm2_memview(floating[::1] x):
+cpdef _nrm2_memview(const floating[::1] x):
     return _nrm2(x.shape[0], &x[0], 1)
 
 
-cdef void _copy(int n, floating *x, int incx, floating *y, int incy) noexcept nogil:
+cdef void _copy(int n, const floating *x, int incx, const floating *y, int incy) noexcept nogil:
     """y := x"""
     if floating is float:
-        scopy(&n, x, &incx, y, &incy)
+        scopy(&n, <float *> x, &incx, <float *> y, &incy)
     else:
-        dcopy(&n, x, &incx, y, &incy)
+        dcopy(&n, <double *> x, &incx, <double *> y, &incy)
 
 
-cpdef _copy_memview(floating[::1] x, floating[::1] y):
+cpdef _copy_memview(const floating[::1] x, const floating[::1] y):
     _copy(x.shape[0], &x[0], 1, &y[0], 1)
 
 
-cdef void _scal(int n, floating alpha, floating *x, int incx) noexcept nogil:
+cdef void _scal(int n, floating alpha, const floating *x, int incx) noexcept nogil:
     """x := alpha * x"""
     if floating is float:
-        sscal(&n, &alpha, x, &incx)
+        sscal(&n, &alpha, <float *> x, &incx)
     else:
-        dscal(&n, &alpha, x, &incx)
+        dscal(&n, &alpha, <double *> x, &incx)
 
 
-cpdef _scal_memview(floating alpha, floating[::1] x):
+cpdef _scal_memview(floating alpha, const floating[::1] x):
     _scal(x.shape[0], alpha, &x[0], 1)
 
 
@@ -122,25 +122,29 @@ cpdef _rot_memview(floating[::1] x, floating[::1] y, floating c, floating s):
 ################
 
 cdef void _gemv(BLAS_Order order, BLAS_Trans ta, int m, int n, floating alpha,
-                floating *A, int lda, floating *x, int incx,
+                const floating *A, int lda, const floating *x, int incx,
                 floating beta, floating *y, int incy) noexcept nogil:
     """y := alpha * op(A).x + beta * y"""
     cdef char ta_ = ta
     if order == RowMajor:
         ta_ = NoTrans if ta == Trans else Trans
         if floating is float:
-            sgemv(&ta_, &n, &m, &alpha, A, &lda, x, &incx, &beta, y, &incy)
+            sgemv(&ta_, &n, &m, &alpha, <float *> A, &lda, <float *> x,
+                  &incx, &beta, y, &incy)
         else:
-            dgemv(&ta_, &n, &m, &alpha, A, &lda, x, &incx, &beta, y, &incy)
+            dgemv(&ta_, &n, &m, &alpha, <double *> A, &lda, <double *> x,
+                  &incx, &beta, y, &incy)
     else:
         if floating is float:
-            sgemv(&ta_, &m, &n, &alpha, A, &lda, x, &incx, &beta, y, &incy)
+            sgemv(&ta_, &m, &n, &alpha, <float *> A, &lda, <float *> x,
+                  &incx, &beta, y, &incy)
         else:
-            dgemv(&ta_, &m, &n, &alpha, A, &lda, x, &incx, &beta, y, &incy)
+            dgemv(&ta_, &m, &n, &alpha, <double *> A, &lda, <double *> x,
+                  &incx, &beta, y, &incy)
 
 
-cpdef _gemv_memview(BLAS_Trans ta, floating alpha, floating[:, :] A,
-                    floating[::1] x, floating beta, floating[::1] y):
+cpdef _gemv_memview(BLAS_Trans ta, floating alpha, const floating[:, :] A,
+                    const floating[::1] x, floating beta, floating[::1] y):
     cdef:
         int m = A.shape[0]
         int n = A.shape[1]
@@ -150,23 +154,24 @@ cpdef _gemv_memview(BLAS_Trans ta, floating alpha, floating[:, :] A,
     _gemv(order, ta, m, n, alpha, &A[0, 0], lda, &x[0], 1, beta, &y[0], 1)
 
 
-cdef void _ger(BLAS_Order order, int m, int n, floating alpha, floating *x,
-               int incx, floating *y, int incy, floating *A, int lda) noexcept nogil:
+cdef void _ger(BLAS_Order order, int m, int n, floating alpha,
+               const floating *x, int incx, const floating *y,
+               int incy, floating *A, int lda) noexcept nogil:
     """A := alpha * x.y.T + A"""
     if order == RowMajor:
         if floating is float:
-            sger(&n, &m, &alpha, y, &incy, x, &incx, A, &lda)
+            sger(&n, &m, &alpha, <float *> y, &incy, <float *> x, &incx, A, &lda)
         else:
-            dger(&n, &m, &alpha, y, &incy, x, &incx, A, &lda)
+            dger(&n, &m, &alpha, <double *> y, &incy, <double *> x, &incx, A, &lda)
     else:
         if floating is float:
-            sger(&m, &n, &alpha, x, &incx, y, &incy, A, &lda)
+            sger(&m, &n, &alpha, <float *> x, &incx,<float *> y, &incy, A, &lda)
         else:
-            dger(&m, &n, &alpha, x, &incx, y, &incy, A, &lda)
+            dger(&m, &n, &alpha, <double *> x, &incx, <double *> y, &incy, A, &lda)
 
 
-cpdef _ger_memview(floating alpha, floating[::1] x, floating[::1] y,
-                   floating[:, :] A):
+cpdef _ger_memview(floating alpha, const floating[::1] x,
+                   const floating[::1] y, floating[:, :] A):
     cdef:
         int m = A.shape[0]
         int n = A.shape[1]

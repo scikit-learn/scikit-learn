@@ -461,7 +461,6 @@ Samples generator
 .. autosummary::
    :toctree: generated/
 
-   experimental.enable_hist_gradient_boosting
    experimental.enable_iterative_imputer
    experimental.enable_halving_search_cv
 

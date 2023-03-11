@@ -21,11 +21,12 @@ import os.path
 
 import numpy as np
 import scipy.sparse as sp
+from numbers import Integral
 
 from .. import __version__
 
 from ..utils import check_array, IS_PYPY
-from ..utils._param_validation import validate_params, HasMethods
+from ..utils._param_validation import validate_params, HasMethods, Interval, StrOptions
 
 if not IS_PYPY:
     from ._svmlight_format_fast import (
@@ -43,6 +44,23 @@ else:
         )
 
 
+@validate_params(
+    {
+        "f": [
+            str,
+            Interval(Integral, 0, None, closed="left"),
+            os.PathLike,
+            HasMethods("read"),
+        ],
+        "n_features": [Interval(Integral, 1, None, closed="left"), None],
+        "dtype": "no_validation",  # delegate validation to numpy
+        "multilabel": ["boolean"],
+        "zero_based": ["boolean", StrOptions({"auto"})],
+        "query_id": ["boolean"],
+        "offset": [Interval(Integral, 0, None, closed="left")],
+        "length": [Integral],
+    }
+)
 def load_svmlight_file(
     f,
     *,
