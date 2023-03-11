@@ -10,7 +10,7 @@ over the internet, all details are available on the official website:
 
 from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
-
+from ..utils._param_validation import validate_params
 import logging
 
 import numpy as np
@@ -231,6 +231,18 @@ def _fetch_lfw_people(
     return faces, target, target_names
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "funneled": ["boolean"],
+        "resize": [float, None],
+        "min_faces_per_person": [int, None],
+        "color": ["boolean"],
+        "slice": ["tuple of slcie", (slice(0, 250), slice(0, 250))],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+    }
+)
 def fetch_lfw_people(
     *,
     data_home=None,
