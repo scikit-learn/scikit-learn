@@ -462,18 +462,18 @@ def predict(
         weight=<char*> &class_weight[0] if class_weight.size > 0 else NULL,
     )
     model = set_model(
-        &param,
-        <int> nSV.shape[0],
-        <char*> &SV[0, 0] if SV.size > 0 else NULL,
-        <cnp.npy_intp*> SV.shape,
-        <char*> &support[0] if support.size > 0 else NULL,
-        <cnp.npy_intp*> support.shape,
-        <cnp.npy_intp*> sv_coef.strides,
-        <char*> &sv_coef[0, 0] if sv_coef.size > 0 else NULL,
-        <char*> &intercept[0],
-        <char*> &nSV[0],
-        <char*> &probA[0] if probA.size > 0 else NULL,
-        <char*> &probB[0] if probB.size > 0 else NULL,
+        param=&param,
+        nr_class=<int> nSV.shape[0],
+        SV=<char*> &SV[0, 0] if SV.size > 0 else NULL,
+        SV_dims=<cnp.npy_intp*> SV.shape,
+        support=<char*> &support[0] if support.size > 0 else NULL,
+        support_dims=<cnp.npy_intp*> support.shape,
+        sv_coef_strides=<cnp.npy_intp*> sv_coef.strides,
+        sv_coef=<char*> &sv_coef[0, 0] if sv_coef.size > 0 else NULL,
+        rho=<char*> &intercept[0],
+        nSV=<char*> &nSV[0],
+        probA=<char*> &probA[0] if probA.size > 0 else NULL,
+        probB=<char*> &probB[0] if probB.size > 0 else NULL,
     )
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
