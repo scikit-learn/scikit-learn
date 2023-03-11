@@ -226,12 +226,10 @@ def _kmeans_plusplus(
     for c in range(1, n_clusters):
         # Choose center candidates by sampling with probability proportional
         # to the squared distance to the closest existing center
-        candidate_ids = random_state.choice(
-            n_samples,
-            size=n_local_trials,
-            replace=False,
-            p=sample_weight * closest_dist_sq / current_pot,
-        )
+        rand_vals = random_state.uniform(size=n_local_trials) * current_pot
+        candidate_ids = np.searchsorted(stable_cumsum(sample_weight * closest_dist_sq), rand_vals)
+        # XXX: numerical imprecision can result in a candidate_id out of range
+        np.clip(candidate_ids, None, closest_dist_sq.size - 1, out=candidate_ids)
 
         # Compute distances to center candidates
         distance_to_candidates = _euclidean_distances(
