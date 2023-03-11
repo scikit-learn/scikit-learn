@@ -268,11 +268,14 @@ redirects = {
     "auto_examples/linear_model/plot_bayesian_ridge": (
         "auto_examples/linear_model/plot_ard"
     ),
-    "examples/model_selection/grid_search_text_feature_extraction.py": (
-        "examples/model_selection/plot_grid_search_text_feature_extraction.py"
+    "auto_examples/model_selection/grid_search_text_feature_extraction.py": (
+        "auto_examples/model_selection/plot_grid_search_text_feature_extraction.py"
     ),
-    "examples/miscellaneous/plot_changed_only_pprint_parameter": (
-        "examples/miscellaneous/plot_estimator_representation"
+    "auto_examples/miscellaneous/plot_changed_only_pprint_parameter": (
+        "auto_examples/miscellaneous/plot_estimator_representation"
+    ),
+    "auto_examples/decomposition/plot_beta_divergence": (
+        "auto_examples/applications/plot_topics_extraction_with_nmf_lda"
     ),
 }
 html_context["redirects"] = redirects

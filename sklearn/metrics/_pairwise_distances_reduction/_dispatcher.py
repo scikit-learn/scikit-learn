@@ -119,26 +119,7 @@ class BaseDistancesReductionDispatcher:
             and metric in cls.valid_metrics()
         )
 
-        # The other joblib-based back-end might be more efficient on fused sparse-dense
-        # datasets' pairs on metric="(sq)euclidean" for some configurations because it
-        # uses the Squared Euclidean matrix decomposition, i.e.:
-        #
-        #       ||X_c_i - Y_c_j||² = ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
-        #
-        # calling efficient sparse-dense routines for matrix and vectors multiplication
-        # implemented in SciPy we do not use yet here.
-        # See: https://github.com/scikit-learn/scikit-learn/pull/23585#issuecomment-1247996669  # noqa
-        # TODO: implement specialisation for (sq)euclidean on fused sparse-dense
-        # using sparse-dense routines for matrix-vector multiplications.
-        # Currently, only dense-dense and sparse-sparse are optimized for
-        # the Euclidean case.
-        fused_sparse_dense_euclidean_case_guard = not (
-            (is_valid_sparse_matrix(X) ^ is_valid_sparse_matrix(Y))  # "^" is XOR
-            and isinstance(metric, str)
-            and "euclidean" in metric
-        )
-
-        return is_usable and fused_sparse_dense_euclidean_case_guard
+        return is_usable
 
     @classmethod
     @abstractmethod
