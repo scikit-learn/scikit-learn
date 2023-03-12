@@ -323,7 +323,7 @@ def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
 
 
 @pytest.mark.filterwarnings("ignore:the behavior of nmi will change in version 0.22")
-def test_pipeline_spectral_clustering(seed=36):
+def test_pipeline_spectral_clustering(seed=35):
     # Test using pipeline to do spectral clustering
     random_state = np.random.RandomState(seed)
     se_rbf = SpectralEmbedding(
