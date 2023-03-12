@@ -56,15 +56,15 @@ cdef inline cnp.int64_t _deg2_column(
             return <cnp.int64_t> py_deg2_column(n_features, i, j, interaction_only)
     else:
         if interaction_only:
-            return n_features * i - (i**2 + 3 * i) / 2 - 1 + j
+            return n_features * i - i * (i + 3) / 2 - 1 + j
         else:
-            return n_features * i - (i**2 + i) / 2 + j
+            return n_features * i - i* (i + 1) / 2 + j
 
 def py_deg2_column(n_features, i, j, interaction_only):
     if interaction_only:
-        return n_features * i - (i**2 + 3 * i) // 2 - 1 + j
+        return n_features * i - i * (i + 3) / 2 - 1 + j
     else:
-        return n_features * i - (i**2 + i) // 2 + j
+        return n_features * i - i* (i + 1) / 2 + j
 
 
 cdef inline cnp.int64_t _deg3_column(
@@ -97,35 +97,41 @@ cdef inline cnp.int64_t _deg3_column(
             return <cnp.int64_t> py_deg3_column(n_features, i, j, k, interaction_only)
     if interaction_only:
         return (
-            (3 * n_features**2 * i - 3 * n_features * i**2 + i**3
-            + 11 * i - 3 * j**2 - 9 * j) / 6
-            + i**2 - 2 * n_features * i + n_features * j - n_features + k
+            (
+                n_features * (3 * n_features * i - 3 * i**2)
+                + i * (i**2 + 11) - j * (3 * j + 9)
+            ) / 6 + i**2 + n_features * (j - 1 - 2 * i) + k
         )
     else:
         return (
-            (3 * n_features**2 * i - 3 * n_features * i**2 + i ** 3 - i
-            - 3 * j**2 - 3 * j) / 6 + n_features * j + k
+            (
+                n_features * (3 * n_features * i - 3 * i**2)
+                + i ** 3 - i - (3 * j) * (j + 1)
+            ) / 6 + n_features * j + k
         )
 
 def py_deg3_column(n_features, i, j, k, interaction_only):
     if interaction_only:
         return (
-            (3 * n_features**2 * i - 3 * n_features * i**2 + i**3
-            + 11 * i - 3 * j**2 - 9 * j) // 6
-            + i**2 - 2 * n_features * i + n_features * j - n_features + k
+            (
+                n_features * (3 * n_features * i - 3 * i**2)
+                + i * (i**2 + 11) - j * (3 * j + 9)
+            ) // 6 + i**2 + n_features * (j - 1 - 2 * i) + k
         )
     else:
         return (
-            (3 * n_features**2 * i - 3 * n_features * i**2 + i ** 3 - i
-            - 3 * j**2 - 3 * j) // 6 + n_features * j + k
+            (
+                n_features * (3 * n_features * i - 3 * i**2)
+                + i ** 3 - i - (3 * j) * (j + 1)
+            ) // 6 + n_features * j + k
         )
 
 
 def py_calc_expanded_nnz_deg2(n, interaction_only):
-    return (n**2 + n) // 2 - interaction_only * n
+    return n * (n + 1) // 2 - interaction_only * n
 
 def py_calc_expanded_nnz_deg3(n, interaction_only):
-    return (n**3 + 3 * n**2 + 2 * n) // 6 - interaction_only * n**2
+    return n * (n**2 + 3 * n + 2) // 6 - interaction_only * n**2
 
 cpdef cnp.int64_t _calc_expanded_nnz(
     cnp.int64_t n,
@@ -148,11 +154,11 @@ cpdef cnp.int64_t _calc_expanded_nnz(
 
     if degree == 2:
         if n <= MAX_SAFE_INDEX_CALC_DEG2:
-            return (n**2 + n) / 2 - interaction_only * n
+            return n * (n + 1) / 2 - interaction_only * n
         return <cnp.int64_t> py_calc_expanded_nnz_deg2(n, interaction_only)
     else:
         if n <= MAX_SAFE_INDEX_CALC_DEG3:
-            return (n**3 + 3 * n**2 + 2 * n) / 6 - interaction_only * n**2
+            return n * (n**2 + 3 * n + 2) / 6 - interaction_only * n**2
         return <cnp.int64_t> py_calc_expanded_nnz_deg3(n, interaction_only)
 
 cpdef cnp.int64_t _calc_total_nnz(
@@ -176,9 +182,9 @@ cpdef cnp.int64_t _calc_total_nnz(
 
 
 cpdef void _csr_polynomial_expansion(
-    const DATA_t[:] data,                 # IN READ-ONLY
-    const INDEX_A_t[:] indices,           # IN READ-ONLY
-    const INDEX_A_t[:] indptr,            # IN READ-ONLY
+    const DATA_t[:] data,           # IN READ-ONLY
+    const INDEX_A_t[:] indices,     # IN READ-ONLY
+    const INDEX_A_t[:] indptr,      # IN READ-ONLY
     INDEX_A_t n_features,
     DATA_t[:] result_data,          # OUT
     INDEX_B_t[:] result_indices,    # OUT
