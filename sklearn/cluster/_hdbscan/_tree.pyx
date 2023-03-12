@@ -5,7 +5,7 @@
 
 cimport numpy as cnp
 from libc.math cimport isinf
-from cython import wraparound
+import cython
 
 import numpy as np
 
@@ -580,7 +580,7 @@ cdef set epsilon_search(
 
     return set(selected_clusters)
 
-@wraparound(True)
+@cython.wraparound(True)
 cpdef tuple get_clusters(
     cnp.ndarray[HIERARCHY_t, ndim=1, mode='c'] hierarchy,
     dict stability,
