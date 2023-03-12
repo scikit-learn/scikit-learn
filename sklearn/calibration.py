@@ -308,9 +308,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
-        for sample_aligned_params in fit_params.values():
-            check_consistent_length(y, sample_aligned_params)
-
         # TODO(1.4): Remove when base_estimator is removed
         if self.base_estimator != "deprecated":
             if self.estimator is not None:
