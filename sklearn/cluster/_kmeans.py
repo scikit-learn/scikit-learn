@@ -132,10 +132,10 @@ def kmeans_plusplus(
     ...               [10, 2], [10, 4], [10, 0]])
     >>> centers, indices = kmeans_plusplus(X, n_clusters=2, random_state=0)
     >>> centers
-    array([[10,  4],
+    array([[10,  2],
            [ 1,  0]])
     >>> indices
-    array([4, 2])
+    array([3, 2])
     """
     # Check data
     check_array(X, accept_sparse="csr", dtype=[np.float64, np.float32])
@@ -1859,10 +1859,10 @@ class MiniBatchKMeans(_BaseKMeans):
     >>> kmeans = kmeans.partial_fit(X[0:6,:])
     >>> kmeans = kmeans.partial_fit(X[6:12,:])
     >>> kmeans.cluster_centers_
-    array([[2. , 1. ],
-           [3.5, 4.5]])
+    array([[3.375, 3.  ],
+           [0.75 , 0.5 ]])
     >>> kmeans.predict([[0, 0], [4, 4]])
-    array([0, 1], dtype=int32)
+    array([1, 0], dtype=int32)
     >>> # fit on the whole data
     >>> kmeans = MiniBatchKMeans(n_clusters=2,
     ...                          random_state=0,
