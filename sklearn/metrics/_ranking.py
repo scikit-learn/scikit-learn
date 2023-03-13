@@ -1733,6 +1733,16 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     return np.average(gain, weights=sample_weight)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "k": [Interval(Integral, 1, None, closed="left")],
+        "normalize": ["boolean"],
+        "sample_weight": ["array-like", None],
+        "labels": ["array-like", None],
+    }
+)
 def top_k_accuracy_score(
     y_true, y_score, *, k=2, normalize=True, sample_weight=None, labels=None
 ):
