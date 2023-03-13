@@ -770,10 +770,10 @@ class ClusterMixin:
         y : Ignored
             Not used, present for API consistency by convention.
 
-        **kwargs: dict
+        **kwargs : dict
             Arguments to be passed to ``fit``.
 
-            .. versionadded: 1.2
+            .. versionadded:: 2.0
 
         Returns
         -------
@@ -1021,10 +1021,10 @@ class OutlierMixin:
         y : Ignored
             Not used, present for API consistency by convention.
 
-        **kwargs: dict
+        **kwargs : dict
             Arguments to be passed to ``fit``.
 
-            .. versionadded: 1.2
+            .. versionadded:: 2.0
 
         Returns
         -------
