@@ -144,7 +144,7 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
         ITYPE_t sample_index,
         ITYPE_t* indices,
         DTYPE_t* distances,
-   ) nogil:
+   ) noexcept nogil:
         cdef:
             ITYPE_t neighbor_idx, neighbor_class_idx, label_index, multi_output_index
             DTYPE_t score_incr = 1
@@ -171,7 +171,7 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
         ITYPE_t thread_num,
         ITYPE_t X_start,
         ITYPE_t X_end,
-    ) nogil:
+    ) noexcept nogil:
         cdef:
             ITYPE_t idx, sample_index
         for idx in range(X_end - X_start):
@@ -187,7 +187,7 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
 
     cdef void _parallel_on_Y_finalize(
         self,
-    ) nogil:
+    ) noexcept nogil:
         cdef:
             ITYPE_t sample_index, thread_num
 
