@@ -26,6 +26,7 @@ from ._base import RemoteFileMetadata
 from ._base import _pkl_filepath
 from ._base import load_descr
 from ..utils import check_random_state, Bunch
+from ..utils._param_validation import validate_params
 
 # The original data can be found at:
 # https://cs.nyu.edu/~roweis/data/olivettifaces.mat
@@ -36,6 +37,15 @@ FACES = RemoteFileMetadata(
 )
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+    }
+)
 def fetch_olivetti_faces(
     *,
     data_home=None,
