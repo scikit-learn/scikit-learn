@@ -282,6 +282,7 @@ cdef max_lambdas(cnp.ndarray hierarchy):
     return deaths
 
 
+@final
 cdef class TreeUnionFind:
 
     cdef cnp.intp_t[:, ::1] data
@@ -292,7 +293,7 @@ cdef class TreeUnionFind:
         data_arr = np.zeros((size, 2), dtype=np.intp)
         data_arr.T[0] = np.arange(size)
         self.data = data_arr
-        self.is_component = np.ones(size, dtype=bool)
+        self.is_component = np.ones(size, dtype=np.uint8)
 
     @cython.final
     cdef void union(self, cnp.intp_t x, cnp.intp_t y):
