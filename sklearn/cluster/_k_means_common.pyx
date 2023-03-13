@@ -35,11 +35,14 @@ cdef floating _euclidean_dense_dense(
 
     # We manually unroll the loop for better cache optimization.
     for i in range(n):
-        result += ((a[0] - b[0]) * (a[0] - b[0])
-                  +(a[1] - b[1]) * (a[1] - b[1])
-                  +(a[2] - b[2]) * (a[2] - b[2])
-                  +(a[3] - b[3]) * (a[3] - b[3]))
-        a += 4; b += 4
+        result += (
+            (a[0] - b[0]) * (a[0] - b[0]) +
+            (a[1] - b[1]) * (a[1] - b[1]) +
+            (a[2] - b[2]) * (a[2] - b[2]) +
+            (a[3] - b[3]) * (a[3] - b[3])
+        )
+        a += 4
+        b += 4
 
     for i in range(rem):
         result += (a[i] - b[i]) * (a[i] - b[i])
@@ -77,7 +80,8 @@ cdef floating _euclidean_sparse_dense(
 
     result += b_squared_norm
 
-    if result < 0: result = 0.0
+    if result < 0:
+        result = 0.0
 
     return result if squared else sqrt(result)
 
