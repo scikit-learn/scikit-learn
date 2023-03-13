@@ -464,10 +464,23 @@ def test_handle_zeros_in_scale():
 def test_minmax_scaler_output_dtype_parameter():
     # Test if MinMaxScaler() returns choosen dtype
 
+    # default behavior: output dtype np.float64 for input dtype np.int8
+    data = np.array([[-1, 2], [-1, 6], [0, 10], [1, 18]], dtype=np.int8)
+    scaler_X_trans = MinMaxScaler().fit_transform(data)
+
+    assert data.dtype == np.int8
+    assert scaler_X_trans.dtype == np.float64
+
     # output dtype np.float16 for input dtype np.int8
     scaler_X_trans = MinMaxScaler(output_dtype=np.float16).fit_transform(data)
 
     assert scaler_X_trans.dtype == np.float16
+
+    # output dtype np.float32 for input dtype np.int8
+    scaler_X_trans = MinMaxScaler(output_dtype=np.float32).fit_transform(data)
+
+    assert data.dtype == np.int8
+    assert scaler_X_trans.dtype == np.float32
 
 
 def test_minmax_scaler_partial_fit():

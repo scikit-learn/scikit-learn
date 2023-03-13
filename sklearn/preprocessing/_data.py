@@ -291,6 +291,9 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
+    output_dtype : type, default=(np.float64, np.float32, np.float16)
+        Desired output dtype.
+
     copy : bool, default=True
         Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array).
@@ -381,14 +384,18 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     _parameter_constraints: dict = {
         "feature_range": [tuple],
+        "output_dtype": [tuple, type],
         "copy": ["boolean"],
         "clip": ["boolean"],
     }
 
-    def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):
+    def __init__(
+        self, feature_range=(0, 1), output_dtype=FLOAT_DTYPES, *, copy=True, clip=False
+    ):
         self.feature_range = feature_range
         self.copy = copy
         self.clip = clip
+        self.output_dtype = output_dtype
 
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.
@@ -466,7 +473,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X = self._validate_data(
             X,
             reset=first_pass,
-            dtype=FLOAT_DTYPES,
+            dtype=self.output_dtype,
             force_all_finite="allow-nan",
         )
 
@@ -508,7 +515,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X = self._validate_data(
             X,
             copy=self.copy,
-            dtype=FLOAT_DTYPES,
+            dtype=self.output_dtype,
             force_all_finite="allow-nan",
             reset=False,
         )
@@ -546,7 +553,9 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True}
 
 
-def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
+def minmax_scale(
+    X, feature_range=(0, 1), output_dtype=FLOAT_DTYPES, *, axis=0, copy=True
+):
     """Transform features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
@@ -581,6 +590,9 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
 
     feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
+
+    output_dtype : type, default=(np.float64, np.float32, np.float16)
+        Desired output dtype.
 
     axis : int, default=0
         Axis used to scale along. If 0, independently scale each feature,
@@ -629,7 +641,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     if original_ndim == 1:
         X = X.reshape(X.shape[0], 1)
 
-    s = MinMaxScaler(feature_range=feature_range, copy=copy)
+    s = MinMaxScaler(feature_range=feature_range, output_dtype=output_dtype, copy=copy)
     if axis == 0:
         X = s.fit_transform(X)
     else:
