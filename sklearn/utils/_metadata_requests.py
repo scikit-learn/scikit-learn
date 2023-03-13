@@ -396,6 +396,7 @@ class MetadataRequest:
         # or __get__() of a name property raises AttributeError). This method
         # should either return the (computed) attribute value or raise an
         # AttributeError exception.
+        # https://docs.python.org/3/reference/datamodel.html#object.__getattr__
         if name not in COMPOSITE_METHODS:
             raise AttributeError(
                 f"'{self.__class__.__name__}' object has no attribute '{name}'"
