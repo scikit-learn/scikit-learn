@@ -284,7 +284,7 @@ def _gram_omp(
 
 @validate_params(
     {
-        "X": [np.ndarray],
+        "X": ["array-like"],
         "y": [np.ndarray],
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left"), None],
@@ -321,7 +321,7 @@ def orthogonal_mp(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Input data. Columns are assumed to have unit norm.
 
     y : ndarray of shape (n_samples,) or (n_samples, n_targets)

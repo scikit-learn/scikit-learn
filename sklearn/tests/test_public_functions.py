@@ -124,6 +124,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_selection.f_regression",
     "sklearn.feature_selection.mutual_info_classif",
     "sklearn.feature_selection.r_regression",
+    "sklearn.linear_model.orthogonal_mp",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
     "sklearn.metrics.average_precision_score",
@@ -166,7 +167,6 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.model_selection.train_test_split",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",
-    "sklearn.linear_model.orthogonal_mp",
 ]
 
 
