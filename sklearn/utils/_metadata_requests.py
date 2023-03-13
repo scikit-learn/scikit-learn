@@ -179,10 +179,13 @@ class MethodMetadataRequest:
 
     method : str
         The name of the method to which these requests belong.
+
+    requests : dict of {str: RequestType or str}, default=None
+        The initial requests for this method.
     """
 
-    def __init__(self, router, owner, method):
-        self._requests = dict()
+    def __init__(self, router, owner, method, requests=None):
+        self._requests = requests or dict()
         self.router = router
         self.owner = owner
         self.method = method
@@ -398,16 +401,13 @@ class MetadataRequest:
                 f"'{self.__class__.__name__}' object has no attribute '{name}'"
             )
 
-        res = MethodMetadataRequest(router=self, owner=self.owner, method=name)
-        res._requests = {}
+        requests = {}
         for method in COMPOSITE_METHODS[name]:
             mmr = getattr(self, method)
-            existing = set(res._requests.keys())
+            existing = set(requests.keys())
             upcoming = set(mmr._requests.keys())
             common = existing & upcoming
-            conflicts = [
-                key for key in common if res._requests[key] != mmr._requests[key]
-            ]
+            conflicts = [key for key in common if requests[key] != mmr._requests[key]]
             if conflicts:
                 raise ValueError(
                     f"Conflicting metadata requests for {', '.join(conflicts)} while"
@@ -415,8 +415,10 @@ class MetadataRequest:
                     f" for methods {', '.join(COMPOSITE_METHODS[name])} should have the"
                     " same request value."
                 )
-            res._requests.update(mmr._requests)
-        return res
+            requests.update(mmr._requests)
+        return MethodMetadataRequest(
+            router=self, owner=self.owner, method=name, requests=requests
+        )
 
     def _get_param_names(self, method, return_alias, ignore_self=None):
         """Get names of all metadata that can be consumed or routed by specified \
