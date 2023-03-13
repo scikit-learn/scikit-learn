@@ -31,7 +31,7 @@ def _chi2_kernel_fast(floating[:, :] X,
                     denom = (X[i, k] - Y[j, k])
                     nom = (X[i, k] + Y[j, k])
                     if nom != 0:
-                        res  += denom * denom / nom
+                        res += denom * denom / nom
                 result[i, j] = -res
 
 

@@ -148,7 +148,8 @@ def _compute_partial_dependence(
     node_struct [:] nodes,
     const X_DTYPE_C [:, ::1] X,
     int [:] target_features,
-    Y_DTYPE_C [:] out):
+    Y_DTYPE_C [:] out
+):
     """Partial dependence of the response on the ``target_features`` set.
 
     For each sample in ``X`` a tree traversal is performed.
@@ -250,5 +251,4 @@ def _compute_partial_dependence(
 
         # Sanity check. Should never happen.
         if not (0.999 < total_weight < 1.001):
-            raise ValueError("Total weight should be 1.0 but was %.9f" %
-                                total_weight)
+            raise ValueError("Total weight should be 1.0 but was %.9f" %total_weight)

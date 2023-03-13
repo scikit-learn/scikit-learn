@@ -111,7 +111,7 @@ def train_wrap(
     with nogil:
         model = train(problem, param, &blas_functions)
 
-    ### FREE
+    # FREE
     free_problem(problem)
     free_parameter(param)
     # destroy_param(param)  don't call this or it will destroy class_weight_label and class_weight
@@ -127,7 +127,8 @@ def train_wrap(
     get_n_iter(model, <int *> &n_iter[0])
 
     cdef int nr_feature = get_nr_feature(model)
-    if bias > 0: nr_feature = nr_feature + 1
+    if bias > 0:
+        nr_feature = nr_feature + 1
     if nr_class == 2 and solver_type != 4:  # solver is not Crammer-Singer
         w = np.empty((1, nr_feature), order='F')
         copy_w(&w[0, 0], model, nr_feature)

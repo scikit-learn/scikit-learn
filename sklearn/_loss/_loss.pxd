@@ -14,8 +14,8 @@ ctypedef fused G_DTYPE_C:
 
 # Struct to return 2 doubles
 ctypedef struct double_pair:
-   double val1
-   double val2
+    double val1
+    double val2
 
 
 # C base class for loss functions

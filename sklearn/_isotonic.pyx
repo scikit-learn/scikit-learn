@@ -75,15 +75,13 @@ def _make_unique(cnp.ndarray[dtype=floating] X,
     """
     unique_values = len(np.unique(X))
 
-    cdef cnp.ndarray[dtype=floating] y_out = np.empty(unique_values,
-                                                     dtype=X.dtype)
+    cdef cnp.ndarray[dtype=floating] y_out = np.empty(unique_values, dtype=X.dtype)
     cdef cnp.ndarray[dtype=floating] x_out = np.empty_like(y_out)
     cdef cnp.ndarray[dtype=floating] weights_out = np.empty_like(y_out)
 
     cdef floating current_x = X[0]
     cdef floating current_y = 0
     cdef floating current_weight = 0
-    cdef floating y_old = 0
     cdef int i = 0
     cdef int j
     cdef floating x

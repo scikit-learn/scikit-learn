@@ -18,7 +18,7 @@ cdef class KDTree(BinaryTree):
     pass
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a KD Tree
 #
 #   Note that these functions use the concept of "reduced distance".

@@ -82,6 +82,7 @@ cdef void _predict_regression_tree_inplace_fast_dense(
                 node = root_node + node.right_child
         out[i, k] += scale * value[node - root_node]
 
+
 def _predict_regression_tree_stages_sparse(
     object[:, :] estimators,
     object X,
@@ -215,7 +216,7 @@ def predict_stages(
                     n_features=X.shape[1],
                     out=out
                 )
-                ## out[:, k] += scale * tree.predict(X).ravel()
+                # out[:, k] += scale * tree.predict(X).ravel()
 
 
 def predict_stage(
@@ -240,34 +241,34 @@ def _random_sample_mask(
     cnp.npy_intp n_total_in_bag,
     random_state
 ):
-     """Create a random sample mask where ``n_total_in_bag`` elements are set.
+    """Create a random sample mask where ``n_total_in_bag`` elements are set.
 
-     Parameters
-     ----------
-     n_total_samples : int
-         The length of the resulting mask.
+    Parameters
+    ----------
+    n_total_samples : int
+        The length of the resulting mask.
 
-     n_total_in_bag : int
-         The number of elements in the sample mask which are set to 1.
+    n_total_in_bag : int
+        The number of elements in the sample mask which are set to 1.
 
-     random_state : RandomState
-         A numpy ``RandomState`` object.
+    random_state : RandomState
+        A numpy ``RandomState`` object.
 
-     Returns
-     -------
-     sample_mask : np.ndarray, shape=[n_total_samples]
-         An ndarray where ``n_total_in_bag`` elements are set to ``True``
-         the others are ``False``.
-     """
-     cdef cnp.float64_t[::1] rand = random_state.uniform(size=n_total_samples)
-     cdef cnp.uint8_t[::1] sample_mask = np_zeros((n_total_samples,), dtype=bool)
+    Returns
+    -------
+    sample_mask : np.ndarray, shape=[n_total_samples]
+        An ndarray where ``n_total_in_bag`` elements are set to ``True``
+        the others are ``False``.
+    """
+    cdef cnp.float64_t[::1] rand = random_state.uniform(size=n_total_samples)
+    cdef cnp.uint8_t[::1] sample_mask = np_zeros((n_total_samples,), dtype=bool)
 
-     cdef cnp.npy_intp n_bagged = 0
-     cdef cnp.npy_intp i = 0
+    cdef cnp.npy_intp n_bagged = 0
+    cdef cnp.npy_intp i = 0
 
-     for i in range(n_total_samples):
-         if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
-             sample_mask[i] = 1
-             n_bagged += 1
+    for i in range(n_total_samples):
+        if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
+            sample_mask[i] = 1
+            n_bagged += 1
 
-     return sample_mask.base
+    return sample_mask.base

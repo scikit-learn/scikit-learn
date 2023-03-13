@@ -76,7 +76,7 @@ cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 # This works by casting `dummy` to an array of Node of length 1, which numpy
 # can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
 # for a more detailed explanation.
-cdef Node dummy;
+cdef Node dummy
 NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 
 # =============================================================================
@@ -124,11 +124,14 @@ cdef class TreeBuilder:
         if y.base.dtype != DOUBLE or not y.base.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
-        if (sample_weight is not None and
-            (sample_weight.base.dtype != DOUBLE or
-            not sample_weight.base.flags.contiguous)):
-                sample_weight = np.asarray(sample_weight, dtype=DOUBLE,
-                                           order="C")
+        if (
+            sample_weight is not None and
+            (
+                sample_weight.base.dtype != DOUBLE or
+                not sample_weight.base.flags.contiguous
+            )
+        ):
+            sample_weight = np.asarray(sample_weight, dtype=DOUBLE, order="C")
 
         return X, y, sample_weight
 
@@ -708,10 +711,10 @@ cdef class Tree:
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
 
-        nodes = memcpy(self.nodes, cnp.PyArray_DATA(node_ndarray),
-                       self.capacity * sizeof(Node))
-        value = memcpy(self.value, cnp.PyArray_DATA(value_ndarray),
-                       self.capacity * self.value_stride * sizeof(double))
+        memcpy(self.nodes, cnp.PyArray_DATA(node_ndarray),
+               self.capacity * sizeof(Node))
+        memcpy(self.value, cnp.PyArray_DATA(value_ndarray),
+               self.capacity * self.value_stride * sizeof(double))
 
     cdef int _resize(self, SIZE_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
@@ -863,8 +866,8 @@ cdef class Tree:
 
         # Extract input
         cdef const DTYPE_t[:] X_data = X.data
-        cdef const INT32_t[:] X_indices  = X.indices
-        cdef const INT32_t[:] X_indptr  = X.indptr
+        cdef const INT32_t[:] X_indices = X.indices
+        cdef const INT32_t[:] X_indptr = X.indptr
 
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t n_features = X.shape[1]
@@ -991,8 +994,8 @@ cdef class Tree:
 
         # Extract input
         cdef const DTYPE_t[:] X_data = X.data
-        cdef const INT32_t[:] X_indices  = X.indices
-        cdef const INT32_t[:] X_indptr  = X.indptr
+        cdef const INT32_t[:] X_indices = X.indices
+        cdef const INT32_t[:] X_indptr = X.indptr
 
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t n_features = X.shape[1]
@@ -1468,7 +1471,7 @@ cdef struct CostComplexityPruningRecord:
     SIZE_t node_idx
     SIZE_t parent
 
-cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
+cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree,  # OUT
                             Tree orig_tree,
                             _CCPPruneController controller):
     """Perform cost complexity pruning.
@@ -1595,7 +1598,7 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                 node_indices_stack.pop()
 
                 if not in_subtree[node_idx]:
-                    continue # branch has already been marked for pruning
+                    continue  # branch has already been marked for pruning
                 candidate_nodes[node_idx] = 0
                 leaves_in_subtree[node_idx] = 0
                 in_subtree[node_idx] = 0
@@ -1628,9 +1631,10 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
 
 
 def _build_pruned_tree_ccp(
-    Tree tree, # OUT
+    Tree tree,  # OUT
     Tree orig_tree,
-    DOUBLE_t ccp_alpha):
+    DOUBLE_t ccp_alpha
+):
     """Build a pruned tree from the original tree using cost complexity
     pruning.
 
@@ -1714,10 +1718,11 @@ cdef struct BuildPrunedRecord:
     bint is_left
 
 cdef _build_pruned_tree(
-    Tree tree, # OUT
+    Tree tree,  # OUT
     Tree orig_tree,
     const unsigned char[:] leaves_in_subtree,
-    SIZE_t capacity):
+    SIZE_t capacity
+):
     """Build a pruned tree.
 
     Build a pruned tree from the original tree by transforming the nodes in

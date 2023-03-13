@@ -205,8 +205,7 @@ NodeData = np.asarray(<NodeData_t[:1]>(&nd_tmp)).dtype
 ######################################################################
 # Define doc strings, substituting the appropriate class name using
 # the DOC_DICT variable defined in the pyx files.
-CLASS_DOC = \
-"""
+CLASS_DOC = """
 {BinaryTree}(X, leaf_size=40, metric='minkowski', **kwargs)
 
 {BinaryTree} for fast generalized N-point problems
@@ -411,7 +410,7 @@ cdef inline DTYPE_t compute_log_kernel(DTYPE_t dist, DTYPE_t h,
         return log_cosine_kernel(dist, h)
 
 
-#------------------------------------------------------------
+# ------------------------------------------------------------
 # Kernel norms are defined via the volume element V_n
 # and surface element S_(n-1) of an n-sphere.
 cdef DTYPE_t logVn(ITYPE_t n):
@@ -567,7 +566,7 @@ cdef class NeighborsHeap:
             )
         return 0
 
-#------------------------------------------------------------
+# ------------------------------------------------------------
 # find_node_split_dim:
 #  this computes the equivalent of
 #  j_max = np.argmax(np.max(data, 0) - np.min(data, 0))
@@ -872,7 +871,6 @@ cdef class BinaryTree:
             self.sample_weight = None
             self.sum_weight = <DTYPE_t> n_samples
 
-
     def __reduce__(self):
         """
         reduce method used for pickling
@@ -1063,7 +1061,7 @@ cdef class BinaryTree:
                                         n_features, n_points)
             partition_node_indices(data, idx_array, i_max, n_mid,
                                    n_features, n_points)
-            self._recursive_build(node_data,2 * i_node + 1,
+            self._recursive_build(node_data, 2 * i_node + 1,
                                   idx_start, idx_start + n_mid)
             self._recursive_build(node_data, 2 * i_node + 2,
                                   idx_start + n_mid, idx_end)
@@ -1362,7 +1360,7 @@ cdef class BinaryTree:
 
                 # deflatten results
                 return indices_npy.reshape(X.shape[:X.ndim - 1])
-        except:
+        except MemoryError:
             # free any buffer that is not owned by a numpy array
             for i in range(Xarr.shape[0]):
                 free(indices[i])
@@ -1372,7 +1370,6 @@ cdef class BinaryTree:
         finally:
             free(indices)
             free(distances)
-
 
     def kernel_density(self, X, h, kernel='gaussian',
                        atol=0, rtol=1E-8,
@@ -1596,13 +1593,13 @@ cdef class BinaryTree:
 
         cdef DTYPE_t* data = &self.data[0, 0]
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 1: query point is outside node radius:
         #         trim it from the query
         if reduced_dist_LB > heap.largest(i_pt):
             self.n_trims += 1
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 2: this is a leaf node.  Update set of nearby points
         elif node_info.is_leaf:
             self.n_leaves += 1
@@ -1612,7 +1609,7 @@ cdef class BinaryTree:
                                      self.data.shape[1])
                 heap._push(i_pt, dist_pt, self.idx_array[i])
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 3: Node is not a leaf.  Recursively query subnodes
         #         starting with the closest
         else:
@@ -1657,13 +1654,13 @@ cdef class BinaryTree:
             i_node = nodeheap_item.i1
             node_info = node_data[i_node]
 
-            #------------------------------------------------------------
+            # ------------------------------------------------------------
             # Case 1: query point is outside node radius:
             #         trim it from the query
             if reduced_dist_LB > heap.largest(i_pt):
                 self.n_trims += 1
 
-            #------------------------------------------------------------
+            # ------------------------------------------------------------
             # Case 2: this is a leaf node.  Update set of nearby points
             elif node_data[i_node].is_leaf:
                 self.n_leaves += 1
@@ -1674,7 +1671,7 @@ cdef class BinaryTree:
                                          self.data.shape[1])
                     heap._push(i_pt, dist_pt, self.idx_array[i])
 
-            #------------------------------------------------------------
+            # ------------------------------------------------------------
             # Case 3: Node is not a leaf.  Add subnodes to the node heap
             else:
                 self.n_splits += 1
@@ -1703,13 +1700,13 @@ cdef class BinaryTree:
         cdef DTYPE_t bound_max, dist_pt, reduced_dist_LB1, reduced_dist_LB2
         cdef ITYPE_t i1, i2, i_pt, i_parent
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 1: nodes are further apart than the current bound:
         #         trim both from the query
         if reduced_dist_LB > bounds[i_node2]:
             pass
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 2: both nodes are leaves:
         #         do a brute-force search comparing all pairs
         elif node_info1.is_leaf and node_info2.is_leaf:
@@ -1743,7 +1740,7 @@ cdef class BinaryTree:
                 else:
                     break
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 3a: node 1 is a leaf or is smaller: split node 2 and
         #          recursively query, starting with the nearest subnode
         elif node_info1.is_leaf or (not node_info2.is_leaf
@@ -1764,7 +1761,7 @@ cdef class BinaryTree:
                 self._query_dual_depthfirst(i_node1, other, 2 * i_node2 + 1,
                                             bounds, heap, reduced_dist_LB1)
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 3b: node 2 is a leaf or is smaller: split node 1 and
         #          recursively query, starting with the nearest subnode
         else:
@@ -1815,13 +1812,13 @@ cdef class BinaryTree:
             node_info1 = node_data1[i_node1]
             node_info2 = node_data2[i_node2]
 
-            #------------------------------------------------------------
+            # ------------------------------------------------------------
             # Case 1: nodes are further apart than the current bound:
             #         trim both from the query
             if reduced_dist_LB > bounds[i_node2]:
                 pass
 
-            #------------------------------------------------------------
+            # ------------------------------------------------------------
             # Case 2: both nodes are leaves:
             #         do a brute-force search comparing all pairs
             elif node_info1.is_leaf and node_info2.is_leaf:
@@ -1844,7 +1841,7 @@ cdef class BinaryTree:
                     bounds[i_node2] = fmax(bounds[i_node2],
                                            heap.largest(i_pt))
 
-            #------------------------------------------------------------
+            # ------------------------------------------------------------
             # Case 3a: node 1 is a leaf or is smaller: split node 2 and
             #          recursively query, starting with the nearest subnode
             elif node_info1.is_leaf or (not node_info2.is_leaf
@@ -1857,7 +1854,7 @@ cdef class BinaryTree:
                                                        other, i2)
                     nodeheap.push(nodeheap_item)
 
-            #------------------------------------------------------------
+            # ------------------------------------------------------------
             # Case 3b: node 2 is a leaf or is smaller: split node 1 and
             #          recursively query, starting with the nearest subnode
             else:
@@ -1889,13 +1886,13 @@ cdef class BinaryTree:
         cdef DTYPE_t dist_pt, dist_LB = 0, dist_UB = 0
         min_max_dist(self, i_node, pt, &dist_LB, &dist_UB)
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 1: all node points are outside distance r.
         #         prune this branch.
         if dist_LB > r:
             pass
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 2: all node points are within distance r
         #         add all points to neighbors
         elif dist_UB <= r:
@@ -1912,7 +1909,7 @@ cdef class BinaryTree:
                                                      n_features)
                     count += 1
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 3: this is a leaf node.  Go through all points to
         #         determine if they fall within radius
         elif node_info.is_leaf:
@@ -1933,7 +1930,7 @@ cdef class BinaryTree:
                                 self.dist_metric._rdist_to_dist(dist_pt)
                     count += 1
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 4: Node is not a leaf.  Recursively query subnodes
         else:
             count = self._query_radius_single(2 * i_node + 1, pt, r,
@@ -2015,21 +2012,21 @@ cdef class BinaryTree:
             else:
                 N1 = node_info.idx_end - node_info.idx_start
 
-            #------------------------------------------------------------
+            # ------------------------------------------------------------
             # Case 1: local bounds are equal to within per-point tolerance.
             if (log_knorm + node_log_bound_spreads[i_node] - log(N1) + log(N)
                 <= logaddexp(log_atol, (log_rtol + log_knorm
                                         + node_log_min_bounds[i_node]))):
                 pass
 
-            #------------------------------------------------------------
+            # ------------------------------------------------------------
             # Case 2: global bounds are within rtol & atol.
             elif (log_knorm + global_log_bound_spread
                   <= logaddexp(log_atol,
                                log_rtol + log_knorm + global_log_min_bound)):
                 break
 
-            #------------------------------------------------------------
+            # ------------------------------------------------------------
             # Case 3: node is a leaf. Count contributions from all points
             elif node_info.is_leaf:
                 global_log_min_bound =\
@@ -2049,7 +2046,7 @@ cdef class BinaryTree:
                     global_log_min_bound = logaddexp(global_log_min_bound,
                                                      log_density + log_weight)
 
-            #------------------------------------------------------------
+            # ------------------------------------------------------------
             # Case 4: split node and query subnodes
             else:
                 i1 = 2 * i_node + 1
@@ -2145,28 +2142,30 @@ cdef class BinaryTree:
         cdef DTYPE_t dist_UB = 0, dist_LB = 0
 
         if with_sample_weight:
-            N1  = _total_node_weight(node_data, sample_weight,
-                                     idx_array, i_node)
+            N1 = _total_node_weight(node_data, sample_weight,
+                                    idx_array, i_node)
             N2 = self.sum_weight
         else:
             N1 = <DTYPE_t>(node_info.idx_end - node_info.idx_start)
             N2 = <DTYPE_t>self.data.shape[0]
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 1: local bounds are equal to within errors.  Return
-        if (log_knorm + local_log_bound_spread - log(N1) + log(N2)
-            <= logaddexp(log_atol, (log_rtol + log_knorm
-                                    + local_log_min_bound))):
+        if (
+            log_knorm + local_log_bound_spread - log(N1) + log(N2)
+            <= logaddexp(log_atol, (log_rtol + log_knorm + local_log_min_bound))
+        ):
             pass
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 2: global bounds are within rtol & atol. Return
-        elif (log_knorm + global_log_bound_spread[0]
-            <= logaddexp(log_atol, (log_rtol + log_knorm
-                                    + global_log_min_bound[0]))):
+        elif (
+            log_knorm + global_log_bound_spread[0]
+            <= logaddexp(log_atol, (log_rtol + log_knorm + global_log_min_bound[0]))
+        ):
             pass
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 3: node is a leaf. Count contributions from all points
         elif node_info.is_leaf:
             global_log_min_bound[0] = logsubexp(global_log_min_bound[0],
@@ -2185,7 +2184,7 @@ cdef class BinaryTree:
                                                     (log_dens_contribution +
                                                      log_weight))
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Case 4: split node and query subnodes
         else:
             i1 = 2 * i_node + 1
@@ -2259,7 +2258,7 @@ cdef class BinaryTree:
         cdef DTYPE_t dist_pt, dist_LB = 0, dist_UB = 0
         min_max_dist(self, i_node, pt, &dist_LB, &dist_UB)
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Go through bounds and check for cuts
         while i_min < i_max:
             if dist_LB > r[i_min]:
@@ -2314,7 +2313,7 @@ cdef class BinaryTree:
         dist_LB = min_dist_dual(self, i_node1, other, i_node2)
         dist_UB = max_dist_dual(self, i_node1, other, i_node2)
 
-        #------------------------------------------------------------
+        # ------------------------------------------------------------
         # Go through bounds and check for cuts
         while i_min < i_max:
             if dist_LB > r[i_min]:
@@ -2358,7 +2357,7 @@ cdef class BinaryTree:
                                          r, count, i_min, i_max)
 
             else:
-                 # neither is a leaf: split & query both
+                # neither is a leaf: split & query both
                 for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
                     for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
                         self._two_point_dual(i1, other, i2,

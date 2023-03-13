@@ -12,11 +12,11 @@ from libcpp.map cimport map as cpp_map
 
 import numpy as np
 
-#DTYPE = np.float64
-#ctypedef cnp.float64_t DTYPE_t
+# DTYPE = np.float64
+# ctypedef cnp.float64_t DTYPE_t
 
-#ITYPE = np.intp
-#ctypedef cnp.intp_t ITYPE_t
+# ITYPE = np.intp
+# ctypedef cnp.intp_t ITYPE_t
 
 ###############################################################################
 # An object to be used in Python
@@ -55,12 +55,12 @@ cdef class IntFloatDict:
 
     # Cython 0.20 generates buggy code below. Commenting this out for now
     # and relying on the to_arrays method
-    #def __iter__(self):
-    #    cdef cpp_map[ITYPE_t, DTYPE_t].iterator it = self.my_map.begin()
-    #    cdef cpp_map[ITYPE_t, DTYPE_t].iterator end = self.my_map.end()
-    #    while it != end:
-    #        yield deref(it).first, deref(it).second
-    #        inc(it)
+    # def __iter__(self):
+    #     cdef cpp_map[ITYPE_t, DTYPE_t].iterator it = self.my_map.begin()
+    #     cdef cpp_map[ITYPE_t, DTYPE_t].iterator end = self.my_map.end()
+    #     while it != end:
+    #         yield deref(it).first, deref(it).second
+    #         inc(it)
 
     def __iter__(self):
         cdef int size = self.my_map.size()

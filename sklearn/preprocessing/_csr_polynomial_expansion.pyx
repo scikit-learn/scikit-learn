@@ -131,9 +131,8 @@ def _csr_polynomial_expansion(
             shape=num_rows + 1, dtype=np.int32
         )
 
-        cnp.int32_t expanded_index = 0, row_starts, row_ends, i, j, k, \
-                i_ptr, j_ptr, k_ptr, num_cols_in_row,  \
-                expanded_column
+        cnp.int32_t expanded_index = 0, row_starts, row_ends
+        cnp.int32_t i, j, k, i_ptr, j_ptr, k_ptr, num_cols_in_row
 
     with nogil:
         expanded_indptr[0] = indptr[0]
@@ -154,8 +153,7 @@ def _csr_polynomial_expansion(
                         num_cols_in_row += 1
                     else:
                         # degree == 3
-                        for k_ptr in range(j_ptr + interaction_only,
-                                            row_ends):
+                        for k_ptr in range(j_ptr + interaction_only, row_ends):
                             k = indices[k_ptr]
                             col = _deg3_column(d, i, j, k, interaction_only)
                             expanded_indices[expanded_index] = col

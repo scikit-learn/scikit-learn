@@ -25,7 +25,7 @@ cdef class BallTree(BinaryTree):
     pass
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a Ball Tree
 #
 #   Note that these functions use the concept of "reduced distance".
