@@ -461,6 +461,17 @@ def test_handle_zeros_in_scale():
     assert_allclose(s2, np.array([1, 1, 1, 2, 3]))
 
 
+def test_minmax_scaler_output_dtype_choice():
+    # Test if MinMaxScaler() returns choosen dtype
+
+    # output dtype np.float16 for input dtype np.int8
+    data = np.array([[-1, 2], [-1, 6], [0, 10], [1, 18]], dtype=np.int8)
+    scaler_X_trans = MinMaxScaler().fit_transform(data)
+
+    assert data.dtype == np.int8
+    assert scaler_X_trans.dtype == np.float64
+
+
 def test_minmax_scaler_partial_fit():
     # Test if partial_fit run over many batches of size 1 and 50
     # gives the same results as fit
