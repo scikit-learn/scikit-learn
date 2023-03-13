@@ -983,10 +983,6 @@ class OneHotEncoder(_BaseEncoder):
             handle_unknown=self.handle_unknown,
             force_all_finite="allow-nan",
         )
-        if self._infrequent_enabled:
-            self._fit_infrequent_category_mapping(
-                fit_results["n_samples"], fit_results["category_counts"]
-            )
         self._set_drop_idx()
         self._n_features_outs = self._compute_n_features_outs()
         return self
