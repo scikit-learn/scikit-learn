@@ -128,6 +128,8 @@ def test_label_binarizer_pandas_nullable(dtype, unique_first):
 
     y_true = pd.Series([1, 0, 0, 1, 0, 1, 1, 0, 1], dtype=dtype)
     if unique_first:
+        # Calling unique creates a pandas array which has a different interface
+        # compared to a pandas Series. Specifically, pandas arrays do not have "iloc".
         y_true = y_true.unique()
     lb = LabelBinarizer().fit(y_true)
     y_out = lb.transform([1, 0])
