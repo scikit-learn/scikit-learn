@@ -35,7 +35,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
     # and values arrays ourselves. Use a Py_ssize_t capacity for safety.
     cdef Py_ssize_t capacity = 8192     # arbitrary
     cdef cnp.int64_t size = 0
-    cdef cnp.ndarray values = np.empty(capacity, dtype=dtype)
+    cdef cnp.dtype values = np.empty(capacity, dtype=dtype)
 
     for x in raw_X:
         for f, v in x:
