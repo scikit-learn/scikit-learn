@@ -73,6 +73,34 @@ cdef void _middle_term_sparse_sparse_64(
 
 {{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
+cdef void _middle_term_sparse_dense_{{name_suffix}}(
+    const DTYPE_t[:] X_data,
+    const SPARSE_INDEX_TYPE_t[:] X_indices,
+    const SPARSE_INDEX_TYPE_t[:] X_indptr,
+    ITYPE_t X_start,
+    ITYPE_t X_end,
+    const {{INPUT_DTYPE_t}}[:, ::1] Y,
+    ITYPE_t Y_start,
+    ITYPE_t Y_end,
+    bint c_ordered_middle_term,
+    DTYPE_t * dist_middle_terms,
+) nogil:
+    # This routine assumes that dist_middle_terms is a pointer to the first element
+    # of a buffer filled with zeros of length at least equal to n_X × n_Y, conceptually
+    # representing a 2-d C-ordered of F-ordered array.
+    cdef:
+        ITYPE_t i, j, k
+        ITYPE_t n_X = X_end - X_start
+        ITYPE_t n_Y = Y_end - Y_start
+        ITYPE_t X_i_col_idx, X_i_ptr, Y_j_col_idx, Y_j_ptr
+
+    for i in range(n_X):
+        for j in range(n_Y):
+            k = i * n_Y + j if c_ordered_middle_term else j * n_X + i
+            for X_i_ptr in range(X_indptr[X_start+i], X_indptr[X_start+i+1]):
+                X_i_col_idx = X_indices[X_i_ptr]
+                dist_middle_terms[k] += -2 * X_data[X_i_ptr] * Y[Y_start + j, X_i_col_idx]
+
 
 cdef class MiddleTermComputer{{name_suffix}}:
     """Helper class to compute a Euclidean distance matrix in chunks.
@@ -103,7 +131,7 @@ cdef class MiddleTermComputer{{name_suffix}}:
         n_features,
         chunk_size,
     ) -> MiddleTermComputer{{name_suffix}}:
-        """Return the DatasetsPair implementation for the given arguments.
+        """Return the MiddleTermComputer implementation for the given arguments.
 
         Parameters
         ----------
@@ -143,11 +171,38 @@ cdef class MiddleTermComputer{{name_suffix}}:
                 n_features,
                 chunk_size,
             )
-
+        if X_is_sparse and not Y_is_sparse:
+            return SparseDenseMiddleTermComputer{{name_suffix}}(
+                X,
+                Y,
+                effective_n_threads,
+                chunks_n_threads,
+                dist_middle_terms_chunks_size,
+                n_features,
+                chunk_size,
+                c_ordered_middle_term=True
+            )
+        if not X_is_sparse and Y_is_sparse:
+            # NOTE: The Dense-Sparse case is implement via the Sparse-Dense case.
+            #
+            # To do so:
+            #    - X (dense) and Y (sparse) are swapped
+            #    - the distance middle term is seen as F-ordered for consistency
+            #      (c_ordered_middle_term = False)
+            return SparseDenseMiddleTermComputer{{name_suffix}}(
+                # Mind that X and Y are swapped here.
+                Y,
+                X,
+                effective_n_threads,
+                chunks_n_threads,
+                dist_middle_terms_chunks_size,
+                n_features,
+                chunk_size,
+                c_ordered_middle_term=False,
+            )
         raise NotImplementedError(
-            "X and Y must be both CSR sparse matrices or both numpy arrays."
+            "X and Y must be CSR sparse matrices or numpy arrays."
         )
-
 
     @classmethod
     def unpack_csr_matrix(cls, X: csr_matrix):
@@ -486,5 +541,101 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
 
         return dist_middle_terms
 
+cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
+    """Middle term of the Euclidean distance between chunks of a CSR matrix and a np.ndarray.
+
+    The logic of the computation is wrapped in the routine _middle_term_sparse_dense_{{name_suffix}}.
+    This routine iterates over the data, indices and indptr arrays of the sparse matrices
+    without densifying them.
+    """
+
+    def __init__(
+        self,
+        X,
+        Y,
+        ITYPE_t effective_n_threads,
+        ITYPE_t chunks_n_threads,
+        ITYPE_t dist_middle_terms_chunks_size,
+        ITYPE_t n_features,
+        ITYPE_t chunk_size,
+        bint c_ordered_middle_term,
+    ):
+        super().__init__(
+            effective_n_threads,
+            chunks_n_threads,
+            dist_middle_terms_chunks_size,
+            n_features,
+            chunk_size,
+        )
+        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
+        self.Y = Y
+        self.c_ordered_middle_term = c_ordered_middle_term
+
+    cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) noexcept nogil:
+        # Fill the thread's dist_middle_terms_chunks with 0.0 before
+        # computing its elements in _compute_dist_middle_terms.
+        fill(
+            self.dist_middle_terms_chunks[thread_num].begin(),
+            self.dist_middle_terms_chunks[thread_num].end(),
+            0.0,
+        )
+
+    cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) noexcept nogil:
+        # Fill the thread's dist_middle_terms_chunks with 0.0 before
+        # computing its elements in _compute_dist_middle_terms.
+        fill(
+            self.dist_middle_terms_chunks[thread_num].begin(),
+            self.dist_middle_terms_chunks[thread_num].end(),
+            0.0,
+        )
+
+    cdef DTYPE_t * _compute_dist_middle_terms(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) noexcept nogil:
+        cdef:
+            DTYPE_t *dist_middle_terms = (
+                self.dist_middle_terms_chunks[thread_num].data()
+            )
+
+        # For the dense-sparse case, we use the sparse-dense case
+        # with dist_middle_terms seen as F-ordered.
+        # Hence we swap indices pointers here.
+        if not self.c_ordered_middle_term:
+            X_start, Y_start = Y_start, X_start
+            X_end, Y_end = Y_end, X_end
+
+        _middle_term_sparse_dense_{{name_suffix}}(
+            self.X_data,
+            self.X_indices,
+            self.X_indptr,
+            X_start,
+            X_end,
+            self.Y,
+            Y_start,
+            Y_end,
+            self.c_ordered_middle_term,
+            dist_middle_terms,
+        )
+
+        return dist_middle_terms
 
 {{endfor}}

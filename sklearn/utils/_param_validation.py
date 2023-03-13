@@ -364,8 +364,11 @@ class Interval(_Constraint):
 
     Parameters
     ----------
-    type : {numbers.Integral, numbers.Real}
+    type : {numbers.Integral, numbers.Real, "real_not_int"}
         The set of numbers in which to set the interval.
+
+        If "real_not_int", only reals that don't have the integer type
+        are allowed. For example 1.0 is allowed but 1 is not.
 
     left : float or int or None
         The left bound of the interval. None means left bound is -∞.
@@ -392,14 +395,6 @@ class Interval(_Constraint):
     `[0, +∞) U {+∞}`.
     """
 
-    @validate_params(
-        {
-            "type": [type],
-            "left": [Integral, Real, None],
-            "right": [Integral, Real, None],
-            "closed": [StrOptions({"left", "right", "both", "neither"})],
-        }
-    )
     def __init__(self, type, left, right, *, closed):
         super().__init__()
         self.type = type
@@ -410,6 +405,18 @@ class Interval(_Constraint):
         self._check_params()
 
     def _check_params(self):
+        if self.type not in (Integral, Real, "real_not_int"):
+            raise ValueError(
+                "type must be either numbers.Integral, numbers.Real or 'real_not_int'."
+                f" Got {self.type} instead."
+            )
+
+        if self.closed not in ("left", "right", "both", "neither"):
+            raise ValueError(
+                "closed must be either 'left', 'right', 'both' or 'neither'. "
+                f"Got {self.closed} instead."
+            )
+
         if self.type is Integral:
             suffix = "for an interval over the integers."
             if self.left is not None and not isinstance(self.left, Integral):
@@ -424,6 +431,11 @@ class Interval(_Constraint):
                 raise ValueError(
                     f"right can't be None when closed == {self.closed} {suffix}"
                 )
+        else:
+            if self.left is not None and not isinstance(self.left, Real):
+                raise TypeError("Expecting left to be a real number.")
+            if self.right is not None and not isinstance(self.right, Real):
+                raise TypeError("Expecting right to be a real number.")
 
         if self.right is not None and self.left is not None and self.right <= self.left:
             raise ValueError(
@@ -447,8 +459,13 @@ class Interval(_Constraint):
             return False
         return True
 
+    def _has_valid_type(self, val):
+        if self.type == "real_not_int":
+            return isinstance(val, Real) and not isinstance(val, Integral)
+        return isinstance(val, self.type)
+
     def is_satisfied_by(self, val):
-        if not isinstance(val, self.type):
+        if not self._has_valid_type(val):
             return False
 
         return val in self
