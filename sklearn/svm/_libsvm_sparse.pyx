@@ -546,7 +546,7 @@ def libsvm_sparse_predict_proba(
     #TODO: use check_model
     cdef cnp.npy_intp n_class = get_nr(model=model)
     cdef int rv
-    dec_values = np.empty((T_indptr.shape[0] -v1, n_class), dtype=np.float64)
+    dec_values = np.empty((T_indptr.shape[0] - 1, n_class), dtype=np.float64)
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     with nogil:
