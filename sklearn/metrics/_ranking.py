@@ -1737,7 +1737,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     {
         "y_true": ["array-like"],
         "y_score": ["array-like"],
-        "k": [Integral],
+        "k": [Interval(Integral, 1, None, closed="left")],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
         "labels": ["array-like", None],
