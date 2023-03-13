@@ -10,7 +10,8 @@ over the internet, all details are available on the official website:
 
 from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import validate_params, Interval
+from numbers import Integral, Real
 import logging
 
 import numpy as np
@@ -235,10 +236,10 @@ def _fetch_lfw_people(
     {
         "data_home": [str, None],
         "funneled": ["boolean"],
-        "resize": [float, None],
-        "min_faces_per_person": [int, None],
+        "resize": [Interval(Real, 0, None, closed="neither"), None],
+        "min_faces_per_person": [Interval(Integral, 0, None, closed="left"), None],
         "color": ["boolean"],
-        "slice": ["tuple of slcie", (slice(0, 250), slice(0, 250))],
+        "slice_": [tuple],
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
     }
