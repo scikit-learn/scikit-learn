@@ -22,14 +22,7 @@ dtypes = [('64', 'double', 'np.float64'),
           ('32', 'float', 'np.float32')]
 
 }}
-{{for name_suffix, c_type, np_type in dtypes}}
-
-#------------------------------------------------------------------------------
-
-"""
-Dataset abstractions for sequential data access.
-WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
-"""
+"""Dataset abstractions for sequential data access."""
 
 cimport cython
 from libc.limits cimport INT_MAX
@@ -39,6 +32,10 @@ import numpy as np
 cnp.import_array()
 
 from ._random cimport our_rand_r
+
+{{for name_suffix, c_type, np_type in dtypes}}
+
+#------------------------------------------------------------------------------
 
 cdef class SequentialDataset{{name_suffix}}:
     """Base class for datasets with sequential data access.
