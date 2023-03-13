@@ -194,6 +194,7 @@ details.
    covariance.empirical_covariance
    covariance.graphical_lasso
    covariance.ledoit_wolf
+   covariance.ledoit_wolf_shrinkage
    covariance.oas
    covariance.shrunk_covariance
 
@@ -444,6 +445,7 @@ Samples generator
    exceptions.DataDimensionalityWarning
    exceptions.EfficiencyWarning
    exceptions.FitFailedWarning
+   exceptions.InconsistentVersionWarning
    exceptions.NotFittedError
    exceptions.UndefinedMetricWarning
 
@@ -1127,6 +1129,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
+   metrics.PredictionErrorDisplay
    metrics.RocCurveDisplay
    calibration.CalibrationDisplay
 
@@ -1233,6 +1236,17 @@ Model validation
    model_selection.learning_curve
    model_selection.permutation_test_score
    model_selection.validation_curve
+
+Visualization
+-------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   model_selection.LearningCurveDisplay
 
 .. _multiclass_ref:
 
@@ -1661,8 +1675,15 @@ Utilities from joblib:
    :toctree: generated/
    :template: function.rst
 
+   utils.parallel.delayed
    utils.parallel_backend
    utils.register_parallel_backend
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   utils.parallel.Parallel
 
 
 Recently deprecated

@@ -23,6 +23,7 @@ import warnings
 from collections.abc import Iterable
 from functools import partial
 from collections import Counter
+from traceback import format_exc
 
 import numpy as np
 
@@ -64,6 +65,7 @@ from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
 from ..base import is_regressor
+from ..utils._param_validation import validate_params
 from ..utils.metadata_routing import _MetadataRequester
 from ..utils.metadata_routing import MetadataRequest
 from ..utils.metadata_routing import MetadataRouter
@@ -96,10 +98,16 @@ class _MultimetricScorer:
     ----------
     scorers : dict
         Dictionary mapping names to callable scorers.
+
+    raise_exc : bool, default=True
+        Whether to raise the exception in `__call__` or not. If set to `False`
+        a formatted string of the exception details is passed as result of
+        the failing scorer.
     """
 
-    def __init__(self, **scorers):
+    def __init__(self, *, scorers, raise_exc=True):
         self._scorers = scorers
+        self._raise_exc = raise_exc
 
     def __call__(self, estimator, *args, **kwargs):
         """Evaluate predicted target values."""
@@ -110,13 +118,19 @@ class _MultimetricScorer:
         params = process_routing(self, "score", kwargs)
 
         for name, scorer in self._scorers.items():
-            if isinstance(scorer, _BaseScorer):
-                score = scorer._score(
-                    cached_call, estimator, *args, **params.get(name).score
-                )
-            else:
-                score = scorer(estimator, *args, **params.get(name).score)
-            scores[name] = score
+            try:
+                if isinstance(scorer, _BaseScorer):
+                    score = scorer._score(
+                        cached_call, estimator, *args, **params.get(name).score
+                    )
+                else:
+                    score = scorer(estimator, *args, **params.get(name).score)
+                scores[name] = score
+            except Exception as e:
+                if self._raise_exc:
+                    raise e
+                else:
+                    scores[name] = format_exc()
         return scores
 
     def _use_cache(self, estimator):
@@ -484,6 +498,11 @@ class _ThresholdScorer(_BaseScorer):
         return ", needs_threshold=True"
 
 
+@validate_params(
+    {
+        "scoring": [str, callable, None],
+    }
+)
 def get_scorer(scoring):
     """Get a scorer from string.
 
@@ -493,8 +512,9 @@ def get_scorer(scoring):
 
     Parameters
     ----------
-    scoring : str or callable
+    scoring : str, callable or None
         Scoring method as string. If callable it is returned as is.
+        If None, returns None.
 
     Returns
     -------
@@ -705,6 +725,14 @@ def _check_multimetric_scoring(estimator, scoring):
     return scorers
 
 
+@validate_params(
+    {
+        "score_func": [callable],
+        "greater_is_better": ["boolean"],
+        "needs_proba": ["boolean"],
+        "needs_threshold": ["boolean"],
+    }
+)
 def make_scorer(
     score_func,
     *,

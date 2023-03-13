@@ -337,7 +337,9 @@ class BisectingKMeans(_BaseKMeans):
                 X, best_centers, best_labels, sample_weight
             )
         else:  # bisecting_strategy == "largest_cluster"
-            scores = np.bincount(best_labels)
+            # Using minlength to make sure that we have the counts for both labels even
+            # if all samples are labelled 0.
+            scores = np.bincount(best_labels, minlength=2)
 
         cluster_to_bisect.split(best_labels, best_centers, scores)
 

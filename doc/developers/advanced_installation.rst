@@ -26,10 +26,15 @@ Installing a nightly build is the quickest way to:
 
 - check whether a bug you encountered has been fixed since the last release.
 
+You can install the nightly build of scikit-learn using the `scipy-wheels-nightly`
+index from the PyPI registry of `anaconda.org`:
+
 .. prompt:: bash $
 
   pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
 
+Note that first uninstalling scikit-learn might be required to be able to
+install nightly builds of scikit-learn.
 
 .. _install_bleeding_edge:
 
@@ -464,15 +469,14 @@ the base system and these steps will not be necessary.
 Alternative compilers
 =====================
 
-The command:
+The following command will build scikit-learn using your default C/C++ compiler.
 
 .. prompt:: bash $
 
     pip install --verbose --editable .
 
-will build scikit-learn using your default C/C++ compiler. If you want to build
-scikit-learn with another compiler handled by ``distutils`` or by
-``numpy.distutils``, use the following command:
+If you want to build scikit-learn with another compiler handled by ``setuptools``,
+use the following command:
 
 .. prompt:: bash $
 
@@ -484,51 +488,22 @@ To see the list of available compilers run:
 
     python setup.py build_ext --help-compiler
 
-If your compiler is not listed here, you can specify it via the ``CC`` and
-``LDSHARED`` environment variables (does not work on windows):
+If your compiler is not listed here, you can specify it through some environment
+variables (does not work on windows). This `section
+<https://setuptools.pypa.io/en/stable/userguide/ext_modules.html#compiler-and-linker-options>`_
+of the setuptools documentation explains in details which environment variables
+are used by ``setuptools``, and at which stage of the compilation, to set the
+compiler and linker options.
 
-.. prompt:: bash $
+When setting these environment variables, it is advised to first check their
+``sysconfig`` counterparts variables and adapt them to your compiler. For instance::
 
-    CC=<compiler> LDSHARED="<compiler> -shared" python setup.py build_ext -i
+    import sysconfig
+    print(sysconfig.get_config_var('CC'))
+    print(sysconfig.get_config_var('LDFLAGS'))
 
-Building with Intel C Compiler (ICC) using oneAPI on Linux
-----------------------------------------------------------
-
-Intel provides access to all of its oneAPI toolkits and packages through a
-public APT repository. First you need to get and install the public key of this
-repository:
-
-.. prompt:: bash $
-
-    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-    sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-
-Then, add the oneAPI repository to your APT repositories:
-
-.. prompt:: bash $
-
-    sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
-    sudo apt-get update
-
-Install ICC, packaged under the name
-``intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic``:
-
-.. prompt:: bash $
-
-    sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
-
-Before using ICC, you need to set up environment variables:
-
-.. prompt:: bash $
-
-    source /opt/intel/oneapi/setvars.sh
-
-Finally, you can build scikit-learn. For example on Linux x86_64:
-
-.. prompt:: bash $
-
-    python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
+In addition, since Scikit-learn uses OpenMP, you need to include the appropriate OpenMP
+flag of your compiler into the ``CFLAGS`` and ``CPPFLAGS`` environment variables.
 
 Parallel builds
 ===============

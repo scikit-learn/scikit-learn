@@ -30,6 +30,7 @@ from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
 from ..utils.metadata_routing import RequestType
 from ..utils.metadata_routing import _MetadataRequester
+from ..utils._param_validation import validate_params, Interval
 
 __all__ = [
     "BaseCrossValidator",
@@ -2195,8 +2196,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=None):
     """
-    Validation helper to check if the test/test sizes are meaningful wrt to the
-    size of the data (n_samples)
+    Validation helper to check if the test/test sizes are meaningful w.r.t. the
+    size of the data (n_samples).
     """
     if test_size is None and train_size is None:
         test_size = default_test_size
@@ -2492,6 +2493,23 @@ def check_cv(cv=5, y=None, *, classifier=False):
     return cv  # New style cv objects are passed without any modification
 
 
+@validate_params(
+    {
+        "test_size": [
+            Interval(numbers.Real, 0, 1, closed="neither"),
+            Interval(numbers.Integral, 1, None, closed="left"),
+            None,
+        ],
+        "train_size": [
+            Interval(numbers.Real, 0, 1, closed="neither"),
+            Interval(numbers.Integral, 1, None, closed="left"),
+            None,
+        ],
+        "random_state": ["random_state"],
+        "shuffle": ["boolean"],
+        "stratify": ["array-like", None],
+    }
+)
 def train_test_split(
     *arrays,
     test_size=None,

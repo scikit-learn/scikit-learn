@@ -14,7 +14,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
@@ -30,8 +30,7 @@ from ..utils.validation import (
     check_is_fitted,
     column_or_1d,
 )
-from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from . import _cd_fast as cd_fast  # type: ignore
@@ -594,9 +593,7 @@ def enet_path(
                 w=coef_,
                 alpha=l1_reg,
                 beta=l2_reg,
-                X_data=ReadonlyArrayWrapper(
-                    X.data
-                ),  # TODO: Remove after release of Cython 3 (#23147)
+                X_data=X.data,
                 X_indices=X.indices,
                 X_indptr=X.indptr,
                 y=y,
@@ -1182,7 +1179,7 @@ class Lasso(ElasticNet):
     --------
     lars_path : Regularization path using LARS.
     lasso_path : Regularization path using Lasso.
-    LassoLars : Lasso Path along the regularization parameter usingLARS algorithm.
+    LassoLars : Lasso Path along the regularization parameter using LARS algorithm.
     LassoCV : Lasso alpha parameter by cross-validation.
     LassoLarsCV : Lasso least angle parameter algorithm by cross-validation.
     sklearn.decomposition.sparse_encode : Sparse coding array estimator.
@@ -1206,7 +1203,17 @@ class Lasso(ElasticNet):
     that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
     is smaller than `tol` times the maximum absolute coefficient, :math:`\\max_j |w_j|`.
     If so, then additionally check whether the dual gap is smaller than `tol` times
-    :math:`||y||_2^2 / n_{\text{samples}}`.
+    :math:`||y||_2^2 / n_{\\text{samples}}`.
+
+    The target can be a 2-dimensional array, resulting in the optimization of the
+    following objective::
+
+        (1 / (2 * n_samples)) * ||Y - XW||^2_F + alpha * ||W||_11
+
+    where :math:`||W||_{1,1}` is the sum of the magnitude of the matrix coefficients.
+    It should not be confused with :class:`~sklearn.linear_model.MultiTaskLasso` which
+    instead penalizes the :math:`L_{2,1}` norm of the coefficients, yielding row-wise
+    sparsity in the coefficients.
 
     Examples
     --------
@@ -1873,6 +1880,14 @@ class LassoCV(RegressorMixin, LinearModelCV):
      For an example, see
      :ref:`examples/linear_model/plot_lasso_model_selection.py
      <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+
+    :class:`LassoCV` leads to different results than a hyperparameter
+    search using :class:`~sklearn.model_selection.GridSearchCV` with a
+    :class:`Lasso` model. In :class:`LassoCV`, a model for a given
+    penalty `alpha` is warm started using the coefficients of the
+    closest model (trained at the previous iteration) on the
+    regularization path. It tends to speed up the hyperparameter
+    search.
 
     Examples
     --------
