@@ -768,24 +768,27 @@ In the following example with :class:`OrdinalEncoder`, the categories `'dog' and
 :class:`OrdinalEncoder`'s `max_categories` do **not** take into account missing
 or unknown categories. Setting `unknown_value` or `encoded_missing_value` to an
 integer will increase the number of unique integer codes by one each. This can
-result in up to `max_categories + 2` integer codes. In the follow example, "a"
-and "d" are grouped together into a single category, unknown values are encoded
-as 2 and missing values are encoded as 3.
+result in up to `max_categories + 2` integer codes. Categories are encoded by
+frequency and therefore less frequent categories care grouped together. In the
+following example "a" and "d" are grouped together into a single category,
+"b" and "c" are their own categories, unknown values are encoded as 3 and
+missing values are encoded as 4.
 
   >>> X_train = np.array(
   ...     [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3 + [np.nan]],
   ...     dtype=object).T
   >>> enc = preprocessing.OrdinalEncoder(
-  ...     handle_unknown="use_encoded_value", unknown_value=2,
-  ...     max_categories=2, encoded_missing_value=3)
+  ...     handle_unknown="use_encoded_value", unknown_value=3,
+  ...     max_categories=3, encoded_missing_value=4)
   >>> _ = enc.fit(X_train)
-  >>> X_test = np.array([["a"], ["b"], ["d"], ["e"], [np.nan]], dtype=object)
+  >>> X_test = np.array([["a"], ["b"], ["c"], ["d"], ["e"], [np.nan]], dtype=object)
   >>> enc.transform(X_test)
-  array([[1.],
+  array([[2.],
          [0.],
          [1.],
          [2.],
-         [3.]])
+         [3.],
+         [4.]])
 
 Similarity, :class:`OneHotEncoder` can be configured the same way to group together
 infrequent categories::

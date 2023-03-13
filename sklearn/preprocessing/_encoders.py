@@ -1336,22 +1336,26 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
            [ 0., -1.]])
 
     Infrequent categories are enabled by setting `max_categories` or `min_frequency`.
-    In the following example, "a" and "d" are grouped together into a single category,
-    unknown values are encoded as 2 and missing values are encoded as 3.
+    Categories are encoded by frequency and therefore less frequent categories
+    care grouped together. In the following example "a" and "d" are grouped
+    together into a single category, "b" and "c" are their own categories,
+    unknown values are encoded as 3 and missing values are encoded as 4.
 
     >>> X_train = np.array(
     ...     [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3 + [np.nan]],
     ...     dtype=object).T
-    >>> enc = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=2,
-    ...                      max_categories=2, encoded_missing_value=3).fit(X_train)
+    >>> enc = OrdinalEncoder(
+    ...     handle_unknown="use_encoded_value", unknown_value=3,
+    ...     max_categories=3, encoded_missing_value=4)
+    >>> _ = enc.fit(X_train)
     >>> X_test = np.array([["a"], ["b"], ["c"], ["d"], ["e"], [np.nan]], dtype=object)
     >>> enc.transform(X_test)
-    array([[1.],
-           [0.],
-           [1.],
-           [1.],
-           [2.],
-           [3.]])
+    array([[2.],
+            [0.],
+            [1.],
+            [2.],
+            [3.],
+            [4.]])
     """
 
     _parameter_constraints: dict = {
