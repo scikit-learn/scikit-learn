@@ -10,6 +10,7 @@ import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils.validation import _check_sample_weight
 from sklearn.utils.fixes import threadpool_limits
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -1286,7 +1287,8 @@ def test_sample_weight_init(Estimator, init, global_random_seed):
     X, _ = make_blobs(
         n_samples=200, n_features=10, centers=10, random_state=global_random_seed
     )
-    sample_weight = rng.uniform(size=200)
+    sample_weight = rng.uniform(size=X.shape[0])
+    sample_weight = _check_sample_weight(sample_weight, X)
     x_squared_norms = row_norms(X, squared=True)
     kmeans = Estimator(random_state=global_random_seed, init=init)
     clusters_weighted = kmeans._init_centroids(
@@ -1306,3 +1308,27 @@ def test_sample_weight_init(Estimator, init, global_random_seed):
         random_state=rng,
     )
     assert (clusters_weighted != clusters).any()
+
+
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+@pytest.mark.parametrize("init", ["k-means++", "random"])
+def test_sample_weight_zero(Estimator, init, global_random_seed):
+    """Check that if sample weight is 0, this sample won't be chosen"""
+    rng = np.random.RandomState(global_random_seed)
+    X, _ = make_blobs(
+        n_samples=100, n_features=5, centers=5, random_state=global_random_seed
+    )
+    sample_weight = rng.uniform(size=X.shape[0])
+    sample_weight[[0, 1, 2]] = 0
+    sample_weight = _check_sample_weight(sample_weight, X)
+    x_squared_norms = row_norms(X, squared=True)
+    kmeans = Estimator(random_state=global_random_seed, init=init)
+    clusters_weighted = kmeans._init_centroids(
+        X=X,
+        x_squared_norms=x_squared_norms,
+        init=init,
+        sample_weight=sample_weight,
+        n_centroids=10,
+        random_state=rng,
+    )
+    assert np.in1d(clusters_weighted, [0, 1, 2], inverse=True).any()
