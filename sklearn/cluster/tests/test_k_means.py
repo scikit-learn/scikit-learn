@@ -1331,4 +1331,4 @@ def test_sample_weight_zero(Estimator, init, global_random_seed):
         n_centroids=10,
         random_state=rng,
     )
-    assert np.in1d(clusters_weighted, [0, 1, 2], inverse=True).any()
+    assert np.in1d(clusters_weighted, [0, 1, 2], invert=True).any()
