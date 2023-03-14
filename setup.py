@@ -281,6 +281,12 @@ extension_config = {
             "extra_compile_args": ["-std=c++11"],
         },
         {
+            "sources": ["_argkmin_classmode.pyx.tp"],
+            "language": "c++",
+            "include_np": True,
+            "extra_compile_args": ["-std=c++11"],
+        },
+        {
             "sources": ["_radius_neighbors.pyx.tp", "_radius_neighbors.pxd.tp"],
             "language": "c++",
             "include_np": True,

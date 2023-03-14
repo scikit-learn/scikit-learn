@@ -292,6 +292,11 @@ Changelog
   dissimilarity is not a metric and cannot be supported by the BallTree.
   :pr:`25417` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| The performance of :meth:`neighbors.KNeighborsClassifier.predict`
+  and of :meth:`neighbors.KNeighborsClassifier.predict_proba` has been improved
+  when `n_neighbors` is large and `algorithm="brute"` with non Euclidean metrics.
+  :pr:`24076` by :user:`Meekail Zain <micky774>`, :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.neural_network`
 .............................
 
