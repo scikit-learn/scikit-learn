@@ -59,7 +59,7 @@ def launch_mcd_on_dataset(
     n_samples, n_features, n_outliers, tol_loc, tol_cov, tol_support, seed
 ):
 
-    rand_gen = np.random.RandomState(0)
+    rand_gen = np.random.RandomState(seed)
     data = rand_gen.randn(n_samples, n_features)
     # add some outliers
     outliers_index = rand_gen.permutation(n_samples)[:n_outliers]
