@@ -317,6 +317,10 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Enhancement| Adds a `output_dtype` parameter to :class:`preprocessing.MinMaxScaler`.
+  This allows users to specify the data type of the result when calling `fit`, `transform`, and `fit_transform`.
+  :pr:`25845` by :user:`Vítor Centoducatte <ducatte>`.
+
 - |Enhancement| Adds a `feature_name_combiner` parameter to
   :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
   feature names to be returned by :meth:`get_feature_names_out`.

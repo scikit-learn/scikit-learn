@@ -291,9 +291,6 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
-    output_dtype : type, default=(np.float64, np.float32, np.float16)
-        Desired output dtype.
-
     copy : bool, default=True
         Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array).
@@ -303,6 +300,11 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         provided `feature range`.
 
         .. versionadded:: 0.24
+
+    output_dtype : type or list of type, default=(np.float64, np.float32, np.float16)
+        Data type of result.
+        If dtype is a list of types, conversion on the first type is only
+        performed if the dtype of the input is not in the list.
 
     Attributes
     ----------
@@ -384,13 +386,13 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     _parameter_constraints: dict = {
         "feature_range": [tuple],
-        "output_dtype": [tuple, type],
         "copy": ["boolean"],
         "clip": ["boolean"],
+        "output_dtype": [type, tuple],
     }
 
     def __init__(
-        self, feature_range=(0, 1), output_dtype=FLOAT_DTYPES, *, copy=True, clip=False
+        self, feature_range=(0, 1), *, copy=True, clip=False, output_dtype=FLOAT_DTYPES
     ):
         self.feature_range = feature_range
         self.copy = copy
@@ -591,9 +593,6 @@ def minmax_scale(
     feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
-    output_dtype : type, default=(np.float64, np.float32, np.float16)
-        Desired output dtype.
-
     axis : int, default=0
         Axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
@@ -601,6 +600,11 @@ def minmax_scale(
     copy : bool, default=True
         Set to False to perform inplace scaling and avoid a copy (if the input
         is already a numpy array).
+
+    output_dtype : type or list of type, default=(np.float64, np.float32, np.float16)
+        Data type of result.
+        If dtype is a list of types, conversion on the first type is only
+        performed if the dtype of the input is not in the list.
 
     Returns
     -------
@@ -641,7 +645,7 @@ def minmax_scale(
     if original_ndim == 1:
         X = X.reshape(X.shape[0], 1)
 
-    s = MinMaxScaler(feature_range=feature_range, output_dtype=output_dtype, copy=copy)
+    s = MinMaxScaler(feature_range=feature_range, copy=copy, output_dtype=output_dtype)
     if axis == 0:
         X = s.fit_transform(X)
     else:

@@ -464,23 +464,31 @@ def test_handle_zeros_in_scale():
 def test_minmax_scaler_output_dtype_parameter():
     # Test if MinMaxScaler() returns choosen dtype
 
-    # default behavior: output dtype np.float64 for input dtype np.int8
-    data = np.array([[-1, 2], [-1, 6], [0, 10], [1, 18]], dtype=np.int8)
-    scaler_X_trans = MinMaxScaler().fit_transform(data)
+    # default behavior: output_dtype=(np.float64, np.float32, np.float16)
+    # output dtype np.float64 for input dtype np.int8
+    # output_dtype tuple doesn't include input dtype np.int8, use 1st value: np.float64
+    data_int8 = np.array([[-1, 2], [-1, 6], [0, 10], [1, 18]], dtype=np.int8)
+    scaler_X_trans = MinMaxScaler().fit_transform(data_int8)
 
-    assert data.dtype == np.int8
+    assert data_int8.dtype == np.int8
     assert scaler_X_trans.dtype == np.float64
 
+    # output_dtype=np.float16
     # output dtype np.float16 for input dtype np.int8
-    scaler_X_trans = MinMaxScaler(output_dtype=np.float16).fit_transform(data)
+    scaler_X_trans = MinMaxScaler(output_dtype=np.float16).fit_transform(data_int8)
 
     assert scaler_X_trans.dtype == np.float16
 
-    # output dtype np.float32 for input dtype np.int8
-    scaler_X_trans = MinMaxScaler(output_dtype=np.float32).fit_transform(data)
+    # output_dtype=(np.float32, np.float16)
+    # output dtype np.float16 for input dtype np.float16
+    # output_dtype tuple includes input dtype np.float16, use it: np.float16
+    data_float16 = np.array([[-1, 2], [-1, 6], [0, 10], [1, 18]], dtype=np.float16)
+    scaler_X_trans = MinMaxScaler(output_dtype=(np.float32, np.float16)).fit_transform(
+        data_float16
+    )
 
-    assert data.dtype == np.int8
-    assert scaler_X_trans.dtype == np.float32
+    assert data_float16.dtype == np.float16
+    assert scaler_X_trans.dtype == np.float16
 
 
 def test_minmax_scaler_partial_fit():
