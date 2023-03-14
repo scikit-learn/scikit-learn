@@ -10,11 +10,18 @@ import numpy as np
 
 ctypedef cnp.int8_t FLAG_t
 
-
+# We use the following verbatim block to determine whether the current
+# platform's compiler supports 128-bit integer values intrinsically.
+# This should work for GCC and CLANG, but doesn't for MSVC. We prefer to use
+# 128-bit integers when possible because the intermediate calculations have a
+# non-trivial risk of overflow. It is, however, very unlikely to come up on an
+# average use case, hence 64-bit integers are "good enough".
 cdef extern from *:
     """
     #ifdef __SIZEOF_INT128__
         typedef __int128 ITYPE_t;
+    #elif __clang__
+        typedef _BitInt(128) ITYPE_t;
     #else
         typedef long long ITYPE_t;
     #endif
@@ -109,11 +116,13 @@ cpdef cnp.int64_t _calc_expanded_nnz(
     cdef cnp.int64_t MAX_SAFE_INDEX_CALC_DEG3 = 2097151
 
     if degree == 2:
+        # Only need to check when not using 128-bit integers
         if sizeof(ITYPE_t) < 16 and n <= MAX_SAFE_INDEX_CALC_DEG2:
             return n * (n + 1) / 2 - interaction_only * n
         return <cnp.int64_t> py_calc_expanded_nnz_deg2(n, interaction_only)
         return n * (n + 1) / 2 - interaction_only * n
     else:
+        # Only need to check when not using 128-bit integers
         if sizeof(ITYPE_t) < 16 and n <= MAX_SAFE_INDEX_CALC_DEG3:
             return n * (n**2 + 3 * n + 2) / 6 - interaction_only * n**2
         return <cnp.int64_t> py_calc_expanded_nnz_deg3(n, interaction_only)
