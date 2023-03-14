@@ -3,10 +3,12 @@ from inspect import signature
 
 import pytest
 
-from sklearn.utils._param_validation import generate_invalid_param_val
-from sklearn.utils._param_validation import generate_valid_param
-from sklearn.utils._param_validation import make_constraint
-from sklearn.utils._param_validation import InvalidParameterError
+from sklearn.utils._param_validation import (
+    InvalidParameterError,
+    generate_invalid_param_val,
+    generate_valid_param,
+    make_constraint,
+)
 
 
 def _get_func_info(func_module):
@@ -123,6 +125,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_selection.f_classif",
     "sklearn.feature_selection.f_regression",
     "sklearn.feature_selection.mutual_info_classif",
+    "sklearn.feature_selection.mutual_info_regression",
     "sklearn.feature_selection.r_regression",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
