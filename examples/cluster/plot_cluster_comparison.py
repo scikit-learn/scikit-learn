@@ -3,23 +3,18 @@
 Comparing different clustering algorithms on toy datasets
 =========================================================
 
-The following example shows the characteristic of
-different clustering algorithms applied to different two
-dimensional datasets.
+The following example shows the characteristic of different clustering 
+algorithms applied to different two dimensional datasets.
 
-With the exception of the last dataset, the data are
-parametrically generated in such a way that
-the results of the respective clusterings turn out to be
-clearly distinguishable for the human reader. The aim is
-to give an intuition about how the different algorithms
-work. (It should be noted, however, that these impression
-might quickly turn invalid on higher dimensional data).
+With the exception of the last dataset, the data are parametrically generated 
+in such a way that the results of the respective clusterings turn out to be 
+clearly distinguishable for the human reader. The aim is to give an intuition 
+about how the different algorithms work. (It should be noted, however, that 
+these impression might quickly turn invalid on higher dimensional data).
 
-The last dataset on the other hand is just rectangular
-noise, which can hold as the absence of any objectively
-useful inherent cluster in the data. Thus, any clustering
-shown is a method artefact by the respective cluster
-algorithm.
+The last dataset on the other hand is just rectangular noise, which can hold 
+as the absence of any objectively useful inherent cluster in the data. Thus, 
+any clustering shown is a method artefact by the respective cluster algorithm.
 
 """
 
