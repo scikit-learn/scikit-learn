@@ -393,10 +393,6 @@ def orthogonal_mp(
         # default for n_nonzero_coefs is 0.1 * n_features
         # but at least one.
         n_nonzero_coefs = max(int(0.1 * X.shape[1]), 1)
-    if tol is not None and tol < 0:
-        raise ValueError("Epsilon cannot be negative")
-    if tol is None and n_nonzero_coefs <= 0:
-        raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > X.shape[1]:
         raise ValueError(
             "The number of atoms cannot be more than the number of features"
