@@ -293,9 +293,8 @@ cdef class TreeUnionFind:
         self.data = np.zeros((size, 2), dtype=np.intp)
         for idx in range(size):
             self.data[idx, 0] = idx
-        self.is_component = np.ones(size, dtype=bool)
+        self.is_component = np.ones(size, dtype=np.uint8_t)
 
-    @cython.final
     cdef void union(self, cnp.intp_t x, cnp.intp_t y):
         cdef cnp.intp_t x_root = self.find(x)
         cdef cnp.intp_t y_root = self.find(y)
@@ -309,7 +308,6 @@ cdef class TreeUnionFind:
             self.data[x_root, 1] += 1
         return
 
-    @cython.final
     cdef cnp.intp_t find(self, cnp.intp_t x):
         if self.data[x, 0] != x:
             self.data[x, 0] = self.find(self.data[x, 0])
