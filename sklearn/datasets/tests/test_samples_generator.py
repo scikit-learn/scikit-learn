@@ -688,11 +688,6 @@ def test_make_circles():
             2,
         ), "Samples not correctly distributed across circles."
 
-    with pytest.raises(ValueError):
-        make_circles(factor=-0.01)
-    with pytest.raises(ValueError):
-        make_circles(factor=1.0)
-
 
 def test_make_circles_unbalanced():
     X, y = make_circles(n_samples=(2, 8))
@@ -704,12 +699,6 @@ def test_make_circles_unbalanced():
 
     with pytest.raises(
         ValueError,
-        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
-    ):
-        make_circles(n_samples=[1, 2, 3])
-
-    with pytest.raises(
-        ValueError,
-        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
+        match="When a tuple, n_samples must have exactly two elements.",
     ):
         make_circles(n_samples=(10,))
