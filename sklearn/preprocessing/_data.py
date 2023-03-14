@@ -556,7 +556,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
 
 def minmax_scale(
-    X, feature_range=(0, 1), output_dtype=FLOAT_DTYPES, *, axis=0, copy=True
+    X, feature_range=(0, 1), *, axis=0, copy=True, output_dtype=FLOAT_DTYPES
 ):
     """Transform features by scaling each feature to a given range.
 
