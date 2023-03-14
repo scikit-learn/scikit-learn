@@ -1290,19 +1290,19 @@ def test_sample_weight_init(Estimator, init, global_random_seed):
     x_squared_norms = row_norms(X, squared=True)
     kmeans = Estimator(random_state=global_random_seed, init=init)
     clusters_weighted = kmeans._init_centroids(
-        X,
+        X=X,
         x_squared_norms=x_squared_norms,
         init=init,
         sample_weight=sample_weight,
         n_centroids=5,
-        random_state=global_random_seed
+        random_state=global_random_seed,
     )
     clusters = kmeans._init_centroids(
-        X,
+        X=X,
         x_squared_norms=x_squared_norms,
         init=init,
         sample_weight=None,
         n_centroids=5,
-        random_state=global_random_seed
+        random_state=global_random_seed,
     )
     assert (clusters_weighted != clusters).any()
