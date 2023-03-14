@@ -33,7 +33,7 @@ from ..utils._metadata_requests import MetadataRouter, MethodMapping, process_ro
 from ..utils.extmath import softmax
 from ..utils.extmath import row_norms
 from ..utils.optimize import _newton_cg, _check_optimize_result
-from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import check_is_fitted, _check_sample_weight, _check_fit_params
 from ..utils.multiclass import check_classification_targets
 from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import StrOptions, Interval
@@ -781,10 +781,8 @@ def _log_reg_scoring_path(
             scores.append(log_reg.score(X_test, y_test))
         else:
             score_params = score_params or {}
-            _score_params = score_params.copy()
-            if "sample_weight" in _score_params:
-                _score_params["sample_weight"] = _score_params["sample_weight"][test]
-            scores.append(scoring(log_reg, X_test, y_test, **_score_params))
+            score_params = _check_fit_params(X=X, fit_params=score_params, indices=test)
+            scores.append(scoring(log_reg, X_test, y_test, **score_params))
 
     return coefs, Cs, np.array(scores), n_iter
 
@@ -1762,6 +1760,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         **fit_params : dict
             Parameters to pass to the underlying splitter and scorer.
+
+            .. versionadded:: 2.0
 
         Returns
         -------
