@@ -672,6 +672,15 @@ def make_regression(
         return X, y
 
 
+@validate_params(
+    {
+       "n_samples": [Interval(Integral, 0, None, closed="left"), tuple],
+       "shuffle": ["boolean"],
+       "noise": [Interval(Real, 0, None, closed="left"), None],
+       "random_state": ["random_state"],
+       "factor": [Interval(Real, 0, 1, closed="left")],
+    }
+)
 def make_circles(
     n_samples=100, *, shuffle=True, noise=None, random_state=None, factor=0.8
 ):
