@@ -1295,7 +1295,7 @@ def test_sample_weight_init(Estimator, init, global_random_seed):
         init=init,
         sample_weight=sample_weight,
         n_centroids=5,
-        random_state=global_random_seed,
+        random_state=rng,
     )
     clusters = kmeans._init_centroids(
         X=X,
@@ -1303,6 +1303,6 @@ def test_sample_weight_init(Estimator, init, global_random_seed):
         init=init,
         sample_weight=None,
         n_centroids=5,
-        random_state=global_random_seed,
+        random_state=rng,
     )
     assert (clusters_weighted != clusters).any()
