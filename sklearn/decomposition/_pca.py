@@ -15,18 +15,17 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
-from scipy.special import gammaln
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
+from scipy.special import gammaln
 
-from ._base import _BasePCA
 from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.deprecation import deprecated
-from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
-from ..utils.extmath import stable_cumsum
+from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, StrOptions
+from ._base import _BasePCA
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -115,6 +114,27 @@ def _infer_dimension(spectrum, n_samples):
     return ll.argmax()
 
 
+@validate_params(
+    {
+        "n_components": [
+            Interval(Integral, 0, None, closed="left"),
+            Interval(Real, 0, 1, closed="neither"),
+            StrOptions({"mle"}),
+            None,
+        ],
+        "copy": ["boolean"],
+        "whiten": ["boolean"],
+        "svd_solver": [StrOptions({"auto", "full", "arpack", "randomized"})],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "iterated_power": [
+            StrOptions({"auto"}),
+            Interval(Integral, 0, None, closed="left"),
+        ],
+        "n_oversamples": [Interval(Integral, 1, None, closed="left")],
+        "power_iteration_normalizer": [StrOptions({"auto", "QR", "LU", "none"})],
+        "random_state": ["random_state"],
+    }
+)
 class PCA(_BasePCA):
     """Principal component analysis (PCA).
 
@@ -359,26 +379,6 @@ class PCA(_BasePCA):
     >>> print(pca.singular_values_)
     [6.30061...]
     """
-
-    _parameter_constraints: dict = {
-        "n_components": [
-            Interval(Integral, 0, None, closed="left"),
-            Interval(Real, 0, 1, closed="neither"),
-            StrOptions({"mle"}),
-            None,
-        ],
-        "copy": ["boolean"],
-        "whiten": ["boolean"],
-        "svd_solver": [StrOptions({"auto", "full", "arpack", "randomized"})],
-        "tol": [Interval(Real, 0, None, closed="left")],
-        "iterated_power": [
-            StrOptions({"auto"}),
-            Interval(Integral, 0, None, closed="left"),
-        ],
-        "n_oversamples": [Interval(Integral, 1, None, closed="left")],
-        "power_iteration_normalizer": [StrOptions({"auto", "QR", "LU", "none"})],
-        "random_state": ["random_state"],
-    }
 
     def __init__(
         self,

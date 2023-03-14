@@ -3,10 +3,12 @@ from inspect import signature
 
 import pytest
 
-from sklearn.utils._param_validation import generate_invalid_param_val
-from sklearn.utils._param_validation import generate_valid_param
-from sklearn.utils._param_validation import make_constraint
-from sklearn.utils._param_validation import InvalidParameterError
+from sklearn.utils._param_validation import (
+    InvalidParameterError,
+    generate_invalid_param_val,
+    generate_valid_param,
+    make_constraint,
+)
 
 
 def _get_func_info(func_module):
@@ -115,6 +117,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.make_friedman1",
     "sklearn.datasets.make_sparse_coded_signal",
     "sklearn.decomposition.sparse_encode",
+    "sklearn.decomposition.PCA",
     "sklearn.feature_extraction.grid_to_graph",
     "sklearn.feature_extraction.img_to_graph",
     "sklearn.feature_extraction.image.extract_patches_2d",
