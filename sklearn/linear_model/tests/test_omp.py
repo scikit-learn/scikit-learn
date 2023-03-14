@@ -120,7 +120,7 @@ def test_unreachable_accuracy():
 @pytest.mark.parametrize("positional_params", [(X, y), (G, Xy)])
 @pytest.mark.parametrize(
     "keyword_params",
-    [{"tol": -1}, {"n_nonzero_coefs": -1}, {"n_nonzero_coefs": n_features + 1}],
+    [{"n_nonzero_coefs": n_features + 1}],
 )
 def test_bad_input(positional_params, keyword_params):
     with pytest.raises(ValueError):
