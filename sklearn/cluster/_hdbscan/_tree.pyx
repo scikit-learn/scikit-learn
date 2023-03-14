@@ -288,10 +288,10 @@ cdef class TreeUnionFind:
     cdef cnp.uint8_t[::1] is_component
 
     def __init__(self, size):
-        cdef cnp.ndarray[cnp.intp_t, ndim=2] data_arr
-        data_arr = np.zeros((size, 2), dtype=np.intp)
-        data_arr.T[0] = np.arange(size)
-        self.data = data_arr
+        cdef cnp.intp_t idx
+        self.data = np.zeros((size, 2), dtype=np.intp)
+        for idx in range(size):
+            self.data[idx, 0] = idx
         self.is_component = np.ones(size, dtype=bool)
 
     @cython.final
