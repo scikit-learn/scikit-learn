@@ -1395,11 +1395,11 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     >>> X_test = np.array([["a"], ["b"], ["c"], ["d"], ["e"], [np.nan]], dtype=object)
     >>> enc.transform(X_test)
     array([[2.],
-            [0.],
-            [1.],
-            [2.],
-            [3.],
-            [4.]])
+           [0.],
+           [1.],
+           [2.],
+           [3.],
+           [4.]])
     """
 
     _parameter_constraints: dict = {
