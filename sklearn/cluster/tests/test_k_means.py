@@ -1301,7 +1301,7 @@ def test_sample_weight_init(Estimator, init, global_random_seed):
         X=X,
         x_squared_norms=x_squared_norms,
         init=init,
-        sample_weight=np.full(X.shape[0], 1/X.shape[0]),
+        sample_weight=np.full(X.shape[0], 1 / X.shape[0]),
         n_centroids=5,
         random_state=rng,
     )
