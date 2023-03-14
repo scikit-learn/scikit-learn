@@ -28,3 +28,4 @@ dependencies:
   - plotly
   - pooch
   - sphinxext-opengraph
+  - pip

@@ -302,6 +302,7 @@ conda_build_metadata_list = [
             "plotly",
             "pooch",
             "sphinxext-opengraph",
+            "pip",
         ],
         "package_constraints": {
             "python": "3.9",
