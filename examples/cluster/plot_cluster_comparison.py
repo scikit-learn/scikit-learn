@@ -1,3 +1,5 @@
+# %%
+
 """
 =========================================================
 Comparing different clustering algorithms on toy datasets
@@ -34,8 +36,9 @@ from itertools import cycle, islice
 # Generate sample data
 # --------------------
 
-# We choose the size big enough to see the scalability
-# of the algorithms, but not too big to avoid too long running times.
+# We choose the size of the datasets to have enough samples to show the
+# scalability of each algorithm, but keeping the running time of the example
+# reasonable.
 # Sample data consists of
 # 1. noisy circles 2. noisy moons 3. blobs with varied variance
 # 4. anisotrophic distributions ('stripes') 5. blobs with smaller variance
