@@ -929,7 +929,7 @@ def test_ohe_infrequent_two_levels_drop_frequent(drop):
         max_categories=2,
         drop=drop,
     ).fit(X_train)
-    assert_array_equal(ohe.drop_idx_, [0])
+    assert ohe.categories_[0][ohe.drop_idx_[0]] == "b"
 
     X_test = np.array([["b"], ["c"]])
     X_trans = ohe.transform(X_test)
@@ -2003,3 +2003,51 @@ def test_predefined_categories_dtype():
     for n, cat in enumerate(enc.categories_):
         assert cat.dtype == object
         assert_array_equal(categories[n], cat)
+
+
+def test_ordinal_encoder_missing_unknown_encoding_max():
+    """Check missing value or unknown encoding can equal the cardinality."""
+    X = np.array([["dog"], ["cat"], [np.nan]], dtype=object)
+    X_trans = OrdinalEncoder(encoded_missing_value=2).fit_transform(X)
+    assert_allclose(X_trans, [[1], [0], [2]])
+
+    enc = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=2).fit(X)
+    X_test = np.array([["snake"]])
+    X_trans = enc.transform(X_test)
+    assert_allclose(X_trans, [[2]])
+
+
+def test_drop_idx_infrequent_categories():
+    """Check drop_idx is defined correctly with infrequent categories.
+
+    Non-regression test for gh-25550.
+    """
+    X = np.array(
+        [["a"] * 2 + ["b"] * 4 + ["c"] * 4 + ["d"] * 4 + ["e"] * 4], dtype=object
+    ).T
+    ohe = OneHotEncoder(min_frequency=4, sparse_output=False, drop="first").fit(X)
+    assert_array_equal(
+        ohe.get_feature_names_out(), ["x0_c", "x0_d", "x0_e", "x0_infrequent_sklearn"]
+    )
+    assert ohe.categories_[0][ohe.drop_idx_[0]] == "b"
+
+    X = np.array([["a"] * 2 + ["b"] * 2 + ["c"] * 10], dtype=object).T
+    ohe = OneHotEncoder(min_frequency=4, sparse_output=False, drop="if_binary").fit(X)
+    assert_array_equal(ohe.get_feature_names_out(), ["x0_infrequent_sklearn"])
+    assert ohe.categories_[0][ohe.drop_idx_[0]] == "c"
+
+    X = np.array(
+        [["a"] * 2 + ["b"] * 4 + ["c"] * 4 + ["d"] * 4 + ["e"] * 4], dtype=object
+    ).T
+    ohe = OneHotEncoder(min_frequency=4, sparse_output=False, drop=["d"]).fit(X)
+    assert_array_equal(
+        ohe.get_feature_names_out(), ["x0_b", "x0_c", "x0_e", "x0_infrequent_sklearn"]
+    )
+    assert ohe.categories_[0][ohe.drop_idx_[0]] == "d"
+
+    ohe = OneHotEncoder(min_frequency=4, sparse_output=False, drop=None).fit(X)
+    assert_array_equal(
+        ohe.get_feature_names_out(),
+        ["x0_b", "x0_c", "x0_d", "x0_e", "x0_infrequent_sklearn"],
+    )
+    assert ohe.drop_idx_ is None

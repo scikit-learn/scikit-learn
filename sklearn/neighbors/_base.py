@@ -66,8 +66,8 @@ if sp_base_version < parse_version("1.11"):
     SCIPY_METRICS += ["kulsinski"]
 
 VALID_METRICS = dict(
-    ball_tree=BallTree.valid_metrics,
-    kd_tree=KDTree.valid_metrics,
+    ball_tree=BallTree._valid_metrics,
+    kd_tree=KDTree._valid_metrics,
     # The following list comes from the
     # sklearn.metrics.pairwise doc string
     brute=sorted(set(PAIRWISE_DISTANCE_FUNCTIONS).union(SCIPY_METRICS)),
@@ -475,7 +475,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
                 check_classification_targets(y)
                 self.classes_ = []
-                self._y = np.empty(y.shape, dtype=int)
+                # Using `dtype=np.intp` is necessary since `np.bincount`
+                # (called in _classification.py) fails when dealing
+                # with a float64 array on 32bit systems.
+                self._y = np.empty(y.shape, dtype=np.intp)
                 for k in range(self._y.shape[1]):
                     classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
                     self.classes_.append(classes)

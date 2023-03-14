@@ -12,13 +12,6 @@ from libcpp.map cimport map as cpp_map
 
 import numpy as np
 
-# Import the C-level symbols of numpy
-cimport numpy as cnp
-
-# Numpy must be initialized. When using numpy from C or Cython you must
-# _always_ do that, or you will have segfaults
-cnp.import_array()
-
 #DTYPE = np.float64
 #ctypedef cnp.float64_t DTYPE_t
 
@@ -35,8 +28,11 @@ cnp.import_array()
 
 cdef class IntFloatDict:
 
-    def __init__(self, cnp.ndarray[ITYPE_t, ndim=1] keys,
-                       cnp.ndarray[DTYPE_t, ndim=1] values):
+    def __init__(
+        self,
+        ITYPE_t[:] keys,
+        DTYPE_t[:] values,
+    ):
         cdef int i
         cdef int size = values.size
         # Should check that sizes for keys and values are equal, and
@@ -91,10 +87,8 @@ cdef class IntFloatDict:
                 The values of the data points
         """
         cdef int size = self.my_map.size()
-        cdef cnp.ndarray[ITYPE_t, ndim=1] keys = np.empty(size,
-                                                         dtype=np.intp)
-        cdef cnp.ndarray[DTYPE_t, ndim=1] values = np.empty(size,
-                                                           dtype=np.float64)
+        keys = np.empty(size, dtype=np.intp)
+        values = np.empty(size, dtype=np.float64)
         self._to_arrays(keys, values)
         return keys, values
 

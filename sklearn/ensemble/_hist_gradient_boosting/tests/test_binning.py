@@ -294,9 +294,9 @@ def test_missing_values_support(n_bins, n_bins_non_missing, X_trans_expected):
 
     X = [
         [1, 1, 0],
-        [np.NaN, np.NaN, 0],
+        [np.nan, np.nan, 0],
         [2, 1, 0],
-        [np.NaN, 2, 1],
+        [np.nan, 2, 1],
         [3, 2, 1],
         [4, 1, 0],
     ]

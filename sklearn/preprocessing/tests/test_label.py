@@ -117,6 +117,22 @@ def test_label_binarizer_set_label_encoding():
     assert_array_equal(lb.inverse_transform(got), inp)
 
 
+@pytest.mark.parametrize("dtype", ["Int64", "Float64", "boolean"])
+def test_label_binarizer_pandas_nullable(dtype):
+    """Checks that LabelBinarizer works with pandas nullable dtypes.
+
+    Non-regression test for gh-25637.
+    """
+    pd = pytest.importorskip("pandas")
+    from sklearn.preprocessing import LabelBinarizer
+
+    y_true = pd.Series([1, 0, 0, 1, 0, 1, 1, 0, 1], dtype=dtype)
+    lb = LabelBinarizer().fit(y_true)
+    y_out = lb.transform([1, 0])
+
+    assert_array_equal(y_out, [[1], [0]])
+
+
 @ignore_warnings
 def test_label_binarizer_errors():
     # Check that invalid arguments yield ValueError
