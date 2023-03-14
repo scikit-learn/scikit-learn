@@ -139,6 +139,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.dcg_score",
     "sklearn.metrics.det_curve",
     "sklearn.metrics.f1_score",
+    "sklearn.metrics.fbeta_score",
     "sklearn.metrics.get_scorer",
     "sklearn.metrics.hamming_loss",
     "sklearn.metrics.jaccard_score",
