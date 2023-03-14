@@ -137,13 +137,13 @@ def set_config(
         .. versionadded:: 1.2
 
     skip_parameter_validation : bool, default=None
-        If True, disable the validation of the hyper-parameters types and values in the
-        fit method of estimators and for arguments passed to public helper functions.
-        It can save time in some situations but can lead to low level crashes and
-        exceptions with confusing error messages.
+        If `True`, disable the validation of the hyper-parameters types and values in
+        the fit method of estimators and for arguments passed to public helper
+        functions. It can save time in some situations but can lead to low level
+        crashes and exceptions with confusing error messages.
 
-        Note that For data parameters, such as X and y, only type validation is skipped
-        but validation with `check_array` will continue to run.
+        Note that for data parameters, such as `X` and `y`, only type validation is
+        skipped but validation with `check_array` will continue to run.
 
         .. versionadded:: 1.3
 
@@ -266,13 +266,13 @@ def config_context(
         .. versionadded:: 1.2
 
     skip_parameter_validation : bool, default=None
-        If True, disable the validation of the hyper-parameters types and values in the
-        fit method of estimators and for arguments passed to public helper functions.
-        It can save time in some situations but can lead to low level crashes and
-        exceptions with confusing error messages.
+        If `True`, disable the validation of the hyper-parameters types and values in
+        the fit method of estimators and for arguments passed to public helper
+        functions. It can save time in some situations but can lead to low level
+        crashes and exceptions with confusing error messages.
 
-        Note that For data parameters, such as X and y, only type validation is skipped
-        but validation with `check_array` will continue to run.
+        Note that for data parameters, such as `X` and `y`, only type validation is
+        skipped but validation with `check_array` will continue to run.
 
         .. versionadded:: 1.3
 
