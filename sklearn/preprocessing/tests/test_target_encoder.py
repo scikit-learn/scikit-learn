@@ -536,8 +536,8 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     model_no_cv = linear_regression.fit(X_enc_no_cv_train, y_train)
 
     # The linear regression model should always overfit because it assigns
-    # all its weight to the extremely high cardinality feature and completely
-    # ignores the informative feature:
+    # too much weight to the extremely high cardinality feature relatively to
+    # the informative feature:
     coef = model_no_cv.coef_
     assert model_no_cv.score(X_enc_no_cv_train, y_train) > 0.7, coef
     assert model_no_cv.score(X_enc_no_cv_test, y_test) < 0.5, coef
