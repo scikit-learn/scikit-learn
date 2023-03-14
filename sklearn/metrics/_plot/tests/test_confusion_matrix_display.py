@@ -334,9 +334,9 @@ def test_confusion_matrix_with_unknown_labels(pyplot, constructor_name):
 def test_colormap_max(pyplot):
     """Check that the max color is used for the color of the text."""
 
-    from matplotlib import cm
+    import matplotlib.pyplot as plt
 
-    gray = cm.get_cmap("gray", 1024)
+    gray = plt.get_cmap("gray", 1024)
     confusion_matrix = np.array([[1.0, 0.0], [0.0, 1.0]])
 
     disp = ConfusionMatrixDisplay(confusion_matrix)
