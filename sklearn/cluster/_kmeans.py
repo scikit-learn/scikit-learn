@@ -90,6 +90,11 @@ def kmeans_plusplus(
     n_clusters : int
         The number of centroids to initialize.
 
+    sample_weight : array-like of shape (n_samples,), default=None
+        The weights for each observation in `X`. If `None`, all observations
+        are assigned equal weight. If not None, weights will be used in
+        initializations of centroids as well as fitting clusters.
+
     x_squared_norms : array-like of shape (n_samples,), default=None
         Squared Euclidean norm of each data point.
 
