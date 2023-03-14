@@ -282,6 +282,7 @@ cdef max_lambdas(cnp.ndarray hierarchy):
     return deaths
 
 
+@final
 cdef class TreeUnionFind:
 
     cdef cnp.intp_t[:, ::1] data
