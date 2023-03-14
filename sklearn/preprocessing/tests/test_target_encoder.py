@@ -419,7 +419,7 @@ def test_invariance_of_encoding_under_label_permutation(smooth, global_random_se
 
     # Shuffle the labels to make sure that the encoding is invariant to the
     # permutation of the labels
-    permutated_labels = np.random.permutation(n_categories)
+    permutated_labels = rng.permutation(n_categories)
     X_train_permuted = permutated_labels[X_train.astype(np.int32)]
     X_test_permuted = permutated_labels[X_test.astype(np.int32)]
 
