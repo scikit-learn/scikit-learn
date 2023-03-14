@@ -32,7 +32,7 @@ from itertools import cycle, islice
 
 # %%
 # Generate sample data
-# ---------------------------------
+# --------------------
 
 # We choose the size big enough to see the scalability
 # of the algorithms, but not too big to avoid too long running times.
@@ -63,7 +63,7 @@ no_structure = np.random.rand(n_samples, 2), None
 
 # %%
 # Set up cluster parameters
-# ---------------------------------
+# --------------------
 
 # Prepare figure containing
 # 1. circles, 2. moons, 3. Gaussian blobs with variance 4. anisotropic distribution
@@ -136,7 +136,7 @@ datasets = [
 
 # %%
 # Prepare samples for clustering
-# ---------------------------------
+# --------------------
 
 for i_dataset, (dataset, algo_params) in enumerate(datasets):
     # update parameters with dataset-specific values
@@ -160,7 +160,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
 
     # %%
     # Create cluster objects
-    # ---------------------------------
+    # --------------------
 
     # set up clustering models:
     # 1. Mini Batch KMeans
@@ -205,7 +205,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
 
     # %%
     # Define clustering algorithms
-    # ---------------------------------
+    # --------------------
 
     clustering_algorithms = (
         ("MiniBatch\nKMeans", two_means),
@@ -248,7 +248,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
 
         # %%
         # Generate plot
-        # ---------------------------------
+        # --------------------
 
         plt.subplot(len(datasets), len(clustering_algorithms), plot_num)
         if i_dataset == 0:
