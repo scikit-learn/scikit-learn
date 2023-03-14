@@ -674,11 +674,11 @@ def make_regression(
 
 @validate_params(
     {
-       "n_samples": [Interval(Integral, 0, None, closed="left"), tuple],
-       "shuffle": ["boolean"],
-       "noise": [Interval(Real, 0, None, closed="left"), None],
-       "random_state": ["random_state"],
-       "factor": [Interval(Real, 0, 1, closed="left")],
+        "n_samples": [Interval(Integral, 0, None, closed="left"), tuple],
+        "shuffle": ["boolean"],
+        "noise": [Interval(Real, 0, None, closed="left"), None],
+        "random_state": ["random_state"],
+        "factor": [Interval(Real, 0, 1, closed="left")],
     }
 )
 def make_circles(
@@ -715,7 +715,7 @@ def make_circles(
         See :term:`Glossary <random_state>`.
 
     factor : float, default=.8
-        Scale factor between inner and outer circle in the range `(0, 1)`.
+        Scale factor between inner and outer circle in the range `[0, 1)`.
 
     Returns
     -------
@@ -725,20 +725,13 @@ def make_circles(
     y : ndarray of shape (n_samples,)
         The integer labels (0 or 1) for class membership of each sample.
     """
-
-    if factor >= 1 or factor < 0:
-        raise ValueError("'factor' has to be between 0 and 1.")
-
     if isinstance(n_samples, numbers.Integral):
         n_samples_out = n_samples // 2
         n_samples_in = n_samples - n_samples_out
-    else:
-        try:
-            n_samples_out, n_samples_in = n_samples
-        except ValueError as e:
-            raise ValueError(
-                "`n_samples` can be either an int or a two-element tuple."
-            ) from e
+    else:  # n_samples is a tuple
+        if len(n_samples) != 2:
+            raise ValueError("When a tuple, n_samples must have exactly two elements.")
+        n_samples_out, n_samples_in = n_samples
 
     generator = check_random_state(random_state)
     # so as not to have the first point = last point, we set endpoint=False
