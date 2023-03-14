@@ -29,6 +29,7 @@ from sklearn.utils._param_validation import generate_invalid_param_val
 from sklearn.utils._param_validation import generate_valid_param
 from sklearn.utils._param_validation import validate_params
 from sklearn.utils._param_validation import InvalidParameterError
+from sklearn.utils._param_validation import RealNotInt
 
 
 # Some helpers for the tests
@@ -219,75 +220,75 @@ def test_generate_invalid_param_val(constraint):
     [
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval("real_not_int", -5, 5, closed="both"),
+            Interval(RealNotInt, -5, 5, closed="both"),
         ),
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval("real_not_int", -5, 5, closed="neither"),
+            Interval(RealNotInt, -5, 5, closed="neither"),
         ),
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval("real_not_int", 4, 5, closed="both"),
+            Interval(RealNotInt, 4, 5, closed="both"),
         ),
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval("real_not_int", 5, None, closed="left"),
+            Interval(RealNotInt, 5, None, closed="left"),
         ),
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval("real_not_int", 4, None, closed="neither"),
+            Interval(RealNotInt, 4, None, closed="neither"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval("real_not_int", -5, 5, closed="both"),
+            Interval(RealNotInt, -5, 5, closed="both"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval("real_not_int", -5, 5, closed="neither"),
+            Interval(RealNotInt, -5, 5, closed="neither"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval("real_not_int", 1, 2, closed="both"),
+            Interval(RealNotInt, 1, 2, closed="both"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval("real_not_int", None, -5, closed="left"),
+            Interval(RealNotInt, None, -5, closed="left"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval("real_not_int", None, -4, closed="neither"),
+            Interval(RealNotInt, None, -4, closed="neither"),
         ),
         (
             Interval(Integral, -5, 5, closed="both"),
-            Interval("real_not_int", None, 1, closed="right"),
+            Interval(RealNotInt, None, 1, closed="right"),
         ),
         (
             Interval(Integral, -5, 5, closed="both"),
-            Interval("real_not_int", 1, None, closed="left"),
+            Interval(RealNotInt, 1, None, closed="left"),
         ),
         (
             Interval(Integral, -5, 5, closed="both"),
-            Interval("real_not_int", -10, -4, closed="neither"),
+            Interval(RealNotInt, -10, -4, closed="neither"),
         ),
         (
             Interval(Integral, -5, 5, closed="both"),
-            Interval("real_not_int", -10, -4, closed="right"),
+            Interval(RealNotInt, -10, -4, closed="right"),
         ),
         (
             Interval(Integral, -5, 5, closed="neither"),
-            Interval("real_not_int", 6, 10, closed="neither"),
+            Interval(RealNotInt, 6, 10, closed="neither"),
         ),
         (
             Interval(Integral, -5, 5, closed="neither"),
-            Interval("real_not_int", 6, 10, closed="left"),
+            Interval(RealNotInt, 6, 10, closed="left"),
         ),
         (
             Interval(Integral, 2, None, closed="left"),
-            Interval("real_not_int", 0, 1, closed="both"),
+            Interval(RealNotInt, 0, 1, closed="both"),
         ),
         (
             Interval(Integral, 1, None, closed="left"),
-            Interval("real_not_int", 0, 1, closed="both"),
+            Interval(RealNotInt, 0, 1, closed="both"),
         ),
     ],
 )
@@ -657,7 +658,7 @@ def test_third_party_estimator():
 
 
 def test_interval_real_not_int():
-    """Check for the type "real_not_int" in the Interval constraint."""
-    constraint = Interval("real_not_int", 0, 1, closed="both")
+    """Check for the type RealNotInt in the Interval constraint."""
+    constraint = Interval(RealNotInt, 0, 1, closed="both")
     assert constraint.is_satisfied_by(1.0)
     assert not constraint.is_satisfied_by(1)

@@ -207,6 +207,18 @@ def validate_params(parameter_constraints):
     return decorator
 
 
+class RealNotInt(Real):
+    """A type that represents reals that are not instances of int.
+
+    Behaves like float, but also works with values extracted from numpy arrays.
+    isintance(1, RealNotInt) -> False
+    isinstance(1.0, RealNotInt) -> True
+    """
+
+
+RealNotInt.register(float)
+
+
 def _type_name(t):
     """Convert type into human readable string."""
     module = t.__module__
@@ -364,10 +376,10 @@ class Interval(_Constraint):
 
     Parameters
     ----------
-    type : {numbers.Integral, numbers.Real, "real_not_int"}
+    type : {numbers.Integral, numbers.Real, RealNotInt}
         The set of numbers in which to set the interval.
 
-        If "real_not_int", only reals that don't have the integer type
+        If RealNotInt, only reals that don't have the integer type
         are allowed. For example 1.0 is allowed but 1 is not.
 
     left : float or int or None
@@ -405,9 +417,9 @@ class Interval(_Constraint):
         self._check_params()
 
     def _check_params(self):
-        if self.type not in (Integral, Real, "real_not_int"):
+        if self.type not in (Integral, Real, RealNotInt):
             raise ValueError(
-                "type must be either numbers.Integral, numbers.Real or 'real_not_int'."
+                "type must be either numbers.Integral, numbers.Real or RealNotInt."
                 f" Got {self.type} instead."
             )
 
@@ -459,13 +471,8 @@ class Interval(_Constraint):
             return False
         return True
 
-    def _has_valid_type(self, val):
-        if self.type == "real_not_int":
-            return isinstance(val, Real) and not isinstance(val, Integral)
-        return isinstance(val, self.type)
-
     def is_satisfied_by(self, val):
-        if not self._has_valid_type(val):
+        if not isinstance(val, self.type):
             return False
 
         return val in self
@@ -769,7 +776,7 @@ def generate_invalid_param_val(constraint):
         # There's no integer outside (-inf, +inf)
         raise NotImplementedError
 
-    if isinstance(constraint, Interval) and constraint.type in (Real, "real_not_int"):
+    if isinstance(constraint, Interval) and constraint.type in (Real, RealNotInt):
         if constraint.left is not None:
             return constraint.left - 1e-6
         if constraint.right is not None:

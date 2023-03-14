@@ -4165,7 +4165,7 @@ def check_param_validation(name, estimator_orig):
         ):
             raise ValueError(
                 f"The constraint for parameter {param_name} of {name} can't have a mix"
-                " of intervals of Integral and Real types. Use the type 'real_not_int'"
+                " of intervals of Integral and Real types. Use the type RealNotInt"
                 " instead of Real."
             )
 

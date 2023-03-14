@@ -83,7 +83,7 @@ def _check_function_param_validation(
             raise ValueError(
                 f"The constraint for parameter {param_name} of {func_name} can't have a"
                 " mix of intervals of Integral and Real types. Use the type"
-                " 'real_not_int' instead of Real."
+                " RealNotInt instead of Real."
             )
 
         match = (
