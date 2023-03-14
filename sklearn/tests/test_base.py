@@ -6,6 +6,7 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 import warnings
+from numpy.testing import assert_allclose
 
 import sklearn
 from sklearn.utils._testing import assert_array_equal
@@ -17,11 +18,13 @@ from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._set_output import _get_output_config
 from sklearn.pipeline import Pipeline
+from sklearn.decomposition import PCA
 from sklearn.model_selection import GridSearchCV
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
+from sklearn.exceptions import InconsistentVersionWarning
 
 from sklearn.base import TransformerMixin
 from sklearn.utils._mocking import MockDataFrame
@@ -361,6 +364,50 @@ def test_clone_pandas_dataframe():
     assert e.scalar_param == cloned_e.scalar_param
 
 
+def test_clone_protocol():
+    """Checks that clone works with `__sklearn_clone__` protocol."""
+
+    class FrozenEstimator(BaseEstimator):
+        def __init__(self, fitted_estimator):
+            self.fitted_estimator = fitted_estimator
+
+        def __getattr__(self, name):
+            return getattr(self.fitted_estimator, name)
+
+        def __sklearn_clone__(self):
+            return self
+
+        def fit(self, *args, **kwargs):
+            return self
+
+        def fit_transform(self, *args, **kwargs):
+            return self.fitted_estimator.transform(*args, **kwargs)
+
+    X = np.array([[-1, -1], [-2, -1], [-3, -2]])
+    pca = PCA().fit(X)
+    components = pca.components_
+
+    frozen_pca = FrozenEstimator(pca)
+    assert_allclose(frozen_pca.components_, components)
+
+    # Calling PCA methods such as `get_feature_names_out` still works
+    assert_array_equal(frozen_pca.get_feature_names_out(), pca.get_feature_names_out())
+
+    # Fitting on a new data does not alter `components_`
+    X_new = np.asarray([[-1, 2], [3, 4], [1, 2]])
+    frozen_pca.fit(X_new)
+    assert_allclose(frozen_pca.components_, components)
+
+    # `fit_transform` does not alter state
+    frozen_pca.fit_transform(X_new)
+    assert_allclose(frozen_pca.components_, components)
+
+    # Cloning estimator is a no-op
+    clone_frozen_pca = clone(frozen_pca)
+    assert clone_frozen_pca is frozen_pca
+    assert_allclose(clone_frozen_pca.components_, components)
+
+
 def test_pickle_version_warning_is_not_raised_with_matching_version():
     iris = datasets.load_iris()
     tree = DecisionTreeClassifier().fit(iris.data, iris.target)
@@ -376,7 +423,7 @@ def test_pickle_version_warning_is_not_raised_with_matching_version():
 
 class TreeBadVersion(DecisionTreeClassifier):
     def __getstate__(self):
-        return dict(self.__dict__.items(), __sklearn_pickle_version__="something")
+        return dict(self.__dict__.items(), _sklearn_version="something")
 
 
 pickle_error_message = (
@@ -384,10 +431,7 @@ pickle_error_message = (
     "version {old_version} when using version "
     "{current_version}. This might "
     "lead to breaking code or invalid results. "
-    "Use at your own risk. "
-    "For more info please refer to:\n"
-    "https://scikit-learn.org/stable/model_persistence.html"
-    "#security-maintainability-limitations"
+    "Use at your own risk."
 )
 
 
@@ -400,8 +444,14 @@ def test_pickle_version_warning_is_issued_upon_different_version():
         old_version="something",
         current_version=sklearn.__version__,
     )
-    with pytest.warns(UserWarning, match=re.escape(message)):
+    with pytest.warns(UserWarning, match=message) as warning_record:
         pickle.loads(tree_pickle_other)
+
+    message = warning_record.list[0].message
+    assert isinstance(message, InconsistentVersionWarning)
+    assert message.estimator_name == "TreeBadVersion"
+    assert message.original_sklearn_version == "something"
+    assert message.current_sklearn_version == sklearn.__version__
 
 
 class TreeNoVersion(DecisionTreeClassifier):
@@ -422,7 +472,7 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
         current_version=sklearn.__version__,
     )
     # check we got the warning about using pre-0.18 pickle
-    with pytest.warns(UserWarning, match=re.escape(message)):
+    with pytest.warns(UserWarning, match=message):
         pickle.loads(tree_pickle_noversion)
 
 
@@ -669,29 +719,6 @@ def test_feature_names_in():
         trans.transform(df_mixed)
 
 
-def test_base_estimator_pickle_version(monkeypatch):
-    """Check the version is embedded when pickled and checked when unpickled."""
-    old_version = "0.21.3"
-    monkeypatch.setattr(sklearn.base, "__version__", old_version)
-    original_estimator = MyEstimator()
-    old_pickle = pickle.dumps(original_estimator)
-    loaded_estimator = pickle.loads(old_pickle)
-    assert loaded_estimator.__sklearn_pickle_version__ == old_version
-    assert not hasattr(original_estimator, "__sklearn_pickle_version__")
-
-    # Loading pickle with newer version will raise a warning
-    new_version = "1.3.0"
-    monkeypatch.setattr(sklearn.base, "__version__", new_version)
-    message = pickle_error_message.format(
-        estimator="MyEstimator",
-        old_version=old_version,
-        current_version=new_version,
-    )
-    with pytest.warns(UserWarning, match=re.escape(message)):
-        reloaded_estimator = pickle.loads(old_pickle)
-        assert reloaded_estimator.__sklearn_pickle_version__ == old_version
-
-
 def test_clone_keeps_output_config():
     """Check that clone keeps the set_output config."""
 
@@ -720,7 +747,7 @@ def test_estimator_empty_instance_dict(estimator):
     ``AttributeError``. Non-regression test for gh-25188.
     """
     state = estimator.__getstate__()
-    expected = {"__sklearn_pickle_version__": sklearn.__version__}
+    expected = {"_sklearn_version": sklearn.__version__}
     assert state == expected
 
     # this should not raise

@@ -15,9 +15,9 @@ import numpy as np
 from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
+from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
-from ..utils._param_validation import Interval, validate_params
-from ..base import BaseEstimator
+from ..utils._param_validation import Hidden, Interval, validate_params
 
 __all__ = [
     "PatchExtractor",
@@ -447,6 +447,7 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
         return patches
 
 
+@validate_params({"patches": [np.ndarray], "image_size": [tuple, Hidden(list)]})
 def reconstruct_from_patches_2d(patches, image_size):
     """Reconstruct the image from all of its patches.
 
@@ -490,7 +491,7 @@ def reconstruct_from_patches_2d(patches, image_size):
     return img
 
 
-class PatchExtractor(BaseEstimator):
+class PatchExtractor(TransformerMixin, BaseEstimator):
     """Extracts patches from a collection of images.
 
     Read more in the :ref:`User Guide <image_feature_extraction>`.
@@ -517,18 +518,23 @@ class PatchExtractor(BaseEstimator):
     --------
     reconstruct_from_patches_2d : Reconstruct image from all of its patches.
 
+    Notes
+    -----
+    This estimator is stateless and does not need to be fitted. However, we
+    recommend to call :meth:`fit_transform` instead of :meth:`transform`, as
+    parameter validation is only performed in :meth:`fit`.
+
     Examples
     --------
     >>> from sklearn.datasets import load_sample_images
     >>> from sklearn.feature_extraction import image
     >>> # Use the array data from the second image in this dataset:
     >>> X = load_sample_images().images[1]
-    >>> print('Image shape: {}'.format(X.shape))
+    >>> print(f"Image shape: {X.shape}")
     Image shape: (427, 640, 3)
     >>> pe = image.PatchExtractor(patch_size=(2, 2))
-    >>> pe_fit = pe.fit(X)
     >>> pe_trans = pe.transform(X)
-    >>> print('Patches shape: {}'.format(pe_trans.shape))
+    >>> print(f"Patches shape: {pe_trans.shape}")
     Patches shape: (545706, 2, 2)
     """
 
@@ -548,15 +554,18 @@ class PatchExtractor(BaseEstimator):
         self.random_state = random_state
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged.
+        """Only validate the parameters of the estimator.
 
-        This method is just there to implement the usual API and hence
-        work in pipelines.
+        This method allows to: (i) validate the parameters of the estimator  and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Training data.
+        X : ndarray of shape (n_samples, image_height, image_width) or \
+                (n_samples, image_height, image_width, n_channels)
+            Array of images from which to extract patches. For color images,
+            the last dimension specifies the channel: a RGB image would have
+            `n_channels=3`.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -575,7 +584,7 @@ class PatchExtractor(BaseEstimator):
         Parameters
         ----------
         X : ndarray of shape (n_samples, image_height, image_width) or \
-            (n_samples, image_height, image_width, n_channels)
+                (n_samples, image_height, image_width, n_channels)
             Array of images from which to extract patches. For color images,
             the last dimension specifies the channel: a RGB image would have
             `n_channels=3`.
@@ -583,24 +592,41 @@ class PatchExtractor(BaseEstimator):
         Returns
         -------
         patches : array of shape (n_patches, patch_height, patch_width) or \
-             (n_patches, patch_height, patch_width, n_channels)
-             The collection of patches extracted from the images, where
-             `n_patches` is either `n_samples * max_patches` or the total
-             number of patches that can be extracted.
+                (n_patches, patch_height, patch_width, n_channels)
+            The collection of patches extracted from the images, where
+            `n_patches` is either `n_samples * max_patches` or the total
+            number of patches that can be extracted.
         """
-        self.random_state = check_random_state(self.random_state)
-        n_images, i_h, i_w = X.shape[:3]
-        X = np.reshape(X, (n_images, i_h, i_w, -1))
-        n_channels = X.shape[-1]
+        X = self._validate_data(
+            X=X,
+            ensure_2d=False,
+            allow_nd=True,
+            ensure_min_samples=1,
+            ensure_min_features=1,
+            reset=False,
+        )
+        random_state = check_random_state(self.random_state)
+        n_imgs, img_height, img_width = X.shape[:3]
         if self.patch_size is None:
-            patch_size = i_h // 10, i_w // 10
+            patch_size = img_height // 10, img_width // 10
         else:
+            if len(self.patch_size) != 2:
+                raise ValueError(
+                    f"patch_size must be a tuple of two integers. Got {self.patch_size}"
+                    " instead."
+                )
             patch_size = self.patch_size
 
+        n_imgs, img_height, img_width = X.shape[:3]
+        X = np.reshape(X, (n_imgs, img_height, img_width, -1))
+        n_channels = X.shape[-1]
+
         # compute the dimensions of the patches array
-        p_h, p_w = patch_size
-        n_patches = _compute_n_patches(i_h, i_w, p_h, p_w, self.max_patches)
-        patches_shape = (n_images * n_patches,) + patch_size
+        patch_height, patch_width = patch_size
+        n_patches = _compute_n_patches(
+            img_height, img_width, patch_height, patch_width, self.max_patches
+        )
+        patches_shape = (n_imgs * n_patches,) + patch_size
         if n_channels > 1:
             patches_shape += (n_channels,)
 
@@ -611,9 +637,9 @@ class PatchExtractor(BaseEstimator):
                 image,
                 patch_size,
                 max_patches=self.max_patches,
-                random_state=self.random_state,
+                random_state=random_state,
             )
         return patches
 
     def _more_tags(self):
-        return {"X_types": ["3darray"]}
+        return {"X_types": ["3darray"], "stateless": True}

@@ -20,7 +20,6 @@ from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel
 
 from .base import (
     BaseEstimator,
@@ -32,11 +31,11 @@ from .base import (
 )
 from .model_selection import cross_val_predict
 from .utils import _print_elapsed_time, check_random_state
-from .utils.fixes import delayed
 from .utils.metadata_routing import MetadataRouter, MethodMapping, process_routing
 from .utils.metaestimators import available_if
 from .utils.multiclass import check_classification_targets
 from .utils.validation import check_is_fitted
+from .utils.parallel import delayed, Parallel
 from .utils._param_validation import HasMethods, StrOptions
 
 __all__ = [

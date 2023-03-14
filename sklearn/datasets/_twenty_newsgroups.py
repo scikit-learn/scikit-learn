@@ -46,6 +46,7 @@ from ._base import load_descr
 from ..feature_extraction.text import CountVectorizer
 from .. import preprocessing
 from ..utils import check_random_state, Bunch
+from ..utils._param_validation import StrOptions, validate_params
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +150,18 @@ def strip_newsgroup_footer(text):
         return text
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "subset": [StrOptions({"train", "test", "all"})],
+        "categories": ["array-like", None],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "remove": [tuple],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+    }
+)
 def fetch_20newsgroups(
     *,
     data_home=None,
@@ -287,10 +300,6 @@ def fetch_20newsgroups(
         data.data = data_lst
         data.target = np.array(target)
         data.filenames = np.array(filenames)
-    else:
-        raise ValueError(
-            "subset can only be 'train', 'test' or 'all', got '%s'" % subset
-        )
 
     fdescr = load_descr("twenty_newsgroups.rst")
 

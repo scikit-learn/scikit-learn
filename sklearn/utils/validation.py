@@ -131,8 +131,8 @@ def _assert_all_finite(
         has_nan_error = False if allow_nan else out == FiniteStatus.has_nan
         has_inf = out == FiniteStatus.has_infinite
     else:
-        has_inf = np.isinf(X).any()
-        has_nan_error = False if allow_nan else xp.isnan(X).any()
+        has_inf = xp.any(xp.isinf(X))
+        has_nan_error = False if allow_nan else xp.any(xp.isnan(X))
     if has_inf or has_nan_error:
         if has_nan_error:
             type_err = "NaN"

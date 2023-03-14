@@ -55,8 +55,18 @@ with::
    available `here
    <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
 
-Note that you can access to the attribute `__sklearn_pickle_version__` to check the
-version of scikit-learn used to pickle the model.
+When an estimator is unpickled with a scikit-learn version that is inconsistent
+with the version the estimator was pickled with, a
+:class:`~sklearn.exceptions.InconsistentVersionWarning` is raised. This warning
+can be caught to obtain the original version the estimator was pickled with:
+
+  from sklearn.exceptions import InconsistentVersionWarning
+  warnings.simplefilter("error", InconsistentVersionWarning)
+
+  try:
+      est = pickle.loads("model_from_prevision_version.pickle")
+  except InconsistentVersionWarning as w:
+      print(w.original_sklearn_version)
 
 .. _persistence_limitations:
 
