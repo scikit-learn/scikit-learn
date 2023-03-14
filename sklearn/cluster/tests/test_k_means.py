@@ -1287,7 +1287,22 @@ def test_sample_weight_init(Estimator, init, global_random_seed):
         n_samples=200, n_features=10, centers=10, random_state=global_random_seed
     )
     sample_weight = rng.uniform(size=200)
+    x_squared_norms = row_norms(X, squared=True)
     kmeans = Estimator(random_state=global_random_seed, init=init)
-    clusters_weighted = kmeans.fit(X, sample_weight=sample_weight).cluster_centers_
-    clusters = kmeans.fit(X).cluster_centers_
+    clusters_weighted = kmeans._init_centroids(
+        X,
+        x_squared_norms=x_squared_norms,
+        init=init,
+        sample_weight=sample_weight,
+        n_centroids=5,
+        random_state=global_random_seed
+    )
+    clusters = kmeans._init_centroids(
+        X,
+        x_squared_norms=x_squared_norms,
+        init=init,
+        sample_weight=None,
+        n_centroids=5,
+        random_state=global_random_seed
+    )
     assert (clusters_weighted != clusters).any()
