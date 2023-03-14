@@ -17,7 +17,7 @@ from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
 from numbers import Integral, Real
 from ..neighbors import NearestNeighbors
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
@@ -537,7 +537,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     return t
 
 
-class TSNE(BaseEstimator):
+class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """T-distributed Stochastic Neighbor Embedding.
 
     t-SNE [1] is a tool to visualize high-dimensional data. It converts
@@ -1144,6 +1144,11 @@ class TSNE(BaseEstimator):
         self._validate_params()
         self.fit_transform(X)
         return self
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.embedding_.shape[1]
 
     def _more_tags(self):
         return {"pairwise": self.metric == "precomputed"}

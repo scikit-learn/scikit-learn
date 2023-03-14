@@ -4234,9 +4234,14 @@ def check_set_output_transform(name, transformer_orig):
     def fit_transform(est):
         return est.fit_transform(X, y)
 
-    transform_methods = [fit_then_transform, fit_transform]
-    for transform_method in transform_methods:
+    transform_methods = {
+        "transform": fit_then_transform,
+        "fit_transform": fit_transform,
+    }
+    for name, transform_method in transform_methods.items():
         transformer = clone(transformer)
+        if not hasattr(transformer, name):
+            continue
         X_trans_no_setting = transform_method(transformer)
 
         # Auto wrapping only wraps the first array
@@ -4269,29 +4274,31 @@ def _output_from_fit_transform(transformer, name, X, df, y):
         ("fit.transform/array/df", X, df),
         ("fit.transform/array/array", X, X),
     ]
-    for (
-        case,
-        data_fit,
-        data_transform,
-    ) in cases:
-        transformer.fit(data_fit, y)
-        if name in CROSS_DECOMPOSITION:
-            X_trans, _ = transformer.transform(data_transform, y)
-        else:
-            X_trans = transformer.transform(data_transform)
-        outputs[case] = (X_trans, transformer.get_feature_names_out())
+    if all(hasattr(transformer, meth) for meth in ["fit", "transform"]):
+        for (
+            case,
+            data_fit,
+            data_transform,
+        ) in cases:
+            transformer.fit(data_fit, y)
+            if name in CROSS_DECOMPOSITION:
+                X_trans, _ = transformer.transform(data_transform, y)
+            else:
+                X_trans = transformer.transform(data_transform)
+            outputs[case] = (X_trans, transformer.get_feature_names_out())
 
     # fit_transform case:
     cases = [
         ("fit_transform/df", df),
         ("fit_transform/array", X),
     ]
-    for case, data in cases:
-        if name in CROSS_DECOMPOSITION:
-            X_trans, _ = transformer.fit_transform(data, y)
-        else:
-            X_trans = transformer.fit_transform(data, y)
-        outputs[case] = (X_trans, transformer.get_feature_names_out())
+    if hasattr(transformer, "fit_transform"):
+        for case, data in cases:
+            if name in CROSS_DECOMPOSITION:
+                X_trans, _ = transformer.fit_transform(data, y)
+            else:
+                X_trans = transformer.fit_transform(data, y)
+            outputs[case] = (X_trans, transformer.get_feature_names_out())
 
     return outputs
 
