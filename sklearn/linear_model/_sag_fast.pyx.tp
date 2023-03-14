@@ -24,19 +24,7 @@ dtypes = [('64', 'double', 'np.float64'),
           ('32', 'float', 'np.float32')]
 
 }}
-
-#------------------------------------------------------------------------------
-
-# Authors: Danny Sullivan <dbsullivan23@gmail.com>
-#          Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
-#          Arthur Mensch <arthur.mensch@m4x.org
-#
-# License: BSD 3 clause
-
-"""
-SAG and SAGA implementation
-WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
-"""
+"""SAG and SAGA implementation"""
 
 import numpy as np
 from libc.math cimport fabs, exp, log
