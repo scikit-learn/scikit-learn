@@ -293,7 +293,7 @@ cdef class TreeUnionFind:
         self.data = np.zeros((size, 2), dtype=np.intp)
         for idx in range(size):
             self.data[idx, 0] = idx
-        self.is_component = np.ones(size, dtype=np.uint8_t)
+        self.is_component = np.ones(size, dtype=np.uint8)
 
     cdef void union(self, cnp.intp_t x, cnp.intp_t y):
         cdef cnp.intp_t x_root = self.find(x)
