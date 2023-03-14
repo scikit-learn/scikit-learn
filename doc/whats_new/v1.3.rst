@@ -41,7 +41,10 @@ Changes impacting all modules
   raises a `NotFittedError` if the instance is not fitted. This ensures the error is
   consistent in all estimators with the `get_feature_names_out` method.
 
-  - :class:`impute.MissingIndicator`
+  - :class:`cluster.KMeans`
+  - :class:`cluster.BisectingKMeans`
+  - :class:`cluster.MiniBatchKMeans`
+  - :class:`cluster.SpectralClustering`
   - :class:`feature_extraction.DictVectorizer`
   - :class:`feature_extraction.text.TfidfTransformer`
   - :class:`feature_selection.GenericUnivariateSelect`
@@ -56,6 +59,7 @@ Changes impacting all modules
   - :class:`feature_selection.SequentialFeatureSelector`
   - :class:`feature_selection.VarianceThreshold`
   - :class:`kernel_approximation.AdditiveChi2Sampler`
+  - :class:`impute.MissingIndicator`
   - :class:`impute.IterativeImputer`
   - :class:`impute.KNNImputer`
   - :class:`impute.SimpleImputer`
