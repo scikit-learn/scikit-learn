@@ -1,5 +1,18 @@
 # %%
 
+import time
+import warnings
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn import cluster, datasets, mixture
+from sklearn.neighbors import kneighbors_graph
+from sklearn.preprocessing import StandardScaler
+from itertools import cycle, islice
+
+# %%
+
 """
 =========================================================
 Comparing different clustering algorithms on toy datasets
@@ -19,17 +32,6 @@ as the absence of any objectively useful inherent cluster in the data. Thus,
 any clustering shown is a method artefact by the respective cluster algorithm.
 
 """
-
-import time
-import warnings
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-from sklearn import cluster, datasets, mixture
-from sklearn.neighbors import kneighbors_graph
-from sklearn.preprocessing import StandardScaler
-from itertools import cycle, islice
 
 
 # %%
