@@ -526,8 +526,7 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     assert (np.abs(coef[1:]) < 0.2).all()
 
     # Let's now disable the internal cross-validation by calling fit and then
-    # transform separately on the training set, even when using the empirical
-    # Bayes smoothing:
+    # transform separately on the training set:
     target_encoder = TargetEncoder(smooth=smooth, random_state=rng).fit(
         X_train, y_train
     )
@@ -537,7 +536,9 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
 
     # The linear regression model should always overfit because it assigns
     # too much weight to the extremely high cardinality feature relatively to
-    # the informative feature:
+    # the informative feature. Note that this is the case even when using
+    # the empirical Bayes smoothing which is not enough to prevent such
+    # overfitting alone.
     coef = model_no_cv.coef_
     assert model_no_cv.score(X_enc_no_cv_train, y_train) > 0.7, coef
     assert model_no_cv.score(X_enc_no_cv_test, y_test) < 0.5, coef
