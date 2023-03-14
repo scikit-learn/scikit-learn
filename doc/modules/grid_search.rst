@@ -433,7 +433,7 @@ ways:
   :class:`HalvingGridSearchCV`;
 - by setting `n_candidates='exhaust'`.
 
-Both options are mutally exclusive: using `min_resources='exhaust'` requires
+Both options are mutually exclusive: using `min_resources='exhaust'` requires
 knowing the number of candidates, and symmetrically `n_candidates='exhaust'`
 requires knowing `min_resources`.
 
