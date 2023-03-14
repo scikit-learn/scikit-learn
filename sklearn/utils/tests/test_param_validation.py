@@ -306,24 +306,24 @@ def test_generate_invalid_param_val_2_intervals(integer_interval, real_interval)
 
 
 @pytest.mark.parametrize(
-    "constraints",
+    "constraint",
     [
-        [_ArrayLikes()],
-        [_InstancesOf(list)],
-        [_Callables()],
-        [_NoneConstraint()],
-        [_RandomStates()],
-        [_SparseMatrices()],
-        [_Booleans()],
-        [Interval(Integral, None, None, closed="neither")],
+        _ArrayLikes(),
+        _InstancesOf(list),
+        _Callables(),
+        _NoneConstraint(),
+        _RandomStates(),
+        _SparseMatrices(),
+        _Booleans(),
+        Interval(Integral, None, None, closed="neither"),
     ],
 )
-def test_generate_invalid_param_val_all_valid(constraints):
+def test_generate_invalid_param_val_all_valid(constraint):
     """Check that the function raises NotImplementedError when there's no invalid value
     for the constraint.
     """
     with pytest.raises(NotImplementedError):
-        generate_invalid_param_val(constraints[0])
+        generate_invalid_param_val(constraint)
 
 
 @pytest.mark.parametrize(
