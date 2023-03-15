@@ -44,8 +44,7 @@ on the same dataset using the knowledge of the labels.
 # for instance :ref:`neighbors_scaling`). In the presence of outliers, a good
 # option is to use a :class:`~sklearn.preprocessing.RobustScaler`.
 #
-# The following `compute_prediction` function returns average outlier score of
-# X.
+# The following `fit_predict` function returns average outlier score of X.
 
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.ensemble import IsolationForest
@@ -117,27 +116,27 @@ X, _, y, _ = train_test_split(X, y, train_size=0.1, stratify=y, random_state=rng
 # "protocol_type", "service" and "flag".
 
 # %%
-model_names = [
-    "LOF",
-    "IForest",
-]
-pos_label = 0  # mean 0 belongs to positive class
-
 y_true = {}
 y_pred = {"LOF": {}, "IForest": {}}
-
+model_names = ["LOF", "IForest"]
 cat_columns = ["protocol_type", "service", "flag"]
 
+n_samples = X.shape[0]
 y_true["SA"] = y
 for model_name in model_names:
     y_pred[model_name]["SA"] = fit_predict(
         X,
         model_name=model_name,
         categorical_columns=cat_columns,
-        n_neighbors=int(0.1 * X.shape[0]),
+        n_neighbors=int(0.1 * n_samples),
     )
 
 # %%
+# Notice that the optimal number of neighbors scales with the number of samples.
+# This means that the fit time of LOF models increases linearly with the size of
+# the dataset. If one is to additionally tune the number of neighbors, the whole
+# computation results quadratic on `n_samples`.
+#
 # Forest covertypes dataset
 # -------------------------
 #
@@ -158,12 +157,13 @@ y = (y != 2).astype(int)
 
 X, _, y, _ = train_test_split(X, y, train_size=0.1, stratify=y, random_state=rng)
 
+n_samples = X.shape[0]
 y_true["forestcover"] = y
 for model_name in model_names:
     y_pred[model_name]["forestcover"] = fit_predict(
         X,
         model_name=model_name,
-        n_neighbors=int(0.02 * X.shape[0]),
+        n_neighbors=int(0.02 * n_samples),
     )
 
 # %%
@@ -181,20 +181,23 @@ from sklearn.datasets import load_breast_cancer
 X, y = load_breast_cancer(return_X_y=True, as_frame=True)
 y = np.logical_not(y).astype(int)  # make label 1 to be the minority class
 
+n_samples = X.shape[0]
 y_true["WDBC"] = y
 for model_name in model_names:
     y_pred[model_name]["WDBC"] = fit_predict(
         X,
         model_name=model_name,
-        n_neighbors=int(0.35 * X.shape[0]),
+        n_neighbors=int(0.35 * n_samples),
     )
 
 # %%
 # Cardiotocography dataset
 # ------------------------
 #
-# The `Cardiotocography dataset <http://www.openml.org/d/1466>`_ is a
-# multiclass dataset of fetal cardiotocograms.
+# The `Cardiotocography dataset <http://www.openml.org/d/1466>`_ is a multiclass
+# dataset of fetal cardiotocograms, the classes being the fetal heart rate (FHR)
+# pattern encoded with labels from 1 to 10. Here we set class 3 (the minority
+# class) to represent the outliers. It contains 30 numerical features.
 
 # %%
 from sklearn.datasets import fetch_openml
@@ -205,12 +208,13 @@ X, y = fetch_openml(
 s = y == "3"
 y = s.astype(int)
 
+n_samples = X.shape[0]
 y_true["cardiotocography"] = y
 for model_name in model_names:
     y_pred[model_name]["cardiotocography"] = fit_predict(
         X,
         model_name=model_name,
-        n_neighbors=int(0.01 * X.shape[0]),
+        n_neighbors=int(0.01 * n_samples),
     )
 
 # %%
