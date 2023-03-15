@@ -11,6 +11,7 @@ from sklearn import datasets
 from sklearn.utils._testing import assert_array_equal
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
+from sklearn.metrics.cluster._unsupervised import _silhouette_reduce
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import calinski_harabasz_score
 from sklearn.metrics.cluster import davies_bouldin_score
@@ -309,6 +310,23 @@ def test_silhouette_samples_euclidean_sparse(to_sparse):
     output_with_sparse_input = silhouette_samples(pdist_sparse, y)
     output_with_dense_input = silhouette_samples(pdist_dense, y)
     assert_allclose(output_with_sparse_input, output_with_dense_input)
+
+
+@pytest.mark.parametrize("to_non_csr_sparse", (csc_matrix, dok_matrix, lil_matrix))
+def test_silhouette_reduce(to_non_csr_sparse):
+    """
+    Check for non-CSR input to private method `_silhouette_reduce`.
+    """
+    X = np.array([[0.2, 0.1, 0.1, 0.2, 0.1, 1.6, 0.2, 0.1]], dtype=np.float32).T
+    pdist_dense = pairwise_distances(X)
+    pdist_sparse = to_non_csr_sparse(pdist_dense)
+    y = [0, 0, 0, 0, 1, 1, 1, 1]
+    label_freqs = np.bincount(y)
+    with pytest.raises(
+        TypeError,
+        match="Expected CSR matrix. Please pass sparse matrix in CSR format.",
+    ):
+        _silhouette_reduce(pdist_sparse, start=0, labels=y, label_freqs=label_freqs)
 
 
 def assert_raises_on_only_one_label(func):
