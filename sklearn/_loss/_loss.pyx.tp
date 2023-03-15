@@ -181,11 +181,6 @@ class_list = [
      "cgradient_half_binomial", "cgrad_hess_half_binomial"),
 ]
 }}
-"""
-WARNING: Do not edit `sklearn/_loss/_loss.pyx` file directly, as it is generated from
-`sklearn/_loss/_loss.pyx.tp`. Changes must be made there.
-"""
-#------------------------------------------------------------------------------
 
 # Design:
 # See https://github.com/scikit-learn/scikit-learn/issues/15123 for reasons.
