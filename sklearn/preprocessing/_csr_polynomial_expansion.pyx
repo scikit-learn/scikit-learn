@@ -120,13 +120,11 @@ cpdef cnp.int64_t _calc_expanded_nnz(
         if sizeof(ITYPE_t) < 16 and n <= MAX_SAFE_INDEX_CALC_DEG2:
             return n * (n + 1) / 2 - interaction_only * n
         return <cnp.int64_t> py_calc_expanded_nnz_deg2(n, interaction_only)
-        return n * (n + 1) / 2 - interaction_only * n
     else:
         # Only need to check when not using 128-bit integers
         if sizeof(ITYPE_t) < 16 and n <= MAX_SAFE_INDEX_CALC_DEG3:
             return n * (n**2 + 3 * n + 2) / 6 - interaction_only * n**2
         return <cnp.int64_t> py_calc_expanded_nnz_deg3(n, interaction_only)
-        return n * (n**2 + 3 * n + 2) / 6 - interaction_only * n**2
 cpdef cnp.int64_t _calc_total_nnz(
     INDEX_A_t[:] indptr,
     FLAG_t interaction_only,
