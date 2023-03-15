@@ -3,12 +3,10 @@ from inspect import signature
 
 import pytest
 
-from sklearn.utils._param_validation import (
-    InvalidParameterError,
-    generate_invalid_param_val,
-    generate_valid_param,
-    make_constraint,
-)
+from sklearn.utils._param_validation import generate_invalid_param_val
+from sklearn.utils._param_validation import generate_valid_param
+from sklearn.utils._param_validation import make_constraint
+from sklearn.utils._param_validation import InvalidParameterError
 
 
 def _get_func_info(func_module):
