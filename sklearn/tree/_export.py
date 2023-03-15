@@ -923,6 +923,7 @@ def export_text(
     decision_tree,
     *,
     feature_names=None,
+    class_names=None,
     max_depth=10,
     spacing=3,
     decimals=2,
@@ -942,6 +943,17 @@ def export_text(
     feature_names : list of str, default=None
         A list of length n_features containing the feature names.
         If None generic names will be used ("feature_0", "feature_1", ...).
+
+    class_names : list or None, default=None
+        Names of each of the target classes in ascending numerical order.
+        Only relevant for classification and not supported for multi-output.
+
+        - if `None`, the class names are delegated to `decision_tree.classes_`;
+        - if a list, then `class_names` will be used as class names instead
+          of `decision_tree.classes_`. The length of `class_names` must match
+          the length of `decision_tree.classes_`.
+
+        .. versionadded:: 1.3
 
     max_depth : int, default=10
         Only the first max_depth levels of the tree are exported.
@@ -986,7 +998,15 @@ def export_text(
     check_is_fitted(decision_tree)
     tree_ = decision_tree.tree_
     if is_classifier(decision_tree):
-        class_names = decision_tree.classes_
+        if class_names is None:
+            class_names = decision_tree.classes_
+        elif len(class_names) != len(decision_tree.classes_):
+            raise ValueError(
+                "When `class_names` is a list, it should contain as"
+                " many items as `decision_tree.classes_`. Got"
+                f" {len(class_names)} while the tree was fitted with"
+                f" {len(decision_tree.classes_)} classes."
+            )
     right_child_fmt = "{} {} <= {}\n"
     left_child_fmt = "{} {} >  {}\n"
     truncation_fmt = "{} {}\n"
