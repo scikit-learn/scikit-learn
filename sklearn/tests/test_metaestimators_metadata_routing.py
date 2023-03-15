@@ -7,7 +7,12 @@ import pytest
 from sklearn.base import RegressorMixin, ClassifierMixin, BaseEstimator
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.exceptions import UnsetMetadataPassedError
-from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
+from sklearn.multioutput import (
+    MultiOutputRegressor,
+    MultiOutputClassifier,
+    ClassifierChain,
+    RegressorChain,
+)
 from sklearn.utils.metadata_routing import MetadataRouter
 from sklearn.tests.test_metadata_routing import (
     record_metadata,
@@ -180,6 +185,24 @@ METAESTIMATORS = [
         "routing_methods": ["fit"],
         "warns_on": {"fit": ["sample_weight", "metadata"]},
         "preserves_metadata": False,
+    },
+    {
+        "metaestimator": ClassifierChain,
+        "estimator_name": "base_estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y_multi,
+        "routing_methods": ["fit"],
+        "warns_on": {},
+    },
+    {
+        "metaestimator": RegressorChain,
+        "estimator_name": "base_estimator",
+        "estimator": ConsumingRegressor,
+        "X": X,
+        "y": y_multi,
+        "routing_methods": ["fit"],
+        "warns_on": {"fit": ["sample_weight", "metadata"]},
     },
 ]
 """List containing all metaestimators to be tested and their settings

@@ -35,6 +35,8 @@ Base classes
    base.RegressorMixin
    base.TransformerMixin
    base.MetaEstimatorMixin
+   base.OneToOneFeatureMixin
+   base.ClassNamePrefixFeaturesOutMixin
    feature_selection.SelectorMixin
 
 Functions
@@ -192,6 +194,7 @@ details.
    covariance.empirical_covariance
    covariance.graphical_lasso
    covariance.ledoit_wolf
+   covariance.ledoit_wolf_shrinkage
    covariance.oas
    covariance.shrunk_covariance
 
@@ -251,7 +254,6 @@ Loaders
    datasets.fetch_rcv1
    datasets.fetch_species_distributions
    datasets.get_data_home
-   datasets.load_boston
    datasets.load_breast_cancer
    datasets.load_diabetes
    datasets.load_digits
@@ -443,6 +445,7 @@ Samples generator
    exceptions.DataDimensionalityWarning
    exceptions.EfficiencyWarning
    exceptions.FitFailedWarning
+   exceptions.InconsistentVersionWarning
    exceptions.NotFittedError
    exceptions.UndefinedMetricWarning
 
@@ -1126,6 +1129,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
+   metrics.PredictionErrorDisplay
    metrics.RocCurveDisplay
    calibration.CalibrationDisplay
 
@@ -1232,6 +1236,17 @@ Model validation
    model_selection.learning_curve
    model_selection.permutation_test_score
    model_selection.validation_curve
+
+Visualization
+-------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   model_selection.LearningCurveDisplay
 
 .. _multiclass_ref:
 
@@ -1637,7 +1652,6 @@ Plotting
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
-   utils.all_estimators
    utils.metadata_routing.RequestType
    utils.metadata_routing.get_routing_for_object
    utils.metadata_routing.MetadataRouter
@@ -1645,14 +1659,31 @@ Plotting
    utils.metadata_routing.MethodMapping
    utils.metadata_routing.process_routing
 
+Specific utilities to list scikit-learn components:
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.discovery.all_estimators
+   utils.discovery.all_displays
+   utils.discovery.all_functions
+
 Utilities from joblib:
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
+   utils.parallel.delayed
    utils.parallel_backend
    utils.register_parallel_backend
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   utils.parallel.Parallel
 
 
 Recently deprecated

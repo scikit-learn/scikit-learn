@@ -24,12 +24,11 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
+from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
 from ..preprocessing import normalize
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
-from ..utils.deprecation import deprecated
 from ..utils import _IS_32BIT
 from ..exceptions import NotFittedError
 from ..utils._param_validation import StrOptions, Interval, HasMethods
@@ -567,7 +566,9 @@ class _VectorizerMixin:
                 )
 
 
-class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
+class HashingVectorizer(
+    TransformerMixin, _VectorizerMixin, BaseEstimator, auto_wrap_output_keys=None
+):
     r"""Convert a collection of text documents to a matrix of token occurrences.
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -723,6 +724,13 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     TfidfVectorizer : Convert a collection of raw documents to a matrix of
         TF-IDF features.
 
+    Notes
+    -----
+    This estimator is :term:`stateless` and does not need to be fitted.
+    However, we recommend to call :meth:`fit_transform` instead of
+    :meth:`transform`, as parameter validation is only performed in
+    :meth:`fit`.
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import HashingVectorizer
@@ -795,10 +803,10 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         self.dtype = dtype
 
     def partial_fit(self, X, y=None):
-        """No-op: this transformer is stateless.
+        """Only validates estimator's parameters.
 
-        This method is just there to mark the fact that this transformer
-        can work in a streaming setup.
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
@@ -818,7 +826,10 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         return self
 
     def fit(self, X, y=None):
-        """No-op: this transformer is stateless.
+        """Only validates estimator's parameters.
+
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
@@ -985,9 +996,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
 
-        If None, no stop words will be used. max_df can be set to a value
-        in the range [0.7, 1.0) to automatically detect and filter stop
-        words based on intra corpus document frequency of terms.
+        If None, no stop words will be used. In this case, setting `max_df`
+        to a higher value, such as in the range (0.7, 1.0), can automatically detect
+        and filter stop words based on intra corpus document frequency of terms.
 
     token_pattern : str or None, default=r"(?u)\\b\\w\\w+\\b"
         Regular expression denoting what constitutes a "token", only used
@@ -1040,7 +1051,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     max_features : int, default=None
         If not None, build a vocabulary that only consider the top
-        max_features ordered by term frequency across the corpus.
+        `max_features` ordered by term frequency across the corpus.
+        Otherwise, all features are used.
 
         This parameter is ignored if vocabulary is not None.
 
@@ -1456,22 +1468,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 for i in range(n_samples)
             ]
 
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self):
-        """Array mapping from feature integer indices to feature name.
-
-        Returns
-        -------
-        feature_names : list
-            A list of feature names.
-        """
-        self._check_vocabulary()
-
-        return [t for t, i in sorted(self.vocabulary_.items(), key=itemgetter(1))]
-
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
@@ -1500,7 +1496,9 @@ def _make_int_array():
     return array.array(str("i"))
 
 
-class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class TfidfTransformer(
+    OneToOneFeatureMixin, TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
+):
     """Transform a count matrix to a normalized tf or tf-idf representation.
 
     Tf means term-frequency while tf-idf means term-frequency times inverse
@@ -1836,9 +1834,9 @@ class TfidfVectorizer(CountVectorizer):
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
 
-        If None, no stop words will be used. max_df can be set to a value
-        in the range [0.7, 1.0) to automatically detect and filter stop
-        words based on intra corpus document frequency of terms.
+        If None, no stop words will be used. In this case, setting `max_df`
+        to a higher value, such as in the range (0.7, 1.0), can automatically detect
+        and filter stop words based on intra corpus document frequency of terms.
 
     token_pattern : str, default=r"(?u)\\b\\w\\w+\\b"
         Regular expression denoting what constitutes a "token", only used
@@ -1876,7 +1874,8 @@ class TfidfVectorizer(CountVectorizer):
 
     max_features : int, default=None
         If not None, build a vocabulary that only consider the top
-        max_features ordered by term frequency across the corpus.
+        `max_features` ordered by term frequency across the corpus.
+        Otherwise, all features are used.
 
         This parameter is ignored if vocabulary is not None.
 

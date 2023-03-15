@@ -335,29 +335,27 @@ TODO: html report, type declarations, bound checks, division by zero checks,
 memory alignment, direct blas calls...
 
 - https://www.youtube.com/watch?v=gMvkiQ-gOW8
-- http://conference.scipy.org/proceedings/SciPy2009/paper_1/
-- http://conference.scipy.org/proceedings/SciPy2009/paper_2/
+- https://conference.scipy.org/proceedings/SciPy2009/paper_1/
+- https://conference.scipy.org/proceedings/SciPy2009/paper_2/
 
 Using OpenMP
 ------------
 
-Since scikit-learn can be built without OpenMP, it's necessary to
-protect each direct call to OpenMP. This can be done using the following
-syntax::
+Since scikit-learn can be built without OpenMP, it's necessary to protect each
+direct call to OpenMP.
 
-  # importing OpenMP
-  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-      cimport openmp
+The `_openmp_helpers` module, available in
+`sklearn/utils/_openmp_helpers.pyx <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_openmp_helpers.pyx>`_
+provides protected versions of the OpenMP routines. To use OpenMP routines, they
+must be cimported from this module and not from the OpenMP library directly::
 
-  # calling OpenMP
-  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-      max_threads = openmp.omp_get_max_threads()
-  ELSE:
-      max_threads = 1
+  from sklearn.utils._openmp_helpers cimport omp_get_max_threads
+  max_threads = omp_get_max_threads()
 
 .. note::
 
-   Protecting the parallel loop, ``prange``, is already done by cython.
+   The parallel loop, `prange`, is already protected by cython and can be used directly
+   from `cython.parallel`.
 
 
 .. _profiling-compiled-extension:
@@ -376,7 +374,7 @@ Using yep and gperftools
 Easy profiling without special compilation options use yep:
 
 - https://pypi.org/project/yep/
-- http://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
+- https://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
 
 Using gprof
 -----------

@@ -1,7 +1,6 @@
 """Permutation importance for estimators."""
 import numbers
 import numpy as np
-from joblib import Parallel
 
 from ..ensemble._bagging import _generate_indices
 from ..metrics import check_scoring
@@ -10,7 +9,7 @@ from ..model_selection._validation import _aggregate_score_dicts
 from ..utils import Bunch, _safe_indexing
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
@@ -252,7 +251,7 @@ def permutation_importance(
         scorer = check_scoring(estimator, scoring=scoring)
     else:
         scorers_dict = _check_multimetric_scoring(estimator, scoring)
-        scorer = _MultimetricScorer(**scorers_dict)
+        scorer = _MultimetricScorer(scorers=scorers_dict)
 
     baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
 

@@ -7,12 +7,11 @@ cimport numpy as cnp
 
 cnp.import_array()
 
-
-def dbscan_inner(cnp.ndarray[cnp.uint8_t, ndim=1, mode='c'] is_core,
-                 cnp.ndarray[object, ndim=1] neighborhoods,
-                 cnp.ndarray[cnp.npy_intp, ndim=1, mode='c'] labels):
+def dbscan_inner(const cnp.uint8_t[::1] is_core,
+                 object[:] neighborhoods,
+                 cnp.npy_intp[::1] labels):
     cdef cnp.npy_intp i, label_num = 0, v
-    cdef cnp.ndarray[cnp.npy_intp, ndim=1] neighb
+    cdef cnp.npy_intp[:] neighb
     cdef vector[cnp.npy_intp] stack
 
     for i in range(labels.shape[0]):

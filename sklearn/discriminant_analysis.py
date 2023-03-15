@@ -16,7 +16,7 @@ from scipy import linalg
 from numbers import Real, Integral
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
-from .base import _ClassNamePrefixFeaturesOutMixin
+from .base import ClassNamePrefixFeaturesOutMixin
 from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
@@ -171,7 +171,7 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
 
 
 class LinearDiscriminantAnalysis(
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
     LinearClassifierMixin,
     TransformerMixin,
     BaseEstimator,
@@ -350,7 +350,7 @@ class LinearDiscriminantAnalysis(
         self.tol = tol  # used only in svd solver
         self.covariance_estimator = covariance_estimator
 
-    def _solve_lsqr(self, X, y, shrinkage, covariance_estimator):
+    def _solve_lstsq(self, X, y, shrinkage, covariance_estimator):
         """Least squares solver.
 
         The least squares solver computes a straightforward solution of the
@@ -621,7 +621,7 @@ class LinearDiscriminantAnalysis(
                 )
             self._solve_svd(X, y)
         elif self.solver == "lsqr":
-            self._solve_lsqr(
+            self._solve_lstsq(
                 X,
                 y,
                 shrinkage=self.shrinkage,

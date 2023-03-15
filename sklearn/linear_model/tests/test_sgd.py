@@ -707,8 +707,6 @@ def test_set_coef_multiclass(klass):
     clf = klass().fit(X2, Y2, intercept_init=np.zeros((3,)))
 
 
-# TODO: Remove filterwarnings in v1.2.
-@pytest.mark.filterwarnings("ignore:.*squared_loss.*:FutureWarning")
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
 def test_sgd_predict_proba_method_access(klass):
     # Checks that SGDClassifier predict_proba and predict_log_proba methods
@@ -2145,3 +2143,75 @@ def test_validation_mask_correctly_subsets(monkeypatch):
     X_val, y_val = mock.call_args[0][1:3]
     assert X_val.shape[0] == int(n_samples * validation_fraction)
     assert y_val.shape[0] == int(n_samples * validation_fraction)
+
+
+def test_sgd_error_on_zero_validation_weight():
+    # Test that SGDClassifier raises error when all the validation samples
+    # have zero sample_weight. Non-regression test for #17229.
+    X, Y = iris.data, iris.target
+    sample_weight = np.zeros_like(Y)
+    validation_fraction = 0.4
+
+    clf = linear_model.SGDClassifier(
+        early_stopping=True, validation_fraction=validation_fraction, random_state=0
+    )
+
+    error_message = (
+        "The sample weights for validation set are all zero, consider using a"
+        " different random state."
+    )
+    with pytest.raises(ValueError, match=error_message):
+        clf.fit(X, Y, sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDRegressor])
+def test_sgd_verbose(Estimator):
+    """non-regression test for gh #25249"""
+    Estimator(verbose=1).fit(X, Y)
+
+
+@pytest.mark.parametrize(
+    "SGDEstimator",
+    [
+        SGDClassifier,
+        SparseSGDClassifier,
+        SGDRegressor,
+        SparseSGDRegressor,
+        SGDOneClassSVM,
+        SparseSGDOneClassSVM,
+    ],
+)
+@pytest.mark.parametrize("data_type", (np.float32, np.float64))
+def test_sgd_dtype_match(SGDEstimator, data_type):
+    _X = X.astype(data_type)
+    _Y = np.array(Y, dtype=data_type)
+    sgd_model = SGDEstimator()
+    sgd_model.fit(_X, _Y)
+    assert sgd_model.coef_.dtype == data_type
+
+
+@pytest.mark.parametrize(
+    "SGDEstimator",
+    [
+        SGDClassifier,
+        SparseSGDClassifier,
+        SGDRegressor,
+        SparseSGDRegressor,
+        SGDOneClassSVM,
+        SparseSGDOneClassSVM,
+    ],
+)
+def test_sgd_numerical_consistency(SGDEstimator):
+    X_64 = X.astype(dtype=np.float64)
+    Y_64 = np.array(Y, dtype=np.float64)
+
+    X_32 = X.astype(dtype=np.float32)
+    Y_32 = np.array(Y, dtype=np.float32)
+
+    sgd_64 = SGDEstimator(max_iter=20)
+    sgd_64.fit(X_64, Y_64)
+
+    sgd_32 = SGDEstimator(max_iter=20)
+    sgd_32.fit(X_32, Y_32)
+
+    assert_allclose(sgd_64.coef_, sgd_32.coef_)

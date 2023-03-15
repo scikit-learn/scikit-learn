@@ -126,6 +126,8 @@ class ConfusionMatrixDisplay:
         Returns
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
+            Returns a :class:`~sklearn.metrics.ConfusionMatrixDisplay` instance
+            that contains all the information to plot the confusion matrix.
         """
         check_matplotlib_support("ConfusionMatrixDisplay.plot")
         import matplotlib.pyplot as plt

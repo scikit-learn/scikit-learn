@@ -83,7 +83,7 @@ class RocCurveDisplay:
         self.pos_label = pos_label
 
     def plot(self, ax=None, *, name=None, **kwargs):
-        """Plot visualization
+        """Plot visualization.
 
         Extra keyword arguments will be passed to matplotlib's ``plot``.
 
@@ -96,6 +96,9 @@ class RocCurveDisplay:
         name : str, default=None
             Name of ROC Curve for labeling. If `None`, use `estimator_name` if
             not `None`, otherwise no labeling is shown.
+
+        **kwargs : dict
+            Keyword arguments to be passed to matplotlib's `plot`.
 
         Returns
         -------

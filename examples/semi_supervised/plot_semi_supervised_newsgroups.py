@@ -41,7 +41,7 @@ print("%d categories" % len(data.target_names))
 print()
 
 # Parameters
-sdg_params = dict(alpha=1e-5, penalty="l2", loss="log")
+sdg_params = dict(alpha=1e-5, penalty="l2", loss="log_loss")
 vectorizer_params = dict(ngram_range=(1, 2), min_df=5, max_df=0.8)
 
 # Supervised Pipeline
@@ -66,7 +66,7 @@ ls_pipeline = Pipeline(
         ("vect", CountVectorizer(**vectorizer_params)),
         ("tfidf", TfidfTransformer()),
         # LabelSpreading does not support dense matrices
-        ("todense", FunctionTransformer(lambda x: x.todense())),
+        ("toarray", FunctionTransformer(lambda x: x.toarray())),
         ("clf", LabelSpreading()),
     ]
 )

@@ -559,7 +559,8 @@ class SVC(BaseSVC):
     beyond tens of thousands of samples. For large datasets
     consider using :class:`~sklearn.svm.LinearSVC` or
     :class:`~sklearn.linear_model.SGDClassifier` instead, possibly after a
-    :class:`~sklearn.kernel_approximation.Nystroem` transformer.
+    :class:`~sklearn.kernel_approximation.Nystroem` transformer or
+    other :ref:`kernel_approximation`.
 
     The multiclass support is handled according to a one-vs-one scheme.
 
@@ -753,9 +754,9 @@ class SVC(BaseSVC):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------
@@ -1017,9 +1018,9 @@ class NuSVC(BaseSVC):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------
@@ -1093,6 +1094,9 @@ class NuSVC(BaseSVC):
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
+                "check_classifiers_one_label_sample_weights": (
+                    "specified nu is infeasible for the fit."
+                ),
             }
         }
 
@@ -1107,7 +1111,8 @@ class SVR(RegressorMixin, BaseLibSVM):
     to scale to datasets with more than a couple of 10000 samples. For large
     datasets consider using :class:`~sklearn.svm.LinearSVR` or
     :class:`~sklearn.linear_model.SGDRegressor` instead, possibly after a
-    :class:`~sklearn.kernel_approximation.Nystroem` transformer.
+    :class:`~sklearn.kernel_approximation.Nystroem` transformer or
+    other :ref:`kernel_approximation`.
 
     Read more in the :ref:`User Guide <svm_regression>`.
 
@@ -1233,9 +1238,9 @@ class SVR(RegressorMixin, BaseLibSVM):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------
@@ -1442,9 +1447,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------

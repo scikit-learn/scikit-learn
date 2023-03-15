@@ -129,25 +129,27 @@ columns = [
 ]
 results_df = pd.DataFrame(results, columns=columns)
 
-# Define what to plot (x_axis, y_axis)
+# Define what to plot
 lines = "Stopping criterion"
-plot_list = [
-    ("max_iter", "Train score"),
-    ("max_iter", "Test score"),
-    ("max_iter", "n_iter_"),
-    ("max_iter", "Fit time (sec)"),
-]
+x_axis = "max_iter"
+styles = ["-.", "--", "-"]
 
-nrows = 2
-ncols = int(np.ceil(len(plot_list) / 2.0))
-fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6 * ncols, 4 * nrows))
-axes[0, 0].get_shared_y_axes().join(axes[0, 0], axes[0, 1])
-
-for ax, (x_axis, y_axis) in zip(axes.ravel(), plot_list):
-    for criterion, group_df in results_df.groupby(lines):
-        group_df.plot(x=x_axis, y=y_axis, label=criterion, ax=ax)
+# First plot: train and test scores
+fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 4))
+for ax, y_axis in zip(axes, ["Train score", "Test score"]):
+    for style, (criterion, group_df) in zip(styles, results_df.groupby(lines)):
+        group_df.plot(x=x_axis, y=y_axis, label=criterion, ax=ax, style=style)
     ax.set_title(y_axis)
     ax.legend(title=lines)
-
 fig.tight_layout()
+
+# Second plot: n_iter and fit time
+fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
+for ax, y_axis in zip(axes, ["n_iter_", "Fit time (sec)"]):
+    for style, (criterion, group_df) in zip(styles, results_df.groupby(lines)):
+        group_df.plot(x=x_axis, y=y_axis, label=criterion, ax=ax, style=style)
+    ax.set_title(y_axis)
+    ax.legend(title=lines)
+fig.tight_layout()
+
 plt.show()
