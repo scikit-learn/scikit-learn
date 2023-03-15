@@ -1519,7 +1519,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
         "warn_for": [list, tuple, set],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0, 1}),
+            Options(Real, {0.0, 1.0, np.nan}),
             StrOptions({"warn"}),
         ],
     }
@@ -1945,7 +1945,7 @@ def class_likelihood_ratios(
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0, 1}),
+            Options(Real, {0.0, 1.0, np.nan}),
             StrOptions({"warn"}),
         ],
     }
@@ -2114,7 +2114,7 @@ def precision_score(
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0, 1}),
+            Options(Real, {0.0, 1.0, np.nan}),
             StrOptions({"warn"}),
         ],
     }
