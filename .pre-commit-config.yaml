@@ -24,3 +24,4 @@ repos:
     rev: v0.14.0
     hooks:
     -   id: cython-lint
+        args: [--max-line-length=999, --ignore=E24,E203,E731,E741,W503,W504]
