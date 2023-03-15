@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
-from joblib import Parallel
-from sklearn.utils.fixes import delayed
+from sklearn.utils.parallel import delayed, Parallel
 
 from sklearn.neighbors._kd_tree import KDTree
 

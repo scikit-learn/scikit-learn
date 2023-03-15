@@ -830,7 +830,7 @@ precision-recall curve as follows.
      2008.
   .. [Everingham2010] M. Everingham, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman,
      `The Pascal Visual Object Classes (VOC) Challenge
-     <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_,
+     <https://citeseerx.ist.psu.edu/doc_view/pid/b6bebfd529b233f00cb854b7d8070319600cf59d>`_,
      IJCV 2010.
   .. [Davis2006] J. Davis, M. Goadrich, `The Relationship Between Precision-Recall and ROC Curves
      <https://www.biostat.wisc.edu/~page/rocpr.pdf>`_,
@@ -1066,7 +1066,7 @@ output by the `decision_function` method), then the hinge loss is defined as:
 
 If there are more than two labels, :func:`hinge_loss` uses a multiclass variant
 due to Crammer & Singer.
-`Here <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_ is
+`Here <https://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_ is
 the paper describing it.
 
 In this case the predicted decision is an array of shape (`n_samples`,
@@ -1547,7 +1547,7 @@ And the decision values do not require such processing.
        Pattern Recognition Letters, 27(8), pp. 861-874.
 
     .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize
-       ROC performance <http://ieeexplore.ieee.org/document/989510/>`_
+       ROC performance <https://ieeexplore.ieee.org/document/989510/>`_
        In Data Mining, 2001.
        Proceedings IEEE International Conference, pp. 131-138.
 
@@ -2711,6 +2711,80 @@ Here are some usage examples of the :func:`d2_absolute_error_score` function::
   >>> d2_absolute_error_score(y_true, y_pred)
   0.0
 
+.. _visualization_regression_evaluation:
+
+Visual evaluation of regression models
+--------------------------------------
+
+Among methods to assess the quality of regression models, scikit-learn provides
+the :class:`~sklearn.metrics.PredictionErrorDisplay` class. It allows to
+visually inspect the prediction errors of a model in two different manners.
+
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_predict_001.png
+   :target: ../auto_examples/model_selection/plot_cv_predict.html
+   :scale: 75
+   :align: center
+
+The plot on the left shows the actual values vs predicted values. For a
+noise-free regression task aiming to predict the (conditional) expectation of
+`y`, a perfect regression model would display data points on the diagonal
+defined by predicted equal to actual values. The further away from this optimal
+line, the larger the error of the model. In a more realistic setting with
+irreducible noise, that is, when not all the variations of `y` can be explained
+by features in `X`, then the best model would lead to a cloud of points densely
+arranged around the diagonal.
+
+Note that the above only holds when the predicted values is the expected value
+of `y` given `X`. This is typically the case for regression models that
+minimize the mean squared error objective function or more generally the
+:ref:`mean Tweedie deviance <mean_tweedie_deviance>` for any value of its
+"power" parameter.
+
+When plotting the predictions of an estimator that predicts a quantile
+of `y` given `X`, e.g. :class:`~sklearn.linear_model.QuantileRegressor`
+or any other model minimizing the :ref:`pinball loss <pinball_loss>`, a
+fraction of the points are either expected to lie above or below the diagonal
+depending on the estimated quantile level.
+
+All in all, while intuitive to read, this plot does not really inform us on
+what to do to obtain a better model.
+
+The right-hand side plot shows the residuals (i.e. the difference between the
+actual and the predicted values) vs. the predicted values.
+
+This plot makes it easier to visualize if the residuals follow and
+`homoscedastic or heteroschedastic
+<https://en.wikipedia.org/wiki/Homoscedasticity_and_heteroscedasticity>`_
+distribution.
+
+In particular, if the true distribution of `y|X` is Poisson or Gamma
+distributed, it is expected that the variance of the residuals of the optimal
+model would grow with the predicted value of `E[y|X]` (either linearly for
+Poisson or quadratically for Gamma).
+
+When fitting a linear least squares regression model (see
+:class:`~sklearn.linear_mnodel.LinearRegression` and
+:class:`~sklearn.linear_mnodel.Ridge`), we can use this plot to check
+if some of the `model assumptions
+<https://en.wikipedia.org/wiki/Ordinary_least_squares#Assumptions>`_
+are met, in particular that the residuals should be uncorrelated, their
+expected value should be null and that their variance should be constant
+(homoschedasticity).
+
+If this is not the case, and in particular if the residuals plot show some
+banana-shaped structure, this is a hint that the model is likely mis-specified
+and that non-linear feature engineering or switching to a non-linear regression
+model might be useful.
+
+Refer to the example below to see a model evaluation that makes use of this
+display.
+
+.. topic:: Example:
+
+  * See :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py` for
+    an example on how to use :class:`~sklearn.metrics.PredictionErrorDisplay`
+    to visualize the prediction quality improvement of a regression model
+    obtained by transforming the target before learning.
 
 .. _clustering_metrics:
 

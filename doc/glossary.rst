@@ -748,6 +748,15 @@ General Concepts
         possible (i.e. if an estimator does not / cannot support sparse
         matrices).
 
+    stateless
+        An estimator is stateless if it does not store any information that is
+        obtained during :term:`fit`. This information can be either parameters
+        learned during :term:`fit` or statistics computed from the
+        training data. An estimator is stateless if it has no :term:`attributes`
+        apart from ones set in `__init__`. Calling :term:`fit` for these
+        estimators will only validate the public :term:`attributes` passed
+        in `__init__`.
+
     supervised
     supervised learning
         Learning where the expected prediction (label or ground truth) is
@@ -1657,10 +1666,24 @@ functions or non-estimator constructors.
         in a subsequent call to :term:`fit`.
 
         Note that this is only applicable for some models and some
-        parameters, and even some orders of parameter values. For example,
-        ``warm_start`` may be used when building random forests to add more
-        trees to the forest (increasing ``n_estimators``) but not to reduce
-        their number.
+        parameters, and even some orders of parameter values. In general, there
+        is an interaction between ``warm_start`` and the parameter controlling
+        the number of iterations of the estimator.
+
+        For estimators imported from :mod:`ensemble`,
+        ``warm_start`` will interact with ``n_estimators`` or ``max_iter``.
+        For these models, the number of iterations, reported via
+        ``len(estimators_)`` or ``n_iter_``, corresponds the total number of
+        estimators/iterations learnt since the initialization of the model.
+        Thus, if a model was already initialized with `N`` estimators, and `fit`
+        is called with ``n_estimators`` or ``max_iter`` set to `M`, the model
+        will train `M - N` new estimators.
+
+        Other models, usually using gradient-based solvers, have a different
+        behavior. They all expose a ``max_iter`` parameter. The reported
+        ``n_iter_`` corresponds to the number of iteration done during the last
+        call to ``fit`` and will be at most ``max_iter``. Thus, we do not
+        consider the state of the estimator since the initialization.
 
         :term:`partial_fit` also retains the model between calls, but differs:
         with ``warm_start`` the parameters change and the data is

@@ -78,7 +78,7 @@ clf_list = [
 # %%
 fig = plt.figure(figsize=(10, 10))
 gs = GridSpec(4, 2)
-colors = plt.cm.get_cmap("Dark2")
+colors = plt.get_cmap("Dark2")
 
 ax_calibration_curve = fig.add_subplot(gs[:2, :2])
 calibration_displays = {}
@@ -124,7 +124,7 @@ plt.show()
 # typical transposed-sigmoid curve. Calibration of the probabilities of
 # :class:`~sklearn.naive_bayes.GaussianNB` with :ref:`isotonic` can fix
 # this issue as can be seen from the nearly diagonal calibration curve.
-# :ref:sigmoid regression `<sigmoid_regressor>` also improves calibration
+# :ref:`Sigmoid regression <sigmoid_regressor>` also improves calibration
 # slightly,
 # albeit not as strongly as the non-parametric isotonic regression. This can be
 # attributed to the fact that we have plenty of calibration data such that the

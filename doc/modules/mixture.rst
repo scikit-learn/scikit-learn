@@ -43,7 +43,7 @@ confidence ellipsoids for multivariate models, and compute the
 Bayesian Information Criterion to assess the number of clusters in the
 data. A :meth:`GaussianMixture.fit` method is provided that learns a Gaussian
 Mixture Model from train data. Given test data, it can assign to each
-sample the Gaussian it mostly probably belongs to using
+sample the Gaussian it most probably belongs to using
 the :meth:`GaussianMixture.predict` method.
 
 ..
@@ -104,7 +104,7 @@ distribution). Note that using a :ref:`Variational Bayesian Gaussian mixture <bg
 avoids the specification of the number of components for a Gaussian mixture
 model.
 
-.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_selection_001.png
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_selection_002.png
    :target: ../auto_examples/mixture/plot_gmm_selection.html
    :align: center
    :scale: 50%
