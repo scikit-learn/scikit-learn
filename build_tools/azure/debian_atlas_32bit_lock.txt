@@ -10,7 +10,7 @@ cython==0.29.33
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
 joblib==1.1.1
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
-more-itertools==9.0.0
+more-itertools==9.1.0
     # via pytest
 packaging==23.0
     # via pytest
