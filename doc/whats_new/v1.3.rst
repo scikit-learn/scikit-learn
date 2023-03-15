@@ -33,6 +33,15 @@ random sampling procedures.
   `fit` and `transform` steps of :class:`decomposition.NMF` and
   :class:`decomposition.MiniBatchNMF` which can produce different results than previous
   versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
+  
+- |Enhancement| The `sample_weight` parameter now will be used in centroids
+  initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
+  and :class:`cluster.MiniBatchKMeans`.
+  This change will break backward compatibility, since numbers generated
+  from same random seeds will be different.
+  :pr:`25752` by :user:`Gleb Levitski <glevv>`,
+  :user:`Jérémie du Boisberranger <jeremiedbb>`,
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changes impacting all modules
 -----------------------------
@@ -41,10 +50,6 @@ Changes impacting all modules
   raises a `NotFittedError` if the instance is not fitted. This ensures the error is
   consistent in all estimators with the `get_feature_names_out` method.
 
-  - :class:`cluster.KMeans`
-  - :class:`cluster.BisectingKMeans`
-  - :class:`cluster.MiniBatchKMeans`
-  - :class:`cluster.SpectralClustering`
   - :class:`feature_extraction.DictVectorizer`
   - :class:`feature_extraction.text.TfidfTransformer`
   - :class:`feature_selection.GenericUnivariateSelect`
@@ -160,15 +165,6 @@ Changelog
   :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
   is now deprecated and will be removed in v1.5. 
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
-
-- |Feature| The `sample_weight` parameter now will be used in centroids
-  initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
-  and :class:`cluster.MiniBatchKMeans`.
-  This change will break backward compatibility, since numbers generated
-  from same random seeds will be different.
-  :pr:`25752` by :user:`Gleb Levitski <glevv>`,
-  :user:`Jérémie du Boisberranger <jeremiedbb>`,
-  :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.datasets`
 .......................
