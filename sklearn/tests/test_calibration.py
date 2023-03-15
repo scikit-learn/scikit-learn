@@ -401,26 +401,6 @@ def test_calibration_curve():
         calibration_curve(y_true2, y_pred2, strategy="percentile")
 
 
-# TODO(1.3): Remove this test.
-def test_calibration_curve_with_unnormalized_proba():
-    """Tests the `normalize` parameter of `calibration_curve`"""
-    y_true = np.array([0, 0, 0, 1, 1, 1])
-    y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
-
-    # Ensure `normalize` == False raises a FutureWarning.
-    with pytest.warns(FutureWarning):
-        calibration_curve(y_true, y_pred, n_bins=2, normalize=False)
-
-    # Ensure `normalize` == True raises a FutureWarning and behaves as expected.
-    with pytest.warns(FutureWarning):
-        prob_true_unnormalized, prob_pred_unnormalized = calibration_curve(
-            y_true, y_pred * 2, n_bins=2, normalize=True
-        )
-        prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=2)
-        assert_almost_equal(prob_true, prob_true_unnormalized)
-        assert_almost_equal(prob_pred, prob_pred_unnormalized)
-
-
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration_nan_imputer(ensemble):
     """Test that calibration can accept nan"""
