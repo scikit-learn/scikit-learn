@@ -17,6 +17,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import row_norms
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import pairwise_distances_argmin
+from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means, kmeans_plusplus
 from sklearn.cluster import MiniBatchKMeans
