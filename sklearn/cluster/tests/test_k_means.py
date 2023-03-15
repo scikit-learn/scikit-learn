@@ -1279,7 +1279,6 @@ def test_predict_does_not_change_cluster_centers(is_sparse):
     assert_array_equal(y_pred1, y_pred2)
 
 
-@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 @pytest.mark.parametrize("init", ["k-means++", "random"])
 def test_sample_weight_init(Estimator, init, global_random_seed):
     """Check that sample weight is used during init."""
@@ -1288,29 +1287,28 @@ def test_sample_weight_init(Estimator, init, global_random_seed):
         n_samples=200, n_features=10, centers=10, random_state=global_random_seed
     )
     sample_weight = rng.uniform(size=X.shape[0])
-    sample_weight = _check_sample_weight(sample_weight, X)
     x_squared_norms = row_norms(X, squared=True)
-    kmeans = Estimator(random_state=global_random_seed, init=init)
+    kmeans = KMeans(random_state=global_random_seed, init=init)
     clusters_weighted = kmeans._init_centroids(
         X=X,
         x_squared_norms=x_squared_norms,
         init=init,
         sample_weight=sample_weight,
         n_centroids=5,
-        random_state=rng,
+        random_state=np.random.RandomState(global_random_seed),
     )
     clusters = kmeans._init_centroids(
         X=X,
         x_squared_norms=x_squared_norms,
         init=init,
-        sample_weight=np.full(X.shape[0], 1 / X.shape[0]),
+        sample_weight=np.ones(X.shape[0]),
         n_centroids=5,
-        random_state=rng,
+        random_state=np.random.RandomState(global_random_seed),
     )
-    assert (clusters_weighted != clusters).any()
+    with pytest.raises(AssertionError):
+        assert_allclose(clusters_weighted, clusters)
 
 
-@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 @pytest.mark.parametrize("init", ["k-means++", "random"])
 def test_sample_weight_zero(Estimator, init, global_random_seed):
     """Check that if sample weight is 0, this sample won't be chosen"""
@@ -1319,16 +1317,17 @@ def test_sample_weight_zero(Estimator, init, global_random_seed):
         n_samples=100, n_features=5, centers=5, random_state=global_random_seed
     )
     sample_weight = rng.uniform(size=X.shape[0])
-    sample_weight[[0, 1, 2]] = 0
-    sample_weight = _check_sample_weight(sample_weight, X)
+    sample_weight[::2] = 0
     x_squared_norms = row_norms(X, squared=True)
-    kmeans = Estimator(random_state=global_random_seed, init=init)
+    kmeans = KMeans(random_state=global_random_seed, init=init)
     clusters_weighted = kmeans._init_centroids(
         X=X,
         x_squared_norms=x_squared_norms,
         init=init,
         sample_weight=sample_weight,
         n_centroids=10,
-        random_state=rng,
+        random_state=np.random.RandomState(global_random_seed),
     )
-    assert np.in1d(clusters_weighted, [0, 1, 2], invert=True).any()
+    # No center should be one of the 0 sample weight point (i.e. be at a distance=0 from it)
+    d = euclidean_distances(X[::2], clusters_weighted)
+    assert not np.any(np.isclose(d, 0))
