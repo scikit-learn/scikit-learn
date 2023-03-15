@@ -301,8 +301,9 @@ conda_build_metadata_list = [
             "sphinx-prompt",
             "plotly",
             "pooch",
+            "sphinxext-opengraph",
+            "pip",
         ],
-        "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
             "python": "3.9",
             # XXX: sphinx > 6.0 does not correctly generate searchindex.js
