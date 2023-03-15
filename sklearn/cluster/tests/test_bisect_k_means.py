@@ -139,7 +139,7 @@ def test_float32_float64_equivalence(is_sparse):
 def test_sample_weight_init_bisect(global_random_seed, init):
     """Check that sample weight is used during init."""
     rng = np.random.RandomState(global_random_seed)
-    X = rng.rand(30, 2)
+    X = rng.rand(35, 2)
     sample_weight = rng.uniform(size=X.shape[0])
     x_squared_norms = row_norms(X, squared=True)
     kmeans = BisectingKMeans(n_clusters=2, random_state=global_random_seed, init=init)
