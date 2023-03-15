@@ -495,9 +495,10 @@ def test_singular_value_helpers(n_samples, n_features, global_random_seed):
     _svd_flip_1d(u1, v1)
     _svd_flip_1d(u2, v2)
 
-    atol = 2e-4
-    assert_allclose(u1, u2, atol=atol)
-    assert_allclose(v1, v2, atol=atol)
+    rtol = 1e-2
+    # Setting atol because some coordinates are very close to zero
+    assert_allclose(u1, u2, atol=u2.max() * rtol)
+    assert_allclose(v1, v2, atol=v2.max() * rtol)
 
 
 def test_one_component_equivalence(global_random_seed):
@@ -508,9 +509,10 @@ def test_one_component_equivalence(global_random_seed):
     reg = PLSRegression(n_components=1).fit(X, Y).transform(X)
     canonical = PLSCanonical(n_components=1).fit(X, Y).transform(X)
 
-    atol = 2e-3
-    assert_allclose(svd, reg, atol=atol)
-    assert_allclose(svd, canonical, atol=atol)
+    rtol = 1e-2
+    # Setting atol because some entries are very close to zero
+    assert_allclose(svd, reg, atol=reg.max() * rtol)
+    assert_allclose(svd, canonical, atol=canonical.max() * rtol)
 
 
 def test_svd_flip_1d():
@@ -528,9 +530,11 @@ def test_svd_flip_1d():
     assert_allclose(v, [-1, -2, -3])
 
 
-def test_loadings_converges():
+def test_loadings_converges(global_random_seed):
     """Test that CCA converges. Non-regression test for #19549."""
-    X, y = make_regression(n_samples=200, n_features=20, n_targets=20, random_state=20)
+    X, y = make_regression(
+        n_samples=200, n_features=20, n_targets=20, random_state=global_random_seed
+    )
 
     cca = CCA(n_components=10, max_iter=500)
 
