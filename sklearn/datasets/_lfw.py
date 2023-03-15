@@ -427,6 +427,17 @@ def _fetch_lfw_pairs(
     return pairs, target, np.array(["Different persons", "Same person"])
 
 
+@validate_params(
+    {
+        "subset": ["train", "test", "10_folds"],
+        "data_home": [str, None],
+        "funneled": ["boolean"],
+        "resize": [Interval(Real, 0, None, closed="neither"), None],
+        "color": ["boolean"],
+        "slice_": [tuple, Hidden(None)],
+        "download_if_missing": ["boolean"],
+    }
+)
 def fetch_lfw_pairs(
     *,
     subset="train",
