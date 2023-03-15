@@ -136,9 +136,9 @@ def test_float32_float64_equivalence(is_sparse):
 
 
 @pytest.mark.parametrize("init", ["k-means++", "random"])
-def test_sample_weight_init_bisect(global_random_seed):
+def test_sample_weight_init_bisect(global_random_seed, init):
     """Check that sample weight is used during init."""
-    rng = np.random.RandomState(global_random_seed, init)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.rand(20, 2)
     sample_weight = rng.uniform(size=X.shape[0])
     x_squared_norms = row_norms(X, squared=True)
