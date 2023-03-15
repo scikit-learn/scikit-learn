@@ -342,9 +342,8 @@ def k_means(
         centroids to generate.
 
     sample_weight : array-like of shape (n_samples,), default=None
-        The weights for each observation in `X`. If `None`, all observations
-        are assigned equal weight. If not None, weights will be used in
-        initializations of centroids as well as fitting clusters.
+        The weights for each observation in `X`. `sample_weight` is not
+        used during initialization if init is a user provided array
 
     init : {'k-means++', 'random'}, callable or array-like of shape \
             (n_clusters, n_features), default='k-means++'
@@ -1451,8 +1450,8 @@ class KMeans(_BaseKMeans):
 
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight. If not None, weights will be used in
-            initializations of centroids as well as fitting clusters.
+            are assigned equal weight. `sample_weight` is not used during
+            initialization if init is a user provided array
 
             .. versionadded:: 0.20
 
@@ -2059,8 +2058,8 @@ class MiniBatchKMeans(_BaseKMeans):
 
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight. If not None, weights will be used in
-            initializations of centroids as well as fitting clusters.
+            are assigned equal weight. `sample_weight` is not used during
+            initialization if init is a user provided array.
 
             .. versionadded:: 0.20
 
@@ -2216,8 +2215,8 @@ class MiniBatchKMeans(_BaseKMeans):
 
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight. If not None, weights will be used in
-            initializations of centroids as well as fitting clusters.
+            are assigned equal weight. `sample_weight` is not used during
+            initialization if init is a user provided array
 
         Returns
         -------
