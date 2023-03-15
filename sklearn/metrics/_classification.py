@@ -1075,8 +1075,8 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            StrOptions({"warn"}),
             Options(Real, {1.0, 0.0, np.nan}),
+            StrOptions({"warn"}),
         ],
     }
 )
