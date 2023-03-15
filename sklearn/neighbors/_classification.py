@@ -240,6 +240,11 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             Class labels for each data sample.
         """
         check_is_fitted(self, "_fit_method")
+
+        if self.sample_weight_ is not None:
+            weights *= self.sample_weight_[neigh_ind]
+
+
         if self.weights == "uniform":
             if self._fit_method == "brute" and ArgKminClassMode.is_usable_for(
                 X, self._fit_X, self.metric
