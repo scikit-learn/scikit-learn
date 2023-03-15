@@ -24,13 +24,7 @@ dtypes = [
 ]
 
 }}
-
-#------------------------------------------------------------------------------
-
-"""
-SGD implementation
-WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
-"""
+"""SGD implementation"""
 
 from cython cimport floating
 import numpy as np

@@ -1807,3 +1807,16 @@ def test_read_only_buffer(monkeypatch):
 
     clf = RandomForestClassifier(n_jobs=2, random_state=rng)
     cross_val_score(clf, X, y, cv=2)
+
+
+@pytest.mark.parametrize("class_weight", ["balanced_subsample", None])
+def test_round_samples_to_one_when_samples_too_low(class_weight):
+    """Check low max_samples works and is rounded to one.
+
+    Non-regression test for gh-24037.
+    """
+    X, y = datasets.load_wine(return_X_y=True)
+    forest = RandomForestClassifier(
+        n_estimators=10, max_samples=1e-4, class_weight=class_weight, random_state=0
+    )
+    forest.fit(X, y)
