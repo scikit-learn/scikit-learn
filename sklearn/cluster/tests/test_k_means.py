@@ -1280,7 +1280,7 @@ def test_predict_does_not_change_cluster_centers(is_sparse):
 
 
 @pytest.mark.parametrize("init", ["k-means++", "random"])
-def test_sample_weight_init(Estimator, init, global_random_seed):
+def test_sample_weight_init(init, global_random_seed):
     """Check that sample weight is used during init."""
     rng = np.random.RandomState(global_random_seed)
     X, _ = make_blobs(
@@ -1310,7 +1310,7 @@ def test_sample_weight_init(Estimator, init, global_random_seed):
 
 
 @pytest.mark.parametrize("init", ["k-means++", "random"])
-def test_sample_weight_zero(Estimator, init, global_random_seed):
+def test_sample_weight_zero(init, global_random_seed):
     """Check that if sample weight is 0, this sample won't be chosen"""
     rng = np.random.RandomState(global_random_seed)
     X, _ = make_blobs(
