@@ -13,6 +13,9 @@ echo -e "No problem detected by flake8\n"
 mypy sklearn/
 echo -e "No problem detected by mypy\n"
 
+cython-lint --max-line-length=999 --ignore=E24,E203,E731,E741,W503,W504 .
+echo -e "No problem detected by cython-lint\n"
+
 # For docstrings and warnings of deprecated attributes to be rendered
 # properly, the property decorator must come before the deprecated decorator
 # (else they are treated as functions)
