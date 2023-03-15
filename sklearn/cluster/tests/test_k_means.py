@@ -10,7 +10,6 @@ import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils.validation import _check_sample_weight
 from sklearn.utils.fixes import threadpool_limits
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
