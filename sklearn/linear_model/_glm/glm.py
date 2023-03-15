@@ -12,7 +12,6 @@ import numpy as np
 import scipy.optimize
 
 from ._newton_solver import NewtonCholeskySolver, NewtonSolver
-from ..._loss.glm_distribution import TweedieDistribution
 from ..._loss.loss import (
     HalfGammaLoss,
     HalfPoissonLoss,
@@ -21,7 +20,7 @@ from ..._loss.loss import (
     HalfTweedieLossIdentity,
 )
 from ...base import BaseEstimator, RegressorMixin
-from ...utils import check_array, deprecated
+from ...utils import check_array
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, StrOptions
 from ...utils.optimize import _check_optimize_result
@@ -458,30 +457,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         only needed to set loss.constant_hessian on which GLMs do not rely.
         """
         return HalfSquaredError()
-
-    # TODO(1.3): remove
-    @deprecated(  # type: ignore
-        "Attribute `family` was deprecated in version 1.1 and will be removed in 1.3."
-    )
-    @property
-    def family(self):
-        """Ensure backward compatibility for the time of deprecation.
-
-        .. deprecated:: 1.1
-            Will be removed in 1.3
-        """
-        if isinstance(self, PoissonRegressor):
-            return "poisson"
-        elif isinstance(self, GammaRegressor):
-            return "gamma"
-        elif isinstance(self, TweedieRegressor):
-            return TweedieDistribution(power=self.power)
-        else:
-            raise ValueError(  # noqa
-                "This should never happen. You presumably accessed the deprecated "
-                "`family` attribute from a subclass of the private scikit-learn class "
-                "_GeneralizedLinearRegressor."
-            )
 
 
 class PoissonRegressor(_GeneralizedLinearRegressor):

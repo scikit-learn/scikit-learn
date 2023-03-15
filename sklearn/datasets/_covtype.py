@@ -31,7 +31,7 @@ from ._base import load_descr
 from ..utils import Bunch
 from ._base import _pkl_filepath
 from ..utils import check_random_state
-
+from ..utils._param_validation import validate_params
 
 # The original data can be found in:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
@@ -62,6 +62,16 @@ FEATURE_NAMES += [f"Soil_Type_{i}" for i in range(40)]
 TARGET_NAMES = ["Cover_Type"]
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "download_if_missing": ["boolean"],
+        "random_state": ["random_state"],
+        "shuffle": ["boolean"],
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def fetch_covtype(
     *,
     data_home=None,

@@ -193,6 +193,32 @@ def test_one_hot_encoder_feature_names_unicode():
     assert_array_equal(["n👍me_c❤t1", "n👍me_dat2"], feature_names)
 
 
+def test_one_hot_encoder_custom_feature_name_combiner():
+    """Check the behaviour of `feature_name_combiner` as a callable."""
+
+    def name_combiner(feature, category):
+        return feature + "_" + repr(category)
+
+    enc = OneHotEncoder(feature_name_combiner=name_combiner)
+    X = np.array([["None", None]], dtype=object).T
+    enc.fit(X)
+    feature_names = enc.get_feature_names_out()
+    assert_array_equal(["x0_'None'", "x0_None"], feature_names)
+    feature_names = enc.get_feature_names_out(input_features=["a"])
+    assert_array_equal(["a_'None'", "a_None"], feature_names)
+
+    def wrong_combiner(feature, category):
+        # we should be returning a Python string
+        return 0
+
+    enc = OneHotEncoder(feature_name_combiner=wrong_combiner).fit(X)
+    err_msg = (
+        "When `feature_name_combiner` is a callable, it should return a Python string."
+    )
+    with pytest.raises(TypeError, match=err_msg):
+        enc.get_feature_names_out()
+
+
 def test_one_hot_encoder_set_params():
     X = np.array([[1, 2]]).T
     oh = OneHotEncoder()
@@ -903,7 +929,7 @@ def test_ohe_infrequent_two_levels_drop_frequent(drop):
         max_categories=2,
         drop=drop,
     ).fit(X_train)
-    assert_array_equal(ohe.drop_idx_, [0])
+    assert ohe.categories_[0][ohe.drop_idx_[0]] == "b"
 
     X_test = np.array([["b"], ["c"]])
     X_trans = ohe.transform(X_test)
@@ -1346,7 +1372,7 @@ def test_one_hot_encoder_sparse_deprecated():
 
 # deliberately omit 'OS' as an invalid combo
 @pytest.mark.parametrize(
-    "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "US", "SO", "SU", "SS"]
+    "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "SO", "SU", "SS"]
 )
 @pytest.mark.parametrize("array_type", ["list", "array", "dataframe"])
 def test_encoders_string_categories(input_dtype, category_dtype, array_type):
@@ -1374,6 +1400,27 @@ def test_encoders_string_categories(input_dtype, category_dtype, array_type):
 
     expected = np.array([[1], [1], [0], [1]])
     assert_array_equal(X_trans, expected)
+
+
+def test_mixed_string_bytes_categoricals():
+    """Check that this mixture of predefined categories and X raises an error.
+
+    Categories defined as bytes can not easily be compared to data that is
+    a string.
+    """
+    # data as unicode
+    X = np.array([["b"], ["a"]], dtype="U")
+    # predefined categories as bytes
+    categories = [np.array(["b", "a"], dtype="S")]
+    ohe = OneHotEncoder(categories=categories, sparse_output=False)
+
+    msg = re.escape(
+        "In column 0, the predefined categories have type 'bytes' which is incompatible"
+        " with values of type 'str_'."
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        ohe.fit(X)
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, None])
@@ -1939,3 +1986,68 @@ def test_ordinal_set_output():
 
     assert_allclose(X_pandas.to_numpy(), X_default)
     assert_array_equal(ord_pandas.get_feature_names_out(), X_pandas.columns)
+
+
+def test_predefined_categories_dtype():
+    """Check that the categories_ dtype is `object` for string categories
+
+    Regression test for gh-25171.
+    """
+    categories = [["as", "mmas", "eas", "ras", "acs"], ["1", "2"]]
+
+    enc = OneHotEncoder(categories=categories)
+
+    enc.fit([["as", "1"]])
+
+    assert len(categories) == len(enc.categories_)
+    for n, cat in enumerate(enc.categories_):
+        assert cat.dtype == object
+        assert_array_equal(categories[n], cat)
+
+
+def test_ordinal_encoder_missing_unknown_encoding_max():
+    """Check missing value or unknown encoding can equal the cardinality."""
+    X = np.array([["dog"], ["cat"], [np.nan]], dtype=object)
+    X_trans = OrdinalEncoder(encoded_missing_value=2).fit_transform(X)
+    assert_allclose(X_trans, [[1], [0], [2]])
+
+    enc = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=2).fit(X)
+    X_test = np.array([["snake"]])
+    X_trans = enc.transform(X_test)
+    assert_allclose(X_trans, [[2]])
+
+
+def test_drop_idx_infrequent_categories():
+    """Check drop_idx is defined correctly with infrequent categories.
+
+    Non-regression test for gh-25550.
+    """
+    X = np.array(
+        [["a"] * 2 + ["b"] * 4 + ["c"] * 4 + ["d"] * 4 + ["e"] * 4], dtype=object
+    ).T
+    ohe = OneHotEncoder(min_frequency=4, sparse_output=False, drop="first").fit(X)
+    assert_array_equal(
+        ohe.get_feature_names_out(), ["x0_c", "x0_d", "x0_e", "x0_infrequent_sklearn"]
+    )
+    assert ohe.categories_[0][ohe.drop_idx_[0]] == "b"
+
+    X = np.array([["a"] * 2 + ["b"] * 2 + ["c"] * 10], dtype=object).T
+    ohe = OneHotEncoder(min_frequency=4, sparse_output=False, drop="if_binary").fit(X)
+    assert_array_equal(ohe.get_feature_names_out(), ["x0_infrequent_sklearn"])
+    assert ohe.categories_[0][ohe.drop_idx_[0]] == "c"
+
+    X = np.array(
+        [["a"] * 2 + ["b"] * 4 + ["c"] * 4 + ["d"] * 4 + ["e"] * 4], dtype=object
+    ).T
+    ohe = OneHotEncoder(min_frequency=4, sparse_output=False, drop=["d"]).fit(X)
+    assert_array_equal(
+        ohe.get_feature_names_out(), ["x0_b", "x0_c", "x0_e", "x0_infrequent_sklearn"]
+    )
+    assert ohe.categories_[0][ohe.drop_idx_[0]] == "d"
+
+    ohe = OneHotEncoder(min_frequency=4, sparse_output=False, drop=None).fit(X)
+    assert_array_equal(
+        ohe.get_feature_names_out(),
+        ["x0_b", "x0_c", "x0_d", "x0_e", "x0_infrequent_sklearn"],
+    )
+    assert ohe.drop_idx_ is None

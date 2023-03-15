@@ -10,17 +10,10 @@ import subprocess
 from setuptools.command.build_ext import customize_compiler, new_compiler
 
 
-def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
+def compile_test_program(code, extra_preargs=None, extra_postargs=None):
     """Check that some C code can be compiled and run"""
     ccompiler = new_compiler()
     customize_compiler(ccompiler)
-
-    # extra_(pre/post)args can be a callable to make it possible to get its
-    # value from the compiler
-    if callable(extra_preargs):
-        extra_preargs = extra_preargs(ccompiler)
-    if callable(extra_postargs):
-        extra_postargs = extra_postargs(ccompiler)
 
     start_dir = os.path.abspath(".")
 
