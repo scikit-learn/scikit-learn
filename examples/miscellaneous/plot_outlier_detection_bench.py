@@ -27,8 +27,9 @@ on the same dataset using the knowledge of the labels.
 # =========================================
 #
 # This example uses real-world datasets available in :class:`sklearn.datasets`
-# and the sample size of some datasets is reduced to speed up computation. After
-# the data preprocessing, the datasets' targets will have two classes, 0
+# and the sample size of some datasets is reduced using a stratified
+# :class:`~sklearn.model_selection.train_test_split` to speed up computation.
+# After the data preprocessing, the datasets' targets will have two classes, 0
 # representing inliers and 1 representing outliers.
 #
 # Different datasets require different preprocessing and individual
@@ -48,124 +49,169 @@ on the same dataset using the knowledge of the labels.
 
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.ensemble import IsolationForest
+from sklearn.preprocessing import (
+    OneHotEncoder,
+    OrdinalEncoder,
+    RobustScaler,
+)
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import make_pipeline
+from time import perf_counter
 
 
-def compute_prediction(X, model_name, categorical_columns=None, n_neighbors=20):
+def fit_predict(X, model_name, categorical_columns=(), n_neighbors=20):
 
-    print(f"Computing {model_name} prediction...")
+    tic = perf_counter()
     if model_name == "LOF":
+        preprocessor = ColumnTransformer(
+            [("categorical", OneHotEncoder(), categorical_columns)],
+            remainder=RobustScaler(),
+        )
         clf = LocalOutlierFactor(n_neighbors=n_neighbors)
-        clf.fit(X)
-        y_pred = clf.negative_outlier_factor_
+        model = make_pipeline(preprocessor, clf)
+        model.fit(X)
+        y_pred = model[-1].negative_outlier_factor_
+
     if model_name == "IForest":
+        ordinal_encoder = OrdinalEncoder(
+            handle_unknown="use_encoded_value", unknown_value=-1
+        )
         clf = IsolationForest(random_state=rng)
-        y_pred = clf.fit(X).decision_function(X)
+        preprocessor = ColumnTransformer(
+            [("categorical", ordinal_encoder, categorical_columns)],
+            remainder="passthrough",
+        )
+        model = make_pipeline(preprocessor, clf)
+        y_pred = model.fit(X).decision_function(X)
+    toc = perf_counter()
+    print(f"Duration for {model_name}: {toc - tic:.1f} s")
     return y_pred
 
 
 # %%
+# On the rest of the example we process one dataset per section and summarize
+# the results in a final plotting section.
+#
+# SA dataset
+# ----------
+#
+# The :ref:`kddcup99_dataset` was generated using a closed network and
+# hand-injected attacks. The SA dataset is a subset of it obtained by simply
+# selecting all the normal data and an anomaly proportion of 3%.
+
+# %%
 import numpy as np
-from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_openml
-from sklearn.preprocessing import LabelBinarizer
-import pandas as pd
+from sklearn.datasets import fetch_kddcup99
+from sklearn.model_selection import train_test_split
 
 rng = np.random.RandomState(42)
 
-
-def preprocess_dataset(dataset_name):
-
-    # loading and vectorization
-    print(f"Loading {dataset_name} data")
-    if dataset_name in ["http", "smtp", "SA", "SF"]:
-        dataset = fetch_kddcup99(subset=dataset_name, percent10=True, random_state=rng)
-        X = dataset.data
-        y = dataset.target
-        lb = LabelBinarizer()
-
-        if dataset_name == "SF":
-            idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
-            X = X[idx]  # reduce the sample size
-            y = y[idx]
-            x1 = lb.fit_transform(X[:, 1].astype(str))
-            X = np.c_[X[:, :1], x1, X[:, 2:]]
-        elif dataset_name == "SA":
-            idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
-            X = X[idx]  # reduce the sample size
-            y = y[idx]
-            x1 = lb.fit_transform(X[:, 1].astype(str))
-            x2 = lb.fit_transform(X[:, 2].astype(str))
-            x3 = lb.fit_transform(X[:, 3].astype(str))
-            X = np.c_[X[:, :1], x1, x2, x3, X[:, 4:]]
-        y = (y != b"normal.").astype(int)
-    if dataset_name == "forestcover":
-        dataset = fetch_covtype()
-        X = dataset.data
-        y = dataset.target
-        idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
-        X = X[idx]  # reduce the sample size
-        y = y[idx]
-
-        # inliers are those with attribute 2
-        # outliers are those with attribute 4
-        s = (y == 2) + (y == 4)
-        X = X[s, :]
-        y = y[s]
-        y = (y != 2).astype(int)
-    if dataset_name in ["glass", "wdbc", "cardiotocography"]:
-        dataset = fetch_openml(
-            name=dataset_name, version=1, as_frame=False, parser="pandas"
-        )
-        X = dataset.data
-        y = dataset.target
-
-        if dataset_name == "glass":
-            s = y == "tableware"
-            y = s.astype(int)
-        if dataset_name == "wdbc":
-            s = y == "2"
-            y = s.astype(int)
-            X_mal, y_mal = X[s], y[s]
-            X_ben, y_ben = X[~s], y[~s]
-
-            # downsampled to 39 points (9.8% outliers)
-            idx = rng.choice(y_mal.shape[0], 39, replace=False)
-            X_mal2 = X_mal[idx]
-            y_mal2 = y_mal[idx]
-            X = np.concatenate((X_ben, X_mal2), axis=0)
-            y = np.concatenate((y_ben, y_mal2), axis=0)
-        if dataset_name == "cardiotocography":
-            s = y == "3"
-            y = s.astype(int)
-    # 0 represents inliers, and 1 represents outliers
-    y = pd.Series(y, dtype="category")
-    return (X, y)
-
+X, y = fetch_kddcup99(
+    subset="SA", percent10=True, random_state=rng, return_X_y=True, as_frame=True
+)
+y = (y != b"normal.").astype(int)
+X, _, y, _ = train_test_split(X, y, train_size=0.1, stratify=y, random_state=rng)
 
 # %%
-datasets_names = [
-    "http",
-    "smtp",
-    "SA",
-    "SF",
-    "forestcover",
-    "glass",
-    "wdbc",
-    "cardiotocography",
-]
+# The SA dataset contains 41 features out of which 3 are categorical:
+# "protocol_type", "service" and "flag".
 
-models_names = [
+# %%
+model_names = [
     "LOF",
     "IForest",
 ]
+pos_label = 0  # mean 0 belongs to positive class
 
 y_true = {}
 y_pred = {"LOF": {}, "IForest": {}}
 
-for dataset_name in datasets_names:
-    (X, y) = preprocess_dataset(dataset_name=dataset_name)
-    y_true[dataset_name] = y
-    for model_name in models_names:
-        y_pred[model_name][dataset_name] = compute_prediction(X, model_name=model_name)
+cat_columns = ["protocol_type", "service", "flag"]
+
+y_true["SA"] = y
+for model_name in model_names:
+    y_pred[model_name]["SA"] = fit_predict(
+        X,
+        model_name=model_name,
+        categorical_columns=cat_columns,
+        n_neighbors=int(0.1 * X.shape[0]),
+    )
+
+# %%
+# Forest covertypes dataset
+# -------------------------
+#
+# The :ref:`covtype_dataset` is a multiclass dataset where the target is the
+# dominant species of tree in a given patch of forest. It contains 54 features,
+# some of wich ("Wilderness_Area" and "Soil_Type") are already binary encoded.
+# Though originally meant as a classification task, one can regard inliers as
+# samples encoded with label 2 and outliers as those with label 4.
+
+# %%
+from sklearn.datasets import fetch_covtype
+
+X, y = fetch_covtype(return_X_y=True, as_frame=True)
+s = (y == 2) + (y == 4)
+X = X.loc[s]
+y = y.loc[s]
+y = (y != 2).astype(int)
+
+X, _, y, _ = train_test_split(X, y, train_size=0.1, stratify=y, random_state=rng)
+
+y_true["forestcover"] = y
+for model_name in model_names:
+    y_pred[model_name]["forestcover"] = fit_predict(
+        X,
+        model_name=model_name,
+        n_neighbors=int(0.02 * X.shape[0]),
+    )
+
+# %%
+# WDBC dataset
+# ------------
+#
+# The :ref:`breast_cancer_dataset` (WDBC) is a binary classification dataset
+# where the class is whether a tumor is malignant or benign. It contains 212
+# malignant samples, and 357 benign. All the 30 features are continuous and
+# positive.
+
+# %%
+from sklearn.datasets import load_breast_cancer
+
+X, y = load_breast_cancer(return_X_y=True, as_frame=True)
+y = np.logical_not(y).astype(int)  # make label 1 to be the minority class
+
+y_true["WDBC"] = y
+for model_name in model_names:
+    y_pred[model_name]["WDBC"] = fit_predict(
+        X,
+        model_name=model_name,
+        n_neighbors=int(0.35 * X.shape[0]),
+    )
+
+# %%
+# Cardiotocography dataset
+# ------------------------
+#
+# The `Cardiotocography dataset <http://www.openml.org/d/1466>`_ is a
+# multiclass dataset of fetal cardiotocograms.
+
+# %%
+from sklearn.datasets import fetch_openml
+
+X, y = fetch_openml(
+    name="cardiotocography", version=1, return_X_y=True, as_frame=False, parser="pandas"
+)
+s = y == "3"
+y = s.astype(int)
+
+y_true["cardiotocography"] = y
+for model_name in model_names:
+    y_pred[model_name]["cardiotocography"] = fit_predict(
+        X,
+        model_name=model_name,
+        n_neighbors=int(0.01 * X.shape[0]),
+    )
 
 # %%
 # Plot and interpret results
@@ -177,7 +223,6 @@ for dataset_name in datasets_names:
 # close to 1. The diagonal dashed line represents a random classification
 # of outliers and inliers.
 
-
 import math
 import matplotlib.pyplot as plt
 from sklearn.metrics import RocCurveDisplay
@@ -186,12 +231,13 @@ from sklearn.metrics import RocCurveDisplay
 cols = 2
 linewidth = 1
 pos_label = 0  # mean 0 belongs to positive class
+datasets_names = y_true.keys()
 rows = math.ceil(len(datasets_names) / cols)
 
-fig, axs = plt.subplots(rows, cols, figsize=(10, rows * 3))
+fig, axs = plt.subplots(nrows=rows, ncols=cols, squeeze=False, figsize=(10, rows * 4))
 
 for i, dataset_name in enumerate(datasets_names):
-    for model_name in models_names:
+    for model_name in model_names:
         display = RocCurveDisplay.from_predictions(
             y_true[dataset_name],
             y_pred[model_name][dataset_name],
