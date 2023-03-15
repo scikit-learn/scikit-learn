@@ -662,3 +662,11 @@ def test_interval_real_not_int():
     constraint = Interval(RealNotInt, 0, 1, closed="both")
     assert constraint.is_satisfied_by(1.0)
     assert not constraint.is_satisfied_by(1)
+
+
+def test_real_not_int():
+    """Check for the RealNotInt type."""
+    assert isinstance(1.0, RealNotInt)
+    assert not isinstance(1, RealNotInt)
+    assert isinstance(np.float64(1), RealNotInt)
+    assert not isinstance(np.int64(1), RealNotInt)
