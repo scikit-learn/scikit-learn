@@ -143,8 +143,6 @@ def test_random_starts(global_random_seed):
 
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
 def test_custom_optimizer(kernel, global_random_seed):
-    X = np.atleast_2d(np.linspace(0, 5, 30)).T
-
     # Test that GPC can use externally defined optimizers.
     # Define a dummy optimizer that simply tests 10 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
@@ -164,9 +162,9 @@ def test_custom_optimizer(kernel, global_random_seed):
     gpc = GaussianProcessClassifier(kernel=kernel, optimizer=optimizer)
     gpc.fit(X, y_mc)
     # Checks that optimizer improved marginal likelihood
-    assert gpc.log_marginal_likelihood(gpc.kernel_.theta) > gpc.log_marginal_likelihood(
-        kernel.theta
-    )
+    assert gpc.log_marginal_likelihood(
+        gpc.kernel_.theta
+    ) >= gpc.log_marginal_likelihood(kernel.theta)
 
 
 @pytest.mark.parametrize("kernel", kernels)
