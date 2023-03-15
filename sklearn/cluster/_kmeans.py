@@ -188,9 +188,7 @@ def _kmeans_plusplus(
         The number of seeds to choose.
 
     sample_weight : array-like of shape (n_samples,), default=None
-        The weights for each observation in `X`. If `None`, all observations
-        are assigned equal weight. If not None, weights will be used in
-        initializations of centroids as well as fitting clusters.
+        The weights for each observation in `X`.
 
     x_squared_norms : ndarray of shape (n_samples,)
         Squared Euclidean norm of each data point.
