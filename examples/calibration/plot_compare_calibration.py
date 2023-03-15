@@ -109,7 +109,7 @@ from matplotlib.gridspec import GridSpec
 
 fig = plt.figure(figsize=(10, 10))
 gs = GridSpec(4, 2)
-colors = plt.cm.get_cmap("Dark2")
+colors = plt.get_cmap("Dark2")
 
 ax_calibration_curve = fig.add_subplot(gs[:2, :2])
 calibration_displays = {}
