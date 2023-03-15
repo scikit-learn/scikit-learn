@@ -5,6 +5,7 @@ from math import ceil
 
 import matplotlib as mpl
 import numpy as np
+import pandas as pd
 from matplotlib.lines import Line2D
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
@@ -1143,6 +1144,7 @@ class PartialDependenceDisplay:
         """
         if categorical:
             import matplotlib.pyplot as plt
+
             default_im_kw = dict(interpolation="nearest", cmap="viridis")
             im_kw = {**default_im_kw, **heatmap_kw}
 
@@ -1229,10 +1231,22 @@ class PartialDependenceDisplay:
             ax.set_ylabel(self.feature_names[feature_idx[1]])
 
     def add_legend_or_cmap_for_individually_colored_ice_lines(self, legend_dict):
+        """
+        Adds a legend or colorbar, depending on the dtype of values passed by the user,
+        to the last axis object containing a plot.
+
+        Parameters
+        ----------
+        legend_dict: dict
+            Dictionary containing the information about the legend or the colorbar
+
+        Returns
+        -------
+
+        """
         if legend_dict is None:
             return None
-        # is not None, doesn't work here
-        last_ax_idx_not_none = np.argwhere(self.axes_.flatten() != None)[-1][0]
+        last_ax_idx_not_none = np.argwhere(pd.notna(self.axes_.flatten()))[-1][0]
         if "mapping" in legend_dict:
             # make legend disappear for all plots but the last
             for ax in self.axes_.flatten()[:last_ax_idx_not_none]:
