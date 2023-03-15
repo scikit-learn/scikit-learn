@@ -10,6 +10,7 @@ import warnings
 from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from ..utils._param_validation import RealNotInt
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 from ..model_selection import cross_val_score
@@ -154,7 +155,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         "estimator": [HasMethods(["fit"])],
         "n_features_to_select": [
             StrOptions({"auto", "warn"}, deprecated={"warn"}),
-            Interval(Real, 0, 1, closed="right"),
+            Interval(RealNotInt, 0, 1, closed="right"),
             Interval(Integral, 0, None, closed="neither"),
             Hidden(None),
         ],

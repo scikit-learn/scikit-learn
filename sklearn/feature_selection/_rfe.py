@@ -7,13 +7,14 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
-from numbers import Integral, Real
+from numbers import Integral
 from joblib import effective_n_jobs
 
 
 from ..utils.metaestimators import available_if
 from ..utils.metaestimators import _safe_split
 from ..utils._param_validation import HasMethods, Interval
+from ..utils._param_validation import RealNotInt
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 from ..utils.parallel import delayed, Parallel
@@ -187,12 +188,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         "estimator": [HasMethods(["fit"])],
         "n_features_to_select": [
             None,
-            Interval(Real, 0, 1, closed="right"),
+            Interval(RealNotInt, 0, 1, closed="right"),
             Interval(Integral, 0, None, closed="neither"),
         ],
         "step": [
             Interval(Integral, 0, None, closed="neither"),
-            Interval(Real, 0, 1, closed="neither"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
         ],
         "verbose": ["verbose"],
         "importance_getter": [str, callable],
