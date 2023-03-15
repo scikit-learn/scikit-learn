@@ -1761,6 +1761,15 @@ def precision_recall_fscore_support(
     return precision, recall, f_score, true_sum
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "labels": ["array-like", None],
+        "sample_weight": ["array-like", None],
+        "raise_warning": ["boolean"],
+    }
+)
 def class_likelihood_ratios(
     y_true,
     y_pred,
