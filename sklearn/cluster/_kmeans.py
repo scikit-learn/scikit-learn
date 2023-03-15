@@ -343,7 +343,7 @@ def k_means(
 
     sample_weight : array-like of shape (n_samples,), default=None
         The weights for each observation in `X`. `sample_weight` is not
-        used during initialization if init is a user provided array
+        used during initialization if init is a user provided array.
 
     init : {'k-means++', 'random'}, callable or array-like of shape \
             (n_clusters, n_features), default='k-means++'
@@ -1451,7 +1451,7 @@ class KMeans(_BaseKMeans):
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight. `sample_weight` is not used during
-            initialization if init is a user provided array
+            initialization if init is a user provided array.
 
             .. versionadded:: 0.20
 
@@ -1588,7 +1588,7 @@ def _mini_batch_step(
         Squared euclidean norm of each data point.
 
     sample_weight : ndarray of shape (n_samples,)
-        The weights for each observation in X.
+        The weights for each observation in `X`.
 
     centers : ndarray of shape (n_clusters, n_features)
         The cluster centers before the current iteration
@@ -2216,7 +2216,7 @@ class MiniBatchKMeans(_BaseKMeans):
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight. `sample_weight` is not used during
-            initialization if init is a user provided array
+            initialization if init is a user provided array.
 
         Returns
         -------
