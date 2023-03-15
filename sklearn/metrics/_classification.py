@@ -53,11 +53,8 @@ def _check_zero_division(zero_division):
         return np.float64(0.0)
     elif isinstance(zero_division, (int, float)) and zero_division in [0, 1]:
         return np.float64(zero_division)
-    elif np.isnan(zero_division):
+    else:  # np.isnan(zero_division)
         return np.nan
-    raise ValueError(
-        f'Got zero_division={zero_division}. Must be one of ["warn", 0, 1, np.nan]'
-    )
 
 
 def _check_targets(y_true, y_pred):
@@ -1245,6 +1242,24 @@ def f1_score(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "beta": [Interval(Real, 0.0, None, closed="both")],
+        "labels": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
+        "average": [
+            StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
+            None,
+        ],
+        "sample_weight": ["array-like", None],
+        "zero_division": [
+            StrOptions({"warn"}),
+            Options(Real, {1.0, 0.0, np.nan}),
+        ],
+    }
+)
 def fbeta_score(
     y_true,
     y_pred,
