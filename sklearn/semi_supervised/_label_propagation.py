@@ -184,6 +184,10 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         y : ndarray of shape (n_samples,)
             Predictions for input data.
         """
+        # Note: since `predict` does not accept semi-supervised labels as input,
+        # `fit(X, y).predict(X) != fit(X, y).transduction_`.
+        # Hence, `fit_predict` is not implemented.
+        # See https://github.com/scikit-learn/scikit-learn/pull/24898
         probas = self.predict_proba(X)
         return self.classes_[np.argmax(probas, axis=1)].ravel()
 
@@ -237,14 +241,14 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target class values with unlabeled points marked as -1.
             All unlabeled samples will be transductively assigned labels
-            internally.
+            internally, which are stored in `transduction_`.
 
         Returns
         -------
@@ -252,7 +256,12 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             Returns the instance itself.
         """
         self._validate_params()
-        X, y = self._validate_data(X, y)
+        X, y = self._validate_data(
+            X,
+            y,
+            accept_sparse=["csr", "csc"],
+            reset=True,
+        )
         self.X_ = X
         check_classification_targets(y)
 
@@ -361,7 +370,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     Attributes
     ----------
-    X_ : ndarray of shape (n_samples, n_features)
+    X_ : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input array.
 
     classes_ : ndarray of shape (n_classes,)
@@ -371,7 +380,7 @@ class LabelPropagation(BaseLabelPropagation):
         Categorical distribution for each item.
 
     transduction_ : ndarray of shape (n_samples)
-        Label assigned to each item via the transduction.
+        Label assigned to each item during :term:`fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -459,14 +468,14 @@ class LabelPropagation(BaseLabelPropagation):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target class values with unlabeled points marked as -1.
             All unlabeled samples will be transductively assigned labels
-            internally.
+            internally, which are stored in `transduction_`.
 
         Returns
         -------
@@ -531,7 +540,7 @@ class LabelSpreading(BaseLabelPropagation):
         Categorical distribution for each item.
 
     transduction_ : ndarray of shape (n_samples,)
-        Label assigned to each item via the transduction.
+        Label assigned to each item during :term:`fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.

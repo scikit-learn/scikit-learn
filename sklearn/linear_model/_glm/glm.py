@@ -12,7 +12,6 @@ import numpy as np
 import scipy.optimize
 
 from ._newton_solver import NewtonCholeskySolver, NewtonSolver
-from ..._loss.glm_distribution import TweedieDistribution
 from ..._loss.loss import (
     HalfGammaLoss,
     HalfPoissonLoss,
@@ -21,7 +20,7 @@ from ..._loss.loss import (
     HalfTweedieLossIdentity,
 )
 from ...base import BaseEstimator, RegressorMixin
-from ...utils import check_array, deprecated
+from ...utils import check_array
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, StrOptions
 from ...utils.optimize import _check_optimize_result
@@ -459,30 +458,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         """
         return HalfSquaredError()
 
-    # TODO(1.3): remove
-    @deprecated(  # type: ignore
-        "Attribute `family` was deprecated in version 1.1 and will be removed in 1.3."
-    )
-    @property
-    def family(self):
-        """Ensure backward compatibility for the time of deprecation.
-
-        .. deprecated:: 1.1
-            Will be removed in 1.3
-        """
-        if isinstance(self, PoissonRegressor):
-            return "poisson"
-        elif isinstance(self, GammaRegressor):
-            return "gamma"
-        elif isinstance(self, TweedieRegressor):
-            return TweedieDistribution(power=self.power)
-        else:
-            raise ValueError(  # noqa
-                "This should never happen. You presumably accessed the deprecated "
-                "`family` attribute from a subclass of the private scikit-learn class "
-                "_GeneralizedLinearRegressor."
-            )
-
 
 class PoissonRegressor(_GeneralizedLinearRegressor):
     """Generalized Linear Model with a Poisson distribution.
@@ -496,15 +471,15 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     Parameters
     ----------
     alpha : float, default=1
-        Constant that multiplies the penalty term and thus determines the
+        Constant that multiplies the L2 penalty term and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
-        Values must be in the range `[0.0, inf)`.
+        Values of `alpha` must be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X @ coef + intercept).
+        added to the linear predictor (`X @ coef + intercept`).
 
     solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
@@ -780,15 +755,15 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
             For ``0 < power < 1``, no distribution exists.
 
     alpha : float, default=1
-        Constant that multiplies the penalty term and thus determines the
+        Constant that multiplies the L2 penalty term and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
-        Values must be in the range `[0.0, inf)`.
+        Values of `alpha` must be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X @ coef + intercept).
+        added to the linear predictor (`X @ coef + intercept`).
 
     link : {'auto', 'identity', 'log'}, default='auto'
         The link function of the GLM, i.e. mapping from linear predictor

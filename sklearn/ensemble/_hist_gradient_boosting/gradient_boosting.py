@@ -2,10 +2,9 @@
 # Author: Nicolas Hug
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
 from functools import partial
+import itertools
 from numbers import Real, Integral
-import warnings
 
 import numpy as np
 from timeit import default_timer as time
@@ -13,6 +12,7 @@ from ..._loss.loss import (
     _LOSSES,
     BaseLoss,
     HalfBinomialLoss,
+    HalfGammaLoss,
     HalfMultinomialLoss,
     HalfPoissonLoss,
     PinballLoss,
@@ -23,6 +23,7 @@ from ...utils.validation import (
     check_is_fitted,
     check_consistent_length,
     _check_sample_weight,
+    _check_monotonic_cst,
 )
 from ...utils._param_validation import Interval, StrOptions
 from ...utils._openmp_helpers import _openmp_effective_n_threads
@@ -38,13 +39,11 @@ from .grower import TreeGrower
 
 
 _LOSSES = _LOSSES.copy()
-# TODO(1.3): Remove "binary_crossentropy" and "categorical_crossentropy"
 _LOSSES.update(
     {
         "poisson": HalfPoissonLoss,
+        "gamma": HalfGammaLoss,
         "quantile": PinballLoss,
-        "binary_crossentropy": HalfBinomialLoss,
-        "categorical_crossentropy": HalfMultinomialLoss,
     }
 )
 
@@ -91,8 +90,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "max_depth": [Interval(Integral, 1, None, closed="left"), None],
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
-        "monotonic_cst": ["array-like", None],
-        "interaction_cst": [Iterable, None],
+        "monotonic_cst": ["array-like", dict, None],
+        "interaction_cst": [
+            list,
+            tuple,
+            StrOptions({"pairwise", "no_interactions"}),
+            None,
+        ],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
             Interval(Real, 0, 1, closed="neither"),
@@ -252,9 +256,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if not np.any(is_categorical):
             return None, None
 
-        # compute the known categories in the training data. We need to do
-        # that here instead of in the BinMapper because in case of early
-        # stopping, the mapper only gets a fraction of the training data.
+        # Compute the known categories in the training data. We cannot do this
+        # in the BinMapper because it only gets a fraction of the training data
+        # when early stopping is enabled.
         known_categories = []
 
         for f_idx in range(n_features):
@@ -264,18 +268,24 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if missing.any():
                     categories = categories[~missing]
 
+                if hasattr(self, "feature_names_in_"):
+                    feature_name = f"'{self.feature_names_in_[f_idx]}'"
+                else:
+                    feature_name = f"at index {f_idx}"
+
                 if categories.size > self.max_bins:
                     raise ValueError(
-                        f"Categorical feature at index {f_idx} is "
-                        "expected to have a "
-                        f"cardinality <= {self.max_bins}"
+                        f"Categorical feature {feature_name} is expected to "
+                        f"have a cardinality <= {self.max_bins} but actually "
+                        f"has a cardinality of {categories.size}."
                     )
 
                 if (categories >= self.max_bins).any():
                     raise ValueError(
-                        f"Categorical feature at index {f_idx} is "
-                        "expected to be encoded with "
-                        f"values < {self.max_bins}"
+                        f"Categorical feature {feature_name} is expected to "
+                        f"be encoded with values < {self.max_bins} but the "
+                        "largest value for the encoded categories is "
+                        f"{categories.max()}."
                     )
             else:
                 categories = None
@@ -288,29 +298,30 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.interaction_cst is None:
             return None
 
-        if not (
-            isinstance(self.interaction_cst, Iterable)
-            and all(isinstance(x, Iterable) for x in self.interaction_cst)
-        ):
+        if self.interaction_cst == "no_interactions":
+            interaction_cst = [[i] for i in range(n_features)]
+        elif self.interaction_cst == "pairwise":
+            interaction_cst = itertools.combinations(range(n_features), 2)
+        else:
+            interaction_cst = self.interaction_cst
+
+        try:
+            constraints = [set(group) for group in interaction_cst]
+        except TypeError:
             raise ValueError(
-                "Interaction constraints must be None or an iterable of iterables, "
-                f"got: {self.interaction_cst!r}."
+                "Interaction constraints must be a sequence of tuples or lists, got:"
+                f" {self.interaction_cst!r}."
             )
 
-        invalid_indices = [
-            x
-            for cst_set in self.interaction_cst
-            for x in cst_set
-            if not (isinstance(x, Integral) and 0 <= x < n_features)
-        ]
-        if invalid_indices:
-            raise ValueError(
-                "Interaction constraints must consist of integer indices in [0,"
-                f" n_features - 1] = [0, {n_features - 1}], specifying the position of"
-                f" features, got invalid indices: {invalid_indices!r}"
-            )
-
-        constraints = [set(group) for group in self.interaction_cst]
+        for group in constraints:
+            for x in group:
+                if not (isinstance(x, Integral) and 0 <= x < n_features):
+                    raise ValueError(
+                        "Interaction constraints must consist of integer indices in"
+                        f" [0, n_features - 1] = [0, {n_features - 1}], specifying the"
+                        " position of features, got invalid indices:"
+                        f" {group!r}"
+                    )
 
         # Add all not listed features as own group by default.
         rest = set(range(n_features)) - set().union(*constraints)
@@ -369,6 +380,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
 
         self._validate_parameters()
+        monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
 
         # used for validation in predict
         n_samples, self._n_features = X.shape
@@ -664,7 +676,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
                     is_categorical=self.is_categorical_,
-                    monotonic_cst=self.monotonic_cst,
+                    monotonic_cst=monotonic_cst,
                     interaction_cst=interaction_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
@@ -1190,13 +1202,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'absolute_error', 'poisson', 'quantile'}, \
+    loss : {'squared_error', 'absolute_error', 'gamma', 'poisson', 'quantile'}, \
             default='squared_error'
         The loss function to use in the boosting process. Note that the
-        "squared error" and "poisson" losses actually implement
-        "half least squares loss" and "half poisson deviance" to simplify the
-        computation of the gradient. Furthermore, "poisson" loss internally
-        uses a log-link and requires ``y >= 0``.
+        "squared error", "gamma" and "poisson" losses actually implement
+        "half least squares loss", "half gamma deviance" and "half poisson
+        deviance" to simplify the computation of the gradient. Furthermore,
+        "gamma" and "poisson" losses internally use a log-link, "gamma"
+        requires ``y > 0`` and "poisson" requires ``y >= 0``.
         "quantile" uses the pinball loss.
 
         .. versionchanged:: 0.23
@@ -1204,6 +1217,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         .. versionchanged:: 1.1
            Added option 'quantile'.
+
+        .. versionchanged:: 1.3
+           Added option 'gamma'.
 
     quantile : float, default=None
         If loss is "quantile", this parameter specifies which quantile to be estimated
@@ -1259,24 +1275,39 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Added support for feature names.
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
-          - 1: monotonic increase
-          - 0: no constraint
-          - -1: monotonic decrease
+    monotonic_cst : array-like of int of shape (n_features) or dict, default=None
+        Monotonic constraint to enforce on each feature are specified using the
+        following integer values:
 
+        - 1: monotonic increase
+        - 0: no constraint
+        - -1: monotonic decrease
+
+        If a dict with str keys, map feature to monotonic constraints by name.
+        If an array, the features are mapped to constraints by position. See
+        :ref:`monotonic_cst_features_names` for a usage example.
+
+        The constraints are only valid for binary classifications and hold
+        over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23
 
-    interaction_cst : iterable of iterables of int, default=None
+        .. versionchanged:: 1.2
+           Accept dict of constraints with feature names as keys.
+
+    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+            of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.
 
-        Each iterable materializes a constraint by the set of indices of
-        the features that are allowed to interact with each other.
-        If there are more features than specified in these constraints,
-        they are treated as if they were specified as an additional set.
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
@@ -1389,7 +1420,15 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     _parameter_constraints: dict = {
         **BaseHistGradientBoosting._parameter_constraints,
         "loss": [
-            StrOptions({"squared_error", "absolute_error", "poisson", "quantile"}),
+            StrOptions(
+                {
+                    "squared_error",
+                    "absolute_error",
+                    "poisson",
+                    "gamma",
+                    "quantile",
+                }
+            ),
             BaseLoss,
         ],
         "quantile": [Interval(Real, 0, 1, closed="both"), None],
@@ -1485,7 +1524,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         # Just convert y to the expected dtype
         self.n_trees_per_iteration_ = 1
         y = y.astype(Y_DTYPE, copy=False)
-        if self.loss == "poisson":
+        if self.loss == "gamma":
+            # Ensure y > 0
+            if not np.all(y > 0):
+                raise ValueError("loss='gamma' requires strictly positive y.")
+        elif self.loss == "poisson":
             # Ensure y >= 0 and sum(y) > 0
             if not (np.all(y >= 0) and np.sum(y) > 0):
                 raise ValueError(
@@ -1526,8 +1569,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'log_loss', 'auto', 'binary_crossentropy', 'categorical_crossentropy'}, \
-            default='log_loss'
+    loss : {'log_loss'}, default='log_loss'
         The loss function to use in the boosting process.
 
         For binary classification problems, 'log_loss' is also known as logistic loss,
@@ -1539,11 +1581,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         deviance or categorical crossentropy. Internally, the model fits one tree per
         boosting iteration and per class and uses the softmax function as inverse link
         function to compute the predicted probabilities of the classes.
-
-        .. deprecated:: 1.1
-            The loss arguments 'auto', 'binary_crossentropy' and
-            'categorical_crossentropy' were deprecated in v1.1 and will be removed in
-            version 1.3. Use `loss='log_loss'` which is equivalent.
 
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
@@ -1596,11 +1633,17 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Added support for feature names.
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
-          - 1: monotonic increase
-          - 0: no constraint
-          - -1: monotonic decrease
+    monotonic_cst : array-like of int of shape (n_features) or dict, default=None
+        Monotonic constraint to enforce on each feature are specified using the
+        following integer values:
+
+        - 1: monotonic increase
+        - 0: no constraint
+        - -1: monotonic decrease
+
+        If a dict with str keys, map feature to monotonic constraints by name.
+        If an array, the features are mapped to constraints by position. See
+        :ref:`monotonic_cst_features_names` for a usage example.
 
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
@@ -1608,14 +1651,21 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 0.23
 
-    interaction_cst : iterable of iterables of int, default=None
+        .. versionchanged:: 1.2
+           Accept dict of constraints with feature names as keys.
+
+    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+            of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.
 
-        Each iterable materializes a constraint by the set of indices of
-        the features that are allowed to interact with each other.
-        If there are more features than specified in these constraints,
-        they are treated as if they were specified as an additional set.
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
@@ -1737,25 +1787,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     1.0
     """
 
-    # TODO(1.3): Remove "binary_crossentropy", "categorical_crossentropy", "auto"
     _parameter_constraints: dict = {
         **BaseHistGradientBoosting._parameter_constraints,
-        "loss": [
-            StrOptions(
-                {
-                    "log_loss",
-                    "binary_crossentropy",
-                    "categorical_crossentropy",
-                    "auto",
-                },
-                deprecated={
-                    "auto",
-                    "binary_crossentropy",
-                    "categorical_crossentropy",
-                },
-            ),
-            BaseLoss,
-        ],
+        "loss": [StrOptions({"log_loss"}), BaseLoss],
         "class_weight": [dict, StrOptions({"balanced"}), None],
     }
 
@@ -1954,37 +1988,10 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         return encoded_y
 
     def _get_loss(self, sample_weight):
-        # TODO(1.3): Remove "auto", "binary_crossentropy", "categorical_crossentropy"
-        if self.loss in ("auto", "binary_crossentropy", "categorical_crossentropy"):
-            warnings.warn(
-                f"The loss '{self.loss}' was deprecated in v1.1 and will be removed in "
-                "version 1.3. Use 'log_loss' which is equivalent.",
-                FutureWarning,
+        # At this point self.loss == "log_loss"
+        if self.n_trees_per_iteration_ == 1:
+            return HalfBinomialLoss(sample_weight=sample_weight)
+        else:
+            return HalfMultinomialLoss(
+                sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
             )
-
-        if self.loss in ("log_loss", "auto"):
-            if self.n_trees_per_iteration_ == 1:
-                return HalfBinomialLoss(sample_weight=sample_weight)
-            else:
-                return HalfMultinomialLoss(
-                    sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
-                )
-        if self.loss == "categorical_crossentropy":
-            if self.n_trees_per_iteration_ == 1:
-                raise ValueError(
-                    f"loss='{self.loss}' is not suitable for a binary classification "
-                    "problem. Please use loss='log_loss' instead."
-                )
-            else:
-                return HalfMultinomialLoss(
-                    sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
-                )
-        if self.loss == "binary_crossentropy":
-            if self.n_trees_per_iteration_ > 1:
-                raise ValueError(
-                    f"loss='{self.loss}' is not defined for multiclass "
-                    f"classification with n_classes={self.n_trees_per_iteration_}, "
-                    "use loss='log_loss' instead."
-                )
-            else:
-                return HalfBinomialLoss(sample_weight=sample_weight)

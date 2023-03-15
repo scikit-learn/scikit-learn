@@ -32,7 +32,7 @@ and maintenance:
 
 Please do not email the authors directly to ask for assistance or report issues.
 Instead, please see `What's the best way to ask questions about scikit-learn
-<http://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
+<https://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
 in the FAQ.
 
 .. seealso::
@@ -73,6 +73,13 @@ past, but no longer have communication responsibilities:
 
 .. include:: communication_team_emeritus.rst
 
+Emeritus Contributor Experience Team
+------------------------------------
+
+The following people have been active in the contributor experience team in the
+past:
+
+.. include:: contributor_experience_team_emeritus.rst
 
 .. _citing-scikit-learn:
 
@@ -83,7 +90,7 @@ If you use scikit-learn in a scientific publication, we would appreciate
 citations to the following paper:
 
   `Scikit-learn: Machine Learning in Python
-  <http://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
+  <https://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
   *et al.*, JMLR 12, pp. 2825-2830, 2011.
 
   Bibtex entry::
@@ -538,7 +545,7 @@ Hug to work full-time on scikit-learn in 2020.
 ......................
 
 The following students were sponsored by `Google
-<https://developers.google.com/open-source/>`_ to work on scikit-learn through
+<https://opensource.google/>`_ to work on scikit-learn through
 the `Google Summer of Code <https://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
 program.
 
@@ -619,7 +626,7 @@ Infrastructure support
 ----------------------
 
 - We would also like to thank `Microsoft Azure
-  <https://azure.microsoft.com/en-us/>`_, `Travis Cl <https://travis-ci.org/>`_,
+  <https://azure.microsoft.com/en-us/>`_, `Cirrus Cl <https://cirrus-ci.org>`_,
   `CircleCl <https://circleci.com/>`_ for free CPU time on their Continuous
   Integration servers, and `Anaconda Inc. <https://www.anaconda.com>`_ for the
   storage they provide for our staging and nightly builds.

@@ -268,11 +268,14 @@ redirects = {
     "auto_examples/linear_model/plot_bayesian_ridge": (
         "auto_examples/linear_model/plot_ard"
     ),
-    "examples/model_selection/grid_search_text_feature_extraction.py": (
-        "examples/model_selection/plot_grid_search_text_feature_extraction.py"
+    "auto_examples/model_selection/grid_search_text_feature_extraction.py": (
+        "auto_examples/model_selection/plot_grid_search_text_feature_extraction.py"
     ),
-    "examples/miscellaneous/plot_changed_only_pprint_parameter": (
-        "examples/miscellaneous/plot_estimator_representation"
+    "auto_examples/miscellaneous/plot_changed_only_pprint_parameter": (
+        "auto_examples/miscellaneous/plot_estimator_representation"
+    ),
+    "auto_examples/decomposition/plot_beta_divergence": (
+        "auto_examples/applications/plot_topics_extraction_with_nmf_lda"
     ),
 }
 html_context["redirects"] = redirects
@@ -331,6 +334,7 @@ intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "joblib": ("https://joblib.readthedocs.io/en/latest/", None),
     "seaborn": ("https://seaborn.pydata.org/", None),
+    "skops": ("https://skops.readthedocs.io/en/stable/", None),
 }
 
 v = parse(release)
@@ -640,6 +644,8 @@ linkcheck_ignore = [
     # https://github.com/sphinx-doc/sphinx/issues/9016 for more details about
     # the github example
     r"https://github.com/conda-forge/miniforge#miniforge",
+    r"https://github.com/joblib/threadpoolctl/"
+    "#setting-the-maximum-size-of-thread-pools",
     r"https://stackoverflow.com/questions/5836335/"
     "consistently-create-same-random-numpy-array/5837352#comment6712034_5837352",
 ]

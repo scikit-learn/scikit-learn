@@ -208,8 +208,8 @@ two ways:
 - It allows specifying multiple metrics for evaluation.
 
 - It returns a dict containing fit-times, score-times
-  (and optionally training scores as well as fitted estimators) in
-  addition to the test score.
+  (and optionally training scores, fitted estimators, train-test split indices)
+  in addition to the test score.
 
 For single metric evaluation, where the scoring parameter is a string,
 callable or None, the keys will be - ``['test_score', 'fit_time', 'score_time']``
@@ -220,10 +220,10 @@ following keys -
 
 ``return_train_score`` is set to ``False`` by default to save computation time.
 To evaluate the scores on the training set as well you need to set it to
-``True``.
-
-You may also retain the estimator fitted on each training set by setting
-``return_estimator=True``.
+``True``. You may also retain the estimator fitted on each training set by
+setting ``return_estimator=True``. Similarly, you may set
+`return_indices=True` to retain the training and testing indices used to split
+the dataset into train and test sets for each cv split.
 
 The multiple metrics can be specified either as a list, tuple or set of
 predefined scorer names::
@@ -445,7 +445,7 @@ fold cross validation should be preferred to LOO.
  * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
    <https://web.stanford.edu/~hastie/ElemStatLearn/>`_, Springer 2009
  * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
-   <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
+   <https://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
  * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
    <https://www.ijcai.org/Proceedings/95-2/Papers/016.pdf>`_, Intl. Jnt. Conf. AI
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation

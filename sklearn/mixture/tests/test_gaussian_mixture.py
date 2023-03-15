@@ -984,7 +984,7 @@ def test_monotonic_likelihood(global_random_seed):
             random_state=rng,
             tol=1e-7,
         )
-        current_log_likelihood = -np.infty
+        current_log_likelihood = -np.inf
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", ConvergenceWarning)
             # Do one training iteration at a time so we can make sure that the

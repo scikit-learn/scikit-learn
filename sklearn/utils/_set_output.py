@@ -27,12 +27,14 @@ def _wrap_in_pandas_container(
     columns : callable, ndarray, or None
         The column names or a callable that returns the column names. The
         callable is useful if the column names require some computation.
-        If `None` and `data_to_wrap` is already a dataframe, then the column
-        names are not changed. If `None` and `data_to_wrap` is **not** a
-        dataframe, then columns are `range(n_features)`.
+        If `columns` is a callable that raises an error, `columns` will have
+        the same semantics as `None`. If `None` and `data_to_wrap` is already a
+        dataframe, then the column names are not changed. If `None` and
+        `data_to_wrap` is **not** a dataframe, then columns are
+        `range(n_features)`.
 
     index : array-like, default=None
-        Index for data.
+        Index for data. `index` is ignored if `data_to_wrap` is already a DataFrame.
 
     Returns
     -------
@@ -43,15 +45,16 @@ def _wrap_in_pandas_container(
         raise ValueError("Pandas output does not support sparse data.")
 
     if callable(columns):
-        columns = columns()
+        try:
+            columns = columns()
+        except Exception:
+            columns = None
 
     pd = check_pandas_support("Setting output container to 'pandas'")
 
     if isinstance(data_to_wrap, pd.DataFrame):
         if columns is not None:
             data_to_wrap.columns = columns
-        if index is not None:
-            data_to_wrap.index = index
         return data_to_wrap
 
     return pd.DataFrame(data_to_wrap, index=index, columns=columns)
@@ -195,6 +198,10 @@ class _SetOutputMixin:
             if not hasattr(cls, method) or key not in auto_wrap_output_keys:
                 continue
             cls._sklearn_auto_wrap_output_keys.add(key)
+
+            # Only wrap methods defined by cls itself
+            if method not in cls.__dict__:
+                continue
             wrapped_method = _wrap_method_output(getattr(cls, method), key)
             setattr(cls, method, wrapped_method)
 

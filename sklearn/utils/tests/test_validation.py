@@ -13,6 +13,7 @@ from pytest import importorskip
 import numpy as np
 import scipy.sparse as sp
 
+from sklearn._config import config_context
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import SkipTest
@@ -445,6 +446,27 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     msg = "Input contains NaN"
     with pytest.raises(ValueError, match=msg):
         check_array(X, force_all_finite=True)
+
+
+def test_check_array_panadas_na_support_series():
+    """Check check_array is correct with pd.NA in a series."""
+    pd = pytest.importorskip("pandas")
+
+    X_int64 = pd.Series([1, 2, pd.NA], dtype="Int64")
+
+    msg = "Input contains NaN"
+    with pytest.raises(ValueError, match=msg):
+        check_array(X_int64, force_all_finite=True, ensure_2d=False)
+
+    X_out = check_array(X_int64, force_all_finite=False, ensure_2d=False)
+    assert_allclose(X_out, [1, 2, np.nan])
+    assert X_out.dtype == np.float64
+
+    X_out = check_array(
+        X_int64, force_all_finite=False, ensure_2d=False, dtype=np.float32
+    )
+    assert_allclose(X_out, [1, 2, np.nan])
+    assert X_out.dtype == np.float32
 
 
 def test_check_array_pandas_dtype_casting():
@@ -1549,7 +1571,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
         ("int8", "byte", np.integer),
         ("short", "int16", np.integer),
         ("intc", "int32", np.integer),
-        ("int0", "long", np.integer),
+        ("intp", "long", np.integer),
         ("int", "long", np.integer),
         ("int64", "longlong", np.integer),
         ("int_", "intp", np.integer),
@@ -1675,8 +1697,12 @@ def test_get_feature_names_invalid_dtypes(names, dtypes):
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
     msg = re.escape(
-        "Feature names only support names that are all strings. "
-        f"Got feature names with dtypes: {dtypes}."
+        "Feature names are only supported if all input features have string names, "
+        f"but your input has {dtypes} as feature name / column name types. "
+        "If you want feature names to be stored and validated, you must convert "
+        "them all to strings, by using X.columns = X.columns.astype(str) for "
+        "example. Otherwise you can remove feature / column names from your input "
+        "data, or convert them all to a non-string data type."
     )
     with pytest.raises(TypeError, match=msg):
         names = _get_feature_names(X)
@@ -1724,3 +1750,29 @@ def test_check_feature_names_in_pandas():
 
     with pytest.raises(ValueError, match="input_features is not equal to"):
         est.get_feature_names_out(["x1", "x2", "x3"])
+
+
+def test_boolean_series_remains_boolean():
+    """Regression test for gh-25145"""
+    pd = importorskip("pandas")
+    res = check_array(pd.Series([True, False]), ensure_2d=False)
+    expected = np.array([True, False])
+
+    assert res.dtype == expected.dtype
+    assert_array_equal(res, expected)
+
+
+@pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
+def test_check_array_array_api_has_non_finite(array_namespace):
+    """Checks that Array API arrays checks non-finite correctly."""
+    xp = pytest.importorskip(array_namespace)
+
+    X_nan = xp.asarray([[xp.nan, 1, 0], [0, xp.nan, 3]], dtype=xp.float32)
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match="Input contains NaN."):
+            check_array(X_nan)
+
+    X_inf = xp.asarray([[xp.inf, 1, 0], [0, xp.inf, 3]], dtype=xp.float32)
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match="infinity or a value too large"):
+            check_array(X_inf)

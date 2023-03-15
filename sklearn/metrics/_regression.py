@@ -26,7 +26,7 @@ the lower the better.
 #          Ohad Michel <ohadmich@gmail.com>
 # License: BSD 3 clause
 
-import numbers
+from numbers import Real
 import warnings
 
 import numpy as np
@@ -36,12 +36,12 @@ from ..exceptions import UndefinedMetricWarning
 from ..utils.validation import (
     check_array,
     check_consistent_length,
-    check_scalar,
     _num_samples,
     column_or_1d,
     _check_sample_weight,
 )
 from ..utils.stats import _weighted_percentile
+from ..utils._param_validation import Interval, StrOptions, validate_params
 
 
 __ALL__ = [
@@ -138,6 +138,14 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     return y_type, y_true, y_pred, multioutput
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+    }
+)
 def mean_absolute_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
@@ -208,6 +216,15 @@ def mean_absolute_error(
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+    }
+)
 def mean_pinball_loss(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
 ):
@@ -277,22 +294,25 @@ def mean_pinball_loss(
     sign = (diff >= 0).astype(diff.dtype)
     loss = alpha * sign * diff - (1 - alpha) * (1 - sign) * diff
     output_errors = np.average(loss, weights=sample_weight, axis=0)
-    if isinstance(multioutput, str):
-        if multioutput == "raw_values":
-            return output_errors
-        elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
-            multioutput = None
-        else:
-            raise ValueError(
-                "multioutput is expected to be 'raw_values' "
-                "or 'uniform_average' but we got %r"
-                " instead." % multioutput
-            )
+
+    if isinstance(multioutput, str) and multioutput == "raw_values":
+        return output_errors
+
+    if isinstance(multioutput, str) and multioutput == "uniform_average":
+        # pass None as weights to np.average: uniform mean
+        multioutput = None
 
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+    }
+)
 def mean_absolute_percentage_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
@@ -379,6 +399,15 @@ def mean_absolute_percentage_error(
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+        "squared": ["boolean"],
+    }
+)
 def mean_squared_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared=True
 ):
@@ -536,6 +565,14 @@ def mean_squared_log_error(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def median_absolute_error(
     y_true, y_pred, *, multioutput="uniform_average", sample_weight=None
 ):
@@ -546,10 +583,10 @@ def median_absolute_error(
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
@@ -781,6 +818,19 @@ def explained_variance_score(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average", "variance_weighted"}),
+            "array-like",
+            None,
+        ],
+        "force_finite": ["boolean"],
+    }
+)
 def r2_score(
     y_true,
     y_pred,
@@ -938,6 +988,12 @@ def r2_score(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+    }
+)
 def max_error(y_true, y_pred):
     """
     The max_error metric calculates the maximum residual error.
@@ -1000,6 +1056,17 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
     return np.average(dev, weights=sample_weight)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "power": [
+            Interval(Real, None, 0, closed="right"),
+            Interval(Real, 1, None, closed="left"),
+        ],
+    }
+)
 def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     """Mean Tweedie deviance regression loss.
 
@@ -1059,27 +1126,19 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
         sample_weight = column_or_1d(sample_weight)
         sample_weight = sample_weight[:, np.newaxis]
 
-    p = check_scalar(
-        power,
-        name="power",
-        target_type=numbers.Real,
-    )
-
-    message = f"Mean Tweedie deviance error with power={p} can only be used on "
-    if p < 0:
+    message = f"Mean Tweedie deviance error with power={power} can only be used on "
+    if power < 0:
         # 'Extreme stable', y any real number, y_pred > 0
         if (y_pred <= 0).any():
             raise ValueError(message + "strictly positive y_pred.")
-    elif p == 0:
+    elif power == 0:
         # Normal, y and y_pred can be any real number
         pass
-    elif 0 < p < 1:
-        raise ValueError("Tweedie deviance is only defined for power<=0 and power>=1.")
-    elif 1 <= p < 2:
+    elif 1 <= power < 2:
         # Poisson and compound Poisson distribution, y >= 0, y_pred > 0
         if (y_true < 0).any() or (y_pred <= 0).any():
             raise ValueError(message + "non-negative y and strictly positive y_pred.")
-    elif p >= 2:
+    elif power >= 2:
         # Gamma and Extreme stable distribution, y and y_pred > 0
         if (y_true <= 0).any() or (y_pred <= 0).any():
             raise ValueError(message + "strictly positive y and y_pred.")
@@ -1127,6 +1186,13 @@ def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=1)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Gamma deviance regression loss.
 
@@ -1263,6 +1329,18 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     return 1 - numerator / denominator
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average"}),
+            "array-like",
+        ],
+    }
+)
 def d2_pinball_score(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
 ):
@@ -1286,7 +1364,7 @@ def d2_pinball_score(
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     alpha : float, default=0.5
@@ -1393,15 +1471,9 @@ def d2_pinball_score(
         if multioutput == "raw_values":
             # return scores individually
             return output_scores
-        elif multioutput == "uniform_average":
+        else:  # multioutput == "uniform_average"
             # passing None as weights to np.average results in uniform mean
             avg_weights = None
-        else:
-            raise ValueError(
-                "multioutput is expected to be 'raw_values' "
-                "or 'uniform_average' but we got %r"
-                " instead." % multioutput
-            )
     else:
         avg_weights = multioutput
 
