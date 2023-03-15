@@ -480,11 +480,6 @@ def test_gaussian_mixture_log_probabilities(global_random_seed):
 
 def test_gaussian_mixture_estimate_log_prob_resp(global_random_seed):
     # test whether responsibilities are normalized
-
-    # Making this test seed-insensitive for the 0-99 range would
-    # be too costly. Restricting to the 0-9 range is necessary to
-    # use small enough datasets that avoid increasing the run time
-    # too much.
     rng = np.random.RandomState(global_random_seed)
     rand_data = RandomData(rng, scale=5)
     n_samples = rand_data.n_samples
@@ -512,8 +507,8 @@ def test_gaussian_mixture_estimate_log_prob_resp(global_random_seed):
         assert_array_equal(g.precisions_init, precisions)
 
 
-def test_gaussian_mixture_predict_predict_proba():
-    rng = np.random.RandomState(0)
+def test_gaussian_mixture_predict_predict_proba(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     rand_data = RandomData(rng)
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
@@ -544,16 +539,16 @@ def test_gaussian_mixture_predict_predict_proba():
 
 @pytest.mark.filterwarnings("ignore:.*did not converge.*")
 @pytest.mark.parametrize(
-    "seed, max_iter, tol",
+    "max_iter, tol",
     [
-        (0, 2, 1e-7),  # strict non-convergence
-        (1, 2, 1e-1),  # loose non-convergence
-        (3, 300, 1e-7),  # strict convergence
-        (4, 300, 1e-1),  # loose convergence
+        (2, 1e-7),  # strict non-convergence
+        (2, 1e-1),  # loose non-convergence
+        (300, 1e-7),  # strict convergence
+        (300, 1e-1),  # loose convergence
     ],
 )
-def test_gaussian_mixture_fit_predict(seed, max_iter, tol):
-    rng = np.random.RandomState(seed)
+def test_gaussian_mixture_fit_predict(max_iter, tol, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     rand_data = RandomData(rng)
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
@@ -586,9 +581,9 @@ def test_gaussian_mixture_fit_predict_n_init(global_random_seed):
     assert_array_equal(y_pred1, y_pred2)
 
 
-def test_gaussian_mixture_fit():
+def test_gaussian_mixture_fit(global_random_seed):
     # recover the ground truth
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     rand_data = RandomData(rng)
     n_features = rand_data.n_features
     n_components = rand_data.n_components
@@ -641,7 +636,7 @@ def test_gaussian_mixture_fit():
 
 def test_gaussian_mixture_fit_best_params(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
-    rand_data = RandomData(rng, n_samples=400, n_features=3, scale=70)
+    rand_data = RandomData(rng)
     n_components = rand_data.n_components
     n_init = 10
     for covar_type in COVARIANCE_TYPE:
@@ -814,10 +809,8 @@ def test_gaussian_mixture_verbose():
 
 
 @pytest.mark.filterwarnings("ignore:.*did not converge.*")
-@pytest.mark.parametrize("seed", (0, 1, 2))
-def test_warm_start(seed):
-    random_state = seed
-    rng = np.random.RandomState(random_state)
+def test_warm_start(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features, n_components = 500, 2, 2
     X = rng.rand(n_samples, n_features)
 
@@ -827,7 +820,7 @@ def test_warm_start(seed):
         n_init=1,
         max_iter=2,
         reg_covar=0,
-        random_state=random_state,
+        random_state=global_random_seed,
         warm_start=False,
     )
     h = GaussianMixture(
@@ -835,7 +828,7 @@ def test_warm_start(seed):
         n_init=1,
         max_iter=1,
         reg_covar=0,
-        random_state=random_state,
+        random_state=global_random_seed,
         warm_start=True,
     )
 
@@ -854,7 +847,7 @@ def test_warm_start(seed):
         n_init=1,
         max_iter=5,
         reg_covar=0,
-        random_state=random_state,
+        random_state=global_random_seed,
         warm_start=False,
         tol=1e-6,
     )
@@ -863,7 +856,7 @@ def test_warm_start(seed):
         n_init=1,
         max_iter=5,
         reg_covar=0,
-        random_state=random_state,
+        random_state=global_random_seed,
         warm_start=True,
         tol=1e-6,
     )
@@ -883,9 +876,9 @@ def test_warm_start(seed):
 
 
 @ignore_warnings(category=ConvergenceWarning)
-def test_convergence_detected_with_warm_start():
+def test_convergence_detected_with_warm_start(global_random_seed):
     # We check that convergence is detected when warm_start=True
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     rand_data = RandomData(rng)
     n_components = rand_data.n_components
     X = rand_data.X["full"]
@@ -908,7 +901,7 @@ def test_convergence_detected_with_warm_start():
 def test_score(global_random_seed):
     covar_type = "full"
     rng = np.random.RandomState(global_random_seed)
-    rand_data = RandomData(rng, n_samples=500, scale=3)
+    rand_data = RandomData(rng, scale=7)
     n_components = rand_data.n_components
     X = rand_data.X[covar_type]
 
@@ -918,7 +911,7 @@ def test_score(global_random_seed):
         n_init=1,
         max_iter=1,
         reg_covar=0,
-        random_state=rng,
+        random_state=global_random_seed,
         covariance_type=covar_type,
     )
     msg = (
@@ -941,7 +934,7 @@ def test_score(global_random_seed):
         n_components=n_components,
         n_init=1,
         reg_covar=0,
-        random_state=rng,
+        random_state=global_random_seed,
         covariance_type=covar_type,
     ).fit(X)
     assert gmm2.score(X) > gmm1.score(X)
@@ -973,10 +966,10 @@ def test_score_samples():
     assert gmm_score_samples.shape[0] == rand_data.n_samples
 
 
-def test_monotonic_likelihood():
+def test_monotonic_likelihood(global_random_seed):
     # We check that each step of the EM without regularization improve
     # monotonically the training set likelihood
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     rand_data = RandomData(rng, scale=7)
     n_components = rand_data.n_components
 
@@ -1007,10 +1000,9 @@ def test_monotonic_likelihood():
             assert gmm.converged_
 
 
-def test_regularisation():
+def test_regularisation(global_random_seed):
     # We train the GaussianMixture on degenerate data by defining two clusters
     # of a 0 covariance.
-    rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
 
     X = np.vstack(
@@ -1022,7 +1014,7 @@ def test_regularisation():
             n_components=n_samples,
             reg_covar=0,
             covariance_type=covar_type,
-            random_state=rng,
+            random_state=global_random_seed,
         )
 
         with warnings.catch_warnings():
@@ -1063,8 +1055,8 @@ def test_property(global_random_seed):
             assert_array_almost_equal(gmm.precisions_, 1.0 / gmm.covariances_)
 
 
-def test_sample():
-    rng = np.random.RandomState(0)
+def test_sample(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     rand_data = RandomData(rng, scale=7, n_components=3)
     n_features, n_components = rand_data.n_features, rand_data.n_components
 
@@ -1121,23 +1113,25 @@ def test_sample():
 
 
 @ignore_warnings(category=ConvergenceWarning)
-def test_init():
+def test_init(global_random_seed):
     # We check that by increasing the n_init number we have a better solution
-    for random_state in range(15):
-        rand_data = RandomData(
-            np.random.RandomState(random_state), n_samples=50, scale=1
-        )
-        n_components = rand_data.n_components
-        X = rand_data.X["full"]
+    rand_data = RandomData(
+        np.random.RandomState(global_random_seed), n_samples=50, scale=1
+    )
+    n_components = rand_data.n_components
+    X = rand_data.X["full"]
 
-        gmm1 = GaussianMixture(
-            n_components=n_components, n_init=1, max_iter=1, random_state=random_state
-        ).fit(X)
-        gmm2 = GaussianMixture(
-            n_components=n_components, n_init=10, max_iter=1, random_state=random_state
-        ).fit(X)
+    gmm1 = GaussianMixture(
+        n_components=n_components, n_init=1, max_iter=1, random_state=global_random_seed
+    ).fit(X)
+    gmm2 = GaussianMixture(
+        n_components=n_components,
+        n_init=10,
+        max_iter=1,
+        random_state=global_random_seed,
+    ).fit(X)
 
-        assert gmm2.lower_bound_ >= gmm1.lower_bound_
+    assert gmm2.lower_bound_ >= gmm1.lower_bound_
 
 
 def test_gaussian_mixture_setting_best_params():
@@ -1270,7 +1264,7 @@ def test_max_iter_zero():
     assert_allclose(gmm.means_, means_init)
 
 
-def test_gaussian_mixture_precisions_init_diag():
+def test_gaussian_mixture_precisions_init_diag(global_random_seed):
     """Check that we properly initialize `precision_cholesky_` when we manually
     provide the precision matrix.
 
@@ -1285,14 +1279,14 @@ def test_gaussian_mixture_precisions_init_diag():
     """
     # generate a toy dataset
     n_samples = 300
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     shifted_gaussian = rng.randn(n_samples, 2) + np.array([20, 20])
     C = np.array([[0.0, -0.7], [3.5, 0.7]])
     stretched_gaussian = np.dot(rng.randn(n_samples, 2), C)
     X = np.vstack([shifted_gaussian, stretched_gaussian])
 
     # common parameters to check the consistency of precision initialization
-    n_components, covariance_type, reg_covar, random_state = 2, "diag", 1e-6, 0
+    n_components, covariance_type, reg_covar = 2, "diag", 1e-6
 
     # execute the manual initialization to compute the precision matrix:
     # - run KMeans to have an initial guess
@@ -1300,7 +1294,7 @@ def test_gaussian_mixture_precisions_init_diag():
     # - compute the precision matrix from the estimated covariance
     resp = np.zeros((X.shape[0], n_components))
     label = (
-        KMeans(n_clusters=n_components, n_init=1, random_state=random_state)
+        KMeans(n_clusters=n_components, n_init=1, random_state=global_random_seed)
         .fit(X)
         .labels_
     )
@@ -1315,14 +1309,14 @@ def test_gaussian_mixture_precisions_init_diag():
         covariance_type=covariance_type,
         reg_covar=reg_covar,
         precisions_init=precisions_init,
-        random_state=random_state,
+        random_state=global_random_seed,
     ).fit(X)
 
     gm_without_init = GaussianMixture(
         n_components=n_components,
         covariance_type=covariance_type,
         reg_covar=reg_covar,
-        random_state=random_state,
+        random_state=global_random_seed,
     ).fit(X)
 
     assert gm_without_init.n_iter_ == gm_with_init.n_iter_
