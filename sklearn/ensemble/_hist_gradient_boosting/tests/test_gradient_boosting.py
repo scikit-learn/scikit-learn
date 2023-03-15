@@ -85,19 +85,6 @@ def test_init_parameters_validation(GradientBoosting, X, y, params, err_msg):
         GradientBoosting(**params).fit(X, y)
 
 
-# TODO(1.3): remove
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-def test_invalid_classification_loss():
-    binary_clf = HistGradientBoostingClassifier(loss="binary_crossentropy")
-    err_msg = (
-        "loss='binary_crossentropy' is not defined for multiclass "
-        "classification with n_classes=3, use "
-        "loss='log_loss' instead"
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        binary_clf.fit(np.zeros(shape=(3, 2)), np.arange(3))
-
-
 @pytest.mark.parametrize(
     "scoring, validation_fraction, early_stopping, n_iter_no_change, tol",
     [
@@ -670,20 +657,6 @@ def test_infinite_values_missing_values():
 
     assert stump_clf.fit(X, y_isinf).score(X, y_isinf) == 1
     assert stump_clf.fit(X, y_isnan).score(X, y_isnan) == 1
-
-
-# TODO(1.3): remove
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-def test_crossentropy_binary_problem():
-    # categorical_crossentropy should only be used if there are more than two
-    # classes present. PR #14869
-    X = [[1], [0]]
-    y = [0, 1]
-    gbrt = HistGradientBoostingClassifier(loss="categorical_crossentropy")
-    with pytest.raises(
-        ValueError, match="loss='categorical_crossentropy' is not suitable for"
-    ):
-        gbrt.fit(X, y)
 
 
 @pytest.mark.parametrize("scoring", [None, "loss"])
@@ -1319,32 +1292,6 @@ def test_interaction_cst_numerically():
         - est.predict(X_delta_0_d)
         > 0.01
     )
-
-
-# TODO(1.3): Remove
-@pytest.mark.parametrize(
-    "old_loss, new_loss, Estimator",
-    [
-        ("auto", "log_loss", HistGradientBoostingClassifier),
-        ("binary_crossentropy", "log_loss", HistGradientBoostingClassifier),
-        ("categorical_crossentropy", "log_loss", HistGradientBoostingClassifier),
-    ],
-)
-def test_loss_deprecated(old_loss, new_loss, Estimator):
-    if old_loss == "categorical_crossentropy":
-        X, y = X_multi_classification[:10], y_multi_classification[:10]
-        assert len(np.unique(y)) > 2
-    else:
-        X, y = X_classification[:10], y_classification[:10]
-
-    est1 = Estimator(loss=old_loss, random_state=0)
-
-    with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
-        est1.fit(X, y)
-
-    est2 = Estimator(loss=new_loss, random_state=0)
-    est2.fit(X, y)
-    assert_allclose(est1.predict(X), est2.predict(X))
 
 
 def test_no_user_warning_with_scoring():
