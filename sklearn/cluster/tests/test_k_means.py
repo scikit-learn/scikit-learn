@@ -1328,6 +1328,7 @@ def test_sample_weight_zero(Estimator, init, global_random_seed):
         n_centroids=10,
         random_state=np.random.RandomState(global_random_seed),
     )
-    # No center should be one of the 0 sample weight point (i.e. be at a distance=0 from it)
+    # No center should be one of the 0 sample weight point
+    # (i.e. be at a distance=0 from it)
     d = euclidean_distances(X[::2], clusters_weighted)
     assert not np.any(np.isclose(d, 0))
