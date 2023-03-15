@@ -57,6 +57,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     tol : float, default=None
         If the score is not incremented by at least `tol` between two
         consecutive feature additions or removals, stop adding or removing.
+
+        `tol` can be negative when removing features using `direction="backward"`.
+        It can be useful to reduce the number of features at the cost of a small
+        decrease in the score.
+
         `tol` is enabled only when `n_features_to_select` is `"auto"`.
 
         .. versionadded:: 1.1
@@ -153,7 +158,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             Interval(Integral, 0, None, closed="neither"),
             Hidden(None),
         ],
-        "tol": [None, Interval(Real, 0, None, closed="neither")],
+        "tol": [None, Interval(Real, None, None, closed="neither")],
         "direction": [StrOptions({"forward", "backward"})],
         "scoring": [None, StrOptions(set(get_scorer_names())), callable],
         "cv": ["cv_object"],
@@ -249,6 +254,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             self.n_features_to_select_ = self.n_features_to_select
         elif isinstance(self.n_features_to_select, Real):
             self.n_features_to_select_ = int(n_features * self.n_features_to_select)
+
+        if self.tol is not None and self.tol < 0 and self.direction == "forward":
+            raise ValueError("tol must be positive when doing forward selection")
 
         cloned_estimator = clone(self.estimator)
 

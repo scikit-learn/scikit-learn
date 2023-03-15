@@ -55,7 +55,7 @@ cdef inline floating fsign(floating f) noexcept nogil:
         return -1.0
 
 
-cdef floating abs_max(int n, floating* a) noexcept nogil:
+cdef floating abs_max(int n, const floating* a) noexcept nogil:
     """np.max(np.abs(a))"""
     cdef int i
     cdef floating m = fabs(a[0])
@@ -79,7 +79,7 @@ cdef floating max(int n, floating* a) noexcept nogil:
     return m
 
 
-cdef floating diff_abs_max(int n, floating* a, floating* b) noexcept nogil:
+cdef floating diff_abs_max(int n, const floating* a, floating* b) noexcept nogil:
     """np.max(np.abs(a - b))"""
     cdef int i
     cdef floating m = fabs(a[0] - b[0])
@@ -90,13 +90,12 @@ cdef floating diff_abs_max(int n, floating* a, floating* b) noexcept nogil:
             m = d
     return m
 
-# TODO: use const fused typed memoryview where possible when Cython 0.29.33 is used.
 def enet_coordinate_descent(
-    cnp.ndarray[floating, ndim=1, mode='c'] w,
+    floating[::1] w,
     floating alpha,
     floating beta,
-    cnp.ndarray[floating, ndim=2, mode='fortran'] X,
-    cnp.ndarray[floating, ndim=1, mode='c'] y,
+    const floating[::1, :] X,
+    const floating[::1] y,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -273,17 +272,16 @@ def enet_coordinate_descent(
     return np.asarray(w), gap, tol, n_iter + 1
 
 
-# TODO: use const fused typed memoryview where possible when Cython 0.29.33 is used.
 def sparse_enet_coordinate_descent(
-    cnp.ndarray[floating, ndim=1, mode='c'] w,
+    floating[::1] w,
     floating alpha,
     floating beta,
-    cnp.ndarray[floating, ndim=1, mode='c'] X_data,
+    const floating[::1] X_data,
     const int[::1] X_indices,
     const int[::1] X_indptr,
-    cnp.ndarray[floating, ndim=1, mode='c'] y,
-    cnp.ndarray[floating, ndim=1, mode='c'] sample_weight,
-    cnp.ndarray[floating, ndim=1, mode='c'] X_mean,
+    const floating[::1] y,
+    const floating[::1] sample_weight,
+    const floating[::1] X_mean,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -340,7 +338,7 @@ def sparse_enet_coordinate_descent(
     # R = y - Zw, weighted version R = sample_weight * (y - Zw)
     cdef floating[::1] R
     cdef floating[::1] XtA
-    cdef floating[::1] yw
+    cdef const floating[::1] yw
 
     if floating is float:
         dtype = np.float32
@@ -565,14 +563,13 @@ def sparse_enet_coordinate_descent(
     return np.asarray(w), gap, tol, n_iter + 1
 
 
-# TODO: use const fused typed memoryview where possible when Cython 0.29.33 is used.
 def enet_coordinate_descent_gram(
-    cnp.ndarray[floating, ndim=1, mode='c'] w,
+    floating[::1] w,
     floating alpha,
     floating beta,
-    cnp.ndarray[floating, ndim=2, mode='c'] Q,
-    cnp.ndarray[floating, ndim=1, mode='c'] q,
-    cnp.ndarray[floating, ndim=1] y,
+    const floating[:, ::1] Q,
+    const floating[::1] q,
+    const floating[:] y,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -633,8 +630,8 @@ def enet_coordinate_descent_gram(
 
     cdef floating y_norm2 = np.dot(y, y)
     cdef floating* w_ptr = &w[0]
-    cdef floating* Q_ptr = &Q[0, 0]
-    cdef floating* q_ptr = &q[0]
+    cdef const floating* Q_ptr = &Q[0, 0]
+    cdef const floating* q_ptr = &q[0]
     cdef floating* H_ptr = &H[0]
     cdef floating* XtA_ptr = &XtA[0]
     tol = tol * y_norm2
@@ -736,14 +733,12 @@ def enet_coordinate_descent_gram(
 
     return np.asarray(w), gap, tol, n_iter + 1
 
-# TODO: use const fused typed memoryview where possible when Cython 0.29.33 is used.
 def enet_coordinate_descent_multi_task(
-    cnp.ndarray[floating, ndim=2, mode='fortran'] W,
+    const floating[::1, :] W,
     floating l1_reg,
     floating l2_reg,
-    # TODO: use const qualified fused-typed memoryview when Cython 3.0 is used.
-    cnp.ndarray[floating, ndim=2, mode='fortran'] X,
-    cnp.ndarray[floating, ndim=2, mode='fortran'] Y,
+    const floating[::1, :] X,
+    const floating[::1, :] Y,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -807,8 +802,8 @@ def enet_coordinate_descent_multi_task(
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
-    cdef floating* X_ptr = &X[0, 0]
-    cdef floating* Y_ptr = &Y[0, 0]
+    cdef const floating* X_ptr = &X[0, 0]
+    cdef const floating* Y_ptr = &Y[0, 0]
 
     if l1_reg == 0:
         warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
