@@ -26,6 +26,7 @@ from ...utils.validation import (
     _check_monotonic_cst,
 )
 from ...utils._param_validation import Interval, StrOptions
+from ...utils._param_validation import RealNotInt
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
@@ -99,7 +100,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         ],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
-            Interval(Real, 0, 1, closed="neither"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
             Interval(Integral, 1, None, closed="left"),
             None,
         ],
