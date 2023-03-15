@@ -495,7 +495,7 @@ def test_singular_value_helpers(n_samples, n_features, global_random_seed):
     _svd_flip_1d(u1, v1)
     _svd_flip_1d(u2, v2)
 
-    rtol = 1e-2
+    rtol = 1e-3
     # Setting atol because some coordinates are very close to zero
     assert_allclose(u1, u2, atol=u2.max() * rtol)
     assert_allclose(v1, v2, atol=v2.max() * rtol)
@@ -509,7 +509,7 @@ def test_one_component_equivalence(global_random_seed):
     reg = PLSRegression(n_components=1).fit(X, Y).transform(X)
     canonical = PLSCanonical(n_components=1).fit(X, Y).transform(X)
 
-    rtol = 1e-2
+    rtol = 1e-3
     # Setting atol because some entries are very close to zero
     assert_allclose(svd, reg, atol=reg.max() * rtol)
     assert_allclose(svd, canonical, atol=canonical.max() * rtol)
