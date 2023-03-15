@@ -1255,8 +1255,8 @@ def f1_score(
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
+            Options(Real, {0.0, 1.0, np.nan}),
             StrOptions({"warn"}),
-            Options(Real, {1.0, 0.0, np.nan}),
         ],
     }
 )
