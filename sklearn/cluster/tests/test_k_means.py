@@ -1292,7 +1292,7 @@ def test_sample_weight_init(init, global_random_seed):
     )
     x_squared_norms = row_norms(X, squared=True)
 
-    kmeans = BisectingKMeans(n_clusters=4, random_state=global_random_seed, init=init)
+    kmeans = KMeans(n_clusters=4, random_state=global_random_seed, init=init)
     clusters_weighted = kmeans._init_centroids(
         X=X,
         x_squared_norms=x_squared_norms,
