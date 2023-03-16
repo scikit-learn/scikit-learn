@@ -716,8 +716,7 @@ def test_sgd_predict_proba_method_access(klass):
     # details.
     for loss in linear_model.SGDClassifier.loss_functions:
         clf = SGDClassifier(loss=loss)
-        # TODO(1.3): Remove "log"
-        if loss in ("log_loss", "log", "modified_huber"):
+        if loss in ("log_loss", "modified_huber"):
             assert hasattr(clf, "predict_proba")
             assert hasattr(clf, "predict_log_proba")
         else:
@@ -2058,29 +2057,6 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     with joblib.parallel_backend(backend=backend):
         clf_parallel.fit(X, y)
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
-
-
-# TODO(1.3): Remove
-@pytest.mark.parametrize(
-    "old_loss, new_loss, Estimator",
-    [
-        ("log", "log_loss", linear_model.SGDClassifier),
-    ],
-)
-def test_loss_deprecated(old_loss, new_loss, Estimator):
-
-    # Note: class BaseSGD calls self._validate_params() in __init__, therefore
-    # even instantiation of class raises FutureWarning for deprecated losses.
-    with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
-        est1 = Estimator(loss=old_loss, random_state=0)
-        est1.fit(X, Y)
-
-    est2 = Estimator(loss=new_loss, random_state=0)
-    est2.fit(X, Y)
-    if hasattr(est1, "predict_proba"):
-        assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
-    else:
-        assert_allclose(est1.predict(X), est2.predict(X))
 
 
 @pytest.mark.parametrize(
