@@ -14,7 +14,7 @@ This module defines export functions for decision trees.
 from io import StringIO
 from numbers import Integral
 
-import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 
 from . import DecisionTreeClassifier
@@ -90,7 +90,7 @@ SENTINEL = Sentinel()
         "proportion": ["boolean"],
         "rounded": ["boolean"],
         "precision": [Interval(Integral, 0, None, closed="left"), None],
-        "ax": [matplotlib.pyplot.Figure, None],
+        "ax": [plt.Figure, None],
         "fontsize": [Interval(Integral, 0, None, closed="left"), None],
     }
 )
