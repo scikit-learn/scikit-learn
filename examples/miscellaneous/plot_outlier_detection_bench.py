@@ -83,7 +83,7 @@ def fit_predict(X, model_name, categorical_columns=(), n_neighbors=20):
         model = make_pipeline(preprocessor, clf)
         y_pred = model.fit(X).decision_function(X)
     toc = perf_counter()
-    print(f"Duration for {model_name}: {toc - tic:.1f} s")
+    print(f"Duration for {model_name}: {toc - tic:.2f} s")
     return y_pred
 
 
@@ -158,6 +158,7 @@ y = (y != 2).astype(int)
 X, _, y, _ = train_test_split(X, y, train_size=0.1, stratify=y, random_state=rng)
 
 n_samples = X.shape[0]
+X_forestcover = X  # save X for later use
 y_true["forestcover"] = y
 for model_name in model_names:
     y_pred[model_name]["forestcover"] = fit_predict(
@@ -219,7 +220,7 @@ for model_name in model_names:
 
 # %%
 # Plot and interpret results
-# --------------------------
+# ==========================
 #
 # The algorithm performance relates to how good the true positive rate (TPR)
 # is at low value of the false positive rate (FPR). The best algorithms
@@ -227,6 +228,7 @@ for model_name in model_names:
 # close to 1. The diagonal dashed line represents a random classification
 # of outliers and inliers.
 
+# %%
 import math
 import matplotlib.pyplot as plt
 from sklearn.metrics import RocCurveDisplay

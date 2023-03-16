@@ -53,6 +53,7 @@ scaled_X_train = scaler.fit_transform(X_train)
 
 # %%
 # .. _neighbors_scaling:
+#
 # Effect of rescaling on a k-neighbors models
 # ===========================================
 #
