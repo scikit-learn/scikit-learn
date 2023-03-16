@@ -5,7 +5,6 @@ from math import ceil
 
 import matplotlib as mpl
 import numpy as np
-import pandas as pd
 from matplotlib.lines import Line2D
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
@@ -1246,7 +1245,8 @@ class PartialDependenceDisplay:
         """
         if legend_dict is None:
             return None
-        last_ax_idx_not_none = np.argwhere(pd.notna(self.axes_.flatten()))[-1][0]
+        # condition is None , does not work here
+        last_ax_idx_not_none = np.argwhere(self.axes_.flatten() != None)[-1][0]  # noqa
         if "mapping" in legend_dict:
             # make legend disappear for all plots but the last
             for ax in self.axes_.flatten()[:last_ax_idx_not_none]:
