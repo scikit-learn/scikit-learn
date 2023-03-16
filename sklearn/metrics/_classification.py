@@ -2350,6 +2350,21 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     return score
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "labels": ["array-like", None],
+        "target_names": ["array-like", None],
+        "sample_weight": ["array-like", None],
+        "digits": [Interval(Integral, 0, None, closed="left")],
+        "output_dict": ["boolean"],
+        "zero_division": [
+            Options(Real, {0, 1}),
+            StrOptions({"warn"}),
+        ],
+    }
+)
 def classification_report(
     y_true,
     y_pred,
@@ -2376,7 +2391,7 @@ def classification_report(
     labels : array-like of shape (n_labels,), default=None
         Optional list of label indices to include in the report.
 
-    target_names : list of str of shape (n_labels,), default=None
+    target_names : array-like of shape (n_labels,), default=None
         Optional display names matching the labels (same order).
 
     sample_weight : array-like of shape (n_samples,), default=None
