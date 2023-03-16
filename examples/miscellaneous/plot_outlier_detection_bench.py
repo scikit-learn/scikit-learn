@@ -272,7 +272,7 @@ _ = plt.tight_layout(pad=2.0)  # spacing between subplots
 # the :ref:`covtype_dataset` dataset as the binary encoded categories introduce
 # a natural scale of euclidean distances between 0 and 1. We then want a scaling
 # method to avoid granting a privilege to non-binary features and that is robust
-# enough to outliers so that the task of finding them does not become to
+# enough to outliers so that the task of finding them does not become too
 # difficult.
 
 # %%
@@ -319,7 +319,7 @@ for scaler in scaler_list:
         y,
         y_pred,
         pos_label=pos_label,
-        name=str(scaler),
+        name=str(scaler).split("(")[0],
         linewidth=linewidth,
         ax=ax,
     )
