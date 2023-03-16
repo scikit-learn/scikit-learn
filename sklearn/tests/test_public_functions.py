@@ -1,5 +1,6 @@
 from importlib import import_module
 from inspect import signature
+from numbers import Integral, Real
 
 import pytest
 
@@ -7,6 +8,7 @@ from sklearn.utils._param_validation import generate_invalid_param_val
 from sklearn.utils._param_validation import generate_valid_param
 from sklearn.utils._param_validation import make_constraint
 from sklearn.utils._param_validation import InvalidParameterError
+from sklearn.utils._param_validation import Interval
 
 
 def _get_func_info(func_module):
@@ -70,6 +72,20 @@ def _check_function_param_validation(
             # This parameter is not validated
             continue
 
+        # Mixing an interval of reals and an interval of integers must be avoided.
+        if any(
+            isinstance(constraint, Interval) and constraint.type == Integral
+            for constraint in constraints
+        ) and any(
+            isinstance(constraint, Interval) and constraint.type == Real
+            for constraint in constraints
+        ):
+            raise ValueError(
+                f"The constraint for parameter {param_name} of {func_name} can't have a"
+                " mix of intervals of Integral and Real types. Use the type"
+                " RealNotInt instead of Real."
+            )
+
         match = (
             rf"The '{param_name}' parameter of {func_name} must be .* Got .* instead."
         )
@@ -85,7 +101,7 @@ def _check_function_param_validation(
 
         for constraint in constraints:
             try:
-                bad_value = generate_invalid_param_val(constraint, constraints)
+                bad_value = generate_invalid_param_val(constraint)
             except NotImplementedError:
                 continue
 
@@ -133,6 +149,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.average_precision_score",
     "sklearn.metrics.balanced_accuracy_score",
     "sklearn.metrics.brier_score_loss",
+    "sklearn.metrics.class_likelihood_ratios",
     "sklearn.metrics.cluster.contingency_matrix",
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
@@ -172,6 +189,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.model_selection.train_test_split",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",
+    "sklearn.utils.gen_batches",
 ]
 
 
