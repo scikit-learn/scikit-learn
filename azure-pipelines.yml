@@ -169,9 +169,9 @@ jobs:
     name: Linux
     vmImage: ubuntu-20.04
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
+    # Runs when dependencies succeeded or skipped
     condition: |
       and(
-        # Runs when dependencies succeeded or skipped
         not(or(failed(), canceled()),
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
@@ -205,9 +205,9 @@ jobs:
     name: Linux_Docker
     vmImage: ubuntu-20.04
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
+    # Runs when dependencies succeeded or skipped
     condition: |
       and(
-        # Runs when dependencies succeeded or skipped
         not(or(failed(), canceled()),
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
@@ -225,9 +225,9 @@ jobs:
     name: macOS
     vmImage: macOS-11
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
+    # Runs when dependencies succeeded or skipped
     condition: |
       and(
-        # Runs when dependencies succeeded or skipped
         not(or(failed(), canceled()),
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
@@ -248,9 +248,9 @@ jobs:
     name: Windows
     vmImage: windows-latest
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
+    # Runs when dependencies succeeded or skipped
     condition: |
       and(
-        # Runs when dependencies succeeded or skipped
         not(or(failed(), canceled()),
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
