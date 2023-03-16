@@ -3,7 +3,7 @@
 # License: BSD 3 clause
 
 import numbers
-from numbers import Integral, Real
+from numbers import Integral
 import warnings
 
 import numpy as np
@@ -14,6 +14,7 @@ from ..utils import check_array, is_scalar_nan, _safe_indexing
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Interval, StrOptions, Hidden
+from ..utils._param_validation import RealNotInt
 from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
@@ -493,7 +494,7 @@ class OneHotEncoder(_BaseEncoder):
         "max_categories": [Interval(Integral, 1, None, closed="left"), None],
         "min_frequency": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="neither"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
             None,
         ],
         "sparse": [Hidden(StrOptions({"deprecated"})), "boolean"],  # deprecated
@@ -1181,7 +1182,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
-    dtype : number type, default np.float64
+    dtype : number type, default=np.float64
         Desired dtype of output.
 
     handle_unknown : {'error', 'use_encoded_value'}, default='error'

@@ -13,10 +13,10 @@ from scipy.spatial.distance import cdist
 from sklearn.metrics._pairwise_distances_reduction import (
     BaseDistancesReductionDispatcher,
     ArgKmin,
+    ArgKminClassMode,
     RadiusNeighbors,
     sqeuclidean_row_norms,
 )
-
 from sklearn.metrics import euclidean_distances
 from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils._testing import (
@@ -656,6 +656,124 @@ def test_argkmin_factory_method_wrong_usages():
         ArgKmin.compute(X=X, Y=Y, k=k, metric=metric, metric_kwargs=metric_kwargs)
 
 
+def test_argkmin_classmode_factory_method_wrong_usages():
+    rng = np.random.RandomState(1)
+    X = rng.rand(100, 10)
+    Y = rng.rand(100, 10)
+    k = 5
+    metric = "manhattan"
+
+    weights = "uniform"
+    labels = rng.randint(low=0, high=10, size=100)
+    unique_labels = np.unique(labels)
+
+    msg = (
+        "Only float64 or float32 datasets pairs are supported at this time, "
+        "got: X.dtype=float32 and Y.dtype=float64"
+    )
+    with pytest.raises(ValueError, match=msg):
+        ArgKminClassMode.compute(
+            X=X.astype(np.float32),
+            Y=Y,
+            k=k,
+            metric=metric,
+            weights=weights,
+            labels=labels,
+            unique_labels=unique_labels,
+        )
+
+    msg = (
+        "Only float64 or float32 datasets pairs are supported at this time, "
+        "got: X.dtype=float64 and Y.dtype=int32"
+    )
+    with pytest.raises(ValueError, match=msg):
+        ArgKminClassMode.compute(
+            X=X,
+            Y=Y.astype(np.int32),
+            k=k,
+            metric=metric,
+            weights=weights,
+            labels=labels,
+            unique_labels=unique_labels,
+        )
+
+    with pytest.raises(ValueError, match="k == -1, must be >= 1."):
+        ArgKminClassMode.compute(
+            X=X,
+            Y=Y,
+            k=-1,
+            metric=metric,
+            weights=weights,
+            labels=labels,
+            unique_labels=unique_labels,
+        )
+
+    with pytest.raises(ValueError, match="k == 0, must be >= 1."):
+        ArgKminClassMode.compute(
+            X=X,
+            Y=Y,
+            k=0,
+            metric=metric,
+            weights=weights,
+            labels=labels,
+            unique_labels=unique_labels,
+        )
+
+    with pytest.raises(ValueError, match="Unrecognized metric"):
+        ArgKminClassMode.compute(
+            X=X,
+            Y=Y,
+            k=k,
+            metric="wrong metric",
+            weights=weights,
+            labels=labels,
+            unique_labels=unique_labels,
+        )
+
+    with pytest.raises(
+        ValueError, match=r"Buffer has wrong number of dimensions \(expected 2, got 1\)"
+    ):
+        ArgKminClassMode.compute(
+            X=np.array([1.0, 2.0]),
+            Y=Y,
+            k=k,
+            metric=metric,
+            weights=weights,
+            labels=labels,
+            unique_labels=unique_labels,
+        )
+
+    with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
+        ArgKminClassMode.compute(
+            X=np.asfortranarray(X),
+            Y=Y,
+            k=k,
+            metric=metric,
+            weights=weights,
+            labels=labels,
+            unique_labels=unique_labels,
+        )
+
+    non_existent_weights_strategy = "non_existent_weights_strategy"
+    message = (
+        "Only the 'uniform' or 'distance' weights options are supported at this time. "
+        f"Got: weights='{non_existent_weights_strategy}'."
+    )
+    with pytest.raises(ValueError, match=message):
+        ArgKminClassMode.compute(
+            X=X,
+            Y=Y,
+            k=k,
+            metric=metric,
+            weights=non_existent_weights_strategy,
+            labels=labels,
+            unique_labels=unique_labels,
+        )
+
+    # TODO: introduce assertions on UserWarnings once the Euclidean specialisation
+    # of ArgKminClassMode is supported.
+
+
 def test_radius_neighbors_factory_method_wrong_usages():
     rng = np.random.RandomState(1)
     X = rng.rand(100, 10)
@@ -1222,3 +1340,36 @@ def test_sqeuclidean_row_norms(
     with pytest.raises(ValueError):
         X = np.asfortranarray(X)
         sqeuclidean_row_norms(X, num_threads=num_threads)
+
+
+def test_argkmin_classmode_strategy_consistent():
+    rng = np.random.RandomState(1)
+    X = rng.rand(100, 10)
+    Y = rng.rand(100, 10)
+    k = 5
+    metric = "manhattan"
+
+    weights = "uniform"
+    labels = rng.randint(low=0, high=10, size=100)
+    unique_labels = np.unique(labels)
+    results_X = ArgKminClassMode.compute(
+        X=X,
+        Y=Y,
+        k=k,
+        metric=metric,
+        weights=weights,
+        labels=labels,
+        unique_labels=unique_labels,
+        strategy="parallel_on_X",
+    )
+    results_Y = ArgKminClassMode.compute(
+        X=X,
+        Y=Y,
+        k=k,
+        metric=metric,
+        weights=weights,
+        labels=labels,
+        unique_labels=unique_labels,
+        strategy="parallel_on_Y",
+    )
+    assert_array_equal(results_X, results_Y)
