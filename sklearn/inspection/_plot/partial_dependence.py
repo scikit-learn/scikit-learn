@@ -41,10 +41,7 @@ def get_categorical_colors_and_mapping(value_list, palette="tab10"):
     if palette is None:
         palette = "tab10"
     color_palette = [
-        mpl.colors.to_hex(rgba_color)
-        for rgba_color in mpl.cm.get_cmap(
-            name=palette, lut=len(np.unique(value_list))
-        ).colors
+        mpl.colors.to_hex(rgba_color) for rgba_color in mpl.colormaps[palette].colors
     ]
     mapping = {v: color_palette[i] for i, v in enumerate(sorted(np.unique(value_list)))}
     color_list = [mapping[value_list[i]] for i in range(len(value_list))]
@@ -1262,7 +1259,7 @@ class PartialDependenceDisplay:
                 h, l, loc="center left", bbox_to_anchor=(1, 0.9)
             )
         elif "norm" in legend_dict:
-            cmap = mpl.cm.get_cmap(legend_dict["palette"])
+            cmap = mpl.colormaps[legend_dict["palette"]]
             mpl.pyplot.colorbar(
                 mpl.cm.ScalarMappable(norm=legend_dict["norm"], cmap=cmap),
                 ax=self.axes_.flatten()[last_ax_idx_not_none],
