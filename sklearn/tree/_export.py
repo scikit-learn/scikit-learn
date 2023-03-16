@@ -14,15 +14,17 @@ This module defines export functions for decision trees.
 from io import StringIO
 from numbers import Integral
 
+import matplotlib
 import numpy as np
 
-from ..utils.validation import check_is_fitted
-from ..base import is_classifier
-
-from . import _criterion
+from . import DecisionTreeClassifier
+from . import _criterion, DecisionTreeRegressor
 from . import _tree
 from ._reingold_tilford import buchheim, Tree
-from . import DecisionTreeClassifier
+from ..base import is_classifier
+from ..utils import validate_params, Interval
+from ..utils._param_validation import StrOptions
+from ..utils.validation import check_is_fitted
 
 
 def _color_brew(n):
@@ -75,6 +77,24 @@ class Sentinel:
 SENTINEL = Sentinel()
 
 
+@validate_params(
+    {
+        "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
+        "max_depth": [Interval(Integral, 0, None, closed="left"), None],
+        "feature_names": [list, None],
+        "class_names": [list, None],
+        "label": [StrOptions({"all", "root", "none"})],
+        "filled": ["boolean"],
+        "impurity": ["boolean"],
+        "node_ids": ["boolean"],
+        "proportion": ["boolean"],
+        "rounded": ["boolean"],
+        "precision": [Interval(Integral, 0, None, closed="left"), None],
+        "ax": [matplotlib.pyplot.Figure, None],
+        "fontsize": [Interval(Integral, 0, None, closed="left"), None],
+
+    }
+)
 def plot_tree(
     decision_tree,
     *,
@@ -196,18 +216,18 @@ def plot_tree(
 
 class _BaseTreeExporter:
     def __init__(
-        self,
-        max_depth=None,
-        feature_names=None,
-        class_names=None,
-        label="all",
-        filled=False,
-        impurity=True,
-        node_ids=False,
-        proportion=False,
-        rounded=False,
-        precision=3,
-        fontsize=None,
+            self,
+            max_depth=None,
+            feature_names=None,
+            class_names=None,
+            label="all",
+            filled=False,
+            impurity=True,
+            node_ids=False,
+            proportion=False,
+            rounded=False,
+            precision=3,
+            fontsize=None,
     ):
         self.max_depth = max_depth
         self.feature_names = feature_names
@@ -235,7 +255,7 @@ class _BaseTreeExporter:
             # Regression tree or multi-output
             color = list(self.colors["rgb"][0])
             alpha = (value - self.colors["bounds"][0]) / (
-                self.colors["bounds"][1] - self.colors["bounds"][0]
+                    self.colors["bounds"][1] - self.colors["bounds"][0]
             )
         # unpack numpy scalars
         alpha = float(alpha)
@@ -313,7 +333,7 @@ class _BaseTreeExporter:
             if labels:
                 node_string += "%s = " % criterion
             node_string += (
-                str(round(tree.impurity[node_id], self.precision)) + characters[4]
+                    str(round(tree.impurity[node_id], self.precision)) + characters[4]
             )
 
         # Write node sample count
@@ -321,7 +341,7 @@ class _BaseTreeExporter:
             node_string += "samples = "
         if self.proportion:
             percent = (
-                100.0 * tree.n_node_samples[node_id] / float(tree.n_node_samples[0])
+                    100.0 * tree.n_node_samples[node_id] / float(tree.n_node_samples[0])
             )
             node_string += str(round(percent, 1)) + "%" + characters[4]
         else:
@@ -355,9 +375,9 @@ class _BaseTreeExporter:
 
         # Write node majority class
         if (
-            self.class_names is not None
-            and tree.n_classes[0] != 1
-            and tree.n_outputs == 1
+                self.class_names is not None
+                and tree.n_classes[0] != 1
+                and tree.n_outputs == 1
         ):
             # Only done for single-output classification trees
             if labels:
@@ -381,22 +401,22 @@ class _BaseTreeExporter:
 
 class _DOTTreeExporter(_BaseTreeExporter):
     def __init__(
-        self,
-        out_file=SENTINEL,
-        max_depth=None,
-        feature_names=None,
-        class_names=None,
-        label="all",
-        filled=False,
-        leaves_parallel=False,
-        impurity=True,
-        node_ids=False,
-        proportion=False,
-        rotate=False,
-        rounded=False,
-        special_characters=False,
-        precision=3,
-        fontname="helvetica",
+            self,
+            out_file=SENTINEL,
+            max_depth=None,
+            feature_names=None,
+            class_names=None,
+            label="all",
+            filled=False,
+            leaves_parallel=False,
+            impurity=True,
+            node_ids=False,
+            proportion=False,
+            rotate=False,
+            rounded=False,
+            special_characters=False,
+            precision=3,
+            fontname="helvetica",
     ):
 
         super().__init__(
@@ -571,18 +591,18 @@ class _DOTTreeExporter(_BaseTreeExporter):
 
 class _MPLTreeExporter(_BaseTreeExporter):
     def __init__(
-        self,
-        max_depth=None,
-        feature_names=None,
-        class_names=None,
-        label="all",
-        filled=False,
-        impurity=True,
-        node_ids=False,
-        proportion=False,
-        rounded=False,
-        precision=3,
-        fontsize=None,
+            self,
+            max_depth=None,
+            feature_names=None,
+            class_names=None,
+            label="all",
+            filled=False,
+            impurity=True,
+            node_ids=False,
+            proportion=False,
+            rounded=False,
+            precision=3,
+            fontsize=None,
     ):
 
         super().__init__(
@@ -598,20 +618,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
             precision=precision,
         )
         self.fontsize = fontsize
-
-        # validate
-        if isinstance(precision, Integral):
-            if precision < 0:
-                raise ValueError(
-                    "'precision' should be greater or equal to 0."
-                    " Got {} instead.".format(precision)
-                )
-        else:
-            raise ValueError(
-                "'precision' should be an integer. Got {} instead.".format(
-                    type(precision)
-                )
-            )
 
         # The depth of each node for plotting with 'leaf' option
         self.ranks = {"leaves": []}
@@ -630,7 +636,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         # "_reingold_tilford.Tree" object
         name = self.node_to_str(et, node_id, criterion=criterion)
         if et.children_left[node_id] != _tree.TREE_LEAF and (
-            self.max_depth is None or depth <= self.max_depth
+                self.max_depth is None or depth <= self.max_depth
         ):
             children = [
                 self._make_tree(
@@ -738,23 +744,23 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
 
 def export_graphviz(
-    decision_tree,
-    out_file=None,
-    *,
-    max_depth=None,
-    feature_names=None,
-    class_names=None,
-    label="all",
-    filled=False,
-    leaves_parallel=False,
-    impurity=True,
-    node_ids=False,
-    proportion=False,
-    rotate=False,
-    rounded=False,
-    special_characters=False,
-    precision=3,
-    fontname="helvetica",
+        decision_tree,
+        out_file=None,
+        *,
+        max_depth=None,
+        feature_names=None,
+        class_names=None,
+        label="all",
+        filled=False,
+        leaves_parallel=False,
+        impurity=True,
+        node_ids=False,
+        proportion=False,
+        rotate=False,
+        rounded=False,
+        special_characters=False,
+        precision=3,
+        fontname="helvetica",
 ):
     """Export a decision tree in DOT format.
 
@@ -901,7 +907,7 @@ def _compute_depth(tree, node):
     """
 
     def compute_depth_(
-        current_node, current_depth, children_left, children_right, depths
+            current_node, current_depth, children_left, children_right, depths
     ):
         depths += [current_depth]
         left = children_left[current_node]
@@ -920,14 +926,14 @@ def _compute_depth(tree, node):
 
 
 def export_text(
-    decision_tree,
-    *,
-    feature_names=None,
-    class_names=None,
-    max_depth=10,
-    spacing=3,
-    decimals=2,
-    show_weights=False,
+        decision_tree,
+        *,
+        feature_names=None,
+        class_names=None,
+        max_depth=10,
+        spacing=3,
+        decimals=2,
+        show_weights=False,
 ):
     """Build a text report showing the rules of a decision tree.
 
