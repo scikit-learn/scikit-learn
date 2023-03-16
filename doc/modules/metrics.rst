@@ -103,7 +103,7 @@ If ``x`` and ``y`` are column vectors, their linear kernel is:
 
 .. math::
 
-    k(x, y) = x^\top y
+    k(x, y) = x y^\top
 
 .. _polynomial_kernel:
 
