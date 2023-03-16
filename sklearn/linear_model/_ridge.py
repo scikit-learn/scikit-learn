@@ -962,23 +962,23 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         For 'lbfgs' solver, the default value is 15000.
 
     tol : float, default=1e-4
-        Precision of the solution. Note that `tol` depends on the solver:
-
-        - 'auto': see lbfgs, sag, cholesky, sparse_cg.
+        The precision of the solution (`coef_`) is determined by `tol` which
+        specifies a different convergence criterion for each solver:
 
         - 'svd': `tol` has no impact.
 
         - 'cholesky': `tol` has no impact.
 
-        - 'sparse_cg': relative or absolute residuals smaller than `tol`.
+        - 'sparse_cg': norm of residuals smaller than `tol`.
 
         - 'lsqr': `tol` is set as atol and btol of scipy.sparse.linalg.lsqr,
           which control the norm of the residual vector in terms of the norms of
           matrix and coefficients.
 
-        - 'sag' and 'saga': change of coef smaller than `tol`.
+        - 'sag' and 'saga': relative change of coef smaller than `tol`.
 
-        - 'lbfgs': (projected) gradient=residual smaller than `tol`.
+        - 'lbfgs': maximum of the absolute (projected) gradient=max|residuals|
+          smaller than `tol`.
 
         .. versionchanged:: 1.2
            Default value changed from 1e-3 to 1e-4 for consistency with other linear
@@ -1267,23 +1267,23 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         The default value is determined by scipy.sparse.linalg.
 
     tol : float, default=1e-4
-        Precision of the solution. Note that `tol` depends on the solver:
-
-        - 'auto': see lbfgs, sag, cholesky, sparse_cg.
+        The precision of the solution (`coef_`) is determined by `tol` which
+        specifies a different convergence criterion for each solver:
 
         - 'svd': `tol` has no impact.
 
         - 'cholesky': `tol` has no impact.
 
-        - 'sparse_cg': relative or absolute residuals smaller than `tol`.
+        - 'sparse_cg': norm of residuals smaller than `tol`.
 
         - 'lsqr': `tol` is set as atol and btol of scipy.sparse.linalg.lsqr,
           which control the norm of the residual vector in terms of the norms of
           matrix and coefficients.
 
-        - 'sag' and 'saga': change of coef smaller than `tol`.
+        - 'sag' and 'saga': relative change of coef smaller than `tol`.
 
-        - 'lbfgs': (projected) gradient=residual smaller than `tol`.
+        - 'lbfgs': maximum of the absolute (projected) gradient=max|residuals|
+          smaller than `tol`.
 
         .. versionchanged:: 1.2
            Default value changed from 1e-3 to 1e-4 for consistency with other linear
