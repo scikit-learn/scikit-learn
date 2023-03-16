@@ -95,7 +95,6 @@ def kmeans_plusplus(
         are assigned equal weight. If not None, weights will be used in
         initializations of centroids as well as fitting clusters.
 
-
         .. versionadded:: 1.3
 
     x_squared_norms : array-like of shape (n_samples,), default=None
