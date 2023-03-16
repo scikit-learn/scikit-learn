@@ -1283,21 +1283,22 @@ def test_predict_does_not_change_cluster_centers(is_sparse):
 def test_sample_weight_init(init, global_random_seed):
     """Check that sample weight is used during init.
 
-    We are testing base class method,
-    there is no need to check derived classes.
+    `_init_centroids` is shared across all classes inheriting from _BaseKMeans so
+    it's enough to check for KMeans.
     """
     rng = np.random.RandomState(global_random_seed)
     X, _ = make_blobs(
         n_samples=200, n_features=10, centers=10, random_state=global_random_seed
     )
-    sample_weight = rng.uniform(size=X.shape[0])
+```suggestion
     x_squared_norms = row_norms(X, squared=True)
-    kmeans = KMeans(random_state=global_random_seed, init=init)
+
+    kmeans = BisectingKMeans(n_clusters=4, random_state=global_random_seed, init=init)
     clusters_weighted = kmeans._init_centroids(
         X=X,
         x_squared_norms=x_squared_norms,
         init=init,
-        sample_weight=sample_weight,
+        sample_weight=rng.uniform(size=X.shape[0]),
         n_centroids=5,
         random_state=np.random.RandomState(global_random_seed),
     )
@@ -1317,8 +1318,8 @@ def test_sample_weight_init(init, global_random_seed):
 def test_sample_weight_zero(init, global_random_seed):
     """Check that if sample weight is 0, this sample won't be chosen.
 
-    We are testing base class method,
-    there is no need to check derived classes.
+    `_init_centroids` is shared across all classes inheriting from _BaseKMeans so
+    it's enough to check for KMeans.
     """
     rng = np.random.RandomState(global_random_seed)
     X, _ = make_blobs(

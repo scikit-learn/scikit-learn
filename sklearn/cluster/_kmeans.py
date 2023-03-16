@@ -344,8 +344,9 @@ def k_means(
         centroids to generate.
 
     sample_weight : array-like of shape (n_samples,), default=None
-        The weights for each observation in `X`. `sample_weight` is not
-        used during initialization if `init` is a user provided array.
+        The weights for each observation in `X`. If `None`, all observations
+        are assigned equal weight. `sample_weight` is not used during
+        initialization if `init` is a callable or a user provided array.
 
     init : {'k-means++', 'random'}, callable or array-like of shape \
             (n_clusters, n_features), default='k-means++'
@@ -1000,7 +1001,8 @@ class _BaseKMeans(
 
         sample_weight : ndarray of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight.
+            are assigned equal weight. `sample_weight` is not used during
+            initialization if `init` is a callable or a user provided array.
 
         Returns
         -------
@@ -1453,7 +1455,7 @@ class KMeans(_BaseKMeans):
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight. `sample_weight` is not used during
-            initialization if `init` is a user provided array.
+            initialization if `init` is a callable or a user provided array.
 
             .. versionadded:: 0.20
 
@@ -2061,7 +2063,7 @@ class MiniBatchKMeans(_BaseKMeans):
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight. `sample_weight` is not used during
-            initialization if `init` is a user provided array.
+            initialization if `init` is a callable or a user provided array.
 
             .. versionadded:: 0.20
 
@@ -2218,7 +2220,7 @@ class MiniBatchKMeans(_BaseKMeans):
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight. `sample_weight` is not used during
-            initialization if `init` is a user provided array.
+            initialization if `init` is a callable or a user provided array.
 
         Returns
         -------

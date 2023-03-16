@@ -366,8 +366,8 @@ class BisectingKMeans(_BaseKMeans):
 
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight. If not None, weights will be used in
-            initializations of centroids as well as fitting clusters.
+            are assigned equal weight. `sample_weight` is not used during
+            initialization if `init` is a callable.
 
         Returns
         -------
