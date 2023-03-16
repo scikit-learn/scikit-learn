@@ -23,7 +23,7 @@ codecov:
     # running CI pipelines. This configuration is particularly useful on PRs
     # to avoid confusion. Note that this value is set to the number of Azure
     # Pipeline jobs uploading coverage reports.
-    after_n_builds: 6
+    after_n_builds: 4
 
 ignore:
 - "sklearn/externals"
