@@ -17,12 +17,14 @@ from numbers import Integral
 import numpy as np
 
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval, validate_params
+
 from ..base import is_classifier
 
 from . import _criterion
 from . import _tree
 from ._reingold_tilford import buchheim, Tree
-from . import DecisionTreeClassifier
+from . import DecisionTreeClassifier, DecisionTreeRegressor
 
 
 def _color_brew(n):
@@ -919,6 +921,16 @@ def _compute_depth(tree, node):
     return max(depths)
 
 
+@validate_params(
+    {
+        "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
+        "feature_names": [list, None],
+        "max_depth": [Interval(Integral, -1, None, closed="left"), None],
+        "spacing": [Interval(Integral, 0, None, closed="left"), None],
+        "decimals": [Interval(Integral, -1, None, closed="left"), None],
+        "show_weights": ["boolean"],
+    }
+)
 def export_text(
     decision_tree,
     *,
