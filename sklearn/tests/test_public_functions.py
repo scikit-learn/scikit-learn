@@ -124,6 +124,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.fetch_california_housing",
     "sklearn.datasets.fetch_covtype",
     "sklearn.datasets.fetch_kddcup99",
+    "sklearn.datasets.fetch_lfw_pairs",
     "sklearn.datasets.fetch_lfw_people",
     "sklearn.datasets.fetch_olivetti_faces",
     "sklearn.datasets.load_svmlight_file",
