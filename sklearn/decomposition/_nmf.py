@@ -140,7 +140,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     X_data = X_data[indices]
 
     # used to avoid division by zero
-    WH_data[WH_data == 0] = EPSILON
+    WH_data[WH_data < EPSILON] = EPSILON
 
     # generalized Kullback-Leibler divergence
     if beta == 1:
@@ -558,11 +558,11 @@ def _multiplicative_update_w(
             # copy used in the Denominator
             WH = WH_safe_X.copy()
             if beta_loss - 1.0 < 0:
-                WH[WH == 0] = EPSILON
+                WH[WH < EPSILON] = EPSILON
 
         # to avoid taking a negative power of zero
         if beta_loss - 2.0 < 0:
-            WH_safe_X_data[WH_safe_X_data == 0] = EPSILON
+            WH_safe_X_data[WH_safe_X_data < EPSILON] = EPSILON
 
         if beta_loss == 1:
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
@@ -596,7 +596,7 @@ def _multiplicative_update_w(
                 for i in range(X.shape[0]):
                     WHi = np.dot(W[i, :], H)
                     if beta_loss - 1 < 0:
-                        WHi[WHi == 0] = EPSILON
+                        WHi[WHi < EPSILON] = EPSILON
                     WHi **= beta_loss - 1
                     WHHt[i, :] = np.dot(WHi, H.T)
             else:
@@ -643,11 +643,11 @@ def _multiplicative_update_h(
             # copy used in the Denominator
             WH = WH_safe_X.copy()
             if beta_loss - 1.0 < 0:
-                WH[WH == 0] = EPSILON
+                WH[WH < EPSILON] = EPSILON
 
         # to avoid division by zero
         if beta_loss - 2.0 < 0:
-            WH_safe_X_data[WH_safe_X_data == 0] = EPSILON
+            WH_safe_X_data[WH_safe_X_data < EPSILON] = EPSILON
 
         if beta_loss == 1:
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
@@ -682,7 +682,7 @@ def _multiplicative_update_h(
                 for i in range(X.shape[1]):
                     WHi = np.dot(W, H[:, i])
                     if beta_loss - 1 < 0:
-                        WHi[WHi == 0] = EPSILON
+                        WHi[WHi < EPSILON] = EPSILON
                     WHi **= beta_loss - 1
                     WtWH[:, i] = np.dot(W.T, WHi)
             else:
