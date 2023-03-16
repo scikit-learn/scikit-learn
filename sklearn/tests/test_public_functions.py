@@ -151,6 +151,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.balanced_accuracy_score",
     "sklearn.metrics.brier_score_loss",
     "sklearn.metrics.class_likelihood_ratios",
+    "sklearn.metrics.classification_report",
     "sklearn.metrics.cluster.contingency_matrix",
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
