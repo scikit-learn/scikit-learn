@@ -32,6 +32,14 @@ from .utils._estimator_html_repr import estimator_html_repr
 from .utils._param_validation import validate_parameter_constraints
 
 
+def not_covered_by_test():
+    """This function is not covered by tests.
+
+    It is used to test the coverage report generation.
+    """
+    print("This function is not covered by tests.")
+
+
 def clone(estimator, *, safe=True):
     """Construct a new unfitted estimator with the same parameters.
 
