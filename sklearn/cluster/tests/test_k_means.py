@@ -1327,7 +1327,8 @@ def test_sample_weight_zero(init, global_random_seed):
     sample_weight = rng.uniform(size=X.shape[0])
     sample_weight[::2] = 0
     x_squared_norms = row_norms(X, squared=True)
-    kmeans = KMeans(random_state=global_random_seed, init=init)
+
+    kmeans = KMeans()
     clusters_weighted = kmeans._init_centroids(
         X=X,
         x_squared_norms=x_squared_norms,
