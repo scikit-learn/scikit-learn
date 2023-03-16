@@ -77,23 +77,6 @@ class Sentinel:
 SENTINEL = Sentinel()
 
 
-@validate_params(
-    {
-        "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
-        "max_depth": [Interval(Integral, 0, None, closed="left"), None],
-        "feature_names": [list, None],
-        "class_names": [list, None],
-        "label": [StrOptions({"all", "root", "none"})],
-        "filled": ["boolean"],
-        "impurity": ["boolean"],
-        "node_ids": ["boolean"],
-        "proportion": ["boolean"],
-        "rounded": ["boolean"],
-        "precision": [Interval(Integral, 0, None, closed="left"), None],
-        "ax": [matplotlib.pyplot.Figure, None],
-        "fontsize": [Interval(Integral, 0, None, closed="left"), None],
-    }
-)
 def plot_tree(
     decision_tree,
     *,
@@ -417,6 +400,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
         precision=3,
         fontname="helvetica",
     ):
+
         super().__init__(
             max_depth=max_depth,
             feature_names=feature_names,
@@ -525,6 +509,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
 
         # Add node with description
         if self.max_depth is None or depth <= self.max_depth:
+
             # Collect ranks for 'leaf' option in plot_options
             if left_child == _tree.TREE_LEAF:
                 self.ranks["leaves"].append(str(node_id))
@@ -601,6 +586,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         precision=3,
         fontsize=None,
     ):
+
         super().__init__(
             max_depth=max_depth,
             feature_names=feature_names,
@@ -614,6 +600,20 @@ class _MPLTreeExporter(_BaseTreeExporter):
             precision=precision,
         )
         self.fontsize = fontsize
+
+        # validate
+        if isinstance(precision, Integral):
+            if precision < 0:
+                raise ValueError(
+                    "'precision' should be greater or equal to 0."
+                    " Got {} instead.".format(precision)
+                )
+        else:
+            raise ValueError(
+                "'precision' should be an integer. Got {} instead.".format(
+                    type(precision)
+                )
+            )
 
         # The depth of each node for plotting with 'leaf' option
         self.ranks = {"leaves": []}
