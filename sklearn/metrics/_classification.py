@@ -2864,6 +2864,14 @@ def log_loss(
     return _weighted_sum(loss, sample_weight, normalize)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "pred_decision": ["array-like"],
+        "labels": ["array-like", None],
+        "sample_weight": ["array-like", None],
+    }
+)
 def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     """Average hinge loss (non-regularized).
 
