@@ -1023,20 +1023,11 @@ def export_text(
     left_child_fmt = "{} {} >  {}\n"
     truncation_fmt = "{} {}\n"
 
-    if max_depth < 0:
-        raise ValueError("max_depth bust be >= 0, given %d" % max_depth)
-
     if feature_names is not None and len(feature_names) != tree_.n_features:
         raise ValueError(
             "feature_names must contain %d elements, got %d"
             % (tree_.n_features, len(feature_names))
         )
-
-    if spacing <= 0:
-        raise ValueError("spacing must be > 0, given %d" % spacing)
-
-    if decimals < 0:
-        raise ValueError("decimals must be >= 0, given %d" % decimals)
 
     if isinstance(decision_tree, DecisionTreeClassifier):
         value_fmt = "{}{} weights: {}\n"

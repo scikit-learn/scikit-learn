@@ -350,13 +350,6 @@ def test_precision():
 def test_export_text_errors():
     clf = DecisionTreeClassifier(max_depth=2, random_state=0)
     clf.fit(X, y)
-
-    err_msg = (
-        r"The 'max_depth' parameter of export_text must be an"
-        r" int in the range \[0, inf\)\ or None. Got -1 instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        export_text(clf, max_depth=-1)
     err_msg = "feature_names must contain 2 elements, got 1"
     with pytest.raises(ValueError, match=err_msg):
         export_text(clf, feature_names=["a"])
@@ -367,18 +360,6 @@ def test_export_text_errors():
     )
     with pytest.raises(ValueError, match=err_msg):
         export_text(clf, class_names=["a"])
-    err_msg = (
-        r"The 'decimals' parameter of export_text must be an"
-        r" int in the range \[0, inf\)\ or None. Got -1 instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        export_text(clf, decimals=-1)
-    err_msg = (
-        r"The 'spacing' parameter of export_text must be an"
-        r" int in the range \[1, inf\)\ or None. Got 0 instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        export_text(clf, spacing=0)
 
 
 def test_export_text():
