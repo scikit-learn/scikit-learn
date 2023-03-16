@@ -95,6 +95,9 @@ def kmeans_plusplus(
         are assigned equal weight. If not None, weights will be used in
         initializations of centroids as well as fitting clusters.
 
+
+        .. versionadded:: 1.3
+
     x_squared_norms : array-like of shape (n_samples,), default=None
         Squared Euclidean norm of each data point.
 
@@ -187,7 +190,7 @@ def _kmeans_plusplus(
     n_clusters : int
         The number of seeds to choose.
 
-    sample_weight : array-like of shape (n_samples,), default=None
+    sample_weight : ndarray of shape (n_samples,)
         The weights for each observation in `X`.
 
     x_squared_norms : ndarray of shape (n_samples,)
@@ -343,7 +346,7 @@ def k_means(
 
     sample_weight : array-like of shape (n_samples,), default=None
         The weights for each observation in `X`. `sample_weight` is not
-        used during initialization if init is a user provided array.
+        used during initialization if `init` is a user provided array.
 
     init : {'k-means++', 'random'}, callable or array-like of shape \
             (n_clusters, n_features), default='k-means++'
@@ -1451,7 +1454,7 @@ class KMeans(_BaseKMeans):
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight. `sample_weight` is not used during
-            initialization if init is a user provided array.
+            initialization if `init` is a user provided array.
 
             .. versionadded:: 0.20
 
@@ -2059,7 +2062,7 @@ class MiniBatchKMeans(_BaseKMeans):
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight. `sample_weight` is not used during
-            initialization if init is a user provided array.
+            initialization if `init` is a user provided array.
 
             .. versionadded:: 0.20
 
@@ -2216,7 +2219,7 @@ class MiniBatchKMeans(_BaseKMeans):
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight. `sample_weight` is not used during
-            initialization if init is a user provided array.
+            initialization if `init` is a user provided array.
 
         Returns
         -------
