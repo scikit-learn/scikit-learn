@@ -925,6 +925,7 @@ def _compute_depth(tree, node):
     {
         "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
         "feature_names": [list, None],
+        "class_names": [list, None],
         "max_depth": [Interval(Integral, 0, None, closed="left"), None],
         "spacing": [Interval(Integral, 1, None, closed="left"), None],
         "decimals": [Interval(Integral, 0, None, closed="left"), None],
