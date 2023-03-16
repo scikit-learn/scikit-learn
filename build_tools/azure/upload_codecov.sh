@@ -10,6 +10,7 @@ source activate $VIRTUALENV
 # from TEST_DIR where pytest has been run
 pushd $TEST_DIR
 coverage combine --append
+coverage report -m
 popd
 cp $TEST_DIR/.coverage $BUILD_REPOSITORY_LOCALPATH
 
