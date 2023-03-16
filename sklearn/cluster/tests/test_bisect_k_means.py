@@ -133,5 +133,3 @@ def test_float32_float64_equivalence(is_sparse):
 
     assert_allclose(km32.cluster_centers_, km64.cluster_centers_)
     assert_array_equal(km32.labels_, km64.labels_)
-
-

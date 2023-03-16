@@ -1290,7 +1290,6 @@ def test_sample_weight_init(init, global_random_seed):
     X, _ = make_blobs(
         n_samples=200, n_features=10, centers=10, random_state=global_random_seed
     )
-```suggestion
     x_squared_norms = row_norms(X, squared=True)
 
     kmeans = BisectingKMeans(n_clusters=4, random_state=global_random_seed, init=init)

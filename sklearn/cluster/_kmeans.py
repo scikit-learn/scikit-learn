@@ -92,8 +92,8 @@ def kmeans_plusplus(
 
     sample_weight : array-like of shape (n_samples,), default=None
         The weights for each observation in `X`. If `None`, all observations
-        are assigned equal weight. If not None, weights will be used in
-        initializations of centroids as well as fitting clusters.
+        are assigned equal weight. `sample_weight` is ignored if `init`
+        is a callable or a user provided array.
 
         .. versionadded:: 1.3
 
