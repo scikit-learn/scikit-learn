@@ -10,7 +10,7 @@ over the internet, all details are available on the official website:
 
 from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
-from ..utils._param_validation import validate_params, Interval, Hidden
+from ..utils._param_validation import validate_params, Interval, Hidden, StrOptions
 from numbers import Integral, Real
 import logging
 
@@ -429,7 +429,7 @@ def _fetch_lfw_pairs(
 
 @validate_params(
     {
-        "subset": ["train", "test", "10_folds"],
+        "subset": [StrOptions({"train", "test", "10_folds"})],
         "data_home": [str, None],
         "funneled": ["boolean"],
         "resize": [Interval(Real, 0, None, closed="neither"), None],
