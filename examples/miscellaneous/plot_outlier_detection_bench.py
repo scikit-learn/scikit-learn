@@ -256,5 +256,75 @@ for i, dataset_name in enumerate(datasets_names):
     axs[i // cols, i % cols].set_title(dataset_name)
     axs[i // cols, i % cols].set_xlabel("False Positive Rate")
     axs[i // cols, i % cols].set_ylabel("True Positive Rate")
-plt.tight_layout(pad=2.0)  # spacing between subplots
+_ = plt.tight_layout(pad=2.0)  # spacing between subplots
+
+# %%
+# We observe that once the number of neighbors is tuned, LOF and IForest perform
+# similarly in terms of ROC AUC for the forestcover and cardiotocography
+# datasets. The score for IForest is slightly better for the SA dataset and LOF
+# performs considerably better on WDBC than IForest.
+#
+# Ablation study
+# ==============
+#
+# In this section we explore the impact of the hyperparameter `n_neighbors` and
+# the choice of scaling the numerical variables on the LOF model. Here we use
+# the :ref:`covtype_dataset` dataset as the binary encoded categories introduce
+# a natural scale of euclidean distances between 0 and 1. We then want a scaling
+# method to avoid granting a privilege to non-binary features and that is robust
+# enough to outliers so that the task of finding them does not become to
+# difficult.
+
+# %%
+X = X_forestcover
+y = y_true["forestcover"]
+
+n_samples = X.shape[0]
+n_neighbors_list = (n_samples * np.array([0.001, 0.01, 0.02])).astype(np.int32)
+model = make_pipeline(RobustScaler(), LocalOutlierFactor())
+
+fig, ax = plt.subplots()
+ax.plot([0, 1], [0, 1], linewidth=linewidth, linestyle=":")
+for n_neighbors in n_neighbors_list:
+    model.set_params(localoutlierfactor__n_neighbors=n_neighbors)
+    model.fit(X)
+    y_pred = model[-1].negative_outlier_factor_
+    display = RocCurveDisplay.from_predictions(
+        y,
+        y_pred,
+        pos_label=pos_label,
+        name=f"n_neighbors = {n_neighbors}",
+        linewidth=linewidth,
+        ax=ax,
+    )
+    ax.plot([0, 1], [0, 1], linewidth=linewidth, linestyle=":")
+ax.set_xlabel("False Positive Rate")
+ax.set_ylabel("True Positive Rate")
+_ = ax.set_title("RobustScaler with varying n_neighbors")
+
+
+# %%
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+
+scaler_list = [RobustScaler(), StandardScaler(), MinMaxScaler()]
+clf = LocalOutlierFactor(n_neighbors=int(0.02 * n_samples))
+
+fig, ax = plt.subplots()
+ax.plot([0, 1], [0, 1], linewidth=linewidth, linestyle=":")
+for scaler in scaler_list:
+    model = make_pipeline(scaler, clf)
+    model.fit(X)
+    y_pred = model[-1].negative_outlier_factor_
+    display = RocCurveDisplay.from_predictions(
+        y,
+        y_pred,
+        pos_label=pos_label,
+        name=str(scaler),
+        linewidth=linewidth,
+        ax=ax,
+    )
+    ax.plot([0, 1], [0, 1], linewidth=linewidth, linestyle=":")
+ax.set_xlabel("False Positive Rate")
+ax.set_ylabel("True Positive Rate")
+ax.set_title("Fixed n_neighbors with varying scaler")
 plt.show()
