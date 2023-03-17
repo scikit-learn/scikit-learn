@@ -1,16 +1,20 @@
 import numpy as np
 import pytest
 
-from sklearn.datasets import make_classification, make_regression
+from sklearn.datasets import load_iris, make_classification, make_regression
 from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
 )
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._mocking import _MockEstimatorOnOffPrediction
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 
-from sklearn.utils._response import _get_response_values
+from sklearn.utils._response import _get_response_values, _get_response_values_binary
+
+
+X, y = load_iris(return_X_y=True)
+X_binary, y_binary = X[:100], y[:100]
 
 
 @pytest.mark.parametrize("response_method", ["decision_function", "predict_proba"])
@@ -19,7 +23,7 @@ def test_get_response_values_regressor_error(response_method):
     method."""
     my_estimator = _MockEstimatorOnOffPrediction(response_methods=[response_method])
     X = "mocking_data", "mocking_target"
-    err_msg = f"{my_estimator.__class__.__name__} should be a classifier"
+    err_msg = f"{my_estimator.__class__.__name__} should either be a classifier"
     with pytest.raises(ValueError, match=err_msg):
         _get_response_values(my_estimator, X, response_method=response_method)
 
@@ -136,4 +140,70 @@ def test_get_response_values_binary_classifier_predict_proba():
         pos_label=classifier.classes_[0],
     )
     assert_allclose(y_pred, classifier.predict_proba(X)[:, 0])
+    assert pos_label == 0
+
+
+@pytest.mark.parametrize(
+    "estimator, X, y, err_msg, params",
+    [
+        (
+            DecisionTreeRegressor(),
+            X_binary,
+            y_binary,
+            "Expected 'estimator' to be a binary classifier",
+            {"response_method": "auto"},
+        ),
+        (
+            DecisionTreeClassifier(),
+            X_binary,
+            y_binary,
+            r"pos_label=unknown is not a valid label: It should be one of \[0 1\]",
+            {"response_method": "auto", "pos_label": "unknown"},
+        ),
+        (
+            DecisionTreeClassifier(),
+            X,
+            y,
+            "be a binary classifier. Got 3 classes instead.",
+            {"response_method": "predict_proba"},
+        ),
+    ],
+)
+def test_get_response_error(estimator, X, y, err_msg, params):
+    """Check that we raise the proper error messages in _get_response_values_binary."""
+
+    estimator.fit(X, y)
+    with pytest.raises(ValueError, match=err_msg):
+        _get_response_values_binary(estimator, X, **params)
+
+
+def test_get_response_predict_proba():
+    """Check the behaviour of `_get_response_values_binary` using `predict_proba`."""
+    classifier = DecisionTreeClassifier().fit(X_binary, y_binary)
+    y_proba, pos_label = _get_response_values_binary(
+        classifier, X_binary, response_method="predict_proba"
+    )
+    np.testing.assert_allclose(y_proba, classifier.predict_proba(X_binary)[:, 1])
+    assert pos_label == 1
+
+    y_proba, pos_label = _get_response_values_binary(
+        classifier, X_binary, response_method="predict_proba", pos_label=0
+    )
+    np.testing.assert_allclose(y_proba, classifier.predict_proba(X_binary)[:, 0])
+    assert pos_label == 0
+
+
+def test_get_response_decision_function():
+    """Check the behaviour of `_get_response_values_binary` using decision_function."""
+    classifier = LogisticRegression().fit(X_binary, y_binary)
+    y_score, pos_label = _get_response_values_binary(
+        classifier, X_binary, response_method="decision_function"
+    )
+    np.testing.assert_allclose(y_score, classifier.decision_function(X_binary))
+    assert pos_label == 1
+
+    y_score, pos_label = _get_response_values_binary(
+        classifier, X_binary, response_method="decision_function", pos_label=0
+    )
+    np.testing.assert_allclose(y_score, classifier.decision_function(X_binary) * -1)
     assert pos_label == 0

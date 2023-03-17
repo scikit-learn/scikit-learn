@@ -1,5 +1,4 @@
-from sklearn.base import is_classifier
-from .base import _get_response_binary
+from ...base import is_classifier
 
 from .. import average_precision_score
 from .. import precision_recall_curve
@@ -7,6 +6,7 @@ from .._base import _check_pos_label_consistency
 from .._classification import check_consistent_length
 
 from ...utils import check_matplotlib_support
+from ...utils._response import _get_response_values_binary
 
 
 class PrecisionRecallDisplay:
@@ -271,7 +271,7 @@ class PrecisionRecallDisplay:
         check_matplotlib_support(method_name)
         if not is_classifier(estimator):
             raise ValueError(f"{method_name} only supports classifiers")
-        y_pred, pos_label = _get_response_binary(
+        y_pred, pos_label = _get_response_values_binary(
             estimator,
             X,
             response_method,

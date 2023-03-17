@@ -34,7 +34,7 @@ from .utils import (
     check_matplotlib_support,
     _safe_indexing,
 )
-from .utils._response import _get_response_values
+from .utils._response import _get_response_values_binary
 
 from .utils.multiclass import check_classification_targets, type_of_target
 from .utils.parallel import delayed, Parallel
@@ -1268,14 +1268,8 @@ class CalibrationDisplay:
             raise ValueError("'estimator' should be a fitted classifier.")
 
         check_is_fitted(estimator)
-        if len(estimator.classes_) != 2:
-            raise ValueError("Estimator must be a binary classifier.")
-
-        y_prob, pos_label = _get_response_values(
-            estimator,
-            X,
-            response_method="predict_proba",
-            pos_label=pos_label,
+        y_prob, pos_label = _get_response_values_binary(
+            estimator, X, response_method="predict_proba", pos_label=pos_label
         )
 
         name = name if name is not None else estimator.__class__.__name__

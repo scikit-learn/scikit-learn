@@ -1,6 +1,11 @@
+"""Utilities to get the response values of a classifier or a regressor.
+
+It allows to make uniform checks and validation.
+"""
 import numpy as np
 
-from .validation import _check_response_method
+from ..base import is_classifier
+from .validation import _check_response_method, check_is_fitted
 
 
 def _get_response_values(
@@ -105,7 +110,69 @@ def _get_response_values(
                     y_pred *= -1
     else:  # estimator is a regressor
         if response_method != "predict":
+            raise ValueError(
+                f"{estimator.__class__.__name__} should either be a classifier to be "
+                f"used with response_method={response_method} or the response_method "
+                "should be 'predict'. Got a regressor with response_method="
+                f"{response_method} instead."
+            )
             raise ValueError(f"{estimator.__class__.__name__} should be a classifier")
         y_pred, pos_label = estimator.predict(X), None
 
     return y_pred, pos_label
+
+
+def _get_response_values_binary(estimator, X, response_method, pos_label=None):
+    """Compute the response values of a binary classifier.
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+        in which the last estimator is a binary classifier.
+
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Input values.
+
+    response_method: {'auto', 'predict_proba', 'decision_function'}
+        Specifies whether to use :term:`predict_proba` or
+        :term:`decision_function` as the target response. If set to 'auto',
+        :term:`predict_proba` is tried first and if it does not exist
+        :term:`decision_function` is tried next.
+
+    pos_label : str or int, default=None
+        The class considered as the positive class when computing
+        the metrics. By default, `estimators.classes_[1]` is
+        considered as the positive class.
+
+    Returns
+    -------
+    y_pred: ndarray of shape (n_samples,)
+        Target scores calculated from the provided response_method
+        and pos_label.
+
+    pos_label: str or int
+        The class considered as the positive class when computing
+        the metrics.
+    """
+    classification_error = "Expected 'estimator' to be a binary classifier."
+
+    check_is_fitted(estimator)
+    if not is_classifier(estimator):
+        raise ValueError(
+            classification_error + f" Got {estimator.__class__.__name__} instead."
+        )
+    elif len(estimator.classes_) != 2:
+        raise ValueError(
+            classification_error + f" Got {len(estimator.classes_)} classes instead."
+        )
+
+    if response_method == "auto":
+        response_method = ["predict_proba", "decision_function"]
+
+    return _get_response_values(
+        estimator,
+        X,
+        response_method,
+        pos_label=pos_label,
+    )
