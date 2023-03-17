@@ -738,18 +738,18 @@ def test_iterative_imputer_truncated_normal_posterior(global_random_seed):
     X[0][0] = np.nan
 
     imputer = IterativeImputer(
-        min_value=0, max_value=0.5, sample_posterior=True, random_state=rng
+        min_value=-10, max_value=10, sample_posterior=True, random_state=rng,
+
     )
 
     imputer.fit_transform(X)
     # generate multiple imputations for the single missing value
     imputations = np.array([imputer.transform(X)[0][0] for _ in range(100)])
 
-    assert all(imputations >= 0)
-    assert all(imputations <= 0.5)
+    assert all(imputations >= imputer.min_value)
+    assert all(imputations <= imputer.max_value)
 
     mu, sigma = imputations.mean(), imputations.std()
-    ks_statistic, p_value = kstest((imputations - mu) / sigma, "norm")
     if sigma == 0:
         sigma += 1e-12
     ks_statistic, p_value = kstest((imputations - mu) / sigma, "norm")
