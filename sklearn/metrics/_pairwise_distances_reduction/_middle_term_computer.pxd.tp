@@ -186,4 +186,45 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
     ) noexcept nogil
 
 
+cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
+    cdef:
+        const DTYPE_t[:] X_data
+        const SPARSE_INDEX_TYPE_t[:] X_indices
+        const SPARSE_INDEX_TYPE_t[:] X_indptr
+
+        const {{INPUT_DTYPE_t}}[:, ::1] Y
+
+        # We treat the dense-sparse case with the sparse-dense case by simply
+        # treating the dist_middle_terms as F-ordered and by swapping arguments.
+        # This attribute is meant to encode the case and adapt the logic
+        # accordingly.
+        bint c_ordered_middle_term
+
+    cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num
+    ) noexcept nogil
+
+    cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num
+    ) noexcept nogil
+
+    cdef DTYPE_t * _compute_dist_middle_terms(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) noexcept nogil
+
 {{endfor}}
