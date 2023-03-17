@@ -163,6 +163,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.fbeta_score",
     "sklearn.metrics.get_scorer",
     "sklearn.metrics.hamming_loss",
+    "sklearn.metrics.hinge_loss",
     "sklearn.metrics.jaccard_score",
     "sklearn.metrics.label_ranking_average_precision_score",
     "sklearn.metrics.label_ranking_loss",
@@ -179,6 +180,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.median_absolute_error",
     "sklearn.metrics.multilabel_confusion_matrix",
     "sklearn.metrics.mutual_info_score",
+    "sklearn.metrics.ndcg_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
     "sklearn.metrics.precision_recall_curve",
     "sklearn.metrics.precision_recall_fscore_support",
@@ -191,6 +193,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.model_selection.train_test_split",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",
+    "sklearn.tree.export_text",
     "sklearn.utils.gen_batches",
 ]
 
