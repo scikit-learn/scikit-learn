@@ -103,7 +103,6 @@ def make_prediction(dataset=None, binary=False):
 
 
 def test_classification_report_dictionary_output():
-
     # Test performance report with dictionary output
     iris = datasets.load_iris()
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
@@ -385,23 +384,6 @@ def test_average_precision_score_tied_values():
     y_true = [0, 1, 1]
     y_score = [0.5, 0.5, 0.6]
     assert average_precision_score(y_true, y_score) != 1.0
-
-
-@ignore_warnings
-def test_precision_recall_fscore_support_errors():
-    y_true, y_pred, _ = make_prediction(binary=True)
-
-    # Bad beta
-    with pytest.raises(ValueError):
-        precision_recall_fscore_support(y_true, y_pred, beta=-0.1)
-
-    # Bad pos_label
-    with pytest.raises(ValueError):
-        precision_recall_fscore_support(y_true, y_pred, pos_label=2, average="binary")
-
-    # Bad average option
-    with pytest.raises(ValueError):
-        precision_recall_fscore_support([0, 1, 2], [1, 2, 0], average="mega")
 
 
 def test_precision_recall_f_unused_pos_label():
@@ -1078,6 +1060,24 @@ def test_confusion_matrix_dtype():
     cm = confusion_matrix(y, y, sample_weight=weight)
     assert cm[0, 0] == 9223372036854775807
     assert cm[1, 1] == -2
+
+
+@pytest.mark.parametrize("dtype", ["Int64", "Float64", "boolean"])
+def test_confusion_matrix_pandas_nullable(dtype):
+    """Checks that confusion_matrix works with pandas nullable dtypes.
+
+    Non-regression test for gh-25635.
+    """
+    pd = pytest.importorskip("pandas")
+
+    y_ndarray = np.array([1, 0, 0, 1, 0, 1, 1, 0, 1])
+    y_true = pd.Series(y_ndarray, dtype=dtype)
+    y_predicted = pd.Series([0, 0, 1, 1, 0, 1, 1, 1, 1], dtype="int64")
+
+    output = confusion_matrix(y_true, y_predicted)
+    expected_output = confusion_matrix(y_ndarray, y_predicted)
+
+    assert_array_equal(output, expected_output)
 
 
 def test_classification_report_multiclass():
@@ -1874,7 +1874,6 @@ def test_prf_warnings():
     # average of per-label scores
     f, w = precision_recall_fscore_support, UndefinedMetricWarning
     for average in [None, "weighted", "macro"]:
-
         msg = (
             "Precision and F-score are ill-defined and "
             "being set to 0.0 in labels with no predicted samples."
@@ -1974,7 +1973,6 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
     # average of per-label scores
     f = precision_recall_fscore_support
     for average in [None, "weighted", "macro"]:
-
         assert_no_warnings(
             f, [0, 1, 2], [1, 1, 2], average=average, zero_division=zero_division
         )
@@ -2480,19 +2478,29 @@ def test_log_loss():
     loss = log_loss(y_true, y_pred, normalize=False)
     assert_almost_equal(loss, 0.6904911 * 6, decimal=6)
 
+    user_warning_msg = "y_pred values do not sum to one"
     # check eps and handling of absolute zero and one probabilities
     y_pred = np.asarray(y_pred) > 0.5
-    loss = log_loss(y_true, y_pred, normalize=True, eps=0.1)
-    assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, 0.1, 0.9)))
+    with pytest.warns(FutureWarning):
+        loss = log_loss(y_true, y_pred, normalize=True, eps=0.1)
+    with pytest.warns(UserWarning, match=user_warning_msg):
+        assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, 0.1, 0.9)))
 
     # binary case: check correct boundary values for eps = 0
-    assert log_loss([0, 1], [0, 1], eps=0) == 0
-    assert log_loss([0, 1], [0, 0], eps=0) == np.inf
-    assert log_loss([0, 1], [1, 1], eps=0) == np.inf
+    with pytest.warns(FutureWarning):
+        assert log_loss([0, 1], [0, 1], eps=0) == 0
+    with pytest.warns(FutureWarning):
+        assert log_loss([0, 1], [0, 0], eps=0) == np.inf
+    with pytest.warns(FutureWarning):
+        assert log_loss([0, 1], [1, 1], eps=0) == np.inf
 
     # multiclass case: check correct boundary values for eps = 0
-    assert log_loss([0, 1, 2], [[1, 0, 0], [0, 1, 0], [0, 0, 1]], eps=0) == 0
-    assert log_loss([0, 1, 2], [[0, 0.5, 0.5], [0, 1, 0], [0, 0, 1]], eps=0) == np.inf
+    with pytest.warns(FutureWarning):
+        assert log_loss([0, 1, 2], [[1, 0, 0], [0, 1, 0], [0, 0, 1]], eps=0) == 0
+    with pytest.warns(FutureWarning):
+        assert (
+            log_loss([0, 1, 2], [[0, 0.5, 0.5], [0, 1, 0], [0, 0, 1]], eps=0) == np.inf
+        )
 
     # raise error if number of classes are not equal.
     y_true = [1, 0, 2]
@@ -2503,7 +2511,8 @@ def test_log_loss():
     # case when y_true is a string array object
     y_true = ["ham", "spam", "spam", "ham"]
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
-    loss = log_loss(y_true, y_pred)
+    with pytest.warns(UserWarning, match=user_warning_msg):
+        loss = log_loss(y_true, y_pred)
     assert_almost_equal(loss, 1.0383217, decimal=6)
 
     # test labels option
@@ -2531,7 +2540,8 @@ def test_log_loss():
     # ensure labels work when len(np.unique(y_true)) != y_pred.shape[1]
     y_true = [1, 2, 2]
     y_score2 = [[0.2, 0.7, 0.3], [0.6, 0.5, 0.3], [0.3, 0.9, 0.1]]
-    loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
+    with pytest.warns(UserWarning, match=user_warning_msg):
+        loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
     assert_almost_equal(loss, 1.0630345, decimal=6)
 
 
@@ -2571,7 +2581,8 @@ def test_log_loss_pandas_input():
     for TrueInputType, PredInputType in types:
         # y_pred dataframe, y_true series
         y_true, y_pred = TrueInputType(y_tr), PredInputType(y_pr)
-        loss = log_loss(y_true, y_pred)
+        with pytest.warns(UserWarning, match="y_pred values do not sum to one"):
+            loss = log_loss(y_true, y_pred)
         assert_almost_equal(loss, 1.0383217, decimal=6)
 
 
@@ -2635,3 +2646,36 @@ def test_balanced_accuracy_score(y_true, y_pred):
     adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
     chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
     assert adjusted == (balanced - chance) / (1 - chance)
+
+
+@pytest.mark.parametrize(
+    "metric",
+    [
+        jaccard_score,
+        f1_score,
+        partial(fbeta_score, beta=0.5),
+        precision_recall_fscore_support,
+        precision_score,
+        recall_score,
+        brier_score_loss,
+    ],
+)
+@pytest.mark.parametrize(
+    "classes", [(False, True), (0, 1), (0.0, 1.0), ("zero", "one")]
+)
+def test_classification_metric_pos_label_types(metric, classes):
+    """Check that the metric works with different types of `pos_label`.
+
+    We can expect `pos_label` to be a bool, an integer, a float, a string.
+    No error should be raised for those types.
+    """
+    rng = np.random.RandomState(42)
+    n_samples, pos_label = 10, classes[-1]
+    y_true = rng.choice(classes, size=n_samples, replace=True)
+    if metric is brier_score_loss:
+        # brier score loss requires probabilities
+        y_pred = rng.uniform(size=n_samples)
+    else:
+        y_pred = y_true.copy()
+    result = metric(y_true, y_pred, pos_label=pos_label)
+    assert not np.any(np.isnan(result))

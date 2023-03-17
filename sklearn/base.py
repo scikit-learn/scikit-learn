@@ -227,6 +227,25 @@ class BaseEstimator:
                 valid_params[key] = value
 
         for key, sub_params in nested_params.items():
+            # TODO(1.4): remove specific handling of "base_estimator".
+            # The "base_estimator" key is special. It was deprecated and
+            # renamed to "estimator" for several estimators. This means we
+            # need to translate it here and set sub-parameters on "estimator",
+            # but only if the user did not explicitly set a value for
+            # "base_estimator".
+            if (
+                key == "base_estimator"
+                and valid_params[key] == "deprecated"
+                and self.__module__.startswith("sklearn.")
+            ):
+                warnings.warn(
+                    f"Parameter 'base_estimator' of {self.__class__.__name__} is"
+                    " deprecated in favor of 'estimator'. See"
+                    f" {self.__class__.__name__}'s docstring for more details.",
+                    FutureWarning,
+                    stacklevel=2,
+                )
+                key = "estimator"
             valid_params[key].set_params(**sub_params)
 
         return self
@@ -479,6 +498,7 @@ class BaseEstimator:
         y="no_validation",
         reset=True,
         validate_separately=False,
+        cast_to_ndarray=True,
         **check_params,
     ):
         """Validate input data and set or check the `n_features_in_` attribute.
@@ -524,6 +544,11 @@ class BaseEstimator:
             `estimator=self` is automatically added to these dicts to generate
             more informative error message in case of invalid input data.
 
+        cast_to_ndarray : bool, default=True
+            Cast `X` and `y` to ndarray with checks in `check_params`. If
+            `False`, `X` and `y` are unchanged and only `feature_names` and
+            `n_features_in_` are checked.
+
         **check_params : kwargs
             Parameters passed to :func:`sklearn.utils.check_array` or
             :func:`sklearn.utils.check_X_y`. Ignored if validate_separately
@@ -555,13 +580,15 @@ class BaseEstimator:
         if no_val_X and no_val_y:
             raise ValueError("Validation should be done on X, y or both.")
         elif not no_val_X and no_val_y:
-            X = check_array(X, input_name="X", **check_params)
+            if cast_to_ndarray:
+                X = check_array(X, input_name="X", **check_params)
             out = X
         elif no_val_X and not no_val_y:
-            y = _check_y(y, **check_params)
+            if cast_to_ndarray:
+                y = _check_y(y, **check_params) if cast_to_ndarray else y
             out = y
         else:
-            if validate_separately:
+            if validate_separately and cast_to_ndarray:
                 # We need this because some estimators validate X and y
                 # separately, and in general, separately calling check_array()
                 # on X and y isn't equivalent to just calling check_X_y()
@@ -654,7 +681,7 @@ class ClassifierMixin:
         Returns
         -------
         score : float
-            Mean accuracy of ``self.predict(X)`` wrt. `y`.
+            Mean accuracy of ``self.predict(X)`` w.r.t. `y`.
         """
         from .metrics import accuracy_score
 
@@ -698,7 +725,7 @@ class RegressorMixin:
         Returns
         -------
         score : float
-            :math:`R^2` of ``self.predict(X)`` wrt. `y`.
+            :math:`R^2` of ``self.predict(X)`` w.r.t. `y`.
 
         Notes
         -----
