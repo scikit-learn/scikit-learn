@@ -17,7 +17,7 @@ from numbers import Integral
 import numpy as np
 
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, validate_params
+from ..utils._param_validation import Interval, validate_params, StrOptions
 
 from ..base import is_classifier
 
@@ -90,7 +90,7 @@ SENTINEL = Sentinel()
         "proportion": ["boolean"],
         "rounded": ["boolean"],
         "precision": [Interval(Integral, 0, None, closed="left"), None],
-        "ax": [matplotlib.pyplot.Figure, None],
+        "ax": "no_validation",  # delegate validation to matplotlib
         "fontsize": [Interval(Integral, 0, None, closed="left"), None],
     }
 )
@@ -441,20 +441,6 @@ class _DOTTreeExporter(_BaseTreeExporter):
             self.characters = ["&#35;", "<SUB>", "</SUB>", "&le;", "<br/>", ">", "<"]
         else:
             self.characters = ["#", "[", "]", "<=", "\\n", '"', '"']
-
-        # validate
-        if isinstance(precision, Integral):
-            if precision < 0:
-                raise ValueError(
-                    "'precision' should be greater or equal to 0."
-                    " Got {} instead.".format(precision)
-                )
-        else:
-            raise ValueError(
-                "'precision' should be an integer. Got {} instead.".format(
-                    type(precision)
-                )
-            )
 
         # The depth of each node for plotting with 'leaf' option
         self.ranks = {"leaves": []}
