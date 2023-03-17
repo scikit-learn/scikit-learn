@@ -436,6 +436,11 @@ sphinx_gallery_conf = {
     "inspect_global_variables": False,
     "remove_config_comments": True,
     "plot_gallery": "True",
+    # Remove %matplotlib inline cell which does not work in JupyterLite if you
+    # have not imported matplotlib before. TODO it can be removed when
+    # https://github.com/sphinx-gallery/sphinx-gallery/pull/1099 is in a
+    # released version
+    "first_notebook_cell": None,
 }
 
 
