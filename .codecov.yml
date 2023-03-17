@@ -2,6 +2,7 @@ comment: false
 
 coverage:
   status:
+    changes: true
     project:
       default:
         # Commits pushed to main should not make the overall
