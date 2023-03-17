@@ -2891,11 +2891,11 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array of shape (n_samples,)
+    y_true : array-like of shape (n_samples,)
         True target, consisting of integers of two values. The positive label
         must be greater than the negative label.
 
-    pred_decision : array of shape (n_samples,) or (n_samples, n_classes)
+    pred_decision : array-like of shape (n_samples,) or (n_samples, n_classes)
         Predicted decisions, as output by decision_function (floats).
 
     labels : array-like, default=None
