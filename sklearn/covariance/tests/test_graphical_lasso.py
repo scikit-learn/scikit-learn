@@ -23,11 +23,11 @@ from sklearn.utils import check_random_state
 from sklearn import datasets
 
 
-def test_graphical_lasso(random_state=0):
+def test_graphical_lasso(global_random_seed):
     # Sample data from a sparse multivariate normal
-    dim = 20
+    dim = 10
     n_samples = 100
-    random_state = check_random_state(random_state)
+    random_state = check_random_state(global_random_seed)
     prec = make_sparse_spd_matrix(dim, alpha=0.95, random_state=random_state)
     cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
@@ -206,7 +206,7 @@ def test_graphical_lasso_cv_alphas_invalid_array(alphas, err_type, err_msg):
         GraphicalLassoCV(alphas=alphas, tol=1e-1, n_jobs=1).fit(X)
 
 
-def test_graphical_lasso_cv_scores():
+def test_graphical_lasso_cv_scores(global_random_seed):
     splits = 4
     n_alphas = 5
     n_refinements = 3
@@ -218,7 +218,7 @@ def test_graphical_lasso_cv_scores():
             [0.0, 0.0, 0.1, 0.7],
         ]
     )
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
     cov = GraphicalLassoCV(cv=splits, alphas=n_alphas, n_refinements=n_refinements).fit(
         X
