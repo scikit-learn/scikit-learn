@@ -49,7 +49,6 @@ def get_random_integer_x_three_classes_y(global_random_seed):
     return X2, y2
 
 
-
 def test_gnb():
     # Gaussian Naive Bayes classification.
     # This checks that GaussianNB implements fit and predict and returns
@@ -76,7 +75,7 @@ def test_gnb_prior(global_random_seed):
     # Test whether class priors are properly set.
     clf = GaussianNB().fit(X, y)
     assert_array_almost_equal(np.array([3, 3]) / 6.0, clf.class_prior_, 8)
-    X1,y1 = get_random_normal_x_binary_y(global_random_seed)
+    X1, y1 = get_random_normal_x_binary_y(global_random_seed)
     clf = GaussianNB().fit(X1, y1)
     # Check that the class priors sum to 1
     assert_array_almost_equal(clf.class_prior_.sum(), 1)
@@ -226,9 +225,9 @@ def test_gnb_naive_bayes_scale_invariance():
 
 
 @pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
-def test_discretenb_prior(DiscreteNaiveBayes,global_random_seed):
+def test_discretenb_prior(DiscreteNaiveBayes, global_random_seed):
     # Test whether class priors are properly set.
-    X2,y2 = get_random_integer_x_three_classes_y(global_random_seed)
+    X2, y2 = get_random_integer_x_three_classes_y(global_random_seed)
     clf = DiscreteNaiveBayes().fit(X2, y2)
     assert_array_almost_equal(
         np.log(np.array([2, 2, 2]) / 6.0), clf.class_log_prior_, 8
@@ -286,9 +285,9 @@ def test_discretenb_partial_fit(DiscreteNaiveBayes):
 
 
 @pytest.mark.parametrize("NaiveBayes", ALL_NAIVE_BAYES_CLASSES)
-def test_NB_partial_fit_no_first_classes(NaiveBayes,global_random_seed):
+def test_NB_partial_fit_no_first_classes(NaiveBayes, global_random_seed):
     # classes is required for first call to partial fit
-    X2,y2 = get_random_integer_x_three_classes_y(global_random_seed)
+    X2, y2 = get_random_integer_x_three_classes_y(global_random_seed)
 
     with pytest.raises(
         ValueError, match="classes must be passed on the first call to partial_fit."
@@ -466,11 +465,11 @@ def test_discretenb_degenerate_one_class_case(
 
 
 @pytest.mark.parametrize("kind", ("dense", "sparse"))
-def test_mnnb(kind,global_random_seed):
+def test_mnnb(kind, global_random_seed):
     # Test Multinomial Naive Bayes classification.
     # This checks that MultinomialNB implements fit and predict and returns
     # correct values for a simple toy dataset.
-    X2,y2 = get_random_integer_x_three_classes_y(global_random_seed)
+    X2, y2 = get_random_integer_x_three_classes_y(global_random_seed)
 
     if kind == "dense":
         X = X2
@@ -694,7 +693,7 @@ def test_cnb():
 def test_categoricalnb(global_random_seed):
     # Check the ability to predict the training set.
     clf = CategoricalNB()
-    X2,y2 = get_random_integer_x_three_classes_y(global_random_seed)
+    X2, y2 = get_random_integer_x_three_classes_y(global_random_seed)
 
     y_pred = clf.fit(X2, y2).predict(X2)
     assert_array_equal(y_pred, y2)
@@ -801,7 +800,6 @@ def test_categoricalnb_with_min_categories(
     ],
 )
 def test_categoricalnb_min_categories_errors(min_categories, error_msg):
-
     X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
     y = np.array([1, 1, 2, 2])
 
@@ -983,8 +981,8 @@ def test_check_alpha():
 
 
 @pytest.mark.parametrize("Estimator", ALL_NAIVE_BAYES_CLASSES)
-def test_predict_joint_proba(Estimator,global_random_seed):
-    X2,y2 = get_random_integer_x_three_classes_y(global_random_seed)
+def test_predict_joint_proba(Estimator, global_random_seed):
+    X2, y2 = get_random_integer_x_three_classes_y(global_random_seed)
     est = Estimator().fit(X2, y2)
     jll = est.predict_joint_log_proba(X2)
     log_prob_x = logsumexp(jll, axis=1)
