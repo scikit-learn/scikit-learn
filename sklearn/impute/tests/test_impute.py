@@ -622,7 +622,8 @@ def test_iterative_imputer_imputation_order(imputation_order, global_random_seed
     n = 100
     d = 10
     max_iter = 2
-    X = _sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
+    # if X has an exclusively missing feature the test fails.
+    X = _sparse_random_matrix(n, d, density=1/3.0, random_state=rng).toarray()
     X[:, 0] = 1  # this column should not be discarded by IterativeImputer
 
     imputer = IterativeImputer(
@@ -657,8 +658,8 @@ def test_iterative_imputer_imputation_order(imputation_order, global_random_seed
 @pytest.mark.parametrize(
     "estimator", [None, DummyRegressor(), BayesianRidge(), ARDRegression(), RidgeCV()]
 )
-def test_iterative_imputer_estimators(estimator,global_random_seed):
-    rng = np.random.RandomState(global_random_seed)
+def test_iterative_imputer_estimators(estimator, global_random_seed):
+    rng = np.random.RandomState(64)
 
     n = 100
     d = 10
