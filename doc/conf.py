@@ -60,8 +60,19 @@ extensions = [
     "doi_role",
     "allow_nan_estimators",
     "matplotlib.sphinxext.plot_directive",
-    "jupyterlite_sphinx",
 ]
+
+try:
+    import jupyterlite_sphinx  # noqa: F401
+
+    extensions.append("jupyterlite_sphinx")
+except ImportError:
+    # In some cases we don't want to require jupyterlite_sphinx to be installed,
+    # e.g. the doc-min-dependencies build
+    warnings.warn(
+        "jupyterlite_sphinx is not installed, you need to install it "
+        "if you want JupyterLite links to appear in each example"
+    )
 
 # Produce `plot::` directives for examples that contain `import matplotlib` or
 # `from matplotlib import`.
