@@ -706,9 +706,9 @@ def test_bad_input():
         clf.predict(Xt)
 
 
-def test_svc_nonfinite_params():
+def test_svc_nonfinite_params(global_random_seed):
     # Check SVC throws ValueError when dealing with non-finite parameter values
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 10
     fmax = np.finfo(np.float64).max
     X = fmax * rng.uniform(size=(n_samples, 2))
@@ -1071,11 +1071,11 @@ def test_linear_svm_convergence_warnings():
     assert lsvr.n_iter_ == 2
 
 
-def test_svr_coef_sign():
+def test_svr_coef_sign(global_random_seed):
     # Test that SVR(kernel="linear") has coef_ with the right sign.
     # Non-regression test for #2933.
-    X = np.random.RandomState(21).randn(10, 3)
-    y = np.random.RandomState(12).randn(10)
+    X = np.random.RandomState(global_random_seed).randn(10, 3)
+    y = np.random.RandomState(global_random_seed + 1).randn(10)
 
     for svr in [svm.SVR(kernel="linear"), svm.NuSVR(kernel="linear"), svm.LinearSVR()]:
         svr.fit(X, y)
