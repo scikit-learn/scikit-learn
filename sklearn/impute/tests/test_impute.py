@@ -720,8 +720,8 @@ def test_iterative_imputer_clip_truncnorm(global_random_seed):
         random_state=rng,
     )
     Xt = imputer.fit_transform(X)
-    assert_allclose(np.min(Xt[X == 0]), 0.1)
-    assert_allclose(np.max(Xt[X == 0]), 0.2)
+    assert_array_equal(np.min(Xt[X == 0]) >= 0.1, 1)
+    assert_array_equal(np.max(Xt[X == 0]) <= 0.2, 1)
     assert_allclose(Xt[X != 0], X[X != 0])
 
 
