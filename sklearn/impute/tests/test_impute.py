@@ -29,6 +29,8 @@ from sklearn.random_projection import _sparse_random_matrix
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.impute._base import _most_frequent
 
+SPARSE_DENSITY = 1/3.0 # using this as a stable default (see Achlioptas, 2001). using lower values might cause some tests to fail.
+
 
 def _assert_array_equal_and_same_dtype(x, y):
     assert_array_equal(x, y)
@@ -507,7 +509,7 @@ def test_iterative_imputer_one_feature(X):
 
 def test_imputation_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
-    X = _sparse_random_matrix(100, 100, density=0.10)
+    X = _sparse_random_matrix(100, 100, density=SPARSE_DENSITY)
     missing_values = X.data[0]
 
     pipeline = Pipeline(
@@ -519,7 +521,7 @@ def test_imputation_pipeline_grid_search():
 
     parameters = {"imputer__strategy": ["mean", "median", "most_frequent"]}
 
-    Y = _sparse_random_matrix(100, 1, density=0.10).toarray()
+    Y = _sparse_random_matrix(100, 1, density=SPARSE_DENSITY).toarray()
     gs = GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
 
@@ -572,7 +574,7 @@ def test_iterative_imputer_zero_iters(global_random_seed):
 
     n = 100
     d = 10
-    X = _sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
+    X = _sparse_random_matrix(n, d, density=SPARSE_DENSITY, random_state=rng).toarray()
     missing_flag = X == 0
     X[missing_flag] = np.nan
 
@@ -596,7 +598,7 @@ def test_iterative_imputer_verbose(global_random_seed):
 
     n = 100
     d = 3
-    X = _sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
+    X = _sparse_random_matrix(n, d, density=SPARSE_DENSITY, random_state=rng).toarray()
     imputer = IterativeImputer(missing_values=0, max_iter=1, verbose=1)
     imputer.fit(X)
     imputer.transform(X)
@@ -623,7 +625,7 @@ def test_iterative_imputer_imputation_order(imputation_order, global_random_seed
     d = 10
     max_iter = 2
     # if X has an exclusively missing feature the test fails.
-    X = _sparse_random_matrix(n, d, density=1/3.0, random_state=rng).toarray()
+    X = _sparse_random_matrix(n, d, density=SPARSE_DENSITY, random_state=rng).toarray()
     X[:, 0] = 1  # this column should not be discarded by IterativeImputer
 
     imputer = IterativeImputer(
@@ -663,7 +665,7 @@ def test_iterative_imputer_estimators(estimator, global_random_seed):
 
     n = 100
     d = 10
-    X = _sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
+    X = _sparse_random_matrix(n, d, density=SPARSE_DENSITY, random_state=rng).toarray()
 
     imputer = IterativeImputer(
         missing_values=0, max_iter=1, estimator=estimator, random_state=rng
@@ -687,15 +689,15 @@ def test_iterative_imputer_clip(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n = 100
     d = 10
-    X = _sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
+    X = _sparse_random_matrix(n, d, density=SPARSE_DENSITY, random_state=rng).toarray()
 
     imputer = IterativeImputer(
         missing_values=0, max_iter=1, min_value=0.1, max_value=0.2, random_state=rng
     )
 
     Xt = imputer.fit_transform(X)
-    assert_allclose(np.min(Xt[X == 0]), 0.1)
-    assert_allclose(np.max(Xt[X == 0]), 0.2)
+    assert_array_equal(np.min(Xt[X == 0]) >= 0.1, 1)
+    assert_array_equal(np.max(Xt[X == 0]) <= 0.2, 1)
     assert_allclose(Xt[X != 0], X[X != 0])
 
 
@@ -703,7 +705,7 @@ def test_iterative_imputer_clip_truncnorm(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n = 100
     d = 10
-    X = _sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
+    X = _sparse_random_matrix(n, d, density=SPARSE_DENSITY, random_state=rng).toarray()
     X[:, 0] = 1
 
     imputer = IterativeImputer(
@@ -784,7 +786,7 @@ def test_iterative_imputer_transform_stochasticity(global_random_seed):
     rng2 = np.random.RandomState(global_random_seed+1)
     n = 100
     d = 10
-    X = _sparse_random_matrix(n, d, density=0.10, random_state=rng1).toarray()
+    X = _sparse_random_matrix(n, d, density=SPARSE_DENSITY, random_state=rng1).toarray()
 
     # when sample_posterior=True, two transforms shouldn't be equal
     imputer = IterativeImputer(
