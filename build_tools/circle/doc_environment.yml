@@ -29,3 +29,6 @@ dependencies:
   - pooch
   - sphinxext-opengraph
   - pip
+  - pip:
+    - jupyterlite-sphinx
+    - jupyterlite-pyodide-kernel
