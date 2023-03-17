@@ -303,8 +303,9 @@ extension_config = {
         },
     ],
     "neighbors": [
-        {"sources": ["_ball_tree.pyx"], "include_np": True},
-        {"sources": ["_kd_tree.pyx"], "include_np": True},
+        {"sources": ["_binary_tree.pxi.tp"], "include_np": True},
+        {"sources": ["_ball_tree.pyx.tp"], "include_np": True},
+        {"sources": ["_kd_tree.pyx.tp"], "include_np": True},
         {"sources": ["_partition_nodes.pyx"], "language": "c++", "include_np": True},
         {"sources": ["_quad_tree.pyx"], "include_np": True},
     ],

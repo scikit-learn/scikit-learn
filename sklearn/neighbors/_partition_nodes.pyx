@@ -63,7 +63,7 @@ cdef extern from *:
 
 
 cdef int partition_node_indices(
-        DTYPE_t *data,
+        floating *data,
         ITYPE_t *node_indices,
         ITYPE_t split_dim,
         ITYPE_t split_index,
