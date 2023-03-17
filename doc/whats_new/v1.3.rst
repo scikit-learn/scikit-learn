@@ -29,6 +29,11 @@ random sampling procedures.
   `transform_algorithm` is not the same as `fit_algorithm` and the number of iterations
   is small. :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Fix| Treat more consistently small values in the `W` and `H` matrices during the
+  `fit` and `transform` steps of :class:`decomposition.NMF` and
+  :class:`decomposition.MiniBatchNMF` which can produce different results than previous
+  versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -76,6 +81,42 @@ Changes impacting all modules
   by :user:`John Pangas <jpangas>`, :user:`Rahil Parikh <rprkh>` ,
   and :user:`Alex Buzenet <albuzenet>`.
 
+- |Enhancement| Added a multi-threaded Cython routine to the compute squared
+  Euclidean distances (sometimes followed by a fused reduction operation) for a
+  pair of datasets consisting of a sparse CSR matrix and a dense NumPy.
+
+  This can improve the performance of following functions and estimators:
+
+  - :func:`sklearn.metrics.pairwise_distances_argmin`
+  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
+  - :class:`sklearn.cluster.AffinityPropagation`
+  - :class:`sklearn.cluster.Birch`
+  - :class:`sklearn.cluster.MeanShift`
+  - :class:`sklearn.cluster.OPTICS`
+  - :class:`sklearn.cluster.SpectralClustering`
+  - :func:`sklearn.feature_selection.mutual_info_regression`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neighbors.KNeighborsRegressor`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.neighbors.RadiusNeighborsRegressor`
+  - :class:`sklearn.neighbors.LocalOutlierFactor`
+  - :class:`sklearn.neighbors.NearestNeighbors`
+  - :class:`sklearn.manifold.Isomap`
+  - :class:`sklearn.manifold.LocallyLinearEmbedding`
+  - :class:`sklearn.manifold.TSNE`
+  - :func:`sklearn.manifold.trustworthiness`
+  - :class:`sklearn.semi_supervised.LabelPropagation`
+  - :class:`sklearn.semi_supervised.LabelSpreading`
+
+  A typical example of this performance improvement happens when passing a sparse
+  CSR matrix to the `predict` or `transform` method of estimators that rely on
+  a dense NumPy representation to store their fitted parameters (or the reverse).
+
+  For instance, :meth:`sklearn.NearestNeighbors.kneighbors` is now up to 2 times faster
+  for this case on commonly available laptops.
+
+  :pr:`25044` by :user:`Julien Jerphanion <jjerphan>`.
+
 Changelog
 ---------
 
@@ -102,6 +143,12 @@ Changelog
 - |Feature| A `__sklearn_clone__` protocol is now available to override the
   default behavior of :func:`base.clone`. :pr:`24568` by `Thomas Fan`_.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| :class:`calibration.CalibratedClassifierCV` now does not enforce sample
+  alignment on `fit_params`. :pr:`25805` by `Adrin Jalali`_.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -110,12 +157,29 @@ Changelog
   is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |API| The `data_transposed` argument of :func:`datasets.make_sparse_coded_signal`
+  is deprecated and will be removed in v1.5.
+  :pr:`25784` by :user:`Jérémie du Boisberranger`.
+
 :mod:`sklearn.decomposition`
 ............................
 
 - |Enhancement| :class:`decomposition.DictionaryLearning` now accepts the parameter
   `callback` for consistency with the function :func:`decomposition.dict_learning`.
   :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Efficiency| :class:`decomposition.MiniBatchDictionaryLearning` and
+  :class:`decomposition.MiniBatchSparsePCA` are now faster for small batch sizes by
+  avoiding duplicate validations.
+  :pr:`25490` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Treat more consistently small values in the `W` and `H` matrices during the
+  `fit` and `transform` steps of :class:`decomposition.NMF` and
+  :class:`decomposition.MiniBatchNMF` which can produce different results than previous
+  versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -145,6 +209,10 @@ Changelog
 - |Enhancement| :class:`ensemble.BaggingClassifier` and
   :class:`ensemble.BaggingRegressor` expose the `allow_nan` tag from the
   underlying estimator. :pr:`25506` by `Thomas Fan`_.
+
+- |Fix| :meth:`ensemble.RandomForestClassifier.fit` sets `max_samples = 1`
+  when `max_samples` is a float and `round(n_samples * max_samples) < 1`.
+  :pr:`25601` by :user:`Jan Fidor <JanFidor>`.
 
 :mod:`sklearn.exception`
 ........................
@@ -186,6 +254,13 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Efficiency| The computation of the expected mutual information in
+  :func:`metrics.adjusted_mutual_info_score` is now faster when the number of
+  unique labels is large and its memory usage is reduced in general.
+  :pr:`25713` by :user:`Kshitij Mathur <Kshitij68>`,
+  :user:`Guillaume Lemaitre <glemaitre>`, :user:`Omar Salman <OmarManzoor>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 - |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
   :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
 
@@ -195,6 +270,13 @@ Changelog
 
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| :func:`model_selection.cross_validate` accepts a new parameter
+  `return_indices` to return the train-test indices of each cv split.
+  :pr:`25659` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -209,6 +291,11 @@ Changelog
 - |Fix| Remove support for `KulsinskiDistance` in :class:`neighbors.BallTree`. This
   dissimilarity is not a metric and cannot be supported by the BallTree.
   :pr:`25417` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| The performance of :meth:`neighbors.KNeighborsClassifier.predict`
+  and of :meth:`neighbors.KNeighborsClassifier.predict_proba` has been improved
+  when `n_neighbors` is large and `algorithm="brute"` with non Euclidean metrics.
+  :pr:`24076` by :user:`Meekail Zain <micky774>`, :user:`Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.neural_network`
 .............................
@@ -234,6 +321,10 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
+
+- |MajorFeature| Introduces :class:`preprocessing.TargetEncoder` which is a
+  categorical encoding based on target mean conditioned on the value of the
+  category. :pr:`25334` by `Thomas Fan`_.
 
 - |Enhancement| Adds a `feature_name_combiner` parameter to
   :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
@@ -268,8 +359,11 @@ Changelog
   during `transform` with no prior call to `fit` or `fit_transform`.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
-- |Enhancement| :func:`utils.multiclass.type_of_target` can identify pandas
-  nullable data types as classification targets. :pr:`25638` by `Thomas Fan`_.
+- |API| A `FutureWarning` is now raised when instantiating a class which inherits from
+  a deprecated base class (i.e. decorated by :class:`utils.deprecated`) and which
+  overrides the `__init__` method.
+  :pr:`25733` by :user:`Brigitta Sipőcz <bsipocz>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.semi_supervised`
 ..............................
