@@ -575,7 +575,7 @@ def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y
         estimator.fit = Mock(name="fit")
         stack_func = getattr(estimator, stack_method)
         predict_method_mocked = Mock(side_effect=stack_func)
-        # Mocking a method will not provide an `__name__` while Python methods
+        # Mocking a method will not provide a `__name__` while Python methods
         # do and we are using it in `_get_response_method`.
         predict_method_mocked.__name__ = stack_method
         setattr(estimator, stack_method, predict_method_mocked)

@@ -103,7 +103,7 @@ def _get_response_values(
             if target_type == "binary":
                 if pos_label == classes[0]:
                     y_pred *= -1
-    else:
+    else:  # estimator is a regressor
         if response_method != "predict":
             raise ValueError(f"{estimator.__class__.__name__} should be a classifier")
         y_pred, pos_label = estimator.predict(X), None
