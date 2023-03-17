@@ -487,7 +487,7 @@ class SpectralBiclustering(BaseSpectral):
     >>> clustering.row_labels_
     array([1, 1, 1, 0, 0, 0], dtype=int32)
     >>> clustering.column_labels_
-    array([0, 1], dtype=int32)
+    array([1, 0], dtype=int32)
     >>> clustering
     SpectralBiclustering(n_clusters=2, random_state=0)
     """
