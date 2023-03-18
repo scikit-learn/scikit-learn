@@ -17,12 +17,14 @@ from numbers import Integral
 import numpy as np
 
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval, validate_params
+
 from ..base import is_classifier
 
 from . import _criterion
 from . import _tree
 from ._reingold_tilford import buchheim, Tree
-from . import DecisionTreeClassifier
+from . import DecisionTreeClassifier, DecisionTreeRegressor
 
 
 def _color_brew(n):
@@ -919,6 +921,17 @@ def _compute_depth(tree, node):
     return max(depths)
 
 
+@validate_params(
+    {
+        "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
+        "feature_names": [list, None],
+        "class_names": [list, None],
+        "max_depth": [Interval(Integral, 0, None, closed="left"), None],
+        "spacing": [Interval(Integral, 1, None, closed="left"), None],
+        "decimals": [Interval(Integral, 0, None, closed="left"), None],
+        "show_weights": ["boolean"],
+    }
+)
 def export_text(
     decision_tree,
     *,
@@ -1011,20 +1024,11 @@ def export_text(
     left_child_fmt = "{} {} >  {}\n"
     truncation_fmt = "{} {}\n"
 
-    if max_depth < 0:
-        raise ValueError("max_depth bust be >= 0, given %d" % max_depth)
-
     if feature_names is not None and len(feature_names) != tree_.n_features:
         raise ValueError(
             "feature_names must contain %d elements, got %d"
             % (tree_.n_features, len(feature_names))
         )
-
-    if spacing <= 0:
-        raise ValueError("spacing must be > 0, given %d" % spacing)
-
-    if decimals < 0:
-        raise ValueError("decimals must be >= 0, given %d" % decimals)
 
     if isinstance(decision_tree, DecisionTreeClassifier):
         value_fmt = "{}{} weights: {}\n"

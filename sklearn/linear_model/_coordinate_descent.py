@@ -168,9 +168,7 @@ def _alpha_grid(
         alphas.fill(np.finfo(float).resolution)
         return alphas
 
-    return np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max), num=n_alphas)[
-        ::-1
-    ]
+    return np.geomspace(alpha_max, alpha_max * eps, num=n_alphas)
 
 
 def lasso_path(
