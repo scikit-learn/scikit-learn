@@ -78,14 +78,14 @@ cdef inline cnp.int64_t _deg3_column(
     if interaction_only:
         return (
             (
-                n_features * (3 * n_features * i - 3 * i**2)
-                + i * (i**2 + 11) - j * (3 * j + 9)
+                (3 * n_features) * (n_features * i - i**2)
+                + i * (i**2 + 11) - (3 * j) * (j + 3)
             ) / 6 + i**2 + n_features * (j - 1 - 2 * i) + k
         )
     else:
         return (
             (
-                n_features * (3 * n_features * i - 3 * i**2)
+                (3 * n_features) * (n_features * i - i**2)
                 + i ** 3 - i - (3 * j) * (j + 1)
             ) / 6 + n_features * j + k
         )
@@ -204,7 +204,6 @@ cpdef void _csr_polynomial_expansion(
     # Make the arrays that will form the CSR matrix of the expansion.
     cdef INDEX_A_t row_i, row_starts, row_ends, i, j, k, i_ptr, j_ptr, k_ptr
     cdef INDEX_B_t expanded_index=0, num_cols_in_row, col
-
     with nogil:
         result_indptr[0] = indptr[0]
         for row_i in range(indptr.shape[0]-1):
