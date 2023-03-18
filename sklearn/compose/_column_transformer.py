@@ -944,7 +944,6 @@ def _get_transformer_list(estimators):
 
 @validate_params(
     {
-        "transformers": [tuple],
         "remainder": [
             StrOptions({"drop", "passthrough"}),
             HasMethods(["fit", "transform"]),
