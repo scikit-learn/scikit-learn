@@ -684,10 +684,7 @@ def test_make_column_transformer_kwargs():
     assert ct.remainder == "drop"
     assert ct.sparse_threshold == 0.5
     # invalid keyword parameters should raise an error message
-    msg = re.escape(
-        "make_column_transformer() got an unexpected "
-        "keyword argument 'transformer_weights'"
-    )
+    msg = re.escape("got an unexpected keyword argument 'transformer_weights'")
     with pytest.raises(TypeError, match=msg):
         make_column_transformer(
             (scaler, "first"),
