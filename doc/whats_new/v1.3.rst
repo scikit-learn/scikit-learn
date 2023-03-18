@@ -163,7 +163,7 @@ Changelog
 
 - |API| The `sample_weight` parameter in `predict` for
   :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
-  is now deprecated and will be removed in v1.5. 
+  is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 
 - |Enhancement| The `sample_weight` parameter now will be used in centroids
@@ -288,6 +288,14 @@ Changelog
 
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
+
+:mod:`sklearn.mixture`
+......................
+
+- |Fix| The `n_init` parameter of classes :class:`mixture.GaussianMixture` and
+  :class:`BayesianGaussianMixture` now optimizes the model based on the score.
+  :pr:`24616` by :user:`Omar Salman <OmarManzoor>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.model_selection`
 ..............................

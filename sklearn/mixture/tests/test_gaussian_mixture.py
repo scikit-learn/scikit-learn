@@ -583,6 +583,7 @@ def test_gaussian_mixture_fit_predict_n_init(global_random_seed):
 
 def test_gaussian_mixture_fit():
     # recover the ground truth. This test is very sensitive to rng
+    # because it's not always possible to recover the ground truth.
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng)
     n_features = rand_data.n_features
@@ -939,8 +940,9 @@ def test_score(global_random_seed):
     ).fit(X)
 
     # Avoid false positive due to rounding errors when scores are equal
-    # by adding a small epsilon
-    assert gmm2.score(X) >= gmm1.score(X) * (1 + 1e-10)
+    # by adding a small epsilon (it can happen if the model had already
+    # reached a minimum at the first iteration).
+    assert gmm2.score(X) >= gmm1.score(X) * (1 + 1e-15)
 
 
 def test_score_samples():
@@ -1134,7 +1136,7 @@ def test_init(global_random_seed):
         random_state=global_random_seed,
     ).fit(X)
 
-    assert gmm2.lower_bound_ >= gmm1.lower_bound_
+    assert gmm2.score(X) >= gmm1.score(X)
 
 
 def test_gaussian_mixture_setting_best_params():
