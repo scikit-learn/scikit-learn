@@ -830,6 +830,92 @@ lexicon order.
    >>> enc.infrequent_categories_
    [array(['b', 'c'], dtype=object)]
 
+.. _target_encoder:
+
+Target Encoder
+--------------
+
+.. currentmodule:: sklearn.preprocessing
+
+The :class:`TargetEncoder` uses the target mean conditioned on the categorical
+feature for encoding unordered categories, i.e. nominal categories [PAR]_
+[MIC]_. This encoding scheme is useful with categorical features with high
+cardinality, where one-hot encoding would inflate the feature space making it
+more expensive for a downstream model to process. A classical example of high
+cardinality categories are location based such as zip code or region. For the
+binary classification target, the target encoding is given by:
+
+.. math::
+    S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_y}{n}
+
+where :math:`S_i` is the encoding for category :math:`i`, :math:`n_{iY}` is the
+number of observations with :math:`Y=1` with category :math:`i`, :math:`n_i` is
+the number of observations with category :math:`i`, :math:`n_y` is the number of
+observations with :math:`Y=1`, :math:`n` is the number of observations, and
+:math:`\lambda_i` is a shrinkage factor. The shrinkage factor is given by:
+
+.. math::
+    \lambda_i = \frac{n_i}{m + n_i}
+
+where :math:`m` is a smoothing factor, which is controlled with the `smooth`
+parameter in :class:`TargetEncoder`. Large smoothing factors will put more
+weight on the global mean. When `smooth="auto"`, the smoothing factor is
+computed as an empirical Bayes estimate: :math:`m=\sigma_c^2/\tau^2`, where
+:math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
+:math:`\tau^2` is the global variance of `y`.
+
+For continuous targets, the formulation is similar to binary classification:
+
+.. math::
+    S_i = \lambda_i\frac{\sum_{k\in L_i}y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}y_k}{n}
+
+where :math:`L_i` is the set of observations for which :math:`X=X_i` and
+:math:`n_i` is the cardinality of :math:`L_i`.
+
+:meth:`~TargetEncoder.fit_transform` internally relies on a cross validation
+scheme to prevent information from the target from leaking into the train-time
+representation for non-informative high-cardinality categorical variables and
+help prevent the downstream model to overfit spurious correlations. Note that
+as a result, `fit(X, y).transform(X)` does not equal `fit_transform(X, y)`. In
+:meth:`~TargetEncoder.fit_transform`, the training data is split into multiple
+folds and encodes each fold by using the encodings trained on the other folds.
+After cross validation is complete in :meth:`~TargetEncoder.fit_transform`, the
+target encoder learns one final encoding on the whole training set. This final
+encoding is used to encode categories in :meth:`~TargetEncoder.transform`. The
+following diagram shows the cross validation scheme in
+:meth:`~TargetEncoder.fit_transform` with the default `cv=5`:
+
+.. image:: ../images/target_encoder_cross_validation.svg
+   :width: 600
+   :align: center
+
+The :meth:`~TargetEncoder.fit` method does **not** use any cross validation
+schemes and learns one encoding on the entire training set, which is used to
+encode categories in :meth:`~TargetEncoder.transform`.
+:meth:`~TargetEncoder.fit`'s one encoding is the same as the final encoding
+learned in :meth:`~TargetEncoder.fit_transform`.
+
+.. note::
+  :class:`TargetEncoder` considers missing values, such as `np.nan` or `None`,
+  as another category and encodes them like any other category. Categories
+  that are not seen during `fit` are encoded with the target mean, i.e.
+  `target_mean_`.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`
+
+.. topic:: References
+
+  .. [MIC] :doi:`Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
+     categorical attributes in classification and prediction problems"
+     SIGKDD Explor. Newsl. 3, 1 (July 2001), 27–32. <10.1145/507533.507538>`
+
+  .. [PAR] :doi:`Pargent, F., Pfisterer, F., Thomas, J. et al. "Regularized target
+     encoding outperforms traditional methods in supervised machine learning with
+     high cardinality features" Comput Stat 37, 2671–2692 (2022)
+     <10.1007/s00180-022-01207-6>`
+
 .. _preprocessing_discretization:
 
 Discretization

@@ -1,6 +1,6 @@
 """Test the 20news downloader, if the data is available,
 or if specifically requested via environment variable
-(e.g. for travis cron job)."""
+(e.g. for CI jobs)."""
 from functools import partial
 from unittest.mock import patch
 

@@ -241,7 +241,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -256,7 +256,12 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             Returns the instance itself.
         """
         self._validate_params()
-        X, y = self._validate_data(X, y)
+        X, y = self._validate_data(
+            X,
+            y,
+            accept_sparse=["csr", "csc"],
+            reset=True,
+        )
         self.X_ = X
         check_classification_targets(y)
 
@@ -365,7 +370,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     Attributes
     ----------
-    X_ : ndarray of shape (n_samples, n_features)
+    X_ : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input array.
 
     classes_ : ndarray of shape (n_classes,)
@@ -463,7 +468,7 @@ class LabelPropagation(BaseLabelPropagation):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 

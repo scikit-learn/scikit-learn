@@ -17,6 +17,7 @@ from ..utils import (
     get_chunk_n_rows,
 )
 from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import RealNotInt
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
@@ -206,7 +207,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         "max_samples": [
             StrOptions({"auto"}),
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="right"),
+            Interval(RealNotInt, 0, 1, closed="right"),
         ],
         "contamination": [
             StrOptions({"auto"}),

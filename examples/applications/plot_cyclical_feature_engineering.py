@@ -774,29 +774,40 @@ _ = ax.legend()
 #
 # Let us finally get a more quantative look at the prediction errors of those
 # three models using the true vs predicted demand scatter plots:
-fig, axes = plt.subplots(ncols=3, figsize=(12, 4), sharey=True)
-fig.suptitle("Non-linear regression models")
+from sklearn.metrics import PredictionErrorDisplay
+
+fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(13, 7), sharex=True, sharey="row")
+fig.suptitle("Non-linear regression models", y=1.0)
 predictions = [
     one_hot_poly_predictions,
     cyclic_spline_poly_predictions,
     gbrt_predictions,
 ]
 labels = [
-    "One hot + polynomial kernel",
-    "Splines + polynomial kernel",
-    "Gradient Boosted Trees",
+    "One hot +\npolynomial kernel",
+    "Splines +\npolynomial kernel",
+    "Gradient Boosted\nTrees",
 ]
-for ax, pred, label in zip(axes, predictions, labels):
-    ax.scatter(y.iloc[test_0].values, pred, alpha=0.3, label=label)
-    ax.plot([0, 1], [0, 1], "--", label="Perfect model")
-    ax.set(
-        xlim=(0, 1),
-        ylim=(0, 1),
-        xlabel="True demand",
-        ylabel="Predicted demand",
-    )
-    ax.legend()
-
+plot_kinds = ["actual_vs_predicted", "residual_vs_predicted"]
+for axis_idx, kind in enumerate(plot_kinds):
+    for ax, pred, label in zip(axes[axis_idx], predictions, labels):
+        disp = PredictionErrorDisplay.from_predictions(
+            y_true=y.iloc[test_0],
+            y_pred=pred,
+            kind=kind,
+            scatter_kwargs={"alpha": 0.3},
+            ax=ax,
+        )
+        ax.set_xticks(np.linspace(0, 1, num=5))
+        if axis_idx == 0:
+            ax.set_yticks(np.linspace(0, 1, num=5))
+            ax.legend(
+                ["Best model", label],
+                loc="upper center",
+                bbox_to_anchor=(0.5, 1.3),
+                ncol=2,
+            )
+        ax.set_aspect("equal", adjustable="box")
 plt.show()
 # %%
 # This visualization confirms the conclusions we draw on the previous plot.

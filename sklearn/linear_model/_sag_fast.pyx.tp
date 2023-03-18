@@ -24,19 +24,7 @@ dtypes = [('64', 'double', 'np.float64'),
           ('32', 'float', 'np.float32')]
 
 }}
-
-#------------------------------------------------------------------------------
-
-# Authors: Danny Sullivan <dbsullivan23@gmail.com>
-#          Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
-#          Arthur Mensch <arthur.mensch@m4x.org
-#
-# License: BSD 3 clause
-
-"""
-SAG and SAGA implementation
-WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
-"""
+"""SAG and SAGA implementation"""
 
 import numpy as np
 from libc.math cimport fabs, exp, log
@@ -60,7 +48,7 @@ cdef extern from "_sgd_fast_helpers.h":
 
 {{for name_suffix, c_type, np_type in dtypes}}
 
-cdef inline {{c_type}} fmax{{name_suffix}}({{c_type}} x, {{c_type}} y) nogil:
+cdef inline {{c_type}} fmax{{name_suffix}}({{c_type}} x, {{c_type}} y) noexcept nogil:
     if x > y:
         return x
     return y
@@ -70,7 +58,7 @@ cdef inline {{c_type}} fmax{{name_suffix}}({{c_type}} x, {{c_type}} y) nogil:
 
 {{for name_suffix, c_type, np_type in dtypes}}
 
-cdef {{c_type}} _logsumexp{{name_suffix}}({{c_type}}* arr, int n_classes) nogil:
+cdef {{c_type}} _logsumexp{{name_suffix}}({{c_type}}* arr, int n_classes) noexcept nogil:
     """Computes the sum of arr assuming arr is in the log domain.
 
     Returns log(sum(exp(arr))) while minimizing the possibility of
@@ -98,7 +86,7 @@ cdef {{c_type}} _logsumexp{{name_suffix}}({{c_type}}* arr, int n_classes) nogil:
 
 cdef class MultinomialLogLoss{{name_suffix}}:
     cdef {{c_type}} _loss(self, {{c_type}}* prediction, {{c_type}} y, int n_classes,
-                      {{c_type}} sample_weight) nogil:
+                      {{c_type}} sample_weight) noexcept nogil:
         r"""Multinomial Logistic regression loss.
 
         The multinomial logistic loss for one sample is:
@@ -142,7 +130,7 @@ cdef class MultinomialLogLoss{{name_suffix}}:
         return loss
 
     cdef void dloss(self, {{c_type}}* prediction, {{c_type}} y, int n_classes,
-                     {{c_type}} sample_weight, {{c_type}}* gradient_ptr) nogil:
+                     {{c_type}} sample_weight, {{c_type}}* gradient_ptr) noexcept nogil:
         r"""Multinomial Logistic regression gradient of the loss.
 
         The gradient of the multinomial logistic loss with respect to a class c,
@@ -200,7 +188,7 @@ cdef class MultinomialLogLoss{{name_suffix}}:
 
 {{for name_suffix, c_type, np_type in dtypes}}
 
-cdef inline {{c_type}} _soft_thresholding{{name_suffix}}({{c_type}} x, {{c_type}} shrinkage) nogil:
+cdef inline {{c_type}} _soft_thresholding{{name_suffix}}({{c_type}} x, {{c_type}} shrinkage) noexcept nogil:
     return fmax{{name_suffix}}(x - shrinkage, 0) - fmax{{name_suffix}}(- x - shrinkage, 0)
 
 {{endfor}}
@@ -595,7 +583,7 @@ cdef int scale_weights{{name_suffix}}(
     bint prox,
     {{c_type}}* sum_gradient,
     int n_iter
-) nogil:
+) noexcept nogil:
     """Scale the weights and reset wscale to 1.0 for numerical stability, and
     reset the just-in-time (JIT) update system.
 
@@ -650,7 +638,7 @@ cdef int lagged_update{{name_suffix}}(
     int* x_ind_ptr,
     bint reset,
     int n_iter
-) nogil:
+) noexcept nogil:
     """Hard perform the JIT updates for non-zero features of present sample.
 
     See `sag{{name_suffix}}`'s docstring about the JIT update system.
@@ -744,7 +732,7 @@ cdef void predict_sample{{name_suffix}}(
     {{c_type}}* intercept,
     {{c_type}}* prediction,
     int n_classes
-) nogil:
+) noexcept nogil:
     """Compute the prediction given sparse sample x and dense weight w.
 
     Parameters

@@ -243,7 +243,7 @@ Some scikit-learn objects are inherently random. These are usually estimators
 splitters (e.g. :class:`~sklearn.model_selection.KFold`). The randomness of
 these objects is controlled via their `random_state` parameter, as described
 in the :term:`Glossary <random_state>`. This section expands on the glossary
-entry, and describes good practices and common pitfalls w.r.t. to this
+entry, and describes good practices and common pitfalls w.r.t. this
 subtle parameter.
 
 .. note:: Recommendation summary
