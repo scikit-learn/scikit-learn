@@ -268,7 +268,7 @@ one, a postprocessing is performed to normalize them.
 .. topic:: References:
 
     .. [1] Allan H. Murphy (1973).
-           :doi`"A New Vector Partition of the Probability Score"
+           :doi:`"A New Vector Partition of the Probability Score"
            <10.1175/1520-0450(1973)012%3C0595:ANVPOT%3E2.0.CO;2>`
            Journal of Applied Meteorology and Climatology
 
