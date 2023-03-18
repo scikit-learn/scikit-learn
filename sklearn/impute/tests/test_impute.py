@@ -891,7 +891,7 @@ def test_iterative_imputer_transform_recovery(rank, global_random_seed):
 
 def test_iterative_imputer_additive_matrix(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
-    n = 100
+    n = 1000
     d = 10
     A = rng.randn(n, d)
     B = rng.randn(n, d)
