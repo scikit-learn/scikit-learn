@@ -29,9 +29,9 @@ from sklearn.random_projection import _sparse_random_matrix
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.impute._base import _most_frequent
 
-SPARSE_DENSITY = (
-    1 / 3.0
-)  # using this as a stable default (see Achlioptas, 2001). using lower values might cause some tests to fail.
+SPARSE_DENSITY = 1 / 3.0  # using this as a stable default (see Achlioptas, 2001).
+# using lower values might cause some tests to fail
+# (as they are made more difficult imputations).
 
 
 def _assert_array_equal_and_same_dtype(x, y):
@@ -114,7 +114,6 @@ def test_imputation_deletion_warning(strategy):
 
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
 def test_imputation_deletion_warning_feature_names(strategy):
-
     pd = pytest.importorskip("pandas")
 
     missing_values = np.nan
