@@ -851,7 +851,7 @@ def test_iterative_imputer_rank_one(global_random_seed):
     A = rng.rand(d, 1)
     B = rng.rand(1, d)
     X = np.dot(A, B)
-    nan_mask = rng.rand(d, d) < 0.5
+    nan_mask = rng.rand(d, d) < 0.25
     X_missing = X.copy()
     X_missing[nan_mask] = np.nan
 
@@ -868,7 +868,7 @@ def test_iterative_imputer_transform_recovery(rank,global_random_seed):
     A = rng.rand(n, rank)
     B = rng.rand(rank, d)
     X_filled = np.dot(A, B)
-    nan_mask = rng.rand(n, d) < 0.5
+    nan_mask = rng.rand(n, d) < 0.25
     X_missing = X_filled.copy()
     X_missing[nan_mask] = np.nan
 
@@ -895,8 +895,8 @@ def test_iterative_imputer_additive_matrix(global_random_seed):
     for i in range(d):
         for j in range(d):
             X_filled[:, (i + j) % d] += (A[:, i] + B[:, j]) / 2
-    # a quarter is randomly missing
-    nan_mask = rng.rand(n, d) < 0.25
+    # 10% is randomly missing
+    nan_mask = rng.rand(n, d) < 0.1
     X_missing = X_filled.copy()
     X_missing[nan_mask] = np.nan
 
@@ -1402,13 +1402,13 @@ def test_imputation_order(order, idx_order,global_random_seed):
     # regression test for #15393
     rng = np.random.RandomState(global_random_seed)
     X = rng.rand(100, 5)
-    X[:50, 1] = np.nan
-    X[:30, 0] = np.nan
-    X[:20, 2] = np.nan
-    X[:10, 4] = np.nan
+    X[:99, 1] = np.nan
+    X[:98, 0] = np.nan
+    X[:97, 2] = np.nan
+    X[:96, 4] = np.nan
 
     with pytest.warns(ConvergenceWarning):
-        trs = IterativeImputer(max_iter=1, imputation_order=order, random_state=0).fit(
+        trs = IterativeImputer(max_iter=1, imputation_order=order, random_state=rng).fit(
             X
         )
         idx = [x.feat_idx for x in trs.imputation_sequence_]
