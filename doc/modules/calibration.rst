@@ -47,7 +47,7 @@ Calibration curves
 Calibration curves, also referred to as *reliability diagrams* (Wilks 1995 [2]_),
 compare how well the probabilistic predictions of a binary classifier are calibrated.
 It plots the frequency of the positive label (to be more precise, an estimation of the
-*conditional event probability* :math:`P(Y=1|\text{predict\_proba})`) on the y-axis
+*conditional event probability* :math:`P(Y=1|\text{predict_proba})`) on the y-axis
 against the predicted probability :term:`predict_proba` of a model on the x-axis.
 The tricky part is to get values for the y-axis.
 In scikit-learn, this is accomplished by binning the predictions such that the x-axis
