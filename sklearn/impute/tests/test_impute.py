@@ -29,7 +29,9 @@ from sklearn.random_projection import _sparse_random_matrix
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.impute._base import _most_frequent
 
-SPARSE_DENSITY = 1/3.0 # using this as a stable default (see Achlioptas, 2001). using lower values might cause some tests to fail.
+SPARSE_DENSITY = (
+    1 / 3.0
+)  # using this as a stable default (see Achlioptas, 2001). using lower values might cause some tests to fail.
 
 
 def _assert_array_equal_and_same_dtype(x, y):
@@ -222,8 +224,8 @@ def test_imputation_mean_median(global_random_seed):
                 )
 
             # Shuffle them the same way
-            np.random.RandomState(global_random_seed+j).shuffle(X[:, j])
-            np.random.RandomState(global_random_seed+j).shuffle(X_true[:, j])
+            np.random.RandomState(global_random_seed + j).shuffle(X[:, j])
+            np.random.RandomState(global_random_seed + j).shuffle(X_true[:, j])
 
         # Mean doesn't support columns containing NaNs, median does
         if strategy == "median":
@@ -738,8 +740,10 @@ def test_iterative_imputer_truncated_normal_posterior(global_random_seed):
     X[0][0] = np.nan
 
     imputer = IterativeImputer(
-        min_value=-10, max_value=10, sample_posterior=True, random_state=rng,
-
+        min_value=-10,
+        max_value=10,
+        sample_posterior=True,
+        random_state=rng,
     )
 
     imputer.fit_transform(X)
@@ -759,7 +763,7 @@ def test_iterative_imputer_truncated_normal_posterior(global_random_seed):
 
 
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
-def test_iterative_imputer_missing_at_transform(strategy,global_random_seed):
+def test_iterative_imputer_missing_at_transform(strategy, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n = 100
     d = 10
@@ -783,7 +787,7 @@ def test_iterative_imputer_missing_at_transform(strategy,global_random_seed):
 
 def test_iterative_imputer_transform_stochasticity(global_random_seed):
     rng1 = np.random.RandomState(global_random_seed)
-    rng2 = np.random.RandomState(global_random_seed+1)
+    rng2 = np.random.RandomState(global_random_seed + 1)
     n = 100
     d = 10
     X = _sparse_random_matrix(n, d, density=SPARSE_DENSITY, random_state=rng1).toarray()
@@ -861,7 +865,7 @@ def test_iterative_imputer_rank_one(global_random_seed):
 
 
 @pytest.mark.parametrize("rank", [3, 5])
-def test_iterative_imputer_transform_recovery(rank,global_random_seed):
+def test_iterative_imputer_transform_recovery(rank, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n = 70
     d = 70
@@ -981,7 +985,9 @@ def test_iterative_imputer_catch_warning(global_random_seed):
     ],
     ids=["scalars", "None-default", "inf", "lists", "lists-with-inf"],
 )
-def test_iterative_imputer_min_max_array_like(min_value, max_value, correct_output,global_random_seed):
+def test_iterative_imputer_min_max_array_like(
+    min_value, max_value, correct_output, global_random_seed
+):
     # check that passing scalar or array-like
     # for min_value and max_value in IterativeImputer works
     X = np.random.RandomState(global_random_seed).randn(10, 3)
@@ -1046,7 +1052,7 @@ def test_iterative_imputer_min_max_array_like_imputation(min_max_1, min_max_2):
 
 
 @pytest.mark.parametrize("skip_complete", [True, False])
-def test_iterative_imputer_skip_non_missing(skip_complete,global_random_seed):
+def test_iterative_imputer_skip_non_missing(skip_complete, global_random_seed):
     # check the imputing strategy when missing data are present in the
     # testing set only.
     # taken from: https://github.com/scikit-learn/scikit-learn/issues/14383
@@ -1066,7 +1072,9 @@ def test_iterative_imputer_skip_non_missing(skip_complete,global_random_seed):
 
 @pytest.mark.parametrize("test_none_state_imputer", [True, False])
 @pytest.mark.parametrize("test_none_state_estimator", [True, False])
-def test_iterative_imputer_dont_set_random_state(test_none_state_imputer,test_none_state_estimator,global_random_seed):
+def test_iterative_imputer_dont_set_random_state(
+    test_none_state_imputer, test_none_state_estimator, global_random_seed
+):
     class ZeroEstimator:
         def __init__(self, random_state):
             self.random_state = random_state
@@ -1080,12 +1088,12 @@ def test_iterative_imputer_dont_set_random_state(test_none_state_imputer,test_no
     if test_none_state_imputer:
         rs_imputer = None
     else:
-        rs_imputer = np.random.RandomState(global_random_seed).randint(0,99)
+        rs_imputer = np.random.RandomState(global_random_seed).randint(0, 99)
 
     if test_none_state_estimator:
         rs_estimator = None
     else:
-        rs_estimator =  np.random.RandomState(global_random_seed+1).randint(0,99)
+        rs_estimator = np.random.RandomState(global_random_seed + 1).randint(0, 99)
 
     estimator = ZeroEstimator(random_state=rs_estimator)
     imputer = IterativeImputer(random_state=rs_imputer)
@@ -1306,7 +1314,11 @@ def test_missing_indicator_with_imputer(X, missing_values, X_trans_exp):
     ],
 )
 def test_inconsistent_dtype_X_missing_values(
-    imputer_constructor, imputer_missing_values, missing_value, err_msg,global_random_seed
+    imputer_constructor,
+    imputer_missing_values,
+    missing_value,
+    err_msg,
+    global_random_seed,
 ):
     # regression test for issue #11390. Comparison between incoherent dtype
     # for X and missing_values was not raising a proper error.
@@ -1398,7 +1410,7 @@ def test_simple_imputation_string_list(strategy, expected):
     "order, idx_order",
     [("ascending", [3, 4, 2, 0, 1]), ("descending", [1, 0, 2, 4, 3])],
 )
-def test_imputation_order(order, idx_order,global_random_seed):
+def test_imputation_order(order, idx_order, global_random_seed):
     # regression test for #15393
     rng = np.random.RandomState(global_random_seed)
     X = rng.rand(100, 5)
@@ -1408,9 +1420,9 @@ def test_imputation_order(order, idx_order,global_random_seed):
     X[:96, 4] = np.nan
 
     with pytest.warns(ConvergenceWarning):
-        trs = IterativeImputer(max_iter=1, imputation_order=order, random_state=rng).fit(
-            X
-        )
+        trs = IterativeImputer(
+            max_iter=1, imputation_order=order, random_state=rng
+        ).fit(X)
         idx = [x.feat_idx for x in trs.imputation_sequence_]
         assert idx == idx_order
 
