@@ -20,7 +20,13 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
-from ..utils._param_validation import HasMethods, Interval, StrOptions, Hidden
+from ..utils._param_validation import (
+    validate_params,
+    HasMethods,
+    Hidden,
+    Interval,
+    StrOptions,
+)
 from ..utils._set_output import _get_output_config, _safe_set_output
 from ..utils import check_pandas_support
 from ..utils.metaestimators import _BaseComposition
@@ -936,6 +942,20 @@ def _get_transformer_list(estimators):
     return transformer_list
 
 
+@validate_params(
+    {
+        "transformers": [tuple],
+        "remainder": [
+            StrOptions({"drop", "passthrough"}),
+            HasMethods(["fit", "transform"]),
+            HasMethods(["fit_transform", "transform"]),
+        ],
+        "sparse_threshold": [Interval(Real, 0, 1, closed="both")],
+        "n_jobs": [Integral, None],
+        "verbose": ["boolean"],
+        "verbose_feature_names_out": ["boolean", None],
+    }
+)
 def make_column_transformer(
     *transformers,
     remainder="drop",
