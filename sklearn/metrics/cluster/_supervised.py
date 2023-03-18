@@ -27,7 +27,7 @@ from ._expected_mutual_info_fast import expected_mutual_information
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
 from ...utils._param_validation import validate_params
-from ...utils._param_validation import Interval
+from ...utils._param_validation import Interval, StrOptions
 
 
 def check_clusterings(labels_true, labels_pred):
@@ -847,6 +847,13 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     return np.clip(mi.sum(), 0.0, None)
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "average_method": [StrOptions({"arithmetic", "max", "min", "geometric"})],
+    }
+)
 def adjusted_mutual_info_score(
     labels_true, labels_pred, *, average_method="arithmetic"
 ):
