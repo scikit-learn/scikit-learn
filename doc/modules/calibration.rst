@@ -178,18 +178,18 @@ area under the optimal cost curve. As refinement loss can change
 independently from calibration loss, a lower Brier score does not necessarily
 mean a better calibrated model.
 
-:class:`CalibratedClassifierCV` supports the use of two 'calibration'
-regressors: 'sigmoid' and 'isotonic'.
+:class:`CalibratedClassifierCV` supports the use of two regression techniques
+for calibration via the `method` parameter: `"sigmoid"` and `"isotonic"`.
 
 .. _sigmoid_regressor:
 
 Sigmoid
 ^^^^^^^
 
-The sigmoid regressor is based on Platt's logistic model [3]_:
+The sigmoid regressor, `method="sigmoid"`` is based on Platt's logistic model [3]_:
 
 .. math::
-       p(y_i = 1 | f_i) = \frac{1}{1 + \exp(A f_i + B)}
+       p(y_i = 1 | f_i) = \frac{1}{1 + \exp(A f_i + B)} \,,
 
 where :math:`y_i` is the true label of sample :math:`i` and :math:`f_i`
 is the output of the un-calibrated classifier for sample :math:`i`. :math:`A`
@@ -213,7 +213,7 @@ high and low outputs.
 Isotonic
 ^^^^^^^^
 
-The 'isotonic' method fits a non-parametric isotonic regressor, which outputs
+The `method="isotonic"` fits a non-parametric isotonic regressor, which outputs
 a step-wise non-decreasing function, see :mod:`sklearn.isotonic`. It minimizes:
 
 .. math::
@@ -230,6 +230,16 @@ However, it is more prone to overfitting, especially on small datasets [5]_.
 
 Overall, 'isotonic' will perform as well as or better than 'sigmoid' when
 there is enough data (greater than ~ 1000 samples) to avoid overfitting [1]_.
+
+.. note:: Impact on ranking metrics like AUC
+
+    It is generally expected that calibration does not affect ranking metrics such as
+    ROC-AUC. However, these metrics might differ after calibration when using
+    `method="isotonic"` since isotonic regression introduces ties in the predicted
+    probabilities. This can be seen as within the uncertainty of the model predictions.
+    In case, you strictly want to keep the ranking and thus AUC scores, use
+    `method="logistic"` which is a strictly monotonic transformation and thus keeps
+    the ranking.
 
 Multiclass support
 ^^^^^^^^^^^^^^^^^^
