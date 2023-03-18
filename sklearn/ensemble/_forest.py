@@ -74,6 +74,7 @@ from ..utils.validation import (
 )
 from ..utils.validation import _num_samples
 from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import RealNotInt
 
 
 __all__ = [
@@ -206,7 +207,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         "warm_start": ["boolean"],
         "max_samples": [
             None,
-            Interval(Real, 0.0, 1.0, closed="right"),
+            Interval(RealNotInt, 0.0, 1.0, closed="right"),
             Interval(Integral, 1, None, closed="left"),
         ],
     }

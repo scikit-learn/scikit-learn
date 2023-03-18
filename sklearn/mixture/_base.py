@@ -228,12 +228,11 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         do_init = not (self.warm_start and hasattr(self, "converged_"))
         n_init = self.n_init if do_init else 1
 
-        max_lower_bound = -np.inf
+        max_log_prob_norm = -np.inf
         self.converged_ = False
 
         random_state = check_random_state(self.random_state)
 
-        n_samples, _ = X.shape
         for init in range(n_init):
             self._print_verbose_msg_init_beg(init)
 
@@ -242,30 +241,34 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
             lower_bound = -np.inf if do_init else self.lower_bound_
 
-            if self.max_iter == 0:
+            n_iter = 0
+            for n_iter in range(1, self.max_iter + 1):
+                prev_lower_bound = lower_bound
+
+                log_prob_norm, log_resp = self._e_step(X)
+                self._m_step(X, log_resp)
+                lower_bound = self._compute_lower_bound(log_resp, log_prob_norm)
+
+                change = lower_bound - prev_lower_bound
+                self._print_verbose_msg_iter_end(n_iter, change)
+
+                if abs(change) < self.tol:
+                    self.converged_ = True
+                    break
+
+            # Always do a final e-step to guarantee that the labels returned by
+            # fit_predict(X) are always consistent with fit(X).predict(X)
+            # for any value of max_iter and tol (and any random_state).
+            log_prob_norm, log_resp = self._e_step(X)
+
+            self._print_verbose_msg_init_end(lower_bound)
+
+            if log_prob_norm > max_log_prob_norm or max_log_prob_norm == -np.inf:
+                max_log_prob_norm = log_prob_norm
+                best_lower_bound = lower_bound
+                best_log_resp = log_resp
                 best_params = self._get_parameters()
-                best_n_iter = 0
-            else:
-                for n_iter in range(1, self.max_iter + 1):
-                    prev_lower_bound = lower_bound
-
-                    log_prob_norm, log_resp = self._e_step(X)
-                    self._m_step(X, log_resp)
-                    lower_bound = self._compute_lower_bound(log_resp, log_prob_norm)
-
-                    change = lower_bound - prev_lower_bound
-                    self._print_verbose_msg_iter_end(n_iter, change)
-
-                    if abs(change) < self.tol:
-                        self.converged_ = True
-                        break
-
-                self._print_verbose_msg_init_end(lower_bound)
-
-                if lower_bound > max_lower_bound or max_lower_bound == -np.inf:
-                    max_lower_bound = lower_bound
-                    best_params = self._get_parameters()
-                    best_n_iter = n_iter
+                best_n_iter = n_iter
 
         # Should only warn about convergence if max_iter > 0, otherwise
         # the user is assumed to have used 0-iters initialization
@@ -281,14 +284,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         self._set_parameters(best_params)
         self.n_iter_ = best_n_iter
-        self.lower_bound_ = max_lower_bound
+        self.lower_bound_ = best_lower_bound
 
-        # Always do a final e-step to guarantee that the labels returned by
-        # fit_predict(X) are always consistent with fit(X).predict(X)
-        # for any value of max_iter and tol (and any random_state).
-        _, log_resp = self._e_step(X)
-
-        return log_resp.argmax(axis=1)
+        return best_log_resp.argmax(axis=1)
 
     def _e_step(self, X):
         """E step.

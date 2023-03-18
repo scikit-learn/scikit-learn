@@ -4,7 +4,7 @@ import re
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
-from numbers import Real
+from numbers import Real, Integral
 
 import numpy as np
 from scipy import sparse
@@ -1434,7 +1434,7 @@ def check_fit2d_1sample(name, estimator_orig):
 
     # min_cluster_size cannot be less than the data size for OPTICS.
     if name == "OPTICS":
-        estimator.set_params(min_samples=1)
+        estimator.set_params(min_samples=1.0)
 
     # perplexity cannot be more than the number of samples for TSNE.
     if name == "TSNE":
@@ -1716,7 +1716,7 @@ def check_fit_score_takes_y(name, estimator_orig):
             func(X, y)
             args = [p.name for p in signature(func).parameters.values()]
             if args[0] == "self":
-                # if_delegate_has_method makes methods into functions
+                # available_if makes methods into functions
                 # with an explicit "self", so need to shift arguments
                 args = args[1:]
             assert args[1] in ["y", "Y"], (
@@ -4155,6 +4155,20 @@ def check_param_validation(name, estimator_orig):
             # This parameter is not validated
             continue
 
+        # Mixing an interval of reals and an interval of integers must be avoided.
+        if any(
+            isinstance(constraint, Interval) and constraint.type == Integral
+            for constraint in constraints
+        ) and any(
+            isinstance(constraint, Interval) and constraint.type == Real
+            for constraint in constraints
+        ):
+            raise ValueError(
+                f"The constraint for parameter {param_name} of {name} can't have a mix"
+                " of intervals of Integral and Real types. Use the type RealNotInt"
+                " instead of Real."
+            )
+
         match = rf"The '{param_name}' parameter of {name} must be .* Got .* instead."
         err_msg = (
             f"{name} does not raise an informative error message when the "
@@ -4188,7 +4202,7 @@ def check_param_validation(name, estimator_orig):
 
         for constraint in constraints:
             try:
-                bad_value = generate_invalid_param_val(constraint, constraints)
+                bad_value = generate_invalid_param_val(constraint)
             except NotImplementedError:
                 continue
 

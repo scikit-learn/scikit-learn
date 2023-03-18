@@ -34,6 +34,15 @@ random sampling procedures.
   :class:`decomposition.MiniBatchNMF` which can produce different results than previous
   versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
 
+- |Enhancement| The `sample_weight` parameter now will be used in centroids
+  initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
+  and :class:`cluster.MiniBatchKMeans`.
+  This change will break backward compatibility, since numbers generated
+  from same random seeds will be different.
+  :pr:`25752` by :user:`Gleb Levitski <glevv>`,
+  :user:`Jérémie du Boisberranger <jeremiedbb>`,
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -154,8 +163,17 @@ Changelog
 
 - |API| The `sample_weight` parameter in `predict` for
   :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
-  is now deprecated and will be removed in v1.5.
+  is now deprecated and will be removed in v1.5. 
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
+
+- |Enhancement| The `sample_weight` parameter now will be used in centroids
+  initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
+  and :class:`cluster.MiniBatchKMeans`.
+  This change will break backward compatibility, since numbers generated
+  from same random seeds will be different.
+  :pr:`25752` by :user:`Gleb Levitski <glevv>`,
+  :user:`Jérémie du Boisberranger <jeremiedbb>`,
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -321,6 +339,10 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
+
+- |MajorFeature| Introduces :class:`preprocessing.TargetEncoder` which is a
+  categorical encoding based on target mean conditioned on the value of the
+  category. :pr:`25334` by `Thomas Fan`_.
 
 - |Enhancement| Adds a `feature_name_combiner` parameter to
   :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
