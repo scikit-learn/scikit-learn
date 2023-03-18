@@ -714,7 +714,7 @@ Building the documentation requires installing some additional packages:
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
                 scikit-image packaging seaborn sphinx-prompt \
-                sphinxext-opengraph plotly
+                sphinxext-opengraph plotly pooch
 
 To build the documentation, you need to be in the ``doc`` folder:
 
@@ -736,7 +736,7 @@ To also generate the example gallery you can use:
 
 .. prompt:: bash $
 
-    make html
+    make doc
 
 This will run all the examples, which takes a while. If you only want to
 generate a few examples, you can use:
