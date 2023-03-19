@@ -43,12 +43,6 @@ random sampling procedures.
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Fixed :func:`classification_report` so that empty input will return
-  `np.nan`. Previously, "macro avg" and `weighted avg` would return
-  e.g. `f1-score=np.nan` and `f1-score=0.0`, being inconsistent. Now, they
-  both return `np.nan`.
-  :pr:`25531` by :user:`Marc Torrellas Socastro <marctorsoc>`.
-
 Changes impacting all modules
 -----------------------------
 
