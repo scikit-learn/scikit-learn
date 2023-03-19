@@ -11,9 +11,10 @@ from cython cimport floating
 cnp.import_array()
 
 
-def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
+def _inplace_contiguous_isotonic_regression(const floating[::1] y, const floating[::1] w):
     cdef:
-        Py_ssize_t n = y.shape[0], i, k
+        Py_ssize_t n = y.shape[0]
+        Py_ssize_t i, k
         floating prev_y, sum_wy, sum_w
         Py_ssize_t[::1] target = np.arange(n, dtype=np.intp)
 
@@ -62,9 +63,9 @@ def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
             i = k
 
 
-def _make_unique(cnp.ndarray[dtype=floating] X,
-                 cnp.ndarray[dtype=floating] y,
-                 cnp.ndarray[dtype=floating] sample_weights):
+def _make_unique(const floating [::1] X,
+                 const floating [::1] y,
+                 const floating [::1] sample_weights):
     """Average targets for duplicate X, drop duplicates.
 
     Aggregates duplicate X values into a single X value where
