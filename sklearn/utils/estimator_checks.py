@@ -1716,7 +1716,7 @@ def check_fit_score_takes_y(name, estimator_orig):
             func(X, y)
             args = [p.name for p in signature(func).parameters.values()]
             if args[0] == "self":
-                # if_delegate_has_method makes methods into functions
+                # available_if makes methods into functions
                 # with an explicit "self", so need to shift arguments
                 args = args[1:]
             assert args[1] in ["y", "Y"], (

@@ -1438,6 +1438,7 @@ details.
    preprocessing.RobustScaler
    preprocessing.SplineTransformer
    preprocessing.StandardScaler
+   preprocessing.TargetEncoder
 
 .. autosummary::
    :toctree: generated/
@@ -1680,12 +1681,3 @@ Utilities from joblib:
 
 Recently deprecated
 ===================
-
-To be removed in 1.3
---------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   utils.metaestimators.if_delegate_has_method

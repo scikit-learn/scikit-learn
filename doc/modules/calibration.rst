@@ -30,16 +30,20 @@ approximately 80% actually belong to the positive class.
 Calibration curves
 ------------------
 
-Calibration curves (also known as reliability diagrams) compare how well the
-probabilistic predictions of a binary classifier are calibrated. It plots
-the true frequency of the positive label against its predicted probability,
-for binned predictions.
-The x axis represents the average predicted probability in each bin. The
-y axis is the *fraction of positives*, i.e. the proportion of samples whose
-class is the positive class (in each bin). The top calibration curve plot
-is created with :func:`CalibrationDisplay.from_estimators`, which uses
-:func:`calibration_curve` to calculate the per bin average predicted
-probabilities and fraction of positives.
+Calibration curves, also referred to as *reliability diagrams* (Wilks 1995 [2]_),
+compare how well the probabilistic predictions of a binary classifier are calibrated.
+It plots the frequency of the positive label (to be more precise, an estimation of the
+*conditional event probability* :math:`P(Y=1|\text{predict\_proba})`) on the y-axis
+against the predicted probability :term:`predict_proba` of a model on the x-axis.
+The tricky part is to get values for the y-axis.
+In scikit-learn, this is accomplished by binning the predictions such that the x-axis
+represents the average predicted probability in each bin.
+The y-axis is then the *fraction of positives* given the predictions of that bin, i.e.
+the proportion of samples whose class is the positive class (in each bin).
+
+The top calibration curve plot is created with
+:func:`CalibrationDisplay.from_estimator`, which uses :func:`calibration_curve` to
+calculate the per bin average predicted probabilities and fraction of positives.
 :func:`CalibrationDisplay.from_estimator`
 takes as input a fitted classifier, which is used to calculate the predicted
 probabilities. The classifier thus must have :term:`predict_proba` method. For
@@ -56,13 +60,16 @@ by showing the number of samples in each predicted probability bin.
 
 .. currentmodule:: sklearn.linear_model
 
-:class:`LogisticRegression` returns well calibrated predictions by default as it directly
-optimizes :ref:`log_loss`. In contrast, the other methods return biased probabilities;
-with different biases per method:
+:class:`LogisticRegression` returns well calibrated predictions by default as it has a
+canonical link function for its loss, i.e. the logit-link for the :ref:`log_loss`.
+This leads to the so-called **balance property**, see [7]_ and
+:ref:`Logistic_regression`.
+In contrast to that, the other shown models return biased probabilities; with
+different biases per model.
 
 .. currentmodule:: sklearn.naive_bayes
 
-:class:`GaussianNB` tends to push probabilities to 0 or 1 (note the counts
+:class:`GaussianNB` (Naive Bayes) tends to push probabilities to 0 or 1 (note the counts
 in the histograms). This is mainly because it makes the assumption that
 features are conditionally independent given the class, which is not the
 case in this dataset which contains 2 redundant features.
@@ -70,7 +77,7 @@ case in this dataset which contains 2 redundant features.
 .. currentmodule:: sklearn.ensemble
 
 :class:`RandomForestClassifier` shows the opposite behavior: the histograms
-show peaks at approximately 0.2 and 0.9 probability, while probabilities
+show peaks at probabilities approximately 0.2 and 0.9, while probabilities
 close to 0 or 1 are very rare. An explanation for this is given by
 Niculescu-Mizil and Caruana [1]_: "Methods such as bagging and random
 forests that average predictions from a base set of models can have
@@ -85,18 +92,16 @@ predict values larger than 0 for this case, thus moving the average
 prediction of the bagged ensemble away from 0. We observe this effect most
 strongly with random forests because the base-level trees trained with
 random forests have relatively high variance due to feature subsetting." As
-a result, the calibration curve also referred to as the reliability diagram
-(Wilks 1995 [2]_) shows a characteristic sigmoid shape, indicating that the
-classifier could trust its "intuition" more and return probabilities closer
+a result, the calibration curve shows a characteristic sigmoid shape, indicating that
+the classifier could trust its "intuition" more and return probabilities closer
 to 0 or 1 typically.
 
 .. currentmodule:: sklearn.svm
 
-Linear Support Vector Classification (:class:`LinearSVC`) shows an even more
-sigmoid curve than :class:`~sklearn.ensemble.RandomForestClassifier`, which is
-typical for maximum-margin methods (compare Niculescu-Mizil and Caruana [1]_),
-which focus on difficult to classify samples that are close to the decision
-boundary (the support vectors).
+:class:`LinearSVC` (SVC) shows an even more sigmoid curve than the random forest, which
+is typical for maximum-margin methods (compare Niculescu-Mizil and Caruana [1]_), which
+focus on difficult to classify samples that are close to the decision boundary (the
+support vectors).
 
 Calibrating a classifier
 ------------------------
@@ -107,10 +112,11 @@ Calibrating a classifier consists of fitting a regressor (called a
 *calibrator*) that maps the output of the classifier (as given by
 :term:`decision_function` or :term:`predict_proba`) to a calibrated probability
 in [0, 1]. Denoting the output of the classifier for a given sample by :math:`f_i`,
-the calibrator tries to predict :math:`p(y_i = 1 | f_i)`.
+the calibrator tries to predict the conditional event probability
+:math:`P(y_i = 1 | f_i)`.
 
-The samples that are used to fit the calibrator should not be the same
-samples used to fit the classifier, as this would introduce bias.
+Ideally, the calibrator is fit on a dataset independent of the training data used to
+fit the classifier in the first place.
 This is because performance of the classifier on its training data would be
 better than for novel data. Using the classifier output of training data
 to fit the calibrator would thus result in a biased calibrator that maps to
@@ -200,22 +206,21 @@ the classifier output for each binary class is normally distributed with
 the same variance [6]_. This can be a problem for highly imbalanced
 classification problems, where outputs do not have equal variance.
 
-In general this method is most effective when the un-calibrated model is
-under-confident and has similar calibration errors for both high and low
-outputs.
+In general this method is most effective for small sample sizes or when the
+un-calibrated model is under-confident and has similar calibration errors for both
+high and low outputs.
 
 Isotonic
 ^^^^^^^^
 
 The 'isotonic' method fits a non-parametric isotonic regressor, which outputs
-a step-wise non-decreasing function (see :mod:`sklearn.isotonic`). It
-minimizes:
+a step-wise non-decreasing function, see :mod:`sklearn.isotonic`. It minimizes:
 
 .. math::
        \sum_{i=1}^{n} (y_i - \hat{f}_i)^2
 
-subject to :math:`\hat{f}_i >= \hat{f}_j` whenever
-:math:`f_i >= f_j`. :math:`y_i` is the true
+subject to :math:`\hat{f}_i \geq \hat{f}_j` whenever
+:math:`f_i \geq f_j`. :math:`y_i` is the true
 label of sample :math:`i` and :math:`\hat{f}_i` is the output of the
 calibrated classifier for sample :math:`i` (i.e., the calibrated probability).
 This method is more general when compared to 'sigmoid' as the only restriction
@@ -277,3 +282,8 @@ one, a postprocessing is performed to normalize them.
            binary classifiers with beta calibration
            <https://projecteuclid.org/euclid.ejs/1513306867>`_
            Kull, M., Silva Filho, T. M., & Flach, P. (2017).
+
+    .. [7] Mario V. Wüthrich, Michael Merz (2023).
+           :doi:`"Statistical Foundations of Actuarial Learning and its Applications"
+           <10.1007/978-3-031-12409-9>`
+           Springer Actuarial
