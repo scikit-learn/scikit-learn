@@ -859,7 +859,7 @@ def test_partial_dependence_kind_individual_ignores_sample_weight(Estimator, dat
         est, X=X, features=[1, 2], kind="individual", sample_weight=sample_weight
     )
     assert_allclose(pdp_nsw["individual"], pdp_sw["individual"])
-    assert_allclose(pdp_nsw["values"], pdp_sw["values"])
+    assert_allclose(pdp_nsw["grid_values"], pdp_sw["grid_values"])
 
 
 @pytest.mark.parametrize(
