@@ -38,6 +38,7 @@ from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import RealNotInt
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -99,16 +100,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "max_depth": [Interval(Integral, 1, None, closed="left"), None],
         "min_samples_split": [
             Interval(Integral, 2, None, closed="left"),
-            Interval("real_not_int", 0.0, 1.0, closed="right"),
+            Interval(RealNotInt, 0.0, 1.0, closed="right"),
         ],
         "min_samples_leaf": [
             Interval(Integral, 1, None, closed="left"),
-            Interval("real_not_int", 0.0, 1.0, closed="neither"),
+            Interval(RealNotInt, 0.0, 1.0, closed="neither"),
         ],
         "min_weight_fraction_leaf": [Interval(Real, 0.0, 0.5, closed="both")],
         "max_features": [
             Interval(Integral, 1, None, closed="left"),
-            Interval("real_not_int", 0.0, 1.0, closed="right"),
+            Interval(RealNotInt, 0.0, 1.0, closed="right"),
             StrOptions({"auto", "sqrt", "log2"}, deprecated={"auto"}),
             None,
         ],

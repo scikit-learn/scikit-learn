@@ -3,7 +3,7 @@
 # License: BSD 3 clause
 
 import numbers
-from numbers import Integral, Real
+from numbers import Integral
 import warnings
 
 import numpy as np
@@ -14,6 +14,7 @@ from ..utils import check_array, is_scalar_nan, _safe_indexing
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Interval, StrOptions, Hidden
+from ..utils._param_validation import RealNotInt
 from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
@@ -414,6 +415,7 @@ class OneHotEncoder(_BaseEncoder):
     --------
     OrdinalEncoder : Performs an ordinal (integer)
       encoding of the categorical features.
+    TargetEncoder : Encodes categorical features using the target.
     sklearn.feature_extraction.DictVectorizer : Performs a one-hot encoding of
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : Performs an approximate one-hot
@@ -493,7 +495,7 @@ class OneHotEncoder(_BaseEncoder):
         "max_categories": [Interval(Integral, 1, None, closed="left"), None],
         "min_frequency": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="neither"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
             None,
         ],
         "sparse": [Hidden(StrOptions({"deprecated"})), "boolean"],  # deprecated
@@ -1181,7 +1183,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
-    dtype : number type, default np.float64
+    dtype : number type, default=np.float64
         Desired dtype of output.
 
     handle_unknown : {'error', 'use_encoded_value'}, default='error'
@@ -1228,7 +1230,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     See Also
     --------
-    OneHotEncoder : Performs a one-hot encoding of categorical features.
+    OneHotEncoder : Performs a one-hot encoding of categorical features. This encoding
+        is suitable for low to medium cardinality categorical variables, both in
+        supervised and unsupervised settings.
+    TargetEncoder : Encodes categorical features using supervised signal
+        in a classification or regression pipeline. This encoding is typically
+        suitable for high cardinality categorical variables.
     LabelEncoder : Encodes target labels with values between 0 and
         ``n_classes-1``.
 

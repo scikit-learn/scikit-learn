@@ -1,5 +1,6 @@
 from importlib import import_module
 from inspect import signature
+from numbers import Integral, Real
 
 import pytest
 
@@ -7,6 +8,7 @@ from sklearn.utils._param_validation import generate_invalid_param_val
 from sklearn.utils._param_validation import generate_valid_param
 from sklearn.utils._param_validation import make_constraint
 from sklearn.utils._param_validation import InvalidParameterError
+from sklearn.utils._param_validation import Interval
 
 
 def _get_func_info(func_module):
@@ -70,6 +72,20 @@ def _check_function_param_validation(
             # This parameter is not validated
             continue
 
+        # Mixing an interval of reals and an interval of integers must be avoided.
+        if any(
+            isinstance(constraint, Interval) and constraint.type == Integral
+            for constraint in constraints
+        ) and any(
+            isinstance(constraint, Interval) and constraint.type == Real
+            for constraint in constraints
+        ):
+            raise ValueError(
+                f"The constraint for parameter {param_name} of {func_name} can't have a"
+                " mix of intervals of Integral and Real types. Use the type"
+                " RealNotInt instead of Real."
+            )
+
         match = (
             rf"The '{param_name}' parameter of {func_name} must be .* Got .* instead."
         )
@@ -85,7 +101,7 @@ def _check_function_param_validation(
 
         for constraint in constraints:
             try:
-                bad_value = generate_invalid_param_val(constraint, constraints)
+                bad_value = generate_invalid_param_val(constraint)
             except NotImplementedError:
                 continue
 
@@ -108,6 +124,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.fetch_california_housing",
     "sklearn.datasets.fetch_covtype",
     "sklearn.datasets.fetch_kddcup99",
+    "sklearn.datasets.fetch_lfw_pairs",
     "sklearn.datasets.fetch_lfw_people",
     "sklearn.datasets.fetch_olivetti_faces",
     "sklearn.datasets.load_svmlight_file",
@@ -125,6 +142,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_selection.f_classif",
     "sklearn.feature_selection.f_regression",
     "sklearn.feature_selection.mutual_info_classif",
+    "sklearn.feature_selection.mutual_info_regression",
     "sklearn.feature_selection.r_regression",
     "sklearn.linear_model.orthogonal_mp",
     "sklearn.metrics.accuracy_score",
@@ -132,6 +150,8 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.average_precision_score",
     "sklearn.metrics.balanced_accuracy_score",
     "sklearn.metrics.brier_score_loss",
+    "sklearn.metrics.class_likelihood_ratios",
+    "sklearn.metrics.classification_report",
     "sklearn.metrics.cluster.contingency_matrix",
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
@@ -143,6 +163,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.fbeta_score",
     "sklearn.metrics.get_scorer",
     "sklearn.metrics.hamming_loss",
+    "sklearn.metrics.hinge_loss",
     "sklearn.metrics.jaccard_score",
     "sklearn.metrics.label_ranking_average_precision_score",
     "sklearn.metrics.label_ranking_loss",
@@ -152,12 +173,14 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.max_error",
     "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.mean_absolute_percentage_error",
+    "sklearn.metrics.mean_gamma_deviance",
     "sklearn.metrics.mean_pinball_loss",
     "sklearn.metrics.mean_squared_error",
     "sklearn.metrics.mean_tweedie_deviance",
     "sklearn.metrics.median_absolute_error",
     "sklearn.metrics.multilabel_confusion_matrix",
     "sklearn.metrics.mutual_info_score",
+    "sklearn.metrics.ndcg_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
     "sklearn.metrics.precision_recall_curve",
     "sklearn.metrics.precision_recall_fscore_support",
@@ -170,6 +193,8 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.model_selection.train_test_split",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",
+    "sklearn.tree.export_text",
+    "sklearn.utils.gen_batches",
 ]
 
 
