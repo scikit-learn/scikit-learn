@@ -49,6 +49,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import is_classifier
 from ..exceptions import NotFittedError
+from ..preprocessing import LabelEncoder
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils import column_or_1d
@@ -209,8 +210,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.tol = tol
 
     @abstractmethod
-    def _validate_y(self, y, sample_weight=None):
-        """Called by fit to validate y."""
+    def _encode_y(self, y=None):
+        """Called by fit to validate and encode y (for classification)."""
 
     @abstractmethod
     def _get_loss(self, sample_weight):
@@ -228,7 +229,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X_csc=None,
         X_csr=None,
     ):
-        """Fit another stage of ``_n_classes`` trees to the boosting model."""
+        """Fit another stage of ``_n_trees_per_iteration_`` trees."""
 
         assert sample_mask.dtype == bool
         loss = self._loss
@@ -443,17 +444,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc", "coo"], dtype=DTYPE, multi_output=True
         )
+        y = self._encode_y(y)
+        y = column_or_1d(y, warn=True)  # TODO: Is this still required?
 
         sample_weight_is_none = sample_weight is None
-
         sample_weight = _check_sample_weight(sample_weight, X)
-
-        y = column_or_1d(y, warn=True)
-
-        if is_classifier(self):
-            y = self._validate_y(y, sample_weight)
-        else:
-            y = self._validate_y(y)
 
         self._check_params()
 
@@ -473,7 +468,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 stratify=stratify,
             )
             if is_classifier(self):
-                if self._n_classes != np.unique(y).shape[0]:
+                if self.n_classes_ != np.unique(y).shape[0]:
                     # We choose to error here. The problem is that the init
                     # estimator would be trained on y, which has some missing
                     # classes now, so its predictions would not have the
@@ -1234,21 +1229,31 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ccp_alpha=ccp_alpha,
         )
 
-    def _validate_y(self, y, sample_weight):
+    def _encode_y(self, y, sample_weight):
+        # encode classes into 0 ... n_classes - 1 and sets attributes classes_
+        # and n_trees_per_iteration_
         check_classification_targets(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
-        n_trim_classes = np.count_nonzero(np.bincount(y, sample_weight))
+
+        label_encoder = LabelEncoder()
+        encoded_y = label_encoder.fit_transform(y)
+        self.classes_ = label_encoder.classes_
+        n_classes = self.classes_.shape[0]
+        # only 1 tree for binary classification. For multiclass classification,
+        # we build 1 tree per class.
+        self.n_trees_per_iteration_ = 1 if n_classes <= 2 else n_classes
+        encoded_y = encoded_y.astype(float, copy=False)
+
+        # From here on, it is additional to the HGBT case.
+        # expose n_classes_ attribute
+        self.n_classes_ = n_classes
+        n_trim_classes = np.count_nonzero(np.bincount(encoded_y, sample_weight))
         if n_trim_classes < 2:
             raise ValueError(
                 "y contains %d class after sample_weight "
                 "trimmed classes with zero weights, while a "
                 "minimum of 2 classes are required." % n_trim_classes
             )
-        self._n_classes = len(self.classes_)
-        # expose n_classes_ attribute
-        self.n_classes_ = self._n_classes
-        self._n_trees_per_iteration_ = 1 if self.n_classes_ <= 2 else self.n_classes_
-        return y
+        return encoded_y
 
     def _get_loss(self, sample_weight):
         # TODO(1.3): Remove deviance
@@ -1820,10 +1825,10 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             ccp_alpha=ccp_alpha,
         )
 
-    def _validate_y(self, y, sample_weight=None):
-        if y.dtype.kind == "O":
-            y = y.astype(DOUBLE)
-        self._n_trees_per_iteration = 1
+    def _encode_y(self, y=None):
+        # Just convert y to the expected dtype
+        self.n_trees_per_iteration_ = 1
+        y = y.astype(DOUBLE, copy=False)
         return y
 
     def predict(self, X):
