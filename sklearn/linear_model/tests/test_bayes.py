@@ -295,20 +295,22 @@ def test_dtype_correctness(Estimator):
 
 
 # TODO(1.5) remove
-def test_bayesian_ridge_n_iter_deprecated():
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_bayesian_ridge_ard_n_iter_deprecated(Estimator):
     """Check the deprecation warning of `n_iter`."""
     depr_msg = (
         "'n_iter' was renamed to 'max_iter' in version 1.3 and will be removed in 1.5"
     )
     X, y = diabetes.data, diabetes.target
-    est = BayesianRidge(n_iter=5)
+    model = Estimator(n_iter=5)
 
     with pytest.warns(FutureWarning, match=depr_msg):
-        est.fit(X, y)
+        model.fit(X, y)
 
 
 # TODO(1.5) remove
-def test_bayesian_ridge_max_iter_and_n_iter_both_set():
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_bayesian_ridge_ard_max_iter_and_n_iter_both_set(Estimator):
     """Check that we raise an error if both `max_iter` and `n_iter` are set."""
     """Check that a ValueError is raised when both `max_iter` and `n_iter` are set."""
     err_msg = (
@@ -317,7 +319,7 @@ def test_bayesian_ridge_max_iter_and_n_iter_both_set():
         " 1.5. To avoid this error, only set the `max_iter` attribute."
     )
     X, y = diabetes.data, diabetes.target
-    est = BayesianRidge(n_iter=5, max_iter=5)
+    model = Estimator(n_iter=5, max_iter=5)
 
     with pytest.raises(ValueError, match=err_msg):
-        est.fit(X, y)
+        model.fit(X, y)

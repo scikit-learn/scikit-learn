@@ -465,8 +465,10 @@ class ARDRegression(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    n_iter : int, default=300
-        Maximum number of iterations.
+    max_iter : int, default=None
+        Maximum number of iterations. If `None`, it corresponds to `max_iter=300`.
+
+        .. versionchanged:: 1.3
 
     tol : float, default=1e-3
         Stop the algorithm if w has converged.
@@ -504,6 +506,13 @@ class ARDRegression(RegressorMixin, LinearModel):
 
     verbose : bool, default=False
         Verbose mode when fitting the model.
+
+    n_iter : int
+        Maximum number of iterations.
+
+        .. deprecated:: 1.3
+           `n_iter` is deprecated in 1.3 and will be removed in 1.5. Use
+           `max_iter` instead.
 
     Attributes
     ----------
@@ -544,6 +553,11 @@ class ARDRegression(RegressorMixin, LinearModel):
 
         .. versionadded:: 1.0
 
+    n_iter_ : int
+        The actual number of iterations to reach the stopping criterion.
+
+        .. versionadded:: 1.3
+
     See Also
     --------
     BayesianRidge : Bayesian ridge regression.
@@ -577,7 +591,7 @@ class ARDRegression(RegressorMixin, LinearModel):
     """
 
     _parameter_constraints: dict = {
-        "n_iter": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left")],
         "alpha_1": [Interval(Real, 0, None, closed="left")],
         "alpha_2": [Interval(Real, 0, None, closed="left")],
@@ -588,12 +602,16 @@ class ARDRegression(RegressorMixin, LinearModel):
         "fit_intercept": ["boolean"],
         "copy_X": ["boolean"],
         "verbose": ["verbose"],
+        "n_iter": [
+            Interval(Integral, 1, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
     }
 
     def __init__(
         self,
         *,
-        n_iter=300,
+        max_iter=None,  # TODO(1.5): Set to 300
         tol=1.0e-3,
         alpha_1=1.0e-6,
         alpha_2=1.0e-6,
@@ -604,8 +622,9 @@ class ARDRegression(RegressorMixin, LinearModel):
         fit_intercept=True,
         copy_X=True,
         verbose=False,
+        n_iter="deprecated",  # TODO(1.5): Remove
     ):
-        self.n_iter = n_iter
+        self.max_iter = max_iter
         self.tol = tol
         self.fit_intercept = fit_intercept
         self.alpha_1 = alpha_1
@@ -616,6 +635,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         self.threshold_lambda = threshold_lambda
         self.copy_X = copy_X
         self.verbose = verbose
+        self.n_iter = n_iter
 
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
@@ -637,6 +657,24 @@ class ARDRegression(RegressorMixin, LinearModel):
         """
 
         self._validate_params()
+
+        max_iter = self.max_iter
+        # TODO(1.5) Remove
+        if self.n_iter != "deprecated":
+            if max_iter is not None:
+                raise ValueError(
+                    "Both `n_iter` and `max_iter` attributes were set. Attribute"
+                    " `n_iter` was deprecated in version 1.3 and will be removed in"
+                    " 1.5. To avoid this error, only set the `max_iter` attribute."
+                )
+            warnings.warn(
+                "'n_iter' was renamed to 'max_iter' in version 1.3 and "
+                "will be removed in 1.5",
+                FutureWarning,
+            )
+            max_iter = self.n_iter
+        elif max_iter is None:
+            max_iter = 300
 
         X, y = self._validate_data(
             X, y, dtype=[np.float64, np.float32], y_numeric=True, ensure_min_samples=2
@@ -683,7 +721,7 @@ class ARDRegression(RegressorMixin, LinearModel):
             else self._update_sigma_woodbury
         )
         # Iterative procedure of ARDRegression
-        for iter_ in range(self.n_iter):
+        for iter_ in range(max_iter):
             sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda)
             coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
 
@@ -722,6 +760,8 @@ class ARDRegression(RegressorMixin, LinearModel):
 
             if not keep_lambda.any():
                 break
+
+        self.n_iter_ = iter_ + 1
 
         if keep_lambda.any():
             # update sigma and mu using updated params from the last iteration
