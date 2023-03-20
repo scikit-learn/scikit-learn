@@ -311,7 +311,6 @@ def test_bayesian_ridge_ard_n_iter_deprecated(Estimator):
 # TODO(1.5) remove
 @pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
 def test_bayesian_ridge_ard_max_iter_and_n_iter_both_set(Estimator):
-    """Check that we raise an error if both `max_iter` and `n_iter` are set."""
     """Check that a ValueError is raised when both `max_iter` and `n_iter` are set."""
     err_msg = (
         "Both `n_iter` and `max_iter` attributes were set. Attribute"
