@@ -309,6 +309,20 @@ def make_classification(
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_classes": [Interval(Integral, 1, None, closed="left")],
+        "n_labels": [Interval(Integral, 0, None, closed="left")],
+        "length": [Interval(Integral, 1, None, closed="left")],
+        "allow_unlabeled": ["boolean"],
+        "sparse": ["boolean"],
+        "return_indicator": [StrOptions({"dense", "sparse"}), "boolean"],
+        "return_distributions": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_multilabel_classification(
     n_samples=100,
     n_features=20,
