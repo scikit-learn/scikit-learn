@@ -9,6 +9,7 @@
 import functools
 
 import numpy as np
+from scipy.sparse import issparse
 
 from ...utils import check_random_state
 from ...utils import check_X_y
@@ -122,8 +123,9 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
 
     Parameters
     ----------
-    D_chunk : array-like of shape (n_chunk_samples, n_samples)
-        Precomputed distances for a chunk.
+    D_chunk : {array-like, sparse matrix} of shape (n_chunk_samples, n_samples)
+        Precomputed distances for a chunk. If a sparse matrix is provided,
+        only CSR format is accepted.
     start : int
         First index in the chunk.
     labels : array-like of shape (n_samples,)
@@ -131,22 +133,43 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     label_freqs : array-like
         Distribution of cluster labels in ``labels``.
     """
+    n_chunk_samples = D_chunk.shape[0]
     # accumulate distances from each sample to each cluster
-    clust_dists = np.zeros((len(D_chunk), len(label_freqs)), dtype=D_chunk.dtype)
-    for i in range(len(D_chunk)):
-        clust_dists[i] += np.bincount(
-            labels, weights=D_chunk[i], minlength=len(label_freqs)
-        )
+    cluster_distances = np.zeros(
+        (n_chunk_samples, len(label_freqs)), dtype=D_chunk.dtype
+    )
 
-    # intra_index selects intra-cluster distances within clust_dists
-    intra_index = (np.arange(len(D_chunk)), labels[start : start + len(D_chunk)])
-    # intra_clust_dists are averaged over cluster size outside this function
-    intra_clust_dists = clust_dists[intra_index]
+    if issparse(D_chunk):
+        if D_chunk.format != "csr":
+            raise TypeError(
+                "Expected CSR matrix. Please pass sparse matrix in CSR format."
+            )
+        for i in range(n_chunk_samples):
+            indptr = D_chunk.indptr
+            indices = D_chunk.indices[indptr[i] : indptr[i + 1]]
+            sample_weights = D_chunk.data[indptr[i] : indptr[i + 1]]
+            sample_labels = np.take(labels, indices)
+            cluster_distances[i] += np.bincount(
+                sample_labels, weights=sample_weights, minlength=len(label_freqs)
+            )
+    else:
+        for i in range(n_chunk_samples):
+            sample_weights = D_chunk[i]
+            sample_labels = labels
+            cluster_distances[i] += np.bincount(
+                sample_labels, weights=sample_weights, minlength=len(label_freqs)
+            )
+
+    # intra_index selects intra-cluster distances within cluster_distances
+    end = start + n_chunk_samples
+    intra_index = (np.arange(n_chunk_samples), labels[start:end])
+    # intra_cluster_distances are averaged over cluster size outside this function
+    intra_cluster_distances = cluster_distances[intra_index]
     # of the remaining distances we normalise and extract the minimum
-    clust_dists[intra_index] = np.inf
-    clust_dists /= label_freqs
-    inter_clust_dists = clust_dists.min(axis=1)
-    return intra_clust_dists, inter_clust_dists
+    cluster_distances[intra_index] = np.inf
+    cluster_distances /= label_freqs
+    inter_cluster_distances = cluster_distances.min(axis=1)
+    return intra_cluster_distances, inter_cluster_distances
 
 
 def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
@@ -174,9 +197,11 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_a, n_samples_a) if metric == \
+    X : {array-like, sparse matrix} of shape (n_samples_a, n_samples_a) if metric == \
             "precomputed" or (n_samples_a, n_features) otherwise
-        An array of pairwise distances between samples, or a feature array.
+        An array of pairwise distances between samples, or a feature array. If
+        a sparse matrix is provided, CSR format should be favoured avoiding
+        an additional copy.
 
     labels : array-like of shape (n_samples,)
         Label values for each sample.
@@ -209,7 +234,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     .. [2] `Wikipedia entry on the Silhouette Coefficient
        <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
     """
-    X, labels = check_X_y(X, labels, accept_sparse=["csc", "csr"])
+    X, labels = check_X_y(X, labels, accept_sparse=["csr"])
 
     # Check for non-zero diagonal entries in precomputed distance matrix
     if metric == "precomputed":
@@ -219,10 +244,10 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
         )
         if X.dtype.kind == "f":
             atol = np.finfo(X.dtype).eps * 100
-            if np.any(np.abs(np.diagonal(X)) > atol):
-                raise ValueError(error_msg)
-        elif np.any(np.diagonal(X) != 0):  # integral dtype
-            raise ValueError(error_msg)
+            if np.any(np.abs(X.diagonal()) > atol):
+                raise error_msg
+        elif np.any(X.diagonal() != 0):  # integral dtype
+            raise error_msg
 
     le = LabelEncoder()
     labels = le.fit_transform(labels)
