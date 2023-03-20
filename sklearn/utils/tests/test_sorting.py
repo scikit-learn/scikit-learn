@@ -10,7 +10,7 @@ from sklearn.utils import check_random_state
 def test_simultaneous_sort_wrong_usage():
     rng = check_random_state(0)
     values = rng.random_sample(10).astype(np.float64, copy=False)
-    indices = np.arange(10).astype(np.int64, copy=False)
+    indices = np.arange(10).astype(np.intp, copy=False)
 
     with pytest.raises(ValueError, match="Currently kind='not_existent'"):
         _simultaneous_sort(values, indices, kind="not_existent")
@@ -22,7 +22,7 @@ def test_simultaneous_sort(kind, dtype, n_pts=201):
     # Sort sanity check
     rng = check_random_state(0)
     values = rng.random_sample(n_pts).astype(dtype, copy=False)
-    indices = np.arange(n_pts).astype(np.int64, copy=False)
+    indices = np.arange(n_pts).astype(np.intp, copy=False)
 
     values_2 = values.copy()
     indices_2 = indices.copy()
