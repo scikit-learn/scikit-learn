@@ -233,7 +233,7 @@ def pyplot():
     pyplot.close("all")
 
 
-def pytest_runtest_setup(item):
+def pytest_sessionstart(session):
     """Set the number of openmp threads based on the number of workers
     xdist is using to prevent oversubscription.
 
@@ -249,7 +249,7 @@ def pytest_runtest_setup(item):
     else:
         xdist_worker_count = int(xdist_worker_count)
 
-    openmp_threads = _openmp_effective_n_threads()
+    openmp_threads = _openmp_effective_n_threads(only_physical_cores=True)
     threads_per_worker = max(openmp_threads // xdist_worker_count, 1)
     threadpool_limits(threads_per_worker, user_api="openmp")
 
