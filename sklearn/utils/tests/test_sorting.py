@@ -7,6 +7,15 @@ from sklearn.utils._sorting import _simultaneous_sort
 from sklearn.utils import check_random_state
 
 
+def test_simultaneous_sort_wrong_usage():
+    rng = check_random_state(0)
+    values = rng.random_sample(10).astype(np.float64, copy=False)
+    indices = np.arange(10).astype(np.int64, copy=False)
+
+    with pytest.raises(ValueError, match="Currently kind='not_existent'"):
+        _simultaneous_sort(values, indices, kind="not_existent")
+
+
 @pytest.mark.parametrize("kind", ["introsort", "heapsort", "quick_sort"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_simultaneous_sort(kind, dtype, n_pts=201):

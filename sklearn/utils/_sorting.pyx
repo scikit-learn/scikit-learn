@@ -29,12 +29,13 @@ def _simultaneous_sort(
     if kind == "introsort":
         return simultaneous_introsort(&values[0], &indices[0], size)
 
-    if kind == "quicksort":
+    if kind == "quick_sort":
         return simultaneous_quick_sort(&values[0], &indices[0], size)
 
     if kind == "heapsort":
         return simultaneous_heapsort(&values[0], &indices[0], size)
 
+    raise ValueError(f"Currently kind='{kind}', but kind must be in ('introsort', 'quick_sort', 'heapsort').")
 
 cdef inline void _simultaneous_swap(
     floating* values,
