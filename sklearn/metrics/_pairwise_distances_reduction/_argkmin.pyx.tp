@@ -61,10 +61,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
 
         No instance should directly be created outside of this class method.
         """
-        if (
-            metric in ("euclidean", "sqeuclidean")
-            and not (issparse(X) ^ issparse(Y))  # "^" is the XOR operator
-        ):
+        if metric in ("euclidean", "sqeuclidean"):
             # Specialized implementation of ArgKmin for the Euclidean distance
             # for the dense-dense and sparse-sparse cases.
             # This implementation computes the distances by chunk using
@@ -181,7 +178,6 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         self.heaps_r_distances_chunks[thread_num] = &self.argkmin_distances[X_start, 0]
         self.heaps_indices_chunks[thread_num] = &self.argkmin_indices[X_start, 0]
 
-    @final
     cdef void _parallel_on_X_prange_iter_finalize(
         self,
         ITYPE_t thread_num,

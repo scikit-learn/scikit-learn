@@ -46,6 +46,10 @@ bikes = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True, parser="pa
 # Make an explicit copy to avoid "SettingWithCopyWarning" from pandas
 X, y = bikes.data.copy(), bikes.target
 
+# We use only a subset of the data to speed up the example.
+X = X.iloc[::5, :]
+y = y[::5]
+
 # %%
 # The feature `"weather"` has a particularity: the category `"heavy_rain"` is a rare
 # category.
@@ -286,7 +290,9 @@ tic = time()
 hgbdt_model = make_pipeline(
     hgbdt_preprocessor,
     HistGradientBoostingRegressor(
-        categorical_features=categorical_features, random_state=0
+        categorical_features=categorical_features,
+        random_state=0,
+        max_iter=50,
     ),
 )
 hgbdt_model.fit(X_train, y_train)
@@ -532,7 +538,7 @@ features = ("temp", "humidity")
 pdp = partial_dependence(
     hgbdt_model, X_train, features=features, kind="average", grid_resolution=10
 )
-XX, YY = np.meshgrid(pdp["values"][0], pdp["values"][1])
+XX, YY = np.meshgrid(pdp["grid_values"][0], pdp["grid_values"][1])
 Z = pdp.average[0].T
 ax = fig.add_subplot(projection="3d")
 fig.add_axes(ax)
