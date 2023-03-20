@@ -77,6 +77,7 @@ def alpha_max(emp_cov):
     return np.max(np.abs(A))
 
 
+# The g-lasso algorithm
 @validate_params(
     {
         "emp_cov": ["array-like"],
@@ -92,7 +93,6 @@ def alpha_max(emp_cov):
         "return_n_iter": ["boolean"],
     }
 )
-# The g-lasso algorithm
 def graphical_lasso(
     emp_cov,
     alpha,
