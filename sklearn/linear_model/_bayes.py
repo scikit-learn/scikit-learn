@@ -21,7 +21,7 @@ from ..utils._param_validation import Interval, Hidden, StrOptions
 
 # TODO(1.5) Remove
 def _deprecate_n_iter(n_iter, max_iter):
-    """Deprecates n_iter in favour of max_iter. Checks if the n_iter has been 
+    """Deprecates n_iter in favour of max_iter. Checks if the n_iter has been
     used instead of max_iter and generates a deprecation warning if True.
 
     Parameters
