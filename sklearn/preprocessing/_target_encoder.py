@@ -339,3 +339,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         for f_idx, encoding in enumerate(encodings):
             X_out[indices, f_idx] = encoding[X_ordinal[indices, f_idx]]
             X_out[X_unknown_mask[:, f_idx], f_idx] = y_mean
+
+    def _more_tags(self):
+        return {"requires_y": True}
