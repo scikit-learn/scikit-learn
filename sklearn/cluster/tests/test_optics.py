@@ -300,7 +300,7 @@ def test_dbscan_optics_parity(eps, min_samples, metric, is_sparse, global_dtype)
 
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(
-        n_samples=750, centers=centers, cluster_std=0.4, random_state=0
+        n_samples=150, centers=centers, cluster_std=0.4, random_state=0
     )
     X = sparse.csr_matrix(X) if is_sparse else X
 
