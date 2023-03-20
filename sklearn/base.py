@@ -1087,3 +1087,10 @@ def is_outlier_detector(estimator):
         True if estimator is an outlier detector and False otherwise.
     """
     return getattr(estimator, "_estimator_type", None) == "outlier_detector"
+
+
+def not_covered_by_test():
+    """Function not covered by tests.
+    It is used to test the coverage report generation.
+    """
+    print("This function is not covered by tests.")
