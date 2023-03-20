@@ -189,7 +189,7 @@ for calibration via the `method` parameter: `"sigmoid"` and `"isotonic"`.
 Sigmoid
 ^^^^^^^
 
-The sigmoid regressor, `method="sigmoid"`` is based on Platt's logistic model [4]_:
+The sigmoid regressor, `method="sigmoid"` is based on Platt's logistic model [4]_:
 
 .. math::
        p(y_i = 1 | f_i) = \frac{1}{1 + \exp(A f_i + B)} \,,
