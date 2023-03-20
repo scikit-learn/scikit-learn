@@ -284,7 +284,7 @@ def partial_dependence(
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
 
     sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights for doing weighted means when averaging the model output.
+        Sample weights are used to calculate weighted means when averaging the model output.
         If `None`, then samples are equally weighted. If `sample_weight` is not
         `None`, then `method` will be set to `'brute'`.
         Note that `sample_weight` does not change the individual predictions.

@@ -851,7 +851,7 @@ def test_partial_dependence_kind_individual_ignores_sample_weight(Estimator, dat
     """Check that `sample_weight` does not have any effect on reported ICE."""
     est = Estimator()
     (X, y), n_targets = data
-    sample_weight = [1] + [0] * (len(X) - 1)
+    sample_weight = np.arange(X.shape[0])
     est.fit(X, y)
 
     pdp_nsw = partial_dependence(est, X=X, features=[1, 2], kind="individual")
@@ -937,7 +937,6 @@ def test_partial_dependence_sample_weight_size_error():
     est.fit(X, y)
 
     with pytest.raises(ValueError, match="sample_weight.shape =="):
-
         partial_dependence(
             est, X, features=[0], sample_weight=sample_weight[1:], grid_resolution=10
         )
@@ -953,7 +952,6 @@ def test_partial_dependence_sample_weight_with_recursion():
     est.fit(X, y, sample_weight=sample_weight)
 
     with pytest.raises(ValueError, match="'recursion' method can only be applied when"):
-
         partial_dependence(
             est, X, features=[0], method="recursion", sample_weight=sample_weight
         )
