@@ -18,7 +18,6 @@ from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
 from ..utils._param_validation import Interval, Hidden, StrOptions
 
-
 ###############################################################################
 # BayesianRidge regression
 
@@ -244,7 +243,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self : object
             Returns the instance itself.
         """
-
         self._validate_params()
 
         max_iter = self.max_iter

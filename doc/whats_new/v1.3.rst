@@ -163,7 +163,7 @@ Changelog
 
 - |API| The `sample_weight` parameter in `predict` for
   :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
-  is now deprecated and will be removed in v1.5. 
+  is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 
 - |Enhancement| The `sample_weight` parameter now will be used in centroids
@@ -265,9 +265,16 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Enhancement| :class:`SGDClassifier`, :class:`SGDRegressor` and
-  :class:`SGDOneClassSVM` now preserve dtype for `numpy.float32`.
-  :pr:`25587` by :user:`Omar Salman <OmarManzoor>`
+- |Enhancement| :class:`linear_model.SGDClassifier`,
+  :class:`linear_model.SGDRegressor` and :class:`linear_model.SGDOneClassSVM`
+  now preserve dtype for `numpy.float32`.
+  :pr:`25587` by :user:`Omar Salman <OmarManzoor>`.
+
+- |API| Deprecates `n_iter` in favor of `max_iter` in
+  :class:`linear_model.BayesianRidge` and :class:`linear_model.ARDRegression`.
+  `n_iter` will be removed in scikit-learn 1.5. This change makes those
+  estimators consistent with the rest of estimators.
+  :pr:`25697` by :user:`John Pangas <jpangas>`.
 
 :mod:`sklearn.metrics`
 ......................
