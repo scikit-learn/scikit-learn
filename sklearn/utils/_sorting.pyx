@@ -7,7 +7,8 @@ from libc.math cimport log as ln
 # simultaneous sort which breaks ties on indices when distances are identical.
 # The best might be using a std::stable_sort and a Comparator which might need
 # an Array of Structures (AoS) instead of the Structure of Arrays (SoA)
-# currently used.
+# currently used. Alternatively, we can find a stable algorithm for SoA and
+# adapt it so that it is simultaneous.
 
 # Utilities functions
 
