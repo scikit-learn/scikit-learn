@@ -33,9 +33,10 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    max_iter : int, default=300
+    max_iter : int, default=None
         Maximum number of iterations over the complete dataset before
-        stopping independently of any early stopping criterion.
+        stopping independently of any early stopping criterion. If `None`, it
+        corresponds to `max_iter=300`.
 
         .. versionchanged:: 1.3
 

@@ -294,9 +294,9 @@ def test_dtype_correctness(Estimator):
     np.testing.assert_allclose(coef_32, coef_64, rtol=1e-4)
 
 
+# TODO(1.5) remove
 def test_bayesian_ridge_n_iter_deprecated():
-    # check the deprecation warning of n_iter
-    # TODO(1.5) remove
+    """Check the deprecation warning of `n_iter`."""
     depr_msg = (
         "'n_iter' was renamed to 'max_iter' in version 1.3 and will be removed in 1.5"
     )
@@ -307,8 +307,9 @@ def test_bayesian_ridge_n_iter_deprecated():
         est.fit(X, y)
 
 
+# TODO(1.5) remove
 def test_bayesian_ridge_max_iter_and_n_iter_both_set():
-    # TODO(1.5) remove
+    """Check that we raise an error if both `max_iter` and `n_iter` are set."""
     """Check that a ValueError is raised when both `max_iter` and `n_iter` are set."""
     err_msg = (
         "Both `n_iter` and `max_iter` attributes were set. Attribute"
