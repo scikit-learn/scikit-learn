@@ -1,7 +1,7 @@
-cimport numpy as cnp
-
 from cython cimport floating
 from libc.math cimport log as ln
+
+from ._typedefs cimport intp_t
 
 # TODO: In order to support discrete distance metrics, we need to have a
 # simultaneous sort which breaks ties on indices when distances are identical.
@@ -18,11 +18,11 @@ cdef inline double log(double x) nogil:
 
 def _simultaneous_sort(
     floating[:] values,
-    cnp.intp_t[:] indices,
+    intp_t[:] indices,
     kind=None,
 ):
     """Interface for testing purposes."""
-    cdef cnp.intp_t size = indices.shape[0]
+    cdef intp_t size = indices.shape[0]
 
     if kind is None:
         kind = "introsort"
@@ -40,9 +40,9 @@ def _simultaneous_sort(
 
 cdef inline void _simultaneous_swap(
     floating* values,
-    cnp.intp_t* indices,
-    cnp.intp_t i,
-    cnp.intp_t j,
+    intp_t* indices,
+    intp_t i,
+    intp_t j,
 ) noexcept nogil:
     # Helper for sort
     values[i], values[j] = values[j], values[i]
@@ -50,7 +50,7 @@ cdef inline void _simultaneous_swap(
 
 cdef inline floating _median3(
     floating* values,
-    cnp.intp_t size,
+    intp_t size,
 ) noexcept nogil:
     # Median of three pivot selection, after Bentley and McIlroy (1993).
     # Engineering a sort function. SP&E. Requires 8/3 comparisons on average.
@@ -72,12 +72,12 @@ cdef inline floating _median3(
 
 cdef inline void _sift_down(
     floating* values,
-    cnp.intp_t* indices,
-    cnp.intp_t start,
-    cnp.intp_t end,
+    intp_t* indices,
+    intp_t start,
+    intp_t end,
 ) noexcept nogil:
     # Restore heap order in values[start:end] by moving the max element to start.
-    cdef cnp.intp_t child, maxind, root
+    cdef intp_t child, maxind, root
 
     root = start
     while True:
@@ -101,8 +101,8 @@ cdef inline void _sift_down(
 
 cdef inline void simultaneous_introsort(
     floating* values,
-    cnp.intp_t* indices,
-    cnp.intp_t size,
+    intp_t* indices,
+    intp_t size,
 ) noexcept nogil:
     # Sort a Structure of Arrays pointed consisting of arrays of values and indices,
     # simultaneously, based on the values. Algorithm: Introsort (Musser, SP&E, 1997).
@@ -114,8 +114,8 @@ cdef inline void simultaneous_introsort(
 
 cdef void simultaneous_quick_sort(
     floating* values,
-    cnp.intp_t* indices,
-    cnp.intp_t size,
+    intp_t* indices,
+    intp_t size,
 ) noexcept nogil:
     """
     Perform a recursive quicksort on the values array as to sort them ascendingly.
@@ -133,7 +133,7 @@ cdef void simultaneous_quick_sort(
     as to ease the processing of dynamically allocated buffers.
     """
     cdef:
-        cnp.intp_t pivot_idx, i, store_idx
+        intp_t pivot_idx, i, store_idx
         floating pivot_val
 
     # in the small-array case, do things efficiently
@@ -187,12 +187,12 @@ cdef void simultaneous_quick_sort(
 # (robust to repeated elements, e.g. lots of zero features).
 cdef void _simultaneous_introsort(
     floating* values,
-    cnp.intp_t* indices,
-    cnp.intp_t size,
+    intp_t* indices,
+    intp_t size,
     int maxd,
 ) noexcept nogil:
     cdef floating pivot
-    cdef cnp.intp_t i, l, r
+    cdef intp_t i, l, r
 
     while size > 1:
         if maxd <= 0:   # max depth limit exceeded ("gone quadratic")
@@ -223,10 +223,10 @@ cdef void _simultaneous_introsort(
 
 cdef void simultaneous_heapsort(
     floating* values,
-    cnp.intp_t* indices,
-    cnp.intp_t size,
+    intp_t* indices,
+    intp_t size,
 ) noexcept nogil:
-    cdef cnp.intp_t start, end
+    cdef intp_t start, end
 
     # heapify
     start = (size - 2) / 2

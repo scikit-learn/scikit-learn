@@ -1449,9 +1449,10 @@ make this task easier and faster (in no particular order).
   <https://joblib.readthedocs.io/>`_. ``out`` is then an iterable containing
   the values returned by ``some_function`` for each call.
 - We use `Cython <https://cython.org/>`_ to write fast code. Cython code is
-  located in ``.pyx`` and ``.pxd`` files. Cython code has a more C-like
-  flavor: we use pointers, perform manual memory allocation, etc. Having
-  some minimal experience in C / C++ is pretty much mandatory here.
+  located in ``.pyx`` and ``.pxd`` files. Cython code has a more C-like flavor:
+  we use pointers, perform manual memory allocation, etc. Having some minimal
+  experience in C / C++ is pretty much mandatory here. For more information see
+  :ref:`cython`.
 - Master your tools.
 
   - With such a big project, being efficient with your favorite editor or
