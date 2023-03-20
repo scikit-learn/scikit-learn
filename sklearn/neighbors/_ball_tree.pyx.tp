@@ -28,32 +28,27 @@ __all__ = ['BallTree', 'BallTree32']
 
 DOC_DICT = {'BinaryTree': 'BallTree', 'binary_tree': 'ball_tree'}
 
-{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
-
-VALID_METRICS{{name_suffix}} = [
-    'EuclideanDistance{{name_suffix}}',
-    'SEuclideanDistance{{name_suffix}}',
-    'ManhattanDistance{{name_suffix}}',
-    'ChebyshevDistance{{name_suffix}}',
-    'MinkowskiDistance{{name_suffix}}',
-    'WMinkowskiDistance{{name_suffix}}',
-    'MahalanobisDistance{{name_suffix}}',
-    'HammingDistance{{name_suffix}}',
-    'CanberraDistance{{name_suffix}}',
-    'BrayCurtisDistance{{name_suffix}}',
-    'JaccardDistance{{name_suffix}}',
-    'MatchingDistance{{name_suffix}}',
-    'DiceDistance{{name_suffix}}',
-    'RogersTanimotoDistance{{name_suffix}}',
-    'RussellRaoDistance{{name_suffix}}',
-    'SokalMichenerDistance{{name_suffix}}',
-    'SokalSneathDistance{{name_suffix}}',
-    'PyFuncDistance{{name_suffix}}',
-    'HaversineDistance{{name_suffix}}',
+VALID_METRICS = [
+    'EuclideanDistance',
+    'SEuclideanDistance',
+    'ManhattanDistance',
+    'ChebyshevDistance',
+    'MinkowskiDistance',
+    'WMinkowskiDistance',
+    'MahalanobisDistance',
+    'HammingDistance',
+    'CanberraDistance',
+    'BrayCurtisDistance',
+    'JaccardDistance',
+    'MatchingDistance',
+    'DiceDistance',
+    'RogersTanimotoDistance',
+    'RussellRaoDistance',
+    'SokalMichenerDistance',
+    'SokalSneathDistance',
+    'PyFuncDistance',
+    'HaversineDistance',
 ]
-
-{{endfor}}
-
 
 include "_binary_tree.pxi"
 

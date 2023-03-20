@@ -32,10 +32,6 @@ DOC_DICT = {'BinaryTree': 'KDTree', 'binary_tree': 'kd_tree'}
 VALID_METRICS = ['EuclideanDistance', 'ManhattanDistance',
                  'ChebyshevDistance', 'MinkowskiDistance']
 
-VALID_METRICS32 = ['EuclideanDistance32', 'ManhattanDistance32',
-                 'ChebyshevDistance32', 'MinkowskiDistance32']
-
-
 include "_binary_tree.pxi"
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}

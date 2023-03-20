@@ -871,7 +871,7 @@ cdef class BinaryTree{{name_suffix}}:
                           == 'EuclideanDistance')
 
         metric = self.dist_metric.__class__.__name__
-        if metric not in VALID_METRICS{{name_suffix}}:
+        if metric not in VALID_METRICS:
             raise ValueError('metric {metric} is not valid for '
                              '{BinaryTree}'.format(metric=metric,
                                                    **DOC_DICT))
