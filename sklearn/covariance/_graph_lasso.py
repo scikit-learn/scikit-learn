@@ -23,7 +23,7 @@ from ..utils.validation import (
     check_scalar,
 )
 from ..utils.parallel import delayed, Parallel
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import validate_params, Interval, StrOptions
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
@@ -77,6 +77,21 @@ def alpha_max(emp_cov):
     return np.max(np.abs(A))
 
 
+@validate_params(
+    {
+        "emp_cov": ["array-like"],
+        "alpha": [Real],
+        "cov_init": ["array-like", None],
+        "mode": [StrOptions({"cd", "lars"})],
+        "tol": [Interval(Real, 0, None, closed="right")],
+        "enet_tol": [Interval(Real, 0, None, closed="right")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "verbose": ["verbose"],
+        "return_costs": ["boolean"],
+        "eps": [Real],
+        "return_n_iter": ["boolean"],
+    }
+)
 # The g-lasso algorithm
 def graphical_lasso(
     emp_cov,
@@ -101,7 +116,7 @@ def graphical_lasso(
 
     Parameters
     ----------
-    emp_cov : ndarray of shape (n_features, n_features)
+    emp_cov : array-like of shape (n_features, n_features)
         Empirical covariance from which to compute the covariance estimate.
 
     alpha : float
@@ -109,7 +124,7 @@ def graphical_lasso(
         regularization, the sparser the inverse covariance.
         Range is (0, inf].
 
-    cov_init : array of shape (n_features, n_features), default=None
+    cov_init : array-like of shape (n_features, n_features), default=None
         The initial guess for the covariance. If None, then the empirical
         covariance is used.
 
@@ -149,10 +164,10 @@ def graphical_lasso(
 
     Returns
     -------
-    covariance : ndarray of shape (n_features, n_features)
+    covariance : array-like of shape (n_features, n_features)
         The estimated covariance matrix.
 
-    precision : ndarray of shape (n_features, n_features)
+    precision : array-like of shape (n_features, n_features)
         The estimated (sparse) precision matrix.
 
     costs : list of (objective, dual_gap) pairs
