@@ -412,18 +412,6 @@ def make_multilabel_classification(
         The probability of each feature being drawn given each class.
         Only returned if ``return_distributions=True``.
     """
-    if n_classes < 1:
-        raise ValueError(
-            "'n_classes' should be an integer greater than 0. Got {} instead.".format(
-                n_classes
-            )
-        )
-    if length < 1:
-        raise ValueError(
-            "'length' should be an integer greater than 0. Got {} instead.".format(
-                length
-            )
-        )
 
     generator = check_random_state(random_state)
     p_c = generator.uniform(size=n_classes)
@@ -483,8 +471,6 @@ def make_multilabel_classification(
     if return_indicator in (True, "sparse", "dense"):
         lb = MultiLabelBinarizer(sparse_output=(return_indicator == "sparse"))
         Y = lb.fit([range(n_classes)]).transform(Y)
-    elif return_indicator is not False:
-        raise ValueError("return_indicator must be either 'sparse', 'dense' or False.")
     if return_distributions:
         return X, Y, p_c, p_w_c
     return X, Y
