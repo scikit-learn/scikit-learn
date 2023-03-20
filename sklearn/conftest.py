@@ -235,7 +235,7 @@ def pyplot():
 
 @pytest.fixture(scope="session", autouse=True)
 def thread_limit():
-    """Set the number of openmp threads based on the number of workers
+    """Set the number of OpenMP and BLAS threads based on the number of workers
     xdist is using to prevent oversubscription.
     """
     xdist_worker_count = environ.get("PYTEST_XDIST_WORKER_COUNT")
@@ -247,7 +247,7 @@ def thread_limit():
 
         openmp_threads = _openmp_effective_n_threads(only_physical_cores=True)
         threads_per_worker = max(openmp_threads // xdist_worker_count, 1)
-        with threadpool_limits(threads_per_worker, user_api="openmp"):
+        with threadpool_limits(threads_per_worker):
             yield
 
 
