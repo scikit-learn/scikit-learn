@@ -17,7 +17,7 @@ from numbers import Integral
 import numpy as np
 
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, validate_params
+from ..utils._param_validation import Interval, validate_params, StrOptions
 
 from ..base import is_classifier
 
@@ -77,6 +77,23 @@ class Sentinel:
 SENTINEL = Sentinel()
 
 
+@validate_params(
+    {
+        "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
+        "max_depth": [Interval(Integral, 0, None, closed="left"), None],
+        "feature_names": [list, None],
+        "class_names": [list, None],
+        "label": [StrOptions({"all", "root", "none"})],
+        "filled": ["boolean"],
+        "impurity": ["boolean"],
+        "node_ids": ["boolean"],
+        "proportion": ["boolean"],
+        "rounded": ["boolean"],
+        "precision": [Interval(Integral, 0, None, closed="left"), None],
+        "ax": "no_validation",  # delegate validation to matplotlib
+        "fontsize": [Interval(Integral, 0, None, closed="left"), None],
+    }
+)
 def plot_tree(
     decision_tree,
     *,
@@ -600,20 +617,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
             precision=precision,
         )
         self.fontsize = fontsize
-
-        # validate
-        if isinstance(precision, Integral):
-            if precision < 0:
-                raise ValueError(
-                    "'precision' should be greater or equal to 0."
-                    " Got {} instead.".format(precision)
-                )
-        else:
-            raise ValueError(
-                "'precision' should be an integer. Got {} instead.".format(
-                    type(precision)
-                )
-            )
 
         # The depth of each node for plotting with 'leaf' option
         self.ranks = {"leaves": []}
