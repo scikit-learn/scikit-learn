@@ -39,7 +39,7 @@ def test_precision_recall_display_validation(pyplot):
     with pytest.raises(ValueError, match=err_msg):
         PrecisionRecallDisplay.from_estimator(regressor, X, y)
 
-    err_msg = "Expected 'estimator' to be a binary classifier, but got SVC"
+    err_msg = "Expected 'estimator' to be a binary classifier."
     with pytest.raises(ValueError, match=err_msg):
         PrecisionRecallDisplay.from_estimator(classifier, X, y)
 
