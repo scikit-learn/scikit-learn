@@ -174,7 +174,7 @@ def test_update_of_sigma_in_ard():
     # of the ARDRegression algorithm. See issue #10128.
     X = np.array([[1, 0], [0, 0]])
     y = np.array([0, 0])
-    clf = ARDRegression(n_iter=1)
+    clf = ARDRegression(max_iter=1)
     clf.fit(X, y)
     # With the inputs above, ARDRegression prunes both of the two coefficients
     # in the first iteration. Hence, the expected shape of `sigma_` is (0, 0).
