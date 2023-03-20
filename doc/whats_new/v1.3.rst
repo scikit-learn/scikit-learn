@@ -282,6 +282,11 @@ Changelog
 - |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
   :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Enhancement| :class:`metrics.silhouette_samples` nows accepts a sparse
+  matrix of pairwise distances between samples, or a feature array.
+  :pr:`18723` by :user:`Sahil Gupta <sahilgupta2105>` and
+  :pr:`24677` by :user:`Ashwin Mathur <awinml>`.
+
 - |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
   not normalized, instead of actually normalizing them in the metric. Starting from
   1.5 this will raise an error. :pr:`25299` by :user:`Omar Salman <OmarManzoor`.
