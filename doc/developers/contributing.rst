@@ -736,7 +736,7 @@ To also generate the example gallery you can use:
 
 .. prompt:: bash $
 
-    make doc
+    make html
 
 This will run all the examples, which takes a while. If you only want to
 generate a few examples, you can use:
