@@ -314,9 +314,7 @@ def test_silhouette_samples_euclidean_sparse(to_sparse):
 
 @pytest.mark.parametrize("to_non_csr_sparse", (csc_matrix, dok_matrix, lil_matrix))
 def test_silhouette_reduce(to_non_csr_sparse):
-    """
-    Check for non-CSR input to private method `_silhouette_reduce`.
-    """
+    """Check for non-CSR input to private method `_silhouette_reduce`."""
     X = np.array([[0.2, 0.1, 0.1, 0.2, 0.1, 1.6, 0.2, 0.1]], dtype=np.float32).T
     pdist_dense = pairwise_distances(X)
     pdist_sparse = to_non_csr_sparse(pdist_dense)
