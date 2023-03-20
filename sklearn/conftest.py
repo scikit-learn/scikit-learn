@@ -251,7 +251,7 @@ def pytest_sessionstart(session):
 
     openmp_threads = _openmp_effective_n_threads(only_physical_cores=True)
 
-    print(f"\nOpenMP threads: {openmp_threads}\n", file=sys.stderr)
+    raise RuntimeError(f"\nOpenMP threads: {openmp_threads}\n")
 
     threads_per_worker = max(openmp_threads // xdist_worker_count, 1)
     threadpool_limits(threads_per_worker)
