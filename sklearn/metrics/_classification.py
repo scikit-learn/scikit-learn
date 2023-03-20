@@ -1075,7 +1075,7 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {1.0, 0.0, np.nan}),
+            Options(Real, {0.0, 1.0, np.nan}),
             StrOptions({"warn"}),
         ],
     }
@@ -2399,7 +2399,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
         "digits": [Interval(Integral, 0, None, closed="left")],
         "output_dict": ["boolean"],
         "zero_division": [
-            Options(Real, {0, 1}),
+            Options(Real, {0.0, 1.0, np.nan}),
             StrOptions({"warn"}),
         ],
     }
