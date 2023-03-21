@@ -26,9 +26,10 @@ on the same dataset using the knowledge of the labels.
 # Datasets preprocessing and model training
 # =========================================
 #
-# This example uses real-world datasets available in :class:`sklearn.datasets`
-# and the sample size of some datasets is reduced using a stratified
-# :class:`~sklearn.model_selection.train_test_split` to speed up computation.
+# This example uses real-world datasets available in :class:`sklearn.datasets`.
+# Due to computational constraints of the scikit-learn documentation, the sample
+# size of some datasets is reduced using a stratified
+# :class:`~sklearn.model_selection.train_test_split`.
 # After the data preprocessing, the datasets' targets will have two classes, 0
 # representing inliers and 1 representing outliers.
 #
@@ -155,7 +156,7 @@ X = X.loc[s]
 y = y.loc[s]
 y = (y != 2).astype(int)
 
-X, _, y, _ = train_test_split(X, y, train_size=0.1, stratify=y, random_state=rng)
+X, _, y, _ = train_test_split(X, y, train_size=0.05, stratify=y, random_state=rng)
 
 n_samples = X.shape[0]
 X_forestcover = X  # save X for later use
@@ -280,7 +281,7 @@ X = X_forestcover
 y = y_true["forestcover"]
 
 n_samples = X.shape[0]
-n_neighbors_list = (n_samples * np.array([0.001, 0.01, 0.02])).astype(np.int32)
+n_neighbors_list = (n_samples * np.array([0.02, 0.01, 0.001])).astype(np.int32)
 model = make_pipeline(RobustScaler(), LocalOutlierFactor())
 
 fig, ax = plt.subplots()
