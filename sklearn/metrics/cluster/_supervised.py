@@ -883,7 +883,7 @@ def adjusted_mutual_info_score(
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`U` in
         the above formula.
 
@@ -891,9 +891,8 @@ def adjusted_mutual_info_score(
         A clustering of the data into disjoint subsets, called :math:`V` in
         the above formula.
 
-    average_method : str, default='arithmetic'
-        How to compute the normalizer in the denominator. Possible options
-        are 'min', 'geometric', 'arithmetic', and 'max'.
+    average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
+        How to compute the normalizer in the denominator.
 
         .. versionadded:: 0.20
 
