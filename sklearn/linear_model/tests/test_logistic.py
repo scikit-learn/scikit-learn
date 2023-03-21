@@ -226,6 +226,7 @@ def test_check_solver_option(LR):
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
 
+
 @pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
 def test_elasticnet_l1_ratio_none_err_helpful(LR):
     """Test that the error that occurs when l1_ratio=None and penalty='elasticnet' 
