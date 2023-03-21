@@ -226,6 +226,16 @@ def test_check_solver_option(LR):
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
 
+@pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
+def test_elasticnet_l1_ratio_none_err_helpful(LR):
+    """Test that the error that occurs when l1_ratio=None and penalty='elasticnet' 
+    is helpful, meaning it contains the word 'l1_ratio'."""
+    # Check that the error message contains the word 'l1_ratio'.
+    with pytest.raises(Exception, match=r".*l1_ratio.*"):
+        # Perform a simple LogisticRegression to trigger the error.
+        model = LR(penalty="elasticnet", l1_ratio=None, solver="saga")
+        model.fit(np.array([[1, 2], [3, 4]]), np.array([0, 1]))
+
 
 @pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "sag", "saga"])
 def test_multinomial_binary(solver):
