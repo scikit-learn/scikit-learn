@@ -245,6 +245,24 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id, offset=0, length=
     return data, indices, indptr, labels, query
 
 
+@validate_params(
+    {
+        "files": [
+            "array-like",
+            str,
+            os.PathLike,
+            HasMethods("read"),
+            Interval(Integral, 0, None, closed="left"),
+        ],
+        "n_features": [Interval(Integral, 1, None, closed="left"), None],
+        "dtype": "no_validation",  # delegate validation to numpy
+        "multilabel": ["boolean"],
+        "zero_based": ["boolean", StrOptions({"auto"})],
+        "query_id": ["boolean"],
+        "offset": [Interval(Integral, 0, None, closed="left")],
+        "length": [Integral],
+    }
+)
 def load_svmlight_files(
     files,
     *,
