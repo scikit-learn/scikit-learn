@@ -47,6 +47,7 @@ from sklearn.metrics import multilabel_confusion_matrix
 
 from sklearn.metrics._classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.utils.extmath import _nanaverage
 
 from scipy.spatial.distance import hamming as sp_hamming
 
@@ -178,9 +179,9 @@ def test_classification_report_output_dict_empty_input():
             "support": 0,
         },
         "weighted avg": {
-            "f1-score": 0.0,
-            "precision": 0.0,
-            "recall": 0.0,
+            "f1-score": np.nan,
+            "precision": np.nan,
+            "recall": np.nan,
             "support": 0,
         },
     }
@@ -197,7 +198,7 @@ def test_classification_report_output_dict_empty_input():
                 assert_almost_equal(expected_report[key][metric], report[key][metric])
 
 
-@pytest.mark.parametrize("zero_division", ["warn", 0, 1])
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_classification_report_zero_division_warning(zero_division):
     y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
     with warnings.catch_warnings(record=True) as record:
@@ -709,6 +710,50 @@ def test_cohen_kappa():
 def test_matthews_corrcoef_nan():
     assert matthews_corrcoef([0], [1]) == 0.0
     assert matthews_corrcoef([0, 0], [0, 1]) == 0.0
+
+
+@pytest.mark.parametrize("zero_division", [0, 1, np.nan])
+@pytest.mark.parametrize("y_true, y_pred", [([0], [0]), ([], [])])
+@pytest.mark.parametrize(
+    "metric",
+    [
+        f1_score,
+        partial(fbeta_score, beta=1),
+        precision_score,
+        recall_score,
+    ],
+)
+def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
+    """Check the behaviour of `zero_division` when setting to 0, 1 or np.nan.
+    No warnings should be raised.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        result = metric(y_true, y_pred, zero_division=zero_division)
+
+    if np.isnan(zero_division):
+        assert np.isnan(result)
+    else:
+        assert result == zero_division
+
+
+@pytest.mark.parametrize("y_true, y_pred", [([0], [0]), ([], [])])
+@pytest.mark.parametrize(
+    "metric",
+    [
+        f1_score,
+        partial(fbeta_score, beta=1),
+        precision_score,
+        recall_score,
+    ],
+)
+def test_zero_division_nan_warning(metric, y_true, y_pred):
+    """Check the behaviour of `zero_division` when setting to "warn".
+    A `UndefinedMetricWarning` should be raised.
+    """
+    with pytest.warns(UndefinedMetricWarning):
+        result = metric(y_true, y_pred, zero_division="warn")
+    assert result == 0.0
 
 
 def test_matthews_corrcoef_against_numpy_corrcoef():
@@ -1678,36 +1723,55 @@ def test_precision_recall_f1_score_multilabel_2():
 
 
 @ignore_warnings
-@pytest.mark.parametrize("zero_division", ["warn", 0, 1])
-def test_precision_recall_f1_score_with_an_empty_prediction(zero_division):
+@pytest.mark.parametrize(
+    "zero_division, zero_division_expected",
+    [("warn", 0), (0, 0), (1, 1), (np.nan, np.nan)],
+)
+def test_precision_recall_f1_score_with_an_empty_prediction(
+    zero_division, zero_division_expected
+):
     y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
     y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
 
     # true_pos = [ 0.  1.  1.  0.]
     # false_pos = [ 0.  0.  0.  1.]
     # false_neg = [ 1.  1.  0.  0.]
-    zero_division = 1.0 if zero_division == 1.0 else 0.0
+
     p, r, f, s = precision_recall_fscore_support(
         y_true, y_pred, average=None, zero_division=zero_division
     )
-    assert_array_almost_equal(p, [zero_division, 1.0, 1.0, 0.0], 2)
-    assert_array_almost_equal(r, [0.0, 0.5, 1.0, zero_division], 2)
-    assert_array_almost_equal(f, [0.0, 1 / 1.5, 1, 0.0], 2)
+
+    assert_array_almost_equal(p, [zero_division_expected, 1.0, 1.0, 0.0], 2)
+    assert_array_almost_equal(r, [0.0, 0.5, 1.0, zero_division_expected], 2)
+    expected_f = 0 if not np.isnan(zero_division_expected) else np.nan
+    assert_array_almost_equal(f, [expected_f, 1 / 1.5, 1, expected_f], 2)
     assert_array_almost_equal(s, [1, 2, 1, 0], 2)
 
     f2 = fbeta_score(y_true, y_pred, beta=2, average=None, zero_division=zero_division)
     support = s
-    assert_array_almost_equal(f2, [0, 0.55, 1, 0], 2)
+    assert_array_almost_equal(f2, [expected_f, 0.55, 1, expected_f], 2)
 
     p, r, f, s = precision_recall_fscore_support(
         y_true, y_pred, average="macro", zero_division=zero_division
     )
-    assert_almost_equal(p, (2 + zero_division) / 4)
-    assert_almost_equal(r, (1.5 + zero_division) / 4)
-    assert_almost_equal(f, 2.5 / (4 * 1.5))
+
+    value_to_sum = 0 if np.isnan(zero_division_expected) else zero_division_expected
+    values_to_average = 3 + (not np.isnan(zero_division_expected))
+
+    assert_almost_equal(p, (2 + value_to_sum) / values_to_average)
+    assert_almost_equal(r, (1.5 + value_to_sum) / values_to_average)
+    expected_f = (2 / 3 + 1) / (4 if not np.isnan(zero_division_expected) else 2)
+    assert_almost_equal(f, expected_f)
     assert s is None
     assert_almost_equal(
-        fbeta_score(y_true, y_pred, beta=2, average="macro"), np.mean(f2)
+        fbeta_score(
+            y_true,
+            y_pred,
+            beta=2,
+            average="macro",
+            zero_division=zero_division,
+        ),
+        _nanaverage(f2, weights=None),
     )
 
     p, r, f, s = precision_recall_fscore_support(
@@ -1727,15 +1791,16 @@ def test_precision_recall_f1_score_with_an_empty_prediction(zero_division):
     p, r, f, s = precision_recall_fscore_support(
         y_true, y_pred, average="weighted", zero_division=zero_division
     )
-    assert_almost_equal(p, 3 / 4 if zero_division == 0 else 1.0)
+    assert_almost_equal(p, 3 / 4 if zero_division_expected == 0 else 1.0)
     assert_almost_equal(r, 0.5)
-    assert_almost_equal(f, (2 / 1.5 + 1) / 4)
+    values_to_average = 4 if not np.isnan(zero_division_expected) else 3
+    assert_almost_equal(f, (2 * 2 / 3 + 1) / values_to_average)
     assert s is None
     assert_almost_equal(
         fbeta_score(
             y_true, y_pred, beta=2, average="weighted", zero_division=zero_division
         ),
-        np.average(f2, weights=support),
+        _nanaverage(f2, weights=support),
     )
 
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average="samples")
@@ -1746,18 +1811,19 @@ def test_precision_recall_f1_score_with_an_empty_prediction(zero_division):
     assert_almost_equal(r, 1 / 3)
     assert_almost_equal(f, 1 / 3)
     assert s is None
+    expected_result = {1: 0.666, np.nan: 1.0}
     assert_almost_equal(
         fbeta_score(
             y_true, y_pred, beta=2, average="samples", zero_division=zero_division
         ),
-        0.333,
+        expected_result.get(zero_division, 0.333),
         2,
     )
 
 
 @pytest.mark.parametrize("beta", [1])
 @pytest.mark.parametrize("average", ["macro", "micro", "weighted", "samples"])
-@pytest.mark.parametrize("zero_division", [0, 1])
+@pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 def test_precision_recall_f1_no_labels(beta, average, zero_division):
     y_true = np.zeros((20, 3))
     y_pred = np.zeros_like(y_true)
@@ -1778,12 +1844,18 @@ def test_precision_recall_f1_no_labels(beta, average, zero_division):
         average=average,
         zero_division=zero_division,
     )
+    assert s is None
+
+    # if zero_division = nan, check that all metrics are nan and exit
+    if np.isnan(zero_division):
+        for metric in [p, r, f, fbeta]:
+            assert np.isnan(metric)
+        return
 
     zero_division = float(zero_division)
     assert_almost_equal(p, zero_division)
     assert_almost_equal(r, zero_division)
     assert_almost_equal(f, zero_division)
-    assert s is None
 
     assert_almost_equal(fbeta, float(zero_division))
 
@@ -1808,7 +1880,7 @@ def test_precision_recall_f1_no_labels_check_warnings(average):
     assert_almost_equal(fbeta, 0)
 
 
-@pytest.mark.parametrize("zero_division", [0, 1])
+@pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 def test_precision_recall_f1_no_labels_average_none(zero_division):
     y_true = np.zeros((20, 3))
     y_pred = np.zeros_like(y_true)
@@ -1832,8 +1904,7 @@ def test_precision_recall_f1_no_labels_average_none(zero_division):
     fbeta = assert_no_warnings(
         fbeta_score, y_true, y_pred, beta=1.0, average=None, zero_division=zero_division
     )
-
-    zero_division = float(zero_division)
+    zero_division = np.float64(zero_division)
     assert_array_almost_equal(p, [zero_division, zero_division, zero_division], 2)
     assert_array_almost_equal(r, [zero_division, zero_division, zero_division], 2)
     assert_array_almost_equal(f, [zero_division, zero_division, zero_division], 2)
@@ -1968,7 +2039,7 @@ def test_prf_warnings():
         assert str(record.pop().message) == msg
 
 
-@pytest.mark.parametrize("zero_division", [0, 1])
+@pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 def test_prf_no_warnings_if_zero_division_set(zero_division):
     # average of per-label scores
     f = precision_recall_fscore_support
@@ -2032,7 +2103,7 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
         assert len(record) == 0
 
 
-@pytest.mark.parametrize("zero_division", ["warn", 0, 1])
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_recall_warnings(zero_division):
     assert_no_warnings(
         recall_score,
@@ -2071,7 +2142,7 @@ def test_recall_warnings(zero_division):
             )
 
 
-@pytest.mark.parametrize("zero_division", ["warn", 0, 1])
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_precision_warnings(zero_division):
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
@@ -2111,7 +2182,7 @@ def test_precision_warnings(zero_division):
     )
 
 
-@pytest.mark.parametrize("zero_division", ["warn", 0, 1])
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_fscore_warnings(zero_division):
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
