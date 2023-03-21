@@ -5,6 +5,7 @@ import sys
 from contextlib import suppress
 from unittest import SkipTest
 
+import joblib
 import pytest
 import numpy as np
 from threadpoolctl import threadpool_limits
@@ -242,13 +243,13 @@ def pytest_configure(config):
     except ImportError:
         pass
 
+    allowed_parallelism = joblib.cpu_count(only_physical_cores=True)
     xdist_worker_count = environ.get("PYTEST_XDIST_WORKER_COUNT")
     if xdist_worker_count is not None:
         # Set the number of OpenMP and BLAS threads based on the number of workers
         # xdist is using to prevent oversubscription.
-        openmp_threads = _openmp_effective_n_threads(only_physical_cores=True)
-        threads_per_worker = max(openmp_threads // int(xdist_worker_count), 1)
-        threadpool_limits(threads_per_worker)
+        allowed_parallelism = max(allowed_parallelism // int(xdist_worker_count), 1)
+    threadpool_limits(allowed_parallelism)
 
     # Register global_random_seed plugin if it is not already registered
     if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):

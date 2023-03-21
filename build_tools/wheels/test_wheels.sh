@@ -11,12 +11,17 @@ if [[ "$UNAME" != "Linux" ]]; then
     cp $CONFTEST_PATH $CONFTEST_NAME
 fi
 
+python -c "import joblib; print(f'Number of cores (physical): \
+{joblib.cpu_count()} ({joblib.cpu_count(only_physical_cores=True)})')"
+
 # Test that there are no links to system libraries in the
 # threadpoolctl output section of the show_versions output:
 python -c "import sklearn; sklearn.show_versions()"
 
-if [ ! -z "$CPU_COUNT" ]; then
-    pytest --pyargs sklearn -n $CPU_COUNT
+XDIST_INSTALLED=$(pip list | grep -c pytest-xdist)
+if [[ $XDIST_INSTALLED -eq 1 ]; then
+    XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
+    pytest --pyargs sklearn -n $XDIST_WORKERS
 else
     pytest --pyargs sklearn
 fi
