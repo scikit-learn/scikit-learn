@@ -15,4 +15,4 @@ cp $TEST_DIR/.coverage $BUILD_REPOSITORY_LOCALPATH
 
 curl -Os https://uploader.codecov.io/latest/linux/codecov
 chmod +x codecov
-./codecov -t ${CODECOV_TOKEN} --rootDir $BUILD_REPOSITORY_LOCALPATH || echo "codecov upload failed"
+./codecov -t ${CODECOV_TOKEN} --rootDir $BUILD_REPOSITORY_LOCALPATH
