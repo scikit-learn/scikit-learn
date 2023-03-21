@@ -433,8 +433,8 @@ def test_decision_function_shape(SVM, global_random_seed):
     assert_array_equal(linear_ovr_svm.predict(iris.data), np.argmax(dec, axis=1))
 
     # with five classes:
-    X, y = make_blobs(n_samples=80, centers=5, random_state=global_random_seed + 2)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=global_random_seed + 3)
+    X, y = make_blobs(n_samples=80, centers=5, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
     linear_ovr_svm.fit(X_train, y_train)
     dec = linear_ovr_svm.decision_function(X_test)
@@ -480,7 +480,7 @@ def test_weight(global_random_seed):
     assert_array_almost_equal(clf.predict(X), [2] * 6)
 
     X_, y_ = make_classification(
-        n_samples=2000, n_features=10, weights=[0.833, 0.167], random_state=global_random_seed
+        n_samples=200, n_features=10, weights=[0.833, 0.167], random_state=2
     )
 
     for clf in (
@@ -583,10 +583,8 @@ def test_negative_sample_weights_mask_all_samples(Estimator, err_msg, sample_wei
     [
         (
             svm.SVC,
-            (
-                "Invalid input - all samples with positive weights belong to the same"
-                " class"
-            ),
+            "Invalid input - all samples with positive weights belong to the same"
+            " class",
         ),
         (svm.NuSVC, "specified nu is infeasible"),
     ],
@@ -662,9 +660,9 @@ def test_auto_weight(global_random_seed):
     assert np.argmax(class_weights) == 2
 
     for clf in (
-            svm.SVC(kernel="linear",random_state=global_random_seed + 1),
-            svm.LinearSVC(random_state=global_random_seed + 2),
-            LogisticRegression(random_state=global_random_seed+3),
+        svm.SVC(kernel="linear"),
+        svm.LinearSVC(random_state=0),
+        LogisticRegression(),
     ):
         # check that score is better when class='balanced' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
@@ -875,7 +873,7 @@ def test_linearsvc_fit_sampleweight(global_random_seed):
 
 def test_crammer_singer_binary(global_random_seed):
     # Test Crammer-Singer formulation in the binary case
-    X, y = make_classification(n_classes=2, random_state=global_random_seed,n_samples=256)
+    X, y = make_classification(n_classes=2, random_state=0)
 
     for fit_intercept in (True, False):
         acc = (
@@ -905,7 +903,7 @@ def test_linearsvc_iris(global_random_seed):
     assert_array_equal(pred, clf.predict(iris.data))
 
 
-def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC, global_random_seed=42):
+def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
     # Test that dense liblinear honours intercept_scaling param
     X = [[2, 1], [3, 1], [1, 3], [2, 3]]
     y = [0, 0, 1, 1]
@@ -1069,7 +1067,7 @@ def test_unfitted():
 def test_consistent_proba(global_random_seed):
     a = svm.SVC(probability=True, max_iter=1, random_state=global_random_seed)
     proba_1 = a.fit(X, Y).predict_proba(X)
-    a = svm.SVC(probability=True, max_iter=1, random_state=global_random_seed)
+    a = svm.SVC(probability=True, max_iter=1, random_state=0)
     proba_2 = a.fit(X, Y).predict_proba(X)
     assert_array_almost_equal(proba_1, proba_2)
 
@@ -1383,10 +1381,14 @@ def test_svc_raises_error_internal_representation():
     ],
 )
 @pytest.mark.parametrize(
-    "n_classes",
-    [2, 3, 4], )
-def test_n_iter_libsvm(estimator, expected_n_iter_type, n_classes, global_random_seed):
-    dataset = make_classification(n_classes=n_classes, n_informative=n_classes, random_state=global_random_seed)
+    "dataset",
+    [
+        make_classification(n_classes=2, n_informative=2, random_state=0),
+        make_classification(n_classes=3, n_informative=3, random_state=0),
+        make_classification(n_classes=4, n_informative=4, random_state=0),
+    ],
+)
+def test_n_iter_libsvm(estimator, expected_n_iter_type, dataset):
     # Check that the type of n_iter_ is correct for the classes that inherit
     # from BaseSVC.
     # Note that for SVC, and NuSVC this is an ndarray; while for SVR, NuSVR, and
