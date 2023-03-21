@@ -12,7 +12,6 @@ from threadpoolctl import threadpool_limits
 from _pytest.doctest import DoctestItem
 
 from sklearn.utils import _IS_32BIT
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.utils.fixes import sp_version
 from sklearn.utils.fixes import parse_version
