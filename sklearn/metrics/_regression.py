@@ -486,6 +486,7 @@ def mean_squared_error(
 
     return np.average(output_errors, weights=multioutput)
 
+
 @validate_params(
     {
         "y_true": ["array-like"],
