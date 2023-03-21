@@ -523,6 +523,21 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_informative": [Interval(Integral, 0, None, closed="left")],
+        "n_targets": [Interval(Integral, 1, None, closed="left")],
+        "bias": [Interval(Real, None, None, closed="neither")],
+        "effective_rank": [Interval(Integral, 1, None, closed="left"), None],
+        "tail_strength": [Interval(Real, 0, 1, closed="both")],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "shuffle": ["boolean"],
+        "coef": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_regression(
     n_samples=100,
     n_features=100,
@@ -1198,6 +1213,15 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "effective_rank": [Interval(Integral, 1, None, closed="left")],
+        "tail_strength": [Interval(Real, 0, 1, closed="both")],
+        "random_state": ["random_state"],
+    }
+)
 def make_low_rank_matrix(
     n_samples=100,
     n_features=100,
