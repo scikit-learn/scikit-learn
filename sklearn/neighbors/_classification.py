@@ -203,7 +203,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         )
         self.weights = weights
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the k-nearest neighbors classifier from the training dataset.
 
         Parameters
@@ -215,6 +215,8 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y : {array-like, sparse matrix} of shape (n_samples,) or \
                 (n_samples, n_outputs)
             Target values.
+        sample_weight : array-like of shape (n_samples,), default=None
+            List of sample weights attached to the data X.
 
         Returns
         -------
@@ -223,7 +225,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         """
         self._validate_params()
 
-        return self._fit(X, y)
+        return self._fit(X, y, sample_weight=sample_weight)
 
     def predict(self, X):
         """Predict the class labels for the provided data.
@@ -288,7 +290,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
     def predict_proba(self, X):
         """Return probability estimates for the test data X.
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_queries, n_features), \
@@ -361,6 +362,9 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
             weights = np.ones_like(neigh_ind)
+
+        if self.sample_weight is not None:
+            weights *= self.sample_weight[neigh_ind]
 
         all_rows = np.arange(n_queries)
         probabilities = []
@@ -572,7 +576,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         self.weights = weights
         self.outlier_label = outlier_label
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the radius neighbors classifier from the training dataset.
 
         Parameters
@@ -584,6 +588,9 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         y : {array-like, sparse matrix} of shape (n_samples,) or \
                 (n_samples, n_outputs)
             Target values.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            List of sample weights attached to the data X.
 
         Returns
         -------
@@ -642,7 +649,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
         self.outlier_label_ = outlier_label_
 
-        return self
+        return self._fit(X, y, sample_weight=sample_weight)
 
     def predict(self, X):
         """Predict the class labels for the provided data.
@@ -747,6 +754,8 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                     proba_inl[i, :] = np.bincount(
                         idx, weights[i], minlength=classes_k.size
                     )
+            if self.sample_weight is not None:
+                weights *= self.sample_weight[neigh_ind]
             proba_k[inliers, :] = proba_inl
 
             if outliers.size > 0:

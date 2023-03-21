@@ -34,7 +34,7 @@ from ..utils import (
     _to_object_array,
 )
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_sample_weight
 from ..utils.validation import check_non_negative
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.parallel import delayed, Parallel
@@ -448,7 +448,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     stacklevel=3,
                 )
 
-    def _fit(self, X, y=None):
+    def _fit(self, X, y=None, sample_weight=None):
         if self._get_tags()["requires_y"]:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
                 X, y = self._validate_data(
@@ -671,6 +671,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
         elif self._fit_method == "brute":
             self._tree = None
+        if sample_weight is not None:
+            sample_weight = check_sample_weight(
+                sample_weight, X, dtype=np.float64, only_non_negative=True
+            )
 
         return self
 
