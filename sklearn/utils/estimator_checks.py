@@ -676,7 +676,7 @@ def _set_checking_parameters(estimator):
             estimator.set_params(max_iter=500)
         # DictionaryLearning
         if name == "DictionaryLearning":
-            estimator.set_params(max_iter=200, transform_algorithm="lasso_lars")
+            estimator.set_params(max_iter=20, transform_algorithm="lasso_lars")
         # MiniBatchNMF
         if estimator.__class__.__name__ == "MiniBatchNMF":
             estimator.set_params(max_iter=20, fresh_restarts=True)
@@ -1716,7 +1716,7 @@ def check_fit_score_takes_y(name, estimator_orig):
             func(X, y)
             args = [p.name for p in signature(func).parameters.values()]
             if args[0] == "self":
-                # if_delegate_has_method makes methods into functions
+                # available_if makes methods into functions
                 # with an explicit "self", so need to shift arguments
                 args = args[1:]
             assert args[1] in ["y", "Y"], (

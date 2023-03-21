@@ -1620,6 +1620,15 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     return gain
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "k": [Interval(Integral, 1, None, closed="left"), None],
+        "sample_weight": ["array-like", None],
+        "ignore_ties": ["boolean"],
+    }
+)
 def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False):
     """Compute Normalized Discounted Cumulative Gain.
 
@@ -1633,7 +1642,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples, n_labels)
+    y_true : array-like of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
         to be ranked. Negative values in `y_true` may result in an output
         that is not between 0 and 1.
@@ -1641,7 +1650,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         .. versionchanged:: 1.2
             These negative values are deprecated, and will raise an error in v1.4.
 
-    y_score : ndarray of shape (n_samples, n_labels)
+    y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
@@ -1650,7 +1659,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         Only consider the highest k scores in the ranking. If `None`, use all
         outputs.
 
-    sample_weight : ndarray of shape (n_samples,), default=None
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights. If `None`, all samples are given the same weight.
 
     ignore_ties : bool, default=False
