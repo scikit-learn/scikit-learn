@@ -3,13 +3,13 @@
 set -e
 set -x
 
-UNAME=$(uname)
+# UNAME=$(uname)
 
-if [[ "$UNAME" != "Linux" ]]; then
-    # The Linux test environment is run in a Docker container and
-    # it is not possible to copy the test configuration file (yet)
-    cp $CONFTEST_PATH $CONFTEST_NAME
-fi
+# if [[ "$UNAME" != "Linux" ]]; then
+#     # The Linux test environment is run in a Docker container and
+#     # it is not possible to copy the test configuration file (yet)
+#     cp $CONFTEST_PATH $CONFTEST_NAME
+# fi
 
 python -c "import joblib; print(f'Number of cores (physical): \
 {joblib.cpu_count()} ({joblib.cpu_count(only_physical_cores=True)})')"
@@ -18,8 +18,10 @@ python -c "import joblib; print(f'Number of cores (physical): \
 # threadpoolctl output section of the show_versions output:
 python -c "import sklearn; sklearn.show_versions()"
 
-XDIST_INSTALLED=$(pip list | grep -c pytest-xdist)
-if [[ "$XDIST_INSTALLED" == "1" ]]; then
+# pip show will return 0 isthe package is installed and 1 otherwise
+pip show pytest-xdist
+XDIST_INSTALLED=$?
+if [[ $XDIST_INSTALLED -eq 0 ]]; then
     XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
     pytest --pyargs sklearn -n $XDIST_WORKERS
 else
