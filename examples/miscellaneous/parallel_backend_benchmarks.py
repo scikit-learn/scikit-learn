@@ -83,7 +83,7 @@ from sklearn.datasets import make_classification
 from sklearn.ensemble import HistGradientBoostingClassifier
 
 X, y = make_classification(n_samples=1_000, random_state=0)
-hist_gbdt = HistGradientBoostingClassifier(random_state=0)
+clf = HistGradientBoostingClassifier(random_state=0)
 
 # %%
 # A common setting is to estimate the performance of the model via
@@ -94,7 +94,7 @@ hist_gbdt = HistGradientBoostingClassifier(random_state=0)
 # %%
 from sklearn.model_selection import ShuffleSplit
 
-cv = ShuffleSplit(n_splits=100, random_state=0)
+cv = ShuffleSplit(n_splits=10, random_state=0)
 
 # %%
 # The computional time can still be reduced by optimizing the number of CPUs
@@ -108,8 +108,21 @@ cv = ShuffleSplit(n_splits=100, random_state=0)
 
 # %%
 from time import time
-from joblib import parallel_backend
 from sklearn.model_selection import cross_validate
+from threadpoolctl import threadpool_limits
+import numpy as np
+
+n_threads_grid = 2 ** np.arange(np.log2(2 * N_CORES).astype(np.int32) + 1)
+
+for n_threads in n_threads_grid:
+    tic = time()
+    with threadpool_limits(limits=int(n_threads)):
+        cross_validate(clf, X, y, cv=cv)
+    toc = time()
+    print(f"n_threads: {n_threads}, elapsed time: {toc - tic:.3f} sec")
+
+# %%
+from joblib import parallel_backend
 
 
 def bench(n_jobs_grid, backend):
@@ -119,7 +132,7 @@ def bench(n_jobs_grid, backend):
     for n_jobs in n_jobs_grid:
         with parallel_backend(backend, n_jobs=int(n_jobs)):
             tic = time()
-            cross_validate(hist_gbdt, X, y, cv=cv)
+            cross_validate(clf, X, y, cv=cv)
             toc = time()
         durations.append(toc - tic)
         print(f"n_jobs: {n_jobs:<3} elapsed time: {toc - tic:.3f} sec")
@@ -145,8 +158,6 @@ register_ray()
 # oversubscription, the grid's maximal value is set to be `N_CORES`.
 
 # %%
-import numpy as np
-
 n_jobs_grid = 2 ** np.arange(np.log2(N_CORES).astype(np.int32) + 1)
 results = []
 
