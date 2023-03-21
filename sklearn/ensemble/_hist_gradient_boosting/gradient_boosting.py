@@ -90,7 +90,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "max_leaf_nodes": [Interval(Integral, 2, None, closed="left"), None],
         "max_depth": [Interval(Integral, 1, None, closed="left"), None],
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
-        "min_weight_fraction_leaf": [Interval(Real, 0.0, 0.5, closed="both")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
         "monotonic_cst": ["array-like", dict, None],
         "interaction_cst": [
@@ -125,7 +124,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         max_leaf_nodes,
         max_depth,
         min_samples_leaf,
-        min_weight_fraction_leaf,
         l2_regularization,
         max_bins,
         categorical_features,
@@ -146,7 +144,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.max_leaf_nodes = max_leaf_nodes
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
-        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.l2_regularization = l2_regularization
         self.max_bins = max_bins
         self.monotonic_cst = monotonic_cst
@@ -388,12 +385,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # used for validation in predict
         n_samples, self._n_features = X.shape
-
-        # Set min_weight_leaf from min_weight_fraction_leaf
-        if sample_weight is None:
-            min_weight_leaf = self.min_weight_fraction_leaf * n_samples
-        else:
-            min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
 
         self.is_categorical_, known_categories = self._check_categories(X)
 
@@ -692,7 +683,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
-                    min_weight_leaf=min_weight_leaf,
                     l2_regularization=self.l2_regularization,
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
@@ -1254,10 +1244,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         The minimum number of samples per leaf. For small datasets with less
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
-    min_weight_fraction_leaf : float, default=0.0
-        The minimum weighted fraction of the sum total of weights (of all
-        the input samples) required to be at a leaf node. Samples have
-        equal weight when sample_weight is not provided.
     l2_regularization : float, default=0
         The L2 regularization parameter. Use ``0`` for no regularization
         (default).
@@ -1460,7 +1446,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         max_leaf_nodes=31,
         max_depth=None,
         min_samples_leaf=20,
-        min_weight_fraction_leaf=0.0,
         l2_regularization=0.0,
         max_bins=255,
         categorical_features=None,
@@ -1482,7 +1467,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             max_leaf_nodes=max_leaf_nodes,
             max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
             l2_regularization=l2_regularization,
             max_bins=max_bins,
             monotonic_cst=monotonic_cst,
@@ -1619,10 +1603,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         The minimum number of samples per leaf. For small datasets with less
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
-    min_weight_fraction_leaf : float, default=0.0
-        The minimum weighted fraction of the sum total of weights (of all
-        the input samples) required to be at a leaf node. Samples have
-        equal weight when sample_weight is not provided.
     l2_regularization : float, default=0
         The L2 regularization parameter. Use 0 for no regularization.
     max_bins : int, default=255
@@ -1824,7 +1804,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         max_leaf_nodes=31,
         max_depth=None,
         min_samples_leaf=20,
-        min_weight_fraction_leaf=0.0,
         l2_regularization=0.0,
         max_bins=255,
         categorical_features=None,
@@ -1847,7 +1826,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             max_leaf_nodes=max_leaf_nodes,
             max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
             l2_regularization=l2_regularization,
             max_bins=max_bins,
             categorical_features=categorical_features,

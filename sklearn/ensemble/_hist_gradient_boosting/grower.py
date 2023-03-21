@@ -162,8 +162,6 @@ class TreeGrower:
         Depth isn't constrained by default.
     min_samples_leaf : int, default=20
         The minimum number of samples per leaf.
-    min_weight_leaf: float, default=0.
-        The minimum weight of input samples required for a node to be a leaf.
     min_gain_to_split : float, default=0.
         The minimum gain needed to split a node. Splits with lower gain will
         be ignored.
@@ -237,7 +235,6 @@ class TreeGrower:
         max_leaf_nodes=None,
         max_depth=None,
         min_samples_leaf=20,
-        min_weight_leaf=0.0,
         min_gain_to_split=0.0,
         n_bins=256,
         n_bins_non_missing=None,
@@ -330,7 +327,6 @@ class TreeGrower:
         self.n_features = X_binned.shape[1]
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
-        self.min_weight_leaf = min_weight_leaf
         self.X_binned = X_binned
         self.min_gain_to_split = min_gain_to_split
         self.shrinkage = shrinkage
@@ -413,10 +409,7 @@ class TreeGrower:
         self.root.partition_start = 0
         self.root.partition_stop = n_samples
 
-        if (
-            self.root.n_samples < self.min_samples_leaf * 2
-            or self.root.weighted_n_node_samples < self.min_weight_leaf * 2
-        ):
+        if self.root.n_samples < self.min_samples_leaf * 2:
             # Do not even bother computing any splitting statistics.
             self._finalize_leaf(self.root)
             return
@@ -557,15 +550,9 @@ class TreeGrower:
             self._finalize_leaf(right_child_node)
             return left_child_node, right_child_node
 
-        if (
-            left_child_node.n_samples < self.min_samples_leaf * 2
-            or left_child_node.weighted_n_node_samples < self.min_weight_leaf * 2
-        ):
+        if left_child_node.n_samples < self.min_samples_leaf * 2:
             self._finalize_leaf(left_child_node)
-        if (
-            right_child_node.n_samples < self.min_samples_leaf * 2
-            or right_child_node.weighted_n_node_samples < self.min_weight_leaf * 2
-        ):
+        if right_child_node.n_samples < self.min_samples_leaf * 2:
             self._finalize_leaf(right_child_node)
 
         if self.with_monotonic_cst:
