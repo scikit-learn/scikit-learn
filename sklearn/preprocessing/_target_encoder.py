@@ -76,7 +76,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Whether to shuffle the data in :meth:`fit_transform` before splitting into
         batches. Note that the samples within each split will not be shuffled.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, default=0
         When `shuffle` is True, `random_state` affects the ordering of the
         indices, which controls the randomness of each fold. Otherwise, this
         parameter has no effect.
@@ -167,7 +167,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         smooth="auto",
         cv=5,
         shuffle=True,
-        random_state=None,
+        random_state=0,
     ):
         self.categories = categories
         self.smooth = smooth
@@ -222,14 +222,16 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self._validate_params()
         X_ordinal, X_known_mask, y, n_categories = self._fit_encodings_all(X, y)
 
+        random_state = self.random_state if self.shuffle else None
+
         # The cv splitter is voluntarily restricted to *KFold to enforce non
         # overlapping validation folds, otherwise the fit_transform output will
         # not be well-specified.
         if self.target_type_ == "continuous":
-            cv = KFold(self.cv, shuffle=self.shuffle, random_state=self.random_state)
+            cv = KFold(self.cv, shuffle=self.shuffle, random_state=random_state)
         else:
             cv = StratifiedKFold(
-                self.cv, shuffle=self.shuffle, random_state=self.random_state
+                self.cv, shuffle=self.shuffle, random_state=random_state
             )
 
         X_out = np.empty_like(X_ordinal, dtype=np.float64)
