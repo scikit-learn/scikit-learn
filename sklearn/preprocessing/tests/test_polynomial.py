@@ -14,7 +14,10 @@ from sklearn.preprocessing import (
     PolynomialFeatures,
     SplineTransformer,
 )
-from sklearn.preprocessing._csr_polynomial_expansion import _get_size_of_ITYPE_t
+from sklearn.preprocessing._csr_polynomial_expansion import (
+    _calc_total_nnz,
+    _calc_expanded_nnz,
+)
 
 
 @pytest.mark.parametrize("est", (PolynomialFeatures, SplineTransformer))
@@ -918,16 +921,32 @@ def test_csr_polynomial_expansion_index_overflow(
             pf.fit(X)
         return
 
-    # `scipy.sparse.hstack` breaks in scipy<1.9.2 when
-    # `n_output_features_ > max_int32`. Test that we provide
-    # an informative error message.
+    # On older versions of scipy, a bug occurs when an intermediate matrix in
+    # `to_stack` in `hstack` fits within int32 however would require int64 when
+    # combined with all previous matrices in `to_stack`.
+    has_bug = False
+    max_int32 = np.iinfo(np.int32).max
+    cumulative_size = n_features + include_bias
+    for deg in range(2, degree + 1):
+        max_indptr = _calc_total_nnz(X.indptr, interaction_only, deg)
+        max_indices = _calc_expanded_nnz(n_features, interaction_only, deg) - 1
+        cumulative_size += max_indices + 1
+        needs_int64 = max(max_indices, max_indptr) > max_int32
+        has_bug |= not needs_int64 and cumulative_size > max_int32
+
+    if sp_version < parse_version("1.8.0") and has_bug:
+        msg = r"In scipy versions `<1.8.0`, the function `scipy.sparse.hstack`"
+        with pytest.raises(ValueError, match=msg):
+            X_trans = pf.fit_transform(X)
+        return
+
+    # When `n_features>=65535`, `scipy.sparse.hstack` may not use the right
+    # dtype for representing indices and indptr if `n_features` is still
+    # small enough so that each block matrix's indices and indptr arrays
+    # can be represnented with `np.int32`. We test `n_features==65535`
+    # since it is guaranteed to run into this bug.
     if (
         sp_version < parse_version("1.9.2")
-        # When `n_features>=65535`, `scipy.sparse.hstack` may not use the right
-        # dtype for representing indices and indptr if `n_features` is still
-        # small enough so that each block matrix's indices and indptr arrays
-        # can be represnented with `np.int32`. We test `n_features==65535`
-        # since it is guaranteed to run into this bug.
         and n_features == 65535
         and degree == 2
         and not interaction_only
@@ -936,16 +955,8 @@ def test_csr_polynomial_expansion_index_overflow(
         with pytest.raises(ValueError, match=msg):
             X_trans = pf.fit_transform(X)
         return
-    else:
-        X_trans = pf.fit_transform(X)
+    X_trans = pf.fit_transform(X)
 
-    num_combinations = pf._num_combinations(
-        n_features=n_features,
-        min_degree=pf._min_degree,
-        max_degree=pf._max_degree,
-        interaction_only=pf.interaction_only,
-        include_bias=pf.include_bias,
-    )
     expected_dtype = np.int64 if num_combinations > np.iinfo(np.int32).max else np.int32
     higher_order_count = (degree - 1) * int(not interaction_only)
     expected_nnz = 1 + higher_order_count + int(include_bias)
@@ -1011,7 +1022,3 @@ def test_polynomial_features_behaviour_on_zero_degree():
         if sparse.issparse(output):
             output = output.toarray()
         assert_array_equal(output, np.ones((X.shape[0], 1)))
-
-
-def test_get_size_of_ITYPE_t():
-    assert _get_size_of_ITYPE_t() >= 8

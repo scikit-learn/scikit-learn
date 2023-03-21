@@ -32,16 +32,15 @@ __all__ = [
 ]
 
 
-def _append_expansion(X, to_stack, interaction_only, deg, n_features):
+def _create_expansion(X, interaction_only, deg, n_features, cumulative_size=0):
     """Helper function for creating and appending sparse expansion matrices"""
 
     total_nnz = _calc_total_nnz(X.indptr, interaction_only, deg)
     expanded_col = _calc_expanded_nnz(n_features, interaction_only, deg)
 
     if expanded_col == 0:
-        return
+        return None
     assert expanded_col > 0
-
     # This only checks whether each block needs 64bit integers upon
     # expansion. We prefer to keep 32bit integers where we can,
     # since currently SciPy's CSR construction downcasts when possible,
@@ -53,6 +52,24 @@ def _append_expansion(X, to_stack, interaction_only, deg, n_features):
     max_int32 = np.iinfo(np.int32).max
     needs_int64 = max(max_indices, max_indptr) > max_int32
     index_dtype = np.int64 if needs_int64 else np.int32
+
+    # This is a pretty specific bug that is hard to work around by a user,
+    # hence we do not detail the entire bug and all possible avoidance
+    # mechnasisms. Instead we recommend upgrading scipy or shrinking their data.
+    cumulative_size += expanded_col
+    if (
+        sp_version < parse_version("1.8.0")
+        and cumulative_size - 1 > max_int32
+        and not needs_int64
+    ):
+        raise ValueError(
+            "In scipy versions `<1.8.0`, the function `scipy.sparse.hstack`"
+            " sometimes produces negative columns when the output shape contains"
+            " `n_cols` too large to be represented by a 32bit signed"
+            " integer. To avoid this error, either use a version"
+            " of scipy `>=1.8.0` or alter the `PolynomialFeatures`"
+            " transformer to produce fewer than 2^31 output features"
+        )
 
     # Result of the expansion, modified in place by the
     # `_csr_polynomial_expansion` routine.
@@ -70,12 +87,10 @@ def _append_expansion(X, to_stack, interaction_only, deg, n_features):
         interaction_only,
         deg,
     )
-    to_stack.append(
-        sparse.csr_matrix(
-            (expanded_data, expanded_indices, expanded_indptr),
-            shape=(X.indptr.shape[0] - 1, expanded_col),
-            dtype=X.dtype,
-        )
+    return sparse.csr_matrix(
+        (expanded_data, expanded_indices, expanded_indptr),
+        shape=(X.indptr.shape[0] - 1, expanded_col),
+        dtype=X.dtype,
     )
 
 
@@ -407,7 +422,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         n_samples, n_features = X.shape
         max_int32 = np.iinfo(np.int32).max
-
         if sparse.isspmatrix_csr(X):
             if self._max_degree > 3:
                 return self.transform(X.tocsc()).tocsr()
@@ -419,14 +433,19 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             if self._min_degree <= 1 and self._max_degree > 0:
                 to_stack.append(X)
 
+            cumulative_size = sum(mat.shape[1] for mat in to_stack)
+            # import pdb; pdb.set_trace()
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
-                _append_expansion(
+                expanded = _create_expansion(
                     X=X,
-                    to_stack=to_stack,
                     interaction_only=self.interaction_only,
                     deg=deg,
                     n_features=n_features,
+                    cumulative_size=cumulative_size,
                 )
+                if expanded is not None:
+                    to_stack.append(expanded)
+                    cumulative_size += expanded.shape[1]
             if len(to_stack) == 0:
                 # edge case: deal with empty matrix
                 XP = sparse.csr_matrix((n_samples, 0), dtype=X.dtype)
