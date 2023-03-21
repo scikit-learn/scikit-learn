@@ -132,6 +132,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.make_circles",
     "sklearn.datasets.make_classification",
     "sklearn.datasets.make_friedman1",
+    "sklearn.datasets.make_low_rank_matrix",
     "sklearn.datasets.make_regression",
     "sklearn.datasets.make_sparse_coded_signal",
     "sklearn.decomposition.sparse_encode",
@@ -195,6 +196,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",
     "sklearn.tree.export_text",
+    "sklearn.tree.plot_tree",
     "sklearn.utils.gen_batches",
 ]
 
