@@ -6,8 +6,6 @@ set -x
 # defines the get_dep and show_installed_libraries functions
 source build_tools/shared.sh
 
-echo $OSTYPE
-
 if [[ "$DISTRIB" == "conda" ]]; then
     conda install -c conda-forge "$(get_dep conda-lock min)" -y
     conda-lock install --name $VIRTUALENV $LOCK_FILE

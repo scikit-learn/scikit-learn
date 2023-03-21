@@ -6,8 +6,6 @@ set -x
 # defines the get_dep and show_installed_libraries functions
 source build_tools/shared.sh
 
-echo $OSTYPE
-
 UNAMESTR=`uname`
 CCACHE_LINKS_DIR="/tmp/ccache"
 
