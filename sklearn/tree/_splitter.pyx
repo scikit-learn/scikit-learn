@@ -21,7 +21,9 @@ import numpy as np
 
 from scipy.sparse import csc_matrix
 
+# TODO: when Cython>=3.0 is used, remove the <intp_t*> casts in call to sort.
 from ..utils._sorting cimport simultaneous_introsort as sort
+from ..utils._typedefs cimport intp_t
 
 from ._utils cimport log
 from ._utils cimport rand_int
@@ -631,7 +633,7 @@ cdef class DensePartitioner:
         # effectively.
         for i in range(self.start, self.end):
             feature_values[i] = X[samples[i], current_feature]
-        sort(&feature_values[self.start], &samples[self.start], self.end - self.start)
+        sort(&feature_values[self.start], <intp_t*>&samples[self.start], self.end - self.start)
 
     cdef inline void find_min_max(
         self,
@@ -790,9 +792,9 @@ cdef class SparsePartitioner:
 
         self.extract_nnz(current_feature)
         # Sort the positive and negative parts of `feature_values`
-        sort(&feature_values[self.start], &samples[self.start], self.end_negative - self.start)
+        sort(&feature_values[self.start], <intp_t*>&samples[self.start], self.end_negative - self.start)
         if self.start_positive < self.end:
-            sort(&feature_values[self.start_positive], &samples[self.start_positive],
+            sort(&feature_values[self.start_positive], <intp_t*>&samples[self.start_positive],
                     self.end - self.start_positive)
 
         # Update index_to_samples to take into account the sort
