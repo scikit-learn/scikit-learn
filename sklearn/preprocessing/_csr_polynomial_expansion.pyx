@@ -41,13 +41,11 @@ ctypedef fused DATA_t:
 # INDEX_{A,B}_t are defined to generate a proper Cartesian product
 # of types through Cython fused-type expansion.
 ctypedef fused INDEX_A_t:
-    int
-    long
-    long long
+    signed int
+    signed long
 ctypedef fused INDEX_B_t:
-    int
-    long
-    long long
+    signed int
+    signed long
 
 cdef inline cnp.int64_t _deg2_column(
     ITYPE_t n_features,
