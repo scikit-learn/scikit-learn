@@ -527,7 +527,7 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     {
         "n_samples": [Interval(Integral, 1, None, closed="left")],
         "n_features": [Interval(Integral, 1, None, closed="left")],
-        "n_informative": [Interval(Integral, 1, None, closed="left")],
+        "n_informative": [Interval(Integral, 0, None, closed="left")],
         "n_targets": [Interval(Integral, 1, None, closed="left")],
         "bias": [Interval(Real, None, None, closed="neither")],
         "effective_rank": [Interval(Integral, 1, None, closed="left"), None],
