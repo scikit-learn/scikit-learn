@@ -3,13 +3,13 @@
 set -e
 set -x
 
-# UNAME=$(uname)
+UNAME=$(uname)
 
-# if [[ "$UNAME" != "Linux" ]]; then
-#     # The Linux test environment is run in a Docker container and
-#     # it is not possible to copy the test configuration file (yet)
-#     cp $CONFTEST_PATH $CONFTEST_NAME
-# fi
+if [[ "$UNAME" != "Linux" ]]; then
+    # The Linux test environment is run in a Docker container and
+    # it is not possible to copy the test configuration file (yet)
+    cp $CONFTEST_PATH $CONFTEST_NAME
+fi
 
 python -c "import joblib; print(f'Number of cores (physical): \
 {joblib.cpu_count()} ({joblib.cpu_count(only_physical_cores=True)})')"
