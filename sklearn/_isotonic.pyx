@@ -76,10 +76,10 @@ def _make_unique(X: List[float], y: List[float], sample_weights: List[float]) ->
     X = np.asarray(X)
     unique_values = len(np.unique(X))
 
-    cdef cnp.ndarray[dtype = floating] y_out = np.empty(unique_values,
-                                                     dtype=X.dtype)
-    cdef cnp.ndarray[dtype = floating] x_out = np.empty_like(y_out)
-    cdef cnp.ndarray[dtype = floating] weights_out = np.empty_like(y_out)
+    cdef cnp.ndarray[floating] y_out = np.empty(unique_values,
+                                                     dtype=np.float64)
+    cdef cnp.ndarray[floating] x_out = np.empty_like(y_out)
+    cdef cnp.ndarray[floating] weights_out = np.empty_like(y_out)
 
     cdef floating current_x = X[0]
     cdef floating current_y = 0
