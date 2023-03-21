@@ -34,6 +34,15 @@ random sampling procedures.
   :class:`decomposition.MiniBatchNMF` which can produce different results than previous
   versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
 
+- |Enhancement| The `sample_weight` parameter now will be used in centroids
+  initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
+  and :class:`cluster.MiniBatchKMeans`.
+  This change will break backward compatibility, since numbers generated
+  from same random seeds will be different.
+  :pr:`25752` by :user:`Gleb Levitski <glevv>`,
+  :user:`Jérémie du Boisberranger <jeremiedbb>`,
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -157,6 +166,15 @@ Changelog
   is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 
+- |Enhancement| The `sample_weight` parameter now will be used in centroids
+  initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
+  and :class:`cluster.MiniBatchKMeans`.
+  This change will break backward compatibility, since numbers generated
+  from same random seeds will be different.
+  :pr:`25752` by :user:`Gleb Levitski <glevv>`,
+  :user:`Jérémie du Boisberranger <jeremiedbb>`,
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -261,8 +279,27 @@ Changelog
   :user:`Guillaume Lemaitre <glemaitre>`, :user:`Omar Salman <OmarManzoor>` and
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Feature| Adds `zero_division=np.nan` to multiple classification metrics:
+  :func:`precision_score`, :func:`recall_score`, :func:`f1_score`,
+  :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
+  :func:`classification_report`. When `zero_division=np.nan` and there is a
+  zero division, the metric is undefined and is excluded from averaging. When not used
+  for averages, the value returned is `np.nan`.
+  :pr:`25531` by :user:`Marc Torrellas Socastro <marctorsoc>`.
+
 - |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
   :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
+
+- |Fix| Fixed :func:`classification_report` so that empty input will return
+  `np.nan`. Previously, "macro avg" and `weighted avg` would return
+  e.g. `f1-score=np.nan` and `f1-score=0.0`, being inconsistent. Now, they
+  both return `np.nan`.
+  :pr:`25531` by :user:`Marc Torrellas Socastro <marctorsoc>`.
+
+- |Enhancement| :class:`metrics.silhouette_samples` nows accepts a sparse
+  matrix of pairwise distances between samples, or a feature array.
+  :pr:`18723` by :user:`Sahil Gupta <sahilgupta2105>` and
+  :pr:`24677` by :user:`Ashwin Mathur <awinml>`.
 
 - |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
   not normalized, instead of actually normalizing them in the metric. Starting from
@@ -321,6 +358,10 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
+
+- |MajorFeature| Introduces :class:`preprocessing.TargetEncoder` which is a
+  categorical encoding based on target mean conditioned on the value of the
+  category. :pr:`25334` by `Thomas Fan`_.
 
 - |Enhancement| Adds a `feature_name_combiner` parameter to
   :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create

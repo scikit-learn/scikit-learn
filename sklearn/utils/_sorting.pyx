@@ -2,24 +2,24 @@ from cython cimport floating
 
 cdef inline void dual_swap(
     floating* darr,
-    ITYPE_t *iarr,
-    ITYPE_t a,
-    ITYPE_t b,
+    intp_t *iarr,
+    intp_t a,
+    intp_t b,
 ) noexcept nogil:
     """Swap the values at index a and b of both darr and iarr"""
     cdef floating dtmp = darr[a]
     darr[a] = darr[b]
     darr[b] = dtmp
 
-    cdef ITYPE_t itmp = iarr[a]
+    cdef intp_t itmp = iarr[a]
     iarr[a] = iarr[b]
     iarr[b] = itmp
 
 
 cdef int simultaneous_sort(
     floating* values,
-    ITYPE_t* indices,
-    ITYPE_t size,
+    intp_t* indices,
+    intp_t size,
 ) noexcept nogil:
     """
     Perform a recursive quicksort on the values array as to sort them ascendingly.
@@ -42,7 +42,7 @@ cdef int simultaneous_sort(
     # an Array of Structures (AoS) instead of the Structure of Arrays (SoA)
     # currently used.
     cdef:
-        ITYPE_t pivot_idx, i, store_idx
+        intp_t pivot_idx, i, store_idx
         floating pivot_val
 
     # in the small-array case, do things efficiently

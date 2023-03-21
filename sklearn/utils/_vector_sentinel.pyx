@@ -2,19 +2,17 @@ from cython.operator cimport dereference as deref
 from cpython.ref cimport Py_INCREF
 cimport numpy as cnp
 
-from ._typedefs cimport DTYPECODE, ITYPECODE, INT32TYPECODE, INT64TYPECODE
-
 cnp.import_array()
 
 
 cdef StdVectorSentinel _create_sentinel(vector_typed * vect_ptr):
-    if vector_typed is vector[DTYPE_t]:
+    if vector_typed is vector[float64_t]:
         return StdVectorSentinelFloat64.create_for(vect_ptr)
-    elif vector_typed is vector[INT32TYPE_t]:
+    elif vector_typed is vector[int32_t]:
         return StdVectorSentinelInt32.create_for(vect_ptr)
-    elif vector_typed is vector[INT64TYPE_t]:
+    elif vector_typed is vector[int64_t]:
         return StdVectorSentinelInt64.create_for(vect_ptr)
-    else:
+    else:  # intp_t
         return StdVectorSentinelIntP.create_for(vect_ptr)
 
 
@@ -33,10 +31,10 @@ cdef class StdVectorSentinel:
 
 
 cdef class StdVectorSentinelFloat64(StdVectorSentinel):
-    cdef vector[DTYPE_t] vec
+    cdef vector[float64_t] vec
 
     @staticmethod
-    cdef StdVectorSentinel create_for(vector[DTYPE_t] * vect_ptr):
+    cdef StdVectorSentinel create_for(vector[float64_t] * vect_ptr):
         # This initializes the object directly without calling __init__
         # See: https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers # noqa
         cdef StdVectorSentinelFloat64 sentinel = StdVectorSentinelFloat64.__new__(StdVectorSentinelFloat64)
@@ -47,14 +45,14 @@ cdef class StdVectorSentinelFloat64(StdVectorSentinel):
         return self.vec.data()
 
     cdef int get_typenum(self):
-        return DTYPECODE
+        return cnp.NPY_FLOAT64
 
 
 cdef class StdVectorSentinelIntP(StdVectorSentinel):
-    cdef vector[ITYPE_t] vec
+    cdef vector[intp_t] vec
 
     @staticmethod
-    cdef StdVectorSentinel create_for(vector[ITYPE_t] * vect_ptr):
+    cdef StdVectorSentinel create_for(vector[intp_t] * vect_ptr):
         # This initializes the object directly without calling __init__
         # See: https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers # noqa
         cdef StdVectorSentinelIntP sentinel = StdVectorSentinelIntP.__new__(StdVectorSentinelIntP)
@@ -65,14 +63,14 @@ cdef class StdVectorSentinelIntP(StdVectorSentinel):
         return self.vec.data()
 
     cdef int get_typenum(self):
-        return ITYPECODE
+        return cnp.NPY_INTP
 
 
 cdef class StdVectorSentinelInt32(StdVectorSentinel):
-    cdef vector[INT32TYPE_t] vec
+    cdef vector[int32_t] vec
 
     @staticmethod
-    cdef StdVectorSentinel create_for(vector[INT32TYPE_t] * vect_ptr):
+    cdef StdVectorSentinel create_for(vector[int32_t] * vect_ptr):
         # This initializes the object directly without calling __init__
         # See: https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers # noqa
         cdef StdVectorSentinelInt32 sentinel = StdVectorSentinelInt32.__new__(StdVectorSentinelInt32)
@@ -83,14 +81,14 @@ cdef class StdVectorSentinelInt32(StdVectorSentinel):
         return self.vec.data()
 
     cdef int get_typenum(self):
-        return INT32TYPECODE
+        return cnp.NPY_INT32
 
 
 cdef class StdVectorSentinelInt64(StdVectorSentinel):
-    cdef vector[INT64TYPE_t] vec
+    cdef vector[int64_t] vec
 
     @staticmethod
-    cdef StdVectorSentinel create_for(vector[INT64TYPE_t] * vect_ptr):
+    cdef StdVectorSentinel create_for(vector[int64_t] * vect_ptr):
         # This initializes the object directly without calling __init__
         # See: https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers # noqa
         cdef StdVectorSentinelInt64 sentinel = StdVectorSentinelInt64.__new__(StdVectorSentinelInt64)
@@ -101,7 +99,7 @@ cdef class StdVectorSentinelInt64(StdVectorSentinel):
         return self.vec.data()
 
     cdef int get_typenum(self):
-        return INT64TYPECODE
+        return cnp.NPY_INT64
 
 
 cdef cnp.ndarray vector_to_nd_array(vector_typed * vect_ptr):
