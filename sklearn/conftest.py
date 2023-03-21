@@ -233,24 +233,6 @@ def pyplot():
     pyplot.close("all")
 
 
-@pytest.fixture(scope="session", autouse=True)
-def thread_limit():
-    """Set the number of OpenMP and BLAS threads based on the number of workers
-    xdist is using to prevent oversubscription.
-    """
-    xdist_worker_count = environ.get("PYTEST_XDIST_WORKER_COUNT")
-    if xdist_worker_count is None:
-        # returns if pytest-xdist is not installed
-        yield
-    else:
-        xdist_worker_count = int(xdist_worker_count)
-
-        openmp_threads = _openmp_effective_n_threads(only_physical_cores=True)
-        threads_per_worker = max(openmp_threads // xdist_worker_count, 1)
-        with threadpool_limits(threads_per_worker):
-            yield
-
-
 def pytest_configure(config):
     # Use matplotlib agg backend during the tests including doctests
     try:
@@ -259,6 +241,14 @@ def pytest_configure(config):
         matplotlib.use("agg")
     except ImportError:
         pass
+
+    xdist_worker_count = environ.get("PYTEST_XDIST_WORKER_COUNT")
+    if xdist_worker_count is not None:
+        # Set the number of OpenMP and BLAS threads based on the number of workers
+        # xdist is using to prevent oversubscription.
+        openmp_threads = _openmp_effective_n_threads(only_physical_cores=True)
+        threads_per_worker = max(openmp_threads // int(xdist_worker_count), 1)
+        threadpool_limits(threads_per_worker)
 
     # Register global_random_seed plugin if it is not already registered
     if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
