@@ -7,6 +7,7 @@
 import numpy as np
 cimport numpy as cnp
 from cython cimport floating
+from typing import List, Tuple
 
 cnp.import_array()
 
@@ -63,9 +64,7 @@ def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
             i = k
 
 
-def _make_unique(const floating[::1] X,
-                 const floating[::1] y,
-                 const floating[::1] sample_weights):
+def _make_unique(X: List[float], y: List[float], sample_weights: List[float]) -> Tuple[List[float], List[float], List[float]]:
     """Average targets for duplicate X, drop duplicates.
 
     Aggregates duplicate X values into a single X value where
