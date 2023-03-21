@@ -19,7 +19,7 @@ python -c "import joblib; print(f'Number of cores (physical): \
 python -c "import sklearn; sklearn.show_versions()"
 
 XDIST_INSTALLED=$(pip list | grep -c pytest-xdist)
-if [[ $XDIST_INSTALLED -eq 1 ]]; then
+if [[ "$XDIST_INSTALLED" == "1" ]]; then
     XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
     pytest --pyargs sklearn -n $XDIST_WORKERS
 else
