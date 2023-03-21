@@ -36,10 +36,10 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         Metric to use for distance computation, either "euclidean" (default)
         or "manhattan".
 
-        .. deprecated:: 1.2
+        .. deprecated:: 1.3
             Support for metrics other than `euclidean` and `manhattan` and for
-            callables was deprecated in version 1.2 and will be removed in
-            version 1.4.
+            callables was deprecated in version 1.3 and will be removed in
+            version 1.5.
 
         .. versionchanged:: 0.19
             `metric='precomputed'` was deprecated and now raises an error
@@ -174,7 +174,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
                     warnings.warn(
                         "Support for metrics other than euclidean and "
                         "manhattan and for callables was deprecated in version "
-                        "1.2 and will be removed in version 1.4.",
+                        "1.3 and will be removed in version 1.5.",
                         FutureWarning,
                     )
                 self.centroids_[cur_class] = X[center_mask].mean(axis=0)

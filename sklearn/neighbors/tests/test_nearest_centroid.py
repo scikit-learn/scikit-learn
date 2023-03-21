@@ -54,7 +54,7 @@ def test_classification_toy():
     assert_array_equal(clf.predict(T_csr.tolil()), true_result)
 
 
-# TODO: Remove filterwarnings in 1.4 when support for some metrics is removed
+# TODO(1.5): Remove filterwarnings when support for some metrics is removed
 @pytest.mark.filterwarnings("ignore:Support for metrics:FutureWarning:sklearn")
 def test_iris():
     # Check consistency on dataset iris.
@@ -64,7 +64,7 @@ def test_iris():
         assert score > 0.9, "Failed with score = " + str(score)
 
 
-# TODO: Remove filterwarnings in 1.4 when support for some metrics is removed
+# TODO(1.5): Remove filterwarnings when support for some metrics is removed
 @pytest.mark.filterwarnings("ignore:Support for metrics:FutureWarning:sklearn")
 def test_iris_shrinkage():
     # Check consistency on dataset iris, when using shrinkage.
@@ -147,6 +147,7 @@ def test_manhattan_metric():
     assert_array_equal(dense_centroid, [[-1, -1], [1, 1]])
 
 
+# TODO(1.5): remove this test
 def test_deprecated_metrics():
     # Make sure no warning is raised when using euclidean or manhattan metric
     # Make sure a warning is raised for all other valid metrics
