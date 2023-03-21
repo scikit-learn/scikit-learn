@@ -96,7 +96,7 @@ cdef int init_node{{name_suffix}}(
     cdef intp_t n_points = idx_end - idx_start
 
     cdef intp_t i, j
-    cdef float64_t radius
+    cdef {{INPUT_DTYPE_t}} radius
     cdef {{INPUT_DTYPE_t}} *this_pt
 
     cdef intp_t* idx_array = &tree.idx_array[0]
@@ -146,7 +146,7 @@ cdef int init_node{{name_suffix}}(
     return 0
 
 
-cdef inline float64_t min_dist{{name_suffix}}(
+cdef inline {{INPUT_DTYPE_t}} min_dist{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
     intp_t i_node,
     {{INPUT_DTYPE_t}}* pt,
@@ -157,7 +157,7 @@ cdef inline float64_t min_dist{{name_suffix}}(
     return fmax(0, dist_pt - tree.node_data[i_node].radius)
 
 
-cdef inline float64_t max_dist{{name_suffix}}(
+cdef inline {{INPUT_DTYPE_t}} max_dist{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
     intp_t i_node,
     {{INPUT_DTYPE_t}}* pt,
@@ -216,7 +216,7 @@ cdef inline float64_t max_rdist{{name_suffix}}(
         )
 
 
-cdef inline float64_t min_dist_dual{{name_suffix}}(
+cdef inline {{INPUT_DTYPE_t}} min_dist_dual{{name_suffix}}(
     BinaryTree{{name_suffix}} tree1,
     intp_t i_node1,
     BinaryTree{{name_suffix}} tree2,
@@ -230,7 +230,7 @@ cdef inline float64_t min_dist_dual{{name_suffix}}(
                     - tree2.node_data[i_node2].radius))
 
 
-cdef inline float64_t max_dist_dual{{name_suffix}}(
+cdef inline {{INPUT_DTYPE_t}} max_dist_dual{{name_suffix}}(
     BinaryTree{{name_suffix}} tree1,
     intp_t i_node1,
     BinaryTree{{name_suffix}} tree2,

@@ -2,8 +2,8 @@ import itertools
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_almost_equal
-from sklearn.neighbors._ball_tree import BallTree
+from numpy.testing import assert_array_almost_equal, assert_allclose, assert_equal
+from sklearn.neighbors._ball_tree import BallTree, BallTree32
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_array
 from sklearn.utils._testing import _convert_container
@@ -101,3 +101,40 @@ def test_bad_pyfunc_metric():
     msg = "takes 1 positional argument but 2 were given"
     with pytest.raises(TypeError, match=msg):
         BallTree(X, metric=one_arg_func)
+
+
+@pytest.mark.parametrize("metric", itertools.chain(METRICS, BOOLEAN_METRICS))
+def test_ball_tree_numerical_consistency(metric):
+    _X = rng.random_sample((40, 3)).round(0)
+    _Y = rng.random_sample((10, 3)).round(0)
+
+    X_64 = _X.astype(dtype=np.float64)
+    Y_64 = _Y.astype(dtype=np.float64)
+
+    X_32 = _X.astype(dtype=np.float32)
+    Y_32 = _Y.astype(dtype=np.float32)
+
+    metric_params = METRICS.get(metric, {})
+    bt_64 = BallTree(X_64, leaf_size=1, metric=metric, **metric_params)
+    bt_32 = BallTree32(X_32, leaf_size=1, metric=metric, **metric_params)
+
+    # Test consistency with respect to the `query` method
+    k = 5
+    dist_64, ind_64 = bt_64.query(Y_64, k=k)
+    dist_32, ind_32 = bt_32.query(Y_32, k=k)
+    assert_allclose(dist_64, dist_32)
+    assert_equal(ind_64, ind_32)
+
+    # Test consistency with respect to the `query_radius` method
+    r = 0.3
+    ind_64, neighbors_64 = bt_64.query_radius(Y_64[0:2, :], r=r)
+    ind_32, neighbors_32 = bt_32.query_radius(Y_32[0:2, :], r=r)
+    assert_equal(ind_64, ind_32)
+    assert_allclose(neighbors_64, neighbors_32)
+
+    # Test consistency with respect to the `kernel_density` method
+    kernel = "gaussian"
+    h = 0.1
+    density64 = bt_64.kernel_density(Y_64, h=h, kernel=kernel)
+    density32 = bt_32.kernel_density(Y_32, h=h, kernel=kernel)
+    assert_allclose(density64, density32)
