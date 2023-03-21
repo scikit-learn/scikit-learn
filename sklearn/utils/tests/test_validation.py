@@ -1762,15 +1762,23 @@ def test_boolean_series_remains_boolean():
     assert_array_equal(res, expected)
 
 
-def test_pandas_array_returns_ndarray():
-    """Check pandas array works and returns a ndarray.
+@pytest.mark.parametrize("input_values", [[0, 1, 0, 1, 0, np.nan], [0, 1, 0, 1, 0, 1]])
+def test_pandas_array_returns_ndarray(input_values):
+    """Check pandas array with extensions dtypes returns a numeric ndarray.
 
     Non-regression test for gh-25637.
     """
     pd = importorskip("pandas")
-    input_values = [0, 1, 0, 1, 0, 1]
-    result = check_array(pd.array(input_values, dtype="Int64"), ensure_2d=False)
-    assert_array_equal(result, input_values)
+    input_series = pd.array(input_values, dtype="Int32")
+    result = check_array(
+        input_series,
+        dtype=None,
+        ensure_2d=False,
+        allow_nd=False,
+        force_all_finite=False,
+    )
+    assert result.dtype.kind == "f"
+    assert_allclose(result, input_values)
 
 
 @pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
