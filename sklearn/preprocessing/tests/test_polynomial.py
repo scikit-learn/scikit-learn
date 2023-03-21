@@ -14,6 +14,7 @@ from sklearn.preprocessing import (
     PolynomialFeatures,
     SplineTransformer,
 )
+from sklearn.preprocessing._csr_polynomial_expansion import _get_size_of_ITYPE_t
 
 
 @pytest.mark.parametrize("est", (PolynomialFeatures, SplineTransformer))
@@ -1010,3 +1011,7 @@ def test_polynomial_features_behaviour_on_zero_degree():
         if sparse.issparse(output):
             output = output.toarray()
         assert_array_equal(output, np.ones((X.shape[0], 1)))
+
+
+def test_get_size_of_ITYPE_t():
+    assert _get_size_of_ITYPE_t() >= 8

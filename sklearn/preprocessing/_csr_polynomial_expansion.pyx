@@ -28,6 +28,9 @@ cdef extern from *:
     """
     ctypedef long long ITYPE_t
 
+def _get_size_of_ITYPE_t():
+    return sizeof(ITYPE_t)
+
 # TODO: use `cnp.{int,float}{32,64}` when cython#5230 is resolved:
 # https://github.com/cython/cython/issues/5230
 ctypedef fused DATA_t:
