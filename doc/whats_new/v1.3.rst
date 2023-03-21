@@ -361,7 +361,7 @@ Changelog
 
 - |MajorFeature| Introduces :class:`preprocessing.TargetEncoder` which is a
   categorical encoding based on target mean conditioned on the value of the
-  category. :pr:`25334` by `Thomas Fan`_.
+  category. :pr:`25334`, :pr:`25927` by `Thomas Fan`_.
 
 - |Enhancement| Adds a `feature_name_combiner` parameter to
   :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
