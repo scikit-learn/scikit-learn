@@ -1762,6 +1762,17 @@ def test_boolean_series_remains_boolean():
     assert_array_equal(res, expected)
 
 
+def test_pandas_array_returns_ndarray():
+    """Check pandas array works and returns a ndarray.
+
+    Non-regression test for gh-25637.
+    """
+    pd = importorskip("pandas")
+    input_values = [0, 1, 0, 1, 0, 1]
+    result = check_array(pd.array(input_values, dtype="Int64"), ensure_2d=False)
+    assert_array_equal(result, input_values)
+
+
 @pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
 def test_check_array_array_api_has_non_finite(array_namespace):
     """Checks that Array API arrays checks non-finite correctly."""
