@@ -14,8 +14,8 @@ implementation_specific_values = [
     #
     # Note: we use the 64bit types as defined in `sklearn.utils._typedefs`
     #
-    ('', 'DTYPE_t', 'DTYPE'),
-    ('32', 'cnp.float32_t', 'np.float32')
+    ('', 'float64_t', 'np.float64'),
+    ('32', 'float32_t', 'np.float32')
 ]
 
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
@@ -58,8 +58,8 @@ cdef class KDTree{{name_suffix}}(BinaryTree{{name_suffix}}):
 
 cdef int allocate_data{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
-    ITYPE_t n_nodes,
-    ITYPE_t n_features,
+    intp_t n_nodes,
+    intp_t n_features,
 ) except -1:
     """Allocate arrays needed for the KD Tree"""
     tree.node_bounds = np.zeros((2, n_nodes, n_features), dtype={{INPUT_DTYPE}})
@@ -69,19 +69,19 @@ cdef int allocate_data{{name_suffix}}(
 cdef int init_node{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
     NodeData_t[::1] node_data,
-    ITYPE_t i_node,
-    ITYPE_t idx_start,
-    ITYPE_t idx_end,
+    intp_t i_node,
+    intp_t idx_start,
+    intp_t idx_end,
 ) except -1:
     """Initialize the node for the dataset stored in tree.data"""
-    cdef ITYPE_t n_features = tree.data.shape[1]
-    cdef ITYPE_t i, j
-    cdef DTYPE_t rad = 0
+    cdef intp_t n_features = tree.data.shape[1]
+    cdef intp_t i, j
+    cdef float64_t rad = 0
 
     cdef {{INPUT_DTYPE_t}}* lower_bounds = &tree.node_bounds[0, i_node, 0]
     cdef {{INPUT_DTYPE_t}}* upper_bounds = &tree.node_bounds[1, i_node, 0]
     cdef {{INPUT_DTYPE_t}}* data = &tree.data[0, 0]
-    cdef ITYPE_t* idx_array = &tree.idx_array[0]
+    cdef intp_t* idx_array = &tree.idx_array[0]
 
     cdef {{INPUT_DTYPE_t}}* data_row
 
@@ -116,15 +116,15 @@ cdef int init_node{{name_suffix}}(
     return 0
 
 
-cdef DTYPE_t min_rdist{{name_suffix}}(
+cdef float64_t min_rdist{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
-    ITYPE_t i_node,
+    intp_t i_node,
     {{INPUT_DTYPE_t}}* pt,
 ) except -1 nogil:
     """Compute the minimum reduced-distance between a point and a node"""
-    cdef ITYPE_t n_features = tree.data.shape[1]
-    cdef DTYPE_t d, d_lo, d_hi, rdist=0.0
-    cdef ITYPE_t j
+    cdef intp_t n_features = tree.data.shape[1]
+    cdef float64_t d, d_lo, d_hi, rdist=0.0
+    cdef intp_t j
 
     if tree.dist_metric.p == INF:
         for j in range(n_features):
@@ -143,9 +143,9 @@ cdef DTYPE_t min_rdist{{name_suffix}}(
     return rdist
 
 
-cdef DTYPE_t min_dist{{name_suffix}}(
+cdef float64_t min_dist{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
-    ITYPE_t i_node,
+    intp_t i_node,
     {{INPUT_DTYPE_t}}* pt,
 ) except -1:
     """Compute the minimum distance between a point and a node"""
@@ -158,16 +158,16 @@ cdef DTYPE_t min_dist{{name_suffix}}(
         )
 
 
-cdef DTYPE_t max_rdist{{name_suffix}}(
+cdef float64_t max_rdist{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
-    ITYPE_t i_node,
+    intp_t i_node,
     {{INPUT_DTYPE_t}}* pt,
 ) except -1:
     """Compute the maximum reduced-distance between a point and a node"""
-    cdef ITYPE_t n_features = tree.data.shape[1]
+    cdef intp_t n_features = tree.data.shape[1]
 
-    cdef DTYPE_t d_lo, d_hi, rdist=0.0
-    cdef ITYPE_t j
+    cdef float64_t d_lo, d_hi, rdist=0.0
+    cdef intp_t j
 
     if tree.dist_metric.p == INF:
         for j in range(n_features):
@@ -182,9 +182,9 @@ cdef DTYPE_t max_rdist{{name_suffix}}(
     return rdist
 
 
-cdef DTYPE_t max_dist{{name_suffix}}(
+cdef float64_t max_dist{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
-    ITYPE_t i_node,
+    intp_t i_node,
     {{INPUT_DTYPE_t}}* pt,
 ) except -1:
     """Compute the maximum distance between a point and a node"""
@@ -199,16 +199,16 @@ cdef DTYPE_t max_dist{{name_suffix}}(
 
 cdef inline int min_max_dist{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
-    ITYPE_t i_node,
+    intp_t i_node,
     {{INPUT_DTYPE_t}}* pt,
-    DTYPE_t* min_dist,
-    DTYPE_t* max_dist,
+    float64_t* min_dist,
+    float64_t* max_dist,
 ) except -1 nogil:
     """Compute the minimum and maximum distance between a point and a node"""
-    cdef ITYPE_t n_features = tree.data.shape[1]
+    cdef intp_t n_features = tree.data.shape[1]
 
-    cdef DTYPE_t d, d_lo, d_hi
-    cdef ITYPE_t j
+    cdef float64_t d, d_lo, d_hi
+    cdef intp_t j
 
     min_dist[0] = 0.0
     max_dist[0] = 0.0
@@ -237,17 +237,17 @@ cdef inline int min_max_dist{{name_suffix}}(
     return 0
 
 
-cdef inline DTYPE_t min_rdist_dual{{name_suffix}}(
+cdef inline float64_t min_rdist_dual{{name_suffix}}(
     BinaryTree{{name_suffix}} tree1,
-    ITYPE_t i_node1,
+    intp_t i_node1,
     BinaryTree{{name_suffix}} tree2,
-    ITYPE_t i_node2,
+    intp_t i_node2,
 ) except -1:
     """Compute the minimum reduced distance between two nodes"""
-    cdef ITYPE_t n_features = tree1.data.shape[1]
+    cdef intp_t n_features = tree1.data.shape[1]
 
-    cdef DTYPE_t d, d1, d2, rdist=0.0
-    cdef ITYPE_t j
+    cdef float64_t d, d1, d2, rdist=0.0
+    cdef intp_t j
 
     if tree1.dist_metric.p == INF:
         for j in range(n_features):
@@ -272,11 +272,11 @@ cdef inline DTYPE_t min_rdist_dual{{name_suffix}}(
     return rdist
 
 
-cdef inline DTYPE_t min_dist_dual{{name_suffix}}(
+cdef inline float64_t min_dist_dual{{name_suffix}}(
     BinaryTree{{name_suffix}} tree1,
-    ITYPE_t i_node1,
+    intp_t i_node1,
     BinaryTree{{name_suffix}} tree2,
-    ITYPE_t i_node2,
+    intp_t i_node2,
 ) except -1:
     """Compute the minimum distance between two nodes"""
     return tree1.dist_metric._rdist_to_dist(
@@ -284,17 +284,17 @@ cdef inline DTYPE_t min_dist_dual{{name_suffix}}(
     )
 
 
-cdef inline DTYPE_t max_rdist_dual{{name_suffix}}(
+cdef inline float64_t max_rdist_dual{{name_suffix}}(
     BinaryTree{{name_suffix}} tree1,
-    ITYPE_t i_node1,
+    intp_t i_node1,
     BinaryTree{{name_suffix}} tree2,
-    ITYPE_t i_node2,
+    intp_t i_node2,
 ) except -1:
     """Compute the maximum reduced distance between two nodes"""
-    cdef ITYPE_t n_features = tree1.data.shape[1]
+    cdef intp_t n_features = tree1.data.shape[1]
 
-    cdef DTYPE_t d1, d2, rdist=0.0
-    cdef ITYPE_t j
+    cdef float64_t d1, d2, rdist=0.0
+    cdef intp_t j
 
     if tree1.dist_metric.p == INF:
         for j in range(n_features):
@@ -313,11 +313,11 @@ cdef inline DTYPE_t max_rdist_dual{{name_suffix}}(
     return rdist
 
 
-cdef inline DTYPE_t max_dist_dual{{name_suffix}}(
+cdef inline float64_t max_dist_dual{{name_suffix}}(
     BinaryTree{{name_suffix}} tree1,
-    ITYPE_t i_node1,
+    intp_t i_node1,
     BinaryTree{{name_suffix}} tree2,
-    ITYPE_t i_node2,
+    intp_t i_node2,
 ) except -1:
     """Compute the maximum distance between two nodes"""
     return tree1.dist_metric._rdist_to_dist(

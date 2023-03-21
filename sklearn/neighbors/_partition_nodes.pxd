@@ -1,10 +1,10 @@
 from cython cimport floating
-from ..utils._typedefs cimport DTYPE_t, ITYPE_t
+from ..utils._typedefs cimport float64_t, intp_t
 
 cdef int partition_node_indices(
         floating *data,
-        ITYPE_t *node_indices,
-        ITYPE_t split_dim,
-        ITYPE_t split_index,
-        ITYPE_t n_features,
-        ITYPE_t n_points) except -1
+        intp_t *node_indices,
+        intp_t split_dim,
+        intp_t split_index,
+        intp_t n_features,
+        intp_t n_points) except -1
