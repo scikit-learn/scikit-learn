@@ -73,6 +73,7 @@ def _make_unique(X: List[float], y: List[float], sample_weights: List[float]) ->
 
     Assumes that X is ordered, so that all duplicates follow each other.
     """
+    X = np.asarray(X)
     unique_values = len(np.unique(X))
 
     cdef cnp.ndarray[dtype = floating] y_out = np.empty(unique_values,
@@ -88,7 +89,7 @@ def _make_unique(X: List[float], y: List[float], sample_weights: List[float]) ->
     cdef int j
     cdef floating x
     cdef int n_samples = len(X)
-    cdef floating eps = np.finfo(X.dtype).resolution
+    eps = np.finfo(np.asarray(X).dtype).resolution
 
     for j in range(n_samples):
         x = X[j]
