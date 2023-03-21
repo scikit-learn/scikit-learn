@@ -228,9 +228,7 @@ def test_check_solver_option(LR):
 
 
 @pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
-def test_elasticnet_l1_ratio_none_err_helpful(LR):
-    """Test that the error that occurs when l1_ratio=None and penalty='elasticnet' 
-    is helpful, meaning it contains the word 'l1_ratio'."""
+def test_elasticnet_l1_ratio_err_helpful(LR):
     # Check that the error message contains the word 'l1_ratio'.
     with pytest.raises(Exception, match=r".*l1_ratio.*"):
         # Perform a simple LogisticRegression to trigger the error.
