@@ -17,7 +17,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import as_float_array, check_array, check_X_y, safe_sqr, safe_mask
 from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ._base import SelectorMixin
 
 
@@ -117,6 +117,12 @@ def f_oneway(*args):
     return f, prob
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+    }
+)
 def f_classif(X, y):
     """Compute the ANOVA F-value for the provided sample.
 
@@ -127,7 +133,7 @@ def f_classif(X, y):
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The set of regressors that will be tested sequentially.
 
-    y : ndarray of shape (n_samples,)
+    y : array-like of shape (n_samples,)
         The target vector.
 
     Returns
@@ -167,6 +173,12 @@ def _chisquare(f_obs, f_exp):
     return chisq, special.chdtrc(k - 1, chisq)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+    }
+)
 def chi2(X, y):
     """Compute chi-squared stats between each non-negative feature and class.
 
@@ -239,6 +251,14 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+        "center": ["boolean"],
+        "force_finite": ["boolean"],
+    }
+)
 def r_regression(X, y, *, center=True, force_finite=True):
     """Compute Pearson's r for each features and the target.
 
@@ -322,6 +342,14 @@ def r_regression(X, y, *, center=True, force_finite=True):
     return correlation_coefficient
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+        "center": ["boolean"],
+        "force_finite": ["boolean"],
+    }
+)
 def f_regression(X, y, *, center=True, force_finite=True):
     """Univariate linear regression tests returning F-statistic and p-values.
 

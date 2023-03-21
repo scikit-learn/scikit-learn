@@ -1,41 +1,32 @@
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 
 import numpy as np
-cimport numpy as cnp
 cimport cython
-
-cnp.import_array()
 
 from ..metrics._dist_metrics cimport DistanceMetric
 from ..utils._fast_dict cimport IntFloatDict
+from ..utils._typedefs cimport float64_t, intp_t, bool_t
 
 # C++
 from cython.operator cimport dereference as deref, preincrement as inc
 from libcpp.map cimport map as cpp_map
-from libc.math cimport fmax
+from libc.math cimport fmax, INFINITY
 
-DTYPE = np.float64
-ctypedef cnp.float64_t DTYPE_t
-
-ITYPE = np.intp
-ctypedef cnp.intp_t ITYPE_t
-
-from numpy.math cimport INFINITY
 
 ###############################################################################
 # Utilities for computing the ward momentum
 
 def compute_ward_dist(
-    const cnp.float64_t[::1] m_1,
-    const cnp.float64_t[:, ::1] m_2,
-    const cnp.intp_t[::1] coord_row,
-    const cnp.intp_t[::1] coord_col,
-    cnp.float64_t[::1] res
+    const float64_t[::1] m_1,
+    const float64_t[:, ::1] m_2,
+    const intp_t[::1] coord_row,
+    const intp_t[::1] coord_col,
+    float64_t[::1] res
 ):
-    cdef cnp.intp_t size_max = coord_row.shape[0]
-    cdef cnp.intp_t n_features = m_2.shape[1]
-    cdef cnp.intp_t i, j, row, col
-    cdef cnp.float64_t pa, n
+    cdef intp_t size_max = coord_row.shape[0]
+    cdef intp_t n_features = m_2.shape[1]
+    cdef intp_t i, j, row, col
+    cdef float64_t pa, n
 
     for i in range(size_max):
         row = coord_row[i]
@@ -50,7 +41,7 @@ def compute_ward_dist(
 ###############################################################################
 # Utilities for cutting and exploring a hierarchical tree
 
-def _hc_get_descendent(cnp.intp_t node, children, cnp.intp_t n_leaves):
+def _hc_get_descendent(intp_t node, children, intp_t n_leaves):
     """
     Function returning all the descendent leaves of a set of nodes in the tree.
 
@@ -79,7 +70,7 @@ def _hc_get_descendent(cnp.intp_t node, children, cnp.intp_t n_leaves):
     # It is actually faster to do the accounting of the number of
     # elements is the list ourselves: len is a lengthy operation on a
     # chained list
-    cdef cnp.intp_t i, n_indices = 1
+    cdef intp_t i, n_indices = 1
 
     while n_indices:
         i = ind.pop()
@@ -92,7 +83,7 @@ def _hc_get_descendent(cnp.intp_t node, children, cnp.intp_t n_leaves):
     return descendent
 
 
-def hc_get_heads(cnp.intp_t[:] parents, copy=True):
+def hc_get_heads(intp_t[:] parents, copy=True):
     """Returns the heads of the forest, as defined by parents.
 
     Parameters
@@ -108,7 +99,7 @@ def hc_get_heads(cnp.intp_t[:] parents, copy=True):
         The indices in the 'parents' of the tree heads
 
     """
-    cdef cnp.intp_t parent, node0, node, size
+    cdef intp_t parent, node0, node, size
     if copy:
         parents = np.copy(parents)
     size = parents.size
@@ -127,8 +118,8 @@ def hc_get_heads(cnp.intp_t[:] parents, copy=True):
 def _get_parents(
     nodes,
     heads,
-    const cnp.intp_t[:] parents,
-    cnp.int8_t[::1] not_visited
+    const intp_t[:] parents,
+    bool_t[::1] not_visited
 ):
     """Returns the heads of the given nodes, as defined by parents.
 
@@ -146,7 +137,7 @@ def _get_parents(
         The tree nodes to consider (modified inplace)
 
     """
-    cdef cnp.intp_t parent, node
+    cdef intp_t parent, node
 
     for node in nodes:
         parent = parents[node]
@@ -169,9 +160,9 @@ def _get_parents(
 def max_merge(
     IntFloatDict a,
     IntFloatDict b,
-    const cnp.intp_t[:] mask,
-    cnp.intp_t n_a,
-    cnp.intp_t n_b
+    const intp_t[:] mask,
+    intp_t n_a,
+    intp_t n_b
 ):
     """Merge two IntFloatDicts with the max strategy: when the same key is
     present in the two dicts, the max of the two values is used.
@@ -193,10 +184,10 @@ def max_merge(
         The IntFloatDict resulting from the merge
     """
     cdef IntFloatDict out_obj = IntFloatDict.__new__(IntFloatDict)
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_it = a.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_end = a.my_map.end()
-    cdef ITYPE_t key
-    cdef DTYPE_t value
+    cdef cpp_map[intp_t, float64_t].iterator a_it = a.my_map.begin()
+    cdef cpp_map[intp_t, float64_t].iterator a_end = a.my_map.end()
+    cdef intp_t key
+    cdef float64_t value
     # First copy a into out
     while a_it != a_end:
         key = deref(a_it).first
@@ -205,10 +196,10 @@ def max_merge(
         inc(a_it)
 
     # Then merge b into out
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_it = out_obj.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_end = out_obj.my_map.end()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_it = b.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_end = b.my_map.end()
+    cdef cpp_map[intp_t, float64_t].iterator out_it = out_obj.my_map.begin()
+    cdef cpp_map[intp_t, float64_t].iterator out_end = out_obj.my_map.end()
+    cdef cpp_map[intp_t, float64_t].iterator b_it = b.my_map.begin()
+    cdef cpp_map[intp_t, float64_t].iterator b_end = b.my_map.end()
     while b_it != b_end:
         key = deref(b_it).first
         value = deref(b_it).second
@@ -226,9 +217,9 @@ def max_merge(
 def average_merge(
     IntFloatDict a,
     IntFloatDict b,
-    const cnp.intp_t[:] mask,
-    cnp.intp_t n_a,
-    cnp.intp_t n_b
+    const intp_t[:] mask,
+    intp_t n_a,
+    intp_t n_b
 ):
     """Merge two IntFloatDicts with the average strategy: when the
     same key is present in the two dicts, the weighted average of the two
@@ -251,11 +242,11 @@ def average_merge(
         The IntFloatDict resulting from the merge
     """
     cdef IntFloatDict out_obj = IntFloatDict.__new__(IntFloatDict)
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_it = a.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_end = a.my_map.end()
-    cdef ITYPE_t key
-    cdef DTYPE_t value
-    cdef DTYPE_t n_out = <DTYPE_t> (n_a + n_b)
+    cdef cpp_map[intp_t, float64_t].iterator a_it = a.my_map.begin()
+    cdef cpp_map[intp_t, float64_t].iterator a_end = a.my_map.end()
+    cdef intp_t key
+    cdef float64_t value
+    cdef float64_t n_out = <float64_t> (n_a + n_b)
     # First copy a into out
     while a_it != a_end:
         key = deref(a_it).first
@@ -264,10 +255,10 @@ def average_merge(
         inc(a_it)
 
     # Then merge b into out
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_it = out_obj.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_end = out_obj.my_map.end()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_it = b.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_end = b.my_map.end()
+    cdef cpp_map[intp_t, float64_t].iterator out_it = out_obj.my_map.begin()
+    cdef cpp_map[intp_t, float64_t].iterator out_end = out_obj.my_map.end()
+    cdef cpp_map[intp_t, float64_t].iterator b_it = b.my_map.begin()
+    cdef cpp_map[intp_t, float64_t].iterator b_end = b.my_map.end()
     while b_it != b_end:
         key = deref(b_it).first
         value = deref(b_it).second
@@ -287,11 +278,11 @@ def average_merge(
 # An edge object for fast comparisons
 
 cdef class WeightedEdge:
-    cdef public ITYPE_t a
-    cdef public ITYPE_t b
-    cdef public DTYPE_t weight
+    cdef public intp_t a
+    cdef public intp_t b
+    cdef public float64_t weight
 
-    def __init__(self, DTYPE_t weight, ITYPE_t a, ITYPE_t b):
+    def __init__(self, float64_t weight, intp_t a, intp_t b):
         self.weight = weight
         self.a = a
         self.b = b
@@ -331,17 +322,17 @@ cdef class WeightedEdge:
 
 cdef class UnionFind(object):
 
-    cdef ITYPE_t next_label
-    cdef ITYPE_t[:] parent
-    cdef ITYPE_t[:] size
+    cdef intp_t next_label
+    cdef intp_t[:] parent
+    cdef intp_t[:] size
 
     def __init__(self, N):
-        self.parent = np.full(2 * N - 1, -1., dtype=ITYPE, order='C')
+        self.parent = np.full(2 * N - 1, -1., dtype=np.intp, order='C')
         self.next_label = N
-        self.size = np.hstack((np.ones(N, dtype=ITYPE),
-                               np.zeros(N - 1, dtype=ITYPE)))
+        self.size = np.hstack((np.ones(N, dtype=np.intp),
+                               np.zeros(N - 1, dtype=np.intp)))
 
-    cdef void union(self, ITYPE_t m, ITYPE_t n):
+    cdef void union(self, intp_t m, intp_t n):
         self.parent[m] = self.next_label
         self.parent[n] = self.next_label
         self.size[self.next_label] = self.size[m] + self.size[n]
@@ -350,8 +341,8 @@ cdef class UnionFind(object):
         return
 
     @cython.wraparound(True)
-    cdef ITYPE_t fast_find(self, ITYPE_t n):
-        cdef ITYPE_t p
+    cdef intp_t fast_find(self, intp_t n):
+        cdef intp_t p
         p = n
         # find the highest node in the linkage graph so far
         while self.parent[n] != -1:
@@ -362,7 +353,7 @@ cdef class UnionFind(object):
         return n
 
 
-def _single_linkage_label(const cnp.float64_t[:, :] L):
+def _single_linkage_label(const float64_t[:, :] L):
     """
     Convert an linkage array or MST to a tree by labelling clusters at merges.
     This is done by using a Union find structure to keep track of merges
@@ -382,18 +373,18 @@ def _single_linkage_label(const cnp.float64_t[:, :] L):
     A tree in the format used by scipy.cluster.hierarchy.
     """
 
-    cdef DTYPE_t[:, ::1] result_arr
+    cdef float64_t[:, ::1] result_arr
 
-    cdef ITYPE_t left, left_cluster, right, right_cluster, index
-    cdef DTYPE_t delta
+    cdef intp_t left, left_cluster, right, right_cluster, index
+    cdef float64_t delta
 
-    result_arr = np.zeros((L.shape[0], 4), dtype=DTYPE)
+    result_arr = np.zeros((L.shape[0], 4), dtype=np.float64)
     U = UnionFind(L.shape[0] + 1)
 
     for index in range(L.shape[0]):
 
-        left = <ITYPE_t> L[index, 0]
-        right = <ITYPE_t> L[index, 1]
+        left = <intp_t> L[index, 0]
+        right = <intp_t> L[index, 1]
         delta = L[index, 2]
 
         left_cluster = U.fast_find(left)
@@ -440,7 +431,7 @@ def single_linkage_label(L):
 
 # Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
 def mst_linkage_core(
-        const DTYPE_t [:, ::1] raw_data,
+        const float64_t [:, ::1] raw_data,
         DistanceMetric dist_metric):
     """
     Compute the necessary elements of a minimum spanning
@@ -473,21 +464,21 @@ def mst_linkage_core(
         MST-LINKAGE-CORE for more details.
     """
     cdef:
-        ITYPE_t n_samples = raw_data.shape[0]
-        cnp.int8_t[:] in_tree = np.zeros(n_samples, dtype=np.int8)
-        DTYPE_t[:, ::1] result = np.zeros((n_samples - 1, 3))
+        intp_t n_samples = raw_data.shape[0]
+        bool_t[:] in_tree = np.zeros(n_samples, dtype=bool)
+        float64_t[:, ::1] result = np.zeros((n_samples - 1, 3))
 
-        ITYPE_t current_node = 0
-        ITYPE_t new_node
-        ITYPE_t i
-        ITYPE_t j
-        ITYPE_t num_features = raw_data.shape[1]
+        intp_t current_node = 0
+        intp_t new_node
+        intp_t i
+        intp_t j
+        intp_t num_features = raw_data.shape[1]
 
-        DTYPE_t right_value
-        DTYPE_t left_value
-        DTYPE_t new_distance
+        float64_t right_value
+        float64_t left_value
+        float64_t new_distance
 
-        DTYPE_t[:] current_distances = np.full(n_samples, INFINITY)
+        float64_t[:] current_distances = np.full(n_samples, INFINITY)
 
     for i in range(n_samples - 1):
 

@@ -2425,3 +2425,25 @@ def test_tree_deserialization_from_read_only_buffer(tmpdir):
         clf.tree_,
         "The trees of the original and loaded classifiers are not equal.",
     )
+
+
+@pytest.mark.parametrize("Tree", ALL_TREES.values())
+def test_min_sample_split_1_error(Tree):
+    """Check that an error is raised when min_sample_split=1.
+
+    non-regression test for issue gh-25481.
+    """
+    X = np.array([[0, 0], [1, 1]])
+    y = np.array([0, 1])
+
+    # min_samples_split=1.0 is valid
+    Tree(min_samples_split=1.0).fit(X, y)
+
+    # min_samples_split=1 is invalid
+    tree = Tree(min_samples_split=1)
+    msg = (
+        r"'min_samples_split' .* must be an int in the range \[2, inf\) "
+        r"or a float in the range \(0.0, 1.0\]"
+    )
+    with pytest.raises(ValueError, match=msg):
+        tree.fit(X, y)
