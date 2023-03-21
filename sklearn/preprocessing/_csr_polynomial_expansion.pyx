@@ -37,15 +37,15 @@ ctypedef fused DATA_t:
     float
     double
     int
-    long
+    long long
 # INDEX_{A,B}_t are defined to generate a proper Cartesian product
 # of types through Cython fused-type expansion.
 ctypedef fused INDEX_A_t:
     signed int
-    signed long
+    signed long long
 ctypedef fused INDEX_B_t:
     signed int
-    signed long
+    signed long long
 
 cdef inline cnp.int64_t _deg2_column(
     ITYPE_t n_features,
@@ -126,6 +126,7 @@ cpdef cnp.int64_t _calc_expanded_nnz(
         if sizeof(ITYPE_t) < 16 and n <= MAX_SAFE_INDEX_CALC_DEG3:
             return n * (n**2 + 3 * n + 2) / 6 - interaction_only * n**2
         return <cnp.int64_t> py_calc_expanded_nnz_deg3(n, interaction_only)
+
 cpdef cnp.int64_t _calc_total_nnz(
     INDEX_A_t[:] indptr,
     FLAG_t interaction_only,
