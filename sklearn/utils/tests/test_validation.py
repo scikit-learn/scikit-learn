@@ -1777,7 +1777,7 @@ def test_pandas_array_returns_ndarray(input_values):
         allow_nd=False,
         force_all_finite=False,
     )
-    assert result.dtype.kind == "f"
+    assert np.issubdtype(result.dtype.kind, np.floating)
     assert_allclose(result, input_values)
 
 
