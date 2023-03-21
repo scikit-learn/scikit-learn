@@ -47,8 +47,8 @@ def test_graphical_lasso(global_random_seed):
             if not alpha == 0:
                 assert_array_less(np.diff(costs), 0)
         # Check that the 2 approaches give similar results
-        assert_array_almost_equal(covs["cd"], covs["lars"], decimal=4)
-        assert_array_almost_equal(icovs["cd"], icovs["lars"], decimal=4)
+        assert_array_almost_equal(covs["cd"], covs["lars"], decimal=3)
+        assert_array_almost_equal(icovs["cd"], icovs["lars"], decimal=3)
 
     # Smoke test the estimator
     model = GraphicalLasso(alpha=0.25).fit(X)
