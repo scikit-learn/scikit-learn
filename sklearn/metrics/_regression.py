@@ -487,6 +487,15 @@ def mean_squared_error(
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+        "squared": ["boolean"],
+    }
+)
 def mean_squared_log_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared=True
 ):
@@ -1186,6 +1195,13 @@ def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=1)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Gamma deviance regression loss.
 

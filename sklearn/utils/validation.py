@@ -626,6 +626,15 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
     return False
 
 
+def _is_extension_array_dtype(array):
+    try:
+        from pandas.api.types import is_extension_array_dtype
+
+        return is_extension_array_dtype(array)
+    except ImportError:
+        return False
+
+
 def check_array(
     array,
     accept_sparse=False,
@@ -780,7 +789,9 @@ def check_array(
             # Force object if any of the dtypes is an object
             dtype_orig = object
 
-    elif hasattr(array, "iloc") and hasattr(array, "dtype"):
+    elif (_is_extension_array_dtype(array) or hasattr(array, "iloc")) and hasattr(
+        array, "dtype"
+    ):
         # array is a pandas series
         pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
         if isinstance(array.dtype, np.dtype):

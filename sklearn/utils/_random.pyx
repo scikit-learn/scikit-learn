@@ -78,7 +78,7 @@ cpdef _sample_without_replacement_with_tracking_selection(
 
     cdef cnp.int_t i
     cdef cnp.int_t j
-    cdef cnp.ndarray[cnp.int_t, ndim=1] out = np.empty((n_samples, ), dtype=int)
+    cdef cnp.int_t[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -94,7 +94,7 @@ cpdef _sample_without_replacement_with_tracking_selection(
         selected.add(j)
         out[i] = j
 
-    return out
+    return np.asarray(out)
 
 
 cpdef _sample_without_replacement_with_pool(cnp.int_t n_population,
@@ -133,9 +133,9 @@ cpdef _sample_without_replacement_with_pool(cnp.int_t n_population,
 
     cdef cnp.int_t i
     cdef cnp.int_t j
-    cdef cnp.ndarray[cnp.int_t, ndim=1] out = np.empty((n_samples, ), dtype=int)
+    cdef cnp.int_t[::1] out = np.empty((n_samples, ), dtype=int)
 
-    cdef cnp.ndarray[cnp.int_t, ndim=1] pool = np.empty((n_population, ),
+    cdef cnp.int_t[::1] pool = np.empty((n_population, ),
                                                       dtype=int)
 
     rng = check_random_state(random_state)
@@ -153,7 +153,7 @@ cpdef _sample_without_replacement_with_pool(cnp.int_t n_population,
         pool[j] = pool[n_population - i - 1]  # move non-selected item into
                                               # vacancy
 
-    return out
+    return np.asarray(out)
 
 
 cpdef _sample_without_replacement_with_reservoir_sampling(
@@ -195,7 +195,7 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
 
     cdef cnp.int_t i
     cdef cnp.int_t j
-    cdef cnp.ndarray[cnp.int_t, ndim=1] out = np.empty((n_samples, ), dtype=int)
+    cdef cnp.int_t[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -212,7 +212,7 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
         if j < n_samples:
             out[j] = i
 
-    return out
+    return np.asarray(out)
 
 
 cpdef sample_without_replacement(cnp.int_t n_population,

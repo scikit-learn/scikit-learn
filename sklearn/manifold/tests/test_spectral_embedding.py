@@ -336,7 +336,7 @@ def test_pipeline_spectral_clustering(seed=36):
         random_state=random_state,
     )
     for se in [se_rbf, se_knn]:
-        km = KMeans(n_clusters=n_clusters, random_state=random_state, n_init="auto")
+        km = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
         km.fit(se.fit_transform(S))
         assert_array_almost_equal(
             normalized_mutual_info_score(km.labels_, true_labels), 1.0, 2
