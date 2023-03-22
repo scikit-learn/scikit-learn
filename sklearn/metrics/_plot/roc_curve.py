@@ -518,6 +518,8 @@ class RocCurveDisplay:
                 f"the number of ROC curves to be plotted. Got {len(fold_name)} names "
                 f"instead of {len(cv_results['estimator'])}."
             )
+        else:
+            fold_name_ = fold_name
 
         displays = []
         for fold_id, (estimator, test_indices, name) in enumerate(

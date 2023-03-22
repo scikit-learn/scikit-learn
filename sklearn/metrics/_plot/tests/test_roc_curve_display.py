@@ -357,7 +357,7 @@ def test_from_cv_results_wrong_length_fold_line_kw(pyplot, data_binary):
         )
 
 
-def test_from_cv_results_xxx(pyplot, data_binary):
+def test_from_cv_results_default(pyplot, data_binary):
     """Check default behaviour of `RocCurveDisplay.from_cv_results`."""
     X, y = data_binary
     model = make_pipeline(StandardScaler(), LogisticRegression())
@@ -428,3 +428,39 @@ def test_from_cv_results_attributes(pyplot, data_binary):
     assert all(isinstance(line, mpl.lines.Line2D) for line in display.fold_lines_)
     assert isinstance(display.mean_line_, mpl.lines.Line2D)
     assert isinstance(display.std_area_, mpl.collections.PolyCollection)
+
+
+def test_from_cv_results_names(pyplot, data_binary):
+    """Check that passing names for each ROC curves is behaving as expected."""
+    X, y = data_binary
+    model = make_pipeline(StandardScaler(), LogisticRegression())
+    n_folds = 3
+
+    cv_results = cross_validate(
+        model, X, y, cv=n_folds, return_estimator=True, return_indices=True
+    )
+    fold_name = [f"From CV #{i}" for i in range(n_folds)]
+    aggregate_name = "Mean from CV"
+    display = RocCurveDisplay.from_cv_results(
+        cv_results,
+        X,
+        y,
+        kind="both",
+        fold_name=fold_name,
+        aggregate_name=aggregate_name,
+    )
+
+    legend = display.ax_.get_legend()
+    for i in range(n_folds):
+        assert fold_name[i] in legend.get_texts()[i].get_text()
+    assert aggregate_name in legend.get_texts()[n_folds].get_text()
+
+    # passing name in `plot` should override the name passed in `from_cv_results`
+    fold_name = [f"From plot #{i}" for i in range(n_folds)]
+    aggregate_name = "Mean from plot"
+    display.plot(kind="both", fold_name=fold_name, aggregate_name=aggregate_name)
+
+    legend = display.ax_.get_legend()
+    for i in range(n_folds):
+        assert fold_name[i] in legend.get_texts()[i].get_text()
+    assert aggregate_name in legend.get_texts()[n_folds].get_text()
