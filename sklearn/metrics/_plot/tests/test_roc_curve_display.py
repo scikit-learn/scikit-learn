@@ -12,7 +12,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
 from sklearn.metrics import auc
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_validate, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
@@ -171,8 +171,13 @@ def test_roc_curve_display_default_labels(
     """Check the default labels used in the display."""
     fpr = np.array([0, 0.5, 1])
     tpr = np.array([0, 0.5, 1])
+    thresholds = np.array([-1, 0, 1])
     disp = RocCurveDisplay(
-        fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=estimator_name
+        fpr=fpr,
+        tpr=tpr,
+        thresholds=thresholds,
+        roc_auc=roc_auc,
+        estimator_name=estimator_name,
     ).plot()
     assert disp.line_.get_label() == expected_label
 
@@ -249,3 +254,12 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)
     assert np.trapz(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+
+
+def test_from_cv_results(pyplot, data_binary):
+    X, y = data_binary
+    model = make_pipeline(StandardScaler(), LogisticRegression())
+    cv_results = cross_validate(
+        model, X, y, cv=5, return_estimator=True, return_indices=True
+    )
+    RocCurveDisplay.from_cv_results(cv_results, X, y)

@@ -4,7 +4,9 @@ from .. import auc
 from .. import roc_curve
 from .._base import _check_pos_label_consistency
 
-from ...utils import check_matplotlib_support
+from ...base import is_classifier
+from ...utils import check_matplotlib_support, _safe_indexing
+from ...utils.validation import _num_samples
 
 
 class RocCurveDisplay:
@@ -25,6 +27,11 @@ class RocCurveDisplay:
 
     tpr : ndarray
         True positive rate.
+
+    threshold : ndarray
+        Decision function threshold associated to each fpr and tpr.
+
+        .. versionadded:: 1.3
 
     roc_auc : float, default=None
         Area under ROC curve. If None, the roc_auc score is not shown.
@@ -68,17 +75,21 @@ class RocCurveDisplay:
     >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
     >>> roc_auc = metrics.auc(fpr, tpr)
-    >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,
+    >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, thresholds=thresholds,
+    ...                                   roc_auc=roc_auc,
     ...                                   estimator_name='example estimator')
     >>> display.plot()
     <...>
     >>> plt.show()
     """
 
-    def __init__(self, *, fpr, tpr, roc_auc=None, estimator_name=None, pos_label=None):
+    def __init__(
+        self, *, fpr, tpr, thresholds, roc_auc=None, estimator_name=None, pos_label=None
+    ):
         self.estimator_name = estimator_name
         self.fpr = fpr
         self.tpr = tpr
+        self.thresholds = thresholds
         self.roc_auc = roc_auc
         self.pos_label = pos_label
 
@@ -249,6 +260,41 @@ class RocCurveDisplay:
             **kwargs,
         )
 
+    @staticmethod
+    def _create_display_from_predictions(
+        *,
+        y_true,
+        y_pred,
+        pos_label,
+        sample_weight,
+        drop_intermediate,
+        name,
+    ):
+        """Private function that create the display given the predictions.
+        No plotting is intended here.
+        """
+        fpr, tpr, thresholds = roc_curve(
+            y_true,
+            y_pred,
+            pos_label=pos_label,
+            sample_weight=sample_weight,
+            drop_intermediate=drop_intermediate,
+        )
+        roc_auc = auc(fpr, tpr)
+
+        name = "Classifier" if name is None else name
+        pos_label = _check_pos_label_consistency(pos_label, y_true)
+
+        viz = RocCurveDisplay(
+            fpr=fpr,
+            tpr=tpr,
+            thresholds=thresholds,
+            roc_auc=roc_auc,
+            estimator_name=name,
+            pos_label=pos_label,
+        )
+        return viz
+
     @classmethod
     def from_predictions(
         cls,
@@ -333,20 +379,103 @@ class RocCurveDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
 
-        fpr, tpr, _ = roc_curve(
-            y_true,
-            y_pred,
+        return cls._create_display_from_predictions(
+            y_true=y_true,
+            y_pred=y_pred,
             pos_label=pos_label,
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
+            name=name,
+        ).plot(ax=ax, name=name, **kwargs)
+
+    @classmethod
+    def from_cv_results(
+        cls,
+        cv_results,
+        X,
+        y,
+        *,
+        sample_weight=None,
+        drop_intermediate=True,
+        response_method="auto",
+        pos_label=None,
+        name=None,
+        ax=None,
+        **kwargs,
+    ):
+        check_matplotlib_support(f"{cls.__name__}.from_cv_results")
+
+        required_keys = {"estimator", "indices"}
+        if not all(key in cv_results for key in required_keys):
+            raise ValueError(
+                "cv_results does not contain one of the following required keys: "
+                f"{required_keys}. Set explicitly the parameters return_estimator=True "
+                "and return_indices=True to the function cross_validate."
+            )
+
+        train_size, test_size = (
+            len(cv_results["indices"]["train"][0]),
+            len(cv_results["indices"]["test"][0]),
         )
-        roc_auc = auc(fpr, tpr)
 
-        name = "Classifier" if name is None else name
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
+        if _num_samples(X) != train_size + test_size:
+            raise ValueError(
+                "X does not contain the correct number of samples. "
+                f"Expected {train_size + test_size}, got {_num_samples(X)}."
+            )
 
-        viz = RocCurveDisplay(
-            fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=name, pos_label=pos_label
-        )
+        # TODO: it should be remove once #23073 is merged since we delegate this check
+        # to `_get_response_values_binary`.
+        if not all(is_classifier(estimator) for estimator in cv_results["estimator"]):
+            raise ValueError(
+                "The estimators in cv_results['estimator'] must be fitted classifiers."
+            )
 
+        displays = []
+        for estimator, test_indices in zip(
+            cv_results["estimator"], cv_results["indices"]["test"]
+        ):
+            y_true = _safe_indexing(y, test_indices)
+            y_pred = _get_response(
+                _safe_indexing(X, test_indices),
+                estimator,
+                response_method=response_method,
+                pos_label=pos_label,
+            )[0]
+
+            name = estimator.__class__.__name__ if name is None else name
+            displays.append(
+                cls._create_display_from_predictions(
+                    y_true=y_true,
+                    y_pred=y_pred,
+                    sample_weight=sample_weight,
+                    drop_intermediate=drop_intermediate,
+                    pos_label=pos_label,
+                    name=name,
+                )
+            )
+
+        viz = MultiRocCurveDisplay(displays=displays)
         return viz.plot(ax=ax, name=name, **kwargs)
+
+
+class MultiRocCurveDisplay:
+    """Multiple ROC curves visualization."""
+
+    def __init__(self, *, displays):
+        self.displays = displays
+
+    def plot(self, ax=None, name=None, **kwargs):
+        check_matplotlib_support(f"{self.__class__.__name__}.plot")
+
+        import matplotlib.pyplot as plt
+
+        if ax is None:
+            _, ax = plt.subplots()
+
+        for display in self.displays:
+            display.plot(ax=ax, name=name, **kwargs)
+
+        self.ax_ = ax
+        self.figure_ = ax.figure
+        return self
