@@ -505,6 +505,12 @@ def configure_extension_modules():
 
             gen_from_templates(tempita_sources)
 
+            # Do not progress if we only have a tempita file which we don't
+            # want to include like the .pxi.tp extension. In such a case
+            # sources would be empty.
+            if len(sources) == 0:
+                continue
+
             # By convention, our extensions always use the name of the first source
             source_name = os.path.splitext(os.path.basename(sources[0]))[0]
             if submodule:
