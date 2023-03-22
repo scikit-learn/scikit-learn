@@ -2036,7 +2036,7 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # We further test a case where memmapping would have been used if
     # SGDClassifier.fit was called from a loky or multiprocessing backend. In
     # this specific case, in-place modification of clf.coef_ would have caused
-    # a segmentation fault when trying to write in a readonly memory mapped
+    # a segmentation fault when trying to write in a read-only memory mapped
     # buffer.
 
     random_state = np.random.RandomState(42)

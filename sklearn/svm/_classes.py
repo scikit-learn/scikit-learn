@@ -106,7 +106,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         Weights assigned to the features (coefficients in the primal
         problem).
 
-        ``coef_`` is a readonly property derived from ``raw_coef_`` that
+        ``coef_`` is a read-only property derived from ``raw_coef_`` that
         follows the internal memory layout of liblinear.
 
     intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
@@ -386,7 +386,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         Weights assigned to the features (coefficients in the primal
         problem).
 
-        `coef_` is a readonly property derived from `raw_coef_` that
+        `coef_` is a read-only property derived from `raw_coef_` that
         follows the internal memory layout of liblinear.
 
     intercept_ : ndarray of shape (1) if n_classes == 2 else (n_classes)
@@ -682,7 +682,7 @@ class SVC(BaseSVC):
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
-        `coef_` is a readonly property derived from `dual_coef_` and
+        `coef_` is a read-only property derived from `dual_coef_` and
         `support_vectors_`.
 
     dual_coef_ : ndarray of shape (n_classes -1, n_SV)
@@ -944,7 +944,7 @@ class NuSVC(BaseSVC):
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
-        `coef_` is readonly property derived from `dual_coef_` and
+        `coef_` is a read-only property derived from `dual_coef_` and
         `support_vectors_`.
 
     dual_coef_ : ndarray of shape (n_classes - 1, n_SV)
@@ -1185,7 +1185,7 @@ class SVR(RegressorMixin, BaseLibSVM):
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
-        `coef_` is readonly property derived from `dual_coef_` and
+        `coef_` is a read-only property derived from `dual_coef_` and
         `support_vectors_`.
 
     dual_coef_ : ndarray of shape (1, n_SV)
@@ -1394,7 +1394,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
-        `coef_` is readonly property derived from `dual_coef_` and
+        `coef_` is a read-only property derived from `dual_coef_` and
         `support_vectors_`.
 
     dual_coef_ : ndarray of shape (1, n_SV)
@@ -1599,7 +1599,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
-        `coef_` is readonly property derived from `dual_coef_` and
+        `coef_` is a read-only property derived from `dual_coef_` and
         `support_vectors_`.
 
     dual_coef_ : ndarray of shape (1, n_SV)

@@ -1762,7 +1762,7 @@ def test_base_estimator_property_deprecated(name):
 
 
 def test_read_only_buffer(monkeypatch):
-    """RandomForestClassifier must work on readonly sparse data.
+    """RandomForestClassifier must work on read-only sparse data.
 
     Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/25333
     """

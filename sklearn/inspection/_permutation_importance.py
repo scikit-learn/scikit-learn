@@ -35,7 +35,7 @@ def _calculate_permutation_scores(
     # Work on a copy of X to ensure thread-safety in case of threading based
     # parallelism. Furthermore, making a copy is also useful when the joblib
     # backend is 'loky' (default) or the old 'multiprocessing': in those cases,
-    # if X is large it will be automatically be backed by a readonly memory map
+    # if X is large it will automatically be backed by a read-only memory map
     # (memmap). X.copy() on the other hand is always guaranteed to return a
     # writable data-structure whose columns can be shuffled inplace.
     if max_samples < X.shape[0]:

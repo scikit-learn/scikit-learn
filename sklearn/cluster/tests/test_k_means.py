@@ -1271,7 +1271,7 @@ def test_predict_does_not_change_cluster_centers(is_sparse):
 
     kmeans = KMeans()
     y_pred1 = kmeans.fit_predict(X)
-    # Make cluster_centers readonly
+    # Make cluster_centers read-only
     kmeans.cluster_centers_ = create_memmap_backed_data(kmeans.cluster_centers_)
     kmeans.labels_ = create_memmap_backed_data(kmeans.labels_)
 

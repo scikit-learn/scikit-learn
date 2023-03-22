@@ -61,8 +61,8 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import zero_one_loss
 from sklearn.utils import check_array
 
-# Memoize the data extraction and memory map the resulting
-# train / test splits in readonly mode
+# Memorize the data extraction and memory map the resulting
+# train / test splits in read-only mode.
 memory = Memory(
     os.path.join(get_data_home(), "covertype_benchmark_data"), mmap_mode="r"
 )

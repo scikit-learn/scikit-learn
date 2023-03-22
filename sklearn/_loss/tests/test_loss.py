@@ -272,12 +272,12 @@ def test_loss_on_specific_values(loss, y_true, raw_prediction, loss_true):
 def test_loss_dtype(
     loss, readonly_memmap, dtype_in, dtype_out, sample_weight, out1, out2, n_threads
 ):
-    """Test acceptance of dtypes, readonly and writeable arrays in loss functions.
+    """Test acceptance of dtypes, read-only and writeable arrays in loss functions.
 
     Check that loss accepts if all input arrays are either all float32 or all
     float64, and all output arrays are either all float32 or all float64.
 
-    Also check that input arrays can be readonly, e.g. memory mapped.
+    Also check that input arrays can be read-only, e.g., memory mapped.
     """
     loss = loss()
     # generate a y_true and raw_prediction in valid range

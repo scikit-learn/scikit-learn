@@ -51,8 +51,8 @@ from sklearn.utils import check_array
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 
-# Memoize the data extraction and memory map the resulting
-# train / test splits in readonly mode
+# Memorize the data extraction and memory map the resulting
+# train / test splits in read-only mode.
 memory = Memory(os.path.join(get_data_home(), "mnist_benchmark_data"), mmap_mode="r")
 
 

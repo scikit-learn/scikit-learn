@@ -398,7 +398,7 @@ def test_readonly_kwargs():
     weights.setflags(write=False)
     VI.setflags(write=False)
 
-    # Those distances metrics have to support readonly buffers.
+    # Those distance metrics have to support read-only buffers.
     DistanceMetric.get_metric("seuclidean", V=weights)
     DistanceMetric.get_metric("wminkowski", p=1, w=weights)
     DistanceMetric.get_metric("mahalanobis", VI=VI)
