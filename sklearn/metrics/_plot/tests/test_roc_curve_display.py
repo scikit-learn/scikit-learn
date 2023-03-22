@@ -318,6 +318,44 @@ def test_from_cv_results_wrong_length_fold_name(pyplot, data_binary):
     with pytest.raises(ValueError, match=err_msg):
         RocCurveDisplay.from_cv_results(cv_results, X, y, fold_name=fold_name)
 
+    # this error could be also raised when invoking `plot` using the display
+    display = RocCurveDisplay.from_cv_results(cv_results, X, y, kind="folds")
+    with pytest.raises(ValueError, match=err_msg):
+        display.plot(fold_name=fold_name)
+
+
+def test_from_cv_results_wrong_kind(pyplot, data_binary):
+    """Check that we raise an error if `kind` is unknown."""
+    X, y = data_binary
+    model = make_pipeline(StandardScaler(), LogisticRegression())
+
+    cv_results = cross_validate(
+        model, X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    err_msg = "Parameter `kind` must be one of"
+    with pytest.raises(ValueError, match=err_msg):
+        RocCurveDisplay.from_cv_results(cv_results, X, y, kind="unknown")
+
+
+def test_from_cv_results_wrong_length_fold_line_kw(pyplot, data_binary):
+    """Check that we raise an error if the length of `fold_line_kw` is not
+    consistent with the number of estimators in `cv_results`."""
+    X, y = data_binary
+    model = make_pipeline(StandardScaler(), LogisticRegression())
+
+    n_fold = 3
+    cv_results = cross_validate(
+        model, X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    fold_line_kw = [{}] * (n_fold + 1)
+    err_msg = "When `fold_line_kw` is a list, it must have the same length as "
+    with pytest.raises(ValueError, match=err_msg):
+        RocCurveDisplay.from_cv_results(
+            cv_results, X, y, kind="folds", fold_line_kw=fold_line_kw
+        )
+
 
 def test_from_cv_results(pyplot, data_binary):
     """Check default behaviour of `RocCurveDisplay.from_cv_results`."""
@@ -326,7 +364,7 @@ def test_from_cv_results(pyplot, data_binary):
     cv_results = cross_validate(
         model, X, y, cv=3, return_estimator=True, return_indices=True
     )
-    display = RocCurveDisplay.from_cv_results(cv_results, X, y)
+    display = RocCurveDisplay.from_cv_results(cv_results, X, y, kind="both")
     assert isinstance(display, MultiRocCurveDisplay)
     assert all(isinstance(d, RocCurveDisplay) for d in display.displays)
 

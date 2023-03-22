@@ -678,7 +678,8 @@ class MultiRocCurveDisplay:
         accepted_kinds = ("folds", "aggregate", "both")
         if kind not in accepted_kinds:
             raise ValueError(
-                f"Parameter kind must be one of {accepted_kinds}. Got {kind} instead."
+                f"Parameter `kind` must be one of {accepted_kinds}. Got"
+                f" {kind!r} instead."
             )
 
         import matplotlib.pyplot as plt
@@ -696,7 +697,6 @@ class MultiRocCurveDisplay:
                     }
                 ] * len(self.displays)
             elif isinstance(fold_line_kw, Mapping):
-                # single dict for all lines
                 fold_line_kw = [fold_line_kw] * len(self.displays)
             elif len(fold_line_kw) != len(self.displays):
                 raise ValueError(
