@@ -232,6 +232,11 @@ Changelog
   when `max_samples` is a float and `round(n_samples * max_samples) < 1`.
   :pr:`25601` by :user:`Jan Fidor <JanFidor>`.
 
+- |Fix| :meth:`ensemble.IsolationForest.fit` no longer warns about missing
+  feature names when called with `contamination` not `"auto"` on a pandas
+  dataframe.
+  :pr:`25931` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.exception`
 ........................
 - |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
