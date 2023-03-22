@@ -79,15 +79,9 @@ def test_newrand_default():
     with other tests that call set_seed explicit in any order: it checks
     invariants on the RNG instead of specific values.
     """
-    previous = None
-    constant = True
-    for _ in range(10):
-        generated = bounded_rand_int_wrap(100)
-        assert 0 <= generated < 100
-        if previous is not None:
-            constant = constant and (generated == previous)
-        previous = generated
-    assert not constant
+    generated = [bounded_rand_int_wrap(100) for _ in range(10)]
+    assert all(0 <= x < 100 for x in generated)
+    assert not all(x == generated[0] for x in generated)
 
 
 @pytest.mark.parametrize("seed, expected", [(0, 54), (_MAX_UNSIGNED_INT, 9)])
