@@ -305,9 +305,9 @@ _ = ax.set_title("RobustScaler with varying n_neighbors")
 
 
 # %%
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, FunctionTransformer
 
-scaler_list = [RobustScaler(), StandardScaler(), MinMaxScaler()]
+scaler_list = [RobustScaler(), FunctionTransformer(), StandardScaler(), MinMaxScaler()]
 clf = LocalOutlierFactor(n_neighbors=int(0.02 * n_samples))
 
 fig, ax = plt.subplots()
