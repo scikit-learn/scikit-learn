@@ -337,25 +337,26 @@ ax.set_title("Fixed n_neighbors with varying scaler")
 plt.show()
 
 # %%
-# On the one hand, `~sklearn.preprocessing.RobustScaler` scales each feature
-# independently by using the interquartile range (IQR) by default, which is the
-# range between the 25th and 75th percentiles of the data. It centers the data
-# by subtracting the median and then scale it by dividing by the IQR. The IQR is
-# robust to outliers: the median and interquartile range are less affected by
-# extreme values than the range, the mean and the standard deviation.
+# On the one hand, :class:`~sklearn.preprocessing.RobustScaler` scales each
+# feature independently by using the interquartile range (IQR) by default, which
+# is the range between the 25th and 75th percentiles of the data. It centers the
+# data by subtracting the median and then scale it by dividing by the IQR. The
+# IQR is robust to outliers: the median and interquartile range are less
+# affected by extreme values than the range, the mean and the standard
+# deviation.
 #
-# On the other hand, the `~sklearn.preprocessing.MinMaxScaler` scales each
-# feature individually such that its range maps into the range between zero and
-# one. If there are outliers in the data, they can skew it towards either the
-# minimum or maximum values, leading to suboptimal performance. In the case of
-# this example, it makes the extreme values present in the continuous variables
-# indistinct from the binary encoded categories, which themselves remain
-# unchanged by this scaling method.
+# On the other hand, the :class:`~sklearn.preprocessing.MinMaxScaler` scales
+# each feature individually such that its range maps into the range between zero
+# and one. If there are outliers in the data, they can skew it towards either
+# the minimum or maximum values, leading to suboptimal performance. In the case
+# of this example, it makes the extreme values present in the continuous
+# variables indistinct from the binary encoded categories, which themselves
+# remain unchanged by this scaling method.
 #
 # Because of the above, an IQR scaling more effective for outlier detection than
 # a min-max range scaling. We can additionally observe that scaling by the
-# standard deviation (as done by `~sklearn.preprocessing.StandardScaler`) and
-# not scaling at all (using the `~sklearn.preprocessing.FunctionTransformer`
-# default argument) give a relatively good result once the number of neighbors
-# is tuned, but still does not perform as well as the
-# `~sklearn.preprocessing.RobustScaler`.
+# standard deviation (as done by :class:`~sklearn.preprocessing.StandardScaler`)
+# and not scaling at all (using the
+# :class:`~sklearn.preprocessing.FunctionTransformer` with default argument)
+# give a relatively good result once the number of neighbors is tuned, but still
+# does not perform as well as the :class:`~sklearn.preprocessing.RobustScaler`.
