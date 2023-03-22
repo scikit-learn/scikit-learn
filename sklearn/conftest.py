@@ -263,6 +263,10 @@ def pytest_configure(config):
     except ImportError:
         pass
 
+    raise ValueError(
+        "######  !!!!!!  ######\n######  !!!!!!  ######\n######  !!!!!!  ######"
+    )
+
     # Register global_random_seed plugin if it is not already registered
     if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
         config.pluginmanager.register(random_seed)
