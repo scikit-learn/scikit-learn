@@ -17,11 +17,31 @@ cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
 
 def _simultaneous_sort(
-    floating[:] values,
-    intp_t[:] indices,
+    floating[::1] values,
+    intp_t[::1] indices,
     kind=None,
 ):
-    """Interface for testing purposes."""
+    """Interface to simultaneous sorting algorithms.
+
+    `values` and `indices` are sorted simultaneously based on increasing
+    order of elements in `values`.
+
+    This interface exposes Cython implementations but is only meant to be
+    used for testing purposes.
+
+    Parameters
+    ----------
+    values : ndarray
+        1-D Array of floating values to sort.
+
+    indices : ndarray
+        Associated 1-D array of values' indices to sort.
+
+    kind : str, default=None
+        Kind of the sorting algorithm to use.
+        Valid values for `kind` are in {'introsort', 'quick_sort', 'heapsort'}.
+        If None, 'introsort' is used.
+    """
     cdef intp_t size = indices.shape[0]
 
     if kind is None:
