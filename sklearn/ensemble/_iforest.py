@@ -434,10 +434,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
         X = self._validate_data(X, accept_sparse="csr", dtype=np.float32, reset=False)
 
         return self._score_samples(X)
-    
+
     def _score_samples(self, X):
         """Private version of score_samples without input validation.
-        
+
         Input validation would remove feature names, so we disable it.
         """
         # Code structure from ForestClassifier/predict_proba
