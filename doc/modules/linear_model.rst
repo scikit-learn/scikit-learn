@@ -24,13 +24,12 @@ To perform classification with generalized linear models, see
 Ordinary Least Squares
 =======================
 
-:class:`LinearRegression` fits a linear model with coefficients
-:math:`w = (w_1, ..., w_p)` to minimize the residual sum
-of squares between the observed targets in the dataset, and the
-targets predicted by the linear approximation. Mathematically it
-solves a problem of the form:
+:class:`LinearRegression` fits a linear model with coefficients :math:`w =
+(w_1, ..., w_p)` to minimize the residual sum of squares between the observed
+targets in the dataset, and the targets predicted by the linear approximation.
+Mathematically it solves a problem of the form:
 
-.. math:: \min_{w} || X w - y||_2^2
+.. math:: \min_{w, w_0} || X w + w_0 - y||_2^2
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
    :target: ../auto_examples/linear_model/plot_ols.html
@@ -100,12 +99,19 @@ of squares:
 
 .. math::
 
-   \min_{w} || X w - y||_2^2 + \alpha ||w||_2^2
+   \min_{w} || X w + w_0 1_s - y||_2^2 + \alpha ||w||_2^2
 
+- :math:`X` is the feature matrix with shape `(n_samples, n_features)`;
+- :math:`y` is the target vector with shape `(n_samples,)`;
+- :math:`w` is the coefficient vector with shape `(n_features,)`;
+- :math:`w_0` is the intercept (a scalar);
+- :math:`1_s` is a vector of size `n_samples` where all entries are 1.
 
-The complexity parameter :math:`\alpha \geq 0` controls the amount
-of shrinkage: the larger the value of :math:`\alpha`, the greater the amount
-of shrinkage and thus the coefficients become more robust to collinearity.
+The regularization parameter :math:`\alpha \geq 0` controls the amount of
+shrinkage: the larger the value of :math:`\alpha`, the greater the amount of
+regularization and thus the coefficients become more robust to collinearity and
+overfitting when `n_samples` is not large enough or when there is a large
+number of features with noise.
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ridge_path_001.png
    :target: ../auto_examples/linear_model/plot_ridge_path.html
@@ -122,7 +128,7 @@ its ``coef_`` member::
     >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
     Ridge(alpha=0.5)
     >>> reg.coef_
-    array([0.34545455, 0.34545455])
+    array([0.34545..., 0.34545...])
     >>> reg.intercept_
     0.13636...
 
@@ -842,6 +848,64 @@ Ridge Regression`_, see the example below.
 
     .. [4] Tristan Fletcher: `Relevance Vector Machines Explained <https://citeseerx.ist.psu.edu/doc_view/pid/3dc9d625404fdfef6eaccc3babddefe4c176abd4>`_
 
+.. _linear_regression_intercept:
+
+Note on the handling on the intercept in linear regression models
+-----------------------------------------------------------------
+
+Recall the definition of the ridge estimator:
+
+.. math::  \min_{w, w_0} { ||X w + w_0 1_s - y||_2 ^ 2 + \alpha ||w||_2 ^ 2}
+
+Here :math:`1_s` is a vector of size `n_samples` where all entries are 1.
+:math:`w_0` is a scalar parameter and is not regularized.
+
+Let's note :math:`\bar{X}` the column vector whose entries the means of the
+columns of :math:`X` and :math:`\bar{y}` the mean scalar value of :math:`y`,
+:math:`X_c` the centered version of :math:`X`, :math:`y_c` the centered version
+of :math:`y` such that:
+
+.. math::  X = X_c + 1_s \bar{X}^{T}  \text{ and } y = y_c + \bar{y} 1_s
+
+Optimizing the original ridge objective with intercept is equivalent to solving
+the following ridge problem on the centered dataset with no intercept:
+
+.. math:: \hat{w} = \min_{w} { ||X_c w - y_c||_2 ^ 2 + \alpha ||w||_2 ^ 2}
+
+and subsequently define the intercept as :math:`\hat{w_0} = \bar{y} -
+\bar{X}^{T} \hat{w}`.
+
+To see this, let's rewrite the data-fit term of the original ridge problem as
+follows (after rearranging the terms and factorizing by :math:`1_s`):
+
+.. math::  ||X w + w_0 1_s - y||_2^2 = ||X_c w - y_c +  (\bar{X}^{T} w  + w_0  - \bar{y}) 1_s ||_2^2
+
+Let's define the scalar :math:`\bar{r} = \bar{X}^{T} w  + w_0  - \bar{y}`. We
+can now expand:
+
+.. math::  ||X w + w_0 1_s - y||_2^2 = ||X_c w - y_c ||_2^2 + ||\bar{r} 1_s ||_2^2 + 2 \bar{r} 1_s^{T} (X_c w - y_c)
+
+If :math:`n` is the number of samples, we have:
+
+.. math::  ||X w + w_0 1_s - y||_2^2 = ||X_c w - y_c ||_2^2 + \bar{r}^2 n + 2 \bar{r} (1_s^{T} X_c w - 1_s^{T} y_c)
+
+Since :math:`X_c` and :math:`y_c` are the centered versions of X and y, we have
+:math:`1_s^{T} X_c = 0` and :math:`1_s^{T} y_c = 0`. Therefore:
+
+.. math::  ||X w + w_0 1_s - y||_2^2 + \alpha ||w||_2^2 = ||X_c w - y_c ||_2^2  + \alpha ||w||_2^2 + \bar{r}^2 n
+
+The first two terms of the right hand side do not depend on :math:`w_0` and are
+minimized by :math:`\hat{w}` the solution of the centered ridge without
+intercept. The third term is positive and therefore subsequently minimized to
+zero by setting :math:`\hat{w_0} = \bar{y} - \bar{X} \cdot \hat{w}`.
+
+Note that the same argument holds for the OLS estimator (for the specific case
+where :math:`\alpha = 0`) or for any other penalized linear regression
+estimator.
+
+Furthermore least-norm solution for the centered OLS problem without intercept
+is also the least-norm solution for non-centered OLS problem with intercept
+and is also the limit of the ridge estimator as :math:`\alpha` goes to zero.
 
 .. _Logistic_regression:
 
