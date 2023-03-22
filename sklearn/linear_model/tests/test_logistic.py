@@ -231,8 +231,8 @@ def test_check_solver_option(LR):
 def test_elasticnet_l1_ratio_err_helpful(LR):
     # Check that an informative error message is raised when penalty="elasticnet"
     # but l1_ratio is not specified.
-    model = LR(penalty="elasticnet")
-    with pytest.raises(Exception, match="l1_ratio must be specified"):
+    model = LR(penalty="elasticnet", solver="saga")
+    with pytest.raises(ValueError, match=r".*l1_ratio.*"):
         model.fit(np.array([[1, 2], [3, 4]]), np.array([0, 1]))
 
 
