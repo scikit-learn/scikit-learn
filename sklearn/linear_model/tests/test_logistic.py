@@ -229,10 +229,10 @@ def test_check_solver_option(LR):
 
 @pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
 def test_elasticnet_l1_ratio_err_helpful(LR):
-    # Check that the error message contains the word 'l1_ratio'.
-    with pytest.raises(Exception, match=r".*l1_ratio.*"):
-        # Perform a simple LogisticRegression to trigger the error.
-        model = LR(penalty="elasticnet", l1_ratio=None, solver="saga")
+    # Check that an informative error message is raised when penalty="elasticnet"
+    # but l1_ratio is not specified.
+    model = LR(penalty="elasticnet")
+    with pytest.raises(Exception, match="l1_ratio must be specified"):
         model.fit(np.array([[1, 2], [3, 4]]), np.array([0, 1]))
 
 
