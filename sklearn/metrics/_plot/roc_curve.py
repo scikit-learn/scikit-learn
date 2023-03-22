@@ -515,7 +515,8 @@ class RocCurveDisplay:
         elif fold_name is not None and len(fold_name) != len(cv_results["estimator"]):
             raise ValueError(
                 "When `fold_name` is provided, it must have the same length as "
-                "the number of ROC curves to be plotted."
+                f"the number of ROC curves to be plotted. Got {len(fold_name)} names "
+                f"instead of {len(cv_results['estimator'])}."
             )
 
         displays = []

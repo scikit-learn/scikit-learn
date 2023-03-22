@@ -8,7 +8,7 @@ from sklearn.datasets import load_iris
 
 from sklearn.datasets import load_breast_cancer
 from sklearn.exceptions import NotFittedError
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.metrics import roc_curve
 from sklearn.metrics import auc
 
@@ -19,6 +19,7 @@ from sklearn.utils import shuffle
 
 
 from sklearn.metrics import RocCurveDisplay
+from sklearn.metrics._plot.roc_curve import MultiRocCurveDisplay
 
 
 @pytest.fixture(scope="module")
@@ -254,10 +255,121 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     assert np.trapz(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
 
 
-def test_from_cv_results(pyplot, data_binary):
+@pytest.mark.parametrize(
+    "param",
+    [
+        {"return_estimator": False, "return_indices": True},
+        {"return_estimator": True, "return_indices": False},
+    ],
+)
+def test_from_cv_results_missing_dict_key(pyplot, data_binary, param):
+    """Check that we raise an error if `estimator` or `indices` are missing in
+    the dictionary returned by `cross_validate`."""
+    X, y = data_binary
+    model = make_pipeline(StandardScaler(), LogisticRegression())
+    cv_results = cross_validate(model, X, y, cv=3, **param)
+
+    err_msg = "cv_results does not contain one of the following required keys"
+    with pytest.raises(ValueError, match=err_msg):
+        RocCurveDisplay.from_cv_results(cv_results, X, y)
+
+
+def test_from_cv_results_inconsistent_n_samples(pyplot, data_binary):
+    """Check that we raise an error if the data given in `cross_validate` and
+    `from_cv_results` are inconsistent regarding the number of samples."""
     X, y = data_binary
     model = make_pipeline(StandardScaler(), LogisticRegression())
     cv_results = cross_validate(
-        model, X, y, cv=5, return_estimator=True, return_indices=True
+        model, X, y, cv=3, return_estimator=True, return_indices=True
     )
-    RocCurveDisplay.from_cv_results(cv_results, X, y)
+
+    err_msg = "X does not contain the correct number of samples"
+    with pytest.raises(ValueError, match=err_msg):
+        RocCurveDisplay.from_cv_results(cv_results, X[:-1], y[:-1])
+
+
+def test_from_cv_results_wrong_estimator_type(pyplot, data_binary):
+    """Check that we raise an error if the type of estimator in `cv_results` is not
+    a binary classifier."""
+    X, y = data_binary
+    model = make_pipeline(StandardScaler(), LinearRegression())
+    cv_results = cross_validate(
+        model, X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    err_msg = "must be fitted classifiers"
+    with pytest.raises(ValueError, match=err_msg):
+        RocCurveDisplay.from_cv_results(cv_results, X, y)
+
+
+def test_from_cv_results_wrong_length_fold_name(pyplot, data_binary):
+    """Check that we raise an error if the length of the fold name is not
+    consistent with the number of estimators in `cv_results`."""
+    X, y = data_binary
+    model = make_pipeline(StandardScaler(), LogisticRegression())
+
+    n_fold = 3
+    cv_results = cross_validate(
+        model, X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    fold_name = [f"fold_{i}" for i in range(n_fold + 1)]
+    err_msg = "When `fold_name` is provided, it must have the same length as "
+    with pytest.raises(ValueError, match=err_msg):
+        RocCurveDisplay.from_cv_results(cv_results, X, y, fold_name=fold_name)
+
+
+def test_from_cv_results(pyplot, data_binary):
+    """Check default behaviour of `RocCurveDisplay.from_cv_results`."""
+    X, y = data_binary
+    model = make_pipeline(StandardScaler(), LogisticRegression())
+    cv_results = cross_validate(
+        model, X, y, cv=3, return_estimator=True, return_indices=True
+    )
+    display = RocCurveDisplay.from_cv_results(cv_results, X, y)
+    assert isinstance(display, MultiRocCurveDisplay)
+    assert all(isinstance(d, RocCurveDisplay) for d in display.displays)
+
+
+def test_from_cv_results_attributes(pyplot, data_binary):
+    """Check that `MultiRocCurveDisplay` contains the correct attributes with
+    the expected behaviour."""
+    X, y = data_binary
+    model = make_pipeline(StandardScaler(), LogisticRegression())
+    n_folds = 3
+
+    cv_results = cross_validate(
+        model, X, y, cv=n_folds, return_estimator=True, return_indices=True
+    )
+    display = RocCurveDisplay.from_cv_results(cv_results, X, y, kind="folds")
+
+    import matplotlib as mpl  # noqal
+
+    assert isinstance(display.ax_, mpl.axes.Axes)
+    assert isinstance(display.figure_, mpl.figure.Figure)
+
+    assert isinstance(display.fold_lines_, np.ndarray)
+    assert len(display.fold_lines_) == n_folds
+    assert all(isinstance(line, mpl.lines.Line2D) for line in display.fold_lines_)
+    assert display.mean_line_ is None
+    assert display.std_area_ is None
+
+    display = RocCurveDisplay.from_cv_results(cv_results, X, y, kind="aggregate")
+
+    assert isinstance(display.ax_, mpl.axes.Axes)
+    assert isinstance(display.figure_, mpl.figure.Figure)
+
+    assert display.fold_lines_ is None
+    assert isinstance(display.mean_line_, mpl.lines.Line2D)
+    assert isinstance(display.std_area_, mpl.collections.PolyCollection)
+
+    display = RocCurveDisplay.from_cv_results(cv_results, X, y, kind="both")
+
+    assert isinstance(display.ax_, mpl.axes.Axes)
+    assert isinstance(display.figure_, mpl.figure.Figure)
+
+    assert isinstance(display.fold_lines_, np.ndarray)
+    assert len(display.fold_lines_) == n_folds
+    assert all(isinstance(line, mpl.lines.Line2D) for line in display.fold_lines_)
+    assert isinstance(display.mean_line_, mpl.lines.Line2D)
+    assert isinstance(display.std_area_, mpl.collections.PolyCollection)
