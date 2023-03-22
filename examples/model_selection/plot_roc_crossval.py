@@ -45,8 +45,8 @@ from sklearn.datasets import load_iris
 
 iris = load_iris()
 target_names = iris.target_names
-X, y = iris.data, iris.target
-X, y = X[y != 2], y[y != 2]
+X, y = iris.data, target_names[iris.target]
+X, y = X[:100], y[:100]
 n_samples, n_features = X.shape
 
 # %%
@@ -76,8 +76,10 @@ cv_results = cross_validate(
 )
 
 fig, ax = plt.subplots(figsize=(6, 6))
-display = RocCurveDisplay.from_cv_results(cv_results, X, y, kind="both", ax=ax)
-ax.set_title("Mean ROC curve with variability\n(Positive label '{target_names[1]}')")
+display = RocCurveDisplay.from_cv_results(
+    cv_results, X, y, kind="both", ax=ax, pos_label=target_names[1]
+)
+ax.set_title(f"Mean ROC curve with variability\n(Positive label '{target_names[1]}')")
 ax.plot([0, 1], [0, 1], "r--", lw=2, label="Chance (AUC = 0.5)")
 ax.axis("square")
 ax.legend(loc="lower right")
