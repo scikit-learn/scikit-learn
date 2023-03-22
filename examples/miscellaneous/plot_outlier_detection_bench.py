@@ -303,6 +303,12 @@ ax.set_xlabel("False Positive Rate")
 ax.set_ylabel("True Positive Rate")
 _ = ax.set_title("RobustScaler with varying n_neighbors")
 
+# %%
+# We observe that the number of neighbors has a big impact on the performance of
+# the model. If one has access to ground truth labels it is then important to
+# tune `n_neighbors` accordingly. A convenient way to do so is to explore a
+# number of samples proportional to the size of the dataset and possibly over a
+# range of values of the order of magnitud of the expected contamination.
 
 # %%
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, FunctionTransformer
@@ -329,3 +335,27 @@ ax.set_xlabel("False Positive Rate")
 ax.set_ylabel("True Positive Rate")
 ax.set_title("Fixed n_neighbors with varying scaler")
 plt.show()
+
+# %%
+# On the one hand, `~sklearn.preprocessing.RobustScaler` scales each feature
+# independently by using the interquartile range (IQR) by default, which is the
+# range between the 25th and 75th percentiles of the data. It centers the data
+# by subtracting the median and then scale it by dividing by the IQR. The IQR is
+# robust to outliers: the median and interquartile range are less affected by
+# extreme values than the range, the mean and the standard deviation.
+#
+# On the other hand, the `~sklearn.preprocessing.MinMaxScaler` scales each
+# feature individually such that its range maps into the range between zero and
+# one. If there are outliers in the data, they can skew it towards either the
+# minimum or maximum values, leading to suboptimal performance. In the case of
+# this example, it makes the extreme values present in the continuous variables
+# indistinct from the binary encoded categories, which themselves remain
+# unchanged by this scaling method.
+#
+# Because of the above, an IQR scaling more effective for outlier detection than
+# a min-max range scaling. We can additionally observe that scaling by the
+# standard deviation (as done by `~sklearn.preprocessing.StandardScaler`) and
+# not scaling at all (using the `~sklearn.preprocessing.FunctionTransformer`
+# default argument) give a relatively good result once the number of neighbors
+# is tuned, but still does not perform as well as the
+# `~sklearn.preprocessing.RobustScaler`.
