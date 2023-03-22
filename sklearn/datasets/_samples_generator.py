@@ -1785,6 +1785,17 @@ def _shuffle(data, random_state=None):
     return result, row_idx, col_idx
 
 
+@validate_params(
+    {
+        "shape": [tuple],
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "minval": [Interval(Real, None, None, closed="neither")],
+        "maxval": [Interval(Real, None, None, closed="neither")],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_biclusters(
     shape,
     n_clusters,
