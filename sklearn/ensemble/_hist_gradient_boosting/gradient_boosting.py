@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 from functools import partial
 import itertools
 from numbers import Real, Integral
-import warnings
 
 import numpy as np
 from timeit import default_timer as time
@@ -27,6 +26,7 @@ from ...utils.validation import (
     _check_monotonic_cst,
 )
 from ...utils._param_validation import Interval, StrOptions
+from ...utils._param_validation import RealNotInt
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
@@ -40,14 +40,11 @@ from .grower import TreeGrower
 
 
 _LOSSES = _LOSSES.copy()
-# TODO(1.3): Remove "binary_crossentropy" and "categorical_crossentropy"
 _LOSSES.update(
     {
         "poisson": HalfPoissonLoss,
         "gamma": HalfGammaLoss,
         "quantile": PinballLoss,
-        "binary_crossentropy": HalfBinomialLoss,
-        "categorical_crossentropy": HalfMultinomialLoss,
     }
 )
 
@@ -103,7 +100,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         ],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
-            Interval(Real, 0, 1, closed="neither"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
             Interval(Integral, 1, None, closed="left"),
             None,
         ],
@@ -1573,8 +1570,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'log_loss', 'auto', 'binary_crossentropy', 'categorical_crossentropy'}, \
-            default='log_loss'
+    loss : {'log_loss'}, default='log_loss'
         The loss function to use in the boosting process.
 
         For binary classification problems, 'log_loss' is also known as logistic loss,
@@ -1586,11 +1582,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         deviance or categorical crossentropy. Internally, the model fits one tree per
         boosting iteration and per class and uses the softmax function as inverse link
         function to compute the predicted probabilities of the classes.
-
-        .. deprecated:: 1.1
-            The loss arguments 'auto', 'binary_crossentropy' and
-            'categorical_crossentropy' were deprecated in v1.1 and will be removed in
-            version 1.3. Use `loss='log_loss'` which is equivalent.
 
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
@@ -1797,25 +1788,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     1.0
     """
 
-    # TODO(1.3): Remove "binary_crossentropy", "categorical_crossentropy", "auto"
     _parameter_constraints: dict = {
         **BaseHistGradientBoosting._parameter_constraints,
-        "loss": [
-            StrOptions(
-                {
-                    "log_loss",
-                    "binary_crossentropy",
-                    "categorical_crossentropy",
-                    "auto",
-                },
-                deprecated={
-                    "auto",
-                    "binary_crossentropy",
-                    "categorical_crossentropy",
-                },
-            ),
-            BaseLoss,
-        ],
+        "loss": [StrOptions({"log_loss"}), BaseLoss],
         "class_weight": [dict, StrOptions({"balanced"}), None],
     }
 
@@ -2014,37 +1989,10 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         return encoded_y
 
     def _get_loss(self, sample_weight):
-        # TODO(1.3): Remove "auto", "binary_crossentropy", "categorical_crossentropy"
-        if self.loss in ("auto", "binary_crossentropy", "categorical_crossentropy"):
-            warnings.warn(
-                f"The loss '{self.loss}' was deprecated in v1.1 and will be removed in "
-                "version 1.3. Use 'log_loss' which is equivalent.",
-                FutureWarning,
+        # At this point self.loss == "log_loss"
+        if self.n_trees_per_iteration_ == 1:
+            return HalfBinomialLoss(sample_weight=sample_weight)
+        else:
+            return HalfMultinomialLoss(
+                sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
             )
-
-        if self.loss in ("log_loss", "auto"):
-            if self.n_trees_per_iteration_ == 1:
-                return HalfBinomialLoss(sample_weight=sample_weight)
-            else:
-                return HalfMultinomialLoss(
-                    sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
-                )
-        if self.loss == "categorical_crossentropy":
-            if self.n_trees_per_iteration_ == 1:
-                raise ValueError(
-                    f"loss='{self.loss}' is not suitable for a binary classification "
-                    "problem. Please use loss='log_loss' instead."
-                )
-            else:
-                return HalfMultinomialLoss(
-                    sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
-                )
-        if self.loss == "binary_crossentropy":
-            if self.n_trees_per_iteration_ > 1:
-                raise ValueError(
-                    f"loss='{self.loss}' is not defined for multiclass "
-                    f"classification with n_classes={self.n_trees_per_iteration_}, "
-                    "use loss='log_loss' instead."
-                )
-            else:
-                return HalfBinomialLoss(sample_weight=sample_weight)
