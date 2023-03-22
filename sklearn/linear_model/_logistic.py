@@ -1013,7 +1013,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     See Also
     --------
     SGDClassifier : Incrementally trained logistic regression (when given
-        the parameter ``loss="log"``).
+        the parameter ``loss="log_loss"``).
     LogisticRegressionCV : Logistic regression with built-in cross validation.
 
     Notes
