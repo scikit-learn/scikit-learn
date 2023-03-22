@@ -171,11 +171,9 @@ def test_roc_curve_display_default_labels(
     """Check the default labels used in the display."""
     fpr = np.array([0, 0.5, 1])
     tpr = np.array([0, 0.5, 1])
-    thresholds = np.array([-1, 0, 1])
     disp = RocCurveDisplay(
         fpr=fpr,
         tpr=tpr,
-        thresholds=thresholds,
         roc_auc=roc_auc,
         estimator_name=estimator_name,
     ).plot()
