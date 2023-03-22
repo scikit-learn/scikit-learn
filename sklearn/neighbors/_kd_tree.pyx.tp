@@ -27,10 +27,21 @@ implementation_specific_values = [
 
 __all__ = ['KDTree', 'KDTree32']
 
-DOC_DICT = {'BinaryTree': 'KDTree', 'binary_tree': 'kd_tree'}
+{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
-VALID_METRICS = ['EuclideanDistance', 'ManhattanDistance',
-                 'ChebyshevDistance', 'MinkowskiDistance']
+DOC_DICT{{name_suffix}} = {
+    'BinaryTree': 'KDTree{{name_suffix}}',
+    'binary_tree': 'kd_tree{{name_suffix}}',
+}
+
+VALID_METRICS{{name_suffix}} = [
+    'EuclideanDistance{{name_suffix}}',
+    'ManhattanDistance{{name_suffix}}',
+    'ChebyshevDistance{{name_suffix}}',
+    'MinkowskiDistance{{name_suffix}}'
+]
+
+{{endfor}}
 
 include "_binary_tree.pxi"
 
@@ -38,7 +49,7 @@ include "_binary_tree.pxi"
 
 # Inherit KDTree{{name_suffix}} from BinaryTree{{name_suffix}}
 cdef class KDTree{{name_suffix}}(BinaryTree{{name_suffix}}):
-    __doc__ = CLASS_DOC.format(**DOC_DICT)
+    __doc__ = CLASS_DOC.format(**DOC_DICT{{name_suffix}})
     pass
 
 {{endfor}}

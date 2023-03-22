@@ -26,29 +26,36 @@ implementation_specific_values = [
 
 __all__ = ['BallTree', 'BallTree32']
 
-DOC_DICT = {'BinaryTree': 'BallTree', 'binary_tree': 'ball_tree'}
+{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
-VALID_METRICS = [
-    'EuclideanDistance',
-    'SEuclideanDistance',
-    'ManhattanDistance',
-    'ChebyshevDistance',
-    'MinkowskiDistance',
-    'WMinkowskiDistance',
-    'MahalanobisDistance',
-    'HammingDistance',
-    'CanberraDistance',
-    'BrayCurtisDistance',
-    'JaccardDistance',
-    'MatchingDistance',
-    'DiceDistance',
-    'RogersTanimotoDistance',
-    'RussellRaoDistance',
-    'SokalMichenerDistance',
-    'SokalSneathDistance',
-    'PyFuncDistance',
-    'HaversineDistance',
+DOC_DICT{{name_suffix}} = {
+    'BinaryTree': 'BallTree{{name_suffix}}',
+    'binary_tree': 'ball_tree{{name_suffix}}',
+}
+
+VALID_METRICS{{name_suffix}} = [
+    'EuclideanDistance{{name_suffix}}',
+    'SEuclideanDistance{{name_suffix}}',
+    'ManhattanDistance{{name_suffix}}',
+    'ChebyshevDistance{{name_suffix}}',
+    'MinkowskiDistance{{name_suffix}}',
+    'WMinkowskiDistance{{name_suffix}}',
+    'MahalanobisDistance{{name_suffix}}',
+    'HammingDistance{{name_suffix}}',
+    'CanberraDistance{{name_suffix}}',
+    'BrayCurtisDistance{{name_suffix}}',
+    'JaccardDistance{{name_suffix}}',
+    'MatchingDistance{{name_suffix}}',
+    'DiceDistance{{name_suffix}}',
+    'RogersTanimotoDistance{{name_suffix}}',
+    'RussellRaoDistance{{name_suffix}}',
+    'SokalMichenerDistance{{name_suffix}}',
+    'SokalSneathDistance{{name_suffix}}',
+    'PyFuncDistance{{name_suffix}}',
+    'HaversineDistance{{name_suffix}}',
 ]
+
+{{endfor}}
 
 include "_binary_tree.pxi"
 
@@ -96,7 +103,7 @@ cdef int init_node{{name_suffix}}(
     cdef intp_t n_points = idx_end - idx_start
 
     cdef intp_t i, j
-    cdef {{INPUT_DTYPE_t}} radius
+    cdef float64_t radius
     cdef {{INPUT_DTYPE_t}} *this_pt
 
     cdef intp_t* idx_array = &tree.idx_array[0]
@@ -146,7 +153,7 @@ cdef int init_node{{name_suffix}}(
     return 0
 
 
-cdef inline {{INPUT_DTYPE_t}} min_dist{{name_suffix}}(
+cdef inline float64_t min_dist{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
     intp_t i_node,
     {{INPUT_DTYPE_t}}* pt,
@@ -157,7 +164,7 @@ cdef inline {{INPUT_DTYPE_t}} min_dist{{name_suffix}}(
     return fmax(0, dist_pt - tree.node_data[i_node].radius)
 
 
-cdef inline {{INPUT_DTYPE_t}} max_dist{{name_suffix}}(
+cdef inline float64_t max_dist{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
     intp_t i_node,
     {{INPUT_DTYPE_t}}* pt,
@@ -216,7 +223,7 @@ cdef inline float64_t max_rdist{{name_suffix}}(
         )
 
 
-cdef inline {{INPUT_DTYPE_t}} min_dist_dual{{name_suffix}}(
+cdef inline float64_t min_dist_dual{{name_suffix}}(
     BinaryTree{{name_suffix}} tree1,
     intp_t i_node1,
     BinaryTree{{name_suffix}} tree2,
@@ -230,7 +237,7 @@ cdef inline {{INPUT_DTYPE_t}} min_dist_dual{{name_suffix}}(
                     - tree2.node_data[i_node2].radius))
 
 
-cdef inline {{INPUT_DTYPE_t}} max_dist_dual{{name_suffix}}(
+cdef inline float64_t max_dist_dual{{name_suffix}}(
     BinaryTree{{name_suffix}} tree1,
     intp_t i_node1,
     BinaryTree{{name_suffix}} tree2,

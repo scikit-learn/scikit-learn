@@ -24,20 +24,14 @@ implementation_specific_values = [
 #    Author: Jake Vanderplas <jakevdp@cs.washington.edu>, 2012-2013
 #    License: BSD
 #
-# This file is meant to be a literal include in a pyx file.
-# See ball_tree.pyx and kd_tree.pyx
+# The file generated is then literally included in ball_tree.pyx and kd_tree.pyx.
+# See ball_tree.pyx.tp and kd_tree.pyx.tp.
 
 }}
 
 
 # KD Tree and Ball Tree
 # =====================
-#
-#    Author: Jake Vanderplas <jakevdp@cs.washington.edu>, 2012-2013
-#    License: BSD
-#
-# This file is meant to be a literal include in a pyx file.
-# See ball_tree.pyx and kd_tree.pyx
 #
 # The routines here are the core algorithms of the KDTree and BallTree
 # structures.  If Cython supported polymorphism, we would be able to
@@ -795,13 +789,13 @@ def newObj(obj):
     return obj.__new__(obj)
 
 
-######################################################################
-# define the reverse mapping of VALID_METRICS
-from sklearn.metrics._dist_metrics import get_valid_metric_ids
-VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
-
-
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+
+######################################################################
+# define the reverse mapping of VALID_METRICS{{name_suffix}}
+from sklearn.metrics._dist_metrics import get_valid_metric_ids
+VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS{{name_suffix}})
+
 
 ######################################################################
 # Binary Tree class
@@ -869,13 +863,13 @@ cdef class BinaryTree{{name_suffix}}:
 
         self.dist_metric = DistanceMetric{{name_suffix}}.get_metric(metric, **kwargs)
         self.euclidean = (self.dist_metric.__class__.__name__
-                          == 'EuclideanDistance')
+                          == 'EuclideanDistance{{name_suffix}}')
 
-        metric = self.dist_metric.__class__.__name__.rstrip("32")
-        if metric not in VALID_METRICS:
+        metric = self.dist_metric.__class__.__name__
+        if metric not in VALID_METRICS{{name_suffix}}:
             raise ValueError('metric {metric} is not valid for '
                              '{BinaryTree}'.format(metric=metric,
-                                                   **DOC_DICT))
+                                                   **DOC_DICT{{name_suffix}}))
         self.dist_metric._validate_data(self.data)
 
         # determine number of levels in the tree, and from this

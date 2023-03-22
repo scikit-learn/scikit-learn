@@ -16,6 +16,8 @@
 #  - https://en.cppreference.com/w/cpp/algorithm/nth_element.
 #  - https://github.com/scikit-learn/scikit-learn/pull/11103
 #  - https://github.com/scikit-learn/scikit-learn/pull/19473
+from cython cimport floating
+
 
 cdef extern from *:
     """
