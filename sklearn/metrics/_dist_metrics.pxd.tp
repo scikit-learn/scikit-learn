@@ -5,7 +5,6 @@ implementation_specific_values = [
     #
     #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
     #
-    #
     # On the first hand, an empty string is used for `name_suffix`
     # for the 64bit case as to still be able to expose the original
     # 64bit implementation under the same API, namely `DistanceMetric`.
