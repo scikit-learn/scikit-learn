@@ -356,11 +356,11 @@ class Pipeline(_BaseComposition):
             # "fit_transform", and "fit_predict", since other methods don't
             # accept extra params at the time of this change.
             warnings.warn(
-                "Passing parameters with the step__parameter format is deprecated and"
-                " their support will be removed in version 1.4. Use metadata routing"
-                " instead. E.g.: make_pipeline("
-                " LogisticRegression().set_fit_request(sample_weight=True) ).fit(X, y,"
-                " sample_weight)",
+                "Passing parameters with the step__parameter format is deprecated"
+                " and their support will be removed in version 1.4. Use metadata"
+                " routing instead. E.g.: make_pipeline("
+                " LogisticRegression().set_fit_request(sample_weight=True) ).fit(X,"
+                " y, sample_weight)",
                 FutureWarning,
             )
 
@@ -407,13 +407,13 @@ class Pipeline(_BaseComposition):
             # doesn't accept any metadata, there will be no warnings, which is
             # the majority of the users.
             warnings.warn(
-                f"The steps {', '.join(warn)} in this pipeline have requested metadata"
-                " which you have provided, but you have not explicitly set the"
-                " `route_metadata_to_transform` for this Pipeline object. To silence"
-                " this warning, either remove the requests from those steps' transform"
-                " method using their set_transform_request method, or explicitly set"
-                " route_metadata_to_transform to `True` or `False` for this Pipeline"
-                " object.",
+                f"The steps {', '.join(warn)} in this pipeline have requested"
+                " metadata which you have provided, but you have not explicitly"
+                " set the `route_metadata_to_transform` for this Pipeline object."
+                " To silence this warning, either remove the requests from those"
+                " steps' transform method using their set_transform_request"
+                " method, or explicitly set route_metadata_to_transform to `True`"
+                " or `False` for this Pipeline object.",
                 FutureWarning,
             )
         return routed_params
@@ -625,7 +625,9 @@ class Pipeline(_BaseComposition):
 
         fit_params_last_step = fit_params_steps[self.steps[-1][0]]
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
-            y_pred = self.steps[-1][1].fit_predict(Xt, y, **fit_params_last_step)
+            y_pred = self.steps[-1][1].fit_predict(
+                Xt, y, **fit_params_last_step.get("fit_predict", {})
+            )
         return y_pred
 
     @available_if(_final_estimator_has("predict_proba"))
@@ -1106,10 +1108,10 @@ def _fit_transform_one(
     """
     with _print_elapsed_time(message_clsname, message):
         if hasattr(transformer, "fit_transform"):
-            res = transformer.fit_transform(X, y, **step_props["fit_transform"])
+            res = transformer.fit_transform(X, y, **step_props.get("fit_transform", {}))
         else:
-            res = transformer.fit(X, y, **step_props["fit"]).transform(
-                X, **step_props["transform"]
+            res = transformer.fit(X, y, **step_props.get("fit", {})).transform(
+                X, **step_props.get("transform", {})
             )
 
     if weight is None:

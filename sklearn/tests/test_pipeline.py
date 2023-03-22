@@ -323,7 +323,8 @@ def test_pipeline_raise_set_params_error():
     # expected error message
     error_msg = re.escape(
         "Invalid parameter 'fake' for estimator Pipeline(steps=[('cls',"
-        " LinearRegression())]). Valid parameters are: ['memory', 'steps', 'verbose']."
+        " LinearRegression())]). Valid parameters are: ['memory',"
+        " 'route_metadata_to_transform', 'steps', 'verbose']."
     )
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(fake="nope")
