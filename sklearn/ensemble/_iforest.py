@@ -345,8 +345,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
             return self
 
         # Else, define offset_ wrt contamination parameter
-        # Input validation would remove feature names, so we call private version
-        # of score_sample that does not perform input validation
+        # To avoid performing input validation a second time we call
+        # _score_samples rather than score_samples
         self.offset_ = np.percentile(self._score_samples(X), 100.0 * self.contamination)
 
         return self
