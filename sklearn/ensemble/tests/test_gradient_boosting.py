@@ -345,7 +345,7 @@ def test_feature_importance_regression(
     assert set(sorted_features[1:4]) == {"Longitude", "AveOccup", "Latitude"}
 
 
-def test_max_feature_auto():
+def test_max_features():
     # Test if max features is set properly for floats and str.
     X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
     _, n_features = X.shape
