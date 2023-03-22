@@ -789,8 +789,8 @@ and missing values are encoded as 4.
          [3.],
          [4.]])
 
-Similarity, :class:`OneHotEncoder` can be configured the same way to group together
-infrequent categories::
+Similarity, :class:`OneHotEncoder` can be configured to group together infrequent
+categories::
 
    >>> enc = preprocessing.OneHotEncoder(min_frequency=6, sparse_output=False).fit(X)
    >>> enc.infrequent_categories_
