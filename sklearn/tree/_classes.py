@@ -110,7 +110,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "max_features": [
             Interval(Integral, 1, None, closed="left"),
             Interval(RealNotInt, 0.0, 1.0, closed="right"),
-            StrOptions({"auto", "sqrt", "log2"}, deprecated={"auto"}),
+            StrOptions({"sqrt", "log2"}),
             None,
         ],
         "random_state": ["random_state"],
@@ -653,14 +653,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             - If float, then `max_features` is a fraction and
               `max(1, int(max_features * n_features_in_))` features are considered at
               each split.
-            - If "auto", then `max_features=sqrt(n_features)`.
             - If "sqrt", then `max_features=sqrt(n_features)`.
             - If "log2", then `max_features=log2(n_features)`.
             - If None, then `max_features=n_features`.
-
-            .. deprecated:: 1.1
-                The `"auto"` option was deprecated in 1.1 and will be removed
-                in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1047,14 +1042,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         - If float, then `max_features` is a fraction and
           `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
-        - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
-
-        .. deprecated:: 1.1
-            The `"auto"` option was deprecated in 1.1 and will be removed
-            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1350,17 +1340,12 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             - If float, then `max_features` is a fraction and
               `max(1, int(max_features * n_features_in_))` features are considered at
               each split.
-            - If "auto", then `max_features=sqrt(n_features)`.
             - If "sqrt", then `max_features=sqrt(n_features)`.
             - If "log2", then `max_features=log2(n_features)`.
             - If None, then `max_features=n_features`.
 
             .. versionchanged:: 1.1
                 The default of `max_features` changed from `"auto"` to `"sqrt"`.
-
-            .. deprecated:: 1.1
-                The `"auto"` option was deprecated in 1.1 and will be removed
-                in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1620,17 +1605,12 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         - If float, then `max_features` is a fraction and
           `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
-        - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
 
         .. versionchanged:: 1.1
             The default of `max_features` changed from `"auto"` to `1.0`.
-
-        .. deprecated:: 1.1
-            The `"auto"` option was deprecated in 1.1 and will be removed
-            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
