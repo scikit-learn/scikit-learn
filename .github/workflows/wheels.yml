@@ -116,9 +116,7 @@ jobs:
         env:
           CONFTEST_PATH: ${{ github.workspace }}/conftest.py
           CONFTEST_NAME: conftest.py
-          CIBW_ENVIRONMENT: OMP_NUM_THREADS=2
-                            OPENBLAS_NUM_THREADS=2
-                            SKLEARN_SKIP_NETWORK_TESTS=1
+          CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
@@ -173,8 +171,6 @@ jobs:
       - name: Test source distribution
         run: bash build_tools/github/test_source.sh
         env:
-          OMP_NUM_THREADS: 2
-          OPENBLAS_NUM_THREADS: 2
           SKLEARN_SKIP_NETWORK_TESTS: 1
 
       - name: Store artifacts
