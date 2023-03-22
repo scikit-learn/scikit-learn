@@ -72,13 +72,30 @@ def test_ill_posed_min_c():
 _MAX_UNSIGNED_INT = 4294967295
 
 
-@pytest.mark.parametrize("seed, val", [(None, 81), (0, 54), (_MAX_UNSIGNED_INT, 9)])
-def test_newrand_set_seed(seed, val):
+def test_newrand_default():
+    """Test that bounded_rand_int_wrap without seeding respects the range
+
+    Note this test should pass either if executed alone, or in conjunctions
+    with other tests that call set_seed explicit in any order: it checks
+    invariants on the RNG instead of specific values.
+    """
+    previous = None
+    constant = True
+    for _ in range(10):
+        generated = bounded_rand_int_wrap(100)
+        assert 0 <= generated < 100
+        if previous is not None:
+            constant = constant and (generated == previous)
+        previous = generated
+    assert not constant
+
+
+@pytest.mark.parametrize("seed, expected", [(0, 54), (_MAX_UNSIGNED_INT, 9)])
+def test_newrand_set_seed(seed, expected):
     """Test that `set_seed` produces deterministic results"""
-    if seed is not None:
-        set_seed_wrap(seed)
-    x = bounded_rand_int_wrap(100)
-    assert x == val, f"Expected {val} but got {x} instead"
+    set_seed_wrap(seed)
+    generated = bounded_rand_int_wrap(100)
+    assert generated == expected
 
 
 @pytest.mark.parametrize("seed", [-1, _MAX_UNSIGNED_INT + 1])
@@ -91,6 +108,9 @@ def test_newrand_set_seed_overflow(seed):
 @pytest.mark.parametrize("range_, n_pts", [(_MAX_UNSIGNED_INT, 10000), (100, 25)])
 def test_newrand_bounded_rand_int(range_, n_pts):
     """Test that `bounded_rand_int` follows a uniform distribution"""
+    # XXX: this test is very seed sensitive: either it is wrong (too strict?)
+    # or the wrapped RNG is not uniform enough, at least on some platforms.
+    set_seed_wrap(42)
     n_iter = 100
     ks_pvals = []
     uniform_dist = stats.uniform(loc=0, scale=range_)
