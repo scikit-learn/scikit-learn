@@ -93,6 +93,8 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
     # - multi-task regressors
 
     est = Estimator()
+    if hasattr(est, "n_estimators"):
+        est.set_params(n_estimators=2)  # speed-up computations
 
     # n_target corresponds to the number of classes (1 for binary classif) or
     # the number of tasks / outputs in multi task settings. It's equal to 1 for
