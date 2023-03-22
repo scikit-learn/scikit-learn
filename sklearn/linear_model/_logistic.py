@@ -1168,6 +1168,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 "(penalty={})".format(self.penalty)
             )
 
+        if self.penalty == "elasticnet" and self.l1_ratio is None:
+            raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
+
         # TODO(1.4): Remove "none" option
         if self.penalty == "none":
             warnings.warn(
