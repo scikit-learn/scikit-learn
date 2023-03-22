@@ -202,8 +202,8 @@ def test_hasattr_multi_output_predict_proba():
 
 # check predict_proba passes
 def test_multi_output_predict_proba():
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, loss="log_loss")
-    param = {"loss": ("hinge", "log", "modified_huber")}
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
+    param = {"loss": ("hinge", "log_loss", "modified_huber")}
 
     # inner function for custom scoring
     def custom_scorer(estimator, X, y):
