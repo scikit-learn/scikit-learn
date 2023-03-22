@@ -785,6 +785,9 @@ def check_array(
         )
         if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
+        elif pandas_requires_conversion and any(d == object for d in dtypes_orig):
+            # Force object if any of the dtypes is an object
+            dtype_orig = object
 
     elif (_is_extension_array_dtype(array) or hasattr(array, "iloc")) and hasattr(
         array, "dtype"
