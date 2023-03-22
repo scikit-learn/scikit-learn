@@ -9,19 +9,19 @@ from sklearn.utils.validation import check_array
 from sklearn.utils._testing import _convert_container
 
 rng = np.random.RandomState(10)
-V_mahalanobis = rng.rand(50, 5)
+V_mahalanobis = rng.rand(3, 3)
 V_mahalanobis = np.dot(V_mahalanobis, V_mahalanobis.T)
 
-DIMENSION = 50
+DIMENSION = 3
 
 METRICS = {
     "euclidean": {},
     "manhattan": {},
     "minkowski": dict(p=3),
     "chebyshev": {},
-    # "seuclidean": dict(V=rng.random_sample(DIMENSION)),
-    # "wminkowski": dict(p=3, w=rng.random_sample(DIMENSION)),
-    # "mahalanobis": dict(V=V_mahalanobis),
+    "seuclidean": dict(V=rng.random_sample(DIMENSION)),
+    "wminkowski": dict(p=3, w=rng.random_sample(DIMENSION)),
+    "mahalanobis": dict(V=V_mahalanobis),
 }
 
 DISCRETE_METRICS = ["hamming", "canberra", "braycurtis"]
@@ -103,7 +103,10 @@ def test_bad_pyfunc_metric():
         BallTree(X, metric=one_arg_func)
 
 
-@pytest.mark.parametrize("metric", itertools.chain(METRICS, BOOLEAN_METRICS))
+METRICS_TO_TEST = ["euclidean", "manhattan", "minkowski", "chebyshev"]
+
+
+@pytest.mark.parametrize("metric", itertools.chain(METRICS_TO_TEST, BOOLEAN_METRICS))
 def test_ball_tree_numerical_consistency(global_random_seed, metric):
     rng = np.random.RandomState(global_random_seed)
     spread = 1000
