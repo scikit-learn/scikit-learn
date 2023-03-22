@@ -745,11 +745,13 @@ class MultiRocCurveDisplay:
                 label=r"$\pm$ 1 std. dev.",
                 **aggregate_uncertainty_kw,
             )
+            legend_title = "Uncertainties via cross-validation"
         else:
             self.mean_line_ = None
             self.std_area_ = None
+            legend_title = None
 
-        ax.legend(loc="lower right", title="Uncertainties via cross-validation")
+        ax.legend(loc="lower right", title=legend_title)
 
         self.ax_ = ax
         self.figure_ = ax.figure

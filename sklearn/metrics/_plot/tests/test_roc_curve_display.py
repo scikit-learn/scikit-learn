@@ -357,16 +357,33 @@ def test_from_cv_results_wrong_length_fold_line_kw(pyplot, data_binary):
         )
 
 
-def test_from_cv_results(pyplot, data_binary):
+def test_from_cv_results_xxx(pyplot, data_binary):
     """Check default behaviour of `RocCurveDisplay.from_cv_results`."""
     X, y = data_binary
     model = make_pipeline(StandardScaler(), LogisticRegression())
+    n_folds = 3
     cv_results = cross_validate(
-        model, X, y, cv=3, return_estimator=True, return_indices=True
+        model, X, y, cv=n_folds, return_estimator=True, return_indices=True
     )
-    display = RocCurveDisplay.from_cv_results(cv_results, X, y, kind="both")
+    display = RocCurveDisplay.from_cv_results(cv_results, X, y, kind="folds")
     assert isinstance(display, MultiRocCurveDisplay)
     assert all(isinstance(d, RocCurveDisplay) for d in display.displays)
+
+    legend = display.ax_.get_legend()
+    assert not legend.get_title().get_text()
+    assert len(legend.get_texts()) == n_folds
+    for i, text in enumerate(legend.get_texts()):
+        assert text.get_text().startswith(f"ROC fold #{i}")
+
+    display = RocCurveDisplay.from_cv_results(cv_results, X, y, kind="both")
+
+    legend = display.ax_.get_legend()
+    assert legend.get_title().get_text() == "Uncertainties via cross-validation"
+    assert len(legend.get_texts()) == n_folds + 2  # adding mean and std dev
+    for i in range(n_folds):
+        assert legend.get_texts()[i].get_text().startswith(f"ROC fold #{i}")
+    assert legend.get_texts()[n_folds].get_text().startswith("Mean ROC")
+    assert "1 std. dev." in legend.get_texts()[n_folds + 1].get_text()
 
 
 def test_from_cv_results_attributes(pyplot, data_binary):
