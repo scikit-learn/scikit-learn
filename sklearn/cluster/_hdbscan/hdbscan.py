@@ -28,7 +28,7 @@ from ._linkage import (
     mst_from_data_matrix,
     MST_edge_dtype,
 )
-from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_cut
+from ._tree import tree_to_labels, labelling_at_cut
 from ._tree import HIERARCHY_dtype
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
@@ -82,31 +82,6 @@ def _brute_mst(mutual_reachability, min_samples):
         dtype=MST_edge_dtype,
     )
     return mst
-
-
-def _tree_to_labels(
-    single_linkage_tree,
-    min_cluster_size=10,
-    cluster_selection_method="eom",
-    allow_single_cluster=False,
-    cluster_selection_epsilon=0.0,
-    max_cluster_size=None,
-):
-    """Converts a pretrained tree and cluster size into a
-    set of labels and probabilities.
-    """
-    condensed_tree = condense_tree(single_linkage_tree, min_cluster_size)
-    stability_dict = compute_stability(condensed_tree)
-    labels, probabilities = get_clusters(
-        condensed_tree,
-        stability_dict,
-        cluster_selection_method,
-        allow_single_cluster,
-        cluster_selection_epsilon,
-        max_cluster_size,
-    )
-
-    return (labels, probabilities, single_linkage_tree)
 
 
 def _process_mst(min_spanning_tree):
@@ -222,7 +197,10 @@ def remap_single_linkage_tree(tree, internal_to_raw, non_finite):
     finite_count = len(internal_to_raw)
 
     outlier_count = len(non_finite)
-    for i, (left, right, *_) in enumerate(tree):
+    for i, _ in enumerate(tree):
+        left = tree[i]["left_node"]
+        right = tree[i]["right_node"]
+
         if left < finite_count:
             tree[i]["left_node"] = internal_to_raw[left]
         else:
@@ -236,7 +214,7 @@ def remap_single_linkage_tree(tree, internal_to_raw, non_finite):
     last_cluster_id = max(
         tree[tree.shape[0] - 1]["left_node"], tree[tree.shape[0] - 1]["right_node"]
     )
-    last_cluster_size = tree[tree.shape[0] - 1]["value"]
+    last_cluster_size = tree[tree.shape[0] - 1]["cluster_size"]
     for i, outlier in enumerate(non_finite):
         outlier_tree[i] = (outlier, last_cluster_id + 1, np.inf, last_cluster_size + 1)
         last_cluster_id += 1
@@ -661,14 +639,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 kwargs["algo"] = "ball_tree"
                 kwargs["leaf_size"] = self.leaf_size
 
-        single_linkage_tree = mst_func(**kwargs)
+        self._single_linkage_tree_ = mst_func(**kwargs)
 
-        (
-            self.labels_,
-            self.probabilities_,
+        self.labels_, self.probabilities_ = tree_to_labels(
             self._single_linkage_tree_,
-        ) = _tree_to_labels(
-            single_linkage_tree,
             self.min_cluster_size,
             self.cluster_selection_method,
             self.allow_single_cluster,

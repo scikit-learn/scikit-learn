@@ -19,15 +19,40 @@ HIERARCHY_dtype = np.dtype([
     ("cluster_size", np.intp),
 ])
 
+cpdef tuple tree_to_labels(
+    const HIERARCHY_t[::1] single_linkage_tree,
+    cnp.intp_t min_cluster_size=10,
+    cluster_selection_method="eom",
+    bint allow_single_cluster=False,
+    cnp.float64_t cluster_selection_epsilon=0.0,
+    max_cluster_size=None,
+):
+    cdef:
+        cnp.ndarray[HIERARCHY_t, ndim=1, mode='c'] condensed_tree
+        cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] labels
+        cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probabilities
+
+    condensed_tree = _condense_tree(single_linkage_tree, min_cluster_size)
+    labels, probabilities = _get_clusters(
+        condensed_tree,
+        _compute_stability(condensed_tree),
+        cluster_selection_method,
+        allow_single_cluster,
+        cluster_selection_epsilon,
+        max_cluster_size,
+    )
+
+    return (labels, probabilities)
+
 cdef list bfs_from_hierarchy(
-    cnp.ndarray[HIERARCHY_t, ndim=1, mode='c'] hierarchy,
+    const HIERARCHY_t[::1] hierarchy,
     cnp.intp_t bfs_root
 ):
     """
     Perform a breadth first search on a tree in scipy hclust format.
     """
 
-    cdef list process_queue, next_queue
+    cdef list process_queue, next_queue, result
     cdef cnp.intp_t n_samples = hierarchy.shape[0] + 1
     cdef cnp.intp_t node
     process_queue = [bfs_root]
@@ -55,8 +80,8 @@ cdef list bfs_from_hierarchy(
     return result
 
 
-cpdef cnp.ndarray[HIERARCHY_t, ndim=1, mode='c'] condense_tree(
-    cnp.ndarray[HIERARCHY_t, ndim=1, mode='c'] hierarchy,
+cdef cnp.ndarray[HIERARCHY_t, ndim=1, mode='c'] _condense_tree(
+    const HIERARCHY_t[::1] hierarchy,
     cnp.intp_t min_cluster_size=10
 ):
     """Condense a tree according to a minimum cluster size. This is akin
@@ -172,7 +197,9 @@ cpdef cnp.ndarray[HIERARCHY_t, ndim=1, mode='c'] condense_tree(
     return np.array(result_list, dtype=HIERARCHY_dtype)
 
 
-cpdef dict compute_stability(cnp.ndarray[HIERARCHY_t, ndim=1, mode='c'] condensed_tree):
+cdef dict _compute_stability(
+    cnp.ndarray[HIERARCHY_t, ndim=1, mode='c'] condensed_tree
+):
 
     cdef:
         cnp.float64_t[::1] result, births
@@ -581,7 +608,7 @@ cdef set epsilon_search(
     return set(selected_clusters)
 
 @cython.wraparound(True)
-cpdef tuple get_clusters(
+cdef tuple _get_clusters(
     cnp.ndarray[HIERARCHY_t, ndim=1, mode='c'] hierarchy,
     dict stability,
     cluster_selection_method='eom',

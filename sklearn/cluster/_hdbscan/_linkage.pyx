@@ -190,7 +190,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
 
     return mst
 
-cpdef cnp.ndarray[HIERARCHY_t, ndim=1] make_single_linkage(const MST_edge_t[::1] mst):
+cpdef cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] make_single_linkage(const MST_edge_t[::1] mst):
     """Construct a single-linkage tree from an MST.
 
     Parameters
