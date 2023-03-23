@@ -731,3 +731,60 @@ def test_lda_array_api(array_namespace):
             err_msg=f"{method} did not the return the same result",
             atol=1e-6,
         )
+
+
+@pytest.mark.parametrize("device", ["cuda", "cpu"])
+@pytest.mark.parametrize("dtype", ["float32", "float64"])
+def test_lda_array_torch(device, dtype):
+    """Check running on PyTorch Tensors gives the same results as NumPy"""
+    torch = pytest.importorskip("torch")
+    if device == "cuda" and not torch.has_cuda:
+        pytest.skip("test requires cuda")
+
+    lda = LinearDiscriminantAnalysis()
+    X_np = X6.astype(dtype)
+    y_np = y6.astype(dtype)
+    lda.fit(X_np, y_np)
+
+    X_torch = torch.asarray(X_np, device=device)
+    y_torch = torch.asarray(y_np, device=device)
+    lda_xp = clone(lda)
+    with config_context(array_api_dispatch=True):
+        lda_xp.fit(X_torch, y_torch)
+
+    array_attributes = {
+        key: value for key, value in vars(lda).items() if isinstance(value, np.ndarray)
+    }
+
+    for key, attribute in array_attributes.items():
+        lda_xp_param = getattr(lda_xp, key)
+        assert isinstance(lda_xp_param, torch.Tensor)
+
+        lda_xp_param_np = _convert_to_numpy(lda_xp_param, xp=torch)
+        assert_allclose(
+            attribute, lda_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
+        )
+
+    # Check predictions are the same
+    methods = (
+        "decision_function",
+        "predict",
+        "predict_log_proba",
+        "predict_proba",
+        "transform",
+    )
+    for method in methods:
+        result = getattr(lda, method)(X_np)
+        with config_context(array_api_dispatch=True):
+            result_xp = getattr(lda_xp, method)(X_torch)
+
+        assert isinstance(result_xp, torch.Tensor)
+
+        result_xp_np = _convert_to_numpy(result_xp, xp=torch)
+
+        assert_allclose(
+            result,
+            result_xp_np,
+            err_msg=f"{method} did not the return the same result",
+            atol=1e-6,
+        )

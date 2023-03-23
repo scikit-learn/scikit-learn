@@ -1,14 +1,16 @@
 import numpy
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_allclose, assert_array_equal
 import pytest
 
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import get_namespace
-from sklearn.utils._array_api import _NumPyApiWrapper
 from sklearn.utils._array_api import _ArrayAPIWrapper
+
 from sklearn.utils._array_api import _asarray_with_order
 from sklearn.utils._array_api import _convert_to_numpy
 from sklearn.utils._array_api import _estimator_with_converted_arrays
+
+import sklearn.externals._array_api_compat.numpy as array_api_compat_numpy
 from sklearn._config import config_context
 
 pytestmark = pytest.mark.filterwarnings(
@@ -22,12 +24,11 @@ def test_get_namespace_ndarray():
 
     X_np = numpy.asarray([[1, 2, 3]])
 
-    # Dispatching on Numpy regardless or the value of array_api_dispatch.
     for array_api_dispatch in [True, False]:
         with config_context(array_api_dispatch=array_api_dispatch):
             xp_out, is_array_api = get_namespace(X_np)
-            assert not is_array_api
-            assert isinstance(xp_out, _NumPyApiWrapper)
+            assert is_array_api == array_api_dispatch
+            assert xp_out is array_api_compat_numpy
 
 
 def test_get_namespace_array_api():
@@ -42,11 +43,12 @@ def test_get_namespace_array_api():
         assert isinstance(xp_out, _ArrayAPIWrapper)
 
         # check errors
-        with pytest.raises(ValueError, match="Multiple namespaces"):
+        with pytest.raises(TypeError, match="Multiple namespaces"):
             get_namespace(X_np, X_xp)
 
-        with pytest.raises(ValueError, match="Unrecognized array input"):
-            get_namespace(1)
+        xp_out, is_array_api = get_namespace(1)
+        assert xp_out == array_api_compat_numpy
+        assert not is_array_api
 
 
 class _AdjustableNameAPITestWrapper(_ArrayAPIWrapper):
@@ -150,8 +152,35 @@ def test_convert_to_numpy_error():
 
     X = xp_.asarray([1.2, 3.4])
 
-    with pytest.raises(ValueError, match="Supported namespaces are:"):
+    with pytest.raises(ValueError, match="wrapped.array_api is an unsupported"):
         _convert_to_numpy(X, xp=xp_)
+
+
+@pytest.mark.parametrize("library", ["cupy", "torch", "cupy.array_api"])
+def test_convert_to_numpy_gpu(library):
+    """Check convert_to_numpy for GPU backed libraries."""
+    xp = pytest.importorskip(library)
+
+    if library == "torch":
+        if not xp.has_cuda:
+            pytest.skip("test requires cuda")
+        X_gpu = xp.asarray([1.0, 2.0, 3.0], device="cuda")
+    else:
+        X_gpu = xp.asarray([1.0, 2.0, 3.0])
+
+    X_cpu = _convert_to_numpy(X_gpu, xp=xp)
+    expected_output = numpy.asarray([1.0, 2.0, 3.0])
+    assert_allclose(X_cpu, expected_output)
+
+
+def test_convert_to_numpy_cpu():
+    """Check convert_to_numpy for PyTorch CPU arrays."""
+    torch = pytest.importorskip("torch")
+    X_torch = torch.asarray([1.0, 2.0, 3.0], device="cpu")
+
+    X_cpu = _convert_to_numpy(X_torch, xp=torch)
+    expected_output = numpy.asarray([1.0, 2.0, 3.0])
+    assert_allclose(X_cpu, expected_output)
 
 
 class SimpleEstimator(BaseEstimator):
@@ -161,15 +190,17 @@ class SimpleEstimator(BaseEstimator):
         return self
 
 
-@pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
-def test_convert_estimator_to_ndarray(array_namespace):
+@pytest.mark.parametrize(
+    "array_namespace, converter",
+    [
+        ("torch", lambda array: array.cpu().numpy()),
+        ("numpy.array_api", lambda array: numpy.asarray(array)),
+        ("cupy.array_api", lambda array: array._array.get()),
+    ],
+)
+def test_convert_estimator_to_ndarray(array_namespace, converter):
     """Convert estimator attributes to ndarray."""
     xp = pytest.importorskip(array_namespace)
-
-    if array_namespace == "numpy.array_api":
-        converter = lambda array: numpy.asarray(array)  # noqa
-    else:  # pragma: no cover
-        converter = lambda array: array._array.get()  # noqa
 
     X = xp.asarray([[1.3, 4.5]])
     est = SimpleEstimator().fit(X)
@@ -187,3 +218,40 @@ def test_convert_estimator_to_array_api():
 
     new_est = _estimator_with_converted_arrays(est, lambda array: xp.asarray(array))
     assert hasattr(new_est.X_, "__array_namespace__")
+
+
+@pytest.mark.parametrize("array_api_dispatch", [True, False])
+def test_get_namespace_array_api_isdtype(array_api_dispatch):
+    """Test isdtype implementation from _ArrayAPIWrapper and array_api_compat."""
+    xp = pytest.importorskip("numpy.array_api")
+
+    X_xp = xp.asarray([[1, 2, 3]])
+    with config_context(array_api_dispatch=array_api_dispatch):
+        xp_out, _ = get_namespace(X_xp)
+        assert xp_out.isdtype(xp_out.float32, "real floating")
+        assert xp_out.isdtype(xp_out.float64, "real floating")
+        assert not xp_out.isdtype(xp_out.int32, "real floating")
+
+        assert xp_out.isdtype(xp_out.bool, "bool")
+        assert not xp_out.isdtype(xp_out.float32, "bool")
+
+        assert xp_out.isdtype(xp_out.int16, "signed integer")
+        assert not xp_out.isdtype(xp_out.uint32, "signed integer")
+
+        assert xp_out.isdtype(xp_out.uint16, "unsigned integer")
+        assert not xp_out.isdtype(xp_out.int64, "unsigned integer")
+
+        assert xp_out.isdtype(xp_out.int64, "numeric")
+        assert xp_out.isdtype(xp_out.float32, "numeric")
+        assert xp_out.isdtype(xp_out.uint32, "numeric")
+
+
+@pytest.mark.parametrize("array_api_dispatch", [True, False])
+def test_get_namespace_list(array_api_dispatch):
+    """Test get_namespace for lists."""
+
+    X = [1, 2, 3]
+    with config_context(array_api_dispatch=array_api_dispatch):
+        xp_out, is_array = get_namespace(X)
+        assert not is_array
+        assert xp_out is array_api_compat_numpy

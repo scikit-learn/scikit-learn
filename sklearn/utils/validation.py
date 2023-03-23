@@ -31,6 +31,7 @@ from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 from ..utils._array_api import get_namespace
 from ..utils._array_api import _asarray_with_order
+from ..utils._array_api import _is_numpy_namespace
 from ._isfinite import cy_isfinite, FiniteStatus
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
@@ -111,7 +112,7 @@ def _assert_all_finite(
             raise ValueError("Input contains NaN")
 
     # We need only consider float arrays, hence can early return for all else.
-    if X.dtype.kind not in "fc":
+    if not xp.isdtype(X.dtype, ("real floating", "complex floating")):
         return
 
     # First try an O(n) time, O(1) space solution for the common case that
@@ -759,7 +760,7 @@ def check_array(
     dtype_numeric = isinstance(dtype, str) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
-    if not hasattr(dtype_orig, "kind"):
+    if not is_array_api and not hasattr(dtype_orig, "kind"):
         # not a data type (e.g. a column named dtype in a pandas DataFrame)
         dtype_orig = None
 
@@ -801,7 +802,11 @@ def check_array(
             dtype_orig = None
 
     if dtype_numeric:
-        if dtype_orig is not None and dtype_orig.kind == "O":
+        if (
+            dtype_orig is not None
+            and hasattr(dtype_orig, "kind")
+            and dtype_orig.kind == "O"
+        ):
             # if input is object, convert to float.
             dtype = xp.float64
         else:
@@ -875,12 +880,12 @@ def check_array(
         with warnings.catch_warnings():
             try:
                 warnings.simplefilter("error", ComplexWarning)
-                if dtype is not None and np.dtype(dtype).kind in "iu":
+                if dtype is not None and xp.isdtype(dtype, "integral"):
                     # Conversion float -> int should not contain NaN or
                     # inf (numpy#14412). We cannot use casting='safe' because
                     # then conversion float -> int would be disallowed.
                     array = _asarray_with_order(array, order=order, xp=xp)
-                    if array.dtype.kind == "f":
+                    if xp.isdtype(array.dtype, ("real floating", "complex floating")):
                         _assert_all_finite(
                             array,
                             allow_nan=False,
@@ -920,7 +925,7 @@ def check_array(
                     "if it contains a single sample.".format(array)
                 )
 
-        if dtype_numeric and array.dtype.kind in "USV":
+        if dtype_numeric and hasattr(array.dtype, "kind") and array.dtype.kind in "USV":
             raise ValueError(
                 "dtype='numeric' is not compatible with arrays of bytes/strings."
                 "Convert your data to numeric values explicitly instead."
@@ -958,7 +963,7 @@ def check_array(
             )
 
     if copy:
-        if xp.__name__ in {"numpy", "numpy.array_api"}:
+        if _is_numpy_namespace(xp):
             # only make a copy if `array` and `array_orig` may share memory`
             if np.may_share_memory(array, array_orig):
                 array = _asarray_with_order(
@@ -1201,7 +1206,7 @@ def column_or_1d(y, *, dtype=None, warn=False):
 
     shape = y.shape
     if len(shape) == 1:
-        return _asarray_with_order(xp.reshape(y, -1), order="C", xp=xp)
+        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
@@ -1211,7 +1216,7 @@ def column_or_1d(y, *, dtype=None, warn=False):
                 DataConversionWarning,
                 stacklevel=2,
             )
-        return _asarray_with_order(xp.reshape(y, -1), order="C", xp=xp)
+        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
 
     raise ValueError(
         "y should be a 1d array, got an array of shape {} instead.".format(shape)

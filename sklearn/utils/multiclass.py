@@ -374,10 +374,10 @@ def type_of_target(y, input_name=""):
         suffix = ""  # [1, 2, 3] or [[1], [2], [3]]
 
     # Check float and contains non-integer float values
-    if y.dtype.kind == "f":
+    if xp.isdtype(y.dtype, "real floating"):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
         data = y.data if issparse(y) else y
-        if xp.any(data != data.astype(int)):
+        if xp.any(data != xp.astype(data, int)):
             _assert_all_finite(data, input_name=input_name)
             return "continuous" + suffix
 

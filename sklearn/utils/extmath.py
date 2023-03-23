@@ -20,7 +20,7 @@ from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from ._array_api import get_namespace
+from ._array_api import get_namespace, _is_numpy_namespace
 
 
 def squared_norm(x):
@@ -886,7 +886,7 @@ def softmax(X, copy=True):
     max_prob = xp.reshape(xp.max(X, axis=1), (-1, 1))
     X -= max_prob
 
-    if xp.__name__ in {"numpy", "numpy.array_api"}:
+    if _is_numpy_namespace(xp):
         # optimization for NumPy arrays
         np.exp(X, out=np.asarray(X))
     else:
