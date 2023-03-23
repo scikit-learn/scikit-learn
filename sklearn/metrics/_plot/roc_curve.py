@@ -73,9 +73,9 @@ class RocCurveDisplay:
     >>> from sklearn import metrics
     >>> y = np.array([0, 0, 1, 1])
     >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
+    >>> fpr, tpr, _ = metrics.roc_curve(y, pred)
     >>> roc_auc = metrics.auc(fpr, tpr)
-    >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, thresholds=thresholds,
+    >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr,
     ...                                   roc_auc=roc_auc,
     ...                                   estimator_name='example estimator')
     >>> display.plot()
@@ -215,6 +215,8 @@ class RocCurveDisplay:
         See Also
         --------
         roc_curve : Compute Receiver operating characteristic (ROC) curve.
+        RocCurveDisplay.from_cv_results : ROC Curve visualization given the
+            results of a cross-validation.
         RocCurveDisplay.from_predictions : ROC Curve visualization given the
             probabilities of scores of a classifier.
         roc_auc_score : Compute the area under the ROC curve.
@@ -352,6 +354,8 @@ class RocCurveDisplay:
         See Also
         --------
         roc_curve : Compute Receiver operating characteristic (ROC) curve.
+        RocCurveDisplay.from_cv_results : ROC Curve visualization given the
+            results of a cross-validation.
         RocCurveDisplay.from_estimator : ROC Curve visualization given an
             estimator and some data.
         roc_auc_score : Compute the area under the ROC curve.
@@ -480,6 +484,30 @@ class RocCurveDisplay:
         -------
         display : :class:`~sklearn.metrics.MultiRocCurveDisplay`
             The multi-fold ROC curve display.
+
+        See Also
+        --------
+        roc_curve : Compute Receiver operating characteristic (ROC) curve.
+            RocCurveDisplay.from_estimator : ROC Curve visualization given an
+            estimator and some data.
+        RocCurveDisplay.from_predictions : ROC Curve visualization given the
+            probabilities of scores of a classifier.
+        roc_auc_score : Compute the area under the ROC curve.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import make_classification
+        >>> from sklearn.metrics import RocCurveDisplay
+        >>> from sklearn.model_selection import cross_validate
+        >>> from sklearn.svm import SVC
+        >>> X, y = make_classification(random_state=0)
+        >>> clf = SVC(random_state=0)
+        >>> cv_results = cross_validate(
+        ...     clf, X, y, cv=3, return_estimator=True, return_indices=True)
+        >>> RocCurveDisplay.from_cv_results(cv_results, X, y, kind="both")
+        <...>
+        >>> plt.show()
         """
         check_matplotlib_support(f"{cls.__name__}.from_cv_results")
 
