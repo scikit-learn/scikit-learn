@@ -16,8 +16,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 
-from sklearn.metrics import RocCurveDisplay
-from sklearn.metrics._plot.roc_curve import MultiRocCurveDisplay
+from sklearn.metrics import RocCurveDisplay, MultiRocCurveDisplay
 
 
 @pytest.fixture(scope="module")

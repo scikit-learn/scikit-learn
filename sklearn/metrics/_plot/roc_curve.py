@@ -18,6 +18,7 @@ class RocCurveDisplay:
     """ROC Curve visualization.
 
     It is recommended to use
+    :meth:`~sklearn.metrics.RocCurveDisplay.from_cv_results`,
     :meth:`~sklearn.metrics.RocCurveDisplay.from_estimator` or
     :meth:`~sklearn.metrics.RocCurveDisplay.from_predictions` to create
     a :class:`~sklearn.metrics.RocCurveDisplay`. All parameters are
@@ -60,6 +61,8 @@ class RocCurveDisplay:
     See Also
     --------
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay.from_cv_results : ROC Curve visualization given the
+        results of a cross-validation.
     RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
         (ROC) curve given an estimator and some data.
     RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
@@ -620,6 +623,33 @@ class MultiRocCurveDisplay:
 
     figure_ : matplotlib Figure
         Figure containing the curve.
+
+    See Also
+    --------
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay.from_cv_results : ROC Curve visualization given the
+        results of a cross-validation.
+    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
+        (ROC) curve given an estimator and some data.
+    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
+        (ROC) curve given the true and predicted values.
+    roc_auc_score : Compute the area under the ROC curve.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> from sklearn.metrics import RocCurveDisplay, MultiRocCurveDisplay
+    >>> X, y = make_classification(random_state=0)
+    >>> log_reg = LogisticRegression().fit(X, y)
+    >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+    >>> displays = [
+    ...     RocCurveDisplay.from_estimator(est, X, y) for est in (log_reg, tree)]
+    >>> MultiRocCurveDisplay(displays=displays).plot()
+    <...>
+    >>> plt.show()
     """
 
     def __init__(self, *, displays):

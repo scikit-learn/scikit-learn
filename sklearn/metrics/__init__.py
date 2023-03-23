@@ -91,6 +91,7 @@ from ._scorer import get_scorer_names
 
 from ._plot.det_curve import DetCurveDisplay
 from ._plot.roc_curve import RocCurveDisplay
+from ._plot.roc_curve import MultiRocCurveDisplay
 from ._plot.precision_recall_curve import PrecisionRecallDisplay
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
 from ._plot.regression import PredictionErrorDisplay
@@ -137,7 +138,6 @@ __all__ = [
     "label_ranking_loss",
     "log_loss",
     "make_scorer",
-    "nan_euclidean_distances",
     "matthews_corrcoef",
     "max_error",
     "mean_absolute_error",
@@ -150,7 +150,9 @@ __all__ = [
     "median_absolute_error",
     "mean_absolute_percentage_error",
     "multilabel_confusion_matrix",
+    "MultiRocCurveDisplay",
     "mutual_info_score",
+    "nan_euclidean_distances",
     "ndcg_score",
     "normalized_mutual_info_score",
     "pair_confusion_matrix",
