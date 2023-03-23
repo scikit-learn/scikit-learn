@@ -1216,7 +1216,8 @@ def load_sample_images():
     descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
 
     filenames, images = [], []
-    for filename in sorted(resources.contents(IMAGES_MODULE)):
+    content = [path.name for path in resources.files(IMAGES_MODULE).iterdir()]
+    for filename in sorted(content):
         if filename.endswith(".jpg"):
             filenames.append(filename)
             with _open_binary(IMAGES_MODULE, filename) as image_file:
