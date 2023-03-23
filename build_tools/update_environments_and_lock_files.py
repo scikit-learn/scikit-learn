@@ -65,7 +65,6 @@ common_dependencies_without_coverage = [
 ]
 
 common_dependencies = common_dependencies_without_coverage + [
-    "codecov",
     "pytest-cov",
     "coverage",
 ]
