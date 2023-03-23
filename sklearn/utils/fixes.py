@@ -215,3 +215,14 @@ def _is_resource(data_module, data_file_name):
         return resources.files(data_module).joinpath(data_file_name).is_file()
     else:
         return resources.is_resource(data_module, data_file_name)
+
+
+def _contents(data_module):
+    if sys.version_info >= (3, 9):
+        return (
+            resource.name
+            for resource in resources.files(data_module).iterdir()
+            if resource.is_file()
+        )
+    else:
+        return resources.contents(data_module)
