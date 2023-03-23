@@ -199,6 +199,10 @@ jobs:
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         CHECK_WARNINGS: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '3'  # non-default seed
+        # disable pytest-xdist to have 1 job where OpenMP and BLAS are not single
+        # threaded because by default the tests configuration (sklearn/conftest.py)
+        # makes sure that they are single threaded in each xdist subprocess.
+        PYTEST_XDIST_VERSION: 'none'
 
 - template: build_tools/azure/posix-docker.yml
   parameters:
