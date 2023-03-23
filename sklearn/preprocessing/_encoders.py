@@ -3,7 +3,7 @@
 # License: BSD 3 clause
 
 import numbers
-from numbers import Integral
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
