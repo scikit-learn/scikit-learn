@@ -850,7 +850,7 @@ Ridge Regression`_, see the example below.
 
 .. _linear_regression_intercept:
 
-Note on the handling on the intercept in linear regression models
+Note on the handling of the intercept in linear regression models
 -----------------------------------------------------------------
 
 Recall the definition of the ridge estimator:
