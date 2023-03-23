@@ -303,10 +303,14 @@ Changelog
 
 - |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
   not normalized, instead of actually normalizing them in the metric. Starting from
-  1.5 this will raise an error. :pr:`25299` by :user:`Omar Salman <OmarManzoor`.
+  1.5 this will raise an error. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
 
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Enhancement| Adds :meth:`~sklearn.metrics.RocCurveDisplay.from_cv_results` method
+  to plot ROC curves using estiamtors fitted during cross-validation.
+  :pr:`25939` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................

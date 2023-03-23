@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 
-
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_iris
 
@@ -16,7 +15,6 @@ from sklearn.model_selection import cross_validate, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
-
 
 from sklearn.metrics import RocCurveDisplay
 from sklearn.metrics._plot.roc_curve import MultiRocCurveDisplay
@@ -464,3 +462,52 @@ def test_from_cv_results_names(pyplot, data_binary):
     for i in range(n_folds):
         assert fold_name[i] in legend.get_texts()[i].get_text()
     assert aggregate_name in legend.get_texts()[n_folds].get_text()
+
+
+def test_from_cv_results_effect_kwargs(pyplot, data_binary):
+    """Check that the different keywords arguments are behaving as expected."""
+    X, y = data_binary
+    model = make_pipeline(StandardScaler(), LogisticRegression())
+
+    cv_results = cross_validate(
+        model, X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    fold_line_kw = {"color": "red", "linestyle": "--", "linewidth": 2}
+    display = RocCurveDisplay.from_cv_results(
+        cv_results, X, y, fold_line_kw=fold_line_kw
+    )
+
+    for line in display.fold_lines_:
+        assert line.get_color() == fold_line_kw["color"]
+        assert line.get_linestyle() == fold_line_kw["linestyle"]
+        assert line.get_linewidth() == fold_line_kw["linewidth"]
+
+    fold_line_kw = [{"color": "red"}, {"color": "green"}, {"color": "blue"}]
+    display = RocCurveDisplay.from_cv_results(
+        cv_results, X, y, fold_line_kw=fold_line_kw
+    )
+
+    for line, kwargs in zip(display.fold_lines_, fold_line_kw):
+        assert line.get_color() == kwargs["color"]
+
+    aggregate_line_kw = {"color": "red", "linestyle": "--", "linewidth": 2}
+    aggregate_uncertainty_kw = {"alpha": 0.5, "color": "red"}
+    display = RocCurveDisplay.from_cv_results(
+        cv_results,
+        X,
+        y,
+        aggregate_line_kw=aggregate_line_kw,
+        aggregate_uncertainty_kw=aggregate_uncertainty_kw,
+        kind="both",
+    )
+
+    assert display.mean_line_.get_color() == aggregate_line_kw["color"]
+    assert display.mean_line_.get_linestyle() == aggregate_line_kw["linestyle"]
+    assert display.mean_line_.get_linewidth() == aggregate_line_kw["linewidth"]
+
+    # `facecolor` is encoded in RGBA
+    assert_allclose(
+        display.std_area_.get_facecolor(),
+        [[1, 0, 0, aggregate_uncertainty_kw["alpha"]]],
+    )
