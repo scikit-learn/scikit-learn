@@ -498,6 +498,8 @@ def roc_auc_score(
     --------
     average_precision_score : Area under the precision-recall curve.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay.from_cv_results : ROC Curve visualization given the
+        results of a cross-validation.
     RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
         (ROC) curve given an estimator and some data.
     RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
