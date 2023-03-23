@@ -97,7 +97,15 @@ class TreeNode:
     partition_start = 0
     partition_stop = 0
 
-    def __init__(self, depth, sample_indices, weighted_n_node_samples, sum_gradients, sum_hessians, value=None):
+    def __init__(
+        self,
+        depth,
+        sample_indices,
+        weighted_n_node_samples,
+        sum_gradients,
+        sum_hessians,
+        value=None,
+    ):
         self.depth = depth
         self.sample_indices = sample_indices
         self.n_samples = sample_indices.shape[0]
