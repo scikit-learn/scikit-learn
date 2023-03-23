@@ -600,7 +600,7 @@ def test_calibration_display_validation(pyplot, iris_data, iris_data_binary):
     X_binary, y_binary = iris_data_binary
 
     reg = LinearRegression().fit(X, y)
-    msg = "'estimator' should be a fitted classifier"
+    msg = "Expected 'estimator' to be a binary classifier. Got LinearRegression"
     with pytest.raises(ValueError, match=msg):
         CalibrationDisplay.from_estimator(reg, X, y)
 
