@@ -204,7 +204,7 @@ Changelog
 
 - |Enhancement| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now
   supports the `PyTorch <https://pytorch.org/>`__. See
-  :ref:`array_api` for more details. :pr:`xxxxx` by `Thomas Fan`_.
+  :ref:`array_api` for more details. :pr:`25956` by `Thomas Fan`_.
 
 :mod:`sklearn.ensemble`
 .......................
