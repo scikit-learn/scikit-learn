@@ -1882,6 +1882,17 @@ def make_biclusters(
     return result, rows, cols
 
 
+@validate_params(
+    {
+        "shape": [tuple],
+        "n_clusters": [Interval(Integral, 1, None, closed="left"), "array-like"],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "minval": [Interval(Real, None, None, closed="neither")],
+        "maxval": [Interval(Real, None, None, closed="neither")],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_checkerboard(
     shape,
     n_clusters,
