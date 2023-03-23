@@ -1013,7 +1013,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     See Also
     --------
     SGDClassifier : Incrementally trained logistic regression (when given
-        the parameter ``loss="log"``).
+        the parameter ``loss="log_loss"``).
     LogisticRegressionCV : Logistic regression with built-in cross validation.
 
     Notes
@@ -1167,6 +1167,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 "'elasticnet'. Got "
                 "(penalty={})".format(self.penalty)
             )
+
+        if self.penalty == "elasticnet" and self.l1_ratio is None:
+            raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 
         # TODO(1.4): Remove "none" option
         if self.penalty == "none":
