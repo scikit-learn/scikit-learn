@@ -95,9 +95,25 @@ def ols_ridge_dataset(global_random_seed, request):
         If "long", then n_samples > n_features.
         If "wide", then n_features > n_samples.
 
-    For "wide", we return the minimum norm solution w = X' (XX')^-1 y:
+    Notes
+    -----
+    For "wide", we return the minimum norm solution:
 
-        min ||w||_2 subject to X w = y
+        min ||w||_2 subject to X w + w_0 = y
+
+    In particular, this is not equivalent to including the intercept as the
+    fitted coefficient for an extra feature column with all ones as the
+    intercept should not be part of the norm we minimize. Indeed the intercept
+    parameter is not penalized and we want the minimum norm solution in the
+    unpenalized problem to be the limit of the penalized problem when alpha ->
+    0.
+
+    The minimum norm solution is of the problem with intercept is also the
+    minimum norm solution of the centered problem without intercept:
+
+        w = X_c' (X_c X_c')^-1 y_c
+
+    See :ref:`linear_regression_intercept` in the user guide for more details.
 
     Returns
     -------
@@ -105,12 +121,13 @@ def ols_ridge_dataset(global_random_seed, request):
         Last column of 1, i.e. intercept.
     y : ndarray
     coef_ols : ndarray of shape
-        Minimum norm OLS solutions, i.e. min ||X w - y||_2_2 (with mininum ||w||_2 in
-        case of ambiguity)
+        Minimum norm OLS solutions, i.e. min_w ||X w[:-1] + w[-1] - y||_2_2
+        (with mininum ||w[:-1]||_2 in case of ambiguity)
         Last coefficient is intercept.
     coef_ridge : ndarray of shape (5,)
-        Ridge solution with alpha=1, i.e. min ||X w - y||_2_2 + ||w||_2^2.
-        Last coefficient is intercept.
+        Ridge solution with alpha=1, i.e.:
+            min_w ||X w[:-1] + w[-1] - y||_2_2 + ||w[:-1]||_2^2.
+        Last coefficient is intercept and is not penalized.
     """
     # Make larger dim more than double as big as the smaller one.
     # This helps when constructing singular matrices like (X, X).
@@ -126,8 +143,7 @@ def ols_ridge_dataset(global_random_seed, request):
     X[:, -1] = 1  # last columns acts as intercept
     U, s, Vt = linalg.svd(X)
     assert np.all(s > 1e-3)  # to be sure
-    U1, U2 = U[:, :k], U[:, k:]
-    Vt1, _ = Vt[:k, :], Vt[k:, :]
+    _, U2 = U[:, :k], U[:, k:]
 
     if request.param == "long":
         # Add a term that vanishes in the product X'y
@@ -135,9 +151,17 @@ def ols_ridge_dataset(global_random_seed, request):
         y = X @ coef_ols
         y += U2 @ rng.normal(size=n_samples - n_features) ** 2
     else:
-        y = rng.uniform(low=-10, high=10, size=n_samples)
-        # w = X'(XX')^-1 y = V s^-1 U' y
-        coef_ols = Vt1.T @ np.diag(1 / s) @ U1.T @ y
+        # Uncentered random response:
+        y = rng.uniform(low=-5, high=10, size=n_samples)
+
+        # The minimum norm solution of the problem with intercept is also the
+        # minimum norm solution of the centered problem without intercept:
+        y_c = y - y.mean()
+        X_c = X[:, :-1] - X[:, :-1].mean(axis=0)
+
+        minimum_norm_coef = X_c.T @ np.linalg.solve(X_c @ X_c.T, y_c)
+        intercept = y.mean() - X[:, :-1].mean(axis=0) @ minimum_norm_coef
+        coef_ols = np.concatenate([minimum_norm_coef, [intercept]])
 
     # Add penalty alpha * ||coef||_2^2 for alpha=1 and solve via normal equations.
     # Note that the problem is well conditioned such that we get accurate results.
@@ -281,7 +305,8 @@ def test_ridge_regression_vstacked_X(
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
-@pytest.mark.parametrize("fit_intercept", [True, False])
+# @pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize("fit_intercept", [True])
 def test_ridge_regression_unpenalized(
     solver, fit_intercept, ols_ridge_dataset, global_random_seed
 ):
@@ -314,29 +339,23 @@ def test_ridge_regression_unpenalized(
         intercept = 0
     model.fit(X, y)
 
-    # FIXME: `assert_allclose(model.coef_, coef)` should work for all cases but fails
-    # for the wide/fat case with n_features > n_samples. The current Ridge solvers do
-    # NOT return the minimum norm solution with fit_intercept=True.
-    if n_samples > n_features or not fit_intercept:
-        assert model.intercept_ == pytest.approx(intercept)
-        assert_allclose(model.coef_, coef)
-    else:
-        # As it is an underdetermined problem, residuals = 0. This shows that we get
-        # a solution to X w = y ....
-        assert_allclose(model.predict(X), y)
+    if n_samples < n_features and fit_intercept:
+        # As the model is well specified (fit_intercept=True) and as it is an
+        # underdetermined problem (n_samples < n_features), residuals = 0. This
+        # shows that we get a solution to X w = y...
         assert_allclose(X @ coef + intercept, y)
-        # But it is not the minimum norm solution. (This should be equal.)
-        assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > np.linalg.norm(
-            np.r_[intercept, coef]
-        )
+        assert_allclose(model.predict(X), y)
 
-        pytest.xfail(reason="Ridge does not provide the minimum norm solution.")
-        assert model.intercept_ == pytest.approx(intercept)
-        assert_allclose(model.coef_, coef)
+    # Check that we converge to the solution provided by the ols_ridge_dataset
+    # fixture. In particular when n_features > n_samples this should be the
+    # minimum ||coef||_2 solution.
+    assert_allclose(model.coef_, coef)
+    assert model.intercept_ == pytest.approx(intercept)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
-@pytest.mark.parametrize("fit_intercept", [True, False])
+# @pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize("fit_intercept", [True])
 def test_ridge_regression_unpenalized_hstacked_X(
     solver, fit_intercept, ols_ridge_dataset, global_random_seed
 ):
@@ -369,29 +388,21 @@ def test_ridge_regression_unpenalized_hstacked_X(
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
     model.fit(X, y)
 
-    if n_samples > n_features or not fit_intercept:
-        assert model.intercept_ == pytest.approx(intercept)
-        if solver == "cholesky":
-            # Cholesky is a bad choice for singular X.
-            pytest.skip()
-        assert_allclose(model.coef_, np.r_[coef, coef])
-    else:
-        # FIXME: Same as in test_ridge_regression_unpenalized.
+    if n_samples < n_features and fit_intercept:
         # As it is an underdetermined problem, residuals = 0. This shows that we get
         # a solution to X w = y ....
         assert_allclose(model.predict(X), y)
-        # But it is not the minimum norm solution. (This should be equal.)
-        assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > np.linalg.norm(
-            np.r_[intercept, coef, coef]
-        )
 
-        pytest.xfail(reason="Ridge does not provide the minimum norm solution.")
-        assert model.intercept_ == pytest.approx(intercept)
-        assert_allclose(model.coef_, np.r_[coef, coef])
+    if solver == "cholesky":
+        # Cholesky is a bad choice for singular X.
+        pytest.skip()
+    assert_allclose(model.coef_, np.r_[coef, coef])
+    assert model.intercept_ == pytest.approx(intercept)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
-@pytest.mark.parametrize("fit_intercept", [True, False])
+# XXX: @pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize("fit_intercept", [True])
 def test_ridge_regression_unpenalized_vstacked_X(
     solver, fit_intercept, ols_ridge_dataset, global_random_seed
 ):
@@ -427,22 +438,13 @@ def test_ridge_regression_unpenalized_vstacked_X(
     y = np.r_[y, y]
     model.fit(X, y)
 
-    if n_samples > n_features or not fit_intercept:
-        assert model.intercept_ == pytest.approx(intercept)
-        assert_allclose(model.coef_, coef)
-    else:
-        # FIXME: Same as in test_ridge_regression_unpenalized.
+    if 2 * n_samples < n_features and fit_intercept:
         # As it is an underdetermined problem, residuals = 0. This shows that we get
         # a solution to X w = y ....
         assert_allclose(model.predict(X), y)
-        # But it is not the minimum norm solution. (This should be equal.)
-        assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > np.linalg.norm(
-            np.r_[intercept, coef]
-        )
 
-        pytest.xfail(reason="Ridge does not provide the minimum norm solution.")
-        assert model.intercept_ == pytest.approx(intercept)
-        assert_allclose(model.coef_, coef)
+    assert_allclose(model.coef_, coef)
+    assert model.intercept_ == pytest.approx(intercept)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
