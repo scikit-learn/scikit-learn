@@ -7,15 +7,13 @@
 import numpy as np
 cimport numpy as cnp
 from cython cimport floating
-from typing import List, Tuple
 
 cnp.import_array()
 
 
 def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
     cdef:
-        Py_ssize_t n = y.shape[0]
-        Py_ssize_t i, k
+        Py_ssize_t n = y.shape[0], i, k
         floating prev_y, sum_wy, sum_w
         Py_ssize_t[::1] target = np.arange(n, dtype=np.intp)
 
@@ -64,7 +62,9 @@ def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
             i = k
 
 
-def _make_unique(X: List[float], y: List[float], sample_weights: List[float]) -> Tuple[List[float], List[float], List[float]]:
+def _make_unique(const floating[::1] X,
+                 const floating[::1] y,
+                 const floating[::1] sample_weights):
     """Average targets for duplicate X, drop duplicates.
 
     Aggregates duplicate X values into a single X value where
@@ -73,13 +73,12 @@ def _make_unique(X: List[float], y: List[float], sample_weights: List[float]) ->
 
     Assumes that X is ordered, so that all duplicates follow each other.
     """
-    X = np.asarray(X)
     unique_values = len(np.unique(X))
 
-    cdef cnp.ndarray[floating] y_out = np.empty(unique_values,
-                                                     dtype=np.float64)
-    cdef cnp.ndarray[floating] x_out = np.empty_like(y_out)
-    cdef cnp.ndarray[floating] weights_out = np.empty_like(y_out)
+    cdef cnp.ndarray[dtype=floating] y_out = np.empty(unique_values,
+                                                     dtype=X.dtype)
+    cdef cnp.ndarray[dtype=floating] x_out = np.empty_like(y_out)
+    cdef cnp.ndarray[dtype=floating] weights_out = np.empty_like(y_out)
 
     cdef floating current_x = X[0]
     cdef floating current_y = 0
@@ -89,7 +88,7 @@ def _make_unique(X: List[float], y: List[float], sample_weights: List[float]) ->
     cdef int j
     cdef floating x
     cdef int n_samples = len(X)
-    eps = np.finfo(np.asarray(X).dtype).resolution
+    cdef floating eps = np.finfo(X.dtype).resolution
 
     for j in range(n_samples):
         x = X[j]
@@ -110,3 +109,4 @@ def _make_unique(X: List[float], y: List[float], sample_weights: List[float]) ->
     weights_out[i] = current_weight
     y_out[i] = current_y / current_weight
     return x_out[:i+1], y_out[:i+1], weights_out[:i+1]
+
