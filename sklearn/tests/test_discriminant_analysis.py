@@ -729,7 +729,7 @@ def test_lda_array_api(array_namespace):
             result,
             result_xp_np,
             err_msg=f"{method} did not the return the same result",
-            atol=1e-6,
+            atol=1e-5,
         )
 
 

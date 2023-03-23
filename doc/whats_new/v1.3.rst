@@ -199,7 +199,7 @@ Changelog
   :class:`decomposition.MiniBatchNMF` which can produce different results than previous
   versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
 
- :mod:`sklearn.discriminant_analysis`
+:mod:`sklearn.discriminant_analysis`
 ....................................
 
 - |Enhancement| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now
