@@ -14,14 +14,13 @@ from collections import namedtuple
 import os
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
-from importlib import resources
 from pathlib import Path
 
 from ..preprocessing import scale
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
-from ..utils.fixes import _open_binary, _open_text, _read_text
+from ..utils.fixes import _open_binary, _open_text, _read_text, _contents
 
 import numpy as np
 
@@ -1216,7 +1215,7 @@ def load_sample_images():
     descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
 
     filenames, images = [], []
-    for filename in sorted(resources.contents(IMAGES_MODULE)):
+    for filename in sorted(_contents(IMAGES_MODULE)):
         if filename.endswith(".jpg"):
             filenames.append(filename)
             with _open_binary(IMAGES_MODULE, filename) as image_file:
