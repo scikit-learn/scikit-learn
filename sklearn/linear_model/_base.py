@@ -203,8 +203,12 @@ def _preprocess_data(
     of whether X was centered (option used for optimization with sparse data in
     coordinate_descend).
 
-    This is here because nearly all linear models will want their data to be
-    centered. This function also systematically makes y consistent with X.dtype
+    Note that it is always possible to use the solution to (penalized) least
+    squares problem on centered data to build a solution to the original
+    problem with or without intercept by setting the intercept a posteriori as
+    explained in the user guide: :ref:`linear_regression_intercept`.
+
+    This function also makes y.dtype systematically consistent with X.dtype.
 
     Returns
     -------
@@ -359,6 +363,11 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
             # We always want coef_.dtype=X.dtype. For instance, X.dtype can differ from
             # coef_.dtype if warm_start=True.
             self.coef_ = np.divide(self.coef_, X_scale, dtype=X_scale.dtype)
+
+            # If self.coef_ is the solution of the penalized least squares on
+            # centered data then it is the solution of the least squares on the
+            # uncentered data with the following intercept:
+            # https://scikit-learn.org/stable/modules/linear_model.html#linear_regression_intercept
             self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
         else:
             self.intercept_ = 0.0
