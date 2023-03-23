@@ -37,7 +37,7 @@ https://conda.anaconda.org/conda-forge/win-64/libbrotlienc-1.0.9-hcfcfb64_8.tar.
 https://conda.anaconda.org/conda-forge/win-64/libclang13-15.0.7-default_h77d9078_1.conda#799890c6c093e7a64ea0dcb3d4f90115
 https://conda.anaconda.org/conda-forge/win-64/libpng-1.6.39-h19919ed_0.conda#ab6febdb2dbd9c00803609079db4de71
 https://conda.anaconda.org/conda-forge/win-64/libvorbis-1.3.7-h0e60522_0.tar.bz2#e1a22282de0169c93e4ffe6ce6acc212
-https://conda.anaconda.org/conda-forge/win-64/libxml2-2.10.3-hc3477c8_3.conda#1f37656230ab24d79970fe82594440f2
+https://conda.anaconda.org/conda-forge/win-64/libxml2-2.10.3-hc3477c8_6.conda#a56f8a52bc13d7eee23457f0e253e055
 https://conda.anaconda.org/conda-forge/win-64/m2w64-gcc-libs-5.3.0-7.tar.bz2#fe759119b8b3bfa720b8762c6fdc35de
 https://conda.anaconda.org/conda-forge/win-64/pcre2-10.40-h17e33f8_0.tar.bz2#2519de0d9620dc2bc7e19caf6867136d
 https://conda.anaconda.org/conda-forge/win-64/python-3.8.16-h4de0772_1_cpython.conda#461d9fc92cfde68f2ca7ef0988f6326a
@@ -122,7 +122,7 @@ https://conda.anaconda.org/conda-forge/win-64/qt-main-5.15.8-h88fe7eb_7.conda#e3
 https://conda.anaconda.org/conda-forge/noarch/requests-2.28.2-pyhd8ed1ab_0.conda#11d178fc55199482ee48d6812ea83983
 https://conda.anaconda.org/conda-forge/win-64/blas-devel-3.9.0-16_win64_mkl.tar.bz2#dc89c75a7dd26c88ac77d64bf313973e
 https://conda.anaconda.org/conda-forge/win-64/contourpy-1.0.7-py38hb1fd069_0.conda#6b53200dddcec578cdd90cac146eeadd
-https://conda.anaconda.org/conda-forge/noarch/pooch-1.7.0-pyhd8ed1ab_0.conda#eb2e0fc33ad0d04b51f9280360c13c1e
+https://conda.anaconda.org/conda-forge/noarch/pooch-1.7.0-pyha770c72_2.conda#2794d1b53ad3ddb1e61f27d1151ccfc7
 https://conda.anaconda.org/conda-forge/win-64/pyqt-5.15.7-py38hd6c051e_3.conda#9b17c0bbf19c6e265c3967e33df8770a
 https://conda.anaconda.org/conda-forge/win-64/blas-2.116-mkl.tar.bz2#7529860b43278247a278c6f56a191d2e
 https://conda.anaconda.org/conda-forge/win-64/matplotlib-base-3.7.1-py38h528a6c7_0.conda#0aebccad15d74ec7f1bc3d62497ad1a8
