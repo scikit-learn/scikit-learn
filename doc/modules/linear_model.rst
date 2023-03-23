@@ -897,7 +897,7 @@ Since :math:`X_c` and :math:`y_c` are the centered versions of X and y, we have
 The first two terms of the right hand side do not depend on :math:`w_0` and are
 minimized by :math:`\hat{w}` the solution of the centered ridge without
 intercept. The third term is positive and therefore subsequently minimized to
-zero by setting :math:`\hat{w_0} = \bar{y} - \bar{X} \cdot \hat{w}`.
+zero by setting :math:`\hat{w_0} = \bar{y} - \bar{X}^{T} \hat{w}`.
 
 Note that the same argument holds for the OLS estimator (for the specific case
 where :math:`\alpha = 0`) or for any other penalized linear regression
