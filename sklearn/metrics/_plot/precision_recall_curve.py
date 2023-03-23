@@ -1,5 +1,3 @@
-from ...base import is_classifier
-
 from .. import average_precision_score
 from .. import precision_recall_curve
 from .._base import _check_pos_label_consistency
@@ -269,8 +267,7 @@ class PrecisionRecallDisplay:
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
-        if not is_classifier(estimator):
-            raise ValueError(f"{method_name} only supports classifiers")
+
         y_pred, pos_label = _get_response_values_binary(
             estimator,
             X,

@@ -25,7 +25,6 @@ from .base import (
     RegressorMixin,
     clone,
     MetaEstimatorMixin,
-    is_classifier,
 )
 from .preprocessing import label_binarize, LabelEncoder
 from .utils import (
@@ -1263,9 +1262,6 @@ class CalibrationDisplay:
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
-
-        if not is_classifier(estimator):
-            raise ValueError("'estimator' should be a fitted classifier.")
 
         check_is_fitted(estimator)
         y_prob, pos_label = _get_response_values_binary(
