@@ -21,7 +21,7 @@ This example will review them.
 # The Yeast UCI dataset
 # ---------------------
 #
-# In this example, we use a UCI dataset [1]_, generally refered as the Yeast
+# In this example, we use a UCI dataset [1]_, generally referred as the Yeast
 # dataset. We use the :func:`sklearn.datasets.fetch_openml` function to load
 # the dataset from OpenML.
 from sklearn.datasets import fetch_openml
@@ -30,7 +30,7 @@ X, y = fetch_openml(data_id=181, as_frame=True, return_X_y=True, parser="pandas"
 
 # %%
 # To know the type of data science problem we are dealing with, we can check
-# the target for which we want to buid a predictive model.
+# the target for which we want to build a predictive model.
 y.value_counts().sort_index()
 
 # %%
@@ -43,7 +43,7 @@ y.value_counts().sort_index()
 # In the following experiment, we use a
 # :class:`~sklearn.tree.DecisionTreeClassifier` and a
 # :class:`~sklearn.model_selection.RepeatedStratifiedKFold` cross-validation
-# with 5 splits and 10 repetitions.
+# with 3 splits and 5 repetitions.
 #
 # We compare the following strategies:
 #
@@ -74,7 +74,7 @@ from sklearn.multiclass import (
 )
 from sklearn.model_selection import cross_validate, RepeatedStratifiedKFold
 
-cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=10, random_state=0)
+cv = RepeatedStratifiedKFold(n_splits=3, n_repeats=5, random_state=0)
 
 tree = DecisionTreeClassifier(random_state=0)
 ovo_tree = OneVsOneClassifier(tree)
@@ -126,7 +126,7 @@ _ = ax.set_title(
 from sklearn.model_selection import GridSearchCV
 
 param_grid = {"max_depth": [3, 5, 8]}
-tree_optimized = GridSearchCV(tree, param_grid=param_grid, cv=3, n_jobs=3)
+tree_optimized = GridSearchCV(tree, param_grid=param_grid, cv=3)
 ovo_tree = OneVsOneClassifier(tree_optimized)
 ovr_tree = OneVsRestClassifier(tree_optimized)
 ecoc = OutputCodeClassifier(tree_optimized, code_size=2)
