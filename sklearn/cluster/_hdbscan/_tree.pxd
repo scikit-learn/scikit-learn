@@ -1,5 +1,4 @@
 cimport numpy as cnp
-import numpy as np
 
 # This corresponds to the scipy.cluster.hierarchy format
 ctypedef packed struct HIERARCHY_t:
