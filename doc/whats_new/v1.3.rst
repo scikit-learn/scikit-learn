@@ -232,6 +232,11 @@ Changelog
   when `max_samples` is a float and `round(n_samples * max_samples) < 1`.
   :pr:`25601` by :user:`Jan Fidor <JanFidor>`.
 
+- |Fix| :meth:`ensemble.IsolationForest.fit` no longer warns about missing
+  feature names when called with `contamination` not `"auto"` on a pandas
+  dataframe.
+  :pr:`25931` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.exception`
 ........................
 - |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
@@ -401,6 +406,13 @@ Changelog
   overrides the `__init__` method.
   :pr:`25733` by :user:`Brigitta Sipőcz <bsipocz>` and
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |FIX| Fixes :func:`utils.validation.check_array` to properly convert pandas
+  extension arrays. :pr:`25813` by `Thomas Fan`_.
+
+- |Fix| :func:`utils.validation.check_array` now suports pandas DataFrames with
+  extension arrays and object dtypes by return an ndarray with object dtype.
+  :pr:`25814` by `Thomas Fan`_.
 
 :mod:`sklearn.semi_supervised`
 ..............................
