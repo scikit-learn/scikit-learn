@@ -18,6 +18,7 @@ from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array
 from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import validate_params
 from ..model_selection import check_cv
 
 premature = (
@@ -281,6 +282,18 @@ def _gram_omp(
         return gamma, indices[:n_active], n_active
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "y": [np.ndarray],
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "precompute": ["boolean", StrOptions({"auto"})],
+        "copy_X": ["boolean"],
+        "return_path": ["boolean"],
+        "return_n_iter": ["boolean"],
+    }
+)
 def orthogonal_mp(
     X,
     y,
@@ -308,7 +321,7 @@ def orthogonal_mp(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Input data. Columns are assumed to have unit norm.
 
     y : ndarray of shape (n_samples,) or (n_samples, n_targets)
@@ -380,10 +393,6 @@ def orthogonal_mp(
         # default for n_nonzero_coefs is 0.1 * n_features
         # but at least one.
         n_nonzero_coefs = max(int(0.1 * X.shape[1]), 1)
-    if tol is not None and tol < 0:
-        raise ValueError("Epsilon cannot be negative")
-    if tol is None and n_nonzero_coefs <= 0:
-        raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > X.shape[1]:
         raise ValueError(
             "The number of atoms cannot be more than the number of features"

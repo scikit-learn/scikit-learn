@@ -1762,6 +1762,25 @@ def test_boolean_series_remains_boolean():
     assert_array_equal(res, expected)
 
 
+@pytest.mark.parametrize("input_values", [[0, 1, 0, 1, 0, np.nan], [0, 1, 0, 1, 0, 1]])
+def test_pandas_array_returns_ndarray(input_values):
+    """Check pandas array with extensions dtypes returns a numeric ndarray.
+
+    Non-regression test for gh-25637.
+    """
+    pd = importorskip("pandas")
+    input_series = pd.array(input_values, dtype="Int32")
+    result = check_array(
+        input_series,
+        dtype=None,
+        ensure_2d=False,
+        allow_nd=False,
+        force_all_finite=False,
+    )
+    assert np.issubdtype(result.dtype.kind, np.floating)
+    assert_allclose(result, input_values)
+
+
 @pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
 def test_check_array_array_api_has_non_finite(array_namespace):
     """Checks that Array API arrays checks non-finite correctly."""
@@ -1776,3 +1795,34 @@ def test_check_array_array_api_has_non_finite(array_namespace):
     with config_context(array_api_dispatch=True):
         with pytest.raises(ValueError, match="infinity or a value too large"):
             check_array(X_inf)
+
+
+@pytest.mark.parametrize(
+    "extension_dtype, regular_dtype",
+    [
+        ("boolean", "bool"),
+        ("Int64", "int64"),
+        ("Float64", "float64"),
+        ("category", "object"),
+    ],
+)
+@pytest.mark.parametrize("include_object", [True, False])
+def test_check_array_multiple_extensions(
+    extension_dtype, regular_dtype, include_object
+):
+    """Check pandas extension arrays give the same result as non-extension arrays."""
+    pd = pytest.importorskip("pandas")
+    X_regular = pd.DataFrame(
+        {
+            "a": pd.Series([1, 0, 1, 0], dtype=regular_dtype),
+            "c": pd.Series([9, 8, 7, 6], dtype="int64"),
+        }
+    )
+    if include_object:
+        X_regular["b"] = pd.Series(["a", "b", "c", "d"], dtype="object")
+
+    X_extension = X_regular.assign(a=X_regular["a"].astype(extension_dtype))
+
+    X_regular_checked = check_array(X_regular, dtype=None)
+    X_extension_checked = check_array(X_extension, dtype=None)
+    assert_array_equal(X_regular_checked, X_extension_checked)

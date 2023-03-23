@@ -47,7 +47,7 @@ if __name__ == "__main__":
     print(f"X_train.shape = {X_train.shape}")
     print(f"X_train.format = {X_train.format}")
     print(f"X_train.dtype = {X_train.dtype}")
-    print(f"X_train density = {X_train.nnz / np.product(X_train.shape)}")
+    print(f"X_train density = {X_train.nnz / np.prod(X_train.shape)}")
     print(f"y_train {y_train.shape}")
     print(f"X_test {X_test.shape}")
     print(f"X_test.format = {X_test.format}")
