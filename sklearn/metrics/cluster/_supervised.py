@@ -27,7 +27,7 @@ from ._expected_mutual_info_fast import expected_mutual_information
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
 from ...utils._param_validation import validate_params
-from ...utils._param_validation import Interval
+from ...utils._param_validation import Interval, StrOptions
 
 
 def check_clusterings(labels_true, labels_pred):
@@ -847,6 +847,13 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     return np.clip(mi.sum(), 0.0, None)
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "average_method": [StrOptions({"arithmetic", "max", "min", "geometric"})],
+    }
+)
 def adjusted_mutual_info_score(
     labels_true, labels_pred, *, average_method="arithmetic"
 ):
@@ -876,7 +883,7 @@ def adjusted_mutual_info_score(
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`U` in
         the above formula.
 
@@ -884,9 +891,8 @@ def adjusted_mutual_info_score(
         A clustering of the data into disjoint subsets, called :math:`V` in
         the above formula.
 
-    average_method : str, default='arithmetic'
-        How to compute the normalizer in the denominator. Possible options
-        are 'min', 'geometric', 'arithmetic', and 'max'.
+    average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
+        How to compute the normalizer in the denominator.
 
         .. versionadded:: 0.20
 
@@ -953,7 +959,6 @@ def adjusted_mutual_info_score(
         return 1.0
 
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
     # Calculate the expected value for the mutual information

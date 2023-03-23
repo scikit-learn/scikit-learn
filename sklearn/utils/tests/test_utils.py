@@ -17,7 +17,6 @@ from sklearn.utils._testing import (
 from sklearn.utils import check_random_state
 from sklearn.utils import _determine_key_type
 from sklearn.utils import deprecated
-from sklearn.utils import gen_batches
 from sklearn.utils import _get_column_indices
 from sklearn.utils import resample
 from sklearn.utils import safe_mask
@@ -54,19 +53,6 @@ def test_make_rng():
 
     with pytest.raises(ValueError):
         check_random_state("some invalid seed")
-
-
-def test_gen_batches():
-    # Make sure gen_batches errors on invalid batch_size
-
-    assert_array_equal(list(gen_batches(4, 2)), [slice(0, 2, None), slice(2, 4, None)])
-    msg_zero = "gen_batches got batch_size=0, must be positive"
-    with pytest.raises(ValueError, match=msg_zero):
-        next(gen_batches(4, 0))
-
-    msg_float = "gen_batches got batch_size=0.5, must be an integer"
-    with pytest.raises(TypeError, match=msg_float):
-        next(gen_batches(4, 0.5))
 
 
 def test_deprecated():

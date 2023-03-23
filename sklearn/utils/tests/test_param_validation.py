@@ -29,6 +29,7 @@ from sklearn.utils._param_validation import generate_invalid_param_val
 from sklearn.utils._param_validation import generate_valid_param
 from sklearn.utils._param_validation import validate_params
 from sklearn.utils._param_validation import InvalidParameterError
+from sklearn.utils._param_validation import RealNotInt
 
 
 # Some helpers for the tests
@@ -219,75 +220,75 @@ def test_generate_invalid_param_val(constraint):
     [
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval(Real, -5, 5, closed="both"),
+            Interval(RealNotInt, -5, 5, closed="both"),
         ),
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval(Real, -5, 5, closed="neither"),
+            Interval(RealNotInt, -5, 5, closed="neither"),
         ),
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval(Real, 4, 5, closed="both"),
+            Interval(RealNotInt, 4, 5, closed="both"),
         ),
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval(Real, 5, None, closed="left"),
+            Interval(RealNotInt, 5, None, closed="left"),
         ),
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval(Real, 4, None, closed="neither"),
+            Interval(RealNotInt, 4, None, closed="neither"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval(Real, -5, 5, closed="both"),
+            Interval(RealNotInt, -5, 5, closed="both"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval(Real, -5, 5, closed="neither"),
+            Interval(RealNotInt, -5, 5, closed="neither"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval(Real, 1, 2, closed="both"),
+            Interval(RealNotInt, 1, 2, closed="both"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval(Real, None, -5, closed="left"),
+            Interval(RealNotInt, None, -5, closed="left"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval(Real, None, -4, closed="neither"),
+            Interval(RealNotInt, None, -4, closed="neither"),
         ),
         (
             Interval(Integral, -5, 5, closed="both"),
-            Interval(Real, None, 1, closed="right"),
+            Interval(RealNotInt, None, 1, closed="right"),
         ),
         (
             Interval(Integral, -5, 5, closed="both"),
-            Interval(Real, 1, None, closed="left"),
+            Interval(RealNotInt, 1, None, closed="left"),
         ),
         (
             Interval(Integral, -5, 5, closed="both"),
-            Interval(Real, -10, -4, closed="neither"),
+            Interval(RealNotInt, -10, -4, closed="neither"),
         ),
         (
             Interval(Integral, -5, 5, closed="both"),
-            Interval(Real, -10, -4, closed="right"),
+            Interval(RealNotInt, -10, -4, closed="right"),
         ),
         (
             Interval(Integral, -5, 5, closed="neither"),
-            Interval(Real, 6, 10, closed="neither"),
+            Interval(RealNotInt, 6, 10, closed="neither"),
         ),
         (
             Interval(Integral, -5, 5, closed="neither"),
-            Interval(Real, 6, 10, closed="left"),
+            Interval(RealNotInt, 6, 10, closed="left"),
         ),
         (
             Interval(Integral, 2, None, closed="left"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval(RealNotInt, 0, 1, closed="both"),
         ),
         (
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval(RealNotInt, 0, 1, closed="both"),
         ),
     ],
 )
@@ -295,42 +296,34 @@ def test_generate_invalid_param_val_2_intervals(integer_interval, real_interval)
     """Check that the value generated for an interval constraint does not satisfy any of
     the interval constraints.
     """
-    bad_value = generate_invalid_param_val(
-        real_interval, constraints=[real_interval, integer_interval]
-    )
+    bad_value = generate_invalid_param_val(constraint=real_interval)
     assert not real_interval.is_satisfied_by(bad_value)
     assert not integer_interval.is_satisfied_by(bad_value)
 
-    bad_value = generate_invalid_param_val(
-        integer_interval, constraints=[real_interval, integer_interval]
-    )
+    bad_value = generate_invalid_param_val(constraint=integer_interval)
     assert not real_interval.is_satisfied_by(bad_value)
     assert not integer_interval.is_satisfied_by(bad_value)
 
 
 @pytest.mark.parametrize(
-    "constraints",
+    "constraint",
     [
-        [_ArrayLikes()],
-        [_InstancesOf(list)],
-        [_Callables()],
-        [_NoneConstraint()],
-        [_RandomStates()],
-        [_SparseMatrices()],
-        [_Booleans()],
-        [Interval(Real, None, None, closed="both")],
-        [
-            Interval(Integral, 0, None, closed="left"),
-            Interval(Real, None, 0, closed="neither"),
-        ],
+        _ArrayLikes(),
+        _InstancesOf(list),
+        _Callables(),
+        _NoneConstraint(),
+        _RandomStates(),
+        _SparseMatrices(),
+        _Booleans(),
+        Interval(Integral, None, None, closed="neither"),
     ],
 )
-def test_generate_invalid_param_val_all_valid(constraints):
+def test_generate_invalid_param_val_all_valid(constraint):
     """Check that the function raises NotImplementedError when there's no invalid value
     for the constraint.
     """
     with pytest.raises(NotImplementedError):
-        generate_invalid_param_val(constraints[0], constraints=constraints)
+        generate_invalid_param_val(constraint)
 
 
 @pytest.mark.parametrize(
@@ -662,3 +655,18 @@ def test_third_party_estimator():
     # does not raise, even though "b" is not in the constraints dict and "a" is not
     # a parameter of the estimator.
     ThirdPartyEstimator(b=0).fit()
+
+
+def test_interval_real_not_int():
+    """Check for the type RealNotInt in the Interval constraint."""
+    constraint = Interval(RealNotInt, 0, 1, closed="both")
+    assert constraint.is_satisfied_by(1.0)
+    assert not constraint.is_satisfied_by(1)
+
+
+def test_real_not_int():
+    """Check for the RealNotInt type."""
+    assert isinstance(1.0, RealNotInt)
+    assert not isinstance(1, RealNotInt)
+    assert isinstance(np.float64(1), RealNotInt)
+    assert not isinstance(np.int64(1), RealNotInt)
