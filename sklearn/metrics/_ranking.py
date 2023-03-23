@@ -23,7 +23,6 @@ import warnings
 from functools import partial
 from numbers import Real, Integral
 
-import numpy
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
