@@ -155,6 +155,9 @@ cdef class Splitter:
         be ignored.
     hessians_are_constant: bool, default is False
         Whether hessians are constant.
+    sample_weight: ndarray of float, shape (n_samples,), default=None
+        Weights of training data. If not provided, all samples are assumed
+        to have uniform weight.
     n_threads : int, default=1
         Number of OpenMP threads to use.
     """
@@ -166,6 +169,7 @@ cdef class Splitter:
         const unsigned char [::1] has_missing_values
         const unsigned char [::1] is_categorical
         const signed char [::1] monotonic_cst
+        const Y_DTYPE_C [::1] sample_weight
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
         Y_DTYPE_C min_hessian_to_split
@@ -189,6 +193,7 @@ cdef class Splitter:
                  unsigned int min_samples_leaf=20,
                  Y_DTYPE_C min_gain_to_split=0.,
                  unsigned char hessians_are_constant=False,
+                 const Y_DTYPE_C [::1] sample_weight=None,
                  unsigned int n_threads=1):
 
         self.X_binned = X_binned
@@ -203,6 +208,7 @@ cdef class Splitter:
         self.min_samples_leaf = min_samples_leaf
         self.min_gain_to_split = min_gain_to_split
         self.hessians_are_constant = hessians_are_constant
+        self.sample_weight = sample_weight if sample_weight is not None else np.ones(X_binned.shape[0], dtype=np.float64)
         self.n_threads = n_threads
 
         # The partition array maps each sample index into the leaves of the
@@ -247,6 +253,8 @@ cdef class Splitter:
         right_indices : ndarray of int, shape (n_right_samples,)
             The indices of the samples in the right child. This is a view on
             self.partition.
+        right_weighted_n_node_samples : float
+            The weighted number of training samples in the right child.
         right_child_position : int
             The position of the right child in ``sample_indices``.
         """
@@ -302,6 +310,7 @@ cdef class Splitter:
                 self.X_binned[:, feature_idx]
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
+            const Y_DTYPE_C [::1] sample_weight = self.sample_weight
             unsigned char is_categorical = split_info.is_categorical
             # Cython is unhappy if we set left_cat_bitset to
             # split_info.left_cat_bitset directly, so we need a tmp var
@@ -321,6 +330,7 @@ cdef class Splitter:
             int i
             int thread_idx
             int sample_idx
+            double right_weighted_n_node_samples
             int right_child_position
             unsigned char turn_left
             int [:] left_offset = np.zeros(n_threads, dtype=np.int32)
@@ -339,6 +349,7 @@ cdef class Splitter:
                     offset_in_buffers[thread_idx - 1] + sizes[thread_idx - 1]
 
             # map indices from sample_indices to left/right_indices_buffer
+            right_weighted_n_node_samples = 0
             for thread_idx in prange(n_threads, schedule='static',
                                      chunksize=1, num_threads=n_threads):
                 left_count = 0
@@ -360,6 +371,7 @@ cdef class Splitter:
                     else:
                         right_indices_buffer[start + right_count] = sample_idx
                         right_count = right_count + 1
+                        right_weighted_n_node_samples += sample_weight[sample_idx]
 
                 left_counts[thread_idx] = left_count
                 right_counts[thread_idx] = right_count
@@ -410,6 +422,7 @@ cdef class Splitter:
 
         return (sample_indices[:right_child_position],
                 sample_indices[right_child_position:],
+                right_weighted_n_node_samples,
                 right_child_position)
 
     def find_node_split(

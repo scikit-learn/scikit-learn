@@ -39,6 +39,8 @@ class TreeNode:
         The depth of the node, i.e. its distance from the root.
     sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint
         The indices of the samples at the node.
+    weighted_n_node_samples : float
+        The weighted number of training samples at the node.
     sum_gradients : float
         The sum of the gradients of the samples at the node.
     sum_hessians : float
@@ -95,11 +97,11 @@ class TreeNode:
     partition_start = 0
     partition_stop = 0
 
-    def __init__(self, depth, sample_indices, sum_gradients, sum_hessians, value=None):
+    def __init__(self, depth, sample_indices, weighted_n_node_samples, sum_gradients, sum_hessians, value=None):
         self.depth = depth
         self.sample_indices = sample_indices
         self.n_samples = sample_indices.shape[0]
-        self.weighted_n_node_samples = sample_indices.shape[0]
+        self.weighted_n_node_samples = weighted_n_node_samples
         self.sum_gradients = sum_gradients
         self.sum_hessians = sum_hessians
         self.value = value
@@ -313,11 +315,11 @@ class TreeGrower:
             min_samples_leaf,
             min_gain_to_split,
             hessians_are_constant,
+            sample_weight,
             n_threads,
         )
         self.n_bins_non_missing = n_bins_non_missing
         self.missing_values_bin_idx = missing_values_bin_idx
-        self.sample_weight = sample_weight
         self.max_leaf_nodes = max_leaf_nodes
         self.has_missing_values = has_missing_values
         self.monotonic_cst = monotonic_cst
@@ -397,14 +399,11 @@ class TreeGrower:
         self.root = TreeNode(
             depth=depth,
             sample_indices=self.splitter.partition,
+            weighted_n_node_samples=np.sum(self.splitter.sample_weight),
             sum_gradients=sum_gradients,
             sum_hessians=sum_hessians,
             value=0,
         )
-
-        self.root.weighted_n_node_samples = self.sample_weight[
-            self.root.sample_indices
-        ].sum()
 
         self.root.partition_start = 0
         self.root.partition_stop = n_samples
@@ -476,6 +475,7 @@ class TreeGrower:
         (
             sample_indices_left,
             sample_indices_right,
+            right_weighted_n_node_samples,
             right_child_pos,
         ) = self.splitter.split_indices(node.split_info, node.sample_indices)
         self.total_apply_split_time += time() - tic
@@ -487,6 +487,7 @@ class TreeGrower:
         left_child_node = TreeNode(
             depth,
             sample_indices_left,
+            node.weighted_n_node_samples - right_weighted_n_node_samples,
             node.split_info.sum_gradient_left,
             node.split_info.sum_hessian_left,
             value=node.split_info.value_left,
@@ -494,6 +495,7 @@ class TreeGrower:
         right_child_node = TreeNode(
             depth,
             sample_indices_right,
+            right_weighted_n_node_samples,
             node.split_info.sum_gradient_right,
             node.split_info.sum_hessian_right,
             value=node.split_info.value_right,
@@ -501,13 +503,6 @@ class TreeGrower:
 
         node.right_child = right_child_node
         node.left_child = left_child_node
-
-        left_child_node.weighted_n_node_samples = self.sample_weight[
-            sample_indices_left
-        ].sum()
-        right_child_node.weighted_n_node_samples = self.sample_weight[
-            sample_indices_right
-        ].sum()
 
         # set start and stop indices
         left_child_node.partition_start = node.partition_start
