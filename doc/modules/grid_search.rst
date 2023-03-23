@@ -128,7 +128,7 @@ discrete choices (which will be sampled uniformly) can be specified::
 
 This example uses the ``scipy.stats`` module, which contains many useful
 distributions for sampling parameters, such as ``expon``, ``gamma``,
-``uniform`` or ``randint``.
+``uniform``, ``loguniform`` or ``randint``.
 
 In principle, any function can be passed that provides a ``rvs`` (random
 variate sample) method to sample a value. A call to the ``rvs`` function should
@@ -148,12 +148,9 @@ For continuous parameters, such as ``C`` above, it is important to specify
 a continuous distribution to take full advantage of the randomization. This way,
 increasing ``n_iter`` will always lead to a finer search.
 
-A continuous log-uniform random variable is available through
-:class:`~sklearn.utils.fixes.loguniform`. This is a continuous version of
-log-spaced parameters. For example to specify ``C`` above, ``loguniform(1,
-100)`` can be used instead of ``[1, 10, 100]`` or ``np.logspace(0, 2,
-num=1000)``. This is an alias to `scipy.stats.loguniform
-<https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.loguniform.html>`_.
+A continuous log-uniform random variable is the continuous version of
+a log-spaced parameter. For example to specify the equivalent of ``C`` from above,
+``loguniform(1, 100)`` can be used instead of ``[1, 10, 100]``.
 
 Mirroring the example above in grid search, we can specify a continuous random
 variable that is log-uniformly distributed between ``1e0`` and ``1e3``::

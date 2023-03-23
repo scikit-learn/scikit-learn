@@ -36,11 +36,11 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/libpng-1.6.39-hf9034f9_0.co
 https://conda.anaconda.org/conda-forge/linux-aarch64/libsqlite-3.40.0-hf9034f9_0.tar.bz2#9afb0d5dbaa403858a660cd0b4a31d29
 https://conda.anaconda.org/conda-forge/linux-aarch64/libxcb-1.13-h3557bc0_1004.tar.bz2#cc973f5f452272c397546eac588cddb3
 https://conda.anaconda.org/conda-forge/linux-aarch64/openblas-0.3.21-pthreads_h2d9dd7e_3.tar.bz2#17a824cf9bbf0e31998d2c1a2140204c
-https://conda.anaconda.org/conda-forge/linux-aarch64/readline-8.1.2-h38e3740_0.tar.bz2#3cdbfb7d7b63ae2c2d35bb167d257ecd
+https://conda.anaconda.org/conda-forge/linux-aarch64/readline-8.2-h8fc344f_1.conda#105eb1e16bf83bfb2eb380a48032b655
 https://conda.anaconda.org/conda-forge/linux-aarch64/tk-8.6.12-hd8af866_0.tar.bz2#7894e82ff743bd96c76585ddebe28e2a
 https://conda.anaconda.org/conda-forge/linux-aarch64/zstd-1.5.2-h44f6412_6.conda#6d0d1cd6d184129eabb96bb220afb5b2
 https://conda.anaconda.org/conda-forge/linux-aarch64/brotli-bin-1.0.9-h4e544f5_8.tar.bz2#0980429a0148a53edd0f1f207ec28a39
-https://conda.anaconda.org/conda-forge/linux-aarch64/ccache-4.7.3-hb064cd7_0.tar.bz2#8e71c7d1731d80d773cdafaa2ddcde50
+https://conda.anaconda.org/conda-forge/linux-aarch64/ccache-4.8-h788f45c_0.conda#28b5b515efa8ac5fec2e1f187b00c810
 https://conda.anaconda.org/conda-forge/linux-aarch64/freetype-2.12.1-hbbbf32d_1.conda#e0891290982420d67651589c8584eec3
 https://conda.anaconda.org/conda-forge/linux-aarch64/libcblas-3.9.0-16_linuxaarch64_openblas.tar.bz2#520a3ecbebc63239c27dd6f70c2ababe
 https://conda.anaconda.org/conda-forge/linux-aarch64/liblapack-3.9.0-16_linuxaarch64_openblas.tar.bz2#62990b2d1efc22d0beb394e893d39541
@@ -102,5 +102,5 @@ https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-2.5.0-pyhd8ed1ab_0.ta
 https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-3.7.1-py39ha65689a_0.conda#ba11d081599ada176b3ca99821e1b753
 https://conda.anaconda.org/conda-forge/noarch/urllib3-1.26.15-pyhd8ed1ab_0.conda#27db656619a55d727eaf5a6ece3d2fd6
 https://conda.anaconda.org/conda-forge/noarch/requests-2.28.2-pyhd8ed1ab_0.conda#11d178fc55199482ee48d6812ea83983
-https://conda.anaconda.org/conda-forge/noarch/pooch-1.7.0-pyhd8ed1ab_0.conda#eb2e0fc33ad0d04b51f9280360c13c1e
+https://conda.anaconda.org/conda-forge/noarch/pooch-1.7.0-pyha770c72_2.conda#2794d1b53ad3ddb1e61f27d1151ccfc7
 https://conda.anaconda.org/conda-forge/linux-aarch64/scipy-1.10.1-py39hafab3e7_0.conda#d5364063c02425a7faa8aca680bdf146
