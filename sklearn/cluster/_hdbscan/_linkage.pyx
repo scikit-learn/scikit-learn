@@ -231,8 +231,6 @@ cpdef cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] make_single_linkage(const MST_e
         current_node_cluster = U.fast_find(current_node)
         next_node_cluster = U.fast_find(next_node)
 
-        # TODO: Update this to an array of structs (AoS).
-        # Should be done simultaneously in _tree.pyx to ensure compatability.
         single_linkage[i].left_node = current_node_cluster
         single_linkage[i].right_node = next_node_cluster
         single_linkage[i].value = distance
