@@ -10,13 +10,11 @@ classification.
 In scikit-learn, all estimators support multiclass classification out of the
 box: the most sensible strategy was implemented for the end-user. The
 :mod:`sklearn.multiclass` module implements various strategies that
-one can use for experimenting. This example will review them.
-
-One should not confuse the OvO/OvR strategy used for the evaluation of
-multiclass classifiers with the OvO/OvR strategy used to train a multiclass
-classifier by fitting a set of binary classifiers (the
-:class:`~sklearn.multiclass.OneVsOneClassifier` and
-:class:`~sklearn.multiclass.OneVsRestClassifier` meta-estimator).
+one can use for experimenting. :mod:`sklearn.multiclass` includes OvO/OvR
+strategies used to train a multiclass classifier by fitting a set of binary
+classifiers (the :class:`~sklearn.multiclass.OneVsOneClassifier` and
+:class:`~sklearn.multiclass.OneVsRestClassifier` meta-estimators).
+This example will review them.
 """
 
 # %%
