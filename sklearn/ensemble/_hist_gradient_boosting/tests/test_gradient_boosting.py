@@ -789,9 +789,9 @@ def test_sample_weight_leaf_weighted_nodes_classification_random(
         feat_idx = int(nodes[0][2])
         num_tresh = nodes[0][3]
 
-        assert nodes[0][1] == np.sum(sample_weight)
-        assert nodes[1][1] == np.sum(sample_weight[X[:, feat_idx] < num_tresh])
-        assert nodes[2][1] == np.sum(sample_weight[X[:, feat_idx] >= num_tresh])
+        assert_allclose(nodes[0][1], sample_weight.sum())
+        assert_allclose(nodes[1][1], sample_weight[X[:, feat_idx] < num_tresh].sum())
+        assert_allclose(nodes[2][1], sample_weight[X[:, feat_idx] >= num_tresh].sum())
 
 
 @pytest.mark.parametrize(

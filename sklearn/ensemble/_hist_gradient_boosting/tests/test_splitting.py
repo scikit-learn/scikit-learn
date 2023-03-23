@@ -158,7 +158,7 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     si_parent = splitter.find_node_split(
         n_samples, hists_parent, sum_gradients, sum_hessians, value_parent
     )
-    sample_indices_left, sample_indices_right, _ = splitter.split_indices(
+    sample_indices_left, sample_indices_right, _, _ = splitter.split_indices(
         si_parent, sample_indices
     )
 
@@ -308,11 +308,14 @@ def test_split_indices():
     assert si_root.feature_idx == 1
     assert si_root.bin_idx == 3
 
-    samples_left, samples_right, position_right = splitter.split_indices(
+    samples_left, samples_right, right_weight, position_right = splitter.split_indices(
         si_root, splitter.partition
     )
     assert set(samples_left) == set([0, 1, 3, 4, 5, 6, 8])
     assert set(samples_right) == set([2, 7, 9])
+
+    assert len(list(samples_left)) == n_samples - right_weight
+    assert len(list(samples_right)) == right_weight
 
     assert list(samples_left) == list(splitter.partition[:position_right])
     assert list(samples_right) == list(splitter.partition[position_right:])
@@ -557,7 +560,7 @@ def test_splitting_missing_values(
     # Make sure the split is properly computed.
     # This also make sure missing values are properly assigned to the correct
     # child in split_indices()
-    samples_left, samples_right, _ = splitter.split_indices(
+    samples_left, samples_right, _, _ = splitter.split_indices(
         split_info, splitter.partition
     )
 
@@ -849,7 +852,7 @@ def test_splitting_categorical_sanity(
     # is set later in the grower.
 
     # make sure samples are split correctly
-    samples_left, samples_right, _ = splitter.split_indices(
+    samples_left, samples_right, _, _ = splitter.split_indices(
         split_info, splitter.partition
     )
 
