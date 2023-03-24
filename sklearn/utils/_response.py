@@ -116,7 +116,6 @@ def _get_response_values(
                 "should be 'predict'. Got a regressor with response_method="
                 f"{response_method} instead."
             )
-            raise ValueError(f"{estimator.__class__.__name__} should be a classifier")
         y_pred, pos_label = estimator.predict(X), None
 
     return y_pred, pos_label

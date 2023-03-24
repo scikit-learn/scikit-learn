@@ -6,6 +6,7 @@ from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
 )
+from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._mocking import _MockEstimatorOnOffPrediction
 from sklearn.utils._testing import assert_allclose, assert_array_equal
@@ -26,6 +27,25 @@ def test_get_response_values_regressor_error(response_method):
     err_msg = f"{my_estimator.__class__.__name__} should either be a classifier"
     with pytest.raises(ValueError, match=err_msg):
         _get_response_values(my_estimator, X, response_method=response_method)
+
+
+@pytest.mark.parametrize(
+    "estimator, response_method",
+    [
+        (DecisionTreeClassifier(), "predict_proba"),
+        (SVC(), "decision_function"),
+    ],
+)
+def test_get_response_values_error_multiclass_classifier(estimator, response_method):
+    """Check that we raise an error with multiclass classifier and requesting
+    response values different from `predict`."""
+    X, y = make_classification(
+        n_samples=10, n_clusters_per_class=1, n_classes=3, random_state=0
+    )
+    classifier = estimator.fit(X, y)
+    err_msg = "With a multiclass estimator, the response method should be predict"
+    with pytest.raises(ValueError, match=err_msg):
+        _get_response_values(classifier, X, response_method=response_method)
 
 
 def test_get_response_values_regressor():
