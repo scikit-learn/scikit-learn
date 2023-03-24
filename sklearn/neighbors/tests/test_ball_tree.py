@@ -128,6 +128,8 @@ def test_ball_tree_numerical_consistency(global_random_seed, metric):
     dist_32, ind_32 = bt_32.query(Y_32, k=k)
     assert_allclose(dist_64, dist_32, rtol=1e-5)
     assert_equal(ind_64, ind_32)
+    assert dist_64.dtype == np.float64
+    assert dist_32.dtype == np.float32
 
     # Test consistency with respect to the `query_radius` method
     r = 2.38
@@ -145,6 +147,8 @@ def test_ball_tree_numerical_consistency(global_random_seed, metric):
     ind_32, dist_32 = bt_32.query_radius(Y_32[4:5, :], r=r, return_distance=True)
     assert_equal(ind_64[0], ind_32[0])
     assert_allclose(dist_64[0], dist_32[0], rtol=1e-5)
+    assert dist_64[0].dtype == np.float64
+    assert dist_32[0].dtype == np.float32
 
 
 @pytest.mark.parametrize("metric", itertools.chain(METRICS_TO_TEST, BOOLEAN_METRICS))
@@ -169,6 +173,8 @@ def test_kernel_density_numerical_consistency(global_random_seed, metric):
     density64 = bt_64.kernel_density(Y_64, h=h, kernel=kernel, breadth_first=True)
     density32 = bt_32.kernel_density(Y_32, h=h, kernel=kernel, breadth_first=True)
     assert_allclose(density64, density32, rtol=1e-5)
+    assert density64.dtype == np.float64
+    assert density32.dtype == np.float32
 
 
 def test_two_point_correlation_numerical_consistency(global_random_seed):
