@@ -148,7 +148,7 @@ def test_ball_tree_numerical_consistency(global_random_seed, metric):
 
 
 @pytest.mark.parametrize("metric", itertools.chain(METRICS_TO_TEST, BOOLEAN_METRICS))
-def test_ball_tree_numerical_consistency_kernel_density(global_random_seed, metric):
+def test_kernel_density_numerical_consistency(global_random_seed, metric):
     # Test consistency with respect to the `kernel_density` method
     rng = np.random.RandomState(global_random_seed)
     _X = rng.random_sample((100, 3))
@@ -169,3 +169,25 @@ def test_ball_tree_numerical_consistency_kernel_density(global_random_seed, metr
     density64 = bt_64.kernel_density(Y_64, h=h, kernel=kernel, breadth_first=True)
     density32 = bt_32.kernel_density(Y_32, h=h, kernel=kernel, breadth_first=True)
     assert_allclose(density64, density32, rtol=1e-5)
+
+
+def test_two_point_correlation_numerical_consistency(global_random_seed):
+    # Test consistency with respect to the `two_point_correlation` method
+    rng = np.random.RandomState(global_random_seed)
+    _X = rng.random_sample((100, 3))
+    _Y = rng.random_sample((5, 3))
+
+    X_64 = _X.astype(dtype=np.float64, copy=False)
+    Y_64 = _Y.astype(dtype=np.float64, copy=False)
+
+    X_32 = _X.astype(dtype=np.float32, copy=False)
+    Y_32 = _Y.astype(dtype=np.float32, copy=False)
+
+    bt_64 = BallTree(X_64, leaf_size=10)
+    bt_32 = BallTree32(X_32, leaf_size=10)
+
+    r = np.linspace(0, 1, 10)
+
+    counts_64 = bt_64.two_point_correlation(Y_64, r=r, dualtree=True)
+    counts_32 = bt_32.two_point_correlation(Y_32, r=r, dualtree=True)
+    assert_allclose(counts_64, counts_32)
