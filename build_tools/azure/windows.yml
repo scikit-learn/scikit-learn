@@ -19,7 +19,6 @@ jobs:
     PYTEST_XDIST_VERSION: 'latest'
     TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     SHOW_SHORT_SUMMARY: 'false'
-    CPU_COUNT: '2'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
@@ -37,13 +36,14 @@ jobs:
         addToPath: true
         architecture: 'x86'
       displayName: Use 32 bit System Python
-      condition: eq(variables['PYTHON_ARCH'], '32')
+      condition: and(succeeded(), eq(variables['PYTHON_ARCH'], '32'))
     - bash: ./build_tools/azure/install_win.sh
       displayName: 'Install'
     - bash: ./build_tools/azure/test_script.sh
       displayName: 'Test Library'
     - bash: ./build_tools/azure/upload_codecov.sh
-      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+      condition: and(succeeded(),
+                     eq(variables['COVERAGE'], 'true'),
                      eq(variables['SELECTED_TESTS'], ''))
       displayName: 'Upload To Codecov'
       env:

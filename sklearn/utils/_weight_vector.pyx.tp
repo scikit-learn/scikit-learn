@@ -26,8 +26,6 @@ dtypes = [('64', 'double', 1e-9),
 #
 # License: BSD 3 clause
 
-# WARNING: Do not edit this .pyx file directly, it is generated from its .pyx.tp
-
 cimport cython
 from libc.limits cimport INT_MAX
 from libc.math cimport sqrt
