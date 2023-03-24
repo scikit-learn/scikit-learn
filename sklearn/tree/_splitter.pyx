@@ -21,8 +21,8 @@ import numpy as np
 
 from scipy.sparse import csc_matrix
 
-# TODO: when Cython>=3.0 is used, remove the <intp_t*> casts in call to sort.
 from ..utils._sorting cimport simultaneous_introsort as sort
+# TODO: when Cython>=3.0 is used, remove the <intp_t*> casts in call to sort.
 from ..utils._typedefs cimport intp_t
 
 from ._utils cimport log

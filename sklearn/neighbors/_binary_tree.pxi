@@ -163,7 +163,7 @@ from ._partition_nodes cimport partition_node_indices
 from ..utils import check_array
 from ..utils._typedefs cimport float64_t, intp_t
 from ..utils._heap cimport heap_push
-from ..utils._sorting cimport simultaneous_quicksort as _simultaneous_sort
+from ..utils._sorting cimport simultaneous_quicksort
 
 cnp.import_array()
 
@@ -561,7 +561,7 @@ cdef class NeighborsHeap:
         """simultaneously sort the distances and indices"""
         cdef intp_t row
         for row in range(self.distances.shape[0]):
-            _simultaneous_sort(
+            simultaneous_quicksort(
                 values=&self.distances[row, 0],
                 indices=&self.indices[row, 0],
                 size=self.distances.shape[1],
@@ -1305,8 +1305,11 @@ cdef class BinaryTree:
                     continue
 
                 if sort_results:
-                    _simultaneous_sort(&dist_arr_i[0], &idx_arr_i[0],
-                                       counts[i])
+                    simultaneous_quicksort(
+                        &dist_arr_i[0],
+                        &idx_arr_i[0],
+                        counts[i],
+                    )
 
                 # equivalent to: indices[i] = np_idx_arr[:counts[i]].copy()
                 indices[i] = <intp_t*>malloc(counts[i] * sizeof(intp_t))
@@ -2388,15 +2391,17 @@ def simultaneous_sort(float64_t[:, ::1] distances, intp_t[:, ::1] indices):
     """In-place simultaneous sort the given row of the arrays
 
     This python wrapper exists primarily to enable unit testing
-    of the _simultaneous_sort C routine.
+    of the simultaneous_quicksort C routine.
     """
     assert distances.shape[0] == indices.shape[0]
     assert distances.shape[1] == indices.shape[1]
     cdef intp_t row
     for row in range(distances.shape[0]):
-        _simultaneous_sort(&distances[row, 0],
-                           &indices[row, 0],
-                           distances.shape[1])
+        simultaneous_quicksort(
+            &distances[row, 0],
+            &indices[row, 0],
+            distances.shape[1],
+        )
 
 
 def nodeheap_sort(float64_t[::1] vals):
