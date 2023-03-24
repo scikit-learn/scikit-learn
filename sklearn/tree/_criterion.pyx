@@ -213,6 +213,46 @@ cdef class Criterion:
                                  - (self.weighted_n_left /
                                     self.weighted_n_node_samples * impurity_left)))
 
+cdef inline void _move_sums_classification(
+    ClassificationCriterion criterion,
+    double[:, ::1] sum_1,
+    double[:, ::1] sum_2,
+    double* weighted_n_1,
+    double* weighted_n_2,
+    bint put_missing_in_1,
+) noexcept nogil:
+    """Distrubute sum_total and sum_missing into sum_1 and sum_2.
+
+    If there are missing values and:
+    - put_missing_in_1 is True, then missing values to go sum_1. Specifically:
+        sum_1 = sum_missing
+        sum_2 = sum_total - sum_missing
+
+    - put_missing_in_1 is False, then missing values go to sum_2. Specifically:
+        sum_1 = 0
+        sum_2 = sum_total
+    """
+    cdef SIZE_t k, c, n_bytes
+    if criterion.n_missing != 0 and put_missing_in_1:
+        for k in range(criterion.n_outputs):
+            n_bytes = criterion.n_classes[k] * sizeof(double)
+            memcpy(&sum_1[k, 0], &criterion.sum_missing[k, 0], n_bytes)
+
+        for k in range(criterion.n_outputs):
+            for c in range(criterion.n_classes[k]):
+                sum_2[k, c] = criterion.sum_total[k, c] - criterion.sum_missing[k, c]
+
+        weighted_n_1[0] = criterion.weighted_n_missing
+        weighted_n_2[0] = criterion.weighted_n_node_samples - criterion.weighted_n_missing
+    else:
+        for k in range(criterion.n_outputs):
+            n_bytes = criterion.n_classes[k] * sizeof(double)
+            memset(&sum_1[k, 0], 0, n_bytes)
+            memcpy(&sum_2[k, 0], &criterion.sum_total[k, 0], n_bytes)
+
+        weighted_n_1[0] = 0.0
+        weighted_n_2[0] = criterion.weighted_n_node_samples
+
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
@@ -372,40 +412,6 @@ cdef class ClassificationCriterion(Criterion):
 
             self.weighted_n_missing += w
 
-    @final
-    cdef inline void _move_sums(
-        self,
-        double[:, ::1] sum_1,
-        double[:, ::1] sum_2,
-        double* weighted_n_1,
-        double* weighted_n_2,
-        bint put_missing_in_1,
-    ) noexcept nogil:
-        """Distrubute sum_missing, sum_total, and sum_missing into sum_1 and sum_2.
-
-        If there are missing values and:
-        - put_missing_in_1 is False, then sum_1 is zero and sum_2 is sum_total.
-        - put_missing_in_1 is True, then sum_1 is sum_missing and sum_2 is
-          sum_total - sum_missing.
-        """
-        cdef SIZE_t k, c
-        if self.n_missing != 0 and put_missing_in_1:
-            for k in range(self.n_outputs):
-                memcpy(&sum_1[k, 0], &self.sum_missing[k, 0], self.n_classes[k] * sizeof(double))
-            for k in range(self.n_outputs):
-                for c in range(self.n_classes[k]):
-                    sum_2[k, c] = self.sum_total[k, c] - self.sum_missing[k, c]
-
-            weighted_n_1[0] = self.weighted_n_missing
-            weighted_n_2[0] = self.weighted_n_node_samples - self.weighted_n_missing
-        else:
-            for k in range(self.n_outputs):
-                memset(&sum_1[k, 0], 0, self.n_classes[k] * sizeof(double))
-                memcpy(&sum_2[k, 0], &self.sum_total[k, 0], self.n_classes[k] * sizeof(double))
-
-            weighted_n_1[0] = 0.0
-            weighted_n_2[0] = self.weighted_n_node_samples
-
     cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
 
@@ -413,7 +419,8 @@ cdef class ClassificationCriterion(Criterion):
         or 0 otherwise.
         """
         self.pos = self.start
-        self._move_sums(
+        _move_sums_classification(
+            self,
             self.sum_left,
             self.sum_right,
             &self.weighted_n_left,
@@ -429,7 +436,8 @@ cdef class ClassificationCriterion(Criterion):
         or 0 otherwise.
         """
         self.pos = self.end
-        self._move_sums(
+        _move_sums_classification(
+            self,
             self.sum_right,
             self.sum_left,
             &self.weighted_n_right,
@@ -687,6 +695,42 @@ cdef class Gini(ClassificationCriterion):
         impurity_right[0] = gini_right / self.n_outputs
 
 
+cdef inline void _move_sums_regression(
+    RegressionCriterion criterion,
+    double[::1] sum_1,
+    double[::1] sum_2,
+    double* weighted_n_1,
+    double* weighted_n_2,
+    bint put_missing_in_1) noexcept nogil:
+    """Distrubute sum_missing and sum_missing into sum_1 and sum_2.
+
+    If there are missing values and:
+    - put_missing_in_1 is True, then missing values to go sum_1. Specifically:
+        sum_1 = sum_missing
+        sum_2 = sum_total - sum_missing
+
+    - put_missing_in_1 is False, then missing values go to sum_2. Specifically:
+        sum_1 = 0
+        sum_2 = sum_total
+    """
+    cdef:
+        SIZE_t i
+        SIZE_t n_bytes = criterion.n_outputs * sizeof(double)
+        bint has_missing = criterion.n_missing != 0
+
+    if has_missing and put_missing_in_1:
+        memcpy(&sum_1[0], &criterion.sum_missing[0], n_bytes)
+        for i in range(criterion.n_outputs):
+            sum_2[i] = criterion.sum_total[i] - criterion.sum_missing[i]
+        weighted_n_1[0] = criterion.weighted_n_missing
+        weighted_n_2[0] = criterion.weighted_n_node_samples - criterion.weighted_n_missing
+    else:
+        memset(&sum_1[0], 0, n_bytes)
+        memcpy(&sum_2[0], &criterion.sum_total[0], n_bytes)
+        weighted_n_1[0] = 0.0
+        weighted_n_2[0] = criterion.weighted_n_node_samples
+
+
 cdef class RegressionCriterion(Criterion):
     r"""Abstract regression criterion.
 
@@ -819,42 +863,11 @@ cdef class RegressionCriterion(Criterion):
 
             self.weighted_n_missing += w
 
-    @final
-    cdef inline void _move_sums(
-        self,
-        double[::1] sum_1,
-        double[::1] sum_2,
-        double* weighted_n_1,
-        double* weighted_n_2,
-        bint put_missing_in_1) noexcept nogil:
-        """Distrubute sum_missing, sum_total, and sum_missing into sum_1 and sum_2.
-
-        If there are missing values and:
-        - put_missing_in_1 is False, then sum_1 is zero and sum_2 is sum_total.
-        - put_missing_in_1 is True, then sum_1 is sum_missing and sum_2 is
-          sum_total - sum_missing.
-        """
-        cdef:
-            SIZE_t i
-            SIZE_t n_bytes = self.n_outputs * sizeof(double)
-            bint has_missing = self.n_missing != 0
-
-        if has_missing and put_missing_in_1:
-            memcpy(&sum_1[0], &self.sum_missing[0], n_bytes)
-            for i in range(self.n_outputs):
-                sum_2[i] = self.sum_total[i] - self.sum_missing[i]
-            weighted_n_1[0] = self.weighted_n_missing
-            weighted_n_2[0] = self.weighted_n_node_samples - self.weighted_n_missing
-        else:
-            memset(&sum_1[0], 0, n_bytes)
-            memcpy(&sum_2[0], &self.sum_total[0], n_bytes)
-            weighted_n_1[0] = 0.0
-            weighted_n_2[0] = self.weighted_n_node_samples
-
     cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start."""
         self.pos = self.start
-        self._move_sums(
+        _move_sums_regression(
+            self,
             self.sum_left,
             self.sum_right,
             &self.weighted_n_left,
@@ -866,7 +879,8 @@ cdef class RegressionCriterion(Criterion):
     cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end."""
         self.pos = self.end
-        self._move_sums(
+        _move_sums_regression(
+            self,
             self.sum_right,
             self.sum_left,
             &self.weighted_n_right,
