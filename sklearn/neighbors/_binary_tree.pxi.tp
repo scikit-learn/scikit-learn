@@ -5,7 +5,7 @@
 implementation_specific_values = [
     # The values are arranged as follows:
     #
-    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
+    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE, NPY_TYPE
     #
     # An empty string is used for the `name_suffix` of the float64 case
     # and '32' bit is used for the `name_suffix` of the float32 case.
@@ -14,8 +14,8 @@ implementation_specific_values = [
     #
     # Note: we use the 64bit types as defined in `sklearn.utils._typedefs`
     #
-    ('', 'float64_t', 'np.float64'),
-    ('32', 'float32_t', 'np.float32')
+    ('', 'float64_t', 'np.float64', 'cnp.NPY_DOUBLE'),
+    ('32', 'float32_t', 'np.float32', 'cnp.NPY_FLOAT')
 ]
 
 # KD Tree and Ball Tree
@@ -525,8 +525,9 @@ def kernel_norm(h, d, kernel, return_log=False):
     else:
         return np.exp(result)
 
+{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE, NPY_TYPE in implementation_specific_values}}
 
-cdef class NeighborsHeap:
+cdef class NeighborsHeap{{name_suffix}}:
     """A max-heap structure to keep track of distances/indices of neighbors
 
     This implements an efficient pre-allocated set of fixed-size heaps
@@ -541,19 +542,19 @@ cdef class NeighborsHeap:
     n_nbrs : int
         the size of each heap.
     """
-    cdef float64_t[:, ::1] distances
+    cdef {{INPUT_DTYPE_t}}[:, ::1] distances
     cdef intp_t[:, ::1] indices
 
     def __cinit__(self):
         # One-element arrays are used as placeholders to prevent
         # any problem due to potential access to those attributes
         # (e.g. assigning to NULL or a to value in another segment).
-        self.distances = np.zeros((1, 1), dtype=np.float64, order='C')
+        self.distances = np.zeros((1, 1), dtype={{INPUT_DTYPE}}, order='C')
         self.indices = np.zeros((1, 1), dtype=np.intp, order='C')
 
     def __init__(self, n_pts, n_nbrs):
         self.distances = np.full(
-            (n_pts, n_nbrs), np.inf, dtype=np.float64, order='C'
+            (n_pts, n_nbrs), np.inf, dtype={{INPUT_DTYPE}}, order='C'
         )
         self.indices = np.zeros((n_pts, n_nbrs), dtype=np.intp, order='C')
 
@@ -595,6 +596,8 @@ cdef class NeighborsHeap:
                 size=self.distances.shape[1],
             )
         return 0
+
+{{endfor}}
 
 #------------------------------------------------------------
 # find_node_split_dim:
@@ -789,7 +792,7 @@ def newObj(obj):
     return obj.__new__(obj)
 
 
-{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE, NPY_TYPE in implementation_specific_values}}
 
 ######################################################################
 # define the reverse mapping of VALID_METRICS{{name_suffix}}
@@ -1162,7 +1165,7 @@ cdef class BinaryTree{{name_suffix}}:
         cdef {{INPUT_DTYPE_t}}* pt
 
         # initialize heap for neighbors
-        cdef NeighborsHeap heap = NeighborsHeap(Xarr.shape[0], k)
+        cdef NeighborsHeap{{name_suffix}} heap = NeighborsHeap{{name_suffix}}(Xarr.shape[0], k)
 
         # node heap for breadth-first queries
         cdef NodeHeap nodeheap
@@ -1274,11 +1277,11 @@ cdef class BinaryTree{{name_suffix}}:
 
         cdef intp_t i, count_i = 0
         cdef intp_t n_features = self.data.shape[1]
-        cdef float64_t[::1] dist_arr_i
+        cdef {{INPUT_DTYPE_t}}[::1] dist_arr_i
         cdef intp_t[::1] idx_arr_i, counts
         cdef {{INPUT_DTYPE_t}}* pt
         cdef intp_t** indices = NULL
-        cdef float64_t** distances = NULL
+        cdef {{INPUT_DTYPE_t}}** distances = NULL
 
         # validate X and prepare for query
         X = check_array(X, dtype={{INPUT_DTYPE}}, order='C')
@@ -1306,7 +1309,7 @@ cdef class BinaryTree{{name_suffix}}:
             if indices == NULL:
                 raise MemoryError()
             if return_distance:
-                distances = <float64_t**>calloc(Xarr.shape[0], sizeof(float64_t*))
+                distances = <{{INPUT_DTYPE_t}}**>calloc(Xarr.shape[0], sizeof({{INPUT_DTYPE_t}}*))
                 if distances == NULL:
                     free(indices)
                     raise MemoryError()
@@ -1314,7 +1317,7 @@ cdef class BinaryTree{{name_suffix}}:
         np_idx_arr = np.zeros(self.data.shape[0], dtype=np.intp)
         idx_arr_i = np_idx_arr
 
-        np_dist_arr = np.zeros(self.data.shape[0], dtype=np.float64)
+        np_dist_arr = np.zeros(self.data.shape[0], dtype={{INPUT_DTYPE}})
         dist_arr_i = np_dist_arr
 
         counts_arr = np.zeros(Xarr.shape[0], dtype=np.intp)
@@ -1347,13 +1350,16 @@ cdef class BinaryTree{{name_suffix}}:
 
                 if return_distance:
                     # equivalent to: distances[i] = np_dist_arr[:counts[i]].copy()
-                    distances[i] = <float64_t*>malloc(counts[i] * sizeof(float64_t))
+                    distances[i] = <{{INPUT_DTYPE_t}}*>malloc(counts[i] * sizeof({{INPUT_DTYPE_t}}))
                     if distances[i] == NULL:
                         memory_error = True
                         break
-                    memcpy(distances[i], &dist_arr_i[0], counts[i] * sizeof(float64_t))
+                    memcpy(distances[i], &dist_arr_i[0], counts[i] * sizeof({{INPUT_DTYPE_t}}))
 
         try:
+            for i in range(Xarr.shape[0]):
+                print(distances[i])
+
             if memory_error:
                 raise MemoryError()
 
@@ -1374,7 +1380,7 @@ cdef class BinaryTree{{name_suffix}}:
 
                     # make a new numpy array that wraps the existing data
                     # TODO: remove the explicit cast to cnp.intp_t* when cython min version >= 3.0
-                    distances_npy[i] = cnp.PyArray_SimpleNewFromData(1, <cnp.intp_t*>&counts[i], cnp.NPY_DOUBLE, distances[i])
+                    distances_npy[i] = cnp.PyArray_SimpleNewFromData(1, <cnp.intp_t*>&counts[i], {{NPY_TYPE}}, distances[i])
                     # make sure the data will be freed when the numpy array is garbage collected
                     PyArray_ENABLEFLAGS(distances_npy[i], cnp.NPY_ARRAY_OWNDATA)
                     # make sure the data is not freed twice
@@ -1495,8 +1501,8 @@ cdef class BinaryTree{{name_suffix}}:
         Xarr_np = X.reshape((-1, n_features))
         cdef {{INPUT_DTYPE_t}}[:, ::1] Xarr = Xarr_np
 
-        log_density_arr = np.zeros(Xarr.shape[0], dtype=np.float64)
-        cdef float64_t[::1] log_density = log_density_arr
+        log_density_arr = np.zeros(Xarr.shape[0], dtype={{INPUT_DTYPE}})
+        cdef {{INPUT_DTYPE_t}}[::1] log_density = log_density_arr
 
         cdef {{INPUT_DTYPE_t}}* pt = &Xarr[0, 0]
 
@@ -1620,7 +1626,7 @@ cdef class BinaryTree{{name_suffix}}:
 
     cdef int _query_single_depthfirst(self, intp_t i_node,
                                       {{INPUT_DTYPE_t}}* pt, intp_t i_pt,
-                                      NeighborsHeap heap,
+                                      NeighborsHeap{{name_suffix}} heap,
                                       float64_t reduced_dist_LB) except -1 nogil:
         """Recursive Single-tree k-neighbors query, depth-first approach"""
         cdef NodeData_t node_info = self.node_data[i_node]
@@ -1671,7 +1677,7 @@ cdef class BinaryTree{{name_suffix}}:
 
     cdef int _query_single_breadthfirst(self, {{INPUT_DTYPE_t}}* pt,
                                         intp_t i_pt,
-                                        NeighborsHeap heap,
+                                        NeighborsHeap{{name_suffix}} heap,
                                         NodeHeap nodeheap) except -1:
         """Non-recursive single-tree k-neighbors query, breadth-first search"""
         cdef intp_t i, i_node
@@ -1721,7 +1727,7 @@ cdef class BinaryTree{{name_suffix}}:
     cdef int _query_dual_depthfirst(self, intp_t i_node1,
                                     BinaryTree{{name_suffix}} other, intp_t i_node2,
                                     float64_t[::1] bounds,
-                                    NeighborsHeap heap,
+                                    NeighborsHeap{{name_suffix}} heap,
                                     float64_t reduced_dist_LB) except -1:
         """Recursive dual-tree k-neighbors query, depth-first"""
         # note that the array `bounds` is maintained such that
@@ -1820,7 +1826,7 @@ cdef class BinaryTree{{name_suffix}}:
         return 0
 
     cdef int _query_dual_breadthfirst(self, BinaryTree{{name_suffix}} other,
-                                      NeighborsHeap heap,
+                                      NeighborsHeap{{name_suffix}} heap,
                                       NodeHeap nodeheap) except -1:
         """Non-recursive dual-tree k-neighbors query, breadth-first"""
         cdef intp_t i, i1, i2, i_node1, i_node2, i_pt
@@ -1907,7 +1913,7 @@ cdef class BinaryTree{{name_suffix}}:
                                       intp_t i_node,
                                       {{INPUT_DTYPE_t}}* pt, float64_t r,
                                       intp_t* indices,
-                                      float64_t* distances,
+                                      {{INPUT_DTYPE_t}}* distances,
                                       intp_t count,
                                       int count_only,
                                       int return_distance) noexcept nogil:
@@ -2414,8 +2420,9 @@ def load_heap(float64_t[:, ::1] X, intp_t k):
             heap._push(i, X[i, j], j)
     return heap.get_arrays()
 
+{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE, NPY_TYPE in implementation_specific_values}}
 
-def simultaneous_sort(float64_t[:, ::1] distances, intp_t[:, ::1] indices):
+def simultaneous_sort({{INPUT_DTYPE_t}}[:, ::1] distances, intp_t[:, ::1] indices):
     """In-place simultaneous sort the given row of the arrays
 
     This python wrapper exists primarily to enable unit testing
@@ -2429,6 +2436,7 @@ def simultaneous_sort(float64_t[:, ::1] distances, intp_t[:, ::1] indices):
                            &indices[row, 0],
                            distances.shape[1])
 
+{{endfor}}
 
 def nodeheap_sort(float64_t[::1] vals):
     """In-place reverse sort of vals using NodeHeap"""

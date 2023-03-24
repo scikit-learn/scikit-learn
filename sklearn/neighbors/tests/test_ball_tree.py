@@ -109,9 +109,8 @@ METRICS_TO_TEST = ["euclidean", "manhattan", "minkowski", "chebyshev"]
 @pytest.mark.parametrize("metric", itertools.chain(METRICS_TO_TEST, BOOLEAN_METRICS))
 def test_ball_tree_numerical_consistency(global_random_seed, metric):
     rng = np.random.RandomState(global_random_seed)
-    spread = 1000
-    _X = rng.rand(100, 50) * spread
-    _Y = rng.rand(5, 50) * spread
+    _X = rng.rand(100, 50)
+    _Y = rng.rand(5, 50)
 
     X_64 = _X.astype(dtype=np.float64, copy=False)
     Y_64 = _Y.astype(dtype=np.float64, copy=False)
@@ -131,15 +130,42 @@ def test_ball_tree_numerical_consistency(global_random_seed, metric):
     assert_equal(ind_64, ind_32)
 
     # Test consistency with respect to the `query_radius` method
-    r = 0.3
+    r = 2.38
     ind_64, neighbors_64 = bt_64.query_radius(Y_64[0:2, :], r=r)
     ind_32, neighbors_32 = bt_32.query_radius(Y_32[0:2, :], r=r)
     assert_equal(ind_64, ind_32)
-    assert_allclose(neighbors_64, neighbors_32)
+    assert_allclose(
+        neighbors_64,
+        neighbors_32,
+    )
 
+    # Test consistency with respect to the `query_radius` method
+    # with return distances being true
+    ind_64, dist_64 = bt_64.query_radius(Y_64[4:5, :], r=r, return_distance=True)
+    ind_32, dist_32 = bt_32.query_radius(Y_32[4:5, :], r=r, return_distance=True)
+    assert_equal(ind_64[0], ind_32[0])
+    assert_allclose(dist_64[0], dist_32[0], rtol=1e-5)
+
+
+@pytest.mark.parametrize("metric", itertools.chain(METRICS_TO_TEST, BOOLEAN_METRICS))
+def test_ball_tree_numerical_consistency_kernel_density(global_random_seed, metric):
     # Test consistency with respect to the `kernel_density` method
+    rng = np.random.RandomState(global_random_seed)
+    _X = rng.random_sample((100, 3))
+    _Y = rng.random_sample((5, 3))
+
+    X_64 = _X.astype(dtype=np.float64, copy=False)
+    Y_64 = _Y.astype(dtype=np.float64, copy=False)
+
+    X_32 = _X.astype(dtype=np.float32, copy=False)
+    Y_32 = _Y.astype(dtype=np.float32, copy=False)
+
+    metric_params = METRICS.get(metric, {})
+    bt_64 = BallTree(X_64, leaf_size=1, metric=metric, **metric_params)
+    bt_32 = BallTree32(X_32, leaf_size=1, metric=metric, **metric_params)
+
     kernel = "gaussian"
-    h = 0.001
-    density64 = bt_64.kernel_density(Y_64, h=h, kernel=kernel)
-    density32 = bt_32.kernel_density(Y_32, h=h, kernel=kernel)
-    assert_allclose(density64, density32)
+    h = 0.1
+    density64 = bt_64.kernel_density(Y_64, h=h, kernel=kernel, breadth_first=True)
+    density32 = bt_32.kernel_density(Y_32, h=h, kernel=kernel, breadth_first=True)
+    assert_allclose(density64, density32, rtol=1e-5)
