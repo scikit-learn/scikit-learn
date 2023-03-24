@@ -851,7 +851,7 @@ Ridge Regression`_, see the example below.
 .. _linear_regression_intercept:
 
 Note on the handling of the intercept in linear regression models
------------------------------------------------------------------
+=================================================================
 
 All least-squares linear regression estimators in scikit-learn solve a centered
 version of the problem without intercept and then compute the intercept a
@@ -865,7 +865,7 @@ The following explains why this approach is valid, both in the penalized and
 unpenalized underdetermined cases.
 
 Intercept of the penalized least-squares solution
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------------------------
 
 Recall the definition of the ridge estimator:
 
@@ -917,7 +917,7 @@ Note that the same argument holds for any other penalized linear regression
 estimator (as long as the penalty is such that the solution is unique).
 
 Intercept of the ordinary least-squares solution
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------------------
 
 For the OLS estimator (as implemented in :class:`LinearRegression` or
 equivalently for :class:`Ridge` with `alpha=0`), the solution is not unique
