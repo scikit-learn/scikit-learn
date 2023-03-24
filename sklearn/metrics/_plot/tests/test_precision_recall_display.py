@@ -35,11 +35,11 @@ def test_precision_recall_display_validation(pyplot):
     classifier = SVC(probability=True).fit(X, y)
     y_pred_classifier = classifier.predict_proba(X)[:, -1]
 
-    err_msg = "PrecisionRecallDisplay.from_estimator only supports classifiers"
+    err_msg = "Expected 'estimator' to be a binary classifier. Got SVR instead."
     with pytest.raises(ValueError, match=err_msg):
         PrecisionRecallDisplay.from_estimator(regressor, X, y)
 
-    err_msg = "Expected 'estimator' to be a binary classifier, but got SVC"
+    err_msg = "Expected 'estimator' to be a binary classifier."
     with pytest.raises(ValueError, match=err_msg):
         PrecisionRecallDisplay.from_estimator(classifier, X, y)
 
