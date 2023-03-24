@@ -190,18 +190,18 @@ class BisectingKMeans(_BaseKMeans):
     --------
     >>> from sklearn.cluster import BisectingKMeans
     >>> import numpy as np
-    >>> X = np.array([[1, 2], [1, 4], [1, 0],
-    ...               [10, 2], [10, 4], [10, 0],
-    ...               [10, 6], [10, 8], [10, 10]])
+    >>> X = np.array([[1, 1], [10, 1], [3, 1],
+    ...               [10, 0], [2, 1], [10, 2],
+    ...               [10, 8], [10, 9], [10, 10]])
     >>> bisect_means = BisectingKMeans(n_clusters=3, random_state=0).fit(X)
     >>> bisect_means.labels_
-    array([2, 2, 2, 0, 0, 0, 1, 1, 1], dtype=int32)
+    array([0, 2, 0, 2, 0, 2, 1, 1, 1], dtype=int32)
     >>> bisect_means.predict([[0, 0], [12, 3]])
-    array([2, 0], dtype=int32)
+    array([0, 2], dtype=int32)
     >>> bisect_means.cluster_centers_
-    array([[10.,  2.],
-           [10.,  8.],
-           [ 1., 2.]])
+    array([[ 2., 1.],
+           [10., 9.],
+           [10., 1.]])
     """
 
     _parameter_constraints: dict = {
@@ -309,7 +309,12 @@ class BisectingKMeans(_BaseKMeans):
         # Repeating `n_init` times to obtain best clusters
         for _ in range(self.n_init):
             centers_init = self._init_centroids(
-                X, x_squared_norms, self.init, self._random_state, n_centroids=2
+                X,
+                x_squared_norms=x_squared_norms,
+                init=self.init,
+                random_state=self._random_state,
+                n_centroids=2,
+                sample_weight=sample_weight,
             )
 
             labels, inertia, centers, _ = self._kmeans_single(
@@ -361,7 +366,8 @@ class BisectingKMeans(_BaseKMeans):
 
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight.
+            are assigned equal weight. `sample_weight` is not used during
+            initialization if `init` is a callable.
 
         Returns
         -------

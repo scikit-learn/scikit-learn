@@ -309,6 +309,20 @@ def make_classification(
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_classes": [Interval(Integral, 1, None, closed="left")],
+        "n_labels": [Interval(Integral, 0, None, closed="left")],
+        "length": [Interval(Integral, 1, None, closed="left")],
+        "allow_unlabeled": ["boolean"],
+        "sparse": ["boolean"],
+        "return_indicator": [StrOptions({"dense", "sparse"}), "boolean"],
+        "return_distributions": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_multilabel_classification(
     n_samples=100,
     n_features=20,
@@ -398,18 +412,6 @@ def make_multilabel_classification(
         The probability of each feature being drawn given each class.
         Only returned if ``return_distributions=True``.
     """
-    if n_classes < 1:
-        raise ValueError(
-            "'n_classes' should be an integer greater than 0. Got {} instead.".format(
-                n_classes
-            )
-        )
-    if length < 1:
-        raise ValueError(
-            "'length' should be an integer greater than 0. Got {} instead.".format(
-                length
-            )
-        )
 
     generator = check_random_state(random_state)
     p_c = generator.uniform(size=n_classes)
@@ -469,8 +471,6 @@ def make_multilabel_classification(
     if return_indicator in (True, "sparse", "dense"):
         lb = MultiLabelBinarizer(sparse_output=(return_indicator == "sparse"))
         Y = lb.fit([range(n_classes)]).transform(Y)
-    elif return_indicator is not False:
-        raise ValueError("return_indicator must be either 'sparse', 'dense' or False.")
     if return_distributions:
         return X, Y, p_c, p_w_c
     return X, Y
@@ -523,6 +523,21 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_informative": [Interval(Integral, 0, None, closed="left")],
+        "n_targets": [Interval(Integral, 1, None, closed="left")],
+        "bias": [Interval(Real, None, None, closed="neither")],
+        "effective_rank": [Interval(Integral, 1, None, closed="left"), None],
+        "tail_strength": [Interval(Real, 0, 1, closed="both")],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "shuffle": ["boolean"],
+        "coef": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_regression(
     n_samples=100,
     n_features=100,
@@ -672,6 +687,15 @@ def make_regression(
         return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 0, None, closed="left"), tuple],
+        "shuffle": ["boolean"],
+        "noise": [Interval(Real, 0, None, closed="left"), None],
+        "random_state": ["random_state"],
+        "factor": [Interval(Real, 0, 1, closed="left")],
+    }
+)
 def make_circles(
     n_samples=100, *, shuffle=True, noise=None, random_state=None, factor=0.8
 ):
@@ -706,7 +730,7 @@ def make_circles(
         See :term:`Glossary <random_state>`.
 
     factor : float, default=.8
-        Scale factor between inner and outer circle in the range `(0, 1)`.
+        Scale factor between inner and outer circle in the range `[0, 1)`.
 
     Returns
     -------
@@ -716,20 +740,13 @@ def make_circles(
     y : ndarray of shape (n_samples,)
         The integer labels (0 or 1) for class membership of each sample.
     """
-
-    if factor >= 1 or factor < 0:
-        raise ValueError("'factor' has to be between 0 and 1.")
-
     if isinstance(n_samples, numbers.Integral):
         n_samples_out = n_samples // 2
         n_samples_in = n_samples - n_samples_out
-    else:
-        try:
-            n_samples_out, n_samples_in = n_samples
-        except ValueError as e:
-            raise ValueError(
-                "`n_samples` can be either an int or a two-element tuple."
-            ) from e
+    else:  # n_samples is a tuple
+        if len(n_samples) != 2:
+            raise ValueError("When a tuple, n_samples must have exactly two elements.")
+        n_samples_out, n_samples_in = n_samples
 
     generator = check_random_state(random_state)
     # so as not to have the first point = last point, we set endpoint=False
@@ -1196,6 +1213,15 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "effective_rank": [Interval(Integral, 1, None, closed="left")],
+        "tail_strength": [Interval(Real, 0, 1, closed="both")],
+        "random_state": ["random_state"],
+    }
+)
 def make_low_rank_matrix(
     n_samples=100,
     n_features=100,
@@ -1278,10 +1304,6 @@ def make_low_rank_matrix(
     return np.dot(np.dot(u, s), v.T)
 
 
-# TODO(1.3): Change argument `data_transposed` default from True to False.
-# TODO(1.3): Deprecate data_transposed, always return data not transposed.
-
-
 @validate_params(
     {
         "n_samples": [Interval(Integral, 1, None, closed="left")],
@@ -1289,7 +1311,7 @@ def make_low_rank_matrix(
         "n_features": [Interval(Integral, 1, None, closed="left")],
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
-        "data_transposed": ["boolean", Hidden(StrOptions({"warn"}))],
+        "data_transposed": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 )
 def make_sparse_coded_signal(
@@ -1299,7 +1321,7 @@ def make_sparse_coded_signal(
     n_features,
     n_nonzero_coefs,
     random_state=None,
-    data_transposed="warn",
+    data_transposed="deprecated",
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
@@ -1328,10 +1350,16 @@ def make_sparse_coded_signal(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    data_transposed : bool, default=True
-        By default, Y, D and X are transposed.
+    data_transposed : bool, default=False
+        By default, Y, D and X are not transposed.
 
         .. versionadded:: 1.1
+
+        .. versionchanged:: 1.3
+            Default value changed from True to False.
+
+        .. deprecated:: 1.3
+            `data_transposed` is deprecated and will be removed in 1.5.
 
     Returns
     -------
@@ -1367,14 +1395,15 @@ def make_sparse_coded_signal(
     # encode signal
     Y = np.dot(D, X)
 
+    # TODO(1.5) remove data_transposed
     # raise warning if data_transposed is not passed explicitly
-    if data_transposed == "warn":
-        data_transposed = True
+    if data_transposed != "deprecated":
         warnings.warn(
-            "The default value of data_transposed will change from True to False in"
-            " version 1.3",
+            "data_transposed was deprecated in version 1.3 and will be removed in 1.5.",
             FutureWarning,
         )
+    else:
+        data_transposed = False
 
     # transpose if needed
     if not data_transposed:
