@@ -24,7 +24,7 @@ from ..base import (
     ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils import check_array
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
@@ -546,6 +546,9 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True}
 
 
+@validate_params(
+    {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]}
+)
 def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     """Transform features by scaling each feature to a given range.
 
