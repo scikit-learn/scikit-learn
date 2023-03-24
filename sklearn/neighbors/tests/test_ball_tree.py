@@ -19,6 +19,9 @@ METRICS = {
     "manhattan": {},
     "minkowski": dict(p=3),
     "chebyshev": {},
+}
+
+ADDITIONAL_METRICS = {
     "seuclidean": dict(V=rng.random_sample(DIMENSION)),
     "wminkowski": dict(p=3, w=rng.random_sample(DIMENSION)),
     "mahalanobis": dict(V=V_mahalanobis),
@@ -103,10 +106,7 @@ def test_bad_pyfunc_metric():
         BallTree(X, metric=one_arg_func)
 
 
-METRICS_TO_TEST = ["euclidean", "manhattan", "minkowski", "chebyshev"]
-
-
-@pytest.mark.parametrize("metric", itertools.chain(METRICS_TO_TEST, BOOLEAN_METRICS))
+@pytest.mark.parametrize("metric", itertools.chain(METRICS, BOOLEAN_METRICS))
 def test_ball_tree_numerical_consistency(global_random_seed, metric):
     rng = np.random.RandomState(global_random_seed)
     _X = rng.rand(100, 50)
@@ -151,7 +151,7 @@ def test_ball_tree_numerical_consistency(global_random_seed, metric):
     assert dist_32[0].dtype == np.float32
 
 
-@pytest.mark.parametrize("metric", itertools.chain(METRICS_TO_TEST, BOOLEAN_METRICS))
+@pytest.mark.parametrize("metric", itertools.chain(METRICS, BOOLEAN_METRICS))
 def test_kernel_density_numerical_consistency(global_random_seed, metric):
     # Test consistency with respect to the `kernel_density` method
     rng = np.random.RandomState(global_random_seed)
