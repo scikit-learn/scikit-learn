@@ -1,12 +1,9 @@
 from .. import auc
 from .. import roc_curve
-from .._base import _check_pos_label_consistency
-
-from ...utils import check_matplotlib_support
-from ...utils._response import _get_response_values_binary
+from ...utils._plot import BinaryClassifierCurveDisplayMixin
 
 
-class RocCurveDisplay:
+class RocCurveDisplay(BinaryClassifierCurveDisplayMixin):
     """ROC Curve visualization.
 
     It is recommend to use
@@ -104,9 +101,7 @@ class RocCurveDisplay:
         display : :class:`~sklearn.metrics.plot.RocCurveDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support("RocCurveDisplay.plot")
-
-        name = self.estimator_name if name is None else name
+        name = super().plot(name=name)
 
         line_kwargs = {}
         if self.roc_auc is not None and name is not None:
@@ -226,15 +221,13 @@ class RocCurveDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_estimator")
-
-        name = estimator.__class__.__name__ if name is None else name
-
-        y_pred, pos_label = _get_response_values_binary(
+        y_pred, pos_label, name = super().from_estimator(
             estimator,
             X,
+            y,
             response_method=response_method,
             pos_label=pos_label,
+            name=name,
         )
 
         return cls.from_predictions(
@@ -330,7 +323,9 @@ class RocCurveDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_predictions")
+        pos_label_validated, name = super().from_predictions(
+            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+        )
 
         fpr, tpr, _ = roc_curve(
             y_true,
@@ -341,11 +336,12 @@ class RocCurveDisplay:
         )
         roc_auc = auc(fpr, tpr)
 
-        name = "Classifier" if name is None else name
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
-
         viz = RocCurveDisplay(
-            fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=name, pos_label=pos_label
+            fpr=fpr,
+            tpr=tpr,
+            roc_auc=roc_auc,
+            estimator_name=name,
+            pos_label=pos_label_validated,
         )
 
         return viz.plot(ax=ax, name=name, **kwargs)
