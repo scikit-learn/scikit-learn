@@ -153,6 +153,7 @@ def _parallel_build_trees(
     sample_weight,
     tree_idx,
     n_trees,
+    missing_mask=None,
     verbose=0,
     class_weight=None,
     n_samples_bootstrap=None,
@@ -182,9 +183,21 @@ def _parallel_build_trees(
         elif class_weight == "balanced_subsample":
             curr_sample_weight *= compute_sample_weight("balanced", y, indices=indices)
 
-        tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
+        tree._fit(
+            X,
+            y,
+            sample_weight=curr_sample_weight,
+            check_input=False,
+            missing_mask=missing_mask,
+        )
     else:
-        tree.fit(X, y, sample_weight=sample_weight, check_input=False)
+        tree._fit(
+            X,
+            y,
+            sample_weight=sample_weight,
+            check_input=False,
+            missing_mask=missing_mask,
+        )
 
     return tree
 
@@ -346,6 +359,13 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         X, y = self._validate_data(
             X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE
         )
+        # TODO: To enable missing values for random forest, use
+        # `tree._check_is_missing_mask` to compute missing_mask. This way, the missing
+        # mask is computed once and passed to every tree during `fit`.
+        # Also set `force_all_finite=False` in `_validate_data` above because
+        # `tree._check_is_missing_mask` will perform this check.
+        missing_mask = None
+
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -462,6 +482,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     sample_weight,
                     i,
                     len(trees),
+                    missing_mask=missing_mask,
                     verbose=self.verbose,
                     class_weight=self.class_weight,
                     n_samples_bootstrap=n_samples_bootstrap,

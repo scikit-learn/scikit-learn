@@ -10,7 +10,9 @@
 from libc.stdlib cimport free
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
+from libc.math cimport isnan
 
+import numpy as np
 cimport numpy as cnp
 cnp.import_array()
 
@@ -445,3 +447,22 @@ cdef class WeightedMedianCalculator:
         if self.sum_w_0_k > (self.total_weight / 2.0):
             # whole median
             return self.samples.get_value_from_index(self.k-1)
+
+
+def _any_isnan_axis0(const DTYPE_t[:, :] X):
+    """Same as np.any(np.isnan(X), axis=0)"""
+    cdef:
+        int i, j
+        int n_samples = X.shape[0]
+        int n_features = X.shape[1]
+        unsigned char[::1] isnan_out = np.zeros(X.shape[1], dtype=np.bool_)
+
+    with nogil:
+        for i in range(n_samples):
+            for j in range(n_features):
+                if isnan_out[j]:
+                    continue
+                if isnan(X[i, j]):
+                    isnan_out[j] = True
+                    break
+    return np.asarray(isnan_out)

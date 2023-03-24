@@ -34,6 +34,8 @@ from ..base import MultiOutputMixin
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils.validation import _check_sample_weight
+from ..utils.validation import assert_all_finite
+from ..utils.validation import _assert_all_finite_element_wise
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
@@ -48,6 +50,7 @@ from ._tree import Tree
 from ._tree import _build_pruned_tree_ccp
 from ._tree import ccp_pruning_path
 from . import _tree, _splitter, _criterion
+from ._utils import _any_isnan_axis0
 
 __all__ = [
     "DecisionTreeClassifier",
@@ -174,7 +177,47 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.tree_.n_leaves
 
-    def fit(self, X, y, sample_weight=None, check_input=True):
+    def _support_missing_values(self, X):
+        return issparse(X) or not self._get_tags()["allow_nan"]
+
+    def _check_is_missing_mask(self, X):
+        """Return boolean mask denoting if there are missing values for each feature.
+
+        Parameter
+        ---------
+        X : array-like of shape (n_samples, n_features), dtype=DOUBLE
+            Input data.
+
+        Returns
+        -------
+        missing_mask : ndarray of shape (n_features,), or None
+            Missing value mask. If missing values are not supported or there
+            are no missing values, return None.
+        """
+        common_kwargs = dict(
+            estimator_name=self.__class__.__name__,
+            input_name="X",
+        )
+        if self._support_missing_values(X):
+            assert_all_finite(X, **common_kwargs)
+            return None
+
+        with np.errstate(over="ignore"):
+            overall_sum = np.sum(X)
+
+        # check for finite
+        if not np.isfinite(overall_sum):
+            _assert_all_finite_element_wise(X, xp=np, allow_nan=True, **common_kwargs)
+
+        # If the sum is not nan, then there are no missing values
+        if not np.isnan(overall_sum):
+            return None
+
+        return _any_isnan_axis0(X)
+
+    def _fit(
+        self, X, y, sample_weight=None, check_input=True, missing_mask="compute_mask"
+    ):
         self._validate_params()
         random_state = check_random_state(self.random_state)
 
@@ -183,13 +226,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # We can't pass multi_output=True because that would allow y to be
             # csr.
 
-            if not issparse(X) and self._get_tags()["allow_nan"]:
-                force_all_finite = "allow-nan"
-            else:
-                force_all_finite = True
-
             check_X_params = dict(
-                dtype=DTYPE, accept_sparse="csc", force_all_finite=force_all_finite
+                dtype=DTYPE, accept_sparse="csc", force_all_finite=False
             )
             check_y_params = dict(ensure_2d=False, dtype=None)
             X, y = self._validate_data(
@@ -214,6 +252,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                         "Sum of y is not positive which is "
                         "necessary for Poisson regression."
                     )
+        if missing_mask == "compute_mask":
+            missing_mask = self._check_is_missing_mask(X)
 
         # Determine output settings
         n_samples, self.n_features_in_ = X.shape
@@ -385,7 +425,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.min_impurity_decrease,
             )
 
-        builder.build(self.tree_, X, y, sample_weight)
+        builder.build(self.tree_, X, y, sample_weight, missing_mask)
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
@@ -398,7 +438,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _validate_X_predict(self, X, check_input):
         """Validate the training data on predict (probabilities)."""
         if check_input:
-            if not issparse(X) and self._get_tags()["allow_nan"]:
+            if self._support_missing_values(X):
                 force_all_finite = "allow-nan"
             else:
                 force_all_finite = True
@@ -900,7 +940,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super().fit(
+        super()._fit(
             X,
             y,
             sample_weight=sample_weight,
@@ -1261,7 +1301,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super().fit(
+        super()._fit(
             X,
             y,
             sample_weight=sample_weight,

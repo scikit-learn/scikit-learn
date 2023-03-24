@@ -213,6 +213,9 @@ cdef class Criterion:
                                  - (self.weighted_n_left /
                                     self.weighted_n_node_samples * impurity_left)))
 
+    cdef void init_sum_missing(self):
+        """Init sum_missing to hold sums for missing values."""
+
 cdef inline void _move_sums_classification(
     ClassificationCriterion criterion,
     double[:, ::1] sum_1,
@@ -301,9 +304,6 @@ cdef class ClassificationCriterion(Criterion):
         self.sum_left = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
         self.sum_right = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
 
-        # sum_missing is initialized in init_missing if there are missing values
-        self.sum_missing = None
-
     def __reduce__(self):
         return (type(self),
                 (self.n_outputs, np.asarray(self.n_classes)), self.__getstate__())
@@ -378,6 +378,10 @@ cdef class ClassificationCriterion(Criterion):
         self.reset()
         return 0
 
+    cdef void init_sum_missing(self):
+        """Init sum_missing to hold sums for missing values."""
+        self.sum_missing = np.zeros((self.n_outputs, self.max_n_classes), dtype=np.float64)
+
     cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
         """Initalize sum_missing if there are missing values.
 
@@ -391,12 +395,7 @@ cdef class ClassificationCriterion(Criterion):
         if n_missing == 0:
             return
 
-        if self.sum_missing is None:
-            # `sum_missing` is only set once when there are missing values.
-            with gil:
-                self.sum_missing = np.zeros((self.n_outputs, self.max_n_classes), dtype=np.float64)
-        else:
-            memset(&self.sum_missing[0, 0], 0, self.max_n_classes * self.n_outputs * sizeof(double))
+        memset(&self.sum_missing[0, 0], 0, self.max_n_classes * self.n_outputs * sizeof(double))
 
         self.weighted_n_missing = 0.0
 
@@ -773,9 +772,6 @@ cdef class RegressionCriterion(Criterion):
         self.sum_left = np.zeros(n_outputs, dtype=np.float64)
         self.sum_right = np.zeros(n_outputs, dtype=np.float64)
 
-        # sum_missing is initialized in init_missing if there are missing values
-        self.sum_missing = None
-
     def __reduce__(self):
         return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
 
@@ -830,6 +826,10 @@ cdef class RegressionCriterion(Criterion):
         self.reset()
         return 0
 
+    cdef void init_sum_missing(self):
+        """Init sum_missing to hold sums for missing values."""
+        self.sum_missing = np.zeros(self.n_outputs, dtype=np.float64)
+
     cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
         """Initalize sum_missing if there are missing values.
 
@@ -843,12 +843,7 @@ cdef class RegressionCriterion(Criterion):
         if n_missing == 0:
             return
 
-        if self.sum_missing is None:
-            # `sum_missing` is only set once when there are missing values.
-            with gil:
-                self.sum_missing = np.zeros(self.n_outputs, dtype=np.float64)
-        else:
-            memset(&self.sum_missing[0], 0, self.n_outputs * sizeof(double))
+        memset(&self.sum_missing[0], 0, self.n_outputs * sizeof(double))
 
         self.weighted_n_missing = 0.0
 

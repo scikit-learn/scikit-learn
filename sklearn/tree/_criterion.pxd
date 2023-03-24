@@ -53,6 +53,7 @@ cdef class Criterion:
         SIZE_t start,
         SIZE_t end
     ) except -1 nogil
+    cdef void init_sum_missing(self)
     cdef void init_missing(self, SIZE_t n_missing) noexcept nogil
     cdef int reset(self) except -1 nogil
     cdef int reverse_reset(self) except -1 nogil
