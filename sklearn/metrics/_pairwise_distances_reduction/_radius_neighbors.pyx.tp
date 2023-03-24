@@ -8,7 +8,7 @@ from cython cimport final
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
 
-from ...utils._sorting cimport simultaneous_quick_sort as simultaneous_sort
+from ...utils._sorting cimport simultaneous_quicksort as simultaneous_sort
 from ...utils._typedefs cimport intp_t, float64_t
 from ...utils._vector_sentinel cimport vector_to_nd_array
 

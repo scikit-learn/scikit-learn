@@ -39,7 +39,7 @@ def _simultaneous_sort(
 
     kind : str, default=None
         Kind of the sorting algorithm to use.
-        Valid values for `kind` are in {'introsort', 'quick_sort', 'heapsort'}.
+        Valid values for `kind` are in {'introsort', 'quicksort', 'heapsort'}.
         If None, 'introsort' is used.
     """
     cdef intp_t size = indices.shape[0]
@@ -50,13 +50,13 @@ def _simultaneous_sort(
     if kind == "introsort":
         return simultaneous_introsort(&values[0], &indices[0], size)
 
-    if kind == "quick_sort":
-        return simultaneous_quick_sort(&values[0], &indices[0], size)
+    if kind == "quicksort":
+        return simultaneous_quicksort(&values[0], &indices[0], size)
 
     if kind == "heapsort":
         return simultaneous_heapsort(&values[0], &indices[0], size)
 
-    raise ValueError(f"Currently kind='{kind}', but kind must be in ('introsort', 'quick_sort', 'heapsort').")
+    raise ValueError(f"Currently kind='{kind}', but kind must be in ('introsort', 'quicksort', 'heapsort').")
 
 cdef inline void _simultaneous_swap(
     floating* values,
@@ -132,7 +132,7 @@ cdef inline void simultaneous_introsort(
     _simultaneous_introsort(values, indices, size, maxd)
 
 
-cdef void simultaneous_quick_sort(
+cdef void simultaneous_quicksort(
     floating* values,
     intp_t* indices,
     intp_t size,
@@ -196,9 +196,9 @@ cdef void simultaneous_quick_sort(
 
         # Recursively sort each side of the pivot
         if pivot_idx > 1:
-            simultaneous_quick_sort(values, indices, pivot_idx)
+            simultaneous_quicksort(values, indices, pivot_idx)
         if pivot_idx + 2 < size:
-            simultaneous_quick_sort(values + pivot_idx + 1,
+            simultaneous_quicksort(values + pivot_idx + 1,
                                     indices + pivot_idx + 1,
                                     size - pivot_idx - 1)
 

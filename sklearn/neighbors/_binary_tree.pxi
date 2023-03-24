@@ -163,7 +163,7 @@ from ._partition_nodes cimport partition_node_indices
 from ..utils import check_array
 from ..utils._typedefs cimport float64_t, intp_t
 from ..utils._heap cimport heap_push
-from ..utils._sorting cimport simultaneous_quick_sort as _simultaneous_sort
+from ..utils._sorting cimport simultaneous_quicksort as _simultaneous_sort
 
 cnp.import_array()
 

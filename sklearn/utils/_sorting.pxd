@@ -2,7 +2,7 @@ from cython cimport floating
 
 from ._typedefs cimport intp_t
 
-cdef void simultaneous_quick_sort(
+cdef void simultaneous_quicksort(
     floating* values,
     intp_t* indices,
     intp_t size,

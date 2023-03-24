@@ -16,7 +16,7 @@ def test_simultaneous_sort_wrong_usage():
         _simultaneous_sort(values, indices, kind="not_existent")
 
 
-@pytest.mark.parametrize("kind", ["introsort", "heapsort", "quick_sort"])
+@pytest.mark.parametrize("kind", ["introsort", "heapsort", "quicksort"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_simultaneous_sort(kind, dtype, n_pts=201):
     # Sort sanity check
