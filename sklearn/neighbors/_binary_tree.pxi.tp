@@ -2417,9 +2417,8 @@ def load_heap(float64_t[:, ::1] X, intp_t k):
             heap._push(i, X[i, j], j)
     return heap.get_arrays()
 
-{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE, NPY_TYPE in implementation_specific_values}}
 
-def simultaneous_sort({{INPUT_DTYPE_t}}[:, ::1] distances, intp_t[:, ::1] indices):
+def simultaneous_sort(float64_t[:, ::1] distances, intp_t[:, ::1] indices):
     """In-place simultaneous sort the given row of the arrays
 
     This python wrapper exists primarily to enable unit testing
@@ -2433,7 +2432,6 @@ def simultaneous_sort({{INPUT_DTYPE_t}}[:, ::1] distances, intp_t[:, ::1] indice
                            &indices[row, 0],
                            distances.shape[1])
 
-{{endfor}}
 
 def nodeheap_sort(float64_t[::1] vals):
     """In-place reverse sort of vals using NodeHeap"""
