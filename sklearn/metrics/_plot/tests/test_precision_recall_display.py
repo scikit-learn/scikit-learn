@@ -65,7 +65,10 @@ def test_precision_recall_display_validation(pyplot):
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
-def test_precision_recall_display_plotting(pyplot, constructor_name, response_method):
+@pytest.mark.parametrize("drop_intermediate", [True, False])
+def test_precision_recall_display_plotting(
+    pyplot, constructor_name, response_method, drop_intermediate
+):
     """Check the overall plotting rendering."""
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_label = 1
@@ -81,14 +84,20 @@ def test_precision_recall_display_plotting(pyplot, constructor_name, response_me
 
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(
-            classifier, X, y, response_method=response_method
+            classifier,
+            X,
+            y,
+            response_method=response_method,
+            drop_intermediate=drop_intermediate,
         )
     else:
         display = PrecisionRecallDisplay.from_predictions(
-            y, y_pred, pos_label=pos_label
+            y, y_pred, pos_label=pos_label, drop_intermediate=drop_intermediate
         )
 
-    precision, recall, _ = precision_recall_curve(y, y_pred, pos_label=pos_label)
+    precision, recall, _ = precision_recall_curve(
+        y, y_pred, pos_label=pos_label, drop_intermediate=drop_intermediate
+    )
     average_precision = average_precision_score(y, y_pred, pos_label=pos_label)
 
     np.testing.assert_allclose(display.precision, precision)
