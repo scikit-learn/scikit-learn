@@ -872,7 +872,7 @@ def precision_recall_curve(
         on a plotted precision-recall curve. This is useful in order to create
         lighter precision-recall curves.
 
-        .. versionadded:: 1.2
+        .. versionadded:: 1.3
 
     Returns
     -------

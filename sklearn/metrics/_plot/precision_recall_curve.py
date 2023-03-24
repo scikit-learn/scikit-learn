@@ -219,7 +219,7 @@ class PrecisionRecallDisplay:
             on a plotted precision-recall curve. This is useful in order to
             create lighter precision-recall curves.
 
-            .. versionadded:: 1.2
+            .. versionadded:: 1.3
 
         response_method : {'predict_proba', 'decision_function', 'auto'}, \
             default='auto'
@@ -334,7 +334,7 @@ class PrecisionRecallDisplay:
             on a plotted precision-recall curve. This is useful in order to
             create lighter precision-recall curves.
 
-            .. versionadded:: 1.2
+            .. versionadded:: 1.3
 
         name : str, default=None
             Name for labeling curve. If `None`, name will be set to
