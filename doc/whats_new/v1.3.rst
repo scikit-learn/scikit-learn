@@ -331,7 +331,6 @@ Changelog
   when the provided `sample_weight` reduces the problem to a single class in `fit`.
   :pr:`24140` by :user:`Jonathan Ohayon <Johayon>` and :user:`Chiara Marmo <cmarmo>`.
 
-
 :mod:`sklearn.neighbors`
 ........................
 
