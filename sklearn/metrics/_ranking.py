@@ -1758,9 +1758,15 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     if y_true.min() < 0:
         # TODO(1.4): Replace warning w/ ValueError
         warnings.warn(
-            "ndcg_score should not be used on negative y_true values. ndcg_score will"
-            " raise a ValueError on negative y_true values starting from version 1.4.",
+            "ndcg_score should not be used on negative y_true values. ndcg_score"
+            " will raise a ValueError on negative y_true values starting from"
+            " version 1.4.",
             FutureWarning,
+        )
+    if y_true.ndim > 1 and y_true.shape[1] <= 1:
+        raise ValueError(
+            "Computing NDCG is only meaningful when there is more than 1 document. "
+            f"Got {y_true.shape[1]} instead."
         )
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
