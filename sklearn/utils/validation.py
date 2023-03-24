@@ -976,7 +976,7 @@ def _check_large_sparse(X, accept_large_sparse=False):
                     "Only sparse matrices with 32-bit integer indices are accepted."
                     f" Got {indices_datatype} indices. Please do report a minimal"
                     " reproducer on scikit-learn issue tracker so that support for"
-                    " your use-case can be study by maintainers. See:"
+                    " your use-case can be studied by maintainers. See:"
                     " https://scikit-learn.org/dev/developers/minimal_reproducer.html"
                 )
 
