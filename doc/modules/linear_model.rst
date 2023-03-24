@@ -853,6 +853,20 @@ Ridge Regression`_, see the example below.
 Note on the handling of the intercept in linear regression models
 -----------------------------------------------------------------
 
+All least-squares linear regression estimators in scikit-learn solve a centered
+version of the problem without intercept and then compute the intercept a
+posteriori from that solution.
+
+This ensures that the ridge solution converges to the minimal norm OLS solution
+when `alpha` tends to zero in the underdeterimined case (more features than
+samples).
+
+The following explains why this approach is valid, both in the penalized and
+unpenalized underdetermined cases.
+
+Intercept of the penalized least-squares solution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Recall the definition of the ridge estimator:
 
 .. math::  \min_{w, w_0} { ||X w + w_0 1_s - y||_2 ^ 2 + \alpha ||w||_2 ^ 2}
@@ -899,13 +913,46 @@ minimized by :math:`\hat{w}` the solution of the centered ridge without
 intercept. The third term is positive and therefore subsequently minimized to
 zero by setting :math:`\hat{w_0} = \bar{y} - \bar{X}^{T} \hat{w}`.
 
-Note that the same argument holds for the OLS estimator (for the specific case
-where :math:`\alpha = 0`) or for any other penalized linear regression
-estimator.
+Note that the same argument holds for any other penalized linear regression
+estimator (as long as the penalty is such that the solution is unique).
 
-Furthermore least-norm solution for the centered OLS problem without intercept
-is also the least-norm solution for non-centered OLS problem with intercept
-and is also the limit of the ridge estimator as :math:`\alpha` goes to zero.
+Intercept of the ordinary least-squares solution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For the OLS estimator (as implemented in :class:`LinearRegression` or
+equivalently for :class:`Ridge` with `alpha=0`), the solution is not unique
+when the rank of :math:`X` is lower than `n_features`. In this case,
+scikit-learn estimators converge to the minimum norm solution:
+
+.. math:: \hat{w} = \min_{w, w_0} ||w||_2^2 \text{ s.t. } X w + w_0 1_s = y
+
+Again this is equivalent to the minimum norm solution of the centered problem
+without intercept:
+
+.. math:: \hat{w} = \min_{w} ||w||_2^2 \text{  s.t. } X_c w = y_c
+
+This equivalence can be shown by considering any solution :math:`\hat{w}`,
+:math:`\hat{w_0}` of the :math:`X w + w_0 1_s = y` system and rewriting it as:
+
+.. math:: X_c \hat{w} + \hat{w_0} 1_s = y_c + \bar{y} 1_s - \bar{X}^{T} \hat{w}
+
+Multiplying both sides by :math:`1_s` yields:
+
+.. math:: 1_s^{T} X_c \hat{w} + 1_s^{T} \hat{w_0} 1_s = 1_s^{T} y_c + 1_s^{T} \bar{y} 1_s - 1_s^{T} \bar{X}^{T} \hat{w}
+
+Since :math:`1_s^{T} X_c = 0` and :math:`1_s^{T} y_c = 0`, we recover:
+
+.. math:: \hat{w_0} = \bar{y} - \bar{X}^{T} \hat{w}
+
+If we plug back this value of :math:`\hat{w_0}` in the first equation, we get:
+
+.. math:: X_c \hat{w} = y_c
+
+Hence any solution to the uncentered system with intercept is also a solution
+of the centered system without intercept.
+
+Since the intercept :math:`w_0` takes no part in the computation of the norm in
+the objective, the minimal solution for both problems match.
 
 .. _Logistic_regression:
 
