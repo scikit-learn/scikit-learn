@@ -108,9 +108,10 @@ cdef cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] _condense_tree(
 
     Returns
     -------
-    condensed_tree : ndarray of shape (n_samples,), dtype=HIERARCHY_dtype
-        Effectively an edgelist with a parent, child, lambda_val
-        and cluster_size in each row providing a tree structure.
+    condensed_tree : ndarray of shape (n_samples,), dtype=CONDENSED_dtype
+        Effectively an edgelist encoding a parent/child pair, along with a
+        value and the corresponding cluster_size in each row providing a tree
+        structure.
     """
 
     cdef:
@@ -626,8 +627,10 @@ cdef tuple _get_clusters(
 
     Parameters
     ----------
-    condensed_tree : numpy recarray
-        The condensed tree to extract flat clusters from
+    condensed_tree : ndarray of shape (n_samples,), dtype=CONDENSED_dtype
+        Effectively an edgelist encoding a parent/child pair, along with a
+        value and the corresponding cluster_size in each row providing a tree
+        structure.
 
     stability : dict
         A dictionary mapping cluster_ids to stability values
