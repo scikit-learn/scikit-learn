@@ -268,9 +268,9 @@ cdef inline int node_split_best(
     # Find the best split
     cdef SIZE_t start = splitter.start
     cdef SIZE_t end = splitter.end
-    cdef SIZE_t end_non_missing, end_non_missing_inner
-    cdef SIZE_t n_missing
-    cdef bint has_missing
+    cdef SIZE_t end_non_missing
+    cdef SIZE_t n_missing = 0
+    cdef bint has_missing = 0
     cdef SIZE_t n_searches
     cdef SIZE_t n_left, n_right
     cdef bint missing_go_to_left
@@ -382,22 +382,14 @@ cdef inline int node_split_best(
         for i in range(n_searches):
             missing_go_to_left = i == 1
             criterion.missing_go_to_left = missing_go_to_left
-            # At this point, the criterion has a view into the samples that was sorted
-            # by the partitioner. The criterion will use that ordering when evaluating the splits.
             criterion.reset()
 
             p = start
 
-            end_non_missing_inner = end_non_missing
-            if has_missing and not missing_go_to_left:
-                # Evalaute when there are missing values and all missing values goes
-                # to the right node and non-missing values goes to the left node.
-                end_non_missing_inner += 1
-
             while p < end_non_missing:
                 partitioner.next_p(&p_prev, &p)
 
-                if p >= end_non_missing_inner:
+                if p >= end_non_missing:
                     continue
 
                 if missing_go_to_left:
@@ -423,22 +415,17 @@ cdef inline int node_split_best(
 
                 if current_proxy_improvement > best_proxy_improvement:
                     best_proxy_improvement = current_proxy_improvement
-                    if p < end_non_missing:
-                        # sum of halves is used to avoid infinite value
-                        current_split.threshold = (
-                            feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
-                        )
+                    # sum of halves is used to avoid infinite value
+                    current_split.threshold = (
+                        feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
+                    )
 
-                        if (
-                            current_split.threshold == feature_values[p] or
-                            current_split.threshold == INFINITY or
-                            current_split.threshold == -INFINITY
-                        ):
-                            current_split.threshold = feature_values[p_prev]
-                    else:
-                        # if p >= end_non_missing, then we are evaluating the case
-                        # where the missing values go right and non-missing values go left
-                        current_split.threshold = INFINITY
+                    if (
+                        current_split.threshold == feature_values[p] or
+                        current_split.threshold == INFINITY or
+                        current_split.threshold == -INFINITY
+                    ):
+                        current_split.threshold = feature_values[p_prev]
 
                     current_split.n_missing = n_missing
                     if n_missing == 0:
@@ -448,8 +435,31 @@ cdef inline int node_split_best(
 
                     best_split = current_split  # copy
 
+        # Evalaute when there are missing values and all missing values goes
+        # to the right node and non-missing values goes to the left node.
+        if has_missing:
+            n_left, n_right = end - start - n_missing, n_missing
+            p = end - n_missing
+            missing_go_to_left = 0
+
+            if not (n_left < min_samples_leaf or n_right < min_samples_leaf):
+                criterion.missing_go_to_left = missing_go_to_left
+                criterion.update(p)
+
+                if not ((criterion.weighted_n_left < min_weight_leaf) or
+                        (criterion.weighted_n_right < min_weight_leaf)):
+                    current_proxy_improvement = criterion.proxy_impurity_improvement()
+
+                    if current_proxy_improvement > best_proxy_improvement:
+                        best_proxy_improvement = current_proxy_improvement
+                        current_split.threshold = INFINITY
+                        current_split.missing_go_to_left = missing_go_to_left
+                        current_split.n_missing = n_missing
+                        current_split.pos = p
+                        best_split = current_split
+
     # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
-    if best_split.pos <= end :
+    if best_split.pos <= end:
         partitioner.partition_samples_final(
             best_split.pos,
             best_split.threshold,
