@@ -97,6 +97,10 @@ def test_sparse_graph_connected_component():
         assert_array_equal(component_1, component_2)
 
 
+# TODO: investigate why this test is seed-sensitive on 32-bit Python
+# runtimes. Is this revealing a numerical stability problem ? Or is it
+# expected from the test numerical design ? In the latter case the test
+# should be made less seed-sensitive instead.
 @pytest.mark.parametrize(
     "eigen_solver",
     [
@@ -106,7 +110,7 @@ def test_sparse_graph_connected_component():
     ],
 )
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_spectral_embedding_two_components(eigen_solver, dtype, seed=36):
+def test_spectral_embedding_two_components(eigen_solver, dtype, seed=0):
     # Test spectral embedding with two components
     random_state = np.random.RandomState(seed)
     n_sample = 100
@@ -332,7 +336,7 @@ def test_pipeline_spectral_clustering(seed=36):
         random_state=random_state,
     )
     for se in [se_rbf, se_knn]:
-        km = KMeans(n_clusters=n_clusters, random_state=random_state, n_init="auto")
+        km = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
         km.fit(se.fit_transform(S))
         assert_array_almost_equal(
             normalized_mutual_info_score(km.labels_, true_labels), 1.0, 2

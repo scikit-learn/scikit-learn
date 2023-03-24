@@ -14,11 +14,11 @@ if platform.python_implementation() == "PyPy":
 else:
     NUMPY_MIN_VERSION = "1.17.3"
 
-SCIPY_MIN_VERSION = "1.3.2"
+SCIPY_MIN_VERSION = "1.5.0"
 JOBLIB_MIN_VERSION = "1.1.1"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
 PYTEST_MIN_VERSION = "5.3.1"
-CYTHON_MIN_VERSION = "0.29.24"
+CYTHON_MIN_VERSION = "0.29.33"
 
 
 # 'build' and 'install' is included to have structured metadata for CI.
@@ -51,7 +51,7 @@ dependent_packages = {
     "plotly": ("5.10.0", "docs, examples"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("1.1.3", "maintenance"),
+    "conda-lock": ("1.4.0", "maintenance"),
 }
 
 

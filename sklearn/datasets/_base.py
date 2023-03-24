@@ -14,13 +14,13 @@ from collections import namedtuple
 import os
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
-from importlib import resources
 from pathlib import Path
 
 from ..preprocessing import scale
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
+from ..utils.fixes import _open_binary, _open_text, _read_text, _contents
 
 import numpy as np
 
@@ -315,7 +315,7 @@ def load_csv_data(
         Description of the dataset (the content of `descr_file_name`).
         Only returned if `descr_file_name` is not None.
     """
-    with resources.open_text(data_module, data_file_name) as csv_file:
+    with _open_text(data_module, data_file_name) as csv_file:
         data_file = csv.reader(csv_file)
         temp = next(data_file)
         n_samples = int(temp[0])
@@ -388,7 +388,7 @@ def load_gzip_compressed_csv_data(
         Description of the dataset (the content of `descr_file_name`).
         Only returned if `descr_file_name` is not None.
     """
-    with resources.open_binary(data_module, data_file_name) as compressed_file:
+    with _open_binary(data_module, data_file_name) as compressed_file:
         compressed_file = gzip.open(compressed_file, mode="rt", encoding=encoding)
         data = np.loadtxt(compressed_file, **kwargs)
 
@@ -420,7 +420,7 @@ def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
     fdescr : str
         Content of `descr_file_name`.
     """
-    fdescr = resources.read_text(descr_module, descr_file_name)
+    fdescr = _read_text(descr_module, descr_file_name)
 
     return fdescr
 
@@ -1132,12 +1132,12 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     target_filename = "linnerud_physiological.csv"
 
     # Read header and data
-    with resources.open_text(DATA_MODULE, data_filename) as f:
+    with _open_text(DATA_MODULE, data_filename) as f:
         header_exercise = f.readline().split()
         f.seek(0)  # reset file obj
         data_exercise = np.loadtxt(f, skiprows=1)
 
-    with resources.open_text(DATA_MODULE, target_filename) as f:
+    with _open_text(DATA_MODULE, target_filename) as f:
         header_physiological = f.readline().split()
         f.seek(0)  # reset file obj
         data_physiological = np.loadtxt(f, skiprows=1)
@@ -1215,10 +1215,10 @@ def load_sample_images():
     descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
 
     filenames, images = [], []
-    for filename in sorted(resources.contents(IMAGES_MODULE)):
+    for filename in sorted(_contents(IMAGES_MODULE)):
         if filename.endswith(".jpg"):
             filenames.append(filename)
-            with resources.open_binary(IMAGES_MODULE, filename) as image_file:
+            with _open_binary(IMAGES_MODULE, filename) as image_file:
                 pil_image = Image.open(image_file)
                 image = np.asarray(pil_image)
             images.append(image)

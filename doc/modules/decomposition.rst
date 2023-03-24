@@ -879,8 +879,7 @@ defined by :
 .. math::
     d_{\beta}(X, Y) = \sum_{i,j} \frac{1}{\beta(\beta - 1)}(X_{ij}^\beta + (\beta-1)Y_{ij}^\beta - \beta X_{ij} Y_{ij}^{\beta - 1})
 
-.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_beta_divergence_001.png
-    :target: ../auto_examples/decomposition/plot_beta_divergence.html
+.. image:: ../images/beta_divergence.png
     :align: center
     :scale: 75%
 
@@ -919,7 +918,6 @@ stored components::
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
     * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_beta_divergence.py`
 
 .. _MiniBatchNMF:
 
@@ -951,7 +949,7 @@ is not readily available from the start, or when the data does not fit into memo
       D. Lee, S. Seung, 1999
 
     .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
-      <http://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
+      <https://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
       P. Hoyer, 2004
 
     .. [4] `"SVD based initialization: A head start for nonnegative
@@ -1069,7 +1067,7 @@ when data can be fetched sequentially.
 .. topic:: References:
 
     * `"Latent Dirichlet Allocation"
-      <http://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf>`_
+      <https://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf>`_
       D. Blei, A. Ng, M. Jordan, 2003
 
     * `"Online Learning for Latent Dirichlet Allocation”

@@ -718,6 +718,12 @@ def cartesian(arrays, out=None):
     -------
     out : ndarray of shape (M, len(arrays))
         Array containing the cartesian products formed of input arrays.
+        If not provided, the `dtype` of the output array is set to the most
+        permissive `dtype` of the input arrays, according to NumPy type
+        promotion.
+
+        .. versionadded:: 1.2
+           Add support for arrays of different types.
 
     Notes
     -----
@@ -743,12 +749,12 @@ def cartesian(arrays, out=None):
     """
     arrays = [np.asarray(x) for x in arrays]
     shape = (len(x) for x in arrays)
-    dtype = arrays[0].dtype
 
     ix = np.indices(shape)
     ix = ix.reshape(len(arrays), -1).T
 
     if out is None:
+        dtype = np.result_type(*arrays)  # find the most permissive dtype
         out = np.empty_like(ix, dtype=dtype)
 
     for n, arr in enumerate(arrays):
@@ -1142,3 +1148,47 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
             RuntimeWarning,
         )
     return out
+
+
+def _nanaverage(a, weights=None):
+    """Compute the weighted average, ignoring NaNs.
+
+    Parameters
+    ----------
+    a : ndarray
+        Array containing data to be averaged.
+    weights : array-like, default=None
+        An array of weights associated with the values in a. Each value in a
+        contributes to the average according to its associated weight. The
+        weights array can either be 1-D of the same shape as a. If `weights=None`,
+        then all data in a are assumed to have a weight equal to one.
+
+    Returns
+    -------
+    weighted_average : float
+        The weighted average.
+
+    Notes
+    -----
+    This wrapper to combine :func:`numpy.average` and :func:`numpy.nanmean`, so
+    that :func:`np.nan` values are ignored from the average and weights can
+    be passed. Note that when possible, we delegate to the prime methods.
+    """
+
+    if len(a) == 0:
+        return np.nan
+
+    mask = np.isnan(a)
+    if mask.all():
+        return np.nan
+
+    if weights is None:
+        return np.nanmean(a)
+
+    weights = np.array(weights, copy=False)
+    a, weights = a[~mask], weights[~mask]
+    try:
+        return np.average(a, weights=weights)
+    except ZeroDivisionError:
+        # this is when all weights are zero, then ignore them
+        return np.average(a)

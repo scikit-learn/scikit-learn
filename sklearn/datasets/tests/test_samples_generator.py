@@ -10,6 +10,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -282,18 +283,6 @@ def test_make_multilabel_classification_return_indicator_sparse():
         assert sp.issparse(Y)
 
 
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"n_classes": 0}, "'n_classes' should be an integer"),
-        ({"length": 0}, "'length' should be an integer"),
-    ],
-)
-def test_make_multilabel_classification_valid_arguments(params, err_msg):
-    with pytest.raises(ValueError, match=err_msg):
-        make_multilabel_classification(**params)
-
-
 def test_make_hastie_10_2():
     X, y = make_hastie_10_2(n_samples=100, random_state=0)
     assert X.shape == (100, 10), "X shape mismatch"
@@ -497,7 +486,6 @@ def test_make_sparse_coded_signal():
         n_features=10,
         n_nonzero_coefs=3,
         random_state=0,
-        data_transposed=False,
     )
     assert Y.shape == (5, 10), "Y shape mismatch"
     assert D.shape == (8, 10), "D shape mismatch"
@@ -508,6 +496,8 @@ def test_make_sparse_coded_signal():
     assert_allclose(np.sqrt((D**2).sum(axis=1)), np.ones(D.shape[0]))
 
 
+# TODO(1.5): remove
+@ignore_warnings(category=FutureWarning)
 def test_make_sparse_coded_signal_transposed():
     Y, D, X = make_sparse_coded_signal(
         n_samples=5,
@@ -526,13 +516,18 @@ def test_make_sparse_coded_signal_transposed():
     assert_allclose(np.sqrt((D**2).sum(axis=0)), np.ones(D.shape[1]))
 
 
-# TODO(1.3): remove
-def test_make_sparse_code_signal_warning():
+# TODO(1.5): remove
+def test_make_sparse_code_signal_deprecation_warning():
     """Check the message for future deprecation."""
-    warn_msg = "The default value of data_transposed will change from True to False"
+    warn_msg = "data_transposed was deprecated in version 1.3"
     with pytest.warns(FutureWarning, match=warn_msg):
         make_sparse_coded_signal(
-            n_samples=1, n_components=1, n_features=1, n_nonzero_coefs=1, random_state=0
+            n_samples=1,
+            n_components=1,
+            n_features=1,
+            n_nonzero_coefs=1,
+            random_state=0,
+            data_transposed=True,
         )
 
 
@@ -681,11 +676,6 @@ def test_make_circles():
             2,
         ), "Samples not correctly distributed across circles."
 
-    with pytest.raises(ValueError):
-        make_circles(factor=-0.01)
-    with pytest.raises(ValueError):
-        make_circles(factor=1.0)
-
 
 def test_make_circles_unbalanced():
     X, y = make_circles(n_samples=(2, 8))
@@ -697,12 +687,6 @@ def test_make_circles_unbalanced():
 
     with pytest.raises(
         ValueError,
-        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
-    ):
-        make_circles(n_samples=[1, 2, 3])
-
-    with pytest.raises(
-        ValueError,
-        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
+        match="When a tuple, n_samples must have exactly two elements.",
     ):
         make_circles(n_samples=(10,))

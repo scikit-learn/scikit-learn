@@ -350,19 +350,16 @@ def test_precision():
 def test_export_text_errors():
     clf = DecisionTreeClassifier(max_depth=2, random_state=0)
     clf.fit(X, y)
-
-    err_msg = "max_depth bust be >= 0, given -1"
-    with pytest.raises(ValueError, match=err_msg):
-        export_text(clf, max_depth=-1)
     err_msg = "feature_names must contain 2 elements, got 1"
     with pytest.raises(ValueError, match=err_msg):
         export_text(clf, feature_names=["a"])
-    err_msg = "decimals must be >= 0, given -1"
+    err_msg = (
+        "When `class_names` is a list, it should contain as"
+        " many items as `decision_tree.classes_`. Got 1 while"
+        " the tree was fitted with 2 classes."
+    )
     with pytest.raises(ValueError, match=err_msg):
-        export_text(clf, decimals=-1)
-    err_msg = "spacing must be > 0, given 0"
-    with pytest.raises(ValueError, match=err_msg):
-        export_text(clf, spacing=0)
+        export_text(clf, class_names=["a"])
 
 
 def test_export_text():
@@ -393,6 +390,16 @@ def test_export_text():
     """
     ).lstrip()
     assert export_text(clf, feature_names=["a", "b"]) == expected_report
+
+    expected_report = dedent(
+        """
+    |--- feature_1 <= 0.00
+    |   |--- class: cat
+    |--- feature_1 >  0.00
+    |   |--- class: dog
+    """
+    ).lstrip()
+    assert export_text(clf, class_names=["cat", "dog"]) == expected_report
 
     expected_report = dedent(
         """
