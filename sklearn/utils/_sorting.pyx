@@ -1,5 +1,5 @@
 from cython cimport floating
-from libc.math cimport log as ln
+from libc.math cimport log2
 
 from ._typedefs cimport intp_t
 
@@ -12,9 +12,6 @@ from ._typedefs cimport intp_t
 
 # Utilities functions
 
-# TODO: Factor code also present in `tree._utils` or use `libc.math.log2` directly
-cdef inline double log(double x) nogil:
-    return ln(x) / ln(2.0)
 
 def _simultaneous_sort(
     floating[::1] values,
@@ -128,7 +125,7 @@ cdef inline void simultaneous_introsort(
     # simultaneously, based on the values. Algorithm: Introsort (Musser, SP&E, 1997).
     if size == 0:
       return
-    cdef int maxd = 2 * <int>log(size)
+    cdef int maxd = 2 * <int>log2(size)
     _simultaneous_introsort(values, indices, size, maxd)
 
 
