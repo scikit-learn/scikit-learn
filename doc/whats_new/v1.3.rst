@@ -306,6 +306,14 @@ Changelog
   :pr:`18723` by :user:`Sahil Gupta <sahilgupta2105>` and
   :pr:`24677` by :user:`Ashwin Mathur <awinml>`.
 
+- |Enhancement| A new parameter `drop_intermediate` was added to
+  :func:`metrics.precision_recall_curve`,
+  :func:`metrics.PrecisionRecallDisplay.from_estimator`,
+  :func:`metrics.PrecisionRecallDisplay.from_predictions`,
+  which drops some suboptimal thresholds to create lighter precision-recall
+  curves.
+  :pr:`24668` by :user:`dberenbaum`.
+
 - |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
   not normalized, instead of actually normalizing them in the metric. Starting from
   1.5 this will raise an error. :pr:`25299` by :user:`Omar Salman <OmarManzoor`.
