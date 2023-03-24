@@ -24,7 +24,13 @@ from sklearn.utils._testing import _convert_container
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
-from sklearn.utils._mocking import MockDataFrame
+
+# TODO: add this estimator into the _mocking module in a further refactoring
+from sklearn.metrics.tests.test_score_objects import EstimatorWithFit
+from sklearn.utils._mocking import (
+    MockDataFrame,
+    _MockEstimatorOnOffPrediction,
+)
 from sklearn.utils.fixes import parse_version
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.random_projection import _sparse_random_matrix
@@ -53,6 +59,7 @@ from sklearn.utils.validation import (
     _get_feature_names,
     _check_feature_names_in,
     _check_fit_params,
+    _check_response_method,
 )
 from sklearn.base import BaseEstimator
 import sklearn
@@ -1750,6 +1757,57 @@ def test_check_feature_names_in_pandas():
 
     with pytest.raises(ValueError, match="input_features is not equal to"):
         est.get_feature_names_out(["x1", "x2", "x3"])
+
+
+def test_check_response_method_unknown_method():
+    """Check the error message when passing an unknown response method."""
+    err_msg = (
+        "RandomForestRegressor has none of the following attributes: unknown_method."
+    )
+    with pytest.raises(AttributeError, match=err_msg):
+        _check_response_method(RandomForestRegressor(), "unknown_method")
+
+
+@pytest.mark.parametrize(
+    "response_method", ["decision_function", "predict_proba", "predict"]
+)
+def test_check_response_method_not_supported_response_method(response_method):
+    """Check the error message when a response method is not supported by the
+    estimator."""
+    err_msg = (
+        f"EstimatorWithFit has none of the following attributes: {response_method}."
+    )
+    with pytest.raises(AttributeError, match=err_msg):
+        _check_response_method(EstimatorWithFit(), response_method)
+
+
+def test_check_response_method_list_str():
+    """Check that we can pass a list of ordered method."""
+    method_implemented = ["predict_proba"]
+    my_estimator = _MockEstimatorOnOffPrediction(method_implemented)
+
+    X = "mocking_data"
+
+    # raise an error when no methods are defined
+    response_method = ["decision_function", "predict"]
+    err_msg = (
+        "_MockEstimatorOnOffPrediction has none of the following attributes: "
+        f"{', '.join(response_method)}."
+    )
+    with pytest.raises(AttributeError, match=err_msg):
+        _check_response_method(my_estimator, response_method)(X)
+
+    # check that we don't get issue when one of the method is defined
+    response_method = ["decision_function", "predict_proba"]
+    method_name_predicting = _check_response_method(my_estimator, response_method)(X)
+    assert method_name_predicting == "predict_proba"
+
+    # check the order of the methods returned
+    method_implemented = ["predict_proba", "predict"]
+    my_estimator = _MockEstimatorOnOffPrediction(method_implemented)
+    response_method = ["decision_function", "predict", "predict_proba"]
+    method_name_predicting = _check_response_method(my_estimator, response_method)(X)
+    assert method_name_predicting == "predict"
 
 
 def test_boolean_series_remains_boolean():
