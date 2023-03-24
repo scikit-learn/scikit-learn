@@ -159,7 +159,7 @@ def ols_ridge_dataset(global_random_seed, request):
         y_c = y - y.mean()
         X_c = X[:, :-1] - X[:, :-1].mean(axis=0)
 
-        minimum_norm_coef = X_c.T @ np.linalg.solve(X_c @ X_c.T, y_c)
+        minimum_norm_coef = X_c.T @ np.linalg.pinv(X_c @ X_c.T) @ y_c
         intercept = y.mean() - X[:, :-1].mean(axis=0) @ minimum_norm_coef
         coef_ols = np.concatenate([minimum_norm_coef, [intercept]])
 
