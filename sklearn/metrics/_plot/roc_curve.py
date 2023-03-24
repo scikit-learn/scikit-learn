@@ -123,6 +123,17 @@ class RocCurveDisplay:
         if ax is None:
             fig, ax = plt.subplots()
 
+        # Set limits of axes to [0, 1] and fix aspect ratio to squared
+        ax.set_xlim((0, 1))
+        ax.set_ylim((0, 1))
+        ax.set_aspect(1)
+
+        # Plot the frame in dotted line, so that the curve can be
+        # seen better when values are close to 0 or 1
+        for s in ["right", "left", "top", "bottom"]:
+            ax.spines[s].set_linestyle((0, (1, 5)))
+            ax.spines[s].set_linewidth(0.5)
+
         (self.line_,) = ax.plot(self.fpr, self.tpr, **line_kwargs)
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""

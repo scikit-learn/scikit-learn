@@ -124,6 +124,15 @@ def test_roc_curve_display_plotting(
     assert display.ax_.get_ylabel() == expected_ylabel
     assert display.ax_.get_xlabel() == expected_xlabel
 
+    assert display.ax_.get_xlim() == (0, 1)
+    assert display.ax_.get_ylim() == (0, 1)
+    assert display.ax_.get_aspect() == 1
+
+    # Check frame styles
+    for s in ["right", "left", "top", "bottom"]:
+        assert display.ax_.spines[s].get_linestyle() == (0, (1, 5))
+        assert display.ax_.spines[s].get_linewidth() <= 0.5
+
 
 @pytest.mark.parametrize(
     "clf",
