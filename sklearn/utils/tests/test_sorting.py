@@ -12,15 +12,15 @@ def test_simultaneous_sort_wrong_usage():
     values = rng.random_sample(10).astype(np.float64, copy=False)
     indices = np.arange(10).astype(np.intp, copy=False)
 
-    with pytest.raises(ValueError, match="Currently kind='not_existent'"):
-        _simultaneous_sort(values, indices, kind="not_existent")
+    with pytest.raises(ValueError, match="Currently kind='nonexistent'"):
+        _simultaneous_sort(values, indices, kind="nonexistent")
 
 
 @pytest.mark.parametrize("kind", ["introsort", "heapsort", "quicksort"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_simultaneous_sort(kind, dtype, n_pts=201):
+def test_simultaneous_sort(kind, dtype, global_random_seed, n_pts=201):
     # Sort sanity check
-    rng = check_random_state(0)
+    rng = check_random_state(global_random_seed)
     values = rng.random_sample(n_pts).astype(dtype, copy=False)
     indices = np.arange(n_pts).astype(np.intp, copy=False)
 
