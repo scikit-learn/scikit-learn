@@ -1357,9 +1357,6 @@ cdef class BinaryTree{{name_suffix}}:
                     memcpy(distances[i], &dist_arr_i[0], counts[i] * sizeof({{INPUT_DTYPE_t}}))
 
         try:
-            for i in range(Xarr.shape[0]):
-                print(distances[i])
-
             if memory_error:
                 raise MemoryError()
 
