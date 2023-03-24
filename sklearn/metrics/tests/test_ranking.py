@@ -1578,7 +1578,6 @@ def test_lrap_error_raised():
 @pytest.mark.parametrize("n_classes", (2, 5, 10))
 @pytest.mark.parametrize("random_state", range(1))
 def test_alternative_lrap_implementation(n_samples, n_classes, random_state):
-
     check_alternative_lrap_implementation(
         label_ranking_average_precision_score, n_classes, n_samples, random_state
     )
@@ -1876,6 +1875,17 @@ def test_ndcg_toy_examples(ignore_ties):
         expected_dcg_score
     )
     assert ndcg_score(y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(1.0)
+
+
+def test_ndcg_error_single_document():
+    """Check that we raise an informative error message when trying to
+    compute NDCG with a single document."""
+    err_msg = (
+        "Computing NDCG is only meaningful when there is more than 1 document. "
+        "Got 1 instead."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        ndcg_score([[1]], [[1]])
 
 
 def test_ndcg_score():
