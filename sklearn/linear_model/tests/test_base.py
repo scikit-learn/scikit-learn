@@ -730,14 +730,16 @@ def test_fused_types_make_dataset():
 
 @pytest.mark.parametrize("sparseX", [False, True])
 @pytest.mark.parametrize("fit_intercept", [False, True])
-def test_linear_regression_sample_weight_consistency(sparseX, fit_intercept):
+def test_linear_regression_sample_weight_consistency(
+    sparseX, fit_intercept, global_random_seed
+):
     """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
     check_sample_weights_invariance alone. It is very similar to
     test_enet_sample_weight_consistency.
     """
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 10, 5
 
     X = rng.rand(n_samples, n_features)
