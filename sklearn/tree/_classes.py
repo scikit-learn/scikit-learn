@@ -178,10 +178,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self.tree_.n_leaves
 
     def _support_missing_values(self, X):
-        return issparse(X) or not self._get_tags()["allow_nan"]
+        return not issparse(X) and self._get_tags()["allow_nan"]
 
     def _check_is_missing_mask(self, X):
         """Return boolean mask denoting if there are missing values for each feature.
+
+        This method also ensures that X is finite.
 
         Parameter
         ---------
@@ -198,7 +200,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             estimator_name=self.__class__.__name__,
             input_name="X",
         )
-        if self._support_missing_values(X):
+        if not self._support_missing_values(X):
             assert_all_finite(X, **common_kwargs)
             return None
 
@@ -215,9 +217,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return _any_isnan_axis0(X)
 
-    def _fit(
-        self, X, y, sample_weight=None, check_input=True, missing_mask="compute_mask"
-    ):
+    def _fit(self, X, y, sample_weight=None, check_input=True, missing_mask=None):
         self._validate_params()
         random_state = check_random_state(self.random_state)
 
@@ -226,6 +226,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # We can't pass multi_output=True because that would allow y to be
             # csr.
 
+            # _check_is_missing_mask will check for finite values and compute missing
+            # mask when it required
             check_X_params = dict(
                 dtype=DTYPE, accept_sparse="csc", force_all_finite=False
             )
@@ -233,6 +235,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             X, y = self._validate_data(
                 X, y, validate_separately=(check_X_params, check_y_params)
             )
+
+            missing_mask = self._check_is_missing_mask(X)
             if issparse(X):
                 X.sort_indices()
 
@@ -252,8 +256,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                         "Sum of y is not positive which is "
                         "necessary for Poisson regression."
                     )
-        if missing_mask == "compute_mask":
-            missing_mask = self._check_is_missing_mask(X)
 
         # Determine output settings
         n_samples, self.n_features_in_ = X.shape
@@ -1031,7 +1033,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             isinstance(self.splitter, str)
             and self.splitter == "best"
             and isinstance(self.criterion, str)
-            and self.criterion != "absolute_error"
         )
         return {"multilabel": True, "allow_nan": allow_nan}
 
