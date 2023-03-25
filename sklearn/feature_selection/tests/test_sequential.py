@@ -318,7 +318,7 @@ def test_backward_neg_tol():
 
 
 def test_cv_generator_support():
-    """Check that we does not throw exception when cv is generator
+    """Check that no exception raised when cv is generator
 
     non-regression test for #25957
     """
@@ -335,8 +335,4 @@ def test_cv_generator_support():
     sfs = SequentialFeatureSelector(
         knc, n_features_to_select=5, scoring="accuracy", cv=splits
     )
-
-    try:
-        sfs.fit(X, y)
-    except Exception:
-        pytest.fail("Should not throw exception when cv is generator")
+    sfs.fit(X, y)
