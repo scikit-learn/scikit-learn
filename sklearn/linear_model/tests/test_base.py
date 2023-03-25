@@ -734,7 +734,8 @@ def test_linear_regression_sample_weight_consistency(sparseX, fit_intercept):
     """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
-    check_sample_weights_invariance alone.
+    check_sample_weights_invariance alone. It is very similar to
+    test_enet_sample_weight_consistency.
     """
     rng = np.random.RandomState(42)
     n_samples, n_features = 10, 5
@@ -776,6 +777,7 @@ def test_linear_regression_sample_weight_consistency(sparseX, fit_intercept):
 
     # 3) scaling of sample_weight should have no effect
     # Note: For models with penalty, scaling the penalty term might work.
+    sample_weight = rng.uniform(low=0.01, high=2, size=X.shape[0])
     reg2 = LinearRegression(**params)
     reg2.fit(X, y, sample_weight=np.pi * sample_weight)
     assert_allclose(reg2.coef_, coef, rtol=1e-5 if sparseX else 1e-6)
