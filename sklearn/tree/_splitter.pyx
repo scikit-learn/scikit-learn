@@ -300,7 +300,6 @@ cdef inline int node_split_best(
     cdef SIZE_t f_j
     cdef SIZE_t p
     cdef SIZE_t p_prev
-    cdef SIZE_t i
 
     cdef SIZE_t n_visited_features = 0
     # Number of features discovered to be constant during the split search
