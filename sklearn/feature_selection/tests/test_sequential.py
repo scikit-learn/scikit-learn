@@ -318,7 +318,7 @@ def test_backward_neg_tol():
 
 
 def test_cv_generator_support():
-    """Check that we support cv that is a generator.
+    """Check that we does not throw exception when cv is generator
 
     non-regression test for #25957
     """
@@ -339,4 +339,4 @@ def test_cv_generator_support():
     try:
         sfs.fit(X, y)
     except Exception:
-        pytest.fail("Failed to support cv that is a generator")
+        pytest.fail("Should not throw exception when cv is generator")
