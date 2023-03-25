@@ -24,7 +24,6 @@ import numpy as np
 
 from time import time
 import scipy.stats as stats
-from sklearn.utils.fixes import loguniform
 
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.datasets import load_digits
@@ -57,7 +56,7 @@ def report(results, n_top=3):
 param_dist = {
     "average": [True, False],
     "l1_ratio": stats.uniform(0, 1),
-    "alpha": loguniform(1e-2, 1e0),
+    "alpha": stats.loguniform(1e-2, 1e0),
 }
 
 # run randomized search
