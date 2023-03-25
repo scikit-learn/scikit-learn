@@ -319,7 +319,8 @@ Changelog
   :pr:`24668` by :user:`dberenbaum`.
 
 - |Enhancement| :class:`RocCurveDisplay` now plots the ROC curve with both axes
-  limited to [0, 1] and a loosely dotted frame.
+  limited to [0, 1] and a loosely dotted frame. There is also an additional
+  parameter `plot_chance_level` to determine whether to plot the chance level.
   :pr:`25972` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 - |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
