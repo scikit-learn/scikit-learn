@@ -196,10 +196,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             Missing value mask. If missing values are not supported or there
             are no missing values, return None.
         """
-        common_kwargs = dict(
-            estimator_name=self.__class__.__name__,
-            input_name="X",
-        )
+        common_kwargs = dict(estimator_name=self.__class__.__name__, input_name="X")
+
         if not self._support_missing_values(X):
             assert_all_finite(X, **common_kwargs)
             return None
@@ -227,7 +225,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # csr.
 
             # _check_is_missing_mask will check for finite values and compute missing
-            # mask when it required
+            # mask the tree supports missing values
             check_X_params = dict(
                 dtype=DTYPE, accept_sparse="csc", force_all_finite=False
             )
