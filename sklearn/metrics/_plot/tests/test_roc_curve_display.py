@@ -36,6 +36,7 @@ def data_binary(data):
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize("drop_intermediate", [True, False])
 @pytest.mark.parametrize("with_strings", [True, False])
+@pytest.mark.parametrize("plot_chance_level", [True, False])
 @pytest.mark.parametrize(
     "constructor_name, default_name",
     [
@@ -50,6 +51,7 @@ def test_roc_curve_display_plotting(
     with_sample_weight,
     drop_intermediate,
     with_strings,
+    plot_chance_level,
     constructor_name,
     default_name,
 ):
@@ -82,6 +84,7 @@ def test_roc_curve_display_plotting(
             drop_intermediate=drop_intermediate,
             pos_label=pos_label,
             alpha=0.8,
+            plot_chance_level=plot_chance_level,
         )
     else:
         display = RocCurveDisplay.from_predictions(
@@ -91,6 +94,7 @@ def test_roc_curve_display_plotting(
             drop_intermediate=drop_intermediate,
             pos_label=pos_label,
             alpha=0.8,
+            plot_chance_level=plot_chance_level,
         )
 
     fpr, tpr, _ = roc_curve(
@@ -113,6 +117,13 @@ def test_roc_curve_display_plotting(
     assert display.line_.get_alpha() == 0.8
     assert isinstance(display.ax_, mpl.axes.Axes)
     assert isinstance(display.figure_, mpl.figure.Figure)
+
+    if plot_chance_level:
+        assert isinstance(display.chance_level_, mpl.lines.Line2D)
+        assert tuple(display.chance_level_.get_xdata()) == (0, 1)
+        assert tuple(display.chance_level_.get_ydata()) == (0, 1)
+    else:
+        assert display.chance_level_ is None
 
     expected_label = f"{default_name} (AUC = {display.roc_auc:.2f})"
     assert display.line_.get_label() == expected_label
