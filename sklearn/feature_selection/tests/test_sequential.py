@@ -6,11 +6,12 @@ from numpy.testing import assert_array_equal
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SequentialFeatureSelector
-from sklearn.datasets import make_regression, make_blobs
+from sklearn.datasets import make_regression, make_blobs, make_classification
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, LeaveOneGroupOut
 from sklearn.cluster import KMeans
+from sklearn.neighbors import KNeighborsClassifier
 
 
 def test_bad_n_features_to_select():
@@ -314,3 +315,28 @@ def test_backward_neg_tol():
 
     assert 0 < sfs.get_support().sum() < X.shape[1]
     assert new_score < initial_score
+
+
+def test_cv_generator_support():
+    """Check that we support cv that is a generator.
+
+    non-regression test for #25957
+    """
+    X, y = make_classification()
+
+    groups = np.zeros_like(y, dtype=int)
+    groups[y.size // 2 :] = 1
+
+    cv = LeaveOneGroupOut()
+    splits = cv.split(X, y, groups=groups)
+
+    knc = KNeighborsClassifier(n_neighbors=5)
+
+    sfs = SequentialFeatureSelector(
+        knc, n_features_to_select=5, scoring="accuracy", cv=splits
+    )
+
+    try:
+        sfs.fit(X, y)
+    except Exception:
+        pytest.fail("Failed to support cv that is a generator")
