@@ -69,7 +69,7 @@ feature_names = dataset.feature_names
 
 feature_mapping = {
     "MedInc": "Median income in block",
-    "HousAge": "Median house age in block",
+    "HouseAge": "Median house age in block",
     "AveRooms": "Average number of rooms",
     "AveBedrms": "Average number of bedrooms",
     "Population": "Block population",
