@@ -632,7 +632,7 @@ def test_check_array_accept_large_sparse_raise_exception(X_64bit):
     # When large sparse are not allowed
     msg = (
         "Only sparse matrices with 32-bit integer indices "
-        "are accepted. Got int64 indices."
+        "are accepted. Got int64 indices. Please do report"
     )
     with pytest.raises(ValueError, match=msg):
         check_array(X_64bit, accept_sparse=True, accept_large_sparse=False)
