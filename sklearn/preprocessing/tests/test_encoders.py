@@ -2066,7 +2066,7 @@ def test_drop_idx_infrequent_categories():
     ],
 )
 def test_ordinal_encoder_infrequent_three_levels(kwargs):
-    """Test that parameters for grouping `a', and 'd' into the infrequent category."""
+    """Test parameters for grouping 'a', and 'd' into the infrequent category."""
 
     X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
     ordinal = OrdinalEncoder(
@@ -2273,7 +2273,7 @@ def test_ordinal_encoder_missing_appears_frequent():
     ).T
     ordinal = OrdinalEncoder(max_categories=3).fit(X)
 
-    X_test = np.array([["snake"] + ["cat"] + ["dog"] + [np.nan]], dtype=object).T
+    X_test = np.array([["snake", "cat", "dog", np.nan]], dtype=object).T
     X_trans = ordinal.transform(X_test)
     assert_allclose(X_trans, [[2], [0], [1], [np.nan]])
 
@@ -2287,7 +2287,7 @@ def test_ordinal_encoder_missing_appears_infrequent():
     ordinal = OrdinalEncoder(min_frequency=4).fit(X)
 
     X_test = np.array(
-        [["snake"] + ["deer"] + [np.nan] + ["dog"] + ["cat"]], dtype=object
+        [["snake", "deer", np.nan, "dog", "cat"]], dtype=object
     ).T
     X_trans = ordinal.transform(X_test)
     assert_allclose(X_trans, [[2], [2], [np.nan], [1], [0]])
