@@ -1229,6 +1229,17 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=2)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "power": [
+            Interval(Real, None, 0, closed="right"),
+            Interval(Real, 1, None, closed="left"),
+        ],
+    }
+)
 def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     """D^2 regression score function, fraction of Tweedie deviance explained.
 
