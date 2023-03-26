@@ -1,10 +1,9 @@
-from .base import _get_response
-
 from .. import auc
 from .. import roc_curve
 from .._base import _check_pos_label_consistency
 
 from ...utils import check_matplotlib_support
+from ...utils._response import _get_response_values_binary
 
 
 class RocCurveDisplay:
@@ -231,9 +230,9 @@ class RocCurveDisplay:
 
         name = estimator.__class__.__name__ if name is None else name
 
-        y_pred, pos_label = _get_response(
-            X,
+        y_pred, pos_label = _get_response_values_binary(
             estimator,
+            X,
             response_method=response_method,
             pos_label=pos_label,
         )
