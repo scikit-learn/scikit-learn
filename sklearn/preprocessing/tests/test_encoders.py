@@ -2280,14 +2280,27 @@ def test_ordinal_encoder_missing_appears_frequent():
 
 def test_ordinal_encoder_missing_appears_infrequent():
     """Check behavior when missing value appears infrequently."""
+
+    # feature 0 has infrequent categories
+    # feature 1 has no infrequent categories
     X = np.array(
-        [[np.nan] + ["dog"] * 10 + ["cat"] * 5 + ["snake"] + ["deer"]],
+        [
+            [np.nan] + ["dog"] * 10 + ["cat"] * 5 + ["snake"] + ["deer"],
+            ["red"] * 9 + ["green"] * 9,
+        ],
         dtype=object,
     ).T
     ordinal = OrdinalEncoder(min_frequency=4).fit(X)
 
     X_test = np.array(
-        [["snake", "deer", np.nan, "dog", "cat"]], dtype=object
-    ).T
+        [
+            ["snake", "red"],
+            ["deer", "green"],
+            [np.nan, "green"],
+            ["dog", "green"],
+            ["cat", "red"],
+        ],
+        dtype=object,
+    )
     X_trans = ordinal.transform(X_test)
-    assert_allclose(X_trans, [[2], [2], [np.nan], [1], [0]])
+    assert_allclose(X_trans, [[2, 1], [2, 0], [np.nan, 0], [1, 0], [0, 1]])
