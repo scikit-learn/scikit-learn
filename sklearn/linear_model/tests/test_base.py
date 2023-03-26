@@ -791,7 +791,7 @@ def test_linear_regression_sample_weight_consistency(
         intercept_0 = reg.intercept_
     reg.fit(X[:-5], y[:-5], sample_weight=sample_weight[:-5])
     if fit_intercept and not sparseX:
-        # TODO: This often fails with, e.g. when calling
+        # TODO: This often fails, e.g. when calling
         # SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest \
         # sklearn/linear_model/tests/test_base.py\
         # ::test_linear_regression_sample_weight_consistency
