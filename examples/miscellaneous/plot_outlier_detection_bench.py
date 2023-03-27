@@ -186,8 +186,14 @@ for i, dataset_name in enumerate(datasets_name):
             name=model_name,
             linewidth=linewidth,
             ax=axs[i // cols, i % cols],
+            plot_chance_level=True,
+            chance_level_kwargs={
+                "linewidth": linewidth,
+                "linestyle": ":",
+                "color": "g",
+                "label": "",
+            },
         )
-    axs[i // cols, i % cols].plot([0, 1], [0, 1], linewidth=linewidth, linestyle=":")
     axs[i // cols, i % cols].set_title(dataset_name)
     axs[i // cols, i % cols].set_xlabel("False Positive Rate")
     axs[i // cols, i % cols].set_ylabel("True Positive Rate")
