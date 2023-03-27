@@ -14,7 +14,7 @@
 # TODO: Stop defining custom types locally or globally like DTYPE_t and friends and
 # use these consistently throughout the codebase.
 # NOTE: Extend this list as needed when converting more cython extensions.
-ctypedef unsigned char bool_t
+ctypedef unsigned char uint8_t
 ctypedef Py_ssize_t intp_t
 ctypedef float float32_t
 ctypedef double float64_t
