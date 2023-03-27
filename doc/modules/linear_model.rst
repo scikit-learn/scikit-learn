@@ -931,28 +931,15 @@ without intercept:
 
 .. math:: \hat{w} = \min_{w} ||w||_2^2 \text{  s.t. } X_c w = y_c
 
-This equivalence can be shown by considering any solution :math:`\hat{w}`,
-:math:`\hat{w_0}` of the :math:`X w + w_0 1_s = y` system and rewriting it as:
-
-.. math:: X_c \hat{w} + \hat{w_0} 1_s = y_c + \bar{y} 1_s - \bar{X}^{T} \hat{w}
-
-Multiplying both sides by :math:`1_s` yields:
-
-.. math:: 1_s^{T} X_c \hat{w} + 1_s^{T} \hat{w_0} 1_s = 1_s^{T} y_c + 1_s^{T} \bar{y} 1_s - 1_s^{T} \bar{X}^{T} \hat{w}
-
-Since :math:`1_s^{T} X_c = 0` and :math:`1_s^{T} y_c = 0`, we recover:
+along with:
 
 .. math:: \hat{w_0} = \bar{y} - \bar{X}^{T} \hat{w}
 
-If we plug back this value of :math:`\hat{w_0}` in the first equation, we get:
+TODO: include proof? if so where should we put this, in maintainers notes somewhere?
 
-.. math:: X_c \hat{w} = y_c
+Here is an external draft of the proof:
 
-Hence any solution to the uncentered system with intercept is also a solution
-of the centered system without intercept.
-
-Since the intercept :math:`w_0` takes no part in the computation of the norm in
-the objective, the minimal solution for both problems match.
+https://github.com/ogrisel/minimum-norm-ols/blob/main/minimum-norm-ols-intercept.pdf
 
 .. _Logistic_regression:
 
