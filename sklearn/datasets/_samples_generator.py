@@ -1821,10 +1821,10 @@ def make_biclusters(
     noise : float, default=0.0
         The standard deviation of the gaussian noise.
 
-    minval : int, default=10
+    minval : float, default=10
         Minimum value of a bicluster.
 
-    maxval : int, default=100
+    maxval : float, default=100
         Maximum value of a bicluster.
 
     shuffle : bool, default=True
