@@ -43,7 +43,7 @@ def test_precision_recall_display_validation(pyplot):
     with pytest.raises(ValueError, match=err_msg):
         PrecisionRecallDisplay.from_estimator(classifier, X, y)
 
-    err_msg = "{} format is not supported"
+    err_msg = "The target y is not binary. Got {} type of target."
     with pytest.raises(ValueError, match=err_msg.format("continuous")):
         # Force `y_true` to be seen as a regression problem
         PrecisionRecallDisplay.from_predictions(y + 0.5, y_pred_classifier, pos_label=1)
@@ -52,7 +52,9 @@ def test_precision_recall_display_validation(pyplot):
 
     err_msg = "Found input variables with inconsistent numbers of samples"
     with pytest.raises(ValueError, match=err_msg):
-        PrecisionRecallDisplay.from_predictions(y, y_pred_classifier[::2])
+        PrecisionRecallDisplay.from_predictions(
+            (y == 0).astype(int), y_pred_classifier[::2]
+        )
 
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     y += 10
