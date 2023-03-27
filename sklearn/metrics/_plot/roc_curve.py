@@ -144,7 +144,7 @@ class RocCurveDisplay:
 
         chance_level_line_kwargs = {
             "label": "Chance level",
-            "linestyle": "dotted",
+            "linestyle": ":",
         }
 
         chance_level_line_kwargs.update(**chance_level_kwargs)

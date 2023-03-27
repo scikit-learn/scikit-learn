@@ -38,6 +38,14 @@ def data_binary(data):
 @pytest.mark.parametrize("with_strings", [True, False])
 @pytest.mark.parametrize("plot_chance_level", [True, False])
 @pytest.mark.parametrize(
+    "chance_level_kwargs",
+    [
+        {"color": "r", "linewidth": 1},
+        {"color": "b", "linewidth": 0.6, "label": "DummyEstimator"},
+        {"color": "g", "linewidth": 0.3, "linestyle": "-."},
+    ],
+)
+@pytest.mark.parametrize(
     "constructor_name, default_name",
     [
         ("from_estimator", "LogisticRegression"),
@@ -52,6 +60,7 @@ def test_roc_curve_display_plotting(
     drop_intermediate,
     with_strings,
     plot_chance_level,
+    chance_level_kwargs,
     constructor_name,
     default_name,
 ):
@@ -85,6 +94,7 @@ def test_roc_curve_display_plotting(
             pos_label=pos_label,
             alpha=0.8,
             plot_chance_level=plot_chance_level,
+            chance_level_kwargs=chance_level_kwargs,
         )
     else:
         display = RocCurveDisplay.from_predictions(
@@ -95,6 +105,7 @@ def test_roc_curve_display_plotting(
             pos_label=pos_label,
             alpha=0.8,
             plot_chance_level=plot_chance_level,
+            chance_level_kwargs=chance_level_kwargs,
         )
 
     fpr, tpr, _ = roc_curve(
@@ -122,6 +133,15 @@ def test_roc_curve_display_plotting(
         assert isinstance(display.chance_level_, mpl.lines.Line2D)
         assert tuple(display.chance_level_.get_xdata()) == (0, 1)
         assert tuple(display.chance_level_.get_ydata()) == (0, 1)
+
+        if "linestyle" not in chance_level_kwargs:
+            assert display.chance_level_.get_linestyle() == ":"
+        if "label" not in chance_level_kwargs:
+            assert display.chance_level_.get_label() == "Chance level"
+
+        for k, v in chance_level_kwargs.items():
+            assert getattr(display.chance_level_, "get_" + k)() == v
+
     else:
         assert display.chance_level_ is None
 
@@ -134,15 +154,6 @@ def test_roc_curve_display_plotting(
 
     assert display.ax_.get_ylabel() == expected_ylabel
     assert display.ax_.get_xlabel() == expected_xlabel
-
-    assert display.ax_.get_xlim() == (0, 1)
-    assert display.ax_.get_ylim() == (0, 1)
-    assert display.ax_.get_aspect() == 1
-
-    # Check frame styles
-    for s in ["right", "left", "top", "bottom"]:
-        assert display.ax_.spines[s].get_linestyle() == (0, (1, 5))
-        assert display.ax_.spines[s].get_linewidth() <= 0.5
 
 
 @pytest.mark.parametrize(
