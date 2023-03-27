@@ -547,7 +547,10 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
 
 @validate_params(
-    {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]}
+    {
+        "X": ["array-like"],
+        "axis": [Options(Integral, {0, 1})],
+    }
 )
 def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     """Transform features by scaling each feature to a given range.
@@ -585,7 +588,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
-    axis : int, default=0
+    axis : {0, 1}, default=0
         Axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
 
