@@ -25,7 +25,7 @@ def test_binary_log_loss_1_prob_finite():
 )
 def test_log_loss_1_prob_finite(y_true, y_prob):
     # y_proba is equal to 1 should result in a finite logloss
-    loss = log_loss(y_true, y_prob, sample_weight=np.ones(shape=y_prob.shape[0]))
+    loss = log_loss(y_true, y_prob)
     assert np.isfinite(loss)
 
 
