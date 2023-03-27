@@ -6,7 +6,7 @@ import numpy as np
 
 
 ctypedef fused type_t:
-    bool_t
+    uint8_t
     intp_t
     float32_t
     float64_t
