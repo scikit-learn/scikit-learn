@@ -7,6 +7,8 @@ from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_iris
 
 from sklearn.datasets import load_breast_cancer
+from sklearn.datasets import make_classification
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
@@ -16,6 +18,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
+from sklearn.svm import SVC
 
 
 from sklearn.metrics import RocCurveDisplay
@@ -282,3 +285,45 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)
     assert np.trapz(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+
+
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+def test_plot_roc_curve_multiple_chance_levels(pyplot, constructor_name):
+    # check that no matter how many times `plot_chance_level=True` is called,
+    # we only plot the chance level line once
+    # this can happen especially when using a loop
+    X, y = make_classification(random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+
+    svc = SVC(random_state=42)
+    svc.fit(X_train, y_train)
+    rfc = RandomForestClassifier(random_state=42)
+    rfc.fit(X_train, y_train)
+
+    svc_disp = RocCurveDisplay.from_estimator(
+        svc,
+        X_test,
+        y_test,
+        plot_chance_level=True,
+    )
+    rfc_disp = RocCurveDisplay.from_estimator(
+        rfc,
+        X_test,
+        y_test,
+        ax=svc_disp.ax_,
+        plot_chance_level=True,
+    )
+
+    chance_level_line_count = 0
+    for line in rfc_disp.ax_.get_lines():
+        if (
+            len(line.get_xdata()) == 2
+            and tuple(line.get_xdata()) == (0, 1)
+            and tuple(line.get_ydata()) == (0, 1)
+        ):
+            chance_level_line_count += 1
+            assert chance_level_line_count <= 1
+    assert chance_level_line_count == 1
+
+    assert tuple(rfc_disp.chance_level_.get_xdata()) == (0, 1)
+    assert tuple(rfc_disp.chance_level_.get_ydata()) == (0, 1)
