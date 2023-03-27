@@ -811,7 +811,12 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
         n_samples_out = n_samples // 2
         n_samples_in = n_samples - n_samples_out
     else:
-        n_samples_out, n_samples_in = n_samples
+        try:
+            n_samples_out, n_samples_in = n_samples
+        except ValueError as e:
+            raise ValueError(
+                "`n_samples` can be either an int or a two-element tuple."
+            ) from e
 
     generator = check_random_state(random_state)
 
