@@ -1802,6 +1802,17 @@ def _shuffle(data, random_state=None):
     return result, row_idx, col_idx
 
 
+@validate_params(
+    {
+        "shape": [tuple],
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "minval": [Interval(Real, None, None, closed="neither")],
+        "maxval": [Interval(Real, None, None, closed="neither")],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_biclusters(
     shape,
     n_clusters,
@@ -1818,7 +1829,7 @@ def make_biclusters(
 
     Parameters
     ----------
-    shape : iterable of shape (n_rows, n_cols)
+    shape : tuple of shape (n_rows, n_cols)
         The shape of the result.
 
     n_clusters : int
@@ -1827,10 +1838,10 @@ def make_biclusters(
     noise : float, default=0.0
         The standard deviation of the gaussian noise.
 
-    minval : int, default=10
+    minval : float, default=10
         Minimum value of a bicluster.
 
-    maxval : int, default=100
+    maxval : float, default=100
         Maximum value of a bicluster.
 
     shuffle : bool, default=True
