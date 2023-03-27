@@ -42,7 +42,7 @@ def data_binary(data):
     [
         {"color": "r", "linewidth": 1},
         {"color": "b", "linewidth": 0.6, "label": "DummyEstimator"},
-        {"color": "g", "linewidth": 0.3, "linestyle": "-."},
+        {"color": "g", "linewidth": 0.3, "linestyle": ":"},
     ],
 )
 @pytest.mark.parametrize(
@@ -134,10 +134,12 @@ def test_roc_curve_display_plotting(
         assert tuple(display.chance_level_.get_xdata()) == (0, 1)
         assert tuple(display.chance_level_.get_ydata()) == (0, 1)
 
+        if "color" not in chance_level_kwargs:
+            assert display.chance_level_.get_color() == "k"
         if "linestyle" not in chance_level_kwargs:
-            assert display.chance_level_.get_linestyle() == ":"
+            assert display.chance_level_.get_linestyle() == "--"
         if "label" not in chance_level_kwargs:
-            assert display.chance_level_.get_label() == "Chance level"
+            assert display.chance_level_.get_label() == "chance level (AUC = 0.5)"
 
         for k, v in chance_level_kwargs.items():
             assert getattr(display.chance_level_, "get_" + k)() == v
