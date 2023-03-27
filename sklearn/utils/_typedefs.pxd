@@ -5,7 +5,6 @@
 # https://github.com/cython/cython/blob/master/Cython/Includes/numpy/__init__.pxd.
 # It will eventually avoid having to always include the numpy headers even when we
 # would only use it for the types.
-# TODO: don't cimport numpy in this extension.
 #
 # When used to declare variables that will receive values from numpy arrays, it
 # should match the dtype of the array. For example, to declare a variable that will
@@ -19,5 +18,10 @@ ctypedef unsigned char bool_t
 ctypedef Py_ssize_t intp_t
 ctypedef float float32_t
 ctypedef double float64_t
+# To index sparse matrices, the type int32_t should be used instead of intp_t because
+# the latter is platform dependent. When large sparse matrices are supported, indexing
+# should use int64_t.
+# See https://github.com/scikit-learn/scikit-learn/issues/23653 which tracks the
+# ongoing work to support large sparse matrices.
 ctypedef signed int int32_t
 ctypedef signed long long int64_t
