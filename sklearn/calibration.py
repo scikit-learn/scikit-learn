@@ -36,7 +36,7 @@ from .utils import (
 from .utils.multiclass import check_classification_targets
 from .utils.parallel import delayed, Parallel
 from .utils._param_validation import StrOptions, HasMethods, Hidden
-from .utils._plot import BinaryClassifierCurveDisplayMixin
+from .utils._plot import _BinaryClassifierCurveDisplayMixin
 from .utils.validation import (
     _check_fit_params,
     _check_pos_label_consistency,
@@ -1012,7 +1012,7 @@ def calibration_curve(
     return prob_true, prob_pred
 
 
-class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
+class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
     """Calibration curve (also known as reliability diagram) visualization.
 
     It is recommended to use

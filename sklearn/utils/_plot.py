@@ -4,7 +4,7 @@ from .validation import _check_pos_label_consistency
 from ._response import _get_response_values_binary
 
 
-class BinaryClassifierCurveDisplayMixin:
+class _BinaryClassifierCurveDisplayMixin:
     """Mixin class to be used in Displays requiring a binary classifier.
 
     The aim of this class is to make some validations regarding the estimator and the

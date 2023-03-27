@@ -1,9 +1,9 @@
 from .. import auc
 from .. import roc_curve
-from ...utils._plot import BinaryClassifierCurveDisplayMixin
+from ...utils._plot import _BinaryClassifierCurveDisplayMixin
 
 
-class RocCurveDisplay(BinaryClassifierCurveDisplayMixin):
+class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     """ROC Curve visualization.
 
     It is recommend to use

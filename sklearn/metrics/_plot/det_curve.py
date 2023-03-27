@@ -1,10 +1,10 @@
 import scipy as sp
 
 from .. import det_curve
-from ...utils._plot import BinaryClassifierCurveDisplayMixin
+from ...utils._plot import _BinaryClassifierCurveDisplayMixin
 
 
-class DetCurveDisplay(BinaryClassifierCurveDisplayMixin):
+class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     """DET curve visualization.
 
     It is recommend to use :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`

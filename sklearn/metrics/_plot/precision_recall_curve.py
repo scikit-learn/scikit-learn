@@ -1,9 +1,9 @@
 from .. import average_precision_score
 from .. import precision_recall_curve
-from ...utils._plot import BinaryClassifierCurveDisplayMixin
+from ...utils._plot import _BinaryClassifierCurveDisplayMixin
 
 
-class PrecisionRecallDisplay(BinaryClassifierCurveDisplayMixin):
+class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     """Precision Recall visualization.
 
     It is recommend to use
