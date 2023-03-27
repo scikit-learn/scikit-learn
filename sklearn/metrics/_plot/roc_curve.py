@@ -155,10 +155,23 @@ class RocCurveDisplay:
         if ax is None:
             fig, ax = plt.subplots()
 
+        # Make sure that the chance level line is not plotted multiple times
+        chance_level_line = None
+        if plot_chance_level:
+            for line in ax.get_lines():
+                if (
+                    len(line.get_xdata()) == 2
+                    and tuple(line.get_xdata()) == (0, 1)
+                    and tuple(line.get_ydata()) == (0, 1)
+                ):
+                    chance_level_line = line
+                    plot_chance_level = False
+                    break
+
         if plot_chance_level:
             (self.chance_level_,) = ax.plot((0, 1), (0, 1), **chance_level_line_kwargs)
         else:
-            self.chance_level_ = None
+            self.chance_level_ = chance_level_line
 
         (self.line_,) = ax.plot(self.fpr, self.tpr, **line_kwargs)
         info_pos_label = (
