@@ -628,6 +628,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if self.early_stopping and incremental:
             raise ValueError("partial_fit does not support early_stopping=True")
         early_stopping = self.early_stopping
+        sample_weight_val = None
         if early_stopping:
             # don't stratify in multilabel classification
             should_stratify = is_classifier(self) and self.n_outputs_ == 1
@@ -728,7 +729,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     early_stopping,
                     X_val,
                     y_val,
-                    sample_weight=None if sample_weight is None else sample_weight_val,
+                    sample_weight=None
+                    if sample_weight_val is None
+                    else sample_weight_val,
                 )
 
                 # for learning rate that needs to be updated at iteration end
