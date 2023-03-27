@@ -215,8 +215,8 @@ cpdef cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] make_single_linkage(const MST_e
 
         # Note mst.shape[0] is one fewer than the number of samples
         cnp.int64_t n_samples = mst.shape[0] + 1
-        cnp.int64_t current_node, next_node, index
         cnp.intp_t current_node_cluster, next_node_cluster
+        cnp.int64_t current_node, next_node, index
         cnp.float64_t distance
         UnionFind U = UnionFind(n_samples)
 
