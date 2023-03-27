@@ -847,6 +847,18 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left"), "array-like"],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "centers": [Interval(Integral, 1, None, closed="left"), "array-like", None],
+        "cluster_std": [Interval(Real, 0, None, closed="left"), "array-like"],
+        "center_box": [tuple],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "return_centers": ["boolean"],
+    }
+)
 def make_blobs(
     n_samples=100,
     n_features=2,
