@@ -476,6 +476,12 @@ def make_multilabel_classification(
     return X, Y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+)
 def make_hastie_10_2(n_samples=12000, *, random_state=None):
     """Generate data for binary classification used in Hastie et al. 2009, Example 10.2.
 
