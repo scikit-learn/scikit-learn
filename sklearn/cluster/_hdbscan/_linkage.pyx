@@ -211,7 +211,7 @@ cpdef cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] make_single_linkage(const MST_e
         - new cluster size
     """
     cdef:
-        cnp.ndarray[HIERARCHY_t, ndim=1] single_linkage
+        cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] single_linkage
 
         # Note mst.shape[0] is one fewer than the number of samples
         cnp.int64_t n_samples = mst.shape[0] + 1
