@@ -23,7 +23,7 @@ from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.svm import SVC
-from sklearn.utils.fixes import loguniform
+from scipy.stats import loguniform
 
 
 # %%

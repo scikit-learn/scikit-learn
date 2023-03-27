@@ -141,7 +141,7 @@ def dbscan(
     ----------
     Ester, M., H. P. Kriegel, J. Sander, and X. Xu, `"A Density-Based
     Algorithm for Discovering Clusters in Large Spatial Databases with Noise"
-    <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_.
+    <https://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf>`_.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
 
@@ -281,7 +281,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     ----------
     Ester, M., H. P. Kriegel, J. Sander, and X. Xu, `"A Density-Based
     Algorithm for Discovering Clusters in Large Spatial Databases with Noise"
-    <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_.
+    <https://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf>`_.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
 
