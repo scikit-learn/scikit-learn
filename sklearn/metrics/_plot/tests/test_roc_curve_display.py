@@ -139,7 +139,7 @@ def test_roc_curve_display_plotting(
         if "linestyle" not in chance_level_kwargs:
             assert display.chance_level_.get_linestyle() == "--"
         if "label" not in chance_level_kwargs:
-            assert display.chance_level_.get_label() == "chance level (AUC = 0.5)"
+            assert display.chance_level_.get_label() == "Chance level (AUC = 0.5)"
 
         for k, v in chance_level_kwargs.items():
             assert getattr(display.chance_level_, "get_" + k)() == v

@@ -143,7 +143,7 @@ class RocCurveDisplay:
         line_kwargs.update(**kwargs)
 
         chance_level_line_kwargs = {
-            "label": "chance level (AUC = 0.5)",
+            "label": "Chance level (AUC = 0.5)",
             "color": "k",
             "linestyle": "--",
         }
