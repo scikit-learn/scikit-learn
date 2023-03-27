@@ -133,6 +133,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.make_classification",
     "sklearn.datasets.make_friedman1",
     "sklearn.datasets.make_gaussian_quantiles",
+    "sklearn.datasets.make_hastie_10_2",
     "sklearn.datasets.make_low_rank_matrix",
     "sklearn.datasets.make_multilabel_classification",
     "sklearn.datasets.make_regression",
