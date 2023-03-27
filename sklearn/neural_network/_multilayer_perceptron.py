@@ -641,7 +641,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     stratify=stratify,
                 )
             else:
-                X, X_val, y, y_val, sample_weight, _ = train_test_split(
+                X, X_val, y, y_val, sample_weight, sample_weight_val = train_test_split(
                     X,
                     y,
                     sample_weight,
@@ -724,7 +724,12 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
                 # update no_improvement_count based on training loss or
                 # validation score according to early_stopping
-                self._update_no_improvement_count(early_stopping, X_val, y_val)
+                self._update_no_improvement_count(
+                    early_stopping,
+                    X_val,
+                    y_val,
+                    sample_weight=None if sample_weight is None else sample_weight_val,
+                )
 
                 # for learning rate that needs to be updated at iteration end
                 self._optimizer.iteration_ends(self.t_)
