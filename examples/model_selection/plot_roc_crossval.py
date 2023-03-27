@@ -88,12 +88,12 @@ for fold, (train, test) in enumerate(cv.split(X, y)):
         alpha=0.3,
         lw=1,
         ax=ax,
+        plot_chance_level=True,
     )
     interp_tpr = np.interp(mean_fpr, viz.fpr, viz.tpr)
     interp_tpr[0] = 0.0
     tprs.append(interp_tpr)
     aucs.append(viz.roc_auc)
-ax.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
 
 mean_tpr = np.mean(tprs, axis=0)
 mean_tpr[-1] = 1.0
