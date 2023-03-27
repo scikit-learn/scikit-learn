@@ -1681,6 +1681,17 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     return X, t
 
 
+@validate_params(
+    {
+        "mean": ["array-like", None],
+        "cov": [Interval(Real, 0, None, closed="left")],
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_classes": [Interval(Integral, 1, None, closed="left")],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_gaussian_quantiles(
     *,
     mean=None,
