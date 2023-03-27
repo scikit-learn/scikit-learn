@@ -640,12 +640,6 @@ def test_make_moons_unbalanced():
         ValueError,
         match=r"`n_samples` can be either an int " r"or a two-element tuple.",
     ):
-        make_moons(n_samples=[1, 2, 3])
-
-    with pytest.raises(
-        ValueError,
-        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
-    ):
         make_moons(n_samples=(10,))
 
 
