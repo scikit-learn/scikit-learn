@@ -1268,7 +1268,7 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     y_pred : array-like of shape (n_samples,)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     power : float, default=0
