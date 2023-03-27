@@ -43,9 +43,9 @@ def data_binary(data):
 @pytest.mark.parametrize(
     "chance_level_kwargs",
     [
-        {"color": "r", "linewidth": 1},
-        {"color": "b", "linewidth": 0.6, "label": "DummyEstimator"},
-        {"color": "g", "linewidth": 0.3, "linestyle": ":"},
+        {"linewidth": 1},
+        {"color": "b", "label": "DummyEstimator"},
+        {"color": "g", "linestyle": ":"},
     ],
 )
 @pytest.mark.parametrize(
