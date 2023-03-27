@@ -318,10 +318,10 @@ Changelog
   curves.
   :pr:`24668` by :user:`dberenbaum`.
 
-- |Enhancement| :class:`RocCurveDisplay` now plots the ROC curve with both axes
-  limited to [0, 1] and a loosely dotted frame. There is also an additional
-  parameter `plot_chance_level` to determine whether to plot the chance level.
-  :pr:`25972` by :user:`Yao Xiao <Charlie-XIAO>`.
+- |Enhancement| :class:`RocCurveDisplay` now has a new attribute `chance_level_`
+  and supports plotting the chance level line via `plot_chance_level` and
+  altering its style via `chance_level_kwargs`.
+  :pr:`25987` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 - |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
   not normalized, instead of actually normalizing them in the metric. Starting from
