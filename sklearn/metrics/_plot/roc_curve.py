@@ -112,13 +112,13 @@ class RocCurveDisplay:
         plot_chance_level : bool, default=False
             Whether to plot the chance level.
 
-        .. versionadded:: 1.3
+            .. versionadded:: 1.3
 
         chance_level_kwargs : dict, default={}
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the chance level line.
 
-        .. versionadded:: 1.3
+            .. versionadded:: 1.3
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -250,13 +250,13 @@ class RocCurveDisplay:
         plot_chance_level : bool, default=False
             Whether to plot the chance level.
 
-        .. versionadded:: 1.3
+            .. versionadded:: 1.3
 
         chance_level_kwargs : dict, default={}
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the chance level line.
 
-        .. versionadded:: 1.3
+            .. versionadded:: 1.3
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -368,13 +368,13 @@ class RocCurveDisplay:
         plot_chance_level : bool, default=False
             Whether to plot the chance level.
 
-        .. versionadded:: 1.3
+            .. versionadded:: 1.3
 
         chance_level_kwargs : dict, default={}
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the chance level line.
 
-        .. versionadded:: 1.3
+            .. versionadded:: 1.3
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
