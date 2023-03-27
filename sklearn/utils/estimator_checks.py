@@ -676,7 +676,7 @@ def _set_checking_parameters(estimator):
             estimator.set_params(max_iter=500)
         # DictionaryLearning
         if name == "DictionaryLearning":
-            estimator.set_params(max_iter=200, transform_algorithm="lasso_lars")
+            estimator.set_params(max_iter=20, transform_algorithm="lasso_lars")
         # MiniBatchNMF
         if estimator.__class__.__name__ == "MiniBatchNMF":
             estimator.set_params(max_iter=20, fresh_restarts=True)

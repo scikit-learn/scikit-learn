@@ -309,6 +309,20 @@ def make_classification(
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_classes": [Interval(Integral, 1, None, closed="left")],
+        "n_labels": [Interval(Integral, 0, None, closed="left")],
+        "length": [Interval(Integral, 1, None, closed="left")],
+        "allow_unlabeled": ["boolean"],
+        "sparse": ["boolean"],
+        "return_indicator": [StrOptions({"dense", "sparse"}), "boolean"],
+        "return_distributions": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_multilabel_classification(
     n_samples=100,
     n_features=20,
@@ -398,18 +412,6 @@ def make_multilabel_classification(
         The probability of each feature being drawn given each class.
         Only returned if ``return_distributions=True``.
     """
-    if n_classes < 1:
-        raise ValueError(
-            "'n_classes' should be an integer greater than 0. Got {} instead.".format(
-                n_classes
-            )
-        )
-    if length < 1:
-        raise ValueError(
-            "'length' should be an integer greater than 0. Got {} instead.".format(
-                length
-            )
-        )
 
     generator = check_random_state(random_state)
     p_c = generator.uniform(size=n_classes)
@@ -469,13 +471,17 @@ def make_multilabel_classification(
     if return_indicator in (True, "sparse", "dense"):
         lb = MultiLabelBinarizer(sparse_output=(return_indicator == "sparse"))
         Y = lb.fit([range(n_classes)]).transform(Y)
-    elif return_indicator is not False:
-        raise ValueError("return_indicator must be either 'sparse', 'dense' or False.")
     if return_distributions:
         return X, Y, p_c, p_w_c
     return X, Y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+)
 def make_hastie_10_2(n_samples=12000, *, random_state=None):
     """Generate data for binary classification used in Hastie et al. 2009, Example 10.2.
 
@@ -523,6 +529,21 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_informative": [Interval(Integral, 0, None, closed="left")],
+        "n_targets": [Interval(Integral, 1, None, closed="left")],
+        "bias": [Interval(Real, None, None, closed="neither")],
+        "effective_rank": [Interval(Integral, 1, None, closed="left"), None],
+        "tail_strength": [Interval(Real, 0, 1, closed="both")],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "shuffle": ["boolean"],
+        "coef": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_regression(
     n_samples=100,
     n_features=100,
@@ -1198,6 +1219,15 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "effective_rank": [Interval(Integral, 1, None, closed="left")],
+        "tail_strength": [Interval(Real, 0, 1, closed="both")],
+        "random_state": ["random_state"],
+    }
+)
 def make_low_rank_matrix(
     n_samples=100,
     n_features=100,
@@ -1657,6 +1687,17 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     return X, t
 
 
+@validate_params(
+    {
+        "mean": ["array-like", None],
+        "cov": [Interval(Real, 0, None, closed="left")],
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_classes": [Interval(Integral, 1, None, closed="left")],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def make_gaussian_quantiles(
     *,
     mean=None,

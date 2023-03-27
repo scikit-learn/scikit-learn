@@ -65,7 +65,6 @@ common_dependencies_without_coverage = [
 ]
 
 common_dependencies = common_dependencies_without_coverage + [
-    "codecov",
     "pytest-cov",
     "coverage",
 ]
@@ -351,11 +350,7 @@ pip_build_metadata_list = [
             "pytest-xdist",
         ],
         "package_constraints": {"joblib": "min", "threadpoolctl": "min"},
-        # Ubuntu 20.04 has 3.8.2 but only 3.8.5 is available for osx-arm64 on
-        # conda-forge. Chosing 3.8.5 so that this script can be run locally on
-        # osx-arm64 machines. This should not matter for pining versions with
-        # pip-compile
-        "python_version": "3.8.5",
+        "python_version": "3.10.4",
     },
 ]
 
