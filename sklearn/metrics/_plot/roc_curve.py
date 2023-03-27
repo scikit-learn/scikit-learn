@@ -43,8 +43,10 @@ class RocCurveDisplay:
     line_ : matplotlib Artist
         ROC Curve.
 
-    chance_level_ : matplotlib Artist
-        The chance level line or None if the chance level is not plotted.
+    chance_level_ : matplotlib Artist or None
+        The chance level line. It is `None` if the chance level is not plotted.
+
+        .. versionadded:: 1.3
 
     ax_ : matplotlib Axes
         Axes with ROC Curve.
@@ -84,7 +86,15 @@ class RocCurveDisplay:
         self.roc_auc = roc_auc
         self.pos_label = pos_label
 
-    def plot(self, ax=None, *, name=None, plot_chance_level=True, **kwargs):
+    def plot(
+        self,
+        ax=None,
+        *,
+        name=None,
+        plot_chance_level=False,
+        chance_level_kwargs={},
+        **kwargs,
+    ):
         """Plot visualization.
 
         Extra keyword arguments will be passed to matplotlib's ``plot``.
@@ -99,8 +109,16 @@ class RocCurveDisplay:
             Name of ROC Curve for labeling. If `None`, use `estimator_name` if
             not `None`, otherwise no labeling is shown.
 
-        plot_chance_level : bool, default=True
+        plot_chance_level : bool, default=False
             Whether to plot the chance level.
+
+        .. versionadded:: 1.3
+
+        chance_level_kwargs : dict, default={}
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+        .. versionadded:: 1.3
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -124,26 +142,20 @@ class RocCurveDisplay:
 
         line_kwargs.update(**kwargs)
 
+        chance_level_line_kwargs = {
+            "label": "Chance level",
+            "linestyle": "dotted",
+        }
+
+        chance_level_line_kwargs.update(**chance_level_kwargs)
+
         import matplotlib.pyplot as plt
 
         if ax is None:
             fig, ax = plt.subplots()
 
-        # Set limits of axes to [0, 1] and fix aspect ratio to squared
-        ax.set_xlim((0, 1))
-        ax.set_ylim((0, 1))
-        ax.set_aspect(1)
-
-        # Plot the frame in dotted line, so that the curve can be
-        # seen better when values are close to 0 or 1
-        for s in ["right", "left", "top", "bottom"]:
-            ax.spines[s].set_linestyle((0, (1, 5)))
-            ax.spines[s].set_linewidth(0.5)
-
         if plot_chance_level:
-            (self.chance_level_,) = ax.plot(
-                (0, 1), (0, 1), linestyle="dotted", label="Chance level"
-            )
+            (self.chance_level_,) = ax.plot((0, 1), (0, 1), **chance_level_line_kwargs)
         else:
             self.chance_level_ = None
 
@@ -176,7 +188,8 @@ class RocCurveDisplay:
         pos_label=None,
         name=None,
         ax=None,
-        plot_chance_level=True,
+        plot_chance_level=False,
+        chance_level_kwargs={},
         **kwargs,
     ):
         """Create a ROC Curve display from an estimator.
@@ -220,8 +233,16 @@ class RocCurveDisplay:
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
 
-        plot_chance_level : bool, default=True
+        plot_chance_level : bool, default=False
             Whether to plot the chance level.
+
+        .. versionadded:: 1.3
+
+        chance_level_kwargs : dict, default={}
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+        .. versionadded:: 1.3
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -274,6 +295,7 @@ class RocCurveDisplay:
             ax=ax,
             pos_label=pos_label,
             plot_chance_level=plot_chance_level,
+            chance_level_kwargs=chance_level_kwargs,
             **kwargs,
         )
 
@@ -288,7 +310,8 @@ class RocCurveDisplay:
         pos_label=None,
         name=None,
         ax=None,
-        plot_chance_level=True,
+        plot_chance_level=False,
+        chance_level_kwargs={},
         **kwargs,
     ):
         """Plot ROC curve given the true and predicted values.
@@ -328,8 +351,16 @@ class RocCurveDisplay:
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        plot_chance_level : bool, default=True
+        plot_chance_level : bool, default=False
             Whether to plot the chance level.
+
+        .. versionadded:: 1.3
+
+        chance_level_kwargs : dict, default={}
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+        .. versionadded:: 1.3
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
@@ -381,4 +412,10 @@ class RocCurveDisplay:
             fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=name, pos_label=pos_label
         )
 
-        return viz.plot(ax=ax, name=name, plot_chance_level=plot_chance_level, **kwargs)
+        return viz.plot(
+            ax=ax,
+            name=name,
+            plot_chance_level=plot_chance_level,
+            chance_level_kwargs=chance_level_kwargs,
+            **kwargs,
+        )
