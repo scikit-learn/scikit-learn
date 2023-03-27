@@ -230,6 +230,7 @@ PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.decomposition.dict_learning", "sklearn.decomposition.DictionaryLearning"),
     ("sklearn.decomposition.fastica", "sklearn.decomposition.FastICA"),
     ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
+    ("sklearn.preprocessing.minmax_scale", "sklearn.preprocessing.MinMaxScaler"),
 ]
 
 
