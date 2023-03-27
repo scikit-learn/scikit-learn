@@ -940,7 +940,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         strength. `alpha` must be a non-negative float i.e. in `[0, inf)`.
 
         When `alpha = 0`, the objective is equivalent to ordinary least
-        squares, solved by the :class:`LinearRegression` class. If `X @ X.T` is
+        squares, solved by the :class:`LinearRegression` class. If `X.T @ X` is
         singular (typically when `n_features > n_samples` or in the presence of
         collinear features) then both classes should convege to the minimum
         norm solution where the intercept does not participate in the
@@ -1014,7 +1014,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         - 'lsqr' uses the dedicated regularized least-squares routine
           `scipy.sparse.linalg.lsqr`. It is often one of the fastest solver and
           uses an iterative procedure. It can to handle training data with
-          singular `X @ X.T` even with low regularization very efficiently.
+          singular `X.T @ X` even with low regularization very efficiently.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
           its improved, unbiased version named SAGA. Both methods also use an
