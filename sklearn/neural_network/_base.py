@@ -172,12 +172,18 @@ def squared_loss(y_true, y_pred, sample_weight=None):
     loss : float
         The degree to which the samples are correctly predicted.
     """
-    loss = ((y_true - y_pred) ** 2).sum(axis=-1)
+    if sample_weight is None:
+        return ((y_true - y_pred) ** 2).mean() / 2
 
-    if sample_weight is not None:
-        loss = loss * sample_weight
+    nonzero_count = np.count_nonzero(sample_weight)
+    if nonzero_count == 0:
+        return 0.0
 
-    return loss.mean() / 2
+    return (
+        (((y_true - y_pred) ** 2).mean(axis=-1) * sample_weight).sum()
+        / nonzero_count
+        / 2
+    )
 
 
 def log_loss(y_true, y_prob, sample_weight=None):
@@ -208,12 +214,16 @@ def log_loss(y_true, y_prob, sample_weight=None):
     if y_true.shape[1] == 1:
         y_true = np.append(1 - y_true, y_true, axis=1)
 
-    loss = -xlogy(y_true, y_prob).sum(axis=-1)
+    temp = xlogy(y_true, y_prob)
 
-    if sample_weight is not None:
-        loss = loss * sample_weight
+    if sample_weight is None:
+        return -temp.sum() / y_prob.shape[0]
 
-    return loss.sum() / y_prob.shape[0]
+    nonzero_count = np.count_nonzero(sample_weight)
+    if nonzero_count == 0:
+        return 0.0
+
+    return (-temp.sum(axis=-1) * sample_weight).sum() / nonzero_count
 
 
 def binary_log_loss(y_true, y_prob, sample_weight=None):
@@ -242,12 +252,16 @@ def binary_log_loss(y_true, y_prob, sample_weight=None):
     eps = np.finfo(y_prob.dtype).eps
     y_prob = np.clip(y_prob, eps, 1 - eps)
 
-    loss = -(xlogy(y_true, y_prob) + xlogy(1 - y_true, 1 - y_prob)).sum(axis=-1)
+    temp = xlogy(y_true, y_prob) + xlogy(1 - y_true, 1 - y_prob)
 
-    if sample_weight is not None:
-        loss = loss * sample_weight
+    if sample_weight is None:
+        return -temp.sum() / y_prob.shape[0]
 
-    return loss.sum() / y_prob.shape[0]
+    nonzero_count = np.count_nonzero(sample_weight)
+    if nonzero_count == 0:
+        return 0.0
+
+    return (-temp.sum(axis=-1) * sample_weight).sum() / nonzero_count
 
 
 LOSS_FUNCTIONS = {

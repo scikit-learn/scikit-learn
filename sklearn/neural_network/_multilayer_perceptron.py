@@ -632,14 +632,23 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             # don't stratify in multilabel classification
             should_stratify = is_classifier(self) and self.n_outputs_ == 1
             stratify = y if should_stratify else None
-            X, X_val, y, y_val, sample_weight, _ = train_test_split(
-                X,
-                y,
-                sample_weight,
-                random_state=self._random_state,
-                test_size=self.validation_fraction,
-                stratify=stratify,
-            )
+            if sample_weight is None:
+                X, X_val, y, y_val = train_test_split(
+                    X,
+                    y,
+                    random_state=self._random_state,
+                    test_size=self.validation_fraction,
+                    stratify=stratify,
+                )
+            else:
+                X, X_val, y, y_val, sample_weight, _ = train_test_split(
+                    X,
+                    y,
+                    sample_weight,
+                    random_state=self._random_state,
+                    test_size=self.validation_fraction,
+                    stratify=stratify,
+                )
             if is_classifier(self):
                 y_val = self._label_binarizer.inverse_transform(y_val)
         else:
@@ -673,11 +682,19 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     if self.shuffle:
                         X_batch = _safe_indexing(X, sample_idx[batch_slice])
                         y_batch = y[sample_idx[batch_slice]]
-                        sample_weight_batch = sample_weight[sample_idx[batch_slice]]
+                        sample_weight_batch = (
+                            None
+                            if sample_weight is None
+                            else sample_weight[sample_idx[batch_slice]]
+                        )
                     else:
                         X_batch = X[batch_slice]
                         y_batch = y[batch_slice]
-                        sample_weight_batch = sample_weight[batch_slice]
+                        sample_weight_batch = (
+                            None
+                            if sample_weight is None
+                            else sample_weight[batch_slice]
+                        )
 
                     activations[0] = X_batch
                     batch_loss, coef_grads, intercept_grads = self._backprop(
@@ -752,10 +769,12 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             self.coefs_ = self._best_coefs
             self.intercepts_ = self._best_intercepts
 
-    def _update_no_improvement_count(self, early_stopping, X_val, y_val):
+    def _update_no_improvement_count(
+        self, early_stopping, X_val, y_val, sample_weight=None
+    ):
         if early_stopping:
             # compute validation score (can be NaN), use that for stopping
-            val_score = self._score(X_val, y_val)
+            val_score = self._score(X_val, y_val, sample_weight)
 
             self.validation_scores_.append(val_score)
 
@@ -1222,15 +1241,11 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         # float32 data
         y = self._label_binarizer.transform(y).astype(bool)
 
+        if sample_weight is None:
+            return X, y, None
+
         # check sample weight
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-        nonzero_indices = np.nonzero(sample_weight)[0]
-        if (
-            nonzero_indices.shape[0] < sample_weight.shape[0]
-        ):  # filter out zero-weighted samples
-            X = X[nonzero_indices]
-            y = y[nonzero_indices]
-            sample_weight = sample_weight[nonzero_indices]
 
         return X, y, sample_weight
 
@@ -1259,8 +1274,12 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         return self._label_binarizer.inverse_transform(y_pred)
 
-    def _score(self, X, y):
-        return super()._score_with_function(X, y, score_function=accuracy_score)
+    def _score(self, X, y, sample_weight=None):
+        """Private score method without input validation"""
+        # Input validation would remove feature names, so we disable it
+        return accuracy_score(
+            y, self._predict(X, check_input=False), sample_weight=sample_weight
+        )
 
     @available_if(lambda est: est._check_solver())
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1709,8 +1728,11 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             return y_pred.ravel()
         return y_pred
 
-    def _score(self, X, y):
-        return super()._score_with_function(X, y, score_function=r2_score)
+    def _score(self, X, y, sample_weight=None):
+        """Private score method without input validation"""
+        # Input validation would remove feature names, so we disable it
+        y_pred = self._predict(X, check_input=False)
+        return r2_score(y, y_pred, sample_weight=sample_weight)
 
     def _validate_input(self, X, y, incremental, reset, sample_weight=None):
         X, y = self._validate_data(
@@ -1725,15 +1747,11 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
+        if sample_weight is None:
+            return X, y, None
+
         # check sample weight
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-        nonzero_indices = np.nonzero(sample_weight)[0]
-        if (
-            nonzero_indices.shape[0] < sample_weight.shape[0]
-        ):  # filter out zero-weighted samples
-            X = X[nonzero_indices]
-            y = y[nonzero_indices]
-            sample_weight = sample_weight[nonzero_indices]
 
         return X, y, sample_weight
 

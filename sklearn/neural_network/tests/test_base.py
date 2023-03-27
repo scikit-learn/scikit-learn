@@ -29,48 +29,68 @@ def test_log_loss_1_prob_finite(y_true, y_prob):
     assert np.isfinite(loss)
 
 
-def test_loss_functions():
-    # for testing the correctness of all loss functions
+def test_squared_loss():
+    y_true = np.array([[1, 0, 0], [0, 1, 0]])
+    y_pred = np.array([[0.0, 1.0, 0.0], [0.9, 0.05, 0.05]])
 
-    # squared loss
-    y_true = np.array([[1, 2, 3]]).T
-    y_pred = np.array([[1.2, 1.8, 3.6]]).T
+    assert squared_loss(y_true, y_pred) == pytest.approx(0.3095833333333333)
 
-    square_loss_value = squared_loss(y_true, y_pred)
-    square_loss_value_with_ones_sample_weight = squared_loss(
-        y_true, y_pred, sample_weight=np.ones(y_true.shape[0])
-    )
-    exp_square_loss_value = 0.07333333333333335
+    sample_weight = np.array([1, 2])
+    assert squared_loss(y_true, y_pred, sample_weight) == pytest.approx(0.4525)
+
+
+def test_log_loss():
+    y_true = np.array([[1, 0, 0], [0, 1, 0]])
+    y_pred = np.array([[0.0, 1.0, 0.0], [0.9, 0.05, 0.05]])
+
+    assert log_loss(y_true, y_pred) == pytest.approx(19.519692831335572)
+
+    sample_weight = np.array([1, 2])
+    assert log_loss(y_true, y_pred, sample_weight) == pytest.approx(21.017558968112567)
+
+
+def test_binary_log_loss():
+    y_true = np.array([[0], [1]])
+    y_pred = np.array([[0.1], [0.9]])
+
     assert (
-        square_loss_value
-        == square_loss_value_with_ones_sample_weight
-        == exp_square_loss_value
+        log_loss(y_true, y_pred)
+        == pytest.approx(binary_log_loss(y_true, y_pred))
+        == pytest.approx(0.10536051565782628)
     )
 
-    # binary log-loss
-    y_true = np.array([[0, 1, 1]]).T
-    y_prob = np.array([[0.4, 0.6, 0.95]]).T
-
-    binary_loss_value = binary_log_loss(y_true, y_prob)
-    binary_loss_value_with_ones_sample_weight = binary_log_loss(
-        y_true, y_prob, sample_weight=np.ones(y_true.shape[0])
-    )
-    exp_binary_loss_value = 0.357648180639844
+    sample_weight = np.array([1, 2])
     assert (
-        binary_loss_value
-        == binary_loss_value_with_ones_sample_weight
-        == exp_binary_loss_value
+        log_loss(y_true, y_pred, sample_weight)
+        == pytest.approx(binary_log_loss(y_true, y_pred, sample_weight))
+        == pytest.approx(0.15804077348673942)
     )
 
-    # log loss
-    y_true = np.array([[0, 1, 2]])
-    y_prob = np.array([[0.8, 0.15, 0.05], [0.2, 0.65, 0.15], [0.2, 0.3, 0.5]])
 
-    log_loss_value = log_loss(y_true, y_prob)
-    log_loss_value_with_ones_sample_weight = log_loss(
-        y_true, y_prob, sample_weight=np.ones(y_true.shape[0])
+def test_binary_log_loss_multi_label():
+    y_true = np.array([[1, 0, 0], [0, 1, 0]])
+    y_pred = np.array([[0.0, 1.0, 0.0], [0.9, 0.05, 0.05]])
+
+    assert binary_log_loss(y_true, y_pred) == pytest.approx(38.71845871958495)
+
+    sample_weight = np.array([1, 2])
+    assert binary_log_loss(y_true, y_pred, sample_weight) == pytest.approx(
+        41.39326405005274
     )
-    exp_log_loss_value = 4.901291527767969
-    assert (
-        log_loss_value == log_loss_value_with_ones_sample_weight == exp_log_loss_value
+
+
+@pytest.mark.parametrize("loss", [squared_loss, log_loss, binary_log_loss])
+def test_sample_weight_effects(loss):
+    y_true = np.array([[1, 0, 0], [0, 1, 0]])
+    y_pred = np.array([[0.0, 1.0, 0.0], [0.9, 0.05, 0.05]])
+
+    sample_weight = np.array([0, 0])
+    assert loss(y_true, y_pred, sample_weight) == pytest.approx(0.0)
+
+    sample_weight = np.array([0, 1])
+    assert loss(y_true, y_pred, sample_weight) == pytest.approx(
+        loss(y_true[1:], y_pred[1:], sample_weight[1:])
     )
+
+    sample_weight = np.array([1, 1])
+    assert loss(y_true, y_pred, sample_weight) == pytest.approx(loss(y_true, y_pred))
