@@ -18,9 +18,9 @@ ctypedef unsigned char uint8_t
 ctypedef Py_ssize_t intp_t
 ctypedef float float32_t
 ctypedef double float64_t
-# To index sparse matrices, the type int32_t should be used instead of intp_t because
-# the latter is platform dependent. When large sparse matrices are supported, indexing
-# should use int64_t.
+# Sparse matrices indices and indices' pointers arrays must use int32_t over
+# intp_t because intp_t is platform dependent.
+# When large sparse matrices are supported, indexing must use int64_t.
 # See https://github.com/scikit-learn/scikit-learn/issues/23653 which tracks the
 # ongoing work to support large sparse matrices.
 ctypedef signed int int32_t
