@@ -262,6 +262,7 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
         The maximum number of patches to extract. If max_patches is a float
         between 0 and 1, it is taken to be a proportion of the total number
         of patches.
+        If max_patches=None then the total number of patches will be extracted.
     """
     n_h = i_h - p_h + 1
     n_w = i_w - p_w + 1
@@ -372,6 +373,8 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
         The maximum number of patches to extract. If `max_patches` is a float
         between 0 and 1, it is taken to be a proportion of the total number
         of patches.
+        If max_patches=None then the total number of patches will be extracted.
+
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator used for random sampling when
