@@ -146,6 +146,9 @@ Changelog
 - |Enhancement| All selectors in :mod:`sklearn.feature_selection` will preserve
   a DataFrame's dtype when transformed. :pr:`25102` by `Thomas Fan`_.
 
+- |Fix| :class:`feature_selection.SequentialFeatureSelector`'s `cv` parameter
+  now supports generators. :pr:`25973` by `Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.base`
 ...................
 
