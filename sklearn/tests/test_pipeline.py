@@ -1163,24 +1163,24 @@ def test_feature_union_passthrough_get_feature_names_out_false():
     )
 
 
-# Class to test feature names collisions
-class CollidingFeatureNamesTransformer:
-    def fit(self, X, y=None):
-        return self
-
-    def transform(self, X):
-        return X[:, :2]
-
-    def get_feature_names_out(self, input_features=None):
-        return np.array(["colliding_name", "colliding_name"])
-
-
 def test_feature_union_passthrough_get_feature_names_out_false_errors():
     """
     Check feature_names_out for verbose_feature_names_out=False,
     Collisions in feature names
     """
 
+    # Class to test feature names collisions
+    class CollidingFeatureNamesTransformer:
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X):
+            return X[:, :2]
+
+        def get_feature_names_out(self, input_features=None):
+            return np.array(["colliding_name", "colliding_name"])
+
+    # Test with verbose_feature_names_out=False when collisions occur
     transformer1 = CollidingFeatureNamesTransformer()
     transformer2 = CollidingFeatureNamesTransformer()
 
@@ -1199,6 +1199,59 @@ def test_feature_union_passthrough_get_feature_names_out_false_errors():
     )
 
     # Replace the escaped ",\\ " with the optional non-capturing group
+    # to match error message
+    msg = msg.replace(",\\\\ ", "(?:, )?")
+
+    with pytest.raises(ValueError, match=msg):
+        fu.get_feature_names_out()
+
+
+def test_feature_union_passthrough_get_feature_names_out_false_errors_overlap_over_5():
+    """
+    Check feature_names_out for verbose_feature_names_out=False,
+    Collisions in feature names
+    There are more than 5 overlapping names
+    """
+
+    class CollidingFeatureNamesTransformer:
+        def __init__(self, names):
+            self.names = names
+
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X):
+            return X[:, : len(self.names)]
+
+        def get_feature_names_out(self, input_features=None):
+            return np.array(self.names)
+
+    # Test with verbose_feature_names_out=False when collisions occur
+    transformer1 = CollidingFeatureNamesTransformer(
+        ["overlap1", "overlap2", "overlap3", "overlap4", "overlap5", "overlap6"]
+    )
+    transformer2 = CollidingFeatureNamesTransformer(
+        ["overlap1", "overlap2", "overlap3", "overlap4", "overlap5", "overlap6"]
+    )
+
+    fu = FeatureUnion(
+        [("t1", transformer1), ("t2", transformer2)],
+        verbose_feature_names_out=False,
+    )
+
+    X = np.random.rand(10, 6)
+
+    fu.fit(X)
+
+    msg = (
+        r"Output feature names: \['overlap1', 'overlap2', 'overlap3'(?:, 'overlap4',"
+        r" 'overlap5')?, \.\.\.\] "
+        r"are not unique\. Please set verbose_feature_names_out=True to add prefixes to"
+        r" feature names"
+    )
+
+    # Replace the escaped ",\\ " with the optional non-capturing group
+    # to match error message
     msg = msg.replace(",\\\\ ", "(?:, )?")
 
     with pytest.raises(ValueError, match=msg):
