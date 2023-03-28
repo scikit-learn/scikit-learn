@@ -28,8 +28,8 @@ cdef class Criterion:
     cdef SIZE_t start                    # samples[start:pos] are the samples in the left node
     cdef SIZE_t pos                      # samples[pos:end] are the samples in the right node
     cdef SIZE_t end
-    cdef SIZE_t n_missing
-    cdef bint missing_go_to_left
+    cdef SIZE_t n_missing                # Number of missing values for the feature being evaluated
+    cdef bint missing_go_to_left         # Whether missing values go to the left node
 
     cdef SIZE_t n_outputs                # Number of outputs
     cdef SIZE_t n_samples                # Number of samples
