@@ -182,6 +182,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         "normalize_y": ["boolean"],
         "copy_X_train": ["boolean"],
         "random_state": ["random_state"],
+        "verbose": ["verbose"],
     }
 
     def __init__(
@@ -194,6 +195,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         normalize_y=False,
         copy_X_train=True,
         random_state=None,
+        verbose=0,
     ):
         self.kernel = kernel
         self.alpha = alpha
@@ -202,6 +204,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.normalize_y = normalize_y
         self.copy_X_train = copy_X_train
         self.random_state = random_state
+        self.verbose = verbose
 
     def fit(self, X, y):
         """Fit Gaussian process regression model.
@@ -619,17 +622,37 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
-            opt_res = scipy.optimize.minimize(
-                obj_func,
-                initial_theta,
-                method="L-BFGS-B",
-                jac=True,
-                bounds=bounds,
-            )
-            _check_optimize_result("lbfgs", opt_res)
-            theta_opt, func_min = opt_res.x, opt_res.fun
+            if self.verbose >= 1:
+                self.explored_theta = []
+                self.explored_theta_log = []
+                def func_callback(theta):
+                    self.explored_theta.append(theta)
+                    self.explored_theta_log.append(self.log_marginal_likelihood(theta))
+                opt_res = scipy.optimize.minimize(
+                    obj_func,
+                    initial_theta,
+                    method="L-BFGS-B",
+                    jac=True,
+                    bounds=bounds,
+                    callback=func_callback,
+                )
+                _check_optimize_result("lbfgs", opt_res)
+                theta_opt, func_min = opt_res.x, opt_res.fun
+            else:
+                opt_res = scipy.optimize.minimize(
+                    obj_func,
+                    initial_theta,
+                    method="L-BFGS-B",
+                    jac=True,
+                    bounds=bounds,
+                )
+                _check_optimize_result("lbfgs", opt_res)
+                theta_opt, func_min = opt_res.x, opt_res.fun
         elif callable(self.optimizer):
-            theta_opt, func_min = self.optimizer(obj_func, initial_theta, bounds=bounds)
+            if self.verbose >= 1:
+                theta_opt, func_min, self.explored_theta, self.explored_theta_log = self.optimizer(obj_func, initial_theta, bounds=bounds)
+            else:
+                theta_opt, func_min = self.optimizer(obj_func, initial_theta, bounds=bounds)
         else:
             raise ValueError(f"Unknown optimizer {self.optimizer}.")
 
