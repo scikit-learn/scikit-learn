@@ -849,7 +849,7 @@ def test_csr_polynomial_expansion_index_overflow_non_regression():
     assert X_trans.shape == (13, second_degree_idx + 1)
     assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
     # Ensure that dtype promotion was actually required:
-    assert X_trans.indices.max() > np.iinfo(np.int32.max)
+    assert X_trans.indices.max() > np.iinfo(np.int32).max
     assert_allclose(X_trans.data, [1, 2, 2, 3, 4, 12])
     assert_array_equal(row_nonzero, [11, 11, 11, 12, 12, 12])
     assert_array_equal(
