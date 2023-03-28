@@ -156,11 +156,6 @@ class RocCurveDisplay:
         if ax is None:
             fig, ax = plt.subplots()
 
-        if plot_chance_level:
-            (self.chance_level_,) = ax.plot((0, 1), (0, 1), **chance_level_line_kwargs)
-        else:
-            self.chance_level_ = None
-
         (self.line_,) = ax.plot(self.fpr, self.tpr, **line_kwargs)
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
@@ -169,6 +164,11 @@ class RocCurveDisplay:
         xlabel = "False Positive Rate" + info_pos_label
         ylabel = "True Positive Rate" + info_pos_label
         ax.set(xlabel=xlabel, ylabel=ylabel)
+
+        if plot_chance_level:
+            (self.chance_level_,) = ax.plot((0, 1), (0, 1), **chance_level_line_kwargs)
+        else:
+            self.chance_level_ = None
 
         if "label" in line_kwargs:
             ax.legend(loc="lower right")

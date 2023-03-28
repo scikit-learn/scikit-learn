@@ -36,15 +36,6 @@ def data_binary(data):
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize("drop_intermediate", [True, False])
 @pytest.mark.parametrize("with_strings", [True, False])
-@pytest.mark.parametrize("plot_chance_level", [True, False])
-@pytest.mark.parametrize(
-    "chance_level_kwargs",
-    [
-        {"linewidth": 1},
-        {"color": "b", "label": "DummyEstimator"},
-        {"color": "g", "linestyle": ":"},
-    ],
-)
 @pytest.mark.parametrize(
     "constructor_name, default_name",
     [
@@ -59,8 +50,6 @@ def test_roc_curve_display_plotting(
     with_sample_weight,
     drop_intermediate,
     with_strings,
-    plot_chance_level,
-    chance_level_kwargs,
     constructor_name,
     default_name,
 ):
@@ -93,8 +82,6 @@ def test_roc_curve_display_plotting(
             drop_intermediate=drop_intermediate,
             pos_label=pos_label,
             alpha=0.8,
-            plot_chance_level=plot_chance_level,
-            chance_level_kwargs=chance_level_kwargs,
         )
     else:
         display = RocCurveDisplay.from_predictions(
@@ -104,8 +91,6 @@ def test_roc_curve_display_plotting(
             drop_intermediate=drop_intermediate,
             pos_label=pos_label,
             alpha=0.8,
-            plot_chance_level=plot_chance_level,
-            chance_level_kwargs=chance_level_kwargs,
         )
 
     fpr, tpr, _ = roc_curve(
@@ -121,6 +106,71 @@ def test_roc_curve_display_plotting(
     assert_allclose(display.tpr, tpr)
 
     assert display.estimator_name == default_name
+
+    import matplotlib as mpl  # noqal
+
+    assert isinstance(display.line_, mpl.lines.Line2D)
+    assert display.line_.get_alpha() == 0.8
+    assert isinstance(display.ax_, mpl.axes.Axes)
+    assert isinstance(display.figure_, mpl.figure.Figure)
+
+    expected_label = f"{default_name} (AUC = {display.roc_auc:.2f})"
+    assert display.line_.get_label() == expected_label
+
+    expected_pos_label = 1 if pos_label is None else pos_label
+    expected_ylabel = f"True Positive Rate (Positive label: {expected_pos_label})"
+    expected_xlabel = f"False Positive Rate (Positive label: {expected_pos_label})"
+
+    assert display.ax_.get_ylabel() == expected_ylabel
+    assert display.ax_.get_xlabel() == expected_xlabel
+
+
+@pytest.mark.parametrize("plot_chance_level", [True, False])
+@pytest.mark.parametrize(
+    "chance_level_kwargs",
+    [
+        {"linewidth": 1},
+        {"color": "b", "label": "DummyEstimator"},
+        {"color": "g", "linestyle": ":"},
+    ],
+)
+@pytest.mark.parametrize(
+    "constructor_name",
+    ["from_estimator", "from_predictions"],
+)
+def test_roc_curve_chance_level_line(
+    pyplot,
+    data_binary,
+    plot_chance_level,
+    chance_level_kwargs,
+    constructor_name,
+):
+    """Check the chance leve line plotting behaviour."""
+    X, y = data_binary
+
+    lr = LogisticRegression()
+    lr.fit(X, y)
+
+    y_pred = getattr(lr, "predict_proba")(X)
+    y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
+
+    if constructor_name == "from_estimator":
+        display = RocCurveDisplay.from_estimator(
+            lr,
+            X,
+            y,
+            alpha=0.8,
+            plot_chance_level=plot_chance_level,
+            chance_level_kwargs=chance_level_kwargs,
+        )
+    else:
+        display = RocCurveDisplay.from_predictions(
+            y,
+            y_pred,
+            alpha=0.8,
+            plot_chance_level=plot_chance_level,
+            chance_level_kwargs=chance_level_kwargs,
+        )
 
     import matplotlib as mpl  # noqal
 
@@ -146,16 +196,6 @@ def test_roc_curve_display_plotting(
 
     else:
         assert display.chance_level_ is None
-
-    expected_label = f"{default_name} (AUC = {display.roc_auc:.2f})"
-    assert display.line_.get_label() == expected_label
-
-    expected_pos_label = 1 if pos_label is None else pos_label
-    expected_ylabel = f"True Positive Rate (Positive label: {expected_pos_label})"
-    expected_xlabel = f"False Positive Rate (Positive label: {expected_pos_label})"
-
-    assert display.ax_.get_ylabel() == expected_ylabel
-    assert display.ax_.get_xlabel() == expected_xlabel
 
 
 @pytest.mark.parametrize(

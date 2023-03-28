@@ -318,9 +318,10 @@ Changelog
   curves.
   :pr:`24668` by :user:`dberenbaum`.
 
-- |Enhancement| :class:`RocCurveDisplay` now has a new attribute `chance_level_`
-  and supports plotting the chance level line via `plot_chance_level` and
-  altering its style via `chance_level_kwargs`.
+- |Enhancement| :meth:`metrics.RocCurveDisplay.from_estiamtor` and
+  :meth:`metrics.ocCurveDisplay.from_predictions` now accept two new keywords,
+  `plot_chance_level` and `chance_level_kwargs` to plot the baseline chance
+  level. This line is exposed in the `chance_level_` attribute.
   :pr:`25987` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 - |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
