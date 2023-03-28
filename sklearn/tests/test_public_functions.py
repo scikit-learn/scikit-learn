@@ -141,6 +141,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.make_multilabel_classification",
     "sklearn.datasets.make_regression",
     "sklearn.datasets.make_sparse_coded_signal",
+    "sklearn.datasets.make_spd_matrix",
     "sklearn.decomposition.sparse_encode",
     "sklearn.feature_extraction.grid_to_graph",
     "sklearn.feature_extraction.img_to_graph",
