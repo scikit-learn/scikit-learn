@@ -180,7 +180,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _support_missing_values(self, X):
         return not issparse(X) and self._get_tags()["allow_nan"]
 
-    def _check_is_missing_mask(self, X):
+    def _check_is_missing_mask_by_feature(self, X):
         """Return boolean mask denoting if there are missing values for each feature.
 
         This method also ensures that X is finite.
@@ -192,7 +192,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        missing_mask : ndarray of shape (n_features,), or None
+        missing_mask_by_feature : ndarray of shape (n_features,), or None
             Missing value mask. If missing values are not supported or there
             are no missing values, return None.
         """
@@ -207,17 +207,19 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         # check for finite
         if not np.isfinite(overall_sum):
-            # Raise a ValueError in case of the presence of an infinite element. 
+            # Raise a ValueError in case of the presence of an infinite element.
             _assert_all_finite_element_wise(X, xp=np, allow_nan=True, **common_kwargs)
 
         # If the sum is not nan, then there are no missing values
         if not np.isnan(overall_sum):
             return None
 
-        missing_mask = _any_isnan_axis0(X)
-        return missing_mask
+        missing_mask_by_feature = _any_isnan_axis0(X)
+        return missing_mask_by_feature
 
-    def _fit(self, X, y, sample_weight=None, check_input=True, missing_mask=None):
+    def _fit(
+        self, X, y, sample_weight=None, check_input=True, missing_mask_by_feature=None
+    ):
         self._validate_params()
         random_state = check_random_state(self.random_state)
 
@@ -226,8 +228,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # We can't pass multi_output=True because that would allow y to be
             # csr.
 
-            # _check_is_missing_mask will check for finite values and compute missing
-            # mask the tree supports missing values
+            # _check_is_missing_mask_by_feature will check for finite values and
+            # compute missing mask the tree supports missing values
             check_X_params = dict(
                 dtype=DTYPE, accept_sparse="csc", force_all_finite=False
             )
@@ -236,7 +238,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 X, y, validate_separately=(check_X_params, check_y_params)
             )
 
-            missing_mask = self._check_is_missing_mask(X)
+            missing_mask_by_feature = self._check_is_missing_mask_by_feature(X)
             if issparse(X):
                 X.sort_indices()
 
@@ -427,7 +429,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.min_impurity_decrease,
             )
 
-        builder.build(self.tree_, X, y, sample_weight, missing_mask)
+        builder.build(self.tree_, X, y, sample_weight, missing_mask_by_feature)
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
