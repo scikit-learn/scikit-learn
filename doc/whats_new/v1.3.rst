@@ -301,10 +301,22 @@ Changelog
   both return `np.nan`.
   :pr:`25531` by :user:`Marc Torrellas Socastro <marctorsoc>`.
 
+- |Fix| :func:`metric.ndcg_score` now gives a meaningful error message for input of
+  length 1.
+  :pr:`25672` by :user:`Lene Preuss <lene>` and :user:`Wei-Chun Chu <wcchu>`.
+
 - |Enhancement| :class:`metrics.silhouette_samples` nows accepts a sparse
   matrix of pairwise distances between samples, or a feature array.
   :pr:`18723` by :user:`Sahil Gupta <sahilgupta2105>` and
   :pr:`24677` by :user:`Ashwin Mathur <awinml>`.
+
+- |Enhancement| A new parameter `drop_intermediate` was added to
+  :func:`metrics.precision_recall_curve`,
+  :func:`metrics.PrecisionRecallDisplay.from_estimator`,
+  :func:`metrics.PrecisionRecallDisplay.from_predictions`,
+  which drops some suboptimal thresholds to create lighter precision-recall
+  curves.
+  :pr:`24668` by :user:`dberenbaum`.
 
 - |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
   not normalized, instead of actually normalizing them in the metric. Starting from
