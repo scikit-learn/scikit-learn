@@ -17,7 +17,7 @@ from ..cluster import kmeans_plusplus
 from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state
+from ..utils import check_random_state, check_array
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
 
@@ -41,6 +41,96 @@ def _check_shape(param, param_shape, name):
         )
 
 
+def get_responsibilities(n_samples, n_components, indices=None, labels=None):
+    """Create correct shaped responsibilities from array of `indices` or `labels`.
+
+    Responsibilities are 1 for the component of the corresponding index or label,
+    and 0 otherwise. Note that `n_components` is not the number of features
+    in the data, but the number of components in the mixture model. Responsibilities
+    can be used to calculate initial weights, means, and precisions of the mixture
+    model components. Either `indices` or `labels` must be provided.
+
+    Parameters
+    ----------
+    n_samples : int
+        Number of samples.
+
+    n_components : int
+        Number of components.
+
+    indices : array-like of shape (n_components,), default=None
+        The index location of the chosen components (centers) in the data array X
+        of shape (n_samples, n_components), will be set to 1 in the output.
+        Either `indices` or `labels` must be provided.
+
+    labels : array-like of shape (n_samples,), default=None
+        Will be used over `indices` if not `None`. The labels i=0 to n_components-1
+        will be set to 1 for each sample in the ouput.
+        Either `indices` or `labels` must be provided.
+
+    Returns
+    -------
+    responsibilities : array, shape (n_samples, n_components)
+        Responsibilities of each sample in each component.
+    """
+    resp = np.zeros((n_samples, n_components))
+    if labels is not None:
+        _check_shape(labels, (n_samples,), "labels")  # will raise if incompatible
+        resp[np.arange(n_samples), labels] = 1
+    elif indices is not None:
+        resp[indices, np.arange(n_components)] = 1
+    else:
+        raise ValueError(
+            "Either `indices` or `labels` must be provided, both were `None`."
+        )
+    return resp
+
+
+def _check_responsibilities(resp, n_components, n_samples):
+    """Check the user provided 'resp'.
+
+    Parameters
+    ----------
+    resp : array-like of shape (n_samples, n_components)
+        The responsibilities for each data sample in terms of each component.
+
+    n_components : int
+        Number of components.
+
+    n_samples : int
+        Number of samples.
+
+    Returns
+    -------
+    resp : array, shape (n_samples, n_components)
+    """
+    resp = check_array(resp, dtype=[np.float64, np.float32], ensure_2d=False)
+
+    _check_shape(resp, (n_samples, n_components), "responsibilities")
+
+    # check range
+    axis_sum = resp.sum(axis=1)
+    less_1 = np.allclose(axis_sum[axis_sum > 1], 1)
+    positive = np.allclose(axis_sum[axis_sum < 0] + 1, 1)
+    in_domain = positive and less_1
+    if not in_domain:
+        raise ValueError(
+            "The parameter 'responsibilities' should be normalized in "
+            "the range [0, 1] within floating point tolerance, but got: "
+            f"max value {np.min(resp)}, min value {np.max(resp)}"
+        )
+
+    # check proper normalization exists
+    nrows_1 = np.sum(np.isclose(axis_sum[axis_sum >= 1], 1))
+    if nrows_1 < n_components:
+        raise ValueError(
+            "The parameter 'responsibilities' should be normalized, "
+            f"with at least `n_components`={n_components} rows summing to 1."
+            f"but got {nrows_1}."
+        )
+    return resp
+
+
 class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for mixture models.
 
@@ -55,7 +145,12 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "n_init": [Interval(Integral, 1, None, closed="left")],
         "init_params": [
-            StrOptions({"kmeans", "random", "random_from_data", "k-means++"})
+            StrOptions({"kmeans", "random", "random_from_data", "k-means++"}),
+            callable,  # With input X: array-like of shape (n_samples, n_features),
+            # should return resp: array-like of shape (n_samples, n_components).
+            # Future child Mixture might have different shape requirements, so
+            # `_check_shape` should only be checked in child, such as in GMM,
+            # at _check_parameters. See `get_responsibilities` for help.
         ],
         "random_state": ["random_state"],
         "warm_start": ["boolean"],
@@ -111,7 +206,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         n_samples, _ = X.shape
 
         if self.init_params == "kmeans":
-            resp = np.zeros((n_samples, self.n_components))
             label = (
                 cluster.KMeans(
                     n_clusters=self.n_components, n_init=1, random_state=random_state
@@ -119,24 +213,27 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 .fit(X)
                 .labels_
             )
-            resp[np.arange(n_samples), label] = 1
+
+            resp = get_responsibilities(n_samples, self.n_components, labels=label)
         elif self.init_params == "random":
             resp = random_state.uniform(size=(n_samples, self.n_components))
             resp /= resp.sum(axis=1)[:, np.newaxis]
         elif self.init_params == "random_from_data":
-            resp = np.zeros((n_samples, self.n_components))
             indices = random_state.choice(
                 n_samples, size=self.n_components, replace=False
             )
-            resp[indices, np.arange(self.n_components)] = 1
+            resp = get_responsibilities(n_samples, self.n_components, indices=indices)
         elif self.init_params == "k-means++":
-            resp = np.zeros((n_samples, self.n_components))
             _, indices = kmeans_plusplus(
                 X,
                 self.n_components,
                 random_state=random_state,
             )
-            resp[indices, np.arange(self.n_components)] = 1
+            resp = get_responsibilities(n_samples, self.n_components, indices=indices)
+        elif callable(self.init_params):
+            resp = self.init_params(X)
+            resp = _check_responsibilities(resp, self.n_components, n_samples)
+
         else:
             raise ValueError(
                 "Unimplemented initialization method '%s'" % self.init_params
@@ -233,7 +330,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         random_state = check_random_state(self.random_state)
 
-        n_samples, _ = X.shape
         for init in range(n_init):
             self._print_verbose_msg_init_beg(init)
 

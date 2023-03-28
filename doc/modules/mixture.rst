@@ -138,14 +138,17 @@ to a local optimum.
 Choice of the Initialization Method
 -----------------------------------
 
-There is a choice of four initialization methods (as well as inputting user defined
-initial means) to generate the initial centers for the model components:
+There are several initialization methods available to generate the
+initial centers for the model components. There is a choice of four
+built-in methods provided as strings, the possibility to pass in a
+custom function (callable), or to pass in pre-computed user defined
+initializations. 
 
-k-means (default)
+"k-means" (default)
   This applies a traditional k-means clustering algorithm.
   This can be computationally expensive compared to other initialization methods.
 
-k-means++
+"k-means++"
   This uses the initialization method of k-means clustering: k-means++.
   This will pick the first center at random from the data. Subsequent centers will be
   chosen from a weighted distribution of the data favouring points further away from
@@ -153,14 +156,35 @@ k-means++
   quicker than running a full k-means but can still take a significant amount of
   time for large data sets with many components.
 
-random_from_data
+"random_from_data"
   This will pick random data points from the input data as the initial
   centers. This is a very fast method of initialization but can produce non-convergent
   results if the chosen points are too close to each other.
 
-random
+"random"
   Centers are chosen as a small perturbation away from the mean of all data.
   This method is simple but can lead to the model taking longer to converge.
+
+callable
+   This allows the user to pass in a custom function to initialize the centers.
+   The function should take the data `X` as the first argument and return a
+   normalized responsibilities array of shape (n_samples, n_centers), where each
+   feature has a value between 0 and 1 for each center, and each sample (row) sums
+   to 1. A simple helper function `get_responsibilities` is provided to help with this.
+
+Finally, there are two options for using pre-computed user defined initializations:
+
+ - The first is to pass in array of means as `means_init`. The weights and inverse
+   covariances (precisions) will be computed from the chosen initializer above unless
+   they are also passed in. 
+
+ - The second is to pass in an array of pre-computed responsibilities as
+   `responsibilities_init`. Using the `get_responsibilities` helper function these
+   can be generated from user implementations of clustering algorithms such as k-means,
+   or other methods, useful for achieving more robust or complex initializations. While
+   allowing for 1 to 1 initialization without having to individually calculate
+   `means_init`, `weights_init`, and `precisions_init`, this method is dependent on
+   the data shape for initialization.
 
 .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_init_001.png
    :target: ../auto_examples/mixture/plot_gmm_init.html
