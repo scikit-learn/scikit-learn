@@ -10,6 +10,8 @@ from libc.float cimport DBL_MAX
 import numpy as np
 from ...metrics._dist_metrics cimport DistanceMetric
 from ...cluster._hierarchical_fast cimport UnionFind
+from ...cluster._hdbscan._tree cimport HIERARCHY_t
+from ...cluster._hdbscan._tree import HIERARCHY_dtype
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 from ...utils._typedefs import ITYPE, DTYPE
 
@@ -188,7 +190,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
 
     return mst
 
-cpdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] make_single_linkage(const MST_edge_t[::1] mst):
+cpdef cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] make_single_linkage(const MST_edge_t[::1] mst):
     """Construct a single-linkage tree from an MST.
 
     Parameters
@@ -209,16 +211,16 @@ cpdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] make_single_linkage(const MST
         - new cluster size
     """
     cdef:
-        cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] single_linkage
+        cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] single_linkage
 
         # Note mst.shape[0] is one fewer than the number of samples
         cnp.int64_t n_samples = mst.shape[0] + 1
-        cnp.int64_t current_node_cluster, next_node_cluster
+        cnp.intp_t current_node_cluster, next_node_cluster
         cnp.int64_t current_node, next_node, index
         cnp.float64_t distance
         UnionFind U = UnionFind(n_samples)
 
-    single_linkage = np.zeros((n_samples - 1, 4), dtype=np.float64)
+    single_linkage = np.zeros(n_samples - 1, dtype=HIERARCHY_dtype)
 
     for i in range(n_samples - 1):
 
@@ -229,12 +231,10 @@ cpdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] make_single_linkage(const MST
         current_node_cluster = U.fast_find(current_node)
         next_node_cluster = U.fast_find(next_node)
 
-        # TODO: Update this to an array of structs (AoS).
-        # Should be done simultaneously in _tree.pyx to ensure compatability.
-        single_linkage[i][0] = <cnp.float64_t> current_node_cluster
-        single_linkage[i][1] = <cnp.float64_t> next_node_cluster
-        single_linkage[i][2] = distance
-        single_linkage[i][3] = U.size[current_node_cluster] + U.size[next_node_cluster]
+        single_linkage[i].left_node = current_node_cluster
+        single_linkage[i].right_node = next_node_cluster
+        single_linkage[i].value = distance
+        single_linkage[i].cluster_size = U.size[current_node_cluster] + U.size[next_node_cluster]
 
         U.union(current_node_cluster, next_node_cluster)
 
