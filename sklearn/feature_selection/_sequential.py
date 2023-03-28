@@ -10,6 +10,7 @@ import warnings
 from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from ..utils._param_validation import RealNotInt
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 from ..model_selection import cross_val_score
@@ -57,6 +58,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     tol : float, default=None
         If the score is not incremented by at least `tol` between two
         consecutive feature additions or removals, stop adding or removing.
+
+        `tol` can be negative when removing features using `direction="backward"`.
+        It can be useful to reduce the number of features at the cost of a small
+        decrease in the score.
+
         `tol` is enabled only when `n_features_to_select` is `"auto"`.
 
         .. versionadded:: 1.1
@@ -149,11 +155,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         "estimator": [HasMethods(["fit"])],
         "n_features_to_select": [
             StrOptions({"auto", "warn"}, deprecated={"warn"}),
-            Interval(Real, 0, 1, closed="right"),
+            Interval(RealNotInt, 0, 1, closed="right"),
             Interval(Integral, 0, None, closed="neither"),
             Hidden(None),
         ],
-        "tol": [None, Interval(Real, 0, None, closed="neither")],
+        "tol": [None, Interval(Real, None, None, closed="neither")],
         "direction": [StrOptions({"forward", "backward"})],
         "scoring": [None, StrOptions(set(get_scorer_names())), callable],
         "cv": ["cv_object"],
@@ -249,6 +255,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             self.n_features_to_select_ = self.n_features_to_select
         elif isinstance(self.n_features_to_select, Real):
             self.n_features_to_select_ = int(n_features * self.n_features_to_select)
+
+        if self.tol is not None and self.tol < 0 and self.direction == "forward":
+            raise ValueError("tol must be positive when doing forward selection")
 
         cloned_estimator = clone(self.estimator)
 

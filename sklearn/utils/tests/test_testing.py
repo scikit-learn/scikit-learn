@@ -10,7 +10,7 @@ from scipy import sparse
 import pytest
 
 from sklearn.utils.deprecation import deprecated
-from sklearn.utils.metaestimators import available_if, if_delegate_has_method
+from sklearn.utils.metaestimators import available_if
 from sklearn.utils._testing import (
     assert_raises,
     assert_no_warnings,
@@ -430,64 +430,7 @@ class MockMetaEstimator:
         """Incorrect docstring but should not be tested"""
 
 
-class MockMetaEstimatorDeprecatedDelegation:
-    def __init__(self, delegate):
-        """MetaEstimator to check if doctest on delegated methods work.
-
-        Parameters
-        ---------
-        delegate : estimator
-            Delegated estimator.
-        """
-        self.delegate = delegate
-
-    @if_delegate_has_method(delegate="delegate")
-    def predict(self, X):
-        """This is available only if delegate has predict.
-
-        Parameters
-        ----------
-        y : ndarray
-            Parameter y
-        """
-        return self.delegate.predict(X)
-
-    @if_delegate_has_method(delegate="delegate")
-    @deprecated("Testing a deprecated delegated method")
-    def score(self, X):
-        """This is available only if delegate has score.
-
-        Parameters
-        ---------
-        y : ndarray
-            Parameter y
-        """
-
-    @if_delegate_has_method(delegate="delegate")
-    def predict_proba(self, X):
-        """This is available only if delegate has predict_proba.
-
-        Parameters
-        ---------
-        X : ndarray
-            Parameter X
-        """
-        return X
-
-    @deprecated("Testing deprecated function with wrong params")
-    def fit(self, X, y):
-        """Incorrect docstring but should not be tested"""
-
-
-@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
-@pytest.mark.parametrize(
-    "mock_meta",
-    [
-        MockMetaEstimator(delegate=MockEst()),
-        MockMetaEstimatorDeprecatedDelegation(delegate=MockEst()),
-    ],
-)
-def test_check_docstring_parameters(mock_meta):
+def test_check_docstring_parameters():
     pytest.importorskip(
         "numpydoc",
         reason="numpydoc is required to test the docstrings",
@@ -506,6 +449,7 @@ def test_check_docstring_parameters(mock_meta):
         check_docstring_parameters(Klass.f_bad_sections)
 
     incorrect = check_docstring_parameters(f_check_param_definition)
+    mock_meta = MockMetaEstimator(delegate=MockEst())
     mock_meta_name = mock_meta.__class__.__name__
     assert incorrect == [
         "sklearn.utils.tests.test_testing.f_check_param_definition There "
