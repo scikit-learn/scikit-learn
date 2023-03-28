@@ -62,14 +62,14 @@ def _return_float_dtype(X, Y):
 
 
 def check_pairwise_arrays(
-        X,
-        Y,
-        *,
-        precomputed=False,
-        dtype=None,
-        accept_sparse="csr",
-        force_all_finite=True,
-        copy=False,
+    X,
+    Y,
+    *,
+    precomputed=False,
+    dtype=None,
+    accept_sparse="csr",
+    force_all_finite=True,
+    copy=False,
 ):
     """Set X and Y appropriately and checks inputs.
 
@@ -223,7 +223,7 @@ def check_paired_arrays(X, Y):
 
 # Pairwise distances
 def euclidean_distances(
-        X, Y=None, *, Y_norm_squared=None, squared=False, X_norm_squared=None
+    X, Y=None, *, Y_norm_squared=None, squared=False, X_norm_squared=None
 ):
     """
     Compute the distance matrix between each pair from a vector array X and Y.
@@ -381,7 +381,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
 
 
 def nan_euclidean_distances(
-        X, Y=None, *, squared=False, missing_values=np.nan, copy=True
+    X, Y=None, *, squared=False, missing_values=np.nan, copy=True
 ):
     """Calculate the euclidean distances in the presence of missing values.
 
@@ -525,11 +525,11 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
         # least 10MiB)
         maxmem = max(
             (
-                    (x_density * n_samples_X + y_density * n_samples_Y) * n_features
-                    + (x_density * n_samples_X * y_density * n_samples_Y)
+                (x_density * n_samples_X + y_density * n_samples_Y) * n_features
+                + (x_density * n_samples_X * y_density * n_samples_Y)
             )
             / 10,
-            10 * 2 ** 17,
+            10 * 2**17,
         )
 
         # The increase amount of memory in 8-byte blocks is:
@@ -539,7 +539,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
         # Hence x² + (xd+yd)kx = M, where x=batch_size, k=n_features, M=maxmem
         #                                 xd=x_density and yd=y_density
         tmp = (x_density + y_density) * n_features
-        batch_size = (-tmp + np.sqrt(tmp ** 2 + 4 * maxmem)) / 2
+        batch_size = (-tmp + np.sqrt(tmp**2 + 4 * maxmem)) / 2
         batch_size = max(int(batch_size), 1)
 
     x_batches = gen_batches(n_samples_X, batch_size)
@@ -592,7 +592,7 @@ def _argmin_reduce(dist, start):
 
 
 def pairwise_distances_argmin_min(
-        X, Y, *, axis=1, metric="euclidean", metric_kwargs=None
+    X, Y, *, axis=1, metric="euclidean", metric_kwargs=None
 ):
     """Compute minimum distances between one point and a set of points.
 
@@ -1360,6 +1360,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
     np.exp(K, K)  # exponentiate K in-place
     return K
 
+
 @validate_params(
     {
         "X": ["array-like"],
@@ -1720,14 +1721,14 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
 
 
 def pairwise_distances_chunked(
-        X,
-        Y=None,
-        *,
-        reduce_func=None,
-        metric="euclidean",
-        n_jobs=None,
-        working_memory=None,
-        **kwds,
+    X,
+    Y=None,
+    *,
+    reduce_func=None,
+    metric="euclidean",
+    n_jobs=None,
+    working_memory=None,
+    **kwds,
 ):
     """Generate a distance matrix chunk by chunk with optional reduction.
 
@@ -1880,11 +1881,11 @@ def pairwise_distances_chunked(
             X_chunk = X[sl]
         D_chunk = pairwise_distances(X_chunk, Y, metric=metric, n_jobs=n_jobs, **kwds)
         if (X is Y or Y is None) and PAIRWISE_DISTANCE_FUNCTIONS.get(
-                metric, None
+            metric, None
         ) is euclidean_distances:
             # zeroing diagonal, taking care of aliases of "euclidean",
             # i.e. "l2"
-            D_chunk.flat[sl.start:: _num_samples(X) + 1] = 0
+            D_chunk.flat[sl.start :: _num_samples(X) + 1] = 0
         if reduce_func is not None:
             chunk_size = D_chunk.shape[0]
             D_chunk = reduce_func(D_chunk, sl.start)
@@ -1893,7 +1894,7 @@ def pairwise_distances_chunked(
 
 
 def pairwise_distances(
-        X, Y=None, metric="euclidean", *, n_jobs=None, force_all_finite=True, **kwds
+    X, Y=None, metric="euclidean", *, n_jobs=None, force_all_finite=True, **kwds
 ):
     """Compute the distance matrix from a vector array X and optional Y.
 
@@ -2005,9 +2006,9 @@ def pairwise_distances(
         of two arrays.
     """
     if (
-            metric not in _VALID_METRICS
-            and not callable(metric)
-            and metric != "precomputed"
+        metric not in _VALID_METRICS
+        and not callable(metric)
+        and metric != "precomputed"
     ):
         raise ValueError(
             "Unknown metric %s. Valid metrics are %s, or 'precomputed', or a callable"
@@ -2133,7 +2134,7 @@ KERNEL_PARAMS = {
 
 
 def pairwise_kernels(
-        X, Y=None, metric="linear", *, filter_params=False, n_jobs=None, **kwds
+    X, Y=None, metric="linear", *, filter_params=False, n_jobs=None, **kwds
 ):
     """Compute the kernel between arrays X and optional array Y.
 

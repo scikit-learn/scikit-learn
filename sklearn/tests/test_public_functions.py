@@ -164,6 +164,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.cluster.contingency_matrix",
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
+    "sklearn.metrics.pairwise.cosine_similarity",
     "sklearn.metrics.coverage_error",
     "sklearn.metrics.d2_pinball_score",
     "sklearn.metrics.d2_tweedie_score",
