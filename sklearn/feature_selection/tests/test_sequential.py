@@ -330,7 +330,7 @@ def test_cv_generator_support():
     cv = LeaveOneGroupOut()
     splits = cv.split(X, y, groups=groups)
 
-    knc = KNeighborsClassifier(n_neighbors=5, random_state=0)
+    knc = KNeighborsClassifier(n_neighbors=5)
 
     sfs = SequentialFeatureSelector(knc, n_features_to_select=5, cv=splits)
     sfs.fit(X, y)
