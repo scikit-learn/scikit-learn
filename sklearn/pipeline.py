@@ -383,7 +383,7 @@ class Pipeline(_BaseComposition):
             # transformer. This is necessary when loading the transformer
             # from the cache.
             self.steps[step_idx] = (name, fitted_transformer)
-        return X
+        return X, memory
 
     def fit(self, X, y=None, **fit_params):
         """Fit the model.
@@ -413,11 +413,25 @@ class Pipeline(_BaseComposition):
         """
         self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
-        Xt = self._fit(X, y, **fit_params_steps)
+        Xt, memory = self._fit(X, y, **fit_params_steps)
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
-            if self._final_estimator != "passthrough":
-                fit_params_last_step = fit_params_steps[self.steps[-1][0]]
-                self._final_estimator.fit(Xt, y, **fit_params_last_step)
+            last_step = self._final_estimator
+            if last_step != "passthrough":
+                step_idx = len(self.steps) - 1
+                name = self.steps[-1][0]
+                fit_params_last_step = fit_params_steps[name]
+                cached_fit_one = memory.cached(_fit_one)
+                fitted_estimator = cached_fit_one(
+                    last_step,
+                    Xt,
+                    y,
+                    None,
+                    message_clsname="Pipeline",
+                    message=self._log_message(step_idx),
+                    **fit_params_last_step,
+                )
+                self.steps[step_idx] = (name, fitted_estimator)
+                return X
 
         return self
 
@@ -450,17 +464,27 @@ class Pipeline(_BaseComposition):
         """
         self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
-        Xt = self._fit(X, y, **fit_params_steps)
+        Xt, memory = self._fit(X, y, **fit_params_steps)
 
         last_step = self._final_estimator
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             if last_step == "passthrough":
                 return Xt
-            fit_params_last_step = fit_params_steps[self.steps[-1][0]]
-            if hasattr(last_step, "fit_transform"):
-                return last_step.fit_transform(Xt, y, **fit_params_last_step)
-            else:
-                return last_step.fit(Xt, y, **fit_params_last_step).transform(Xt)
+            step_idx = len(self.steps) - 1
+            name = self.steps[-1][0]
+            fit_params_last_step = fit_params_steps[name]
+            cached_fit_transform_one = memory.cached(_fit_transform_one)
+            X, fitted_transformer = cached_fit_transform_one(
+                last_step,
+                Xt,
+                y,
+                None,
+                message_clsname="Pipeline",
+                message=self._log_message(step_idx),
+                **fit_params_last_step,
+            )
+            self.steps[step_idx] = (name, fitted_transformer)
+            return X
 
     @available_if(_final_estimator_has("predict"))
     def predict(self, X, **predict_params):
@@ -527,7 +551,7 @@ class Pipeline(_BaseComposition):
         """
         self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
-        Xt = self._fit(X, y, **fit_params_steps)
+        Xt, _ = self._fit(X, y, **fit_params_steps)
 
         fit_params_last_step = fit_params_steps[self.steps[-1][0]]
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
