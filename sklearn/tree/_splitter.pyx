@@ -15,6 +15,7 @@ from ._criterion cimport Criterion
 
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
+from libc.math cimport isnan
 from cython cimport final
 
 import numpy as np
@@ -969,7 +970,7 @@ cdef class DensePartitioner:
 
                 # X[samples[partition_end], best_feature] is a non-missing value
                 if isnan(X[samples[p], best_feature]):
-                    # If X[samples[p], best_feature] is missing, 
+                    # If X[samples[p], best_feature] is missing,
                     # swap samples[p] and samples[partition_end]
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
                     partition_end -= 1
