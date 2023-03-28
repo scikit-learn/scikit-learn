@@ -21,7 +21,6 @@ from cython cimport final
 import numpy as np
 
 from scipy.sparse import csc_matrix
-from scipy.sparse import issparse
 
 from ._utils cimport log
 from ._utils cimport rand_int
@@ -789,24 +788,6 @@ cdef inline int node_split_random(
     n_constant_features[0] = n_total_constants
     return 0
 
-
-cdef inline unsigned char[::1] _any_isnan_axis0(const DTYPE_t[:, :] X):
-    """Same as np.any(np.isnan(X), axis=0)"""
-    cdef:
-        int i, j
-        int n_samples = X.shape[0]
-        int n_features = X.shape[1]
-        unsigned char[::1] isnan_out = np.zeros(X.shape[1], dtype=np.bool_)
-
-    with nogil:
-        for i in range(n_samples):
-            for j in range(n_features):
-                if isnan_out[j]:
-                    continue
-                if isnan(X[i, j]):
-                    isnan_out[j] = True
-                    break
-    return isnan_out
 
 @final
 cdef class DensePartitioner:
