@@ -1123,11 +1123,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.calibration.CalibrationDisplay`
             Object that stores computed values.
         """
-        name = super().plot(name=name)
-        import matplotlib.pyplot as plt
-
-        if ax is None:
-            fig, ax = plt.subplots()
+        self.ax_, self.figure_, name = super()._validate_plot_params(ax=ax, name=name)
 
         info_pos_label = (
             f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
@@ -1139,20 +1135,18 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         line_kwargs.update(**kwargs)
 
         ref_line_label = "Perfectly calibrated"
-        existing_ref_line = ref_line_label in ax.get_legend_handles_labels()[1]
+        existing_ref_line = ref_line_label in self.ax_.get_legend_handles_labels()[1]
         if ref_line and not existing_ref_line:
-            ax.plot([0, 1], [0, 1], "k:", label=ref_line_label)
+            self.ax_.plot([0, 1], [0, 1], "k:", label=ref_line_label)
         self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[0]
 
         # We always have to show the legend for at least the reference line
-        ax.legend(loc="lower right")
+        self.ax_.legend(loc="lower right")
 
         xlabel = f"Mean predicted probability {info_pos_label}"
         ylabel = f"Fraction of positives {info_pos_label}"
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
-        self.ax_ = ax
-        self.figure_ = ax.figure
         return self
 
     @classmethod
@@ -1258,7 +1252,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
         >>> plt.show()
         """
-        y_prob, pos_label, name = super().from_estimator(
+        y_prob, pos_label, name = super()._validate_and_get_response_values(
             estimator,
             X,
             y,
@@ -1376,7 +1370,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
         >>> plt.show()
         """
-        pos_label_validated, name = super().from_predictions(
+        pos_label_validated, name = super()._validate_from_predictions_params(
             y_true, y_prob, sample_weight=None, pos_label=pos_label, name=name
         )
 

@@ -137,7 +137,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         `drawstyle="default"`. However, the curve will not be strictly
         consistent with the reported average precision.
         """
-        name = super().plot(name=name)
+        self.ax_, self.figure_, name = super()._validate_plot_params(ax=ax, name=name)
 
         line_kwargs = {"drawstyle": "steps-post"}
         if self.average_precision is not None and name is not None:
@@ -148,25 +148,18 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
-        import matplotlib.pyplot as plt
-
-        if ax is None:
-            fig, ax = plt.subplots()
-
-        (self.line_,) = ax.plot(self.recall, self.precision, **line_kwargs)
+        (self.line_,) = self.ax_.plot(self.recall, self.precision, **line_kwargs)
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
         )
 
         xlabel = "Recall" + info_pos_label
         ylabel = "Precision" + info_pos_label
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
         if "label" in line_kwargs:
-            ax.legend(loc="lower left")
+            self.ax_.legend(loc="lower left")
 
-        self.ax_ = ax
-        self.figure_ = ax.figure
         return self
 
     @classmethod
@@ -267,7 +260,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_pred, pos_label, name = super().from_estimator(
+        y_pred, pos_label, name = super()._validate_and_get_response_values(
             estimator,
             X,
             y,
@@ -373,7 +366,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        pos_label, name = super().from_predictions(
+        pos_label, name = super()._validate_from_predictions_params(
             y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
 

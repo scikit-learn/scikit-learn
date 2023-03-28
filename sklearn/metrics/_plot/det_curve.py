@@ -160,7 +160,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_pred, pos_label, name = super().from_estimator(
+        y_pred, pos_label, name = super()._validate_and_get_response_values(
             estimator,
             X,
             y,
@@ -254,7 +254,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        pos_label_validated, name = super().from_predictions(
+        pos_label_validated, name = super()._validate_from_predictions_params(
             y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
 
@@ -295,17 +295,12 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.plot.DetCurveDisplay`
             Object that stores computed values.
         """
-        name = super().plot(name=name)
+        self.ax_, self.figure_, name = super()._validate_plot_params(ax=ax, name=name)
 
         line_kwargs = {} if name is None else {"label": name}
         line_kwargs.update(**kwargs)
 
-        import matplotlib.pyplot as plt
-
-        if ax is None:
-            _, ax = plt.subplots()
-
-        (self.line_,) = ax.plot(
+        (self.line_,) = self.ax_.plot(
             sp.stats.norm.ppf(self.fpr),
             sp.stats.norm.ppf(self.fnr),
             **line_kwargs,
@@ -316,10 +311,10 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         xlabel = "False Positive Rate" + info_pos_label
         ylabel = "False Negative Rate" + info_pos_label
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
         if "label" in line_kwargs:
-            ax.legend(loc="lower right")
+            self.ax_.legend(loc="lower right")
 
         ticks = [0.001, 0.01, 0.05, 0.20, 0.5, 0.80, 0.95, 0.99, 0.999]
         tick_locations = sp.stats.norm.ppf(ticks)
@@ -327,13 +322,11 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             "{:.0%}".format(s) if (100 * s).is_integer() else "{:.1%}".format(s)
             for s in ticks
         ]
-        ax.set_xticks(tick_locations)
-        ax.set_xticklabels(tick_labels)
-        ax.set_xlim(-3, 3)
-        ax.set_yticks(tick_locations)
-        ax.set_yticklabels(tick_labels)
-        ax.set_ylim(-3, 3)
+        self.ax_.set_xticks(tick_locations)
+        self.ax_.set_xticklabels(tick_labels)
+        self.ax_.set_xlim(-3, 3)
+        self.ax_.set_yticks(tick_locations)
+        self.ax_.set_yticklabels(tick_labels)
+        self.ax_.set_ylim(-3, 3)
 
-        self.ax_ = ax
-        self.figure_ = ax.figure
         return self

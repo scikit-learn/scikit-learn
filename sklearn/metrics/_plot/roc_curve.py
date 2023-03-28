@@ -101,7 +101,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.plot.RocCurveDisplay`
             Object that stores computed values.
         """
-        name = super().plot(name=name)
+        self.ax_, self.figure_, name = super()._validate_plot_params(ax=ax, name=name)
 
         line_kwargs = {}
         if self.roc_auc is not None and name is not None:
@@ -113,25 +113,18 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         line_kwargs.update(**kwargs)
 
-        import matplotlib.pyplot as plt
-
-        if ax is None:
-            fig, ax = plt.subplots()
-
-        (self.line_,) = ax.plot(self.fpr, self.tpr, **line_kwargs)
+        (self.line_,) = self.ax_.plot(self.fpr, self.tpr, **line_kwargs)
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
         )
 
         xlabel = "False Positive Rate" + info_pos_label
         ylabel = "True Positive Rate" + info_pos_label
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
         if "label" in line_kwargs:
-            ax.legend(loc="lower right")
+            self.ax_.legend(loc="lower right")
 
-        self.ax_ = ax
-        self.figure_ = ax.figure
         return self
 
     @classmethod
@@ -221,7 +214,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_pred, pos_label, name = super().from_estimator(
+        y_pred, pos_label, name = super()._validate_and_get_response_values(
             estimator,
             X,
             y,
@@ -323,7 +316,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        pos_label_validated, name = super().from_predictions(
+        pos_label_validated, name = super()._validate_from_predictions_params(
             y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
 

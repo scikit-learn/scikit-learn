@@ -11,13 +11,18 @@ class _BinaryClassifierCurveDisplayMixin:
     target and gather the response of the estimator.
     """
 
-    def plot(self, *, name=None):
+    def _validate_plot_params(self, *, ax=None, name=None):
         check_matplotlib_support(f"{self.__class__.__name__}.plot")
+        import matplotlib.pyplot as plt
+
+        if ax is None:
+            _, ax = plt.subplots()
+
         name = self.estimator_name if name is None else name
-        return name
+        return ax, ax.figure, name
 
     @classmethod
-    def from_estimator(
+    def _validate_and_get_response_values(
         cls, estimator, X, y, *, response_method="auto", pos_label=None, name=None
     ):
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
@@ -34,7 +39,7 @@ class _BinaryClassifierCurveDisplayMixin:
         return y_pred, pos_label, name
 
     @classmethod
-    def from_predictions(
+    def _validate_from_predictions_params(
         cls, y_true, y_pred, *, sample_weight=None, pos_label=None, name=None
     ):
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
