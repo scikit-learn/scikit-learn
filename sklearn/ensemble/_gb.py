@@ -28,7 +28,6 @@ import warnings
 from ._base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
 from ..base import is_classifier
-from ..utils import deprecated
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -275,20 +274,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         return raw_predictions
 
     def _check_params(self):
-        # TODO(1.3): Remove
-        if self.loss == "deviance":
-            warnings.warn(
-                "The loss parameter name 'deviance' was deprecated in v1.1 and will be "
-                "removed in version 1.3. Use the new parameter name 'log_loss' which "
-                "is equivalent.",
-                FutureWarning,
-            )
-            loss_class = (
-                _gb_losses.MultinomialDeviance
-                if len(self.classes_) > 2
-                else _gb_losses.BinomialDeviance
-            )
-        elif self.loss == "log_loss":
+        if self.loss == "log_loss":
             loss_class = (
                 _gb_losses.MultinomialDeviance
                 if len(self.classes_) > 2
@@ -636,7 +622,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 X_csr,
             )
 
-            # track deviance (= loss)
+            # track loss
             if do_oob:
                 self.train_score_[i] = loss_(
                     y[sample_mask],
@@ -853,15 +839,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         return leaves
 
-    # TODO(1.3): Remove
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `loss_` was deprecated in version 1.1 and will be removed in 1.3."
-    )
-    @property
-    def loss_(self):
-        return self._loss
-
 
 class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     """Gradient Boosting for classification.
@@ -880,15 +857,11 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     Parameters
     ----------
-    loss : {'log_loss', 'deviance', 'exponential'}, default='log_loss'
+    loss : {'log_loss', 'exponential'}, default='log_loss'
         The loss function to be optimized. 'log_loss' refers to binomial and
         multinomial deviance, the same as used in logistic regression.
         It is a good choice for classification with probabilistic outputs.
         For loss 'exponential', gradient boosting recovers the AdaBoost algorithm.
-
-        .. deprecated:: 1.1
-            The loss 'deviance' was deprecated in v1.1 and will be removed in
-            version 1.3. Use `loss='log_loss'` which is equivalent.
 
     learning_rate : float, default=0.1
         Learning rate shrinks the contribution of each tree by `learning_rate`.
@@ -992,13 +965,12 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    max_features : {'auto', 'sqrt', 'log2'}, int or float, default=None
+    max_features : {'sqrt', 'log2'}, int or float, default=None
         The number of features to consider when looking for the best split:
 
         - If int, values must be in the range `[1, inf)`.
         - If float, values must be in the range `(0.0, 1.0]` and the features
           considered at each split will be `max(1, int(max_features * n_features_in_))`.
-        - If 'auto', then `max_features=sqrt(n_features)`.
         - If 'sqrt', then `max_features=sqrt(n_features)`.
         - If 'log2', then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
@@ -1084,35 +1056,28 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     oob_improvement_ : ndarray of shape (n_estimators,)
-        The improvement in loss (= deviance) on the out-of-bag samples
+        The improvement in loss on the out-of-bag samples
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
         Only available if ``subsample < 1.0``.
 
     oob_scores_ : ndarray of shape (n_estimators,)
-        The full history of the loss (= deviance) values on the out-of-bag
+        The full history of the loss values on the out-of-bag
         samples. Only available if `subsample < 1.0`.
 
         .. versionadded:: 1.3
 
     oob_score_ : float
-        The last value of the loss (= deviance) on the out-of-bag samples. It is
+        The last value of the loss on the out-of-bag samples. It is
         the same as `oob_scores_[-1]`. Only available if `subsample < 1.0`.
 
         .. versionadded:: 1.3
 
     train_score_ : ndarray of shape (n_estimators,)
-        The i-th score ``train_score_[i]`` is the deviance (= loss) of the
+        The i-th score ``train_score_[i]`` is the loss of the
         model at iteration ``i`` on the in-bag sample.
-        If ``subsample == 1`` this is the deviance on the training data.
-
-    loss_ : LossFunction
-        The concrete ``LossFunction`` object.
-
-        .. deprecated:: 1.1
-             Attribute `loss_` was deprecated in version 1.1 and will be
-            removed in 1.3.
+        If ``subsample == 1`` this is the loss on the training data.
 
     init_ : estimator
         The estimator that provides the initial predictions.
@@ -1194,12 +1159,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     0.913...
     """
 
-    # TODO(1.3): remove "deviance"
     _parameter_constraints: dict = {
         **BaseGradientBoosting._parameter_constraints,
-        "loss": [
-            StrOptions({"log_loss", "deviance", "exponential"}, deprecated={"deviance"})
-        ],
+        "loss": [StrOptions({"log_loss", "exponential"})],
         "init": [StrOptions({"zero"}), None, HasMethods(["fit", "predict_proba"])],
     }
 
@@ -1568,13 +1530,12 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    max_features : {'auto', 'sqrt', 'log2'}, int or float, default=None
+    max_features : {'sqrt', 'log2'}, int or float, default=None
         The number of features to consider when looking for the best split:
 
         - If int, values must be in the range `[1, inf)`.
         - If float, values must be in the range `(0.0, 1.0]` and the features
           considered at each split will be `max(1, int(max_features * n_features_in_))`.
-        - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
@@ -1658,35 +1619,28 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     oob_improvement_ : ndarray of shape (n_estimators,)
-        The improvement in loss (= deviance) on the out-of-bag samples
+        The improvement in loss on the out-of-bag samples
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
         Only available if ``subsample < 1.0``.
 
     oob_scores_ : ndarray of shape (n_estimators,)
-        The full history of the loss (= deviance) values on the out-of-bag
+        The full history of the loss values on the out-of-bag
         samples. Only available if `subsample < 1.0`.
 
         .. versionadded:: 1.3
 
     oob_score_ : float
-        The last value of the loss (= deviance) on the out-of-bag samples. It is
+        The last value of the loss on the out-of-bag samples. It is
         the same as `oob_scores_[-1]`. Only available if `subsample < 1.0`.
 
         .. versionadded:: 1.3
 
     train_score_ : ndarray of shape (n_estimators,)
-        The i-th score ``train_score_[i]`` is the deviance (= loss) of the
+        The i-th score ``train_score_[i]`` is the loss of the
         model at iteration ``i`` on the in-bag sample.
-        If ``subsample == 1`` this is the deviance on the training data.
-
-    loss_ : LossFunction
-        The concrete ``LossFunction`` object.
-
-        .. deprecated:: 1.1
-             Attribute `loss_` was deprecated in version 1.1 and will be
-            removed in 1.3.
+        If ``subsample == 1`` this is the loss on the training data.
 
     init_ : estimator
         The estimator that provides the initial predictions.
