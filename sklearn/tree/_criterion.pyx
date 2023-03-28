@@ -15,7 +15,6 @@
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.math cimport fabs
-from cython cimport final
 
 import numpy as np
 cimport numpy as cnp
@@ -248,6 +247,7 @@ cdef inline void _move_sums_classification(
         weighted_n_1[0] = criterion.weighted_n_missing
         weighted_n_2[0] = criterion.weighted_n_node_samples - criterion.weighted_n_missing
     else:
+        # Assigning sum_2 = sum_total for all outputs.
         for k in range(criterion.n_outputs):
             n_bytes = criterion.n_classes[k] * sizeof(double)
             memset(&sum_1[k, 0], 0, n_bytes)
@@ -725,6 +725,7 @@ cdef inline void _move_sums_regression(
         weighted_n_2[0] = criterion.weighted_n_node_samples - criterion.weighted_n_missing
     else:
         memset(&sum_1[0], 0, n_bytes)
+        # Assigning sum_2 = sum_total for all outputs.
         memcpy(&sum_2[0], &criterion.sum_total[0], n_bytes)
         weighted_n_1[0] = 0.0
         weighted_n_2[0] = criterion.weighted_n_node_samples

@@ -2578,7 +2578,7 @@ def test_missing_values_is_resilience(make_data, Tree):
 
 
 def test_missing_value_is_predictive():
-    """Checks that adding tree uses missing value to split on when it is informative."""
+    """Check the tree learns when only the missing value is predictive."""
     rng = np.random.RandomState(0)
     n_samples = 1000
 
