@@ -131,7 +131,7 @@ cdef class Splitter:
             as a Cython memoryview.
 
         has_missing : bool
-            Missing values are in the dataset
+            At least one missing values is in X.
         """
 
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
@@ -235,7 +235,7 @@ cdef inline void shift_missing_values_to_left_if_required(
     SIZE_t end,
 ) nogil:
     cdef SIZE_t i, p, current_end
-    # The partitioner paritions the data such that the missing values are in
+    # The partitioner partitions the data such that the missing values are in
     # samples[-n_missing:] for the criterion to consume. If the missing values
     # are going to the right node, then the missing values are already in the
     # correct position. If the missing values go left, then we move the missing
@@ -438,7 +438,7 @@ cdef inline int node_split_best(
 
                     best_split = current_split  # copy
 
-        # Evalaute when there are missing values and all missing values goes
+        # Evaluate when there are missing values and all missing values goes
         # to the right node and non-missing values goes to the left node.
         if has_missing:
             n_left, n_right = end - start - n_missing, n_missing
@@ -826,7 +826,9 @@ cdef class DensePartitioner:
     ) noexcept nogil:
         """Simultaneously sort based on the feature_values.
 
-        Returns the number of missing values in feature_values.
+        Missing values are stored at the end of feature_values.
+        The number of missing values observed in feature_values is stored
+        in self.n_missing.
         """
         cdef:
             SIZE_t i, current_end
@@ -844,7 +846,8 @@ cdef class DensePartitioner:
             i, current_end = self.start, self.end - 1
             # Missing values are placed at the end and do not participate in the sorting.
             while i <= current_end:
-                # Finds the lowest current_end that is not missing
+                # Finds the right-most value that is not missing so that
+                # it can be swapped with missing values at its left.
                 if isnan(X[samples[current_end], current_feature]):
                     n_missing += 1
                     current_end -= 1
@@ -957,15 +960,17 @@ cdef class DensePartitioner:
             n_missing = 0
             p, partition_end = start, end - 1
             while p < partition_end and n_missing < best_n_missing:
-                # Finds the lowest partition_end that is not missing
+                # Finds the right-most value that is not missing so that
+                # it can be swapped with missing values at its left.
                 if isnan(X[samples[partition_end], best_feature]):
                     partition_end -= 1
                     n_missing += 1
                     continue
 
-                # X[samples[partition_end]] is a non-missing value
+                # X[samples[partition_end], best_feature] is a non-missing value
                 if isnan(X[samples[p], best_feature]):
-                    # If X[samples[p]] is missing, swap samples[p] and samples[partition_end]
+                    # If X[samples[p], best_feature] is missing, 
+                    # swap samples[p] and samples[partition_end]
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
                     partition_end -= 1
                     n_missing += 1
