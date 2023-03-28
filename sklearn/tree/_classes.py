@@ -205,7 +205,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         with np.errstate(over="ignore"):
             overall_sum = np.sum(X)
 
-        # check for finite
         if not np.isfinite(overall_sum):
             # Raise a ValueError in case of the presence of an infinite element.
             _assert_all_finite_element_wise(X, xp=np, allow_nan=True, **common_kwargs)
