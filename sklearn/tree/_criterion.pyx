@@ -223,7 +223,7 @@ cdef inline void _move_sums_classification(
     double* weighted_n_2,
     bint put_missing_in_1,
 ) noexcept nogil:
-    """Distrubute sum_total and sum_missing into sum_1 and sum_2.
+    """Distribute sum_total and sum_missing into sum_1 and sum_2.
 
     If there are missing values and:
     - put_missing_in_1 is True, then missing values to go sum_1. Specifically:
@@ -459,7 +459,7 @@ cdef class ClassificationCriterion(Criterion):
         """
         cdef SIZE_t pos = self.pos
         # The missing samples are assumed to be in
-        # self.sample_indices[-self.n_missing:] or
+        # self.sample_indices[-self.n_missing:] that is
         # self.sample_indices[end_non_missing:self.end].
         cdef SIZE_t end_non_missing = self.end - self.n_missing
 
@@ -700,8 +700,9 @@ cdef inline void _move_sums_regression(
     double[::1] sum_2,
     double* weighted_n_1,
     double* weighted_n_2,
-    bint put_missing_in_1) noexcept nogil:
-    """Distrubute sum_missing and sum_missing into sum_1 and sum_2.
+    bint put_missing_in_1,
+) noexcept nogil:
+    """Distribute sum_total and sum_missing into sum_1 and sum_2.
 
     If there are missing values and:
     - put_missing_in_1 is True, then missing values to go sum_1. Specifically:
@@ -893,7 +894,7 @@ cdef class RegressionCriterion(Criterion):
         cdef SIZE_t pos = self.pos
 
         # The missing samples are assumed to be in
-        # self.sample_indices[-self.n_missing:] or
+        # self.sample_indices[-self.n_missing:] that is
         # self.sample_indices[end_non_missing:self.end].
         cdef SIZE_t end_non_missing = self.end - self.n_missing
         cdef SIZE_t i

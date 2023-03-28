@@ -207,13 +207,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         # check for finite
         if not np.isfinite(overall_sum):
+            # Raise a ValueError in case of the presence of an infinite element. 
             _assert_all_finite_element_wise(X, xp=np, allow_nan=True, **common_kwargs)
 
         # If the sum is not nan, then there are no missing values
         if not np.isnan(overall_sum):
             return None
 
-        return _any_isnan_axis0(X)
+        missing_mask = _any_isnan_axis0(X)
+        return missing_mask
 
     def _fit(self, X, y, sample_weight=None, check_input=True, missing_mask=None):
         self._validate_params()

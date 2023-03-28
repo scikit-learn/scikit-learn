@@ -2444,7 +2444,7 @@ def test_missing_values_on_equal_nodes_no_missing(criterion):
 
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
 def test_missing_values_best_splitter_three_classes(criterion):
-    """Test when missing values is uniquely present in a class among 3 classes."""
+    """Test when missing values are uniquely present in a class among 3 classes."""
     missing_values_class = 0
     X = np.array([[np.nan] * 4 + [0, 1, 2, 3, 8, 9, 11, 12]]).T
     y = np.array([missing_values_class] * 4 + [1] * 4 + [2] * 4)
@@ -2453,20 +2453,21 @@ def test_missing_values_best_splitter_three_classes(criterion):
 
     X_test = np.array([[np.nan, 3, 12]]).T
     y_nan_pred = dtc.predict(X_test)
-    # Missing values necessarily are associated the observed class.
+    # Missing values necessarily are associated to the observed class.
     assert_array_equal(y_nan_pred, [missing_values_class, 1, 2])
 
 
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
 def test_missing_values_best_splitter_to_left(criterion):
-    """Missing value uniquely defines class."""
+    """Missing values spanning only one class at fit-time must make missing
+    values at predict-time be classified has belonging to this class."""
     X = np.array([[np.nan] * 4 + [0, 1, 2, 3, 4, 5]]).T
     y = np.array([0] * 4 + [1] * 6)
 
     dtc = DecisionTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
     dtc.fit(X, y)
 
-    X_test = np.array([[np.nan, 4, np.nan]]).T
+    X_test = np.array([[np.nan, 5, np.nan]]).T
     y_pred = dtc.predict(X_test)
 
     assert_array_equal(y_pred, [0, 1, 0])
@@ -2474,7 +2475,9 @@ def test_missing_values_best_splitter_to_left(criterion):
 
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
 def test_missing_values_best_splitter_to_right(criterion):
-    """Missing value shares a class with non-missing values."""
+    """Missing values and non-missing values sharing one class at fit-time
+    must make missing values at predict-time be classified has belonging
+    to this class."""
     X = np.array([[np.nan] * 4 + [0, 1, 2, 3, 4, 5]]).T
     y = np.array([1] * 4 + [0] * 4 + [1] * 2)
 
@@ -2484,8 +2487,6 @@ def test_missing_values_best_splitter_to_right(criterion):
     X_test = np.array([[np.nan, 1.2, 4.8]]).T
     y_pred = dtc.predict(X_test)
 
-    # Missing value goes to the class at the right (here 1) because the implementation
-    # searches right first.
     assert_array_equal(y_pred, [1, 0, 1])
 
 
@@ -2549,7 +2550,7 @@ def test_missing_values_poisson():
     ],
 )
 def test_missing_values_is_resilience(make_data, Tree):
-    """Check that tree can deal with missing values and have decent performance."""
+    """Check that trees can deal with missing values and have decent performance."""
 
     rng = np.random.RandomState(0)
     n_samples, n_features = 1000, 50
