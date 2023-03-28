@@ -92,9 +92,7 @@ def _mask_edges_weights(mask, edges, weights=None):
         return edges, weights
 
 
-def _to_graph(
-    n_x, n_y, n_z, mask=None, img=None, return_as=sparse.coo_matrix, dtype=None
-):
+def _to_graph(n_x, n_y, n_z, mask=None, img=None, return_as=sparse.coo_matrix, dtype=None):
     """Auxiliary function for img_to_graph and grid_to_graph"""
     edges = _make_edges_3d(n_x, n_y, n_z)
 
@@ -198,9 +196,7 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
         "dtype": "no_validation",  # validation delegated to numpy
     }
 )
-def grid_to_graph(
-    n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_matrix, dtype=int
-):
+def grid_to_graph(n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_matrix, dtype=int):
     """Graph of the pixel-to-pixel connections.
 
     Edges exist if 2 voxels are connected.
@@ -328,9 +324,7 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
     slices = tuple(slice(None, None, st) for st in extraction_step)
     indexing_strides = arr[slices].strides
 
-    patch_indices_shape = (
-        (np.array(arr.shape) - np.array(patch_shape)) // np.array(extraction_step)
-    ) + 1
+    patch_indices_shape = ((np.array(arr.shape) - np.array(patch_shape)) // np.array(extraction_step)) + 1
 
     shape = tuple(list(patch_indices_shape) + list(patch_shape))
     strides = tuple(list(indexing_strides) + list(patch_strides))
@@ -414,22 +408,16 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
     p_h, p_w = patch_size
 
     if p_h > i_h:
-        raise ValueError(
-            "Height of the patch should be less than the height of the image."
-        )
+        raise ValueError("Height of the patch should be less than the height of the image.")
 
     if p_w > i_w:
-        raise ValueError(
-            "Width of the patch should be less than the width of the image."
-        )
+        raise ValueError("Width of the patch should be less than the width of the image.")
 
     image = check_array(image, allow_nd=True)
     image = image.reshape((i_h, i_w, -1))
     n_colors = image.shape[-1]
 
-    extracted_patches = _extract_patches(
-        image, patch_shape=(p_h, p_w, n_colors), extraction_step=1
-    )
+    extracted_patches = _extract_patches(image, patch_shape=(p_h, p_w, n_colors), extraction_step=1)
 
     n_patches = _compute_n_patches(i_h, i_w, p_h, p_w, max_patches)
     if max_patches:
@@ -502,17 +490,19 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     patch_size : tuple of int (patch_height, patch_width), default=None
-        The dimensions of one patch.
+        The dimensions of one patch. If set to None, the patch size will be
+        automatically set to (img_height // 10, img_width // 10), where
+        img_height and img_width are the dimensions of the input images.
 
     max_patches : int or float, default=None
         The maximum number of patches per image to extract. If `max_patches` is
         a float in (0, 1), it is taken to mean a proportion of the total number
-        of patches.
+        of patches. If set to None, extract all possible patches.
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator used for random sampling when
         `max_patches is not None`. Use an int to make the randomness
-        deterministic.
+        deterministic. If set to None, use the RandomState from np.random.
         See :term:`Glossary <random_state>`.
 
     See Also
@@ -612,10 +602,7 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             patch_size = img_height // 10, img_width // 10
         else:
             if len(self.patch_size) != 2:
-                raise ValueError(
-                    f"patch_size must be a tuple of two integers. Got {self.patch_size}"
-                    " instead."
-                )
+                raise ValueError(f"patch_size must be a tuple of two integers. Got {self.patch_size} instead.")
             patch_size = self.patch_size
 
         n_imgs, img_height, img_width = X.shape[:3]
@@ -624,9 +611,7 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
 
         # compute the dimensions of the patches array
         patch_height, patch_width = patch_size
-        n_patches = _compute_n_patches(
-            img_height, img_width, patch_height, patch_width, self.max_patches
-        )
+        n_patches = _compute_n_patches(img_height, img_width, patch_height, patch_width, self.max_patches)
         patches_shape = (n_imgs * n_patches,) + patch_size
         if n_channels > 1:
             patches_shape += (n_channels,)
