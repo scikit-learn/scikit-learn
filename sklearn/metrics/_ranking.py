@@ -34,7 +34,7 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import validate_params, StrOptions, Interval
+from ..utils._param_validation import validate_params, StrOptions, Interval, Options
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
@@ -381,7 +381,25 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     max_area = max_fpr
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
-
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "average": [
+            StrOptions({"micro", "macro", "samples", "weighted"}),
+            None,
+        ],
+        "sample_weight": ["array-like", None],
+        "max_fpr":[
+            Options(Real, {0.0, 0.1}),
+            None,
+        ],
+        "multi_class": [
+                        StrOptions({"raise", "ovr", "ovo"}),
+                        ],
+        "labels": ["array-like", None],
+    }
+)
 def roc_auc_score(
     y_true,
     y_score,
