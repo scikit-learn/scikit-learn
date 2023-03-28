@@ -15,7 +15,6 @@ from ._criterion cimport Criterion
 
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
-from libc.math cimport isnan
 from cython cimport final
 
 import numpy as np
@@ -860,7 +859,8 @@ cdef class DensePartitioner:
                 feature_values[i] = X[samples[i], current_feature]
                 i += 1
         else:
-            # When there are no missing values, then we reduce the number of operations
+            # When there are no missing values, we only need to copy the data into
+            # feature_values
             for i in range(self.start, self.end):
                 feature_values[i] = X[samples[i], current_feature]
 
