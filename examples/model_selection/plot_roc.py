@@ -281,7 +281,7 @@ for class_id, color in zip(range(n_classes), colors):
         name=f"ROC curve for {target_names[class_id]}",
         color=color,
         ax=ax,
-        plot_chance_level=True,
+        plot_chance_level=(class_id == 0),
     )
 
 plt.axis("square")
