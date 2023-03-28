@@ -322,7 +322,7 @@ def test_cv_generator_support():
 
     non-regression test for #25957
     """
-    X, y = make_classification()
+    X, y = make_classification(random_state=0)
 
     groups = np.zeros_like(y, dtype=int)
     groups[y.size // 2 :] = 1
@@ -330,9 +330,7 @@ def test_cv_generator_support():
     cv = LeaveOneGroupOut()
     splits = cv.split(X, y, groups=groups)
 
-    knc = KNeighborsClassifier(n_neighbors=5)
+    knc = KNeighborsClassifier(n_neighbors=5, random_state=0)
 
-    sfs = SequentialFeatureSelector(
-        knc, n_features_to_select=5, scoring="accuracy", cv=splits
-    )
+    sfs = SequentialFeatureSelector(knc, n_features_to_select=5, cv=splits)
     sfs.fit(X, y)
