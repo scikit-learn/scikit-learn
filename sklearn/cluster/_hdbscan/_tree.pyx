@@ -210,61 +210,41 @@ cdef dict _compute_stability(
 ):
 
     cdef:
-        cnp.float64_t[::1] result, births
-        cnp.intp_t[:] parents = condensed_tree['parent']
-        cnp.float64_t[:] lambdas = condensed_tree['value']
-        cnp.intp_t[:] sizes = condensed_tree['cluster_size']
+        cnp.float64_t[::1] result, births_arr
+        cnp.ndarray[cnp.intp_t, ndim=1] parents
 
         cnp.intp_t parent, cluster_size, result_index
-        cnp.float64_t lambda_val, child_size
+        cnp.float64_t lambda_val
+        CONDENSED_t condensed_node
         cnp.float64_t[:, :] result_pre_dict
-        cnp.intp_t largest_child = condensed_tree['child'].max()
-        cnp.intp_t smallest_cluster = np.min(parents)
-        cnp.intp_t num_clusters = np.max(parents) - smallest_cluster + 1
-        cnp.ndarray sorted_child_data = np.sort(condensed_tree[['child', 'value']], axis=0)
-        cnp.intp_t[:] sorted_children = sorted_child_data['child'].copy()
-        cnp.float64_t[:] sorted_lambdas = sorted_child_data['value'].copy()
-        cnp.intp_t child, current_child = -1
-        cnp.float64_t min_lambda = 0
+
+    parents = condensed_tree['parent']
+    cdef cnp.intp_t largest_child = condensed_tree['child'].max()
+    cdef cnp.intp_t smallest_cluster = parents.min()
+    cdef cnp.intp_t num_clusters = parents.max() - smallest_cluster + 1
 
     largest_child = max(largest_child, smallest_cluster)
-    births = np.full(largest_child + 1, np.nan, dtype=np.float64)
-
-    if largest_child < smallest_cluster:
-        largest_child = smallest_cluster
+    births_arr = np.full(largest_child + 1, np.nan, dtype=np.float64)
 
     births = np.full(largest_child + 1, np.nan, dtype=np.float64)
     for idx in range(condensed_tree.shape[0]):
-        child = sorted_children[idx]
-        lambda_val = sorted_lambdas[idx]
+        condensed_node = condensed_tree[idx]
+        births_arr[condensed_node.child] = condensed_node.value
 
-        if child == current_child:
-            min_lambda = min(min_lambda, lambda_val)
-        elif current_child != -1:
-            births[current_child] = min_lambda
-            current_child = child
-            min_lambda = lambda_val
-        else:
-            # Initialize
-            current_child = child
-            min_lambda = lambda_val
-
-    if current_child != -1:
-        births[current_child] = min_lambda
-    births[smallest_cluster] = 0.0
+    births_arr[smallest_cluster] = 0.0
 
     result = np.zeros(num_clusters, dtype=np.float64)
-    for idx in range(condensed_tree.shape[0]):
-        parent = parents[idx]
-        lambda_val = lambdas[idx]
-        child_size = sizes[idx]
+    for condensed_node in condensed_tree:
+        parent = condensed_node.parent
+        lambda_val = condensed_node.value
+        cluster_size = condensed_node.cluster_size
 
         result_index = parent - smallest_cluster
-        result[result_index] += (lambda_val - births[parent]) * child_size
+        result[result_index] += (lambda_val - births_arr[parent]) * cluster_size
 
     result_pre_dict = np.vstack(
         (
-            np.arange(smallest_cluster, np.max(parents) + 1),
+            np.arange(smallest_cluster, parents.max() + 1),
             result
         )
     ).T
@@ -272,57 +252,48 @@ cdef dict _compute_stability(
     return dict(result_pre_dict)
 
 
-cdef list bfs_from_cluster_tree(cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] hierarchy, cnp.intp_t bfs_root):
+cdef list bfs_from_cluster_tree(cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] condensed_tree, cnp.intp_t bfs_root):
 
     cdef list result
-    cdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] to_process
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] process_queue, children
+    children = condensed_tree['child']
+
+    cdef cnp.intp_t[:] parents = condensed_tree['parent']
 
     result = []
-    to_process = np.array([bfs_root], dtype=np.intp)
+    process_queue = np.array([bfs_root], dtype=np.intp)
 
-    while to_process.shape[0] > 0:
-        result.extend(to_process.tolist())
-        to_process = hierarchy['child'][np.in1d(hierarchy['parent'], to_process)]
+    while process_queue.shape[0] > 0:
+        result.extend(process_queue.tolist())
+        process_queue = children[np.isin(parents, process_queue)]
 
     return result
 
 
-cdef cnp.float64_t[::1] max_lambdas(cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] hierarchy):
+cdef cnp.float64_t[::1] max_lambdas(cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] condensed_tree):
 
     cdef:
-        cnp.ndarray sorted_parent_data
-        cnp.intp_t[:] sorted_parents
-        cnp.float64_t[:] sorted_lambdas
-        cnp.float64_t[::1] deaths
-        cnp.intp_t parent, current_parent
+        cnp.intp_t parent, current_parent, idx
         cnp.float64_t lambda_val, max_lambda
-        cnp.intp_t largest_parent = hierarchy['parent'].max()
+        cnp.float64_t[::1] deaths
+        cnp.intp_t largest_parent = condensed_tree['parent'].max()
 
-    sorted_parent_data = np.sort(hierarchy[['parent', 'value']], axis=0)
     deaths = np.zeros(largest_parent + 1, dtype=np.float64)
-    sorted_parents = sorted_parent_data['parent']
-    sorted_lambdas = sorted_parent_data['value']
+    current_parent = condensed_tree[0].parent
+    max_lambda = condensed_tree[0].value
 
-    current_parent = -1
-    max_lambda = 0
-
-    for row in range(sorted_parent_data.shape[0]):
-        parent = sorted_parents[row]
-        lambda_val = sorted_lambdas[row]
+    for idx in range(1, condensed_tree.shape[0]):
+        parent = condensed_tree[idx].parent
+        lambda_val = condensed_tree[idx].value
 
         if parent == current_parent:
             max_lambda = max(max_lambda, lambda_val)
-        elif current_parent != -1:
-            deaths[current_parent] = max_lambda
-            current_parent = parent
-            max_lambda = lambda_val
         else:
-            # Initialize
+            deaths[current_parent] = max_lambda
             current_parent = parent
             max_lambda = lambda_val
 
     deaths[current_parent] = max_lambda # value for last parent
-
     return deaths
 
 
@@ -432,7 +403,7 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] labelling_at_cut(
 
 
 cdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] do_labelling(
-        cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] hierarchy,
+        cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] condensed_tree,
         set clusters,
         dict cluster_label_map,
         cnp.intp_t allow_single_cluster,
@@ -442,20 +413,20 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] do_labelling(
     cdef:
         cnp.intp_t root_cluster
         cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] result
-        cnp.intp_t[:] parent_array, child_array
-        cnp.float64_t[:] lambda_array
+        cnp.ndarray[cnp.intp_t, ndim=1] parent_array, child_array
+        cnp.ndarray[cnp.float64_t, ndim=1] lambda_array
         TreeUnionFind union_find
-        cnp.intp_t n, parent, child, cluster
+        cnp.intp_t n, parent, child, cluster, label
 
-    child_array = hierarchy['child']
-    parent_array = hierarchy['parent']
-    lambda_array = hierarchy['value']
+    child_array = condensed_tree['child']
+    parent_array = condensed_tree['parent']
+    lambda_array = condensed_tree['value']
 
     root_cluster = np.min(parent_array)
     result = np.empty(root_cluster, dtype=np.intp)
     union_find = TreeUnionFind(np.max(parent_array) + 1)
 
-    for n in range(hierarchy.shape[0]):
+    for n in range(condensed_tree.shape[0]):
         child = child_array[n]
         parent = parent_array[n]
         if child not in clusters:
@@ -463,25 +434,20 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] do_labelling(
 
     for n in range(root_cluster):
         cluster = union_find.find(n)
-        if cluster < root_cluster:
-            result[n] = NOISE
-        elif cluster == root_cluster:
-            if len(clusters) == 1 and allow_single_cluster:
-                if cluster_selection_epsilon != 0.0:
-                    if hierarchy['value'][hierarchy['child'] == n] >= 1 / cluster_selection_epsilon :
-                        result[n] = cluster_label_map[cluster]
-                    else:
-                        result[n] = NOISE
-                elif hierarchy['value'][hierarchy['child'] == n] >= \
-                     hierarchy['value'][hierarchy['parent'] == cluster].max():
-                    result[n] = cluster_label_map[cluster]
-                else:
-                    result[n] = NOISE
-            else:
-                result[n] = NOISE
-        else:
-            result[n] = cluster_label_map[cluster]
+        label = NOISE
+        if cluster != root_cluster:
+            label = cluster_label_map[cluster]
+        elif len(clusters) == 1 and allow_single_cluster:
+            if cluster_selection_epsilon != 0.0:
+                if lambda_array[child_array == n] \
+                    >= 1 / cluster_selection_epsilon:
+                    label = cluster_label_map[cluster]
 
+            elif lambda_array[child_array == n] >= \
+                    lambda_array[parent_array == cluster].max():
+                label = cluster_label_map[cluster]
+
+        result[n] = label
     return result
 
 
