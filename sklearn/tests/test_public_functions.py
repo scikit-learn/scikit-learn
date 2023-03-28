@@ -129,10 +129,15 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.fetch_olivetti_faces",
     "sklearn.datasets.load_svmlight_file",
     "sklearn.datasets.load_svmlight_files",
+    "sklearn.datasets.make_biclusters",
+    "sklearn.datasets.make_checkerboard",
     "sklearn.datasets.make_circles",
     "sklearn.datasets.make_classification",
     "sklearn.datasets.make_friedman1",
+    "sklearn.datasets.make_gaussian_quantiles",
+    "sklearn.datasets.make_hastie_10_2",
     "sklearn.datasets.make_low_rank_matrix",
+    "sklearn.datasets.make_moons",
     "sklearn.datasets.make_multilabel_classification",
     "sklearn.datasets.make_regression",
     "sklearn.datasets.make_sparse_coded_signal",
@@ -161,6 +166,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.confusion_matrix",
     "sklearn.metrics.coverage_error",
     "sklearn.metrics.d2_pinball_score",
+    "sklearn.metrics.d2_tweedie_score",
     "sklearn.metrics.dcg_score",
     "sklearn.metrics.det_curve",
     "sklearn.metrics.f1_score",
@@ -227,6 +233,7 @@ PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.decomposition.dict_learning", "sklearn.decomposition.DictionaryLearning"),
     ("sklearn.decomposition.fastica", "sklearn.decomposition.FastICA"),
     ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
+    ("sklearn.preprocessing.minmax_scale", "sklearn.preprocessing.MinMaxScaler"),
 ]
 
 
