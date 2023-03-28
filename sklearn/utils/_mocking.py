@@ -147,9 +147,13 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            The data set.
+            The data set. Required argument.
         y : array-like of shape (n_samples), default=None
-            The corresponding target, by default None.
+            The corresponding target, by default `None`.
+            If `y = None`, only X is validated. To check y,
+            the checking function, `check_y`, needs to be
+            initiated.
+
         should_be_fitted : bool, default=True
             Whether or not the classifier should be already fitted.
             By default True.
