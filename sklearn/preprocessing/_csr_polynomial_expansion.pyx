@@ -15,7 +15,12 @@ ctypedef cnp.int8_t FLAG_t
 # This should work for GCC and CLANG, but doesn't for MSVC. We prefer to use
 # 128-bit integers when possible because the intermediate calculations have a
 # non-trivial risk of overflow. It is, however, very unlikely to come up on an
-# average use case, hence 64-bit integers are "good enough".
+# average use case, hence 64-bit integers (i.e. `long long`) are "good enough"
+# for most common cases. There is not much we can do to efficiently mitigate
+# the overflow risk on the Windows platform at this time. Consider this a
+# "best effort" design decision that could be revisited later in case someone
+# comes up with a safer option that does not hurt the performance of the common
+# cases.
 cdef extern from *:
     """
     #ifdef __SIZEOF_INT128__

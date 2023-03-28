@@ -794,9 +794,14 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
 
 
 def test_csr_polynomial_expansion_index_overflow_non_regression():
-    """Tests to ensure that sufficiently large input configurations get
+    """Check the automatic index dtype promotion to `np.int64` when needed.
+
+    This ensures that sufficiently large input configurations get
     properly promoted to use `np.int64` for index and indptr representation
     while preserving data integrity. Non-regression test for gh-16803.
+
+    Note that this is only possible for Python runtimes with a 64 bit address
+    space. On 32 bit platforms, a `ValueError` is raised instead.
     """
 
     def degree_2_calc(d, i, j, interaction_only):
@@ -843,6 +848,8 @@ def test_csr_polynomial_expansion_index_overflow_non_regression():
     assert X_trans.dtype == dtype
     assert X_trans.shape == (13, second_degree_idx + 1)
     assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
+    # Ensure that dtype promotion was actually required:
+    assert X_trans.indices.max() > np.iinfo(np.int32.max)
     assert_allclose(X_trans.data, [1, 2, 2, 3, 4, 12])
     assert_array_equal(row_nonzero, [11, 11, 11, 12, 12, 12])
     assert_array_equal(
@@ -943,7 +950,7 @@ def test_csr_polynomial_expansion_index_overflow(
     # When `n_features>=65535`, `scipy.sparse.hstack` may not use the right
     # dtype for representing indices and indptr if `n_features` is still
     # small enough so that each block matrix's indices and indptr arrays
-    # can be represnented with `np.int32`. We test `n_features==65535`
+    # can be represented with `np.int32`. We test `n_features==65535`
     # since it is guaranteed to run into this bug.
     if (
         sp_version < parse_version("1.9.2")

@@ -42,7 +42,7 @@ def _create_expansion(X, interaction_only, deg, n_features, cumulative_size=0):
         return None
     assert expanded_col > 0
     # This only checks whether each block needs 64bit integers upon
-    # expansion. We prefer to keep 32bit integers where we can,
+    # expansion. We prefer to keep int32 indexing where we can,
     # since currently SciPy's CSR construction downcasts when possible,
     # so we prefer to avoid an unnecessary cast. The dtype may still
     # change in the concatenation process if needed.
@@ -68,14 +68,14 @@ def _create_expansion(X, interaction_only, deg, n_features, cumulative_size=0):
             " `n_cols` too large to be represented by a 32bit signed"
             " integer. To avoid this error, either use a version"
             " of scipy `>=1.8.0` or alter the `PolynomialFeatures`"
-            " transformer to produce fewer than 2^31 output features"
+            " transformer to produce fewer than 2^31 output features."
         )
 
     # Result of the expansion, modified in place by the
     # `_csr_polynomial_expansion` routine.
     expanded_data = np.empty(shape=total_nnz, dtype=X.data.dtype)
-    expanded_indices = np.ndarray(shape=total_nnz, dtype=index_dtype)
-    expanded_indptr = np.ndarray(shape=X.indptr.shape[0], dtype=index_dtype)
+    expanded_indices = np.empty(shape=total_nnz, dtype=index_dtype)
+    expanded_indptr = np.empty(shape=X.indptr.shape[0], dtype=index_dtype)
     _csr_polynomial_expansion(
         X.data,
         X.indices,
@@ -365,7 +365,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         if self.n_output_features_ > np.iinfo(np.intp).max:
             msg = (
                 "The output that would result from the current configuration is too"
-                f" large to be indexed by {np.intp}. Please change some"
+                f" large to be indexed by {np.intp().dtype.name}. Please change some"
                 " or all of the following:\n- The number of features in the input,"
                 f" currently {n_features=}\n- The range of degrees to calculate,"
                 f" currently [{self._min_degree}, {self._max_degree}]\n- Whether to"
@@ -434,7 +434,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 to_stack.append(X)
 
             cumulative_size = sum(mat.shape[1] for mat in to_stack)
-            # import pdb; pdb.set_trace()
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
                 expanded = _create_expansion(
                     X=X,
