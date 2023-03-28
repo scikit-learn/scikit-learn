@@ -659,7 +659,7 @@ Plotting
 
 .. autosummary::
    :toctree: generated/
-   :template: displays.rst
+   :template: display.rst
 
    inspection.DecisionBoundaryDisplay
    inspection.PartialDependenceDisplay
@@ -1122,7 +1122,7 @@ See the :ref:`visualizations` section of the user guide for further details.
 
 .. autosummary::
    :toctree: generated/
-   :template: displays.rst
+   :template: display.rst
 
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
@@ -1242,7 +1242,7 @@ Visualization
 
 .. autosummary::
    :toctree: generated/
-   :template: displays.rst
+   :template: display.rst
 
    model_selection.LearningCurveDisplay
 
