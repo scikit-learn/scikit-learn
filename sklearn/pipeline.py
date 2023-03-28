@@ -80,11 +80,11 @@ class Pipeline(_BaseComposition):
         estimator.
 
     memory : str or object with the joblib.Memory interface, default=None
-        Used to cache the fitted transformers of the pipeline. By default,
-        no caching is performed. If a string is given, it is the path to
-        the caching directory. Enabling caching triggers a clone of
-        the transformers before fitting. Therefore, the transformer
-        instance given to the pipeline cannot be inspected
+        Used to cache the fitted transformers of the pipeline. Currently,
+        the last step will never be cached. By default, no caching is performed.
+        If a string is given, it is the path to the caching directory. Enabling
+        caching triggers a clone of the transformers before fitting. Therefore,
+        the transformer instance given to the pipeline cannot be inspected
         directly. Use the attribute ``named_steps`` or ``steps`` to
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
@@ -858,11 +858,11 @@ def make_pipeline(*steps, memory=None, verbose=False):
         List of the scikit-learn estimators that are chained together.
 
     memory : str or object with the joblib.Memory interface, default=None
-        Used to cache the fitted transformers of the pipeline. By default,
-        no caching is performed. If a string is given, it is the path to
-        the caching directory. Enabling caching triggers a clone of
-        the transformers before fitting. Therefore, the transformer
-        instance given to the pipeline cannot be inspected
+        Used to cache the fitted transformers of the pipeline. Currently,
+        the last step will never be cached. By default, no caching is performed.
+        If a string is given, it is the path to the caching directory. Enabling
+        caching triggers a clone of the transformers before fitting. Therefore,
+        the transformer instance given to the pipeline cannot be inspected
         directly. Use the attribute ``named_steps`` or ``steps`` to
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.

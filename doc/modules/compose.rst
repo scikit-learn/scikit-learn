@@ -198,7 +198,8 @@ after calling ``fit``.
 This feature is used to avoid computing the fit transformers within a pipeline
 if the parameters and input data are identical. A typical example is the case of
 a grid search in which the transformers can be fitted only once and reused for
-each configuration.
+each configuration. Currently, the last step will never be cached. This might
+change in the future.
 
 The parameter ``memory`` is needed in order to cache the transformers.
 ``memory`` can be either a string containing the directory where to cache the
