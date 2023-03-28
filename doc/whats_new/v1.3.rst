@@ -373,6 +373,13 @@ Changelog
   `pandas.DataFrame`
   :pr:`25220` by :user:`Ian Thompson <it176131>`.
 
+- |Feature| :class:`pipeline.FeatureUnion` can now use the
+  `verbose_feature_names_out` attribute. If `True`, `get_feature_names_out`
+  will prefix all feature names with the name of the transformer
+  that generated that feature. If `False`, `get_feature_names_out` will not
+  prefix any feature names and will error if feature names are not unique.
+  :pr:`25889` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 

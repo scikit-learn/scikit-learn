@@ -40,6 +40,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.impute import SimpleImputer
 
+
 iris = load_iris()
 
 JUNK_FOOD_DOCS = (
@@ -1119,10 +1120,8 @@ def test_set_feature_union_passthrough():
     )
 
 
-def test_feature_union_passthrough_get_feature_names_out():
-    """Check that get_feature_names_out works with passthrough without
-    passing input_features.
-    """
+def test_feature_union_passthrough_get_feature_names_out_true():
+    """Check feature_names_out for verbose_feature_names_out=True (default)"""
     X = iris.data
     pca = PCA(n_components=2, svd_solver="randomized", random_state=0)
 
@@ -1139,6 +1138,71 @@ def test_feature_union_passthrough_get_feature_names_out():
         ],
         ft.get_feature_names_out(),
     )
+
+
+def test_feature_union_passthrough_get_feature_names_out_false():
+    """Check feature_names_out for verbose_feature_names_out=False"""
+    X = iris.data
+    pca = PCA(n_components=2, svd_solver="randomized", random_state=0)
+
+    ft = FeatureUnion(
+        [("pca", pca), ("passthrough", "passthrough")], verbose_feature_names_out=False
+    )
+    ft.fit(X)
+    print(ft.get_feature_names_out())
+    assert_array_equal(
+        [
+            "pca0",
+            "pca1",
+            "x0",
+            "x1",
+            "x2",
+            "x3",
+        ],
+        ft.get_feature_names_out(),
+    )
+
+
+# Class to test feature names collisions
+class CollidingFeatureNamesTransformer:
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return X[:, :2]
+
+    def get_feature_names_out(self, input_features=None):
+        return np.array(["colliding_name", "colliding_name"])
+
+
+def test_feature_union_passthrough_get_feature_names_out_false_errors():
+    """
+    Check feature_names_out for verbose_feature_names_out=False,
+    Collisions in feature names
+    """
+
+    transformer1 = CollidingFeatureNamesTransformer()
+    transformer2 = CollidingFeatureNamesTransformer()
+
+    fu = FeatureUnion(
+        [("t1", transformer1), ("t2", transformer2)],
+        verbose_feature_names_out=False,
+    )
+
+    X = np.random.rand(10, 4)
+
+    fu.fit(X)
+
+    msg = re.escape(
+        "Output feature names: ['colliding_name'] are not unique. "
+        "Please set verbose_feature_names_out=True to add prefixes to feature names"
+    )
+
+    # Replace the escaped ",\\ " with the optional non-capturing group
+    msg = msg.replace(",\\\\ ", "(?:, )?")
+
+    with pytest.raises(ValueError, match=msg):
+        fu.get_feature_names_out()
 
 
 def test_step_name_validation():
