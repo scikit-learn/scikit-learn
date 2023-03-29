@@ -195,5 +195,3 @@ for i, dataset_name in enumerate(datasets_name):
     axs[i // cols, i % cols].set_title(dataset_name)
 plt.tight_layout(pad=2.0)  # spacing between subplots
 plt.show()
-
-# %%

@@ -281,7 +281,7 @@ for class_id, color in zip(range(n_classes), colors):
         name=f"ROC curve for {target_names[class_id]}",
         color=color,
         ax=ax,
-        plot_chance_level=(class_id == 0),
+        plot_chance_level=(class_id == 2),
     )
 
 plt.axis("square")
@@ -358,13 +358,13 @@ for ix, (label_a, label_b) in enumerate(pair_list):
         y_score[ab_mask, idx_a],
         ax=ax,
         name=f"{label_a} as positive class",
-        plot_chance_level=True,
     )
     RocCurveDisplay.from_predictions(
         b_true,
         y_score[ab_mask, idx_b],
         ax=ax,
         name=f"{label_b} as positive class",
+        plot_chance_level=True,
     )
     plt.axis("square")
     plt.xlabel("False Positive Rate")
