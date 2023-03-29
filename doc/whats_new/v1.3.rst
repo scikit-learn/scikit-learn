@@ -396,6 +396,11 @@ Changelog
   :pr:`24935` by :user:`Seladus <seladus>`, :user:`Guillaume Lemaitre <glemaitre>`, and
   :user:`Dea María Léon <deamarialeon>`, :pr:`25257` by :user:`Gleb Levitski <glevv>`.
 
+- |Feature| :class:`preprocessing.OrdinalEncoder` now supports grouping
+  infrequent categories into a single feature. Grouping infrequent categories
+  is enabled by specifying how to select infrequent categories with
+  `min_frequency` or `max_categories`. :pr:`25677` by `Thomas Fan`_.
+
 - |Fix| :class:`AdditiveChi2Sampler` is now stateless.
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
