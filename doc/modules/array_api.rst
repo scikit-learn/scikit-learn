@@ -12,6 +12,8 @@ Array API support (experimental)
 
 The `Array API <https://data-apis.org/array-api/latest/>`_ specification defines
 a standard API for all array manipulation libraries with a NumPy-like API.
+Scikit-learn's Array API support requires
+`array-api-compat <https://github.com/data-apis/array-api-compat>`__ to be installed.
 
 Some scikit-learn estimators that primarily rely on NumPy (as opposed to using
 Cython) to implement the algorithmic logic of their `fit`, `predict` or
