@@ -297,7 +297,7 @@ def get_namespace(*arrays):
 
 
 def _get_namespace(*arrays, array_api_dispatch):
-    """Helper method for get_namespace that dispatches with array_api_dispatch.
+    """Helper method for get_namespace that dispatches based on array_api_dispatch.
 
     Parameters
     ----------
@@ -321,15 +321,12 @@ def _get_namespace(*arrays, array_api_dispatch):
 
     try:
         import array_api_compat
-    except ImportError:
-        return _NUMPY_API_WRAPPER_INSTANCE, False
 
-    try:
         namespace, is_array_api_compliant = (
             array_api_compat.get_namespace(*arrays),
             True,
         )
-    except TypeError:
+    except (TypeError, ImportError):
         return _NUMPY_API_WRAPPER_INSTANCE, False
 
     if namespace.__name__ in {"numpy.array_api", "cupy.array_api"}:
@@ -409,7 +406,7 @@ def _estimator_with_converted_arrays(estimator, converter):
     new_estimator = clone(estimator)
     for key, attribute in vars(estimator).items():
         _, is_array_api_compliant = _get_namespace(attribute, array_api_dispatch=True)
-        if is_array_api_compliant:
+        if is_array_api_compliant or isinstance(attribute, numpy.ndarray):
             attribute = converter(attribute)
         setattr(new_estimator, key, attribute)
     return new_estimator

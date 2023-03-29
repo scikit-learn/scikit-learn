@@ -199,6 +199,7 @@ class SimpleEstimator(BaseEstimator):
         return self
 
 
+@skip_if_no_array_api_compat
 @pytest.mark.parametrize(
     "array_namespace, converter",
     [
@@ -218,6 +219,7 @@ def test_convert_estimator_to_ndarray(array_namespace, converter):
     assert isinstance(new_est.X_, numpy.ndarray)
 
 
+@skip_if_no_array_api_compat
 def test_convert_estimator_to_array_api():
     """Convert estimator attributes to ArrayAPI arrays."""
     xp = pytest.importorskip("numpy.array_api")

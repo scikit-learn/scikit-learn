@@ -3,6 +3,7 @@
 import os
 from contextlib import contextmanager as contextmanager
 import threading
+import numpy
 
 _global_config = {
     "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),
@@ -41,14 +42,13 @@ def _check_array_api_dispatch(array_api_dispatch):
                 "array_api_compat is required when array_api_dispatch=True"
             )
 
-        import numpy
         from .utils.fixes import parse_version
 
         numpy_version = parse_version(numpy.__version__)
         min_numpy_version = "1.21"
         if numpy_version < parse_version(min_numpy_version):
             raise ImportError(
-                f"NumPy must be newer than {min_numpy_version} when"
+                f"NumPy must be {min_numpy_version} or newer when"
                 " array_api_dispatch=True"
             )
 
@@ -180,7 +180,7 @@ def set_config(
     if enable_cython_pairwise_dist is not None:
         local_config["enable_cython_pairwise_dist"] = enable_cython_pairwise_dist
     if array_api_dispatch is not None:
-        # _check_array_api_dispatch(array_api_dispatch)
+        _check_array_api_dispatch(array_api_dispatch)
         local_config["array_api_dispatch"] = array_api_dispatch
     if transform_output is not None:
         local_config["transform_output"] = transform_output
