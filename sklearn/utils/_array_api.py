@@ -5,7 +5,7 @@ import math
 import numpy
 import scipy.special as special
 
-from .._config import get_config
+from .._config import get_config, config_context
 from .fixes import parse_version
 
 
@@ -334,29 +334,6 @@ def get_namespace(*arrays):
         True of the arrays are containers that implement the Array API spec.
     """
     array_api_dispatch = get_config()["array_api_dispatch"]
-    return _get_namespace(*arrays, array_api_dispatch=array_api_dispatch)
-
-
-def _get_namespace(*arrays, array_api_dispatch):
-    """Helper method for get_namespace that dispatches based on array_api_dispatch.
-
-    Parameters
-    ----------
-    *arrays : array objects
-        Array objects.
-
-    array_api_dispatch : bool
-        If True, the array namespace is obtained from the array objects.
-
-    Returns
-    -------
-    namespace : module
-        Namespace shared by array objects. If any of the `arrays` are not arrays,
-        the namespace defaults to NumPy.
-
-    is_array_api_compliant : bool
-        True of the arrays are containers that implement the Array API spec.
-    """
     if not array_api_dispatch:
         return _NUMPY_API_WRAPPER_INSTANCE, False
 
@@ -414,7 +391,8 @@ def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
 
 def _convert_to_numpy(array):
     """Convert X into a NumPy ndarray on the CPU."""
-    xp, _ = _get_namespace(array, array_api_dispatch=True)
+    with config_context(array_api_dispatch=True):
+        xp, _ = get_namespace(array)
 
     xp_name = xp.__name__
 
@@ -448,7 +426,8 @@ def _estimator_with_converted_arrays(estimator, converter):
 
     new_estimator = clone(estimator)
     for key, attribute in vars(estimator).items():
-        _, is_array_api_compliant = _get_namespace(attribute, array_api_dispatch=True)
+        with config_context(array_api_dispatch=True):
+            _, is_array_api_compliant = get_namespace(attribute)
         if is_array_api_compliant or isinstance(attribute, numpy.ndarray):
             attribute = converter(attribute)
         setattr(new_estimator, key, attribute)
