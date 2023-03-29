@@ -597,7 +597,7 @@ Decisions are made as follows:
         >>> y = [0, 0, 1, 1]
 
         >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
-        >>> tree.predict()
+        >>> tree.predict(X)
         array([0, 0, 1, 1])
 
     - If the the criterion evaluation is the same for both nodes,
