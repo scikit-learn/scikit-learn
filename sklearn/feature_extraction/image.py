@@ -503,12 +503,14 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     patch_size : tuple of int (patch_height, patch_width), default=None
-        The dimensions of one patch.
+        The dimensions of one patch. If set to None, the patch size will be
+        automatically set to `(img_height // 10, img_width // 10)`, where
+        `img_height` and `img_width` are the dimensions of the input images.
 
     max_patches : int or float, default=None
         The maximum number of patches per image to extract. If `max_patches` is
         a float in (0, 1), it is taken to mean a proportion of the total number
-        of patches.
+        of patches. If set to None, extract all possible patches.
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator used for random sampling when
@@ -618,8 +620,8 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         else:
             if len(self.patch_size) != 2:
                 raise ValueError(
-                    f"patch_size must be a tuple of two integers. Got {self.patch_size}"
-                    " instead."
+                    "patch_size must be a tuple of two integers. Got"
+                    f" {self.patch_size} instead."
                 )
             patch_size = self.patch_size
 
