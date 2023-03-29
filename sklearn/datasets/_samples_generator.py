@@ -1537,6 +1537,16 @@ def make_spd_matrix(n_dim, *, random_state=None):
     return X
 
 
+@validate_params(
+    {
+        "dim": [Interval(Integral, 1, None, closed="left")],
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+        "norm_diag": ["boolean"],
+        "smallest_coef": [Interval(Real, 0, 1, closed="both")],
+        "largest_coef": [Interval(Real, 0, 1, closed="both")],
+        "random_state": ["random_state"],
+    }
+)
 def make_sparse_spd_matrix(
     dim=1,
     *,
