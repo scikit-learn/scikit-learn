@@ -38,14 +38,3 @@ exclude = '''
   | asv_benchmarks/env
 )/
 '''
-
-[tool.mypy]
-ignore_missing_imports = true
-allow_redefinition = true
-exclude = [
-    "sklearn/externals"
-]
-
-[[tool.mypy.overrides]]
-module = "sklearn.externals.*"
-follow_imports = "skip"

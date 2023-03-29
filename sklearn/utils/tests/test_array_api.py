@@ -6,7 +6,6 @@ from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import get_namespace
 from sklearn.utils._array_api import _NumPyApiWrapper
 from sklearn.utils._array_api import _ArrayAPIWrapper
-
 from sklearn.utils._array_api import _asarray_with_order
 from sklearn.utils._array_api import _convert_to_numpy
 from sklearn.utils._array_api import _estimator_with_converted_arrays

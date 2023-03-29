@@ -162,9 +162,6 @@ def test_tabs():
         ):
             continue
 
-        if ".externals._array_api_compat." in modname:
-            continue
-
         # because we don't import
         mod = importlib.import_module(modname)
 

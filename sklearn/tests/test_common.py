@@ -202,7 +202,7 @@ def test_import_all_consistency():
     )
     submods = [modname for _, modname, _ in pkgs]
     for modname in submods + ["sklearn"]:
-        if ".tests." in modname or ".externals._array_api_compat." in modname:
+        if ".tests." in modname:
             continue
         if IS_PYPY and (
             "_svmlight_format_io" in modname
