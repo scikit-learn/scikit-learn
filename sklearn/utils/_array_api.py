@@ -6,6 +6,31 @@ import numpy
 import scipy.special as special
 
 from .._config import get_config
+from .fixes import parse_version
+
+
+def _check_array_api_dispatch(array_api_dispatch):
+    """Check that array_api_compat is installed and NumPy version is compatible.
+
+    array_api_compat follows NEP29, which has a higher minimum NumPy version than
+    scikit-learn.
+    """
+    if array_api_dispatch:
+        try:
+            import array_api_compat  # noqa
+        except ImportError:
+            raise ImportError(
+                "array_api_compat is required to dispatch arrays using the API"
+                " specification"
+            )
+
+        numpy_version = parse_version(numpy.__version__)
+        min_numpy_version = "1.21"
+        if numpy_version < parse_version(min_numpy_version):
+            raise ImportError(
+                f"NumPy must be {min_numpy_version} or newer to dispatch array using"
+                " the API specification"
+            )
 
 
 def device(x):
@@ -246,6 +271,22 @@ class _NumPyApiWrapper:
         """
         return isdtype(dtype, kind, xp=self)
 
+    def reshape(self, x, shape, *, copy=None):
+        """Gives a new shape to an array without changing its data.
+
+        The Array API specification requires shape to be a tuple.
+        https://data-apis.org/array-api/latest/API_specification/generated/array_api.reshape.html
+        """
+        if not isinstance(shape, tuple):
+            raise TypeError("shape must be a tuple")
+
+        if copy is True:
+            x = x.copy()
+        elif copy is False:
+            x.shape = shape
+            return x
+        return numpy.reshape(x, shape)
+
 
 _NUMPY_API_WRAPPER_INSTANCE = _NumPyApiWrapper()
 
@@ -318,6 +359,8 @@ def _get_namespace(*arrays, array_api_dispatch):
     """
     if not array_api_dispatch:
         return _NUMPY_API_WRAPPER_INSTANCE, False
+
+    _check_array_api_dispatch(array_api_dispatch)
 
     try:
         import array_api_compat

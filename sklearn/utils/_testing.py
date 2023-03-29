@@ -54,7 +54,7 @@ from sklearn.utils import (
     _IS_32BIT,
     _in_unstable_openblas_configuration,
 )
-from sklearn._config import _check_array_api_dispatch
+from sklearn.utils._array_api import _check_array_api_dispatch
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,

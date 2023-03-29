@@ -270,3 +270,12 @@ def test_get_namespace_list(array_api_dispatch):
         xp_out, is_array = get_namespace(X)
         assert not is_array
         assert isinstance(xp_out, _NumPyApiWrapper)
+
+
+def test_error_when_reshape_is_not_a_tuple():
+    """Raise error in reshape when shape is not a tuple."""
+    X = numpy.asarray([[1, 2, 3], [3, 4, 5]])
+    xp, _ = get_namespace(X)
+
+    with pytest.raises(TypeError, match="shape must be a tuple"):
+        xp.reshape(X, -1)

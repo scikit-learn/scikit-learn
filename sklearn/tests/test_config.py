@@ -181,7 +181,7 @@ def test_config_array_api_dispatch_error_numpy(monkeypatch):
         return orig_import(name, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", mocked_import)
-    monkeypatch.setattr(sklearn._config.numpy, "__version__", "1.20")
+    monkeypatch.setattr(sklearn.utils._array_api.numpy, "__version__", "1.20")
 
     with pytest.raises(ImportError, match="NumPy must be 1.21 or newer"):
         with config_context(array_api_dispatch=True):

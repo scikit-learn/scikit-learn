@@ -3,7 +3,6 @@
 import os
 from contextlib import contextmanager as contextmanager
 import threading
-import numpy
 
 _global_config = {
     "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),
@@ -26,31 +25,6 @@ def _get_threadlocal_config():
     if not hasattr(_threadlocal, "global_config"):
         _threadlocal.global_config = _global_config.copy()
     return _threadlocal.global_config
-
-
-def _check_array_api_dispatch(array_api_dispatch):
-    """Check that array_api_compat is installed and NumPy version is compatible.
-
-    array_api_compat follows NEP29, which has a higher minimum NumPy version than
-    scikit-learn.
-    """
-    if array_api_dispatch:
-        try:
-            import array_api_compat  # noqa
-        except ImportError:
-            raise ImportError(
-                "array_api_compat is required when array_api_dispatch=True"
-            )
-
-        from .utils.fixes import parse_version
-
-        numpy_version = parse_version(numpy.__version__)
-        min_numpy_version = "1.21"
-        if numpy_version < parse_version(min_numpy_version):
-            raise ImportError(
-                f"NumPy must be {min_numpy_version} or newer when"
-                " array_api_dispatch=True"
-            )
 
 
 def get_config():
@@ -180,6 +154,8 @@ def set_config(
     if enable_cython_pairwise_dist is not None:
         local_config["enable_cython_pairwise_dist"] = enable_cython_pairwise_dist
     if array_api_dispatch is not None:
+        from .utils._array_api import _check_array_api_dispatch
+
         _check_array_api_dispatch(array_api_dispatch)
         local_config["array_api_dispatch"] = array_api_dispatch
     if transform_output is not None:
