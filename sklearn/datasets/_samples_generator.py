@@ -979,19 +979,17 @@ def make_blobs(
             centers = generator.uniform(
                 center_box[0], center_box[1], size=(n_centers, n_features)
             )
-        try:
-            assert len(centers) == n_centers
-        except TypeError as e:
+        if not isinstance(centers, Iterable):
             raise ValueError(
                 "Parameter `centers` must be array-like. Got {!r} instead".format(
                     centers
                 )
-            ) from e
-        except AssertionError as e:
+            )
+        if len(centers) != n_centers:
             raise ValueError(
                 "Length of `n_samples` not consistent with number of "
                 f"centers. Got n_samples = {n_samples} and centers = {centers}"
-            ) from e
+            )
         else:
             centers = check_array(centers)
             n_features = centers.shape[1]
