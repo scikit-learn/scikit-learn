@@ -685,6 +685,14 @@ class GaussianMixture(BaseMixture):
         """Check the Gaussian mixture parameters are well defined."""
         _, n_features = X.shape
 
+        weights_initialized = self.weights_init is not None
+        means_initialized = self.means_init is not None
+        precisions_initialized = self.precisions_init is not None
+
+        self._init_weights_means_precisions_skipped = (
+            weights_initialized and means_initialized and precisions_initialized
+        )
+
         if self.weights_init is not None:
             self.weights_init = _check_weights(self.weights_init, self.n_components)
 
@@ -711,14 +719,19 @@ class GaussianMixture(BaseMixture):
         resp : array-like of shape (n_samples, n_components)
         """
         n_samples, _ = X.shape
+        covariances = None
 
-        weights, means, covariances = _estimate_gaussian_parameters(
-            X, resp, self.reg_covar, self.covariance_type
-        )
-        weights /= n_samples
+        if self._init_weights_means_precisions_skipped:
+            self.weights_ = self.weights_init
+            self.means_ = self.means_init
+        else:
+            weights, means, covariances = _estimate_gaussian_parameters(
+                X, resp, self.reg_covar, self.covariance_type
+            )
+            weights /= n_samples
 
-        self.weights_ = weights if self.weights_init is None else self.weights_init
-        self.means_ = means if self.means_init is None else self.means_init
+            self.weights_ = weights if self.weights_init is None else self.weights_init
+            self.means_ = means if self.means_init is None else self.means_init
 
         if self.precisions_init is None:
             self.covariances_ = covariances
