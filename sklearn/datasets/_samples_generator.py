@@ -896,7 +896,7 @@ def make_blobs(
     n_features : int, default=2
         The number of features for each sample.
 
-    centers : int or ndarray of shape (n_centers, n_features), default=None
+    centers : int or array-like of shape (n_centers, n_features), default=None
         The number of centers to generate, or the fixed center locations.
         If n_samples is an int and centers is None, 3 centers are generated.
         If n_samples is array-like, centers must be
