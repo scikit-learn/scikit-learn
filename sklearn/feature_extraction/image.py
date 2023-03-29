@@ -503,8 +503,8 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
     ----------
     patch_size : tuple of int (patch_height, patch_width), default=None
         The dimensions of one patch. If set to None, the patch size will be
-        automatically set to (img_height // 10, img_width // 10), where
-        img_height and img_width are the dimensions of the input images.
+        automatically set to `(img_height // 10, img_width // 10)`, where
+        `img_height` and `img_width` are the dimensions of the input images.
 
     max_patches : int or float, default=None
         The maximum number of patches per image to extract. If `max_patches` is
@@ -514,7 +514,7 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
     random_state : int, RandomState instance, default=None
         Determines the random number generator used for random sampling when
         `max_patches is not None`. Use an int to make the randomness
-        deterministic. If set to None, use the RandomState from np.random.
+        deterministic.
         See :term:`Glossary <random_state>`.
 
     See Also
