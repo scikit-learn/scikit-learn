@@ -204,6 +204,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.r2_score",
     "sklearn.metrics.recall_score",
     "sklearn.metrics.roc_curve",
+    "sklearn.metrics.roc_auc_score",
     "sklearn.metrics.top_k_accuracy_score",
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.train_test_split",
