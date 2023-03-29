@@ -964,34 +964,35 @@ cdef class DensePartitioner:
         """
         cdef:
             SIZE_t start = self.start
-            SIZE_t end = self.end
-            SIZE_t p, n_missing, partition_end
+            SIZE_t end
+            SIZE_t p, partition_end
             SIZE_t[::1] samples = self.samples
             const DTYPE_t[:, :] X = self.X
+            DTYPE_t current_value
             SIZE_t end_non_missing = self.end - best_n_missing
 
         # Move missing values to the end
         if best_n_missing != 0:
-            n_missing = 0
-            p, partition_end = start, end - 1
-            while p < partition_end and n_missing < best_n_missing:
-                # Finds the right-most value that is not missing so that
-                # it can be swapped with missing values at its left.
-                if isnan(X[samples[partition_end], best_feature]):
-                    partition_end -= 1
-                    n_missing += 1
+            p, partition_end, end = start, end_non_missing, self.end - 1
+
+            while p < partition_end:
+                # Move missing values to the end
+                if isnan(X[samples[end], best_feature]):
+                    end -= 1
                     continue
 
-                # X[samples[partition_end], best_feature] is a non-missing value
-                if isnan(X[samples[p], best_feature]):
-                    # If X[samples[p], best_feature] is missing,
-                    # swap samples[p] and samples[partition_end]
-                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
-                    partition_end -= 1
-                    n_missing += 1
-                p += 1
+                current_value = X[samples[p], best_feature]
+                if isnan(current_value):
+                    samples[p], samples[end] = samples[end], samples[p]
+                    end -= 1
+                    continue
 
-        if best_threshold != INFINITY:
+                if current_value <= best_threshold:
+                    p += 1
+                else:
+                    partition_end -= 1
+                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
+        else:
             p, partition_end = start, end_non_missing
             while p < partition_end:
                 if X[samples[p], best_feature] <= best_threshold:
