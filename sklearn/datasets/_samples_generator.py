@@ -1440,6 +1440,13 @@ def make_sparse_coded_signal(
     return map(np.squeeze, (Y, D, X))
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+)
 def make_sparse_uncorrelated(n_samples=100, n_features=10, *, random_state=None):
     """Generate a random regression problem with sparse uncorrelated design.
 
