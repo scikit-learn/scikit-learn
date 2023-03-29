@@ -361,9 +361,14 @@ cdef inline int node_split_best(
         end_non_missing = end - n_missing
 
         if (
-            end_non_missing == start or  # all values are missing
+            # All values for this feature are missing, or
+            end_non_missing == start or
+            # This feature is considered constant (max - min <= FEATURE_THRESHOLD)
             feature_values[end_non_missing - 1] <= feature_values[start] + FEATURE_THRESHOLD
         ):
+            # We consider this feature constant in this case.
+            # Since finding a split among constant feature is not valuable, 
+            # we do not consider this feature for splitting.
             features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
 
             n_found_constants += 1
@@ -377,10 +382,11 @@ cdef inline int node_split_best(
             criterion.init_missing(n_missing)
         # Evaluate all splits
 
-        # If there are missing values, then we search twice.
+        # If there are missing values, then we search twice for the most optimal split.
         # The first search will have all the missing values going to the right node.
         # The second search will have all the missing values going to the left node.
-        # If there are no missing values, then we search only once.
+        # If there are no missing values, then we search only once for the most
+        # optimal split.
         n_searches = 2 if has_missing else 1
 
         for i in range(n_searches):
@@ -947,7 +953,12 @@ cdef class DensePartitioner:
         SIZE_t best_feature,
         SIZE_t best_n_missing,
     ) noexcept nogil:
-        """Partition samples for X at the best_threshold and best_feature."""
+        """Partition samples for X at the best_threshold and best_feature.
+
+        If missing values are present, this method partitions `samples`
+        so that the `best_n_missing` missing values' indices are in the
+        right-most end of `samples`, that is `samples[end_non_missing:end]`.
+        """
         cdef:
             SIZE_t start = self.start
             SIZE_t end = self.end
