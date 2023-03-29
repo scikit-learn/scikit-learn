@@ -750,7 +750,7 @@ def check_array(
             "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html"
         )
 
-    xp, is_array_api = get_namespace(array)
+    xp, is_array_api_compliant = get_namespace(array)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -762,7 +762,7 @@ def check_array(
         dtype = xp.int64
 
     dtype_orig = getattr(array, "dtype", None)
-    if not is_array_api and not hasattr(dtype_orig, "kind"):
+    if not is_array_api_compliant and not hasattr(dtype_orig, "kind"):
         # not a data type (e.g. a column named dtype in a pandas DataFrame)
         dtype_orig = None
 

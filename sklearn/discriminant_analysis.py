@@ -107,11 +107,11 @@ def _class_means(X, y):
     means : array-like of shape (n_classes, n_features)
         Class means.
     """
-    xp, is_array_api = get_namespace(X)
+    xp, is_array_api_compliant = get_namespace(X)
     classes, y = xp.unique_inverse(y)
     means = xp.zeros((classes.shape[0], X.shape[1]), device=device(X), dtype=X.dtype)
 
-    if is_array_api:
+    if is_array_api_compliant:
         for i in range(classes.shape[0]):
             means[i, :] = xp.mean(X[y == i], axis=0)
     else:
@@ -483,9 +483,9 @@ class LinearDiscriminantAnalysis(
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
         """
-        xp, is_array_api = get_namespace(X)
+        xp, is_array_api_compliant = get_namespace(X)
 
-        if is_array_api:
+        if is_array_api_compliant:
             svd = xp.linalg.svd
         else:
             svd = scipy.linalg.svd
@@ -688,7 +688,7 @@ class LinearDiscriminantAnalysis(
             Estimated probabilities.
         """
         check_is_fitted(self)
-        xp, is_array_api = get_namespace(X)
+        xp, is_array_api_compliant = get_namespace(X)
         decision = self.decision_function(X)
         if size(self.classes_) == 2:
             proba = _expit(decision)

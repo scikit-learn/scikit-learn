@@ -289,7 +289,7 @@ def get_namespace(*arrays):
         Namespace shared by array objects. If any of the `arrays` are not arrays,
         the namespace defaults to NumPy.
 
-    is_array_api : bool
+    is_array_api_compliant : bool
         True of the arrays are containers that implement the Array API spec.
     """
     array_api_dispatch = get_config()["array_api_dispatch"]
@@ -313,7 +313,7 @@ def _get_namespace(*arrays, array_api_dispatch):
         Namespace shared by array objects. If any of the `arrays` are not arrays,
         the namespace defaults to NumPy.
 
-    is_array_api : bool
+    is_array_api_compliant : bool
         True of the arrays are containers that implement the Array API spec.
     """
     if not array_api_dispatch:
@@ -325,14 +325,17 @@ def _get_namespace(*arrays, array_api_dispatch):
         return _NUMPY_API_WRAPPER_INSTANCE, False
 
     try:
-        namespace, is_array_api = array_api_compat.get_namespace(*arrays), True
+        namespace, is_array_api_compliant = (
+            array_api_compat.get_namespace(*arrays),
+            True,
+        )
     except TypeError:
         return _NUMPY_API_WRAPPER_INSTANCE, False
 
     if namespace.__name__ in {"numpy.array_api", "cupy.array_api"}:
         namespace = _ArrayAPIWrapper(namespace)
 
-    return namespace, is_array_api
+    return namespace, is_array_api_compliant
 
 
 def _expit(X):
@@ -405,8 +408,8 @@ def _estimator_with_converted_arrays(estimator, converter):
 
     new_estimator = clone(estimator)
     for key, attribute in vars(estimator).items():
-        _, is_array_api = _get_namespace(attribute, array_api_dispatch=True)
-        if is_array_api:
+        _, is_array_api_compliant = _get_namespace(attribute, array_api_dispatch=True)
+        if is_array_api_compliant:
             attribute = converter(attribute)
         setattr(new_estimator, key, attribute)
     return new_estimator

@@ -880,7 +880,7 @@ def softmax(X, copy=True):
     out : ndarray of shape (M, N)
         Softmax function evaluated at every point in x.
     """
-    xp, is_array_api = get_namespace(X)
+    xp, is_array_api_compliant = get_namespace(X)
     if copy:
         X = xp.asarray(X, copy=True)
     max_prob = xp.reshape(xp.max(X, axis=1), (-1, 1))

@@ -22,9 +22,9 @@ pytestmark = pytest.mark.filterwarnings(
 @pytest.mark.parametrize("X", [numpy.asarray([1, 2, 3]), [1, 2, 3]])
 def test_get_namespace_ndarray_default(X):
     """Check that get_namespace returns NumPy wrapper"""
-    xp_out, is_array_api = get_namespace(X)
+    xp_out, is_array_api_compliant = get_namespace(X)
     assert isinstance(xp_out, _NumPyApiWrapper)
-    assert not is_array_api
+    assert not is_array_api_compliant
 
 
 def test_get_namespace_ndarray_creation_device():
@@ -46,8 +46,8 @@ def test_get_namespace_ndarray_with_dispatch():
     X_np = numpy.asarray([[1, 2, 3]])
 
     with config_context(array_api_dispatch=True):
-        xp_out, is_array_api = get_namespace(X_np)
-        assert is_array_api
+        xp_out, is_array_api_compliant = get_namespace(X_np)
+        assert is_array_api_compliant
         assert xp_out is array_api_compat.numpy
 
 
@@ -59,13 +59,13 @@ def test_get_namespace_array_api():
     X_np = numpy.asarray([[1, 2, 3]])
     X_xp = xp.asarray(X_np)
     with config_context(array_api_dispatch=True):
-        xp_out, is_array_api = get_namespace(X_xp)
-        assert is_array_api
+        xp_out, is_array_api_compliant = get_namespace(X_xp)
+        assert is_array_api_compliant
         assert isinstance(xp_out, _ArrayAPIWrapper)
 
-        xp_out, is_array_api = get_namespace(1)
+        xp_out, is_array_api_compliant = get_namespace(1)
         assert isinstance(xp_out, _NumPyApiWrapper)
-        assert not is_array_api
+        assert not is_array_api_compliant
 
 
 class _AdjustableNameAPITestWrapper(_ArrayAPIWrapper):
@@ -133,11 +133,12 @@ def test_array_api_wrapper_take():
 
 
 @pytest.mark.parametrize(
-    "is_array_api", [pytest.param(True, marks=skip_if_no_array_api_compat), False]
+    "is_array_api_compliant",
+    [pytest.param(True, marks=skip_if_no_array_api_compat), False],
 )
-def test_asarray_with_order(is_array_api):
+def test_asarray_with_order(is_array_api_compliant):
     """Test _asarray_with_order passes along order for NumPy arrays."""
-    if is_array_api:
+    if is_array_api_compliant:
         xp = pytest.importorskip("numpy.array_api")
     else:
         xp = numpy
