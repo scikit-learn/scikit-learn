@@ -1498,6 +1498,12 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, *, random_state=None)
     return X, y
 
 
+@validate_params(
+    {
+        "n_dim": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+)
 def make_spd_matrix(n_dim, *, random_state=None):
     """Generate a random symmetric, positive-definite matrix.
 
