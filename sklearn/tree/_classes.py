@@ -228,7 +228,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # csr.
 
             # _check_is_missing_mask_by_feature will check for finite values and
-            # compute missing mask the tree supports missing values
+            # compute the missing mask if the tree supports missing values
             check_X_params = dict(
                 dtype=DTYPE, accept_sparse="csc", force_all_finite=False
             )
