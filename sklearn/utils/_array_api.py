@@ -165,8 +165,11 @@ def _expit(X):
     return 1.0 / (1.0 + xp.exp(-X))
 
 
-def _asarray_with_order(array, dtype=None, order=None, copy=None, xp=None):
-    """Helper to support the order kwarg only for NumPy-backed arrays
+def _asarray_with_order(
+        array, dtype=None, order=None, copy=None, _asarray_fn=None, xp=None
+    ):
+    """Helper to automatically support the order kwarg for NumPy-backed
+    arrays.
 
     Memory layout parameter `order` is not exposed in the Array API standard,
     however some input validation code in scikit-learn needs to work both
@@ -179,7 +182,16 @@ def _asarray_with_order(array, dtype=None, order=None, copy=None, xp=None):
     is NumPy based, otherwise `order` is just silently ignored.
     """
     if xp is None:
-        xp, _ = get_namespace(array)
+        xp, is_array_api = get_namespace(array)
+
+    if _asarray_fn is not None:
+        if is_array_api:
+            raise ValueError(
+                "Passing _asarray_fn is only supported for array namespaces "
+                "compatible with the Array API"
+            )
+        return _asarray_fn(array, dtype=dtype, copy=copy)
+
     if xp.__name__ in {"numpy", "numpy.array_api"}:
         # Use NumPy API to support order
         array = numpy.asarray(array, order=order, dtype=dtype)
