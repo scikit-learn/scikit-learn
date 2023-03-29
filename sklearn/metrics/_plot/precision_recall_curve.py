@@ -1,6 +1,6 @@
 from .. import average_precision_score
 from .. import precision_recall_curve
-from ...utils._plot import _BinaryClassifierCurveDisplayMixin
+from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 
 
 class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
@@ -137,7 +137,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         `drawstyle="default"`. However, the curve will not be strictly
         consistent with the reported average precision.
         """
-        self.ax_, self.figure_, name = super()._validate_plot_params(ax=ax, name=name)
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
         line_kwargs = {"drawstyle": "steps-post"}
         if self.average_precision is not None and name is not None:
@@ -260,7 +260,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_pred, pos_label, name = super()._validate_and_get_response_values(
+        y_pred, pos_label, name = cls._validate_and_get_response_values(
             estimator,
             X,
             y,
@@ -366,7 +366,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        pos_label, name = super()._validate_from_predictions_params(
+        pos_label, name = cls._validate_from_predictions_params(
             y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
 

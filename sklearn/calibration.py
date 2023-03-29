@@ -36,7 +36,7 @@ from .utils import (
 from .utils.multiclass import check_classification_targets
 from .utils.parallel import delayed, Parallel
 from .utils._param_validation import StrOptions, HasMethods, Hidden
-from .utils._plot import _BinaryClassifierCurveDisplayMixin
+from .utils._plotting import _BinaryClassifierCurveDisplayMixin
 from .utils.validation import (
     _check_fit_params,
     _check_pos_label_consistency,
@@ -1123,7 +1123,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.calibration.CalibrationDisplay`
             Object that stores computed values.
         """
-        self.ax_, self.figure_, name = super()._validate_plot_params(ax=ax, name=name)
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
         info_pos_label = (
             f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
@@ -1138,7 +1138,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         existing_ref_line = ref_line_label in self.ax_.get_legend_handles_labels()[1]
         if ref_line and not existing_ref_line:
             self.ax_.plot([0, 1], [0, 1], "k:", label=ref_line_label)
-        self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[0]
+        self.line_ = self.ax_.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[
+            0
+        ]
 
         # We always have to show the legend for at least the reference line
         self.ax_.legend(loc="lower right")
@@ -1252,7 +1254,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
         >>> plt.show()
         """
-        y_prob, pos_label, name = super()._validate_and_get_response_values(
+        y_prob, pos_label, name = cls._validate_and_get_response_values(
             estimator,
             X,
             y,
@@ -1370,7 +1372,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
         >>> plt.show()
         """
-        pos_label_validated, name = super()._validate_from_predictions_params(
+        pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_prob, sample_weight=None, pos_label=pos_label, name=name
         )
 

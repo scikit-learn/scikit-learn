@@ -1,7 +1,7 @@
 import scipy as sp
 
 from .. import det_curve
-from ...utils._plot import _BinaryClassifierCurveDisplayMixin
+from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 
 
 class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
@@ -160,7 +160,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_pred, pos_label, name = super()._validate_and_get_response_values(
+        y_pred, pos_label, name = cls._validate_and_get_response_values(
             estimator,
             X,
             y,
@@ -254,7 +254,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        pos_label_validated, name = super()._validate_from_predictions_params(
+        pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
 
@@ -295,7 +295,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.plot.DetCurveDisplay`
             Object that stores computed values.
         """
-        self.ax_, self.figure_, name = super()._validate_plot_params(ax=ax, name=name)
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
         line_kwargs = {} if name is None else {"label": name}
         line_kwargs.update(**kwargs)
