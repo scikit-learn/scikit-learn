@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.utils._typedefs import make_array_from_typed_val
+from sklearn.utils._typedefs import testing_make_array_from_typed_val
 
 
 @pytest.mark.parametrize(
@@ -19,4 +19,4 @@ def test_types(type_t, value, expected_dtype):
     """Check that the types defined in _typedefs correspond to the expected
     numpy dtypes.
     """
-    assert make_array_from_typed_val[type_t](value).dtype == expected_dtype
+    assert testing_make_array_from_typed_val[type_t](value).dtype == expected_dtype
