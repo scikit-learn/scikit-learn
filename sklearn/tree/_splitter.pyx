@@ -469,7 +469,7 @@ cdef inline int node_split_best(
                         best_split = current_split
 
     # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
-    if best_split.pos <= end:
+    if best_split.pos < end:
         partitioner.partition_samples_final(
             best_split.pos,
             best_split.threshold,
