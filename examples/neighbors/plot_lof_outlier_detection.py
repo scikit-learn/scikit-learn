@@ -68,6 +68,6 @@ plt.xlim((-5, 5))
 plt.ylim((-5, 5))
 plt.xlabel("prediction errors: %d" % (n_errors))
 legend = plt.legend(loc="upper left")
-legend.legendHandles[0]._sizes = [10]
-legend.legendHandles[1]._sizes = [20]
+legend.legend_handles[0]._sizes = [10]
+legend.legend_handles[1]._sizes = [20]
 plt.show()
