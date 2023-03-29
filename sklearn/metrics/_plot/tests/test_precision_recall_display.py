@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
 
+from collections import Counter
+
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, make_classification
 from sklearn.exceptions import NotFittedError
@@ -118,6 +120,80 @@ def test_precision_recall_display_plotting(
     expected_label = f"MySpecialEstimator (AP = {average_precision:0.2f})"
     assert display.line_.get_label() == expected_label
     assert display.line_.get_alpha() == pytest.approx(0.8)
+
+
+@pytest.mark.parametrize("plot_chance_level", [True, False])
+@pytest.mark.parametrize(
+    "chance_level_kwargs",
+    [None, {"linewidth": 1, "color": "red", "label": "DummyEstimator"}],
+)
+@pytest.mark.parametrize(
+    "constructor_name",
+    ["from_estimator", "from_predictions"],
+)
+def test_precision_recall_chance_level_line(
+    pyplot,
+    plot_chance_level,
+    chance_level_kwargs,
+    constructor_name,
+):
+    """Check the chance leve line plotting behaviour."""
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+    pos_prevalence = Counter(y)[1] / len(y)
+
+    lr = LogisticRegression()
+    lr.fit(X, y)
+
+    y_pred = getattr(lr, "predict_proba")(X)
+    y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
+
+    if constructor_name == "from_estimator":
+        display = PrecisionRecallDisplay.from_estimator(
+            lr,
+            X,
+            y,
+            alpha=0.8,
+            plot_chance_level=plot_chance_level,
+            chance_level_kwargs=chance_level_kwargs,
+        )
+    else:
+        display = PrecisionRecallDisplay.from_predictions(
+            y,
+            y_pred,
+            alpha=0.8,
+            plot_chance_level=plot_chance_level,
+            chance_level_kwargs=chance_level_kwargs,
+        )
+
+    import matplotlib as mpl  # noqal
+
+    assert isinstance(display.line_, mpl.lines.Line2D)
+    assert display.line_.get_alpha() == 0.8
+    assert isinstance(display.ax_, mpl.axes.Axes)
+    assert isinstance(display.figure_, mpl.figure.Figure)
+
+    if plot_chance_level:
+        assert isinstance(display.chance_level_, mpl.lines.Line2D)
+        assert tuple(display.chance_level_.get_xdata()) == (0, 1)
+        assert tuple(display.chance_level_.get_ydata()) == (
+            pos_prevalence,
+            pos_prevalence,
+        )
+
+    # Checking for chance level line styles
+    if plot_chance_level and chance_level_kwargs is None:
+        assert display.chance_level_.get_color() == "k"
+        assert display.chance_level_.get_linestyle() == "--"
+        assert (
+            display.chance_level_.get_label()
+            == f"Chance level (AP = {pos_prevalence:0.2f})"
+        )
+    elif plot_chance_level:
+        for k, v in chance_level_kwargs.items():
+            if hasattr(display.chance_level_, "get_" + k):
+                assert getattr(display.chance_level_, "get_" + k)() == v
+    else:
+        assert display.chance_level_ is None
 
 
 @pytest.mark.parametrize(
