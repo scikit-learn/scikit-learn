@@ -66,8 +66,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     optimizer : "fmin_l_bfgs_b", callable or None, default="fmin_l_bfgs_b"
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
-        defined optimizer passed as a callable. If a callable is passed, it
-        must have the signature::
+        defined optimizer passed as a callable. If a callable is passed when
+        `verbose=0`, it must have the signature::
 
             def optimizer(obj_func, initial_theta, bounds):
                 # * 'obj_func': the objective function to be minimized, which
@@ -81,6 +81,24 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 # Returned are the best found hyperparameters theta and
                 # the corresponding value of the target function.
                 return theta_opt, func_min
+
+        If a callable is passed when `verbose>=1`, it must have the signature::
+
+            def optimizer(obj_func, initial_theta, bounds):
+                # * 'obj_func': the objective function to be minimized, which
+                #   takes the hyperparameters theta as a parameter and an
+                #   optional flag eval_gradient, which determines if the
+                #   gradient is returned additionally to the function value
+                # * 'initial_theta': the initial value for theta, which can be
+                #   used by local optimizers
+                # * 'bounds': the bounds on the values of theta
+                ....
+                # Returned are the best found hyperparameters theta,
+                # the corresponding value of the target function,
+                # an array of explored theta,
+                # and an array of log marginal likelihood of the corresponding
+                # theta
+                return theta_opt, func_min, explored_theta, explored_theta_log
 
         Per default, the L-BFGS-B algorithm from `scipy.optimize.minimize`
         is used. If None is passed, the kernel's parameters are kept fixed.
@@ -114,6 +132,12 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
+
+    verbose : int, default=0
+        Enable verbose output. Tracks the theta explored and the corresponding
+        log marginal likelihood in the regression process.
+
+        .. versionadded:: 1.3
 
     Attributes
     ----------
