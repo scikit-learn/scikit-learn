@@ -1169,6 +1169,13 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+)
 def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     """Generate the "Friedman #3" regression problem.
 
