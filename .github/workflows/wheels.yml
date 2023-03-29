@@ -7,12 +7,12 @@ on:
     - cron: "42 3 */1 * *"
   push:
     branches:
-      - main
+      - fork
       # Release branches
       - "[0-9]+.[0-9]+.X"
   pull_request:
     branches:
-      - main
+      - fork
       - "[0-9]+.[0-9]+.X"
   # Manual run
   workflow_dispatch:
@@ -26,7 +26,7 @@ jobs:
   check_build_trigger:
     name: Check build trigger
     runs-on: ubuntu-latest
-    if: github.repository == 'scikit-learn/scikit-learn'
+    if: github.repository == 'neurodata/scikit-learn'
     outputs:
       build: ${{ steps.check_build_trigger.outputs.build }}
 
@@ -178,31 +178,8 @@ jobs:
         with:
           path: dist/*.tar.gz
 
-  # Upload the wheels and the source distribution
-  upload_anaconda:
-    name: Upload to Anaconda
-    runs-on: ubuntu-latest
-    needs: [build_wheels, build_sdist]
-    # The artifacts cannot be uploaded on PRs
-    if: github.event_name != 'pull_request'
-
-    steps:
-      - name: Checkout scikit-learn
-        uses: actions/checkout@v3
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
+      - uses: actions/upload-artifact@v3
         with:
           path: dist
+          name: ${{ matrix.python[0] }}-${{ matrix.os[1] }}
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-
-      - name: Upload artifacts
-        env:
-          # Secret variables need to be mapped to environment variables explicitly
-          SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
-          SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
-          ARTIFACTS_PATH: dist/artifact
-        # Force a replacement if the remote file already exists
-        run: bash build_tools/github/upload_anaconda.sh

@@ -7,7 +7,7 @@ on:
 jobs:
   check-manifest:
     # Don't run on forks
-    if: github.repository == 'scikit-learn/scikit-learn'
+    if: github.repository == 'neurodata/scikit-learn'
 
     runs-on: ubuntu-latest
     steps:

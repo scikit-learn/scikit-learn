@@ -94,22 +94,23 @@ jobs:
           root: doc/_build/html
           paths: .
 
-  deploy:
-    docker:
-      - image: cimg/python:3.8.12
-    steps:
-      - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
-      # Attach documentation generated in the 'doc' step so that it can be
-      # deployed.
-      - attach_workspace:
-          at: doc/_build/html
-      - run: ls -ltrh doc/_build/html/stable
-      - deploy:
-          command: |
-            if [[ "${CIRCLE_BRANCH}" =~ ^main$|^[0-9]+\.[0-9]+\.X$ ]]; then
-              bash build_tools/circle/push_doc.sh doc/_build/html/stable
-            fi
+  # XXX: in order to make sure our fork passes all the CIs and not remove too many LOC, we don't want to deploy
+  # deploy:
+  #   docker:
+  #     - image: cimg/python:3.8.12
+  #   steps:
+  #     - checkout
+  #     - run: ./build_tools/circle/checkout_merge_commit.sh
+  #     # Attach documentation generated in the 'doc' step so that it can be
+  #     # deployed.
+  #     - attach_workspace:
+  #         at: doc/_build/html
+  #     - run: ls -ltrh doc/_build/html/stable
+  #     - deploy:
+  #         command: |
+  #           if [[ "${CIRCLE_BRANCH}" =~ ^main$|^[0-9]+\.[0-9]+\.X$ ]]; then
+  #             bash build_tools/circle/push_doc.sh doc/_build/html/stable
+  #           fi
 
 workflows:
   version: 2

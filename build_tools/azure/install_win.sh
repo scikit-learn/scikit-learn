@@ -22,4 +22,4 @@ show_installed_libraries
 python setup.py bdist_wheel
 
 # Install the generated wheel package to test it
-pip install --pre --no-index --find-links dist scikit-learn
+pip install --pre --no-index --find-links dist scikit-learn-tree

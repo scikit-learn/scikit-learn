@@ -7,7 +7,7 @@ set -x
 source build_tools/shared.sh
 
 UNAMESTR=`uname`
-CCACHE_LINKS_DIR="/tmp/ccache"
+CCACHE_LINKS_DIR="/tmp/ccachev2"
 
 setup_ccache() {
     CCACHE_BIN=`which ccache || echo ""`

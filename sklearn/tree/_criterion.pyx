@@ -9,6 +9,8 @@
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #          Nelson Liu <nelson@nelsonliu.me>
+#          Adam Li <adam2392@gmail.com>
+#          Jong Shin <jshinm@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -29,11 +31,20 @@ from ._utils cimport WeightedMedianCalculator
 # EPSILON is used in the Poisson criterion
 cdef double EPSILON = 10 * np.finfo('double').eps
 
-cdef class Criterion:
-    """Interface for impurity criteria.
-
+cdef class BaseCriterion:
+    """This is an abstract interface for criterion. For example, a tree model could
+    be either supervisedly, or unsupervisedly computing impurity on samples of
+    covariates, or labels, or both. Although scikit-learn currently only contains
+    supervised tree methods, this class enables 3rd party packages to leverage
+    scikit-learn's Cython code for criteria.
+    The downstream classes _must_ implement methods to compute the impurity
+    in current node and in children nodes.
     This object stores methods on how to calculate how good a split is using
-    different metrics.
+    a set API. 
+    Samples in the "current" node are stored in `samples[start:end]` which is
+    partitioned around `pos` (an index in `start:end`) so that:
+       - the samples of left child node are stored in `samples[start:pos]`
+       - the samples of right child node are stored in `samples[pos:end]`
     """
     def __getstate__(self):
         return {}
@@ -41,61 +52,23 @@ cdef class Criterion:
     def __setstate__(self, d):
         pass
 
-    cdef int init(
-        self,
-        const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight,
-        double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end,
-    ) except -1 nogil:
-        """Placeholder for a method which will initialize the criterion.
-
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-
-        Parameters
-        ----------
-        y : ndarray, dtype=DOUBLE_t
-            y is a buffer that can store values for n_outputs target variables
-            stored as a Cython memoryview.
-        sample_weight : ndarray, dtype=DOUBLE_t
-            The weight of each sample stored as a Cython memoryview.
-        weighted_n_samples : double
-            The total weight of the samples being considered
-        sample_indices : ndarray, dtype=SIZE_t
-            A mask on the samples. Indices of the samples in X and y we want to use,
-            where sample_indices[start:end] correspond to the samples in this node.
-        start : SIZE_t
-            The first sample to be used on this node
-        end : SIZE_t
-            The last sample used on this node
-
-        """
-        pass
-
     cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
-
         This method must be implemented by the subclass.
         """
         pass
 
     cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end.
-
         This method must be implemented by the subclass.
         """
         pass
 
     cdef int update(self, SIZE_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left child.
-
         This updates the collected statistics by moving sample_indices[pos:new_pos]
         from the right child to the left child. It must be implemented by
         the subclass.
-
         Parameters
         ----------
         new_pos : SIZE_t
@@ -105,7 +78,6 @@ cdef class Criterion:
 
     cdef double node_impurity(self) noexcept nogil:
         """Placeholder for calculating the impurity of the node.
-
         Placeholder for a method which will evaluate the impurity of
         the current node, i.e. the impurity of sample_indices[start:end]. This is the
         primary function of the criterion class. The smaller the impurity the
@@ -116,11 +88,9 @@ cdef class Criterion:
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) noexcept nogil:
         """Placeholder for calculating the impurity of children.
-
         Placeholder for a method which evaluates the impurity in
         children nodes, i.e. the impurity of sample_indices[start:pos] + the impurity
         of sample_indices[pos:end].
-
         Parameters
         ----------
         impurity_left : double pointer
@@ -134,10 +104,8 @@ cdef class Criterion:
 
     cdef void node_value(self, double* dest) noexcept nogil:
         """Placeholder for storing the node value.
-
         Placeholder for a method which will compute the node value
         of sample_indices[start:end] and save the value into dest.
-
         Parameters
         ----------
         dest : double pointer
@@ -147,12 +115,10 @@ cdef class Criterion:
 
     cdef double proxy_impurity_improvement(self) noexcept nogil:
         """Compute a proxy of the impurity reduction.
-
         This method is used to speed up the search for the best split.
         It is a proxy quantity such that the split that maximizes this value
         also maximizes the impurity improvement. It neglects all constant terms
         of the impurity decrease for a given split.
-
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
         """
@@ -167,28 +133,21 @@ cdef class Criterion:
                                      double impurity_left,
                                      double impurity_right) noexcept nogil:
         """Compute the improvement in impurity.
-
         This method computes the improvement in impurity when a split occurs.
         The weighted impurity improvement equation is the following:
-
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
-
         where N is the total number of samples, N_t is the number of samples
         at the current node, N_t_L is the number of samples in the left child,
         and N_t_R is the number of samples in the right child,
-
         Parameters
         ----------
         impurity_parent : double
             The initial impurity of the parent node before the split
-
         impurity_left : double
             The impurity of the left child
-
         impurity_right : double
             The impurity of the right child
-
         Return
         ------
         double : improvement in impurity after the split occurs
@@ -199,6 +158,61 @@ cdef class Criterion:
                                  - (self.weighted_n_left /
                                     self.weighted_n_node_samples * impurity_left)))
 
+    cdef void set_sample_pointers(
+        self,
+        SIZE_t start,
+        SIZE_t end
+    ) noexcept nogil:
+        """Abstract method which will set sample pointers in the criterion.
+        The dataset array that we compute criteria on is assumed to consist of 'N' 
+        ordered samples or rows (i.e. sorted). Since we pass this by reference, we 
+        use sample pointers to move the start and end around to consider only a subset of data. 
+        This function should also update relevant statistics that the class uses to compute the final criterion.
+        Parameters
+        ----------
+        start : SIZE_t
+            The index of the first sample to be used on computation of criteria of the current node.
+        end : SIZE_t
+            The last sample used on this node
+        """
+        pass
+
+
+cdef class Criterion(BaseCriterion):
+    """Interface for impurity criteria.
+    The supervised criterion computes the impurity of a node and the reduction of
+    impurity of a split on that node using the distribution of labels in parent and
+    children nodes. It also computes the output statistics
+    such as the mean in regression and class probabilities in classification.
+    Instances of this class are responsible for compute splits' impurity difference
+    Criterion is the base class for criteria used in supervised tree-based models
+    with a homogeneous float64-dtyped y.
+    """
+    cdef int init(
+        self,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight,
+        double weighted_n_samples,
+        const SIZE_t[:] sample_indices
+    ) except -1 nogil:
+        """Placeholder for a method which will initialize the criterion.
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        Parameters
+        ----------
+        y : ndarray, dtype=DOUBLE_t
+            y is a buffer that can store values for n_outputs target variables
+            stored as a Cython memoryview.
+        sample_weight : ndarray, dtype=DOUBLE_t
+            The weight of each sample stored as a Cython memoryview.
+        weighted_n_samples : double
+            The total weight of the samples being considered
+        sample_indices : ndarray, dtype=SIZE_t
+            A mask on the samples. Indices of the samples in X and y we want to use,
+            where sample_indices[start:end] correspond to the samples in this node.
+        """
+        pass
+
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
@@ -206,7 +220,6 @@ cdef class ClassificationCriterion(Criterion):
     def __cinit__(self, SIZE_t n_outputs,
                   cnp.ndarray[SIZE_t, ndim=1] n_classes):
         """Initialize attributes for this criterion.
-
         Parameters
         ----------
         n_outputs : SIZE_t
@@ -254,18 +267,11 @@ cdef class ClassificationCriterion(Criterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end
+        const SIZE_t[:] sample_indices
     ) except -1 nogil:
         """Initialize the criterion.
-
-        This initializes the criterion at node sample_indices[start:end] and children
-        sample_indices[start:start] and sample_indices[start:end].
-
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
-
         Parameters
         ----------
         y : ndarray, dtype=DOUBLE_t
@@ -277,18 +283,24 @@ cdef class ClassificationCriterion(Criterion):
         sample_indices : ndarray, dtype=SIZE_t
             A mask on the samples. Indices of the samples in X and y we want to use,
             where sample_indices[start:end] correspond to the samples in this node.
-        start : SIZE_t
-            The first sample to use in the mask
-        end : SIZE_t
-            The last sample to use in the mask
         """
         self.y = y
         self.sample_weight = sample_weight
         self.sample_indices = sample_indices
+        self.weighted_n_samples = weighted_n_samples
+
+        return 0
+
+    cdef void set_sample_pointers(
+        self,
+        SIZE_t start,
+        SIZE_t end
+    ) noexcept nogil:
+        """Set sample pointers in the criterion."""
+        self.n_node_samples = end - start
         self.start = start
         self.end = end
-        self.n_node_samples = end - start
-        self.weighted_n_samples = weighted_n_samples
+
         self.weighted_n_node_samples = 0.0
 
         cdef SIZE_t i
@@ -301,12 +313,12 @@ cdef class ClassificationCriterion(Criterion):
             memset(&self.sum_total[k, 0], 0, self.n_classes[k] * sizeof(double))
 
         for p in range(start, end):
-            i = sample_indices[p]
+            i = self.sample_indices[p]
 
             # w is originally set to be 1.0, meaning that if no sample weights
             # are given, the default weight of each sample is 1.0.
-            if sample_weight is not None:
-                w = sample_weight[i]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
 
             # Count weighted class frequency for each target
             for k in range(self.n_outputs):
@@ -317,11 +329,9 @@ cdef class ClassificationCriterion(Criterion):
 
         # Reset to pos=start
         self.reset()
-        return 0
 
     cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
-
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
@@ -338,7 +348,6 @@ cdef class ClassificationCriterion(Criterion):
 
     cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end.
-
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
@@ -355,10 +364,8 @@ cdef class ClassificationCriterion(Criterion):
 
     cdef int update(self, SIZE_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left child.
-
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
-
         Parameters
         ----------
         new_pos : SIZE_t
@@ -428,7 +435,6 @@ cdef class ClassificationCriterion(Criterion):
 
     cdef void node_value(self, double* dest) noexcept nogil:
         """Compute the node value of sample_indices[start:end] and save it into dest.
-
         Parameters
         ----------
         dest : double pointer
@@ -443,23 +449,17 @@ cdef class ClassificationCriterion(Criterion):
 
 cdef class Entropy(ClassificationCriterion):
     r"""Cross Entropy impurity criterion.
-
     This handles cases where the target is a classification taking values
     0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations,
     then let
-
         count_k = 1 / Nm \sum_{x_i in Rm} I(yi = k)
-
     be the proportion of class k observations in node m.
-
     The cross-entropy is then defined as
-
         cross-entropy = -\sum_{k=0}^{K-1} count_k log(count_k)
     """
 
     cdef double node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
-
         Evaluate the cross-entropy criterion as impurity of the current node,
         i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
@@ -481,10 +481,8 @@ cdef class Entropy(ClassificationCriterion):
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) noexcept nogil:
         """Evaluate the impurity in children nodes.
-
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
         impurity the right child (sample_indices[pos:end]).
-
         Parameters
         ----------
         impurity_left : double pointer
@@ -516,24 +514,18 @@ cdef class Entropy(ClassificationCriterion):
 
 cdef class Gini(ClassificationCriterion):
     r"""Gini Index impurity criterion.
-
     This handles cases where the target is a classification taking values
     0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations,
     then let
-
         count_k = 1/ Nm \sum_{x_i in Rm} I(yi = k)
-
     be the proportion of class k observations in node m.
-
     The Gini Index is then defined as:
-
         index = \sum_{k=0}^{K-1} count_k (1 - count_k)
               = 1 - \sum_{k=0}^{K-1} count_k ** 2
     """
 
     cdef double node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
-
         Evaluate the Gini criterion as impurity of the current node,
         i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
@@ -559,10 +551,8 @@ cdef class Gini(ClassificationCriterion):
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) noexcept nogil:
         """Evaluate the impurity in children nodes.
-
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
         impurity the right child (sample_indices[pos:end]) using the Gini index.
-
         Parameters
         ----------
         impurity_left : double pointer
@@ -601,24 +591,20 @@ cdef class Gini(ClassificationCriterion):
 
 cdef class RegressionCriterion(Criterion):
     r"""Abstract regression criterion.
-
     This handles cases where the target is a continuous value, and is
     evaluated by computing the variance of the target values left and right
     of the split point. The computation takes linear time with `n_samples`
     by using ::
-
         var = \sum_i^n (y_i - y_bar) ** 2
             = (\sum_i^n y_i ** 2) - n_samples * y_bar ** 2
     """
 
     def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
         """Initialize parameters for this criterion.
-
         Parameters
         ----------
         n_outputs : SIZE_t
             The number of targets to be predicted
-
         n_samples : SIZE_t
             The total number of samples to fit on
         """
@@ -648,23 +634,29 @@ cdef class RegressionCriterion(Criterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end,
+        const SIZE_t[:] sample_indices
     ) except -1 nogil:
-        """Initialize the criterion.
-
-        This initializes the criterion at node sample_indices[start:end] and children
-        sample_indices[start:start] and sample_indices[start:end].
-        """
+        """Initialize the criterion."""
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
         self.sample_indices = sample_indices
+        self.weighted_n_samples = weighted_n_samples
+
+        return 0
+
+    cdef void set_sample_pointers(
+        self,
+        SIZE_t start,
+        SIZE_t end
+    ) noexcept nogil:
+        """Set sample pointers in the criterion."""
         self.start = start
         self.end = end
+
         self.n_node_samples = end - start
-        self.weighted_n_samples = weighted_n_samples
+
+        self.sq_sum_total = 0.0
         self.weighted_n_node_samples = 0.
 
         cdef SIZE_t i
@@ -673,14 +665,14 @@ cdef class RegressionCriterion(Criterion):
         cdef DOUBLE_t y_ik
         cdef DOUBLE_t w_y_ik
         cdef DOUBLE_t w = 1.0
-        self.sq_sum_total = 0.0
+
         memset(&self.sum_total[0], 0, self.n_outputs * sizeof(double))
 
         for p in range(start, end):
-            i = sample_indices[p]
+            i = self.sample_indices[p]
 
-            if sample_weight is not None:
-                w = sample_weight[i]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
 
             for k in range(self.n_outputs):
                 y_ik = self.y[i, k]
@@ -692,7 +684,6 @@ cdef class RegressionCriterion(Criterion):
 
         # Reset to pos=start
         self.reset()
-        return 0
 
     cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start."""
@@ -785,13 +776,11 @@ cdef class RegressionCriterion(Criterion):
 
 cdef class MSE(RegressionCriterion):
     """Mean squared error impurity criterion.
-
         MSE = var_left + var_right
     """
 
     cdef double node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
-
         Evaluate the MSE criterion as impurity of the current node,
         i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
@@ -807,22 +796,16 @@ cdef class MSE(RegressionCriterion):
 
     cdef double proxy_impurity_improvement(self) noexcept nogil:
         """Compute a proxy of the impurity reduction.
-
         This method is used to speed up the search for the best split.
         It is a proxy quantity such that the split that maximizes this value
         also maximizes the impurity improvement. It neglects all constant terms
         of the impurity decrease for a given split.
-
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
-
         The MSE proxy is derived from
-
             sum_{i left}(y_i - y_pred_L)^2 + sum_{i right}(y_i - y_pred_R)^2
             = sum(y_i^2) - n_L * mean_{i left}(y_i)^2 - n_R * mean_{i right}(y_i)^2
-
         Neglecting constant terms, this gives:
-
             - 1/n_L * sum_{i left}(y_i)^2 - 1/n_R * sum_{i right}(y_i)^2
         """
         cdef SIZE_t k
@@ -839,7 +822,6 @@ cdef class MSE(RegressionCriterion):
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) noexcept nogil:
         """Evaluate the impurity in children nodes.
-
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
         impurity the right child (sample_indices[pos:end]).
         """
@@ -883,7 +865,6 @@ cdef class MSE(RegressionCriterion):
 
 cdef class MAE(RegressionCriterion):
     r"""Mean absolute error impurity criterion.
-
        MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
        value and f_i is the predicted value."""
 
@@ -895,12 +876,10 @@ cdef class MAE(RegressionCriterion):
 
     def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
         """Initialize parameters for this criterion.
-
         Parameters
         ----------
         n_outputs : SIZE_t
             The number of targets to be predicted
-
         n_samples : SIZE_t
             The total number of samples to fit on
         """
@@ -933,26 +912,30 @@ cdef class MAE(RegressionCriterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end,
+        const SIZE_t[:] sample_indices
     ) except -1 nogil:
-        """Initialize the criterion.
-
-        This initializes the criterion at node sample_indices[start:end] and children
-        sample_indices[start:start] and sample_indices[start:end].
-        """
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t w = 1.0
-
+        """Initialize the criterion."""
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
         self.sample_indices = sample_indices
+        self.weighted_n_samples = weighted_n_samples
+
+        return 0
+
+    cdef void set_sample_pointers(
+        self,
+        SIZE_t start,
+        SIZE_t end
+    ) noexcept nogil:
+        """Set sample pointers in the criterion."""
+        cdef SIZE_t i, p, k
+        cdef DOUBLE_t w = 1.0
+
         self.start = start
         self.end = end
+
         self.n_node_samples = end - start
-        self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
         cdef void** left_child = self.left_child_ptr
@@ -963,10 +946,10 @@ cdef class MAE(RegressionCriterion):
             (<WeightedMedianCalculator> right_child[k]).reset()
 
         for p in range(start, end):
-            i = sample_indices[p]
+            i = self.sample_indices[p]
 
-            if sample_weight is not None:
-                w = sample_weight[i]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
 
             for k in range(self.n_outputs):
                 # push method ends up calling safe_realloc, hence `except -1`
@@ -981,11 +964,9 @@ cdef class MAE(RegressionCriterion):
 
         # Reset to pos=start
         self.reset()
-        return 0
 
     cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
-
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
@@ -1016,7 +997,6 @@ cdef class MAE(RegressionCriterion):
 
     cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end.
-
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
@@ -1044,7 +1024,6 @@ cdef class MAE(RegressionCriterion):
 
     cdef int update(self, SIZE_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left.
-
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
@@ -1107,7 +1086,6 @@ cdef class MAE(RegressionCriterion):
 
     cdef double node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
-
         Evaluate the MAE criterion as impurity of the current node,
         i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
@@ -1132,7 +1110,6 @@ cdef class MAE(RegressionCriterion):
     cdef void children_impurity(self, double* p_impurity_left,
                                 double* p_impurity_right) noexcept nogil:
         """Evaluate the impurity in children nodes.
-
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
         impurity the right child (sample_indices[pos:end]).
         """
@@ -1179,21 +1156,17 @@ cdef class MAE(RegressionCriterion):
 
 cdef class FriedmanMSE(MSE):
     """Mean squared error impurity criterion with improvement score by Friedman.
-
     Uses the formula (35) in Friedman's original Gradient Boosting paper:
-
         diff = mean_left - mean_right
         improvement = n_left * n_right * diff^2 / (n_left + n_right)
     """
 
     cdef double proxy_impurity_improvement(self) noexcept nogil:
         """Compute a proxy of the impurity reduction.
-
         This method is used to speed up the search for the best split.
         It is a proxy quantity such that the split that maximizes this value
         also maximizes the impurity improvement. It neglects all constant terms
         of the impurity decrease for a given split.
-
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
         """
@@ -1234,9 +1207,7 @@ cdef class FriedmanMSE(MSE):
 
 cdef class Poisson(RegressionCriterion):
     """Half Poisson deviance as impurity criterion.
-
     Poisson deviance = 2/n * sum(y_true * log(y_true/y_pred) + y_pred - y_true)
-
     Note that the deviance is >= 0, and since we have `y_pred = mean(y_true)`
     at the leaves, one always has `sum(y_pred - y_true) = 0`. It remains the
     implemented impurity (factor 2 is skipped):
@@ -1255,7 +1226,6 @@ cdef class Poisson(RegressionCriterion):
 
     cdef double node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
-
         Evaluate the Poisson criterion as impurity of the current node,
         i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
@@ -1265,24 +1235,18 @@ cdef class Poisson(RegressionCriterion):
 
     cdef double proxy_impurity_improvement(self) noexcept nogil:
         """Compute a proxy of the impurity reduction.
-
         This method is used to speed up the search for the best split.
         It is a proxy quantity such that the split that maximizes this value
         also maximizes the impurity improvement. It neglects all constant terms
         of the impurity decrease for a given split.
-
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
-
         The Poisson proxy is derived from:
-
               sum_{i left }(y_i * log(y_i / y_pred_L))
             + sum_{i right}(y_i * log(y_i / y_pred_R))
             = sum(y_i * log(y_i) - n_L * mean_{i left}(y_i) * log(mean_{i left}(y_i))
                                  - n_R * mean_{i right}(y_i) * log(mean_{i right}(y_i))
-
         Neglecting constant terms, this gives
-
             - sum{i left }(y_i) * log(mean{i left}(y_i))
             - sum{i right}(y_i) * log(mean{i right}(y_i))
         """
@@ -1312,7 +1276,6 @@ cdef class Poisson(RegressionCriterion):
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) noexcept nogil:
         """Evaluate the impurity in children nodes.
-
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
         impurity of the right child (sample_indices[pos:end]) for Poisson.
         """

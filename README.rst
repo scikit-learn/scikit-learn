@@ -44,20 +44,36 @@
 .. |PytestMinVersion| replace:: 5.3.1
 .. |PlotlyMinVersion| replace:: 5.10.0
 
-.. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo.png
-  :target: https://scikit-learn.org/
-
-**scikit-learn** is a Python module for machine learning built on top of
-SciPy and is distributed under the 3-Clause BSD license.
-
-The project was started in 2007 by David Cournapeau as a Google Summer
-of Code project, and since then many volunteers have contributed. See
-the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
-for a list of core contributors.
+``scikit-learn-tree`` is a maintained fork of scikit-learn, which advances the tree submodule, while staying in-line
+with changes from upstream scikit-learn. It is an exact stand-in for ``sklearn`` in package imports, but is
+released under the name ``scikit-learn-tree`` to avoid confusion.
 
 It is currently maintained by a team of volunteers.
 
-Website: https://scikit-learn.org
+The upstream package **scikit-learn** is a Python module for machine learning built on top of
+SciPy and is distributed under the 3-Clause BSD license. Refer to their website for all documentation
+needs: https://scikit-learn.org.
+
+Why a fork?
+-----------
+Currently, the scikit-learn tree submodule is difficult to extend. Requests to modularize
+and improve the extensibility of the code is currently unsupported, or may take a long time.
+The desire for advanced tree models that also leverage the robustness of scikit-learn is desirable.
+
+However, "hard-forking" via copy/pasting the explicit Python/Cython code into another tree package
+altogether is undesirable because it results in a tree codebase that is inherently different
+and not compatible with ``scikit-learn``. For example, `quantile-forests <https://github.com/zillow/quantile-forest>`_,
+and `EconML <https://github.com/py-why/EconML>`_ do this, and their current tree submodules
+cannot take advantage of improvements made in upstream ``scikit-learn``.
+
+An example of seamless integration would be `scikit-survival <https://github.com/sebp/scikit-survival>`_, which
+only needs to implement a subclass of the Cython ``Criterion`` oject in their code to enable survival trees.
+
+Maintaining a "soft-fork" of ``scikit-learn`` in the form of a repository fork allows us to develop
+a separate package that serves as a stand-in for ``sklearn`` in any package, extends the tree submodule
+and can also be synced with upstream changes in ``scikit-learn``. This enables this fork to always
+take advantage of improvements made in ``scikit-learn`` main upstream, while providing a customizable
+tree API.
 
 Installation
 ------------
@@ -73,133 +89,195 @@ scikit-learn requires:
 - joblib (>= |JoblibMinVersion|)
 - threadpoolctl (>= |ThreadpoolctlMinVersion|)
 
-=======
+============================
+Installing scikit-learn-tree
+============================
 
-**Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
-scikit-learn 1.0 and later require Python 3.7 or newer.
-scikit-learn 1.1 and later require Python 3.8 or newer.
+Scikit-learn-tree is a maintained fork of scikit-learn, which extends the
+tree submodule in a few ways documented in :ref:`changelog of the fork
+<fork-changelog>`. 
 
-Scikit-learn plotting capabilities (i.e., functions start with ``plot_`` and
-classes end with "Display") require Matplotlib (>= |MatplotlibMinVersion|).
-For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
-A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
-require pandas >= |PandasMinVersion|, some examples require seaborn >=
-|SeabornMinVersion| and plotly >= |PlotlyMinVersion|.
+We release versions of scikit-learn-tree in an analagous fashion to
+scikit-learn main. Due to maintenance resources, we only release on PyPi
+and recommend therefore installing with ``pip``.
 
-User installation
-~~~~~~~~~~~~~~~~~
+There are different ways to install scikit-learn-tree:
 
-If you already have a working installation of numpy and scipy,
-the easiest way to install scikit-learn is using ``pip``::
+  * :ref:`Install the latest official release <install_fork_release>`. This
+    is the best approach for most users. It will provide a stable version
+    and pre-built packages are available for most platforms.
+    
+  * :ref:`Building the package from source
+    <install_source>`. This is best for users who want the
+    latest-and-greatest features and aren't afraid of running
+    brand-new code. This is also needed for users who wish to contribute to the
+    project.
 
-    pip install -U scikit-learn
+.. _install_fork_release:
 
-or ``conda``::
+Installing the latest release
+-----------------------------
+We release wheels for common distributions and this is thus installable via pip.
 
-    conda install -c conda-forge scikit-learn
+.. prompt:: bash $
+  
+  pip install scikit-learn-tree
 
-The documentation includes more detailed `installation instructions <https://scikit-learn.org/stable/install.html>`_.
+This will install ``scikit-learn-tree`` under the namespace of ``sklearn``, which then
+can be used as a stand-in for any package that relies on the public API of ``sklearn``.
 
+For example, any usage of ``scikit-learn`` is preserved with ``scikit-learn-tree``
 
-Changelog
----------
+  >>> # the sklearn installed is that of scikit-learn-tree and is equivalent to scikit-learn
+  >>> from sklearn.ensemble import RandomForestClassifier
+  >>> clf = RandomForestClassifier(random_state=0)
+  >>> X = [[ 1,  2,  3],  # 2 samples, 3 features
+  ...      [11, 12, 13]]
+  >>> y = [0, 1]  # classes of each sample
+  >>> clf.fit(X, y)
+  RandomForestClassifier(random_state=0)
 
-See the `changelog <https://scikit-learn.org/dev/whats_new.html>`__
-for a history of notable changes to scikit-learn.
+.. _install_source:
+
+Building from source
+--------------------
+If you are a developer and are interested in helping maintain, or add some new
+features to the fork, the building from source instructions are exactly the same
+as that of scikit-learn main, so please refer to `scikit-learn documentation <https://scikit-learn.org/stable/developers/advanced_installation.html#install-bleeding-edge>`_
+for instructions on building from source.
 
 Development
------------
+===========
 
-We welcome new contributors of all experience levels. The scikit-learn
-community goals are to be helpful, welcoming, and effective. The
+We welcome new contributors of all experience levels, specifically to maintain the fork.
+Any contributions that make sure our fork is "better in-line" with scikit-learn upstream,
+or improves the tree submodule in anyway will be appreciated.
+
+The scikit-learn community goals are to be helpful, welcoming, and effective. The
 `Development Guide <https://scikit-learn.org/stable/developers/index.html>`_
 has detailed information about contributing code, documentation, tests, and
 more. We've included some basic information in this README.
 
-Important links
-~~~~~~~~~~~~~~~
+.. _fork-changelog:
+Major Changes of the Fork
+=========================
 
-- Official source code repo: https://github.com/scikit-learn/scikit-learn
-- Download releases: https://pypi.org/project/scikit-learn/
-- Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
+The purpose of this page is to illustrate some of the main features that
+``scikit-learn-tree`` provides compared to ``scikit-learn``. It assumes a
+an understanding of core package ``scikit-learn`` and also decision trees
+models. Please refer to our :ref:`installation instructions
+<fork-installation-instructions>` for installing ``scikit-learn-tree``.
 
-Source code
-~~~~~~~~~~~
+Scikit-learn-tree though operates as a stand-in for upstream ``scikit-learn``.
+It is used in packages exactly the same way and will support all features
+in the corresponding version of ``scikit-learn``. For example, if you
+are interested in features of ``scikit-learn`` in v1.2.2 for ``NearestNeighbors`` algorithm,
+then if ``scikit-learn-tree`` has a version release of v1.2.2, then it will have
+all those features. 
 
-You can check the latest sources with the command::
+The breaking API changes will be with respect to anything in the ``tree`` submodule,
+and related Forest ensemble models. See below for a detailed list of breaking changes.
 
-    git clone https://github.com/scikit-learn/scikit-learn.git
+See: https://scikit-learn.org/ for documentation on scikit-learn main.
 
-Contributing
-~~~~~~~~~~~~
+Our Philosophy
+--------------
+Our design philosophy with this fork of ``scikit-learn`` is to maintain as few changes
+as possible, such that incorporating upstream changes into the fork requires minimal effort.
 
-To learn more about making a contribution to scikit-learn, please see our
-`Contributing guide
-<https://scikit-learn.org/dev/developers/contributing.html>`_.
+Candidate changes and PRs accepted into the fork are those that:
 
-Testing
-~~~~~~~
+- improve compatability with upstream ``scikit-learn`` main
+- enable improved extensibility of tree models
 
-After installation, you can launch the test suite from outside the source
-directory (you will need to have ``pytest`` >= |PyTestMinVersion| installed)::
+Decision tree generalizations
+-----------------------------
 
-    pytest sklearn
+``Scikit-learn`` provides an axis-aligned :class:`~sklearn.tree.DecisionTreeClassifier`
+decision tree model (classifier and regressor), which has a few fundamental limitations
+that prevent 3rd parties from utilizing the existing class, without forking a large
+amount of copy/pasted Python and Cython code. We highlight those limitations here
+and then describe how we generalize that limitation.
 
-See the web page https://scikit-learn.org/dev/developers/contributing.html#testing-and-improving-test-coverage
-for more information.
+Cython Internal Private API:
 
-    Random number generation can be controlled during testing by setting
-    the ``SKLEARN_SEED`` environment variable.
+Note, the Cython API for scikit-learn is still not a publicly supported API, so it may
+change without warning.
 
-Submitting a Pull Request
-~~~~~~~~~~~~~~~~~~~~~~~~~
+- leaf and split nodes: These nodes are treated the same way and there is no internal
+  API for setting them differently. Quantile trees and causal trees inherently generalize
+  how leaf nodes are set.
+- Criterion class: The criterion class currently assumes a supervised learning interface.
+  - Our fix: We implement a ``BaseCriterion`` object that provides an abstract API for unsupervised criterion.
+- Splitter class: The splitter clas currently assumes a supervised learning interface and
+  does not provide a way of generalizing the way split candidates are proposed.
+  - Our fix: We implement a ``BaseSplitter`` object that provides an abstract API for unsupervised splitters and also implement an API to allow generalizations of the ``SplitRecord`` struct and ``Splitter.node_split`` function. For example, this enables oblique splits to be considered.
+- Tree class: The tree class currently assumes a supervised learning interface and does not
+  provide a way of generalizing the type of tree.
+  - Our fix: We implementa ``BaseTree`` object that provides an abstract API for general tree models and also implement an API that allows generalization of the type of tree. For example, oblique trees are trivially implementable as an extension now.
+- stopping conditions for splitter: Currently, the ``Splitter.node_split`` function has various
+  stopping conditions for the splitter based on hyperparameters. It is plausible that these conditions
+  may be extended. For example, in causal trees, one may want the splitter to also account for
+  a minimal degree of heterogeneity (i.e. variance) in its children nodes. 
 
-Before opening a Pull Request, have a look at the
-full Contributing page to make sure your code complies
-with our guidelines: https://scikit-learn.org/stable/developers/index.html
+Python API:
 
-Project History
----------------
+- ``sklearn.tree.BaseDecisionTree`` assumes the underlying tree model is supervised: The ``y``
+  parameter is required to be passed in, which is not necessary for general tree-based models.
+  For example, an unsupervised tree may pass in ``y=None``.
+  - Our fix: We fix this API, so the ``BaseDecisionTree`` is subclassable by unsupervised tree models that do not require ``y`` to be defined.
+- ``sklearn.tree.BaseDecisionTree`` does not provide a way to generalize the ``Criterion``, ``Splitter``
+  and ``Tree`` Cython classes used: The current codebase requires users to define custom
+  criterion and/or splitters outside the instantiation of the ``BaseDecisionTree``. This prevents
+  users from generalizing the ``Criterion`` and ``Splitter`` and creating a neat Python API wrapper.
+  Moreover, the ``Tree`` class is not customizable.
+  - Our fix: We internally implement a private function to actually build the entire tree, ``BaseDecisionTree._build_tree``, which can be overridden in subclasses that customize the criterion, splitter, or tree, or any combination of them.
+- ``sklearn.ensemble.BaseForest`` and its subclass algorithms are slow when ``n_samples`` is very high. Binning
+  features into a histogram, which is the basis of "LightGBM" and "HistGradientBoostingClassifier" is a computational
+  trick that can both significantly increase runtime efficiency, but also help prevent overfitting in trees, since
+  the sorting in "BestSplitter" is done on bins rather than the continuous feature values. This would enable
+  random forests and their variants to scale to millions of samples.
+  - Our fix: We added a ``max_bins=None`` keyword argument to the ``BaseForest`` class, and all its subclasses. The default behavior is no binning. The current implementation is not necessarily efficient. There are several improvements to be made. See below.
 
-The project was started in 2007 by David Cournapeau as a Google Summer
-of Code project, and since then many volunteers have contributed. See
-the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
-for a list of core contributors.
+Overall, the existing tree models, such as :class:`~sklearn.tree.DecisionTreeClassifier`
+and :class:`~sklearn.ensemble.RandomForestClassifier` all work exactly the same as they
+would in ``scikit-learn`` main, but these extensions enable 3rd-party packages to extend
+the Cython/Python API easily.
 
-The project is currently maintained by a team of volunteers.
+Roadmap
+-------
+There are several improvements that can be made in this fork. Primarily, the binning feature
+promises to make Random Forests and their variants ultra-fast. However, the binning needs
+to be implemented in a similar fashion to ``HistGradientBoostingClassifier``, which passes
+in the binning thresholds throughout the tree construction step, such that the split nodes
+store the actual numerical value of the bin rather than the "bin index". This requires
+modifying the tree Cython code to take in a ``binning_thresholds`` parameter that is part
+of the ``_BinMapper`` fitted class. This also allows us not to do any binning during prediction/apply
+time because the tree already stores the "numerical" threshold value we would want to apply
+to any incoming ``X`` that is not binned.
 
-**Note**: `scikit-learn` was previously referred to as `scikits.learn`.
+Besides that modification, the tree and splitter need to be able to handle not just ``np.float32``
+data (the type for X normally in Random Forests), but also ``uint8`` data (the type for X when it
+is binned in to e.g. 255 bins). This would not only save RAM since ``uint8`` storage of millions
+of samples would result in many GB saved, but also improved runtime.
 
-Help and Support
-----------------
+So in summary, the Cython code of the tree submodule needs to take in an extra parameter for
+the binning thresholds if binning occurs and also be able to handle ``X`` being of dtype ``uint8``.
+Afterwards, Random Forests will have fully leveraged the binning feature.
 
-Documentation
-~~~~~~~~~~~~~
+Something to keep in mind is that upstream scikit-learn is actively working on incorporating
+missing-value handling and categorical handling into Random Forests.
 
-- HTML documentation (stable release): https://scikit-learn.org
-- HTML documentation (development version): https://scikit-learn.org/dev/
-- FAQ: https://scikit-learn.org/stable/faq.html
+Next steps
+----------
 
-Communication
-~~~~~~~~~~~~~
+We have briefly covered how the tree submodule has changed with respect to ``scikit-learn``.
+This enables packages to leverage these changes in developing more complex tree models
+that may, or may not eventually be PRed into ``scikit-learn``. For example,
 
-- Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
-- Gitter: https://gitter.im/scikit-learn/scikit-learn
-- Logos & Branding: https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos
-- Blog: https://blog.scikit-learn.org
-- Calendar: https://blog.scikit-learn.org/calendar/
-- Twitter: https://twitter.com/scikit_learn
-- Twitter (commits): https://twitter.com/sklearn_commits
-- Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
-- Github Discussions: https://github.com/scikit-learn/scikit-learn/discussions
-- Website: https://scikit-learn.org
-- LinkedIn: https://www.linkedin.com/company/scikit-learn
-- YouTube: https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists
-- Facebook: https://www.facebook.com/scikitlearnofficial/
-- Instagram: https://www.instagram.com/scikitlearnofficial/
-- TikTok: https://www.tiktok.com/@scikit.learn
+- `scikit-tree <https://docs.neurodata.io/scikit-tree/dev/index.html>`_ is a scikit-learn
+  compatible package for more complex and advanced tree models.
 
-Citation
-~~~~~~~~
-
-If you use scikit-learn in a scientific publication, we would appreciate citations: https://scikit-learn.org/stable/about.html#citing-scikit-learn
+If you are developing tree models, we encourage you to take a look at that package, or
+if you have suggestions to make the tree submodule of our fork, ``scikit-learn-tree``
+more 

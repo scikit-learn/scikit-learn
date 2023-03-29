@@ -10,12 +10,13 @@ jobs:
   check:
     name: A reviewer will let you know if it is required or can be bypassed
     runs-on: ubuntu-latest
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'No Changelog Needed') == 0 }}
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'No Changelog Needed') == 0 && github.repository == 'scikit-learn/scikit-learn' }}
     steps:
       - name: Get PR number and milestone
         run: |
           echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           echo "TAGGED_MILESTONE=${{ github.event.pull_request.milestone.title }}" >> $GITHUB_ENV
+          echo "${{ github.repository }}"
       - uses: actions/checkout@v3
         with:
           fetch-depth: '0'

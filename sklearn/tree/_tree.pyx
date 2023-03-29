@@ -22,6 +22,8 @@ from libcpp.vector cimport vector
 from libcpp.algorithm cimport pop_heap
 from libcpp.algorithm cimport push_heap
 from libcpp cimport bool
+from cython.operator cimport dereference as deref
+from libc.stdlib cimport malloc, free
 
 import struct
 
@@ -82,6 +84,7 @@ NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 # =============================================================================
 # TreeBuilder
 # =============================================================================
+
 
 cdef class TreeBuilder:
     """Interface for different tree building strategies."""
@@ -196,8 +199,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef bint is_left
         cdef SIZE_t n_node_samples = splitter.n_samples
         cdef double weighted_n_node_samples
-        cdef SplitRecord split
         cdef SIZE_t node_id
+
+        cdef SplitRecord split
+        cdef SplitRecord* split_ptr = <SplitRecord *>malloc(splitter.pointer_size())
 
         cdef double impurity = INFINITY
         cdef SIZE_t n_constant_features
@@ -248,7 +253,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_leaf = is_leaf or impurity <= EPSILON
 
                 if not is_leaf:
-                    splitter.node_split(impurity, &split, &n_constant_features)
+                    splitter.node_split(impurity, split_ptr, &n_constant_features)
+
+                    # assign local copy of SplitRecord to assign
+                    # pos, improvement, and impurity scores
+                    split = deref(split_ptr)
+
                     # If EPSILON=0 in the below comparison, float precision
                     # issues stop splitting, producing trees that are
                     # dissimilar to v0.18
@@ -256,8 +266,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                (split.improvement + EPSILON <
                                 min_impurity_decrease))
 
-                node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
-                                         split.threshold, impurity, n_node_samples,
+                node_id = tree._add_node(parent, is_left, is_leaf, split_ptr,
+                                         impurity, n_node_samples,
                                          weighted_n_node_samples)
 
                 if node_id == INTPTR_MAX:
@@ -297,6 +307,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
             if rc >= 0:
                 tree.max_depth = max_depth_seen
+        
+        # free the memory created for the SplitRecord pointer
+        free(split_ptr)
+
         if rc == -1:
             raise MemoryError()
 
@@ -462,6 +476,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     FrontierRecord* res) except -1 nogil:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
+        cdef SplitRecord* split_ptr = <SplitRecord *>malloc(splitter.pointer_size())
+        
         cdef SIZE_t node_id
         cdef SIZE_t n_node_samples
         cdef SIZE_t n_constant_features = 0
@@ -483,7 +499,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                    )
 
         if not is_leaf:
-            splitter.node_split(impurity, &split, &n_constant_features)
+            splitter.node_split(impurity, split_ptr, &n_constant_features)
+            # assign local copy of SplitRecord to assign
+            # pos, improvement, and impurity scores
+            split = deref(split_ptr)
+
             # If EPSILON=0 in the below comparison, float precision issues stop
             # splitting early, producing trees that are dissimilar to v0.18
             is_leaf = (is_leaf or split.pos >= end or
@@ -493,7 +513,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  if parent != NULL
                                  else _TREE_UNDEFINED,
                                  is_left, is_leaf,
-                                 split.feature, split.threshold, impurity, n_node_samples,
+                                 split_ptr, impurity, n_node_samples,
                                  weighted_n_node_samples)
         if node_id == INTPTR_MAX:
             return -1
@@ -522,7 +542,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             res.improvement = 0.0
             res.impurity_left = impurity
             res.impurity_right = impurity
-
+        
+        free(split_ptr)
         return 0
 
 
@@ -530,7 +551,629 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 # Tree
 # =============================================================================
 
-cdef class Tree:
+cdef class BaseTree:
+    """Base class for Cython tree models.
+    
+    Downstream classes must implement
+    """
+    cdef int _resize(
+        self,
+        SIZE_t capacity
+    ) except -1 nogil:
+        """Resize all inner arrays to `capacity`, if `capacity` == -1, then
+           double the size of the inner arrays.
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
+        if self._resize_c(capacity) != 0:
+            # Acquire gil only if we need to raise
+            with gil:
+                raise MemoryError()
+
+    cdef int _resize_c(
+        self,
+        SIZE_t capacity=INTPTR_MAX
+    ) except -1 nogil:
+        """Guts of _resize
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
+        if capacity == self.capacity and self.nodes != NULL:
+            return 0
+
+        if capacity == INTPTR_MAX:
+            if self.capacity == 0:
+                capacity = 3  # default initial value
+            else:
+                capacity = 2 * self.capacity
+
+        safe_realloc(&self.nodes, capacity)
+        safe_realloc(&self.value, capacity * self.value_stride)
+
+        # value memory is initialised to 0 to enable classifier argmax
+        if capacity > self.capacity:
+            memset(<void*>(self.value + self.capacity * self.value_stride), 0,
+                   (capacity - self.capacity) * self.value_stride *
+                   sizeof(double))
+
+        # if capacity smaller than node_count, adjust the counter
+        if capacity < self.node_count:
+            self.node_count = capacity
+
+        self.capacity = capacity
+        return 0
+
+    cdef int _set_split_node(
+        self,
+        SplitRecord* split_node,
+        Node* node
+    ) except -1 nogil:
+        """Set split node data.
+        
+        Parameters
+        ----------
+        split_node : SplitRecord*
+            The pointer to the record of the split node data.
+        node : Node*
+            The pointer to the node that will hold the split node.
+        """
+        # left_child and right_child will be set later for a split node
+        node.feature = split_node.feature
+        node.threshold = split_node.threshold
+        return 1
+
+    cdef int _set_leaf_node(
+        self,
+        SplitRecord* split_node,
+        Node* node
+    ) except -1 nogil:
+        """Set leaf node data.
+        
+        Parameters
+        ----------
+        split_node : SplitRecord*
+            The pointer to the record of the leaf node data.
+        node : Node*
+            The pointer to the node that will hold the leaf node.
+        """
+        node.left_child = _TREE_LEAF
+        node.right_child = _TREE_LEAF
+        node.feature = _TREE_UNDEFINED
+        node.threshold = _TREE_UNDEFINED
+        return 1
+
+    cdef DTYPE_t _compute_feature(self, const DTYPE_t[:, :] X_ndarray,
+            SIZE_t sample_index,
+            Node *node) noexcept nogil:
+        """Compute feature from a given data matrix, X.
+
+        In axis-aligned trees, this is simply the value in the column of X
+        for this specific feature.
+        """
+        # the feature index
+        cdef DTYPE_t feature = X_ndarray[sample_index, node.feature]
+        return feature
+
+    cdef SIZE_t _add_node(
+        self, 
+        SIZE_t parent,
+        bint is_left,
+        bint is_leaf,
+        SplitRecord* split_node,
+        double impurity,
+        SIZE_t n_node_samples,
+        double weighted_n_node_samples
+    ) except -1 nogil:
+        """Add a node to the tree.
+        The new node registers itself as the child of its parent.
+        Parameters
+        ----------
+        parent : SIZE_t
+            The index of the parent. If '_TREE_UNDEFINED', then the current
+            node is a root node.
+        is_left : bint
+            Whether or not the current node is to the left of the parent node.
+        is_leaf : bint
+            Whether or not the current node is a leaf node.
+        split_node : SplitRecord*
+            A pointer to a SplitRecord pointer address.
+        impurity : double
+            The impurity of the node to be added.
+        n_node_samples : SIZE_t
+            The number of samples in the node.
+        weighted_n_node_samples : double
+            The weight of the samples in the node.
+            
+        Returns (size_t)(-1) on error.
+        """
+        cdef SIZE_t node_id = self.node_count
+
+        if node_id >= self.capacity:
+            if self._resize_c() != 0:
+                return INTPTR_MAX
+
+        cdef Node* node = &self.nodes[node_id]
+        node.impurity = impurity
+        node.n_node_samples = n_node_samples
+        node.weighted_n_node_samples = weighted_n_node_samples
+
+        if parent != _TREE_UNDEFINED:
+            if is_left:
+                self.nodes[parent].left_child = node_id
+            else:
+                self.nodes[parent].right_child = node_id
+
+        if is_leaf:
+            if self._set_leaf_node(split_node, node) != 1:
+                 with gil:
+                     raise RuntimeError
+        else:
+            if self._set_split_node(split_node, node) != 1:
+                 with gil:
+                     raise RuntimeError
+
+        self.node_count += 1
+
+        return node_id
+
+    cpdef cnp.ndarray apply(self, object X):
+        """Finds the terminal region (=leaf node) for each sample in X."""
+        if issparse(X):
+            return self._apply_sparse_csr(X)
+        else:
+            return self._apply_dense(X)
+
+    cdef inline cnp.ndarray _apply_dense(self, object X):
+        """Finds the terminal region (=leaf node) for each sample in X."""
+
+        # Check input
+        if not isinstance(X, np.ndarray):
+            raise ValueError("X should be in np.ndarray format, got %s"
+                             % type(X))
+
+        if X.dtype != DTYPE:
+            raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
+
+        # Extract input
+        cdef const DTYPE_t[:, :] X_ndarray = X
+        cdef SIZE_t n_samples = X.shape[0]
+
+        # Initialize output
+        cdef SIZE_t[:] out = np.zeros(n_samples, dtype=np.intp)
+
+        # Initialize auxiliary data-structure
+        cdef Node* node = NULL
+        cdef SIZE_t i = 0
+
+        # the feature value
+        cdef DTYPE_t feature_value = 0
+
+        with nogil:
+            for i in range(n_samples):
+                node = self.nodes
+
+                # While node not a leaf
+                while node.left_child != _TREE_LEAF:
+                    # ... and node.right_child != _TREE_LEAF:
+                    
+                    # compute the feature value to compare against threshold
+                    feature_value = self._compute_feature(X_ndarray, i, node)
+                    if feature_value <= node.threshold:
+                        node = &self.nodes[node.left_child]
+                    else:
+                        node = &self.nodes[node.right_child]
+
+                out[i] = <SIZE_t>(node - self.nodes)  # node offset
+
+        return np.asarray(out)
+
+    cdef inline cnp.ndarray _apply_sparse_csr(self, object X):
+        """Finds the terminal region (=leaf node) for each sample in sparse X.
+        """
+        # Check input
+        if not isinstance(X, csr_matrix):
+            raise ValueError("X should be in csr_matrix format, got %s"
+                             % type(X))
+
+        if X.dtype != DTYPE:
+            raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
+
+        # Extract input
+        cdef const DTYPE_t[:] X_data = X.data
+        cdef const INT32_t[:] X_indices  = X.indices
+        cdef const INT32_t[:] X_indptr  = X.indptr
+
+        cdef SIZE_t n_samples = X.shape[0]
+        cdef SIZE_t n_features = X.shape[1]
+
+        # Initialize output
+        cdef SIZE_t[:] out = np.zeros(n_samples, dtype=np.intp)
+
+        # Initialize auxiliary data-structure
+        cdef DTYPE_t feature_value = 0.
+        cdef Node* node = NULL
+        cdef DTYPE_t* X_sample = NULL
+        cdef SIZE_t i = 0
+        cdef INT32_t k = 0
+
+        # feature_to_sample as a data structure records the last seen sample
+        # for each feature; functionally, it is an efficient way to identify
+        # which features are nonzero in the present sample.
+        cdef SIZE_t* feature_to_sample = NULL
+
+        safe_realloc(&X_sample, n_features)
+        safe_realloc(&feature_to_sample, n_features)
+
+        with nogil:
+            memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))
+
+            for i in range(n_samples):
+                node = self.nodes
+
+                for k in range(X_indptr[i], X_indptr[i + 1]):
+                    feature_to_sample[X_indices[k]] = i
+                    X_sample[X_indices[k]] = X_data[k]
+
+                # While node not a leaf
+                while node.left_child != _TREE_LEAF:
+                    # ... and node.right_child != _TREE_LEAF:
+                    if feature_to_sample[node.feature] == i:
+                        feature_value = X_sample[node.feature]
+                    else:
+                        feature_value = 0.
+
+                    if feature_value <= node.threshold:
+                        node = &self.nodes[node.left_child]
+                    else:
+                        node = &self.nodes[node.right_child]
+
+                out[i] = <SIZE_t>(node - self.nodes)  # node offset
+
+            # Free auxiliary arrays
+            free(X_sample)
+            free(feature_to_sample)
+
+        return np.asarray(out)
+
+    cpdef object decision_path(self, object X):
+        """Finds the decision path (=node) for each sample in X."""
+        if issparse(X):
+            return self._decision_path_sparse_csr(X)
+        else:
+            return self._decision_path_dense(X)
+
+    cdef inline object _decision_path_dense(self, object X):
+        """Finds the decision path (=node) for each sample in X."""
+
+        # Check input
+        if not isinstance(X, np.ndarray):
+            raise ValueError("X should be in np.ndarray format, got %s"
+                             % type(X))
+
+        if X.dtype != DTYPE:
+            raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
+
+        # Extract input
+        cdef const DTYPE_t[:, :] X_ndarray = X
+        cdef SIZE_t n_samples = X.shape[0]
+
+        # Initialize output
+        cdef SIZE_t[:] indptr = np.zeros(n_samples + 1, dtype=np.intp)
+        cdef SIZE_t[:] indices = np.zeros(
+            n_samples * (1 + self.max_depth), dtype=np.intp
+        )
+
+        # Initialize auxiliary data-structure
+        cdef Node* node = NULL
+        cdef SIZE_t i = 0
+
+        # the feature index
+        cdef DOUBLE_t feature
+
+        with nogil:
+            for i in range(n_samples):
+                node = self.nodes
+                indptr[i + 1] = indptr[i]
+
+                # Add all external nodes
+                while node.left_child != _TREE_LEAF:
+                    # ... and node.right_child != _TREE_LEAF:
+                    indices[indptr[i + 1]] = <SIZE_t>(node - self.nodes)
+                    indptr[i + 1] += 1
+
+                    # compute the feature value to compare against threshold
+                    feature = self._compute_feature(X_ndarray, i, node)
+                    if feature <= node.threshold:
+                        node = &self.nodes[node.left_child]
+                    else:
+                        node = &self.nodes[node.right_child]
+
+                # Add the leave node
+                indices[indptr[i + 1]] = <SIZE_t>(node - self.nodes)
+                indptr[i + 1] += 1
+
+        indices = indices[:indptr[n_samples]]
+        cdef SIZE_t[:] data = np.ones(shape=len(indices), dtype=np.intp)
+        out = csr_matrix((data, indices, indptr),
+                         shape=(n_samples, self.node_count))
+
+        return out
+
+    cdef inline object _decision_path_sparse_csr(self, object X):
+        """Finds the decision path (=node) for each sample in X."""
+
+        # Check input
+        if not isinstance(X, csr_matrix):
+            raise ValueError("X should be in csr_matrix format, got %s"
+                             % type(X))
+
+        if X.dtype != DTYPE:
+            raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
+
+        # Extract input
+        cdef const DTYPE_t[:] X_data = X.data
+        cdef const INT32_t[:] X_indices  = X.indices
+        cdef const INT32_t[:] X_indptr  = X.indptr
+
+        cdef SIZE_t n_samples = X.shape[0]
+        cdef SIZE_t n_features = X.shape[1]
+
+        # Initialize output
+        cdef SIZE_t[:] indptr = np.zeros(n_samples + 1, dtype=np.intp)
+        cdef SIZE_t[:] indices = np.zeros(
+            n_samples * (1 + self.max_depth), dtype=np.intp
+        )
+
+        # Initialize auxiliary data-structure
+        cdef DTYPE_t feature_value = 0.
+        cdef Node* node = NULL
+        cdef DTYPE_t* X_sample = NULL
+        cdef SIZE_t i = 0
+        cdef INT32_t k = 0
+
+        # feature_to_sample as a data structure records the last seen sample
+        # for each feature; functionally, it is an efficient way to identify
+        # which features are nonzero in the present sample.
+        cdef SIZE_t* feature_to_sample = NULL
+
+        safe_realloc(&X_sample, n_features)
+        safe_realloc(&feature_to_sample, n_features)
+
+        with nogil:
+            memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))
+
+            for i in range(n_samples):
+                node = self.nodes
+                indptr[i + 1] = indptr[i]
+
+                for k in range(X_indptr[i], X_indptr[i + 1]):
+                    feature_to_sample[X_indices[k]] = i
+                    X_sample[X_indices[k]] = X_data[k]
+
+                # While node not a leaf
+                while node.left_child != _TREE_LEAF:
+                    # ... and node.right_child != _TREE_LEAF:
+
+                    indices[indptr[i + 1]] = <SIZE_t>(node - self.nodes)
+                    indptr[i + 1] += 1
+
+                    if feature_to_sample[node.feature] == i:
+                        feature_value = X_sample[node.feature]
+
+                    else:
+                        feature_value = 0.
+
+                    if feature_value <= node.threshold:
+                        node = &self.nodes[node.left_child]
+                    else:
+                        node = &self.nodes[node.right_child]
+
+                # Add the leave node
+                indices[indptr[i + 1]] = <SIZE_t>(node - self.nodes)
+                indptr[i + 1] += 1
+
+            # Free auxiliary arrays
+            free(X_sample)
+            free(feature_to_sample)
+
+        indices = indices[:indptr[n_samples]]
+        cdef SIZE_t[:] data = np.ones(shape=len(indices), dtype=np.intp)
+        out = csr_matrix((data, indices, indptr),
+                         shape=(n_samples, self.node_count))
+
+        return out
+
+    cpdef compute_node_depths(self):
+        """Compute the depth of each node in a tree.
+
+        .. versionadded:: 1.3
+
+        Returns
+        -------
+        depths : ndarray of shape (self.node_count,), dtype=np.int64
+            The depth of each node in the tree.
+        """
+        cdef:
+            cnp.int64_t[::1] depths = np.empty(self.node_count, dtype=np.int64)
+            cnp.npy_intp[:] children_left = self.children_left
+            cnp.npy_intp[:] children_right = self.children_right
+            cnp.npy_intp node_id
+            cnp.npy_intp node_count = self.node_count
+            cnp.int64_t depth
+
+        depths[0] = 1  # init root node
+        for node_id in range(node_count):
+            if children_left[node_id] != _TREE_LEAF:
+                depth = depths[node_id] + 1
+                depths[children_left[node_id]] = depth
+                depths[children_right[node_id]] = depth
+
+        return depths.base
+
+    cpdef compute_feature_importances(self, normalize=True):
+        """Computes the importance of each feature (aka variable)."""
+        cdef Node* nodes = self.nodes
+        cdef Node* node = nodes
+        cdef Node* end_node = node + self.node_count
+
+        cdef double normalizer = 0.
+
+        cdef cnp.float64_t[:] importances = np.zeros(self.n_features)
+
+        with nogil:
+            while node != end_node:
+                if node.left_child != _TREE_LEAF:
+                    # ... and node.right_child != _TREE_LEAF:
+                    self._compute_feature_importances(
+                        importances, node)
+                        
+                node += 1
+
+        for i in range(self.n_features):
+            importances[i] /= nodes[0].weighted_n_node_samples
+
+        if normalize:
+            normalizer = np.sum(importances)
+
+            if normalizer > 0.0:
+                # Avoid dividing by zero (e.g., when root is pure)
+                for i in range(self.n_features):
+                    importances[i] /= normalizer
+
+        return np.asarray(importances)
+
+    cdef void _compute_feature_importances(
+        self,
+        cnp.float64_t[:] importances,
+        Node* node
+    ) noexcept nogil:
+        """Compute feature importances from a Node in the Tree.
+        
+        Wrapped in a private function to allow subclassing that
+        computes feature importances.
+        """
+        cdef Node* nodes = self.nodes
+        cdef Node* left
+        cdef Node* right
+
+        left = &nodes[node.left_child]
+        right = &nodes[node.right_child]
+
+        importances[node.feature] += (
+                        node.weighted_n_node_samples * node.impurity -
+                        left.weighted_n_node_samples * left.impurity -
+                        right.weighted_n_node_samples * right.impurity)
+
+    def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
+                                   int[::1] target_features,
+                                   double[::1] out):
+        """Partial dependence of the response on the ``target_feature`` set.
+
+        For each sample in ``X`` a tree traversal is performed.
+        Each traversal starts from the root with weight 1.0.
+
+        At each non-leaf node that splits on a target feature, either
+        the left child or the right child is visited based on the feature
+        value of the current sample, and the weight is not modified.
+        At each non-leaf node that splits on a complementary feature,
+        both children are visited and the weight is multiplied by the fraction
+        of training samples which went to each child.
+
+        At each leaf, the value of the node is multiplied by the current
+        weight (weights sum to 1 for all visited terminal nodes).
+
+        Parameters
+        ----------
+        X : view on 2d ndarray, shape (n_samples, n_target_features)
+            The grid points on which the partial dependence should be
+            evaluated.
+        target_features : view on 1d ndarray, shape (n_target_features)
+            The set of target features for which the partial dependence
+            should be evaluated.
+        out : view on 1d ndarray, shape (n_samples)
+            The value of the partial dependence function on each grid
+            point.
+        """
+        cdef:
+            double[::1] weight_stack = np.zeros(self.node_count,
+                                                dtype=np.float64)
+            SIZE_t[::1] node_idx_stack = np.zeros(self.node_count,
+                                                  dtype=np.intp)
+            SIZE_t sample_idx
+            SIZE_t feature_idx
+            int stack_size
+            double left_sample_frac
+            double current_weight
+            double total_weight  # used for sanity check only
+            Node *current_node  # use a pointer to avoid copying attributes
+            SIZE_t current_node_idx
+            bint is_target_feature
+            SIZE_t _TREE_LEAF = TREE_LEAF  # to avoid python interactions
+
+        for sample_idx in range(X.shape[0]):
+            # init stacks for current sample
+            stack_size = 1
+            node_idx_stack[0] = 0  # root node
+            weight_stack[0] = 1  # all the samples are in the root node
+            total_weight = 0
+
+            while stack_size > 0:
+                # pop the stack
+                stack_size -= 1
+                current_node_idx = node_idx_stack[stack_size]
+                current_node = &self.nodes[current_node_idx]
+
+                if current_node.left_child == _TREE_LEAF:
+                    # leaf node
+                    out[sample_idx] += (weight_stack[stack_size] *
+                                        self.value[current_node_idx])
+                    total_weight += weight_stack[stack_size]
+                else:
+                    # non-leaf node
+
+                    # determine if the split feature is a target feature
+                    is_target_feature = False
+                    for feature_idx in range(target_features.shape[0]):
+                        if target_features[feature_idx] == current_node.feature:
+                            is_target_feature = True
+                            break
+
+                    if is_target_feature:
+                        # In this case, we push left or right child on stack
+                        if X[sample_idx, feature_idx] <= current_node.threshold:
+                            node_idx_stack[stack_size] = current_node.left_child
+                        else:
+                            node_idx_stack[stack_size] = current_node.right_child
+                        stack_size += 1
+                    else:
+                        # In this case, we push both children onto the stack,
+                        # and give a weight proportional to the number of
+                        # samples going through each branch.
+
+                        # push left child
+                        node_idx_stack[stack_size] = current_node.left_child
+                        left_sample_frac = (
+                            self.nodes[current_node.left_child].weighted_n_node_samples /
+                            current_node.weighted_n_node_samples)
+                        current_weight = weight_stack[stack_size]
+                        weight_stack[stack_size] = current_weight * left_sample_frac
+                        stack_size += 1
+
+                        # push right child
+                        node_idx_stack[stack_size] = current_node.right_child
+                        weight_stack[stack_size] = (
+                            current_weight * (1 - left_sample_frac))
+                        stack_size += 1
+
+            # Sanity check. Should never happen.
+            if not (0.999 < total_weight < 1.001):
+                raise ValueError("Total weight should be 1.0 but was %.9f" %
+                                 total_weight)
+
+
+cdef class Tree(BaseTree):
     """Array-based representation of a binary decision tree.
 
     The binary tree is represented as a number of parallel arrays. The i-th
@@ -713,420 +1356,6 @@ cdef class Tree:
         value = memcpy(self.value, cnp.PyArray_DATA(value_ndarray),
                        self.capacity * self.value_stride * sizeof(double))
 
-    cdef int _resize(self, SIZE_t capacity) except -1 nogil:
-        """Resize all inner arrays to `capacity`, if `capacity` == -1, then
-           double the size of the inner arrays.
-
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-        if self._resize_c(capacity) != 0:
-            # Acquire gil only if we need to raise
-            with gil:
-                raise MemoryError()
-
-    cdef int _resize_c(self, SIZE_t capacity=INTPTR_MAX) except -1 nogil:
-        """Guts of _resize
-
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-        if capacity == self.capacity and self.nodes != NULL:
-            return 0
-
-        if capacity == INTPTR_MAX:
-            if self.capacity == 0:
-                capacity = 3  # default initial value
-            else:
-                capacity = 2 * self.capacity
-
-        safe_realloc(&self.nodes, capacity)
-        safe_realloc(&self.value, capacity * self.value_stride)
-
-        # value memory is initialised to 0 to enable classifier argmax
-        if capacity > self.capacity:
-            memset(<void*>(self.value + self.capacity * self.value_stride), 0,
-                   (capacity - self.capacity) * self.value_stride *
-                   sizeof(double))
-
-        # if capacity smaller than node_count, adjust the counter
-        if capacity < self.node_count:
-            self.node_count = capacity
-
-        self.capacity = capacity
-        return 0
-
-    cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
-                          SIZE_t feature, double threshold, double impurity,
-                          SIZE_t n_node_samples,
-                          double weighted_n_node_samples) except -1 nogil:
-        """Add a node to the tree.
-
-        The new node registers itself as the child of its parent.
-
-        Returns (size_t)(-1) on error.
-        """
-        cdef SIZE_t node_id = self.node_count
-
-        if node_id >= self.capacity:
-            if self._resize_c() != 0:
-                return INTPTR_MAX
-
-        cdef Node* node = &self.nodes[node_id]
-        node.impurity = impurity
-        node.n_node_samples = n_node_samples
-        node.weighted_n_node_samples = weighted_n_node_samples
-
-        if parent != _TREE_UNDEFINED:
-            if is_left:
-                self.nodes[parent].left_child = node_id
-            else:
-                self.nodes[parent].right_child = node_id
-
-        if is_leaf:
-            node.left_child = _TREE_LEAF
-            node.right_child = _TREE_LEAF
-            node.feature = _TREE_UNDEFINED
-            node.threshold = _TREE_UNDEFINED
-
-        else:
-            # left_child and right_child will be set later
-            node.feature = feature
-            node.threshold = threshold
-
-        self.node_count += 1
-
-        return node_id
-
-    cpdef cnp.ndarray predict(self, object X):
-        """Predict target for X."""
-        out = self._get_value_ndarray().take(self.apply(X), axis=0,
-                                             mode='clip')
-        if self.n_outputs == 1:
-            out = out.reshape(X.shape[0], self.max_n_classes)
-        return out
-
-    cpdef cnp.ndarray apply(self, object X):
-        """Finds the terminal region (=leaf node) for each sample in X."""
-        if issparse(X):
-            return self._apply_sparse_csr(X)
-        else:
-            return self._apply_dense(X)
-
-    cdef inline cnp.ndarray _apply_dense(self, object X):
-        """Finds the terminal region (=leaf node) for each sample in X."""
-
-        # Check input
-        if not isinstance(X, np.ndarray):
-            raise ValueError("X should be in np.ndarray format, got %s"
-                             % type(X))
-
-        if X.dtype != DTYPE:
-            raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
-
-        # Extract input
-        cdef const DTYPE_t[:, :] X_ndarray = X
-        cdef SIZE_t n_samples = X.shape[0]
-
-        # Initialize output
-        cdef SIZE_t[:] out = np.zeros(n_samples, dtype=np.intp)
-
-        # Initialize auxiliary data-structure
-        cdef Node* node = NULL
-        cdef SIZE_t i = 0
-
-        with nogil:
-            for i in range(n_samples):
-                node = self.nodes
-                # While node not a leaf
-                while node.left_child != _TREE_LEAF:
-                    # ... and node.right_child != _TREE_LEAF:
-                    if X_ndarray[i, node.feature] <= node.threshold:
-                        node = &self.nodes[node.left_child]
-                    else:
-                        node = &self.nodes[node.right_child]
-
-                out[i] = <SIZE_t>(node - self.nodes)  # node offset
-
-        return np.asarray(out)
-
-    cdef inline cnp.ndarray _apply_sparse_csr(self, object X):
-        """Finds the terminal region (=leaf node) for each sample in sparse X.
-        """
-        # Check input
-        if not isinstance(X, csr_matrix):
-            raise ValueError("X should be in csr_matrix format, got %s"
-                             % type(X))
-
-        if X.dtype != DTYPE:
-            raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
-
-        # Extract input
-        cdef const DTYPE_t[:] X_data = X.data
-        cdef const INT32_t[:] X_indices  = X.indices
-        cdef const INT32_t[:] X_indptr  = X.indptr
-
-        cdef SIZE_t n_samples = X.shape[0]
-        cdef SIZE_t n_features = X.shape[1]
-
-        # Initialize output
-        cdef SIZE_t[:] out = np.zeros(n_samples, dtype=np.intp)
-
-        # Initialize auxiliary data-structure
-        cdef DTYPE_t feature_value = 0.
-        cdef Node* node = NULL
-        cdef DTYPE_t* X_sample = NULL
-        cdef SIZE_t i = 0
-        cdef INT32_t k = 0
-
-        # feature_to_sample as a data structure records the last seen sample
-        # for each feature; functionally, it is an efficient way to identify
-        # which features are nonzero in the present sample.
-        cdef SIZE_t* feature_to_sample = NULL
-
-        safe_realloc(&X_sample, n_features)
-        safe_realloc(&feature_to_sample, n_features)
-
-        with nogil:
-            memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))
-
-            for i in range(n_samples):
-                node = self.nodes
-
-                for k in range(X_indptr[i], X_indptr[i + 1]):
-                    feature_to_sample[X_indices[k]] = i
-                    X_sample[X_indices[k]] = X_data[k]
-
-                # While node not a leaf
-                while node.left_child != _TREE_LEAF:
-                    # ... and node.right_child != _TREE_LEAF:
-                    if feature_to_sample[node.feature] == i:
-                        feature_value = X_sample[node.feature]
-
-                    else:
-                        feature_value = 0.
-
-                    if feature_value <= node.threshold:
-                        node = &self.nodes[node.left_child]
-                    else:
-                        node = &self.nodes[node.right_child]
-
-                out[i] = <SIZE_t>(node - self.nodes)  # node offset
-
-            # Free auxiliary arrays
-            free(X_sample)
-            free(feature_to_sample)
-
-        return np.asarray(out)
-
-    cpdef object decision_path(self, object X):
-        """Finds the decision path (=node) for each sample in X."""
-        if issparse(X):
-            return self._decision_path_sparse_csr(X)
-        else:
-            return self._decision_path_dense(X)
-
-    cdef inline object _decision_path_dense(self, object X):
-        """Finds the decision path (=node) for each sample in X."""
-
-        # Check input
-        if not isinstance(X, np.ndarray):
-            raise ValueError("X should be in np.ndarray format, got %s"
-                             % type(X))
-
-        if X.dtype != DTYPE:
-            raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
-
-        # Extract input
-        cdef const DTYPE_t[:, :] X_ndarray = X
-        cdef SIZE_t n_samples = X.shape[0]
-
-        # Initialize output
-        cdef SIZE_t[:] indptr = np.zeros(n_samples + 1, dtype=np.intp)
-        cdef SIZE_t[:] indices = np.zeros(
-            n_samples * (1 + self.max_depth), dtype=np.intp
-        )
-
-        # Initialize auxiliary data-structure
-        cdef Node* node = NULL
-        cdef SIZE_t i = 0
-
-        with nogil:
-            for i in range(n_samples):
-                node = self.nodes
-                indptr[i + 1] = indptr[i]
-
-                # Add all external nodes
-                while node.left_child != _TREE_LEAF:
-                    # ... and node.right_child != _TREE_LEAF:
-                    indices[indptr[i + 1]] = <SIZE_t>(node - self.nodes)
-                    indptr[i + 1] += 1
-
-                    if X_ndarray[i, node.feature] <= node.threshold:
-                        node = &self.nodes[node.left_child]
-                    else:
-                        node = &self.nodes[node.right_child]
-
-                # Add the leave node
-                indices[indptr[i + 1]] = <SIZE_t>(node - self.nodes)
-                indptr[i + 1] += 1
-
-        indices = indices[:indptr[n_samples]]
-        cdef SIZE_t[:] data = np.ones(shape=len(indices), dtype=np.intp)
-        out = csr_matrix((data, indices, indptr),
-                         shape=(n_samples, self.node_count))
-
-        return out
-
-    cdef inline object _decision_path_sparse_csr(self, object X):
-        """Finds the decision path (=node) for each sample in X."""
-
-        # Check input
-        if not isinstance(X, csr_matrix):
-            raise ValueError("X should be in csr_matrix format, got %s"
-                             % type(X))
-
-        if X.dtype != DTYPE:
-            raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
-
-        # Extract input
-        cdef const DTYPE_t[:] X_data = X.data
-        cdef const INT32_t[:] X_indices  = X.indices
-        cdef const INT32_t[:] X_indptr  = X.indptr
-
-        cdef SIZE_t n_samples = X.shape[0]
-        cdef SIZE_t n_features = X.shape[1]
-
-        # Initialize output
-        cdef SIZE_t[:] indptr = np.zeros(n_samples + 1, dtype=np.intp)
-        cdef SIZE_t[:] indices = np.zeros(
-            n_samples * (1 + self.max_depth), dtype=np.intp
-        )
-
-        # Initialize auxiliary data-structure
-        cdef DTYPE_t feature_value = 0.
-        cdef Node* node = NULL
-        cdef DTYPE_t* X_sample = NULL
-        cdef SIZE_t i = 0
-        cdef INT32_t k = 0
-
-        # feature_to_sample as a data structure records the last seen sample
-        # for each feature; functionally, it is an efficient way to identify
-        # which features are nonzero in the present sample.
-        cdef SIZE_t* feature_to_sample = NULL
-
-        safe_realloc(&X_sample, n_features)
-        safe_realloc(&feature_to_sample, n_features)
-
-        with nogil:
-            memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))
-
-            for i in range(n_samples):
-                node = self.nodes
-                indptr[i + 1] = indptr[i]
-
-                for k in range(X_indptr[i], X_indptr[i + 1]):
-                    feature_to_sample[X_indices[k]] = i
-                    X_sample[X_indices[k]] = X_data[k]
-
-                # While node not a leaf
-                while node.left_child != _TREE_LEAF:
-                    # ... and node.right_child != _TREE_LEAF:
-
-                    indices[indptr[i + 1]] = <SIZE_t>(node - self.nodes)
-                    indptr[i + 1] += 1
-
-                    if feature_to_sample[node.feature] == i:
-                        feature_value = X_sample[node.feature]
-
-                    else:
-                        feature_value = 0.
-
-                    if feature_value <= node.threshold:
-                        node = &self.nodes[node.left_child]
-                    else:
-                        node = &self.nodes[node.right_child]
-
-                # Add the leave node
-                indices[indptr[i + 1]] = <SIZE_t>(node - self.nodes)
-                indptr[i + 1] += 1
-
-            # Free auxiliary arrays
-            free(X_sample)
-            free(feature_to_sample)
-
-        indices = indices[:indptr[n_samples]]
-        cdef SIZE_t[:] data = np.ones(shape=len(indices), dtype=np.intp)
-        out = csr_matrix((data, indices, indptr),
-                         shape=(n_samples, self.node_count))
-
-        return out
-
-    cpdef compute_node_depths(self):
-        """Compute the depth of each node in a tree.
-
-        .. versionadded:: 1.3
-
-        Returns
-        -------
-        depths : ndarray of shape (self.node_count,), dtype=np.int64
-            The depth of each node in the tree.
-        """
-        cdef:
-            cnp.int64_t[::1] depths = np.empty(self.node_count, dtype=np.int64)
-            cnp.npy_intp[:] children_left = self.children_left
-            cnp.npy_intp[:] children_right = self.children_right
-            cnp.npy_intp node_id
-            cnp.npy_intp node_count = self.node_count
-            cnp.int64_t depth
-
-        depths[0] = 1  # init root node
-        for node_id in range(node_count):
-            if children_left[node_id] != _TREE_LEAF:
-                depth = depths[node_id] + 1
-                depths[children_left[node_id]] = depth
-                depths[children_right[node_id]] = depth
-
-        return depths.base
-
-    cpdef compute_feature_importances(self, normalize=True):
-        """Computes the importance of each feature (aka variable)."""
-        cdef Node* left
-        cdef Node* right
-        cdef Node* nodes = self.nodes
-        cdef Node* node = nodes
-        cdef Node* end_node = node + self.node_count
-
-        cdef double normalizer = 0.
-
-        cdef cnp.float64_t[:] importances = np.zeros(self.n_features)
-
-        with nogil:
-            while node != end_node:
-                if node.left_child != _TREE_LEAF:
-                    # ... and node.right_child != _TREE_LEAF:
-                    left = &nodes[node.left_child]
-                    right = &nodes[node.right_child]
-
-                    importances[node.feature] += (
-                        node.weighted_n_node_samples * node.impurity -
-                        left.weighted_n_node_samples * left.impurity -
-                        right.weighted_n_node_samples * right.impurity)
-                node += 1
-
-        for i in range(self.n_features):
-            importances[i] /= nodes[0].weighted_n_node_samples
-
-        if normalize:
-            normalizer = np.sum(importances)
-
-            if normalizer > 0.0:
-                # Avoid dividing by zero (e.g., when root is pure)
-                for i in range(self.n_features):
-                    importances[i] /= normalizer
-
-        return np.asarray(importances)
-
     cdef cnp.ndarray _get_value_ndarray(self):
         """Wraps value as a 3-d NumPy array.
 
@@ -1166,111 +1395,13 @@ cdef class Tree:
             raise ValueError("Can't initialize array.")
         return arr
 
-    def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
-                                   int[::1] target_features,
-                                   double[::1] out):
-        """Partial dependence of the response on the ``target_feature`` set.
-
-        For each sample in ``X`` a tree traversal is performed.
-        Each traversal starts from the root with weight 1.0.
-
-        At each non-leaf node that splits on a target feature, either
-        the left child or the right child is visited based on the feature
-        value of the current sample, and the weight is not modified.
-        At each non-leaf node that splits on a complementary feature,
-        both children are visited and the weight is multiplied by the fraction
-        of training samples which went to each child.
-
-        At each leaf, the value of the node is multiplied by the current
-        weight (weights sum to 1 for all visited terminal nodes).
-
-        Parameters
-        ----------
-        X : view on 2d ndarray, shape (n_samples, n_target_features)
-            The grid points on which the partial dependence should be
-            evaluated.
-        target_features : view on 1d ndarray, shape (n_target_features)
-            The set of target features for which the partial dependence
-            should be evaluated.
-        out : view on 1d ndarray, shape (n_samples)
-            The value of the partial dependence function on each grid
-            point.
-        """
-        cdef:
-            double[::1] weight_stack = np.zeros(self.node_count,
-                                                dtype=np.float64)
-            SIZE_t[::1] node_idx_stack = np.zeros(self.node_count,
-                                                  dtype=np.intp)
-            SIZE_t sample_idx
-            SIZE_t feature_idx
-            int stack_size
-            double left_sample_frac
-            double current_weight
-            double total_weight  # used for sanity check only
-            Node *current_node  # use a pointer to avoid copying attributes
-            SIZE_t current_node_idx
-            bint is_target_feature
-            SIZE_t _TREE_LEAF = TREE_LEAF  # to avoid python interactions
-
-        for sample_idx in range(X.shape[0]):
-            # init stacks for current sample
-            stack_size = 1
-            node_idx_stack[0] = 0  # root node
-            weight_stack[0] = 1  # all the samples are in the root node
-            total_weight = 0
-
-            while stack_size > 0:
-                # pop the stack
-                stack_size -= 1
-                current_node_idx = node_idx_stack[stack_size]
-                current_node = &self.nodes[current_node_idx]
-
-                if current_node.left_child == _TREE_LEAF:
-                    # leaf node
-                    out[sample_idx] += (weight_stack[stack_size] *
-                                        self.value[current_node_idx])
-                    total_weight += weight_stack[stack_size]
-                else:
-                    # non-leaf node
-
-                    # determine if the split feature is a target feature
-                    is_target_feature = False
-                    for feature_idx in range(target_features.shape[0]):
-                        if target_features[feature_idx] == current_node.feature:
-                            is_target_feature = True
-                            break
-
-                    if is_target_feature:
-                        # In this case, we push left or right child on stack
-                        if X[sample_idx, feature_idx] <= current_node.threshold:
-                            node_idx_stack[stack_size] = current_node.left_child
-                        else:
-                            node_idx_stack[stack_size] = current_node.right_child
-                        stack_size += 1
-                    else:
-                        # In this case, we push both children onto the stack,
-                        # and give a weight proportional to the number of
-                        # samples going through each branch.
-
-                        # push left child
-                        node_idx_stack[stack_size] = current_node.left_child
-                        left_sample_frac = (
-                            self.nodes[current_node.left_child].weighted_n_node_samples /
-                            current_node.weighted_n_node_samples)
-                        current_weight = weight_stack[stack_size]
-                        weight_stack[stack_size] = current_weight * left_sample_frac
-                        stack_size += 1
-
-                        # push right child
-                        node_idx_stack[stack_size] = current_node.right_child
-                        weight_stack[stack_size] = (
-                            current_weight * (1 - left_sample_frac))
-                        stack_size += 1
-
-            # Sanity check. Should never happen.
-            if not (0.999 < total_weight < 1.001):
-                raise ValueError("Total weight should be 1.0 but was %.9f" %
-                                 total_weight)
+    cpdef cnp.ndarray predict(self, object X):
+        """Predict target for X."""
+        out = self._get_value_ndarray().take(self.apply(X), axis=0,
+                                             mode='clip')
+        if self.n_outputs == 1:
+            out = out.reshape(X.shape[0], self.max_n_classes)
+        return out
 
 
 def _check_n_classes(n_classes, expected_dtype):
@@ -1755,6 +1886,8 @@ cdef _build_pruned_tree(
         stack[BuildPrunedRecord] prune_stack
         BuildPrunedRecord stack_record
 
+        SplitRecord split
+
     with nogil:
         # push root node onto stack
         prune_stack.push({"start": 0, "depth": 0, "parent": _TREE_UNDEFINED, "is_left": 0})
@@ -1771,8 +1904,12 @@ cdef _build_pruned_tree(
             is_leaf = leaves_in_subtree[orig_node_id]
             node = &orig_tree.nodes[orig_node_id]
 
+            # redefine to a SplitRecord to pass into _add_node
+            split.feature = node.feature
+            split.threshold = node.threshold
+
             new_node_id = tree._add_node(
-                parent, is_left, is_leaf, node.feature, node.threshold,
+                parent, is_left, is_leaf, &split,
                 node.impurity, node.n_node_samples,
                 node.weighted_n_node_samples)
 

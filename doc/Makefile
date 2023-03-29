@@ -53,6 +53,8 @@ html:
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html/stable"
 
+# rm $(BUILDDIR)/html/stable/index.html
+# mv $(BUILDDIR)/html/stable/fork_index.html $(BUILDDIR)/html/stable/index.html
 html-noplot:
 	$(SPHINXBUILD) -D plot_gallery=0 -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html/stable
 	@echo

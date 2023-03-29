@@ -40,6 +40,7 @@ Single and multi-output problems are both handled.
 # License: BSD 3 clause
 
 
+from time import time
 from numbers import Integral, Real
 from warnings import catch_warnings, simplefilter, warn
 import threading
@@ -72,10 +73,11 @@ from ..utils.validation import (
     _check_sample_weight,
     _check_feature_names_in,
 )
+from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import _num_samples
 from ..utils._param_validation import Interval, StrOptions
 from ..utils._param_validation import RealNotInt
-
+from ._hist_gradient_boosting.binning import _BinMapper
 
 __all__ = [
     "RandomForestClassifier",
@@ -210,6 +212,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             Interval(RealNotInt, 0.0, 1.0, closed="right"),
             Interval(Integral, 1, None, closed="left"),
         ],
+        "max_bins": [
+            None,
+            Interval(Integral, 1, None, closed="left"),
+        ],
     }
 
     @abstractmethod
@@ -228,6 +234,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         class_weight=None,
         max_samples=None,
         base_estimator="deprecated",
+        max_bins=None,
     ):
         super().__init__(
             estimator=estimator,
@@ -244,6 +251,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self.warm_start = warm_start
         self.class_weight = class_weight
         self.max_samples = max_samples
+        self.max_bins = max_bins
 
     def apply(self, X):
         """
@@ -263,6 +271,15 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             return the index of the leaf x ends up in.
         """
         X = self._validate_X_predict(X)
+
+        # if we trained a binning tree, then we should re-bin the data
+        # XXX: this is inefficient and should be improved to be in line with what
+        # the Histogram Gradient Boosting Tree does, where the binning thresholds
+        # are passed into the tree itself, thus allowing us to set the node feature
+        # value thresholds within the tree itself.
+        if self.max_bins is not None:
+            X = self._bin_data(X, is_training_data=False).astype(DTYPE)
+
         results = Parallel(
             n_jobs=self.n_jobs,
             verbose=self.verbose,
@@ -419,6 +436,38 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             self.estimators_ = []
 
         n_more_estimators = self.n_estimators - len(self.estimators_)
+
+        if self.max_bins is not None:
+            # `_openmp_effective_n_threads` is used to take cgroups CPU quotes
+            # into account when determine the maximum number of threads to use.
+            n_threads = _openmp_effective_n_threads()
+
+            # Bin the data
+            # For ease of use of the API, the user-facing GBDT classes accept the
+            # parameter max_bins, which doesn't take into account the bin for
+            # missing values (which is always allocated). However, since max_bins
+            # isn't the true maximal number of bins, all other private classes
+            # (binmapper, histbuilder...) accept n_bins instead, which is the
+            # actual total number of bins. Everywhere in the code, the
+            # convention is that n_bins == max_bins + 1
+            n_bins = self.max_bins + 1  # + 1 for missing values
+            self._bin_mapper = _BinMapper(
+                n_bins=n_bins,
+                # is_categorical=self.is_categorical_,
+                known_categories=None,
+                random_state=random_state,
+                n_threads=n_threads,
+            )
+
+            # XXX: in order for this to work with the underlying tree submodule's Cython
+            # code, we need to convert this into the original data's DTYPE because
+            # the Cython code assumes that `DTYPE` is used.
+            # The proper implementation will be a lot more complicated and should be
+            # tackled once scikit-learn has finalized their inclusion of missing data
+            # and categorical support for decision trees
+            X = self._bin_data(X, is_training_data=True)  # .astype(DTYPE)
+        else:
+            self._bin_mapper = None
 
         if n_more_estimators < 0:
             raise ValueError(
@@ -628,6 +677,35 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         all_importances = np.mean(all_importances, axis=0, dtype=np.float64)
         return all_importances / np.sum(all_importances)
 
+    def _bin_data(self, X, is_training_data):
+        """Bin data X.
+
+        If is_training_data, then fit the _bin_mapper attribute.
+        Else, the binned data is converted to a C-contiguous array.
+        """
+
+        description = "training" if is_training_data else "validation"
+        if self.verbose:
+            print(
+                "Binning {:.3f} GB of {} data: ".format(X.nbytes / 1e9, description),
+                end="",
+                flush=True,
+            )
+        tic = time()
+        if is_training_data:
+            X_binned = self._bin_mapper.fit_transform(X)  # F-aligned array
+        else:
+            X_binned = self._bin_mapper.transform(X)  # F-aligned array
+            # We convert the array to C-contiguous since predicting is faster
+            # with this layout (training is faster on F-arrays though)
+            X_binned = np.ascontiguousarray(X_binned)
+        toc = time()
+        if self.verbose:
+            duration = toc - tic
+            print("{:.3f} s".format(duration))
+
+        return X_binned
+
 
 def _accumulate_prediction(predict, X, out, lock):
     """
@@ -669,6 +747,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         class_weight=None,
         max_samples=None,
         base_estimator="deprecated",
+        max_bins=None,
     ):
         super().__init__(
             estimator=estimator,
@@ -683,6 +762,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             class_weight=class_weight,
             max_samples=max_samples,
             base_estimator=base_estimator,
+            max_bins=max_bins,
         )
 
     @staticmethod
@@ -856,6 +936,14 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         # Check data
         X = self._validate_X_predict(X)
 
+        # if we trained a binning tree, then we should re-bin the data
+        # XXX: this is inefficient and should be improved to be in line with what
+        # the Histogram Gradient Boosting Tree does, where the binning thresholds
+        # are passed into the tree itself, thus allowing us to set the node feature
+        # value thresholds within the tree itself.
+        if self.max_bins is not None:
+            X = self._bin_data(X, is_training_data=False).astype(DTYPE)
+
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
@@ -937,6 +1025,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         warm_start=False,
         max_samples=None,
         base_estimator="deprecated",
+        max_bins=None,
     ):
         super().__init__(
             estimator,
@@ -950,6 +1039,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             warm_start=warm_start,
             max_samples=max_samples,
             base_estimator=base_estimator,
+            max_bins=max_bins,
         )
 
     def predict(self, X):
@@ -974,6 +1064,14 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         check_is_fitted(self)
         # Check data
         X = self._validate_X_predict(X)
+
+        # if we trained a binning tree, then we should re-bin the data
+        # XXX: this is inefficient and should be improved to be in line with what
+        # the Histogram Gradient Boosting Tree does, where the binning thresholds
+        # are passed into the tree itself, thus allowing us to set the node feature
+        # value thresholds within the tree itself.
+        if self.max_bins is not None:
+            X = self._bin_data(X, is_training_data=False).astype(DTYPE)
 
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
@@ -1399,6 +1497,7 @@ class RandomForestClassifier(ForestClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         max_samples=None,
+        max_bins=None,
     ):
         super().__init__(
             estimator=DecisionTreeClassifier(),
@@ -1423,6 +1522,7 @@ class RandomForestClassifier(ForestClassifier):
             warm_start=warm_start,
             class_weight=class_weight,
             max_samples=max_samples,
+            max_bins=max_bins,
         )
 
         self.criterion = criterion
@@ -1734,6 +1834,7 @@ class RandomForestRegressor(ForestRegressor):
         warm_start=False,
         ccp_alpha=0.0,
         max_samples=None,
+        max_bins=None,
     ):
         super().__init__(
             estimator=DecisionTreeRegressor(),
@@ -1757,6 +1858,7 @@ class RandomForestRegressor(ForestRegressor):
             verbose=verbose,
             warm_start=warm_start,
             max_samples=max_samples,
+            max_bins=max_bins,
         )
 
         self.criterion = criterion
@@ -2084,6 +2186,7 @@ class ExtraTreesClassifier(ForestClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         max_samples=None,
+        max_bins=None,
     ):
         super().__init__(
             estimator=ExtraTreeClassifier(),
@@ -2108,6 +2211,7 @@ class ExtraTreesClassifier(ForestClassifier):
             warm_start=warm_start,
             class_weight=class_weight,
             max_samples=max_samples,
+            max_bins=max_bins,
         )
 
         self.criterion = criterion
@@ -2406,6 +2510,7 @@ class ExtraTreesRegressor(ForestRegressor):
         warm_start=False,
         ccp_alpha=0.0,
         max_samples=None,
+        max_bins=None,
     ):
         super().__init__(
             estimator=ExtraTreeRegressor(),
@@ -2429,6 +2534,7 @@ class ExtraTreesRegressor(ForestRegressor):
             verbose=verbose,
             warm_start=warm_start,
             max_samples=max_samples,
+            max_bins=max_bins,
         )
 
         self.criterion = criterion

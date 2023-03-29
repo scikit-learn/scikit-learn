@@ -4,12 +4,14 @@
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
+#          Adam Li <adam2392@gmail.com>
+#          Jong Shin <jshinm@gmail.com>
 #
 # License: BSD 3 clause
 
 # See _splitter.pyx for details.
 
-from ._criterion cimport Criterion
+from ._criterion cimport BaseCriterion, Criterion
 
 from ._tree cimport DTYPE_t          # Type of X
 from ._tree cimport DOUBLE_t         # Type of y, sample_weight
@@ -28,14 +30,15 @@ cdef struct SplitRecord:
     double impurity_left   # Impurity of the left split.
     double impurity_right  # Impurity of the right split.
 
-cdef class Splitter:
+cdef class BaseSplitter:
+    """Abstract interface for splitter."""
+
     # The splitter searches in the input space for a feature and a threshold
     # to split the samples samples[start:end].
     #
     # The impurity computations are delegated to a criterion object.
 
     # Internal structures
-    cdef public Criterion criterion      # Impurity criterion
     cdef public SIZE_t max_features      # Number of features to test
     cdef public SIZE_t min_samples_leaf  # Min samples in a leaf
     cdef public double min_weight_leaf   # Minimum weight in a leaf
@@ -54,7 +57,6 @@ cdef class Splitter:
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node
 
-    cdef const DOUBLE_t[:, ::1] y
     cdef const DOUBLE_t[:] sample_weight
 
     # The samples vector `samples` is maintained by the Splitter object such
@@ -74,6 +76,26 @@ cdef class Splitter:
     # This allows optimization with depth-based tree building.
 
     # Methods
+    cdef int node_reset(
+        self,
+        SIZE_t start,
+        SIZE_t end,
+        double* weighted_n_node_samples
+    ) except -1 nogil
+    cdef int node_split(
+        self,
+        double impurity,   # Impurity of the node
+        SplitRecord* split,
+        SIZE_t* n_constant_features
+    ) except -1 nogil
+    cdef void node_value(self, double* dest) noexcept nogil
+    cdef double node_impurity(self) noexcept nogil
+    cdef int pointer_size(self) noexcept nogil
+
+cdef class Splitter(BaseSplitter):
+    cdef public Criterion criterion      # Impurity criterion
+    cdef const DOUBLE_t[:, ::1] y
+    
     cdef int init(
         self,
         object X,
@@ -81,20 +103,11 @@ cdef class Splitter:
         const DOUBLE_t[:] sample_weight
     ) except -1
 
-    cdef int node_reset(
+    # Methods that allow modifications to stopping conditions
+    cdef bint check_presplit_conditions(
         self,
-        SIZE_t start,
-        SIZE_t end,
-        double* weighted_n_node_samples
-    ) except -1 nogil
-
-    cdef int node_split(
-        self,
-        double impurity,   # Impurity of the node
-        SplitRecord* split,
-        SIZE_t* n_constant_features
-    ) except -1 nogil
-
-    cdef void node_value(self, double* dest) noexcept nogil
-
-    cdef double node_impurity(self) noexcept nogil
+        SplitRecord current_split,
+    ) noexcept nogil
+    cdef bint check_postsplit_conditions(
+        self
+    ) noexcept nogil

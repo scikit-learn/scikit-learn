@@ -2,16 +2,12 @@
 =======================================================================
 Plot the decision surface of decision trees trained on the iris dataset
 =======================================================================
-
 Plot the decision surface of a decision tree trained on pairs
 of features of the iris dataset.
-
 See :ref:`decision tree <tree>` for more information on the estimator.
-
 For each pair of iris features, the decision tree learns decision
 boundaries made of combinations of simple thresholding rules inferred from
 the training samples.
-
 We also show the tree structure of a model built on all of the features.
 """
 # %%
