@@ -142,6 +142,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.make_moons",
     "sklearn.datasets.make_multilabel_classification",
     "sklearn.datasets.make_regression",
+    "sklearn.datasets.make_s_curve",
     "sklearn.datasets.make_sparse_coded_signal",
     "sklearn.datasets.make_sparse_spd_matrix",
     "sklearn.datasets.make_sparse_uncorrelated",
