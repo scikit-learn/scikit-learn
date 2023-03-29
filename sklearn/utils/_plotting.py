@@ -7,8 +7,8 @@ from ._response import _get_response_values_binary
 class _BinaryClassifierCurveDisplayMixin:
     """Mixin class to be used in Displays requiring a binary classifier.
 
-    The aim of this class is to make some validations regarding the estimator and the
-    target and gather the response of the estimator.
+    The aim of this class is to centralize some validations regarding the estimator and
+    the target and gather the response of the estimator.
     """
 
     def _validate_plot_params(self, *, ax=None, name=None):
