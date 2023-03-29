@@ -625,9 +625,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             if self.verbose >= 1:
                 self.explored_theta = []
                 self.explored_theta_log = []
+
                 def func_callback(theta):
                     self.explored_theta.append(theta)
                     self.explored_theta_log.append(self.log_marginal_likelihood(theta))
+
                 opt_res = scipy.optimize.minimize(
                     obj_func,
                     initial_theta,
@@ -650,9 +652,16 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 theta_opt, func_min = opt_res.x, opt_res.fun
         elif callable(self.optimizer):
             if self.verbose >= 1:
-                theta_opt, func_min, self.explored_theta, self.explored_theta_log = self.optimizer(obj_func, initial_theta, bounds=bounds)
+                (
+                    theta_opt,
+                    func_min,
+                    self.explored_theta,
+                    self.explored_theta_log,
+                ) = self.optimizer(obj_func, initial_theta, bounds=bounds)
             else:
-                theta_opt, func_min = self.optimizer(obj_func, initial_theta, bounds=bounds)
+                theta_opt, func_min = self.optimizer(
+                    obj_func, initial_theta, bounds=bounds
+                )
         else:
             raise ValueError(f"Unknown optimizer {self.optimizer}.")
 

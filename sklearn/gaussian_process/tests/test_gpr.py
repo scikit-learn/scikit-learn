@@ -19,7 +19,7 @@ from sklearn.gaussian_process.kernels import (
     ConstantKernel as C,
     WhiteKernel,
 )
-from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared, WhiteKernel
+from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import (
@@ -775,11 +775,11 @@ def test_sample_y_shapes(normalize_y, n_targets):
 
 @pytest.mark.parametrize("verbose", [1, 2])
 def test_verbose(verbose):
-    kernel = kernel = 1.0 * ExpSineSquared(1.0, 5.0, periodicity_bounds=(1e-2, 1e1)) + WhiteKernel(
-    1e-1
-    )
-    gpr = GaussianProcessRegressor(kernel=kernel,verbose=2)
-    res = gpr.fit(X,y)
+    kernel = kernel = 1.0 * ExpSineSquared(
+        1.0, 5.0, periodicity_bounds=(1e-2, 1e1)
+    ) + WhiteKernel(1e-1)
+    gpr = GaussianProcessRegressor(kernel=kernel, verbose=2)
+    res = gpr.fit(X, y)
     assert len(res.explored_theta) == len(res.explored_theta_log)
     assert res.explored_theta[-1].all() == res.kernel_.theta.all()
 
