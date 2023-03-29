@@ -532,12 +532,16 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
     >>> from sklearn.feature_extraction import image
     >>> # Use the array data from the second image in this dataset:
     >>> X = load_sample_images().images[1]
+    >>> X = X[None, ...]
     >>> print(f"Image shape: {X.shape}")
-    Image shape: (427, 640, 3)
-    >>> pe = image.PatchExtractor(patch_size=(2, 2))
+    Image shape: (1, 427, 640, 3)
+    >>> pe = image.PatchExtractor(patch_size=(10, 10))
     >>> pe_trans = pe.transform(X)
     >>> print(f"Patches shape: {pe_trans.shape}")
-    Patches shape: (545706, 2, 2)
+    Patches shape: (263758, 10, 10, 3)
+    >>> X_reconstructed = image.reconstruct_from_patches_2d(pe_trans, X.shape[1:])
+    >>> print(f"Reconstructed shape: {X_reconstructed.shape}")
+    Reconstructed shape: (427, 640, 3)
     """
 
     _parameter_constraints: dict = {
