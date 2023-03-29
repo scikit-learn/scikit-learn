@@ -976,11 +976,12 @@ cdef class DensePartitioner:
             p, partition_end, end = start, end_non_missing, self.end - 1
 
             while p < partition_end:
-                # Move missing values to the end
+                # Keep misisng values at the end
                 if isnan(X[samples[end], best_feature]):
                     end -= 1
                     continue
 
+                # Move missing values to the end
                 current_value = X[samples[p], best_feature]
                 if isnan(current_value):
                     samples[p], samples[end] = samples[end], samples[p]
