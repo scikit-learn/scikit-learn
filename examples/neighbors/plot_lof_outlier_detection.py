@@ -24,17 +24,17 @@ n_neighbors=20 appears to work well in general.
 
 """
 
+# %%
+# Generate data with outliers
+# ---------------------------
+
+# %%
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.neighbors import LocalOutlierFactor
 
 np.random.seed(42)
 
-# Generate train data
 X_inliers = 0.3 * np.random.randn(100, 2)
 X_inliers = np.r_[X_inliers + 2, X_inliers - 2]
-
-# Generate some outliers
 X_outliers = np.random.uniform(low=-4, high=4, size=(20, 2))
 X = np.r_[X_inliers, X_outliers]
 
@@ -42,14 +42,27 @@ n_outliers = len(X_outliers)
 ground_truth = np.ones(len(X), dtype=int)
 ground_truth[-n_outliers:] = -1
 
-# fit the model for outlier detection (default)
-clf = LocalOutlierFactor(n_neighbors=20, contamination=0.1)
-# use fit_predict to compute the predicted labels of the training samples
+# %%
+# Fit the model for outlier detection (default)
+# ---------------------------------------------
+#
+# Use `fit_predict` to compute the predicted labels of the training samples
 # (when LOF is used for outlier detection, the estimator has no predict,
-# decision_function and score_samples methods).
+# `decision_function` and `score_samples` methods).
+
+from sklearn.neighbors import LocalOutlierFactor
+
+clf = LocalOutlierFactor(n_neighbors=20, contamination=0.1)
 y_pred = clf.fit_predict(X)
 n_errors = (y_pred != ground_truth).sum()
 X_scores = clf.negative_outlier_factor_
+
+# %%
+# Plot results
+# ------------
+
+# %%
+import matplotlib.pyplot as plt
 
 plt.title("Local Outlier Factor (LOF)")
 plt.scatter(X[:, 0], X[:, 1], color="k", s=3.0, label="Data points")
