@@ -990,9 +990,8 @@ def make_blobs(
                 "Length of `n_samples` not consistent with number of "
                 f"centers. Got n_samples = {n_samples} and centers = {centers}"
             )
-        else:
-            centers = check_array(centers)
-            n_features = centers.shape[1]
+        centers = check_array(centers)
+        n_features = centers.shape[1]
 
     # stds: if cluster_std is given as list, it must be consistent
     # with the n_centers
