@@ -68,8 +68,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return X_columns, n_samples, n_features
 
     def _fit(
-        self, X, handle_unknown="error", force_all_finite=True, return_counts=False
+        self,
+        X,
+        handle_unknown="error",
+        force_all_finite=True,
+        return_counts=False,
+        return_and_ignore_missing_for_infrequent=False,
     ):
+        self._check_infrequent_enabled()
         self._check_n_features(X, reset=True)
         self._check_feature_names(X, reset=True)
         X_list, n_samples, n_features = self._check_X(
@@ -86,13 +92,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         self.categories_ = []
         category_counts = []
+        compute_counts = return_counts or self._infrequent_enabled
 
         for i in range(n_features):
             Xi = X_list[i]
 
             if self.categories == "auto":
-                result = _unique(Xi, return_counts=return_counts)
-                if return_counts:
+                result = _unique(Xi, return_counts=compute_counts)
+                if compute_counts:
                     cats, counts = result
                     category_counts.append(counts)
                 else:
@@ -139,7 +146,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                             " during fit".format(diff, i)
                         )
                         raise ValueError(msg)
-                if return_counts:
+                if compute_counts:
                     category_counts.append(_get_counts(Xi, cats))
 
             self.categories_.append(cats)
@@ -147,10 +154,31 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         output = {"n_samples": n_samples}
         if return_counts:
             output["category_counts"] = category_counts
+
+        missing_indices = {}
+        if return_and_ignore_missing_for_infrequent:
+            for feature_idx, categories_for_idx in enumerate(self.categories_):
+                for category_idx, category in enumerate(categories_for_idx):
+                    if is_scalar_nan(category):
+                        missing_indices[feature_idx] = category_idx
+                        break
+            output["missing_indices"] = missing_indices
+
+        if self._infrequent_enabled:
+            self._fit_infrequent_category_mapping(
+                n_samples,
+                category_counts,
+                missing_indices,
+            )
         return output
 
     def _transform(
-        self, X, handle_unknown="error", force_all_finite=True, warn_on_unknown=False
+        self,
+        X,
+        handle_unknown="error",
+        force_all_finite=True,
+        warn_on_unknown=False,
+        ignore_category_indices=None,
     ):
         self._check_feature_names(X, reset=False)
         self._check_n_features(X, reset=False)
@@ -207,7 +235,208 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 UserWarning,
             )
 
+        self._map_infrequent_categories(X_int, X_mask, ignore_category_indices)
         return X_int, X_mask
+
+    @property
+    def infrequent_categories_(self):
+        """Infrequent categories for each feature."""
+        # raises an AttributeError if `_infrequent_indices` is not defined
+        infrequent_indices = self._infrequent_indices
+        return [
+            None if indices is None else category[indices]
+            for category, indices in zip(self.categories_, infrequent_indices)
+        ]
+
+    def _check_infrequent_enabled(self):
+        """
+        This functions checks whether _infrequent_enabled is True or False.
+        This has to be called after parameter validation in the fit function.
+        """
+        max_categories = getattr(self, "max_categories", None)
+        min_frequency = getattr(self, "min_frequency", None)
+        self._infrequent_enabled = (
+            max_categories is not None and max_categories >= 1
+        ) or min_frequency is not None
+
+    def _identify_infrequent(self, category_count, n_samples, col_idx):
+        """Compute the infrequent indices.
+
+        Parameters
+        ----------
+        category_count : ndarray of shape (n_cardinality,)
+            Category counts.
+
+        n_samples : int
+            Number of samples.
+
+        col_idx : int
+            Index of the current category. Only used for the error message.
+
+        Returns
+        -------
+        output : ndarray of shape (n_infrequent_categories,) or None
+            If there are infrequent categories, indices of infrequent
+            categories. Otherwise None.
+        """
+        if isinstance(self.min_frequency, numbers.Integral):
+            infrequent_mask = category_count < self.min_frequency
+        elif isinstance(self.min_frequency, numbers.Real):
+            min_frequency_abs = n_samples * self.min_frequency
+            infrequent_mask = category_count < min_frequency_abs
+        else:
+            infrequent_mask = np.zeros(category_count.shape[0], dtype=bool)
+
+        n_current_features = category_count.size - infrequent_mask.sum() + 1
+        if self.max_categories is not None and self.max_categories < n_current_features:
+            # max_categories includes the one infrequent category
+            frequent_category_count = self.max_categories - 1
+            if frequent_category_count == 0:
+                # All categories are infrequent
+                infrequent_mask[:] = True
+            else:
+                # stable sort to preserve original count order
+                smallest_levels = np.argsort(category_count, kind="mergesort")[
+                    :-frequent_category_count
+                ]
+                infrequent_mask[smallest_levels] = True
+
+        output = np.flatnonzero(infrequent_mask)
+        return output if output.size > 0 else None
+
+    def _fit_infrequent_category_mapping(
+        self, n_samples, category_counts, missing_indices
+    ):
+        """Fit infrequent categories.
+
+        Defines the private attribute: `_default_to_infrequent_mappings`. For
+        feature `i`, `_default_to_infrequent_mappings[i]` defines the mapping
+        from the integer encoding returned by `super().transform()` into
+        infrequent categories. If `_default_to_infrequent_mappings[i]` is None,
+        there were no infrequent categories in the training set.
+
+        For example if categories 0, 2 and 4 were frequent, while categories
+        1, 3, 5 were infrequent for feature 7, then these categories are mapped
+        to a single output:
+        `_default_to_infrequent_mappings[7] = array([0, 3, 1, 3, 2, 3])`
+
+        Defines private attribute: `_infrequent_indices`. `_infrequent_indices[i]`
+        is an array of indices such that
+        `categories_[i][_infrequent_indices[i]]` are all the infrequent category
+        labels. If the feature `i` has no infrequent categories
+        `_infrequent_indices[i]` is None.
+
+        .. versionadded:: 1.1
+
+        Parameters
+        ----------
+        n_samples : int
+            Number of samples in training set.
+        category_counts: list of ndarray
+            `category_counts[i]` is the category counts corresponding to
+            `self.categories_[i]`.
+        missing_indices : dict
+            Dict mapping from feature_idx to category index with a missing value.
+        """
+        # Remove missing value from counts, so it is not considered as infrequent
+        if missing_indices:
+            category_counts_ = []
+            for feature_idx, count in enumerate(category_counts):
+                if feature_idx in missing_indices:
+                    category_counts_.append(
+                        np.delete(count, missing_indices[feature_idx])
+                    )
+                else:
+                    category_counts_.append(count)
+        else:
+            category_counts_ = category_counts
+
+        self._infrequent_indices = [
+            self._identify_infrequent(category_count, n_samples, col_idx)
+            for col_idx, category_count in enumerate(category_counts_)
+        ]
+
+        # compute mapping from default mapping to infrequent mapping
+        self._default_to_infrequent_mappings = []
+
+        for feature_idx, infreq_idx in enumerate(self._infrequent_indices):
+            cats = self.categories_[feature_idx]
+            # no infrequent categories
+            if infreq_idx is None:
+                self._default_to_infrequent_mappings.append(None)
+                continue
+
+            n_cats = len(cats)
+            if feature_idx in missing_indices:
+                # Missing index was removed from ths category when computing
+                # infrequent indices, thus we need to decrease the number of
+                # total categories when considering the infrequent mapping.
+                n_cats -= 1
+
+            # infrequent indices exist
+            mapping = np.empty(n_cats, dtype=np.int64)
+            n_infrequent_cats = infreq_idx.size
+
+            # infrequent categories are mapped to the last element.
+            n_frequent_cats = n_cats - n_infrequent_cats
+            mapping[infreq_idx] = n_frequent_cats
+
+            frequent_indices = np.setdiff1d(np.arange(n_cats), infreq_idx)
+            mapping[frequent_indices] = np.arange(n_frequent_cats)
+
+            self._default_to_infrequent_mappings.append(mapping)
+
+    def _map_infrequent_categories(self, X_int, X_mask, ignore_category_indices):
+        """Map infrequent categories to integer representing the infrequent category.
+
+        This modifies X_int in-place. Values that were invalid based on `X_mask`
+        are mapped to the infrequent category if there was an infrequent
+        category for that feature.
+
+        Parameters
+        ----------
+        X_int: ndarray of shape (n_samples, n_features)
+            Integer encoded categories.
+
+        X_mask: ndarray of shape (n_samples, n_features)
+            Bool mask for valid values in `X_int`.
+
+        ignore_category_indices : dict
+            Dictionary mapping from feature_idx to category index to ignore.
+            Ignored indexes will not be grouped and the original ordinal encoding
+            will remain.
+        """
+        if not self._infrequent_enabled:
+            return
+
+        ignore_category_indices = ignore_category_indices or {}
+
+        for col_idx in range(X_int.shape[1]):
+            infrequent_idx = self._infrequent_indices[col_idx]
+            if infrequent_idx is None:
+                continue
+
+            X_int[~X_mask[:, col_idx], col_idx] = infrequent_idx[0]
+            if self.handle_unknown == "infrequent_if_exist":
+                # All the unknown values are now mapped to the
+                # infrequent_idx[0], which makes the unknown values valid
+                # This is needed in `transform` when the encoding is formed
+                # using `X_mask`.
+                X_mask[:, col_idx] = True
+
+        # Remaps encoding in `X_int` where the infrequent categories are
+        # grouped together.
+        for i, mapping in enumerate(self._default_to_infrequent_mappings):
+            if mapping is None:
+                continue
+
+            if i in ignore_category_indices:
+                # Update rows that are **not** ignored
+                rows_to_update = X_int[:, i] != ignore_category_indices[i]
+            else:
+                rows_to_update = slice(None)
+
+            X_int[rows_to_update, i] = np.take(mapping, X_int[rows_to_update, i])
 
     def _more_tags(self):
         return {"X_types": ["categorical"]}
@@ -319,7 +548,7 @@ class OneHotEncoder(_BaseEncoder):
           :meth:`inverse_transform` will handle an unknown category as with
           `handle_unknown='ignore'`. Infrequent categories exist based on
           `min_frequency` and `max_categories`. Read more in the
-          :ref:`User Guide <one_hot_encoder_infrequent_categories>`.
+          :ref:`User Guide <encoder_infrequent_categories>`.
 
         .. versionchanged:: 1.1
             `'infrequent_if_exist'` was added to automatically handle unknown
@@ -336,7 +565,7 @@ class OneHotEncoder(_BaseEncoder):
           `min_frequency * n_samples`  will be considered infrequent.
 
         .. versionadded:: 1.1
-            Read more in the :ref:`User Guide <one_hot_encoder_infrequent_categories>`.
+            Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
 
     max_categories : int, default=None
         Specifies an upper limit to the number of output features for each input
@@ -346,7 +575,7 @@ class OneHotEncoder(_BaseEncoder):
         there is no limit to the number of output features.
 
         .. versionadded:: 1.1
-            Read more in the :ref:`User Guide <one_hot_encoder_infrequent_categories>`.
+            Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
 
     feature_name_combiner : "concat" or callable, default="concat"
         Callable with signature `def callable(input_feature, category)` that returns a
@@ -527,25 +756,6 @@ class OneHotEncoder(_BaseEncoder):
         self.max_categories = max_categories
         self.feature_name_combiner = feature_name_combiner
 
-    @property
-    def infrequent_categories_(self):
-        """Infrequent categories for each feature."""
-        # raises an AttributeError if `_infrequent_indices` is not defined
-        infrequent_indices = self._infrequent_indices
-        return [
-            None if indices is None else category[indices]
-            for category, indices in zip(self.categories_, infrequent_indices)
-        ]
-
-    def _check_infrequent_enabled(self):
-        """
-        This functions checks whether _infrequent_enabled is True or False.
-        This has to be called after parameter validation in the fit function.
-        """
-        self._infrequent_enabled = (
-            self.max_categories is not None and self.max_categories >= 1
-        ) or self.min_frequency is not None
-
     def _map_drop_idx_to_infrequent(self, feature_idx, drop_idx):
         """Convert `drop_idx` into the index for infrequent categories.
 
@@ -688,141 +898,6 @@ class OneHotEncoder(_BaseEncoder):
 
             self.drop_idx_ = np.asarray(drop_idx_, dtype=object)
 
-    def _identify_infrequent(self, category_count, n_samples, col_idx):
-        """Compute the infrequent indices.
-
-        Parameters
-        ----------
-        category_count : ndarray of shape (n_cardinality,)
-            Category counts.
-
-        n_samples : int
-            Number of samples.
-
-        col_idx : int
-            Index of the current category. Only used for the error message.
-
-        Returns
-        -------
-        output : ndarray of shape (n_infrequent_categories,) or None
-            If there are infrequent categories, indices of infrequent
-            categories. Otherwise None.
-        """
-        if isinstance(self.min_frequency, numbers.Integral):
-            infrequent_mask = category_count < self.min_frequency
-        elif isinstance(self.min_frequency, numbers.Real):
-            min_frequency_abs = n_samples * self.min_frequency
-            infrequent_mask = category_count < min_frequency_abs
-        else:
-            infrequent_mask = np.zeros(category_count.shape[0], dtype=bool)
-
-        n_current_features = category_count.size - infrequent_mask.sum() + 1
-        if self.max_categories is not None and self.max_categories < n_current_features:
-            # stable sort to preserve original count order
-            smallest_levels = np.argsort(category_count, kind="mergesort")[
-                : -self.max_categories + 1
-            ]
-            infrequent_mask[smallest_levels] = True
-
-        output = np.flatnonzero(infrequent_mask)
-        return output if output.size > 0 else None
-
-    def _fit_infrequent_category_mapping(self, n_samples, category_counts):
-        """Fit infrequent categories.
-
-        Defines the private attribute: `_default_to_infrequent_mappings`. For
-        feature `i`, `_default_to_infrequent_mappings[i]` defines the mapping
-        from the integer encoding returned by `super().transform()` into
-        infrequent categories. If `_default_to_infrequent_mappings[i]` is None,
-        there were no infrequent categories in the training set.
-
-        For example if categories 0, 2 and 4 were frequent, while categories
-        1, 3, 5 were infrequent for feature 7, then these categories are mapped
-        to a single output:
-        `_default_to_infrequent_mappings[7] = array([0, 3, 1, 3, 2, 3])`
-
-        Defines private attribute: `_infrequent_indices`. `_infrequent_indices[i]`
-        is an array of indices such that
-        `categories_[i][_infrequent_indices[i]]` are all the infrequent category
-        labels. If the feature `i` has no infrequent categories
-        `_infrequent_indices[i]` is None.
-
-        .. versionadded:: 1.1
-
-        Parameters
-        ----------
-        n_samples : int
-            Number of samples in training set.
-        category_counts: list of ndarray
-            `category_counts[i]` is the category counts corresponding to
-            `self.categories_[i]`.
-        """
-        self._infrequent_indices = [
-            self._identify_infrequent(category_count, n_samples, col_idx)
-            for col_idx, category_count in enumerate(category_counts)
-        ]
-
-        # compute mapping from default mapping to infrequent mapping
-        self._default_to_infrequent_mappings = []
-
-        for cats, infreq_idx in zip(self.categories_, self._infrequent_indices):
-            # no infrequent categories
-            if infreq_idx is None:
-                self._default_to_infrequent_mappings.append(None)
-                continue
-
-            n_cats = len(cats)
-            # infrequent indices exist
-            mapping = np.empty(n_cats, dtype=np.int64)
-            n_infrequent_cats = infreq_idx.size
-
-            # infrequent categories are mapped to the last element.
-            n_frequent_cats = n_cats - n_infrequent_cats
-            mapping[infreq_idx] = n_frequent_cats
-
-            frequent_indices = np.setdiff1d(np.arange(n_cats), infreq_idx)
-            mapping[frequent_indices] = np.arange(n_frequent_cats)
-
-            self._default_to_infrequent_mappings.append(mapping)
-
-    def _map_infrequent_categories(self, X_int, X_mask):
-        """Map infrequent categories to integer representing the infrequent category.
-
-        This modifies X_int in-place. Values that were invalid based on `X_mask`
-        are mapped to the infrequent category if there was an infrequent
-        category for that feature.
-
-        Parameters
-        ----------
-        X_int: ndarray of shape (n_samples, n_features)
-            Integer encoded categories.
-
-        X_mask: ndarray of shape (n_samples, n_features)
-            Bool mask for valid values in `X_int`.
-        """
-        if not self._infrequent_enabled:
-            return
-
-        for col_idx in range(X_int.shape[1]):
-            infrequent_idx = self._infrequent_indices[col_idx]
-            if infrequent_idx is None:
-                continue
-
-            X_int[~X_mask[:, col_idx], col_idx] = infrequent_idx[0]
-            if self.handle_unknown == "infrequent_if_exist":
-                # All the unknown values are now mapped to the
-                # infrequent_idx[0], which makes the unknown values valid
-                # This is needed in `transform` when the encoding is formed
-                # using `X_mask`.
-                X_mask[:, col_idx] = True
-
-        # Remaps encoding in `X_int` where the infrequent categories are
-        # grouped together.
-        for i, mapping in enumerate(self._default_to_infrequent_mappings):
-            if mapping is None:
-                continue
-            X_int[:, i] = np.take(mapping, X_int[:, i])
-
     def _compute_transformed_categories(self, i, remove_dropped=True):
         """Compute the transformed categories used for column `i`.
 
@@ -905,18 +980,11 @@ class OneHotEncoder(_BaseEncoder):
             )
             self.sparse_output = self.sparse
 
-        self._check_infrequent_enabled()
-
-        fit_results = self._fit(
+        self._fit(
             X,
             handle_unknown=self.handle_unknown,
             force_all_finite="allow-nan",
-            return_counts=self._infrequent_enabled,
         )
-        if self._infrequent_enabled:
-            self._fit_infrequent_category_mapping(
-                fit_results["n_samples"], fit_results["category_counts"]
-            )
         self._set_drop_idx()
         self._n_features_outs = self._compute_n_features_outs()
         return self
@@ -952,7 +1020,6 @@ class OneHotEncoder(_BaseEncoder):
             force_all_finite="allow-nan",
             warn_on_unknown=warn_on_unknown,
         )
-        self._map_infrequent_categories(X_int, X_mask)
 
         n_samples, n_features = X_int.shape
 
@@ -1210,6 +1277,34 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         .. versionadded:: 1.1
 
+    min_frequency : int or float, default=None
+        Specifies the minimum frequency below which a category will be
+        considered infrequent.
+
+        - If `int`, categories with a smaller cardinality will be considered
+          infrequent.
+
+        - If `float`, categories with a smaller cardinality than
+          `min_frequency * n_samples`  will be considered infrequent.
+
+        .. versionadded:: 1.3
+            Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
+
+    max_categories : int, default=None
+        Specifies an upper limit to the number of output categories for each input
+        feature when considering infrequent categories. If there are infrequent
+        categories, `max_categories` includes the category representing the
+        infrequent categories along with the frequent categories. If `None`,
+        there is no limit to the number of output features.
+
+        `max_categories` do **not** take into account missing or unknown
+        categories. Setting `unknown_value` or `encoded_missing_value` to an
+        integer will increase the number of unique integer codes by one each.
+        This can result in up to `max_categories + 2` integer codes.
+
+        .. versionadded:: 1.3
+            Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -1227,6 +1322,15 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    infrequent_categories_ : list of ndarray
+        Defined only if infrequent categories are enabled by setting
+        `min_frequency` or `max_categories` to a non-default value.
+        `infrequent_categories_[i]` are the infrequent categories for feature
+        `i`. If the feature `i` has no infrequent categories
+        `infrequent_categories_[i]` is None.
+
+        .. versionadded:: 1.3
 
     See Also
     --------
@@ -1282,6 +1386,27 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     array([[ 1.,  0.],
            [ 0.,  1.],
            [ 0., -1.]])
+
+    Infrequent categories are enabled by setting `max_categories` or `min_frequency`.
+    In the following example, "a" and "d" are considered infrequent and grouped
+    together into a single category, "b" and "c" are their own categories, unknown
+    values are encoded as 3 and missing values are encoded as 4.
+
+    >>> X_train = np.array(
+    ...     [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3 + [np.nan]],
+    ...     dtype=object).T
+    >>> enc = OrdinalEncoder(
+    ...     handle_unknown="use_encoded_value", unknown_value=3,
+    ...     max_categories=3, encoded_missing_value=4)
+    >>> _ = enc.fit(X_train)
+    >>> X_test = np.array([["a"], ["b"], ["c"], ["d"], ["e"], [np.nan]], dtype=object)
+    >>> enc.transform(X_test)
+    array([[2.],
+           [0.],
+           [1.],
+           [2.],
+           [3.],
+           [4.]])
     """
 
     _parameter_constraints: dict = {
@@ -1290,6 +1415,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "encoded_missing_value": [Integral, type(np.nan)],
         "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
         "unknown_value": [Integral, type(np.nan), None],
+        "max_categories": [Interval(Integral, 1, None, closed="left"), None],
+        "min_frequency": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
+            None,
+        ],
     }
 
     def __init__(
@@ -1300,12 +1431,16 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         handle_unknown="error",
         unknown_value=None,
         encoded_missing_value=np.nan,
+        min_frequency=None,
+        max_categories=None,
     ):
         self.categories = categories
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.unknown_value = unknown_value
         self.encoded_missing_value = encoded_missing_value
+        self.min_frequency = min_frequency
+        self.max_categories = max_categories
 
     def fit(self, X, y=None):
         """
@@ -1350,9 +1485,21 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             )
 
         # `_fit` will only raise an error when `self.handle_unknown="error"`
-        self._fit(X, handle_unknown=self.handle_unknown, force_all_finite="allow-nan")
+        fit_results = self._fit(
+            X,
+            handle_unknown=self.handle_unknown,
+            force_all_finite="allow-nan",
+            return_and_ignore_missing_for_infrequent=True,
+        )
+        self._missing_indices = fit_results["missing_indices"]
 
         cardinalities = [len(categories) for categories in self.categories_]
+        if self._infrequent_enabled:
+            # Cardinality decreases because the infrequent categories are grouped
+            # together
+            for feature_idx, infrequent in enumerate(self.infrequent_categories_):
+                if infrequent is not None:
+                    cardinalities[feature_idx] -= len(infrequent)
 
         # stores the missing indices per category
         self._missing_indices = {}
@@ -1426,7 +1573,10 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             Transformed input.
         """
         X_int, X_mask = self._transform(
-            X, handle_unknown=self.handle_unknown, force_all_finite="allow-nan"
+            X,
+            handle_unknown=self.handle_unknown,
+            force_all_finite="allow-nan",
+            ignore_category_indices=self._missing_indices,
         )
         X_trans = X_int.astype(self.dtype, copy=False)
 
@@ -1471,6 +1621,9 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         found_unknown = {}
+        infrequent_masks = {}
+
+        infrequent_indices = getattr(self, "_infrequent_indices", None)
 
         for i in range(n_features):
             labels = X[:, i]
@@ -1480,22 +1633,44 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 X_i_mask = _get_mask(labels, self.encoded_missing_value)
                 labels[X_i_mask] = self._missing_indices[i]
 
+            rows_to_update = slice(None)
+            categories = self.categories_[i]
+
+            if infrequent_indices is not None and infrequent_indices[i] is not None:
+                # Compute mask for frequent categories
+                infrequent_encoding_value = len(categories) - len(infrequent_indices[i])
+                infrequent_masks[i] = labels == infrequent_encoding_value
+                rows_to_update = ~infrequent_masks[i]
+
+                # Remap categories to be only frequent categories. The infrequent
+                # categories will be mapped to "infrequent_sklearn" later
+                frequent_categories_mask = np.ones_like(categories, dtype=bool)
+                frequent_categories_mask[infrequent_indices[i]] = False
+                categories = categories[frequent_categories_mask]
+
             if self.handle_unknown == "use_encoded_value":
                 unknown_labels = _get_mask(labels, self.unknown_value)
+                found_unknown[i] = unknown_labels
 
                 known_labels = ~unknown_labels
-                X_tr[known_labels, i] = self.categories_[i][
-                    labels[known_labels].astype("int64", copy=False)
-                ]
-                found_unknown[i] = unknown_labels
-            else:
-                X_tr[:, i] = self.categories_[i][labels.astype("int64", copy=False)]
+                if isinstance(rows_to_update, np.ndarray):
+                    rows_to_update &= known_labels
+                else:
+                    rows_to_update = known_labels
+
+            labels_int = labels[rows_to_update].astype("int64", copy=False)
+            X_tr[rows_to_update, i] = categories[labels_int]
+
+        if found_unknown or infrequent_masks:
+            X_tr = X_tr.astype(object, copy=False)
 
         # insert None values for unknown values
         if found_unknown:
-            X_tr = X_tr.astype(object, copy=False)
-
             for idx, mask in found_unknown.items():
                 X_tr[mask, idx] = None
+
+        if infrequent_masks:
+            for idx, mask in infrequent_masks.items():
+                X_tr[mask, idx] = "infrequent_sklearn"
 
         return X_tr
