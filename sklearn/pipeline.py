@@ -420,8 +420,12 @@ class Pipeline(_BaseComposition):
                 step_idx = len(self.steps) - 1
                 name = self.steps[-1][0]
                 fit_params_last_step = fit_params_steps[name]
-                cached_fit_one = memory.cached(_fit_one)
-                fitted_estimator = cached_fit_one(
+                actual_fit_one = (
+                    memory.cached(_fit_one)
+                    if isinstance(last_step, TransformerMixin)
+                    else _fit_one
+                )
+                fitted_estimator = actual_fit_one(
                     last_step,
                     Xt,
                     y,
@@ -473,8 +477,12 @@ class Pipeline(_BaseComposition):
             step_idx = len(self.steps) - 1
             name = self.steps[-1][0]
             fit_params_last_step = fit_params_steps[name]
-            cached_fit_transform_one = memory.cached(_fit_transform_one)
-            X, fitted_transformer = cached_fit_transform_one(
+            actual_fit_transform_one = (
+                memory.cached(_fit_transform_one)
+                if isinstance(last_step, TransformerMixin)
+                else _fit_transform_one
+            )
+            X, fitted_transformer = actual_fit_transform_one(
                 last_step,
                 Xt,
                 y,
