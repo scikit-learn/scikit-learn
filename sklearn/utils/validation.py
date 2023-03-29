@@ -758,6 +758,8 @@ def check_array(
 
     # store whether originally we wanted numeric dtype
     dtype_numeric = isinstance(dtype, str) and dtype == "numeric"
+    if dtype is int or dtype == "int":
+        dtype = xp.int64
 
     dtype_orig = getattr(array, "dtype", None)
     if not is_array_api and not hasattr(dtype_orig, "kind"):

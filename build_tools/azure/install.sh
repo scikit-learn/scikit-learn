@@ -54,6 +54,10 @@ python_environment_install_and_activate() {
         conda-lock install --name $VIRTUALENV $LOCK_FILE
         source activate $VIRTUALENV
 
+        # TODO: Remove when array_api_compat ships a new release with latest changes
+        # install development feature of array_api_compat for testing purposes
+        pip install git+https://github.com/data-apis/array-api-compat
+
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
         python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
         source $VIRTUALENV/bin/activate

@@ -165,23 +165,48 @@ class _NumPyApiWrapper:
     See the `get_namespace()` public function for more details.
     """
 
+    # Creation functions in spec:
+    # https://data-apis.org/array-api/latest/API_specification/creation_functions.html
+    _CREATION_FUNCS = {
+        "arange",
+        "empty",
+        "empty_like",
+        "eye",
+        "full",
+        "full_like",
+        "linspace",
+        "ones",
+        "ones_like",
+        "zeros",
+        "zeros_like",
+    }
+    # Data types in spec
+    # https://data-apis.org/array-api/latest/API_specification/data_types.html
+    _DTYPES = {
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float32",
+        "float64",
+        "complex64",
+        "complex128",
+    }
+
     def __getattr__(self, name):
         attr = getattr(numpy, name)
-        # accept device
-        if name in {
-            "arange",
-            "empty",
-            "empty_like",
-            "eye",
-            "full",
-            "full_like",
-            "linspace",
-            "ones",
-            "ones_like",
-            "zeros",
-            "zeros_like",
-        }:
+
+        # Support device kwargs and make sure they are on the CPU
+        if name in self._CREATION_FUNCS:
             return _accept_device_cpu(attr)
+
+        # Convert to dtype objects
+        if name in self._DTYPES:
+            return numpy.dtype(attr)
 
         return attr
 

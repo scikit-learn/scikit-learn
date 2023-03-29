@@ -54,6 +54,7 @@ from sklearn.utils import (
     _IS_32BIT,
     _in_unstable_openblas_configuration,
 )
+from sklearn._config import _check_array_api_dispatch
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -389,11 +390,10 @@ def set_random_state(estimator, random_state=0):
 
 
 try:
-    import array_api_compat  # noqa
-
-    ARRAY_API_COMPAT_INSTALLED = True
+    _check_array_api_dispatch(True)
+    ARRAY_API_COMPAT_FUNCTIONAL = True
 except ImportError:
-    ARRAY_API_COMPAT_INSTALLED = False
+    ARRAY_API_COMPAT_FUNCTIONAL = False
 
 try:
     import pytest
@@ -408,8 +408,8 @@ try:
         not joblib.parallel.mp, reason="joblib is in serial mode"
     )
     skip_if_no_array_api_compat = pytest.mark.skipif(
-        not ARRAY_API_COMPAT_INSTALLED,
-        reason="requires array_api_compat installed",
+        not ARRAY_API_COMPAT_FUNCTIONAL,
+        reason="requires array_api_compat installed and a new enough version of NumPy",
     )
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
