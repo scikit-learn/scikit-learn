@@ -367,7 +367,7 @@ cdef inline int node_split_best(
             feature_values[end_non_missing - 1] <= feature_values[start] + FEATURE_THRESHOLD
         ):
             # We consider this feature constant in this case.
-            # Since finding a split among constant feature is not valuable, 
+            # Since finding a split among constant feature is not valuable,
             # we do not consider this feature for splitting.
             features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
 
