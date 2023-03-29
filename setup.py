@@ -265,7 +265,6 @@ extension_config = {
         {
             "sources": ["_middle_term_computer.pyx.tp", "_middle_term_computer.pxd.tp"],
             "language": "c++",
-            "include_np": True,
             "extra_compile_args": ["-std=c++11"],
         },
         {
@@ -397,9 +396,9 @@ extension_config = {
         },
         {"sources": ["_random.pyx"], "include_np": True},
         {"sources": ["_logistic_sigmoid.pyx"], "include_np": True},
-        {"sources": ["_typedefs.pyx"], "include_np": True},
-        {"sources": ["_heap.pyx"], "include_np": True},
-        {"sources": ["_sorting.pyx"], "include_np": True},
+        {"sources": ["_typedefs.pyx"]},
+        {"sources": ["_heap.pyx"]},
+        {"sources": ["_sorting.pyx"]},
         {"sources": ["_vector_sentinel.pyx"], "language": "c++", "include_np": True},
         {"sources": ["_isfinite.pyx"]},
     ],
