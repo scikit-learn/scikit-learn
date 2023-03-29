@@ -263,6 +263,24 @@ Changelog
   that tracks coresponding log marginal likelihood would be defined.
   :pr:`26012` by :user:`Yuchen Zhou <ROMEEZHOU>`
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Enhancement| :class:`_gpr.GaussianProcessRegressor` Add attribute
+  `explored_theta`, a nparray to store the explored theta
+  :pr:`26012` by :user:`Yuchen Zhou <ROMEEZHOU>`
+
+:mod:`sklearn.impute`
+.....................
+
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Enhancement| :class:`_gpr.GaussianProcessRegressor` Add attribute
+  `explored_theta_log`, a nparray to store the corresponding value of
+  log marginal likelihood of explored theta
+  :pr:`26012` by :user:`Yuchen Zhou <ROMEEZHOU>`
+
 :mod:`sklearn.impute`
 .....................
 

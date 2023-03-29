@@ -172,6 +172,16 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    explored_theta : ndarray of explored theta
+        Defined only when `verbose>=1`
+
+        .. versionadded:: 1.3
+
+    explored_theta_log : ndarray of the log marginal likelihood corresponding
+        to explored theta values. Defined only when `verbose>=1`
+
+        ..versionadded:: 1.3
+
     See Also
     --------
     GaussianProcessClassifier : Gaussian process classification (GPC)
