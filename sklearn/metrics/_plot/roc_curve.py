@@ -2,15 +2,12 @@ from collections.abc import Mapping
 from functools import cached_property
 
 import numpy as np
-
-from .base import _get_response
-
 from .. import auc
 from .. import roc_curve
 from .._base import _check_pos_label_consistency
 
-from ...base import is_classifier
 from ...utils import check_matplotlib_support, _safe_indexing
+from ...utils._response import _get_response_values_binary
 from ...utils.validation import _num_samples
 
 
@@ -244,9 +241,9 @@ class RocCurveDisplay:
 
         name = estimator.__class__.__name__ if name is None else name
 
-        y_pred, pos_label = _get_response(
-            X,
+        y_pred, pos_label = _get_response_values_binary(
             estimator,
+            X,
             response_method=response_method,
             pos_label=pos_label,
         )
@@ -533,13 +530,6 @@ class RocCurveDisplay:
                 f"Expected {train_size + test_size}, got {_num_samples(X)}."
             )
 
-        # TODO: it should be remove once #23073 is merged since we delegate this check
-        # to `_get_response_values_binary`.
-        if not all(is_classifier(estimator) for estimator in cv_results["estimator"]):
-            raise ValueError(
-                "The estimators in cv_results['estimator'] must be fitted classifiers."
-            )
-
         if fold_name is None:
             # create an iterable of the same length as the number of ROC curves
             fold_name_ = [None] * len(cv_results["estimator"])
@@ -557,9 +547,9 @@ class RocCurveDisplay:
             zip(cv_results["estimator"], cv_results["indices"]["test"], fold_name_)
         ):
             y_true = _safe_indexing(y, test_indices)
-            y_pred = _get_response(
-                _safe_indexing(X, test_indices),
+            y_pred = _get_response_values_binary(
                 estimator,
+                _safe_indexing(X, test_indices),
                 response_method=response_method,
                 pos_label=pos_label,
             )[0]

@@ -1,12 +1,10 @@
-from sklearn.base import is_classifier
-from .base import _get_response
-
 from .. import average_precision_score
 from .. import precision_recall_curve
 from .._base import _check_pos_label_consistency
 from .._classification import check_consistent_length
 
 from ...utils import check_matplotlib_support
+from ...utils._response import _get_response_values_binary
 
 
 class PrecisionRecallDisplay:
@@ -186,6 +184,7 @@ class PrecisionRecallDisplay:
         *,
         sample_weight=None,
         pos_label=None,
+        drop_intermediate=False,
         response_method="auto",
         name=None,
         ax=None,
@@ -212,6 +211,13 @@ class PrecisionRecallDisplay:
             The class considered as the positive class when computing the
             precision and recall metrics. By default, `estimators.classes_[1]`
             is considered as the positive class.
+
+        drop_intermediate : bool, default=False
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted precision-recall curve. This is useful in order to
+            create lighter precision-recall curves.
+
+            .. versionadded:: 1.3
 
         response_method : {'predict_proba', 'decision_function', 'auto'}, \
             default='auto'
@@ -269,11 +275,10 @@ class PrecisionRecallDisplay:
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
-        if not is_classifier(estimator):
-            raise ValueError(f"{method_name} only supports classifiers")
-        y_pred, pos_label = _get_response(
-            X,
+
+        y_pred, pos_label = _get_response_values_binary(
             estimator,
+            X,
             response_method,
             pos_label=pos_label,
         )
@@ -286,6 +291,7 @@ class PrecisionRecallDisplay:
             sample_weight=sample_weight,
             name=name,
             pos_label=pos_label,
+            drop_intermediate=drop_intermediate,
             ax=ax,
             **kwargs,
         )
@@ -298,6 +304,7 @@ class PrecisionRecallDisplay:
         *,
         sample_weight=None,
         pos_label=None,
+        drop_intermediate=False,
         name=None,
         ax=None,
         **kwargs,
@@ -318,6 +325,13 @@ class PrecisionRecallDisplay:
         pos_label : str or int, default=None
             The class considered as the positive class when computing the
             precision and recall metrics.
+
+        drop_intermediate : bool, default=False
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted precision-recall curve. This is useful in order to
+            create lighter precision-recall curves.
+
+            .. versionadded:: 1.3
 
         name : str, default=None
             Name for labeling curve. If `None`, name will be set to
@@ -374,7 +388,11 @@ class PrecisionRecallDisplay:
         pos_label = _check_pos_label_consistency(pos_label, y_true)
 
         precision, recall, _ = precision_recall_curve(
-            y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
+            y_true,
+            y_pred,
+            pos_label=pos_label,
+            sample_weight=sample_weight,
+            drop_intermediate=drop_intermediate,
         )
         average_precision = average_precision_score(
             y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight

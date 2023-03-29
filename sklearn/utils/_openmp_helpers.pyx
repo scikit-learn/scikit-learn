@@ -12,7 +12,7 @@ def _openmp_parallelism_enabled():
     return SKLEARN_OPENMP_PARALLELISM_ENABLED
 
 
-cpdef _openmp_effective_n_threads(n_threads=None):
+cpdef _openmp_effective_n_threads(n_threads=None, only_physical_cores=False):
     """Determine the effective number of threads to be used for OpenMP calls
 
     - For ``n_threads = None``,
@@ -47,7 +47,10 @@ cpdef _openmp_effective_n_threads(n_threads=None):
         # to exceed the number of cpus.
         max_n_threads = omp_get_max_threads()
     else:
-        max_n_threads = min(omp_get_max_threads(), cpu_count())
+        max_n_threads = min(
+            omp_get_max_threads(),
+            cpu_count(only_physical_cores=only_physical_cores)
+        )
 
     if n_threads is None:
         return max_n_threads

@@ -294,7 +294,7 @@ def test_from_cv_results_wrong_estimator_type(pyplot, data_binary):
         model, X, y, cv=3, return_estimator=True, return_indices=True
     )
 
-    err_msg = "must be fitted classifiers"
+    err_msg = "Expected 'estimator' to be a binary classifier."
     with pytest.raises(ValueError, match=err_msg):
         RocCurveDisplay.from_cv_results(cv_results, X, y)
 
