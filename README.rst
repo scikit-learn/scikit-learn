@@ -44,6 +44,10 @@
 .. |PytestMinVersion| replace:: 5.3.1
 .. |PlotlyMinVersion| replace:: 5.10.0
 
+=================
+Scikit-learn-tree
+=================
+
 ``scikit-learn-tree`` is a maintained fork of scikit-learn, which advances the tree submodule, while staying in-line
 with changes from upstream scikit-learn. It is an exact stand-in for ``sklearn`` in package imports, but is
 released under the name ``scikit-learn-tree`` to avoid confusion.
@@ -94,8 +98,7 @@ Installing scikit-learn-tree
 ============================
 
 Scikit-learn-tree is a maintained fork of scikit-learn, which extends the
-tree submodule in a few ways documented in :ref:`changelog of the fork
-<fork-changelog>`. 
+tree submodule in a few ways documented in `fork_changelog`_. 
 
 We release versions of scikit-learn-tree in an analagous fashion to
 scikit-learn main. Due to maintenance resources, we only release on PyPi
@@ -103,12 +106,11 @@ and recommend therefore installing with ``pip``.
 
 There are different ways to install scikit-learn-tree:
 
-  * :ref:`Install the latest official release <install_fork_release>`. This
+  * Install the latest official release `install_fork_release`_. This
     is the best approach for most users. It will provide a stable version
     and pre-built packages are available for most platforms.
     
-  * :ref:`Building the package from source
-    <install_source>`. This is best for users who want the
+  * Building the package from source `install_source`_. This is best for users who want the
     latest-and-greatest features and aren't afraid of running
     brand-new code. This is also needed for users who wish to contribute to the
     project.
@@ -119,9 +121,7 @@ Installing the latest release
 -----------------------------
 We release wheels for common distributions and this is thus installable via pip.
 
-.. prompt:: bash $
-  
-  pip install scikit-learn-tree
+    pip install scikit-learn-tree
 
 This will install ``scikit-learn-tree`` under the namespace of ``sklearn``, which then
 can be used as a stand-in for any package that relies on the public API of ``sklearn``.
@@ -146,8 +146,10 @@ features to the fork, the building from source instructions are exactly the same
 as that of scikit-learn main, so please refer to `scikit-learn documentation <https://scikit-learn.org/stable/developers/advanced_installation.html#install-bleeding-edge>`_
 for instructions on building from source.
 
-Development
 ===========
+
+Development
+-----------
 
 We welcome new contributors of all experience levels, specifically to maintain the fork.
 Any contributions that make sure our fork is "better in-line" with scikit-learn upstream,
@@ -158,15 +160,17 @@ The scikit-learn community goals are to be helpful, welcoming, and effective. Th
 has detailed information about contributing code, documentation, tests, and
 more. We've included some basic information in this README.
 
-.. _fork-changelog:
-Major Changes of the Fork
 =========================
+
+.. _fork_changelog:
+
+Major Changes of the Fork
+-------------------------
 
 The purpose of this page is to illustrate some of the main features that
 ``scikit-learn-tree`` provides compared to ``scikit-learn``. It assumes a
 an understanding of core package ``scikit-learn`` and also decision trees
-models. Please refer to our :ref:`installation instructions
-<fork-installation-instructions>` for installing ``scikit-learn-tree``.
+models. Please refer to our installation instructions `install_fork_release`_ for installing ``scikit-learn-tree``.
 
 Scikit-learn-tree though operates as a stand-in for upstream ``scikit-learn``.
 It is used in packages exactly the same way and will support all features
@@ -193,7 +197,7 @@ Candidate changes and PRs accepted into the fork are those that:
 Decision tree generalizations
 -----------------------------
 
-``Scikit-learn`` provides an axis-aligned :class:`~sklearn.tree.DecisionTreeClassifier`
+``Scikit-learn`` provides an axis-aligned `sklearn.tree.DecisionTreeClassifier <https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html>`_
 decision tree model (classifier and regressor), which has a few fundamental limitations
 that prevent 3rd parties from utilizing the existing class, without forking a large
 amount of copy/pasted Python and Cython code. We highlight those limitations here
@@ -239,8 +243,8 @@ Python API:
   random forests and their variants to scale to millions of samples.
   - Our fix: We added a ``max_bins=None`` keyword argument to the ``BaseForest`` class, and all its subclasses. The default behavior is no binning. The current implementation is not necessarily efficient. There are several improvements to be made. See below.
 
-Overall, the existing tree models, such as :class:`~sklearn.tree.DecisionTreeClassifier`
-and :class:`~sklearn.ensemble.RandomForestClassifier` all work exactly the same as they
+Overall, the existing tree models, such as `sklearn.tree.DecisionTreeClassifier <https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html>`_
+and `sklearn.ensemble.RandomForestClassifier <https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html#sklearn.ensemble.RandomForestClassifier>`_ all work exactly the same as they
 would in ``scikit-learn`` main, but these extensions enable 3rd-party packages to extend
 the Cython/Python API easily.
 
