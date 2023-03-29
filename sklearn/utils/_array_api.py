@@ -7,7 +7,7 @@ import sklearn.externals._array_api_compat as array_api_compat
 import sklearn.externals._array_api_compat.numpy as array_api_compat_numpy
 from sklearn.externals._array_api_compat import device, size  # noqa
 
-from .._config import get_config
+from .._config import get_config, config_context
 
 
 def _is_numpy_namespace(xp):
@@ -143,25 +143,19 @@ def get_namespace(*arrays):
     is_array_api : bool
         True of the arrays are containers that implement the Array API spec.
     """
-    return _get_namespace(
-        *arrays, array_api_dispatch=get_config()["array_api_dispatch"]
-    )
-
-
-def _get_namespace(*arrays, array_api_dispatch=False):
+    array_api_dispatch = get_config()["array_api_dispatch"]
     if not array_api_dispatch:
         return array_api_compat_numpy, False
+
     try:
-        namespace, is_array = array_api_compat.get_namespace(*arrays), True
-    except TypeError as e:
-        if str(e).startswith("The input is not a supported array type"):
-            return array_api_compat_numpy, False
-        raise
+        namespace, is_array_api = array_api_compat.get_namespace(*arrays), True
+    except TypeError:
+        return array_api_compat_numpy, False
 
     if namespace.__name__ in {"numpy.array_api", "cupy.array_api"}:
         namespace = _ArrayAPIWrapper(namespace)
 
-    return namespace, is_array
+    return namespace, is_array_api
 
 
 def _expit(X):
@@ -198,20 +192,21 @@ def _asarray_with_order(array, dtype=None, order=None, copy=None, xp=None):
         return xp.asarray(array, dtype=dtype, copy=copy)
 
 
-def _convert_to_numpy(array, xp):
+def _convert_to_numpy(array):
     """Convert X into a NumPy ndarray on the CPU."""
+    with config_context(array_api_dispatch=True):
+        xp, _ = get_namespace(array)
+
     xp_name = xp.__name__
 
-    if _is_numpy_namespace(xp):
-        return numpy.asarray(array)
-    elif xp_name in {"sklearn.externals._array_api_compat.torch", "torch"}:
+    if xp_name in {"sklearn.externals._array_api_compat.torch", "torch"}:
         return array.cpu().numpy()
     elif xp_name == "cupy.array_api":
         return array._array.get()
     elif xp_name in {"sklearn.externals._array_api_compat.cupy", "cupy"}:
         return array.get()
-    else:
-        raise ValueError(f"{xp_name} is an unsupported namespace")
+
+    return numpy.asarray(array)
 
 
 def _estimator_with_converted_arrays(estimator, converter):
@@ -234,8 +229,9 @@ def _estimator_with_converted_arrays(estimator, converter):
 
     new_estimator = clone(estimator)
     for key, attribute in vars(estimator).items():
-        _, is_array = _get_namespace(attribute, array_api_dispatch=True)
-        if is_array:
+        with config_context(array_api_dispatch=True):
+            _, is_array_api = get_namespace(attribute)
+        if is_array_api:
             attribute = converter(attribute)
         setattr(new_estimator, key, attribute)
     return new_estimator

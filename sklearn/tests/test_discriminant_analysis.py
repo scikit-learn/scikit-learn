@@ -701,7 +701,7 @@ def test_lda_array_api(array_namespace):
         lda_xp_param = getattr(lda_xp, key)
         assert hasattr(lda_xp_param, "__array_namespace__")
 
-        lda_xp_param_np = _convert_to_numpy(lda_xp_param, xp=xp)
+        lda_xp_param_np = _convert_to_numpy(lda_xp_param)
         assert_allclose(
             attribute, lda_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
         )
@@ -723,7 +723,7 @@ def test_lda_array_api(array_namespace):
             result_xp, "__array_namespace__"
         ), f"{method} did not output an array_namespace"
 
-        result_xp_np = _convert_to_numpy(result_xp, xp=xp)
+        result_xp_np = _convert_to_numpy(result_xp)
 
         assert_allclose(
             result,
@@ -759,8 +759,9 @@ def test_lda_array_torch(device, dtype):
     for key, attribute in array_attributes.items():
         lda_xp_param = getattr(lda_xp, key)
         assert isinstance(lda_xp_param, torch.Tensor)
+        assert lda_xp_param.device.type == device
 
-        lda_xp_param_np = _convert_to_numpy(lda_xp_param, xp=torch)
+        lda_xp_param_np = _convert_to_numpy(lda_xp_param)
         assert_allclose(
             attribute, lda_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
         )
@@ -779,8 +780,9 @@ def test_lda_array_torch(device, dtype):
             result_xp = getattr(lda_xp, method)(X_torch)
 
         assert isinstance(result_xp, torch.Tensor)
+        assert result_xp.device.type == device
 
-        result_xp_np = _convert_to_numpy(result_xp, xp=torch)
+        result_xp_np = _convert_to_numpy(result_xp)
 
         assert_allclose(
             result,

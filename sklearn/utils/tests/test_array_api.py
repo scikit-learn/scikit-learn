@@ -145,17 +145,6 @@ def test_asarray_with_order_ignored():
     assert not X_new_np.flags["F_CONTIGUOUS"]
 
 
-def test_convert_to_numpy_error():
-    """Test convert to numpy errors for unsupported namespaces."""
-    xp = pytest.importorskip("numpy.array_api")
-    xp_ = _AdjustableNameAPITestWrapper(xp, "wrapped.array_api")
-
-    X = xp_.asarray([1.2, 3.4])
-
-    with pytest.raises(ValueError, match="wrapped.array_api is an unsupported"):
-        _convert_to_numpy(X, xp=xp_)
-
-
 @pytest.mark.parametrize("library", ["cupy", "torch", "cupy.array_api"])
 def test_convert_to_numpy_gpu(library):
     """Check convert_to_numpy for GPU backed libraries."""
@@ -168,7 +157,7 @@ def test_convert_to_numpy_gpu(library):
     else:
         X_gpu = xp.asarray([1.0, 2.0, 3.0])
 
-    X_cpu = _convert_to_numpy(X_gpu, xp=xp)
+    X_cpu = _convert_to_numpy(X_gpu)
     expected_output = numpy.asarray([1.0, 2.0, 3.0])
     assert_allclose(X_cpu, expected_output)
 
@@ -178,7 +167,7 @@ def test_convert_to_numpy_cpu():
     torch = pytest.importorskip("torch")
     X_torch = torch.asarray([1.0, 2.0, 3.0], device="cpu")
 
-    X_cpu = _convert_to_numpy(X_torch, xp=torch)
+    X_cpu = _convert_to_numpy(X_torch)
     expected_output = numpy.asarray([1.0, 2.0, 3.0])
     assert_allclose(X_cpu, expected_output)
 
