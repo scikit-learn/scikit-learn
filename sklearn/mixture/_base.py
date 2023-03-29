@@ -92,7 +92,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         self.warm_start = warm_start
         self.verbose = verbose
         self.verbose_interval = verbose_interval
-        self.all_params_enough_to_skip_initilization = False
 
     @abstractmethod
     def _check_parameters(self, X):
