@@ -908,7 +908,10 @@ cdef class DensePartitioner:
         max_feature_value_out[0] = max_feature_value
 
     cdef inline void next_p(self, SIZE_t* p_prev, SIZE_t* p) noexcept nogil:
-        """Compute the next p_prev and p for iteratiing over feature values."""
+        """Compute the next p_prev and p for iteratiing over feature values.
+
+        The missing values are not included when iterating through the feature values.
+        """
         cdef:
             DTYPE_t[::1] feature_values = self.feature_values
             SIZE_t end_non_missing = self.end - self.n_missing
