@@ -758,8 +758,6 @@ def check_array(
 
     # store whether originally we wanted numeric dtype
     dtype_numeric = isinstance(dtype, str) and dtype == "numeric"
-    if dtype is int or dtype == "int":
-        dtype = xp.int64
 
     dtype_orig = getattr(array, "dtype", None)
     if not is_array_api_compliant and not hasattr(dtype_orig, "kind"):
@@ -831,6 +829,9 @@ def check_array(
         array = array.astype(new_dtype)
         # Since we converted here, we do not need to convert again later
         dtype = None
+
+    if dtype is not None and _is_numpy_namespace(xp):
+        dtype = np.dtype(dtype)
 
     if force_all_finite not in (True, False, "allow-nan"):
         raise ValueError(
