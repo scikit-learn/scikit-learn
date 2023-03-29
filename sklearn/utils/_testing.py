@@ -389,6 +389,13 @@ def set_random_state(estimator, random_state=0):
 
 
 try:
+    import array_api_compat  # noqa
+
+    ARRAY_API_COMPAT_INSTALLED = True
+except ImportError:
+    ARRAY_API_COMPAT_INSTALLED = False
+
+try:
     import pytest
 
     skip_if_32bit = pytest.mark.skipif(_IS_32BIT, reason="skipped on 32bit platforms")
@@ -399,6 +406,10 @@ try:
     )
     skip_if_no_parallel = pytest.mark.skipif(
         not joblib.parallel.mp, reason="joblib is in serial mode"
+    )
+    skip_if_no_array_api_compat = pytest.mark.skipif(
+        not ARRAY_API_COMPAT_INSTALLED,
+        reason="requires array_api_compat installed",
     )
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.

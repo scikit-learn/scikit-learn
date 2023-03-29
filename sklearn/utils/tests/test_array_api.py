@@ -4,13 +4,14 @@ import pytest
 
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import get_namespace
+from sklearn.utils._array_api import _NumPyApiWrapper
 from sklearn.utils._array_api import _ArrayAPIWrapper
 
 from sklearn.utils._array_api import _asarray_with_order
 from sklearn.utils._array_api import _convert_to_numpy
 from sklearn.utils._array_api import _estimator_with_converted_arrays
+from sklearn.utils._testing import skip_if_no_array_api_compat
 
-import sklearn.externals._array_api_compat.numpy as array_api_compat_numpy
 from sklearn._config import config_context
 
 pytestmark = pytest.mark.filterwarnings(
@@ -18,19 +19,39 @@ pytestmark = pytest.mark.filterwarnings(
 )
 
 
-def test_get_namespace_ndarray():
+@pytest.mark.parametrize("X", [numpy.asarray([1, 2, 3]), [1, 2, 3]])
+def test_get_namespace_ndarray_default(X):
+    """Check that get_namespace returns NumPy wrapper"""
+    xp_out, is_array_api = get_namespace(X)
+    assert isinstance(xp_out, _NumPyApiWrapper)
+    assert not is_array_api
+
+
+def test_get_namespace_ndarray_creation_device():
+    """Check expected behavior with device and creation functions."""
+    X = numpy.asarray([1, 2, 3])
+    xp_out, _ = get_namespace(X)
+
+    full_array = xp_out.full(10, fill_value=2.0, device="cpu")
+    assert_allclose(full_array, [2.0] * 10)
+
+    with pytest.raises(ValueError, match="Unsupported device"):
+        xp_out.zeros(10, device="cuda")
+
+
+def test_get_namespace_ndarray_with_dispatch():
     """Test get_namespace on NumPy ndarrays."""
-    pytest.importorskip("numpy.array_api")
+    array_api_compat = pytest.importorskip("array_api_compat")
 
     X_np = numpy.asarray([[1, 2, 3]])
 
-    for array_api_dispatch in [True, False]:
-        with config_context(array_api_dispatch=array_api_dispatch):
-            xp_out, is_array_api = get_namespace(X_np)
-            assert is_array_api == array_api_dispatch
-            assert xp_out is array_api_compat_numpy
+    with config_context(array_api_dispatch=True):
+        xp_out, is_array_api = get_namespace(X_np)
+        assert is_array_api
+        assert xp_out is array_api_compat.numpy
 
 
+@skip_if_no_array_api_compat
 def test_get_namespace_array_api():
     """Test get_namespace for ArrayAPI arrays."""
     xp = pytest.importorskip("numpy.array_api")
@@ -42,12 +63,8 @@ def test_get_namespace_array_api():
         assert is_array_api
         assert isinstance(xp_out, _ArrayAPIWrapper)
 
-        # check errors
-        with pytest.raises(TypeError, match="Multiple namespaces"):
-            get_namespace(X_np, X_xp)
-
         xp_out, is_array_api = get_namespace(1)
-        assert xp_out == array_api_compat_numpy
+        assert isinstance(xp_out, _NumPyApiWrapper)
         assert not is_array_api
 
 
@@ -115,7 +132,9 @@ def test_array_api_wrapper_take():
         xp.take(xp.asarray([[[0]]]), xp.asarray([0]), axis=0)
 
 
-@pytest.mark.parametrize("is_array_api", [True, False])
+@pytest.mark.parametrize(
+    "is_array_api", [pytest.param(True, marks=skip_if_no_array_api_compat), False]
+)
 def test_asarray_with_order(is_array_api):
     """Test _asarray_with_order passes along order for NumPy arrays."""
     if is_array_api:
@@ -124,7 +143,7 @@ def test_asarray_with_order(is_array_api):
         xp = numpy
 
     X = xp.asarray([1.2, 3.4, 5.1])
-    X_new = _asarray_with_order(X, order="F")
+    X_new = _asarray_with_order(X, order="F", xp=xp)
 
     X_new_np = numpy.asarray(X_new)
     assert X_new_np.flags["F_CONTIGUOUS"]
@@ -145,6 +164,7 @@ def test_asarray_with_order_ignored():
     assert not X_new_np.flags["F_CONTIGUOUS"]
 
 
+@skip_if_no_array_api_compat
 @pytest.mark.parametrize("library", ["cupy", "torch", "cupy.array_api"])
 def test_convert_to_numpy_gpu(library):
     """Check convert_to_numpy for GPU backed libraries."""
@@ -209,7 +229,9 @@ def test_convert_estimator_to_array_api():
     assert hasattr(new_est.X_, "__array_namespace__")
 
 
-@pytest.mark.parametrize("array_api_dispatch", [True, False])
+@pytest.mark.parametrize(
+    "array_api_dispatch", [pytest.param(True, marks=skip_if_no_array_api_compat), False]
+)
 def test_get_namespace_array_api_isdtype(array_api_dispatch):
     """Test isdtype implementation from _ArrayAPIWrapper and array_api_compat."""
     xp = pytest.importorskip("numpy.array_api")
@@ -235,7 +257,9 @@ def test_get_namespace_array_api_isdtype(array_api_dispatch):
         assert xp_out.isdtype(xp_out.uint32, "numeric")
 
 
-@pytest.mark.parametrize("array_api_dispatch", [True, False])
+@pytest.mark.parametrize(
+    "array_api_dispatch", [pytest.param(True, marks=skip_if_no_array_api_compat), False]
+)
 def test_get_namespace_list(array_api_dispatch):
     """Test get_namespace for lists."""
 
@@ -243,4 +267,4 @@ def test_get_namespace_list(array_api_dispatch):
     with config_context(array_api_dispatch=array_api_dispatch):
         xp_out, is_array = get_namespace(X)
         assert not is_array
-        assert xp_out is array_api_compat_numpy
+        assert isinstance(xp_out, _NumPyApiWrapper)

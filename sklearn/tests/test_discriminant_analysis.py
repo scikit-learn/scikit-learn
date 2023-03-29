@@ -13,6 +13,7 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._array_api import _convert_to_numpy
 from sklearn.utils._testing import _convert_container
+from sklearn.utils._testing import skip_if_no_array_api_compat
 
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -676,6 +677,7 @@ def test_get_feature_names_out():
     assert_array_equal(names_out, expected_names_out)
 
 
+@skip_if_no_array_api_compat
 @pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
 def test_lda_array_api(array_namespace):
     """Check that the array_api Array gives the same results as ndarrays."""
@@ -733,6 +735,7 @@ def test_lda_array_api(array_namespace):
         )
 
 
+@skip_if_no_array_api_compat
 @pytest.mark.parametrize("device", ["cuda", "cpu"])
 @pytest.mark.parametrize("dtype", ["float32", "float64"])
 def test_lda_array_torch(device, dtype):
