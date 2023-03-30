@@ -7,14 +7,12 @@ implementation_specific_values = [
     #
     # We use DistanceMetric for float64 for backward naming compatibility.
     #
-    ('64', 'DistanceMetric', 'DTYPE_t'),
-    ('32', 'DistanceMetric32', 'cnp.float32_t')
+    ('64', 'DistanceMetric', 'float64_t'),
+    ('32', 'DistanceMetric32', 'float32_t')
 ]
 
 }}
-cimport numpy as cnp
-
-from ...utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
+from ...utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
 from ...metrics._dist_metrics cimport DistanceMetric, DistanceMetric32
 
 {{for name_suffix, DistanceMetric, INPUT_DTYPE_t in implementation_specific_values}}
@@ -23,15 +21,15 @@ from ...metrics._dist_metrics cimport DistanceMetric, DistanceMetric32
 cdef class DatasetsPair{{name_suffix}}:
     cdef:
         {{DistanceMetric}} distance_metric
-        ITYPE_t n_features
+        intp_t n_features
 
-    cdef ITYPE_t n_samples_X(self) noexcept nogil
+    cdef intp_t n_samples_X(self) noexcept nogil
 
-    cdef ITYPE_t n_samples_Y(self) noexcept nogil
+    cdef intp_t n_samples_Y(self) noexcept nogil
 
-    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil
+    cdef float64_t dist(self, intp_t i, intp_t j) noexcept nogil
 
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil
+    cdef float64_t surrogate_dist(self, intp_t i, intp_t j) noexcept nogil
 
 
 cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
@@ -43,23 +41,23 @@ cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
 cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef:
         const {{INPUT_DTYPE_t}}[:] X_data
-        const SPARSE_INDEX_TYPE_t[:] X_indices
-        const SPARSE_INDEX_TYPE_t[:] X_indptr
+        const int32_t[:] X_indices
+        const int32_t[:] X_indptr
 
         const {{INPUT_DTYPE_t}}[:] Y_data
-        const SPARSE_INDEX_TYPE_t[:] Y_indices
-        const SPARSE_INDEX_TYPE_t[:] Y_indptr
+        const int32_t[:] Y_indices
+        const int32_t[:] Y_indptr
 
 
 cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef:
         const {{INPUT_DTYPE_t}}[:] X_data
-        const SPARSE_INDEX_TYPE_t[:] X_indices
-        const SPARSE_INDEX_TYPE_t[:] X_indptr
+        const int32_t[:] X_indices
+        const int32_t[:] X_indptr
 
         const {{INPUT_DTYPE_t}}[:] Y_data
-        const SPARSE_INDEX_TYPE_t[:] Y_indices
-        ITYPE_t n_Y
+        const int32_t[:] Y_indices
+        intp_t n_Y
 
 
 cdef class DenseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
