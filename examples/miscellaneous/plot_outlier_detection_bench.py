@@ -172,12 +172,12 @@ linewidth = 1
 pos_label = 0  # mean 0 belongs to positive class
 rows = math.ceil(len(datasets_name) / cols)
 
-fig, axs = plt.subplots(rows, cols, figsize=(10, rows * 3))
+fig, axs = plt.subplots(rows, cols, figsize=(10, rows * 3), sharex=True, sharey=True)
 
 for i, dataset_name in enumerate(datasets_name):
     (X, y) = preprocess_dataset(dataset_name=dataset_name)
 
-    for model_name in models_name:
+    for model_idx, model_name in enumerate(models_name):
         y_pred = compute_prediction(X, model_name=model_name)
         display = RocCurveDisplay.from_predictions(
             y,
@@ -186,10 +186,12 @@ for i, dataset_name in enumerate(datasets_name):
             name=model_name,
             linewidth=linewidth,
             ax=axs[i // cols, i % cols],
+            plot_chance_level=(model_idx == len(models_name) - 1),
+            chance_level_kw={
+                "linewidth": linewidth,
+                "linestyle": ":",
+            },
         )
-    axs[i // cols, i % cols].plot([0, 1], [0, 1], linewidth=linewidth, linestyle=":")
     axs[i // cols, i % cols].set_title(dataset_name)
-    axs[i // cols, i % cols].set_xlabel("False Positive Rate")
-    axs[i // cols, i % cols].set_ylabel("True Positive Rate")
 plt.tight_layout(pad=2.0)  # spacing between subplots
 plt.show()
