@@ -320,7 +320,7 @@ Changelog
 
 - |Enhancement| :meth:`metrics.RocCurveDisplay.from_estimator` and
   :meth:`metrics.RocCurveDisplay.from_predictions` now accept two new keywords,
-  `plot_chance_level` and `chance_level_kwargs` to plot the baseline chance
+  `plot_chance_level` and `chance_level_kw` to plot the baseline chance
   level. This line is exposed in the `chance_level_` attribute.
   :pr:`25987` by :user:`Yao Xiao <Charlie-XIAO>`.
 

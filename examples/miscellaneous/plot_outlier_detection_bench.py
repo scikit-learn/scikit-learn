@@ -187,7 +187,7 @@ for i, dataset_name in enumerate(datasets_name):
             linewidth=linewidth,
             ax=axs[i // cols, i % cols],
             plot_chance_level=(model_idx == len(models_name) - 1),
-            chance_level_kwargs={
+            chance_level_kw={
                 "linewidth": linewidth,
                 "linestyle": ":",
             },
