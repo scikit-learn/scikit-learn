@@ -92,8 +92,8 @@ def fit_predict(X, model_name, categorical_columns=(), n_neighbors=20):
 # On the rest of the example we process one dataset per section and summarize
 # the results in a final plotting section.
 #
-# SA dataset
-# ----------
+# KDDCup99 - SA dataset
+# ---------------------
 #
 # The :ref:`kddcup99_dataset` was generated using a closed network and
 # hand-injected attacks. The SA dataset is a subset of it obtained by simply
@@ -169,8 +169,8 @@ for model_name in model_names:
     )
 
 # %%
-# WDBC dataset
-# ------------
+# Breast Cancer dataset
+# ---------------------
 #
 # The :ref:`breast_cancer_dataset` (WDBC) is a binary classification dataset
 # where the class is whether a tumor is malignant or benign. It contains 212
