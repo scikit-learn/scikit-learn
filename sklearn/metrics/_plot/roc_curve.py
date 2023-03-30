@@ -406,6 +406,8 @@ class RocCurveDisplay:
         aggregate_name=None,
         aggregate_line_kw=None,
         aggregate_uncertainty_kw=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
     ):
         """Create a multi-fold ROC curve display given cross-validation results.
 
@@ -479,6 +481,13 @@ class RocCurveDisplay:
         aggregate_uncertainty_kw : dict, default=None
             Dictionary with keywords passed to the matplotlib's `fill_between`
             function to draw the standard deviation area.
+
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level.
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
 
         Returns
         -------
@@ -574,6 +583,8 @@ class RocCurveDisplay:
             aggregate_name=aggregate_name,
             aggregate_line_kw=aggregate_line_kw,
             aggregate_uncertainty_kw=aggregate_uncertainty_kw,
+            plot_chance_level=plot_chance_level,
+            chance_level_kw=chance_level_kw,
         )
 
 
@@ -610,6 +621,10 @@ class MultiRocCurveDisplay:
     std_area_ : matplotlib Artist or None
         Artist representing the standard deviation area. If `None`, no standard
         deviation area is plotted.
+
+    chance_level_ : matplotlib Artist or None
+        Artist representing the chance level. If `None`, no chance level is
+        plotted.
 
     figure_ : matplotlib Figure
         Figure containing the curve.
@@ -676,6 +691,8 @@ class MultiRocCurveDisplay:
         aggregate_name=None,
         aggregate_line_kw=None,
         aggregate_uncertainty_kw=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
     ):
         """Plot visualization.
 
@@ -717,6 +734,13 @@ class MultiRocCurveDisplay:
         aggregate_uncertainty_kw : dict, default=None
             Dictionary with keywords passed to the matplotlib's `fill_between`
             function to draw the standard deviation area.
+
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level.
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
 
         Returns
         -------
@@ -800,6 +824,19 @@ class MultiRocCurveDisplay:
             self.mean_line_ = None
             self.std_area_ = None
             legend_title = None
+
+        if plot_chance_level:
+            chance_level_line_kw = {
+                "label": "Chance level (AUC = 0.5)",
+                "color": "k",
+                "linestyle": "--",
+            }
+            if chance_level_kw is not None:
+                chance_level_line_kw.update(chance_level_kw)
+
+            self.chance_level_ = ax.plot([0, 1], [0, 1], **chance_level_line_kw)
+        else:
+            self.chance_level_ = None
 
         ax.legend(loc="lower right", title=legend_title)
 
