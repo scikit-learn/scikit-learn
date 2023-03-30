@@ -130,6 +130,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.load_svmlight_file",
     "sklearn.datasets.load_svmlight_files",
     "sklearn.datasets.make_biclusters",
+    "sklearn.datasets.make_blobs",
     "sklearn.datasets.make_checkerboard",
     "sklearn.datasets.make_circles",
     "sklearn.datasets.make_classification",
