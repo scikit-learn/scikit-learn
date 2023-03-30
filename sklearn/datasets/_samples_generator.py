@@ -1700,6 +1700,13 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     return X, t
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+)
 def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     """Generate an S curve dataset.
 
