@@ -659,7 +659,7 @@ Plotting
 
 .. autosummary::
    :toctree: generated/
-   :template: display.rst
+   :template: display_only_from_estimator.rst
 
    inspection.DecisionBoundaryDisplay
    inspection.PartialDependenceDisplay
@@ -1242,7 +1242,7 @@ Visualization
 
 .. autosummary::
    :toctree: generated/
-   :template: display.rst
+   :template: display_only_from_estimator.rst
 
    model_selection.LearningCurveDisplay
 
