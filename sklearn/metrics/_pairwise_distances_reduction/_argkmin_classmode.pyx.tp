@@ -3,10 +3,6 @@ from cython.parallel cimport parallel, prange
 from libcpp.map cimport map as cpp_map, pair as cpp_pair
 from libc.stdlib cimport free
 
-cimport numpy as cnp
-
-cnp.import_array()
-
 from ...utils._typedefs cimport intp_t, float64_t
 
 import numpy as np
