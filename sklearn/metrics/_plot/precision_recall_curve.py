@@ -121,7 +121,7 @@ class PrecisionRecallDisplay:
         name=None,
         plot_chance_level=False,
         pos_prevalence=0,
-        chance_level_kwargs=None,
+        chance_level_kw=None,
         **kwargs,
     ):
         """Plot visualization.
@@ -149,7 +149,7 @@ class PrecisionRecallDisplay:
 
             .. versionadded:: 1.3
 
-        chance_level_kwargs : dict, default=None
+        chance_level_kw : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the chance level line.
 
@@ -187,14 +187,14 @@ class PrecisionRecallDisplay:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
-        chance_level_line_kwargs = {
+        chance_level_line_kw = {
             "label": f"Chance level (AP = {pos_prevalence:0.2f})",
             "color": "k",
             "linestyle": "--",
         }
 
-        if chance_level_kwargs is not None:
-            chance_level_line_kwargs.update(chance_level_kwargs)
+        if chance_level_kw is not None:
+            chance_level_line_kw.update(chance_level_kw)
 
         import matplotlib.pyplot as plt
 
@@ -214,7 +214,7 @@ class PrecisionRecallDisplay:
             (self.chance_level_,) = ax.plot(
                 (0, 1),
                 (pos_prevalence, pos_prevalence),
-                **chance_level_line_kwargs,
+                **chance_level_line_kw,
             )
         else:
             self.chance_level_ = None
@@ -240,7 +240,7 @@ class PrecisionRecallDisplay:
         name=None,
         ax=None,
         plot_chance_level=False,
-        chance_level_kwargs=None,
+        chance_level_kw=None,
         **kwargs,
     ):
         """Plot precision-recall curve given an estimator and some data.
@@ -290,7 +290,7 @@ class PrecisionRecallDisplay:
 
             .. versionadded:: 1.3
 
-        chance_level_kwargs : dict, default=None
+        chance_level_kw : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the chance level line.
 
@@ -358,7 +358,7 @@ class PrecisionRecallDisplay:
             drop_intermediate=drop_intermediate,
             ax=ax,
             plot_chance_level=plot_chance_level,
-            chance_level_kwargs=chance_level_kwargs,
+            chance_level_kw=chance_level_kw,
             **kwargs,
         )
 
@@ -374,7 +374,7 @@ class PrecisionRecallDisplay:
         name=None,
         ax=None,
         plot_chance_level=False,
-        chance_level_kwargs=None,
+        chance_level_kw=None,
         **kwargs,
     ):
         """Plot precision-recall curve given binary class predictions.
@@ -413,7 +413,7 @@ class PrecisionRecallDisplay:
 
             .. versionadded:: 1.3
 
-        chance_level_kwargs : dict, default=None
+        chance_level_kw : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the chance level line.
 
@@ -497,6 +497,6 @@ class PrecisionRecallDisplay:
             name=name,
             plot_chance_level=plot_chance_level,
             pos_prevalence=pos_prevalence,
-            chance_level_kwargs=chance_level_kwargs,
+            chance_level_kw=chance_level_kw,
             **kwargs,
         )
