@@ -198,7 +198,7 @@ hgbdt_preprocessor
 # features and individual conditional expectation (ICE).
 #
 # Multi-layer perceptron
-# """"""""""""""""""""""
+# ~~~~~~~~~~~~~~~~~~~~~~
 #
 # Let's fit a :class:`~sklearn.neural_network.MLPRegressor` and compute
 # single-variable partial dependence plots.
@@ -278,7 +278,7 @@ _ = display.figure_.suptitle(
 
 # %%
 # Gradient boosting
-# """""""""""""""""
+# ~~~~~~~~~~~~~~~~~
 #
 # Let's now fit a :class:`~sklearn.ensemble.HistGradientBoostingRegressor` and
 # compute the partial dependence on the same features. We also use the
@@ -330,7 +330,7 @@ _ = display.figure_.suptitle(
 
 # %%
 # Analysis of the plots
-# """""""""""""""""""""
+# ~~~~~~~~~~~~~~~~~~~~~
 #
 # We will first look at the PDPs for the numerical features. For both models, the
 # general trend of the PDP of the temperature is that the number of bike rentals is
@@ -352,7 +352,7 @@ _ = display.figure_.suptitle(
 # synthetic samples if features are correlated.
 #
 # ICE vs. PDP
-# """""""""""
+# ~~~~~~~~~~~
 # PDP is an average of the marginal effects of the features. We are averaging the
 # response of all samples of the provided set. Thus, some effects could be hidden. In
 # this regard, it is possible to plot each individual response. This representation is
@@ -521,7 +521,7 @@ _ = display.figure_.suptitle(
 
 # %%
 # 3D representation
-# """""""""""""""""
+# ~~~~~~~~~~~~~~~~~
 #
 # Let's make the same partial dependence plot for the 2 features interaction,
 # this time in 3 dimensions.
