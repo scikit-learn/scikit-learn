@@ -16,9 +16,6 @@ jobs:
     TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     VIRTUALENV: 'testvenv'
     JUNITXML: 'test-data.xml'
-    OMP_NUM_THREADS: '2'
-    OPENBLAS_NUM_THREADS: '2'
-    CPU_COUNT: '2'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
     CCACHE_DIR: $(Pipeline.Workspace)/ccache
     CCACHE_COMPRESS: '1'
@@ -63,11 +60,12 @@ jobs:
     - script: |
         build_tools/azure/test_docs.sh
       displayName: 'Test Docs'
-      condition: eq(variables['SELECTED_TESTS'], '')
+      condition: and(succeeded(), eq(variables['SELECTED_TESTS'], ''))
     - script: |
         build_tools/azure/test_pytest_soft_dependency.sh
       displayName: 'Test Soft Dependency'
-      condition: and(eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true'),
+      condition: and(succeeded(),
+                     eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true'),
                      eq(variables['SELECTED_TESTS'], ''))
     - task: PublishTestResults@2
       inputs:

@@ -18,6 +18,7 @@ from numpy.lib.stride_tricks import as_strided
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
 from ..utils._param_validation import Hidden, Interval, validate_params
+from ..utils._param_validation import RealNotInt
 
 __all__ = [
     "PatchExtractor",
@@ -343,8 +344,8 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
         "image": [np.ndarray],
         "patch_size": [tuple, list],
         "max_patches": [
-            Interval(Real, left=0, right=1, closed="neither"),
-            Interval(Integral, left=1, right=None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
+            Interval(Integral, 1, None, closed="left"),
             None,
         ],
         "random_state": ["random_state"],
@@ -370,7 +371,8 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
     max_patches : int or float, default=None
         The maximum number of patches to extract. If `max_patches` is a float
         between 0 and 1, it is taken to be a proportion of the total number
-        of patches.
+        of patches. If `max_patches` is None it corresponds to the total number
+        of patches that can be extracted.
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator used for random sampling when
@@ -501,12 +503,14 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     patch_size : tuple of int (patch_height, patch_width), default=None
-        The dimensions of one patch.
+        The dimensions of one patch. If set to None, the patch size will be
+        automatically set to `(img_height // 10, img_width // 10)`, where
+        `img_height` and `img_width` are the dimensions of the input images.
 
     max_patches : int or float, default=None
         The maximum number of patches per image to extract. If `max_patches` is
         a float in (0, 1), it is taken to mean a proportion of the total number
-        of patches.
+        of patches. If set to None, extract all possible patches.
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator used for random sampling when
@@ -530,19 +534,23 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
     >>> from sklearn.feature_extraction import image
     >>> # Use the array data from the second image in this dataset:
     >>> X = load_sample_images().images[1]
+    >>> X = X[None, ...]
     >>> print(f"Image shape: {X.shape}")
-    Image shape: (427, 640, 3)
-    >>> pe = image.PatchExtractor(patch_size=(2, 2))
+    Image shape: (1, 427, 640, 3)
+    >>> pe = image.PatchExtractor(patch_size=(10, 10))
     >>> pe_trans = pe.transform(X)
     >>> print(f"Patches shape: {pe_trans.shape}")
-    Patches shape: (545706, 2, 2)
+    Patches shape: (263758, 10, 10, 3)
+    >>> X_reconstructed = image.reconstruct_from_patches_2d(pe_trans, X.shape[1:])
+    >>> print(f"Reconstructed shape: {X_reconstructed.shape}")
+    Reconstructed shape: (427, 640, 3)
     """
 
     _parameter_constraints: dict = {
         "patch_size": [tuple, None],
         "max_patches": [
             None,
-            Interval(Real, 0, 1, closed="neither"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
             Interval(Integral, 1, None, closed="left"),
         ],
         "random_state": ["random_state"],
@@ -612,8 +620,8 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         else:
             if len(self.patch_size) != 2:
                 raise ValueError(
-                    f"patch_size must be a tuple of two integers. Got {self.patch_size}"
-                    " instead."
+                    "patch_size must be a tuple of two integers. Got"
+                    f" {self.patch_size} instead."
                 )
             patch_size = self.patch_size
 
