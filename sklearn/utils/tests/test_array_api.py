@@ -9,7 +9,7 @@ from sklearn.utils._array_api import _ArrayAPIWrapper
 from sklearn.utils._array_api import _asarray_with_order
 from sklearn.utils._array_api import _convert_to_numpy
 from sklearn.utils._array_api import _estimator_with_converted_arrays
-from sklearn.utils._testing import skip_if_no_array_api_compat
+from sklearn.utils._testing import skip_if_array_api_compat_not_configured
 
 from sklearn._config import config_context
 
@@ -38,6 +38,7 @@ def test_get_namespace_ndarray_creation_device():
         xp_out.zeros(10, device="cuda")
 
 
+@skip_if_array_api_compat_not_configured
 def test_get_namespace_ndarray_with_dispatch():
     """Test get_namespace on NumPy ndarrays."""
     array_api_compat = pytest.importorskip("array_api_compat")
@@ -50,7 +51,7 @@ def test_get_namespace_ndarray_with_dispatch():
         assert xp_out is array_api_compat.numpy
 
 
-@skip_if_no_array_api_compat
+@skip_if_array_api_compat_not_configured
 def test_get_namespace_array_api():
     """Test get_namespace for ArrayAPI arrays."""
     xp = pytest.importorskip("numpy.array_api")
@@ -133,7 +134,7 @@ def test_array_api_wrapper_take():
 
 @pytest.mark.parametrize(
     "is_array_api_compliant",
-    [pytest.param(True, marks=skip_if_no_array_api_compat), False],
+    [pytest.param(True, marks=skip_if_array_api_compat_not_configured), False],
 )
 def test_asarray_with_order(is_array_api_compliant):
     """Test _asarray_with_order passes along order for NumPy arrays."""
@@ -164,7 +165,7 @@ def test_asarray_with_order_ignored():
     assert not X_new_np.flags["F_CONTIGUOUS"]
 
 
-@skip_if_no_array_api_compat
+@skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize("library", ["cupy", "torch", "cupy.array_api"])
 def test_convert_to_numpy_gpu(library):
     """Check convert_to_numpy for GPU backed libraries."""
@@ -199,7 +200,7 @@ class SimpleEstimator(BaseEstimator):
         return self
 
 
-@skip_if_no_array_api_compat
+@skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
     "array_namespace, converter",
     [
@@ -219,7 +220,7 @@ def test_convert_estimator_to_ndarray(array_namespace, converter):
     assert isinstance(new_est.X_, numpy.ndarray)
 
 
-@skip_if_no_array_api_compat
+@skip_if_array_api_compat_not_configured
 def test_convert_estimator_to_array_api():
     """Convert estimator attributes to ArrayAPI arrays."""
     xp = pytest.importorskip("numpy.array_api")
@@ -232,7 +233,8 @@ def test_convert_estimator_to_array_api():
 
 
 @pytest.mark.parametrize(
-    "array_api_dispatch", [pytest.param(True, marks=skip_if_no_array_api_compat), False]
+    "array_api_dispatch",
+    [pytest.param(True, marks=skip_if_array_api_compat_not_configured), False],
 )
 def test_get_namespace_array_api_isdtype(array_api_dispatch):
     """Test isdtype implementation from _ArrayAPIWrapper and array_api_compat."""
@@ -260,7 +262,8 @@ def test_get_namespace_array_api_isdtype(array_api_dispatch):
 
 
 @pytest.mark.parametrize(
-    "array_api_dispatch", [pytest.param(True, marks=skip_if_no_array_api_compat), False]
+    "array_api_dispatch",
+    [pytest.param(True, marks=skip_if_array_api_compat_not_configured), False],
 )
 def test_get_namespace_list(array_api_dispatch):
     """Test get_namespace for lists."""

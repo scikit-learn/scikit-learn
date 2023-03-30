@@ -407,7 +407,7 @@ try:
     skip_if_no_parallel = pytest.mark.skipif(
         not joblib.parallel.mp, reason="joblib is in serial mode"
     )
-    skip_if_no_array_api_compat = pytest.mark.skipif(
+    skip_if_array_api_compat_not_configured = pytest.mark.skipif(
         not ARRAY_API_COMPAT_FUNCTIONAL,
         reason="requires array_api_compat installed and a new enough version of NumPy",
     )
