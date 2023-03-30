@@ -323,7 +323,7 @@ Changelog
 
 - |Enhancement| :meth:`metrics.PrecisionRecallDisplay.from_estimator` and
   :meth:`metrics.PrecisionRecallDisplay.from_predictions` now accept two new
-  keywords, `plot_chance_level` and `chance_level_kwargs` to plot the baseline
+  keywords, `plot_chance_level` and `chance_level_kw` to plot the baseline
   chance level. This line is exposed in the `chance_level_` attribute.
   :pr:`26019` by :user:`Yao Xiao <Charlie-XIAO>`.
 
