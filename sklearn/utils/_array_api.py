@@ -34,18 +34,17 @@ def _check_array_api_dispatch(array_api_dispatch):
 
 
 def device(x):
-    """
-    Hardware device the array data resides on.
+    """Hardware device the array data resides on.
 
     Parameters
     ----------
-    x: array
-        array instance from NumPy or an array API compatible library.
+    x : array
+        Array instance from NumPy or an array API compatible library.
 
     Returns
     -------
-    out: device
-        a ``device`` object (see the "Device Support" section of the array API spec).
+    out : device
+        `device` object (see the "Device Support" section of the array API spec).
     """
     if isinstance(x, (numpy.ndarray, numpy.generic)):
         return "cpu"
@@ -53,8 +52,17 @@ def device(x):
 
 
 def size(x):
-    """
-    Return the total number of elements of x
+    """Return the total number of elements of x.
+
+    Parameters
+    ----------
+    x : array
+        Array instance from NumPy or an array API compatible library.
+
+    Returns
+    -------
+    out : int
+        Total number of elements.
     """
     if None in x.shape:
         return None
