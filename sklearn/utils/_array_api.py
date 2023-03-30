@@ -332,6 +332,7 @@ def get_namespace(*arrays):
 
     is_array_api_compliant : bool
         True of the arrays are containers that implement the Array API spec.
+        Always False when array_api_dispatch=False.
     """
     array_api_dispatch = get_config()["array_api_dispatch"]
     if not array_api_dispatch:
