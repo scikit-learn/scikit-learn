@@ -187,3 +187,12 @@ def test_convert_estimator_to_array_api():
 
     new_est = _estimator_with_converted_arrays(est, lambda array: xp.asarray(array))
     assert hasattr(new_est.X_, "__array_namespace__")
+
+
+def test_error_when_reshape_is_not_a_tuple():
+    """Raise error in reshape when shape is not a tuple."""
+    xp = _NumPyApiWrapper()
+    X = xp.asarray([[1, 2, 3], [3, 4, 5]])
+
+    with pytest.raises(TypeError, match="shape must be a tuple"):
+        xp.reshape(X, -1)

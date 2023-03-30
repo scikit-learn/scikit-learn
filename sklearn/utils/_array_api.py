@@ -86,6 +86,22 @@ class _NumPyApiWrapper:
     def concat(self, arrays, *, axis=None):
         return numpy.concatenate(arrays, axis=axis)
 
+    def reshape(self, x, shape, *, copy=None):
+        """Gives a new shape to an array without changing its data.
+
+        The Array API specification requires shape to be a tuple.
+        https://data-apis.org/array-api/latest/API_specification/generated/array_api.reshape.html
+        """
+        if not isinstance(shape, tuple):
+            raise TypeError("shape must be a tuple")
+
+        if copy is True:
+            x = x.copy()
+        elif copy is False:
+            x.shape = shape
+            return x
+        return numpy.reshape(x, shape)
+
 
 def get_namespace(*arrays):
     """Get namespace of arrays.
