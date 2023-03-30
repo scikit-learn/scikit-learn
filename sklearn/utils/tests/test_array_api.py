@@ -172,18 +172,17 @@ def test_convert_to_numpy_gpu(library):
     else:
         X_gpu = xp.asarray([1.0, 2.0, 3.0])
 
-    X_cpu = _convert_to_numpy(X_gpu)
+    X_cpu = _convert_to_numpy(X_gpu, xp=xp)
     expected_output = numpy.asarray([1.0, 2.0, 3.0])
     assert_allclose(X_cpu, expected_output)
 
 
-@skip_if_array_api_compat_not_configured
 def test_convert_to_numpy_cpu():
     """Check convert_to_numpy for PyTorch CPU arrays."""
     torch = pytest.importorskip("torch")
     X_torch = torch.asarray([1.0, 2.0, 3.0], device="cpu")
 
-    X_cpu = _convert_to_numpy(X_torch)
+    X_cpu = _convert_to_numpy(X_torch, xp=torch)
     expected_output = numpy.asarray([1.0, 2.0, 3.0])
     assert_allclose(X_cpu, expected_output)
 

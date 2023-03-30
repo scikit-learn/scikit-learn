@@ -388,9 +388,9 @@ def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
         return xp.asarray(array, dtype=dtype, copy=copy)
 
 
-def _convert_to_numpy(array):
+def _convert_to_numpy(array, xp=None):
     """Convert X into a NumPy ndarray on the CPU."""
-    with config_context(array_api_dispatch=True):
+    if xp is None:
         xp, _ = get_namespace(array)
 
     xp_name = xp.__name__
