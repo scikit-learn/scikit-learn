@@ -764,11 +764,7 @@ class MultiRocCurveDisplay:
         if kind in ("folds", "both"):
             if fold_line_kw is None:
                 fold_line_kw = [
-                    {
-                        "alpha": 0.5,
-                        "lw": 1,
-                        "linestyle": "--",
-                    }
+                    {"alpha": 0.5, "color": "tab:blue", "linestyle": "--"}
                 ] * len(self.displays)
             elif isinstance(fold_line_kw, Mapping):
                 fold_line_kw = [fold_line_kw] * len(self.displays)
@@ -796,9 +792,9 @@ class MultiRocCurveDisplay:
 
         if kind in ("aggregate", "both"):
             if aggregate_line_kw is None:
-                aggregate_line_kw = {"color": "black", "linewidth": 2}
+                aggregate_line_kw = {"color": "tab:blue", "linewidth": 2}
             if aggregate_uncertainty_kw is None:
-                aggregate_uncertainty_kw = {"alpha": 0.2, "color": "black"}
+                aggregate_uncertainty_kw = {"alpha": 0.1, "color": "tab:blue"}
 
             mean_fpr, mean_tpr, std_tpr, mean_auc, std_auc = self._means_and_stds
             if aggregate_name is None:
@@ -839,6 +835,9 @@ class MultiRocCurveDisplay:
             self.chance_level_ = None
 
         ax.legend(loc="lower right", title=legend_title)
+        ax.set_aspect("equal")
+        ax.set_xlim((-0.01, 1.01))
+        ax.set_ylim((-0.01, 1.01))
 
         self.ax_ = ax
         self.figure_ = ax.figure

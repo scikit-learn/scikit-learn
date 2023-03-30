@@ -66,8 +66,12 @@ plt.show()
 y_pred_svc = svc.decision_function(X_test)
 y_pred_rfc = rfc.predict_proba(X_test)
 _, ax = plt.subplots()
-rfc_disp = RocCurveDisplay.from_predictions(y_test, y_pred_rfc[:, 1], ax=ax, alpha=0.8)
-svc_disp = RocCurveDisplay.from_predictions(y_test, y_pred_svc, ax=ax, alpha=0.8)
+rfc_disp = RocCurveDisplay.from_predictions(
+    y_test, y_pred_rfc[:, 1], ax=ax, alpha=0.8, name=rfc.__class__.__name__
+)
+svc_disp = RocCurveDisplay.from_predictions(
+    y_test, y_pred_svc, ax=ax, alpha=0.8, name=svc.__class__.__name__
+)
 plt.show()
 
 # %%
@@ -84,3 +88,5 @@ from sklearn.model_selection import cross_validate
 cv_results = cross_validate(rfc, X, y, return_estimator=True, return_indices=True)
 rfc_disp = RocCurveDisplay.from_cv_results(cv_results, X, y, kind="both")
 plt.show()
+
+# %%
