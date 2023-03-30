@@ -125,8 +125,8 @@ RocCurveDisplay.from_predictions(
     y_score[:, class_id],
     name=f"{class_of_interest} vs the rest",
     color="darkorange",
+    plot_chance_level=True,
 )
-plt.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
 plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
@@ -161,8 +161,8 @@ RocCurveDisplay.from_predictions(
     y_score.ravel(),
     name="micro-average OvR",
     color="darkorange",
+    plot_chance_level=True,
 )
-plt.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
 plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
@@ -281,9 +281,9 @@ for class_id, color in zip(range(n_classes), colors):
         name=f"ROC curve for {target_names[class_id]}",
         color=color,
         ax=ax,
+        plot_chance_level=(class_id == 2),
     )
 
-plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
 plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
@@ -364,8 +364,8 @@ for ix, (label_a, label_b) in enumerate(pair_list):
         y_score[ab_mask, idx_b],
         ax=ax,
         name=f"{label_b} as positive class",
+        plot_chance_level=True,
     )
-    plt.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
     plt.axis("square")
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
@@ -413,7 +413,7 @@ plt.plot(
     linestyle=":",
     linewidth=4,
 )
-plt.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
+plt.plot([0, 1], [0, 1], "k--", label="Chance level (AUC = 0.5)")
 plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
