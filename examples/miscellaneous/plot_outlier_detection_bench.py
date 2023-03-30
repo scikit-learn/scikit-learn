@@ -33,9 +33,8 @@ on the same dataset using the knowledge of the labels.
 # After the data preprocessing, the datasets' targets will have two classes, 0
 # representing inliers and 1 representing outliers.
 #
-# Different datasets require different preprocessing and individual
-# hyperparameter tuning (not shown in this notebook to keep it simple). One has
-# to take into account that tree based models such as
+# Different datasets require different preprocessing. One has to take into
+# account that tree based models such as
 # :class:`~sklearn.ensemble.IsolationForest` can deal with categorical variables
 # encoded using an :class:`~sklearn.preprocessing.OrdinalEncoder`, whereas
 # neighbors based models such as :class:`~sklearn.neighbors.LocalOutlierFactor`
@@ -97,7 +96,7 @@ def fit_predict(X, model_name, categorical_columns=(), n_neighbors=20):
 #
 # The :ref:`kddcup99_dataset` was generated using a closed network and
 # hand-injected attacks. The SA dataset is a subset of it obtained by simply
-# selecting all the normal data and an anomaly proportion of 3%.
+# selecting all the normal data and an anomaly proportion of around 3%.
 
 # %%
 import numpy as np
@@ -112,6 +111,9 @@ X, y = fetch_kddcup99(
 y = (y != b"normal.").astype(np.int32)
 X, _, y, _ = train_test_split(X, y, train_size=0.1, stratify=y, random_state=rng)
 
+n_samples, anomaly_frac = X.shape[0], y.mean()
+print(f"{n_samples} datapoints with anomaly propotion of {anomaly_frac:.02%} %")
+
 # %%
 # The SA dataset contains 41 features out of which 3 are categorical:
 # "protocol_type", "service" and "flag".
@@ -122,21 +124,23 @@ y_pred = {"LOF": {}, "IForest": {}}
 model_names = ["LOF", "IForest"]
 cat_columns = ["protocol_type", "service", "flag"]
 
-n_samples = X.shape[0]
-y_true["SA"] = y
+y_true["KDDCup99 - SA"] = y
 for model_name in model_names:
-    y_pred[model_name]["SA"] = fit_predict(
+    y_pred[model_name]["KDDCup99 - SA"] = fit_predict(
         X,
         model_name=model_name,
         categorical_columns=cat_columns,
-        n_neighbors=int(0.1 * n_samples),
+        n_neighbors=int(n_samples * anomaly_frac),
     )
 
 # %%
-# Notice that the optimal number of neighbors scales with the number of samples.
-# This means that the fit time of LOF models increases linearly with the size of
-# the dataset. If one is to additionally tune the number of neighbors, the whole
-# computation results quadratic on `n_samples`.
+# In this example we set `n_neighbors` to match the number of anomalies on the
+# dataset. This is a good heuristic as long as the proportion of outliers is not
+# very low. Notice that this means the optimal number of neighbors scales with
+# the number of samples. Therefore the fit time of LOF models increases linearly
+# with the size of the dataset. If one had access to ground truth labels and was
+# to additionally tune the number of neighbors, the whole computation would
+# result quadratic on `n_samples`.
 #
 # Forest covertypes dataset
 # -------------------------
@@ -157,15 +161,18 @@ y = y.loc[s]
 y = (y != 2).astype(np.int32)
 
 X, _, y, _ = train_test_split(X, y, train_size=0.05, stratify=y, random_state=rng)
-
-n_samples = X.shape[0]
 X_forestcover = X  # save X for later use
+
+n_samples, anomaly_frac = X.shape[0], y.mean()
+print(f"{n_samples} datapoints with anomaly propotion of {anomaly_frac:.02%} %")
+
+# %%
 y_true["forestcover"] = y
 for model_name in model_names:
     y_pred[model_name]["forestcover"] = fit_predict(
         X,
         model_name=model_name,
-        n_neighbors=int(0.02 * n_samples),
+        n_neighbors=int(n_samples * anomaly_frac),
     )
 
 # %%
@@ -183,13 +190,16 @@ from sklearn.datasets import load_breast_cancer
 X, y = load_breast_cancer(return_X_y=True, as_frame=True)
 y = np.logical_not(y).astype(np.int32)  # make label 1 to be the minority class
 
-n_samples = X.shape[0]
-y_true["WDBC"] = y
+n_samples, anomaly_frac = X.shape[0], y.mean()
+print(f"{n_samples} datapoints with anomaly propotion of {anomaly_frac:.02%} %")
+
+# %%
+y_true["breast cancer"] = y
 for model_name in model_names:
-    y_pred[model_name]["WDBC"] = fit_predict(
+    y_pred[model_name]["breast cancer"] = fit_predict(
         X,
         model_name=model_name,
-        n_neighbors=int(0.35 * n_samples),
+        n_neighbors=int(n_samples * anomaly_frac),
     )
 
 # %%
@@ -210,13 +220,16 @@ X, y = fetch_openml(
 s = y == "3"
 y = s.astype(np.int32)
 
-n_samples = X.shape[0]
+n_samples, anomaly_frac = X.shape[0], y.mean()
+print(f"{n_samples} datapoints with anomaly propotion of {anomaly_frac:.02%} %")
+
+# %%
 y_true["cardiotocography"] = y
 for model_name in model_names:
     y_pred[model_name]["cardiotocography"] = fit_predict(
         X,
         model_name=model_name,
-        n_neighbors=int(0.01 * n_samples),
+        n_neighbors=int(n_samples * anomaly_frac),
     )
 
 # %%
