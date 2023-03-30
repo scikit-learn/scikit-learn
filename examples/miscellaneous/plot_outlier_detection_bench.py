@@ -109,7 +109,7 @@ rng = np.random.RandomState(42)
 X, y = fetch_kddcup99(
     subset="SA", percent10=True, random_state=rng, return_X_y=True, as_frame=True
 )
-y = (y != b"normal.").astype(int)
+y = (y != b"normal.").astype(np.int32)
 X, _, y, _ = train_test_split(X, y, train_size=0.1, stratify=y, random_state=rng)
 
 # %%
@@ -154,7 +154,7 @@ X, y = fetch_covtype(return_X_y=True, as_frame=True)
 s = (y == 2) + (y == 4)
 X = X.loc[s]
 y = y.loc[s]
-y = (y != 2).astype(int)
+y = (y != 2).astype(np.int32)
 
 X, _, y, _ = train_test_split(X, y, train_size=0.05, stratify=y, random_state=rng)
 
@@ -181,7 +181,7 @@ for model_name in model_names:
 from sklearn.datasets import load_breast_cancer
 
 X, y = load_breast_cancer(return_X_y=True, as_frame=True)
-y = np.logical_not(y).astype(int)  # make label 1 to be the minority class
+y = np.logical_not(y).astype(np.int32)  # make label 1 to be the minority class
 
 n_samples = X.shape[0]
 y_true["WDBC"] = y
@@ -208,7 +208,7 @@ X, y = fetch_openml(
     name="cardiotocography", version=1, return_X_y=True, as_frame=False, parser="pandas"
 )
 s = y == "3"
-y = s.astype(int)
+y = s.astype(np.int32)
 
 n_samples = X.shape[0]
 y_true["cardiotocography"] = y
