@@ -834,7 +834,7 @@ class MultiRocCurveDisplay:
             if chance_level_kw is not None:
                 chance_level_line_kw.update(chance_level_kw)
 
-            self.chance_level_ = ax.plot([0, 1], [0, 1], **chance_level_line_kw)
+            (self.chance_level_,) = ax.plot([0, 1], [0, 1], **chance_level_line_kw)
         else:
             self.chance_level_ = None
 

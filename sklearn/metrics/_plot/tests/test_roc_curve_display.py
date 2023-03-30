@@ -405,6 +405,7 @@ def test_from_cv_results_attributes(pyplot, data_binary):
     assert all(isinstance(line, mpl.lines.Line2D) for line in display.fold_lines_)
     assert display.mean_line_ is None
     assert display.std_area_ is None
+    assert display.chance_level_ is None
 
     display = RocCurveDisplay.from_cv_results(cv_results, X, y, kind="aggregate")
 
@@ -414,8 +415,11 @@ def test_from_cv_results_attributes(pyplot, data_binary):
     assert display.fold_lines_ is None
     assert isinstance(display.mean_line_, mpl.lines.Line2D)
     assert isinstance(display.std_area_, mpl.collections.PolyCollection)
+    assert display.chance_level_ is None
 
-    display = RocCurveDisplay.from_cv_results(cv_results, X, y, kind="both")
+    display = RocCurveDisplay.from_cv_results(
+        cv_results, X, y, kind="both", plot_chance_level=True
+    )
 
     assert isinstance(display.ax_, mpl.axes.Axes)
     assert isinstance(display.figure_, mpl.figure.Figure)
@@ -425,6 +429,7 @@ def test_from_cv_results_attributes(pyplot, data_binary):
     assert all(isinstance(line, mpl.lines.Line2D) for line in display.fold_lines_)
     assert isinstance(display.mean_line_, mpl.lines.Line2D)
     assert isinstance(display.std_area_, mpl.collections.PolyCollection)
+    assert isinstance(display.chance_level_, mpl.lines.Line2D)
 
 
 def test_from_cv_results_names(pyplot, data_binary):
@@ -510,3 +515,11 @@ def test_from_cv_results_effect_kwargs(pyplot, data_binary):
         display.std_area_.get_facecolor(),
         [[1, 0, 0, aggregate_uncertainty_kw["alpha"]]],
     )
+
+    chance_level_kw = {"color": "red", "label": "random"}
+    display = RocCurveDisplay.from_cv_results(
+        cv_results, X, y, plot_chance_level=True, chance_level_kw=chance_level_kw
+    )
+
+    assert display.chance_level_.get_color() == chance_level_kw["color"]
+    assert display.chance_level_.get_label() == chance_level_kw["label"]
