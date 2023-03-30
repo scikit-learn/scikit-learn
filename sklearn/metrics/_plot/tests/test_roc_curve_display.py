@@ -127,7 +127,7 @@ def test_roc_curve_display_plotting(
 
 @pytest.mark.parametrize("plot_chance_level", [True, False])
 @pytest.mark.parametrize(
-    "chance_level_kwargs",
+    "chance_level_kw",
     [None, {"linewidth": 1, "color": "red", "label": "DummyEstimator"}],
 )
 @pytest.mark.parametrize(
@@ -138,7 +138,7 @@ def test_roc_curve_chance_level_line(
     pyplot,
     data_binary,
     plot_chance_level,
-    chance_level_kwargs,
+    chance_level_kw,
     constructor_name,
 ):
     """Check the chance leve line plotting behaviour."""
@@ -157,7 +157,7 @@ def test_roc_curve_chance_level_line(
             y,
             alpha=0.8,
             plot_chance_level=plot_chance_level,
-            chance_level_kwargs=chance_level_kwargs,
+            chance_level_kw=chance_level_kw,
         )
     else:
         display = RocCurveDisplay.from_predictions(
@@ -165,7 +165,7 @@ def test_roc_curve_chance_level_line(
             y_pred,
             alpha=0.8,
             plot_chance_level=plot_chance_level,
-            chance_level_kwargs=chance_level_kwargs,
+            chance_level_kw=chance_level_kw,
         )
 
     import matplotlib as mpl  # noqal
@@ -179,18 +179,18 @@ def test_roc_curve_chance_level_line(
         assert isinstance(display.chance_level_, mpl.lines.Line2D)
         assert tuple(display.chance_level_.get_xdata()) == (0, 1)
         assert tuple(display.chance_level_.get_ydata()) == (0, 1)
+    else:
+        assert display.chance_level_ is None
 
     # Checking for chance level line styles
-    if plot_chance_level and chance_level_kwargs is None:
+    if plot_chance_level and chance_level_kw is None:
         assert display.chance_level_.get_color() == "k"
         assert display.chance_level_.get_linestyle() == "--"
         assert display.chance_level_.get_label() == "Chance level (AUC = 0.5)"
     elif plot_chance_level:
-        for k, v in chance_level_kwargs.items():
-            if hasattr(display.chance_level_, "get_" + k):
-                assert getattr(display.chance_level_, "get_" + k)() == v
-    else:
-        assert display.chance_level_ is None
+        assert display.chance_level_.get_label() == chance_level_kw["label"]
+        assert display.chance_level_.get_color() == chance_level_kw["color"]
+        assert display.chance_level_.get_linewidth() == chance_level_kw["linewidth"]
 
 
 @pytest.mark.parametrize(
