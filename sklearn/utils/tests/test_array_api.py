@@ -132,16 +132,10 @@ def test_array_api_wrapper_take():
         xp.take(xp.asarray([[[0]]]), xp.asarray([0]), axis=0)
 
 
-@pytest.mark.parametrize(
-    "is_array_api_compliant",
-    [pytest.param(True, marks=skip_if_array_api_compat_not_configured), False],
-)
-def test_asarray_with_order(is_array_api_compliant):
+@pytest.mark.parametrize("array_api", ["numpy", "numpy.array_api"])
+def test_asarray_with_order(array_api):
     """Test _asarray_with_order passes along order for NumPy arrays."""
-    if is_array_api_compliant:
-        xp = pytest.importorskip("numpy.array_api")
-    else:
-        xp = numpy
+    xp = pytest.importorskip(array_api)
 
     X = xp.asarray([1.2, 3.4, 5.1])
     X_new = _asarray_with_order(X, order="F", xp=xp)
@@ -183,6 +177,7 @@ def test_convert_to_numpy_gpu(library):
     assert_allclose(X_cpu, expected_output)
 
 
+@skip_if_array_api_compat_not_configured
 def test_convert_to_numpy_cpu():
     """Check convert_to_numpy for PyTorch CPU arrays."""
     torch = pytest.importorskip("torch")
