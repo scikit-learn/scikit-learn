@@ -38,7 +38,7 @@ vector machine:
     svc_disp = RocCurveDisplay.from_estimator(svc, X_test, y_test)
 
 .. note::
-    A new method `from_cv_results` is available in some of the displays. It
+    A method `from_cv_results` is available in some of the displays. It
     allows to create multiple displays from the results of a cross-validation.
     In general, it provides a convenient way to obtain uncertainty estimates
     by injecting randomness in the full fit-predict procedures.
