@@ -100,11 +100,12 @@ def _isdtype_single(dtype, kind, *, xp):
         elif kind == "complex floating":
             # Some name spaces do not have complex, such as cupy.array_api
             # and numpy.array_api
+            complex_dtypes = set()
             if hasattr(xp, "complex64"):
-                return dtype == xp.complex64
+                complex_dtypes.add(xp.complex64)
             if hasattr(xp, "complex128"):
-                return dtype == xp.complex128
-            return False
+                complex_dtypes.add(xp.complex128)
+            return dtype in complex_dtypes
         elif kind == "numeric":
             return any(
                 _isdtype_single(dtype, k, xp=xp)
@@ -161,11 +162,6 @@ class _ArrayAPIWrapper:
         return self._namespace.stack(selected, axis=axis)
 
     def isdtype(self, dtype, kind):
-        """Returns a boolean indicating whether a provided dtype is of type "kind".
-
-        Included in the v2022.12 of the Array API spec.
-        https://data-apis.org/array-api/latest/API_specification/generated/array_api.isdtype.html
-        """
         return isdtype(dtype, kind, xp=self._namespace)
 
 
@@ -268,11 +264,6 @@ class _NumPyApiWrapper:
         return numpy.concatenate(arrays, axis=axis)
 
     def isdtype(self, dtype, kind):
-        """Returns a boolean indicating whether a provided dtype is of type "kind".
-
-        Included in the v2022.12 of the Array API spec.
-        https://data-apis.org/array-api/latest/API_specification/generated/array_api.isdtype.html
-        """
         return isdtype(dtype, kind, xp=self)
 
     def reshape(self, x, shape, *, copy=None):

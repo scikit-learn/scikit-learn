@@ -232,33 +232,39 @@ def test_convert_estimator_to_array_api():
     assert hasattr(new_est.X_, "__array_namespace__")
 
 
-@pytest.mark.parametrize(
-    "array_api_dispatch",
-    [pytest.param(True, marks=skip_if_array_api_compat_not_configured), False],
-)
-def test_get_namespace_array_api_isdtype(array_api_dispatch):
-    """Test isdtype implementation from _ArrayAPIWrapper and array_api_compat."""
-    xp = pytest.importorskip("numpy.array_api")
+@pytest.mark.parametrize("wrapper", [_ArrayAPIWrapper, _NumPyApiWrapper])
+def test_get_namespace_array_api_isdtype(wrapper):
+    """Test isdtype implementation from _ArrayAPIWrapper and _NumPyApiWrapper."""
 
-    X_xp = xp.asarray([[1, 2, 3]])
-    with config_context(array_api_dispatch=array_api_dispatch):
-        xp_out, _ = get_namespace(X_xp)
-        assert xp_out.isdtype(xp_out.float32, "real floating")
-        assert xp_out.isdtype(xp_out.float64, "real floating")
-        assert not xp_out.isdtype(xp_out.int32, "real floating")
+    if wrapper == _ArrayAPIWrapper:
+        xp_ = pytest.importorskip("numpy.array_api")
+        xp = _ArrayAPIWrapper(xp_)
+    else:
+        xp = _NumPyApiWrapper()
 
-        assert xp_out.isdtype(xp_out.bool, "bool")
-        assert not xp_out.isdtype(xp_out.float32, "bool")
+    assert xp.isdtype(xp.float32, "real floating")
+    assert xp.isdtype(xp.float64, "real floating")
+    assert not xp.isdtype(xp.int32, "real floating")
 
-        assert xp_out.isdtype(xp_out.int16, "signed integer")
-        assert not xp_out.isdtype(xp_out.uint32, "signed integer")
+    assert xp.isdtype(xp.bool, "bool")
+    assert not xp.isdtype(xp.float32, "bool")
 
-        assert xp_out.isdtype(xp_out.uint16, "unsigned integer")
-        assert not xp_out.isdtype(xp_out.int64, "unsigned integer")
+    assert xp.isdtype(xp.int16, "signed integer")
+    assert not xp.isdtype(xp.uint32, "signed integer")
 
-        assert xp_out.isdtype(xp_out.int64, "numeric")
-        assert xp_out.isdtype(xp_out.float32, "numeric")
-        assert xp_out.isdtype(xp_out.uint32, "numeric")
+    assert xp.isdtype(xp.uint16, "unsigned integer")
+    assert not xp.isdtype(xp.int64, "unsigned integer")
+
+    assert xp.isdtype(xp.int64, "numeric")
+    assert xp.isdtype(xp.float32, "numeric")
+    assert xp.isdtype(xp.uint32, "numeric")
+
+    assert not xp.isdtype(xp.float32, "complex floating")
+
+    if wrapper == _NumPyApiWrapper:
+        assert not xp.isdtype(xp.int8, "complex floating")
+        assert xp.isdtype(xp.complex64, "complex floating")
+        assert xp.isdtype(xp.complex128, "complex floating")
 
 
 @pytest.mark.parametrize(
