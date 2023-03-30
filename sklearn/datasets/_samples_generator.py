@@ -1627,6 +1627,14 @@ def make_sparse_spd_matrix(
     return prec
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "hole": ["boolean"],
+    }
+)
 def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     """Generate a swiss roll dataset.
 

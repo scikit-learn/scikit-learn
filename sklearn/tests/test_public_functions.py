@@ -146,6 +146,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.make_sparse_spd_matrix",
     "sklearn.datasets.make_sparse_uncorrelated",
     "sklearn.datasets.make_spd_matrix",
+    "sklearn.datasets.make_swiss_roll",
     "sklearn.decomposition.sparse_encode",
     "sklearn.feature_extraction.grid_to_graph",
     "sklearn.feature_extraction.img_to_graph",
