@@ -58,126 +58,21 @@ def _dual_gap(emp_cov, precision_, alpha):
     return gap
 
 
-def alpha_max(emp_cov):
-    """Find the maximum alpha for which there are some non-zeros off-diagonal.
-
-    Parameters
-    ----------
-    emp_cov : ndarray of shape (n_features, n_features)
-        The sample covariance matrix.
-
-    Notes
-    -----
-    This results from the bound for the all the Lasso that are solved
-    in GraphicalLasso: each time, the row of cov corresponds to Xy. As the
-    bound for alpha is given by `max(abs(Xy))`, the result follows.
-    """
-    A = np.copy(emp_cov)
-    A.flat[:: A.shape[0] + 1] = 0
-    return np.max(np.abs(A))
-
-
-# The g-lasso algorithm
-def graphical_lasso(
+def _graphical_lasso(
     emp_cov,
     alpha,
     *,
-    cov_init=None,
-    mode="cd",
-    tol=1e-4,
-    enet_tol=1e-4,
-    max_iter=100,
-    verbose=False,
-    return_costs=False,
-    eps=np.finfo(np.float64).eps,
-    return_n_iter=False,
+    cov_init,
+    mode,
+    tol,
+    enet_tol,
+    max_iter,
+    verbose,
+    return_costs,
+    eps,
+    return_n_iter,
 ):
-    """L1-penalized covariance estimator.
-
-    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
-
-    .. versionchanged:: v0.20
-        graph_lasso has been renamed to graphical_lasso
-
-    Parameters
-    ----------
-    emp_cov : ndarray of shape (n_features, n_features)
-        Empirical covariance from which to compute the covariance estimate.
-
-    alpha : float
-        The regularization parameter: the higher alpha, the more
-        regularization, the sparser the inverse covariance.
-        Range is (0, inf].
-
-    cov_init : array of shape (n_features, n_features), default=None
-        The initial guess for the covariance. If None, then the empirical
-        covariance is used.
-
-    mode : {'cd', 'lars'}, default='cd'
-        The Lasso solver to use: coordinate descent or LARS. Use LARS for
-        very sparse underlying graphs, where p > n. Elsewhere prefer cd
-        which is more numerically stable.
-
-    tol : float, default=1e-4
-        The tolerance to declare convergence: if the dual gap goes below
-        this value, iterations are stopped. Range is (0, inf].
-
-    enet_tol : float, default=1e-4
-        The tolerance for the elastic net solver used to calculate the descent
-        direction. This parameter controls the accuracy of the search direction
-        for a given column update, not of the overall parameter estimate. Only
-        used for mode='cd'. Range is (0, inf].
-
-    max_iter : int, default=100
-        The maximum number of iterations.
-
-    verbose : bool, default=False
-        If verbose is True, the objective function and dual gap are
-        printed at each iteration.
-
-    return_costs : bool, default=False
-        If return_costs is True, the objective function and dual gap
-        at each iteration are returned.
-
-    eps : float, default=eps
-        The machine-precision regularization in the computation of the
-        Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. Default is `np.finfo(np.float64).eps`.
-
-    return_n_iter : bool, default=False
-        Whether or not to return the number of iterations.
-
-    Returns
-    -------
-    covariance : ndarray of shape (n_features, n_features)
-        The estimated covariance matrix.
-
-    precision : ndarray of shape (n_features, n_features)
-        The estimated (sparse) precision matrix.
-
-    costs : list of (objective, dual_gap) pairs
-        The list of values of the objective function and the dual gap at
-        each iteration. Returned only if return_costs is True.
-
-    n_iter : int
-        Number of iterations. Returned only if `return_n_iter` is set to True.
-
-    See Also
-    --------
-    GraphicalLasso : Sparse inverse covariance estimation
-        with an l1-penalized estimator.
-    GraphicalLassoCV : Sparse inverse covariance with
-        cross-validated choice of the l1 penalty.
-
-    Notes
-    -----
-    The algorithm employed to solve this problem is the GLasso algorithm,
-    from the Friedman 2008 Biostatistics paper. It is the same algorithm
-    as in the R `glasso` package.
-
-    One possible difference with the `glasso` R package is that the
-    diagonal coefficients are not penalized.
-    """
+    """Main graphical lasso algorithm."""
     _, n_features = emp_cov.shape
     if alpha == 0:
         if return_costs:
@@ -313,6 +208,150 @@ def graphical_lasso(
             return covariance_, precision_, i + 1
         else:
             return covariance_, precision_
+
+
+def alpha_max(emp_cov):
+    """Find the maximum alpha for which there are some non-zeros off-diagonal.
+
+    Parameters
+    ----------
+    emp_cov : ndarray of shape (n_features, n_features)
+        The sample covariance matrix.
+
+    Notes
+    -----
+    This results from the bound for the all the Lasso that are solved
+    in GraphicalLasso: each time, the row of cov corresponds to Xy. As the
+    bound for alpha is given by `max(abs(Xy))`, the result follows.
+    """
+    A = np.copy(emp_cov)
+    A.flat[:: A.shape[0] + 1] = 0
+    return np.max(np.abs(A))
+
+
+# The g-lasso algorithm
+def graphical_lasso(
+    emp_cov,
+    alpha,
+    *,
+    cov_init=None,
+    mode="cd",
+    tol=1e-4,
+    enet_tol=1e-4,
+    max_iter=100,
+    verbose=False,
+    return_costs=False,
+    eps=np.finfo(np.float64).eps,
+    return_n_iter=False,
+):
+    """L1-penalized covariance estimator.
+
+    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+
+    .. versionchanged:: v0.20
+        graph_lasso has been renamed to graphical_lasso
+
+    Parameters
+    ----------
+    emp_cov : ndarray of shape (n_features, n_features)
+        Empirical covariance from which to compute the covariance estimate.
+
+    alpha : float
+        The regularization parameter: the higher alpha, the more
+        regularization, the sparser the inverse covariance.
+        Range is (0, inf].
+
+    cov_init : array of shape (n_features, n_features), default=None
+        The initial guess for the covariance. If None, then the empirical
+        covariance is used.
+
+    mode : {'cd', 'lars'}, default='cd'
+        The Lasso solver to use: coordinate descent or LARS. Use LARS for
+        very sparse underlying graphs, where p > n. Elsewhere prefer cd
+        which is more numerically stable.
+
+    tol : float, default=1e-4
+        The tolerance to declare convergence: if the dual gap goes below
+        this value, iterations are stopped. Range is (0, inf].
+
+    enet_tol : float, default=1e-4
+        The tolerance for the elastic net solver used to calculate the descent
+        direction. This parameter controls the accuracy of the search direction
+        for a given column update, not of the overall parameter estimate. Only
+        used for mode='cd'. Range is (0, inf].
+
+    max_iter : int, default=100
+        The maximum number of iterations.
+
+    verbose : bool, default=False
+        If verbose is True, the objective function and dual gap are
+        printed at each iteration.
+
+    return_costs : bool, default=False
+        If return_costs is True, the objective function and dual gap
+        at each iteration are returned.
+
+    eps : float, default=eps
+        The machine-precision regularization in the computation of the
+        Cholesky diagonal factors. Increase this for very ill-conditioned
+        systems. Default is `np.finfo(np.float64).eps`.
+
+    return_n_iter : bool, default=False
+        Whether or not to return the number of iterations.
+
+    Returns
+    -------
+    covariance : ndarray of shape (n_features, n_features)
+        The estimated covariance matrix.
+
+    precision : ndarray of shape (n_features, n_features)
+        The estimated (sparse) precision matrix.
+
+    costs : list of (objective, dual_gap) pairs
+        The list of values of the objective function and the dual gap at
+        each iteration. Returned only if return_costs is True.
+
+    n_iter : int
+        Number of iterations. Returned only if `return_n_iter` is set to True.
+
+    See Also
+    --------
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    GraphicalLassoCV : Sparse inverse covariance with
+        cross-validated choice of the l1 penalty.
+
+    Notes
+    -----
+    The algorithm employed to solve this problem is the GLasso algorithm,
+    from the Friedman 2008 Biostatistics paper. It is the same algorithm
+    as in the R `glasso` package.
+
+    One possible difference with the `glasso` R package is that the
+    diagonal coefficients are not penalized.
+    """
+    model = GraphicalLasso(
+        alpha=alpha,
+        mode=mode,
+        tol=tol,
+        enet_tol=enet_tol,
+        max_iter=max_iter,
+        verbose=verbose,
+        assume_centered=False,
+    ).fit(
+        emp_cov
+    )  # or emp_cov?
+
+    if return_costs:
+        if return_n_iter:
+            return model.covariance_, model.precision_, model.costs, model.i + 1
+        else:
+            return model.covariance_, model.precision_, model.costs
+    else:
+        if return_n_iter:
+            return model.covariance_, model.precision_, model.i + 1
+        else:
+            return model.covariance_, model.precision_
 
 
 class BaseGraphicalLasso(EmpiricalCovariance):
@@ -490,14 +529,17 @@ class GraphicalLasso(BaseGraphicalLasso):
         else:
             self.location_ = X.mean(0)
         emp_cov = empirical_covariance(X, assume_centered=self.assume_centered)
-        self.covariance_, self.precision_, self.n_iter_ = graphical_lasso(
+        self.covariance_, self.precision_, self.costs, self.n_iter_ = _graphical_lasso(
             emp_cov,
             alpha=self.alpha,
+            cov_init=None,
             mode=self.mode,
             tol=self.tol,
             enet_tol=self.enet_tol,
             max_iter=self.max_iter,
             verbose=self.verbose,
+            return_costs=True,
+            eps=np.finfo(np.float64).eps,
             return_n_iter=True,
         )
         return self
