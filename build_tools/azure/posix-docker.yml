@@ -61,8 +61,10 @@ jobs:
         -w /io
         --detach
         --name skcontainer
+        -e BUILD_SOURCESDIRECTORY=/io
         -e TEST_DIR=/temp_dir
         -e CCACHE_DIR=/ccache
+        -e COVERAGE
         -e DISTRIB
         -e LOCK_FILE
         -e JUNITXML
@@ -116,3 +118,12 @@ jobs:
         JUNIT_FILE: $(TEST_DIR)/$(JUNITXML)
       condition: and(succeededOrFailed(), eq(variables['CREATE_ISSUE_ON_TRACKER'], 'true'),
                      eq(variables['Build.Reason'], 'Schedule'))
+    - bash: echo "##vso[task.prependpath]$CONDA/bin"
+      displayName: Add conda to PATH
+    - bash: |
+        conda create -n $VIRTUALENV python=3.10 coverage -y
+        sudo chown -R $(whoami) $TEST_DIR
+        bash build_tools/azure/upload_codecov.sh
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
+      displayName: 'Upload To Codecov'
