@@ -4,6 +4,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 import pytest
 
+from sklearn._config import config_context
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import LeaveOneOut
 from sklearn.utils import deprecated
@@ -670,3 +671,42 @@ def test_real_not_int():
     assert not isinstance(1, RealNotInt)
     assert isinstance(np.float64(1), RealNotInt)
     assert not isinstance(np.int64(1), RealNotInt)
+
+
+def test_skip_param_validation():
+    """Check that param validation can be skipped using config_context."""
+
+    @validate_params({"a": [int]})
+    def f(a):
+        pass
+
+    with pytest.raises(InvalidParameterError, match="The 'a' parameter"):
+        f(a="1")
+
+    # does not raise
+    with config_context(skip_parameter_validation=True):
+        f(a="1")
+
+
+@pytest.mark.parametrize("skip_nested_validation", [True, False])
+def test_skip_nested_validation(skip_nested_validation):
+    """Check that nested validation can be skipped."""
+
+    @validate_params({"a": [int]})
+    def f(a):
+        pass
+
+    @validate_params({"b": [int]}, skip_nested_validation=skip_nested_validation)
+    def g(b):
+        # calls f with a bad parameter type
+        return f(a="1")
+
+    # Validation for g is not never skipped.
+    with pytest.raises(InvalidParameterError, match="The 'b' parameter"):
+        g(b="1")
+
+    if skip_nested_validation:
+        g(b=1)  # does not raise
+    else:
+        with pytest.raises(InvalidParameterError, match="The 'a' parameter"):
+            g(b=1)

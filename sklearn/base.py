@@ -1091,7 +1091,7 @@ def is_outlier_detector(estimator):
 
 
 def _fit_context(*, skip_nested_validation=True):
-    """Decorator to run the fit methods of estimators within a context manager.
+    """Decorator to run the fit methods of estimators within context managers.
 
     Parameters
     ----------
@@ -1112,10 +1112,7 @@ def _fit_context(*, skip_nested_validation=True):
             if not get_config()["skip_parameter_validation"]:
                 estimator._validate_params()
 
-            if not skip_nested_validation:
-                return fit_method(estimator, *args, **kwargs)
-
-            with config_context(skip_parameter_validation=True):
+            with config_context(skip_parameter_validation=skip_nested_validation):
                 return fit_method(estimator, *args, **kwargs)
 
         return wrapper
