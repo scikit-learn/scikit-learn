@@ -91,7 +91,10 @@ def _isdtype_single(dtype, kind, *, xp):
         elif kind == "unsigned integer":
             return dtype in {xp.uint8, xp.uint16, xp.uint32, xp.uint64}
         elif kind == "integral":
-            return isdtype(dtype, ("signed integer", "unsigned integer"), xp=xp)
+            return any(
+                _isdtype_single(dtype, k, xp=xp)
+                for k in ("signed integer", "unsigned integer")
+            )
         elif kind == "real floating":
             return dtype in {xp.float32, xp.float64}
         elif kind == "complex floating":
@@ -103,8 +106,9 @@ def _isdtype_single(dtype, kind, *, xp):
                 return dtype == xp.complex128
             return False
         elif kind == "numeric":
-            return isdtype(
-                dtype, ("integral", "real floating", "complex floating"), xp=xp
+            return any(
+                _isdtype_single(dtype, k, xp=xp)
+                for k in ("integral", "real floating", "complex floating")
             )
         else:
             raise ValueError(f"Unrecognized data type kind: {kind!r}")
