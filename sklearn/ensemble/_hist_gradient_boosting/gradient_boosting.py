@@ -272,7 +272,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if missing.any():
                     categories = categories[~missing]
 
-                # Treat negative categories as missing values
+                # Treat negative values for categorical features as missing values.
                 negative_categories = categories < 0
                 if categories.any():
                     categories = categories[~negative_categories]
@@ -1282,7 +1282,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         For each categorical feature, there must be at most `max_bins` unique
         categories, and each categorical value must be less then `max_bins - 1`.
-        Categories encoded as a negative value are treated as missing values.
+        Negative values for categorical features are treated as missing values.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
@@ -1645,7 +1645,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         For each categorical feature, there must be at most `max_bins` unique
         categories, and each categorical value must be less then `max_bins - 1`.
-        Categories encoded as a negative value are treated as missing values.
+        Negative values for categorical features are treated as missing values.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 

@@ -60,7 +60,8 @@ cdef void _map_col_to_bins(const X_DTYPE_C [:] data,
                     num_threads=n_threads):
         if (
             isnan(data[i]) or
-            # categorical features consider negative values as missing
+            # To follow LightGBM's conventions, negative values for
+            # categorical features are considered as missing values.
             (is_categorical and data[i] < 0)
         ):
             binned[i] = missing_values_bin_idx
