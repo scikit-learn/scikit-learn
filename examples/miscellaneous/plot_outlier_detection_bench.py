@@ -263,7 +263,7 @@ rows = math.ceil(len(datasets_names) / cols)
 fig, axs = plt.subplots(nrows=rows, ncols=cols, squeeze=False, figsize=(10, rows * 4))
 
 for i, dataset_name in enumerate(datasets_names):
-    for model_name in model_names:
+    for model_idx, model_name in enumerate(model_names):
         display = RocCurveDisplay.from_predictions(
             y_true[dataset_name],
             y_pred[model_name][dataset_name],
@@ -271,11 +271,13 @@ for i, dataset_name in enumerate(datasets_names):
             name=model_name,
             linewidth=linewidth,
             ax=axs[i // cols, i % cols],
+            plot_chance_level=(model_idx == len(model_names) - 1),
+            chance_level_kw={
+                "linewidth": linewidth,
+                "linestyle": ":",
+            },
         )
-    axs[i // cols, i % cols].plot([0, 1], [0, 1], linewidth=linewidth, linestyle=":")
     axs[i // cols, i % cols].set_title(dataset_name)
-    axs[i // cols, i % cols].set_xlabel("False Positive Rate")
-    axs[i // cols, i % cols].set_ylabel("True Positive Rate")
 _ = plt.tight_layout(pad=2.0)  # spacing between subplots
 
 # %%
@@ -318,8 +320,6 @@ for n_neighbors in n_neighbors_list:
         ax=ax,
     )
     ax.plot([0, 1], [0, 1], linewidth=linewidth, linestyle=":")
-ax.set_xlabel("False Positive Rate")
-ax.set_ylabel("True Positive Rate")
 _ = ax.set_title("RobustScaler with varying n_neighbors")
 
 # %%
@@ -350,8 +350,6 @@ for scaler in scaler_list:
         ax=ax,
     )
     ax.plot([0, 1], [0, 1], linewidth=linewidth, linestyle=":")
-ax.set_xlabel("False Positive Rate")
-ax.set_ylabel("True Positive Rate")
 ax.set_title("Fixed n_neighbors with varying scaler")
 plt.show()
 
