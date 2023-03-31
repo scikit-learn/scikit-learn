@@ -194,5 +194,11 @@ def test_error_when_reshape_is_not_a_tuple():
     xp = _NumPyApiWrapper()
     X = xp.asarray([[1, 2, 3], [3, 4, 5]])
 
+    X_no_copy = xp.reshape(X, (-1,), copy=False)
+    assert X_no_copy.base is X.base
+
+    X_copy = xp.reshape(X, (6, 1), copy=True)
+    assert X_copy.base is not X.base
+
     with pytest.raises(TypeError, match="shape must be a tuple"):
         xp.reshape(X, -1)
