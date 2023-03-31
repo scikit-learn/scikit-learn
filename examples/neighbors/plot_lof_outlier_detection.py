@@ -45,7 +45,7 @@ ground_truth[-n_outliers:] = -1
 # ---------------------------------------------
 #
 # Use `fit_predict` to compute the predicted labels of the training samples
-# (when LOF is used for outlier detection, the estimator has no predict,
+# (when LOF is used for outlier detection, the estimator has no `predict`,
 # `decision_function` and `score_samples` methods).
 
 from sklearn.neighbors import LocalOutlierFactor
