@@ -11,7 +11,7 @@ This module defines export functions for decision trees.
 #          Li Li <aiki.nogard@gmail.com>
 #          Giuseppe Vettigli <vettigli@gmail.com>
 # License: BSD 3 clause
-from io import StringIO
+from io import StringIO, TextIOWrapper
 from numbers import Integral
 
 import numpy as np
@@ -742,6 +742,26 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
 
 
+@validate_params(
+    {
+        "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
+        "out_file": [TextIOWrapper, str, None],
+        "max_depth": [Interval(Integral, 0, None, closed="left"), None],
+        "feature_names": [list, None],
+        "class_names": [list, None],
+        "label": [StrOptions({"all", "root", "none"})],
+        "filled": ["boolean"],
+        "leaves_parallel": ["boolean"],
+        "impurity": ["boolean"],
+        "node_ids": ["boolean"],
+        "proportion": ["boolean"],
+        "rotate": ["boolean"],
+        "rounded": ["boolean"],
+        "special_characters": ["boolean"],
+        "precision": [Interval(Integral, 0, None, closed="left"), None],
+        "fontname": [str],
+    }
+)
 def export_graphviz(
     decision_tree,
     out_file=None,
