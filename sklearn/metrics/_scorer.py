@@ -484,11 +484,6 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
     """
-    if not hasattr(estimator, "fit"):
-        raise TypeError(
-            "estimator should be an estimator implementing 'fit' method, %r was passed"
-            % estimator
-        )
     if isinstance(scoring, str):
         return get_scorer(scoring)
     elif callable(scoring):
