@@ -120,6 +120,15 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         return scale
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "axis": [Options(int, {0, 1})],
+        "with_mean": ["boolean"],
+        "with_std": ["boolean"],
+        "copy": ["boolean"],
+    }
+)
 def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     """Standardize a dataset along any axis.
 
