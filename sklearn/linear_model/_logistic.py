@@ -16,7 +16,7 @@ import warnings
 
 import numpy as np
 from scipy import optimize
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from sklearn.metrics import get_scorer_names
 
@@ -34,7 +34,7 @@ from ..utils.extmath import row_norms
 from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import StrOptions, Interval
 from ..model_selection import check_cv
 from ..metrics import get_scorer
@@ -1013,7 +1013,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     See Also
     --------
     SGDClassifier : Incrementally trained logistic regression (when given
-        the parameter ``loss="log"``).
+        the parameter ``loss="log_loss"``).
     LogisticRegressionCV : Logistic regression with built-in cross validation.
 
     Notes
@@ -1167,6 +1167,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 "'elasticnet'. Got "
                 "(penalty={})".format(self.penalty)
             )
+
+        if self.penalty == "elasticnet" and self.l1_ratio is None:
+            raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 
         # TODO(1.4): Remove "none" option
         if self.penalty == "none":
@@ -1629,7 +1632,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         an OvR for the corresponding class. If the 'multi_class' option
         given is 'multinomial' then the same scores are repeated across
         all classes, since this is the multinomial class. Each dict value
-        has shape ``(n_folds, n_cs`` or ``(n_folds, n_cs, n_l1_ratios)`` if
+        has shape ``(n_folds, n_cs)`` or ``(n_folds, n_cs, n_l1_ratios)`` if
         ``penalty='elasticnet'``.
 
     C_ : ndarray of shape (n_classes,) or (n_classes - 1,)
@@ -2087,7 +2090,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Returns
         -------
         score : float
-            Score of self.predict(X) wrt. y.
+            Score of self.predict(X) w.r.t. y.
         """
         scoring = self.scoring or "accuracy"
         scoring = get_scorer(scoring)

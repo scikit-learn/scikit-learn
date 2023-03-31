@@ -35,18 +35,18 @@ cdef enum:
     RAND_R_MAX = 0x7FFFFFFF
 
 
-cdef inline UINT32_t rand_int(UINT32_t end, UINT32_t* random_state) nogil:
+cdef inline UINT32_t rand_int(UINT32_t end, UINT32_t* random_state) noexcept nogil:
     """Generate a random integer in [0; end)."""
     return our_rand_r(random_state) % end
 
 
-cdef inline floating fmax(floating x, floating y) nogil:
+cdef inline floating fmax(floating x, floating y) noexcept nogil:
     if x > y:
         return x
     return y
 
 
-cdef inline floating fsign(floating f) nogil:
+cdef inline floating fsign(floating f) noexcept nogil:
     if f == 0:
         return 0
     elif f > 0:
@@ -55,7 +55,7 @@ cdef inline floating fsign(floating f) nogil:
         return -1.0
 
 
-cdef floating abs_max(int n, floating* a) nogil:
+cdef floating abs_max(int n, const floating* a) noexcept nogil:
     """np.max(np.abs(a))"""
     cdef int i
     cdef floating m = fabs(a[0])
@@ -67,7 +67,7 @@ cdef floating abs_max(int n, floating* a) nogil:
     return m
 
 
-cdef floating max(int n, floating* a) nogil:
+cdef floating max(int n, floating* a) noexcept nogil:
     """np.max(a)"""
     cdef int i
     cdef floating m = a[0]
@@ -79,7 +79,7 @@ cdef floating max(int n, floating* a) nogil:
     return m
 
 
-cdef floating diff_abs_max(int n, floating* a, floating* b) nogil:
+cdef floating diff_abs_max(int n, const floating* a, floating* b) noexcept nogil:
     """np.max(np.abs(a - b))"""
     cdef int i
     cdef floating m = fabs(a[0] - b[0])
@@ -90,13 +90,12 @@ cdef floating diff_abs_max(int n, floating* a, floating* b) nogil:
             m = d
     return m
 
-
 def enet_coordinate_descent(
     floating[::1] w,
     floating alpha,
     floating beta,
-    floating[::1, :] X,
-    floating[::1] y,
+    const floating[::1, :] X,
+    const floating[::1] y,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -274,15 +273,15 @@ def enet_coordinate_descent(
 
 
 def sparse_enet_coordinate_descent(
-    floating [::1] w,
+    floating[::1] w,
     floating alpha,
     floating beta,
-    floating[::1] X_data, # TODO: Make const after release of Cython 3 (#23147)
+    const floating[::1] X_data,
     const int[::1] X_indices,
     const int[::1] X_indptr,
-    floating[::1] y,
-    floating[::1] sample_weight,
-    floating[::1] X_mean,
+    const floating[::1] y,
+    const floating[::1] sample_weight,
+    const floating[::1] X_mean,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -339,7 +338,7 @@ def sparse_enet_coordinate_descent(
     # R = y - Zw, weighted version R = sample_weight * (y - Zw)
     cdef floating[::1] R
     cdef floating[::1] XtA
-    cdef floating[::1] yw
+    cdef const floating[::1] yw
 
     if floating is float:
         dtype = np.float32
@@ -568,9 +567,9 @@ def enet_coordinate_descent_gram(
     floating[::1] w,
     floating alpha,
     floating beta,
-    cnp.ndarray[floating, ndim=2, mode='c'] Q,
-    cnp.ndarray[floating, ndim=1, mode='c'] q,
-    cnp.ndarray[floating, ndim=1] y,
+    const floating[:, ::1] Q,
+    const floating[::1] q,
+    const floating[:] y,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -630,9 +629,9 @@ def enet_coordinate_descent_gram(
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
     cdef floating y_norm2 = np.dot(y, y)
-    cdef floating* w_ptr = <floating*>&w[0]
-    cdef floating* Q_ptr = &Q[0, 0]
-    cdef floating* q_ptr = <floating*>q.data
+    cdef floating* w_ptr = &w[0]
+    cdef const floating* Q_ptr = &Q[0, 0]
+    cdef const floating* q_ptr = &q[0]
     cdef floating* H_ptr = &H[0]
     cdef floating* XtA_ptr = &XtA[0]
     tol = tol * y_norm2
@@ -734,14 +733,12 @@ def enet_coordinate_descent_gram(
 
     return np.asarray(w), gap, tol, n_iter + 1
 
-
 def enet_coordinate_descent_multi_task(
-    floating[::1, :] W,
+    const floating[::1, :] W,
     floating l1_reg,
     floating l2_reg,
-    # TODO: use const qualified fused-typed memoryview when Cython 3.0 is used.
-    cnp.ndarray[floating, ndim=2, mode='fortran'] X,
-    cnp.ndarray[floating, ndim=2, mode='fortran'] Y,
+    const floating[::1, :] X,
+    const floating[::1, :] Y,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -805,8 +802,8 @@ def enet_coordinate_descent_multi_task(
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
-    cdef floating* X_ptr = &X[0, 0]
-    cdef floating* Y_ptr = &Y[0, 0]
+    cdef const floating* X_ptr = &X[0, 0]
+    cdef const floating* Y_ptr = &Y[0, 0]
 
     if l1_reg == 0:
         warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"

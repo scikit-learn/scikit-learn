@@ -24,7 +24,7 @@ from ..base import (
     ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils import check_array
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
@@ -546,6 +546,12 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True}
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "axis": [Options(Integral, {0, 1})],
+    }
+)
 def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     """Transform features by scaling each feature to a given range.
 
@@ -582,7 +588,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
-    axis : int, default=0
+    axis : {0, 1}, default=0
         Axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
 
@@ -1910,8 +1916,10 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     Notes
     -----
-    This estimator is stateless (besides constructor parameters), the
-    fit method does nothing but is useful when used in a pipeline.
+    This estimator is :term:`stateless` and does not need to be fitted.
+    However, we recommend to call :meth:`fit_transform` instead of
+    :meth:`transform`, as parameter validation is only performed in
+    :meth:`fit`.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
@@ -1942,10 +1950,10 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged.
+        """Only validates estimator's parameters.
 
-        This method is just there to implement the usual API and hence
-        work in pipelines.
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
@@ -2086,10 +2094,12 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     Notes
     -----
     If the input is a sparse matrix, only the non-zero values are subject
-    to update by the Binarizer class.
+    to update by the :class:`Binarizer` class.
 
-    This estimator is stateless (besides constructor parameters), the
-    fit method does nothing but is useful when used in a pipeline.
+    This estimator is :term:`stateless` and does not need to be fitted.
+    However, we recommend to call :meth:`fit_transform` instead of
+    :meth:`transform`, as parameter validation is only performed in
+    :meth:`fit`.
 
     Examples
     --------
@@ -2116,10 +2126,10 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged.
+        """Only validates estimator's parameters.
 
-        This method is just there to implement the usual API and hence
-        work in pipelines.
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------

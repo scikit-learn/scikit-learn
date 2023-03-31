@@ -344,15 +344,6 @@ def test_regression_multioutput_array():
 
     mse = mean_squared_error(y_true, y_pred, multioutput="raw_values")
     mae = mean_absolute_error(y_true, y_pred, multioutput="raw_values")
-    err_msg = (
-        "multioutput is expected to be 'raw_values' "
-        "or 'uniform_average' but we got 'variance_weighted' instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        mean_pinball_loss(y_true, y_pred, multioutput="variance_weighted")
-
-    with pytest.raises(ValueError, match=err_msg):
-        d2_pinball_score(y_true, y_pred, multioutput="variance_weighted")
 
     pbl = mean_pinball_loss(y_true, y_pred, multioutput="raw_values")
     mape = mean_absolute_percentage_error(y_true, y_pred, multioutput="raw_values")

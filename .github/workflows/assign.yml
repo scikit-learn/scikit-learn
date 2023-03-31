@@ -4,6 +4,12 @@ on:
   issue_comment:
     types: created
 
+# Restrict the permissions granted to the use of secrets.GITHUB_TOKEN in this
+# github actions workflow:
+# https://docs.github.com/en/actions/security-guides/automatic-token-authentication
+permissions:
+  issues: write
+
 jobs:
   one:
     runs-on: ubuntu-latest
