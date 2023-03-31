@@ -942,19 +942,6 @@ def _get_transformer_list(estimators):
     return transformer_list
 
 
-@validate_params(
-    {
-        "remainder": [
-            StrOptions({"drop", "passthrough"}),
-            HasMethods(["fit", "transform"]),
-            HasMethods(["fit_transform", "transform"]),
-        ],
-        "sparse_threshold": [Interval(Real, 0, 1, closed="both"), None],
-        "n_jobs": [Integral, None],
-        "verbose": ["verbose"],
-        "verbose_feature_names_out": ["boolean"],
-    }
-)
 def make_column_transformer(
     *transformers,
     remainder="drop",
