@@ -48,6 +48,9 @@ jobs:
       displayName: 'Upload To Codecov'
       env:
         CODECOV_TOKEN: $(CODECOV_TOKEN)
+    - bash: ./build_tools/azure/combine_coverage_reports.sh
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
     - task: PublishTestResults@2
       inputs:
         testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
