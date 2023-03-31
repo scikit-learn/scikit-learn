@@ -337,6 +337,10 @@ def get_namespace(*arrays):
     _check_array_api_dispatch(array_api_dispatch)
 
     try:
+        # array-api-compat is a required dependency of scikit-learn only when
+        # configuring `array_api_dispatch=True`. Its import should therefore be
+        # protected by _check_array_api_dispatch to display an informative error
+        # message in case it is missing.
         import array_api_compat
 
         namespace, is_array_api_compliant = (
