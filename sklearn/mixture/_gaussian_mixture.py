@@ -688,7 +688,7 @@ class GaussianMixture(BaseMixture):
         weights_initialized = self.weights_init is not None
         means_initialized = self.means_init is not None
         precisions_initialized = self.precisions_init is not None
-        self.init_skipped = (
+        self._init_skipped = (
             weights_initialized and means_initialized and precisions_initialized
         )
 
@@ -720,7 +720,7 @@ class GaussianMixture(BaseMixture):
         n_samples, _ = X.shape
         covariances = None
 
-        if self.init_skipped:
+        if self._init_skipped:
             self.weights_ = self.weights_init
             self.means_ = self.means_init
         else:

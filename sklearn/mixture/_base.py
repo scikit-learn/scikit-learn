@@ -48,11 +48,11 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
     provides basic common methods for mixture models.
     """
 
-    # init_skipped is intended to be used by
+    # _init_skipped is intended to be used by
     # derived classes to skip the initialization of parameters if all
     # parameters are provided by the user. This is useful for example in
     # BayesianGaussianMixture where the user can provide an initial value
-    init_skipped = False
+    _init_skipped = False
 
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
@@ -116,7 +116,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         n_samples, _ = X.shape
 
-        if self.init_skipped:
+        if self._init_skipped:
             self._initialize(X, None)
             return
 
