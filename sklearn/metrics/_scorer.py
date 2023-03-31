@@ -482,6 +482,11 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
     scoring : callable
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+
+    Notes
+    -----
+    For evaluating multiple scores, use
+    :func:`~sklearn.model_selection.cross_validate` instead.
     """
     if isinstance(scoring, str):
         return get_scorer(scoring)
