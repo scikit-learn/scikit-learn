@@ -260,10 +260,16 @@ def test_get_namespace_array_api_isdtype(wrapper):
         assert xp.isdtype(xp.complex128, "complex floating")
 
 
-def test_error_when_reshape_is_not_a_tuple():
-    """Raise error in reshape when shape is not a tuple."""
-    X = numpy.asarray([[1, 2, 3], [3, 4, 5]])
-    xp, _ = get_namespace(X)
+def test_reshape_behavior():
+    """Check reshape behavior with copy and is strict with non-tuple shape."""
+    xp = _NumPyApiWrapper()
+    X = xp.asarray([[1, 2, 3], [3, 4, 5]])
+
+    X_no_copy = xp.reshape(X, (-1,), copy=False)
+    assert X_no_copy.base is X.base
+
+    X_copy = xp.reshape(X, (6, 1), copy=True)
+    assert X_copy.base is not X.base
 
     with pytest.raises(TypeError, match="shape must be a tuple"):
         xp.reshape(X, -1)
