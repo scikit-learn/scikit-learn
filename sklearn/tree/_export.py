@@ -11,7 +11,7 @@ This module defines export functions for decision trees.
 #          Li Li <aiki.nogard@gmail.com>
 #          Giuseppe Vettigli <vettigli@gmail.com>
 # License: BSD 3 clause
-from io import StringIO, TextIOWrapper
+from io import StringIO
 from numbers import Integral
 
 import numpy as np
@@ -744,8 +744,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
 @validate_params(
     {
-        "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
-        "out_file": [TextIOWrapper, str, None],
+        "decision_tree": [DecisionTreeClassifier],
+        "out_file": "no_validation",
         "max_depth": [Interval(Integral, 0, None, closed="left"), None],
         "feature_names": [list, None],
         "class_names": [list, None],
