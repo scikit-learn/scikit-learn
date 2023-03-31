@@ -338,18 +338,16 @@ def graphical_lasso(
         max_iter=max_iter,
         verbose=verbose,
         assume_centered=False,
-    ).fit(
-        emp_cov
-    )  # or emp_cov?
+    ).fit(emp_cov)
 
     if return_costs:
         if return_n_iter:
-            return model.covariance_, model.precision_, model.costs, model.i + 1
+            return model.covariance_, model.precision_, model.costs, model.n_iter_ + 1
         else:
             return model.covariance_, model.precision_, model.costs
     else:
         if return_n_iter:
-            return model.covariance_, model.precision_, model.i + 1
+            return model.covariance_, model.precision_, model.n_iter_ + 1
         else:
             return model.covariance_, model.precision_
 
