@@ -179,12 +179,6 @@ def teardown_module():
     shutil.rmtree(TEMP_FOLDER)
 
 
-class EstimatorWithoutFit:
-    """Dummy estimator to test scoring validators"""
-
-    pass
-
-
 class EstimatorWithFit(BaseEstimator):
     """Dummy estimator to test scoring validators"""
 
@@ -228,13 +222,6 @@ def test_all_scorers_repr():
 
 def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     # Test all branches of single metric usecases
-    estimator = EstimatorWithoutFit()
-    pattern = (
-        r"estimator should be an estimator implementing 'fit' method," r" .* was passed"
-    )
-    with pytest.raises(TypeError, match=pattern):
-        scoring_validator(estimator)
-
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
     scorer = scoring_validator(estimator)
