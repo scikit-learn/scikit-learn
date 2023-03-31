@@ -189,8 +189,8 @@ def test_convert_estimator_to_array_api():
     assert hasattr(new_est.X_, "__array_namespace__")
 
 
-def test_error_when_reshape_is_not_a_tuple():
-    """Raise error in reshape when shape is not a tuple."""
+def test_reshape_behavior():
+    """Check reshape behavior with copy and is strict with non-tuple shape."""
     xp = _NumPyApiWrapper()
     X = xp.asarray([[1, 2, 3], [3, 4, 5]])
 
