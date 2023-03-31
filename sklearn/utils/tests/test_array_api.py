@@ -266,7 +266,7 @@ def test_reshape_behavior():
     X = xp.asarray([[1, 2, 3], [3, 4, 5]])
 
     X_no_copy = xp.reshape(X, (-1,), copy=False)
-    assert X_no_copy.base is X.base
+    assert X_no_copy.base is X
 
     X_copy = xp.reshape(X, (6, 1), copy=True)
     assert X_copy.base is not X.base
