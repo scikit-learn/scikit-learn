@@ -66,7 +66,7 @@ def fit_predict(X, model_name, categorical_columns=(), n_neighbors=20):
             [("categorical", OneHotEncoder(), categorical_columns)],
             remainder=RobustScaler(),
         )
-        clf = LocalOutlierFactor(n_neighbors=n_neighbors)
+        clf = LocalOutlierFactor(n_neighbors=n_neighbors, n_jobs=2)
         model = make_pipeline(preprocessor, clf)
         model.fit(X)
         y_pred = model[-1].negative_outlier_factor_
