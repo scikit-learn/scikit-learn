@@ -85,8 +85,3 @@ fi
 set -x
 eval "$TEST_CMD --pyargs sklearn"
 set +x
-
-if [[ "$COVERAGE" == "true" ]]; then
-    coverage combine --append
-    cp $TEST_DIR/.coverage $BUILD_REPOSITORY_LOCALPATH
-fi
