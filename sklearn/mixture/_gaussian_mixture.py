@@ -688,7 +688,6 @@ class GaussianMixture(BaseMixture):
         weights_initialized = self.weights_init is not None
         means_initialized = self.means_init is not None
         precisions_initialized = self.precisions_init is not None
-
         self.init_skipped = (
             weights_initialized and means_initialized and precisions_initialized
         )
