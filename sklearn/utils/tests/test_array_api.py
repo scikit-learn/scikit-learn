@@ -63,9 +63,8 @@ def test_get_namespace_array_api():
         assert is_array_api_compliant
         assert isinstance(xp_out, _ArrayAPIWrapper)
 
-        xp_out, is_array_api_compliant = get_namespace(1)
-        assert isinstance(xp_out, _NumPyApiWrapper)
-        assert not is_array_api_compliant
+        with pytest.raises(TypeError):
+            xp_out, is_array_api_compliant = get_namespace(X_xp, X_np)
 
 
 class _AdjustableNameAPITestWrapper(_ArrayAPIWrapper):
@@ -259,20 +258,6 @@ def test_get_namespace_array_api_isdtype(wrapper):
         assert not xp.isdtype(xp.int8, "complex floating")
         assert xp.isdtype(xp.complex64, "complex floating")
         assert xp.isdtype(xp.complex128, "complex floating")
-
-
-@pytest.mark.parametrize(
-    "array_api_dispatch",
-    [pytest.param(True, marks=skip_if_array_api_compat_not_configured), False],
-)
-def test_get_namespace_list(array_api_dispatch):
-    """Test get_namespace for lists."""
-
-    X = [1, 2, 3]
-    with config_context(array_api_dispatch=array_api_dispatch):
-        xp_out, is_array = get_namespace(X)
-        assert not is_array
-        assert isinstance(xp_out, _NumPyApiWrapper)
 
 
 def test_error_when_reshape_is_not_a_tuple():

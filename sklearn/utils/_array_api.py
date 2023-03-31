@@ -336,19 +336,13 @@ def get_namespace(*arrays):
 
     _check_array_api_dispatch(array_api_dispatch)
 
-    try:
-        # array-api-compat is a required dependency of scikit-learn only when
-        # configuring `array_api_dispatch=True`. Its import should therefore be
-        # protected by _check_array_api_dispatch to display an informative error
-        # message in case it is missing.
-        import array_api_compat
+    # array-api-compat is a required dependency of scikit-learn only when
+    # configuring `array_api_dispatch=True`. Its import should therefore be
+    # protected by _check_array_api_dispatch to display an informative error
+    # message in case it is missing.
+    import array_api_compat
 
-        namespace, is_array_api_compliant = (
-            array_api_compat.get_namespace(*arrays),
-            True,
-        )
-    except (TypeError, ImportError):
-        return _NUMPY_API_WRAPPER_INSTANCE, False
+    namespace, is_array_api_compliant = array_api_compat.get_namespace(*arrays), True
 
     if namespace.__name__ in {"numpy.array_api", "cupy.array_api"}:
         namespace = _ArrayAPIWrapper(namespace)
@@ -428,7 +422,11 @@ def _estimator_with_converted_arrays(estimator, converter):
     new_estimator = clone(estimator)
     for key, attribute in vars(estimator).items():
         with config_context(array_api_dispatch=True):
-            _, is_array_api_compliant = get_namespace(attribute)
+            try:
+                _, is_array_api_compliant = get_namespace(attribute)
+            except TypeError:
+                is_array_api_compliant = False
+
         if is_array_api_compliant or isinstance(attribute, numpy.ndarray):
             attribute = converter(attribute)
         setattr(new_estimator, key, attribute)
