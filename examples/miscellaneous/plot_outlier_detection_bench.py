@@ -185,10 +185,16 @@ for model_name in model_names:
 # positive.
 
 # %%
+import pandas as pd
 from sklearn.datasets import load_breast_cancer
 
 X, y = load_breast_cancer(return_X_y=True, as_frame=True)
 y = np.logical_not(y).astype(np.int32)  # make label 1 to be the minority class
+
+idx_benign = y.index[y == 0]
+idx_malign = rng.choice(y.index[y == 1], size=85)  # downsample to 85 points
+X = pd.concat([X.iloc[idx_benign], X.iloc[idx_malign]])
+y = pd.concat([y.iloc[idx_benign], y.iloc[idx_malign]])
 
 n_samples, anomaly_frac = X.shape[0], y.mean()
 print(f"{n_samples} datapoints with anomaly propotion of {anomaly_frac:.02%}")
