@@ -2,7 +2,7 @@
 
 set -e
 
-# defines the show_installed_libraries function
+# Defines the show_installed_libraries and activate_environment functions.
 source build_tools/shared.sh
 
 activate_environment
