@@ -20,3 +20,5 @@ dependencies:
   - pytest-cov
   - coverage
   - ccache
+  - pytorch=1.13
+  - pytorch-cpu
