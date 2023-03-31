@@ -93,13 +93,12 @@ class _NumPyApiWrapper:
         https://data-apis.org/array-api/latest/API_specification/generated/array_api.reshape.html
         """
         if not isinstance(shape, tuple):
-            raise TypeError("shape must be a tuple")
+            raise TypeError(
+                f"shape must be a tuple, got {shape!r} of type {type(shape)}"
+            )
 
         if copy is True:
             x = x.copy()
-        elif copy is False:
-            x.shape = shape
-            return x
         return numpy.reshape(x, shape)
 
 
