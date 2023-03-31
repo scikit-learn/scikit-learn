@@ -199,6 +199,7 @@ def test_get_namespace_array_api_isdtype(wrapper):
     else:
         xp = _NumPyApiWrapper()
 
+    assert xp.isdtype(xp.float32, xp.float32)
     assert xp.isdtype(xp.float32, "real floating")
     assert xp.isdtype(xp.float64, "real floating")
     assert not xp.isdtype(xp.int32, "real floating")
@@ -222,3 +223,6 @@ def test_get_namespace_array_api_isdtype(wrapper):
         assert not xp.isdtype(xp.int8, "complex floating")
         assert xp.isdtype(xp.complex64, "complex floating")
         assert xp.isdtype(xp.complex128, "complex floating")
+
+    with pytest.raises(ValueError, match="Unrecognized data type"):
+        assert xp.isdtype(xp.int16, "unknown")
