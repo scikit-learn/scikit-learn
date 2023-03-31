@@ -744,11 +744,11 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
 @validate_params(
     {
-        "decision_tree": [DecisionTreeClassifier],
+        "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
         "out_file": "no_validation",
         "max_depth": [Interval(Integral, 0, None, closed="left"), None],
         "feature_names": [list, None],
-        "class_names": [list, None],
+        "class_names": [list, "boolean", None],
         "label": [StrOptions({"all", "root", "none"})],
         "filled": ["boolean"],
         "leaves_parallel": ["boolean"],
@@ -797,8 +797,10 @@ def export_graphviz(
 
     Parameters
     ----------
-    decision_tree : decision tree classifier
-        The decision tree to be exported to GraphViz.
+    decision_tree : object
+        The decision tree estimator to be exported to GraphViz.
+        It can be an instance of
+        DecisionTreeClassifier or DecisionTreeRegressor.
 
     out_file : object or str, default=None
         Handle or name of the output file. If ``None``, the result is

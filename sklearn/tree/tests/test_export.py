@@ -270,22 +270,10 @@ def test_graphviz_errors():
     with pytest.raises(ValueError, match=message):
         export_graphviz(clf, None, feature_names=["a", "b", "c"])
 
-    # Check error when argument is not an estimator
-    message = "is not an estimator instance"
-    with pytest.raises(TypeError, match=message):
-        export_graphviz(clf.fit(X, y).tree_)
-
     # Check class_names error
     out = StringIO()
     with pytest.raises(IndexError):
         export_graphviz(clf, out, class_names=[])
-
-    # Check precision error
-    out = StringIO()
-    with pytest.raises(ValueError, match="should be greater or equal"):
-        export_graphviz(clf, out, precision=-1)
-    with pytest.raises(ValueError, match="should be an integer"):
-        export_graphviz(clf, out, precision="1")
 
 
 def test_friedman_mse_in_graphviz():
