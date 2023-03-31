@@ -56,6 +56,7 @@ jobs:
     - script: >
         docker container run --rm
         --volume $TEST_DIR:/temp_dir
+        --volume $BUILD_REPOSITORY_LOCALPATH:/repo_localpath
         --volume $PWD:/io
         --volume $CCACHE_DIR:/ccache
         -w /io
@@ -64,6 +65,7 @@ jobs:
         -e BUILD_SOURCESDIRECTORY=/io
         -e TEST_DIR=/temp_dir
         -e CCACHE_DIR=/ccache
+        -e BUILD_REPOSITORY_LOCALPATH=/repo_localpath
         -e COVERAGE
         -e DISTRIB
         -e LOCK_FILE
