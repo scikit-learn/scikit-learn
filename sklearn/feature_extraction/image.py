@@ -238,6 +238,92 @@ def grid_to_graph(
     """
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as, dtype=dtype)
 
+def extract_non_overlapping_patches_2d(image, patch_size):
+    """Extract non-overlapping patches from a 2D image.
+    
+    Parameters
+    ----------
+    image : ndarray of shape (image_height, image_width) or \
+        (image_height, image_width, n_channels)
+        The original image data. For color images, the last dimension specifies
+        the channel: a RGB image would have `n_channels=3`.
+    patch_size : tuple of int (patch_height, patch_width)
+        The dimensions of one patch.
+
+    Returns
+    -------
+    patches : array of shape (n_patches, patch_height, patch_width) or \
+        (n_patches, patch_height, patch_width, n_channels)
+        The collection of non-overlapping patches extracted from the image.
+    """
+    i_h, i_w = image.shape[:2]
+    p_h, p_w = patch_size
+
+    if p_h > i_h or p_w > i_w:
+        raise ValueError("Patch dimensions should be smaller than the image dimensions.")
+
+    n_rows = i_h // p_h
+    n_cols = i_w // p_w
+    n_patches = n_rows * n_cols
+
+    image = image[:n_rows * p_h, :n_cols * p_w]  # Crop the image to fit the non-overlapping patches
+    image = image.reshape((i_h, i_w, -1))
+    n_colors = image.shape[-1]
+
+    patches = np.empty((n_patches, p_h, p_w, n_colors))
+
+    patch_idx = 0
+    for row in range(n_rows):
+        for col in range(n_cols):
+            patch = image[row * p_h:(row + 1) * p_h, col * p_w:(col + 1) * p_w]
+            patches[patch_idx] = patch
+            patch_idx += 1
+
+    if patches.shape[-1] == 1:
+        return patches.reshape((n_patches, p_h, p_w))
+    else:
+        return patches
+
+
+
+    multiple function calls. See :term:`Glossary <random_state>`.
+
+Returns
+-------
+patches : ndarray of shape (n_patches, patch_height, patch_width)
+    The collection of patches extracted from the original image. The
+    number of patches is either n_patches when max_patches is an integer
+    or a proportion of the total number of patches when max_patches is a
+    float, depending on the value of max_patches.
+
+See Also
+--------
+PatchExtractor : Transformer that performs the same operation.
+extract_non_overlapping_patches_2d : Function to extract non-overlapping
+    patches from an image.
+
+Examples
+--------
+>>> from sklearn.feature_extraction import image
+>>> one_image = np.arange(4 * 4).reshape((4, 4))
+>>> one_image
+array([[ 0,  1,  2,  3],
+       [ 4,  5,  6,  7],
+       [ 8,  9, 10, 11],
+       [12, 13, 14, 15]])
+>>> patches = image.extract_patches_2d(one_image, (2, 2))
+>>> patches.shape
+(9, 2, 2)
+>>> patches[4]
+array([[ 5,  6],
+       [ 9, 10]])
+>>> patches = image.extract_patches_2d(one_image, (2, 2), max_patches=2,
+...                                    random_state=0)
+>>> patches.shape
+(2, 2, 2)
+
+
+
 
 ###############################################################################
 # From an image to a set of small image patches
