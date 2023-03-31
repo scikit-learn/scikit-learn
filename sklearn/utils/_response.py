@@ -78,11 +78,11 @@ def _get_response_values(
 
         target_type = "binary" if len(classes) <= 2 else "multiclass"
 
-        if target_type == "multiclass" and prediction_method.__name__ != "predict":
-            raise ValueError(
-                "With a multiclass estimator, the response method should be "
-                f"predict, got {prediction_method.__name__} instead."
-            )
+        # if target_type == "multiclass" and prediction_method.__name__ != "predict":
+        #     raise ValueError(
+        #         "With a multiclass estimator, the response method should be "
+        #         f"predict, got {prediction_method.__name__} instead."
+        #     )
 
         if pos_label is not None and pos_label not in classes.tolist():
             raise ValueError(
