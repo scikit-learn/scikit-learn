@@ -18,7 +18,6 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from collections.abc import Iterable
 from functools import partial
 from collections import Counter
 from traceback import format_exc
@@ -486,7 +485,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
     """
     if isinstance(scoring, str):
         return get_scorer(scoring)
-    elif callable(scoring):
+    if callable(scoring):
         # Heuristic to ensure user has not passed a metric
         module = getattr(scoring, "__module__", None)
         if (
@@ -503,7 +502,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
                 "to a scorer." % scoring
             )
         return get_scorer(scoring)
-    elif scoring is None:
+    if scoring is None:
         if hasattr(estimator, "score"):
             return _passthrough_scorer
         elif allow_none:
@@ -513,17 +512,6 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
                 "If no scoring is specified, the estimator passed should "
                 "have a 'score' method. The estimator %r does not." % estimator
             )
-    elif isinstance(scoring, Iterable):
-        raise ValueError(
-            "For evaluating multiple scores, use "
-            "sklearn.model_selection.cross_validate instead. "
-            "{0} was passed.".format(scoring)
-        )
-    else:
-        raise ValueError(
-            "scoring value should either be a callable, string or None. %r was passed"
-            % scoring
-        )
 
 
 def _check_multimetric_scoring(estimator, scoring):
