@@ -458,9 +458,14 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             not self.warm_start and not incremental
         )
 
-        X, y, sample_weight = self._validate_input(
-            X, y, incremental, reset=first_pass, sample_weight=sample_weight
-        )
+        X, y = self._validate_input(X, y, incremental, reset=first_pass)
+        # Handle sample_weight
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            nonzero_mask = sample_weight != 0
+            X = X[nonzero_mask]
+            y = y[nonzero_mask]
+            sample_weight = sample_weight[nonzero_mask]
 
         n_samples, n_features = X.shape
 
@@ -1196,7 +1201,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             max_fun=max_fun,
         )
 
-    def _validate_input(self, X, y, incremental, reset, sample_weight=None):
+    def _validate_input(self, X, y, incremental, reset):
         X, y = self._validate_data(
             X,
             y,
@@ -1249,13 +1254,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         # float32 data
         y = self._label_binarizer.transform(y).astype(bool)
 
-        if sample_weight is None:
-            return X, y, None
-
-        # check sample weight
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
-        return X, y, sample_weight
+        return X, y
 
     def predict(self, X):
         """Predict using the multi-layer perceptron classifier.
@@ -1742,7 +1741,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         y_pred = self._predict(X, check_input=False)
         return r2_score(y, y_pred, sample_weight=sample_weight)
 
-    def _validate_input(self, X, y, incremental, reset, sample_weight=None):
+    def _validate_input(self, X, y, incremental, reset):
         X, y = self._validate_data(
             X,
             y,
@@ -1755,13 +1754,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
-        if sample_weight is None:
-            return X, y, None
-
-        # check sample weight
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
-        return X, y, sample_weight
+        return X, y
 
     @available_if(lambda est: est._check_solver)
     @_fit_context(prefer_skip_nested_validation=True)
