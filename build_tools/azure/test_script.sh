@@ -5,11 +5,7 @@ set -e
 # defines the show_installed_libraries function
 source build_tools/shared.sh
 
-if [[ "$DISTRIB" =~ ^conda.* ]]; then
-    source activate $VIRTUALENV
-elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pip-nogil" ]]; then
-    source $VIRTUALENV/bin/activate
-fi
+activate_environment
 
 if [[ "$BUILD_REASON" == "Schedule" ]]; then
     # Enable global random seed randomization to discover seed-sensitive tests
@@ -89,3 +85,8 @@ fi
 set -x
 eval "$TEST_CMD --pyargs sklearn"
 set +x
+
+if [[ "$COVERAGE" == "true" ]]; then
+    coverage combine --append
+    cp $TEST_DIR/.coverage $BUILD_REPOSITORY_LOCALPATH
+fi
