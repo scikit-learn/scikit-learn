@@ -64,8 +64,6 @@ def size(x):
     out : int
         Total number of elements.
     """
-    if None in x.shape:
-        return None
     return math.prod(x.shape)
 
 
