@@ -1184,8 +1184,8 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
 # Kernels
 @validate_params(
     {
-        "X": ["array-like"],
-        "Y": ["array-like", None],
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
         "dense_output": ["boolean"],
     }
 )
@@ -1197,10 +1197,10 @@ def linear_kernel(X, Y=None, dense_output=True):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_X, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
         A feature array.
 
-    Y : array-like of shape (n_samples_Y, n_features), default=None
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), default=None
         An optional second feature array. If `None`, uses `Y=X`.
 
     dense_output : bool, default=True
