@@ -20,8 +20,8 @@ CODECOV_BASE_URL="https://uploader.codecov.io/v$CODECOV_UPLOADER_VERSION"
 
 
 # XXX: debug
-echo "ls -l $BUILD_REPOSITORY_LOCALPATH"
-ls -l $BUILD_REPOSITORY_LOCALPATH
+echo "ls -la $BUILD_REPOSITORY_LOCALPATH"
+ls -la $BUILD_REPOSITORY_LOCALPATH
 
 # Check that the git repo is located at the expected location:
 if [[ ! -d "$BUILD_REPOSITORY_LOCALPATH/.git" ]]; then
