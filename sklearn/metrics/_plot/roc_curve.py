@@ -40,6 +40,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     line_ : matplotlib Artist
         ROC Curve.
 
+    chance_level_ : matplotlib Artist or None
+        The chance level line. It is `None` if the chance level is not plotted.
+
+        .. versionadded:: 1.3
+
     ax_ : matplotlib Axes
         Axes with ROC Curve.
 
@@ -78,7 +83,15 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         self.roc_auc = roc_auc
         self.pos_label = pos_label
 
-    def plot(self, ax=None, *, name=None, **kwargs):
+    def plot(
+        self,
+        ax=None,
+        *,
+        name=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
+        **kwargs,
+    ):
         """Plot visualization.
 
         Extra keyword arguments will be passed to matplotlib's ``plot``.
@@ -92,6 +105,17 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         name : str, default=None
             Name of ROC Curve for labeling. If `None`, use `estimator_name` if
             not `None`, otherwise no labeling is shown.
+
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -113,6 +137,15 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         line_kwargs.update(**kwargs)
 
+        chance_level_line_kw = {
+            "label": "Chance level (AUC = 0.5)",
+            "color": "k",
+            "linestyle": "--",
+        }
+
+        if chance_level_kw is not None:
+            chance_level_line_kw.update(**chance_level_kw)
+
         (self.line_,) = self.ax_.plot(self.fpr, self.tpr, **line_kwargs)
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
@@ -122,7 +155,14 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ylabel = "True Positive Rate" + info_pos_label
         self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
-        if "label" in line_kwargs:
+        if plot_chance_level:
+            (self.chance_level_,) = self.ax_.plot(
+                (0, 1), (0, 1), **chance_level_line_kw
+            )
+        else:
+            self.chance_level_ = None
+
+        if "label" in line_kwargs or "label" in chance_level_line_kw:
             self.ax_.legend(loc="lower right")
 
         return self
@@ -140,6 +180,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         name=None,
         ax=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
         **kwargs,
     ):
         """Create a ROC Curve display from an estimator.
@@ -182,6 +224,17 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
+
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -231,6 +284,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
             ax=ax,
             pos_label=pos_label,
+            plot_chance_level=plot_chance_level,
+            chance_level_kw=chance_level_kw,
             **kwargs,
         )
 
@@ -245,6 +300,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         name=None,
         ax=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
         **kwargs,
     ):
         """Plot ROC curve given the true and predicted values.
@@ -283,6 +340,17 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
+
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
@@ -337,4 +405,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             pos_label=pos_label_validated,
         )
 
-        return viz.plot(ax=ax, name=name, **kwargs)
+        return viz.plot(
+            ax=ax,
+            name=name,
+            plot_chance_level=plot_chance_level,
+            chance_level_kw=chance_level_kw,
+            **kwargs,
+        )
