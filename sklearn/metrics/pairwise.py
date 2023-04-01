@@ -1326,9 +1326,9 @@ def rbf_kernel(X, Y=None, gamma=None):
 
 @validate_params(
     {
-        "X": ["array-like"],
-        "Y": ["array-like", None],
-        "gamma": [Interval(Real, None, None, closed="neither"), None],
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "gamma": [Interval(Real, 0, None, closed="neither"), None],
     }
 )
 def laplacian_kernel(X, Y=None, gamma=None):
@@ -1345,14 +1345,14 @@ def laplacian_kernel(X, Y=None, gamma=None):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_X, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
         A feature array.
 
-    Y : array-like of shape (n_samples_Y, n_features), default=None
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), default=None
         An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
-        If None, defaults to 1.0 / n_features.
+        If None, defaults to 1.0 / n_features. Otherwise it should be strictly positive.
 
     Returns
     -------
