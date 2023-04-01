@@ -17,7 +17,17 @@ set -e
 # network failures.
 CODECOV_UPLOADER_VERSION=0.4.1
 CODECOV_BASE_URL="https://uploader.codecov.io/v$CODECOV_UPLOADER_VERSION"
-echo "About to run codecov for repo at $BUILD_REPOSITORY_LOCALPATH and searching for coverage files in $TEST_DIR:"
+
+# Check that the git repo is located at the expected location:
+if [[ ! -d "$BUILD_REPOSITORY_LOCALPATH/.git" ]]; then
+    echo "Could not find the git checkout at $BUILD_REPOSITORY_LOCALPATH"
+    exit 1
+fi
+# Check that the combined coverage file exists at the expected location:
+if [[ ! -f "$TEST_DIR/.coverage" ]]; then
+    echo "Could not find the combined coverage file at $TEST_DIR/.coverage"
+    exit 1
+fi
 if [[ $OSTYPE == *"linux"* ]]; then
     curl -Os "$CODECOV_BASE_URL/linux/codecov"
     SHA256SUM="32cb14b5f3aaacd67f4c1ff55d82f037d3cd10c8e7b69c051f27391d2e66e15c  codecov"
