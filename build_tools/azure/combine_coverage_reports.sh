@@ -12,3 +12,6 @@ activate_environment
 pushd $TEST_DIR
 coverage combine --append
 popd
+
+# Copy the combined coverage file to the root of the repository:
+cp $TEST_DIR/.coverage $BUILD_REPOSITORY_LOCALPATH
