@@ -4,6 +4,7 @@ Testing for export functions of decision trees (sklearn.tree.export).
 from re import finditer, search
 from textwrap import dedent
 
+import numpy as np
 from numpy.random import RandomState
 import pytest
 
@@ -52,6 +53,9 @@ def test_graphviz_toy():
     contents1 = export_graphviz(
         clf, feature_names=["feature0", "feature1"], out_file=None
     )
+    contents1_ = export_graphviz(
+        clf, feature_names=np.array(["feature0", "feature1"]), out_file=None
+    )
     contents2 = (
         "digraph Tree {\n"
         'node [shape=box, fontname="helvetica"] ;\n'
@@ -68,9 +72,13 @@ def test_graphviz_toy():
     )
 
     assert contents1 == contents2
+    assert contents1_ == contents2
 
     # Test with class_names
     contents1 = export_graphviz(clf, class_names=["yes", "no"], out_file=None)
+    contents1_ = export_graphviz(
+        clf, class_names=np.array(["yes", "no"]), out_file=None
+    )
     contents2 = (
         "digraph Tree {\n"
         'node [shape=box, fontname="helvetica"] ;\n'
@@ -89,6 +97,7 @@ def test_graphviz_toy():
     )
 
     assert contents1 == contents2
+    assert contents1_ == contents2
 
     # Test plot_options
     contents1 = export_graphviz(
