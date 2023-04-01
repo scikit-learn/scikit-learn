@@ -730,6 +730,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
 @validate_params(
     {
+        "decision_tree": "no_validation",
         "out_file": "no_validation",
         "max_depth": [Interval(Integral, 0, None, closed="left"), None],
         "feature_names": [list, "array-like", None],
