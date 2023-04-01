@@ -833,6 +833,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     return indices
 
 
+@validate_params({"X": ["array-like"], "Y": ["array-like", None]})
 def haversine_distances(X, Y=None):
     """Compute the Haversine distance between samples in X and Y.
 
