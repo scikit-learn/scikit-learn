@@ -18,6 +18,11 @@ set -e
 CODECOV_UPLOADER_VERSION=0.4.1
 CODECOV_BASE_URL="https://uploader.codecov.io/v$CODECOV_UPLOADER_VERSION"
 
+
+# XXX: debug
+echo "ls -l $BUILD_REPOSITORY_LOCALPATH"
+ls -l $BUILD_REPOSITORY_LOCALPATH
+
 # Check that the git repo is located at the expected location:
 if [[ ! -d "$BUILD_REPOSITORY_LOCALPATH/.git" ]]; then
     echo "Could not find the git checkout at $BUILD_REPOSITORY_LOCALPATH"
@@ -33,7 +38,7 @@ if [[ $OSTYPE == *"linux"* ]]; then
     SHA256SUM="32cb14b5f3aaacd67f4c1ff55d82f037d3cd10c8e7b69c051f27391d2e66e15c  codecov"
     echo "$SHA256SUM" | shasum -a256 -c
     chmod +x codecov
-    ./codecov -t ${CODECOV_TOKEN} --r $BUILD_REPOSITORY_LOCALPATH -f $BUILD_REPOSITORY_LOCALPATH/.coverage -Z
+    ./codecov -t ${CODECOV_TOKEN} -r $BUILD_REPOSITORY_LOCALPATH -f $BUILD_REPOSITORY_LOCALPATH/.coverage -Z
 elif [[ $OSTYPE == *"darwin"* ]]; then
     curl -Os "$CODECOV_BASE_URL/macos/codecov"
     SHA256SUM="4ab0f06f06e9c4d25464f155b0aff36bfc1e8dbcdb19bfffd586beed1269f3af  codecov"
