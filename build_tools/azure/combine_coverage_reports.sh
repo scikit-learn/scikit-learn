@@ -11,7 +11,8 @@ activate_environment
 # such as pytest-xdist and joblib/loky:
 pushd $TEST_DIR
 coverage combine --append
+coverage xml
 popd
 
 # Copy the combined coverage file to the root of the repository:
-cp $TEST_DIR/.coverage $BUILD_REPOSITORY_LOCALPATH
+cp $TEST_DIR/coverage.xml $BUILD_REPOSITORY_LOCALPATH
