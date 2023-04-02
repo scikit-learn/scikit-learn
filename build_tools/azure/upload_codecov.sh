@@ -29,6 +29,13 @@ if [[ ! -f "$BUILD_REPOSITORY_LOCALPATH/.coverage" ]]; then
     echo "Could not find the combined coverage file at $BUILD_REPOSITORY_LOCALPATH/.coverage"
     exit 1
 fi
+
+# Check the content of the .coverage file:
+echo "Content of $BUILD_REPOSITORY_LOCALPATH/.coverage:"
+head -n 10 $BUILD_REPOSITORY_LOCALPATH/.coverage
+echo "..."
+tail -n 10 $BUILD_REPOSITORY_LOCALPATH/.coverage
+
 if [[ $OSTYPE == *"linux"* ]]; then
     curl -Os "$CODECOV_BASE_URL/linux/codecov"
     SHA256SUM="32cb14b5f3aaacd67f4c1ff55d82f037d3cd10c8e7b69c051f27391d2e66e15c  codecov"
