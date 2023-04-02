@@ -4,7 +4,7 @@ import pytest
 
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import get_namespace
-from sklearn.utils._array_api import _NumPyApiWrapper
+from sklearn.utils._array_api import _NumPyAPIWrapper
 from sklearn.utils._array_api import _ArrayAPIWrapper
 from sklearn.utils._array_api import _asarray_with_order
 from sklearn.utils._array_api import _convert_to_numpy
@@ -27,7 +27,7 @@ def test_get_namespace_ndarray():
         with config_context(array_api_dispatch=array_api_dispatch):
             xp_out, is_array_api = get_namespace(X_np)
             assert not is_array_api
-            assert isinstance(xp_out, _NumPyApiWrapper)
+            assert isinstance(xp_out, _NumPyAPIWrapper)
 
 
 def test_get_namespace_array_api():
