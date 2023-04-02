@@ -32,12 +32,6 @@ if [[ ! -f "$COVERAGE_XML" ]]; then
     exit 1
 fi
 
-# Check the content of the coverage.xml file:
-echo "Content of $COVERAGE_XML:"
-head -n 10 $COVERAGE_XML
-echo "..."
-tail -n 10 $COVERAGE_XML
-
 if [[ $OSTYPE == *"linux"* ]]; then
     curl -Os "$CODECOV_BASE_URL/linux/codecov"
     SHA256SUM="32cb14b5f3aaacd67f4c1ff55d82f037d3cd10c8e7b69c051f27391d2e66e15c  codecov"
