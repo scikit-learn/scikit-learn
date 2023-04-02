@@ -1363,8 +1363,8 @@ def laplacian_kernel(X, Y=None, gamma=None):
 
 @validate_params(
     {
-        "X": ["array-like"],
-        "Y": ["array-like", None],
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
         "dense_output": ["boolean"],
     }
 )
