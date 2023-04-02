@@ -45,13 +45,6 @@ jobs:
       condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
                      eq(variables['SELECTED_TESTS'], ''))
       displayName: 'Combine coverage'
-    - bash: ./build_tools/azure/upload_codecov.sh
-      condition: and(succeeded(),
-                     eq(variables['COVERAGE'], 'true'),
-                     eq(variables['SELECTED_TESTS'], ''))
-      displayName: 'Upload To Codecov'
-      env:
-        CODECOV_TOKEN: $(CODECOV_TOKEN)
     - task: PublishTestResults@2
       inputs:
         testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
@@ -82,3 +75,10 @@ jobs:
         JUNIT_FILE: $(TEST_DIR)/$(JUNITXML)
       condition: and(succeededOrFailed(), eq(variables['CREATE_ISSUE_ON_TRACKER'], 'true'),
                      eq(variables['Build.Reason'], 'Schedule'))
+    - bash: ./build_tools/azure/upload_codecov.sh
+      condition: and(succeeded(),
+                     eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
+      displayName: 'Upload To Codecov'
+      env:
+        CODECOV_TOKEN: $(CODECOV_TOKEN)
