@@ -232,6 +232,7 @@ jobs:
       debian_atlas_32bit:
         DOCKER_CONTAINER: 'i386/debian:11.2'
         DISTRIB: 'debian-32'
+        COVERAGE: "true"
         LOCK_FILE: './build_tools/azure/debian_atlas_32bit_lock.txt'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
