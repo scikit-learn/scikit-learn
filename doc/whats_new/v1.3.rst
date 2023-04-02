@@ -321,6 +321,12 @@ Changelog
   curves.
   :pr:`24668` by :user:`dberenbaum`.
 
+- |Enhancement| :meth:`metrics.RocCurveDisplay.from_estimator` and
+  :meth:`metrics.RocCurveDisplay.from_predictions` now accept two new keywords,
+  `plot_chance_level` and `chance_level_kw` to plot the baseline chance
+  level. This line is exposed in the `chance_level_` attribute.
+  :pr:`25987` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 - |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
   not normalized, instead of actually normalizing them in the metric. Starting from
   1.5 this will raise an error. :pr:`25299` by :user:`Omar Salman <OmarManzoor`.
