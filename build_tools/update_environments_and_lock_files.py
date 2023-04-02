@@ -329,11 +329,18 @@ pip_build_metadata_list = [
     {
         "build_name": "debian_atlas_32bit",
         "folder": "build_tools/azure",
-        "pip_dependencies": ["cython", "joblib", "threadpoolctl", "pytest"],
+        "pip_dependencies": [
+            "cython",
+            "joblib",
+            "threadpoolctl",
+            "pytest",
+            "pytest-cov",
+        ],
         "package_constraints": {
             "joblib": "min",
             "threadpoolctl": "2.2.0",
             "pytest": "min",
+            "pytest-cov": "min",
             # no pytest-xdist because it causes issue on 32bit
         },
         # same Python version as in debian-32 build
