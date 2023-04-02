@@ -129,3 +129,5 @@ jobs:
       condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
                      eq(variables['SELECTED_TESTS'], ''))
       displayName: 'Upload To Codecov'
+      env:
+        CODECOV_TOKEN: $(CODECOV_TOKEN)
