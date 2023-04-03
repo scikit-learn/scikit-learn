@@ -4,7 +4,7 @@ import pytest
 
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import get_namespace
-from sklearn.utils._array_api import _NumPyApiWrapper
+from sklearn.utils._array_api import _NumPyAPIWrapper
 from sklearn.utils._array_api import _ArrayAPIWrapper
 from sklearn.utils._array_api import _asarray_with_order
 from sklearn.utils._array_api import _convert_to_numpy
@@ -27,7 +27,7 @@ def test_get_namespace_ndarray():
         with config_context(array_api_dispatch=array_api_dispatch):
             xp_out, is_array_api = get_namespace(X_np)
             assert not is_array_api
-            assert isinstance(xp_out, _NumPyApiWrapper)
+            assert isinstance(xp_out, _NumPyAPIWrapper)
 
 
 def test_get_namespace_array_api():
@@ -187,3 +187,42 @@ def test_convert_estimator_to_array_api():
 
     new_est = _estimator_with_converted_arrays(est, lambda array: xp.asarray(array))
     assert hasattr(new_est.X_, "__array_namespace__")
+
+
+@pytest.mark.parametrize("wrapper", [_ArrayAPIWrapper, _NumPyAPIWrapper])
+def test_get_namespace_array_api_isdtype(wrapper):
+    """Test isdtype implementation from _ArrayAPIWrapper and _NumPyAPIWrapper."""
+
+    if wrapper == _ArrayAPIWrapper:
+        xp_ = pytest.importorskip("numpy.array_api")
+        xp = _ArrayAPIWrapper(xp_)
+    else:
+        xp = _NumPyAPIWrapper()
+
+    assert xp.isdtype(xp.float32, xp.float32)
+    assert xp.isdtype(xp.float32, "real floating")
+    assert xp.isdtype(xp.float64, "real floating")
+    assert not xp.isdtype(xp.int32, "real floating")
+
+    assert xp.isdtype(xp.bool, "bool")
+    assert not xp.isdtype(xp.float32, "bool")
+
+    assert xp.isdtype(xp.int16, "signed integer")
+    assert not xp.isdtype(xp.uint32, "signed integer")
+
+    assert xp.isdtype(xp.uint16, "unsigned integer")
+    assert not xp.isdtype(xp.int64, "unsigned integer")
+
+    assert xp.isdtype(xp.int64, "numeric")
+    assert xp.isdtype(xp.float32, "numeric")
+    assert xp.isdtype(xp.uint32, "numeric")
+
+    assert not xp.isdtype(xp.float32, "complex floating")
+
+    if wrapper == _NumPyAPIWrapper:
+        assert not xp.isdtype(xp.int8, "complex floating")
+        assert xp.isdtype(xp.complex64, "complex floating")
+        assert xp.isdtype(xp.complex128, "complex floating")
+
+    with pytest.raises(ValueError, match="Unrecognized data type"):
+        assert xp.isdtype(xp.int16, "unknown")
