@@ -41,6 +41,8 @@ exclude = '''
 
 [tool.cython-lint]
 # Ignore the same error codes as flake8
+# + E501 (line too long) because keeping it < 88 in cython
+# often makes code less readable.
 ignore = [
     # check ignored by default in flake8. Meaning unclear.
     'E24',
