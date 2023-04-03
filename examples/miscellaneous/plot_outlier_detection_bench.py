@@ -24,7 +24,7 @@ on the same dataset using the knowledge of the labels.
 
 # %%
 # Dataset preprocessing and model training
-# =========================================
+# ========================================
 #
 # This example uses real-world datasets available in :class:`sklearn.datasets`.
 # Due to computational constraints of the scikit-learn documentation, the sample
