@@ -50,12 +50,6 @@ def test_graphviz_toy():
     assert contents1 == contents2
 
     # Test with feature_names
-    contents1 = export_graphviz(
-        clf, feature_names=["feature0", "feature1"], out_file=None
-    )
-    contents1_ = export_graphviz(
-        clf, feature_names=np.array(["feature0", "feature1"]), out_file=None
-    )
     contents2 = (
         "digraph Tree {\n"
         'node [shape=box, fontname="helvetica"] ;\n'
@@ -70,15 +64,12 @@ def test_graphviz_toy():
         'headlabel="False"] ;\n'
         "}"
     )
-
-    assert contents1 == contents2
-    assert contents1_ == contents2
+    for feature_names_type in (list, np.array):
+        feature_names = feature_names_type(["feature0", "feature1"])
+        contents1 = export_graphviz(clf, feature_names=feature_names, out_file=None)
+        assert contents1 == contents2
 
     # Test with class_names
-    contents1 = export_graphviz(clf, class_names=["yes", "no"], out_file=None)
-    contents1_ = export_graphviz(
-        clf, class_names=np.array(["yes", "no"]), out_file=None
-    )
     contents2 = (
         "digraph Tree {\n"
         'node [shape=box, fontname="helvetica"] ;\n'
@@ -95,9 +86,10 @@ def test_graphviz_toy():
         'headlabel="False"] ;\n'
         "}"
     )
-
-    assert contents1 == contents2
-    assert contents1_ == contents2
+    for class_names_type in (list, np.array):
+        class_names = class_names_type(["yes", "no"])
+        contents1 = export_graphviz(clf, class_names=class_names, out_file=None)
+        assert contents1 == contents2
 
     # Test plot_options
     contents1 = export_graphviz(
