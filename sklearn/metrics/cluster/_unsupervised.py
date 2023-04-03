@@ -188,6 +188,13 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     return intra_cluster_distances, inter_cluster_distances
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "labels": ["array-like"],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+    }
+)
 def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
