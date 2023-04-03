@@ -1,0 +1,96 @@
+from cython cimport floating, integral
+from cython.parallel cimport parallel, prange
+from libc.math cimport fmax
+from libc.stdlib cimport free
+
+from ...utils._typedefs cimport intp_t, float64_t
+
+import numpy as np
+from scipy.sparse import issparse
+from sklearn.utils.fixes import threadpool_limits
+
+
+{{for name_suffix in ["32", "64"]}}
+
+cdef class ArgKminLRD{{name_suffix}}(ArgKmin{{name_suffix}}):
+    """
+    {{name_suffix}}bit implementation of ArgKminLRD
+    """
+    cdef:
+        float64_t[:] lrd
+
+    def __init__(
+        self,
+        DatasetsPair{{name_suffix}} datasets_pair,
+        chunk_size=None,
+        strategy=None,
+        intp_t k=1,
+    ):
+        super().__init__(
+            datasets_pair=datasets_pair,
+            chunk_size=chunk_size,
+            strategy=strategy,
+            k=k,
+        )
+
+        self.lrd = np.zeros(self.n_samples_X, dtype=np.float64)
+
+    cdef inline void _local_reachability_density(
+        self,
+        intp_t sample_index,
+        intp_t* indices,
+        float64_t* distances,
+    ) noexcept nogil:
+        cdef:
+            intp_t neighbor_idx
+            float64_t dist_sample, dist_neighbor, dist_reach
+            float64_t overall_reachability = 0
+
+        for neighbor_rank in range(self.k):
+            neighbor_idx = indices[sample_index + neighbor_rank]
+            dist_s = distances[sample_index + neighbor_rank]
+            dist_k = distances[neighbor_idx + (self.k - 1)]
+            dist_reach = fmax(dist_sample, dist_neighbor)
+            overall_reachability += dist_reach
+
+        overall_reachability /= self.k
+        lrd[sample_index] = overall_reachability
+
+   cdef void _parallel_on_X_prange_iter_finalize(
+       self,
+       intp_t thread_num,
+       intp_t X_start,
+       intp_t X_end,
+   ) noexcept nogil:
+       cdef:
+           intp_t idx, sample_index
+           for idx in range(X_end - X_start):
+               sample_index = X_start + idx
+               self._local_reachability_density(
+                   sample_index,
+                   &self.heaps_indices_chunks[thread_num][0],
+                   &self.heaps_r_distances_chunks[thread_num][0],
+            )
+       return
+
+   cdef void _parallel_on_Y_finalize(
+       self,
+   ) noexcept nogil:
+       cdef:
+           intp_t sample_index, thread_num
+
+       with nogil, parallel(num_threads=self.chunks_n_threads):
+           # Deallocating temporary datastructures
+           for thread_num in prange(self.chunks_n_threads, schedule='static'):
+               free(self.heaps_r_distances_chunks[thread_num])
+               free(self.heaps_indices_chunks[thread_num])
+
+           for sample_index in prange(self.n_samples_X, schedule='static'):
+               self._local_reachability_density(
+                   sample_index,
+                   &self.argkmin_indices[0, 0],
+                   &self.argkmin_distances[0, 0],
+               )
+       return
+
+{{endfor}}
