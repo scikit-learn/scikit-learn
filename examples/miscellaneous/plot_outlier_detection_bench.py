@@ -23,7 +23,7 @@ on the same dataset using the knowledge of the labels.
 # License: BSD 3 clause
 
 # %%
-# Datasets preprocessing and model training
+# Dataset preprocessing and model training
 # =========================================
 #
 # This example uses real-world datasets available in :class:`sklearn.datasets`.
@@ -33,8 +33,8 @@ on the same dataset using the knowledge of the labels.
 # After the data preprocessing, the datasets' targets will have two classes, 0
 # representing inliers and 1 representing outliers.
 #
-# Different datasets require different preprocessing. One has to take into
-# account that tree based models such as
+# Different datasets require different preprocessing. For example
+# tree based models such as
 # :class:`~sklearn.ensemble.IsolationForest` can deal with categorical variables
 # encoded using an :class:`~sklearn.preprocessing.OrdinalEncoder`, whereas
 # neighbors based models such as :class:`~sklearn.neighbors.LocalOutlierFactor`
@@ -44,7 +44,7 @@ on the same dataset using the knowledge of the labels.
 # for instance :ref:`neighbors_scaling`). In the presence of outliers, a good
 # option is to use a :class:`~sklearn.preprocessing.RobustScaler`.
 #
-# The following `fit_predict` function returns average outlier score of X.
+# The following `fit_predict` function returns the average outlier score of X.
 
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.ensemble import IsolationForest
@@ -370,7 +370,7 @@ plt.show()
 # variables indistinct from the binary encoded categories, which themselves
 # remain unchanged by this scaling method.
 #
-# Because of the above, an IQR scaling more effective for outlier detection than
+# Because of the above, an IQR scaling is more effective for outlier detection than
 # a min-max range scaling. We can additionally observe that scaling by the
 # standard deviation (as done by :class:`~sklearn.preprocessing.StandardScaler`)
 # and not scaling at all (using the
