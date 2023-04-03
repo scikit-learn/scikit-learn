@@ -463,6 +463,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
             nonzero_mask = sample_weight != 0
+            if sum(nonzero_mask) == 0:
+                raise ValueError("sample_weight must not be all zeros")
             X = X[nonzero_mask]
             y = y[nonzero_mask]
             sample_weight = sample_weight[nonzero_mask]
