@@ -202,6 +202,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.ndcg_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
     "sklearn.metrics.pairwise.haversine_distances",
+    "sklearn.metrics.pairwise.laplacian_kernel",
     "sklearn.metrics.precision_recall_curve",
     "sklearn.metrics.precision_recall_fscore_support",
     "sklearn.metrics.precision_score",
