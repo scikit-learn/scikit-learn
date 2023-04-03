@@ -29,7 +29,7 @@ from ..preprocessing import normalize
 from ..utils._mask import _get_mask
 from ..utils.parallel import delayed, Parallel
 from ..utils.fixes import sp_base_version, sp_version, parse_version
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import validate_params, Interval, Real, Hidden
 
 from ._pairwise_distances_reduction import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
@@ -1327,6 +1327,17 @@ def rbf_kernel(X, Y=None, gamma=None):
     return K
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "gamma": [
+            Interval(Real, 0, None, closed="neither"),
+            Hidden(np.ndarray),
+            None,
+        ],
+    }
+)
 def laplacian_kernel(X, Y=None, gamma=None):
     """Compute the laplacian kernel between X and Y.
 
@@ -1341,14 +1352,14 @@ def laplacian_kernel(X, Y=None, gamma=None):
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_X, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
         A feature array.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), default=None
         An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
-        If None, defaults to 1.0 / n_features.
+        If None, defaults to 1.0 / n_features. Otherwise it should be strictly positive.
 
     Returns
     -------
