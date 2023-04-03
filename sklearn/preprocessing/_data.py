@@ -2337,6 +2337,12 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         return {"pairwise": True}
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "value": [Interval(Real, None, None, closed="neither")],
+    }
+)
 def add_dummy_feature(X, value=1.0):
     """Augment dataset with an additional dummy feature.
 
