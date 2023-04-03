@@ -49,7 +49,7 @@ class _ArrayAPIWrapper:
         return self._namespace.stack(selected, axis=axis)
 
 
-class _NumPyApiWrapper:
+class _NumPyAPIWrapper:
     """Array API compat wrapper for any numpy version
 
     NumPy < 1.22 does not expose the numpy.array_api namespace. This
@@ -98,7 +98,7 @@ def get_namespace(*arrays):
     See: https://numpy.org/neps/nep-0047-array-api-standard.html
 
     If `arrays` are regular numpy arrays, an instance of the
-    `_NumPyApiWrapper` compatibility wrapper is returned instead.
+    `_NumPyAPIWrapper` compatibility wrapper is returned instead.
 
     Namespace support is not enabled by default. To enabled it
     call:
@@ -110,7 +110,7 @@ def get_namespace(*arrays):
       with sklearn.config_context(array_api_dispatch=True):
           # your code here
 
-    Otherwise an instance of the `_NumPyApiWrapper`
+    Otherwise an instance of the `_NumPyAPIWrapper`
     compatibility wrapper is always returned irrespective of
     the fact that arrays implement the `__array_namespace__`
     protocol or not.
@@ -133,7 +133,7 @@ def get_namespace(*arrays):
     # Returns a tuple: (array_namespace, is_array_api)
 
     if not get_config()["array_api_dispatch"]:
-        return _NumPyApiWrapper(), False
+        return _NumPyAPIWrapper(), False
 
     namespaces = {
         x.__array_namespace__() if hasattr(x, "__array_namespace__") else None
@@ -152,7 +152,7 @@ def get_namespace(*arrays):
     (xp,) = namespaces
     if xp is None:
         # Use numpy as default
-        return _NumPyApiWrapper(), False
+        return _NumPyAPIWrapper(), False
 
     return _ArrayAPIWrapper(xp), True
 
