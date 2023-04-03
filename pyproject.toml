@@ -62,6 +62,7 @@ exclude= '''
 (
     sklearn/_loss/_loss.pyx
   | sklearn/linear_model/_sag_fast.pyx
+  | sklearn/linear_model/_sgd_fast.pyx
   | sklearn/utils/_seq_dataset.pyx
   | sklearn/utils/_seq_dataset.pxd
   | sklearn/utils/_weight_vector.pyx
