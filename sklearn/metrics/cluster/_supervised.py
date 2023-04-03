@@ -979,6 +979,13 @@ def adjusted_mutual_info_score(
     return ami
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "average_method": [StrOptions({"arithmetic", "max", "min", "geometric"})],
+    }
+)
 def normalized_mutual_info_score(
     labels_true, labels_pred, *, average_method="arithmetic"
 ):
