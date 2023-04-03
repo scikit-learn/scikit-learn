@@ -68,6 +68,7 @@ def size(x):
 
 
 def _is_numpy_namespace(xp):
+    """Return True if xp is backed by NumPy."""
     return xp.__name__ in {"numpy", "array_api_compat.numpy", "numpy.array_api"}
 
 
@@ -233,7 +234,6 @@ class _NumPyAPIWrapper:
         # Convert to dtype objects
         if name in self._DTYPES:
             return numpy.dtype(attr)
-
         return attr
 
     @property
