@@ -118,6 +118,58 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
+def _is_numpy_namespace(xp):
+    """Return True if xp is backed by NumPy."""
+    return xp.__name__ in {"numpy", "numpy.array_api"}
+
+
+def isdtype(dtype, kind, *, xp):
+    """Returns a boolean indicating whether a provided dtype is of type "kind".
+
+    Included in the v2022.12 of the Array API spec.
+    https://data-apis.org/array-api/latest/API_specification/generated/array_api.isdtype.html
+    """
+    if isinstance(kind, tuple):
+        return any(_isdtype_single(dtype, k, xp=xp) for k in kind)
+    else:
+        return _isdtype_single(dtype, kind, xp=xp)
+
+
+def _isdtype_single(dtype, kind, *, xp):
+    if isinstance(kind, str):
+        if kind == "bool":
+            return dtype == xp.bool
+        elif kind == "signed integer":
+            return dtype in {xp.int8, xp.int16, xp.int32, xp.int64}
+        elif kind == "unsigned integer":
+            return dtype in {xp.uint8, xp.uint16, xp.uint32, xp.uint64}
+        elif kind == "integral":
+            return any(
+                _isdtype_single(dtype, k, xp=xp)
+                for k in ("signed integer", "unsigned integer")
+            )
+        elif kind == "real floating":
+            return dtype in {xp.float32, xp.float64}
+        elif kind == "complex floating":
+            # Some name spaces do not have complex, such as cupy.array_api
+            # and numpy.array_api
+            complex_dtypes = set()
+            if hasattr(xp, "complex64"):
+                complex_dtypes.add(xp.complex64)
+            if hasattr(xp, "complex128"):
+                complex_dtypes.add(xp.complex128)
+            return dtype in complex_dtypes
+        elif kind == "numeric":
+            return any(
+                _isdtype_single(dtype, k, xp=xp)
+                for k in ("integral", "real floating", "complex floating")
+            )
+        else:
+            raise ValueError(f"Unrecognized data type kind: {kind!r}")
+    else:
+        return dtype == kind
+
+
 class _ArrayAPIWrapper:
     """sklearn specific Array API compatibility wrapper
 
@@ -180,7 +232,7 @@ def _accept_device_cpu(func):
     return wrapped_func
 
 
-class _NumPyApiWrapper:
+class _NumPyAPIWrapper:
     """Array API compat wrapper for any numpy version
 
     NumPy < 1.22 does not expose the numpy.array_api namespace. This
@@ -283,7 +335,7 @@ class _NumPyApiWrapper:
         return numpy.reshape(x, shape)
 
 
-_NUMPY_API_WRAPPER_INSTANCE = _NumPyApiWrapper()
+_NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
 
 
 def get_namespace(*arrays):
@@ -297,7 +349,7 @@ def get_namespace(*arrays):
     See: https://numpy.org/neps/nep-0047-array-api-standard.html
 
     If `arrays` are regular numpy arrays, an instance of the
-    `_NumPyApiWrapper` compatibility wrapper is returned instead.
+    `_NumPyAPIWrapper` compatibility wrapper is returned instead.
 
     Namespace support is not enabled by default. To enabled it
     call:
@@ -309,7 +361,7 @@ def get_namespace(*arrays):
       with sklearn.config_context(array_api_dispatch=True):
           # your code here
 
-    Otherwise an instance of the `_NumPyApiWrapper`
+    Otherwise an instance of the `_NumPyAPIWrapper`
     compatibility wrapper is always returned irrespective of
     the fact that arrays implement the `__array_namespace__`
     protocol or not.

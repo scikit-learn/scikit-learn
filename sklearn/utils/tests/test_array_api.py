@@ -4,7 +4,7 @@ import pytest
 
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import get_namespace
-from sklearn.utils._array_api import _NumPyApiWrapper
+from sklearn.utils._array_api import _NumPyAPIWrapper
 from sklearn.utils._array_api import _ArrayAPIWrapper
 from sklearn.utils._array_api import _asarray_with_order
 from sklearn.utils._array_api import _convert_to_numpy
@@ -22,7 +22,7 @@ pytestmark = pytest.mark.filterwarnings(
 def test_get_namespace_ndarray_default(X):
     """Check that get_namespace returns NumPy wrapper"""
     xp_out, is_array_api_compliant = get_namespace(X)
-    assert isinstance(xp_out, _NumPyApiWrapper)
+    assert isinstance(xp_out, _NumPyAPIWrapper)
     assert not is_array_api_compliant
 
 
@@ -225,16 +225,17 @@ def test_convert_estimator_to_array_api():
     assert hasattr(new_est.X_, "__array_namespace__")
 
 
-@pytest.mark.parametrize("wrapper", [_ArrayAPIWrapper, _NumPyApiWrapper])
+@pytest.mark.parametrize("wrapper", [_ArrayAPIWrapper, _NumPyAPIWrapper])
 def test_get_namespace_array_api_isdtype(wrapper):
-    """Test isdtype implementation from _ArrayAPIWrapper and _NumPyApiWrapper."""
+    """Test isdtype implementation from _ArrayAPIWrapper and _NumPyAPIWrapper."""
 
     if wrapper == _ArrayAPIWrapper:
         xp_ = pytest.importorskip("numpy.array_api")
         xp = _ArrayAPIWrapper(xp_)
     else:
-        xp = _NumPyApiWrapper()
+        xp = _NumPyAPIWrapper()
 
+    assert xp.isdtype(xp.float32, xp.float32)
     assert xp.isdtype(xp.float32, "real floating")
     assert xp.isdtype(xp.float64, "real floating")
     assert not xp.isdtype(xp.int32, "real floating")
@@ -254,15 +255,18 @@ def test_get_namespace_array_api_isdtype(wrapper):
 
     assert not xp.isdtype(xp.float32, "complex floating")
 
-    if wrapper == _NumPyApiWrapper:
+    if wrapper == _NumPyAPIWrapper:
         assert not xp.isdtype(xp.int8, "complex floating")
         assert xp.isdtype(xp.complex64, "complex floating")
         assert xp.isdtype(xp.complex128, "complex floating")
 
+    with pytest.raises(ValueError, match="Unrecognized data type"):
+        assert xp.isdtype(xp.int16, "unknown")
+
 
 def test_reshape_behavior():
     """Check reshape behavior with copy and is strict with non-tuple shape."""
-    xp = _NumPyApiWrapper()
+    xp = _NumPyAPIWrapper()
     X = xp.asarray([[1, 2, 3], [3, 4, 5]])
 
     X_no_copy = xp.reshape(X, (-1,), copy=False)
