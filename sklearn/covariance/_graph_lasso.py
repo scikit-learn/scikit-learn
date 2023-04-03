@@ -342,9 +342,9 @@ def graphical_lasso(
 
     if return_costs:
         if return_n_iter:
-            return model.covariance_, model.precision_, model.costs, model.n_iter_ + 1
+            return model.covariance_, model.precision_, model.costs_, model.n_iter_ + 1
         else:
-            return model.covariance_, model.precision_, model.costs
+            return model.covariance_, model.precision_, model.costs_
     else:
         if return_n_iter:
             return model.covariance_, model.precision_, model.n_iter_ + 1
@@ -478,7 +478,7 @@ class GraphicalLasso(BaseGraphicalLasso):
 
     _parameter_constraints: dict = {
         **BaseGraphicalLasso._parameter_constraints,
-        "alpha": [Interval(Real, 0, None, closed="right")],
+        "alpha": [Interval(Real, 0, None, closed="both")],
     }
 
     def __init__(
@@ -527,7 +527,7 @@ class GraphicalLasso(BaseGraphicalLasso):
         else:
             self.location_ = X.mean(0)
         emp_cov = empirical_covariance(X, assume_centered=self.assume_centered)
-        self.covariance_, self.precision_, self.costs, self.n_iter_ = _graphical_lasso(
+        self.covariance_, self.precision_, self.costs_, self.n_iter_ = _graphical_lasso(
             emp_cov,
             alpha=self.alpha,
             cov_init=None,
