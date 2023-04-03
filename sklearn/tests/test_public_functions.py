@@ -219,6 +219,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.train_test_split",
     "sklearn.preprocessing.add_dummy_feature",
+    "sklearn.preprocessing.normalize",
     "sklearn.preprocessing.scale",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",
