@@ -271,10 +271,7 @@ for i, dataset_name in enumerate(datasets_names):
             linewidth=linewidth,
             ax=axs[i // cols, i % cols],
             plot_chance_level=(model_idx == len(model_names) - 1),
-            chance_level_kw={
-                "linewidth": linewidth,
-                "linestyle": ":",
-            },
+            chance_level_kw={"linestyle": ":"},
         )
     axs[i // cols, i % cols].set_title(dataset_name)
 _ = plt.tight_layout(pad=2.0)  # spacing between subplots
@@ -317,10 +314,7 @@ for model_idx, n_neighbors in enumerate(n_neighbors_list):
         linewidth=linewidth,
         ax=ax,
         plot_chance_level=(model_idx == len(n_neighbors_list) - 1),
-        chance_level_kw={
-            "linewidth": linewidth,
-            "linestyle": ":",
-        },
+        chance_level_kw={"linestyle": ":"},
     )
 _ = ax.set_title("RobustScaler with varying n_neighbors")
 
@@ -350,10 +344,7 @@ for model_idx, scaler in enumerate(scaler_list):
         linewidth=linewidth,
         ax=ax,
         plot_chance_level=(model_idx == len(scaler_list) - 1),
-        chance_level_kw={
-            "linewidth": linewidth,
-            "linestyle": ":",
-        },
+        chance_level_kw={"linestyle": ":"},
     )
 ax.set_title("Fixed n_neighbors with varying scaler")
 plt.show()
