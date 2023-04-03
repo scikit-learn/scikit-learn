@@ -24,7 +24,7 @@ from ..base import (
     ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils import check_array
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import validate_params, Interval, StrOptions
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
@@ -2322,6 +2322,12 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         return {"pairwise": True}
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "value": [Interval(Real, None, None, closed="neither")],
+    }
+)
 def add_dummy_feature(X, value=1.0):
     """Augment dataset with an additional dummy feature.
 
