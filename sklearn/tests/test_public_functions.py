@@ -172,6 +172,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.cluster.contingency_matrix",
     "sklearn.metrics.cluster.normalized_mutual_info_score",
     "sklearn.metrics.cluster.silhouette_samples",
+    "sklearn.metrics.cluster.silhouette_score",
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
     "sklearn.metrics.coverage_error",
