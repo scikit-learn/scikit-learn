@@ -13,10 +13,7 @@ echo -e "No problem detected by flake8\n"
 mypy sklearn/
 echo -e "No problem detected by mypy\n"
 
-# The list for `--ignore` has to be maintained with the one in setup.cfg except
-# for E501 (line too long) because keeping it < 88 in cython often makes code
-# less readable
-cython-lint --ignore=E24,E203,E501,E731,E741,W503,W504 .
+cython-lint sklearn/
 echo -e "No problem detected by cython-lint\n"
 
 # For docstrings and warnings of deprecated attributes to be rendered

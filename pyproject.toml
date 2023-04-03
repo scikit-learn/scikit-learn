@@ -40,6 +40,7 @@ exclude = '''
 '''
 
 [tool.cython-lint]
+# Ignore the same error codes as flake8
 ignore = [
     # check ignored by default in flake8. Meaning unclear.
     'E24',
@@ -56,6 +57,7 @@ ignore = [
     # line break after binary operator
     'W504',
 ]
+# Exclude files are generated from tempita templates
 exclude= '''
 (
     sklearn/_loss/_loss.pyx
