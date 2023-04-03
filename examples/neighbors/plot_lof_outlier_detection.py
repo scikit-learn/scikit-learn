@@ -9,7 +9,7 @@ respect to its neighbors. It considers as outliers the samples that have a
 substantially lower density than their neighbors. This example shows how to use
 LOF for outlier detection which is the default use case of this estimator in
 scikit-learn. Note that when LOF is used for outlier detection it has no
-predict, `decision_function` and `score_samples` methods. See the :ref:`User
+`predict`, `decision_function` and `score_samples` methods. See the :ref:`User
 Guide <outlier_detection>` for details on the difference between outlier
 detection and novelty detection and how to use LOF for novelty detection.
 
@@ -45,7 +45,7 @@ ground_truth[-n_outliers:] = -1
 # ---------------------------------------------
 #
 # Use `fit_predict` to compute the predicted labels of the training samples
-# (when LOF is used for outlier detection, the estimator has no predict,
+# (when LOF is used for outlier detection, the estimator has no `predict`,
 # `decision_function` and `score_samples` methods).
 
 from sklearn.neighbors import LocalOutlierFactor
