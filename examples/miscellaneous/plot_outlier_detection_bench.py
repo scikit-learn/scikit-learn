@@ -133,13 +133,11 @@ for model_name in model_names:
     )
 
 # %%
-# In this example we set `n_neighbors` to match the number of anomalies on the
-# dataset. This is a good heuristic as long as the proportion of outliers is not
-# very low. Notice that this means the optimal number of neighbors scales with
-# the number of samples. Therefore the fit time of LOF models increases linearly
-# with the size of the dataset. If one had access to ground truth labels and was
-# to additionally tune the number of neighbors, the whole computation would
-# result quadratic on `n_samples`.
+# In this example we set `n_neighbors` to match the number of anomalies
+# `n_anomalies = n_samples * anomaly_frac`. This is a good heuristic as long as
+# the proportion of outliers is not very low, as `n_neighbors` should be at
+# least greater than the number of samples in the less populated cluster (see
+# :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py`).
 #
 # Forest covertypes dataset
 # -------------------------
