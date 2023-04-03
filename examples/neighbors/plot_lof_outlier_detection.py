@@ -61,9 +61,9 @@ X_scores = clf.negative_outlier_factor_
 
 # %%
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
-plt.title("Local Outlier Factor (LOF)")
-plt.scatter(X[:, 0], X[:, 1], color="k", s=3.0, label="Data points")
+scatter = plt.scatter(X[:, 0], X[:, 1], color="k", s=3.0)
 # plot circles with radius proportional to the outlier scores
 radius = (X_scores.max() - X_scores) / (X_scores.max() - X_scores.min())
 plt.scatter(
@@ -72,13 +72,21 @@ plt.scatter(
     s=1000 * radius,
     edgecolors="r",
     facecolors="none",
-    label="Outlier scores",
+)
+# Create dummy Line2D objects for legend
+dummy = Line2D(
+    [0],
+    [0],
+    marker="o",
+    markersize=10,
+    markeredgecolor="r",
+    markerfacecolor="none",
+    linestyle="none",
 )
 plt.axis("tight")
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))
 plt.xlabel("prediction errors: %d" % (n_errors))
-legend = plt.legend(loc="upper left")
-legend.legend_handles[0]._sizes = [10]
-legend.legend_handles[1]._sizes = [20]
+plt.legend([scatter, dummy], ["data points", "outlier scores"])
+plt.title("Local Outlier Factor (LOF)")
 plt.show()
