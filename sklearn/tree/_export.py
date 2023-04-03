@@ -17,7 +17,7 @@ from numbers import Integral
 import numpy as np
 
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, validate_params, StrOptions
+from ..utils._param_validation import Interval, validate_params, StrOptions, HasMethods
 
 from ..base import is_classifier
 
@@ -730,11 +730,11 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
 @validate_params(
     {
-        "decision_tree": "no_validation",
-        "out_file": "no_validation",
+        "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
+        "out_file": [str, None, HasMethods("write")],
         "max_depth": [Interval(Integral, 0, None, closed="left"), None],
-        "feature_names": [list, "array-like", None],
-        "class_names": [list, "array-like", "boolean", None],
+        "feature_names": ["array-like", None],
+        "class_names": ["array-like", "boolean", None],
         "label": [StrOptions({"all", "root", "none"})],
         "filled": ["boolean"],
         "leaves_parallel": ["boolean"],
@@ -799,11 +799,11 @@ def export_graphviz(
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    feature_names : {list, array-like} of str, default=None
+    feature_names : array-like of str, default=None
         Names of each of the features.
         If None, generic names will be used ("x[0]", "x[1]", ...).
 
-    class_names : {list, array-like} of str or bool, default=None
+    class_names : array-like of str or bool, default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
         If ``True``, shows a symbolic representation of the class name.
