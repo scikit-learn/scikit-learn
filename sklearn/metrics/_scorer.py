@@ -70,16 +70,18 @@ from ..utils._response import _get_response_values
 from ..utils._param_validation import validate_params
 
 
-def _cached_call(cache, estimator, *args, **kwargs):
+def _cached_call(cache, estimator, response_method, *args, **kwargs):
     """Call estimator with method and args and kwargs."""
     if cache is None:
-        return _get_response_values(estimator, *args, **kwargs)
-
-    response_method = kwargs["response_method"]
+        return _get_response_values(
+            estimator, *args, response_method=response_method, **kwargs
+        )
     try:
         return cache[response_method]
     except KeyError:
-        result = _get_response_values(estimator, *args, **kwargs)
+        result = _get_response_values(
+            estimator, *args, response_method=response_method, **kwargs
+        )
         cache[response_method] = result
         return result
 
@@ -252,7 +254,7 @@ class _PredictScorer(_BaseScorer):
             Score function applied to prediction of estimator on X.
         """
 
-        y_pred, _ = method_caller(estimator, X, response_method="predict")
+        y_pred, _ = method_caller(estimator, "predict", X)
         if sample_weight is not None:
             return self._sign * self._score_func(
                 y_true, y_pred, sample_weight=sample_weight, **self._kwargs
@@ -291,7 +293,7 @@ class _ProbaScorer(_BaseScorer):
             Score function applied to prediction of estimator on X.
         """
         y_pred, _ = method_caller(
-            clf, X, response_method="predict_proba", pos_label=self._get_pos_label()
+            clf, "predict_proba", X, pos_label=self._get_pos_label()
         )
         if sample_weight is not None:
             return self._sign * self._score_func(
@@ -341,12 +343,12 @@ class _ThresholdScorer(_BaseScorer):
             raise ValueError("{0} format is not supported".format(y_type))
 
         if is_regressor(clf):
-            y_pred, _ = method_caller(clf, X, response_method="predict")
+            y_pred, _ = method_caller(clf, "predict", X)
         else:
             pos_label = self._get_pos_label()
             try:
                 y_pred, _ = method_caller(
-                    clf, X, response_method="decision_function", pos_label=pos_label
+                    clf, "decision_function", X, pos_label=pos_label
                 )
 
                 if isinstance(y_pred, list):
@@ -354,9 +356,7 @@ class _ThresholdScorer(_BaseScorer):
                     y_pred = np.vstack([p for p in y_pred]).T
 
             except (NotImplementedError, AttributeError):
-                y_pred, _ = method_caller(
-                    clf, X, response_method="predict_proba", pos_label=pos_label
-                )
+                y_pred, _ = method_caller(clf, "predict_proba", X, pos_label=pos_label)
                 if isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
