@@ -400,6 +400,26 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
         "labels": ["array-like", None],
     }
 )
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "average": [
+            StrOptions({"micro", "macro", "samples", "weighted"}),
+            None,
+        ],
+        "sample_weight": ["array-like", None],
+        "max_fpr":[
+            Options(Real, {0.0, 0.1}),
+            None,
+        ],
+        "multi_class": [
+            StrOptions({"raise", "ovr", "ovo"}),
+        ],
+        "labels": ["array-like", None],
+    }
+)
 def roc_auc_score(
     y_true,
     y_score,
