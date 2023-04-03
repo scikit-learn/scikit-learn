@@ -2,14 +2,10 @@
 
 set -e
 
-# defines the show_installed_libraries function
+# Defines the show_installed_libraries and activate_environment functions.
 source build_tools/shared.sh
 
-if [[ "$DISTRIB" =~ ^conda.* ]]; then
-    source activate $VIRTUALENV
-elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pip-nogil" ]]; then
-    source $VIRTUALENV/bin/activate
-fi
+activate_environment
 
 if [[ "$BUILD_REASON" == "Schedule" ]]; then
     # Enable global random seed randomization to discover seed-sensitive tests
@@ -34,7 +30,8 @@ mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
-python -c "import joblib; print(f'Number of cores: {joblib.cpu_count()}')"
+python -c "import joblib; print(f'Number of cores (physical): \
+{joblib.cpu_count()} ({joblib.cpu_count(only_physical_cores=True)})')"
 python -c "import sklearn; sklearn.show_versions()"
 
 show_installed_libraries
@@ -70,7 +67,8 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    TEST_CMD="$TEST_CMD -n$CPU_COUNT"
+    XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
+    TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
 fi
 
 if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then

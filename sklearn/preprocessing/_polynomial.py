@@ -517,7 +517,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         recommended to manually set the knot values to control the period.
 
     include_bias : bool, default=True
-        If True (default), then the last spline element inside the data range
+        If False, then the last spline element inside the data range
         of a feature is dropped. As B-splines sum to one over the spline basis
         functions for each data point, they implicitly include a bias term,
         i.e. a column of ones. It acts as an intercept term in a linear models.
