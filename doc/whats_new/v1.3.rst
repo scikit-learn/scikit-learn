@@ -273,9 +273,21 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Enhancement| :class:`SGDClassifier`, :class:`SGDRegressor` and
-  :class:`SGDOneClassSVM` now preserve dtype for `numpy.float32`.
-  :pr:`25587` by :user:`Omar Salman <OmarManzoor>`
+- |Enhancement| :class:`linear_model.SGDClassifier`,
+  :class:`linear_model.SGDRegressor` and :class:`linear_model.SGDOneClassSVM`
+  now preserve dtype for `numpy.float32`.
+  :pr:`25587` by :user:`Omar Salman <OmarManzoor>`.
+
+- |API| Deprecates `n_iter` in favor of `max_iter` in
+  :class:`linear_model.BayesianRidge` and :class:`linear_model.ARDRegression`.
+  `n_iter` will be removed in scikit-learn 1.5. This change makes those
+  estimators consistent with the rest of estimators.
+  :pr:`25697` by :user:`John Pangas <jpangas>`.
+
+- |Enhancement| The `n_iter_` attribute has been included in 
+  :class:`linear_model.ARDRegression` to expose the actual number of iterations 
+  required to reach the stopping criterion.
+  :pr:`25697` by :user:`John Pangas <jpangas>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -320,6 +332,12 @@ Changelog
   which drops some suboptimal thresholds to create lighter precision-recall
   curves.
   :pr:`24668` by :user:`dberenbaum`.
+
+- |Enhancement| :meth:`metrics.RocCurveDisplay.from_estimator` and
+  :meth:`metrics.RocCurveDisplay.from_predictions` now accept two new keywords,
+  `plot_chance_level` and `chance_level_kw` to plot the baseline chance
+  level. This line is exposed in the `chance_level_` attribute.
+  :pr:`25987` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 - |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
   not normalized, instead of actually normalizing them in the metric. Starting from
