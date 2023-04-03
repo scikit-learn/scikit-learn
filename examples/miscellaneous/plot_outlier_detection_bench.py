@@ -305,8 +305,7 @@ n_neighbors_list = (n_samples * np.array([0.02, 0.01, 0.001])).astype(np.int32)
 model = make_pipeline(RobustScaler(), LocalOutlierFactor())
 
 fig, ax = plt.subplots()
-ax.plot([0, 1], [0, 1], linewidth=linewidth, linestyle=":")
-for n_neighbors in n_neighbors_list:
+for model_idx, n_neighbors in enumerate(n_neighbors_list):
     model.set_params(localoutlierfactor__n_neighbors=n_neighbors)
     model.fit(X)
     y_pred = model[-1].negative_outlier_factor_
@@ -317,8 +316,12 @@ for n_neighbors in n_neighbors_list:
         name=f"n_neighbors = {n_neighbors}",
         linewidth=linewidth,
         ax=ax,
+        plot_chance_level=(model_idx == len(n_neighbors_list) - 1),
+        chance_level_kw={
+            "linewidth": linewidth,
+            "linestyle": ":",
+        },
     )
-    ax.plot([0, 1], [0, 1], linewidth=linewidth, linestyle=":")
 _ = ax.set_title("RobustScaler with varying n_neighbors")
 
 # %%
@@ -335,8 +338,7 @@ scaler_list = [RobustScaler(), FunctionTransformer(), StandardScaler(), MinMaxSc
 clf = LocalOutlierFactor(n_neighbors=int(0.02 * n_samples))
 
 fig, ax = plt.subplots()
-ax.plot([0, 1], [0, 1], linewidth=linewidth, linestyle=":")
-for scaler in scaler_list:
+for model_idx, scaler in enumerate(scaler_list):
     model = make_pipeline(scaler, clf)
     model.fit(X)
     y_pred = model[-1].negative_outlier_factor_
@@ -347,8 +349,12 @@ for scaler in scaler_list:
         name=str(scaler).split("(")[0],
         linewidth=linewidth,
         ax=ax,
+        plot_chance_level=(model_idx == len(scaler_list) - 1),
+        chance_level_kw={
+            "linewidth": linewidth,
+            "linestyle": ":",
+        },
     )
-    ax.plot([0, 1], [0, 1], linewidth=linewidth, linestyle=":")
 ax.set_title("Fixed n_neighbors with varying scaler")
 plt.show()
 
