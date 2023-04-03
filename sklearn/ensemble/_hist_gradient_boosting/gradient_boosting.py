@@ -274,7 +274,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                 # Treat negative values for categorical features as missing values.
                 negative_categories = categories < 0
-                if categories.any():
+                if negative_categories.any():
                     categories = categories[~negative_categories]
 
                 if hasattr(self, "feature_names_in_"):
