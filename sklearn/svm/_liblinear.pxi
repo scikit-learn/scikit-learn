@@ -1,8 +1,8 @@
 cdef extern from "_cython_blas_helpers.h":
-    ctypedef double (*dot_func)(int, double*, int, double*, int)
-    ctypedef void (*axpy_func)(int, double, double*, int, double*, int)
-    ctypedef void (*scal_func)(int, double, double*, int)
-    ctypedef double (*nrm2_func)(int, double*, int)
+    ctypedef double (*dot_func)(int, const double*, int, const double*, int)
+    ctypedef void (*axpy_func)(int, double, const double*, int, double*, int)
+    ctypedef void (*scal_func)(int, double, const double*, int)
+    ctypedef double (*nrm2_func)(int, const double*, int)
     cdef struct BlasFunctions:
         dot_func dot
         axpy_func axpy
