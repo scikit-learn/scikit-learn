@@ -31,6 +31,7 @@ from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 from ..utils._array_api import get_namespace
 from ..utils._array_api import _asarray_with_order
+from ..utils._array_api import _is_numpy_namespace
 from ._isfinite import cy_isfinite, FiniteStatus
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
@@ -111,7 +112,7 @@ def _assert_all_finite(
             raise ValueError("Input contains NaN")
 
     # We need only consider float arrays, hence can early return for all else.
-    if X.dtype.kind not in "fc":
+    if not xp.isdtype(X.dtype, ("real floating", "complex floating")):
         return
 
     # First try an O(n) time, O(1) space solution for the common case that
@@ -759,7 +760,7 @@ def check_array(
     dtype_numeric = isinstance(dtype, str) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
-    if not hasattr(dtype_orig, "kind"):
+    if not is_array_api and not hasattr(dtype_orig, "kind"):
         # not a data type (e.g. a column named dtype in a pandas DataFrame)
         dtype_orig = None
 
@@ -832,6 +833,10 @@ def check_array(
             )
         )
 
+    if dtype is not None and _is_numpy_namespace(xp):
+        # convert to dtype object to conform to Array API to be use `xp.isdtype` later
+        dtype = np.dtype(dtype)
+
     estimator_name = _check_estimator_name(estimator)
     context = " by %s" % estimator_name if estimator is not None else ""
 
@@ -875,12 +880,12 @@ def check_array(
         with warnings.catch_warnings():
             try:
                 warnings.simplefilter("error", ComplexWarning)
-                if dtype is not None and np.dtype(dtype).kind in "iu":
+                if dtype is not None and xp.isdtype(dtype, "integral"):
                     # Conversion float -> int should not contain NaN or
                     # inf (numpy#14412). We cannot use casting='safe' because
                     # then conversion float -> int would be disallowed.
                     array = _asarray_with_order(array, order=order, xp=xp)
-                    if array.dtype.kind == "f":
+                    if xp.isdtype(array.dtype, ("real floating", "complex floating")):
                         _assert_all_finite(
                             array,
                             allow_nan=False,
