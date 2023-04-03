@@ -120,6 +120,15 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         return scale
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "axis": [Options(Integral, {0, 1})],
+        "with_mean": ["boolean"],
+        "with_std": ["boolean"],
+        "copy": ["boolean"],
+    }
+)
 def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     """Standardize a dataset along any axis.
 
@@ -132,7 +141,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data to center and scale.
 
-    axis : int, default=0
+    axis : {0, 1}, default=0
         Axis used to compute the means and standard deviations along. If 0,
         independently standardize each feature, otherwise (if 1) standardize
         each sample.
@@ -2328,6 +2337,12 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         return {"pairwise": True}
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "value": [Interval(Real, None, None, closed="neither")],
+    }
+)
 def add_dummy_feature(X, value=1.0):
     """Augment dataset with an additional dummy feature.
 
