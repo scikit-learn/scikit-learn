@@ -203,6 +203,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.mutual_info_score",
     "sklearn.metrics.ndcg_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
+    "sklearn.metrics.pairwise.cosine_similarity",
     "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.laplacian_kernel",
     "sklearn.metrics.pairwise.linear_kernel",
