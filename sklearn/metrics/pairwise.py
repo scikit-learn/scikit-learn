@@ -980,6 +980,12 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     return D.reshape((-1, X.shape[1]))
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+    }
+)
 def cosine_distances(X, Y=None):
     """Compute cosine distance between samples in X and Y.
 
