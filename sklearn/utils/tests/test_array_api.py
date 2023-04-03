@@ -191,7 +191,7 @@ def test_convert_estimator_to_array_api():
 
 def test_reshape_behavior():
     """Check reshape behavior with copy and is strict with non-tuple shape."""
-    xp = _NumPyApiWrapper()
+    xp = _NumPyAPIWrapper()
     X = xp.asarray([[1, 2, 3], [3, 4, 5]])
 
     X_no_copy = xp.reshape(X, (-1,), copy=False)
@@ -204,15 +204,15 @@ def test_reshape_behavior():
         xp.reshape(X, -1)
 
 
-@pytest.mark.parametrize("wrapper", [_ArrayAPIWrapper, _NumPyApiWrapper])
+@pytest.mark.parametrize("wrapper", [_ArrayAPIWrapper, _NumPyAPIWrapper])
 def test_get_namespace_array_api_isdtype(wrapper):
-    """Test isdtype implementation from _ArrayAPIWrapper and _NumPyApiWrapper."""
+    """Test isdtype implementation from _ArrayAPIWrapper and _NumPyAPIWrapper."""
 
     if wrapper == _ArrayAPIWrapper:
         xp_ = pytest.importorskip("numpy.array_api")
         xp = _ArrayAPIWrapper(xp_)
     else:
-        xp = _NumPyApiWrapper()
+        xp = _NumPyAPIWrapper()
 
     assert xp.isdtype(xp.float32, xp.float32)
     assert xp.isdtype(xp.float32, "real floating")
@@ -234,7 +234,7 @@ def test_get_namespace_array_api_isdtype(wrapper):
 
     assert not xp.isdtype(xp.float32, "complex floating")
 
-    if wrapper == _NumPyApiWrapper:
+    if wrapper == _NumPyAPIWrapper:
         assert not xp.isdtype(xp.int8, "complex floating")
         assert xp.isdtype(xp.complex64, "complex floating")
         assert xp.isdtype(xp.complex128, "complex floating")
