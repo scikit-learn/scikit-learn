@@ -49,7 +49,7 @@ def check_number_of_labels(n_labels, n_samples):
         "X": ["array-like", "sparse matrix"],
         "labels": ["array-like"],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
-        "sample_size": [Interval(Integral, 0, 2**32 - 1, closed="both"), None],
+        "sample_size": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
     }
 )
