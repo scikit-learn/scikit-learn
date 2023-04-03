@@ -59,7 +59,6 @@ from time import perf_counter
 
 
 def fit_predict(X, model_name, categorical_columns=(), n_neighbors=20):
-
     tic = perf_counter()
     if model_name == "LOF":
         preprocessor = ColumnTransformer(
