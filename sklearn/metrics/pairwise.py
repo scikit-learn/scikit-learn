@@ -833,6 +833,9 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     return indices
 
 
+@validate_params(
+    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix", None]}
+)
 def haversine_distances(X, Y=None):
     """Compute the Haversine distance between samples in X and Y.
 
@@ -847,10 +850,10 @@ def haversine_distances(X, Y=None):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_X, 2)
+    X : {array-like, sparse matrix} of shape (n_samples_X, 2)
         A feature array.
 
-    Y : array-like of shape (n_samples_Y, 2), default=None
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, 2), default=None
         An optional second feature array. If `None`, uses `Y=X`.
 
     Returns
