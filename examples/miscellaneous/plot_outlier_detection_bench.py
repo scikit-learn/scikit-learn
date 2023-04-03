@@ -33,12 +33,12 @@ on the same dataset using the knowledge of the labels.
 # After the data preprocessing, the datasets' targets will have two classes, 0
 # representing inliers and 1 representing outliers.
 #
-# Different datasets require different preprocessing. For example
-# tree based models such as
-# :class:`~sklearn.ensemble.IsolationForest` can deal with categorical variables
-# encoded using an :class:`~sklearn.preprocessing.OrdinalEncoder`, whereas
-# neighbors based models such as :class:`~sklearn.neighbors.LocalOutlierFactor`
-# require a :class:`~sklearn.preprocessing.OneHotEncoder`.
+# Different datasets require different preprocessing. For example tree based
+# models such as :class:`~sklearn.ensemble.IsolationForest` can deal with
+# categorical variables encoded using an
+# :class:`~sklearn.preprocessing.OrdinalEncoder`, whereas neighbors based models
+# such as :class:`~sklearn.neighbors.LocalOutlierFactor` require a
+# :class:`~sklearn.preprocessing.OneHotEncoder`.
 #
 # Neighbors based models may also require scaling of the numerical features (see
 # for instance :ref:`neighbors_scaling`). In the presence of outliers, a good
@@ -364,8 +364,8 @@ plt.show()
 # variables indistinct from the binary encoded categories, which themselves
 # remain unchanged by this scaling method.
 #
-# Because of the above, an IQR scaling is more effective for outlier detection than
-# a min-max range scaling. We can additionally observe that scaling by the
+# Because of the above, an IQR scaling is more effective for outlier detection
+# than a min-max range scaling. We can additionally observe that scaling by the
 # standard deviation (as done by :class:`~sklearn.preprocessing.StandardScaler`)
 # and not scaling at all (using the
 # :class:`~sklearn.preprocessing.FunctionTransformer` with default argument)
