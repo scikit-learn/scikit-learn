@@ -29,7 +29,7 @@ from scipy.stats import rankdata
 
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
@@ -39,11 +39,7 @@ from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
 
-from ._base import (
-    _average_binary_score,
-    _average_multiclass_ovo_score,
-    _check_pos_label_consistency,
-)
+from ._base import _average_binary_score, _average_multiclass_ovo_score
 
 
 @validate_params({"x": ["array-like"], "y": ["array-like"]})
