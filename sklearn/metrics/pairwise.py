@@ -1382,10 +1382,10 @@ def cosine_similarity(X, Y=None, dense_output=True):
 
     Parameters
     ----------
-    X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
         Input data.
 
-    Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features), \
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), \
             default=None
         Input data. If ``None``, the output will be the pairwise
         similarities between all samples in ``X``.
