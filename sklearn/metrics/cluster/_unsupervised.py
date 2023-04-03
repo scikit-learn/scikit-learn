@@ -6,6 +6,7 @@
 # License: BSD 3 clause
 
 
+from numbers import Integral
 import functools
 
 import numpy as np
@@ -15,6 +16,7 @@ from ...utils import check_random_state
 from ...utils import check_X_y
 from ...utils import _safe_indexing
 from ...utils._param_validation import (
+    Interval,
     StrOptions,
     validate_params,
 )
@@ -42,6 +44,15 @@ def check_number_of_labels(n_labels, n_samples):
         )
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "labels": ["array-like"],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "sample_size": [Interval(Integral, 1, None, closed="left"), None],
+        "random_state": ["random_state"],
+    }
+)
 def silhouette_score(
     X, labels, *, metric="euclidean", sample_size=None, random_state=None, **kwds
 ):
@@ -66,7 +77,7 @@ def silhouette_score(
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_a, n_samples_a) if metric == \
+    X : {array-like, sparse matrix} of shape (n_samples_a, n_samples_a) if metric == \
             "precomputed" or (n_samples_a, n_features) otherwise
         An array of pairwise distances between samples, or a feature array.
 
