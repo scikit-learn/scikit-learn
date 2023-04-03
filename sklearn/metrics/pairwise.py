@@ -1268,6 +1268,14 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     return K
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "gamma": [Interval(Real, None, None, closed="neither"), None],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+    }
+)
 def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     """Compute the sigmoid kernel between X and Y.
 
