@@ -123,7 +123,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         **partial_fit_params : dict of str -> object
             Parameters passed to the ``estimator.partial_fit`` method of each step.
 
-            .. versionadded:: 1.2
+            .. versionadded:: 2.0
 
         Returns
         -------
@@ -377,7 +377,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         **partial_fit_params : dict of str -> object
             Parameters passed to the ``estimator.partial_fit`` method of each step.
 
-            .. versionadded:: 1.2
+            .. versionadded:: 2.0
 
         Returns
         -------
@@ -851,7 +851,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method of each step.
 
-            .. versionadded:: 1.2
+            .. versionadded:: 2.0
 
         Returns
         -------

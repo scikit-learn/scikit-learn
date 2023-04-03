@@ -54,13 +54,13 @@ __all__ = [
 ]
 
 
-class GroupsComsumerMixin(_MetadataRequester):
+class GroupsConsumerMixin(_MetadataRequester):
     """A Mixin to ``groups`` by default.
 
     This Mixin makes the object to request ``groups`` by default as
     ``REQUESTED``.
 
-    .. versionadded:: 1.2
+    .. versionadded:: 2.0
     """
 
     __metadata_request__split = {"groups": RequestType.REQUESTED}
@@ -73,7 +73,7 @@ class BaseCrossValidator(_MetadataRequester, metaclass=ABCMeta):
     """
 
     # This indicates that by default CV splitters don't have a "groups" kwarg,
-    # unless indicated by inheriting from ``GroupsComsumerMixin``.
+    # unless indicated by inheriting from ``GroupsConsumerMixin``.
     # This also prevents ``set_split_request`` to be generated for splitters
     # which don't support ``groups``.
     __metadata_request__split = {"groups": RequestType.UNUSED}
@@ -488,7 +488,7 @@ class KFold(_BaseKFold):
             current = stop
 
 
-class GroupKFold(GroupsComsumerMixin, _BaseKFold):
+class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     """K-fold iterator variant with non-overlapping groups.
 
     Each group will appear exactly once in the test set across all folds (the
@@ -794,7 +794,7 @@ class StratifiedKFold(_BaseKFold):
         return super().split(X, y, groups)
 
 
-class StratifiedGroupKFold(GroupsComsumerMixin, _BaseKFold):
+class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     """Stratified K-Folds iterator variant with non-overlapping groups.
 
     This cross-validation object is a variation of StratifiedKFold attempts to
@@ -1175,7 +1175,7 @@ class TimeSeriesSplit(_BaseKFold):
                 )
 
 
-class LeaveOneGroupOut(GroupsComsumerMixin, BaseCrossValidator):
+class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
     """Leave One Group Out cross-validator
 
     Provides train/test indices to split data such that each training set is
@@ -1294,7 +1294,7 @@ class LeaveOneGroupOut(GroupsComsumerMixin, BaseCrossValidator):
         return super().split(X, y, groups)
 
 
-class LeavePGroupsOut(GroupsComsumerMixin, BaseCrossValidator):
+class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
     """Leave P Group(s) Out cross-validator
 
     Provides train/test indices to split data according to a third-party
@@ -1452,7 +1452,7 @@ class _RepeatedSplits(_MetadataRequester, metaclass=ABCMeta):
     """
 
     # This indicates that by default CV splitters don't have a "groups" kwarg,
-    # unless indicated by inheriting from ``GroupsComsumerMixin``.
+    # unless indicated by inheriting from ``GroupsConsumerMixin``.
     # This also prevents ``set_split_request`` to be generated for splitters
     # which don't support ``groups``.
     __metadata_request__split = {"groups": RequestType.UNUSED}
@@ -1675,7 +1675,7 @@ class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     # This indicates that by default CV splitters don't have a "groups" kwarg,
-    # unless indicated by inheriting from ``GroupsComsumerMixin``.
+    # unless indicated by inheriting from ``GroupsConsumerMixin``.
     # This also prevents ``set_split_request`` to be generated for splitters
     # which don't support ``groups``.
     __metadata_request__split = {"groups": RequestType.UNUSED}
@@ -1869,7 +1869,7 @@ class ShuffleSplit(BaseShuffleSplit):
             yield ind_train, ind_test
 
 
-class GroupShuffleSplit(GroupsComsumerMixin, ShuffleSplit):
+class GroupShuffleSplit(GroupsConsumerMixin, ShuffleSplit):
     """Shuffle-Group(s)-Out cross-validation iterator
 
     Provides randomized train/test indices to split data according to a
