@@ -1093,6 +1093,13 @@ def normalized_mutual_info_score(
     return mi / normalizer
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "sparse": ["boolean"],
+    }
+)
 def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     """Measure the similarity of two clusterings of a set of points.
 
