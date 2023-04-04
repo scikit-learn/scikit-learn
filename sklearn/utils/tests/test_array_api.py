@@ -189,6 +189,21 @@ def test_convert_estimator_to_array_api():
     assert hasattr(new_est.X_, "__array_namespace__")
 
 
+def test_reshape_behavior():
+    """Check reshape behavior with copy and is strict with non-tuple shape."""
+    xp = _NumPyAPIWrapper()
+    X = xp.asarray([[1, 2, 3], [3, 4, 5]])
+
+    X_no_copy = xp.reshape(X, (-1,), copy=False)
+    assert X_no_copy.base is X
+
+    X_copy = xp.reshape(X, (6, 1), copy=True)
+    assert X_copy.base is not X.base
+
+    with pytest.raises(TypeError, match="shape must be a tuple"):
+        xp.reshape(X, -1)
+
+
 @pytest.mark.parametrize("wrapper", [_ArrayAPIWrapper, _NumPyAPIWrapper])
 def test_get_namespace_array_api_isdtype(wrapper):
     """Test isdtype implementation from _ArrayAPIWrapper and _NumPyAPIWrapper."""
