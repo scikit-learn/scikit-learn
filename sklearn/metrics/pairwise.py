@@ -1319,7 +1319,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
         "X": ["array-like", "sparse matrix"],
         "Y": ["array-like", "sparse matrix", None],
         "gamma": [
-            Interval(Real, 0, None, closed="neither"),
+            Interval(Real, 0, None, closed="left"),
             None,
             Hidden(np.ndarray),
         ],
