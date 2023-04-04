@@ -123,7 +123,7 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
 @validate_params(
     {
         "X": ["array-like", "sparse matrix"],
-        "axis": [Interval(Integral, 0, 1, closed="both")],
+        "axis": [Options(Integral, {0, 1})],
         "with_mean": ["boolean"],
         "with_std": ["boolean"],
         "copy": ["boolean"],
