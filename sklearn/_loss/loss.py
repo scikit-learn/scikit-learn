@@ -690,7 +690,9 @@ class HuberLoss(BaseLoss):
         axis=0.
         """
         # See formula before algo 4 in Friedman (2001), but we apply it to y_true,
-        # not to the residual y_true - raw_prediction.
+        # not to the residual y_true - raw_prediction. An estimator like
+        # HistGradientBoostingRegressor might then call it on the residual, e.g.
+        # fit_intercept_only(y_true - raw_prediction).
         if sample_weight is None:
             median = np.percentile(y_true, 50, axis=0)
         else:
