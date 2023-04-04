@@ -224,6 +224,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.model_selection.train_test_split",
     "sklearn.preprocessing.add_dummy_feature",
     "sklearn.preprocessing.binarize",
+    "sklearn.preprocessing.label_binarize",
     "sklearn.preprocessing.maxabs_scale",
     "sklearn.preprocessing.scale",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
