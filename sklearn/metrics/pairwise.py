@@ -1236,23 +1236,36 @@ def linear_kernel(X, Y=None, dense_output=True):
     return safe_sparse_dot(X, Y.T, dense_output=dense_output)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "degree": [Interval(Real, 1, None, closed="left")],
+        "gamma": [
+            Interval(Real, 0, None, closed="left"),
+            None,
+            Hidden(np.ndarray),
+        ],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+    }
+)
 def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     """
     Compute the polynomial kernel between X and Y.
 
-    :math:`K(X, Y) = (gamma <X, Y> + coef0)^{degree}`
+        K(X, Y) = (gamma <X, Y> + coef0) ^ degree
 
     Read more in the :ref:`User Guide <polynomial_kernel>`.
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_X, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
         A feature array.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), default=None
         An optional second feature array. If `None`, uses `Y=X`.
 
-    degree : int, default=3
+    degree : float, default=3
         Kernel degree.
 
     gamma : float, default=None
@@ -1326,6 +1339,17 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     return K
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "gamma": [
+            Interval(Real, 0, None, closed="left"),
+            None,
+            Hidden(np.ndarray),
+        ],
+    }
+)
 def rbf_kernel(X, Y=None, gamma=None):
     """Compute the rbf (gaussian) kernel between X and Y.
 
@@ -1337,10 +1361,10 @@ def rbf_kernel(X, Y=None, gamma=None):
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_X, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
         A feature array.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), default=None
         An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
