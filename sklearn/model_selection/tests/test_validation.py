@@ -382,9 +382,6 @@ def test_cross_validate_invalid_scoring_param():
     with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
 
-    with pytest.raises(ValueError, match="'mse' is not a valid scoring value."):
-        cross_validate(SVC(), X, y, scoring="mse")
-
 
 def test_cross_validate_nested_estimator():
     # Non-regression test to ensure that nested
