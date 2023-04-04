@@ -2,6 +2,11 @@ import os
 from joblib import cpu_count
 
 
+# Module level cache for cpu_count as we do not expect this to change during
+# the lifecycle of a Python program.
+_CPU_COUNTS = None
+
+
 def _openmp_parallelism_enabled():
     """Determines whether scikit-learn has been built with OpenMP
 
@@ -44,6 +49,7 @@ cpdef _openmp_effective_n_threads(n_threads=None, only_physical_cores=True):
 
     If scikit-learn is built without OpenMP support, always return 1.
     """
+    global _CPU_COUNTS
     if n_threads == 0:
         raise ValueError("n_threads = 0 is invalid")
 
@@ -56,9 +62,12 @@ cpdef _openmp_effective_n_threads(n_threads=None, only_physical_cores=True):
         # to exceed the number of cpus.
         max_n_threads = omp_get_max_threads()
     else:
+        if _CPU_COUNTS is None:
+          _CPU_COUNTS = {
+            opc: cpu_count(only_physical_cores=opc) for opc in [True, False]
+          }
         max_n_threads = min(
-            omp_get_max_threads(),
-            cpu_count(only_physical_cores=only_physical_cores)
+            omp_get_max_threads(), _CPU_COUNTS[only_physical_cores]
         )
 
     if n_threads is None:
