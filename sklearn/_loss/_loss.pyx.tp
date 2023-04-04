@@ -381,8 +381,10 @@ cdef inline double closs_huber_loss(
     double delta,
 ) noexcept nogil:
     cdef double abserr = fabs(y_true - raw_prediction)
-    return (0.5 * abserr**2 if abserr <= delta
-            else delta * (abserr - 0.5 * delta))
+    if abserr <= delta:
+        return 0.5 * abserr**2
+    else:
+        return delta * (abserr - 0.5 * delta)
 
 
 cdef inline double cgradient_huber_loss(
@@ -391,7 +393,10 @@ cdef inline double cgradient_huber_loss(
     double delta,
 ) noexcept nogil:
     cdef double res = raw_prediction - y_true
-    return res if fabs(res) <= delta else delta * (1 if res >=0 else -1)
+    if fabs(res) <= delta:
+        return res
+    else:
+        return delta if res >=0 else -delta
 
 
 cdef inline double_pair cgrad_hess_huber_loss(
@@ -400,13 +405,13 @@ cdef inline double_pair cgrad_hess_huber_loss(
     double delta,
 ) noexcept nogil:
     cdef double_pair gh
-    gh.val2 = raw_prediction - y_true             # used as temporary
+    gh.val2 = raw_prediction - y_true               # used as temporary
     if fabs(gh.val2) <= delta:
-        gh.val1 = gh.val2 if fabs(gh.val2) <= delta  # gradient
-        gh.val2 = 1                                  # hessian
+        gh.val1 = gh.val2                           # gradient
+        gh.val2 = 1                                 # hessian
     else:
-        gh.val1 = delta * (1 if gh.val2 >=0 else -1)  # gradient
-        gh.val2 = 0                                   # hessian
+        gh.val1 = delta if gh.val2 >=0 else -delta  # gradient
+        gh.val2 = 0                                 # hessian
     return gh
 
 
