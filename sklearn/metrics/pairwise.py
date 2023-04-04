@@ -1094,6 +1094,9 @@ def paired_manhattan_distances(X, Y):
         return np.abs(diff).sum(axis=-1)
 
 
+@validate_params(
+    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]}
+)
 def paired_cosine_distances(X, Y):
     """
     Compute the paired cosine distances between X and Y.
@@ -1102,10 +1105,10 @@ def paired_cosine_distances(X, Y):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         An array where each row is a sample and each column is a feature.
 
-    Y : array-like of shape (n_samples, n_features)
+    Y : {array-like, sparse matrix} of shape (n_samples, n_features)
         An array where each row is a sample and each column is a feature.
 
     Returns
