@@ -123,7 +123,7 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
 @validate_params(
     {
         "X": ["array-like", "sparse matrix"],
-        "axis": [Options(Integral, {0, 1})],
+        "axis": [Interval(Integral, 0, 1, closed="both")],
         "with_mean": ["boolean"],
         "with_std": ["boolean"],
         "copy": ["boolean"],
@@ -1651,6 +1651,17 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True}
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "axis": [Options(Integral, {0, 1})],
+        "with_centering": ["boolean"],
+        "with_scaling": ["boolean"],
+        "quantile_range": [tuple],
+        "copy": ["boolean"],
+        "unit_variance": ["boolean"],
+    }
+)
 def robust_scale(
     X,
     *,
