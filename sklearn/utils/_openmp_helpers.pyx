@@ -12,7 +12,7 @@ def _openmp_parallelism_enabled():
     return SKLEARN_OPENMP_PARALLELISM_ENABLED
 
 
-cpdef _openmp_effective_n_threads(n_threads=None, only_physical_cores=False):
+cpdef _openmp_effective_n_threads(n_threads=None, only_physical_cores=True):
     """Determine the effective number of threads to be used for OpenMP calls
 
     - For ``n_threads = None``,
@@ -32,6 +32,15 @@ cpdef _openmp_effective_n_threads(n_threads=None, only_physical_cores=False):
       threads as there are available cores on the machine.
 
     - Raise a ValueError for ``n_threads = 0``.
+
+    Passing `only_physical_cores=False` flag makes it possible to use extra
+    threads for SMT/HyperThreading logical cores. It has been empirically
+    observed that using as many threads as available SMT cores can slightly
+    improve the performance in some cases, but can severely degrade
+    performance other times. Therefore it is recommended to use
+    `only_physical_cores=True` unless an empirical study has been conducted to
+    assess the impact of SMT on a case-by-case basis (using various input data
+    shapes, in particular small data shapes).
 
     If scikit-learn is built without OpenMP support, always return 1.
     """
