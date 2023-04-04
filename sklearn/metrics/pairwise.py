@@ -1025,6 +1025,9 @@ def cosine_distances(X, Y=None):
 
 
 # Paired distances
+@validate_params(
+    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]}
+)
 def paired_euclidean_distances(X, Y):
     """Compute the paired euclidean distances between X and Y.
 
@@ -1032,10 +1035,10 @@ def paired_euclidean_distances(X, Y):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input array/matrix X.
 
-    Y : array-like of shape (n_samples, n_features)
+    Y : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input array/matrix Y.
 
     Returns
