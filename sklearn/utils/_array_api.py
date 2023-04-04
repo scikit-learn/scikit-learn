@@ -166,6 +166,21 @@ class _NumPyAPIWrapper:
     def concat(self, arrays, *, axis=None):
         return numpy.concatenate(arrays, axis=axis)
 
+    def reshape(self, x, shape, *, copy=None):
+        """Gives a new shape to an array without changing its data.
+
+        The Array API specification requires shape to be a tuple.
+        https://data-apis.org/array-api/latest/API_specification/generated/array_api.reshape.html
+        """
+        if not isinstance(shape, tuple):
+            raise TypeError(
+                f"shape must be a tuple, got {shape!r} of type {type(shape)}"
+            )
+
+        if copy is True:
+            x = x.copy()
+        return numpy.reshape(x, shape)
+
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self)
 
