@@ -378,6 +378,17 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "average": [StrOptions({"micro", "macro", "samples", "weighted"}), None],
+        "sample_weight": ["array-like", None],
+        "max_fpr": [Interval(Real, 0.0, 1, closed="right"), None],
+        "multi_class": [StrOptions({"raise", "ovr", "ovo"})],
+        "labels": ["array-like", None],
+    }
+)
 def roc_auc_score(
     y_true,
     y_score,
