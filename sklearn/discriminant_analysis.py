@@ -640,7 +640,7 @@ class LinearDiscriminantAnalysis(
             intercept_ = xp.asarray(
                 self.intercept_[1] - self.intercept_[0], dtype=X.dtype
             )
-            self.intercept_ = xp.reshape(intercept_, 1)
+            self.intercept_ = xp.reshape(intercept_, (1,))
         self._n_features_out = self._max_components
         return self
 
