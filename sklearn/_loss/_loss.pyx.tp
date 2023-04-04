@@ -401,11 +401,12 @@ cdef inline double_pair cgrad_hess_huber_loss(
 ) noexcept nogil:
     cdef double_pair gh
     gh.val2 = raw_prediction - y_true             # used as temporary
-    gh.val1 = (                                   # gradient
-        gh.val2 if fabs(gh.val2) <= delta
-        else delta * (1 if gh.val2 >=0 else -1)
-    )
-    gh.val2 = 1 if fabs(gh.val2) <= delta else 0  # hessian
+    if fabs(gh.val2) <= delta:
+        gh.val1 = gh.val2 if fabs(gh.val2) <= delta  # gradient
+        gh.val2 = 1                                  # hessian
+    else:
+        gh.val1 = delta * (1 if gh.val2 >=0 else -1)  # gradient
+        gh.val2 = 0                                   # hessian
     return gh
 
 
