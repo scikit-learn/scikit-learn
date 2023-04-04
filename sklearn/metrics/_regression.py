@@ -487,6 +487,15 @@ def mean_squared_error(
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+        "squared": ["boolean"],
+    }
+)
 def mean_squared_log_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared=True
 ):
@@ -1241,6 +1250,17 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=2)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "power": [
+            Interval(Real, None, 0, closed="right"),
+            Interval(Real, 1, None, closed="left"),
+        ],
+    }
+)
 def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     """D^2 regression score function, fraction of Tweedie deviance explained.
 
@@ -1260,7 +1280,7 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     y_pred : array-like of shape (n_samples,)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     power : float, default=0

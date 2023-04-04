@@ -572,9 +572,13 @@ def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y
 
     # mock out fit and stack_method to be asserted later
     for _, estimator in estimators:
-        estimator.fit = Mock()
+        estimator.fit = Mock(name="fit")
         stack_func = getattr(estimator, stack_method)
-        setattr(estimator, stack_method, Mock(side_effect=stack_func))
+        predict_method_mocked = Mock(side_effect=stack_func)
+        # Mocking a method will not provide a `__name__` while Python methods
+        # do and we are using it in `_get_response_method`.
+        predict_method_mocked.__name__ = stack_method
+        setattr(estimator, stack_method, predict_method_mocked)
 
     stacker = Stacker(
         estimators=estimators, cv="prefit", final_estimator=final_estimator

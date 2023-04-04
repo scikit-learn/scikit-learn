@@ -1,13 +1,9 @@
-from .base import _get_response
-
 from .. import auc
 from .. import roc_curve
-from .._base import _check_pos_label_consistency
-
-from ...utils import check_matplotlib_support
+from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 
 
-class RocCurveDisplay:
+class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     """ROC Curve visualization.
 
     It is recommend to use
@@ -43,6 +39,11 @@ class RocCurveDisplay:
     ----------
     line_ : matplotlib Artist
         ROC Curve.
+
+    chance_level_ : matplotlib Artist or None
+        The chance level line. It is `None` if the chance level is not plotted.
+
+        .. versionadded:: 1.3
 
     ax_ : matplotlib Axes
         Axes with ROC Curve.
@@ -82,7 +83,15 @@ class RocCurveDisplay:
         self.roc_auc = roc_auc
         self.pos_label = pos_label
 
-    def plot(self, ax=None, *, name=None, **kwargs):
+    def plot(
+        self,
+        ax=None,
+        *,
+        name=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
+        **kwargs,
+    ):
         """Plot visualization.
 
         Extra keyword arguments will be passed to matplotlib's ``plot``.
@@ -97,6 +106,17 @@ class RocCurveDisplay:
             Name of ROC Curve for labeling. If `None`, use `estimator_name` if
             not `None`, otherwise no labeling is shown.
 
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
+
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
@@ -105,9 +125,7 @@ class RocCurveDisplay:
         display : :class:`~sklearn.metrics.plot.RocCurveDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support("RocCurveDisplay.plot")
-
-        name = self.estimator_name if name is None else name
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
         line_kwargs = {}
         if self.roc_auc is not None and name is not None:
@@ -119,25 +137,34 @@ class RocCurveDisplay:
 
         line_kwargs.update(**kwargs)
 
-        import matplotlib.pyplot as plt
+        chance_level_line_kw = {
+            "label": "Chance level (AUC = 0.5)",
+            "color": "k",
+            "linestyle": "--",
+        }
 
-        if ax is None:
-            fig, ax = plt.subplots()
+        if chance_level_kw is not None:
+            chance_level_line_kw.update(**chance_level_kw)
 
-        (self.line_,) = ax.plot(self.fpr, self.tpr, **line_kwargs)
+        (self.line_,) = self.ax_.plot(self.fpr, self.tpr, **line_kwargs)
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
         )
 
         xlabel = "False Positive Rate" + info_pos_label
         ylabel = "True Positive Rate" + info_pos_label
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
-        if "label" in line_kwargs:
-            ax.legend(loc="lower right")
+        if plot_chance_level:
+            (self.chance_level_,) = self.ax_.plot(
+                (0, 1), (0, 1), **chance_level_line_kw
+            )
+        else:
+            self.chance_level_ = None
 
-        self.ax_ = ax
-        self.figure_ = ax.figure
+        if "label" in line_kwargs or "label" in chance_level_line_kw:
+            self.ax_.legend(loc="lower right")
+
         return self
 
     @classmethod
@@ -153,6 +180,8 @@ class RocCurveDisplay:
         pos_label=None,
         name=None,
         ax=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
         **kwargs,
     ):
         """Create a ROC Curve display from an estimator.
@@ -196,6 +225,17 @@ class RocCurveDisplay:
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
 
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
+
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
@@ -227,15 +267,13 @@ class RocCurveDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_estimator")
-
-        name = estimator.__class__.__name__ if name is None else name
-
-        y_pred, pos_label = _get_response(
-            X,
+        y_pred, pos_label, name = cls._validate_and_get_response_values(
             estimator,
+            X,
+            y,
             response_method=response_method,
             pos_label=pos_label,
+            name=name,
         )
 
         return cls.from_predictions(
@@ -246,6 +284,8 @@ class RocCurveDisplay:
             name=name,
             ax=ax,
             pos_label=pos_label,
+            plot_chance_level=plot_chance_level,
+            chance_level_kw=chance_level_kw,
             **kwargs,
         )
 
@@ -260,6 +300,8 @@ class RocCurveDisplay:
         pos_label=None,
         name=None,
         ax=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
         **kwargs,
     ):
         """Plot ROC curve given the true and predicted values.
@@ -299,6 +341,17 @@ class RocCurveDisplay:
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
+
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
 
@@ -331,7 +384,9 @@ class RocCurveDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_predictions")
+        pos_label_validated, name = cls._validate_from_predictions_params(
+            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+        )
 
         fpr, tpr, _ = roc_curve(
             y_true,
@@ -342,11 +397,18 @@ class RocCurveDisplay:
         )
         roc_auc = auc(fpr, tpr)
 
-        name = "Classifier" if name is None else name
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
-
         viz = RocCurveDisplay(
-            fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=name, pos_label=pos_label
+            fpr=fpr,
+            tpr=tpr,
+            roc_auc=roc_auc,
+            estimator_name=name,
+            pos_label=pos_label_validated,
         )
 
-        return viz.plot(ax=ax, name=name, **kwargs)
+        return viz.plot(
+            ax=ax,
+            name=name,
+            plot_chance_level=plot_chance_level,
+            chance_level_kw=chance_level_kw,
+            **kwargs,
+        )
