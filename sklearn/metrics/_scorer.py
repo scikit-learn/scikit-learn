@@ -371,6 +371,66 @@ class _ThresholdScorer(_BaseScorer):
         return ", needs_threshold=True"
 
 
+class _ContinuousScorer(_BaseScorer):
+    def __init__(self, score_func, sign, response_method, kwargs):
+        super().__init__(score_func=score_func, sign=sign, kwargs=kwargs)
+        self.response_method = response_method
+
+    def _score(self, method_caller, estimator, X, y_true, sample_weight=None):
+        """Evaluate predicted target values for X relative to y_true.
+        Parameters
+        ----------
+        method_caller : callable
+            Returns predictions given an estimator, method name, and other
+            arguments, potentially caching results.
+        estimator : object
+            Trained estimator to use for scoring. Must have a predict_proba
+            method; the output of that is used to compute the score.
+        X : {array-like, sparse matrix}
+            Test data that will be fed to estimator.predict.
+        y_true : array-like
+            Gold standard target values for X.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+        Returns
+        -------
+        score : float
+            Score function applied to prediction of estimator on X.
+        """
+        response_method = _check_classifier_response_method(
+            estimator=estimator, response_method=self.response_method
+        )
+        y_score = response_method(X)
+        if response_method.__name__ == "decision_function":
+            y_score = self._check_decision_function(y_score, estimator.classes_)
+        else:
+            y_score = self._select_proba(
+                y_score, estimator.classes_, support_multi_class=False
+            )
+
+        # `np.unique` returned sorted array, thus no need to sort values
+        potential_thresholds = np.unique(y_score)
+        score_thresholds = []
+        for th in potential_thresholds:
+            y_score_thresholded = estimator.classes_[(y_score >= th).astype(int)]
+            if sample_weight is not None:
+                score_thresholds.append(
+                    self._sign
+                    * self._score_func(
+                        y_true,
+                        y_score_thresholded,
+                        sample_weight=sample_weight,
+                        **self._kwargs,
+                    )
+                )
+            else:
+                score_thresholds.append(
+                    self._sign
+                    * self._score_func(y_true, y_score_thresholded, **self._kwargs)
+                )
+        return np.array(potential_thresholds), np.array(score_thresholds)
+
+
 @validate_params(
     {
         "scoring": [str, callable, None],
