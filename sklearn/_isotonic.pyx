@@ -5,10 +5,8 @@
 # pool at each step.
 
 import numpy as np
-cimport numpy as cnp
 from cython cimport floating
 
-cnp.import_array()
 
 
 def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
@@ -62,9 +60,9 @@ def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
             i = k
 
 
-def _make_unique(floating[::1] X,
-                 floating[::1] y,
-                 floating[::1] sample_weights):
+def _make_unique(const floating[::1] X,
+                 const floating[::1] y,
+                 const floating[::1] sample_weights):
     """Average targets for duplicate X, drop duplicates.
 
     Aggregates duplicate X values into a single X value where
@@ -75,8 +73,13 @@ def _make_unique(floating[::1] X,
     """
     unique_values = len(np.unique(X))
 
-    cdef floating[::1] y_out = np.empty(unique_values,
-                                                     dtype=X.dtype)
+    if floating is float:
+        dtype = np.float32
+    else:
+        dtype = np.float64
+
+    cdef floating[::1] y_out = np.empty(unique_values, dtype=dtype)
+    
     cdef floating[::1] x_out = np.empty_like(y_out)
     cdef floating[::1] weights_out = np.empty_like(y_out)
 
@@ -108,4 +111,7 @@ def _make_unique(floating[::1] X,
     x_out[i] = current_x
     weights_out[i] = current_weight
     y_out[i] = current_y / current_weight
-    return x_out[:i+1], y_out[:i+1], weights_out[:i+1]
+    return(
+        np.asarray(x_out[:i+1])
+        np.asarray(y_out[:i+1])
+        np.asarray(weights_out[:i+1]))

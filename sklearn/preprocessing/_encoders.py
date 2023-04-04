@@ -741,7 +741,7 @@ class OneHotEncoder(_BaseEncoder):
         drop=None,
         sparse="deprecated",
         sparse_output=True,
-        dtype=np.uint8,
+        dtype=np.float64,
         handle_unknown="error",
         min_frequency=None,
         max_categories=None,

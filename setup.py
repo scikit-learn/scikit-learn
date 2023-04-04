@@ -196,7 +196,7 @@ extension_config = {
         {"sources": ["_check_build.pyx"]},
     ],
     "": [
-        {"sources": ["_isotonic.pyx"], "include_np": True},
+        {"sources": ["_isotonic.pyx"]},
     ],
     "_loss": [
         {"sources": ["_loss.pyx.tp"]},
