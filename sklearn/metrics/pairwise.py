@@ -9,7 +9,6 @@
 
 import itertools
 from functools import partial
-from numbers import Integral
 import warnings
 
 import numpy as np
@@ -30,7 +29,7 @@ from ..preprocessing import normalize
 from ..utils._mask import _get_mask
 from ..utils.parallel import delayed, Parallel
 from ..utils.fixes import sp_base_version, sp_version, parse_version
-from ..utils._param_validation import validate_params, Interval, Real, Hidden, Options
+from ..utils._param_validation import validate_params, Interval, Real, Hidden
 
 from ._pairwise_distances_reduction import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
@@ -386,10 +385,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
         "X": ["array-like"],
         "Y": ["array-like", None],
         "squared": ["boolean"],
-        "missing_values": [
-            Options(Real, {np.nan}),
-            Interval(Integral, None, None, closed="neither"),
-        ],
+        "missing_values": ["missing_values"],
         "copy": ["boolean"],
     }
 )
