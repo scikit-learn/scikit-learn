@@ -1125,10 +1125,10 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
     Parameters
     ----------
-    labels_true : int array, shape = (``n_samples``,)
+    labels_true : array-like of shape (n_samples,), dtype=int
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array, shape = (``n_samples``, )
+    labels_pred : array-like of shape (n_samples,), dtype=int
         A clustering of the data into disjoint subsets.
 
     sparse : bool, default=False
