@@ -1272,7 +1272,11 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     {
         "X": ["array-like", "sparse matrix"],
         "Y": ["array-like", "sparse matrix", None],
-        "gamma": [Interval(Real, None, None, closed="neither"), None],
+        "gamma": [
+            Interval(Real, 0, None, closed="neither"),
+            None,
+            Hidden(np.ndarray),
+        ],
         "coef0": [Interval(Real, None, None, closed="neither")],
     }
 )
