@@ -1292,6 +1292,13 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True}
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "axis": [Options(Integral, {0, 1})],
+        "copy": ["boolean"],
+    }
+)
 def maxabs_scale(X, *, axis=0, copy=True):
     """Scale each feature to the [-1, 1] range without breaking the sparsity.
 
@@ -1306,7 +1313,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data.
 
-    axis : int, default=0
+    axis : {0, 1}, default=0
         Axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
 
