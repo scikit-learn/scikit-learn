@@ -1025,6 +1025,9 @@ def cosine_distances(X, Y=None):
 
 
 # Paired distances
+@validate_params(
+    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]}
+)
 def paired_euclidean_distances(X, Y):
     """Compute the paired euclidean distances between X and Y.
 
@@ -1032,10 +1035,10 @@ def paired_euclidean_distances(X, Y):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input array/matrix X.
 
-    Y : array-like of shape (n_samples, n_features)
+    Y : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input array/matrix Y.
 
     Returns
@@ -1048,6 +1051,9 @@ def paired_euclidean_distances(X, Y):
     return row_norms(X - Y)
 
 
+@validate_params(
+    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]}
+)
 def paired_manhattan_distances(X, Y):
     """Compute the paired L1 distances between X and Y.
 
@@ -1058,10 +1064,10 @@ def paired_manhattan_distances(X, Y):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         An array-like where each row is a sample and each column is a feature.
 
-    Y : array-like of shape (n_samples, n_features)
+    Y : {array-like, sparse matrix} of shape (n_samples, n_features)
         An array-like where each row is a sample and each column is a feature.
 
     Returns
@@ -1088,6 +1094,9 @@ def paired_manhattan_distances(X, Y):
         return np.abs(diff).sum(axis=-1)
 
 
+@validate_params(
+    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]}
+)
 def paired_cosine_distances(X, Y):
     """
     Compute the paired cosine distances between X and Y.
@@ -1096,10 +1105,10 @@ def paired_cosine_distances(X, Y):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         An array where each row is a sample and each column is a feature.
 
-    Y : array-like of shape (n_samples, n_features)
+    Y : {array-like, sparse matrix} of shape (n_samples, n_features)
         An array where each row is a sample and each column is a feature.
 
     Returns
