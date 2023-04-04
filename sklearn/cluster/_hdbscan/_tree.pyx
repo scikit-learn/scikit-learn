@@ -211,24 +211,21 @@ cdef dict _compute_stability(
 
     cdef:
         cnp.float64_t[::1] result, births_arr
-        cnp.ndarray[cnp.intp_t, ndim=1] parents
+        cnp.intp_t[:] parents = condensed_tree['parent']
 
         cnp.intp_t parent, cluster_size, result_index
         cnp.float64_t lambda_val
         CONDENSED_t condensed_node
         cnp.float64_t[:, :] result_pre_dict
-
-    parents = condensed_tree['parent']
-    cdef cnp.intp_t largest_child = condensed_tree['child'].max()
-    cdef cnp.intp_t smallest_cluster = parents.min()
-    cdef cnp.intp_t num_clusters = parents.max() - smallest_cluster + 1
+        cnp.intp_t largest_child = condensed_tree['child'].max()
+        cnp.intp_t smallest_cluster = np.min(parents)
+        cnp.intp_t num_clusters = np.max(parents) - smallest_cluster + 1
 
     largest_child = max(largest_child, smallest_cluster)
     births_arr = np.full(largest_child + 1, np.nan, dtype=np.float64)
 
     births = np.full(largest_child + 1, np.nan, dtype=np.float64)
-    for idx in range(condensed_tree.shape[0]):
-        condensed_node = condensed_tree[idx]
+    for condensed_node in condensed_tree:
         births_arr[condensed_node.child] = condensed_node.value
 
     births_arr[smallest_cluster] = 0.0
@@ -244,7 +241,7 @@ cdef dict _compute_stability(
 
     result_pre_dict = np.vstack(
         (
-            np.arange(smallest_cluster, parents.max() + 1),
+            np.arange(smallest_cluster, np.max(parents) + 1),
             result
         )
     ).T
