@@ -702,6 +702,18 @@ def _assemble_r2_explained_variance(
     return np.average(output_scores, weights=avg_weights)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average", "variance_weighted"}),
+            "array-like",
+        ],
+        "force_finite": ["boolean"],
+    }
+)
 def explained_variance_score(
     y_true,
     y_pred,
