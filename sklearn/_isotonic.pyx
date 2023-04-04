@@ -60,7 +60,7 @@ def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
             i = k
 
 
-def _make_unique(const floating[::1] X,
+def _make_unique(const floating[:, ::1] X,
                  const floating[::1] y,
                  const floating[::1] sample_weights):
     """Average targets for duplicate X, drop duplicates.
@@ -112,6 +112,7 @@ def _make_unique(const floating[::1] X,
     weights_out[i] = current_weight
     y_out[i] = current_y / current_weight
     return(
-        np.asarray(x_out[:i+1])
-        np.asarray(y_out[:i+1])
-        np.asarray(weights_out[:i+1]))
+        np.asarray(x_out[:i+1]),
+        np.asarray(y_out[:i+1]),
+        np.asarray(weights_out[:i+1]),
+)
