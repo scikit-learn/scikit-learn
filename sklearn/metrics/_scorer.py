@@ -70,18 +70,19 @@ from ..utils._response import _get_response_values
 from ..utils._param_validation import validate_params
 
 
-def _cached_call(cache, estimator, *args, **kwargs):
+def _cached_call(cache, estimator, response_method, *args, **kwargs):
     """Call estimator with method and args and kwargs."""
-    if cache is None:
-        return _get_response_values(estimator, *args, **kwargs)
-
-    response_method = kwargs["response_method"]
-    try:
+    if cache is not None and response_method in cache:
         return cache[response_method]
-    except KeyError:
-        result = _get_response_values(estimator, *args, **kwargs)
+
+    result, _ = _get_response_values(
+        estimator, *args, response_method=response_method, **kwargs
+    )
+
+    if cache is not None:
         cache[response_method] = result
-        return result
+
+    return result
 
 
 class _MultimetricScorer:
@@ -169,12 +170,10 @@ class _BaseScorer:
     def _get_pos_label(self):
         score_func_params = signature(self._score_func).parameters
         if "pos_label" in self._kwargs:
-            pos_label = self._kwargs["pos_label"]
-        elif "pos_label" in score_func_params:
-            pos_label = score_func_params["pos_label"].default
-        else:
-            pos_label = None
-        return pos_label
+            return self._kwargs["pos_label"]
+        if "pos_label" in score_func_params:
+            return score_func_params["pos_label"].default
+        return None
 
     def __repr__(self):
         kwargs_string = "".join(
@@ -252,7 +251,7 @@ class _PredictScorer(_BaseScorer):
             Score function applied to prediction of estimator on X.
         """
 
-        y_pred, _ = method_caller(estimator, X, response_method="predict")
+        y_pred = method_caller(estimator, "predict", X)
         if sample_weight is not None:
             return self._sign * self._score_func(
                 y_true, y_pred, sample_weight=sample_weight, **self._kwargs
@@ -290,9 +289,7 @@ class _ProbaScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        y_pred, _ = method_caller(
-            clf, X, response_method="predict_proba", pos_label=self._get_pos_label()
-        )
+        y_pred = method_caller(clf, "predict_proba", X, pos_label=self._get_pos_label())
         if sample_weight is not None:
             return self._sign * self._score_func(
                 y, y_pred, sample_weight=sample_weight, **self._kwargs
@@ -341,22 +338,18 @@ class _ThresholdScorer(_BaseScorer):
             raise ValueError("{0} format is not supported".format(y_type))
 
         if is_regressor(clf):
-            y_pred, _ = method_caller(clf, X, response_method="predict")
+            y_pred = method_caller(clf, "predict", X)
         else:
             pos_label = self._get_pos_label()
             try:
-                y_pred, _ = method_caller(
-                    clf, X, response_method="decision_function", pos_label=pos_label
-                )
+                y_pred = method_caller(clf, "decision_function", X, pos_label=pos_label)
 
                 if isinstance(y_pred, list):
                     # For multi-output multi-class estimator
                     y_pred = np.vstack([p for p in y_pred]).T
 
             except (NotImplementedError, AttributeError):
-                y_pred, _ = method_caller(
-                    clf, X, response_method="predict_proba", pos_label=pos_label
-                )
+                y_pred = method_caller(clf, "predict_proba", X, pos_label=pos_label)
                 if isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
