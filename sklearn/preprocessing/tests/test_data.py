@@ -1988,10 +1988,6 @@ def test_normalize():
     # Only tests functionality not used by the tests for Normalizer.
     X = np.random.RandomState(37).randn(3, 2)
     assert_array_equal(normalize(X, copy=False), normalize(X.T, axis=0, copy=False).T)
-    with pytest.raises(ValueError):
-        normalize([[0]], axis=2)
-    with pytest.raises(ValueError):
-        normalize([[0]], norm="l3")
 
     rs = np.random.RandomState(0)
     X_dense = rs.randn(10, 5)

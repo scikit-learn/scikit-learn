@@ -936,6 +936,8 @@ def _get_transformer_list(estimators):
     return transformer_list
 
 
+# This function is not validated using validate_params because
+# it's just a factory for ColumnTransformer.
 def make_column_transformer(
     *transformers,
     remainder="drop",
