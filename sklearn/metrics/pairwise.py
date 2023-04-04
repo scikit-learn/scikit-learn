@@ -1240,9 +1240,9 @@ def linear_kernel(X, Y=None, dense_output=True):
     {
         "X": ["array-like", "sparse matrix"],
         "Y": ["array-like", "sparse matrix", None],
-        "degree": [Interval(Real, 0, None, closed="left")],
+        "degree": [Interval(Real, 1, None, closed="left")],
         "gamma": [
-            Interval(Real, None, None, closed="neither"),
+            Interval(Real, 0, None, closed="left"),
             None,
             Hidden(np.ndarray),
         ],
@@ -1265,7 +1265,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), default=None
         An optional second feature array. If `None`, uses `Y=X`.
 
-    degree : int, default=3
+    degree : float, default=3
         Kernel degree.
 
     gamma : float, default=None
