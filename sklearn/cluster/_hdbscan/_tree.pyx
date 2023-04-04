@@ -414,6 +414,7 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] do_labelling(
         cnp.ndarray[cnp.float64_t, ndim=1] lambda_array
         TreeUnionFind union_find
         cnp.intp_t n, parent, child, cluster, label
+        cnp.float64_t parent_lambda, max_child_lambda
 
     child_array = condensed_tree['child']
     parent_array = condensed_tree['parent']
@@ -435,13 +436,13 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] do_labelling(
         if cluster != root_cluster:
             label = cluster_label_map[cluster]
         elif len(clusters) == 1 and allow_single_cluster:
-            if cluster_selection_epsilon != 0.0:
-                if lambda_array[child_array == n] \
-                    >= 1 / cluster_selection_epsilon:
-                    label = cluster_label_map[cluster]
+            parent_lambda = lambda_array[child_array == n]
+            max_child_lambda = lambda_array[parent_array == cluster].max()
 
-            elif lambda_array[child_array == n] >= \
-                    lambda_array[parent_array == cluster].max():
+            if cluster_selection_epsilon != 0.0:
+                if  parent_lambda >= 1 / cluster_selection_epsilon:
+                    label = cluster_label_map[cluster]
+            elif parent_lambda >= max_child_lambda:
                 label = cluster_label_map[cluster]
 
         result[n] = label
