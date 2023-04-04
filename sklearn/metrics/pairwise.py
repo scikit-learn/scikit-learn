@@ -29,7 +29,13 @@ from ..preprocessing import normalize
 from ..utils._mask import _get_mask
 from ..utils.parallel import delayed, Parallel
 from ..utils.fixes import sp_base_version, sp_version, parse_version
-from ..utils._param_validation import validate_params, Interval, Real, Hidden
+from ..utils._param_validation import (
+    validate_params,
+    Interval,
+    Real,
+    Hidden,
+    MissingValues,
+)
 
 from ._pairwise_distances_reduction import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
@@ -380,6 +386,15 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     return distances if squared else np.sqrt(distances, out=distances)
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "Y": ["array-like", None],
+        "squared": ["boolean"],
+        "missing_values": [MissingValues(numeric_only=True)],
+        "copy": ["boolean"],
+    }
+)
 def nan_euclidean_distances(
     X, Y=None, *, squared=False, missing_values=np.nan, copy=True
 ):
@@ -420,7 +435,7 @@ def nan_euclidean_distances(
     squared : bool, default=False
         Return squared Euclidean distances.
 
-    missing_values : np.nan or int, default=np.nan
+    missing_values : np.nan, float or int, default=np.nan
         Representation of missing value.
 
     copy : bool, default=True
