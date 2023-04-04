@@ -135,11 +135,6 @@ Changelog
   out-of-bag scores via the `oob_scores_` or `oob_score_` attributes.
   :pr:`24882` by :user:`Ashwin Mathur <awinml>`.
 
-- |Feature| :class:`ensemble.HistGradientBoostingRegressor` and
-  :class:`ensemble.HistGradientBoostingClassifier` treats negative values
-  as missing values for categorical features, following LightGBM's convention.
-  :pr:`25629` by `Thomas Fan`_.
-
 - |Efficiency| :class:`ensemble.IsolationForest` predict time is now faster
   (typically by a factor of 8 or more). Internally, the estimator now precomputes
   decision path lengths per tree at `fit` time. It is therefore not possible
@@ -150,6 +145,12 @@ Changelog
 - |Enhancement| :class:`ensemble.BaggingClassifier` and
   :class:`ensemble.BaggingRegressor` expose the `allow_nan` tag from the
   underlying estimator. :pr:`25506` by `Thomas Fan`_.
+
+- |Fix| :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientBoostingClassifier` treats negative values for
+  categorical features consistently as missing values, following LightGBM's and
+  pandas' conventions.
+  :pr:`25629` by `Thomas Fan`_.
 
 :mod:`sklearn.exception`
 ........................
