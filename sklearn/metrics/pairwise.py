@@ -9,7 +9,6 @@
 
 import itertools
 from functools import partial
-from numbers import Integral
 import warnings
 
 import numpy as np
@@ -1232,8 +1231,12 @@ def linear_kernel(X, Y=None, dense_output=True):
     {
         "X": ["array-like", "sparse matrix"],
         "Y": ["array-like", "sparse matrix", None],
-        "degree": [Interval(Integral, 1, None, closed="left")],
-        "gamma": [Interval(Real, None, None, closed="neither"), None],
+        "degree": [Interval(Real, 0, None, closed="left")],
+        "gamma": [
+            Interval(Real, None, None, closed="neither"),
+            None,
+            Hidden(np.ndarray),
+        ],
         "coef0": [Interval(Real, None, None, closed="neither")],
     }
 )
@@ -1241,7 +1244,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     """
     Compute the polynomial kernel between X and Y.
 
-    :math:`K(X, Y) = (gamma <X, Y> + coef0)^{degree}`
+    `K(X, Y) = (gamma <X, Y> + coef0) ** degree`
 
     Read more in the :ref:`User Guide <polynomial_kernel>`.
 
