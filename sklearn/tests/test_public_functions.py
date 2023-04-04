@@ -180,6 +180,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.d2_tweedie_score",
     "sklearn.metrics.dcg_score",
     "sklearn.metrics.det_curve",
+    "sklearn.metrics.explained_variance_score",
     "sklearn.metrics.f1_score",
     "sklearn.metrics.fbeta_score",
     "sklearn.metrics.get_scorer",
