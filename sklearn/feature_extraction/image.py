@@ -373,7 +373,8 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
         The maximum number of patches to extract. If `max_patches` is a float
         between 0 and 1, it is taken to be a proportion of the total number
         of patches.
-        If max_patches=None then the total number of patches will be extracted.
+        If `max_patches` is None it corresponds to the total number
+        of patches that can be extracted.
 
 
     random_state : int, RandomState instance, default=None
@@ -508,9 +509,11 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         The dimensions of one patch.
 
     max_patches : int or float, default=None
-        The maximum number of patches per image to extract. If `max_patches` is
-        a float in (0, 1), it is taken to mean a proportion of the total number
-        of patches.
+        The maximum number of patches per image to extract. 
+        If `max_patches` is a float in (0, 1), it is taken to mean a proportion of 
+        the total number of patches. 
+        If `max_patches` is None it corresponds to the total number
+        of patches that can be extracted.
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator used for random sampling when
