@@ -119,6 +119,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
     return tuple(my_mean), len(points_within), completed_iterations
 
 
+@validate_params({"X": ["array-like"]})
 def mean_shift(
     X,
     *,
@@ -141,9 +142,9 @@ def mean_shift(
         Input data.
 
     bandwidth : float, default=None
-        Kernel bandwidth.
+        Kernel bandwidth. If not None, must be in the range [0, +inf).
 
-        If bandwidth is not given, it is determined using a heuristic based on
+        If None, the bandwidth is determined using a heuristic based on
         the median of all pairwise distances. This will take quadratic time in
         the number of samples. The sklearn.cluster.estimate_bandwidth function
         can be used to do this more efficiently.
@@ -287,7 +288,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
     Parameters
     ----------
     bandwidth : float, default=None
-        Bandwidth used in the RBF kernel.
+        Bandwidth used in the flat kernel.
 
         If not given, the bandwidth is estimated using
         sklearn.cluster.estimate_bandwidth; see the documentation for that

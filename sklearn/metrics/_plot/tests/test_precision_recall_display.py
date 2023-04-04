@@ -9,7 +9,6 @@ from sklearn.metrics import average_precision_score, precision_recall_curve
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC, SVR
 from sklearn.utils import shuffle
 
 from sklearn.metrics import PrecisionRecallDisplay
@@ -21,51 +20,12 @@ pytestmark = pytest.mark.filterwarnings(
 )
 
 
-def test_precision_recall_display_validation(pyplot):
-    """Check that we raise the proper error when validating parameters."""
-    X, y = make_classification(
-        n_samples=100, n_informative=5, n_classes=5, random_state=0
-    )
-
-    with pytest.raises(NotFittedError):
-        PrecisionRecallDisplay.from_estimator(SVC(), X, y)
-
-    regressor = SVR().fit(X, y)
-    y_pred_regressor = regressor.predict(X)
-    classifier = SVC(probability=True).fit(X, y)
-    y_pred_classifier = classifier.predict_proba(X)[:, -1]
-
-    err_msg = "PrecisionRecallDisplay.from_estimator only supports classifiers"
-    with pytest.raises(ValueError, match=err_msg):
-        PrecisionRecallDisplay.from_estimator(regressor, X, y)
-
-    err_msg = "Expected 'estimator' to be a binary classifier, but got SVC"
-    with pytest.raises(ValueError, match=err_msg):
-        PrecisionRecallDisplay.from_estimator(classifier, X, y)
-
-    err_msg = "{} format is not supported"
-    with pytest.raises(ValueError, match=err_msg.format("continuous")):
-        # Force `y_true` to be seen as a regression problem
-        PrecisionRecallDisplay.from_predictions(y + 0.5, y_pred_classifier, pos_label=1)
-    with pytest.raises(ValueError, match=err_msg.format("multiclass")):
-        PrecisionRecallDisplay.from_predictions(y, y_pred_regressor, pos_label=1)
-
-    err_msg = "Found input variables with inconsistent numbers of samples"
-    with pytest.raises(ValueError, match=err_msg):
-        PrecisionRecallDisplay.from_predictions(y, y_pred_classifier[::2])
-
-    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
-    y += 10
-    classifier.fit(X, y)
-    y_pred_classifier = classifier.predict_proba(X)[:, -1]
-    err_msg = r"y_true takes value in {10, 11} and pos_label is not specified"
-    with pytest.raises(ValueError, match=err_msg):
-        PrecisionRecallDisplay.from_predictions(y, y_pred_classifier)
-
-
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
-def test_precision_recall_display_plotting(pyplot, constructor_name, response_method):
+@pytest.mark.parametrize("drop_intermediate", [True, False])
+def test_precision_recall_display_plotting(
+    pyplot, constructor_name, response_method, drop_intermediate
+):
     """Check the overall plotting rendering."""
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_label = 1
@@ -81,14 +41,20 @@ def test_precision_recall_display_plotting(pyplot, constructor_name, response_me
 
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(
-            classifier, X, y, response_method=response_method
+            classifier,
+            X,
+            y,
+            response_method=response_method,
+            drop_intermediate=drop_intermediate,
         )
     else:
         display = PrecisionRecallDisplay.from_predictions(
-            y, y_pred, pos_label=pos_label
+            y, y_pred, pos_label=pos_label, drop_intermediate=drop_intermediate
         )
 
-    precision, recall, _ = precision_recall_curve(y, y_pred, pos_label=pos_label)
+    precision, recall, _ = precision_recall_curve(
+        y, y_pred, pos_label=pos_label, drop_intermediate=drop_intermediate
+    )
     average_precision = average_precision_score(y, y_pred, pos_label=pos_label)
 
     np.testing.assert_allclose(display.precision, precision)

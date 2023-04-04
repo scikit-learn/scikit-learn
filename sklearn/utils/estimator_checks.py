@@ -1,11 +1,10 @@
-import types
 import warnings
 import pickle
 import re
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
-from numbers import Real
+from numbers import Real, Integral
 
 import numpy as np
 from scipy import sparse
@@ -130,6 +129,7 @@ def _yield_checks(estimator):
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
     yield check_estimators_pickle
+    yield partial(check_estimators_pickle, readonly_memmap=True)
 
     yield check_estimator_get_tags_default_keys
 
@@ -676,7 +676,7 @@ def _set_checking_parameters(estimator):
             estimator.set_params(max_iter=500)
         # DictionaryLearning
         if name == "DictionaryLearning":
-            estimator.set_params(max_iter=200, transform_algorithm="lasso_lars")
+            estimator.set_params(max_iter=20, transform_algorithm="lasso_lars")
         # MiniBatchNMF
         if estimator.__class__.__name__ == "MiniBatchNMF":
             estimator.set_params(max_iter=20, fresh_restarts=True)
@@ -1434,7 +1434,7 @@ def check_fit2d_1sample(name, estimator_orig):
 
     # min_cluster_size cannot be less than the data size for OPTICS.
     if name == "OPTICS":
-        estimator.set_params(min_samples=1)
+        estimator.set_params(min_samples=1.0)
 
     # perplexity cannot be more than the number of samples for TSNE.
     if name == "TSNE":
@@ -1716,7 +1716,7 @@ def check_fit_score_takes_y(name, estimator_orig):
             func(X, y)
             args = [p.name for p in signature(func).parameters.values()]
             if args[0] == "self":
-                # if_delegate_has_method makes methods into functions
+                # available_if makes methods into functions
                 # with an explicit "self", so need to shift arguments
                 args = args[1:]
             assert args[1] in ["y", "Y"], (
@@ -1871,7 +1871,7 @@ def check_nonsquare_error(name, estimator_orig):
 
 
 @ignore_warnings
-def check_estimators_pickle(name, estimator_orig):
+def check_estimators_pickle(name, estimator_orig, readonly_memmap=False):
     """Test that we can pickle all estimators."""
     check_methods = ["predict", "transform", "decision_function", "predict_proba"]
 
@@ -1900,16 +1900,19 @@ def check_estimators_pickle(name, estimator_orig):
     set_random_state(estimator)
     estimator.fit(X, y)
 
-    # pickle and unpickle!
-    pickled_estimator = pickle.dumps(estimator)
-    module_name = estimator.__module__
-    if module_name.startswith("sklearn.") and not (
-        "test_" in module_name or module_name.endswith("_testing")
-    ):
-        # strict check for sklearn estimators that are not implemented in test
-        # modules.
-        assert b"version" in pickled_estimator
-    unpickled_estimator = pickle.loads(pickled_estimator)
+    if readonly_memmap:
+        unpickled_estimator = create_memmap_backed_data(estimator)
+    else:
+        # pickle and unpickle!
+        pickled_estimator = pickle.dumps(estimator)
+        module_name = estimator.__module__
+        if module_name.startswith("sklearn.") and not (
+            "test_" in module_name or module_name.endswith("_testing")
+        ):
+            # strict check for sklearn estimators that are not implemented in test
+            # modules.
+            assert b"version" in pickled_estimator
+        unpickled_estimator = pickle.loads(pickled_estimator)
 
     result = dict()
     for method in check_methods:
@@ -3297,18 +3300,25 @@ def check_parameters_default_constructible(name, Estimator):
                 tuple,
                 type(None),
                 type,
-                types.FunctionType,
-                joblib.Memory,
             }
             # Any numpy numeric such as np.int32.
             allowed_types.update(np.core.numerictypes.allTypes.values())
-            assert type(init_param.default) in allowed_types, (
+
+            allowed_value = (
+                type(init_param.default) in allowed_types
+                or
+                # Although callables are mutable, we accept them as argument
+                # default value and trust that neither the implementation of
+                # the callable nor of the estimator changes the state of the
+                # callable.
+                callable(init_param.default)
+            )
+
+            assert allowed_value, (
                 f"Parameter '{init_param.name}' of estimator "
                 f"'{Estimator.__name__}' is of type "
-                f"{type(init_param.default).__name__} which is not "
-                "allowed. All init parameters have to be immutable to "
-                "make cloning possible. Therefore we restrict the set of "
-                "legal types to "
+                f"{type(init_param.default).__name__} which is not allowed. "
+                f"'{init_param.name}' must be a callable or must be of type "
                 f"{set(type.__name__ for type in allowed_types)}."
             )
             if init_param.name not in params.keys():
@@ -4145,6 +4155,20 @@ def check_param_validation(name, estimator_orig):
             # This parameter is not validated
             continue
 
+        # Mixing an interval of reals and an interval of integers must be avoided.
+        if any(
+            isinstance(constraint, Interval) and constraint.type == Integral
+            for constraint in constraints
+        ) and any(
+            isinstance(constraint, Interval) and constraint.type == Real
+            for constraint in constraints
+        ):
+            raise ValueError(
+                f"The constraint for parameter {param_name} of {name} can't have a mix"
+                " of intervals of Integral and Real types. Use the type RealNotInt"
+                " instead of Real."
+            )
+
         match = rf"The '{param_name}' parameter of {name} must be .* Got .* instead."
         err_msg = (
             f"{name} does not raise an informative error message when the "
@@ -4178,7 +4202,7 @@ def check_param_validation(name, estimator_orig):
 
         for constraint in constraints:
             try:
-                bad_value = generate_invalid_param_val(constraint, constraints)
+                bad_value = generate_invalid_param_val(constraint)
             except NotImplementedError:
                 continue
 
@@ -4224,9 +4248,14 @@ def check_set_output_transform(name, transformer_orig):
     def fit_transform(est):
         return est.fit_transform(X, y)
 
-    transform_methods = [fit_then_transform, fit_transform]
-    for transform_method in transform_methods:
+    transform_methods = {
+        "transform": fit_then_transform,
+        "fit_transform": fit_transform,
+    }
+    for name, transform_method in transform_methods.items():
         transformer = clone(transformer)
+        if not hasattr(transformer, name):
+            continue
         X_trans_no_setting = transform_method(transformer)
 
         # Auto wrapping only wraps the first array
@@ -4259,29 +4288,31 @@ def _output_from_fit_transform(transformer, name, X, df, y):
         ("fit.transform/array/df", X, df),
         ("fit.transform/array/array", X, X),
     ]
-    for (
-        case,
-        data_fit,
-        data_transform,
-    ) in cases:
-        transformer.fit(data_fit, y)
-        if name in CROSS_DECOMPOSITION:
-            X_trans, _ = transformer.transform(data_transform, y)
-        else:
-            X_trans = transformer.transform(data_transform)
-        outputs[case] = (X_trans, transformer.get_feature_names_out())
+    if all(hasattr(transformer, meth) for meth in ["fit", "transform"]):
+        for (
+            case,
+            data_fit,
+            data_transform,
+        ) in cases:
+            transformer.fit(data_fit, y)
+            if name in CROSS_DECOMPOSITION:
+                X_trans, _ = transformer.transform(data_transform, y)
+            else:
+                X_trans = transformer.transform(data_transform)
+            outputs[case] = (X_trans, transformer.get_feature_names_out())
 
     # fit_transform case:
     cases = [
         ("fit_transform/df", df),
         ("fit_transform/array", X),
     ]
-    for case, data in cases:
-        if name in CROSS_DECOMPOSITION:
-            X_trans, _ = transformer.fit_transform(data, y)
-        else:
-            X_trans = transformer.fit_transform(data, y)
-        outputs[case] = (X_trans, transformer.get_feature_names_out())
+    if hasattr(transformer, "fit_transform"):
+        for case, data in cases:
+            if name in CROSS_DECOMPOSITION:
+                X_trans, _ = transformer.fit_transform(data, y)
+            else:
+                X_trans = transformer.fit_transform(data, y)
+            outputs[case] = (X_trans, transformer.get_feature_names_out())
 
     return outputs
 

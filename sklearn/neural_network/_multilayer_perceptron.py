@@ -575,7 +575,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 )
 
         # early_stopping in partial_fit doesn't make sense
-        early_stopping = self.early_stopping and not incremental
+        if self.early_stopping and incremental:
+            raise ValueError("partial_fit does not support early_stopping=True")
+        early_stopping = self.early_stopping
         if early_stopping:
             # don't stratify in multilabel classification
             should_stratify = is_classifier(self) and self.n_outputs_ == 1
@@ -607,6 +609,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
         try:
+            self.n_iter_ = 0
             for it in range(self.max_iter):
                 if self.shuffle:
                     # Only shuffle the sample indices instead of X and y to
@@ -1302,7 +1305,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
-        If the solver is 'lbfgs', the classifier will not use minibatch.
+        If the solver is 'lbfgs', the regressor will not use minibatch.
         When set to "auto", `batch_size=min(200, n_samples)`.
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default='constant'
@@ -1365,7 +1368,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         previous solution. See :term:`the Glossary <warm_start>`.
 
     momentum : float, default=0.9
-        Momentum for gradient descent update.  Should be between 0 and 1. Only
+        Momentum for gradient descent update. Should be between 0 and 1. Only
         used when solver='sgd'.
 
     nesterovs_momentum : bool, default=True
@@ -1374,10 +1377,10 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
-        score is not improving. If set to true, it will automatically set
-        aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least ``tol`` for
-        ``n_iter_no_change`` consecutive epochs.
+        score is not improving. If set to True, it will automatically set
+        aside ``validation_fraction`` of training data as validation and
+        terminate training when validation score is not improving by at
+        least ``tol`` for ``n_iter_no_change`` consecutive epochs.
         Only effective when solver='sgd' or 'adam'.
 
     validation_fraction : float, default=0.1
@@ -1404,7 +1407,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     max_fun : int, default=15000
         Only used when solver='lbfgs'. Maximum number of function calls.
-        The solver iterates until convergence (determined by 'tol'), number
+        The solver iterates until convergence (determined by ``tol``), number
         of iterations reaches max_iter, or this number of function calls.
         Note that number of function calls will be greater than or equal to
         the number of iterations for the MLPRegressor.
@@ -1418,22 +1421,26 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     best_loss_ : float
         The minimum loss reached by the solver throughout fitting.
-        If `early_stopping=True`, this attribute is set ot `None`. Refer to
+        If `early_stopping=True`, this attribute is set to `None`. Refer to
         the `best_validation_score_` fitted attribute instead.
+        Only accessible when solver='sgd' or 'adam'.
 
     loss_curve_ : list of shape (`n_iter_`,)
         Loss value evaluated at the end of each training step.
         The ith element in the list represents the loss at the ith iteration.
+        Only accessible when solver='sgd' or 'adam'.
 
     validation_scores_ : list of shape (`n_iter_`,) or None
         The score at each iteration on a held-out validation set. The score
         reported is the R2 score. Only available if `early_stopping=True`,
         otherwise the attribute is set to `None`.
+        Only accessible when solver='sgd' or 'adam'.
 
     best_validation_score_ : float or None
         The best validation score (i.e. R2 score) that triggered the
         early stopping. Only available if `early_stopping=True`, otherwise the
         attribute is set to `None`.
+        Only accessible when solver='sgd' or 'adam'.
 
     t_ : int
         The number of training samples seen by the solver during fitting.

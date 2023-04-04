@@ -1,4 +1,4 @@
-{% if theme_google_analytics|tobool %}
+{% if theme_legacy_google_analytics|tobool %}
 <script>
     window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
     ga('create', 'UA-22606712-2', 'auto');
@@ -6,6 +6,11 @@
     ga('send', 'pageview');
 </script>
 <script async src='https://www.google-analytics.com/analytics.js'></script>
+{% endif %}
+
+{% if theme_analytics|tobool %}
+<script defer data-domain="scikit-learn.org" src="https://views.scientific-python.org/js/script.js">
+</script>
 {% endif %}
 
 <script>
@@ -67,78 +72,6 @@ $(document).ready(function() {
 			    this.getAttribute('id') +
 			    '" title="Permalink to this term">¶</a>');
 	});
-
-{%- if pagename != 'index' and pagename != 'documentation' %}
-  /*** Hide navbar when scrolling down ***/
-  // Returns true when headerlink target matches hash in url
-  (function() {
-    hashTargetOnTop = function() {
-        var hash = window.location.hash;
-        if ( hash.length < 2 ) { return false; }
-
-        var target = document.getElementById( hash.slice(1) );
-        if ( target === null ) { return false; }
-
-        var top = target.getBoundingClientRect().top;
-        return (top < 2) && (top > -2);
-    };
-
-    // Hide navbar on load if hash target is on top
-    var navBar = document.getElementById("navbar");
-    var navBarToggler = document.getElementById("sk-navbar-toggler");
-    var navBarHeightHidden = "-" + navBar.getBoundingClientRect().height + "px";
-    var $window = $(window);
-
-    hideNavBar = function() {
-        navBar.style.top = navBarHeightHidden;
-    };
-
-    showNavBar = function() {
-        navBar.style.top = "0";
-    }
-
-    if (hashTargetOnTop()) {
-        hideNavBar()
-    }
-
-    var prevScrollpos = window.pageYOffset;
-    hideOnScroll = function(lastScrollTop) {
-        if (($window.width() < 768) && (navBarToggler.getAttribute("aria-expanded") === 'true')) {
-            return;
-        }
-        if (lastScrollTop > 2 && (prevScrollpos <= lastScrollTop) || hashTargetOnTop()){
-            hideNavBar()
-        } else {
-            showNavBar()
-        }
-        prevScrollpos = lastScrollTop;
-    };
-
-    /*** high performance scroll event listener***/
-    var raf = window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
-        window.oRequestAnimationFrame;
-    var lastScrollTop = $window.scrollTop();
-
-    if (raf) {
-        loop();
-    }
-
-    function loop() {
-        var scrollTop = $window.scrollTop();
-        if (lastScrollTop === scrollTop) {
-            raf(loop);
-            return;
-        } else {
-            lastScrollTop = scrollTop;
-            hideOnScroll(lastScrollTop);
-            raf(loop);
-        }
-    }
-  })();
-{%- endif %}
 });
 
 </script>

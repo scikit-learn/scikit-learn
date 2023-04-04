@@ -4,29 +4,29 @@
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
-  - numpy
+  - python=3.8
+  - numpy=1.17.3  # min
   - blas
-  - scipy
-  - cython
+  - scipy=1.5.0  # min
+  - cython=0.29.33  # min
   - joblib
   - threadpoolctl
-  - matplotlib
-  - pandas
+  - matplotlib=3.1.3  # min
+  - pandas=1.0.5  # min
   - pyamg
   - pytest
   - pytest-xdist=2.5.0
   - pillow
-  - scikit-image
+  - scikit-image=0.16.2  # min
   - seaborn
   - memory_profiler
   - compilers
-  - sphinx
-  - sphinx-gallery
-  - numpydoc
-  - sphinx-prompt
-  - plotly
+  - sphinx=4.0.1  # min
+  - sphinx-gallery=0.7.0  # min
+  - numpydoc=1.2.0  # min
+  - sphinx-prompt=1.3.0  # min
+  - plotly=5.10.0  # min
   - pooch
   - pip
   - pip:
-    - sphinxext-opengraph
+    - sphinxext-opengraph==0.4.2  # min

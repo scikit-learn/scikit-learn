@@ -11,7 +11,7 @@ import numpy.ma as ma
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils._param_validation import StrOptions, Hidden
+from ..utils._param_validation import StrOptions, Hidden, MissingValues
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
@@ -78,7 +78,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        "missing_values": ["missing_values"],
+        "missing_values": [MissingValues()],
         "add_indicator": ["boolean"],
         "keep_empty_features": ["boolean"],
     }
@@ -800,7 +800,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        "missing_values": [numbers.Real, numbers.Integral, str, None],
+        "missing_values": [MissingValues()],
         "features": [StrOptions({"missing-only", "all"})],
         "sparse": ["boolean", StrOptions({"auto"})],
         "error_on_new": ["boolean"],
@@ -937,6 +937,9 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         # in the Imputer calling MissingIndicator
         if not self._precomputed:
             X = self._validate_input(X, in_fit=True)
+        else:
+            # only create `n_features_in_` in the precomputed case
+            self._check_n_features(X, reset=True)
 
         self._n_features = X.shape[1]
 
@@ -1054,6 +1057,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(self, input_features)
         prefix = self.__class__.__name__.lower()
         return np.asarray(
