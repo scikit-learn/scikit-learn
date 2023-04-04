@@ -116,7 +116,6 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.kmeans_plusplus",
     "sklearn.cluster.cluster_optics_xi",
     "sklearn.cluster.ward_tree",
-    "sklearn.compose.make_column_transformer",
     "sklearn.covariance.empirical_covariance",
     "sklearn.covariance.shrunk_covariance",
     "sklearn.datasets.dump_svmlight_file",
