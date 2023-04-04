@@ -429,8 +429,10 @@ def nan_euclidean_distances(
     squared : bool, default=False
         Return squared Euclidean distances.
 
-    missing_values : np.nan or int, default=np.nan
-        Representation of missing value.
+    missing_values : int, float, str, np.nan or None, default=np.nan
+        Representation of missing value. For pandas' dataframes with
+        nullable integer dtypes with missing values, `missing_values`
+        should be set to np.nan, since `pd.NA` will be converted to np.nan.
 
     copy : bool, default=True
         Make and use a deep copy of X and Y (if Y exists).
