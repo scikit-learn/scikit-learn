@@ -89,7 +89,7 @@ conda_build_metadata_list = [
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies
-        + ["ccache", "pytorch", "pytorch-cpu"],
+        + ["ccache", "pytorch", "pytorch-cpu", "array-api-compat"],
         "package_constraints": {
             "blas": "[build=mkl]",
             "pytorch": "1.13",
