@@ -1,0 +1,27 @@
+# Create Github Actions workflow that checks upstream scikit-learn 'main' branch and
+# creates or updates
+# an existing pull request to https://github.com/neurodata/scikit-learn:fork.
+# Runs the check weekly.
+# Creates a pull request if there are changes.
+
+# name: Check upstream scikit-learn
+
+# on:
+#   schedule:
+#     - cron: '0 0 * * 0'
+
+# jobs:
+#   check-upstream:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
+#       - name: Check upstream scikit-learn
+#         uses: neurodata/check-upstream@main
+#         with:
+#           upstream: scikit-learn/scikit-learn
+#           fork: neurodata/scikit-learn
+#           branch: fork
+#           token: ${{ secrets.GITHUB_TOKEN }}
+
+# # Creates a pull request if there are changes.
+
