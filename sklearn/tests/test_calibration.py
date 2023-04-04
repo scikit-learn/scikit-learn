@@ -25,7 +25,7 @@ from sklearn.ensemble import (
     RandomForestClassifier,
     VotingClassifier,
 )
-from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline, make_pipeline
@@ -173,7 +173,7 @@ def test_parallel_execution(data, method, ensemble):
     X, y = data
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-    estimator = LinearSVC(random_state=42)
+    estimator = make_pipeline(StandardScaler(), LinearSVC(random_state=42))
 
     cal_clf_parallel = CalibratedClassifierCV(
         estimator, method=method, n_jobs=2, ensemble=ensemble
@@ -401,26 +401,6 @@ def test_calibration_curve():
         calibration_curve(y_true2, y_pred2, strategy="percentile")
 
 
-# TODO(1.3): Remove this test.
-def test_calibration_curve_with_unnormalized_proba():
-    """Tests the `normalize` parameter of `calibration_curve`"""
-    y_true = np.array([0, 0, 0, 1, 1, 1])
-    y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
-
-    # Ensure `normalize` == False raises a FutureWarning.
-    with pytest.warns(FutureWarning):
-        calibration_curve(y_true, y_pred, n_bins=2, normalize=False)
-
-    # Ensure `normalize` == True raises a FutureWarning and behaves as expected.
-    with pytest.warns(FutureWarning):
-        prob_true_unnormalized, prob_pred_unnormalized = calibration_curve(
-            y_true, y_pred * 2, n_bins=2, normalize=True
-        )
-        prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=2)
-        assert_almost_equal(prob_true, prob_true_unnormalized)
-        assert_almost_equal(prob_pred, prob_pred_unnormalized)
-
-
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration_nan_imputer(ensemble):
     """Test that calibration can accept nan"""
@@ -613,42 +593,6 @@ def iris_data():
 def iris_data_binary(iris_data):
     X, y = iris_data
     return X[y < 2], y[y < 2]
-
-
-def test_calibration_display_validation(pyplot, iris_data, iris_data_binary):
-    X, y = iris_data
-    X_binary, y_binary = iris_data_binary
-
-    reg = LinearRegression().fit(X, y)
-    msg = "'estimator' should be a fitted classifier"
-    with pytest.raises(ValueError, match=msg):
-        CalibrationDisplay.from_estimator(reg, X, y)
-
-    clf = LinearSVC().fit(X, y)
-    msg = "response method predict_proba is not defined in"
-    with pytest.raises(ValueError, match=msg):
-        CalibrationDisplay.from_estimator(clf, X, y)
-
-    clf = LogisticRegression()
-    with pytest.raises(NotFittedError):
-        CalibrationDisplay.from_estimator(clf, X, y)
-
-
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
-def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
-    X, y = iris_data
-    clf = DecisionTreeClassifier()
-    clf.fit(X, y)
-    y_prob = clf.predict_proba(X)
-
-    if constructor_name == "from_estimator":
-        msg = "to be a binary classifier, but got"
-        with pytest.raises(ValueError, match=msg):
-            CalibrationDisplay.from_estimator(clf, X, y)
-    else:
-        msg = "y should be a 1d array, got an array of shape"
-        with pytest.raises(ValueError, match=msg):
-            CalibrationDisplay.from_predictions(y, y_prob)
 
 
 @pytest.mark.parametrize("n_bins", [5, 10])
@@ -974,23 +918,6 @@ def test_calibration_without_sample_weight_base_estimator(data):
         pc_clf.fit(X, y, sample_weight=sample_weight)
 
 
-def test_calibration_with_fit_params_inconsistent_length(data):
-    """fit_params having different length than data should raise the
-    correct error message.
-    """
-    X, y = data
-    fit_params = {"a": y[:5]}
-    clf = CheckingClassifier(expected_fit_params=fit_params)
-    pc_clf = CalibratedClassifierCV(clf)
-
-    msg = (
-        r"Found input variables with inconsistent numbers of "
-        r"samples: \[" + str(N_SAMPLES) + r", 5\]"
-    )
-    with pytest.raises(ValueError, match=msg):
-        pc_clf.fit(X, y, **fit_params)
-
-
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensemble):
@@ -1054,3 +981,17 @@ def test_calibrated_classifier_deprecation_base_estimator(data):
     warn_msg = "`base_estimator` was renamed to `estimator`"
     with pytest.warns(FutureWarning, match=warn_msg):
         calibrated_classifier.fit(*data)
+
+
+def test_calibration_with_non_sample_aligned_fit_param(data):
+    """Check that CalibratedClassifierCV does not enforce sample alignment
+    for fit parameters."""
+
+    class TestClassifier(LogisticRegression):
+        def fit(self, X, y, sample_weight=None, fit_param=None):
+            assert fit_param is not None
+            return super().fit(X, y, sample_weight=sample_weight)
+
+    CalibratedClassifierCV(estimator=TestClassifier()).fit(
+        *data, fit_param=np.ones(len(data[1]) + 1)
+    )

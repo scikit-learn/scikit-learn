@@ -575,7 +575,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 )
 
         # early_stopping in partial_fit doesn't make sense
-        early_stopping = self.early_stopping and not incremental
+        if self.early_stopping and incremental:
+            raise ValueError("partial_fit does not support early_stopping=True")
+        early_stopping = self.early_stopping
         if early_stopping:
             # don't stratify in multilabel classification
             should_stratify = is_classifier(self) and self.n_outputs_ == 1
@@ -607,6 +609,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
         try:
+            self.n_iter_ = 0
             for it in range(self.max_iter):
                 if self.shuffle:
                     # Only shuffle the sample indices instead of X and y to

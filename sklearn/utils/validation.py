@@ -9,7 +9,7 @@
 #          Sylvain Marie
 # License: BSD 3 clause
 
-from functools import wraps
+from functools import reduce, wraps
 import warnings
 import numbers
 import operator
@@ -31,6 +31,7 @@ from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 from ..utils._array_api import get_namespace
 from ..utils._array_api import _asarray_with_order
+from ..utils._array_api import _is_numpy_namespace
 from ._isfinite import cy_isfinite, FiniteStatus
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
@@ -111,7 +112,7 @@ def _assert_all_finite(
             raise ValueError("Input contains NaN")
 
     # We need only consider float arrays, hence can early return for all else.
-    if X.dtype.kind not in "fc":
+    if not xp.isdtype(X.dtype, ("real floating", "complex floating")):
         return
 
     # First try an O(n) time, O(1) space solution for the common case that
@@ -626,6 +627,15 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
     return False
 
 
+def _is_extension_array_dtype(array):
+    try:
+        from pandas.api.types import is_extension_array_dtype
+
+        return is_extension_array_dtype(array)
+    except ImportError:
+        return False
+
+
 def check_array(
     array,
     accept_sparse=False,
@@ -750,7 +760,7 @@ def check_array(
     dtype_numeric = isinstance(dtype, str) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
-    if not hasattr(dtype_orig, "kind"):
+    if not is_array_api and not hasattr(dtype_orig, "kind"):
         # not a data type (e.g. a column named dtype in a pandas DataFrame)
         dtype_orig = None
 
@@ -776,8 +786,13 @@ def check_array(
         )
         if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
+        elif pandas_requires_conversion and any(d == object for d in dtypes_orig):
+            # Force object if any of the dtypes is an object
+            dtype_orig = object
 
-    elif hasattr(array, "iloc") and hasattr(array, "dtype"):
+    elif (_is_extension_array_dtype(array) or hasattr(array, "iloc")) and hasattr(
+        array, "dtype"
+    ):
         # array is a pandas series
         pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
         if isinstance(array.dtype, np.dtype):
@@ -817,6 +832,10 @@ def check_array(
                 force_all_finite
             )
         )
+
+    if dtype is not None and _is_numpy_namespace(xp):
+        # convert to dtype object to conform to Array API to be use `xp.isdtype` later
+        dtype = np.dtype(dtype)
 
     estimator_name = _check_estimator_name(estimator)
     context = " by %s" % estimator_name if estimator is not None else ""
@@ -861,12 +880,12 @@ def check_array(
         with warnings.catch_warnings():
             try:
                 warnings.simplefilter("error", ComplexWarning)
-                if dtype is not None and np.dtype(dtype).kind in "iu":
+                if dtype is not None and xp.isdtype(dtype, "integral"):
                     # Conversion float -> int should not contain NaN or
                     # inf (numpy#14412). We cannot use casting='safe' because
                     # then conversion float -> int would be disallowed.
                     array = _asarray_with_order(array, order=order, xp=xp)
-                    if array.dtype.kind == "f":
+                    if xp.isdtype(array.dtype, ("real floating", "complex floating")):
                         _assert_all_finite(
                             array,
                             allow_nan=False,
@@ -973,8 +992,11 @@ def _check_large_sparse(X, accept_large_sparse=False):
             indices_datatype = getattr(X, key).dtype
             if indices_datatype not in supported_indices:
                 raise ValueError(
-                    "Only sparse matrices with 32-bit integer"
-                    " indices are accepted. Got %s indices." % indices_datatype
+                    "Only sparse matrices with 32-bit integer indices are accepted."
+                    f" Got {indices_datatype} indices. Please do report a minimal"
+                    " reproducer on scikit-learn issue tracker so that support for"
+                    " your use-case can be studied by maintainers. See:"
+                    " https://scikit-learn.org/dev/developers/minimal_reproducer.html"
                 )
 
 
@@ -1187,7 +1209,7 @@ def column_or_1d(y, *, dtype=None, warn=False):
 
     shape = y.shape
     if len(shape) == 1:
-        return _asarray_with_order(xp.reshape(y, -1), order="C", xp=xp)
+        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
@@ -1197,7 +1219,7 @@ def column_or_1d(y, *, dtype=None, warn=False):
                 DataConversionWarning,
                 stacklevel=2,
             )
-        return _asarray_with_order(xp.reshape(y, -1), order="C", xp=xp)
+        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
 
     raise ValueError(
         "y should be a 1d array, got an array of shape {} instead.".format(shape)
@@ -1827,6 +1849,52 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
     )
 
 
+def _check_response_method(estimator, response_method):
+    """Check if `response_method` is available in estimator and return it.
+
+    .. versionadded:: 1.3
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        Classifier or regressor to check.
+
+    response_method : {"predict_proba", "decision_function", "predict"} or \
+            list of such str
+        Specifies the response method to use get prediction from an estimator
+        (i.e. :term:`predict_proba`, :term:`decision_function` or
+        :term:`predict`). Possible choices are:
+        - if `str`, it corresponds to the name to the method to return;
+        - if a list of `str`, it provides the method names in order of
+          preference. The method returned corresponds to the first method in
+          the list and which is implemented by `estimator`.
+
+    Returns
+    -------
+    prediction_method : callable
+        Prediction method of estimator.
+
+    Raises
+    ------
+    AttributeError
+        If `response_method` is not available in `estimator`.
+    """
+    if isinstance(response_method, str):
+        list_methods = [response_method]
+    else:
+        list_methods = response_method
+
+    prediction_method = [getattr(estimator, method, None) for method in list_methods]
+    prediction_method = reduce(lambda x, y: x or y, prediction_method)
+    if prediction_method is None:
+        raise AttributeError(
+            f"{estimator.__class__.__name__} has none of the following attributes: "
+            f"{', '.join(list_methods)}."
+        )
+
+    return prediction_method
+
+
 def _check_fit_params(X, fit_params, indices=None):
     """Check and validate the parameters passed during `fit`.
 
@@ -2082,3 +2150,55 @@ def _check_monotonic_cst(estimator, monotonic_cst=None):
                 f"X has {estimator.n_features_in_} features."
             )
     return monotonic_cst
+
+
+def _check_pos_label_consistency(pos_label, y_true):
+    """Check if `pos_label` need to be specified or not.
+
+    In binary classification, we fix `pos_label=1` if the labels are in the set
+    {-1, 1} or {0, 1}. Otherwise, we raise an error asking to specify the
+    `pos_label` parameters.
+
+    Parameters
+    ----------
+    pos_label : int, str or None
+        The positive label.
+    y_true : ndarray of shape (n_samples,)
+        The target vector.
+
+    Returns
+    -------
+    pos_label : int
+        If `pos_label` can be inferred, it will be returned.
+
+    Raises
+    ------
+    ValueError
+        In the case that `y_true` does not have label in {-1, 1} or {0, 1},
+        it will raise a `ValueError`.
+    """
+    # ensure binary classification if pos_label is not specified
+    # classes.dtype.kind in ('O', 'U', 'S') is required to avoid
+    # triggering a FutureWarning by calling np.array_equal(a, b)
+    # when elements in the two arrays are not comparable.
+    classes = np.unique(y_true)
+    if pos_label is None and (
+        classes.dtype.kind in "OUS"
+        or not (
+            np.array_equal(classes, [0, 1])
+            or np.array_equal(classes, [-1, 1])
+            or np.array_equal(classes, [0])
+            or np.array_equal(classes, [-1])
+            or np.array_equal(classes, [1])
+        )
+    ):
+        classes_repr = ", ".join(repr(c) for c in classes)
+        raise ValueError(
+            f"y_true takes value in {{{classes_repr}}} and pos_label is not "
+            "specified: either make y_true take value in {0, 1} or "
+            "{-1, 1} or pass pos_label explicitly."
+        )
+    elif pos_label is None:
+        pos_label = 1
+
+    return pos_label

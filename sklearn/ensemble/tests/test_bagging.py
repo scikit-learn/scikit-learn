@@ -831,7 +831,7 @@ def test_bagging_regressor_with_missing_inputs():
             [2, None, 6],
             [2, np.nan, 6],
             [2, np.inf, 6],
-            [2, np.NINF, 6],
+            [2, -np.inf, 6],
         ]
     )
     y_values = [
@@ -872,7 +872,7 @@ def test_bagging_classifier_with_missing_inputs():
             [2, None, 6],
             [2, np.nan, 6],
             [2, np.inf, 6],
-            [2, np.NINF, 6],
+            [2, -np.inf, 6],
         ]
     )
     y = np.array([3, 6, 6, 6, 6])
