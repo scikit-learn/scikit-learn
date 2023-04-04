@@ -2006,6 +2006,13 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"stateless": True}
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "threshold": [Interval(Real, None, None, closed="neither")],
+        "copy": ["boolean"],
+    }
+)
 def binarize(X, *, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix.
 
