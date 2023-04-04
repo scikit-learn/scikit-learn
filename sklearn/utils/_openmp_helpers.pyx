@@ -33,7 +33,7 @@ cpdef _openmp_effective_n_threads(n_threads=None, only_physical_cores=True):
 
     - Raise a ValueError for ``n_threads = 0``.
 
-    Passing `only_physical_cores=False` flag makes it possible to use extra
+    Passing the `only_physical_cores=False` flag makes it possible to use extra
     threads for SMT/HyperThreading logical cores. It has been empirically
     observed that using as many threads as available SMT cores can slightly
     improve the performance in some cases, but can severely degrade
