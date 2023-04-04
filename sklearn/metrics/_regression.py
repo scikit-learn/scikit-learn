@@ -702,6 +702,18 @@ def _assemble_r2_explained_variance(
     return np.average(output_scores, weights=avg_weights)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average", "variance_weighted"}),
+            "array-like",
+        ],
+        "force_finite": ["boolean"],
+    }
+)
 def explained_variance_score(
     y_true,
     y_pred,
@@ -1500,12 +1512,22 @@ def d2_pinball_score(
     return np.average(output_scores, weights=avg_weights)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average"}),
+            "array-like",
+        ],
+    }
+)
 def d2_absolute_error_score(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
     """
-    :math:`D^2` regression score function, \
-    fraction of absolute error explained.
+    :math:`D^2` regression score function, fraction of absolute error explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
     arbitrarily worse). A model that always uses the empirical median of `y_true`
@@ -1524,7 +1546,7 @@ def d2_absolute_error_score(
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
