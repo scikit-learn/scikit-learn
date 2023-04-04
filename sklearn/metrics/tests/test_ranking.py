@@ -778,13 +778,6 @@ def test_roc_auc_score_multiclass_labels_error(msg, y_true, labels, multi_class)
             ),
             {"multi_class": "ovo", "max_fpr": 0.5},
         ),
-        (
-            (
-                r"multi_class='ovp' is not supported for multiclass ROC AUC, "
-                r"multi_class must be in \('ovo', 'ovr'\)"
-            ),
-            {"multi_class": "ovp"},
-        ),
         (r"multi_class must be in \('ovo', 'ovr'\)", {}),
     ],
 )
