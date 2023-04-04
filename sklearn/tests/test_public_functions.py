@@ -210,6 +210,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.pairwise.laplacian_kernel",
     "sklearn.metrics.pairwise.linear_kernel",
     "sklearn.metrics.pairwise.paired_euclidean_distances",
+    "sklearn.metrics.pairwise.paired_manhattan_distances",
     "sklearn.metrics.precision_recall_curve",
     "sklearn.metrics.precision_recall_fscore_support",
     "sklearn.metrics.precision_score",
