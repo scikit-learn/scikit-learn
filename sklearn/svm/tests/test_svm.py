@@ -1404,7 +1404,7 @@ def test_dual_auto_deprecation_warning(Estimator):
     svm = Estimator()
     msg = (
         "The default value of `dual` will change from `True` to `'auto'` in"
-        " 1.5. Set the value of `dual` explicitly to suppress the warning.",
+        " 1.5. Set the value of `dual` explicitly to suppress the warning."
     )
     with pytest.warns(FutureWarning, match=re.escape(msg)):
         svm.fit(X, Y)
