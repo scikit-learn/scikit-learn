@@ -210,7 +210,7 @@ cdef dict _compute_stability(
 ):
 
     cdef:
-        cnp.float64_t[::1] result, births_arr
+        cnp.float64_t[::1] result, births
         cnp.intp_t[:] parents = condensed_tree['parent']
 
         cnp.intp_t parent, cluster_size, result_index
@@ -222,13 +222,13 @@ cdef dict _compute_stability(
         cnp.intp_t num_clusters = np.max(parents) - smallest_cluster + 1
 
     largest_child = max(largest_child, smallest_cluster)
-    births_arr = np.full(largest_child + 1, np.nan, dtype=np.float64)
+    births = np.full(largest_child + 1, np.nan, dtype=np.float64)
 
     births = np.full(largest_child + 1, np.nan, dtype=np.float64)
     for condensed_node in condensed_tree:
-        births_arr[condensed_node.child] = condensed_node.value
+        births[condensed_node.child] = condensed_node.value
 
-    births_arr[smallest_cluster] = 0.0
+    births[smallest_cluster] = 0.0
 
     result = np.zeros(num_clusters, dtype=np.float64)
     for condensed_node in condensed_tree:
@@ -237,7 +237,7 @@ cdef dict _compute_stability(
         cluster_size = condensed_node.cluster_size
 
         result_index = parent - smallest_cluster
-        result[result_index] += (lambda_val - births_arr[parent]) * cluster_size
+        result[result_index] += (lambda_val - births[parent]) * cluster_size
 
     result_pre_dict = np.vstack(
         (
