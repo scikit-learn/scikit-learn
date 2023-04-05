@@ -1292,6 +1292,13 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True}
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "axis": [Options(Integral, {0, 1})],
+        "copy": ["boolean"],
+    }
+)
 def maxabs_scale(X, *, axis=0, copy=True):
     """Scale each feature to the [-1, 1] range without breaking the sparsity.
 
@@ -1306,7 +1313,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data.
 
-    axis : int, default=0
+    axis : {0, 1}, default=0
         Axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
 
@@ -1770,6 +1777,15 @@ def robust_scale(
     return X
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "norm": [StrOptions({"l1", "l2", "max"})],
+        "axis": [Options(Integral, {0, 1})],
+        "copy": ["boolean"],
+        "return_norm": ["boolean"],
+    }
+)
 def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     """Scale input vectors individually to unit norm (vector length).
 
@@ -1819,15 +1835,10 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
-    if norm not in ("l1", "l2", "max"):
-        raise ValueError("'%s' is not a supported norm" % norm)
-
     if axis == 0:
         sparse_format = "csc"
-    elif axis == 1:
+    else:  # axis == 1:
         sparse_format = "csr"
-    else:
-        raise ValueError("'%d' is not a supported axis" % axis)
 
     X = check_array(
         X,
@@ -2006,6 +2017,13 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"stateless": True}
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "threshold": [Interval(Real, None, None, closed="neither")],
+        "copy": ["boolean"],
+    }
+)
 def binarize(X, *, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix.
 

@@ -1122,7 +1122,7 @@ See the :ref:`visualizations` section of the user guide for further details.
 
 .. autosummary::
    :toctree: generated/
-   :template: display.rst
+   :template: display_all_class_methods.rst
 
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
