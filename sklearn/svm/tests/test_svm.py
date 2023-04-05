@@ -1401,7 +1401,7 @@ def test_dual_auto_deprecation_warning(Estimator):
 
 
 @pytest.mark.parametrize(
-"SVM, params",
+    "SVM, params",
     [
         (LinearSVC, {"loss": "squared_hinge", "dual": "auto"}),
         (LinearSVR, {"loss": "squared_epsilon_insensitive", "dual": "auto"}),
