@@ -628,12 +628,8 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
 
 
 def _is_extension_array_dtype(array):
-    try:
-        from pandas.api.types import is_extension_array_dtype
-
-        return is_extension_array_dtype(array)
-    except ImportError:
-        return False
+    # Pandas extension arrays have a dtype with an na_value
+    return hasattr(array, "dtype") and hasattr(array.dtype, "na_value")
 
 
 def check_array(
