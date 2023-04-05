@@ -79,7 +79,6 @@ def _make_unique(const floating[:] X,
         dtype = np.float64
 
     cdef floating[::1] y_out = np.empty(unique_values, dtype=dtype)
-    
     cdef floating[::1] x_out = np.empty_like(y_out)
     cdef floating[::1] weights_out = np.empty_like(y_out)
 
