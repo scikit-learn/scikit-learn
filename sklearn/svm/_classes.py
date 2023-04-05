@@ -216,7 +216,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         penalty="l2",
         loss="squared_hinge",
         *,
-        dual=True,
+        dual="warn",
         tol=1e-4,
         C=1.0,
         multi_class="ovr",
@@ -278,10 +278,6 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.classes_ = np.unique(y)
 
         if self.dual == "auto":
-            warnings.warn(
-                "The default value of dual will change from `True` to `'auto'` in 1.5.",
-                FutureWarning,
-            )
             if self.loss == "hinge":
                 self._dual = True
             elif self.loss == "squared_hinge" and self.penalty == "l1":
@@ -290,7 +286,8 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 self._dual = True if X.shape[0] < X.shape[1] else False
         elif self.dual == "warn":
             warnings.warn(
-                "The default value of dual will change from `True` to `'auto'` in 1.5.",
+                "The default value of `dual` will change from `True` to `'auto'` in 1.5. "
+                "Set the value of `dual` explicitly to suppress the warning.",
                 FutureWarning,
             )
             self._dual = True
@@ -495,7 +492,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         loss="epsilon_insensitive",
         fit_intercept=True,
         intercept_scaling=1.0,
-        dual=True,
+        dual="warn",
         verbose=0,
         random_state=None,
         max_iter=1000,
@@ -548,17 +545,14 @@ class LinearSVR(RegressorMixin, LinearModel):
         penalty = "l2"  # SVR only accepts l2 penalty
 
         if self.dual == "auto":
-            warnings.warn(
-                "The default value of dual will change from `True` to `'auto'` in 1.5.",
-                FutureWarning,
-            )
             if self.loss == "epsilon_insensitive":
                 self._dual = True
             else:
                 self._dual = True if X.shape[0] < X.shape[1] else False
         elif self.dual == "warn":
             warnings.warn(
-                "The default value of dual will change from `True` to `'auto'` in 1.5.",
+                "The default value of `dual` will change from `True` to `'auto'` in 1.5. "
+                "Set the value of `dual` explicitly to suppress the warning.",
                 FutureWarning,
             )
             self._dual = True
