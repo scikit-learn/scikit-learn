@@ -41,8 +41,8 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     dual : "auto" or bool, default=True
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
-        `dual="auto"` is equivalent to `dual=False` when
-        `n_samples > n_features` and `dual=True` otherwise.
+        `dual="auto"` will choose the best option considering `n_samples`,
+        `n_features`, `loss` and `penalty`.
 
         .. versionchanged:: 1.4
            The default value will change from `True` to `"auto"` in 1.5.
@@ -391,8 +391,8 @@ class LinearSVR(RegressorMixin, LinearModel):
     dual : "auto" or bool, default=True
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
-        `dual="auto"` is equivalent to `dual=False` when
-        `n_samples > n_features` and `dual=True` otherwise.
+        `dual="auto"` will choose the best option considering `n_samples`,
+        `n_features` and `loss`.
 
         .. versionchanged:: 1.4
            The default value will change from `True` to `"auto"` in 1.5.
