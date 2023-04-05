@@ -410,13 +410,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     )
                 routed_params = Bunch()
                 routed_params.splitter = Bunch(split={})  # no routing for splitter
-                routed_params.estimator = Bunch()
-                if sample_weight:
-                    routed_params.estimator = Bunch(
-                        fit={"sample_weight": sample_weight}
-                    )
-                else:
-                    routed_params.estimator = Bunch(fit={})
+                routed_params.estimator = Bunch(fit=fit_params)
+                if sample_weight is not None and supports_sw:
+                    routed_params.estimator.fit["sample_weight"] = sample_weight
 
             # Check that each cross-validation fold can have at least one
             # example per class
