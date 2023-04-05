@@ -29,9 +29,9 @@ on the same dataset using the knowledge of the labels.
 # This example uses real-world datasets available in :class:`sklearn.datasets`.
 # Due to computational constraints of the scikit-learn documentation, the sample
 # size of some datasets is reduced using a stratified
-# :class:`~sklearn.model_selection.train_test_split`.
-# After the data preprocessing, the datasets' targets will have two classes, 0
-# representing inliers and 1 representing outliers.
+# :class:`~sklearn.model_selection.train_test_split`. After the data
+# preprocessing, the datasets' targets will have two classes, 0 representing
+# inliers and 1 representing outliers.
 #
 # Different datasets require different preprocessing. For example tree based
 # models such as :class:`~sklearn.ensemble.IsolationForest` can deal with
@@ -212,7 +212,8 @@ for model_name in model_names:
 # The `Cardiotocography dataset <http://www.openml.org/d/1466>`_ is a multiclass
 # dataset of fetal cardiotocograms, the classes being the fetal heart rate (FHR)
 # pattern encoded with labels from 1 to 10. Here we set class 3 (the minority
-# class) to represent the outliers. It contains 30 numerical features.
+# class) to represent the outliers. It contains 30 numerical features, some of
+# which are binary encoded and some are continuous.
 
 # %%
 from sklearn.datasets import fetch_openml
@@ -239,11 +240,11 @@ for model_name in model_names:
 # Plot and interpret results
 # ==========================
 #
-# The algorithm performance relates to how good the true positive rate (TPR)
-# is at low value of the false positive rate (FPR). The best algorithms
-# have the curve on the top-left of the plot and the area under curve (AUC)
-# close to 1. The diagonal dashed line represents a random classification
-# of outliers and inliers.
+# The algorithm performance relates to how good the true positive rate (TPR) is
+# at low value of the false positive rate (FPR). The best algorithms have the
+# curve on the top-left of the plot and the area under curve (AUC) close to 1.
+# The diagonal dashed line represents a random classification of outliers and
+# inliers.
 
 # %%
 import math
