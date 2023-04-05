@@ -269,21 +269,11 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = (
-            MetadataRouter(owner=self.__class__.__name__).add(
-                estimator=self.estimator,
-                method_mapping=MethodMapping()
-                .add(callee="partial_fit", caller="partial_fit")
-                .add(callee="fit", caller="fit"),
-            )
-            # the fit method already accepts everything, therefore we don't
-            # specify parameters. The value passed to ``child`` needs to be the
-            # same as what's passed to ``add`` above, in this case
-            # `"estimator"`.
-            .warn_on(child="estimator", method="fit", params=None)
-            # the partial_fit method at the time of this change (v1.2) only
-            # supports sample_weight, therefore we only include this metadata.
-            .warn_on(child="estimator", method="partial_fit", params=["sample_weight"])
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping()
+            .add(callee="partial_fit", caller="partial_fit")
+            .add(callee="fit", caller="fit"),
         )
         return router
 
@@ -1087,13 +1077,9 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = (
-            MetadataRouter(owner=self.__class__.__name__)
-            .add(
-                estimator=self.base_estimator,
-                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
-            )
-            .warn_on(child="estimator", method="fit", params=None)
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            estimator=self.base_estimator,
+            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
         )
         return router
 
