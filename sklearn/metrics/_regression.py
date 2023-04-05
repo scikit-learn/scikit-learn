@@ -1172,6 +1172,13 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Poisson deviance regression loss.
 
