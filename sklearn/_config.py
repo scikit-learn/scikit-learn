@@ -15,6 +15,7 @@ _global_config = {
     "enable_cython_pairwise_dist": True,
     "array_api_dispatch": False,
     "transform_output": "default",
+    "enable_metadata_routing": False,
 }
 _threadlocal = threading.local()
 

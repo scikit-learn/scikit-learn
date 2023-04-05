@@ -4,6 +4,7 @@ from functools import partial
 
 import numpy as np
 import pytest
+from sklearn import config_context
 from sklearn.base import RegressorMixin, ClassifierMixin, BaseEstimator
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.exceptions import UnsetMetadataPassedError
@@ -221,12 +222,13 @@ METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATOR
 )
 def test_default_request(metaestimator):
     # Check that by default request is empty and the right type
-    cls = metaestimator["metaestimator"]
-    estimator = metaestimator["estimator"]()
-    estimator_name = metaestimator["estimator_name"]
-    instance = cls(**{estimator_name: estimator})
-    assert_request_is_empty(instance.get_metadata_routing())
-    assert isinstance(instance.get_metadata_routing(), MetadataRouter)
+    with config_context(enable_metadata_routing=True):
+        cls = metaestimator["metaestimator"]
+        estimator = metaestimator["estimator"]()
+        estimator_name = metaestimator["estimator_name"]
+        instance = cls(**{estimator_name: estimator})
+        assert_request_is_empty(instance.get_metadata_routing())
+        assert isinstance(instance.get_metadata_routing(), MetadataRouter)
 
 
 @pytest.mark.parametrize(
@@ -237,28 +239,29 @@ def test_default_request(metaestimator):
 def test_error_for_other_methods(metaestimator):
     # This test complements test_warning_for_indicated_methods but checks for
     # UnsetMetadataPassedError instead of FutureWarning
-    cls = metaestimator["metaestimator"]
-    estimator = metaestimator["estimator"]()
-    estimator_name = metaestimator["estimator_name"]
-    X = metaestimator["X"]
-    y = metaestimator["y"]
-    routing_methods = metaestimator["routing_methods"]
+    with config_context(enable_metadata_routing=True):
+        cls = metaestimator["metaestimator"]
+        estimator = metaestimator["estimator"]()
+        estimator_name = metaestimator["estimator_name"]
+        X = metaestimator["X"]
+        y = metaestimator["y"]
+        routing_methods = metaestimator["routing_methods"]
 
-    for method_name in routing_methods:
-        for key in ["sample_weight", "metadata"]:
-            val = {"sample_weight": sample_weight, "metadata": metadata}[key]
-            kwargs = {key: val}
-            msg = (
-                f"[{key}] are passed but are not explicitly set as requested or not for"
-                f" {estimator.__class__.__name__}.{method_name}"
-            )
+        for method_name in routing_methods:
+            for key in ["sample_weight", "metadata"]:
+                val = {"sample_weight": sample_weight, "metadata": metadata}[key]
+                kwargs = {key: val}
+                msg = (
+                    f"[{key}] are passed but are not explicitly set as requested or not"
+                    f" for {estimator.__class__.__name__}.{method_name}"
+                )
 
-            instance = cls(**{estimator_name: estimator})
-            if "fit" not in method_name:  # instance needs to be fitted first
-                instance.fit(X, y)
-            with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
-                method = getattr(instance, method_name)
-                method(X, y, **kwargs)
+                instance = cls(**{estimator_name: estimator})
+                if "fit" not in method_name:  # instance needs to be fitted first
+                    instance.fit(X, y)
+                with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
+                    method = getattr(instance, method_name)
+                    method(X, y, **kwargs)
 
 
 @pytest.mark.parametrize(
@@ -274,22 +277,23 @@ def test_setting_request_removes_warning_or_error(metaestimator):
         method = getattr(estimator, f"set_{method_name}_request")
         method(sample_weight=True, metadata=True)
 
-    cls = metaestimator["metaestimator"]
-    estimator_name = metaestimator["estimator_name"]
-    X = metaestimator["X"]
-    y = metaestimator["y"]
-    routing_methods = metaestimator["routing_methods"]
+    with config_context(enable_metadata_routing=True):
+        cls = metaestimator["metaestimator"]
+        estimator_name = metaestimator["estimator_name"]
+        X = metaestimator["X"]
+        y = metaestimator["y"]
+        routing_methods = metaestimator["routing_methods"]
 
-    for method_name in routing_methods:
-        estimator = metaestimator["estimator"]()
-        set_request(estimator, method_name)
-        instance = cls(**{estimator_name: estimator})
-        # lines below to ensure that there are no warnings
-        with warnings.catch_warnings(record=True) as rec:
-            method = getattr(instance, method_name)
-            method(X, y, sample_weight=sample_weight, metadata=metadata)
-            # Check that there was no FutureWarning about metadata. The exact
-            # error message is not checked on purpose, because if the message is
-            # changed without amending this test, the test would pass trivially.
-            future_warnings = [w for w in rec if isinstance(w, FutureWarning)]
-            assert not any("metadata" in w.message for w in future_warnings)
+        for method_name in routing_methods:
+            estimator = metaestimator["estimator"]()
+            set_request(estimator, method_name)
+            instance = cls(**{estimator_name: estimator})
+            # lines below to ensure that there are no warnings
+            with warnings.catch_warnings(record=True) as rec:
+                method = getattr(instance, method_name)
+                method(X, y, sample_weight=sample_weight, metadata=metadata)
+                # Check that there was no FutureWarning about metadata. The exact
+                # error message is not checked on purpose, because if the message is
+                # changed without amending this test, the test would pass trivially.
+                future_warnings = [w for w in rec if isinstance(w, FutureWarning)]
+                assert not any("metadata" in w.message for w in future_warnings)

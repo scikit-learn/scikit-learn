@@ -17,6 +17,7 @@ def test_config_context():
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
+        "enable_metadata_routing": False,
     }
 
     # Not using as a context manager affects nothing
@@ -33,6 +34,7 @@ def test_config_context():
             "pairwise_dist_chunk_size": 256,
             "enable_cython_pairwise_dist": True,
             "transform_output": "default",
+            "enable_metadata_routing": False,
         }
     assert get_config()["assume_finite"] is False
 
@@ -66,6 +68,7 @@ def test_config_context():
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
+        "enable_metadata_routing": False,
     }
 
     # No positional arguments
