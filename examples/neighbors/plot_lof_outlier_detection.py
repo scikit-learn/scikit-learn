@@ -66,7 +66,7 @@ from matplotlib.lines import Line2D
 scatter = plt.scatter(X[:, 0], X[:, 1], color="k", s=3.0)
 # plot circles with radius proportional to the outlier scores
 radius = (X_scores.max() - X_scores) / (X_scores.max() - X_scores.min())
-plt.scatter(
+scatter = plt.scatter(
     X[:, 0],
     X[:, 1],
     s=1000 * radius,
@@ -87,6 +87,13 @@ plt.axis("tight")
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))
 plt.xlabel("prediction errors: %d" % (n_errors))
-plt.legend([scatter, dummy], ["data points", "outlier scores"])
+marker_size = 20
+def update_legend_marker_size(handle, orig):
+    handle.update_from(orig)
+    handle.set_sizes([marker_size])
+
+plt.legend(
+    handler_map={scatter: HandlerPathCollection(update_func=update_legend_marker_size)}
+)
 plt.title("Local Outlier Factor (LOF)")
 plt.show()
