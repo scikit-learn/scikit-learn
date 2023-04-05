@@ -115,17 +115,11 @@ Usage examples:
     >>> clf = svm.SVC(random_state=0)
     >>> cross_val_score(clf, X, y, cv=5, scoring='recall_macro')
     array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
-    >>> model = svm.SVC()
-    >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
-    Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Use
-    sklearn.metrics.get_scorer_names() to get valid options.
 
 .. note::
 
-    The values listed by the ``ValueError`` exception correspond to the
-    functions measuring prediction accuracy described in the following
-    sections. You can retrieve the names of all available scorers by calling
+    If a wrong scoring name is passed, an ``InvalidParameterError`` is raised.
+    You can retrieve the names of all available scorers by calling
     :func:`~sklearn.metrics.get_scorer_names`.
 
 .. currentmodule:: sklearn.metrics
