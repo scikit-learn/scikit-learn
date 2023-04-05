@@ -1936,7 +1936,7 @@ class GroupShuffleSplit(ShuffleSplit):
 
         if pd.Series(groups).isna().sum() != 0:
             raise ValueError("Input groups contain NaN.")
-            
+
         groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
         classes, group_indices = np.unique(groups, return_inverse=True)
         for group_train, group_test in super()._iter_indices(X=classes):
