@@ -285,7 +285,6 @@ cdef list bfs_from_cluster_tree(
         cnp.ndarray[cnp.intp_t, ndim=1] children = condensed_tree['child']
         cnp.intp_t[:] parents = condensed_tree['parent']
 
-    process_queue
 
     while process_queue.shape[0] > 0:
         result.extend(process_queue.tolist())
