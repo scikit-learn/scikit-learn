@@ -23,6 +23,7 @@ from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..utils._param_validation import Interval, StrOptions
 from ..exceptions import ConvergenceWarning
+from ..utils._param_validation import validate_params
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
 
@@ -53,6 +54,17 @@ def _pinv2_old(a):
     return np.transpose(np.conjugate(np.dot(u, vh[:rank])))
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix"],
+        "mode": StrOptions({"A", "B"}),
+        "max_iter": "int",
+        "tol": "float",
+        "norm_y_weights": "boolean"
+    }
+)
+    
 def _get_first_singular_vectors_power_method(
     X, Y, mode="A", max_iter=500, tol=1e-06, norm_y_weights=False
 ):
