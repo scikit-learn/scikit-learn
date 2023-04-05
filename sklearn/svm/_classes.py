@@ -9,7 +9,7 @@ from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearM
 from ..utils import deprecated
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, Hidden
 
 
 class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
