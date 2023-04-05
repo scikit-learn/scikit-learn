@@ -33,7 +33,7 @@ from sklearn.svm import _libsvm  # type: ignore
 # TODO(1.5): Remove
 msg = (
     r"The default value of `dual` will change from `True` to `'auto'` in 1.5. "
-    r"Set the value of `dual` explicitly to suppress the warning.:FutureWarning",
+    r"Set the value of `dual` explicitly to suppress the warning.:FutureWarning"
 )
 pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
 
