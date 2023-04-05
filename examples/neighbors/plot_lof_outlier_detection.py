@@ -61,9 +61,16 @@ X_scores = clf.negative_outlier_factor_
 
 # %%
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
+from matplotlib.legend_handler import HandlerPathCollection
 
-scatter = plt.scatter(X[:, 0], X[:, 1], color="k", s=3.0)
+
+def update_legend_marker_size(handle, orig):
+    "Customize size of the legend marker"
+    handle.update_from(orig)
+    handle.set_sizes([20])
+
+
+plt.scatter(X[:, 0], X[:, 1], color="k", s=3.0, label="Data points")
 # plot circles with radius proportional to the outlier scores
 radius = (X_scores.max() - X_scores) / (X_scores.max() - X_scores.min())
 scatter = plt.scatter(
@@ -72,26 +79,12 @@ scatter = plt.scatter(
     s=1000 * radius,
     edgecolors="r",
     facecolors="none",
-)
-# Create dummy Line2D objects for legend
-dummy = Line2D(
-    [0],
-    [0],
-    marker="o",
-    markersize=10,
-    markeredgecolor="r",
-    markerfacecolor="none",
-    linestyle="none",
+    label="Outlier scores",
 )
 plt.axis("tight")
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))
 plt.xlabel("prediction errors: %d" % (n_errors))
-marker_size = 20
-def update_legend_marker_size(handle, orig):
-    handle.update_from(orig)
-    handle.set_sizes([marker_size])
-
 plt.legend(
     handler_map={scatter: HandlerPathCollection(update_func=update_legend_marker_size)}
 )
