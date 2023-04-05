@@ -391,8 +391,8 @@ def _convert_to_numpy(array, xp):
         return array.cpu().numpy()
     elif xp_name == "cupy.array_api":
         return array._array.get()
-    elif xp_name in {"array_api_compat.cupy", "cupy"}:
-        return array.get()  # pragma: nocover
+    elif xp_name in {"array_api_compat.cupy", "cupy"}:  # pragma: nocover
+        return array.get()
 
     return numpy.asarray(array)
 
