@@ -474,12 +474,12 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] do_labelling(
         if cluster != root_cluster:
             label = cluster_label_map[cluster]
         elif len(clusters) == 1 and allow_single_cluster:
+            # There can only be one parent
             parent_lambda = lambda_array[child_array == n]
-            max_child_lambda = lambda_array[parent_array == cluster].max()
-            threshold = (
-                1 / cluster_selection_epsilon if cluster_selection_epsilon != 0.0
-                else max_child_lambda
-            )
+            if cluster_selection_epsilon != 0.0:
+                threshold = 1 / cluster_selection_epsilon
+            else:
+                threshold = lambda_array[parent_array == cluster].max()
             if parent_lambda >= threshold:
                 label = cluster_label_map[cluster]
 
