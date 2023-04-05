@@ -266,6 +266,17 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         """
         self._validate_params()
 
+        X, y = self._validate_data(
+            X,
+            y,
+            accept_sparse="csr",
+            dtype=np.float64,
+            order="C",
+            accept_large_sparse=False,
+        )
+        check_classification_targets(y)
+        self.classes_ = np.unique(y)
+
         if self.dual == "auto":
             warnings.warn(
                 "The default value of dual will change from `True` to `'auto'` in 1.5.",
@@ -280,17 +291,6 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             self._dual = True
         else:
             self._dual = self.dual
-
-        X, y = self._validate_data(
-            X,
-            y,
-            accept_sparse="csr",
-            dtype=np.float64,
-            order="C",
-            accept_large_sparse=False,
-        )
-        check_classification_targets(y)
-        self.classes_ = np.unique(y)
 
         self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
@@ -532,6 +532,16 @@ class LinearSVR(RegressorMixin, LinearModel):
         """
         self._validate_params()
 
+        X, y = self._validate_data(
+            X,
+            y,
+            accept_sparse="csr",
+            dtype=np.float64,
+            order="C",
+            accept_large_sparse=False,
+        )
+        penalty = "l2"  # SVR only accepts l2 penalty
+
         if self.dual == "auto":
             warnings.warn(
                 "The default value of dual will change from `True` to `'auto'` in 1.5.",
@@ -547,15 +557,6 @@ class LinearSVR(RegressorMixin, LinearModel):
         else:
             self._dual = self.dual
 
-        X, y = self._validate_data(
-            X,
-            y,
-            accept_sparse="csr",
-            dtype=np.float64,
-            order="C",
-            accept_large_sparse=False,
-        )
-        penalty = "l2"  # SVR only accepts l2 penalty
         self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
             y,
