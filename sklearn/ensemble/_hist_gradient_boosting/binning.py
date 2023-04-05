@@ -275,7 +275,12 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         n_threads = _openmp_effective_n_threads(self.n_threads)
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order="F")
         _map_to_bins(
-            X, self.bin_thresholds_, self.missing_values_bin_idx_, n_threads, binned
+            X,
+            self.bin_thresholds_,
+            self.is_categorical_,
+            self.missing_values_bin_idx_,
+            n_threads,
+            binned,
         )
         return binned
 

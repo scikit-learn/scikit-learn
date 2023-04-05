@@ -11,7 +11,7 @@ import numpy.ma as ma
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils._param_validation import StrOptions, Hidden
+from ..utils._param_validation import StrOptions, Hidden, MissingValues
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
@@ -78,7 +78,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        "missing_values": ["missing_values"],
+        "missing_values": [MissingValues()],
         "add_indicator": ["boolean"],
         "keep_empty_features": ["boolean"],
     }
@@ -800,7 +800,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        "missing_values": [numbers.Real, numbers.Integral, str, None],
+        "missing_values": [MissingValues()],
         "features": [StrOptions({"missing-only", "all"})],
         "sparse": ["boolean", StrOptions({"auto"})],
         "error_on_new": ["boolean"],
