@@ -219,6 +219,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.pairwise.polynomial_kernel",
     "sklearn.metrics.pairwise.rbf_kernel",
     "sklearn.metrics.pairwise.sigmoid_kernel",
+    "sklearn.metrics.pair_confusion_matrix",
     "sklearn.metrics.precision_recall_curve",
     "sklearn.metrics.precision_recall_fscore_support",
     "sklearn.metrics.precision_score",
