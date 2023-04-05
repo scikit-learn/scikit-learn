@@ -268,15 +268,13 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         if self.dual == "auto":
             warnings.warn(
-                "The default value of dual will change "
-                "from `True` to `'auto'` in 1.5.",
+                "The default value of dual will change from `True` to `'auto'` in 1.5.",
                 FutureWarning
             )
             self._dual = True if X.shape[0] < X.shape[1] else False
         elif self.dual == "warn":
             warnings.warn(
-                "The default value of dual will change "
-                "from `True` to `'auto'` in 1.5.",
+                "The default value of dual will change from `True` to `'auto'` in 1.5.",
                 FutureWarning
             )
             self._dual = True
@@ -536,15 +534,13 @@ class LinearSVR(RegressorMixin, LinearModel):
 
         if self.dual == "auto":
             warnings.warn(
-                "The default value of dual will change "
-                "from `True` to `'auto'` in 1.5.",
+                "The default value of dual will change from `True` to `'auto'` in 1.5.",
                 FutureWarning
             )
             self._dual = True if X.shape[0] < X.shape[1] else False
         elif self.dual == "warn":
             warnings.warn(
-                "The default value of dual will change "
-                "from `True` to `'auto'` in 1.5.",
+                "The default value of dual will change from `True` to `'auto'` in 1.5.",
                 FutureWarning
             )
             self._dual = True
