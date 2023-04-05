@@ -1409,9 +1409,11 @@ def test_dual_auto_deprecation_warning(Estimator):
 )
 def test_dual_auto(SVM, params):
     svm = SVM(**params)
-    # N > M
-    svm.fit(X, Y)
-    assert svm._dual is False
-    # M > N
-    svm.fit(np.asarray(X).T, [1, 2])
-    assert svm._dual is True
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        # N > M
+        svm.fit(X, Y)
+        assert svm._dual is False
+        # M > N
+        svm.fit(np.asarray(X).T, [1, 2])
+        assert svm._dual is True
