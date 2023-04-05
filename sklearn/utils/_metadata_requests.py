@@ -6,13 +6,15 @@ Metadata Routing Utility
 # License: BSD 3 clause
 
 import inspect
+from collections import namedtuple
 from copy import deepcopy
 from enum import Enum
+from typing import Optional, Union
 from warnings import warn
-from collections import namedtuple
-from typing import Union, Optional
-from ._bunch import Bunch
+
+from .. import get_config
 from ..exceptions import UnsetMetadataPassedError
+from ._bunch import Bunch
 
 # This namedtuple is used to store a (mapping, routing) pair. Mapping is a
 # MethodMapping object, and routing is the output of `get_metadata_routing`.
@@ -22,6 +24,20 @@ RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
 # A namedtuple storing a single method route. A collection of these namedtuples
 # is stored in a MetadataRouter.
 MethodPair = namedtuple("MethodPair", ["callee", "caller"])
+
+
+def _routing_enabled():
+    """Return whether metadata routing is enabled.
+
+    .. versionadded:: 1.4
+
+    Returns
+    -------
+    enabled : bool
+        Whether metadata routing is enabled. If the config is not set, it
+        defaults to False.
+    """
+    return get_config().get("enable_metadata_routing", False)
 
 
 class RequestType(Enum):
@@ -868,8 +884,8 @@ class MetadataRouter:
             warn(
                 "You are passing metadata for which the request values are not"
                 f" explicitly set: {', '.join(warn_keys)}. From version"
-                f" {warn_on_params['raise_on']} this results in the following error:"
-                f" {str(e)}",
+                f" {warn_on_params['raise_on']} this results in the following"
+                f" error: {str(e)}",
                 FutureWarning,
             )
         return routed_params

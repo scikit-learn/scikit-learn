@@ -7,6 +7,7 @@
 #
 # License: BSD 3 clause
 
+from inspect import signature
 from numbers import Integral
 import warnings
 from functools import partial
@@ -48,7 +49,13 @@ from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
 from .metrics._base import _check_pos_label_consistency
-from .utils.metadata_routing import MetadataRouter, MethodMapping, process_routing
+from sklearn.utils import Bunch
+from .utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    process_routing,
+    _routing_enabled,
+)
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -378,12 +385,38 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             self.classes_ = label_encoder_.classes_
             n_classes = len(self.classes_)
 
-            routed_params = process_routing(
-                obj=self,
-                method="fit",
-                sample_weight=sample_weight,
-                other_params=fit_params,
-            )
+            if _routing_enabled():
+                routed_params = process_routing(
+                    obj=self,
+                    method="fit",
+                    sample_weight=sample_weight,
+                    other_params=fit_params,
+                )
+            else:
+                # sample_weight checks
+                fit_parameters = signature(estimator.fit).parameters
+                supports_sw = "sample_weight" in fit_parameters
+                if sample_weight is not None and not supports_sw:
+                    estimator_name = type(estimator).__name__
+                    warnings.warn(
+                        f"Since {estimator_name} does not appear to accept"
+                        " sample_weight, sample weights will only be used for the"
+                        " calibration itself. This can be caused by a limitation of"
+                        " the current scikit-learn API. See the following issue for"
+                        " more details:"
+                        " https://github.com/scikit-learn/scikit-learn/issues/21134."
+                        " Be warned that the result of the calibration is likely to be"
+                        " incorrect."
+                    )
+                routed_params = Bunch()
+                routed_params.splitter = Bunch(split={})  # no routing for splitter
+                routed_params.estimator = Bunch()
+                if sample_weight:
+                    routed_params.estimator = Bunch(
+                        fit={"sample_weight": sample_weight}
+                    )
+                else:
+                    routed_params.estimator = Bunch(fit={})
 
             # Check that each cross-validation fold can have at least one
             # example per class
