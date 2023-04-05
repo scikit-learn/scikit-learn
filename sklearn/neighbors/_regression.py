@@ -13,6 +13,7 @@
 import warnings
 
 import numpy as np
+from scipy.sparse import csr_matrix
 
 from ._base import _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
@@ -466,25 +467,29 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         if _y.ndim == 1:
             _y = _y.reshape((-1, 1))
 
-        empty_obs = np.full_like(_y[0], np.nan)
+        # converting weights to sparse matrix
+        n_samples = len(neigh_ind)
+        n_neigh = np.asarray([len(ind) for ind in neigh_ind])
+
+        neigh_dst = np.concatenate(neigh_ind, axis=0)
+        neigh_src = np.repeat(np.arange(n_samples), repeats=n_neigh)
 
         if weights is None:
-            y_pred = np.array(
-                [
-                    np.mean(_y[ind, :], axis=0) if len(ind) else empty_obs
-                    for (i, ind) in enumerate(neigh_ind)
-                ]
-            )
-
+            weights = np.ones(len(neigh_src), dtype=bool)
         else:
-            y_pred = np.array(
-                [
-                    np.average(_y[ind, :], axis=0, weights=weights[i])
-                    if len(ind)
-                    else empty_obs
-                    for (i, ind) in enumerate(neigh_ind)
-                ]
-            )
+            weights = np.concatenate(weights, axis=0)
+
+        weights = csr_matrix(
+            (weights, (neigh_src, neigh_dst)),
+            shape=(n_samples, len(_y)),
+        )
+
+        # normalization factor so weights sum = 1
+        norm_factor = weights.sum(axis=1)
+        y_pred = weights @ _y
+        with np.errstate(divide="ignore"):
+            # normalizing and assigning NaN to lonely samples
+            y_pred = np.where(norm_factor > 0, y_pred / norm_factor, np.nan)
 
         if np.any(np.isnan(y_pred)):
             empty_warning_msg = (
