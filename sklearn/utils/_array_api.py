@@ -383,11 +383,8 @@ def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
         return xp.asarray(array, dtype=dtype, copy=copy)
 
 
-def _convert_to_numpy(array, xp=None):
+def _convert_to_numpy(array, xp):
     """Convert X into a NumPy ndarray on the CPU."""
-    if xp is None:
-        xp, _ = get_namespace(array)
-
     xp_name = xp.__name__
 
     if xp_name in {"array_api_compat.torch", "torch"}:
@@ -395,7 +392,7 @@ def _convert_to_numpy(array, xp=None):
     elif xp_name == "cupy.array_api":
         return array._array.get()
     elif xp_name in {"array_api_compat.cupy", "cupy"}:
-        return array.get()
+        return array.get()  # pragma: nocover
 
     return numpy.asarray(array)
 

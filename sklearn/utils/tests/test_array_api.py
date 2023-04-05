@@ -160,7 +160,7 @@ def test_asarray_with_order_ignored():
 
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize("library", ["cupy", "torch", "cupy.array_api"])
-def test_convert_to_numpy_gpu(library):
+def test_convert_to_numpy_gpu(library):  # pragma: nocover
     """Check convert_to_numpy for GPU backed libraries."""
     xp = pytest.importorskip(library)
 
