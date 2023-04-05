@@ -1389,3 +1389,28 @@ def test_svm_class_weights_deprecation(Klass):
     )
     with pytest.warns(FutureWarning, match=re.escape(msg)):
         getattr(clf, "class_weight_")
+
+
+# TODO(1.5): Remove
+@pytest.mark.parametrize("Estimator", [LinearSVR, LinearSVC])
+def test_dual_auto_deprecation_warning(Estimator):
+    svm = Estimator(dual="auto")
+    with pytest.warns(
+        FutureWarning,
+        match=(
+            "The default value of dual will change "
+            "from `True` to `'auto'` in 1.5."
+        ),
+    ):
+        svm.fit(X, Y)
+
+
+@pytest.mark.parametrize("Estimator", [LinearSVR, LinearSVC])
+def test_dual_auto(Estimator):
+    svm = Estimator(dual="auto")
+    # N > M
+    svm.fit(X, Y)
+    assert svm._dual == False
+    # M > N
+    svm.fit(X.T, [1, 2])
+    assert svm._dual == True
