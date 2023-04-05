@@ -1395,13 +1395,10 @@ def test_svm_class_weights_deprecation(Klass):
 @pytest.mark.parametrize("Estimator", [LinearSVR, LinearSVC])
 def test_dual_auto_deprecation_warning(Estimator):
     svm = Estimator(dual="auto")
-    with pytest.warns(
-        FutureWarning,
-        match=(
-            "The default value of dual will change "
-            "from `True` to `'auto'` in 1.5."
-        ),
-    ):
+    msg = (
+        "The default value of dual will change from `True` to `'auto'` in 1.5."
+    )
+    with pytest.warns(FutureWarning, match=re.escape(msg)):
         svm.fit(X, Y)
 
 
