@@ -30,6 +30,13 @@ from sklearn.multiclass import OneVsRestClassifier
 # mypy error: Module 'sklearn.svm' has no attribute '_libsvm'
 from sklearn.svm import _libsvm  # type: ignore
 
+# TODO(1.5): Remove
+msg = (
+    r"The default value of `dual` will change from `True` to `'auto'` in 1.5. "
+    r"Set the value of `dual` explicitly to suppress the warning.:FutureWarning",
+)
+pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
+
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 Y = [1, 1, 1, 2, 2, 2]
@@ -1394,8 +1401,11 @@ def test_svm_class_weights_deprecation(Klass):
 # TODO(1.5): Remove
 @pytest.mark.parametrize("Estimator", [LinearSVR, LinearSVC])
 def test_dual_auto_deprecation_warning(Estimator):
-    svm = Estimator(dual="auto")
-    msg = "The default value of dual will change from `True` to `'auto'` in 1.5."
+    svm = Estimator()
+    msg = (
+        "The default value of `dual` will change from `True` to `'auto'` in 1.5. "
+        "Set the value of `dual` explicitly to suppress the warning."
+    )
     with pytest.warns(FutureWarning, match=re.escape(msg)):
         svm.fit(X, Y)
 
@@ -1409,11 +1419,9 @@ def test_dual_auto_deprecation_warning(Estimator):
 )
 def test_dual_auto(SVM, params):
     svm = SVM(**params)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        # N > M
-        svm.fit(X, Y)
-        assert svm._dual is False
-        # M > N
-        svm.fit(np.asarray(X).T, [1, 2])
-        assert svm._dual is True
+    # N > M
+    svm.fit(X, Y)
+    assert svm._dual is False
+    # M > N
+    svm.fit(np.asarray(X).T, [1, 2])
+    assert svm._dual is True
