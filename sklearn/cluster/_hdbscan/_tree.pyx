@@ -249,16 +249,19 @@ cdef dict _compute_stability(
     return dict(result_pre_dict)
 
 
-cdef list bfs_from_cluster_tree(cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] condensed_tree, cnp.intp_t bfs_root):
+cdef list bfs_from_cluster_tree(
+    cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] condensed_tree,
+    cnp.intp_t bfs_root
+):
 
-    cdef list result
-    cdef cnp.ndarray[cnp.intp_t, ndim=1] process_queue, children
-    children = condensed_tree['child']
+    cdef:
+        list result = []
+        cnp.ndarray[cnp.intp_t, ndim=1] process_queue = (
+            np.array([bfs_root], dtype=np.intp)
+        )
+        cnp.ndarray[cnp.intp_t, ndim=1] children = condensed_tree['child']
+        cnp.intp_t[:] parents = condensed_tree['parent']
 
-    cdef cnp.intp_t[:] parents = condensed_tree['parent']
-
-    result = []
-    process_queue = np.array([bfs_root], dtype=np.intp)
 
     while process_queue.shape[0] > 0:
         result.extend(process_queue.tolist())
