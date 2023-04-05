@@ -1,4 +1,5 @@
 from numbers import Integral, Real
+import warnings
 
 import numpy as np
 
@@ -37,9 +38,14 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         square of the hinge loss. The combination of ``penalty='l1'``
         and ``loss='hinge'`` is not supported.
 
-    dual : bool, default=True
+    dual : "auto" or bool, default=True
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
+        `dual="auto"` is equivalent to `dual=False` when
+        `n_samples > n_features` and `dual=True` otherwise.
+
+        .. versionchanged:: 1.4
+           The default value will change from `True` to `"auto"` in 1.5.
 
     tol : float, default=1e-4
         Tolerance for stopping criteria.
@@ -193,7 +199,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     _parameter_constraints: dict = {
         "penalty": [StrOptions({"l1", "l2"})],
         "loss": [StrOptions({"hinge", "squared_hinge"})],
-        "dual": ["boolean"],
+        "dual": ["boolean", StrOptions({"auto"}), Hidden(StrOptions({"warn"}))],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
         "C": [Interval(Real, 0.0, None, closed="neither")],
         "multi_class": [StrOptions({"ovr", "crammer_singer"})],
@@ -260,6 +266,23 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         """
         self._validate_params()
 
+        if self.dual == "auto":
+            warnings.warn(
+                "The default value of dual will change "
+                "from `True` to `'auto'` in 1.5.",
+                FutureWarning
+            )
+            self._dual = True if X.shape[0] < X.shape[1] else False
+        elif self.dual == "warn":
+            warnings.warn(
+                "The default value of dual will change "
+                "from `True` to `'auto'` in 1.5.",
+                FutureWarning
+            )
+            self._dual = True
+        else:
+            self._dual = self.dual
+
         X, y = self._validate_data(
             X,
             y,
@@ -279,7 +302,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             self.intercept_scaling,
             self.class_weight,
             self.penalty,
-            self.dual,
+            self._dual,
             self.verbose,
             self.max_iter,
             self.tol,
@@ -362,9 +385,14 @@ class LinearSVR(RegressorMixin, LinearModel):
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    dual : bool, default=True
+    dual : "auto" or bool, default=True
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
+        `dual="auto"` is equivalent to `dual=False` when
+        `n_samples > n_features` and `dual=True` otherwise.
+
+        .. versionchanged:: 1.4
+           The default value will change from `True` to `"auto"` in 1.5.
 
     verbose : int, default=0
         Enable verbose output. Note that this setting takes advantage of a
@@ -449,7 +477,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
         "fit_intercept": ["boolean"],
         "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
-        "dual": ["boolean"],
+        "dual": ["boolean", StrOptions({"auto"}), Hidden(StrOptions({"warn"}))],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
@@ -506,6 +534,23 @@ class LinearSVR(RegressorMixin, LinearModel):
         """
         self._validate_params()
 
+        if self.dual == "auto":
+            warnings.warn(
+                "The default value of dual will change "
+                "from `True` to `'auto'` in 1.5.",
+                FutureWarning
+            )
+            self._dual = True if X.shape[0] < X.shape[1] else False
+        elif self.dual == "warn":
+            warnings.warn(
+                "The default value of dual will change "
+                "from `True` to `'auto'` in 1.5.",
+                FutureWarning
+            )
+            self._dual = True
+        else:
+            self._dual = self.dual
+
         X, y = self._validate_data(
             X,
             y,
@@ -523,7 +568,7 @@ class LinearSVR(RegressorMixin, LinearModel):
             self.intercept_scaling,
             None,
             penalty,
-            self.dual,
+            self._dual,
             self.verbose,
             self.max_iter,
             self.tol,
