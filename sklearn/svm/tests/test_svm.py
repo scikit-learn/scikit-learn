@@ -1405,7 +1405,7 @@ def test_dual_auto(Estimator):
     svm = Estimator(dual="auto")
     # N > M
     svm.fit(X, Y)
-    assert svm._dual == False
+    assert svm._dual is False
     # M > N
     svm.fit(X.T, [1, 2])
-    assert svm._dual == True
+    assert svm._dual is True
