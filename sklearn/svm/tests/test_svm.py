@@ -1400,9 +1400,15 @@ def test_dual_auto_deprecation_warning(Estimator):
         svm.fit(X, Y)
 
 
-@pytest.mark.parametrize("Estimator", [LinearSVR, LinearSVC])
-def test_dual_auto(Estimator):
-    svm = Estimator(dual="auto")
+@pytest.mark.parametrize(
+"SVM, params",
+    [
+        (LinearSVC, {"loss": "squared_hinge", "dual": "auto"}),
+        (LinearSVR, {"loss": "squared_epsilon_insensitive", "dual": "auto"}),
+    ],
+)
+def test_dual_auto(SVM, params):
+    svm = SVM(**params)
     # N > M
     svm.fit(X, Y)
     assert svm._dual is False
