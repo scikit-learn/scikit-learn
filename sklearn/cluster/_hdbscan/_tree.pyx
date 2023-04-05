@@ -272,17 +272,23 @@ cdef dict _compute_stability(
     return dict(result_pre_dict)
 
 
-cdef list bfs_from_cluster_tree(cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] hierarchy, cnp.intp_t bfs_root):
+cdef list bfs_from_cluster_tree(
+    cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] condensed_tree,
+    cnp.intp_t bfs_root
+):
 
-    cdef list result
-    cdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] to_process
+    cdef:
+        list result = []
+        cnp.ndarray[cnp.intp_t, ndim=1] process_queue = (
+            np.array([bfs_root], dtype=np.intp)
+        )
+        cnp.ndarray[cnp.intp_t, ndim=1] children = condensed_tree['child']
+        cnp.intp_t[:] parents = condensed_tree['parent']
 
-    result = []
-    to_process = np.array([bfs_root], dtype=np.intp)
 
-    while to_process.shape[0] > 0:
-        result.extend(to_process.tolist())
-        to_process = hierarchy['child'][np.in1d(hierarchy['parent'], to_process)]
+    while process_queue.shape[0] > 0:
+        result.extend(process_queue.tolist())
+        process_queue = children[np.isin(parents, process_queue)]
 
     return result
 
