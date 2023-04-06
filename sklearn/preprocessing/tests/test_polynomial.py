@@ -795,7 +795,11 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
-def test_csr_polynomial_expansion_index_overflow_non_regression():
+@pytest.mark.parametrize("interaction_only", [True, False])
+@pytest.mark.parametrize("include_bias", [True, False])
+def test_csr_polynomial_expansion_index_overflow_non_regression(
+    interaction_only, include_bias
+):
     """Check the automatic index dtype promotion to `np.int64` when needed.
 
     This ensures that sufficiently large input configurations get
@@ -806,7 +810,7 @@ def test_csr_polynomial_expansion_index_overflow_non_regression():
     space. On 32 bit platforms, a `ValueError` is raised instead.
     """
 
-    def degree_2_calc(d, i, j, interaction_only):
+    def degree_2_calc(d, i, j):
         if interaction_only:
             return d * i - (i**2 + 3 * i) // 2 - 1 + j
         else:
@@ -823,7 +827,9 @@ def test_csr_polynomial_expansion_index_overflow_non_regression():
         shape=(n_samples, n_features),
         dtype=dtype,
     )
-    pf = PolynomialFeatures(interaction_only=True, include_bias=False, degree=2)
+    pf = PolynomialFeatures(
+        interaction_only=interaction_only, include_bias=include_bias, degree=2
+    )
 
     # Calculate the number of combinations a-priori, and if needed check for
     # the correct ValueError and terminate the test early.
@@ -844,27 +850,62 @@ def test_csr_polynomial_expansion_index_overflow_non_regression():
         return
     X_trans = pf.fit_transform(X)
     row_nonzero, col_nonzero = X_trans.nonzero()
-    second_degree_idx = (
-        degree_2_calc(n_features, n_features - 2, n_features - 1, True) + n_features
+    n_degree_1_features = n_features
+    lower_degree_features = n_degree_1_features + include_bias
+    max_degree_2_idx = (
+        degree_2_calc(n_features, col[int(not interaction_only)], col[1])
+        + lower_degree_features
     )
+
+    # Account for bias of all samples except last one which will be handled
+    # separately since there are distinct data values before it
+    data_target = ([1] * (n_samples - 2)) if include_bias else []
+    col_nonzero_target = [0] * (n_samples - 2) if include_bias else []
+
+    for i in range(2):
+        x = data[2 * i]
+        y = data[2 * i + 1]
+        x_idx = col[2 * i]
+        y_idx = col[2 * i + 1]
+        if include_bias:
+            data_target.append(1)
+            col_nonzero_target.append(0)
+        data_target.extend([x, y])
+        col_nonzero_target.extend(
+            [x_idx + int(include_bias), y_idx + int(include_bias)]
+        )
+        if not interaction_only:
+            data_target.extend([x * x, x * y, y * y])
+            col_nonzero_target.extend(
+                [
+                    degree_2_calc(n_features, x_idx, x_idx) + lower_degree_features,
+                    degree_2_calc(n_features, x_idx, y_idx) + lower_degree_features,
+                    degree_2_calc(n_features, y_idx, y_idx) + lower_degree_features,
+                ]
+            )
+        else:
+            data_target.extend([x * y])
+            col_nonzero_target.append(
+                degree_2_calc(n_features, x_idx, y_idx) + lower_degree_features
+            )
+
+    nnz_per_row = int(include_bias) + 3 + 2 * int(not interaction_only)
+
+    assert pf.n_output_features_ == max_degree_2_idx + 1
     assert X_trans.dtype == dtype
-    assert X_trans.shape == (13, second_degree_idx + 1)
+    assert X_trans.shape == (13, max_degree_2_idx + 1)
     assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
     # Ensure that dtype promotion was actually required:
     assert X_trans.indices.max() > np.iinfo(np.int32).max
-    assert_allclose(X_trans.data, [1, 2, 2, 3, 4, 12])
-    assert_array_equal(row_nonzero, [11, 11, 11, 12, 12, 12])
-    assert_array_equal(
-        col_nonzero,
-        [
-            n_features - 2,
-            n_features - 1,
-            second_degree_idx,
-            n_features - 2,
-            n_features - 1,
-            second_degree_idx,
-        ],
+
+    row_nonzero_target = list(np.arange(n_samples - 2)) if include_bias else []
+    row_nonzero_target.extend(
+        [n_samples - 2] * nnz_per_row + [n_samples - 1] * nnz_per_row
     )
+
+    assert_allclose(X_trans.data, data_target)
+    assert_array_equal(row_nonzero, row_nonzero_target)
+    assert_array_equal(col_nonzero, col_nonzero_target)
 
 
 @pytest.mark.parametrize(
@@ -1054,7 +1095,8 @@ def test_sizeof_LARGEST_INT_t():
     run=True,
 )
 def test_csr_polynomial_expansion_windows_fail():
-    # Minimum needed to ensure integer overflow occurs
+    # Minimum needed to ensure integer overflow occurs while guaranteeing an
+    # int64-indexable output.
     n_features = int(np.iinfo(np.int64).max ** (1 / 3) + 3)
     data = [1.0]
     row = [0]
