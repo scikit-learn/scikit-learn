@@ -819,6 +819,11 @@ class HalfBinomialLoss(BaseLoss):
     logistic regression, y = [0, 1].
     If you add `constant_to_optimal_zero` to the loss, you get half the
     Bernoulli/binomial deviance.
+
+    More details: Inserting the predicted probability y_pred = expit(raw_prediction)
+    in the loss gives the well known::
+
+        loss(x_i) = - y_true_i * log(y_pred_i) - (1 - y_true_i) * log(1 - y_pred_i)
     """
 
     def __init__(self, sample_weight=None):
@@ -1025,10 +1030,11 @@ class ExponentialLoss(BaseLoss):
     "exponential logistic" regression, y = [0, 1].
     Note that this is a proper scoring rule, but without it's canonical link.
 
-    More details: Inserting p = predict_proba = expit(2 * raw_prediction) in the
-    loss gives::
+    More details: Inserting the predicted probability
+    y_pred = expit(2 * raw_prediction) in the loss gives::
 
-        loss(x_i) = y_true_i * sqrt((1 - p) / p) + (1 - y_true_i) * sqrt(p / (1 - p))
+        loss(x_i) = y_true_i * sqrt((1 - y_pred_i) / y_pred_i)
+            + (1 - y_true_i) * sqrt(y_pred_i / (1 - y_pred_i))
     """
 
     def __init__(self, sample_weight=None):
