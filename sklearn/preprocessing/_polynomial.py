@@ -364,22 +364,23 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         )
         if self.n_output_features_ > np.iinfo(np.intp).max:
             msg = (
-                "The output that would result from the current configuration is too"
-                f" large to be indexed by {np.intp().dtype.name}. Please change some"
-                " or all of the following:\n- The number of features in the input,"
-                f" currently {n_features=}\n- The range of degrees to calculate,"
-                f" currently [{self._min_degree}, {self._max_degree}]\n- Whether to"
-                f" include only interaction terms, currently {self.interaction_only}\n-"
-                f" Whether to include a bias term, currently {self.include_bias}."
+                "The output that would result from the current configuration would"
+                f" have {self.n_output_features_} features which is too large to be"
+                f" indexed by {np.intp().dtype.name}. Please change some or all of the"
+                " following:\n- The number of features in the input, currently"
+                f" {n_features=}\n- The range of degrees to calculate, currently"
+                f" [{self._min_degree}, {self._max_degree}]\n- Whether to include only"
+                f" interaction terms, currently {self.interaction_only}\n- Whether to"
+                f" include a bias term, currently {self.include_bias}."
             )
             if (
                 np.intp == np.int32
                 and self.n_output_features_ <= np.iinfo(np.int64).max
             ):
                 msg += (
-                   "\nNote that the current Python runtime has a limited 32 bit "
-                   "address space and that this configuration would have been "
-                   "admissible if run on a 64 bit Python runtime."
+                    "\nNote that the current Python runtime has a limited 32 bit "
+                    "address space and that this configuration would have been "
+                    "admissible if run on a 64 bit Python runtime."
                 )
             raise ValueError(msg)
         # We also record the number of output features for

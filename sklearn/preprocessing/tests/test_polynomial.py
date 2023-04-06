@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import sys
 from scipy import sparse
 from scipy.sparse import random as sparse_random
 from sklearn.utils._testing import assert_array_almost_equal
@@ -17,6 +18,7 @@ from sklearn.preprocessing import (
 from sklearn.preprocessing._csr_polynomial_expansion import (
     _calc_total_nnz,
     _calc_expanded_nnz,
+    _get_sizeof_LARGEST_INT_t,
 )
 
 
@@ -992,8 +994,8 @@ def test_csr_polynomial_expansion_too_large_to_index(interaction_only, include_b
         interaction_only=interaction_only, include_bias=include_bias, degree=(2, 2)
     )
     msg = (
-        "The output that would result from the current configuration is too large to be"
-        " indexed"
+        r"The output that would result from the current configuration would have \d*"
+        r" features which is too large to be indexed"
     )
     with pytest.raises(ValueError, match=msg):
         pf.fit(X)
@@ -1029,3 +1031,49 @@ def test_polynomial_features_behaviour_on_zero_degree():
         if sparse.issparse(output):
             output = output.toarray()
         assert_array_equal(output, np.ones((X.shape[0], 1)))
+
+
+def test_sizeof_LARGEST_INT_t():
+    # On Windows, scikit-learn is typically compiled with MSVC that
+    # does not support int128 arithmetic (at the time of writing):
+    # https://stackoverflow.com/a/6761962/163740
+    if sys.maxsize <= 2**32 or sys.platform == "win32":
+        expected_size = 8
+    else:
+        expected_size = 16
+
+    assert _get_sizeof_LARGEST_INT_t() == expected_size
+
+
+@pytest.mark.xfail(
+    sys.platform == "win32",
+    reason=(
+        "On Windows, scikit-learn is typically compiled with MSVC that does not support"
+        " int128 arithmetic (at the time of writing)"
+    ),
+    run=True,
+)
+def test_csr_polynomial_expansion_windows_fail():
+    # Minimum needed to ensure integer overflow occurs
+    n_features = int(np.iinfo(np.int64).max ** (1 / 3) + 3)
+    data = [1.0]
+    row = [0]
+    col = [n_features - 1]
+
+    # First degree index
+    target_indices = [
+        n_features - 1,
+    ]
+    # Second degree index
+    target_indices.append(int(n_features * (n_features + 1) // 2 + target_indices[0]))
+    # Third degree index
+    target_indices.append(
+        int(n_features * (n_features + 1) * (n_features + 2) // 6 + target_indices[1])
+    )
+
+    X = sparse.csr_matrix((data, (row, col)))
+    pf = PolynomialFeatures(interaction_only=False, include_bias=False, degree=3)
+    X_trans = pf.fit_transform(X)
+    print(X_trans)
+    for idx in range(3):
+        assert X_trans[0, target_indices[idx]] == pytest.approx(1.0)

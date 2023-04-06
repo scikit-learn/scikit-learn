@@ -33,6 +33,9 @@ cdef extern from *:
     """
     ctypedef long long LARGEST_INT_t
 
+def _get_sizeof_LARGEST_INT_t():
+    return sizeof(LARGEST_INT_t)
+
 # TODO: use `cnp.{int,float}{32,64}` when cython#5230 is resolved:
 # https://github.com/cython/cython/issues/5230
 ctypedef fused DATA_t:
