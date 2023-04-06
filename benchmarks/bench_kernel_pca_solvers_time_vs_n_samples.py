@@ -83,7 +83,6 @@ r_time = np.empty((len(n_samples_range), n_iter)) * np.nan
 
 # loop
 for j, n_samples in enumerate(n_samples_range):
-
     n_samples = int(n_samples)
     print("Performing kPCA with n_samples = %i" % n_samples)
 

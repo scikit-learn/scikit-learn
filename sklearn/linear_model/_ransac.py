@@ -283,7 +283,6 @@ class RANSACRegressor(
         random_state=None,
         base_estimator="deprecated",
     ):
-
         self.estimator = estimator
         self.min_samples = min_samples
         self.residual_threshold = residual_threshold
@@ -342,8 +341,10 @@ class RANSACRegressor(
 
         if self.base_estimator != "deprecated":
             warnings.warn(
-                "`base_estimator` was renamed to `estimator` in version 1.1 and "
-                "will be removed in 1.3.",
+                (
+                    "`base_estimator` was renamed to `estimator` in version 1.1 and "
+                    "will be removed in 1.3."
+                ),
                 FutureWarning,
             )
             self.estimator = self.base_estimator
@@ -540,10 +541,12 @@ class RANSACRegressor(
                 + self.n_skips_invalid_model_
             ) > self.max_skips:
                 warnings.warn(
-                    "RANSAC found a valid consensus set but exited"
-                    " early due to skipping more iterations than"
-                    " `max_skips`. See estimator attributes for"
-                    " diagnostics (n_skips*).",
+                    (
+                        "RANSAC found a valid consensus set but exited"
+                        " early due to skipping more iterations than"
+                        " `max_skips`. See estimator attributes for"
+                        " diagnostics (n_skips*)."
+                    ),
                     ConvergenceWarning,
                 )
 
