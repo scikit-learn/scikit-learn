@@ -1270,7 +1270,6 @@ def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
     for algorithm, weights in product(ALGORITHMS, [None, "uniform"]):
-
         rnn = neighbors.RadiusNeighborsRegressor(weights=weights, algorithm=algorithm)
         rnn.fit(X_train, y_train)
 
@@ -1839,7 +1838,6 @@ def test_k_and_radius_neighbors_train_is_not_query():
     # Test kneighbors et.al when query is not training data
 
     for algorithm in ALGORITHMS:
-
         nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
 
         X = [[0], [1]]
