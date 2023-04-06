@@ -1115,7 +1115,15 @@ def test_csr_polynomial_expansion_windows_fail():
 
     X = sparse.csr_matrix((data, (row, col)))
     pf = PolynomialFeatures(interaction_only=False, include_bias=False, degree=3)
-    X_trans = pf.fit_transform(X)
-    print(X_trans)
-    for idx in range(3):
-        assert X_trans[0, target_indices[idx]] == pytest.approx(1.0)
+    if sys.maxsize <= 2**32:
+        msg = (
+            r"The output that would result from the current configuration would"
+            r" have \d*"
+            r" features which is too large to be indexed"
+        )
+        with pytest.raises(ValueError, match=msg):
+            pf.fit_transform(X)
+    else:
+        X_trans = pf.fit_transform(X)
+        for idx in range(3):
+            assert X_trans[0, target_indices[idx]] == pytest.approx(1.0)
