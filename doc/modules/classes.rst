@@ -659,7 +659,7 @@ Plotting
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
+   :template: display_only_from_estimator.rst
 
    inspection.DecisionBoundaryDisplay
    inspection.PartialDependenceDisplay
@@ -1122,7 +1122,7 @@ See the :ref:`visualizations` section of the user guide for further details.
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
+   :template: display_all_class_methods.rst
 
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
@@ -1242,7 +1242,7 @@ Visualization
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
+   :template: display_only_from_estimator.rst
 
    model_selection.LearningCurveDisplay
 
@@ -1438,6 +1438,7 @@ details.
    preprocessing.RobustScaler
    preprocessing.SplineTransformer
    preprocessing.StandardScaler
+   preprocessing.TargetEncoder
 
 .. autosummary::
    :toctree: generated/
@@ -1680,12 +1681,3 @@ Utilities from joblib:
 
 Recently deprecated
 ===================
-
-To be removed in 1.3
---------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   utils.metaestimators.if_delegate_has_method

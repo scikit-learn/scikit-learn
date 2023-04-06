@@ -26,6 +26,7 @@ from ...utils.validation import (
     _check_monotonic_cst,
 )
 from ...utils._param_validation import Interval, StrOptions
+from ...utils._param_validation import RealNotInt
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
@@ -99,7 +100,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         ],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
-            Interval(Real, 0, 1, closed="neither"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
             Interval(Integral, 1, None, closed="left"),
             None,
         ],
@@ -267,6 +268,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 missing = np.isnan(categories)
                 if missing.any():
                     categories = categories[~missing]
+
+                # Treat negative values for categorical features as missing values.
+                negative_categories = categories < 0
+                if negative_categories.any():
+                    categories = categories[~negative_categories]
 
                 if hasattr(self, "feature_names_in_"):
                     feature_name = f"'{self.feature_names_in_[f_idx]}'"
@@ -1264,9 +1270,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           data has feature names).
 
         For each categorical feature, there must be at most `max_bins` unique
-        categories, and each categorical value must be in [0, max_bins -1].
-        During prediction, categories encoded as a negative value are treated as
-        missing values.
+        categories, and each categorical value must be less then `max_bins - 1`.
+        Negative values for categorical features are treated as missing values.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
@@ -1296,7 +1301,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
 
-    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+    interaction_cst : {"pairwise", "no_interactions"} or sequence of lists/tuples/sets \
             of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.
@@ -1622,9 +1627,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
           data has feature names).
 
         For each categorical feature, there must be at most `max_bins` unique
-        categories, and each categorical value must be in [0, max_bins -1].
-        During prediction, categories encoded as a negative value are treated as
-        missing values.
+        categories, and each categorical value must be less then `max_bins - 1`.
+        Negative values for categorical features are treated as missing values.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
@@ -1654,7 +1658,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
 
-    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+    interaction_cst : {"pairwise", "no_interactions"} or sequence of lists/tuples/sets \
             of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.

@@ -311,6 +311,16 @@ def _estimate_mi(
     return np.array(mi)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+        "discrete_features": [StrOptions({"auto"}), "boolean", "array-like"],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "copy": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def mutual_info_regression(
     X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
 ):

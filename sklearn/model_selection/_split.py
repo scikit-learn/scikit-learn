@@ -29,6 +29,7 @@ from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
 from ..utils._param_validation import validate_params, Interval
+from ..utils._param_validation import RealNotInt
 
 __all__ = [
     "BaseCrossValidator",
@@ -2464,12 +2465,12 @@ def check_cv(cv=5, y=None, *, classifier=False):
 @validate_params(
     {
         "test_size": [
-            Interval(numbers.Real, 0, 1, closed="neither"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
             Interval(numbers.Integral, 1, None, closed="left"),
             None,
         ],
         "train_size": [
-            Interval(numbers.Real, 0, 1, closed="neither"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
             Interval(numbers.Integral, 1, None, closed="left"),
             None,
         ],

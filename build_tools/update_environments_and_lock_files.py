@@ -65,7 +65,6 @@ common_dependencies_without_coverage = [
 ]
 
 common_dependencies = common_dependencies_without_coverage + [
-    "codecov",
     "pytest-cov",
     "coverage",
 ]
@@ -301,8 +300,9 @@ conda_build_metadata_list = [
             "sphinx-prompt",
             "plotly",
             "pooch",
+            "sphinxext-opengraph",
+            "pip",
         ],
-        "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
             "python": "3.9",
             # XXX: sphinx > 6.0 does not correctly generate searchindex.js
@@ -329,11 +329,18 @@ pip_build_metadata_list = [
     {
         "build_name": "debian_atlas_32bit",
         "folder": "build_tools/azure",
-        "pip_dependencies": ["cython", "joblib", "threadpoolctl", "pytest"],
+        "pip_dependencies": [
+            "cython",
+            "joblib",
+            "threadpoolctl",
+            "pytest",
+            "pytest-cov",
+        ],
         "package_constraints": {
             "joblib": "min",
             "threadpoolctl": "2.2.0",
             "pytest": "min",
+            "pytest-cov": "min",
             # no pytest-xdist because it causes issue on 32bit
         },
         # same Python version as in debian-32 build
@@ -350,11 +357,7 @@ pip_build_metadata_list = [
             "pytest-xdist",
         ],
         "package_constraints": {"joblib": "min", "threadpoolctl": "min"},
-        # Ubuntu 20.04 has 3.8.2 but only 3.8.5 is available for osx-arm64 on
-        # conda-forge. Chosing 3.8.5 so that this script can be run locally on
-        # osx-arm64 machines. This should not matter for pining versions with
-        # pip-compile
-        "python_version": "3.8.5",
+        "python_version": "3.10.4",
     },
 ]
 

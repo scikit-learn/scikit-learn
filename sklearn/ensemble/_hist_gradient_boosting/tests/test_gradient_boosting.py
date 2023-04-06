@@ -950,7 +950,10 @@ def test_staged_predict(HistGradientBoosting, X, y):
     "Est", (HistGradientBoostingRegressor, HistGradientBoostingClassifier)
 )
 @pytest.mark.parametrize("bool_categorical_parameter", [True, False])
-def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter):
+@pytest.mark.parametrize("missing_value", [np.nan, -1])
+def test_unknown_categories_nan(
+    insert_missing, Est, bool_categorical_parameter, missing_value
+):
     # Make sure no error is raised at predict if a category wasn't seen during
     # fit. We also make sure they're treated as nans.
 
@@ -970,7 +973,7 @@ def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter)
     if insert_missing:
         mask = rng.binomial(1, 0.01, size=X.shape).astype(bool)
         assert mask.sum() > 0
-        X[mask] = np.nan
+        X[mask] = missing_value
 
     est = Est(max_iter=20, categorical_features=categorical_features).fit(X, y)
     assert_array_equal(est.is_categorical_, [False, True])
@@ -979,7 +982,7 @@ def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter)
     # unknown categories will be treated as nans
     X_test = np.zeros((10, X.shape[1]), dtype=float)
     X_test[:5, 1] = 30
-    X_test[5:, 1] = np.nan
+    X_test[5:, 1] = missing_value
     assert len(np.unique(est.predict(X_test))) == 1
 
 

@@ -15,6 +15,7 @@ from ..utils.validation import check_is_fitted, _check_sample_weight
 from ._base import LinearRegression
 from ..utils.validation import has_fit_parameter
 from ..utils._param_validation import Interval, Options, StrOptions, HasMethods, Hidden
+from ..utils._param_validation import RealNotInt
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.spacing(1)
@@ -236,7 +237,7 @@ class RANSACRegressor(
         "estimator": [HasMethods(["fit", "score", "predict"]), None],
         "min_samples": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval(RealNotInt, 0, 1, closed="both"),
             None,
         ],
         "residual_threshold": [Interval(Real, 0, None, closed="left"), None],
