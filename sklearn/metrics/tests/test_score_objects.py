@@ -12,6 +12,7 @@ import pytest
 import joblib
 
 from numpy.testing import assert_allclose
+from sklearn import config_context
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
@@ -1255,8 +1256,9 @@ def test_metadata_kwarg_conflict():
     with pytest.warns(UserWarning, match="already set as kwargs"):
         scorer.set_score_request(labels=True)
 
-    with pytest.warns(UserWarning, match="There is an overlap"):
-        scorer(lr, X, y, labels=lr.classes_)
+    with config_context(enable_metadata_routing=True):
+        with pytest.warns(UserWarning, match="There is an overlap"):
+            scorer(lr, X, y, labels=lr.classes_)
 
 
 def test_PassthroughScorer_metadata_request():

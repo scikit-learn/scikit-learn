@@ -121,7 +121,9 @@ class _MultimetricScorer:
             routed_params = process_routing(self, "score", kwargs)
         else:
             # they all get the same args, and they all get them all
-            routed_params = Bunch({name: Bunch(score=kwargs) for name in self._scorers})
+            routed_params = Bunch(
+                **{name: Bunch(score=kwargs) for name in self._scorers}
+            )
 
         for name, scorer in self._scorers.items():
             try:
