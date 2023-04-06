@@ -126,6 +126,17 @@ Changes impacting all modules
 
   :pr:`25044` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Enhancement| All estimators that internally rely on OpenMP multi-threading
+  (via Cython) now use a number of threads equal to the number of physical
+  (instead of logical) cores by default. In the past, we observed that using as
+  many threads as logical cores on SMT hosts could sometimes cause severe
+  performance problems depending on the algorithms and the shape of the data.
+  Note that it is still possible to manually adjust the number of threads used
+  by OpenMP as documented in :ref:`parallelism`.
+
+  :pr:`26082` by :user:`Jérémie du Boisberranger <jeremiedbb>` and
+  :user:`Olivier Grisel <ogrisel>`.
+
 Changelog
 ---------
 
