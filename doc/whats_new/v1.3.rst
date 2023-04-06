@@ -251,6 +251,12 @@ Changelog
   dataframe.
   :pr:`25931` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+- |Fix| :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientBoostingClassifier` treats negative values for
+  categorical features consistently as missing values, following LightGBM's and
+  pandas' conventions.
+  :pr:`25629` by `Thomas Fan`_.
+
 :mod:`sklearn.exception`
 ........................
 - |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
@@ -295,8 +301,8 @@ Changelog
   estimators consistent with the rest of estimators.
   :pr:`25697` by :user:`John Pangas <jpangas>`.
 
-- |Enhancement| The `n_iter_` attribute has been included in 
-  :class:`linear_model.ARDRegression` to expose the actual number of iterations 
+- |Enhancement| The `n_iter_` attribute has been included in
+  :class:`linear_model.ARDRegression` to expose the actual number of iterations
   required to reach the stopping criterion.
   :pr:`25697` by :user:`John Pangas <jpangas>`.
 

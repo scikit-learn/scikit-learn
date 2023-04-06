@@ -53,6 +53,7 @@ from sklearn.metrics.pairwise import check_paired_arrays
 from sklearn.metrics.pairwise import paired_distances
 from sklearn.metrics.pairwise import paired_euclidean_distances
 from sklearn.metrics.pairwise import paired_manhattan_distances
+from sklearn.metrics.pairwise import paired_cosine_distances
 from sklearn.metrics.pairwise import _euclidean_distances_upcast
 from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
@@ -1175,6 +1176,14 @@ def test_paired_manhattan_distances():
     Y = [[1], [2]]
     D = paired_manhattan_distances(X, Y)
     assert_allclose(D, [1.0, 2.0])
+
+
+def test_paired_cosine_distances():
+    # Check the paired manhattan distances computation
+    X = [[0], [0]]
+    Y = [[1], [2]]
+    D = paired_cosine_distances(X, Y)
+    assert_allclose(D, [0.5, 0.5])
 
 
 def test_chi_square_kernel():
