@@ -452,7 +452,7 @@ Changelog
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |FIX| Fixes :func:`utils.validation.check_array` to properly convert pandas
-  extension arrays. :pr:`25813` by `Thomas Fan`_.
+  extension arrays. :pr:`25813` and :pr:`26106` by `Thomas Fan`_.
 
 - |Fix| :func:`utils.validation.check_array` now suports pandas DataFrames with
   extension arrays and object dtypes by return an ndarray with object dtype.
