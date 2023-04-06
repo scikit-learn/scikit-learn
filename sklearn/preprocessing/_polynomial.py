@@ -372,6 +372,15 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 f" include only interaction terms, currently {self.interaction_only}\n-"
                 f" Whether to include a bias term, currently {self.include_bias}."
             )
+            if (
+                np.intp == np.int32
+                and self.n_output_features_ <= np.iinfo(np.int64).max
+            ):
+                msg += (
+                   "\nNote that the current Python runtime has a limited 32 bit "
+                   "address space and that this configuration would have been "
+                   "admissible if run on a 64 bit Python runtime."
+                )
             raise ValueError(msg)
         # We also record the number of output features for
         # _max_degree = 0
