@@ -963,8 +963,10 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     # TODO(1.4): remove sum_over_features
     if sum_over_features != "deprecated":
         warnings.warn(
-            "`sum_over_features` is deprecated in version 1.2 and will be"
-            " removed in version 1.4.",
+            (
+                "`sum_over_features` is deprecated in version 1.2 and will be"
+                " removed in version 1.4."
+            ),
             FutureWarning,
         )
     else:
