@@ -859,7 +859,7 @@ def test_csr_polynomial_expansion_index_overflow_non_regression(
 
     # Account for bias of all samples except last one which will be handled
     # separately since there are distinct data values before it
-    data_target = ([1] * (n_samples - 2)) if include_bias else []
+    data_target = [1] * (n_samples - 2) if include_bias else []
     col_nonzero_target = [0] * (n_samples - 2) if include_bias else []
 
     for i in range(2):
