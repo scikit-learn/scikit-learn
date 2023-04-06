@@ -18,3 +18,4 @@ dependencies:
   - pytest-xdist=2.5.0
   - pillow
   - ccache
+  - polars
