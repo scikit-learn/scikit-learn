@@ -187,3 +187,57 @@ def test_convert_estimator_to_array_api():
 
     new_est = _estimator_with_converted_arrays(est, lambda array: xp.asarray(array))
     assert hasattr(new_est.X_, "__array_namespace__")
+
+
+def test_reshape_behavior():
+    """Check reshape behavior with copy and is strict with non-tuple shape."""
+    xp = _NumPyAPIWrapper()
+    X = xp.asarray([[1, 2, 3], [3, 4, 5]])
+
+    X_no_copy = xp.reshape(X, (-1,), copy=False)
+    assert X_no_copy.base is X
+
+    X_copy = xp.reshape(X, (6, 1), copy=True)
+    assert X_copy.base is not X.base
+
+    with pytest.raises(TypeError, match="shape must be a tuple"):
+        xp.reshape(X, -1)
+
+
+@pytest.mark.parametrize("wrapper", [_ArrayAPIWrapper, _NumPyAPIWrapper])
+def test_get_namespace_array_api_isdtype(wrapper):
+    """Test isdtype implementation from _ArrayAPIWrapper and _NumPyAPIWrapper."""
+
+    if wrapper == _ArrayAPIWrapper:
+        xp_ = pytest.importorskip("numpy.array_api")
+        xp = _ArrayAPIWrapper(xp_)
+    else:
+        xp = _NumPyAPIWrapper()
+
+    assert xp.isdtype(xp.float32, xp.float32)
+    assert xp.isdtype(xp.float32, "real floating")
+    assert xp.isdtype(xp.float64, "real floating")
+    assert not xp.isdtype(xp.int32, "real floating")
+
+    assert xp.isdtype(xp.bool, "bool")
+    assert not xp.isdtype(xp.float32, "bool")
+
+    assert xp.isdtype(xp.int16, "signed integer")
+    assert not xp.isdtype(xp.uint32, "signed integer")
+
+    assert xp.isdtype(xp.uint16, "unsigned integer")
+    assert not xp.isdtype(xp.int64, "unsigned integer")
+
+    assert xp.isdtype(xp.int64, "numeric")
+    assert xp.isdtype(xp.float32, "numeric")
+    assert xp.isdtype(xp.uint32, "numeric")
+
+    assert not xp.isdtype(xp.float32, "complex floating")
+
+    if wrapper == _NumPyAPIWrapper:
+        assert not xp.isdtype(xp.int8, "complex floating")
+        assert xp.isdtype(xp.complex64, "complex floating")
+        assert xp.isdtype(xp.complex128, "complex floating")
+
+    with pytest.raises(ValueError, match="Unrecognized data type"):
+        assert xp.isdtype(xp.int16, "unknown")

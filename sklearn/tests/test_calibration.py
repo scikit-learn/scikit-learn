@@ -25,7 +25,7 @@ from sklearn.ensemble import (
     RandomForestClassifier,
     VotingClassifier,
 )
-from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline, make_pipeline
@@ -593,42 +593,6 @@ def iris_data():
 def iris_data_binary(iris_data):
     X, y = iris_data
     return X[y < 2], y[y < 2]
-
-
-def test_calibration_display_validation(pyplot, iris_data, iris_data_binary):
-    X, y = iris_data
-    X_binary, y_binary = iris_data_binary
-
-    reg = LinearRegression().fit(X, y)
-    msg = "Expected 'estimator' to be a binary classifier. Got LinearRegression"
-    with pytest.raises(ValueError, match=msg):
-        CalibrationDisplay.from_estimator(reg, X, y)
-
-    clf = LinearSVC().fit(X_binary, y_binary)
-    msg = "has none of the following attributes: predict_proba."
-    with pytest.raises(AttributeError, match=msg):
-        CalibrationDisplay.from_estimator(clf, X, y)
-
-    clf = LogisticRegression()
-    with pytest.raises(NotFittedError):
-        CalibrationDisplay.from_estimator(clf, X, y)
-
-
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
-def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
-    X, y = iris_data
-    clf = DecisionTreeClassifier()
-    clf.fit(X, y)
-    y_prob = clf.predict_proba(X)
-
-    if constructor_name == "from_estimator":
-        msg = "to be a binary classifier. Got 3 classes instead."
-        with pytest.raises(ValueError, match=msg):
-            CalibrationDisplay.from_estimator(clf, X, y)
-    else:
-        msg = "The target y is not binary. Got multiclass type of target."
-        with pytest.raises(ValueError, match=msg):
-            CalibrationDisplay.from_predictions(y, y_prob)
 
 
 @pytest.mark.parametrize("n_bins", [5, 10])

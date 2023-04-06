@@ -40,12 +40,10 @@ from ..utils import column_or_1d
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
-from ..utils.validation import _num_samples
+from ..utils.validation import _check_pos_label_consistency, _num_samples
 from ..utils.sparsefuncs import count_nonzero
 from ..utils._param_validation import StrOptions, Options, Interval, validate_params
 from ..exceptions import UndefinedMetricWarning
-
-from ._base import _check_pos_label_consistency
 
 
 def _check_zero_division(zero_division):

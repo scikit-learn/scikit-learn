@@ -1,13 +1,9 @@
 from .. import average_precision_score
 from .. import precision_recall_curve
-from .._base import _check_pos_label_consistency
-from .._classification import check_consistent_length
-
-from ...utils import check_matplotlib_support
-from ...utils._response import _get_response_values_binary
+from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 
 
-class PrecisionRecallDisplay:
+class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     """Precision Recall visualization.
 
     It is recommend to use
@@ -141,9 +137,7 @@ class PrecisionRecallDisplay:
         `drawstyle="default"`. However, the curve will not be strictly
         consistent with the reported average precision.
         """
-        check_matplotlib_support("PrecisionRecallDisplay.plot")
-
-        name = self.estimator_name if name is None else name
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
         line_kwargs = {"drawstyle": "steps-post"}
         if self.average_precision is not None and name is not None:
@@ -154,25 +148,18 @@ class PrecisionRecallDisplay:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
-        import matplotlib.pyplot as plt
-
-        if ax is None:
-            fig, ax = plt.subplots()
-
-        (self.line_,) = ax.plot(self.recall, self.precision, **line_kwargs)
+        (self.line_,) = self.ax_.plot(self.recall, self.precision, **line_kwargs)
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
         )
 
         xlabel = "Recall" + info_pos_label
         ylabel = "Precision" + info_pos_label
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
         if "label" in line_kwargs:
-            ax.legend(loc="lower left")
+            self.ax_.legend(loc="lower left")
 
-        self.ax_ = ax
-        self.figure_ = ax.figure
         return self
 
     @classmethod
@@ -273,17 +260,14 @@ class PrecisionRecallDisplay:
         <...>
         >>> plt.show()
         """
-        method_name = f"{cls.__name__}.from_estimator"
-        check_matplotlib_support(method_name)
-
-        y_pred, pos_label = _get_response_values_binary(
+        y_pred, pos_label, name = cls._validate_and_get_response_values(
             estimator,
             X,
-            response_method,
+            y,
+            response_method=response_method,
             pos_label=pos_label,
+            name=name,
         )
-
-        name = name if name is not None else estimator.__class__.__name__
 
         return cls.from_predictions(
             y,
@@ -382,10 +366,9 @@ class PrecisionRecallDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_predictions")
-
-        check_consistent_length(y_true, y_pred, sample_weight)
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
+        pos_label, name = cls._validate_from_predictions_params(
+            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+        )
 
         precision, recall, _ = precision_recall_curve(
             y_true,
@@ -397,8 +380,6 @@ class PrecisionRecallDisplay:
         average_precision = average_precision_score(
             y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
         )
-
-        name = name if name is not None else "Classifier"
 
         viz = PrecisionRecallDisplay(
             precision=precision,
