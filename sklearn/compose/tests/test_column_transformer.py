@@ -3,6 +3,7 @@ Test the ColumnTransformer.
 """
 import re
 import pickle
+from itertools import product
 
 import numpy as np
 from scipy import sparse
@@ -12,6 +13,7 @@ from numpy.testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_almost_equal
+from sklearn.base import clone
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import (
@@ -2157,3 +2159,58 @@ def test_empty_selection_pandas_output(empty_selection):
     ct.set_params(verbose_feature_names_out=False)
     X_out = ct.fit_transform(X)
     assert_array_equal(X_out.columns, ["a", "b"])
+
+
+class TransformerCheckDtype(TransformerMixin, BaseEstimator):
+    def __init__(self, *, scale=1):
+        self.scale = scale
+
+    def fit(self, X, y=None):
+        self.feature_names_in_ = np.asarray(X.columns)
+        self.fit_in_ = X
+        return self
+
+    def transform(self, X, y=None):
+        self.transform_in_ = X
+        return self.scale * X
+
+    def get_feature_names_out(self, input_features=None):
+        return self.feature_names_in_
+
+
+def test_polars_input():
+    """Check support for polars input."""
+
+    pl = pytest.importorskip("polars")
+    pd = pytest.importorskip("pandas")
+
+    X_pd = pd.DataFrame({"a": [13, 2, 3], "b": [4.0, 5.0, 6.0]})
+    X_pl = pl.from_pandas(X_pd)
+
+    ct = ColumnTransformer(
+        [
+            ("ints", TransformerCheckDtype(scale=3), ["a"]),
+            ("floats", TransformerCheckDtype(scale=2), ["b"]),
+        ]
+    )
+
+    def _check_fit_transform(X):
+        ct_clone = clone(ct)
+        out = ct_clone.fit_transform(X)
+
+        # ColumnTransformer converts the polars DataFrame into a pandas one
+        # and passes it to the inner transformers
+        for name, attr in product(["ints", "floats"], ["fit_in_", "transform_in_"]):
+            X_in = getattr(ct_clone.named_transformers_[name], attr)
+            assert isinstance(X_in, pd.DataFrame)
+
+        return out
+
+    out_pl = _check_fit_transform(X_pl)
+    out_pd = _check_fit_transform(X_pd)
+    assert_allclose(out_pl, out_pd)
+
+    ct.set_output(transform="pandas")
+    out_pl_pandas = _check_fit_transform(X_pl)
+    out_pd_pandas = _check_fit_transform(X_pd)
+    pd.testing.assert_frame_equal(out_pl_pandas, out_pd_pandas)
