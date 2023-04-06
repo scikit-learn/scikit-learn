@@ -1271,6 +1271,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         For each categorical feature, there must be at most `max_bins` unique
         categories, and each categorical value must be less then `max_bins - 1`.
         Negative values for categorical features are treated as missing values.
+        Internally integers are cast as float array and hence 1.0 and 1 is treated as the same. 
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
