@@ -178,6 +178,13 @@ Changelog
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.covariance`
+.........................
+
+- |Fix| Allow :func:`covariance.empirical_covariance` now gives an informative
+  error message when input is not appropriate.
+  :pr:`26108` by :user:`Quentin Barthélemy <qbarthelemy>`.
+
 :mod:`sklearn.datasets`
 .......................
 
