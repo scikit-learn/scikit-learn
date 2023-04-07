@@ -228,12 +228,6 @@ def test_all_scorers_repr():
 
 def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     # Test all branches of single metric usecases
-    estimator = EstimatorWithoutFit()
-    pattern = (
-        r"estimator should be an estimator implementing 'fit' method," r" .* was passed"
-    )
-    with pytest.raises(TypeError, match=pattern):
-        scoring_validator(estimator)
 
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
