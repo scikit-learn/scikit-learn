@@ -143,7 +143,7 @@ def make_constraint(constraint):
     raise ValueError(f"Unknown constraint type: {constraint}")
 
 
-def validate_params(parameter_constraints, *, skip_nested_validation=False):
+def validate_params(parameter_constraints, *, skip_nested_validation=True):
     """Decorator to validate types and values of functions and methods.
 
     Parameters
@@ -173,7 +173,9 @@ def validate_params(parameter_constraints, *, skip_nested_validation=False):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            if get_config()["skip_parameter_validation"]:
+
+            global_skip_validation = get_config()["skip_parameter_validation"]
+            if global_skip_validation:
                 return func(*args, **kwargs)
 
             func_sig = signature(func)
@@ -196,7 +198,11 @@ def validate_params(parameter_constraints, *, skip_nested_validation=False):
             )
 
             try:
-                with config_context(skip_parameter_validation=skip_nested_validation):
+                with config_context(
+                    skip_parameter_validation=(
+                        skip_nested_validation or global_skip_validation
+                    )
+                ):
                     return func(*args, **kwargs)
             except InvalidParameterError as e:
                 # When the function is just a wrapper around an estimator, we allow

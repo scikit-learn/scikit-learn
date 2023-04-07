@@ -710,3 +710,21 @@ def test_skip_nested_validation(skip_nested_validation):
     else:
         with pytest.raises(InvalidParameterError, match="The 'a' parameter"):
             g(b=1)
+
+
+def test_skip_nested_validation_and_config_context():
+    """Check that nested validation respects the config_context."""
+
+    @validate_params({"a": [int]})
+    def f(a):
+        pass
+
+    @validate_params({"b": [int]}, skip_nested_validation=False)
+    def g(b):
+        # calls f with a bad parameter type
+        return f(a="1")
+
+    # validation is skipped when either skip_nested_validation or
+    # skip_parameter_validation is True.
+    with config_context(skip_parameter_validation=True):
+        g(b="1")
