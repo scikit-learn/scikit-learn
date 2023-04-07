@@ -173,7 +173,6 @@ def validate_params(parameter_constraints, *, skip_nested_validation=True):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-
             global_skip_validation = get_config()["skip_parameter_validation"]
             if global_skip_validation:
                 return func(*args, **kwargs)

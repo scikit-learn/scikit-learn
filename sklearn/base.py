@@ -1110,7 +1110,6 @@ def _fit_context(*, skip_nested_validation=True):
     def decorator(fit_method):
         @functools.wraps(fit_method)
         def wrapper(estimator, *args, **kwargs):
-
             global_skip_validation = get_config()["skip_parameter_validation"]
             if not global_skip_validation:
                 estimator._validate_params()
