@@ -609,6 +609,41 @@ def _argmin_reduce(dist, start):
     return dist.argmin(axis=1)
 
 
+_VALID_METRICS = [
+    "euclidean",
+    "l2",
+    "l1",
+    "manhattan",
+    "cityblock",
+    "braycurtis",
+    "canberra",
+    "chebyshev",
+    "correlation",
+    "cosine",
+    "dice",
+    "hamming",
+    "jaccard",
+    "mahalanobis",
+    "matching",
+    "minkowski",
+    "rogerstanimoto",
+    "russellrao",
+    "seuclidean",
+    "sokalmichener",
+    "sokalsneath",
+    "sqeuclidean",
+    "yule",
+    "wminkowski",
+    "nan_euclidean",
+    "haversine",
+]
+if sp_base_version < parse_version("1.11"):
+    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
+    _VALID_METRICS += ["kulsinski"]
+
+_NAN_METRICS = ["nan_euclidean"]
+
+
 def pairwise_distances_argmin_min(
     X, Y, *, axis=1, metric="euclidean", metric_kwargs=None
 ):
@@ -736,7 +771,10 @@ def pairwise_distances_argmin_min(
         "X": ["array-like", "sparse matrix"],
         "Y": ["array-like", "sparse matrix"],
         "axis": [Options(Integral, {0, 1})],
-        "metric": [StrOptions(set(ArgKmin.valid_metrics())), callable],
+        "metric": [
+            StrOptions(set(_VALID_METRICS).union(ArgKmin.valid_metrics())),
+            callable,
+        ],
         "metric_kwargs": [dict, None],
     }
 )
@@ -1737,41 +1775,6 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
             out[i, j] = metric(X[i], Y[j], **kwds)
 
     return out
-
-
-_VALID_METRICS = [
-    "euclidean",
-    "l2",
-    "l1",
-    "manhattan",
-    "cityblock",
-    "braycurtis",
-    "canberra",
-    "chebyshev",
-    "correlation",
-    "cosine",
-    "dice",
-    "hamming",
-    "jaccard",
-    "mahalanobis",
-    "matching",
-    "minkowski",
-    "rogerstanimoto",
-    "russellrao",
-    "seuclidean",
-    "sokalmichener",
-    "sokalsneath",
-    "sqeuclidean",
-    "yule",
-    "wminkowski",
-    "nan_euclidean",
-    "haversine",
-]
-if sp_base_version < parse_version("1.11"):
-    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
-    _VALID_METRICS += ["kulsinski"]
-
-_NAN_METRICS = ["nan_euclidean"]
 
 
 def _check_chunk_size(reduced, chunk_size):
