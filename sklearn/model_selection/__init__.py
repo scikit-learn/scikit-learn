@@ -1,5 +1,7 @@
 import typing
 
+from ._prediction import CutOffClassifier
+
 from ._split import BaseCrossValidator
 from ._split import BaseShuffleSplit
 from ._split import KFold
@@ -65,6 +67,7 @@ __all__ = [
     "StratifiedKFold",
     "StratifiedGroupKFold",
     "StratifiedShuffleSplit",
+    "CutOffClassifier",
     "check_cv",
     "cross_val_predict",
     "cross_val_score",
