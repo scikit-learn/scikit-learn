@@ -821,7 +821,10 @@ def test_csr_polynomial_expansion_index_overflow_non_regression(
     dtype = np.float32
     data = np.arange(1, 5, dtype=np.int64)
     row = np.array([n_samples - 2, n_samples - 2, n_samples - 1, n_samples - 1])
-    col = np.array([n_features - 2, n_features - 1, n_features - 2, n_features - 1])
+    # An int64 dtype is required to avoid overflow error on Windows
+    col = np.array(
+        [n_features - 2, n_features - 1, n_features - 2, n_features - 1], dtype=np.int64
+    )
     X = sparse.csr_matrix(
         (data, (row, col)),
         shape=(n_samples, n_features),
