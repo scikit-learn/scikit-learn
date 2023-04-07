@@ -228,6 +228,15 @@ def check_paired_arrays(X, Y):
 
 
 # Pairwise distances
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "Y_norm_squared": ["array-like", None],
+        "squared": ["boolean"],
+        "X_norm_squared": ["array-like", None],
+    }
+)
 def euclidean_distances(
     X, Y=None, *, Y_norm_squared=None, squared=False, X_norm_squared=None
 ):
