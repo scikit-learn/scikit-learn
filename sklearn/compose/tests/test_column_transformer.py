@@ -2185,7 +2185,7 @@ def test_polars_input():
     pd = pytest.importorskip("pandas")
 
     X_pd = pd.DataFrame({"a": [13, 2, 3], "b": [4.0, 5.0, 6.0]})
-    X_pl = pl.from_pandas(X_pd)
+    X_pl = pl.DataFrame({"a": [13, 2, 3], "b": [4.0, 5.0, 6.0]})
 
     ct = ColumnTransformer(
         [
