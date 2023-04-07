@@ -35,6 +35,8 @@ from ..utils._param_validation import (
     Real,
     Hidden,
     MissingValues,
+    Integral,
+    Options,
 )
 
 from ._pairwise_distances_reduction import ArgKmin
@@ -606,6 +608,15 @@ def _argmin_reduce(dist, start):
     return dist.argmin(axis=1)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix"],
+        "axis": [Options(Integral, {0, 1})],
+        "metric": [str, callable],
+        "metric_kwargs": [dict, None],
+    }
+)
 def pairwise_distances_argmin_min(
     X, Y, *, axis=1, metric="euclidean", metric_kwargs=None
 ):
