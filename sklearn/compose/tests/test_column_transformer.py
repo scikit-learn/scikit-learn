@@ -2161,7 +2161,7 @@ def test_empty_selection_pandas_output(empty_selection):
     assert_array_equal(X_out.columns, ["a", "b"])
 
 
-class TransformerCheckDtype(TransformerMixin, BaseEstimator):
+class CheckingTransformer(TransformerMixin, BaseEstimator):
     def __init__(self, *, scale=1):
         self.scale = scale
 
@@ -2189,8 +2189,8 @@ def test_polars_input():
 
     ct = ColumnTransformer(
         [
-            ("ints", TransformerCheckDtype(scale=3), ["a"]),
-            ("floats", TransformerCheckDtype(scale=2), ["b"]),
+            ("ints", CheckingTransformer(scale=3), ["a"]),
+            ("floats", CheckingTransformer(scale=2), ["b"]),
         ]
     )
 
@@ -2208,9 +2208,13 @@ def test_polars_input():
 
     out_pl = _check_fit_transform(X_pl)
     out_pd = _check_fit_transform(X_pd)
+    assert isinstance(out_pl, np.ndarray)
+    assert isinstance(out_pd, np.ndarray)
     assert_allclose(out_pl, out_pd)
 
     ct.set_output(transform="pandas")
     out_pl_pandas = _check_fit_transform(X_pl)
     out_pd_pandas = _check_fit_transform(X_pd)
+    assert isinstance(out_pl_pandas, pd.DataFrame)
+    assert isinstance(out_pd_pandas, pd.DataFrame)
     pd.testing.assert_frame_equal(out_pl_pandas, out_pd_pandas)
