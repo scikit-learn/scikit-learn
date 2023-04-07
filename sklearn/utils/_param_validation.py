@@ -143,7 +143,7 @@ def make_constraint(constraint):
     raise ValueError(f"Unknown constraint type: {constraint}")
 
 
-def validate_params(parameter_constraints, *, skip_nested_validation=True):
+def validate_params(parameter_constraints, *, prefer_skip_nested_validation=True):
     """Decorator to validate types and values of functions and methods.
 
     Parameters
@@ -155,7 +155,7 @@ def validate_params(parameter_constraints, *, skip_nested_validation=True):
         Note that the *args and **kwargs parameters are not validated and must not be
         present in the parameter_constraints dictionary.
 
-    skip_nested_validation : bool, default=True
+    prefer_skip_nested_validation : bool, default=True
         Whether to skip the validation of parameters of inner estimators or functions
         called by the decorated function.
 
@@ -199,7 +199,7 @@ def validate_params(parameter_constraints, *, skip_nested_validation=True):
             try:
                 with config_context(
                     skip_parameter_validation=(
-                        skip_nested_validation or global_skip_validation
+                        prefer_skip_nested_validation or global_skip_validation
                     )
                 ):
                     return func(*args, **kwargs)

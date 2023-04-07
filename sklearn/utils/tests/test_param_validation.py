@@ -690,15 +690,15 @@ def test_skip_param_validation():
         f(a="1")
 
 
-@pytest.mark.parametrize("skip_nested_validation", [True, False])
-def test_skip_nested_validation(skip_nested_validation):
+@pytest.mark.parametrize("prefer_skip_nested_validation", [True, False])
+def test_skip_nested_validation(prefer_skip_nested_validation):
     """Check that nested validation can be skipped."""
 
     @validate_params({"a": [int]})
     def f(a):
         pass
 
-    @validate_params({"b": [int]}, skip_nested_validation=skip_nested_validation)
+    @validate_params({"b": [int]}, prefer_skip_nested_validation=prefer_skip_nested_validation)
     def g(b):
         # calls f with a bad parameter type
         return f(a="1")
@@ -707,7 +707,7 @@ def test_skip_nested_validation(skip_nested_validation):
     with pytest.raises(InvalidParameterError, match="The 'b' parameter"):
         g(b="1")
 
-    if skip_nested_validation:
+    if prefer_skip_nested_validation:
         g(b=1)  # does not raise
     else:
         with pytest.raises(InvalidParameterError, match="The 'a' parameter"):
@@ -721,12 +721,12 @@ def test_skip_nested_validation_and_config_context():
     def f(a):
         pass
 
-    @validate_params({"b": [int]}, skip_nested_validation=False)
+    @validate_params({"b": [int]}, prefer_skip_nested_validation=False)
     def g(b):
         # calls f with a bad parameter type
         return f(a="1")
 
-    # validation is skipped when either skip_nested_validation or
+    # validation is skipped when either prefer_skip_nested_validation or
     # skip_parameter_validation is True.
     with config_context(skip_parameter_validation=True):
         g(b="1")
