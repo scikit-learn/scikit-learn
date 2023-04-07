@@ -284,8 +284,8 @@ Changelog
   estimators consistent with the rest of estimators.
   :pr:`25697` by :user:`John Pangas <jpangas>`.
 
-- |Enhancement| The `n_iter_` attribute has been included in 
-  :class:`linear_model.ARDRegression` to expose the actual number of iterations 
+- |Enhancement| The `n_iter_` attribute has been included in
+  :class:`linear_model.ARDRegression` to expose the actual number of iterations
   required to reach the stopping criterion.
   :pr:`25697` by :user:`John Pangas <jpangas>`.
 
@@ -352,6 +352,11 @@ Changelog
 - |Enhancement| :func:`model_selection.cross_validate` accepts a new parameter
   `return_indices` to return the train-test indices of each cv split.
   :pr:`25659` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |MajorFeature| :class:`model_selection.CutOffClassifier` calibrates decision threshold
+  function of a binary classifier by maximizing a classification metric through
+  cross-validatin.
+  :pr:`26120` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
