@@ -166,6 +166,9 @@ Changelog
 - |Feature| A `__sklearn_clone__` protocol is now available to override the
   default behavior of :func:`base.clone`. :pr:`24568` by `Thomas Fan`_.
 
+- |Fix| :class:`base.TransformerMixin` now currently keeps a namedtuple's class
+  if `transform` returns a namedtuple. :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.calibration`
 ..........................
 

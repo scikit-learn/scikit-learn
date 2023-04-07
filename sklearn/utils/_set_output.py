@@ -140,7 +140,7 @@ def _wrap_method_output(f, method):
         data_to_wrap = f(self, X, *args, **kwargs)
         if isinstance(data_to_wrap, tuple):
             # only wrap the first output for cross decomposition
-            return (
+            return type(data_to_wrap)(
                 _wrap_data_with_container(method, data_to_wrap[0], X, self),
                 *data_to_wrap[1:],
             )

@@ -1,4 +1,5 @@
 import pytest
+from collections import namedtuple
 
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -292,3 +293,21 @@ def test_set_output_pandas_keep_index():
 
     X_trans = est.transform(X)
     assert_array_equal(X_trans.index, ["s0", "s1"])
+
+
+class EstimatorReturnTuple(_SetOutputMixin):
+    def __init__(self, OutputTuple):
+        self.OutputTuple = OutputTuple
+
+    def transform(self, X, y=None):
+        return self.OutputTuple(X, 2 * X)
+
+
+def test_set_output_named_tuple_out():
+    """Check that namedtuples are kept by default."""
+    Output = namedtuple("Output", "X, y")
+    X = np.asarray([[1, 2, 3]])
+    est = EstimatorReturnTuple(OutputTuple=Output)
+    X_trans = est.transform(X)
+
+    assert isinstance(X_trans, Output)
