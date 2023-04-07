@@ -725,7 +725,7 @@ def test_group_shuffle_split_nan_values():
     splitter = GroupShuffleSplit(test_size=0.2, n_splits=2, random_state=7)
     split = splitter.split(data, groups=data["clusters"])
 
-    error_message = "Input groups contain NaN."
+    error_message = "Input groups contains NaN."
 
     # raises a value error if the data contains pd.NA or np.nan
     with pytest.raises(ValueError, match=error_message):

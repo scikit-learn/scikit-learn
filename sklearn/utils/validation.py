@@ -24,7 +24,6 @@ import joblib
 
 from contextlib import suppress
 
-from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
 from ..exceptions import PositiveSpectrumWarning
 from ..exceptions import NotFittedError
@@ -123,7 +122,7 @@ def _assert_all_finite(
     if X.dtype == np.dtype("object") and not allow_nan:
         if _object_dtype_any_isnan(X):
             padded_input_name = input_name + " " if input_name else ""
-            raise ValueError(f"Input {padded_input_name}contain NaN.")
+            raise ValueError(f"Input {padded_input_name}contains NaN.")
 
     # We need only consider float arrays, hence can early return for all else.
     if not xp.isdtype(X.dtype, ("real floating", "complex floating")):
