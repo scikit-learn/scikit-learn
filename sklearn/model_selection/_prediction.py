@@ -41,7 +41,6 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         response_method="auto",
         n_thresholds=1_000,
         cv=None,
-        random_state=None,
         n_jobs=None,
     ):
         self.estimator = estimator
@@ -50,7 +49,6 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         self.response_method = response_method
         self.n_thresholds = n_thresholds
         self.cv = cv
-        self.random_state = random_state
         self.n_jobs = n_jobs
 
     _parameter_constraints: dict = {
@@ -66,7 +64,6 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
         "n_thresholds": [Interval(Integral, 1, None, closed="left")],
         "cv": ["cv_object", StrOptions({"prefit"})],
-        "random_state": ["random_state"],
         "n_jobs": [Integral, None],
     }
 
