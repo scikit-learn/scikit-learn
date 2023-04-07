@@ -1,6 +1,5 @@
 """Test the split module"""
 import warnings
-import pandas as pd
 import pytest
 import re
 import numpy as np
@@ -720,16 +719,17 @@ def test_group_shuffle_split_default_test_size(train_size, exp_train, exp_test):
 
 
 def test_group_shuffle_split_nan_values():
+    pd = pytest.importorskip("pandas")
     data = pd.DataFrame({"clusters": [1, 2, 3, pd.NA, np.nan], "x": [0, 1, 2, 3, 4]})
 
     splitter = GroupShuffleSplit(test_size=0.2, n_splits=2, random_state=7)
+    split = splitter.split(data, groups=data["clusters"])
 
     error_message = "Input groups contain NaN."
 
     # raises a value error if the data contains pd.NA or np.nan
-    with pytest.raises(ValueError, match=re.escape(error_message)):
-        split = splitter.split(data, groups=data["clusters"])
-        train_inds, test_inds = next(split)
+    with pytest.raises(ValueError, match=error_message):
+        next(split)
 
 
 @ignore_warnings
