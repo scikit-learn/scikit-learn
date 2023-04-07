@@ -40,6 +40,7 @@ from sklearn.metrics._scorer import (
     _passthrough_scorer,
     _MultimetricScorer,
     _check_multimetric_scoring,
+    _ContinuousScorer,
 )
 from sklearn.metrics import make_scorer, get_scorer, SCORERS, get_scorer_names
 from sklearn.neighbors import KNeighborsClassifier
@@ -1203,3 +1204,43 @@ def test_scorer_no_op_multiclass_select_proba():
         labels=lr.classes_,
     )
     scorer(lr, X_test, y_test)
+
+
+def test_continuous_scorer():
+    """Check the behaviour of the `_ContinuousScorer` class."""
+    X, y = make_classification(random_state=0)
+    estimator = LogisticRegression().fit(X, y)
+    scorer = _ContinuousScorer(
+        balanced_accuracy_score, sign=1, response_method="predict_proba", kwargs={}
+    )
+    thresholds, scores = scorer(estimator, X, y)
+
+    assert thresholds.shape == scores.shape
+    # check that the thresholds are probability with extreme values close to 0 and 1
+    assert 0 <= thresholds.min() <= 0.01
+    assert 0.99 <= thresholds.max() <= 1
+    # balanced accuracy should be between 0.5 and 1 when it is not adjusted
+    assert 0.5 <= scores.min() <= 1
+
+    # check that passing kwargs to the scorer works
+    scorer = _ContinuousScorer(
+        balanced_accuracy_score,
+        sign=1,
+        response_method="predict_proba",
+        kwargs={"adjusted": True},
+    )
+    thresholds, scores = scorer(estimator, X, y)
+
+    # balanced accuracy should be between 0.5 and 1 when it is not adjusted
+    assert 0 <= scores.min() <= 0.5
+
+    # check that we can inverse the sign of the score when dealing with `neg_*` scorer
+    scorer = _ContinuousScorer(
+        balanced_accuracy_score,
+        sign=-1,
+        response_method="predict_proba",
+        kwargs={"adjusted": True},
+    )
+    thresholds, scores = scorer(estimator, X, y)
+
+    assert all(scores <= 0)
