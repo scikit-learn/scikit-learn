@@ -403,7 +403,7 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] labelling_at_cut(
 
 
 cdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] do_labelling(
-        cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] condensed_tree,
+        cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] hierarchy,
         set clusters,
         dict cluster_label_map,
         cnp.intp_t allow_single_cluster,
@@ -413,21 +413,20 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] do_labelling(
     cdef:
         cnp.intp_t root_cluster
         cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] result
-        cnp.ndarray[cnp.intp_t, ndim=1] parent_array, child_array
-        cnp.ndarray[cnp.float64_t, ndim=1] lambda_array
+        cnp.intp_t[:] parent_array, child_array
+        cnp.float64_t[:] lambda_array
         TreeUnionFind union_find
-        cnp.intp_t n, parent, child, cluster, label
-        cnp.float64_t parent_lambda, max_child_lambda
+        cnp.intp_t n, parent, child, cluster
 
-    child_array = condensed_tree['child']
-    parent_array = condensed_tree['parent']
-    lambda_array = condensed_tree['value']
+    child_array = hierarchy['child']
+    parent_array = hierarchy['parent']
+    lambda_array = hierarchy['value']
 
     root_cluster = np.min(parent_array)
     result = np.empty(root_cluster, dtype=np.intp)
     union_find = TreeUnionFind(np.max(parent_array) + 1)
 
-    for n in range(condensed_tree.shape[0]):
+    for n in range(hierarchy.shape[0]):
         child = child_array[n]
         parent = parent_array[n]
         if child not in clusters:
@@ -435,20 +434,25 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] do_labelling(
 
     for n in range(root_cluster):
         cluster = union_find.find(n)
-        label = NOISE
-        if cluster != root_cluster:
-            label = cluster_label_map[cluster]
-        elif len(clusters) == 1 and allow_single_cluster:
-            parent_lambda = lambda_array[child_array == n]
-            max_child_lambda = lambda_array[parent_array == cluster].max()
+        if cluster < root_cluster:
+            result[n] = NOISE
+        elif cluster == root_cluster:
+            if len(clusters) == 1 and allow_single_cluster:
+                if cluster_selection_epsilon != 0.0:
+                    if hierarchy['value'][hierarchy['child'] == n] >= 1 / cluster_selection_epsilon :
+                        result[n] = cluster_label_map[cluster]
+                    else:
+                        result[n] = NOISE
+                elif hierarchy['value'][hierarchy['child'] == n] >= \
+                     hierarchy['value'][hierarchy['parent'] == cluster].max():
+                    result[n] = cluster_label_map[cluster]
+                else:
+                    result[n] = NOISE
+            else:
+                result[n] = NOISE
+        else:
+            result[n] = cluster_label_map[cluster]
 
-            if cluster_selection_epsilon != 0.0:
-                if  parent_lambda >= 1 / cluster_selection_epsilon:
-                    label = cluster_label_map[cluster]
-            elif parent_lambda >= max_child_lambda:
-                label = cluster_label_map[cluster]
-
-        result[n] = label
     return result
 
 
