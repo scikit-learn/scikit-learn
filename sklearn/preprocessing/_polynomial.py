@@ -221,9 +221,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             inds = np.where(row)[0]
             if len(inds):
                 name = " ".join(
-                    "%s^%d" % (input_features[ind], exp)
-                    if exp != 1
-                    else input_features[ind]
+                    (
+                        "%s^%d" % (input_features[ind], exp)
+                        if exp != 1
+                        else input_features[ind]
+                    )
                     for ind, exp in zip(inds, row[inds])
                 )
             else:
