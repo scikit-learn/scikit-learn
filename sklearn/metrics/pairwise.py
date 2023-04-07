@@ -609,15 +609,6 @@ def _argmin_reduce(dist, start):
     return dist.argmin(axis=1)
 
 
-@validate_params(
-    {
-        "X": ["array-like", "sparse matrix"],
-        "Y": ["array-like", "sparse matrix"],
-        "axis": [Options(Integral, {0, 1})],
-        "metric": [StrOptions(set(ArgKmin.valid_metrics())), callable],
-        "metric_kwargs": [dict, None],
-    }
-)
 def pairwise_distances_argmin_min(
     X, Y, *, axis=1, metric="euclidean", metric_kwargs=None
 ):
@@ -740,6 +731,15 @@ def pairwise_distances_argmin_min(
     return indices, values
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix"],
+        "axis": [Options(Integral, {0, 1})],
+        "metric": [StrOptions(set(ArgKmin.valid_metrics())), callable],
+        "metric_kwargs": [dict, None],
+    }
+)
 def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
