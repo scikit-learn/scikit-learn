@@ -240,3 +240,17 @@ def test_graphical_lasso_cv_scores():
 
     assert_allclose(cov.cv_results_["mean_test_score"], expected_mean)
     assert_allclose(cov.cv_results_["std_test_score"], expected_std)
+
+
+# TODO(1.5): remove in 1.5
+def test_graphical_lasso_cov_init_deprecation():
+    """Check that we raise a deprecation warning if providing `cov_init` in
+    `graphical_lasso`."""
+    rng, dim, n_samples = np.random.RandomState(0), 20, 100
+    prec = make_sparse_spd_matrix(dim, alpha=0.95, random_state=0)
+    cov = linalg.inv(prec)
+    X = rng.multivariate_normal(np.zeros(dim), cov, size=n_samples)
+
+    emp_cov = empirical_covariance(X)
+    with pytest.warns(FutureWarning, match="cov_init parameter is deprecated"):
+        graphical_lasso(emp_cov, alpha=0.1, cov_init=emp_cov)
