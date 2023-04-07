@@ -40,12 +40,10 @@ from ..utils import column_or_1d
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
-from ..utils.validation import _num_samples
+from ..utils.validation import _check_pos_label_consistency, _num_samples
 from ..utils.sparsefuncs import count_nonzero
 from ..utils._param_validation import StrOptions, Options, Interval, validate_params
 from ..exceptions import UndefinedMetricWarning
-
-from ._base import _check_pos_label_consistency
 
 
 def _check_zero_division(zero_division):
@@ -2827,9 +2825,11 @@ def log_loss(
     else:
         # TODO: Remove user defined eps in 1.5
         warnings.warn(
-            "Setting the eps parameter is deprecated and will "
-            "be removed in 1.5. Instead eps will always have"
-            "a default value of `np.finfo(y_pred.dtype).eps`.",
+            (
+                "Setting the eps parameter is deprecated and will "
+                "be removed in 1.5. Instead eps will always have"
+                "a default value of `np.finfo(y_pred.dtype).eps`."
+            ),
             FutureWarning,
         )
 
@@ -2896,8 +2896,10 @@ def log_loss(
     y_pred_sum = y_pred.sum(axis=1)
     if not np.isclose(y_pred_sum, 1, rtol=1e-15, atol=5 * eps).all():
         warnings.warn(
-            "The y_pred values do not sum to one. Starting from 1.5 this"
-            "will result in an error.",
+            (
+                "The y_pred values do not sum to one. Starting from 1.5 this"
+                "will result in an error."
+            ),
             UserWarning,
         )
     y_pred = y_pred / y_pred_sum[:, np.newaxis]

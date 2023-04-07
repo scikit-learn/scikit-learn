@@ -236,7 +236,6 @@ def test_classifier_prediction_independent_of_X(strategy, global_random_seed):
 
 
 def test_mean_strategy_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X = [[0]] * 4  # ignored
@@ -248,7 +247,6 @@ def test_mean_strategy_regressor(global_random_seed):
 
 
 def test_mean_strategy_multioutput_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X_learn = random_state.randn(10, 10)
@@ -276,7 +274,6 @@ def test_regressor_exceptions():
 
 
 def test_median_strategy_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X = [[0]] * 5  # ignored
@@ -288,7 +285,6 @@ def test_median_strategy_regressor(global_random_seed):
 
 
 def test_median_strategy_multioutput_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X_learn = random_state.randn(10, 10)
@@ -310,7 +306,6 @@ def test_median_strategy_multioutput_regressor(global_random_seed):
 
 
 def test_quantile_strategy_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X = [[0]] * 5  # ignored
@@ -334,7 +329,6 @@ def test_quantile_strategy_regressor(global_random_seed):
 
 
 def test_quantile_strategy_multioutput_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X_learn = random_state.randn(10, 10)
@@ -368,7 +362,6 @@ def test_quantile_strategy_multioutput_regressor(global_random_seed):
 
 
 def test_quantile_invalid():
-
     X = [[0]] * 5  # ignored
     y = [0] * 5  # ignored
 
@@ -387,7 +380,6 @@ def test_quantile_strategy_empty_train():
 
 
 def test_constant_strategy_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X = [[0]] * 5  # ignored
@@ -406,7 +398,6 @@ def test_constant_strategy_regressor(global_random_seed):
 
 
 def test_constant_strategy_multioutput_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X_learn = random_state.randn(10, 10)

@@ -139,7 +139,6 @@ def _partial_dependence_recursion(est, grid, features):
 
 
 def _partial_dependence_brute(est, grid, features, X, response_method):
-
     predictions = []
     averaged_predictions = []
 
