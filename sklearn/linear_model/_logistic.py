@@ -48,7 +48,6 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 
 
 def _check_solver(solver, penalty, dual):
-
     # TODO(1.4): Remove "none" option
     if solver not in ["liblinear", "saga"] and penalty not in ("l2", "none", None):
         raise ValueError(
@@ -484,7 +483,11 @@ def _logistic_regression_path(
             w0 = sol.solve(X=X, y=target, sample_weight=sample_weight)
             n_iter_i = sol.iteration
         elif solver == "liblinear":
-            coef_, intercept_, n_iter_i, = _fit_liblinear(
+            (
+                coef_,
+                intercept_,
+                n_iter_i,
+            ) = _fit_liblinear(
                 X,
                 target,
                 C,
@@ -1110,7 +1113,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         n_jobs=None,
         l1_ratio=None,
     ):
-
         self.penalty = penalty
         self.dual = dual
         self.tol = tol
@@ -1174,8 +1176,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         # TODO(1.4): Remove "none" option
         if self.penalty == "none":
             warnings.warn(
-                "`penalty='none'`has been deprecated in 1.2 and will be removed in 1.4."
-                " To keep the past behaviour, set `penalty=None`.",
+                (
+                    "`penalty='none'`has been deprecated in 1.2 and will be removed in"
+                    " 1.4. To keep the past behaviour, set `penalty=None`."
+                ),
                 FutureWarning,
             )
 
@@ -1944,7 +1948,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         for index, (cls, encoded_label) in enumerate(
             zip(iter_classes, iter_encoded_labels)
         ):
-
             if multi_class == "ovr":
                 scores = self.scores_[cls]
                 coefs_paths = self.coefs_paths_[cls]

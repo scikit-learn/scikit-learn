@@ -4,6 +4,58 @@ from .._config import get_config
 import scipy.special as special
 
 
+def _is_numpy_namespace(xp):
+    """Return True if xp is backed by NumPy."""
+    return xp.__name__ in {"numpy", "numpy.array_api"}
+
+
+def isdtype(dtype, kind, *, xp):
+    """Returns a boolean indicating whether a provided dtype is of type "kind".
+
+    Included in the v2022.12 of the Array API spec.
+    https://data-apis.org/array-api/latest/API_specification/generated/array_api.isdtype.html
+    """
+    if isinstance(kind, tuple):
+        return any(_isdtype_single(dtype, k, xp=xp) for k in kind)
+    else:
+        return _isdtype_single(dtype, kind, xp=xp)
+
+
+def _isdtype_single(dtype, kind, *, xp):
+    if isinstance(kind, str):
+        if kind == "bool":
+            return dtype == xp.bool
+        elif kind == "signed integer":
+            return dtype in {xp.int8, xp.int16, xp.int32, xp.int64}
+        elif kind == "unsigned integer":
+            return dtype in {xp.uint8, xp.uint16, xp.uint32, xp.uint64}
+        elif kind == "integral":
+            return any(
+                _isdtype_single(dtype, k, xp=xp)
+                for k in ("signed integer", "unsigned integer")
+            )
+        elif kind == "real floating":
+            return dtype in {xp.float32, xp.float64}
+        elif kind == "complex floating":
+            # Some name spaces do not have complex, such as cupy.array_api
+            # and numpy.array_api
+            complex_dtypes = set()
+            if hasattr(xp, "complex64"):
+                complex_dtypes.add(xp.complex64)
+            if hasattr(xp, "complex128"):
+                complex_dtypes.add(xp.complex128)
+            return dtype in complex_dtypes
+        elif kind == "numeric":
+            return any(
+                _isdtype_single(dtype, k, xp=xp)
+                for k in ("integral", "real floating", "complex floating")
+            )
+        else:
+            raise ValueError(f"Unrecognized data type kind: {kind!r}")
+    else:
+        return dtype == kind
+
+
 class _ArrayAPIWrapper:
     """sklearn specific Array API compatibility wrapper
 
@@ -48,6 +100,9 @@ class _ArrayAPIWrapper:
             selected = [X[:, i] for i in indices]
         return self._namespace.stack(selected, axis=axis)
 
+    def isdtype(self, dtype, kind):
+        return isdtype(dtype, kind, xp=self._namespace)
+
 
 class _NumPyAPIWrapper:
     """Array API compat wrapper for any numpy version
@@ -60,8 +115,33 @@ class _NumPyAPIWrapper:
     See the `get_namespace()` public function for more details.
     """
 
+    # Data types in spec
+    # https://data-apis.org/array-api/latest/API_specification/data_types.html
+    _DTYPES = {
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float32",
+        "float64",
+        "complex64",
+        "complex128",
+    }
+
     def __getattr__(self, name):
-        return getattr(numpy, name)
+        attr = getattr(numpy, name)
+        # Convert to dtype objects
+        if name in self._DTYPES:
+            return numpy.dtype(attr)
+        return attr
+
+    @property
+    def bool(self):
+        return numpy.bool_
 
     def astype(self, x, dtype, *, copy=True, casting="unsafe"):
         # astype is not defined in the top level NumPy namespace
@@ -85,6 +165,24 @@ class _NumPyAPIWrapper:
 
     def concat(self, arrays, *, axis=None):
         return numpy.concatenate(arrays, axis=axis)
+
+    def reshape(self, x, shape, *, copy=None):
+        """Gives a new shape to an array without changing its data.
+
+        The Array API specification requires shape to be a tuple.
+        https://data-apis.org/array-api/latest/API_specification/generated/array_api.reshape.html
+        """
+        if not isinstance(shape, tuple):
+            raise TypeError(
+                f"shape must be a tuple, got {shape!r} of type {type(shape)}"
+            )
+
+        if copy is True:
+            x = x.copy()
+        return numpy.reshape(x, shape)
+
+    def isdtype(self, dtype, kind):
+        return isdtype(dtype, kind, xp=self)
 
 
 def get_namespace(*arrays):
