@@ -17,7 +17,7 @@ from sklearn.utils._param_validation import _Booleans
 from sklearn.utils._param_validation import _Callables
 from sklearn.utils._param_validation import _CVObjects
 from sklearn.utils._param_validation import _InstancesOf
-from sklearn.utils._param_validation import _MissingValues
+from sklearn.utils._param_validation import MissingValues
 from sklearn.utils._param_validation import _PandasNAConstraint
 from sklearn.utils._param_validation import _IterablesNotString
 from sklearn.utils._param_validation import _NoneConstraint
@@ -203,7 +203,8 @@ def test_hasmethods():
         Interval(Real, 0, None, closed="left"),
         Interval(Real, None, None, closed="neither"),
         StrOptions({"a", "b", "c"}),
-        _MissingValues(),
+        MissingValues(),
+        MissingValues(numeric_only=True),
         _VerboseHelper(),
         HasMethods("fit"),
         _IterablesNotString(),
@@ -338,7 +339,8 @@ def test_generate_invalid_param_val_all_valid(constraint):
         _SparseMatrices(),
         _Booleans(),
         _VerboseHelper(),
-        _MissingValues(),
+        MissingValues(),
+        MissingValues(numeric_only=True),
         StrOptions({"a", "b", "c"}),
         Options(Integral, {1, 2, 3}),
         Interval(Integral, None, None, closed="neither"),
@@ -379,12 +381,12 @@ def test_generate_valid_param(constraint):
         (Real, 0.5),
         ("boolean", False),
         ("verbose", 1),
-        ("missing_values", -1),
-        ("missing_values", -1.0),
-        ("missing_values", None),
-        ("missing_values", float("nan")),
-        ("missing_values", np.nan),
-        ("missing_values", "missing"),
+        (MissingValues(), -1),
+        (MissingValues(), -1.0),
+        (MissingValues(), None),
+        (MissingValues(), float("nan")),
+        (MissingValues(), np.nan),
+        (MissingValues(), "missing"),
         (HasMethods("fit"), _Estimator(a=0)),
         ("cv_object", 5),
     ],
@@ -409,7 +411,7 @@ def test_is_satisfied_by(constraint_declaration, value):
         (int, _InstancesOf),
         ("boolean", _Booleans),
         ("verbose", _VerboseHelper),
-        ("missing_values", _MissingValues),
+        (MissingValues(numeric_only=True), MissingValues),
         (HasMethods("fit"), HasMethods),
         ("cv_object", _CVObjects),
     ],

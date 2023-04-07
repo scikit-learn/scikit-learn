@@ -187,6 +187,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 ###############################################################################
 # Test the behaviour of `fetch_openml` depending of the input parameters.
 
+
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
@@ -974,6 +975,7 @@ def test_fetch_openml_types_inference(
 ###############################################################################
 # Test some more specific behaviour
 
+
 # TODO(1.4): remove this filterwarning decorator
 @pytest.mark.filterwarnings("ignore:The default value of `parser` will change")
 @pytest.mark.parametrize(
@@ -1210,8 +1212,10 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response, dataset_params):
             40945,
             {"data_id": 40945, "as_frame": False},
             ValueError,
-            "STRING attributes are not supported for array representation. Try"
-            " as_frame=True",
+            (
+                "STRING attributes are not supported for array representation. Try"
+                " as_frame=True"
+            ),
         ),
         (
             2,
@@ -1635,6 +1639,7 @@ def test_fetch_openml_quotechar_escapechar(monkeypatch):
 
 ###############################################################################
 # Deprecation-changed parameters
+
 
 # TODO(1.4): remove this test
 def test_fetch_openml_deprecation_parser(monkeypatch):
