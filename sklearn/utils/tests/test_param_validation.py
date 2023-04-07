@@ -698,7 +698,10 @@ def test_skip_nested_validation(prefer_skip_nested_validation):
     def f(a):
         pass
 
-    @validate_params({"b": [int]}, prefer_skip_nested_validation=prefer_skip_nested_validation)
+    @validate_params(
+        {"b": [int]},
+        prefer_skip_nested_validation=prefer_skip_nested_validation,
+    )
     def g(b):
         # calls f with a bad parameter type
         return f(a="1")
