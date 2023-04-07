@@ -65,7 +65,7 @@ from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
 from ..base import is_regressor
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import validate_params, HasMethods
 
 
 def _cached_call(cache, estimator, method, *args, **kwargs):
@@ -451,6 +451,13 @@ def _passthrough_scorer(estimator, *args, **kwargs):
     return estimator.score(*args, **kwargs)
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods(["fit"])],
+        "scoring": [str, callable, None],
+        "allow_none": ["boolean"],
+    }
+)
 def check_scoring(estimator, scoring=None, *, allow_none=False):
     """Determine scorer from user options.
 
