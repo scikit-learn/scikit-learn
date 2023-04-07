@@ -842,8 +842,8 @@ def test_csr_polynomial_expansion_index_overflow_non_regression(
     )
     if num_combinations > np.iinfo(np.intp).max:
         msg = (
-            "The output that would result from the current configuration is too large"
-            " to be indexed"
+            r"The output that would result from the current configuration would have"
+            r" \d* features which is too large to be indexed"
         )
         with pytest.raises(ValueError, match=msg):
             pf.fit(X)
@@ -964,8 +964,8 @@ def test_csr_polynomial_expansion_index_overflow(
     )
     if num_combinations > np.iinfo(np.intp).max:
         msg = (
-            "The output that would result from the current configuration is too large"
-            " to be indexed"
+            r"The output that would result from the current configuration would have"
+            r" \d* features which is too large to be indexed"
         )
         with pytest.raises(ValueError, match=msg):
             pf.fit(X)
