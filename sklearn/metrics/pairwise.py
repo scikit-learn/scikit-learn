@@ -32,9 +32,11 @@ from ..utils.fixes import sp_base_version, sp_version, parse_version
 from ..utils._param_validation import (
     validate_params,
     Interval,
+    Integral,
     Real,
     Hidden,
     MissingValues,
+    StrOptions,
 )
 
 from ._pairwise_distances_reduction import ArgKmin
@@ -1809,6 +1811,16 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
     return {}
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "reduce_func": [callable, None],
+        "metric": [StrOptions({"precomputed"}.union(_VALID_METRICS)), callable],
+        "n_jobs": [Interval(Integral, -1, None, closed="left"), None],
+        "working_memory": [Interval(Real, 0, None, closed="left"), None],
+    }
+)
 def pairwise_distances_chunked(
     X,
     Y=None,
@@ -1829,13 +1841,13 @@ def pairwise_distances_chunked(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_X, n_samples_X) or \
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_samples_X) or \
             (n_samples_X, n_features)
         Array of pairwise distances between samples, or a feature array.
         The shape the array should be (n_samples_X, n_samples_X) if
         metric='precomputed' and (n_samples_X, n_features) otherwise.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), default=None
         An optional second feature array. Only allowed if
         metric != "precomputed".
 
@@ -1872,7 +1884,7 @@ def pairwise_distances_chunked(
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    working_memory : int, default=None
+    working_memory : float, default=None
         The sought maximum memory for temporary distance matrix chunks.
         When None (default), the value of
         ``sklearn.get_config()['working_memory']`` is used.
