@@ -15,6 +15,7 @@ import warnings
 import numbers
 import time
 from functools import partial
+from numbers import Real
 from traceback import format_exc
 from contextlib import suppress
 from collections import Counter
@@ -29,6 +30,11 @@ from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
 from ..utils.parallel import delayed, Parallel
 from ..utils.metaestimators import _safe_split
+from ..utils._param_validation import (
+    HasMethods,
+    StrOptions,
+    validate_params,
+)
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..exceptions import FitFailedWarning
@@ -46,6 +52,24 @@ __all__ = [
 ]
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods("fit")],
+        "X": ["array-like"],
+        "y": ["array-like", None],
+        "groups": ["array-like", None],
+        "scoring": [str, callable, list, tuple, dict, None],
+        "cv": ["cv_object"],
+        "n_jobs": [int, None],
+        "verbose": ["verbose"],
+        "fit_params": [dict, None],
+        "pre_dispatch": [int, str],
+        "return_train_score": ["boolean"],
+        "return_estimator": ["boolean"],
+        "return_indices": ["boolean"],
+        "error_score": [StrOptions({"raise"}), Real],
+    }
+)
 def cross_validate(
     estimator,
     X,
@@ -140,11 +164,6 @@ def cross_validate(
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
 
             - An int, giving the exact number of total jobs that are
               spawned

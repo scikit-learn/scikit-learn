@@ -355,7 +355,7 @@ def test_cross_validate_invalid_scoring_param():
         cross_validate(estimator, X, y, scoring=[[make_scorer(precision_score)]])
 
     error_message_regexp = (
-        ".*scoring is invalid.*Refer to the scoring glossary for details:.*"
+        "The 'scoring' parameter of cross_validate must be .*. Got .* instead.*"
     )
 
     # Empty dict should raise invalid scoring error
@@ -2104,10 +2104,14 @@ def test_fit_and_score_failing():
         "error_score must be the string 'raise' or a numeric value. (Hint: if "
         "using 'raise', please make sure that it has been spelled correctly.)"
     )
-    with pytest.raises(ValueError, match=error_message):
+
+    error_message_cross_validate = (
+        "The 'error_score' parameter of cross_validate must be .*. Got .* instead."
+    )
+    with pytest.raises(ValueError, match=error_message_cross_validate):
         cross_validate(failing_clf, X, cv=3, error_score="unvalid-string")
 
-    with pytest.raises(ValueError, match=error_message):
+    with pytest.raises(ValueError, match=error_message_cross_validate):
         cross_val_score(failing_clf, X, cv=3, error_score="unvalid-string")
 
     with pytest.raises(ValueError, match=error_message):
