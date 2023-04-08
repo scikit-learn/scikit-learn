@@ -129,8 +129,7 @@ if __name__ == "__main__":
         try:
             from bhtsne.bhtsne import run_bh_tsne
         except ImportError as e:
-            raise ImportError(
-                """\
+            raise ImportError("""\
 If you want comparison with the reference implementation, build the
 binary from source (https://github.com/lvdmaaten/bhtsne) in the folder
 benchmarks/bhtsne and add an empty `__init__.py` file in the folder:
@@ -140,8 +139,7 @@ $ cd bhtsne
 $ g++ sptree.cpp tsne.cpp tsne_main.cpp -o bh_tsne -O2
 $ touch __init__.py
 $ cd ..
-"""
-            ) from e
+""") from e
 
         def bhtsne(X):
             """Wrapper for the reference lvdmaaten/bhtsne implementation."""
@@ -160,7 +158,6 @@ $ cd ..
         methods.append(("lvdmaaten/bhtsne", bhtsne))
 
     if args.profile:
-
         try:
             from memory_profiler import profile
         except ImportError as e:

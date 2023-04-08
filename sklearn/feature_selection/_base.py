@@ -101,8 +101,10 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         mask = self.get_support()
         if not mask.any():
             warnings.warn(
-                "No features were selected: either the data is"
-                " too noisy or the selection test too strict.",
+                (
+                    "No features were selected: either the data is"
+                    " too noisy or the selection test too strict."
+                ),
                 UserWarning,
             )
             if hasattr(X, "iloc"):

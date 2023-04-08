@@ -223,7 +223,6 @@ if __name__ == "__main__":
     )
     print("-" * 60)
     for name in sorted(args["classifiers"], key=error.get):
-
         print(
             "{0: <23} {1: >10.2f}s {2: >10.2f}s {3: >12.4f}".format(
                 name, train_time[name], test_time[name], error[name]
