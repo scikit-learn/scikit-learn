@@ -113,6 +113,7 @@ def _in_unstable_openblas_configuration():
             return True
     return False
 
+
 @validate_params(
     {
         "X": ["array-like", "sparse matrix"],
