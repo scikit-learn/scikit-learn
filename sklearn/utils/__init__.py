@@ -781,6 +781,13 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
         yield slice(start, n)
 
 
+@validate_params(
+    {
+        "n": [Interval(numbers.Integral, 1, None, closed="left")],
+        "n_packs": [Interval(numbers.Integral, 1, None, closed="left")],
+        "n_samples": [Interval(numbers.Integral, 1, None, closed="left"), None],
+    }
+)
 def gen_even_slices(n, n_packs, *, n_samples=None):
     """Generator to create `n_packs` evenly spaced slices going up to `n`.
 
