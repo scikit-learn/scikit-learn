@@ -188,10 +188,12 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         if not _allclose_dense_sparse(X[idx_selected], X_round_trip):
             warnings.warn(
-                "The provided functions are not strictly"
-                " inverse of each other. If you are sure you"
-                " want to proceed regardless, set"
-                " 'check_inverse=False'.",
+                (
+                    "The provided functions are not strictly"
+                    " inverse of each other. If you are sure you"
+                    " want to proceed regardless, set"
+                    " 'check_inverse=False'."
+                ),
                 UserWarning,
             )
 

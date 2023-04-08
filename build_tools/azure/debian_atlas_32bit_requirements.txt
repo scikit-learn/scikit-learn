@@ -5,3 +5,4 @@ cython
 joblib==1.1.1  # min
 threadpoolctl==2.2.0
 pytest==5.3.1  # min
+pytest-cov==2.9.0  # min

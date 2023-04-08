@@ -105,47 +105,53 @@ if __name__ == "__main__":
 
     ###########################################################################
     # Set Python core input
-    sampling_algorithm[
-        "python-core-sample"
-    ] = lambda n_population, n_sample: random.sample(range(n_population), n_sample)
+    sampling_algorithm["python-core-sample"] = (
+        lambda n_population, n_sample: random.sample(range(n_population), n_sample)
+    )
 
     ###########################################################################
     # Set custom automatic method selection
-    sampling_algorithm[
-        "custom-auto"
-    ] = lambda n_population, n_samples, random_state=None: sample_without_replacement(
-        n_population, n_samples, method="auto", random_state=random_state
+    sampling_algorithm["custom-auto"] = (
+        lambda n_population, n_samples, random_state=None: sample_without_replacement(
+            n_population, n_samples, method="auto", random_state=random_state
+        )
     )
 
     ###########################################################################
     # Set custom tracking based method
-    sampling_algorithm[
-        "custom-tracking-selection"
-    ] = lambda n_population, n_samples, random_state=None: sample_without_replacement(
-        n_population, n_samples, method="tracking_selection", random_state=random_state
+    sampling_algorithm["custom-tracking-selection"] = (
+        lambda n_population, n_samples, random_state=None: sample_without_replacement(
+            n_population,
+            n_samples,
+            method="tracking_selection",
+            random_state=random_state,
+        )
     )
 
     ###########################################################################
     # Set custom reservoir based method
-    sampling_algorithm[
-        "custom-reservoir-sampling"
-    ] = lambda n_population, n_samples, random_state=None: sample_without_replacement(
-        n_population, n_samples, method="reservoir_sampling", random_state=random_state
+    sampling_algorithm["custom-reservoir-sampling"] = (
+        lambda n_population, n_samples, random_state=None: sample_without_replacement(
+            n_population,
+            n_samples,
+            method="reservoir_sampling",
+            random_state=random_state,
+        )
     )
 
     ###########################################################################
     # Set custom reservoir based method
-    sampling_algorithm[
-        "custom-pool"
-    ] = lambda n_population, n_samples, random_state=None: sample_without_replacement(
-        n_population, n_samples, method="pool", random_state=random_state
+    sampling_algorithm["custom-pool"] = (
+        lambda n_population, n_samples, random_state=None: sample_without_replacement(
+            n_population, n_samples, method="pool", random_state=random_state
+        )
     )
 
     ###########################################################################
     # Numpy permutation based
-    sampling_algorithm[
-        "numpy-permutation"
-    ] = lambda n_population, n_sample: np.random.permutation(n_population)[:n_sample]
+    sampling_algorithm["numpy-permutation"] = (
+        lambda n_population, n_sample: np.random.permutation(n_population)[:n_sample]
+    )
 
     ###########################################################################
     # Remove unspecified algorithm

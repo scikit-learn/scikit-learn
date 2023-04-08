@@ -1980,7 +1980,6 @@ def test_cross_val_predict_with_method_multilabel_rf_rare_class():
 
 
 def get_expected_predictions(X, y, cv, classes, est, method):
-
     expected_predictions = np.zeros([len(y), classes])
     func = getattr(est, method)
 
@@ -2001,7 +2000,6 @@ def get_expected_predictions(X, y, cv, classes, est, method):
 
 
 def test_cross_val_predict_class_subset():
-
     X = np.arange(200).reshape(100, 2)
     y = np.array([x // 10 for x in range(100)])
     classes = 10
@@ -2175,9 +2173,11 @@ def test_cross_validate_some_failing_fits_warning(error_score):
         "ValueError: Classifier fit failed with 1 values too high"
     )
     warning_message = re.compile(
-        "2 fits failed.+total of 3.+The score on these"
-        " train-test partitions for these parameters will be set to"
-        f" {cross_validate_kwargs['error_score']}.+{individual_fit_error_message}",
+        (
+            "2 fits failed.+total of 3.+The score on these"
+            " train-test partitions for these parameters will be set to"
+            f" {cross_validate_kwargs['error_score']}.+{individual_fit_error_message}"
+        ),
         flags=re.DOTALL,
     )
 
@@ -2198,8 +2198,10 @@ def test_cross_validate_all_failing_fits_error(error_score):
 
     individual_fit_error_message = "ValueError: Failing classifier failed as required"
     error_message = re.compile(
-        "All the 7 fits failed.+your model is misconfigured.+"
-        f"{individual_fit_error_message}",
+        (
+            "All the 7 fits failed.+your model is misconfigured.+"
+            f"{individual_fit_error_message}"
+        ),
         flags=re.DOTALL,
     )
 

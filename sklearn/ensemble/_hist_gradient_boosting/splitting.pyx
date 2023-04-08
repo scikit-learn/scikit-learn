@@ -582,15 +582,15 @@ cdef class Splitter:
         free(split_infos)
         return out
 
-    cdef unsigned int _find_best_feature_to_split_helper(
+    cdef int _find_best_feature_to_split_helper(
         self,
         split_info_struct * split_infos,  # IN
         int n_allowed_features,
     ) noexcept nogil:
         """Return the index of split_infos with the best feature split."""
         cdef:
-            unsigned int split_info_idx
-            unsigned int best_split_info_idx = 0
+            int split_info_idx
+            int best_split_info_idx = 0
 
         for split_info_idx in range(1, n_allowed_features):
             if (split_infos[split_info_idx].gain > split_infos[best_split_info_idx].gain):
