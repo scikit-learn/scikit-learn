@@ -147,7 +147,7 @@ def test_stacking_classifier_drop_estimator():
     clf = StackingClassifier(
         estimators=[("svc", LinearSVC(dual="auto", random_state=0))],
         final_estimator=rf,
-        cv=5
+        cv=5,
     )
     clf_drop = StackingClassifier(estimators=estimators, final_estimator=rf, cv=5)
 
@@ -169,7 +169,7 @@ def test_stacking_regressor_drop_estimator():
     reg = StackingRegressor(
         estimators=[("svr", LinearSVR(dual="auto", random_state=0))],
         final_estimator=rf,
-        cv=5
+        cv=5,
     )
     reg_drop = StackingRegressor(estimators=estimators, final_estimator=rf, cv=5)
 
@@ -351,7 +351,8 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
             y_diabetes,
             {
                 "estimators": [
-                    ("lr", LinearRegression()), ("cor", LinearSVR(dual="auto"))
+                    ("lr", LinearRegression()),
+                    ("cor", LinearSVR(dual="auto")),
                 ],
                 "final_estimator": NoWeightRegressor(),
             },
