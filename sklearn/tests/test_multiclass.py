@@ -694,7 +694,9 @@ def test_ecoc_exceptions():
 
 def test_ecoc_fit_predict():
     # A classifier which implements decision_function.
-    ecoc = OutputCodeClassifier(LinearSVC(dual="auto", random_state=0), code_size=2, random_state=0)
+    ecoc = OutputCodeClassifier(
+        LinearSVC(dual="auto", random_state=0), code_size=2, random_state=0
+    )
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert len(ecoc.estimators_) == n_classes * 2
 
