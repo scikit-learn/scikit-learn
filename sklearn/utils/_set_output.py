@@ -140,10 +140,15 @@ def _wrap_method_output(f, method):
         data_to_wrap = f(self, X, *args, **kwargs)
         if isinstance(data_to_wrap, tuple):
             # only wrap the first output for cross decomposition
-            return type(data_to_wrap)(
+            return_tuple = (
                 _wrap_data_with_container(method, data_to_wrap[0], X, self),
                 *data_to_wrap[1:],
             )
+            # `_make` is a documented API for named tuples:
+            # https://docs.python.org/3/library/collections.html#collections.somenamedtuple._make
+            if hasattr(type(data_to_wrap), "_make"):
+                return type(data_to_wrap)._make(return_tuple)
+            return return_tuple
 
         return _wrap_data_with_container(method, data_to_wrap, X, self)
 
