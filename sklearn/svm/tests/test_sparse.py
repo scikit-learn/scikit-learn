@@ -251,7 +251,9 @@ def test_linearsvc_iris():
     # Test the sparse LinearSVC with the iris dataset
 
     sp_clf = svm.LinearSVC(dual="auto", random_state=0).fit(iris.data, iris.target)
-    clf = svm.LinearSVC(dual="auto", random_state=0).fit(iris.data.toarray(), iris.target)
+    clf = svm.LinearSVC(dual="auto", random_state=0).fit(
+        iris.data.toarray(), iris.target
+    )
 
     assert clf.fit_intercept == sp_clf.fit_intercept
 
