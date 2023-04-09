@@ -971,7 +971,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     ...                                 n_components=300)
     >>> data_transformed = feature_map_nystroem.fit_transform(data)
     >>> clf.fit(data_transformed, y)
-    LinearSVC(dual="auto")
+    LinearSVC(dual='auto')
     >>> clf.score(data_transformed, y)
     0.9987...
     """
