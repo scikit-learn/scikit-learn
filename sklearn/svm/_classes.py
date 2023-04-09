@@ -182,10 +182,10 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(n_features=4, random_state=0)
     >>> clf = make_pipeline(StandardScaler(),
-    ...                     LinearSVC(random_state=0, tol=1e-5))
+    ...                     LinearSVC(dual="auto", random_state=0, tol=1e-5))
     >>> clf.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('linearsvc', LinearSVC(dual="auto", random_state=0, tol=1e-05))])
+                    ('linearsvc', LinearSVC(dual='auto', random_state=0, tol=1e-05))])
 
     >>> print(clf.named_steps['linearsvc'].coef_)
     [[0.141...   0.526... 0.679... 0.493...]]
@@ -462,7 +462,7 @@ class LinearSVR(RegressorMixin, LinearModel):
     ...                      LinearSVR(dual="auto", random_state=0, tol=1e-5))
     >>> regr.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('linearsvr', LinearSVR(random_state=0, tol=1e-05))])
+                    ('linearsvr', LinearSVR(dual='auto', random_state=0, tol=1e-05))])
 
     >>> print(regr.named_steps['linearsvr'].coef_)
     [18.582... 27.023... 44.357... 64.522...]
