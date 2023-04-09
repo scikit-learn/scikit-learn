@@ -173,9 +173,7 @@ def test_parallel_execution(data, method, ensemble):
     X, y = data
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-    estimator = make_pipeline(
-        StandardScaler(), LinearSVC(dual="auto", random_state=42)
-    )
+    estimator = make_pipeline(StandardScaler(), LinearSVC(dual="auto", random_state=42))
 
     cal_clf_parallel = CalibratedClassifierCV(
         estimator, method=method, n_jobs=2, ensemble=ensemble
