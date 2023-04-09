@@ -14,6 +14,7 @@ from sklearn import config_context
 # Ignore flake8 (lots of line too long issues)
 # flake8: noqa
 
+
 # Constructors excerpted to test pprinting
 class LogisticRegression(BaseEstimator):
     def __init__(
@@ -438,7 +439,6 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
 
 
 def test_n_max_elements_to_show(print_changed_only_false):
-
     n_max_elements_to_show = 30
     pp = _EstimatorPrettyPrinter(
         compact=True,
