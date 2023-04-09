@@ -350,7 +350,9 @@ def test_classes__property():
     assert not hasattr(grid_search, "classes_")
 
     # Test that the grid searcher has no classes_ attribute without a refit
-    grid_search = GridSearchCV(LinearSVC(dual="auto", random_state=0), {"C": Cs}, refit=False)
+    grid_search = GridSearchCV(
+        LinearSVC(dual="auto", random_state=0), {"C": Cs}, refit=False
+    )
     grid_search.fit(X, y)
     assert not hasattr(grid_search, "classes_")
 
