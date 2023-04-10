@@ -225,6 +225,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.precision_recall_fscore_support",
     "sklearn.metrics.precision_score",
     "sklearn.metrics.r2_score",
+    "sklearn.metrics.rand_score",
     "sklearn.metrics.recall_score",
     "sklearn.metrics.roc_auc_score",
     "sklearn.metrics.roc_curve",

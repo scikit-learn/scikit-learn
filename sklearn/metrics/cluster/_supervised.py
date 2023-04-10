@@ -254,6 +254,12 @@ def pair_confusion_matrix(labels_true, labels_pred):
     return C
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    }
+)
 def rand_score(labels_true, labels_pred):
     """Rand index.
 
