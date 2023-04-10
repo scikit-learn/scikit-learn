@@ -236,6 +236,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.preprocessing.label_binarize",
     "sklearn.preprocessing.maxabs_scale",
     "sklearn.preprocessing.normalize",
+    "sklearn.preprocessing.power_transform",
     "sklearn.preprocessing.scale",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",

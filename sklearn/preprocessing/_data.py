@@ -3394,6 +3394,14 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True}
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "method": [StrOptions({"yeo-johnson", "box-cox"})],
+        "standardize": ["boolean"],
+        "copy": ["boolean"],
+    }
+)
 def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     """Parametric, monotonic transformation to make data more Gaussian-like.
 
