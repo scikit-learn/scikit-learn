@@ -1778,6 +1778,139 @@ def precision_recall_fscore_support(
     return precision, recall, f_score, true_sum
 
 
+def precision_recall_fscore_support_pred(
+    y_true,
+    y_pred,
+    *,
+    beta=1.0,
+    labels=None,
+    pos_label=1,
+    average=None,
+    warn_for=("precision", "recall", "f-score"),
+    sample_weight=None,
+    zero_division="warn",
+):
+    """Functionally identical to precision_recall_fscore_support.
+    Please refer to precision_recall_fscore_support for a more complete docstring.
+
+    Returns
+    -------
+    precision : float (if average is not None) or array of float, shape =\
+        [n_unique_labels]
+        Precision score.
+
+    recall : float (if average is not None) or array of float, shape =\
+        [n_unique_labels]
+        Recall score.
+
+    fbeta_score : float (if average is not None) or array of float, shape =\
+        [n_unique_labels]
+        F-beta score.
+
+    support : None (if average is not None) or array of int, shape =\
+        [n_unique_labels]
+        The number of occurrences of each label in ``y_true``.
+
+    predicted: None (if average is not None) or array of int, shape =\
+        [n_unique_labels]
+        The number of predictions made for each label in ``y_true``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import precision_recall_fscore_support_pred
+    >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
+    >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
+    >>> precision_recall_fscore_support_pred(y_true, y_pred, average='macro')
+    (0.22..., 0.33..., 0.26..., None, None)
+    >>> precision_recall_fscore_support_pred(y_true, y_pred, average='micro')
+    (0.33..., 0.33..., 0.33..., None, None)
+    >>> precision_recall_fscore_support_pred(y_true, y_pred, average='weighted')
+    (0.22..., 0.33..., 0.26..., None, None)
+
+    It is possible to compute per-label precisions, recalls, F1-scores and
+    supports instead of averaging:
+
+    >>> precision_recall_fscore_support_pred(y_true, y_pred, average=None,
+    ... labels=['pig', 'dog', 'cat'])
+    (array([0.        , 0.        , 0.66...]),
+     array([0., 0., 1.]), array([0. , 0. , 0.8]),
+     array([2, 2, 2]),
+     array([3, 2, 1]))
+    """
+    zero_division_value = _check_zero_division(zero_division)
+    labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
+
+    # Calculate tp_sum, pred_sum, true_sum ###
+    samplewise = average == "samples"
+    MCM = multilabel_confusion_matrix(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        labels=labels,
+        samplewise=samplewise,
+    )
+    tp_sum = MCM[:, 1, 1]
+    pred_sum = tp_sum + MCM[:, 0, 1]
+    true_sum = tp_sum + MCM[:, 1, 0]
+
+    if average == "micro":
+        tp_sum = np.array([tp_sum.sum()])
+        pred_sum = np.array([pred_sum.sum()])
+        true_sum = np.array([true_sum.sum()])
+
+    # Finally, we have all our sufficient statistics. Divide! #
+    beta2 = beta**2
+
+    # Divide, and on zero-division, set scores and/or warn according to
+    # zero_division:
+    precision = _prf_divide(
+        tp_sum, pred_sum, "precision", "predicted", average, warn_for, zero_division
+    )
+    recall = _prf_divide(
+        tp_sum, true_sum, "recall", "true", average, warn_for, zero_division
+    )
+
+    # warn for f-score only if zero_division is warn, it is in warn_for
+    # and BOTH prec and rec are ill-defined
+    if zero_division == "warn" and ("f-score",) == warn_for:
+        if (pred_sum[true_sum == 0] == 0).any():
+            _warn_prf(average, "true nor predicted", "F-score is", len(true_sum))
+
+    if np.isposinf(beta):
+        f_score = recall
+    elif beta == 0:
+        f_score = precision
+    else:
+        # The score is defined as:
+        # score = (1 + beta**2) * precision * recall / (beta**2 * precision + recall)
+        # We set to `zero_division_value` if the denominator is 0 **or** if **both**
+        # precision and recall are ill-defined.
+        denom = beta2 * precision + recall
+        mask = np.isclose(denom, 0) | np.isclose(pred_sum + true_sum, 0)
+        denom[mask] = 1  # avoid division by 0
+        f_score = (1 + beta2) * precision * recall / denom
+        f_score[mask] = zero_division_value
+
+    # Average the results
+    if average == "weighted":
+        weights = true_sum
+    elif average == "samples":
+        weights = sample_weight
+    else:
+        weights = None
+
+    if average is not None:
+        assert average != "binary" or len(precision) == 1
+        precision = _nanaverage(precision, weights=weights)
+        recall = _nanaverage(recall, weights=weights)
+        f_score = _nanaverage(f_score, weights=weights)
+        true_sum = None  # return no support
+        pred_sum = None
+
+    return precision, recall, f_score, true_sum, pred_sum
+
+
 @validate_params(
     {
         "y_true": ["array-like", "sparse matrix"],
@@ -2411,6 +2544,7 @@ def classification_report(
     sample_weight=None,
     digits=2,
     output_dict=False,
+    output_pred=False,
     zero_division="warn",
 ):
     """Build a text report showing the main classification metrics.
@@ -2443,6 +2577,9 @@ def classification_report(
         If True, return output as dict.
 
         .. versionadded:: 0.20
+
+    output_pred : bool, default=False
+        If True, return the number of predictions along with support.
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division. If set to
@@ -2550,17 +2687,29 @@ def classification_report(
     if target_names is None:
         target_names = ["%s" % l for l in labels]
 
-    headers = ["precision", "recall", "f1-score", "support"]
-    # compute per-class results without averaging
-    p, r, f1, s = precision_recall_fscore_support(
-        y_true,
-        y_pred,
-        labels=labels,
-        average=None,
-        sample_weight=sample_weight,
-        zero_division=zero_division,
-    )
-    rows = zip(target_names, p, r, f1, s)
+    if output_pred:
+        headers = ["precision", "recall", "f1-score", "support", "predicted"]
+        p, r, f1, s, pr = precision_recall_fscore_support_pred(
+            y_true,
+            y_pred,
+            labels=labels,
+            average=None,
+            sample_weight=sample_weight,
+            zero_division=zero_division,
+        )
+        rows = zip(target_names, p, r, f1, s, pr)
+    else:
+        headers = ["precision", "recall", "f1-score", "support"]
+        # compute per-class results without averaging
+        p, r, f1, s = precision_recall_fscore_support(
+            y_true,
+            y_pred,
+            labels=labels,
+            average=None,
+            sample_weight=sample_weight,
+            zero_division=zero_division,
+        )
+        rows = zip(target_names, p, r, f1, s)
 
     if y_type.startswith("multilabel"):
         average_options = ("micro", "macro", "weighted", "samples")
@@ -2599,7 +2748,11 @@ def classification_report(
             sample_weight=sample_weight,
             zero_division=zero_division,
         )
-        avg = [avg_p, avg_r, avg_f1, np.sum(s)]
+
+        if output_pred:
+            avg = [avg_p, avg_r, avg_f1, np.sum(s), np.sum(pr)]
+        else:
+            avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
         if output_dict:
             report_dict[line_heading] = dict(zip(headers, [float(i) for i in avg]))
