@@ -325,6 +325,12 @@ def rand_score(labels_true, labels_pred):
     return numerator / denominator
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    }
+)
 def adjusted_rand_score(labels_true, labels_pred):
     """Rand index adjusted for chance.
 
