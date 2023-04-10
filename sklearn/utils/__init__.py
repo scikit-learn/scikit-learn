@@ -464,6 +464,7 @@ def _get_column_indices(X, key):
             "strings, or boolean mask is allowed"
         )
 
+
 @validate_params(
     {
         "replace":["boolean"],
