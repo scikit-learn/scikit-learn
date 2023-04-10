@@ -784,7 +784,7 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
 @validate_params(
     {
         "n": [Interval(numbers.Integral, 1, None, closed="left")],
-        "n_packs": [Interval(numbers.Integral, 1, None, closed="left")],
+        "n_packs": [Interval(numbers.Real, 0.0, None, closed="left")],
         "n_samples": [Interval(numbers.Integral, 1, None, closed="left"), None],
     }
 )
