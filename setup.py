@@ -196,7 +196,7 @@ extension_config = {
         {"sources": ["_check_build.pyx"]},
     ],
     "": [
-        {"sources": ["_isotonic.pyx"], "include_np": True},
+        {"sources": ["_isotonic.pyx"]},
     ],
     "_loss": [
         {"sources": ["_loss.pyx.tp"]},
@@ -265,7 +265,6 @@ extension_config = {
         {
             "sources": ["_middle_term_computer.pyx.tp", "_middle_term_computer.pxd.tp"],
             "language": "c++",
-            "include_np": True,
             "extra_compile_args": ["-std=c++11"],
         },
         {
@@ -387,8 +386,7 @@ extension_config = {
             "include_dirs": ["src"],
             "include_np": True,
         },
-        {"sources": ["_fast_dict.pyx"], "language": "c++", "include_np": True},
-        {"sources": ["_fast_dict.pyx"], "language": "c++", "include_np": True},
+        {"sources": ["_fast_dict.pyx"], "language": "c++"},
         {"sources": ["_openmp_helpers.pyx"]},
         {"sources": ["_seq_dataset.pyx.tp", "_seq_dataset.pxd.tp"], "include_np": True},
         {
@@ -397,9 +395,9 @@ extension_config = {
         },
         {"sources": ["_random.pyx"], "include_np": True},
         {"sources": ["_logistic_sigmoid.pyx"], "include_np": True},
-        {"sources": ["_typedefs.pyx"], "include_np": True},
-        {"sources": ["_heap.pyx"], "include_np": True},
-        {"sources": ["_sorting.pyx"], "include_np": True},
+        {"sources": ["_typedefs.pyx"]},
+        {"sources": ["_heap.pyx"]},
+        {"sources": ["_sorting.pyx"]},
         {"sources": ["_vector_sentinel.pyx"], "language": "c++", "include_np": True},
         {"sources": ["_isfinite.pyx"]},
     ],

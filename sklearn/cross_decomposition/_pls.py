@@ -501,10 +501,12 @@ class _PLS(
         #            update the docstring of `coef_` and `intercept_` attribute
         if hasattr(self, "_coef_") and getattr(self, "_coef_warning", True):
             warnings.warn(
-                "The attribute `coef_` will be transposed in version 1.3 to be "
-                "consistent with other linear models in scikit-learn. Currently, "
-                "`coef_` has a shape of (n_features, n_targets) and in the future it "
-                "will have a shape of (n_targets, n_features).",
+                (
+                    "The attribute `coef_` will be transposed in version 1.3 to be"
+                    " consistent with other linear models in scikit-learn. Currently,"
+                    " `coef_` has a shape of (n_features, n_targets) and in the future"
+                    " it will have a shape of (n_targets, n_features)."
+                ),
                 FutureWarning,
             )
             # Only warn the first time

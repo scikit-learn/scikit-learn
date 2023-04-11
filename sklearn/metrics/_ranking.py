@@ -29,7 +29,7 @@ from scipy.stats import rankdata
 
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
@@ -39,11 +39,7 @@ from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
 
-from ._base import (
-    _average_binary_score,
-    _average_multiclass_ovo_score,
-    _check_pos_label_consistency,
-)
+from ._base import _average_binary_score, _average_multiclass_ovo_score
 
 
 @validate_params({"x": ["array-like"], "y": ["array-like"]})
@@ -382,6 +378,17 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "average": [StrOptions({"micro", "macro", "samples", "weighted"}), None],
+        "sample_weight": ["array-like", None],
+        "max_fpr": [Interval(Real, 0.0, 1, closed="right"), None],
+        "multi_class": [StrOptions({"raise", "ovr", "ovo"})],
+        "labels": ["array-like", None],
+    }
+)
 def roc_auc_score(
     y_true,
     y_score,
@@ -1758,9 +1765,11 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     if y_true.min() < 0:
         # TODO(1.4): Replace warning w/ ValueError
         warnings.warn(
-            "ndcg_score should not be used on negative y_true values. ndcg_score"
-            " will raise a ValueError on negative y_true values starting from"
-            " version 1.4.",
+            (
+                "ndcg_score should not be used on negative y_true values. ndcg_score"
+                " will raise a ValueError on negative y_true values starting from"
+                " version 1.4."
+            ),
             FutureWarning,
         )
     if y_true.ndim > 1 and y_true.shape[1] <= 1:
@@ -1918,8 +1927,10 @@ def top_k_accuracy_score(
 
     if k >= n_classes:
         warnings.warn(
-            f"'k' ({k}) greater than or equal to 'n_classes' ({n_classes}) "
-            "will result in a perfect score and is therefore meaningless.",
+            (
+                f"'k' ({k}) greater than or equal to 'n_classes' ({n_classes}) "
+                "will result in a perfect score and is therefore meaningless."
+            ),
             UndefinedMetricWarning,
         )
 

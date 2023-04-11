@@ -275,12 +275,14 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
 
         if n_clusters is not None:
             warnings.warn(
-                "Partial build of the tree is implemented "
-                "only for structured clustering (i.e. with "
-                "explicit connectivity). The algorithm "
-                "will build the full tree and only "
-                "retain the lower branches required "
-                "for the specified number of clusters",
+                (
+                    "Partial build of the tree is implemented "
+                    "only for structured clustering (i.e. with "
+                    "explicit connectivity). The algorithm "
+                    "will build the full tree and only "
+                    "retain the lower branches required "
+                    "for the specified number of clusters"
+                ),
                 stacklevel=2,
             )
         X = np.require(X, requirements="W")
@@ -507,12 +509,14 @@ def linkage_tree(
 
         if n_clusters is not None:
             warnings.warn(
-                "Partial build of the tree is implemented "
-                "only for structured clustering (i.e. with "
-                "explicit connectivity). The algorithm "
-                "will build the full tree and only "
-                "retain the lower branches required "
-                "for the specified number of clusters",
+                (
+                    "Partial build of the tree is implemented "
+                    "only for structured clustering (i.e. with "
+                    "explicit connectivity). The algorithm "
+                    "will build the full tree and only "
+                    "retain the lower branches required "
+                    "for the specified number of clusters"
+                ),
                 stacklevel=2,
             )
 
@@ -541,7 +545,6 @@ def linkage_tree(
             and not callable(affinity)
             and affinity in METRIC_MAPPING
         ):
-
             # We need the fast cythonized metric from neighbors
             dist_metric = DistanceMetric.get_metric(affinity)
 
@@ -995,8 +998,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                     " 1.4. To avoid this error, only set the `metric` attribute."
                 )
             warnings.warn(
-                "Attribute `affinity` was deprecated in version 1.2 and will be removed"
-                " in 1.4. Use `metric` instead",
+                (
+                    "Attribute `affinity` was deprecated in version 1.2 and will be"
+                    " removed in 1.4. Use `metric` instead"
+                ),
                 FutureWarning,
             )
             self._metric = self.affinity
