@@ -48,7 +48,7 @@
 Scikit-learn-tree
 =================
 
-``scikit-learn-tree`` is a maintained fork of scikit-learn, which advances the tree submodule, while staying in-line
+``scikit-learn-tree`` is an alias of scikit-learn. It is a maintained fork of scikit-learn, which advances the tree submodule, while staying in-line
 with changes from upstream scikit-learn. It is an exact stand-in for ``sklearn`` in package imports, but is
 released under the name ``scikit-learn-tree`` to avoid confusion.
 
@@ -85,7 +85,7 @@ Installation
 Dependencies
 ~~~~~~~~~~~~
 
-scikit-learn requires:
+scikit-learn-tree requires:
 
 - Python (>= |PythonMinVersion|)
 - NumPy (>= |NumPyMinVersion|)
