@@ -3,6 +3,8 @@ from .. import precision_recall_curve
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 
 from collections import Counter
+from numbers import Real
+
 
 class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     """Precision Recall visualization.
@@ -183,9 +185,12 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         if plot_chance_level:
             if pos_prevalence is None:
-                raise ValueError(
-                    "pos_prevalence must be provided if plot_chance_level=True"
+                raise TypeError(
+                    "pos_prevalence must be provided as a real number between "
+                    "0 and 1 if plot_chance_level=True"
                 )
+            elif not isinstance(pos_prevalence, Real):
+                raise TypeError("pos_prevalence must be a real number between 0 and 1")
             elif pos_prevalence < 0 or pos_prevalence > 1:
                 raise ValueError("pos_prevalence has value outside [0, 1]")
             else:
@@ -472,7 +477,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         average_precision = average_precision_score(
             y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
         )
-        
+
         name = name if name is not None else "Classifier"
 
         if plot_chance_level:
