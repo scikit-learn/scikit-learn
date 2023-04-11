@@ -467,7 +467,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     and self.n_output_features_ > max_int32
                     and all_int32
                 ):
-                    raise ValueError(
+                    raise ValueError(  # pragma: no cover
                         "In scipy versions `<1.9.2`, the function `scipy.sparse.hstack`"
                         " produces negative columns when:\n1. The output shape contains"
                         " `n_cols` too large to be represented by a 32bit signed"

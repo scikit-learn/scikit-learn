@@ -818,17 +818,18 @@ def test_csr_polynomial_expansion_index_overflow_non_regression(
 
     n_samples = 13
     n_features = 120001
-    dtype = np.float32
+    data_dtype = np.float32
     data = np.arange(1, 5, dtype=np.int64)
     row = np.array([n_samples - 2, n_samples - 2, n_samples - 1, n_samples - 1])
-    # An int64 dtype is required to avoid overflow error on Windows
+    # An int64 dtype is required to avoid overflow error on Windows within the
+    # `degree_2_calc` function.
     col = np.array(
         [n_features - 2, n_features - 1, n_features - 2, n_features - 1], dtype=np.int64
     )
     X = sparse.csr_matrix(
         (data, (row, col)),
         shape=(n_samples, n_features),
-        dtype=dtype,
+        dtype=data_dtype,
     )
     pf = PolynomialFeatures(
         interaction_only=interaction_only, include_bias=include_bias, degree=2
@@ -853,11 +854,10 @@ def test_csr_polynomial_expansion_index_overflow_non_regression(
         return
     X_trans = pf.fit_transform(X)
     row_nonzero, col_nonzero = X_trans.nonzero()
-    n_degree_1_features = n_features
-    lower_degree_features = n_degree_1_features + include_bias
+    n_degree_1_features_out = n_features + include_bias
     max_degree_2_idx = (
         degree_2_calc(n_features, col[int(not interaction_only)], col[1])
-        + lower_degree_features
+        + n_degree_1_features_out
     )
 
     # Account for bias of all samples except last one which will be handled
@@ -881,27 +881,27 @@ def test_csr_polynomial_expansion_index_overflow_non_regression(
             data_target.extend([x * x, x * y, y * y])
             col_nonzero_target.extend(
                 [
-                    degree_2_calc(n_features, x_idx, x_idx) + lower_degree_features,
-                    degree_2_calc(n_features, x_idx, y_idx) + lower_degree_features,
-                    degree_2_calc(n_features, y_idx, y_idx) + lower_degree_features,
+                    degree_2_calc(n_features, x_idx, x_idx) + n_degree_1_features_out,
+                    degree_2_calc(n_features, x_idx, y_idx) + n_degree_1_features_out,
+                    degree_2_calc(n_features, y_idx, y_idx) + n_degree_1_features_out,
                 ]
             )
         else:
             data_target.extend([x * y])
             col_nonzero_target.append(
-                degree_2_calc(n_features, x_idx, y_idx) + lower_degree_features
+                degree_2_calc(n_features, x_idx, y_idx) + n_degree_1_features_out
             )
 
     nnz_per_row = int(include_bias) + 3 + 2 * int(not interaction_only)
 
     assert pf.n_output_features_ == max_degree_2_idx + 1
-    assert X_trans.dtype == dtype
-    assert X_trans.shape == (13, max_degree_2_idx + 1)
+    assert X_trans.dtype == data_dtype
+    assert X_trans.shape == (n_samples, max_degree_2_idx + 1)
     assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
     # Ensure that dtype promotion was actually required:
     assert X_trans.indices.max() > np.iinfo(np.int32).max
 
-    row_nonzero_target = list(np.arange(n_samples - 2)) if include_bias else []
+    row_nonzero_target = list(range(n_samples - 2)) if include_bias else []
     row_nonzero_target.extend(
         [n_samples - 2] * nnz_per_row + [n_samples - 1] * nnz_per_row
     )
@@ -945,10 +945,10 @@ def test_csr_polynomial_expansion_index_overflow(
         n_features - 1 + int(include_bias),
     ]
     # Second degree index
-    target_indices.append(int(n_features * (n_features + 1) // 2 + target_indices[0]))
+    target_indices.append(n_features * (n_features + 1) // 2 + target_indices[0])
     # Third degree index
     target_indices.append(
-        int(n_features * (n_features + 1) * (n_features + 2) // 6 + target_indices[1])
+        n_features * (n_features + 1) * (n_features + 2) // 6 + target_indices[1]
     )
 
     X = sparse.csr_matrix((data, (row, col)))
@@ -974,24 +974,24 @@ def test_csr_polynomial_expansion_index_overflow(
             pf.fit(X)
         return
 
-    # On older versions of scipy, a bug occurs when an intermediate matrix in
+    # In SciPy < 1.8, a bug occurs when an intermediate matrix in
     # `to_stack` in `hstack` fits within int32 however would require int64 when
     # combined with all previous matrices in `to_stack`.
-    has_bug = False
-    max_int32 = np.iinfo(np.int32).max
-    cumulative_size = n_features + include_bias
-    for deg in range(2, degree + 1):
-        max_indptr = _calc_total_nnz(X.indptr, interaction_only, deg)
-        max_indices = _calc_expanded_nnz(n_features, interaction_only, deg) - 1
-        cumulative_size += max_indices + 1
-        needs_int64 = max(max_indices, max_indptr) > max_int32
-        has_bug |= not needs_int64 and cumulative_size > max_int32
-
-    if sp_version < parse_version("1.8.0") and has_bug:
-        msg = r"In scipy versions `<1.8.0`, the function `scipy.sparse.hstack`"
-        with pytest.raises(ValueError, match=msg):
-            X_trans = pf.fit_transform(X)
-        return
+    if sp_version < parse_version("1.8.0"):
+        has_bug = False
+        max_int32 = np.iinfo(np.int32).max
+        cumulative_size = n_features + include_bias
+        for deg in range(2, degree + 1):
+            max_indptr = _calc_total_nnz(X.indptr, interaction_only, deg)
+            max_indices = _calc_expanded_nnz(n_features, interaction_only, deg) - 1
+            cumulative_size += max_indices + 1
+            needs_int64 = max(max_indices, max_indptr) > max_int32
+            has_bug |= not needs_int64 and cumulative_size > max_int32
+        if has_bug:
+            msg = r"In scipy versions `<1.8.0`, the function `scipy.sparse.hstack`"
+            with pytest.raises(ValueError, match=msg):
+                X_trans = pf.fit_transform(X)
+            return
 
     # When `n_features>=65535`, `scipy.sparse.hstack` may not use the right
     # dtype for representing indices and indptr if `n_features` is still
@@ -1003,7 +1003,7 @@ def test_csr_polynomial_expansion_index_overflow(
         and n_features == 65535
         and degree == 2
         and not interaction_only
-    ):
+    ):  # pragma: no cover
         msg = r"In scipy versions `<1.9.2`, the function `scipy.sparse.hstack`"
         with pytest.raises(ValueError, match=msg):
             X_trans = pf.fit_transform(X)
@@ -1011,13 +1011,17 @@ def test_csr_polynomial_expansion_index_overflow(
     X_trans = pf.fit_transform(X)
 
     expected_dtype = np.int64 if num_combinations > np.iinfo(np.int32).max else np.int32
+    # Terms higher than first degree
     higher_order_count = (degree - 1) * int(not interaction_only)
-    expected_nnz = 1 + higher_order_count + int(include_bias)
+    expected_nnz = int(include_bias) + 1 + higher_order_count
     assert X_trans.dtype == X.dtype
     assert X_trans.shape == (1, pf.n_output_features_)
     assert X_trans.indptr.dtype == X_trans.indices.dtype == expected_dtype
     assert X_trans.nnz == expected_nnz
-    for idx in range(higher_order_count):
+
+    if include_bias:
+        assert X_trans[0, 0] == pytest.approx(1.0)
+    for idx in range(higher_order_count + 1):
         assert X_trans[0, target_indices[idx]] == pytest.approx(1.0)
 
     offset = interaction_only * n_features
