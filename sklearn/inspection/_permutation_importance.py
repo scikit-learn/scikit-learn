@@ -10,6 +10,13 @@ from ..utils import Bunch, _safe_indexing
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils.parallel import delayed, Parallel
+from ..utils._param_validation import (
+    HasMethods,
+    Integral,
+    Interval,
+    RealNotInt,
+    validate_params,
+)
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
@@ -99,6 +106,22 @@ def _create_importances_bunch(baseline_score, permuted_score):
     )
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods(["fit"])],
+        "X": ["array-like"],
+        "y": ["array-like", None],
+        "scoring": [str, callable, list, tuple, dict, None],
+        "n_repeats": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "random_state": ["random_state"],
+        "sample_weight": ["array-like", None],
+        "max_samples": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="right"),
+        ],
+    }
+)
 def permutation_importance(
     estimator,
     X,
@@ -242,7 +265,7 @@ def permutation_importance(
 
     if not isinstance(max_samples, numbers.Integral):
         max_samples = int(max_samples * X.shape[0])
-    elif not (0 < max_samples <= X.shape[0]):
+    elif max_samples > X.shape[0]:
         raise ValueError("max_samples must be in (0, n_samples]")
 
     if callable(scoring):
