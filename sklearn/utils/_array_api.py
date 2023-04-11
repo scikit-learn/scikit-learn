@@ -400,6 +400,9 @@ def _convert_to_numpy(array, xp):
 def _estimator_with_converted_arrays(estimator, converter):
     """Create new estimator which converting all attributes that are arrays.
 
+    The converted is called on all NumPy arrays and arrays that support the
+    `DLPack interface <https://dmlc.github.io/dlpack/latest/>`__.
+
     Parameters
     ----------
     estimator : Estimator
@@ -417,13 +420,7 @@ def _estimator_with_converted_arrays(estimator, converter):
 
     new_estimator = clone(estimator)
     for key, attribute in vars(estimator).items():
-        with config_context(array_api_dispatch=True):
-            try:
-                _, is_array_api_compliant = get_namespace(attribute)
-            except TypeError:
-                is_array_api_compliant = False
-
-        if is_array_api_compliant or isinstance(attribute, numpy.ndarray):
+        if hasattr(attribute, "__dlpack__") or isinstance(attribute, numpy.ndarray):
             attribute = converter(attribute)
         setattr(new_estimator, key, attribute)
     return new_estimator
