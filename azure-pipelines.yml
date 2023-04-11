@@ -232,6 +232,7 @@ jobs:
       debian_atlas_32bit:
         DOCKER_CONTAINER: 'i386/debian:11.2'
         DISTRIB: 'debian-32'
+        COVERAGE: "true"
         LOCK_FILE: './build_tools/azure/debian_atlas_32bit_lock.txt'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
@@ -276,6 +277,11 @@ jobs:
         DISTRIB: 'conda'
         LOCK_FILE: ./build_tools/azure/py38_conda_forge_mkl_win-64_conda.lock
         CHECK_WARNINGS: 'true'
-        COVERAGE: 'true'
+        # The Azure Windows runner is typically much slower than other CI
+        # runners due to the lack of compiler cache. Running the tests with
+        # coverage enabled make them run extra slower. Since very few parts of
+        # code should have windows-specific code branches, it should be enable
+        # to restrict the code coverage collection to the non-windows runners.
+        COVERAGE: 'false'
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed

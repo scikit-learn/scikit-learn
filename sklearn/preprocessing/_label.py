@@ -18,6 +18,7 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 
 from ..utils.sparsefuncs import min_max_axis
+from ..utils._param_validation import Interval, validate_params
 from ..utils import column_or_1d
 from ..utils.validation import _num_samples, check_array, check_is_fitted
 from ..utils.multiclass import unique_labels
@@ -263,7 +264,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     }
 
     def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
-
         self.neg_label = neg_label
         self.pos_label = pos_label
         self.sparse_output = sparse_output
@@ -422,6 +422,15 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         return {"X_types": ["1dlabels"]}
 
 
+@validate_params(
+    {
+        "y": ["array-like"],
+        "classes": ["array-like"],
+        "neg_label": [Interval(Integral, None, None, closed="neither")],
+        "pos_label": [Interval(Integral, None, None, closed="neither")],
+        "sparse_output": ["boolean"],
+    }
+)
 def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False):
     """Binarize labels in a one-vs-all fashion.
 

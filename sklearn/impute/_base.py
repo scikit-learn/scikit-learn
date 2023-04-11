@@ -11,7 +11,7 @@ import numpy.ma as ma
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils._param_validation import StrOptions, Hidden
+from ..utils._param_validation import StrOptions, Hidden, MissingValues
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
@@ -78,7 +78,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        "missing_values": ["missing_values"],
+        "missing_values": [MissingValues()],
         "add_indicator": ["boolean"],
         "keep_empty_features": ["boolean"],
     }
@@ -299,7 +299,6 @@ class SimpleImputer(_BaseImputer):
         self.copy = copy
 
     def _validate_input(self, X, in_fit):
-
         if self.strategy in ("most_frequent", "constant"):
             # If input is a list of strings, dtype = object.
             # Otherwise ValueError is raised in SimpleImputer
@@ -380,10 +379,12 @@ class SimpleImputer(_BaseImputer):
         self._validate_params()
         if self.verbose != "deprecated":
             warnings.warn(
-                "The 'verbose' parameter was deprecated in version "
-                "1.1 and will be removed in 1.3. A warning will "
-                "always be raised upon the removal of empty columns "
-                "in the future version.",
+                (
+                    "The 'verbose' parameter was deprecated in version "
+                    "1.1 and will be removed in 1.3. A warning will "
+                    "always be raised upon the removal of empty columns "
+                    "in the future version."
+                ),
                 FutureWarning,
             )
 
@@ -684,8 +685,8 @@ class SimpleImputer(_BaseImputer):
 
     def _more_tags(self):
         return {
-            "allow_nan": (
-                _is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values)
+            "allow_nan": _is_pandas_na(self.missing_values) or is_scalar_nan(
+                self.missing_values
             )
         }
 
@@ -800,7 +801,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        "missing_values": [numbers.Real, numbers.Integral, str, None],
+        "missing_values": [MissingValues()],
         "features": [StrOptions({"missing-only", "all"})],
         "sparse": ["boolean", StrOptions({"auto"})],
         "error_on_new": ["boolean"],

@@ -170,6 +170,12 @@ def contingency_matrix(
 # clustering measures
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    }
+)
 def pair_confusion_matrix(labels_true, labels_pred):
     """Pair confusion matrix arising from two clusterings [1]_.
 
@@ -979,6 +985,13 @@ def adjusted_mutual_info_score(
     return ami
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "average_method": [StrOptions({"arithmetic", "max", "min", "geometric"})],
+    }
+)
 def normalized_mutual_info_score(
     labels_true, labels_pred, *, average_method="arithmetic"
 ):
@@ -1006,15 +1019,14 @@ def normalized_mutual_info_score(
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
     labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    average_method : str, default='arithmetic'
-        How to compute the normalizer in the denominator. Possible options
-        are 'min', 'geometric', 'arithmetic', and 'max'.
+    average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
+        How to compute the normalizer in the denominator.
 
         .. versionadded:: 0.20
 
@@ -1087,6 +1099,13 @@ def normalized_mutual_info_score(
     return mi / normalizer
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "sparse": ["boolean"],
+    }
+)
 def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     """Measure the similarity of two clusterings of a set of points.
 
@@ -1112,10 +1131,10 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
     Parameters
     ----------
-    labels_true : int array, shape = (``n_samples``,)
+    labels_true : array-like of shape (n_samples,), dtype=int
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array, shape = (``n_samples``, )
+    labels_pred : array-like of shape (n_samples,), dtype=int
         A clustering of the data into disjoint subsets.
 
     sparse : bool, default=False

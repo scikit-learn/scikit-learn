@@ -297,9 +297,11 @@ def smacof(
     # TODO(1.4): Remove
     if normalized_stress == "warn":
         warnings.warn(
-            "The default value of `normalized_stress` will change to `'auto'` in"
-            " version 1.4. To suppress this warning, manually set the value of"
-            " `normalized_stress`.",
+            (
+                "The default value of `normalized_stress` will change to `'auto'` in"
+                " version 1.4. To suppress this warning, manually set the value of"
+                " `normalized_stress`."
+            ),
             FutureWarning,
         )
         normalized_stress = False
