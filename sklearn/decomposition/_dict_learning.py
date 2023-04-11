@@ -1754,7 +1754,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         positive_dict=False,
         transform_max_iter=1000,
     ):
-
         super().__init__(
             transform_algorithm,
             transform_n_nonzero_coefs,
@@ -2133,7 +2132,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         tol=1e-3,
         max_no_improvement=10,
     ):
-
         super().__init__(
             transform_algorithm,
             transform_n_nonzero_coefs,
@@ -2347,10 +2345,12 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         if self.n_iter != "deprecated":
             warnings.warn(
-                "'n_iter' is deprecated in version 1.1 and will be removed "
-                "in version 1.4. Use 'max_iter' and let 'n_iter' to its default "
-                "value instead. 'n_iter' is also ignored if 'max_iter' is "
-                "specified.",
+                (
+                    "'n_iter' is deprecated in version 1.1 and will be removed "
+                    "in version 1.4. Use 'max_iter' and let 'n_iter' to its default "
+                    "value instead. 'n_iter' is also ignored if 'max_iter' is "
+                    "specified."
+                ),
                 FutureWarning,
             )
             n_iter = self.n_iter
@@ -2378,7 +2378,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self._B = np.zeros((n_features, self._n_components), dtype=X_train.dtype)
 
         if self.max_iter is not None:
-
             # Attributes to monitor the convergence
             self._ewa_cost = None
             self._ewa_cost_min = None

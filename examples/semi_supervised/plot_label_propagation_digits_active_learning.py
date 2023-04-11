@@ -115,8 +115,10 @@ for i in range(max_iterations):
     n_labeled_points += len(uncertainty_index)
 
 f.suptitle(
-    "Active learning with Label Propagation.\nRows show 5 most "
-    "uncertain labels to learn with the next model.",
+    (
+        "Active learning with Label Propagation.\nRows show 5 most "
+        "uncertain labels to learn with the next model."
+    ),
     y=1.15,
 )
 plt.subplots_adjust(left=0.2, bottom=0.03, right=0.9, top=0.9, wspace=0.2, hspace=0.85)
