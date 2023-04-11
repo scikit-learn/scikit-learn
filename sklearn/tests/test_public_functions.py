@@ -242,6 +242,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.tree.export_text",
     "sklearn.tree.plot_tree",
     "sklearn.utils.gen_batches",
+    "sklearn.metrics.pairwise.manhattan_distances",
 ]
 
 
