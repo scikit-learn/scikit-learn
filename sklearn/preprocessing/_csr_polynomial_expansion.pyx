@@ -113,12 +113,14 @@ cpdef cnp.int64_t _calc_expanded_nnz(
     """
     # This is the maximum value before the intermediate computation
     # d**2 + d overflows
-    # Solution to d**2 + d = maxint32
-    cdef cnp.int64_t MAX_SAFE_INDEX_CALC_DEG2 = <cnp.int64_t> sqrt(LONG_MAX)
+    # Solution to d**2 + d = maxint64
+    # SymPy: solve(x**2 + x - int64_max, x)
+    cdef cnp.int64_t MAX_SAFE_INDEX_CALC_DEG2 = 3037000499
 
     # This is the maximum value before the intermediate computation
     # d**3 + 3 * d**2 + 2*d overflows
-    # Solution to d**3 + 3 * d**2 + 2*d = maxint32
+    # Solution to d**3 + 3 * d**2 + 2*d = maxint64
+    # SymPy: solve(x * (x**2 + 3 * x + 2) - int64_max, x)
     cdef cnp.int64_t MAX_SAFE_INDEX_CALC_DEG3 = 2097151
 
     if degree == 2:
