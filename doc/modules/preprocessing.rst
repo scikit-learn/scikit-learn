@@ -729,14 +729,15 @@ separate categories::
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.
 
-.. _one_hot_encoder_infrequent_categories:
+.. _encoder_infrequent_categories:
 
 Infrequent categories
 ---------------------
 
-:class:`OneHotEncoder` supports aggregating infrequent categories into a single
-output for each feature. The parameters to enable the gathering of infrequent
-categories are `min_frequency` and `max_categories`.
+:class:`OneHotEncoder` and :class:`OrdinalEncoder` support aggregating
+infrequent categories into a single output for each feature. The parameters to
+enable the gathering of infrequent categories are `min_frequency` and
+`max_categories`.
 
 1. `min_frequency` is either an  integer greater or equal to 1, or a float in
    the interval `(0.0, 1.0)`. If `min_frequency` is an integer, categories with
@@ -750,11 +751,47 @@ categories are `min_frequency` and `max_categories`.
    input feature. `max_categories` includes the feature that combines
    infrequent categories.
 
-In the following example, the categories, `'dog', 'snake'` are considered
-infrequent::
+In the following example with :class:`OrdinalEncoder`, the categories `'dog' and
+'snake'` are considered infrequent::
 
    >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 +
    ...               ['snake'] * 3], dtype=object).T
+   >>> enc = preprocessing.OrdinalEncoder(min_frequency=6).fit(X)
+   >>> enc.infrequent_categories_
+   [array(['dog', 'snake'], dtype=object)]
+   >>> enc.transform(np.array([['dog'], ['cat'], ['rabbit'], ['snake']]))
+   array([[2.],
+          [0.],
+          [1.],
+          [2.]])
+
+:class:`OrdinalEncoder`'s `max_categories` do **not** take into account missing
+or unknown categories. Setting `unknown_value` or `encoded_missing_value` to an
+integer will increase the number of unique integer codes by one each. This can
+result in up to `max_categories + 2` integer codes. In the following example,
+"a" and "d" are considered infrequent and grouped together into a single
+category, "b" and "c" are their own categories, unknown values are encoded as 3
+and missing values are encoded as 4.
+
+  >>> X_train = np.array(
+  ...     [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3 + [np.nan]],
+  ...     dtype=object).T
+  >>> enc = preprocessing.OrdinalEncoder(
+  ...     handle_unknown="use_encoded_value", unknown_value=3,
+  ...     max_categories=3, encoded_missing_value=4)
+  >>> _ = enc.fit(X_train)
+  >>> X_test = np.array([["a"], ["b"], ["c"], ["d"], ["e"], [np.nan]], dtype=object)
+  >>> enc.transform(X_test)
+  array([[2.],
+         [0.],
+         [1.],
+         [2.],
+         [3.],
+         [4.]])
+
+Similarity, :class:`OneHotEncoder` can be configured to group together infrequent
+categories::
+
    >>> enc = preprocessing.OneHotEncoder(min_frequency=6, sparse_output=False).fit(X)
    >>> enc.infrequent_categories_
    [array(['dog', 'snake'], dtype=object)]

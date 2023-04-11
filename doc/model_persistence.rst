@@ -126,7 +126,7 @@ trusted by you. You can get existing unknown types in a dumped object / file
 using :func:`skops.io.get_untrusted_types`, and after checking its contents,
 pass it to the load function::
 
-    unknown_types = sio.get_untrusted_types(obj)
+    unknown_types = sio.get_untrusted_types(data=obj)
     clf = sio.loads(obj, trusted=unknown_types)
 
 If you trust the source of the file / object, you can pass ``trusted=True``::

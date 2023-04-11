@@ -123,14 +123,16 @@ def test_nan_handling(HalvingSearch, fail_at):
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
-    "aggressive_elimination,"
-    "max_resources,"
-    "expected_n_iterations,"
-    "expected_n_required_iterations,"
-    "expected_n_possible_iterations,"
-    "expected_n_remaining_candidates,"
-    "expected_n_candidates,"
-    "expected_n_resources,",
+    (
+        "aggressive_elimination,"
+        "max_resources,"
+        "expected_n_iterations,"
+        "expected_n_required_iterations,"
+        "expected_n_possible_iterations,"
+        "expected_n_remaining_candidates,"
+        "expected_n_candidates,"
+        "expected_n_resources,"
+    ),
     [
         # notice how it loops at the beginning
         # also, the number of candidates evaluated at the last iteration is
@@ -196,11 +198,13 @@ def test_aggressive_elimination(
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
-    "min_resources,"
-    "max_resources,"
-    "expected_n_iterations,"
-    "expected_n_possible_iterations,"
-    "expected_n_resources,",
+    (
+        "min_resources,"
+        "max_resources,"
+        "expected_n_iterations,"
+        "expected_n_possible_iterations,"
+        "expected_n_resources,"
+    ),
     [
         # with enough resources
         ("smallest", "auto", 2, 4, [20, 60]),
@@ -534,7 +538,6 @@ def test_subsample_splitter_determinism(subsample_test):
     ],
 )
 def test_top_k(k, itr, expected):
-
     results = {  # this isn't a 'real world' result dict
         "iter": [0, 0, 0, 0, 1, 1, 2, 2, 2],
         "mean_test_score": [4, 3, 5, 1, 11, 10, 5, 6, 9],
