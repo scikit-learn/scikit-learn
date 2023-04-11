@@ -941,14 +941,14 @@ def test_csr_polynomial_expansion_index_overflow(
     col = [n_features - 1]
 
     # First degree index
-    target_indices = [
+    expected_indices = [
         n_features - 1 + int(include_bias),
     ]
     # Second degree index
-    target_indices.append(n_features * (n_features + 1) // 2 + target_indices[0])
+    expected_indices.append(n_features * (n_features + 1) // 2 + expected_indices[0])
     # Third degree index
-    target_indices.append(
-        n_features * (n_features + 1) * (n_features + 2) // 6 + target_indices[1]
+    expected_indices.append(
+        n_features * (n_features + 1) * (n_features + 2) // 6 + expected_indices[1]
     )
 
     X = sparse.csr_matrix((data, (row, col)))
@@ -1012,8 +1012,8 @@ def test_csr_polynomial_expansion_index_overflow(
 
     expected_dtype = np.int64 if num_combinations > np.iinfo(np.int32).max else np.int32
     # Terms higher than first degree
-    higher_order_count = (degree - 1) * int(not interaction_only)
-    expected_nnz = int(include_bias) + 1 + higher_order_count
+    non_bias_terms = 1 + (degree - 1) * int(not interaction_only)
+    expected_nnz = int(include_bias) + non_bias_terms
     assert X_trans.dtype == X.dtype
     assert X_trans.shape == (1, pf.n_output_features_)
     assert X_trans.indptr.dtype == X_trans.indices.dtype == expected_dtype
@@ -1021,13 +1021,13 @@ def test_csr_polynomial_expansion_index_overflow(
 
     if include_bias:
         assert X_trans[0, 0] == pytest.approx(1.0)
-    for idx in range(higher_order_count + 1):
-        assert X_trans[0, target_indices[idx]] == pytest.approx(1.0)
+    for idx in range(non_bias_terms):
+        assert X_trans[0, expected_indices[idx]] == pytest.approx(1.0)
 
     offset = interaction_only * n_features
     if degree == 3:
         offset *= 1 + n_features
-    assert pf.n_output_features_ == target_indices[degree - 1] + 1 - offset
+    assert pf.n_output_features_ == expected_indices[degree - 1] + 1 - offset
 
 
 @pytest.mark.parametrize("interaction_only", [True, False])
@@ -1110,14 +1110,16 @@ def test_csr_polynomial_expansion_windows_fail():
     col = [n_features - 1]
 
     # First degree index
-    target_indices = [
+    expected_indices = [
         n_features - 1,
     ]
     # Second degree index
-    target_indices.append(int(n_features * (n_features + 1) // 2 + target_indices[0]))
+    expected_indices.append(
+        int(n_features * (n_features + 1) // 2 + expected_indices[0])
+    )
     # Third degree index
-    target_indices.append(
-        int(n_features * (n_features + 1) * (n_features + 2) // 6 + target_indices[1])
+    expected_indices.append(
+        int(n_features * (n_features + 1) * (n_features + 2) // 6 + expected_indices[1])
     )
 
     X = sparse.csr_matrix((data, (row, col)))
@@ -1133,4 +1135,4 @@ def test_csr_polynomial_expansion_windows_fail():
     else:
         X_trans = pf.fit_transform(X)
         for idx in range(3):
-            assert X_trans[0, target_indices[idx]] == pytest.approx(1.0)
+            assert X_trans[0, expected_indices[idx]] == pytest.approx(1.0)
