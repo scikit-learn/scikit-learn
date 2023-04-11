@@ -35,6 +35,7 @@ from ..utils._param_validation import (
     Real,
     Hidden,
     MissingValues,
+    StrOptions,
 )
 
 from ._pairwise_distances_reduction import ArgKmin
@@ -906,7 +907,7 @@ def haversine_distances(X, Y=None):
 @validate_params(
     {"X": ["array-like", "sparse matrix"], 
     "Y": ["array-like", "sparse matrix", None],
-    "sum_over_features": ["boolean"]}
+    "sum_over_features": ["boolean", Hidden(StrOptions({"deprecated"}))],}
 )
 def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     """Compute the L1 distances between the vectors in X and Y.
