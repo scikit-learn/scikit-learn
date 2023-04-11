@@ -2849,6 +2849,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         return {"allow_nan": True}
 
 
+@validate_params(
+    {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]}
+)
 def quantile_transform(
     X,
     *,
@@ -2983,13 +2986,10 @@ def quantile_transform(
         copy=copy,
     )
     if axis == 0:
-        return n.fit_transform(X)
-    elif axis == 1:
-        return n.fit_transform(X.T).T
+        X = n.fit_transform(X)
     else:
-        raise ValueError(
-            "axis should be either equal to 0 or 1. Got axis={}".format(axis)
-        )
+        X = n.fit_transform(X.T).T
+    return X
 
 
 class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):

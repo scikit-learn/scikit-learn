@@ -269,6 +269,10 @@ PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.decomposition.fastica", "sklearn.decomposition.FastICA"),
     ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
     ("sklearn.preprocessing.minmax_scale", "sklearn.preprocessing.MinMaxScaler"),
+    (
+        "sklearn.preprocessing.quantile_transform",
+        "sklearn.preprocessing.QuantileTransformer",
+    ),
 ]
 
 

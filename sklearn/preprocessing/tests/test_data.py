@@ -2250,7 +2250,11 @@ def test_quantile_transform_valid_axis():
     X = np.array([[0, 25, 50, 75, 100], [2, 4, 6, 8, 10], [2.6, 4.1, 2.3, 9.5, 0.1]])
 
     with pytest.raises(
-        ValueError, match="axis should be either equal to 0 or 1. Got axis=2"
+        ValueError,
+        match=(
+            "The 'axis' parameter of quantile_transform must be a int among {0, 1}. Got"
+            " 2 instead."
+        ),
     ):
         quantile_transform(X.T, axis=2)
 
