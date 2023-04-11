@@ -10,9 +10,9 @@
 cimport cython
 from cython.parallel import prange
 import numpy as np
+from libc.math cimport INFINITY
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
-from numpy.math cimport INFINITY
 
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
