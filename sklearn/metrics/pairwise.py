@@ -1566,6 +1566,13 @@ def additive_chi2_kernel(X, Y=None):
     return result
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "gamma": [Interval(Real, None, None, closed="neither")],
+    }
+)
 def chi2_kernel(X, Y=None, gamma=1.0):
     """Compute the exponential chi-squared kernel between X and Y.
 
