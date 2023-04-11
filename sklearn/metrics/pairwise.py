@@ -904,7 +904,9 @@ def haversine_distances(X, Y=None):
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 
 @validate_params(
-    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix", None]}
+    {"X": ["array-like", "sparse matrix"], 
+    "Y": ["array-like", "sparse matrix", None],
+    "sum_over_features": ["boolean"]}
 )
 def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     """Compute the L1 distances between the vectors in X and Y.
@@ -1567,6 +1569,13 @@ def additive_chi2_kernel(X, Y=None):
     _chi2_kernel_fast(X, Y, result)
     return result
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "gamma": [Interval(Real, None, None, closed="neither")],
+    }
+)
 def chi2_kernel(X, Y=None, gamma=1.0):
     """Compute the exponential chi-squared kernel between X and Y.
 
