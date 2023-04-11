@@ -151,6 +151,18 @@ doc_HalfBinomialLoss = (
     """
 )
 
+doc_ExponentialLoss = (
+    """"Exponential loss with (half) logit link
+
+    Domain:
+    y_true in [0, 1]
+    y_pred in (0, 1), i.e. boundaries excluded
+
+    Link:
+    y_pred = expit(2 * raw_prediction)
+    """
+)
+
 # loss class name, docstring, param,
 # cy_loss, cy_loss_grad,
 # cy_grad, cy_grad_hess,
@@ -179,6 +191,9 @@ class_list = [
     ("CyHalfBinomialLoss", doc_HalfBinomialLoss, None,
      "closs_half_binomial", "closs_grad_half_binomial",
      "cgradient_half_binomial", "cgrad_hess_half_binomial"),
+     ("CyExponentialLoss", doc_ExponentialLoss, None,
+     "closs_exponential", "closs_grad_exponential",
+     "cgradient_exponential", "cgrad_hess_exponential"),
 ]
 }}
 
@@ -679,6 +694,48 @@ cdef inline double_pair cgrad_hess_half_binomial(
     gh.val2 = exp(-raw_prediction)  # used as temporary
     gh.val1 = ((1 - y_true) - y_true * gh.val2) / (1 + gh.val2)  # gradient
     gh.val2 = gh.val2 / (1 + gh.val2)**2                         # hessian
+    return gh
+
+
+# Exponential loss with (half) logit-link, aka boosting loss
+cdef inline double closs_exponential(
+    double y_true,
+    double raw_prediction
+) noexcept nogil:
+    cdef double tmp = exp(raw_prediction)
+    return y_true / tmp + (1 - y_true) * tmp
+
+
+cdef inline double cgradient_exponential(
+    double y_true,
+    double raw_prediction
+) noexcept nogil:
+    cdef double tmp = exp(raw_prediction)
+    return -y_true / tmp + (1 - y_true) * tmp
+
+
+cdef inline double_pair closs_grad_exponential(
+    double y_true,
+    double raw_prediction
+) noexcept nogil:
+    cdef double_pair lg
+    lg.val2 = exp(raw_prediction)  # used as temporary
+
+    lg.val1 =  y_true / lg.val2 + (1 - y_true) * lg.val2  # loss
+    lg.val2 = -y_true / lg.val2 + (1 - y_true) * lg.val2  # gradient
+    return lg
+
+
+cdef inline double_pair cgrad_hess_exponential(
+    double y_true,
+    double raw_prediction
+) noexcept nogil:
+    # Note that hessian = loss
+    cdef double_pair gh
+    gh.val2 = exp(raw_prediction)  # used as temporary
+
+    gh.val1 = -y_true / gh.val2 + (1 - y_true) * gh.val2  # gradient
+    gh.val2 =  y_true / gh.val2 + (1 - y_true) * gh.val2  # hessian
     return gh
 
 
