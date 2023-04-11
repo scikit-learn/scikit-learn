@@ -105,10 +105,10 @@ def ols_ridge_dataset(global_random_seed, request):
     fitted coefficient for an extra feature column with all ones as the
     intercept should not be part of the norm we minimize. Indeed the intercept
     parameter is not penalized and we want the minimum norm solution in the
-    unpenalized problem to be the limit of the penalized problem when alpha ->
-    0.
+    unpenalized problem to be the limit of the penalized problem when alpha
+    tends to 0.
 
-    The minimum norm solution is of the problem with intercept is also the
+    The minimum norm solution of the problem with intercept is also the
     minimum norm solution of the centered problem without intercept:
 
         w = X_c' (X_c X_c')^-1 y_c

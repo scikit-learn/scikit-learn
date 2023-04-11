@@ -899,7 +899,7 @@ can now expand:
 
 .. math::  ||X w + w_0 1_s - y||_2^2 = ||X_c w - y_c ||_2^2 + ||\bar{r} 1_s ||_2^2 + 2 \bar{r} 1_s^{T} (X_c w - y_c)
 
-If :math:`n` is the number of samples, we have:
+If :math:`n` is the number of data points, we have:
 
 .. math::  ||X w + w_0 1_s - y||_2^2 = ||X_c w - y_c ||_2^2 + \bar{r}^2 n + 2 \bar{r} (1_s^{T} X_c w - 1_s^{T} y_c)
 

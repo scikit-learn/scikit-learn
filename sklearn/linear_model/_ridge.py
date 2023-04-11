@@ -942,7 +942,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         When `alpha = 0`, the objective is equivalent to ordinary least
         squares, solved by the :class:`LinearRegression` class. If `X.T @ X` is
         singular (typically when `n_features > n_samples` or in the presence of
-        collinear features) then both classes should convege to the minimum
+        collinear features) then both classes should converge to the minimum
         norm solution where the intercept does not participate in the
         computation of the norm.
 
@@ -1003,7 +1003,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         - 'cholesky' uses the standard `scipy.linalg.solve` function to obtain
           a closed-form solution. This solver can fail when the regularization
-          is too weak on highly correlated data. In this case, the 'svd' solver
+          is too small on highly correlated data. In this case, the 'svd' solver
           is automatically used instead.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
