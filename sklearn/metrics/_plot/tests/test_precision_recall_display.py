@@ -137,7 +137,7 @@ def test_precision_recall_chance_level_line(
     chance_level_kw,
     constructor_name,
 ):
-    """Check the chance leve line plotting behaviour."""
+    """Check the chance level line plotting behavior."""
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_prevalence = Counter(y)[1] / len(y)
 

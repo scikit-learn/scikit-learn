@@ -120,7 +120,7 @@ class PrecisionRecallDisplay:
         *,
         name=None,
         plot_chance_level=False,
-        pos_prevalence=0,
+        pos_prevalence=None,
         chance_level_kw=None,
         **kwargs,
     ):
@@ -143,9 +143,10 @@ class PrecisionRecallDisplay:
 
             .. versionadded:: 1.3
 
-        pos_prevalence : float, default=0
+        pos_prevalence : float, default=None
             The prevalence of the positive label. It is used for plotting the
-            chance level line.
+            chance level line. If `plot_chance_level=True`, it must be provided
+            as a float between 0 and 1.
 
             .. versionadded:: 1.3
 
@@ -187,14 +188,21 @@ class PrecisionRecallDisplay:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
-        chance_level_line_kw = {
-            "label": f"Chance level (AP = {pos_prevalence:0.2f})",
-            "color": "k",
-            "linestyle": "--",
-        }
-
-        if chance_level_kw is not None:
-            chance_level_line_kw.update(chance_level_kw)
+        if plot_chance_level:
+            if pos_prevalence is None:
+                raise ValueError(
+                    "pos_prevalence must be provided if plot_chance_level=True"
+                )
+            elif pos_prevalence < 0 or pos_prevalence > 1:
+                raise ValueError("pos_prevalence has value outside [0, 1]")
+            else:
+                chance_level_line_kw = {
+                    "label": f"Chance level (AP = {pos_prevalence:0.2f})",
+                    "color": "k",
+                    "linestyle": "--",
+                }
+                if chance_level_kw is not None:
+                    chance_level_line_kw.update(chance_level_kw)
 
         import matplotlib.pyplot as plt
 
@@ -482,7 +490,7 @@ class PrecisionRecallDisplay:
         if plot_chance_level:
             pos_prevalence = Counter(y_true)[pos_label] / len(y_true)
         else:
-            pos_prevalence = 0
+            pos_prevalence = None
 
         viz = PrecisionRecallDisplay(
             precision=precision,
