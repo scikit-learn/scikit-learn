@@ -128,6 +128,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.fetch_lfw_people",
     "sklearn.datasets.fetch_olivetti_faces",
     "sklearn.datasets.fetch_rcv1",
+    "sklearn.datasets.load_diabetes",
     "sklearn.datasets.load_svmlight_file",
     "sklearn.datasets.load_svmlight_files",
     "sklearn.datasets.make_biclusters",
