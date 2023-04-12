@@ -11,6 +11,7 @@ from sklearn.metrics import average_precision_score, precision_recall_curve
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 from sklearn.utils import shuffle
 
 from sklearn.metrics import PrecisionRecallDisplay
@@ -332,3 +333,31 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
     avg_prec_limit = 0.95
     assert display.average_precision > avg_prec_limit
     assert -np.trapz(display.precision, display.recall) > avg_prec_limit
+
+
+def test_precision_recall_pos_prevalence_error(pyplot):
+    # Check that when plot_chance_level is True
+    # If pos_prevalence is not given as a real number between 0 and 1
+    # We raise the correct exceptions
+    X, y = make_classification(random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = SVC(random_state=0)
+    clf.fit(X_train, y_train)
+    predictions = clf.predict(X_test)
+    precision, recall, _ = precision_recall_curve(y_test, predictions)
+    disp = PrecisionRecallDisplay(precision=precision, recall=recall)
+
+    msg = (
+        "pos_prevalence must be provided as a real number between 0 and 1 "
+        "if plot_chance_level=True"
+    )
+    with pytest.raises(TypeError, match=msg):
+        disp.plot(plot_chance_level=True)
+
+    msg = "pos_prevalence must be a real number between 0 and 1"
+    with pytest.raises(TypeError, match=msg):
+        disp.plot(plot_chance_level=True, pos_prevalence="0.5")
+
+    msg = "pos_prevalence has value outside \\[0, 1\\]"
+    with pytest.raises(ValueError, match=msg):
+        disp.plot(plot_chance_level=True, pos_prevalence=1.5)
