@@ -431,7 +431,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     {
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
-        "beta": [Interval(Real, None, None, closed="neither")],
+        "beta": [Interval(Real, 0, None, closed="left")],
     }
 )
 def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
