@@ -238,7 +238,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     }
 )
 def confusion_matrix(
-    y_true, y_pred, *, labels=None, sample_weight=None, normalize=None
+    y_true, y_pred, *, num_classes=None, labels=None, sample_weight=None, normalize=None
 ):
     """Compute confusion matrix to evaluate the accuracy of a classification.
 
@@ -327,7 +327,10 @@ def confusion_matrix(
         raise ValueError("%s is not supported" % y_type)
 
     if labels is None:
-        labels = unique_labels(y_true, y_pred)
+        if num_classes is None:
+            labels = unique_labels(y_true, y_pred)
+        else:
+            labels = np.arange(num_classes)
     else:
         labels = np.asarray(labels)
         n_labels = labels.size
