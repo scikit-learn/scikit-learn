@@ -297,7 +297,7 @@ _ = plt.tight_layout(pad=2.0)  # spacing between subplots
 # We observe that once the number of neighbors is tuned, LOF and IForest perform
 # similarly in terms of ROC AUC for the forestcover and cardiotocography
 # datasets. The score for IForest is slightly better for the SA dataset and LOF
-# performs considerably better on WDBC than IForest.
+# performs considerably better on the Ames housing dataset than IForest.
 #
 # Ablation study
 # ==============
