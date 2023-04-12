@@ -207,6 +207,9 @@ Changelog
   :func:`covariance.graphical_lasso_path`, and :class:`covariance.GraphicalLassoCV`.
   :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
 
+- |Fix| Allows `alpha=0` in :class:`covariance.GraphicalLasso` to be
+  consistent with :func:`covariance.graphical_lasso`.
+  :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
 :mod:`sklearn.datasets`
 .......................
 
