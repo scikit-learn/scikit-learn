@@ -343,9 +343,9 @@ _ = ax.set_title("RobustScaler with varying n_neighbors")
 # range of values of the order of magnitud of the expected contamination.
 
 # %%
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, FunctionTransformer
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-scaler_list = [RobustScaler(), FunctionTransformer(), StandardScaler(), MinMaxScaler()]
+scaler_list = [None, RobustScaler(), StandardScaler(), MinMaxScaler()]
 lof = LocalOutlierFactor(n_neighbors=int(0.02 * n_samples))
 
 fig, ax = plt.subplots()
@@ -386,7 +386,6 @@ plt.show()
 # Because of the above, an IQR scaling is more effective for outlier detection
 # than a min-max range scaling. We can additionally observe that scaling by the
 # standard deviation (as done by :class:`~sklearn.preprocessing.StandardScaler`)
-# and not scaling at all (using the
-# :class:`~sklearn.preprocessing.FunctionTransformer` with default argument)
+# and not scaling at all (by passing `None` to the scaling step in the pipeline)
 # give a relatively good result once the number of neighbors is tuned, but still
 # does not perform as well as the :class:`~sklearn.preprocessing.RobustScaler`.
