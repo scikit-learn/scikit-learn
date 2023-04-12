@@ -209,6 +209,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.mutual_info_score",
     "sklearn.metrics.ndcg_score",
     "sklearn.metrics.pair_confusion_matrix",
+    "sklearn.metrics.adjusted_rand_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
     "sklearn.metrics.pairwise.cosine_distances",
     "sklearn.metrics.pairwise.cosine_similarity",
