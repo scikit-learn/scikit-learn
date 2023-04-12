@@ -1568,6 +1568,8 @@ def additive_chi2_kernel(X, Y=None):
 
 @validate_params(
     {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
         "gamma": [Interval(Real, None, None, closed="neither")],
     }
 )
