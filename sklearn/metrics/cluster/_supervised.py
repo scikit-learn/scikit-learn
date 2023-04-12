@@ -358,10 +358,10 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,), dtype=int
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,), dtype=int
         Cluster labels to evaluate.
 
     Returns
