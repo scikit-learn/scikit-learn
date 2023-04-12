@@ -65,8 +65,8 @@ def fit_predict(X, model_name, categorical_columns=(), n_neighbors=20):
             [("categorical", OneHotEncoder(), categorical_columns)],
             remainder=RobustScaler(),
         )
-        clf = LocalOutlierFactor(n_neighbors=n_neighbors, n_jobs=2)
-        model = make_pipeline(preprocessor, clf)
+        lof = LocalOutlierFactor(n_neighbors=n_neighbors)
+        model = make_pipeline(preprocessor, lof)
         model.fit(X)
         y_pred = model[-1].negative_outlier_factor_
 
@@ -74,12 +74,12 @@ def fit_predict(X, model_name, categorical_columns=(), n_neighbors=20):
         ordinal_encoder = OrdinalEncoder(
             handle_unknown="use_encoded_value", unknown_value=-1
         )
-        clf = IsolationForest(random_state=rng)
+        iforest = IsolationForest(random_state=rng)
         preprocessor = ColumnTransformer(
             [("categorical", ordinal_encoder, categorical_columns)],
             remainder="passthrough",
         )
-        model = make_pipeline(preprocessor, clf)
+        model = make_pipeline(preprocessor, iforest)
         y_pred = model.fit(X).decision_function(X)
     toc = perf_counter()
     print(f"Duration for {model_name}: {toc - tic:.2f} s")
@@ -328,11 +328,11 @@ _ = ax.set_title("RobustScaler with varying n_neighbors")
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, FunctionTransformer
 
 scaler_list = [RobustScaler(), FunctionTransformer(), StandardScaler(), MinMaxScaler()]
-clf = LocalOutlierFactor(n_neighbors=int(0.02 * n_samples))
+lof = LocalOutlierFactor(n_neighbors=int(0.02 * n_samples))
 
 fig, ax = plt.subplots()
 for model_idx, scaler in enumerate(scaler_list):
-    model = make_pipeline(scaler, clf)
+    model = make_pipeline(scaler, lof)
     model.fit(X)
     y_pred = model[-1].negative_outlier_factor_
     display = RocCurveDisplay.from_predictions(
