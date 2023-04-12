@@ -266,7 +266,7 @@ def permutation_importance(
     if not isinstance(max_samples, numbers.Integral):
         max_samples = int(max_samples * X.shape[0])
     elif max_samples > X.shape[0]:
-        raise ValueError("max_samples must be in (0, n_samples]")
+        raise ValueError("max_samples must be <= n_samples")
 
     if callable(scoring):
         scorer = scoring

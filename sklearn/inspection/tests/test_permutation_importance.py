@@ -535,7 +535,7 @@ def test_permutation_importance_max_samples_error():
     clf = LogisticRegression()
     clf.fit(X, y)
 
-    err_msg = r"max_samples must be in \(0, n_samples\]"
+    err_msg = r"max_samples must be <= n_samples"
 
     with pytest.raises(ValueError, match=err_msg):
         permutation_importance(clf, X, y, max_samples=5)
