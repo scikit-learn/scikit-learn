@@ -1,9 +1,11 @@
 import warnings
+from unittest.mock import Mock
 
 import re
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
+import sklearn
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
@@ -29,6 +31,7 @@ from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.utils import shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.metrics import get_scorer
 
 
 n_threads = _openmp_effective_n_threads()
@@ -847,6 +850,37 @@ def test_early_stopping_on_test_set_with_warm_start():
     # does not raise on second call
     gb.set_params(max_iter=2)
     gb.fit(X, y)
+
+
+def test_early_stopping_with_sample_weights(monkeypatch):
+    """Check that sample weights is passed in to scorer."""
+
+    mock_scorer = Mock(side_effect=get_scorer("neg_median_absolute_error"))
+
+    def mock_check_scoring(estimator, scoring):
+        assert scoring == "neg_median_absolute_error"
+        return mock_scorer
+
+    monkeypatch.setattr(
+        sklearn.ensemble._hist_gradient_boosting.gradient_boosting,
+        "check_scoring",
+        mock_check_scoring,
+    )
+
+    X, y = make_regression(random_state=0)
+    sample_weight = np.ones_like(y)
+    hist = HistGradientBoostingRegressor(
+        max_iter=2,
+        early_stopping=True,
+        random_state=0,
+        scoring="neg_median_absolute_error",
+    )
+    hist.fit(X, y, sample_weight=sample_weight)
+
+    # For scorer is called three times per iteration. (2 x 3 = 6)
+    assert mock_scorer.call_count == 6
+    for arg_list in mock_scorer.call_args_list:
+        assert "sample_weight" in arg_list[1]
 
 
 @pytest.mark.parametrize(
