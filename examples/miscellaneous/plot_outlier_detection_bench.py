@@ -173,35 +173,54 @@ for model_name in model_names:
     )
 
 # %%
-# Breast Cancer dataset
-# ---------------------
+# Ames Housing dataset
+# --------------------
 #
-# The :ref:`breast_cancer_dataset` (WDBC) is a binary classification dataset
-# where the class is whether a tumor is malignant or benign. It contains 212
-# malignant samples, and 357 benign. All the 30 features are continuous and
-# positive.
+# The `Ames housing dataset <http://www.openml.org/d/43926>`_ is originally a
+# regression dataset where the target are sales prices of houses in Ames, Iowa.
+# Here we convert it into an outlier detection problem by regarding houses with
+# price over 70 USD/sqft. To make the problem easier, we drop intermediate
+# prices between 40 and 70 USD/sqft.
 
 # %%
-import pandas as pd
-from sklearn.datasets import load_breast_cancer
+import matplotlib.pyplot as plt
+from sklearn.datasets import fetch_openml
 
-X, y = load_breast_cancer(return_X_y=True, as_frame=True)
-y = np.logical_not(y).astype(np.int32)  # make label 1 to be the minority class
+X, y = fetch_openml(
+    name="ames_housing", version=1, return_X_y=True, as_frame=True, parser="pandas"
+)
+y = y.div(X["Lot_Area"])
+X.drop(columns="Lot_Area", inplace=True)
+mask = (y < 40) | (y > 70)
+X = X.loc[mask]
+y = y.loc[mask]
+y.hist(bins=20, edgecolor="black")
+plt.xlabel("House price in USD/sqft")
+_ = plt.title("Distribution of house prices \nin Ames")
 
-idx_benign = y.index[y == 0]
-idx_malign = rng.choice(y.index[y == 1], size=85)  # downsample to 85 points
-X = pd.concat([X.iloc[idx_benign], X.iloc[idx_malign]])
-y = pd.concat([y.iloc[idx_benign], y.iloc[idx_malign]])
+# %%
+y = (y > 70).astype(np.int32)
 
 n_samples, anomaly_frac = X.shape[0], y.mean()
 print(f"{n_samples} datapoints with anomaly propotion of {anomaly_frac:.02%}")
 
 # %%
-y_true["breast cancer"] = y
+# The dataset contains 46 categorical features. In this case it is easier use a
+# :class:`~sklearn.compose.make_column_selector` to find them instead of passing
+# a list made by hand.
+
+# %%
+from sklearn.compose import make_column_selector as selector
+
+categorical_columns_selector = selector(dtype_include="category")
+cat_columns = categorical_columns_selector(X)
+
+y_true["ames_housing"] = y
 for model_name in model_names:
-    y_pred[model_name]["breast cancer"] = fit_predict(
+    y_pred[model_name]["ames_housing"] = fit_predict(
         X,
         model_name=model_name,
+        categorical_columns=cat_columns,
         n_neighbors=int(n_samples * anomaly_frac),
     )
 
@@ -248,7 +267,6 @@ for model_name in model_names:
 
 # %%
 import math
-import matplotlib.pyplot as plt
 from sklearn.metrics import RocCurveDisplay
 
 # plotting parameters
