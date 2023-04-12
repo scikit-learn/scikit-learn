@@ -315,7 +315,7 @@ X = X_forestcover
 y = y_true["forestcover"]
 
 n_samples = X.shape[0]
-n_neighbors_list = (n_samples * np.array([0.02, 0.01, 0.001])).astype(np.int32)
+n_neighbors_list = (n_samples * np.array([0.2, 0.02, 0.01, 0.001])).astype(np.int32)
 model = make_pipeline(RobustScaler(), LocalOutlierFactor())
 
 fig, ax = plt.subplots()
