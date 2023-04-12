@@ -331,6 +331,12 @@ def rand_score(labels_true, labels_pred):
     return numerator / denominator
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    }
+)
 def adjusted_rand_score(labels_true, labels_pred):
     """Rand index adjusted for chance.
 
@@ -358,10 +364,10 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,), dtype=int
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,), dtype=int
         Cluster labels to evaluate.
 
     Returns

@@ -1651,6 +1651,9 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True}
 
 
+@validate_params(
+    {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]}
+)
 def robust_scale(
     X,
     *,

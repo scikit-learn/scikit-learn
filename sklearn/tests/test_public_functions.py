@@ -127,6 +127,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.fetch_lfw_pairs",
     "sklearn.datasets.fetch_lfw_people",
     "sklearn.datasets.fetch_olivetti_faces",
+    "sklearn.datasets.fetch_rcv1",
     "sklearn.datasets.load_svmlight_file",
     "sklearn.datasets.load_svmlight_files",
     "sklearn.datasets.make_biclusters",
@@ -166,6 +167,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.average_precision_score",
     "sklearn.metrics.balanced_accuracy_score",
     "sklearn.metrics.brier_score_loss",
+    "sklearn.metrics.calinski_harabasz_score",
     "sklearn.metrics.class_likelihood_ratios",
     "sklearn.metrics.classification_report",
     "sklearn.metrics.cluster.adjusted_mutual_info_score",
@@ -180,6 +182,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.d2_absolute_error_score",
     "sklearn.metrics.d2_pinball_score",
     "sklearn.metrics.d2_tweedie_score",
+    "sklearn.metrics.davies_bouldin_score",
     "sklearn.metrics.dcg_score",
     "sklearn.metrics.det_curve",
     "sklearn.metrics.explained_variance_score",
@@ -208,6 +211,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.mutual_info_score",
     "sklearn.metrics.ndcg_score",
     "sklearn.metrics.pair_confusion_matrix",
+    "sklearn.metrics.adjusted_rand_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
     "sklearn.metrics.pairwise.cosine_distances",
     "sklearn.metrics.pairwise.cosine_similarity",
@@ -270,6 +274,7 @@ PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.decomposition.fastica", "sklearn.decomposition.FastICA"),
     ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
     ("sklearn.preprocessing.minmax_scale", "sklearn.preprocessing.MinMaxScaler"),
+    ("sklearn.preprocessing.robust_scale", "sklearn.preprocessing.RobustScaler"),
 ]
 
 

@@ -859,8 +859,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         X : {ndarray, sparse matrix} of (n_samples, n_features)
             Data.
 
-        y : {ndarray, sparse matrix} of shape (n_samples,) or \
-            (n_samples, n_targets)
+        y : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
