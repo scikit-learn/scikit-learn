@@ -96,6 +96,7 @@ def _graphical_lasso(
     precision_ = linalg.pinvh(covariance_)
 
     indices = np.arange(n_features)
+    i = 0  # initialize the counter to be robust to `max_iter=0`
     costs = list()
     # The different l1 regression solver have different numerical errors
     if mode == "cd":
