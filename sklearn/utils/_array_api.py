@@ -5,7 +5,7 @@ import math
 import numpy
 import scipy.special as special
 
-from .._config import get_config, config_context
+from .._config import get_config
 from .fixes import parse_version
 
 
