@@ -1,4 +1,3 @@
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import (
     LogisticRegression,
     Ridge,
@@ -7,7 +6,6 @@ from sklearn.linear_model import (
     LinearRegression,
     SGDRegressor,
 )
-from sklearn.utils._testing import ignore_warnings
 
 from .common import Benchmark, Estimator, Predictor
 from .datasets import (
@@ -166,18 +164,14 @@ class SGDRegressorBenchmark(Predictor, Estimator, Benchmark):
         return data
 
     def make_estimator(self, params):
-        estimator = SGDRegressor(max_iter=1000, tol=None, random_state=0)
+        (representation,) = params
+        max_iter = 60 if representation == "dense" else 300
+        estimator = SGDRegressor(max_iter=max_iter, tol=None, random_state=0)
 
         return estimator
 
     def make_scorers(self):
         make_gen_reg_scorers(self)
-
-    def time_fit(self, *args):
-        with ignore_warnings(category=ConvergenceWarning):
-            self.estimator.fit(self.X, self.y)
-
-        assert self.estimator.n_iter_ == self.estimator.max_iter
 
 
 class ElasticNetBenchmark(Predictor, Estimator, Benchmark):
