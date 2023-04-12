@@ -67,7 +67,7 @@ def test_graphical_lasso(random_state=0):
 
 
 def test_graphical_lasso_when_alpha_equals_0():
-    # Test graphical_lasso's early return conditon when alpha=0.
+    """Test graphical_lasso's early return condition when alpha=0."""
     X = np.random.randn(100, 10)
     emp_cov = empirical_covariance(X, assume_centered=True)
 
