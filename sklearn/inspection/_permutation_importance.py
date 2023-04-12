@@ -3,7 +3,7 @@ import numbers
 import numpy as np
 
 from ..ensemble._bagging import _generate_indices
-from ..metrics import check_scoring
+from ..metrics import check_scoring, get_scorer_names
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..model_selection._validation import _aggregate_score_dicts
 from ..utils import Bunch, _safe_indexing
@@ -15,6 +15,7 @@ from ..utils._param_validation import (
     Integral,
     Interval,
     RealNotInt,
+    StrOptions,
     validate_params,
 )
 
@@ -111,7 +112,14 @@ def _create_importances_bunch(baseline_score, permuted_score):
         "estimator": [HasMethods(["fit"])],
         "X": ["array-like"],
         "y": ["array-like", None],
-        "scoring": [str, callable, list, tuple, dict, None],
+        "scoring": [
+            StrOptions(set(get_scorer_names())),
+            callable,
+            list,
+            tuple,
+            dict,
+            None,
+        ],
         "n_repeats": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],
         "random_state": ["random_state"],
