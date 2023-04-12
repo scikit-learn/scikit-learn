@@ -144,7 +144,7 @@ def _wrap_method_output(f, method):
                 _wrap_data_with_container(method, data_to_wrap[0], X, self),
                 *data_to_wrap[1:],
             )
-            # `_make` is a documented API for named tuples:
+            # Support for namedtuples `_make` is a documented API for namedtuples:
             # https://docs.python.org/3/library/collections.html#collections.somenamedtuple._make
             if hasattr(type(data_to_wrap), "_make"):
                 return type(data_to_wrap)._make(return_tuple)
