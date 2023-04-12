@@ -240,7 +240,7 @@ Changelog
 
 - |Efficiency| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` is now faster when `scoring`
-  is a predefined metric listed in :ref:`scoring_parameter`. :pr:`xxxxx`
+  is a predefined metric listed in :ref:`scoring_parameter`. :pr:`25974`
   by `Thomas Fan`_.
 
 - |Enhancement| :class:`ensemble.BaggingClassifier` and
