@@ -495,7 +495,7 @@ def test_small_trainset():
     gb = HistGradientBoostingClassifier()
 
     # Compute the small training set
-    X_small, y_small, _ = gb._get_small_trainset(
+    X_small, y_small, *_ = gb._get_small_trainset(
         X, y, seed=42, sample_weight_train=None
     )
 
