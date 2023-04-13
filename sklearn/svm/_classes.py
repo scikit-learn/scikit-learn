@@ -3,7 +3,7 @@ import warnings
 
 import numpy as np
 
-from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
+from ._base import _fit_liblinear, _get_liblinear_solver_type, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearModel
 from ..utils import deprecated
@@ -11,6 +11,23 @@ from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
 from ..utils._param_validation import Interval, StrOptions, Hidden
 
+
+def _choose_dual_automatically(loss, penalty, X):
+    """Choose dual parameter value wrt to loss, penalty and shape of the data
+    """
+    if X.shape[0] < X.shape[1]:
+        try:
+            # check if the combination of loss and penalty is supporting
+            # dual formulation
+            _get_liblinear_solver_type(
+                self.multi_class, self.penalty, self.loss, True
+            )
+            return True
+        except ValueError:
+            return False
+    else:
+        return False
+    
 
 class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """Linear Support Vector Classification.
@@ -44,7 +61,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         `dual="auto"` will choose the best option considering `n_samples`,
         `n_features`, `loss` and `penalty`.
 
-        .. versionchanged:: 1.4
+        .. versionchanged:: 1.3
            The default value will change from `True` to `"auto"` in 1.5.
 
     tol : float, default=1e-4
@@ -278,12 +295,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.classes_ = np.unique(y)
 
         if self.dual == "auto":
-            if self.loss == "hinge":
-                self._dual = True
-            elif self.loss == "squared_hinge" and self.penalty == "l1":
-                self._dual = False
-            else:
-                self._dual = True if X.shape[0] < X.shape[1] else False
+            self._dual = _choose_dual_automatically(self.loss, self.penalty, X)
         elif self.dual == "warn":
             warnings.warn(
                 (
@@ -393,7 +405,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         `dual="auto"` will choose the best option considering `n_samples`,
         `n_features` and `loss`.
 
-        .. versionchanged:: 1.4
+        .. versionchanged:: 1.3
            The default value will change from `True` to `"auto"` in 1.5.
 
     verbose : int, default=0
@@ -547,10 +559,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         penalty = "l2"  # SVR only accepts l2 penalty
 
         if self.dual == "auto":
-            if self.loss == "epsilon_insensitive":
-                self._dual = True
-            else:
-                self._dual = True if X.shape[0] < X.shape[1] else False
+            self._dual = _choose_dual_automatically(self.loss, self.penalty, X)
         elif self.dual == "warn":
             warnings.warn(
                 (
