@@ -429,20 +429,15 @@ def notebook_modification_function(notebook_content, notebook_filename):
         ]
     )
 
-    if "import plotly" in notebook_content_str:
-        message_class = "danger"
-        message = (
-            "This notebook is not expected to work inside JupyterLite for now."
-            " There seems to be some issues with Plotly, see "
-            "[this]('https://github.com/jupyterlite/jupyterlite/pull/950') "
-            "for more details."
-        )
-    else:
-        message_class = "warning"
-        message = (
-            "JupyterLite integration in sphinx-gallery is beta "
-            "and it may break in unexpected ways"
-        )
+    message_class = "warning"
+    message = (
+        "Running the scikit-learn examples in JupyterLite is experimental "
+        "and you may encounter some unexpected behavior.\n\n"
+        "The main difference is that imports will take a lot longer than usual, "
+        "for example the first `import sklearn` can take roughly 20-30s.\n\n"
+        "If you notice problems, feel free to open an "
+        "[issue](https://github.com/scikit-learn/scikit-learn/issues/new/choose) about it."
+    )
 
     markdown = warning_template.format(message_class=message_class, message=message)
 
@@ -465,6 +460,13 @@ def notebook_modification_function(notebook_content, notebook_filename):
                 "pyodide_http.patch_all()",
             ]
         )
+    if (
+        # TODO(1.4) the default fetch_openml parser will be pandas so any
+        # notebook using fetch_openml will need 'import pandas'
+        'parser="pandas"' in notebook_content_str
+        or "as_frame=True" in notebook_content_str
+    ):
+        code_lines.extend("import pandas")
 
     if code_lines:
         code_lines = ["# JupyterLite-specific code"] + code_lines
