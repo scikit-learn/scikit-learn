@@ -922,9 +922,13 @@ Intercept of the ordinary least-squares solution
 For the OLS estimator (as implemented in :class:`LinearRegression` or
 equivalently for :class:`Ridge` with `alpha=0`), the solution is not unique
 when the rank of :math:`X` is lower than `n_features`. In this case,
-scikit-learn estimators converge to the minimum norm solution:
+scikit-learn estimators converge to the minimum norm solution defined as
+follows:
 
 .. math:: \hat{w} = \min_{w, w_0} ||w||_2^2 \text{ s.t. } X w + w_0 1_s = y
+
+Note that the intercept :math:`w_0` does not take part in the computation of
+the norm.
 
 Again this is equivalent to the minimum norm solution of the centered problem
 without intercept:
