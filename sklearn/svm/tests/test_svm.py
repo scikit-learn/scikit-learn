@@ -15,6 +15,7 @@ from numpy.testing import assert_allclose
 from scipy import sparse
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.svm import LinearSVC, OneClassSVM, SVR, NuSVR, LinearSVR
+from sklearn.svm._classes import _choose_dual_automatically
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
@@ -1411,18 +1412,11 @@ def test_dual_auto_deprecation_warning(Estimator):
         svm.fit(X, Y)
 
 
-@pytest.mark.parametrize(
-    "SVM, params",
-    [
-        (LinearSVC, {"loss": "squared_hinge", "dual": "auto"}),
-        (LinearSVR, {"loss": "squared_epsilon_insensitive", "dual": "auto"}),
-    ],
-)
-def test_dual_auto(SVM, params):
-    svm = SVM(**params)
-    # N > M
-    svm.fit(X, Y)
-    assert svm._dual is False
-    # M > N
-    svm.fit(np.asarray(X).T, [1, 2])
-    assert svm._dual is True
+@pytest.mark.parametrize("loss", ["epsilon_insensitive", "squared_hinge", "squared_epsilon_insensitive"])
+def test_dual_auto(loss):
+    # OvR, L2, N > M (6,2)
+    dual = _choose_dual_automatically("squared_hinge", "l2", "ovr", X)
+    assert dual is False
+    # OvR, L2, N < M (2,6)
+    dual = _choose_dual_automatically("squared_hinge", "l2", "ovr", np.asarray(X).T)
+    assert dual is True
