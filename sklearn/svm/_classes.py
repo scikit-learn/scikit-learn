@@ -559,7 +559,7 @@ class LinearSVR(RegressorMixin, LinearModel):
 
         if self.dual == "auto":
             self._dual = _choose_dual_automatically(
-                self.loss, penalty, self.multi_class, X
+                self.loss, penalty, "ovr", X
             )
         elif self.dual == "warn":
             warnings.warn(
