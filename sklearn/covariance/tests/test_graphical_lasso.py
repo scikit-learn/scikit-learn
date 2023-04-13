@@ -78,6 +78,17 @@ def test_graphical_lasso_when_alpha_equals_0():
     assert_allclose(precision, np.linalg.inv(emp_cov))
 
 
+@pytest.mark.parametrize("mode", ["cd", "lars"])
+def test_graphical_lasso_n_iter(mode):
+    X, _ = datasets.make_classification(n_samples=5_000, n_features=20, random_state=0)
+    emp_cov = empirical_covariance(X)
+
+    _, _, n_iter = graphical_lasso(
+        emp_cov, 0.2, mode=mode, max_iter=2, return_n_iter=True
+    )
+    assert n_iter == 2
+
+
 def test_graphical_lasso_iris():
     # Hard-coded solution from R glasso package for alpha=1.0
     # (need to set penalize.diagonal to FALSE)
