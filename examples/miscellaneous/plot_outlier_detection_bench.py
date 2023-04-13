@@ -3,7 +3,7 @@
 Evaluation of outlier detection estimators
 ==========================================
 
-This example benchmarks two outlier detection algorithms, namely
+This example compares two outlier detection algorithms, namely
 :ref:`local_outlier_factor` (LOF) and :ref:`isolation_forest` (IForest), using
 ROC curves on classical anomaly detection datasets. The goal is to show that
 different algorithms perform well on different datasets.
@@ -144,7 +144,7 @@ for model_name in model_names:
 #
 # The :ref:`covtype_dataset` is a multiclass dataset where the target is the
 # dominant species of tree in a given patch of forest. It contains 54 features,
-# some of wich ("Wilderness_Area" and "Soil_Type") are already binary encoded.
+# some of which ("Wilderness_Area" and "Soil_Type") are already binary encoded.
 # Though originally meant as a classification task, one can regard inliers as
 # samples encoded with label 2 and outliers as those with label 4.
 
