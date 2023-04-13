@@ -11,7 +11,7 @@ cdef extern from *:
 # Includes
 
 cdef extern from "_svm_cython_blas_helpers.h":
-    ctypedef double (*dot_func)(int, double*, int, double*, int)
+    ctypedef double (*dot_func)(int, const double*, int, const double*, int)
     cdef struct BlasFunctions:
         dot_func dot
 

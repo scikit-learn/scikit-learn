@@ -145,10 +145,10 @@ def test_unseen_or_no_features():
             v.transform([])
 
 
-def test_deterministic_vocabulary():
+def test_deterministic_vocabulary(global_random_seed):
     # Generate equal dictionaries with different memory layouts
     items = [("%03d" % i, i) for i in range(1000)]
-    rng = Random(42)
+    rng = Random(global_random_seed)
     d_sorted = dict(items)
     rng.shuffle(items)
     d_shuffled = dict(items)

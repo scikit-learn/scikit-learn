@@ -39,6 +39,7 @@ from .validation import (
 )
 from .. import get_config
 from ._bunch import Bunch
+from ._param_validation import validate_params, Interval
 
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
@@ -725,6 +726,13 @@ def _chunk_generator(gen, chunksize):
             return
 
 
+@validate_params(
+    {
+        "n": [Interval(numbers.Integral, 1, None, closed="left")],
+        "batch_size": [Interval(numbers.Integral, 1, None, closed="left")],
+        "min_batch_size": [Interval(numbers.Integral, 0, None, closed="left")],
+    }
+)
 def gen_batches(n, batch_size, *, min_batch_size=0):
     """Generator to create slices containing `batch_size` elements from 0 to `n`.
 
@@ -762,12 +770,6 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
     >>> list(gen_batches(7, 3, min_batch_size=2))
     [slice(0, 3, None), slice(3, 7, None)]
     """
-    if not isinstance(batch_size, numbers.Integral):
-        raise TypeError(
-            "gen_batches got batch_size=%s, must be an integer" % batch_size
-        )
-    if batch_size <= 0:
-        raise ValueError("gen_batches got batch_size=%s, must be positive" % batch_size)
     start = 0
     for _ in range(int(n // batch_size)):
         end = start + batch_size

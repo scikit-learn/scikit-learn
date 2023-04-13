@@ -66,8 +66,8 @@ if sp_base_version < parse_version("1.11"):
     SCIPY_METRICS += ["kulsinski"]
 
 VALID_METRICS = dict(
-    ball_tree=BallTree.valid_metrics,
-    kd_tree=KDTree.valid_metrics,
+    ball_tree=BallTree._valid_metrics,
+    kd_tree=KDTree._valid_metrics,
     # The following list comes from the
     # sklearn.metrics.pairwise doc string
     brute=sorted(set(PAIRWISE_DISTANCE_FUNCTIONS).union(SCIPY_METRICS)),
@@ -232,9 +232,12 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
 
     if warn_when_not_sorted:
         warnings.warn(
-            "Precomputed sparse input was not sorted by row values. Use the function"
-            " sklearn.neighbors.sort_graph_by_row_values to sort the input by row"
-            " values, with warn_when_not_sorted=False to remove this warning.",
+            (
+                "Precomputed sparse input was not sorted by row values. Use the"
+                " function sklearn.neighbors.sort_graph_by_row_values to sort the input"
+                " by row values, with warn_when_not_sorted=False to remove this"
+                " warning."
+            ),
             EfficiencyWarning,
         )
 
@@ -400,7 +403,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         metric_params=None,
         n_jobs=None,
     ):
-
         self.n_neighbors = n_neighbors
         self.radius = radius
         self.algorithm = algorithm
@@ -441,9 +443,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.metric_params is not None and "p" in self.metric_params:
             if self.p is not None:
                 warnings.warn(
-                    "Parameter p is found in metric_params. "
-                    "The corresponding parameter from __init__ "
-                    "is ignored.",
+                    (
+                        "Parameter p is found in metric_params. "
+                        "The corresponding parameter from __init__ "
+                        "is ignored."
+                    ),
                     SyntaxWarning,
                     stacklevel=3,
                 )
@@ -460,10 +464,12 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
                     if y.ndim != 1:
                         warnings.warn(
-                            "A column-vector y was passed when a "
-                            "1d array was expected. Please change "
-                            "the shape of y to (n_samples,), for "
-                            "example using ravel().",
+                            (
+                                "A column-vector y was passed when a "
+                                "1d array was expected. Please change "
+                                "the shape of y to (n_samples,), for "
+                                "example using ravel()."
+                            ),
                             DataConversionWarning,
                             stacklevel=2,
                         )
@@ -475,7 +481,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
                 check_classification_targets(y)
                 self.classes_ = []
-                self._y = np.empty(y.shape, dtype=int)
+                # Using `dtype=np.intp` is necessary since `np.bincount`
+                # (called in _classification.py) fails when dealing
+                # with a float64 array on 32bit systems.
+                self._y = np.empty(y.shape, dtype=np.intp)
                 for k in range(self._y.shape[1]):
                     classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
                     self.classes_.append(classes)

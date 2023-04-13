@@ -49,27 +49,27 @@ cdef class Criterion:
         const SIZE_t[:] sample_indices,
         SIZE_t start,
         SIZE_t end
-    ) nogil except -1
-    cdef int reset(self) nogil except -1
-    cdef int reverse_reset(self) nogil except -1
-    cdef int update(self, SIZE_t new_pos) nogil except -1
-    cdef double node_impurity(self) nogil
+    ) except -1 nogil
+    cdef int reset(self) except -1 nogil
+    cdef int reverse_reset(self) except -1 nogil
+    cdef int update(self, SIZE_t new_pos) except -1 nogil
+    cdef double node_impurity(self) noexcept nogil
     cdef void children_impurity(
         self,
         double* impurity_left,
         double* impurity_right
-    ) nogil
+    ) noexcept nogil
     cdef void node_value(
         self,
         double* dest
-    ) nogil
+    ) noexcept nogil
     cdef double impurity_improvement(
         self,
         double impurity_parent,
         double impurity_left,
         double impurity_right
-    ) nogil
-    cdef double proxy_impurity_improvement(self) nogil
+    ) noexcept nogil
+    cdef double proxy_impurity_improvement(self) noexcept nogil
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""

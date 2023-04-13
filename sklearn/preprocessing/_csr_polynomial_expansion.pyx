@@ -20,7 +20,7 @@ cdef inline cnp.int32_t _deg2_column(
     cnp.int32_t i,
     cnp.int32_t j,
     cnp.int32_t interaction_only,
-) nogil:
+) noexcept nogil:
     """Compute the index of the column for a degree 2 expansion
 
     d is the dimensionality of the input data, i and j are the indices
@@ -38,7 +38,7 @@ cdef inline cnp.int32_t _deg3_column(
     cnp.int32_t j,
     cnp.int32_t k,
     cnp.int32_t interaction_only
-) nogil:
+) noexcept nogil:
     """Compute the index of the column for a degree 3 expansion
 
     d is the dimensionality of the input data, i, j and k are the indices

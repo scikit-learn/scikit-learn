@@ -675,15 +675,18 @@ def test_kneighbors_classifier_predict_proba(global_dtype):
     cls = neighbors.KNeighborsClassifier(n_neighbors=3, p=1)  # cityblock dist
     cls.fit(X, y)
     y_prob = cls.predict_proba(X)
-    real_prob = np.array(
-        [
-            [0, 2.0 / 3, 1.0 / 3],
-            [1.0 / 3, 2.0 / 3, 0],
-            [1.0 / 3, 0, 2.0 / 3],
-            [0, 1.0 / 3, 2.0 / 3],
-            [2.0 / 3, 1.0 / 3, 0],
-            [2.0 / 3, 1.0 / 3, 0],
-        ]
+    real_prob = (
+        np.array(
+            [
+                [0, 2, 1],
+                [1, 2, 0],
+                [1, 0, 2],
+                [0, 1, 2],
+                [2, 1, 0],
+                [2, 1, 0],
+            ]
+        )
+        / 3.0
     )
     assert_array_equal(real_prob, y_prob)
     # Check that it also works with non integer labels
@@ -1267,7 +1270,6 @@ def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
     for algorithm, weights in product(ALGORITHMS, [None, "uniform"]):
-
         rnn = neighbors.RadiusNeighborsRegressor(weights=weights, algorithm=algorithm)
         rnn.fit(X_train, y_train)
 
@@ -1836,7 +1838,6 @@ def test_k_and_radius_neighbors_train_is_not_query():
     # Test kneighbors et.al when query is not training data
 
     for algorithm in ALGORITHMS:
-
         nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
 
         X = [[0], [1]]
