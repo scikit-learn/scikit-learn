@@ -377,7 +377,7 @@ def test_average_precision_score_duplicate_values():
 def test_average_precision_score_tied_values():
     # Here if we go from left to right in y_true, the 0 values are
     # separated from the 1 values, so it appears that we've
-    # Correctly sorted our classifications. But in fact the first two
+    # correctly sorted our classifications. But in fact the first two
     # values have the same score (0.5) and so the first two values
     # could be swapped around, creating an imperfect sorting. This
     # imperfection should come through in the end score, making it less
