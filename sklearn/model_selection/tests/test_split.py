@@ -719,6 +719,10 @@ def test_group_shuffle_split_default_test_size(train_size, exp_train, exp_test):
 
 
 def test_group_shuffle_split_nan_values():
+    """Check error is raised with pandas NA value.
+
+    Non-regression for gh-24486.
+    """
     pd = pytest.importorskip("pandas")
     data = pd.DataFrame({"clusters": [1, 2, 3, pd.NA, np.nan], "x": [0, 1, 2, 3, 4]})
 
