@@ -19,9 +19,7 @@ def _choose_dual_automatically(loss, penalty, multi_class, X):
         try:
             # check if the combination of loss and penalty is supporting
             # dual formulation
-            _get_liblinear_solver_type(
-                multi_class, penalty, loss, True
-            )
+            _get_liblinear_solver_type(multi_class, penalty, loss, True)
             return True
         except ValueError:
             return False
