@@ -12,7 +12,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils._param_validation import Interval, StrOptions, Hidden
 
 
-def _choose_dual_automatically(loss, penalty, X):
+def _choose_dual_automatically(loss, penalty, multi_class, X):
     """Choose dual parameter value wrt to loss, penalty and shape of the data
     """
     if X.shape[0] < X.shape[1]:
@@ -20,7 +20,7 @@ def _choose_dual_automatically(loss, penalty, X):
             # check if the combination of loss and penalty is supporting
             # dual formulation
             _get_liblinear_solver_type(
-                self.multi_class, self.penalty, self.loss, True
+                multi_class, penalty, loss, True
             )
             return True
         except ValueError:
@@ -295,7 +295,9 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.classes_ = np.unique(y)
 
         if self.dual == "auto":
-            self._dual = _choose_dual_automatically(self.loss, self.penalty, X)
+            self._dual = _choose_dual_automatically(
+                self.loss, self.penalty, self.multi_class, X
+            )
         elif self.dual == "warn":
             warnings.warn(
                 (
@@ -559,7 +561,9 @@ class LinearSVR(RegressorMixin, LinearModel):
         penalty = "l2"  # SVR only accepts l2 penalty
 
         if self.dual == "auto":
-            self._dual = _choose_dual_automatically(self.loss, self.penalty, X)
+            self._dual = _choose_dual_automatically(
+                self.loss, self.penalty, self.multi_class, X
+            )
         elif self.dual == "warn":
             warnings.warn(
                 (
