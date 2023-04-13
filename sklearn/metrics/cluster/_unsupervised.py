@@ -358,6 +358,12 @@ def calinski_harabasz_score(X, labels):
     )
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "labels": ["array-like"],
+    }
+)
 def davies_bouldin_score(X, labels):
     """Compute the Davies-Bouldin score.
 
