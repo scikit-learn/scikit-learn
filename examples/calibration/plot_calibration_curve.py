@@ -164,9 +164,6 @@ for i, (clf, name) in enumerate(clf_list):
         scores[score_name].append(metric(y_test, y_pred))
 
     score_df = pd.DataFrame(scores).set_index("Classifier")
-    score_df = score_df[
-        ["Brier  loss", "Log loss", "Precision ", "Recall ", "F1 ", "Roc auc "]
-    ]
     score_df.round(decimals=3)
 
 score_df
@@ -312,9 +309,6 @@ for i, (clf, name) in enumerate(clf_list):
         scores[score_name].append(metric(y_test, y_pred))
 
     score_df = pd.DataFrame(scores).set_index("Classifier")
-    score_df = score_df[
-        ["Brier  loss", "Log loss", "Precision ", "Recall ", "F1 ", "Roc auc "]
-    ]
     score_df.round(decimals=3)
 
 score_df
