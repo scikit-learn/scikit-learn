@@ -275,9 +275,8 @@ class _BaseScorer(_MetadataRequester):
         """
         if kwargs and not _routing_enabled():
             raise ValueError(
-                "kwargs is only supported if "
-                "enable_metadata_routing=True. See the "
-                "User Guide for more information."
+                "kwargs is only supported if enable_metadata_routing=True. See"
+                " the User Guide for more information."
             )
 
         if sample_weight is not None:
@@ -351,7 +350,6 @@ class _PredictScorer(_BaseScorer):
 
         y_true : array-like
             Gold standard target values for X.
-
 
         **kwargs : dict
             Other parameters passed to the scorer, e.g. sample_weight.
@@ -430,7 +428,10 @@ class _ProbaScorer(_BaseScorer):
         # this is for backward compatibility to avoid passing sample_weight
         # to the scorer if it's None
         # TODO: Probably remove when deprecating enable_metadata_routing
-        if scoring_kwargs.get("sample_weight", -1) is None:
+        if (
+            "sample_weight" in scoring_kwargs
+            and scoring_kwargs["sample_weight"] is None
+        ):
             del scoring_kwargs["sample_weight"]
 
         return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
@@ -515,7 +516,10 @@ class _ThresholdScorer(_BaseScorer):
         # this is for backward compatibility to avoid passing sample_weight
         # to the scorer if it's None
         # TODO: Probably remove when deprecating enable_metadata_routing
-        if scoring_kwargs.get("sample_weight", -1) is None:
+        if (
+            "sample_weight" in scoring_kwargs
+            and scoring_kwargs["sample_weight"] is None
+        ):
             del scoring_kwargs["sample_weight"]
 
         return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
@@ -950,9 +954,9 @@ class _DeprecatedScorers(dict):
 
     def __getitem__(self, item):
         warnings.warn(
-            "sklearn.metrics.SCORERS is deprecated and will be removed in v1.3. "
-            "Please use sklearn.metrics.get_scorer_names to get a list of available "
-            "scorers and sklearn.metrics.get_metric to get scorer.",
+            "sklearn.metrics.SCORERS is deprecated and will be removed in v1.3."
+            " Please use sklearn.metrics.get_scorer_names to get a list of"
+            " available scorers and sklearn.metrics.get_metric to get scorer.",
             FutureWarning,
         )
         return super().__getitem__(item)

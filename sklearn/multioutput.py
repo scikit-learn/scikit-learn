@@ -127,7 +127,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         **partial_fit_params : dict of str -> object
             Parameters passed to the ``estimator.partial_fit`` method of each
-            step.
+            sub-estimator.
 
             Only available if `enable_metadata_routing=True`. See the
             :ref:`User Guide <metadata_routing>`.
@@ -141,9 +141,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         """
         if partial_fit_params and not _routing_enabled():
             raise ValueError(
-                "partial_fit_params is only supported if "
-                "enable_metadata_routing=True. See the "
-                "User Guide for more information."
+                "partial_fit_params is only supported if enable_metadata_routing=True."
+                " See the User Guide for more information."
             )
 
         first_time = not hasattr(self, "estimators_")
@@ -413,7 +412,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
 
         **partial_fit_params : dict of str -> object
             Parameters passed to the ``estimator.partial_fit`` method of each
-            step.
+            sub-estimator.
 
             Only available if `enable_metadata_routing=True`. See the
             :ref:`User Guide <metadata_routing>`.
@@ -905,9 +904,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         """
         if fit_params and not _routing_enabled():
             raise ValueError(
-                "fit_params is only supported if "
-                "enable_metadata_routing=True. See the "
-                "User Guide for more information."
+                "fit_params is only supported if enable_metadata_routing=True. "
+                "See the User Guide for more information."
             )
 
         self._validate_params()

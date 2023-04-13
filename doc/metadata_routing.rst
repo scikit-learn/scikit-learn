@@ -6,11 +6,12 @@
 Metadata Routing
 ================
 
-**Note**: By default this feature is not enabled. You can enable this feature
-by setting the ``enable_metadata_routing`` flag to ``True``:
+.. note::
+  By default this feature is not enabled. You can enable this feature
+  by setting the ``enable_metadata_routing`` flag to ``True``:
 
-  >>> import sklearn
-  >>> sklearn.set_config(enable_metadata_routing=True)
+    >>> import sklearn
+    >>> sklearn.set_config(enable_metadata_routing=True)
 
 This guide demonstrates how metadata such as ``sample_weight`` can be routed
 and passed along to estimators, scorers, and CV splitters through
