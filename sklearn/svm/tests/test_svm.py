@@ -1412,7 +1412,9 @@ def test_dual_auto_deprecation_warning(Estimator):
         svm.fit(X, Y)
 
 
-@pytest.mark.parametrize("loss", ["epsilon_insensitive", "squared_hinge", "squared_epsilon_insensitive"])
+@pytest.mark.parametrize(
+    "loss", ["epsilon_insensitive", "squared_hinge", "squared_epsilon_insensitive"]
+)
 def test_dual_auto(loss):
     # OvR, L2, N > M (6,2)
     dual = _choose_dual_automatically("squared_hinge", "l2", "ovr", X)
