@@ -4,18 +4,16 @@ Evaluation of outlier detection estimators
 ==========================================
 
 This example compares two outlier detection algorithms, namely
-:ref:`local_outlier_factor` (LOF) and :ref:`isolation_forest` (IForest), using
-ROC curves on classical anomaly detection datasets. The goal is to show that
-different algorithms perform well on different datasets.
+:ref:`local_outlier_factor` (LOF) and :ref:`isolation_forest` (IForest), on
+real-world datasets available in :class:`sklearn.datasets`. The goal is to show
+that different algorithms perform well on different datasets.
 
-The algorithm performance is assessed in an outlier detection context:
+The algorithms are trained in an outlier detection context:
 
-1. The algorithms are trained on the whole dataset which is assumed to
-contain outliers.
+1. The ROC curves are computed using knowledge of the ground-truth labels
+and displayed using :class:`~sklearn.metrics.RocCurveDisplay`.
 
-2. The ROC curve from :class:`~sklearn.metrics.RocCurveDisplay` is computed
-on the same dataset using the knowledge of the labels.
-
+2. The performance is assessed in terms of the ROC-AUC.
 """
 
 # Author: Pharuj Rajborirug <pharuj.ra@kmitl.ac.th>
@@ -25,13 +23,6 @@ on the same dataset using the knowledge of the labels.
 # %%
 # Dataset preprocessing and model training
 # ========================================
-#
-# This example uses real-world datasets available in :class:`sklearn.datasets`.
-# Due to computational constraints of the scikit-learn documentation, the sample
-# size of some datasets is reduced using a stratified
-# :class:`~sklearn.model_selection.train_test_split`. After the data
-# preprocessing, the datasets' targets will have two classes, 0 representing
-# inliers and 1 representing outliers.
 #
 # Different outlier detection models require different preprocessing. In the
 # presence of categorical variables,
@@ -89,8 +80,11 @@ def fit_predict(X, model_name, categorical_columns=(), n_neighbors=20):
 
 
 # %%
-# On the rest of the example we process one dataset per section and summarize
-# the results in a final plotting section.
+# On the rest of the example we process one dataset per section. After loading
+# the data, the targets are modified to consist of two classes: 0 representing
+# inliers and 1 representing outliers. Due to computational constraints of the
+# scikit-learn documentation, the sample size of some datasets is reduced using
+# a stratified :class:`~sklearn.model_selection.train_test_split`.
 #
 # KDDCup99 - SA dataset
 # ---------------------
@@ -198,7 +192,7 @@ X = X.loc[mask]
 y = y.loc[mask]
 y.hist(bins=20, edgecolor="black")
 plt.xlabel("House price in USD/sqft")
-_ = plt.title("Distribution of house prices \nin Ames")
+_ = plt.title("Distribution of house prices in Ames")
 
 # %%
 y = (y > 70).astype(np.int32)
@@ -237,8 +231,6 @@ for model_name in model_names:
 # which are binary encoded and some are continuous.
 
 # %%
-from sklearn.datasets import fetch_openml
-
 X, y = fetch_openml(
     name="cardiotocography", version=1, return_X_y=True, as_frame=False, parser="pandas"
 )
