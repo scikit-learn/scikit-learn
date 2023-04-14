@@ -543,7 +543,7 @@ class GraphicalLasso(BaseGraphicalLasso):
         # Covariance does not make sense for a single feature
         X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2)
 
-        if self.covariance:
+        if self.covariance == "precomputed":
             emp_cov = X.copy()
             self.location_ = np.zeros(X.shape[1])
         else:
