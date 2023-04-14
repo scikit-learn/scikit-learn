@@ -22,7 +22,7 @@ from ..utils import check_pandas_support  # noqa
 
 __all__ = ["fetch_openml"]
 
-_OPENML_PREFIX = "https://openml.org/"
+_OPENML_PREFIX = "https://api.openml.org/"
 _SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/2"
 _DATA_INFO = "api/v1/json/data/{}"
 _DATA_FEATURES = "api/v1/json/data/features/{}"

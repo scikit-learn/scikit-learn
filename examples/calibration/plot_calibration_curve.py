@@ -155,11 +155,11 @@ for i, (clf, name) in enumerate(clf_list):
     y_pred = clf.predict(X_test)
     scores["Classifier"].append(name)
 
-    for metric in [brier_score_loss, log_loss]:
+    for metric in [brier_score_loss, log_loss, roc_auc_score]:
         score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
         scores[score_name].append(metric(y_test, y_prob[:, 1]))
 
-    for metric in [precision_score, recall_score, f1_score, roc_auc_score]:
+    for metric in [precision_score, recall_score, f1_score]:
         score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
         scores[score_name].append(metric(y_test, y_pred))
 
@@ -300,11 +300,11 @@ for i, (clf, name) in enumerate(clf_list):
     y_pred = clf.predict(X_test)
     scores["Classifier"].append(name)
 
-    for metric in [brier_score_loss, log_loss]:
+    for metric in [brier_score_loss, log_loss, roc_auc_score]:
         score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
         scores[score_name].append(metric(y_test, y_prob[:, 1]))
 
-    for metric in [precision_score, recall_score, f1_score, roc_auc_score]:
+    for metric in [precision_score, recall_score, f1_score]:
         score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
         scores[score_name].append(metric(y_test, y_pred))
 
