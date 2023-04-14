@@ -16,7 +16,6 @@ from scipy import sparse
 from ..metrics.pairwise import pairwise_distances
 
 
-###############################################################################
 # Path and connected component analysis.
 # Code adapted from networkx
 def single_source_shortest_path_length(graph, source, *, cutoff=None):
