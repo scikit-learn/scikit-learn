@@ -10,7 +10,9 @@ classification.
 In scikit-learn, all estimators support multiclass classification out of the
 box: the most sensible strategy was implemented for the end-user. The
 :mod:`sklearn.multiclass` module implements various strategies that
-one can use for experimenting. This example will review them.
+one can use for experimenting. These strategies are particularly useful when
+developing third-party estimators that only support binary classification
+out-of-the-box. This example will review the different strategies.
 
 One should not confuse the OvO/OvR strategy used for the evaluation of
 multiclass classifiers with the OvO/OvR strategy used to train a multiclass
@@ -175,9 +177,10 @@ plt.show()
 #
 # Finally, it is important to recall that the estimators in scikit-learn
 # are developed with a specific strategy to handle multiclass classification
-# out of the box. It means that there is little interest in using the
-# different strategies. However, it also shows that even if a strategy has been
-# chosen and implemented, the hyperparameters should be optimized.
+# out of the box. So for these estimators, it means that there is no need to
+# use different strategies. These strategies are mainly useful for third-party
+# estimators supporting only binary classification. In all cases, we also show
+# that the hyperparameters should be optimized.
 #
 # References
 # ----------
