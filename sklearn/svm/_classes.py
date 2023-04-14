@@ -558,9 +558,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         penalty = "l2"  # SVR only accepts l2 penalty
 
         if self.dual == "auto":
-            self._dual = _choose_dual_automatically(
-                self.loss, penalty, "ovr", X
-            )
+            self._dual = _choose_dual_automatically(self.loss, penalty, "ovr", X)
         elif self.dual == "warn":
             warnings.warn(
                 (
