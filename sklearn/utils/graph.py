@@ -32,7 +32,7 @@ def single_source_shortest_path_length(graph, source, *, cutoff=None):
 
     Parameters
     ----------
-    graph : {sparse matrix, array-like} of shape (n_nodes, n_nodes)
+    graph : {array-like, sparse matrix} of shape (n_nodes, n_nodes)
         Adjacency matrix of the graph. Sparse matrix of format LIL is
         preferred.
 
