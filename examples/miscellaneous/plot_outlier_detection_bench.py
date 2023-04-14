@@ -111,7 +111,7 @@ y = (y != b"normal.").astype(np.int32)
 X, _, y, _ = train_test_split(X, y, train_size=0.1, stratify=y, random_state=rng)
 
 n_samples, anomaly_frac = X.shape[0], y.mean()
-print(f"{n_samples} datapoints with anomaly propotion of {anomaly_frac:.02%}")
+print(f"{n_samples} datapoints with {y.sum()} anomalies ({anomaly_frac:.02%})")
 
 # %%
 # The SA dataset contains 41 features out of which 3 are categorical:
@@ -161,7 +161,7 @@ X, _, y, _ = train_test_split(X, y, train_size=0.05, stratify=y, random_state=rn
 X_forestcover = X  # save X for later use
 
 n_samples, anomaly_frac = X.shape[0], y.mean()
-print(f"{n_samples} datapoints with anomaly propotion of {anomaly_frac:.02%}")
+print(f"{n_samples} datapoints with {y.sum()} anomalies ({anomaly_frac:.02%})")
 
 # %%
 y_true["forestcover"] = y
@@ -202,7 +202,7 @@ _ = plt.title("Distribution of house prices \nin Ames")
 y = (y > 70).astype(np.int32)
 
 n_samples, anomaly_frac = X.shape[0], y.mean()
-print(f"{n_samples} datapoints with anomaly propotion of {anomaly_frac:.02%}")
+print(f"{n_samples} datapoints with {y.sum()} anomalies ({anomaly_frac:.02%})")
 
 # %%
 # The dataset contains 46 categorical features. In this case it is easier use a
@@ -244,7 +244,7 @@ s = y == "3"
 y = s.astype(np.int32)
 
 n_samples, anomaly_frac = X.shape[0], y.mean()
-print(f"{n_samples} datapoints with anomaly propotion of {anomaly_frac:.02%}")
+print(f"{n_samples} datapoints with {y.sum()} anomalies ({anomaly_frac:.02%})")
 
 # %%
 y_true["cardiotocography"] = y
