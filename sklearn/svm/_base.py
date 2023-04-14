@@ -95,8 +95,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     }
 
     # The order of these must match the integer values in LibSVM.
-    # XXX These are actually the same in the dense case. Need to factor
-    # this out.
     _sparse_kernels = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
 
     @abstractmethod
