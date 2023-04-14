@@ -117,7 +117,7 @@ def _in_unstable_openblas_configuration():
 @validate_params(
     {
         "X": ["array-like", "sparse matrix"],
-        "mask": ["array-like", np.ndarray],
+        "mask": ["array-like"],
     }
 )
 def safe_mask(X, mask):
