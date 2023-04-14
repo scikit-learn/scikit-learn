@@ -2,6 +2,7 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 
 from ...utils.validation import check_consistent_length, check_array
+from ...utils._param_validation import validate_params, StrOptions
 
 __all__ = ["consensus_score"]
 
@@ -45,6 +46,13 @@ def _pairwise_similarity(a, b, similarity):
     return result
 
 
+@validate_params(
+    {
+        "a": [tuple],
+        "b": [tuple],
+        "similarity": [callable, StrOptions({"jaccard"})],
+    }
+)
 def consensus_score(a, b, *, similarity="jaccard"):
     """The similarity of two sets of biclusters.
 
