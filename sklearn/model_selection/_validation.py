@@ -60,6 +60,7 @@ def cross_validate(
     pre_dispatch="2*n_jobs",
     return_train_score=False,
     return_estimator=False,
+    return_indices=False,
     error_score=np.nan,
 ):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
@@ -169,6 +170,11 @@ def cross_validate(
 
         .. versionadded:: 0.20
 
+    return_indices : bool, default=False
+        Whether to return the train-test indices selected for each split.
+
+        .. versionadded:: 1.3
+
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
@@ -207,6 +213,11 @@ def cross_validate(
                 The estimator objects for each cv split.
                 This is available only if ``return_estimator`` parameter
                 is set to ``True``.
+            ``indices``
+                The train/test positional indices for each cv split. A dictionary
+                is returned where the keys are either `"train"` or `"test"`
+                and the associated values are a list of integer-dtyped NumPy
+                arrays with the indices. Available only if `return_indices=True`.
 
     See Also
     --------
@@ -260,6 +271,11 @@ def cross_validate(
     else:
         scorers = _check_multimetric_scoring(estimator, scoring)
 
+    indices = cv.split(X, y, groups)
+    if return_indices:
+        # materialize the indices since we need to store them in the returned dict
+        indices = list(indices)
+
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
@@ -279,7 +295,7 @@ def cross_validate(
             return_estimator=return_estimator,
             error_score=error_score,
         )
-        for train, test in cv.split(X, y, groups)
+        for train, test in indices
     )
 
     _warn_or_raise_about_fit_failures(results, error_score)
@@ -298,6 +314,10 @@ def cross_validate(
 
     if return_estimator:
         ret["estimator"] = results["estimator"]
+
+    if return_indices:
+        ret["indices"] = {}
+        ret["indices"]["train"], ret["indices"]["test"] = zip(*indices)
 
     test_scores_dict = _normalize_score_results(results["test_scores"])
     if return_train_score:
@@ -547,7 +567,6 @@ def _fit_and_score(
     candidate_progress=None,
     error_score=np.nan,
 ):
-
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -776,9 +795,11 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
             else:
                 scores = error_score
                 warnings.warn(
-                    "Scoring failed. The score on this train-test partition for "
-                    f"these parameters will be set to {error_score}. Details: \n"
-                    f"{format_exc()}",
+                    (
+                        "Scoring failed. The score on this train-test partition for "
+                        f"these parameters will be set to {error_score}. Details: \n"
+                        f"{format_exc()}"
+                    ),
                     UserWarning,
                 )
 
@@ -792,9 +813,11 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
             for name, str_e in exception_messages:
                 scores[name] = error_score
                 warnings.warn(
-                    "Scoring failed. The score on this train-test partition for "
-                    f"these parameters will be set to {error_score}. Details: \n"
-                    f"{str_e}",
+                    (
+                        "Scoring failed. The score on this train-test partition for "
+                        f"these parameters will be set to {error_score}. Details: \n"
+                        f"{str_e}"
+                    ),
                     UserWarning,
                 )
 
@@ -1924,8 +1947,10 @@ def _aggregate_score_dicts(scores):
      'b': array([10, 2, 3, 10])}
     """
     return {
-        key: np.asarray([score[key] for score in scores])
-        if isinstance(scores[0][key], numbers.Number)
-        else [score[key] for score in scores]
+        key: (
+            np.asarray([score[key] for score in scores])
+            if isinstance(scores[0][key], numbers.Number)
+            else [score[key] for score in scores]
+        )
         for key in scores[0]
     }

@@ -171,7 +171,8 @@ html_theme = "scikit-learn-modern"
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "google_analytics": True,
+    "legacy_google_analytics": True,
+    "analytics": True,
     "mathjax_path": mathjax_path,
     "link_to_live_contributing_page": not parsed_version.is_devrelease,
 }
@@ -248,9 +249,9 @@ latest_highlights = sorted(release_highlights_dir.glob("plot_release_highlights_
     -1
 ]
 latest_highlights = latest_highlights.with_suffix("").name
-html_context[
-    "release_highlights"
-] = f"auto_examples/release_highlights/{latest_highlights}"
+html_context["release_highlights"] = (
+    f"auto_examples/release_highlights/{latest_highlights}"
+)
 
 # get version from highlight name assuming highlights have the form
 # plot_release_highlights_0_22_0
@@ -268,11 +269,14 @@ redirects = {
     "auto_examples/linear_model/plot_bayesian_ridge": (
         "auto_examples/linear_model/plot_ard"
     ),
-    "examples/model_selection/grid_search_text_feature_extraction.py": (
-        "examples/model_selection/plot_grid_search_text_feature_extraction.py"
+    "auto_examples/model_selection/grid_search_text_feature_extraction.py": (
+        "auto_examples/model_selection/plot_grid_search_text_feature_extraction.py"
     ),
-    "examples/miscellaneous/plot_changed_only_pprint_parameter": (
-        "examples/miscellaneous/plot_estimator_representation"
+    "auto_examples/miscellaneous/plot_changed_only_pprint_parameter": (
+        "auto_examples/miscellaneous/plot_estimator_representation"
+    ),
+    "auto_examples/decomposition/plot_beta_divergence": (
+        "auto_examples/applications/plot_topics_extraction_with_nmf_lda"
     ),
 }
 html_context["redirects"] = redirects
@@ -565,9 +569,11 @@ def setup(app):
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
     "sklearn",
-    "https://github.com/scikit-learn/"
-    "scikit-learn/blob/{revision}/"
-    "{package}/{path}#L{lineno}",
+    (
+        "https://github.com/scikit-learn/"
+        "scikit-learn/blob/{revision}/"
+        "{package}/{path}#L{lineno}"
+    ),
 )
 
 warnings.filterwarnings(
@@ -613,20 +619,32 @@ linkcheck_ignore = [
     # ignore links to specific pdf pages because linkcheck does not handle them
     # ('utf-8' codec can't decode byte error)
     r"http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=.*",
-    "https://www.fordfoundation.org/media/2976/"
-    "roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=.*",
+    (
+        "https://www.fordfoundation.org/media/2976/roads-and-bridges"
+        "-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=.*"
+    ),
     # links falsely flagged as broken
-    "https://www.researchgate.net/publication/"
-    "233096619_A_Dendrite_Method_for_Cluster_Analysis",
-    "https://www.researchgate.net/publication/221114584_Random_Fourier_Approximations_"
-    "for_Skewed_Multiplicative_Histogram_Kernels",
-    "https://www.researchgate.net/publication/4974606_"
-    "Hedonic_housing_prices_and_the_demand_for_clean_air",
-    "https://www.researchgate.net/profile/Anh-Huy-Phan/publication/220241471_Fast_"
-    "Local_Algorithms_for_Large_Scale_Nonnegative_Matrix_and_Tensor_Factorizations",
+    (
+        "https://www.researchgate.net/publication/"
+        "233096619_A_Dendrite_Method_for_Cluster_Analysis"
+    ),
+    (
+        "https://www.researchgate.net/publication/221114584_Random_Fourier"
+        "_Approximations_for_Skewed_Multiplicative_Histogram_Kernels"
+    ),
+    (
+        "https://www.researchgate.net/publication/4974606_"
+        "Hedonic_housing_prices_and_the_demand_for_clean_air"
+    ),
+    (
+        "https://www.researchgate.net/profile/Anh-Huy-Phan/publication/220241471_Fast_"
+        "Local_Algorithms_for_Large_Scale_Nonnegative_Matrix_and_Tensor_Factorizations"
+    ),
     "https://doi.org/10.13140/RG.2.2.35280.02565",
-    "https://www.microsoft.com/en-us/research/uploads/prod/2006/01/"
-    "Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf",
+    (
+        "https://www.microsoft.com/en-us/research/uploads/prod/2006/01/"
+        "Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf"
+    ),
     "https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-99-87.pdf",
     "https://microsoft.com/",
     "https://www.jstor.org/stable/2984099",

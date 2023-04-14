@@ -27,6 +27,7 @@ from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import RealNotInt
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -363,7 +364,7 @@ class PCA(_BasePCA):
     _parameter_constraints: dict = {
         "n_components": [
             Interval(Integral, 0, None, closed="left"),
-            Interval(Real, 0, 1, closed="neither"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
             StrOptions({"mle"}),
             None,
         ],

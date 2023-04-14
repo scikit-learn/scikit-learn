@@ -63,7 +63,7 @@ from sklearn.neural_network import MLPRegressor
 
 from sklearn.impute import SimpleImputer
 
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, scale
 from sklearn.pipeline import Pipeline
 
 from io import StringIO
@@ -1980,7 +1980,6 @@ def test_cross_val_predict_with_method_multilabel_rf_rare_class():
 
 
 def get_expected_predictions(X, y, cv, classes, est, method):
-
     expected_predictions = np.zeros([len(y), classes])
     func = getattr(est, method)
 
@@ -2001,7 +2000,6 @@ def get_expected_predictions(X, y, cv, classes, est, method):
 
 
 def test_cross_val_predict_class_subset():
-
     X = np.arange(200).reshape(100, 2)
     y = np.array([x // 10 for x in range(100)])
     classes = 10
@@ -2175,9 +2173,11 @@ def test_cross_validate_some_failing_fits_warning(error_score):
         "ValueError: Classifier fit failed with 1 values too high"
     )
     warning_message = re.compile(
-        "2 fits failed.+total of 3.+The score on these"
-        " train-test partitions for these parameters will be set to"
-        f" {cross_validate_kwargs['error_score']}.+{individual_fit_error_message}",
+        (
+            "2 fits failed.+total of 3.+The score on these"
+            " train-test partitions for these parameters will be set to"
+            f" {cross_validate_kwargs['error_score']}.+{individual_fit_error_message}"
+        ),
         flags=re.DOTALL,
     )
 
@@ -2198,8 +2198,10 @@ def test_cross_validate_all_failing_fits_error(error_score):
 
     individual_fit_error_message = "ValueError: Failing classifier failed as required"
     error_message = re.compile(
-        "All the 7 fits failed.+your model is misconfigured.+"
-        f"{individual_fit_error_message}",
+        (
+            "All the 7 fits failed.+your model is misconfigured.+"
+            f"{individual_fit_error_message}"
+        ),
         flags=re.DOTALL,
     )
 
@@ -2399,3 +2401,28 @@ def test_learning_curve_partial_fit_regressors():
 
     # Does not error
     learning_curve(MLPRegressor(), X, y, exploit_incremental_learning=True, cv=2)
+
+
+def test_cross_validate_return_indices(global_random_seed):
+    """Check the behaviour of `return_indices` in `cross_validate`."""
+    X, y = load_iris(return_X_y=True)
+    X = scale(X)  # scale features for better convergence
+    estimator = LogisticRegression()
+
+    cv = KFold(n_splits=3, shuffle=True, random_state=global_random_seed)
+    cv_results = cross_validate(estimator, X, y, cv=cv, n_jobs=2, return_indices=False)
+    assert "indices" not in cv_results
+
+    cv_results = cross_validate(estimator, X, y, cv=cv, n_jobs=2, return_indices=True)
+    assert "indices" in cv_results
+    train_indices = cv_results["indices"]["train"]
+    test_indices = cv_results["indices"]["test"]
+    assert len(train_indices) == cv.n_splits
+    assert len(test_indices) == cv.n_splits
+
+    assert_array_equal([indices.size for indices in train_indices], 100)
+    assert_array_equal([indices.size for indices in test_indices], 50)
+
+    for split_idx, (expected_train_idx, expected_test_idx) in enumerate(cv.split(X, y)):
+        assert_array_equal(train_indices[split_idx], expected_train_idx)
+        assert_array_equal(test_indices[split_idx], expected_test_idx)

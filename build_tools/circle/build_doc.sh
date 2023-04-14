@@ -189,11 +189,6 @@ ccache -s
 
 export OMP_NUM_THREADS=1
 
-# Avoid CI job getting killed because it uses too much memory
-if [[ -z $SPHINX_NUMJOBS ]]; then
-    export SPHINX_NUMJOBS=2
-fi
-
 if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
 then
     # List available documentation versions if on main

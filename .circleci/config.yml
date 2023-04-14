@@ -61,6 +61,8 @@ jobs:
       - OPENBLAS_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
       - LOCK_FILE: build_tools/circle/doc_linux-64_conda.lock
+      # Disable sphinx parallelism to avoid EOFError or job stalling in CircleCI
+      - SPHINX_NUMJOBS: 1
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
