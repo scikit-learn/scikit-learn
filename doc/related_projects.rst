@@ -182,6 +182,10 @@ and tasks.
   (`CRFsuite <http://www.chokkan.org/software/crfsuite/>`_ wrapper with
   sklearn-like API).
 
+- `skforecast <https://github.com/JoaquinAmatRodrigo/skforecast>`_ A python library
+  that eases using scikit-learn regressors as multi-step forecasters. It also works
+  with any regressor compatible with the scikit-learn API.
+
 **Deep neural networks etc.**
 
 - `nolearn <https://github.com/dnouri/nolearn>`_ A number of wrappers and
