@@ -48,8 +48,8 @@ def _pairwise_similarity(a, b, similarity):
 
 @validate_params(
     {
-        "a": [tuple],
-        "b": [tuple],
+        "a": ["array-like"],
+        "b": ["array-like"],
         "similarity": [callable, StrOptions({"jaccard"})],
     }
 )
@@ -65,11 +65,9 @@ def consensus_score(a, b, *, similarity="jaccard"):
 
     Parameters
     ----------
-    a : (rows, columns)
-        Tuple of row and column indicators for a set of biclusters.
+    a : array-like of shape (rows, columns).
 
-    b : (rows, columns)
-        Another set of biclusters like ``a``.
+    b : array-like of shape (rows, columns).
 
     similarity : 'jaccard' or callable, default='jaccard'
         May be the string "jaccard" to use the Jaccard coefficient, or
