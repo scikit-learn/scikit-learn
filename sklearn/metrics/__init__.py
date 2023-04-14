@@ -31,6 +31,7 @@ from ._classification import jaccard_score
 from ._classification import log_loss
 from ._classification import matthews_corrcoef
 from ._classification import precision_recall_fscore_support
+from ._classification import precision_recall_fscore_support_pred
 from ._classification import precision_score
 from ._classification import recall_score
 from ._classification import zero_one_loss
@@ -162,6 +163,7 @@ __all__ = [
     "PrecisionRecallDisplay",
     "precision_recall_curve",
     "precision_recall_fscore_support",
+    "precision_recall_fscore_support_pred",
     "precision_score",
     "PredictionErrorDisplay",
     "r2_score",
