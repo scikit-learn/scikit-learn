@@ -16,14 +16,20 @@ def _choose_dual_automatically(loss, penalty, multi_class, X):
     """Choose dual parameter value wrt to loss, penalty and shape of the data"""
     if X.shape[0] < X.shape[1]:
         try:
-            # check if the combination of loss and penalty is supporting
+            # check if the combination of parameters supports
             # dual formulation
             _get_liblinear_solver_type(multi_class, penalty, loss, True)
             return True
         except ValueError:
             return False
     else:
-        return False
+        try:
+            # check if the combination of parameters doesn't support
+            # dual formulation
+            _get_liblinear_solver_type(multi_class, penalty, loss, False)
+            return False
+        except ValueError:
+            return True
 
 
 class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
