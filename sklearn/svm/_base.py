@@ -49,7 +49,7 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
         # SVs for class1:
         sv1 = support_vectors[sv_locs[class1] : sv_locs[class1 + 1], :]
         for class2 in range(class1 + 1, n_class):
-            # SVs for class1:
+            # SVs for class2:
             sv2 = support_vectors[sv_locs[class2] : sv_locs[class2 + 1], :]
 
             # dual coef for class1 SVs:
