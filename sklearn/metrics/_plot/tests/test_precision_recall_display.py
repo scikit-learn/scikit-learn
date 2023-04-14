@@ -304,3 +304,32 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
     avg_prec_limit = 0.95
     assert display.average_precision > avg_prec_limit
     assert -np.trapz(display.precision, display.recall) > avg_prec_limit
+
+
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name):
+    # Check that even if one passes plot_chance_level=False the first time
+    # one can still call disp.plot with plot_chance_level=True and get the
+    # chance level line
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+
+    lr = LogisticRegression()
+    y_pred = lr.fit(X, y).predict_proba(X)[:, 1]
+
+    if constructor_name == "from_estimator":
+        display = PrecisionRecallDisplay.from_estimator(
+            lr, X, y, plot_chance_level=False
+        )
+    else:
+        display = PrecisionRecallDisplay.from_predictions(
+            y, y_pred, plot_chance_level=False
+        )
+    assert display.chance_level_ is None
+
+    import matplotlib as mpl  # noqa
+
+    # When calling from_estimator or from_predictions,
+    # prevalence_pos_label should have been set, so that directly
+    # calling plot_chance_level=True should plot the chance level line
+    display.plot(plot_chance_level=True)
+    assert isinstance(display.chance_level_, mpl.lines.Line2D)
