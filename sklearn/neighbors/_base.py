@@ -36,7 +36,7 @@ from ..utils import (
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.parallel import delayed, Parallel
 from ..utils.fixes import parse_version, sp_base_version, sp_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
@@ -197,6 +197,13 @@ def _check_precomputed(X):
     return graph
 
 
+@validate_params(
+    {
+        "graph": ["sparse matrix"],
+        "copy": ["boolean"],
+        "warn_when_not_sorted": ["boolean"],
+    }
+)
 def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
     """Sort a sparse graph such that each row is stored with increasing values.
 
