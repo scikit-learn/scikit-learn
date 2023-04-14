@@ -1851,11 +1851,13 @@ def precision_recall_fscore_support_pred(
         samplewise=samplewise,
     )
     tp_sum = MCM[:, 1, 1]
-    pred_sum = tp_sum + MCM[:, 0, 1]
-    true_sum = tp_sum + MCM[:, 1, 0]
+    fp_sum = MCM[:, 0, 1]
+    fn_sum = MCM[:, 1, 0]
+
+    pred_sum = tp_sum + fp_sum
+    true_sum = tp_sum + fn_sum
 
     if average == "micro":
-        tp_sum = np.array([tp_sum.sum()])
         pred_sum = np.array([pred_sum.sum()])
         true_sum = np.array([true_sum.sum()])
 
@@ -2728,7 +2730,7 @@ def classification_report(
         head_fmt = "{:>{width}s} " + " {:>9}" * len(headers)
         report = head_fmt.format("", *headers, width=width)
         report += "\n\n"
-        row_fmt = "{:>{width}s} " + " {:>9.{digits}f}" * 3 + " {:>9}\n"
+        row_fmt = "{:>{width}s} " + " {:>9.{digits}f}" * 3 + " {:>9}" * 2 + "\n"
         for row in rows:
             report += row_fmt.format(*row, width=width, digits=digits)
         report += "\n"
@@ -2763,7 +2765,8 @@ def classification_report(
                     "{:>{width}s} "
                     + " {:>9.{digits}}" * 2
                     + " {:>9.{digits}f}"
-                    + " {:>9}\n"
+                    + " {:>9}" * 2
+                    + "\n"
                 )
                 report += row_fmt_accuracy.format(
                     line_heading, "", "", *avg[2:], width=width, digits=digits
