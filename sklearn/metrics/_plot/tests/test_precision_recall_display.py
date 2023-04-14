@@ -1,7 +1,7 @@
+from collections import Counter
+
 import numpy as np
 import pytest
-
-from collections import Counter
 
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, make_classification
@@ -78,7 +78,7 @@ def test_precision_recall_display_plotting(
     assert display.line_.get_label() == expected_label
     assert display.line_.get_alpha() == pytest.approx(0.8)
 
-    # Check that the chance level line is not plotted
+    # Check that the chance level line is not plotted by default
     assert display.chance_level_ is None
 
 

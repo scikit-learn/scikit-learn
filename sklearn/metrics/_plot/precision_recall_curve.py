@@ -39,7 +39,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     prevalence_pos_label : float, default=None
         The prevalence of the positive label. It is used for plotting the
         chance level line. If None, the chance level line will not be plotted
-        even if plot_chance_level is set to True when plotting.
+        even if `plot_chance_level` is set to True when plotting.
 
         .. versionadded:: 1.3
 
@@ -143,7 +143,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             `estimator_name` if not `None`, otherwise no labeling is shown.
 
         plot_chance_level : bool, default=False
-            Whether to plot the chance level.
+            Whether to plot the chance level. The chance level is the prevalence
+            of the positive label computed from the data passed during
+            :meth:`from_estimator` or :meth:`from_predictions` call.
 
             .. versionadded:: 1.3
 
@@ -183,20 +185,6 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
-        # If prevalence_pos_label is not provided, even if plot_chance_level
-        # is set to True, we do not plot the chance level line
-        if self.prevalence_pos_label is None:
-            plot_chance_level = False
-
-        if plot_chance_level:
-            chance_level_line_kw = {
-                "label": f"Chance level (AP = {self.prevalence_pos_label:0.2f})",
-                "color": "k",
-                "linestyle": "--",
-            }
-            if chance_level_kw is not None:
-                chance_level_line_kw.update(chance_level_kw)
-
         (self.line_,) = self.ax_.plot(self.recall, self.precision, **line_kwargs)
 
         info_pos_label = (
@@ -207,7 +195,14 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         ylabel = "Precision" + info_pos_label
         self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
-        if plot_chance_level:
+        if plot_chance_level and self.prevalence is not None:
+            chance_level_line_kw = {
+                "label": f"Chance level (AP = {self.prevalence_pos_label:0.2f})",
+                "color": "k",
+                "linestyle": "--",
+            }
+            if chance_level_kw is not None:
+                chance_level_line_kw.update(chance_level_kw)
             (self.chance_level_,) = self.ax_.plot(
                 (0, 1),
                 (self.prevalence_pos_label, self.prevalence_pos_label),
@@ -281,7 +276,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is created.
 
         plot_chance_level : bool, default=False
-            Whether to plot the chance level.
+            Whether to plot the chance level. The chance level is the prevalence
+            of the positive label computed from the data passed during
+            :meth:`from_estimator` or :meth:`from_predictions` call.
 
             .. versionadded:: 1.3
 
@@ -401,7 +398,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is created.
 
         plot_chance_level : bool, default=False
-            Whether to plot the chance level.
+            Whether to plot the chance level. The chance level is the prevalence
+            of the positive label computed from the data passed during
+            :meth:`from_estimator` or :meth:`from_predictions` call.
 
             .. versionadded:: 1.3
 
@@ -468,10 +467,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
         )
 
-        if plot_chance_level:
-            pos_prevalence = Counter(y_true)[pos_label] / len(y_true)
-        else:
-            pos_prevalence = None
+        prevalence_pos_label = Counter(y_true)[pos_label] / len(y_true)
 
         viz = PrecisionRecallDisplay(
             precision=precision,
@@ -479,7 +475,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             average_precision=average_precision,
             estimator_name=name,
             pos_label=pos_label,
-            prevalence_pos_label=pos_prevalence,
+            prevalence_pos_label=prevalence_pos_label,
         )
 
         return viz.plot(
