@@ -38,6 +38,12 @@ and displayed using :class:`~sklearn.metrics.RocCurveDisplay`.
 # option is to use a :class:`~sklearn.preprocessing.RobustScaler`.
 #
 # The following `fit_predict` function returns the average outlier score of X.
+# In this example we set `n_neighbors` to match the expected number of anomalies
+# `expected_n_anomalies = n_samples * expected_anomaly_frac`. This is a good
+# heuristic as long as the proportion of outliers is not very low, as
+# `n_neighbors` should be at least greater than the number of samples in the
+# less populated cluster (see
+# :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py`).
 
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.ensemble import IsolationForest
@@ -51,9 +57,11 @@ from sklearn.pipeline import make_pipeline
 from time import perf_counter
 
 
-def fit_predict(X, model_name, categorical_columns=(), n_neighbors=20):
+def fit_predict(X, model_name, expected_anomaly_frac, categorical_columns=()):
     tic = perf_counter()
     if model_name == "LOF":
+        n_samples = X.shape[0]
+        n_neighbors = int(n_samples * expected_anomaly_frac)  # expected_n_anomalies
         preprocessor = ColumnTransformer(
             [("categorical", OneHotEncoder(), categorical_columns)],
             remainder=RobustScaler(),
@@ -125,16 +133,10 @@ for model_name in model_names:
         X,
         model_name=model_name,
         categorical_columns=cat_columns,
-        n_neighbors=int(n_samples * anomaly_frac),
+        expected_anomaly_frac=anomaly_frac,
     )
 
 # %%
-# In this example we set `n_neighbors` to match the number of anomalies
-# `n_anomalies = n_samples * anomaly_frac`. This is a good heuristic as long as
-# the proportion of outliers is not very low, as `n_neighbors` should be at
-# least greater than the number of samples in the less populated cluster (see
-# :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py`).
-#
 # Forest covertypes dataset
 # -------------------------
 #
@@ -165,7 +167,7 @@ for model_name in model_names:
     y_pred[model_name]["forestcover"] = fit_predict(
         X,
         model_name=model_name,
-        n_neighbors=int(n_samples * anomaly_frac),
+        expected_anomaly_frac=anomaly_frac,
     )
 
 # %%
@@ -217,7 +219,7 @@ for model_name in model_names:
         X,
         model_name=model_name,
         categorical_columns=cat_columns,
-        n_neighbors=int(n_samples * anomaly_frac),
+        expected_anomaly_frac=anomaly_frac,
     )
 
 # %%
@@ -247,7 +249,7 @@ for model_name in model_names:
     y_pred[model_name]["cardiotocography"] = fit_predict(
         X,
         model_name=model_name,
-        n_neighbors=int(n_samples * anomaly_frac),
+        expected_anomaly_frac=anomaly_frac,
     )
 
 # %%
@@ -343,7 +345,8 @@ preprocessor_list = [
     MinMaxScaler(),
     SplineTransformer(),
 ]
-lof = LocalOutlierFactor(n_neighbors=int(0.02 * n_samples))
+expected_anomaly_frac = 0.02
+lof = LocalOutlierFactor(n_neighbors=int(n_samples * expected_anomaly_frac))
 
 fig, ax = plt.subplots()
 for model_idx, preprocessor in enumerate(preprocessor_list):
@@ -390,8 +393,8 @@ _ = ax.set_title("Fixed n_neighbors with varying preprocessing\non forestcover d
 X = X_cardiotocography
 y = y_true["cardiotocography"]
 
-n_samples = X.shape[0]
-lof = LocalOutlierFactor(n_neighbors=int(0.02 * n_samples))
+n_samples, expected_anomaly_frac = X.shape[0], 0.025
+lof = LocalOutlierFactor(n_neighbors=int(n_samples * expected_anomaly_frac))
 
 fig, ax = plt.subplots()
 for model_idx, preprocessor in enumerate(preprocessor_list):
