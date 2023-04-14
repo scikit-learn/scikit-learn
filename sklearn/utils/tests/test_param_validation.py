@@ -706,12 +706,12 @@ def test_skip_nested_validation(prefer_skip_nested_validation):
         # calls f with a bad parameter type
         return f(a="1")
 
-    # Validation for g is not never skipped.
+    # Validation for g is never skipped.
     with pytest.raises(InvalidParameterError, match="The 'b' parameter"):
         g(b="1")
 
     if prefer_skip_nested_validation:
-        g(b=1)  # does not raise
+        g(b=1)  # does not raise because inner f is not validated
     else:
         with pytest.raises(InvalidParameterError, match="The 'a' parameter"):
             g(b=1)

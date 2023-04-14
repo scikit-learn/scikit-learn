@@ -156,8 +156,8 @@ def validate_params(parameter_constraints, *, prefer_skip_nested_validation=True
         present in the parameter_constraints dictionary.
 
     prefer_skip_nested_validation : bool, default=True
-        Whether to skip the validation of parameters of inner estimators or functions
-        called by the decorated function.
+        If True, the validation of parameters of inner estimators or functions
+        called by the decorated function will be skipped.
 
     Returns
     -------
