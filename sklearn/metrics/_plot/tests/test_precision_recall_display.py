@@ -20,7 +20,6 @@ pytestmark = pytest.mark.filterwarnings(
 )
 
 
-
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("drop_intermediate", [True, False])
