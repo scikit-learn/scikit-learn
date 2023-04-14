@@ -274,10 +274,12 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                     "of passing a sparse neighbors graph."
                 )
             warnings.warn(
-                "The number of connected components of the neighbors graph "
-                f"is {n_connected_components} > 1. Completing the graph to fit"
-                " Isomap might be slow. Increase the number of neighbors to "
-                "avoid this issue.",
+                (
+                    "The number of connected components of the neighbors graph "
+                    f"is {n_connected_components} > 1. Completing the graph to fit"
+                    " Isomap might be slow. Increase the number of neighbors to "
+                    "avoid this issue."
+                ),
                 stacklevel=2,
             )
 
