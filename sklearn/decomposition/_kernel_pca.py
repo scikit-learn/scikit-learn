@@ -307,7 +307,6 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 
     def _fit_transform(self, K):
         """Fit's using kernel K"""
-        # center kernel
         K = self._centerer.fit_transform(K)
 
         # adjust n_components according to user inputs
