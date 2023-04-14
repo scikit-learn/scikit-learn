@@ -269,9 +269,7 @@ for model_name in model_names:
 import math
 from sklearn.metrics import RocCurveDisplay
 
-# plotting parameters
 cols = 2
-linewidth = 1
 pos_label = 0  # mean 0 belongs to positive class
 datasets_names = y_true.keys()
 rows = math.ceil(len(datasets_names) / cols)
@@ -285,7 +283,6 @@ for i, dataset_name in enumerate(datasets_names):
             y_pred[model_name][dataset_name],
             pos_label=pos_label,
             name=model_name,
-            linewidth=linewidth,
             ax=axs[i // cols, i % cols],
             plot_chance_level=(model_idx == len(model_names) - 1),
             chance_level_kw={"linestyle": ":"},
@@ -328,12 +325,11 @@ for model_idx, n_neighbors in enumerate(n_neighbors_list):
         y_pred,
         pos_label=pos_label,
         name=f"n_neighbors = {n_neighbors}",
-        linewidth=linewidth,
         ax=ax,
         plot_chance_level=(model_idx == len(n_neighbors_list) - 1),
         chance_level_kw={"linestyle": ":"},
     )
-_ = ax.set_title("RobustScaler with varying n_neighbors")
+_ = ax.set_title("RobustScaler with varying n_neighbors\non forestcover dataset")
 
 # %%
 # We observe that the number of neighbors has a big impact on the performance of
@@ -343,28 +339,32 @@ _ = ax.set_title("RobustScaler with varying n_neighbors")
 # range of values of the order of magnitud of the expected contamination.
 
 # %%
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, SplineTransformer
 
-scaler_list = [None, RobustScaler(), StandardScaler(), MinMaxScaler()]
+preprocessor_list = [
+    None,
+    RobustScaler(),
+    StandardScaler(),
+    MinMaxScaler(),
+    SplineTransformer(),
+]
 lof = LocalOutlierFactor(n_neighbors=int(0.02 * n_samples))
 
 fig, ax = plt.subplots()
-for model_idx, scaler in enumerate(scaler_list):
-    model = make_pipeline(scaler, lof)
+for model_idx, preprocessor in enumerate(preprocessor_list):
+    model = make_pipeline(preprocessor, lof)
     model.fit(X)
     y_pred = model[-1].negative_outlier_factor_
     display = RocCurveDisplay.from_predictions(
         y,
         y_pred,
         pos_label=pos_label,
-        name=str(scaler).split("(")[0],
-        linewidth=linewidth,
+        name=str(preprocessor).split("(")[0],
         ax=ax,
-        plot_chance_level=(model_idx == len(scaler_list) - 1),
+        plot_chance_level=(model_idx == len(preprocessor_list) - 1),
         chance_level_kw={"linestyle": ":"},
     )
-ax.set_title("Fixed n_neighbors with varying scaler")
-plt.show()
+_ = ax.set_title("Fixed n_neighbors with varying preprocessing\non forestcover dataset")
 
 # %%
 # On the one hand, :class:`~sklearn.preprocessing.RobustScaler` scales each
