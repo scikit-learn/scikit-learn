@@ -546,6 +546,7 @@ def load_wine(*, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params({"return_X_y": ["boolean"], "as_frame": ["boolean"]})
 def load_iris(*, return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
@@ -952,6 +953,9 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params(
+    {"return_X_y": ["boolean"], "as_frame": ["boolean"], "scaled": ["boolean"]}
+)
 def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     """Load and return the diabetes dataset (regression).
 
