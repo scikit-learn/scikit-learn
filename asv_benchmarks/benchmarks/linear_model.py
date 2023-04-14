@@ -165,7 +165,9 @@ class SGDRegressorBenchmark(Predictor, Estimator, Benchmark):
 
     def make_estimator(self, params):
         (representation,) = params
+
         max_iter = 60 if representation == "dense" else 300
+
         estimator = SGDRegressor(max_iter=max_iter, tol=None, random_state=0)
 
         return estimator

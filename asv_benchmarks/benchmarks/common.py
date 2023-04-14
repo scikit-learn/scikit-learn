@@ -9,9 +9,6 @@ from multiprocessing import cpu_count
 
 import numpy as np
 
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._testing import ignore_warnings
-
 
 def get_from_config():
     """Get benchmarks configuration from the config.json file"""
@@ -181,8 +178,7 @@ class Estimator(ABC):
         self.make_scorers()
 
     def time_fit(self, *args):
-        with ignore_warnings(category=ConvergenceWarning):
-            self.estimator.fit(self.X, self.y)
+        self.estimator.fit(self.X, self.y)
 
     def peakmem_fit(self, *args):
         self.estimator.fit(self.X, self.y)
