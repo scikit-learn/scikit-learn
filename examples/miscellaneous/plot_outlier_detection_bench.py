@@ -333,10 +333,10 @@ _ = ax.set_title("RobustScaler with varying n_neighbors\non forestcover dataset"
 
 # %%
 # We observe that the number of neighbors has a big impact on the performance of
-# the model. If one has access to ground truth labels it is then important to
-# tune `n_neighbors` accordingly. A convenient way to do so is to explore a
-# number of samples proportional to the size of the dataset and possibly over a
-# range of values of the order of magnitud of the expected contamination.
+# the model. If one has access to (at least some) ground truth labels, it is
+# then important to tune `n_neighbors` accordingly. A convenient way to do so is
+# to explore values for `n_neighbors` of the order of magnitud of the expected
+# contamination.
 
 # %%
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, SplineTransformer
@@ -373,19 +373,18 @@ _ = ax.set_title("Fixed n_neighbors with varying preprocessing\non forestcover d
 # data by subtracting the median and then scale it by dividing by the IQR. The
 # IQR is robust to outliers: the median and interquartile range are less
 # affected by extreme values than the range, the mean and the standard
-# deviation.
+# deviation. Furthermore, :class:`~sklearn.preprocessing.RobustScaler` does not
+# squash marginal outlier values, contrary to
+# :class:`~sklearn.preprocessing.StandardScaler`.
 #
-# On the other hand, the :class:`~sklearn.preprocessing.MinMaxScaler` scales
-# each feature individually such that its range maps into the range between zero
-# and one. If there are outliers in the data, they can skew it towards either
-# the minimum or maximum values, leading to suboptimal performance. In the case
-# of this example, it makes the extreme values present in the continuous
-# variables indistinct from the binary encoded categories, which themselves
-# remain unchanged by this scaling method.
+# On the other hand, :class:`~sklearn.preprocessing.MinMaxScaler` scales each
+# feature individually such that its range maps into the range between zero and
+# one. If there are outliers in the data, they can skew it towards either the
+# minimum or maximum values, leading to a completely different distribution of
+# data with large marginal outliers: all non-outlier values can be collapsed
+# almost together as a result.
 #
-# Because of the above, an IQR scaling is more effective for outlier detection
-# than a min-max range scaling. We can additionally observe that scaling by the
-# standard deviation (as done by :class:`~sklearn.preprocessing.StandardScaler`)
-# and not scaling at all (by passing `None` to the scaling step in the pipeline)
-# give a relatively good result once the number of neighbors is tuned, but still
-# does not perform as well as the :class:`~sklearn.preprocessing.RobustScaler`.
+# We also evaluated no preprocessing at all (by passing `None` to the pipeline),
+# :class:`~sklearn.preprocessing.StandardScaler` and
+# :class:`~sklearn.preprocessing.SplineTransformer`. Please refer to their
+# respective documentation for more details.
