@@ -43,6 +43,7 @@ random sampling procedures.
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+
 Changes impacting all modules
 -----------------------------
 
@@ -365,6 +366,13 @@ Changelog
 
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
+
+:mod:`sklearn.mixture`
+......................
+
+- |Efficiency| :class:`GaussianMixture` is more efficient now and will bypass unnecessary
+  initialization like kmeans if the weights, means, and precision are given by users.
+  :pr:`26021` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
 
 :mod:`sklearn.model_selection`
 ..............................
