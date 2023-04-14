@@ -952,6 +952,9 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params(
+    {"return_X_y": ["boolean"], "as_frame": ["boolean"], "scaled": ["boolean"]}
+)
 def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     """Load and return the diabetes dataset (regression).
 
