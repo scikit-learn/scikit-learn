@@ -1817,7 +1817,7 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
         "Y": ["array-like", "sparse matrix", None],
         "reduce_func": [callable, None],
         "metric": [StrOptions({"precomputed"}.union(_VALID_METRICS)), callable],
-        "n_jobs": [Interval(Integral, -1, None, closed="left"), None],
+        "n_jobs": [Integral, None],
         "working_memory": [Interval(Real, 0, None, closed="left"), None],
     }
 )
