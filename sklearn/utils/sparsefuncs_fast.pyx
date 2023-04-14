@@ -6,12 +6,12 @@
 #
 # License: BSD 3 clause
 
-from libc.math cimport fabs, sqrt
+from libc.math cimport fabs, sqrt, isnan
+
 cimport numpy as cnp
 import numpy as np
 from cython cimport floating
 from cython.parallel cimport prange
-from numpy.math cimport isnan
 
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
