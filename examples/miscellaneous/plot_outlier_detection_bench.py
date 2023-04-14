@@ -33,14 +33,16 @@ on the same dataset using the knowledge of the labels.
 # preprocessing, the datasets' targets will have two classes, 0 representing
 # inliers and 1 representing outliers.
 #
-# Different datasets require different preprocessing. For example tree based
-# models such as :class:`~sklearn.ensemble.IsolationForest` can deal with
-# categorical variables encoded using an
-# :class:`~sklearn.preprocessing.OrdinalEncoder`, whereas neighbors based models
-# such as :class:`~sklearn.neighbors.LocalOutlierFactor` require a
+# Different outlier detection models require different preprocessing. In the
+# presence of categorical variables,
+# :class:`~sklearn.preprocessing.OrdinalEncoder` is often a good strategy for
+# tree-based models such as :class:`~sklearn.ensemble.IsolationForest`, whereas
+# neighbors-based models such as :class:`~sklearn.neighbors.LocalOutlierFactor`
+# would be impacted by the ordering induced by ordinal encoding. To avoid
+# inducing an ordering, on should rather use
 # :class:`~sklearn.preprocessing.OneHotEncoder`.
 #
-# Neighbors based models may also require scaling of the numerical features (see
+# Neighbors-based models may also require scaling of the numerical features (see
 # for instance :ref:`neighbors_scaling`). In the presence of outliers, a good
 # option is to use a :class:`~sklearn.preprocessing.RobustScaler`.
 #
