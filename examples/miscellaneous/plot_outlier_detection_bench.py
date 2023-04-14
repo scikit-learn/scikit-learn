@@ -240,6 +240,7 @@ from sklearn.datasets import fetch_openml
 X, y = fetch_openml(
     name="cardiotocography", version=1, return_X_y=True, as_frame=False, parser="pandas"
 )
+X_cardiotocography = X  # save X for later use
 s = y == "3"
 y = s.astype(np.int32)
 
@@ -388,3 +389,31 @@ _ = ax.set_title("Fixed n_neighbors with varying preprocessing\non forestcover d
 # :class:`~sklearn.preprocessing.StandardScaler` and
 # :class:`~sklearn.preprocessing.SplineTransformer`. Please refer to their
 # respective documentation for more details.
+#
+# Note that the optimal preprocessing depends on the dataset, as shown below:
+
+# %%
+X = X_cardiotocography
+y = y_true["cardiotocography"]
+
+n_samples = X.shape[0]
+lof = LocalOutlierFactor(n_neighbors=int(0.02 * n_samples))
+
+fig, ax = plt.subplots()
+for model_idx, preprocessor in enumerate(preprocessor_list):
+    model = make_pipeline(preprocessor, lof)
+    model.fit(X)
+    y_pred = model[-1].negative_outlier_factor_
+    display = RocCurveDisplay.from_predictions(
+        y,
+        y_pred,
+        pos_label=pos_label,
+        name=str(preprocessor).split("(")[0],
+        ax=ax,
+        plot_chance_level=(model_idx == len(preprocessor_list) - 1),
+        chance_level_kw={"linestyle": ":"},
+    )
+ax.set_title(
+    "Fixed n_neighbors with varying preprocessing\non cardiotocography dataset"
+)
+plt.show()
