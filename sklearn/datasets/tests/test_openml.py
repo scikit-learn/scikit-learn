@@ -376,7 +376,7 @@ def test_fetch_openml_consistency_parser(monkeypatch, data_id):
         pandas_series = frame_pandas[series.name]
         if pd.api.types.is_numeric_dtype(pandas_series):
             return series.astype(pandas_series.dtype)
-        elif pd.api.types.is_categorical_dtype(pandas_series):
+        elif isinstance(pandas_series.dtype, pd.CategoricalDtype):
             # Compare categorical features by converting categorical liac uses
             # strings to denote the categories, we rename the categories to make
             # them comparable to the pandas parser. Fixing this behavior in

@@ -21,6 +21,7 @@ from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
 from ..utils.fixes import _open_binary, _open_text, _read_text, _contents
+from ..utils._param_validation import validate_params
 
 import numpy as np
 
@@ -545,6 +546,7 @@ def load_wine(*, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params({"return_X_y": ["boolean"], "as_frame": ["boolean"]})
 def load_iris(*, return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
@@ -950,6 +952,9 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params(
+    {"return_X_y": ["boolean"], "as_frame": ["boolean"], "scaled": ["boolean"]}
+)
 def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     """Load and return the diabetes dataset (regression).
 
