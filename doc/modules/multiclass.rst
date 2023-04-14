@@ -464,7 +464,7 @@ Note that all classifiers handling multiclass-multioutput (also known as
 multitask classification) tasks, support the multilabel classification task
 as a special case. Multitask classification is similar to the multioutput
 classification task with different model formulations. For more information,
-see the relevant estimator documentat
+see the relevant estimator documentation.
 
 Below is an example of multiclass-multioutput classification:
 

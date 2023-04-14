@@ -54,7 +54,7 @@ cdef float compute_gradient(float[:] val_P,
                             long start,
                             long stop,
                             bint compute_error,
-                            int num_threads) nogil:
+                            int num_threads) noexcept nogil:
     # Having created the tree, calculate the gradient
     # in two components, the positive and negative forces
     cdef:
@@ -112,7 +112,7 @@ cdef float compute_gradient_positive(float[:] val_P,
                                      cnp.int64_t start,
                                      int verbose,
                                      bint compute_error,
-                                     int num_threads) nogil:
+                                     int num_threads) noexcept nogil:
     # Sum over the following expression for i not equal to j
     # grad_i = p_ij (1 + ||y_i - y_j||^2)^-1 (y_i - y_j)
     # This is equivalent to compute_edge_forces in the authors' code
@@ -177,7 +177,7 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
                                       float theta,
                                       long start,
                                       long stop,
-                                      int num_threads) nogil:
+                                      int num_threads) noexcept nogil:
     if stop == -1:
         stop = pos_reference.shape[0]
     cdef:

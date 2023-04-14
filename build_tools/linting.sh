@@ -4,8 +4,14 @@ set -e
 # pipefail is necessary to propagate exit codes
 set -o pipefail
 
+black --check --diff .
+echo -e "No problem detected by black\n"
+
 flake8 --show-source .
 echo -e "No problem detected by flake8\n"
+
+mypy sklearn/
+echo -e "No problem detected by mypy\n"
 
 # For docstrings and warnings of deprecated attributes to be rendered
 # properly, the property decorator must come before the deprecated decorator
@@ -34,10 +40,15 @@ then
     exit 1
 fi
 
-joblib_import="$(git grep -l -A 10 -E "joblib import.+delayed" -- "*.py" ":!sklearn/utils/_joblib.py" ":!sklearn/utils/fixes.py")"
-
-if [ ! -z "$joblib_import" ]; then
-    echo "Use from sklearn.utils.fixes import delayed instead of joblib delayed. The following files contains imports to joblib.delayed:"
-    echo "$joblib_import"
+joblib_delayed_import="$(git grep -l -A 10 -E "joblib import.+delayed" -- "*.py" ":!sklearn/utils/_joblib.py" ":!sklearn/utils/parallel.py")"
+if [ ! -z "$joblib_delayed_import" ]; then
+    echo "Use from sklearn.utils.parallel import delayed instead of joblib delayed. The following files contains imports to joblib.delayed:"
+    echo "$joblib_delayed_import"
+    exit 1
+fi
+joblib_Parallel_import="$(git grep -l -A 10 -E "joblib import.+Parallel" -- "*.py" ":!sklearn/utils/_joblib.py" ":!sklearn/utils/parallel.py")"
+if [ ! -z "$joblib_Parallel_import" ]; then
+    echo "Use from sklearn.utils.parallel import Parallel instead of joblib Parallel. The following files contains imports to joblib.Parallel:"
+    echo "$joblib_Parallel_import"
     exit 1
 fi

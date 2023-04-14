@@ -33,14 +33,13 @@ from ._validation import _insert_error_scores
 from ._validation import _normalize_score_results
 from ._validation import _warn_or_raise_about_fit_failures
 from ..exceptions import NotFittedError
-from joblib import Parallel
 from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._tags import _safe_tags
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.metaestimators import available_if
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..metrics._scorer import _check_multimetric_scoring, get_scorer_names
 from ..metrics import check_scoring
 
@@ -152,7 +151,7 @@ class ParameterGrid:
 
     def __len__(self):
         """Number of points on the grid."""
-        # Product function that can handle iterables (np.product can't).
+        # Product function that can handle iterables (np.prod can't).
         product = partial(reduce, operator.mul)
         return sum(
             product(len(v) for v in p.values()) if p else 1 for p in self.param_grid
@@ -185,7 +184,7 @@ class ParameterGrid:
             # Reverse so most frequent cycling parameter comes first
             keys, values_lists = zip(*sorted(sub_grid.items())[::-1])
             sizes = [len(v_list) for v_list in values_lists]
-            total = np.product(sizes)
+            total = np.prod(sizes)
 
             if ind >= total:
                 # Try the next grid
@@ -406,7 +405,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         error_score=np.nan,
         return_train_score=True,
     ):
-
         self.scoring = scoring
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -972,8 +970,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 ~np.isfinite(array_means)
             ):
                 warnings.warn(
-                    f"One or more of the {key_name.split('_')[0]} scores "
-                    f"are non-finite: {array_means}",
+                    (
+                        f"One or more of the {key_name.split('_')[0]} scores "
+                        f"are non-finite: {array_means}"
+                    ),
                     category=UserWarning,
                 )
 

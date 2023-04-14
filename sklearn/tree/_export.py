@@ -17,12 +17,14 @@ from numbers import Integral
 import numpy as np
 
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval, validate_params, StrOptions
+
 from ..base import is_classifier
 
 from . import _criterion
 from . import _tree
 from ._reingold_tilford import buchheim, Tree
-from . import DecisionTreeClassifier
+from . import DecisionTreeClassifier, DecisionTreeRegressor
 
 
 def _color_brew(n):
@@ -75,6 +77,23 @@ class Sentinel:
 SENTINEL = Sentinel()
 
 
+@validate_params(
+    {
+        "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
+        "max_depth": [Interval(Integral, 0, None, closed="left"), None],
+        "feature_names": [list, None],
+        "class_names": [list, None],
+        "label": [StrOptions({"all", "root", "none"})],
+        "filled": ["boolean"],
+        "impurity": ["boolean"],
+        "node_ids": ["boolean"],
+        "proportion": ["boolean"],
+        "rounded": ["boolean"],
+        "precision": [Interval(Integral, 0, None, closed="left"), None],
+        "ax": "no_validation",  # delegate validation to matplotlib
+        "fontsize": [Interval(Integral, 0, None, closed="left"), None],
+    }
+)
 def plot_tree(
     decision_tree,
     *,
@@ -398,7 +417,6 @@ class _DOTTreeExporter(_BaseTreeExporter):
         precision=3,
         fontname="helvetica",
     ):
-
         super().__init__(
             max_depth=max_depth,
             feature_names=feature_names,
@@ -507,7 +525,6 @@ class _DOTTreeExporter(_BaseTreeExporter):
 
         # Add node with description
         if self.max_depth is None or depth <= self.max_depth:
-
             # Collect ranks for 'leaf' option in plot_options
             if left_child == _tree.TREE_LEAF:
                 self.ranks["leaves"].append(str(node_id))
@@ -584,7 +601,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
         precision=3,
         fontsize=None,
     ):
-
         super().__init__(
             max_depth=max_depth,
             feature_names=feature_names,
@@ -598,20 +614,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
             precision=precision,
         )
         self.fontsize = fontsize
-
-        # validate
-        if isinstance(precision, Integral):
-            if precision < 0:
-                raise ValueError(
-                    "'precision' should be greater or equal to 0."
-                    " Got {} instead.".format(precision)
-                )
-        else:
-            raise ValueError(
-                "'precision' should be an integer. Got {} instead.".format(
-                    type(precision)
-                )
-            )
 
         # The depth of each node for plotting with 'leaf' option
         self.ranks = {"leaves": []}
@@ -919,10 +921,22 @@ def _compute_depth(tree, node):
     return max(depths)
 
 
+@validate_params(
+    {
+        "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
+        "feature_names": [list, None],
+        "class_names": [list, None],
+        "max_depth": [Interval(Integral, 0, None, closed="left"), None],
+        "spacing": [Interval(Integral, 1, None, closed="left"), None],
+        "decimals": [Interval(Integral, 0, None, closed="left"), None],
+        "show_weights": ["boolean"],
+    }
+)
 def export_text(
     decision_tree,
     *,
     feature_names=None,
+    class_names=None,
     max_depth=10,
     spacing=3,
     decimals=2,
@@ -942,6 +956,17 @@ def export_text(
     feature_names : list of str, default=None
         A list of length n_features containing the feature names.
         If None generic names will be used ("feature_0", "feature_1", ...).
+
+    class_names : list or None, default=None
+        Names of each of the target classes in ascending numerical order.
+        Only relevant for classification and not supported for multi-output.
+
+        - if `None`, the class names are delegated to `decision_tree.classes_`;
+        - if a list, then `class_names` will be used as class names instead
+          of `decision_tree.classes_`. The length of `class_names` must match
+          the length of `decision_tree.classes_`.
+
+        .. versionadded:: 1.3
 
     max_depth : int, default=10
         Only the first max_depth levels of the tree are exported.
@@ -986,25 +1011,24 @@ def export_text(
     check_is_fitted(decision_tree)
     tree_ = decision_tree.tree_
     if is_classifier(decision_tree):
-        class_names = decision_tree.classes_
+        if class_names is None:
+            class_names = decision_tree.classes_
+        elif len(class_names) != len(decision_tree.classes_):
+            raise ValueError(
+                "When `class_names` is a list, it should contain as"
+                " many items as `decision_tree.classes_`. Got"
+                f" {len(class_names)} while the tree was fitted with"
+                f" {len(decision_tree.classes_)} classes."
+            )
     right_child_fmt = "{} {} <= {}\n"
     left_child_fmt = "{} {} >  {}\n"
     truncation_fmt = "{} {}\n"
-
-    if max_depth < 0:
-        raise ValueError("max_depth bust be >= 0, given %d" % max_depth)
 
     if feature_names is not None and len(feature_names) != tree_.n_features:
         raise ValueError(
             "feature_names must contain %d elements, got %d"
             % (tree_.n_features, len(feature_names))
         )
-
-    if spacing <= 0:
-        raise ValueError("spacing must be > 0, given %d" % spacing)
-
-    if decimals < 0:
-        raise ValueError("decimals must be >= 0, given %d" % decimals)
 
     if isinstance(decision_tree, DecisionTreeClassifier):
         value_fmt = "{}{} weights: {}\n"

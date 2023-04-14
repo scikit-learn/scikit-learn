@@ -28,7 +28,6 @@ fig, sub = plt.subplots(2, 1, figsize=(5, 8))
 titles = ("break_ties = False", "break_ties = True")
 
 for break_ties, title, ax in zip((False, True), titles, sub.flatten()):
-
     svm = SVC(
         kernel="linear", C=1, break_ties=break_ties, decision_function_shape="ovr"
     ).fit(X, y)

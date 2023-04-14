@@ -1,6 +1,7 @@
 import itertools
 import os
 import warnings
+from functools import partial
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -28,13 +29,16 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._logistic import (
     _log_reg_scoring_path,
     _logistic_regression_path,
-    LogisticRegression,
-    LogisticRegressionCV,
+    LogisticRegression as LogisticRegressionDefault,
+    LogisticRegressionCV as LogisticRegressionCVDefault,
 )
 
 pytestmark = pytest.mark.filterwarnings(
     "error::sklearn.exceptions.ConvergenceWarning:sklearn.*"
 )
+# Fixing random_state helps prevent ConvergenceWarnings
+LogisticRegression = partial(LogisticRegressionDefault, random_state=0)
+LogisticRegressionCV = partial(LogisticRegressionCVDefault, random_state=0)
 
 
 SOLVERS = ("lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga")
@@ -221,6 +225,15 @@ def test_check_solver_option(LR):
         lr = LR(penalty="none", solver="liblinear")
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
+
+
+@pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
+def test_elasticnet_l1_ratio_err_helpful(LR):
+    # Check that an informative error message is raised when penalty="elasticnet"
+    # but l1_ratio is not specified.
+    model = LR(penalty="elasticnet", solver="saga")
+    with pytest.raises(ValueError, match=r".*l1_ratio.*"):
+        model.fit(np.array([[1, 2], [3, 4]]), np.array([0, 1]))
 
 
 @pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "sag", "saga"])
@@ -729,7 +742,6 @@ def test_logistic_regression_sample_weights():
     sample_weight = y + 1
 
     for LR in [LogisticRegression, LogisticRegressionCV]:
-
         kw = {"random_state": 42, "fit_intercept": False, "multi_class": "ovr"}
         if LR is LogisticRegressionCV:
             kw.update({"Cs": 3, "cv": 3})
@@ -1380,13 +1392,13 @@ def test_elastic_net_coeffs():
     C = 2.0
     l1_ratio = 0.5
     coeffs = list()
-    for penalty in ("elasticnet", "l1", "l2"):
+    for penalty, ratio in (("elasticnet", l1_ratio), ("l1", None), ("l2", None)):
         lr = LogisticRegression(
             penalty=penalty,
             C=C,
             solver="saga",
             random_state=0,
-            l1_ratio=l1_ratio,
+            l1_ratio=ratio,
             tol=1e-3,
             max_iter=200,
         )
@@ -1807,7 +1819,7 @@ def test_penalty_none(solver):
     #   non-default value.
     # - Make sure setting penalty=None is equivalent to setting C=np.inf with
     #   l2 penalty.
-    X, y = make_classification(n_samples=1000, random_state=0)
+    X, y = make_classification(n_samples=1000, n_redundant=0, random_state=0)
 
     msg = "Setting penalty=None will ignore the C"
     lr = LogisticRegression(penalty=None, solver=solver, C=4)
@@ -1905,7 +1917,6 @@ def test_scores_attribute_layout_elasticnet():
 
     for i, C in enumerate(Cs):
         for j, l1_ratio in enumerate(l1_ratios):
-
             lr = LogisticRegression(
                 penalty="elasticnet",
                 solver="saga",

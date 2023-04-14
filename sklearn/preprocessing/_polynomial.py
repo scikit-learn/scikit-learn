@@ -221,9 +221,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             inds = np.where(row)[0]
             if len(inds):
                 name = " ".join(
-                    "%s^%d" % (input_features[ind], exp)
-                    if exp != 1
-                    else input_features[ind]
+                    (
+                        "%s^%d" % (input_features[ind], exp)
+                        if exp != 1
+                        else input_features[ind]
+                    )
                     for ind, exp in zip(inds, row[inds])
                 )
             else:
@@ -517,7 +519,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         recommended to manually set the knot values to control the period.
 
     include_bias : bool, default=True
-        If True (default), then the last spline element inside the data range
+        If False, then the last spline element inside the data range
         of a feature is dropped. As B-splines sum to one over the spline basis
         functions for each data point, they implicitly include a bias term,
         i.e. a column of ones. It acts as an intercept term in a linear models.
@@ -673,7 +675,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
-        n_splines = self.bsplines_[0].c.shape[0]
+        check_is_fitted(self, "n_features_in_")
+        n_splines = self.bsplines_[0].c.shape[1]
+
         input_features = _check_feature_names_in(self, input_features)
         feature_names = []
         for i in range(self.n_features_in_):
@@ -934,3 +938,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # We chose the last one.
             indices = [j for j in range(XBS.shape[1]) if (j + 1) % n_splines != 0]
             return XBS[:, indices]
+
+    def _more_tags(self):
+        return {
+            "_xfail_checks": {
+                "check_estimators_pickle": (
+                    "Current Scipy implementation of _bsplines does not"
+                    "support const memory views."
+                ),
+            }
+        }

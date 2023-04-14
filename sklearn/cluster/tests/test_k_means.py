@@ -17,6 +17,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import row_norms
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import pairwise_distances_argmin
+from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means, kmeans_plusplus
 from sklearn.cluster import MiniBatchKMeans
@@ -1276,3 +1277,67 @@ def test_predict_does_not_change_cluster_centers(is_sparse):
 
     y_pred2 = kmeans.predict(X)
     assert_array_equal(y_pred1, y_pred2)
+
+
+@pytest.mark.parametrize("init", ["k-means++", "random"])
+def test_sample_weight_init(init, global_random_seed):
+    """Check that sample weight is used during init.
+
+    `_init_centroids` is shared across all classes inheriting from _BaseKMeans so
+    it's enough to check for KMeans.
+    """
+    rng = np.random.RandomState(global_random_seed)
+    X, _ = make_blobs(
+        n_samples=200, n_features=10, centers=10, random_state=global_random_seed
+    )
+    x_squared_norms = row_norms(X, squared=True)
+
+    kmeans = KMeans()
+    clusters_weighted = kmeans._init_centroids(
+        X=X,
+        x_squared_norms=x_squared_norms,
+        init=init,
+        sample_weight=rng.uniform(size=X.shape[0]),
+        n_centroids=5,
+        random_state=np.random.RandomState(global_random_seed),
+    )
+    clusters = kmeans._init_centroids(
+        X=X,
+        x_squared_norms=x_squared_norms,
+        init=init,
+        sample_weight=np.ones(X.shape[0]),
+        n_centroids=5,
+        random_state=np.random.RandomState(global_random_seed),
+    )
+    with pytest.raises(AssertionError):
+        assert_allclose(clusters_weighted, clusters)
+
+
+@pytest.mark.parametrize("init", ["k-means++", "random"])
+def test_sample_weight_zero(init, global_random_seed):
+    """Check that if sample weight is 0, this sample won't be chosen.
+
+    `_init_centroids` is shared across all classes inheriting from _BaseKMeans so
+    it's enough to check for KMeans.
+    """
+    rng = np.random.RandomState(global_random_seed)
+    X, _ = make_blobs(
+        n_samples=100, n_features=5, centers=5, random_state=global_random_seed
+    )
+    sample_weight = rng.uniform(size=X.shape[0])
+    sample_weight[::2] = 0
+    x_squared_norms = row_norms(X, squared=True)
+
+    kmeans = KMeans()
+    clusters_weighted = kmeans._init_centroids(
+        X=X,
+        x_squared_norms=x_squared_norms,
+        init=init,
+        sample_weight=sample_weight,
+        n_centroids=10,
+        random_state=np.random.RandomState(global_random_seed),
+    )
+    # No center should be one of the 0 sample weight point
+    # (i.e. be at a distance=0 from it)
+    d = euclidean_distances(X[::2], clusters_weighted)
+    assert not np.any(np.isclose(d, 0))

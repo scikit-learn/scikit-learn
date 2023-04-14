@@ -25,7 +25,6 @@ from scipy import optimize
 from scipy import sparse
 from scipy.sparse.linalg import lsqr
 from scipy.special import expit
-from joblib import Parallel
 from numbers import Integral
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin
@@ -40,7 +39,7 @@ from ..utils._array_api import get_namespace
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.
@@ -115,12 +114,14 @@ def _deprecate_normalize(normalize, estimator_name):
         )
     elif not normalize:
         warnings.warn(
-            "'normalize' was deprecated in version 1.2 and will be "
-            "removed in 1.4. "
-            "Please leave the normalize parameter to its default value to "
-            "silence this warning. The default behavior of this estimator "
-            "is to not do any normalization. If normalization is needed "
-            "please use sklearn.preprocessing.StandardScaler instead.",
+            (
+                "'normalize' was deprecated in version 1.2 and will be "
+                "removed in 1.4. "
+                "Please leave the normalize parameter to its default value to "
+                "silence this warning. The default behavior of this estimator "
+                "is to not do any normalization. If normalization is needed "
+                "please use sklearn.preprocessing.StandardScaler instead."
+            ),
             FutureWarning,
         )
 
@@ -400,7 +401,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
-        return xp.reshape(scores, -1) if scores.shape[1] == 1 else scores
+        return xp.reshape(scores, (-1,)) if scores.shape[1] == 1 else scores
 
     def predict(self, X):
         """
@@ -826,8 +827,10 @@ def _pre_fit(
             and not np.allclose(X_scale, np.ones(n_features))
         ):
             warnings.warn(
-                "Gram matrix was provided but X was centered to fit "
-                "intercept, or X was normalized : recomputing Gram matrix.",
+                (
+                    "Gram matrix was provided but X was centered to fit "
+                    "intercept, or X was normalized : recomputing Gram matrix."
+                ),
                 UserWarning,
             )
             # recompute Gram

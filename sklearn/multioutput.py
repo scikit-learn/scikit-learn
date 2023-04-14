@@ -17,7 +17,6 @@ from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel
 
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
@@ -31,7 +30,7 @@ from .utils.validation import (
     has_fit_parameter,
     _check_fit_params,
 )
-from .utils.fixes import delayed
+from .utils.parallel import delayed, Parallel
 from .utils._param_validation import HasMethods, StrOptions
 
 __all__ = [
@@ -85,7 +84,6 @@ def _available_if_estimator_has(attr):
 
 
 class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
-
     _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit", "predict"])],
         "n_jobs": [Integral, None],
@@ -542,7 +540,6 @@ def _available_if_base_estimator_has(attr):
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
-
     _parameter_constraints: dict = {
         "base_estimator": [HasMethods(["fit", "predict"])],
         "order": ["array-like", StrOptions({"random"}), None],

@@ -177,7 +177,7 @@ kernel_ridge.kernel
 
 # %%
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.utils.fixes import loguniform
+from scipy.stats import loguniform
 
 param_distributions = {
     "alpha": loguniform(1e0, 1e3),
