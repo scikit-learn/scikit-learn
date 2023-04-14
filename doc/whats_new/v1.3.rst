@@ -200,7 +200,7 @@ Changelog
   :class:`covariance.GraphicalLassoCV`.
   :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
 
-- |API| Adds `covariance` parameter in :class:`covariance.graphical_lasso`.
+- |API| Adds `covariance` parameter in :class:`covariance.GraphicalLasso`.
   :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
 
 - |API| Adds `eps` parameter in :class:`covariance.GraphicalLasso`,
