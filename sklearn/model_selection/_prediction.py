@@ -9,6 +9,7 @@ from ..metrics._scorer import _ContinuousScorer
 from ..utils import _safe_indexing
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._response import _get_response_values_binary
+from ..utils.metaestimators import available_if
 from ..utils.multiclass import type_of_target
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
@@ -19,6 +20,19 @@ from ..utils.validation import (
 )
 
 from ._split import check_cv
+
+
+def _estimator_has(attr):
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the first fitted estimator if available, otherwise we
+    check the unfitted estimator.
+    """
+    return lambda self: (
+        hasattr(self.estimator_, attr)
+        if hasattr(self, "estimator_")
+        else hasattr(self.estimator, attr)
+    )
 
 
 def _fit_and_score(
@@ -57,16 +71,10 @@ def _fit_and_score(
 class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     """Decision threshold calibration for binary classification.
 
-    Estimator that calibrates the decision threshold (cutoff point) that is
-    used for prediction. The methods for picking cutoff points make use of
-    traditional binary classification evaluation statistics such as the true
-    positive and true negative rates or any metrics accepting true labels and
-    the output of a scoring function from a scikit-learn estimator.
-
     Parameters
     ----------
-    estimator : estimator object
-        The classifier, fitted or not fitted, from which we want to optimize
+    estimator : estimator instance
+        The classifier, fitted or not fitted, for which we want to optimize
         the decision threshold used during `predict`.
 
     objective_metric : {"tpr", "tnr"}, str or callable,  \
@@ -104,8 +112,8 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
 
     cv : int, float, cross-validation generator, iterable or "prefit", \
             default=None
-        Determines the cross-validation splitting strategy used in
-        `cross_val_predict` to train classifier. Possible inputs for cv are:
+        Determines the cross-validation splitting strategy to train classifier.
+        Possible inputs for cv are:
 
         * None, to use the default 5-fold stratified K-fold cross validation;
         * An integer number, to specify the number of folds in a stratified
@@ -121,9 +129,11 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         cross-validation strategies that can be used here.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel all `estimators` `fit`.
-        `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
-        using all processors. See Glossary for more details.
+        The number of jobs to run in parallel. When `cv` represents a
+        cross-validation strategy, the fitting and scoring on each data split
+        is done in parallel. ``None`` means 1 unless in a
+        :obj:`joblib.parallel_backend` context. ``-1`` means using all
+        processors. See :term:`Glossary <n_jobs>` for more details.
 
     Attributes
     ----------
@@ -178,6 +188,28 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     }
 
     def fit(self, X, y, sample_weight=None, **fit_params):
+        """Fit the calibrated model.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If `None`, then samples are equally weighted.
+
+        **fit_params : dict
+            Parameters to pass to the `fit` method of the underlying
+            classifier.
+
+        Returns
+        -------
+        self : object
+            Returns an instance of self.
+        """
         self._validate_params()
         X, y = indexable(X, y)
 
@@ -284,6 +316,18 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.classes_
 
     def predict(self, X):
+        """Predict the target of new samples.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The samples, as accepted by `estimator.predict`.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,)
+            The predicted class.
+        """
         check_is_fitted(self, "estimator_")
         pos_label = self._scorer._get_pos_label()
         y_score, _ = _get_response_values_binary(
@@ -291,6 +335,60 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         )
         y_pred = (y_score >= self.decision_threshold_).astype(int)
         return self.classes_[y_pred]
+
+    @available_if(_estimator_has("predict_proba"))
+    def predict_proba(self, X):
+        """Predict class probabilities for `X` using the fitted estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        Returns
+        -------
+        probabilities : ndarray of shape (n_samples, n_classes)
+            The class probabilities of the input samples.
+        """
+        check_is_fitted(self, "estimator_")
+        return self.estimator_.predict_proba(X)
+
+    @available_if(_estimator_has("predict_log_proba"))
+    def predict_log_proba(self, X):
+        """Predict logarithm class probabilities for `X` using the fitted estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        Returns
+        -------
+        log_probabilities : ndarray of shape (n_samples, n_classes)
+            The logarithm class probabilities of the input samples.
+        """
+        check_is_fitted(self, "estimator_")
+        return self.estimator_.predict_log_proba(X)
+
+    @available_if(_estimator_has("decision_function"))
+    def decision_function(self, X):
+        """Decision function for samples in `X` using the fitted estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        Returns
+        -------
+        decisions : ndarray of shape (n_samples,)
+            The decision function computed the fitted estimator.
+        """
+        check_is_fitted(self, "estimator_")
+        return self.estimator_.decision_function(X)
 
     def _more_tags(self):
         return {"binary_only": True}
