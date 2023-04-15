@@ -207,7 +207,14 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         else:
             objective_value = "highest"
 
-        self.estimator_ = clone(self.estimator).fit(X, y, sample_weight, **fit_params)
+        fit_parameters = signature(self.estimator.fit).parameters
+        supports_sw = "sample_weight" in fit_parameters
+        if sample_weight is not None and supports_sw:
+            self.estimator_ = clone(self.estimator).fit(
+                X, y, sample_weight, **fit_params
+            )
+        else:
+            self.estimator_ = clone(self.estimator).fit(X, y, **fit_params)
 
         if cv == "prefit":
             classifier = self.estimator
