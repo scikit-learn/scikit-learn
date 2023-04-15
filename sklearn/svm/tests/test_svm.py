@@ -315,7 +315,7 @@ def test_oneclass_decision_function(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     N = 1000
     # Generate train data
-    X = 0.3 * rng.randn(5*N, 2)
+    X = 0.3 * rng.randn(5 * N, 2)
     import seaborn as sns
     sns.scatterplot(X)
     X_train = np.r_[X + 2, X - 2]
@@ -1099,8 +1099,9 @@ def test_linear_svm_convergence_warnings(global_random_seed):
 def test_svr_coef_sign(global_random_seed):
     # Test that SVR(kernel="linear") has coef_ with the right sign.
     # Non-regression test for #2933.
-    X = np.random.RandomState(global_random_seed).randn(10, 3)
-    y = np.random.RandomState(global_random_seed + 1).randn(10)
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.randn(10, 3)
+    y = rng.randn(10)
 
     for svr in [svm.SVR(kernel="linear"), svm.NuSVR(kernel="linear"), svm.LinearSVR()]:
         svr.fit(X, y)
