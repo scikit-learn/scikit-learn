@@ -433,8 +433,8 @@ def test_decision_function_shape(SVM, global_random_seed):
     assert_array_equal(linear_ovr_svm.predict(iris.data), np.argmax(dec, axis=1))
 
     # with five classes:
-    X, y = make_blobs(n_samples=80, centers=5, random_state=0)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    X, y = make_blobs(n_samples=80, centers=5, random_state=global_random_seed + 2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=global_random_seed + 3)
 
     linear_ovr_svm.fit(X_train, y_train)
     dec = linear_ovr_svm.decision_function(X_test)
@@ -480,7 +480,7 @@ def test_weight(global_random_seed):
     assert_array_almost_equal(clf.predict(X), [2] * 6)
 
     X_, y_ = make_classification(
-        n_samples=200, n_features=10, weights=[0.833, 0.167], random_state=2
+        n_samples=200, n_features=10, weights=[0.833, 0.167], random_state=global_random_seed
     )
 
     for clf in (
@@ -660,9 +660,9 @@ def test_auto_weight(global_random_seed):
     assert np.argmax(class_weights) == 2
 
     for clf in (
-        svm.SVC(kernel="linear"),
-        svm.LinearSVC(random_state=0),
-        LogisticRegression(),
+            svm.SVC(kernel="linear"),
+            svm.LinearSVC(random_state=global_random_seed + 1),
+            LogisticRegression(),
     ):
         # check that score is better when class='balanced' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
@@ -873,7 +873,7 @@ def test_linearsvc_fit_sampleweight(global_random_seed):
 
 def test_crammer_singer_binary(global_random_seed):
     # Test Crammer-Singer formulation in the binary case
-    X, y = make_classification(n_classes=2, random_state=0)
+    X, y = make_classification(n_classes=2, random_state=global_random_seed)
 
     for fit_intercept in (True, False):
         acc = (
@@ -1067,7 +1067,7 @@ def test_unfitted():
 def test_consistent_proba(global_random_seed):
     a = svm.SVC(probability=True, max_iter=1, random_state=global_random_seed)
     proba_1 = a.fit(X, Y).predict_proba(X)
-    a = svm.SVC(probability=True, max_iter=1, random_state=0)
+    a = svm.SVC(probability=True, max_iter=1, random_state=global_random_seed + 1)
     proba_2 = a.fit(X, Y).predict_proba(X)
     assert_array_almost_equal(proba_1, proba_2)
 
@@ -1381,14 +1381,15 @@ def test_svc_raises_error_internal_representation():
     ],
 )
 @pytest.mark.parametrize(
-    "dataset",
+    "dataset_params",
     [
-        make_classification(n_classes=2, n_informative=2, random_state=0),
-        make_classification(n_classes=3, n_informative=3, random_state=0),
-        make_classification(n_classes=4, n_informative=4, random_state=0),
+        {"n_classes": 2, "n_informative": 2},
+        {"n_classes": 3, "n_informative": 3},
+        {"n_classes": 4, "n_informative": 4},
     ],
 )
-def test_n_iter_libsvm(estimator, expected_n_iter_type, dataset):
+def test_n_iter_libsvm(estimator, expected_n_iter_type, dataset_params, global_random_seed):
+    dataset = make_classification(*dataset_params, random_state=global_random_seed)
     # Check that the type of n_iter_ is correct for the classes that inherit
     # from BaseSVC.
     # Note that for SVC, and NuSVC this is an ndarray; while for SVR, NuSVR, and
