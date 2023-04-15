@@ -215,11 +215,11 @@ def test_svr():
 
     diabetes = datasets.load_diabetes()
     for clf in (
-            svm.NuSVR(kernel="linear", nu=0.4, C=1.0),
-            svm.NuSVR(kernel="linear", nu=0.4, C=10.0),
-            svm.SVR(kernel="linear", C=10.0),
-            svm.LinearSVR(C=10.0),
-            svm.LinearSVR(C=10.0),
+        svm.NuSVR(kernel="linear", nu=0.4, C=1.0),
+        svm.NuSVR(kernel="linear", nu=0.4, C=10.0),
+        svm.SVR(kernel="linear", C=10.0),
+        svm.LinearSVR(C=10.0),
+        svm.LinearSVR(C=10.0),
     ):
         clf.fit(diabetes.data, diabetes.target)
         assert clf.score(diabetes.data, diabetes.target) > 0.02
@@ -315,7 +315,7 @@ def test_oneclass_decision_function(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     N = 1000
     # Generate train data
-    X = 0.3 * rng.randn(5*N, 2)
+    X = 0.3 * rng.randn(5 * N, 2)
     X_train = np.r_[X + 2, X - 2]
 
     # Generate some regular novel observations
@@ -369,8 +369,8 @@ def test_probability(global_random_seed):
     iris = get_iris_dataset(global_random_seed)
 
     for clf in (
-            svm.SVC(probability=True, random_state=global_random_seed + 1, C=1.0),
-            svm.NuSVC(probability=True, random_state=global_random_seed + 2),
+        svm.SVC(probability=True, random_state=global_random_seed + 1, C=1.0),
+        svm.NuSVC(probability=True, random_state=global_random_seed + 2),
     ):
         clf.fit(iris.data, iris.target)
 
@@ -423,18 +423,23 @@ def test_decision_function_shape(SVM, global_random_seed):
     # correct shape and is consistent with predict
     iris = get_iris_dataset(global_random_seed)
 
-    linear_ovr_svm = SVM(kernel="linear", decision_function_shape="ovr",random_state=global_random_seed+1, break_ties=True)
-    # we need to use break_ties here so that the prediction won't break ties randomly but use the argmax of dec.
-    linear_ovr_svm.fit(
-        iris.data, iris.target
+    linear_ovr_svm = SVM(
+        kernel="linear",
+        decision_function_shape="ovr",
+        random_state=global_random_seed + 1,
+        break_ties=True,
     )
+    # we need to use break_ties here so that the prediction won't break ties randomly but use the argmax of dec.
+    linear_ovr_svm.fit(iris.data, iris.target)
     dec = linear_ovr_svm.decision_function(iris.data)
     assert dec.shape == (len(iris.data), 3)
     assert_array_equal(linear_ovr_svm.predict(iris.data), np.argmax(dec, axis=1))
 
     # with five classes:
     X, y = make_blobs(n_samples=80, centers=5, random_state=global_random_seed + 2)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=global_random_seed + 3)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=global_random_seed + 3
+    )
 
     linear_ovr_svm.fit(X_train, y_train)
     dec = linear_ovr_svm.decision_function(X_test)
@@ -442,7 +447,12 @@ def test_decision_function_shape(SVM, global_random_seed):
     assert_array_equal(linear_ovr_svm.predict(X_test), np.argmax(dec, axis=1))
 
     # check shape of ovo_decision_function=True
-    linear_ovo_svm = SVM(kernel="linear", decision_function_shape="ovo",random_state=global_random_seed+4,break_ties=True)
+    linear_ovo_svm = SVM(
+        kernel="linear",
+        decision_function_shape="ovo",
+        random_state=global_random_seed + 4,
+        break_ties=True,
+    )
     linear_ovo_svm.fit(X_train, y_train)
     dec = linear_ovo_svm.decision_function(X_train)
     assert dec.shape == (len(X_train), 10)
@@ -480,13 +490,16 @@ def test_weight(global_random_seed):
     assert_array_almost_equal(clf.predict(X), [2] * 6)
 
     X_, y_ = make_classification(
-        n_samples=200, n_features=10, weights=[0.833, 0.167], random_state=global_random_seed
+        n_samples=2000,
+        n_features=10,
+        weights=[0.833, 0.167],
+        random_state=global_random_seed,
     )
 
     for clf in (
-            linear_model.LogisticRegression(),
-            svm.LinearSVC(random_state=global_random_seed + 1),
-            svm.SVC(),
+        linear_model.LogisticRegression(),
+        svm.LinearSVC(random_state=global_random_seed + 1),
+        svm.SVC(),
     ):
         clf.set_params(class_weight={0: 0.1, 1: 10})
         clf.fit(X_[:1000], y_[:1000])
@@ -615,7 +628,7 @@ def test_negative_weights_svc_leave_just_one_label(Classifier, err_msg, sample_w
     ids=["partial-mask-label-1", "partial-mask-label-2"],
 )
 def test_negative_weights_svc_leave_two_labels(
-        Classifier, model, sample_weight, mask_side
+    Classifier, model, sample_weight, mask_side
 ):
     clf = Classifier(kernel="linear")
     clf.fit(X, Y, sample_weight=sample_weight)
@@ -660,9 +673,9 @@ def test_auto_weight(global_random_seed):
     assert np.argmax(class_weights) == 2
 
     for clf in (
-            svm.SVC(kernel="linear"),
-            svm.LinearSVC(random_state=global_random_seed + 1),
-            LogisticRegression(),
+        svm.SVC(kernel="linear", random_state=global_random_seed + 1),
+        svm.LinearSVC(random_state=global_random_seed + 2),
+        LogisticRegression(random_state=global_random_seed + 3),
     ):
         # check that score is better when class='balanced' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
@@ -765,18 +778,22 @@ def test_sparse_fit_support_vectors_empty():
 def test_linearsvc_parameters(loss, penalty, dual, global_random_seed):
     # Test possible parameter combinations in LinearSVC
     # Generate list of possible parameter combinations
-    X, y = make_classification(n_samples=5, n_features=5, random_state=global_random_seed)
+    X, y = make_classification(
+        n_samples=5, n_features=5, random_state=global_random_seed
+    )
 
-    clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual, random_state=global_random_seed + 1)
+    clf = svm.LinearSVC(
+        penalty=penalty, loss=loss, dual=dual, random_state=global_random_seed + 1
+    )
     if (
-            (loss, penalty) == ("hinge", "l1")
-            or (loss, penalty, dual) == ("hinge", "l2", False)
-            or (penalty, dual) == ("l1", True)
+        (loss, penalty) == ("hinge", "l1")
+        or (loss, penalty, dual) == ("hinge", "l2", False)
+        or (penalty, dual) == ("l1", True)
     ):
         with pytest.raises(
-                ValueError,
-                match="Unsupported set of arguments.*penalty='%s.*loss='%s.*dual=%s"
-                      % (penalty, loss, dual),
+            ValueError,
+            match="Unsupported set of arguments.*penalty='%s.*loss='%s.*dual=%s"
+            % (penalty, loss, dual),
         ):
             clf.fit(X, y)
     else:
@@ -795,16 +812,23 @@ def test_linearsvc(global_random_seed):
 
     # the same with l1 penalty
     clf = svm.LinearSVC(
-        penalty="l1", loss="squared_hinge", dual=False, random_state=global_random_seed + 1
+        penalty="l1",
+        loss="squared_hinge",
+        dual=False,
+        random_state=global_random_seed + 1,
     ).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     # l2 penalty with dual formulation
-    clf = svm.LinearSVC(penalty="l2", dual=True, random_state=global_random_seed + 2).fit(X, Y)
+    clf = svm.LinearSVC(
+        penalty="l2", dual=True, random_state=global_random_seed + 2
+    ).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     # l2 penalty, l1 loss
-    clf = svm.LinearSVC(penalty="l2", loss="hinge", dual=True, random_state=global_random_seed + 3)
+    clf = svm.LinearSVC(
+        penalty="l2", loss="hinge", dual=True, random_state=global_random_seed + 3
+    )
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
@@ -818,8 +842,12 @@ def test_linearsvc_crammer_singer(global_random_seed):
     # Test LinearSVC with crammer_singer multi-class svm
     iris = get_iris_dataset(global_random_seed)
 
-    ovr_clf = svm.LinearSVC(random_state=global_random_seed + 1).fit(iris.data, iris.target)
-    cs_clf = svm.LinearSVC(multi_class="crammer_singer", random_state=global_random_seed + 2)
+    ovr_clf = svm.LinearSVC(random_state=global_random_seed + 1).fit(
+        iris.data, iris.target
+    )
+    cs_clf = svm.LinearSVC(
+        multi_class="crammer_singer", random_state=global_random_seed + 2
+    )
     cs_clf.fit(iris.data, iris.target)
 
     # similar prediction for ovr and crammer-singer:
@@ -842,9 +870,9 @@ def test_linearsvc_fit_sampleweight(global_random_seed):
     n_samples = len(X)
     unit_weight = np.ones(n_samples)
     clf = svm.LinearSVC(random_state=global_random_seed).fit(X, Y)
-    clf_unitweight = svm.LinearSVC(random_state=global_random_seed + 1, tol=1e-12, max_iter=1000).fit(
-        X, Y, sample_weight=unit_weight
-    )
+    clf_unitweight = svm.LinearSVC(
+        random_state=global_random_seed + 1, tol=1e-12, max_iter=1000
+    ).fit(X, Y, sample_weight=unit_weight)
 
     # check if same as sample_weight=None
     assert_array_equal(clf_unitweight.predict(T), clf.predict(T))
@@ -855,16 +883,16 @@ def test_linearsvc_fit_sampleweight(global_random_seed):
 
     rng = np.random.RandomState(global_random_seed)
     random_weight = rng.randint(0, 10, n_samples)
-    lsvc_unflat = svm.LinearSVC(random_state=global_random_seed + 2, tol=1e-12, max_iter=1000).fit(
-        X, Y, sample_weight=random_weight
-    )
+    lsvc_unflat = svm.LinearSVC(
+        random_state=global_random_seed + 2, tol=1e-12, max_iter=1000
+    ).fit(X, Y, sample_weight=random_weight)
     pred1 = lsvc_unflat.predict(T)
 
     X_flat = np.repeat(X, random_weight, axis=0)
     y_flat = np.repeat(Y, random_weight, axis=0)
-    lsvc_flat = svm.LinearSVC(random_state=global_random_seed + 3, tol=1e-12, max_iter=1000).fit(
-        X_flat, y_flat
-    )
+    lsvc_flat = svm.LinearSVC(
+        random_state=global_random_seed + 3, tol=1e-12, max_iter=1000
+    ).fit(X_flat, y_flat)
     pred2 = lsvc_flat.predict(T)
 
     assert_array_equal(pred1, pred2)
@@ -873,7 +901,9 @@ def test_linearsvc_fit_sampleweight(global_random_seed):
 
 def test_crammer_singer_binary(global_random_seed):
     # Test Crammer-Singer formulation in the binary case
-    X, y = make_classification(n_classes=2, random_state=global_random_seed)
+    X, y = make_classification(
+        n_classes=2, random_state=global_random_seed, n_samples=256
+    )
 
     for fit_intercept in (True, False):
         acc = (
@@ -903,7 +933,9 @@ def test_linearsvc_iris(global_random_seed):
     assert_array_equal(pred, clf.predict(iris.data))
 
 
-def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC, global_random_seed=42):
+def test_dense_liblinear_intercept_handling(
+    classifier=svm.LinearSVC, global_random_seed=42
+):
     # Test that dense liblinear honours intercept_scaling param
     X = [[2, 1], [3, 1], [1, 3], [2, 3]]
     y = [0, 0, 1, 1]
@@ -1012,7 +1044,10 @@ def test_svc_clone_with_callable_kernel(global_random_seed):
     svm_cloned.fit(iris.data, iris.target)
 
     svm_builtin = svm.SVC(
-        kernel="linear", probability=True, random_state=global_random_seed + 1, decision_function_shape="ovr"
+        kernel="linear",
+        probability=True,
+        random_state=global_random_seed + 1,
+        decision_function_shape="ovr",
     )
     svm_builtin.fit(iris.data, iris.target)
 
@@ -1039,7 +1074,10 @@ def test_svc_bad_kernel():
 
 def test_libsvm_convergence_warnings(global_random_seed):
     a = svm.SVC(
-        kernel=lambda x, y: np.dot(x, y.T), probability=True, random_state=global_random_seed, max_iter=2
+        kernel=lambda x, y: np.dot(x, y.T),
+        probability=True,
+        random_state=global_random_seed,
+        max_iter=2,
     )
     warning_msg = (
         r"Solver terminated early \(max_iter=2\).  Consider pre-processing "
@@ -1200,7 +1238,10 @@ def test_svc_invalid_break_ties_param(SVCClass, global_random_seed):
     X, y = make_blobs(random_state=global_random_seed)
 
     svm = SVCClass(
-        kernel="linear", decision_function_shape="ovo", break_ties=True, random_state=global_random_seed + 1
+        kernel="linear",
+        decision_function_shape="ovo",
+        break_ties=True,
+        random_state=global_random_seed + 1,
     ).fit(X, y)
 
     with pytest.raises(ValueError, match="break_ties must be False"):
@@ -1219,7 +1260,10 @@ def test_svc_ovr_tie_breaking(SVCClass, global_random_seed):
     xx, yy = np.meshgrid(xs, ys)
 
     common_params = dict(
-        kernel="rbf", gamma=1e6, random_state=global_random_seed + 1, decision_function_shape="ovr"
+        kernel="rbf",
+        gamma=1e6,
+        random_state=global_random_seed + 1,
+        decision_function_shape="ovr",
     )
     svm = SVCClass(
         break_ties=False,
@@ -1287,8 +1331,10 @@ def test_linearsvm_liblinear_sample_weight(SVM, params, global_random_seed):
     X2 = np.vstack([X, X])
     y2 = np.hstack([y, 3 - y])
     sample_weight = np.ones(shape=len(y) * 2)
-    sample_weight[len(y):] = 0
-    X2, y2, sample_weight = shuffle(X2, y2, sample_weight, random_state=global_random_seed)
+    sample_weight[len(y) :] = 0
+    X2, y2, sample_weight = shuffle(
+        X2, y2, sample_weight, random_state=global_random_seed
+    )
 
     base_estimator = SVM(random_state=global_random_seed + 1)
     base_estimator.set_params(**params)
@@ -1302,7 +1348,7 @@ def test_linearsvm_liblinear_sample_weight(SVM, params, global_random_seed):
         if hasattr(base_estimator, method):
             result_without_weight = getattr(est_no_weight, method)(X)
             result_with_weight = getattr(est_with_weight, method)(X)
-            assert_allclose(result_without_weight, result_with_weight,atol=1e-6)
+            assert_allclose(result_without_weight, result_with_weight, atol=1e-6)
 
 
 @pytest.mark.parametrize("Klass", (OneClassSVM, SVR, NuSVR))
@@ -1381,15 +1427,13 @@ def test_svc_raises_error_internal_representation():
     ],
 )
 @pytest.mark.parametrize(
-    "dataset_params",
-    [
-        {"n_classes": 2, "n_informative": 2},
-        {"n_classes": 3, "n_informative": 3},
-        {"n_classes": 4, "n_informative": 4},
-    ],
+    "n_classes",
+    [2, 3, 4],
 )
-def test_n_iter_libsvm(estimator, expected_n_iter_type, dataset_params, global_random_seed):
-    dataset = make_classification(*dataset_params, random_state=global_random_seed)
+def test_n_iter_libsvm(estimator, expected_n_iter_type, n_classes, global_random_seed):
+    dataset = make_classification(
+        n_classes=n_classes, n_informative=n_classes, random_state=global_random_seed
+    )
     # Check that the type of n_iter_ is correct for the classes that inherit
     # from BaseSVC.
     # Note that for SVC, and NuSVC this is an ndarray; while for SVR, NuSVR, and
