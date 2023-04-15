@@ -604,9 +604,6 @@ class MetadataRouter:
         # `add_self()`) is treated differently from the other objects which are
         # stored in _route_mappings.
         self._self = None
-        # this attribute is used to decide if there should be an error raised
-        # or a FutureWarning if a metadata is passed which is not requested.
-        self._warn_on = dict()
         self.owner = owner
 
     @property
@@ -816,79 +813,10 @@ class MetadataRouter:
             res[name] = Bunch()
             for _callee, _caller in mapping:
                 if _caller == caller:
-                    res[name][_callee] = self._route_warn_or_error(
-                        child=name, router=router, params=params, method=_callee
+                    res[name][_callee] = router._route_params(
+                        params=params, method=_callee
                     )
         return res
-
-    def _route_warn_or_error(self, *, child, router, params, method):
-        """Route parameters while handling error or deprecation warning choice.
-
-        This method warns instead of raising an error if the parent object
-        has set ``warn_on`` for the child object's method and the user has not
-        set any metadata request for that child object. This is used during the
-        deprecation cycle for backward compatibility.
-
-        Parameters
-        ----------
-        child : str
-            The name of the child object.
-
-        router : MetadataRouter or MetadataRequest
-            The router for the child object.
-
-        params : dict
-            The parameters to be routed.
-
-        method : str
-            The name of the callee method.
-
-        Returns
-        -------
-        dict
-            The routed parameters.
-        """
-        try:
-            routed_params = router._route_params(params=params, method=method)
-        except UnsetMetadataPassedError as e:
-            warn_on = self._warn_on.get(child, {})
-            if method not in warn_on:
-                # there is no warn_on set for this method of this child object,
-                # we raise as usual.
-                raise
-            if not router._is_default_request:
-                # the user has set at least one request value for this child
-                # object, but not for all of them. Therefore we raise as usual.
-                raise
-            # now we move everything which has a warn_on flag from
-            # `unrequested_params` to routed_params, and then raise if anything
-            # is left. Otherwise we have a perfectly formed `routed_params` and
-            # we return that.
-            warn_on_params = warn_on.get(method, {"params": [], "raise_on": "1.4"})
-            warn_keys = list(e.unrequested_params.keys())
-            routed_params = e.routed_params
-            # if params is None, we accept and warn on everything.
-            warn_params = warn_on_params["params"]
-            if warn_params is None:
-                warn_params = warn_keys
-
-            for param in warn_params:
-                if param in e.unrequested_params:
-                    routed_params[param] = e.unrequested_params.pop(param)
-
-            # check if anything is left, and if yes, we raise as usual
-            if e.unrequested_params:
-                raise
-
-            # Finally warn before returning the routed parameters.
-            warn(
-                "You are passing metadata for which the request values are not"
-                f" explicitly set: {', '.join(warn_keys)}. From version"
-                f" {warn_on_params['raise_on']} this results in the following"
-                f" error: {str(e)}",
-                FutureWarning,
-            )
-        return routed_params
 
     def validate_metadata(self, *, method, params):
         """Validate given metadata for a method.
@@ -919,58 +847,6 @@ class MetadataRouter:
                 f"{method} got unexpected argument(s) {extra_keys}, which are "
                 "not requested metadata in any object."
             )
-
-    def warn_on(self, *, child, method, params, raise_on="1.4"):
-        """Set where deprecation warnings on no set requests should occur.
-
-        This method is used in meta-estimators during the transition period for
-        backward compatibility. Expected behavior for meta-estimators on a code
-        such as ``RFE(Ridge()).fit(X, y, sample_weight=sample_weight)`` is to
-        raise a ``ValueError`` complaining about the fact that ``Ridge()`` has
-        not explicitly set the request values for ``sample_weight``. However,
-        this breaks backward compatibility for existing meta-estimators.
-
-        Calling this method on a ``MetadataRouter`` object such as
-        ``warn_on(child='estimator', method='fit', params=['sample_weight'])``
-        tells the router to raise a ``FutureWarning`` instead of a
-        ``ValueError`` if the child object has no set requests for
-        ``sample_weight`` during ``fit``.
-
-        You can find more information on how to use this method in the
-        developer guide:
-        :ref:`sphx_glr_auto_examples_plot_metadata_routing.py`.
-
-        Parameters
-        ----------
-        child : str
-            The name of the child object. The names come from the keyword
-            arguments passed to the ``add`` method.
-
-        method : str
-            The method for which there should be a ``FutureWarning``
-            instead of a ``ValueError`` for given params.
-
-        params : list of str
-            The list of parameters for which there should be a
-            ``FutureWarning`` instead of a ``ValueError``. If ``None``, the
-            rule is applied on all parameters.
-
-        raise_on : str, default="1.4"
-            The version after which there should be an error. Used in the
-            warning message to inform users.
-
-        Returns
-        -------
-        self : MetadataRouter
-            Returns `self`.
-        """
-        if child not in self._route_mappings:
-            raise ValueError(f"Unknown child object: {child}")
-
-        if child not in self._warn_on:
-            self._warn_on[child] = dict()
-        self._warn_on[child][method] = {"params": params, "raise_on": raise_on}
-        return self
 
     def _serialize(self):
         """Serialize the object.

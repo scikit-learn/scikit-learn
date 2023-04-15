@@ -1,24 +1,21 @@
 import re
-import warnings
 from functools import partial
 
 import numpy as np
 import pytest
+
 from sklearn import config_context
-from sklearn.base import RegressorMixin, ClassifierMixin, BaseEstimator
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.multioutput import (
-    MultiOutputRegressor,
-    MultiOutputClassifier,
     ClassifierChain,
+    MultiOutputClassifier,
+    MultiOutputRegressor,
     RegressorChain,
 )
+from sklearn.tests.test_metadata_routing import assert_request_is_empty, record_metadata
 from sklearn.utils.metadata_routing import MetadataRouter
-from sklearn.tests.test_metadata_routing import (
-    record_metadata,
-    assert_request_is_empty,
-)
 
 N, M = 100, 4
 X = np.random.rand(N, M)
@@ -236,9 +233,8 @@ def test_default_request(metaestimator):
     METAESTIMATORS,
     ids=METAESTIMATOR_IDS,
 )
-def test_error_for_other_methods(metaestimator):
-    # This test complements test_warning_for_indicated_methods but checks for
-    # UnsetMetadataPassedError instead of FutureWarning
+def test_error_on_missing_requests(metaestimator):
+    # Test that a UnsetMetadataPassedError is raised when it should.
     with config_context(enable_metadata_routing=True):
         cls = metaestimator["metaestimator"]
         estimator = metaestimator["estimator"]()
@@ -269,13 +265,12 @@ def test_error_for_other_methods(metaestimator):
     METAESTIMATORS,
     ids=METAESTIMATOR_IDS,
 )
-def test_setting_request_removes_warning_or_error(metaestimator):
-    # When the metadata is explicitly requested, there should be no warning and
-    # no error.
+def test_setting_request_removes_error(metaestimator):
+    # When the metadata is explicitly requested, there should be no errors.
     def set_request(estimator, method_name):
         # e.g. call set_fit_request on estimator
-        method = getattr(estimator, f"set_{method_name}_request")
-        method(sample_weight=True, metadata=True)
+        set_request_for_method = getattr(estimator, f"set_{method_name}_request")
+        set_request_for_method(sample_weight=True, metadata=True)
 
     with config_context(enable_metadata_routing=True):
         cls = metaestimator["metaestimator"]
@@ -288,12 +283,5 @@ def test_setting_request_removes_warning_or_error(metaestimator):
             estimator = metaestimator["estimator"]()
             set_request(estimator, method_name)
             instance = cls(**{estimator_name: estimator})
-            # lines below to ensure that there are no warnings
-            with warnings.catch_warnings(record=True) as rec:
-                method = getattr(instance, method_name)
-                method(X, y, sample_weight=sample_weight, metadata=metadata)
-                # Check that there was no FutureWarning about metadata. The exact
-                # error message is not checked on purpose, because if the message is
-                # changed without amending this test, the test would pass trivially.
-                future_warnings = [w for w in rec if isinstance(w, FutureWarning)]
-                assert not any("metadata" in w.message for w in future_warnings)
+            method = getattr(instance, method_name)
+            method(X, y, sample_weight=sample_weight, metadata=metadata)

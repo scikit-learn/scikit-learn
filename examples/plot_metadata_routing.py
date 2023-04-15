@@ -37,7 +37,7 @@ from sklearn.utils.metadata_routing import MetadataRouter
 from sklearn.utils.metadata_routing import MethodMapping
 from sklearn.utils.metadata_routing import process_routing
 from sklearn.utils.validation import check_is_fitted
-from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.linear_model import LinearRegression
 
 N, M = 100, 4
 X = np.random.rand(N, M)
@@ -617,40 +617,6 @@ try:
 except Exception as e:
     print(e)
 
-# %%
-# You might want to give your users a period during which they see a
-# ``FutureWarning`` instead in order to have time to adapt to the new API. For
-# this, the :class:`~sklearn.utils.metadata_routing.MetadataRouter` provides a
-# `warn_on` method:
-
-
-class WarningMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
-    def __init__(self, estimator):
-        self.estimator = estimator
-
-    def fit(self, X, y, **fit_params):
-        params = process_routing(self, "fit", fit_params)
-        self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
-
-    def get_metadata_routing(self):
-        router = (
-            MetadataRouter(owner=self.__class__.__name__)
-            .add(estimator=self.estimator, method_mapping="one-to-one")
-            .warn_on(child="estimator", method="fit", params=None)
-        )
-        return router
-
-
-with warnings.catch_warnings(record=True) as record:
-    WarningMetaRegressor(estimator=LogisticRegression()).fit(
-        X, y, sample_weight=my_weights
-    )
-for w in record:
-    print(w.message)
-
-# %%
-# Note that in the above implementation, the value passed to ``child`` the same
-# as the key passed to the ``add`` method, in this case ``"estimator"``.
 
 # %%
 # Third Party Development and scikit-learn Dependency
