@@ -126,6 +126,17 @@ Changes impacting all modules
 
   :pr:`25044` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Enhancement| All estimators that internally rely on OpenMP multi-threading
+  (via Cython) now use a number of threads equal to the number of physical
+  (instead of logical) cores by default. In the past, we observed that using as
+  many threads as logical cores on SMT hosts could sometimes cause severe
+  performance problems depending on the algorithms and the shape of the data.
+  Note that it is still possible to manually adjust the number of threads used
+  by OpenMP as documented in :ref:`parallelism`.
+
+  :pr:`26082` by :user:`Jérémie du Boisberranger <jeremiedbb>` and
+  :user:`Olivier Grisel <ogrisel>`.
+
 Changelog
 ---------
 
@@ -154,6 +165,9 @@ Changelog
 
 - |Feature| A `__sklearn_clone__` protocol is now available to override the
   default behavior of :func:`base.clone`. :pr:`24568` by `Thomas Fan`_.
+
+- |Fix| :class:`base.TransformerMixin` now currently keeps a namedtuple's class
+  if `transform` returns a namedtuple. :pr:`26121` by `Thomas Fan`_.
 
 :mod:`sklearn.calibration`
 ..........................
@@ -452,7 +466,7 @@ Changelog
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |FIX| Fixes :func:`utils.validation.check_array` to properly convert pandas
-  extension arrays. :pr:`25813` by `Thomas Fan`_.
+  extension arrays. :pr:`25813` and :pr:`26106` by `Thomas Fan`_.
 
 - |Fix| :func:`utils.validation.check_array` now suports pandas DataFrames with
   extension arrays and object dtypes by return an ndarray with object dtype.

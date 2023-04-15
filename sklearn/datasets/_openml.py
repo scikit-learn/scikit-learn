@@ -22,7 +22,7 @@ from ..utils import check_pandas_support  # noqa
 
 __all__ = ["fetch_openml"]
 
-_OPENML_PREFIX = "https://openml.org/"
+_OPENML_PREFIX = "https://api.openml.org/"
 _SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/2"
 _DATA_INFO = "api/v1/json/data/{}"
 _DATA_FEATURES = "api/v1/json/data/features/{}"
@@ -966,12 +966,14 @@ def fetch_openml(
         # TODO(1.4): remove this warning
         parser = "liac-arff"
         warn(
-            "The default value of `parser` will change from `'liac-arff'` to "
-            "`'auto'` in 1.4. You can set `parser='auto'` to silence this "
-            "warning. Therefore, an `ImportError` will be raised from 1.4 if "
-            "the dataset is dense and pandas is not installed. Note that the pandas "
-            "parser may return different data types. See the Notes Section in "
-            "fetch_openml's API doc for details.",
+            (
+                "The default value of `parser` will change from `'liac-arff'` to"
+                " `'auto'` in 1.4. You can set `parser='auto'` to silence this warning."
+                " Therefore, an `ImportError` will be raised from 1.4 if the dataset is"
+                " dense and pandas is not installed. Note that the pandas parser may"
+                " return different data types. See the Notes Section in fetch_openml's"
+                " API doc for details."
+            ),
             FutureWarning,
         )
 
@@ -1007,9 +1009,11 @@ def fetch_openml(
                     # TODO(1.4): In version 1.4, we will raise an error instead of
                     # a warning.
                     warn(
-                        "From version 1.4, `parser='auto'` with `as_frame=False` "
-                        "will use pandas. Either install pandas or set explicitely "
-                        "`parser='liac-arff'` to preserve the current behavior.",
+                        (
+                            "From version 1.4, `parser='auto'` with `as_frame=False` "
+                            "will use pandas. Either install pandas or set explicitely "
+                            "`parser='liac-arff'` to preserve the current behavior."
+                        ),
                         FutureWarning,
                     )
                     parser_ = "liac-arff"

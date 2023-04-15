@@ -427,7 +427,7 @@ def _pandas_arff_parser(
     categorical_columns = [
         name
         for name, dtype in frame.dtypes.items()
-        if pd.api.types.is_categorical_dtype(dtype)
+        if isinstance(dtype, pd.CategoricalDtype)
     ]
     for col in categorical_columns:
         frame[col] = frame[col].cat.rename_categories(strip_single_quotes)
@@ -442,7 +442,7 @@ def _pandas_arff_parser(
     categories = {
         name: dtype.categories.tolist()
         for name, dtype in frame.dtypes.items()
-        if pd.api.types.is_categorical_dtype(dtype)
+        if isinstance(dtype, pd.CategoricalDtype)
     }
     return X, y, None, categories
 

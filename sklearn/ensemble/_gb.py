@@ -174,7 +174,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         n_iter_no_change=None,
         tol=1e-4,
     ):
-
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.loss = loss
@@ -598,7 +597,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # perform boosting iterations
         i = begin_at_stage
         for i in range(begin_at_stage, self.n_estimators):
-
             # subsampling
             if do_oob:
                 sample_mask = _random_sample_mask(n_samples, n_inbag, random_state)
@@ -1189,7 +1187,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         tol=1e-4,
         ccp_alpha=0.0,
     ):
-
         super().__init__(
             loss=loss,
             learning_rate=learning_rate,
@@ -1743,7 +1740,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         tol=1e-4,
         ccp_alpha=0.0,
     ):
-
         super().__init__(
             loss=loss,
             learning_rate=learning_rate,
