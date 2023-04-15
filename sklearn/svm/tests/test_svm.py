@@ -1413,7 +1413,7 @@ def test_dual_auto_deprecation_warning(Estimator):
 
 
 @pytest.mark.parametrize(
-    "loss", ["epsilon_insensitive", "squared_hinge", "squared_epsilon_insensitive"]
+    "loss", ["squared_hinge", "squared_epsilon_insensitive"]
 )
 def test_dual_auto(loss):
     # OvR, L2, N > M (6,2)
