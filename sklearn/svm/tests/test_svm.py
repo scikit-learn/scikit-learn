@@ -903,7 +903,7 @@ def test_linearsvc_iris(global_random_seed):
     assert_array_equal(pred, clf.predict(iris.data))
 
 
-def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
+def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC, global_random_seed=42):
     # Test that dense liblinear honours intercept_scaling param
     X = [[2, 1], [3, 1], [1, 3], [2, 3]]
     y = [0, 0, 1, 1]
