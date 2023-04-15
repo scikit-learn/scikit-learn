@@ -315,9 +315,7 @@ def test_oneclass_decision_function(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     N = 1000
     # Generate train data
-    X = 0.3 * rng.randn(5 * N, 2)
-    import seaborn as sns
-    sns.scatterplot(X)
+    X = 0.3 * rng.randn(5*N, 2)
     X_train = np.r_[X + 2, X - 2]
 
     # Generate some regular novel observations
@@ -906,7 +904,7 @@ def test_linearsvc_iris(global_random_seed):
     assert_array_equal(pred, clf.predict(iris.data))
 
 
-def test_dense_liblinear_intercept_handling(global_random_seed, classifier=svm.LinearSVC):
+def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC, global_random_seed=42):
     # Test that dense liblinear honours intercept_scaling param
     X = [[2, 1], [3, 1], [1, 3], [2, 3]]
     y = [0, 0, 1, 1]
