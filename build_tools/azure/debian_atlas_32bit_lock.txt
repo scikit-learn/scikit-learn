@@ -20,7 +20,7 @@ pluggy==0.13.1
     # via pytest
 py==1.11.0
     # via pytest
-pytest==5.3.1
+pytest==5.4.3
     # via
     #   -r build_tools/azure/debian_atlas_32bit_requirements.txt
     #   pytest-cov
