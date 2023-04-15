@@ -670,6 +670,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params({"return_X_y": ["boolean"], "as_frame": ["boolean"]})
 def load_breast_cancer(*, return_X_y=False, as_frame=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
