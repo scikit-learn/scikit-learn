@@ -2654,3 +2654,25 @@ def test_kernel_centerer_feature_names_out():
     names_out = centerer.get_feature_names_out()
     samples_out2 = X_pairwise.shape[1]
     assert_array_equal(names_out, [f"kernelcenterer{i}" for i in range(samples_out2)])
+
+
+def test_yeo_johnson_overflow():
+    """Test that Yeo-Johnson doesn't trigger overflow.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/23319
+    """
+    x = np.array(
+        [2003.0, 1950.0, 1997.0, 2000.0, 2009.0, 2009.0, 1980.0, 1999.0, 2007.0, 1991.0]
+    )
+    with np.errstate(over="raise"):
+        # Attempt to trigger overflow in `x_trans_var = x_trans.var()`. This overflow is
+        # mitigated by replacing instances of np.power with np.exp.
+        pt = PowerTransformer(method="yeo-johnson")
+        X1_trans = pt.fit_transform(x[:, np.newaxis])
+        assert np.abs(X1_trans).max() < 3
+        # Attempt to trigger overflow in `out[pos] = (np.power(x[pos] + 1, lmbda) - 1) /
+        # lmbda`. Without regularization, the exponent of the transformed output could
+        # blow up for a marginal gain in log likelihood.
+        pt = PowerTransformer(method="yeo-johnson")
+        X2_trans = pt.fit_transform(x[:5, np.newaxis])
+        assert np.abs(X2_trans).max() < 3

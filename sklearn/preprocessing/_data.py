@@ -3273,11 +3273,11 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if abs(lmbda) < np.spacing(1.0):
             x_inv[pos] = np.exp(x[pos]) - 1
         else:  # lmbda != 0
-            x_inv[pos] = np.power(x[pos] * lmbda + 1, 1 / lmbda) - 1
+            x_inv[pos] = np.exp(np.log1p(x[pos] * lmbda) / lmbda) - 1
 
         # when x < 0
         if abs(lmbda - 2) > np.spacing(1.0):
-            x_inv[~pos] = 1 - np.power(-(2 - lmbda) * x[~pos] + 1, 1 / (2 - lmbda))
+            x_inv[~pos] = 1 - np.exp(np.log1p(-(2 - lmbda) * x[~pos]) / (2 - lmbda))
         else:  # lmbda == 2
             x_inv[~pos] = 1 - np.exp(-x[~pos])
 
@@ -3295,11 +3295,11 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if abs(lmbda) < np.spacing(1.0):
             out[pos] = np.log1p(x[pos])
         else:  # lmbda != 0
-            out[pos] = (np.power(x[pos] + 1, lmbda) - 1) / lmbda
+            out[pos] = (np.exp(np.log1p(x[pos]) * lmbda) - 1) / lmbda
 
         # when x < 0
         if abs(lmbda - 2) > np.spacing(1.0):
-            out[~pos] = -(np.power(-x[~pos] + 1, 2 - lmbda) - 1) / (2 - lmbda)
+            out[~pos] = -(np.exp(np.log1p(-x[~pos]) * (2 - lmbda)) - 1) / (2 - lmbda)
         else:  # lmbda == 2
             out[~pos] = -np.log1p(-x[~pos])
 
@@ -3339,6 +3339,11 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             log_var = np.log(x_trans_var)
             loglike = -n_samples / 2 * log_var
             loglike += (lmbda - 1) * (np.sign(x) * np.log1p(np.abs(x))).sum()
+
+            # Regularize the exponents to avoid blowing them up for a marginal gain in
+            # log likelihood
+            x_trans_exp = np.log(np.abs(x_trans))
+            loglike -= 1e-3 * np.sum(np.abs(x_trans_exp[np.isfinite(x_trans_exp)]))
 
             return -loglike
 
