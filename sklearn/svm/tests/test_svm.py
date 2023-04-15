@@ -596,8 +596,10 @@ def test_negative_sample_weights_mask_all_samples(Estimator, err_msg, sample_wei
     [
         (
             svm.SVC,
-            "Invalid input - all samples with positive weights belong to the same"
-            " class",
+            (
+                "Invalid input - all samples with positive weights belong to the same"
+                " class"
+            ),
         ),
         (svm.NuSVC, "specified nu is infeasible"),
     ],
@@ -1105,7 +1107,7 @@ def test_unfitted():
 def test_consistent_proba(global_random_seed):
     a = svm.SVC(probability=True, max_iter=1, random_state=global_random_seed)
     proba_1 = a.fit(X, Y).predict_proba(X)
-    a = svm.SVC(probability=True, max_iter=1, random_state=global_random_seed + 1)
+    a = svm.SVC(probability=True, max_iter=1, random_state=global_random_seed)
     proba_2 = a.fit(X, Y).predict_proba(X)
     assert_array_almost_equal(proba_1, proba_2)
 
