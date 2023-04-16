@@ -429,7 +429,8 @@ def test_decision_function_shape(SVM, global_random_seed):
         random_state=global_random_seed + 1,
         break_ties=True,
     )
-    # we need to use break_ties here so that the prediction won't break ties randomly but use the argmax of dec.
+    # we need to use break_ties here so that the prediction won't break ties randomly
+    # but use the argmax of the decision function.
     linear_ovr_svm.fit(iris.data, iris.target)
     dec = linear_ovr_svm.decision_function(iris.data)
     assert dec.shape == (len(iris.data), 3)
