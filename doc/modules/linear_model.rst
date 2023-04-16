@@ -99,7 +99,7 @@ of squares:
 
 .. math::
 
-   \min_{w} || X w + w_0 1_s - y||_2^2 + \alpha ||w||_2^2
+   \min_{w} || X w + w_0 - y||_2^2 + \alpha ||w||_2^2
 
 - :math:`X` is the feature matrix with shape `(n_samples, n_features)`;
 - :math:`y` is the target vector with shape `(n_samples,)`;

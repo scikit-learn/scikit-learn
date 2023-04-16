@@ -1012,8 +1012,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          `scipy.sparse.linalg.lsqr`. It is often one of the fastest solver and
-          uses an iterative procedure. It can to handle training data with
+          `scipy.sparse.linalg.lsqr`. It is often one of the fastest solvers and
+          uses an iterative procedure. It can handle training data with
           singular `X.T @ X` even with low regularization very efficiently.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
