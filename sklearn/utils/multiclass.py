@@ -338,9 +338,13 @@ def type_of_target(y, input_name=""):
     try:
         # labels in bytes format
         if isinstance(y[0], bytes):
-            raise ValueError(
-                "Labels are represented as bytes and are not supported. "
-                "Convert the labels to Python string or integral format."
+            warnings.warn(
+                (
+                    "Support for labels represented as bytes is deprecated in v1.3 and"
+                    " will error in v1.5. Convert the labels to a string or integer"
+                    " format."
+                ),
+                FutureWarning,
             )
         # The old sequence of sequences format
         if (

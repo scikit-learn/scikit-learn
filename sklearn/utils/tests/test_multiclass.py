@@ -502,8 +502,8 @@ def test_labels_in_bytes_format(input_type):
     # https://github.com/scikit-learn/scikit-learn/issues/16980
     target = _convert_container([b"a", b"b"], input_type)
     err_msg = (
-        "Labels are represented as bytes and are not supported. "
-        "Convert the labels to Python string or integral format."
+        "Support for labels represented as bytes is deprecated in v1.3 and will"
+        " error in v1.5. Convert the labels to a string or integer format."
     )
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.warns(FutureWarning, match=err_msg):
         type_of_target(target)

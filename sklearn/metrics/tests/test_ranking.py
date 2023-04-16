@@ -877,9 +877,12 @@ def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
     # Check that using bytes class labels raises an informative
     # error for any supported string dtype:
     labels = _convert_container([b"a", b"b"], labels_type)
+    classes = np.unique(labels)
+    classes_repr = ", ".join(repr(c) for c in classes)
     msg = (
-        "Labels are represented as bytes and are not supported. "
-        "Convert the labels to Python string or integral format."
+        f"y_true takes value in {{{classes_repr}}} and pos_label is not "
+        "specified: either make y_true take value in {0, 1} or "
+        "{-1, 1} or pass pos_label explicitly."
     )
     with pytest.raises(ValueError, match=msg):
         curve_func(labels, [0.0, 1.0])
@@ -1209,7 +1212,7 @@ def test_score_scale_invariance():
 
 
 @pytest.mark.parametrize(
-    "y_true,y_score,expected_fpr,expected_fnr",
+    "y_true, y_score, expected_fpr, expected_fnr",
     [
         ([0, 0, 1], [0, 0.5, 1], [0], [0]),
         ([0, 0, 1], [0, 0.25, 0.5], [0], [0]),

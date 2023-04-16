@@ -479,6 +479,13 @@ Changelog
   accepts sparse metrics.
   :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
 
+:mod:`sklearn.multiclass`
+..............................
+
+- |Enhancement| Raise informative warning message in :func:`type_of_target` when
+  represented as bytes.
+  :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
