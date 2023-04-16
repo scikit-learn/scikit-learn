@@ -1,34 +1,29 @@
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: cdivision=True
-#
 # Author: Thomas Moreau <thomas.moreau.2010@gmail.com>
 # Author: Olivier Grisel <olivier.grisel@ensta.fr>
 
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.stdio cimport printf
 from libc.stdint cimport SIZE_MAX
 
-from ..tree._utils cimport safe_realloc, sizet_ptr_to_ndarray
-from ..utils import check_array
+from ..tree._utils cimport safe_realloc
 
 import numpy as np
-cimport numpy as np
-np.import_array()
+cimport numpy as cnp
+cnp.import_array()
 
 cdef extern from "math.h":
     float fabsf(float x) nogil
 
 cdef extern from "numpy/arrayobject.h":
-    object PyArray_NewFromDescr(PyTypeObject* subtype, np.dtype descr,
-                                int nd, np.npy_intp* dims,
-                                np.npy_intp* strides,
+    object PyArray_NewFromDescr(PyTypeObject* subtype, cnp.dtype descr,
+                                int nd, cnp.npy_intp* dims,
+                                cnp.npy_intp* strides,
                                 void* data, int flags, object obj)
-    int PyArray_SetBaseObject(np.ndarray arr, PyObject* obj)
+    int PyArray_SetBaseObject(cnp.ndarray arr, PyObject* obj)
 
 # Build the corresponding numpy dtype for Cell.
 # This works by casting `dummy` to an array of Cell of length 1, which numpy
@@ -57,7 +52,7 @@ cdef class _QuadTree:
         # Parameters of the tree
         self.n_dimensions = n_dimensions
         self.verbose = verbose
-        self.n_cells_per_cell = 2 ** self.n_dimensions
+        self.n_cells_per_cell = <int> (2 ** self.n_dimensions)
 
         # Inner structures
         self.max_depth = 0
@@ -73,11 +68,13 @@ cdef class _QuadTree:
 
     property cumulative_size:
         def __get__(self):
-            return self._get_cell_ndarray()['cumulative_size'][:self.cell_count]
+            cdef Cell[:] cell_mem_view = self._get_cell_ndarray()
+            return cell_mem_view.base['cumulative_size'][:self.cell_count]
 
     property leafs:
         def __get__(self):
-            return self._get_cell_ndarray()['is_leaf'][:self.cell_count]
+            cdef Cell[:] cell_mem_view = self._get_cell_ndarray()
+            return cell_mem_view.base['is_leaf'][:self.cell_count]
 
     def build_tree(self, X):
         """Build a tree from an array of points X."""
@@ -117,10 +114,9 @@ cdef class _QuadTree:
         self._resize(capacity=self.cell_count)
 
     cdef int insert_point(self, DTYPE_t[3] point, SIZE_t point_index,
-                          SIZE_t cell_id=0) nogil except -1:
+                          SIZE_t cell_id=0) except -1 nogil:
         """Insert a point in the QuadTree."""
         cdef int ax
-        cdef DTYPE_t n_frac
         cdef SIZE_t selected_child
         cdef Cell* cell = &self.cells[cell_id]
         cdef SIZE_t n_point = cell.cumulative_size
@@ -183,7 +179,7 @@ cdef class _QuadTree:
     # XXX: This operation is not Thread safe
     cdef SIZE_t _insert_point_in_new_child(self, DTYPE_t[3] point, Cell* cell,
                                           SIZE_t point_index, SIZE_t size=1
-                                          ) nogil:
+                                          ) noexcept nogil:
         """Create a child of cell which will contain point."""
 
         # Local variable definition
@@ -252,7 +248,7 @@ cdef class _QuadTree:
         return cell_id
 
 
-    cdef bint _is_duplicate(self, DTYPE_t[3] point1, DTYPE_t[3] point2) nogil:
+    cdef bint _is_duplicate(self, DTYPE_t[3] point1, DTYPE_t[3] point2) noexcept nogil:
         """Check if the two given points are equals."""
         cdef int i
         cdef bint res = True
@@ -262,7 +258,7 @@ cdef class _QuadTree:
         return res
 
 
-    cdef SIZE_t _select_child(self, DTYPE_t[3] point, Cell* cell) nogil:
+    cdef SIZE_t _select_child(self, DTYPE_t[3] point, Cell* cell) noexcept nogil:
         """Select the child of cell which contains the given query point."""
         cdef:
             int i
@@ -276,7 +272,7 @@ cdef class _QuadTree:
                 selected_child += 1
         return cell.children[selected_child]
 
-    cdef void _init_cell(self, Cell* cell, SIZE_t parent, SIZE_t depth) nogil:
+    cdef void _init_cell(self, Cell* cell, SIZE_t parent, SIZE_t depth) noexcept nogil:
         """Initialize a cell structure with some constants."""
         cell.parent = parent
         cell.is_leaf = True
@@ -287,7 +283,7 @@ cdef class _QuadTree:
             cell.children[i] = SIZE_MAX
 
     cdef void _init_root(self, DTYPE_t[3] min_bounds, DTYPE_t[3] max_bounds
-                         ) nogil:
+                         ) noexcept nogil:
         """Initialize the root node with the given space boundaries"""
         cdef:
             int i
@@ -306,7 +302,7 @@ cdef class _QuadTree:
         self.cell_count += 1
 
     cdef int _check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
-                                  ) nogil except -1:
+                                  ) except -1 nogil:
         """Check that the given point is in the cell boundaries."""
 
         if self.verbose >= 50:
@@ -356,7 +352,7 @@ cdef class _QuadTree:
                         child = self.cells[child_id]
                         n_points += child.cumulative_size
                         assert child.cell_id == child_id, (
-                            "Cell id not correctly initiliazed.")
+                            "Cell id not correctly initialized.")
                 if n_points != cell.cumulative_size:
                     raise ValueError(
                         "Cell {} is incoherent. Size={} but found {} points "
@@ -365,7 +361,7 @@ cdef class _QuadTree:
                                 n_points, cell.children))
 
         # Make sure that the number of point in the tree correspond to the
-        # cummulative size in root cell.
+        # cumulative size in root cell.
         if self.n_points != self.cells[0].cumulative_size:
             raise ValueError(
                 "QuadTree is incoherent. Size={} but found {} points "
@@ -374,7 +370,7 @@ cdef class _QuadTree:
 
     cdef long summarize(self, DTYPE_t[3] point, DTYPE_t* results,
                         float squared_theta=.5, SIZE_t cell_id=0, long idx=0
-                        ) nogil:
+                        ) noexcept nogil:
         """Summarize the tree compared to a query point.
 
         Input arguments
@@ -430,7 +426,7 @@ cdef class _QuadTree:
 
         # Check whether we can use this node as a summary
         # It's a summary node if the angular size as measured from the point
-        # is relatively small (w.r.t. to theta) or if it is a leaf node.
+        # is relatively small (w.r.t. theta) or if it is a leaf node.
         # If it can be summarized, we use the cell center of mass
         # Otherwise, we go a higher level of resolution and into the leaves.
         if cell.is_leaf or (
@@ -465,7 +461,7 @@ cdef class _QuadTree:
         return self._get_cell(query_pt, 0)
 
     cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=0
-                       ) nogil except -1:
+                       ) except -1 nogil:
         """guts of get_cell.
 
         Return the id of the cell containing the query point or raise ValueError
@@ -506,7 +502,7 @@ cdef class _QuadTree:
         d["cell_count"] = self.cell_count
         d["capacity"] = self.capacity
         d["n_points"] = self.n_points
-        d["cells"] = self._get_cell_ndarray()
+        d["cells"] = self._get_cell_ndarray().base
         return d
 
     def __setstate__(self, d):
@@ -531,36 +527,46 @@ cdef class _QuadTree:
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
 
-        cells = memcpy(self.cells, (<np.ndarray> cell_ndarray).data,
-                       self.capacity * sizeof(Cell))
+        cdef Cell[:] cell_mem_view = cell_ndarray
+        cells = memcpy(
+            pto=self.cells,
+            pfrom=&cell_mem_view[0],
+            size=self.capacity * sizeof(Cell),
+        )
 
 
     # Array manipulation methods, to convert it to numpy or to resize
     # self.cells array
 
-    cdef np.ndarray _get_cell_ndarray(self):
+    cdef Cell[:] _get_cell_ndarray(self):
         """Wraps nodes as a NumPy struct array.
 
         The array keeps a reference to this Tree, which manages the underlying
         memory. Individual fields are publicly accessible as properties of the
         Tree.
         """
-        cdef np.npy_intp shape[1]
-        shape[0] = <np.npy_intp> self.cell_count
-        cdef np.npy_intp strides[1]
+        cdef cnp.npy_intp shape[1]
+        shape[0] = <cnp.npy_intp> self.cell_count
+        cdef cnp.npy_intp strides[1]
         strides[0] = sizeof(Cell)
-        cdef np.ndarray arr
+        cdef Cell[:] arr
         Py_INCREF(CELL_DTYPE)
-        arr = PyArray_NewFromDescr(<PyTypeObject *> np.ndarray,
-                                   CELL_DTYPE, 1, shape,
-                                   strides, <void*> self.cells,
-                                   np.NPY_DEFAULT, None)
+        arr = PyArray_NewFromDescr(
+            subtype=<PyTypeObject *> np.ndarray,
+            descr=CELL_DTYPE,
+            nd=1,
+            dims=shape,
+            strides=strides,
+            data=<void*> self.cells,
+            flags=cnp.NPY_ARRAY_DEFAULT,
+            obj=None,
+        )
         Py_INCREF(self)
-        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
-            raise ValueError("Can't intialize array!")
+        if PyArray_SetBaseObject(arr.base, <PyObject*> self) < 0:
+            raise ValueError("Can't initialize array!")
         return arr
 
-    cdef int _resize(self, SIZE_t capacity) nogil except -1:
+    cdef int _resize(self, SIZE_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays.
 
@@ -572,7 +578,7 @@ cdef class _QuadTree:
             with gil:
                 raise MemoryError()
 
-    cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) nogil except -1:
+    cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) except -1 nogil:
         """Guts of _resize
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -581,7 +587,7 @@ cdef class _QuadTree:
         if capacity == self.capacity and self.cells != NULL:
             return 0
 
-        if capacity == SIZE_MAX:
+        if <size_t> capacity == SIZE_MAX:
             if self.capacity == 0:
                 capacity = 9  # default initial value to min
             else:

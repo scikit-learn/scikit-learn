@@ -1,6 +1,6 @@
 """Test  kddcup99 loader, if the data is available,
 or if specifically requested via environment variable
-(e.g. for travis cron job).
+(e.g. for CI jobs).
 
 Only 'percent10' mode is tested, as the full data
 is too big to use in unit-testing.
@@ -33,6 +33,7 @@ def test_fetch_kddcup99_percent10(
     assert data.target.shape == (n_samples,)
     if as_frame:
         assert data.frame.shape == (n_samples, n_features + 1)
+    assert data.DESCR.startswith(".. _kddcup99_dataset:")
 
 
 def test_fetch_kddcup99_return_X_y(fetch_kddcup99_fxt):

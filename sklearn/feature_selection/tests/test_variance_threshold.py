@@ -32,15 +32,6 @@ def test_variance_threshold():
         assert (len(data), 1) == X.shape
 
 
-@pytest.mark.parametrize("X", [data, csr_matrix(data)])
-def test_variance_negative(X):
-    """Test VarianceThreshold with negative variance."""
-    var_threshold = VarianceThreshold(threshold=-1.0)
-    msg = r"^Threshold must be non-negative. Got: -1.0$"
-    with pytest.raises(ValueError, match=msg):
-        var_threshold.fit(X)
-
-
 @pytest.mark.skipif(
     np.var(data2) == 0,
     reason=(
@@ -63,9 +54,9 @@ def test_zero_variance_floating_point_error():
 def test_variance_nan():
     arr = np.array(data, dtype=np.float64)
     # add single NaN and feature should still be included
-    arr[0, 0] = np.NaN
+    arr[0, 0] = np.nan
     # make all values in feature NaN and feature should be rejected
-    arr[:, 1] = np.NaN
+    arr[:, 1] = np.nan
 
     for X in [arr, csr_matrix(arr), csc_matrix(arr), bsr_matrix(arr)]:
         sel = VarianceThreshold().fit(X)

@@ -131,7 +131,7 @@ def test_rotg(dtype):
         if a == 0 and b == 0:
             c, s, r, z = (1, 0, 0, 0)
         else:
-            r = np.sqrt(a ** 2 + b ** 2) * (1 if roe >= 0 else -1)
+            r = np.sqrt(a**2 + b**2) * (1 if roe >= 0 else -1)
             c, s = a / r, b / r
             z = s if roe == a else (1 if c == 0 else 1 / c)
         return r, z, c, s

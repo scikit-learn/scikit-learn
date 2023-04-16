@@ -12,7 +12,7 @@ import errno
 from gzip import GzipFile
 import logging
 import os
-from os.path import dirname, exists, join
+from os.path import exists, join
 
 import numpy as np
 import joblib
@@ -21,6 +21,8 @@ from ._base import _fetch_remote
 from ._base import _convert_data_dataframe
 from . import get_data_home
 from ._base import RemoteFileMetadata
+from ._base import load_descr
+from ..utils._param_validation import StrOptions, validate_params
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
@@ -45,6 +47,18 @@ ARCHIVE_10_PERCENT = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
+@validate_params(
+    {
+        "subset": [StrOptions({"SA", "SF", "http", "smtp"}), None],
+        "data_home": [str, None],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "percent10": ["boolean"],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def fetch_kddcup99(
     *,
     subset=None,
@@ -80,6 +94,7 @@ def fetch_kddcup99(
     data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+
         .. versionadded:: 0.19
 
     shuffle : bool, default=False
@@ -132,6 +147,10 @@ def fetch_kddcup99(
             The names of the target columns
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of
+        shape (n_samples, n_features) with each row representing one
+        sample and each column representing the features. The second
+        ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
     """
@@ -202,9 +221,7 @@ def fetch_kddcup99(
     if shuffle:
         data, target = shuffle_method(data, target, random_state=random_state)
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "kddcup99.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("kddcup99.rst")
 
     frame = None
     if as_frame:
@@ -226,7 +243,6 @@ def fetch_kddcup99(
 
 
 def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=True):
-
     """Load the kddcup99 dataset, downloading it if necessary.
 
     Parameters

@@ -7,7 +7,7 @@ Related Projects
 Projects implementing the scikit-learn estimator API are encouraged to use
 the `scikit-learn-contrib template <https://github.com/scikit-learn-contrib/project-template>`_
 which facilitates best practices for testing and documenting estimators.
-The `scikit-learn-contrib GitHub organisation <https://github.com/scikit-learn-contrib/scikit-learn-contrib>`_
+The `scikit-learn-contrib GitHub organization <https://github.com/scikit-learn-contrib/scikit-learn-contrib>`_
 also accepts high-quality contributions of repositories conforming to this
 template.
 
@@ -45,10 +45,10 @@ enhance the functionality of scikit-learn's estimators.
   operators to design a machine learning pipeline, including data and feature
   preprocessors as well as the estimators. Works as a drop-in replacement for a
   scikit-learn estimator.
-  
+
 - `Featuretools <https://github.com/alteryx/featuretools>`_
-  A framework to perform automated feature engineering. It can be used for 
-  transforming temporal and relational datasets into feature matrices for 
+  A framework to perform automated feature engineering. It can be used for
+  transforming temporal and relational datasets into feature matrices for
   machine learning.
 
 - `Neuraxle <https://github.com/Neuraxio/Neuraxle>`_
@@ -66,6 +66,11 @@ enhance the functionality of scikit-learn's estimators.
 
 **Experimentation frameworks**
 
+- `Neptune <https://neptune.ai/>`_ Metadata store for MLOps,
+  built for teams that run a lot of experiments.‌ It gives you a single
+  place to log, store, display, organize, compare, and query all your
+  model building metadata.
+
 - `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
   organize, log and reproduce experiments
 
@@ -77,7 +82,7 @@ enhance the functionality of scikit-learn's estimators.
   wrapper around scikit-learn that makes it easy to run machine learning
   experiments with multiple learners and large feature sets.
 
-**Model inspection and visualisation**
+**Model inspection and visualization**
 
 - `dtreeviz <https://github.com/parrt/dtreeviz/>`_ A python library for
   decision tree visualization and model interpretation.
@@ -88,6 +93,11 @@ enhance the functionality of scikit-learn's estimators.
 
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes model visualization
   utilities.
+
+- `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_ 
+  Machine learning model evaluation made easy: plots, tables, HTML reports,
+  experiment tracking and Jupyter notebook analysis. Visual analysis, model
+  selection, evaluation and diagnostics.
 
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
   custom matplotlib visualizers for scikit-learn estimators to support visual feature
@@ -110,6 +120,10 @@ enhance the functionality of scikit-learn's estimators.
   Scikit-learn pipelines to `ONNX <https://onnx.ai/>`_ for interchange and
   prediction.
 
+- `skops.io <https://skops.readthedocs.io/en/stable/persistence.html>`__ A
+  persistence model more secure than pickle, which can be used instead of
+  pickle in most common cases.
+
 - `sklearn2pmml <https://github.com/jpmml/sklearn2pmml>`_
   Serialization of a wide variety of scikit-learn estimators and transformers
   into PMML with the help of `JPMML-SkLearn <https://github.com/jpmml/jpmml-sklearn>`_
@@ -118,9 +132,25 @@ enhance the functionality of scikit-learn's estimators.
 - `sklearn-porter <https://github.com/nok/sklearn-porter>`_
   Transpile trained scikit-learn models to C, Java, Javascript and others.
 
+- `m2cgen <https://github.com/BayesWitnesses/m2cgen>`_
+  A lightweight library which allows to transpile trained machine learning
+  models including many scikit-learn estimators into a native code of C, Java,
+  Go, R, PHP, Dart, Haskell, Rust and many other programming languages.
+
 - `treelite <https://treelite.readthedocs.io>`_
   Compiles tree-based ensemble models into C code for minimizing prediction
   latency.
+  
+**Model throughput**
+
+- `Intel(R) Extension for scikit-learn <https://github.com/intel/scikit-learn-intelex>`_
+  Mostly on high end Intel(R) hardware, accelerates some scikit-learn models
+  for both training and inference under certain circumstances. This project is
+  maintained by Intel(R) and scikit-learn's maintainers are not involved in the
+  development of this project. Also note that in some cases using the tools and
+  estimators under ``scikit-learn-intelex`` would give different results than
+  ``scikit-learn`` itself. If you encounter issues while using this project,
+  make sure you report potential issues in their respective repositories.
 
 
 Other estimators and tasks
@@ -133,7 +163,7 @@ and tasks.
 
 **Structured learning**
 
-- `tslearn <https://github.com/tslearn-team/tslearn>`_ A machine learning library for time series 
+- `tslearn <https://github.com/tslearn-team/tslearn>`_ A machine learning library for time series
   that offers tools for pre-processing and feature extraction as well as dedicated models for clustering, classification and regression.
 
 - `sktime <https://github.com/alan-turing-institute/sktime>`_ A scikit-learn compatible toolbox for machine learning with time series including time series classification/regression and (supervised/panel) forecasting.
@@ -151,6 +181,10 @@ and tasks.
   Linear-chain conditional random fields
   (`CRFsuite <http://www.chokkan.org/software/crfsuite/>`_ wrapper with
   sklearn-like API).
+
+- `skforecast <https://github.com/JoaquinAmatRodrigo/skforecast>`_ A python library
+  that eases using scikit-learn regressors as multi-step forecasters. It also works
+  with any regressor compatible with the scikit-learn API.
 
 **Deep neural networks etc.**
 
@@ -170,12 +204,17 @@ and tasks.
   Keras to interface it with scikit-learn. SciKeras is the successor
   of `tf.keras.wrappers.scikit_learn`.
 
+**Federated Learning**
+
+- `Flower <https://flower.dev/>`_ A friendly federated learning framework with a
+  unified approach that can federate any workload, any ML framework, and any programming language.
+
 **Broad scope**
 
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
   estimators as well as model visualization utilities.
 
-- `scikit-lego <https://github.com/koaning/scikit-lego>`_ A number of scikit-learn compatible 
+- `scikit-lego <https://github.com/koaning/scikit-lego>`_ A number of scikit-learn compatible
   custom transformers, models and metrics, focusing on solving practical industry tasks.
 
 **Other regression and classification**
@@ -270,7 +309,7 @@ Other packages useful for data analysis and machine learning.
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 
-- `PyMC <https://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
+- `PyMC <https://www.pymc.io/>`_ Bayesian statistical models and
   fitting algorithms.
 
 - `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
@@ -295,11 +334,13 @@ Recommendation Engine packages
 - `Spotlight <https://github.com/maciejkula/spotlight>`_ Pytorch-based
   implementation of deep recommender models.
 
-- `Surprise Lib <http://surpriselib.com/>`_ Library for explicit feedback
+- `Surprise Lib <https://surpriselib.com/>`_ Library for explicit feedback
   datasets.
 
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
+- `scikit-network <https://scikit-network.readthedocs.io/>`_ Machine learning on graphs.
 
 - `scikit-image <https://scikit-image.org/>`_ Image processing and computer
   vision in python.
@@ -320,7 +361,7 @@ Domain specific packages
 Translations of scikit-learn documentation
 ------------------------------------------
 
-Translation’s purpose is to ease reading and understanding in languages
+Translation's purpose is to ease reading and understanding in languages
 other than English. Its aim is to help people who do not understand English
 or have doubts about its interpretation. Additionally, some people prefer
 to read documentation in their native language, but please bear in mind that
@@ -337,9 +378,13 @@ and promote community efforts.
   (`source <https://github.com/apachecn/sklearn-doc-zh>`__)
 - `Persian translation <https://sklearn.ir/>`_
   (`source <https://github.com/mehrdad-dev/scikit-learn>`__)
+- `Spanish translation <https://qu4nt.github.io/sklearn-doc-es/>`_
+  (`source <https://github.com/qu4nt/sklearn-doc-es>`__)
+- `Korean translation <https://panda5176.github.io/scikit-learn-korean/>`_
+  (`source <https://github.com/panda5176/scikit-learn-korean>`__)
+
 
 .. rubric:: Footnotes
 
 .. [#f1] following `linux documentation Disclaimer
    <https://www.kernel.org/doc/html/latest/translations/index.html#disclaimer>`__
-

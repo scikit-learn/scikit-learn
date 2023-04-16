@@ -117,6 +117,26 @@ def test_label_binarizer_set_label_encoding():
     assert_array_equal(lb.inverse_transform(got), inp)
 
 
+@pytest.mark.parametrize("dtype", ["Int64", "Float64", "boolean"])
+@pytest.mark.parametrize("unique_first", [True, False])
+def test_label_binarizer_pandas_nullable(dtype, unique_first):
+    """Checks that LabelBinarizer works with pandas nullable dtypes.
+
+    Non-regression test for gh-25637.
+    """
+    pd = pytest.importorskip("pandas")
+
+    y_true = pd.Series([1, 0, 0, 1, 0, 1, 1, 0, 1], dtype=dtype)
+    if unique_first:
+        # Calling unique creates a pandas array which has a different interface
+        # compared to a pandas Series. Specifically, pandas arrays do not have "iloc".
+        y_true = y_true.unique()
+    lb = LabelBinarizer().fit(y_true)
+    y_out = lb.transform([1, 0])
+
+    assert_array_equal(y_out, [[1], [0]])
+
+
 @ignore_warnings
 def test_label_binarizer_errors():
     # Check that invalid arguments yield ValueError
@@ -124,25 +144,37 @@ def test_label_binarizer_errors():
     lb = LabelBinarizer().fit(one_class)
 
     multi_label = [(2, 3), (0,), (0, 2)]
-    with pytest.raises(ValueError):
+    err_msg = "You appear to be using a legacy multi-label data representation."
+    with pytest.raises(ValueError, match=err_msg):
         lb.transform(multi_label)
 
     lb = LabelBinarizer()
-    with pytest.raises(ValueError):
+    err_msg = "This LabelBinarizer instance is not fitted yet"
+    with pytest.raises(ValueError, match=err_msg):
         lb.transform([])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=err_msg):
         lb.inverse_transform([])
 
-    with pytest.raises(ValueError):
-        LabelBinarizer(neg_label=2, pos_label=1)
-    with pytest.raises(ValueError):
-        LabelBinarizer(neg_label=2, pos_label=2)
-
-    with pytest.raises(ValueError):
-        LabelBinarizer(neg_label=1, pos_label=2, sparse_output=True)
+    input_labels = [0, 1, 0, 1]
+    err_msg = "neg_label=2 must be strictly less than pos_label=1."
+    lb = LabelBinarizer(neg_label=2, pos_label=1)
+    with pytest.raises(ValueError, match=err_msg):
+        lb.fit(input_labels)
+    err_msg = "neg_label=2 must be strictly less than pos_label=2."
+    lb = LabelBinarizer(neg_label=2, pos_label=2)
+    with pytest.raises(ValueError, match=err_msg):
+        lb.fit(input_labels)
+    err_msg = (
+        "Sparse binarization is only supported with non zero pos_label and zero "
+        "neg_label, got pos_label=2 and neg_label=1"
+    )
+    lb = LabelBinarizer(neg_label=1, pos_label=2, sparse_output=True)
+    with pytest.raises(ValueError, match=err_msg):
+        lb.fit(input_labels)
 
     # Fail on y_type
-    with pytest.raises(ValueError):
+    err_msg = "foo format is not supported"
+    with pytest.raises(ValueError, match=err_msg):
         _inverse_binarize_thresholding(
             y=csr_matrix([[1, 2], [2, 1]]),
             output_type="foo",
@@ -152,11 +184,13 @@ def test_label_binarizer_errors():
 
     # Sequence of seq type should raise ValueError
     y_seq_of_seqs = [[], [1, 2], [3], [0, 1, 3], [2]]
-    with pytest.raises(ValueError):
+    err_msg = "You appear to be using a legacy multi-label data representation"
+    with pytest.raises(ValueError, match=err_msg):
         LabelBinarizer().fit_transform(y_seq_of_seqs)
 
     # Fail on the number of classes
-    with pytest.raises(ValueError):
+    err_msg = "The number of class is not equal to the number of dimension of y."
+    with pytest.raises(ValueError, match=err_msg):
         _inverse_binarize_thresholding(
             y=csr_matrix([[1, 2], [2, 1]]),
             output_type="foo",
@@ -165,7 +199,8 @@ def test_label_binarizer_errors():
         )
 
     # Fail on the dimension of 'binary'
-    with pytest.raises(ValueError):
+    err_msg = "output_type='binary', but y.shape"
+    with pytest.raises(ValueError, match=err_msg):
         _inverse_binarize_thresholding(
             y=np.array([[1, 2, 3], [2, 1, 3]]),
             output_type="binary",
@@ -174,9 +209,10 @@ def test_label_binarizer_errors():
         )
 
     # Fail on multioutput data
-    with pytest.raises(ValueError):
+    err_msg = "Multioutput target data is not supported with label binarization"
+    with pytest.raises(ValueError, match=err_msg):
         LabelBinarizer().fit(np.array([[1, 3], [2, 1]]))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=err_msg):
         label_binarize(np.array([[1, 3], [2, 1]]), classes=[1, 2, 3])
 
 
@@ -627,3 +663,15 @@ def test_inverse_binarize_multiclass():
         csr_matrix([[0, 1, 0], [-1, 0, -1], [0, 0, 0]]), np.arange(3)
     )
     assert_array_equal(got, np.array([1, 1, 0]))
+
+
+def test_nan_label_encoder():
+    """Check that label encoder encodes nans in transform.
+
+    Non-regression test for #22628.
+    """
+    le = LabelEncoder()
+    le.fit(["a", "a", "b", np.nan])
+
+    y_trans = le.transform([np.nan])
+    assert_array_equal(y_trans, [2])

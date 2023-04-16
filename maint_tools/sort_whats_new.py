@@ -6,7 +6,7 @@ import sys
 import re
 from collections import defaultdict
 
-LABEL_ORDER = ["MajorFeature", "Feature", "Enhancement", "Efficiency", "Fix", "API"]
+LABEL_ORDER = ["MajorFeature", "Feature", "Efficiency", "Enhancement", "Fix", "API"]
 
 
 def entry_sort_key(s):

@@ -1,6 +1,6 @@
 """Test the california_housing loader, if the data is available,
 or if specifically requested via environment variable
-(e.g. for travis cron job)."""
+(e.g. for CI jobs)."""
 import pytest
 
 from sklearn.datasets.tests.test_common import check_return_X_y
@@ -11,6 +11,7 @@ def test_fetch(fetch_california_housing_fxt):
     data = fetch_california_housing_fxt()
     assert (20640, 8) == data.data.shape
     assert (20640,) == data.target.shape
+    assert data.DESCR.startswith(".. _california_housing_dataset:")
 
     # test return_X_y option
     fetch_func = partial(fetch_california_housing_fxt)

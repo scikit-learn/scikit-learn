@@ -34,8 +34,8 @@ standard deviation.
 
 For instance, many elements used in the objective function of
 a learning algorithm (such as the RBF kernel of Support Vector
-Machines or the l1 and l2 regularizers of linear models) assume that
-all features are centered around zero and have variance in the same
+Machines or the l1 and l2 regularizers of linear models) may assume that
+all features are centered around zero or have variance in the same
 order. If a feature has a variance that is orders of magnitude larger
 than others, it might dominate the objective function and make the
 estimator unable to learn from other features correctly as expected.
@@ -537,8 +537,8 @@ scikit-learn estimators, as these expect continuous input, and would interpret
 the categories as being ordered, which is often not desired (i.e. the set of
 browsers was ordered arbitrarily).
 
-:class:`OrdinalEncoder` will also passthrough missing values that are
-indicated by `np.nan`.
+By default, :class:`OrdinalEncoder` will also passthrough missing values that
+are indicated by `np.nan`.
 
     >>> enc = preprocessing.OrdinalEncoder()
     >>> X = [['male'], ['female'], [np.nan], ['female']]
@@ -546,6 +546,32 @@ indicated by `np.nan`.
     array([[ 1.],
            [ 0.],
            [nan],
+           [ 0.]])
+
+:class:`OrdinalEncoder` provides a parameter `encoded_missing_value` to encode
+the missing values without the need to create a pipeline and using
+:class:`~sklearn.impute.SimpleImputer`.
+
+    >>> enc = preprocessing.OrdinalEncoder(encoded_missing_value=-1)
+    >>> X = [['male'], ['female'], [np.nan], ['female']]
+    >>> enc.fit_transform(X)
+    array([[ 1.],
+           [ 0.],
+           [-1.],
+           [ 0.]])
+
+The above processing is equivalent to the following pipeline::
+
+    >>> from sklearn.pipeline import Pipeline
+    >>> from sklearn.impute import SimpleImputer
+    >>> enc = Pipeline(steps=[
+    ...     ("encoder", preprocessing.OrdinalEncoder()),
+    ...     ("imputer", SimpleImputer(strategy="constant", fill_value=-1)),
+    ... ])
+    >>> enc.fit_transform(X)
+    array([[ 1.],
+           [ 0.],
+           [-1.],
            [ 0.]])
 
 Another possibility to convert categorical features to features that can be used
@@ -594,17 +620,19 @@ dataset::
     array([[1., 0., 0., 1., 0., 0., 1., 0., 0., 0.]])
 
 If there is a possibility that the training data might have missing categorical
-features, it can often be better to specify ``handle_unknown='ignore'`` instead
-of setting the ``categories`` manually as above. When
-``handle_unknown='ignore'`` is specified and unknown categories are encountered
-during transform, no error will be raised but the resulting one-hot encoded
-columns for this feature will be all zeros
-(``handle_unknown='ignore'`` is only supported for one-hot encoding)::
+features, it can often be better to specify
+`handle_unknown='infrequent_if_exist'` instead of setting the `categories`
+manually as above. When `handle_unknown='infrequent_if_exist'` is specified
+and unknown categories are encountered during transform, no error will be
+raised but the resulting one-hot encoded columns for this feature will be all
+zeros or considered as an infrequent category if enabled.
+(`handle_unknown='infrequent_if_exist'` is only supported for one-hot
+encoding)::
 
-    >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
+    >>> enc = preprocessing.OneHotEncoder(handle_unknown='infrequent_if_exist')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X)
-    OneHotEncoder(handle_unknown='ignore')
+    OneHotEncoder(handle_unknown='infrequent_if_exist')
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 0., 0., 0.]])
 
@@ -621,7 +649,8 @@ since co-linearity would cause the covariance matrix to be non-invertible::
     ...      ['female', 'from Europe', 'uses Firefox']]
     >>> drop_enc = preprocessing.OneHotEncoder(drop='first').fit(X)
     >>> drop_enc.categories_
-    [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object), array(['uses Firefox', 'uses Safari'], dtype=object)]
+    [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object),
+     array(['uses Firefox', 'uses Safari'], dtype=object)]
     >>> drop_enc.transform(X).toarray()
     array([[1., 1., 1.],
            [0., 0., 0.]])
@@ -634,7 +663,8 @@ categories. In this case, you can set the parameter `drop='if_binary'`.
     ...      ['female', 'Asia', 'Chrome']]
     >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary').fit(X)
     >>> drop_enc.categories_
-    [array(['female', 'male'], dtype=object), array(['Asia', 'Europe', 'US'], dtype=object), array(['Chrome', 'Firefox', 'Safari'], dtype=object)]
+    [array(['female', 'male'], dtype=object), array(['Asia', 'Europe', 'US'], dtype=object),
+     array(['Chrome', 'Firefox', 'Safari'], dtype=object)]
     >>> drop_enc.transform(X).toarray()
     array([[1., 0., 0., 1., 0., 0., 1.],
            [0., 0., 1., 0., 0., 1., 0.],
@@ -655,11 +685,11 @@ be encoded as all zeros::
 
 All the categories in `X_test` are unknown during transform and will be mapped
 to all zeros. This means that unknown categories will have the same mapping as
-the dropped category. :meth`OneHotEncoder.inverse_transform` will map all zeros
+the dropped category. :meth:`OneHotEncoder.inverse_transform` will map all zeros
 to the dropped category if a category is dropped and `None` if a category is
 not dropped::
 
-    >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary', sparse=False,
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary', sparse_output=False,
     ...                                        handle_unknown='ignore').fit(X)
     >>> X_test = [['unknown', 'America', 'IE']]
     >>> X_trans = drop_enc.transform(X_test)
@@ -698,6 +728,230 @@ separate categories::
 
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.
+
+.. _encoder_infrequent_categories:
+
+Infrequent categories
+---------------------
+
+:class:`OneHotEncoder` and :class:`OrdinalEncoder` support aggregating
+infrequent categories into a single output for each feature. The parameters to
+enable the gathering of infrequent categories are `min_frequency` and
+`max_categories`.
+
+1. `min_frequency` is either an  integer greater or equal to 1, or a float in
+   the interval `(0.0, 1.0)`. If `min_frequency` is an integer, categories with
+   a cardinality smaller than `min_frequency`  will be considered infrequent.
+   If `min_frequency` is a float, categories with a cardinality smaller than
+   this fraction of the total number of samples will be considered infrequent.
+   The default value is 1, which means every category is encoded separately.
+
+2. `max_categories` is either `None` or any integer greater than 1. This
+   parameter sets an upper limit to the number of output features for each
+   input feature. `max_categories` includes the feature that combines
+   infrequent categories.
+
+In the following example with :class:`OrdinalEncoder`, the categories `'dog' and
+'snake'` are considered infrequent::
+
+   >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 +
+   ...               ['snake'] * 3], dtype=object).T
+   >>> enc = preprocessing.OrdinalEncoder(min_frequency=6).fit(X)
+   >>> enc.infrequent_categories_
+   [array(['dog', 'snake'], dtype=object)]
+   >>> enc.transform(np.array([['dog'], ['cat'], ['rabbit'], ['snake']]))
+   array([[2.],
+          [0.],
+          [1.],
+          [2.]])
+
+:class:`OrdinalEncoder`'s `max_categories` do **not** take into account missing
+or unknown categories. Setting `unknown_value` or `encoded_missing_value` to an
+integer will increase the number of unique integer codes by one each. This can
+result in up to `max_categories + 2` integer codes. In the following example,
+"a" and "d" are considered infrequent and grouped together into a single
+category, "b" and "c" are their own categories, unknown values are encoded as 3
+and missing values are encoded as 4.
+
+  >>> X_train = np.array(
+  ...     [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3 + [np.nan]],
+  ...     dtype=object).T
+  >>> enc = preprocessing.OrdinalEncoder(
+  ...     handle_unknown="use_encoded_value", unknown_value=3,
+  ...     max_categories=3, encoded_missing_value=4)
+  >>> _ = enc.fit(X_train)
+  >>> X_test = np.array([["a"], ["b"], ["c"], ["d"], ["e"], [np.nan]], dtype=object)
+  >>> enc.transform(X_test)
+  array([[2.],
+         [0.],
+         [1.],
+         [2.],
+         [3.],
+         [4.]])
+
+Similarity, :class:`OneHotEncoder` can be configured to group together infrequent
+categories::
+
+   >>> enc = preprocessing.OneHotEncoder(min_frequency=6, sparse_output=False).fit(X)
+   >>> enc.infrequent_categories_
+   [array(['dog', 'snake'], dtype=object)]
+   >>> enc.transform(np.array([['dog'], ['cat'], ['rabbit'], ['snake']]))
+   array([[0., 0., 1.],
+          [1., 0., 0.],
+          [0., 1., 0.],
+          [0., 0., 1.]])
+
+By setting handle_unknown to `'infrequent_if_exist'`, unknown categories will
+be considered infrequent::
+
+   >>> enc = preprocessing.OneHotEncoder(
+   ...    handle_unknown='infrequent_if_exist', sparse_output=False, min_frequency=6)
+   >>> enc = enc.fit(X)
+   >>> enc.transform(np.array([['dragon']]))
+   array([[0., 0., 1.]])
+
+:meth:`OneHotEncoder.get_feature_names_out` uses 'infrequent' as the infrequent
+feature name::
+
+   >>> enc.get_feature_names_out()
+   array(['x0_cat', 'x0_rabbit', 'x0_infrequent_sklearn'], dtype=object)
+
+When `'handle_unknown'` is set to `'infrequent_if_exist'` and an unknown
+category is encountered in transform:
+
+1. If infrequent category support was not configured or there was no
+   infrequent category during training, the resulting one-hot encoded columns
+   for this feature will be all zeros. In the inverse transform, an unknown
+   category will be denoted as `None`.
+
+2. If there is an infrequent category during training, the unknown category
+   will be considered infrequent. In the inverse transform, 'infrequent_sklearn'
+   will be used to represent the infrequent category.
+
+Infrequent categories can also be configured using `max_categories`. In the
+following example, we set `max_categories=2` to limit the number of features in
+the output. This will result in all but the `'cat'` category to be considered
+infrequent, leading to two features, one for `'cat'` and one for infrequent
+categories - which are all the others::
+
+   >>> enc = preprocessing.OneHotEncoder(max_categories=2, sparse_output=False)
+   >>> enc = enc.fit(X)
+   >>> enc.transform([['dog'], ['cat'], ['rabbit'], ['snake']])
+   array([[0., 1.],
+          [1., 0.],
+          [0., 1.],
+          [0., 1.]])
+
+If both `max_categories` and `min_frequency` are non-default values, then
+categories are selected based on `min_frequency` first and `max_categories`
+categories are kept. In the following example, `min_frequency=4` considers
+only `snake` to be infrequent, but `max_categories=3`, forces `dog` to also be
+infrequent::
+
+   >>> enc = preprocessing.OneHotEncoder(min_frequency=4, max_categories=3, sparse_output=False)
+   >>> enc = enc.fit(X)
+   >>> enc.transform([['dog'], ['cat'], ['rabbit'], ['snake']])
+   array([[0., 0., 1.],
+          [1., 0., 0.],
+          [0., 1., 0.],
+          [0., 0., 1.]])
+
+If there are infrequent categories with the same cardinality at the cutoff of
+`max_categories`, then then the first `max_categories` are taken based on lexicon
+ordering. In the following example, "b", "c", and "d", have the same cardinality
+and with `max_categories=2`, "b" and "c" are infrequent because they have a higher
+lexicon order.
+
+   >>> X = np.asarray([["a"] * 20 + ["b"] * 10 + ["c"] * 10 + ["d"] * 10], dtype=object).T
+   >>> enc = preprocessing.OneHotEncoder(max_categories=3).fit(X)
+   >>> enc.infrequent_categories_
+   [array(['b', 'c'], dtype=object)]
+
+.. _target_encoder:
+
+Target Encoder
+--------------
+
+.. currentmodule:: sklearn.preprocessing
+
+The :class:`TargetEncoder` uses the target mean conditioned on the categorical
+feature for encoding unordered categories, i.e. nominal categories [PAR]_
+[MIC]_. This encoding scheme is useful with categorical features with high
+cardinality, where one-hot encoding would inflate the feature space making it
+more expensive for a downstream model to process. A classical example of high
+cardinality categories are location based such as zip code or region. For the
+binary classification target, the target encoding is given by:
+
+.. math::
+    S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_y}{n}
+
+where :math:`S_i` is the encoding for category :math:`i`, :math:`n_{iY}` is the
+number of observations with :math:`Y=1` with category :math:`i`, :math:`n_i` is
+the number of observations with category :math:`i`, :math:`n_y` is the number of
+observations with :math:`Y=1`, :math:`n` is the number of observations, and
+:math:`\lambda_i` is a shrinkage factor. The shrinkage factor is given by:
+
+.. math::
+    \lambda_i = \frac{n_i}{m + n_i}
+
+where :math:`m` is a smoothing factor, which is controlled with the `smooth`
+parameter in :class:`TargetEncoder`. Large smoothing factors will put more
+weight on the global mean. When `smooth="auto"`, the smoothing factor is
+computed as an empirical Bayes estimate: :math:`m=\sigma_c^2/\tau^2`, where
+:math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
+:math:`\tau^2` is the global variance of `y`.
+
+For continuous targets, the formulation is similar to binary classification:
+
+.. math::
+    S_i = \lambda_i\frac{\sum_{k\in L_i}y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}y_k}{n}
+
+where :math:`L_i` is the set of observations for which :math:`X=X_i` and
+:math:`n_i` is the cardinality of :math:`L_i`.
+
+:meth:`~TargetEncoder.fit_transform` internally relies on a cross validation
+scheme to prevent information from the target from leaking into the train-time
+representation for non-informative high-cardinality categorical variables and
+help prevent the downstream model to overfit spurious correlations. Note that
+as a result, `fit(X, y).transform(X)` does not equal `fit_transform(X, y)`. In
+:meth:`~TargetEncoder.fit_transform`, the training data is split into multiple
+folds and encodes each fold by using the encodings trained on the other folds.
+After cross validation is complete in :meth:`~TargetEncoder.fit_transform`, the
+target encoder learns one final encoding on the whole training set. This final
+encoding is used to encode categories in :meth:`~TargetEncoder.transform`. The
+following diagram shows the cross validation scheme in
+:meth:`~TargetEncoder.fit_transform` with the default `cv=5`:
+
+.. image:: ../images/target_encoder_cross_validation.svg
+   :width: 600
+   :align: center
+
+The :meth:`~TargetEncoder.fit` method does **not** use any cross validation
+schemes and learns one encoding on the entire training set, which is used to
+encode categories in :meth:`~TargetEncoder.transform`.
+:meth:`~TargetEncoder.fit`'s one encoding is the same as the final encoding
+learned in :meth:`~TargetEncoder.fit_transform`.
+
+.. note::
+  :class:`TargetEncoder` considers missing values, such as `np.nan` or `None`,
+  as another category and encodes them like any other category. Categories
+  that are not seen during `fit` are encoded with the target mean, i.e.
+  `target_mean_`.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`
+
+.. topic:: References
+
+  .. [MIC] :doi:`Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
+     categorical attributes in classification and prediction problems"
+     SIGKDD Explor. Newsl. 3, 1 (July 2001), 27–32. <10.1145/507533.507538>`
+
+  .. [PAR] :doi:`Pargent, F., Pfisterer, F., Thomas, J. et al. "Regularized target
+     encoding outperforms traditional methods in supervised machine learning with
+     high cardinality features" Comput Stat 37, 2671–2692 (2022)
+     <10.1007/s00180-022-01207-6>`
 
 .. _preprocessing_discretization:
 
@@ -973,17 +1227,16 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
+    * :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
 
 .. topic:: References:
 
-    * Eilers, P., & Marx, B. (1996). Flexible Smoothing with B-splines and
-      Penalties. Statist. Sci. 11 (1996), no. 2, 89--121.
-      `doi:10.1214/ss/1038425655 <https://doi.org/10.1214/ss/1038425655>`_
+    * Eilers, P., & Marx, B. (1996). :doi:`Flexible Smoothing with B-splines and
+      Penalties <10.1214/ss/1038425655>`. Statist. Sci. 11 (1996), no. 2, 89--121.
 
-    * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. A review of
-      spline function procedures in R. BMC Med Res Methodol 19, 46 (2019).
-      `doi:10.1186/s12874-019-0666-3
-      <https://doi.org/10.1186/s12874-019-0666-3>`_
+    * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. :doi:`A review of
+      spline function procedures in R <10.1186/s12874-019-0666-3>`.
+      BMC Med Res Methodol 19, 46 (2019).
 
 .. _function_transformer:
 
@@ -999,6 +1252,7 @@ a transformer that applies a log transformation in a pipeline, do::
     >>> from sklearn.preprocessing import FunctionTransformer
     >>> transformer = FunctionTransformer(np.log1p, validate=True)
     >>> X = np.array([[0, 1], [2, 3]])
+    >>> # Since FunctionTransformer is no-op during fit, we can call transform directly
     >>> transformer.transform(X)
     array([[0.        , 0.69314718],
            [1.09861229, 1.38629436]])
@@ -1014,4 +1268,5 @@ error with a ``filterwarnings``::
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
 to extract features from text data see
-:ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
+:ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py` and
+:ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`.

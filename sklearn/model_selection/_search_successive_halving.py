@@ -1,15 +1,16 @@
 from copy import deepcopy
 from math import ceil, floor, log
 from abc import abstractmethod
-from numbers import Integral
+from numbers import Integral, Real
 
 import numpy as np
-from ._search import _check_param_grid
 from ._search import BaseSearchCV
 from . import ParameterGrid, ParameterSampler
 from ..base import is_classifier
 from ._split import check_cv, _yields_constant_splits
+from ..metrics._scorer import get_scorer_names
 from ..utils import resample
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import _num_samples
 
@@ -51,7 +52,11 @@ def _top_k(results, k, itr):
         for a in (results["iter"], results["mean_test_score"], results["params"])
     )
     iter_indices = np.flatnonzero(iteration == itr)
-    sorted_indices = np.argsort(mean_test_score[iter_indices])
+    scores = mean_test_score[iter_indices]
+    # argsort() places NaNs at the end of the array so we move NaNs to the
+    # front of the array so the last `k` items are the those with the
+    # highest scores.
+    sorted_indices = np.roll(np.argsort(scores), np.count_nonzero(np.isnan(scores)))
     return np.array(params[iter_indices][sorted_indices[-k:]])
 
 
@@ -62,6 +67,25 @@ class BaseSuccessiveHalving(BaseSearchCV):
     Almost optimal exploration in multi-armed bandits, ICML 13
     Zohar Karnin, Tomer Koren, Oren Somekh
     """
+
+    _parameter_constraints: dict = {
+        **BaseSearchCV._parameter_constraints,
+        # overwrite `scoring` since multi-metrics are not supported
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "random_state": ["random_state"],
+        "max_resources": [
+            Interval(Integral, 0, None, closed="neither"),
+            StrOptions({"auto"}),
+        ],
+        "min_resources": [
+            Interval(Integral, 0, None, closed="neither"),
+            StrOptions({"exhaust", "smallest"}),
+        ],
+        "resource": [str],
+        "factor": [Interval(Real, 0, None, closed="neither")],
+        "aggressive_elimination": ["boolean"],
+    }
+    _parameter_constraints.pop("pre_dispatch")  # not used in this class
 
     def __init__(
         self,
@@ -100,16 +124,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.aggressive_elimination = aggressive_elimination
 
     def _check_input_parameters(self, X, y, groups):
-
-        if self.scoring is not None and not (
-            isinstance(self.scoring, str) or callable(self.scoring)
-        ):
-            raise ValueError(
-                "scoring parameter must be a string, "
-                "a callable or None. Multimetric scoring is not "
-                "supported."
-            )
-
         # We need to enforce that successive calls to cv.split() yield the same
         # splits: see https://github.com/scikit-learn/scikit-learn/issues/15149
         if not _yields_constant_splits(self._checked_cv_orig):
@@ -128,26 +142,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 f"by estimator {self.estimator.__class__.__name__}"
             )
 
-        if isinstance(self.max_resources, str) and self.max_resources != "auto":
-            raise ValueError(
-                "max_resources must be either 'auto' or a positive integer"
-            )
-        if self.max_resources != "auto" and (
-            not isinstance(self.max_resources, Integral) or self.max_resources <= 0
-        ):
-            raise ValueError(
-                "max_resources must be either 'auto' or a positive integer"
-            )
-
-        if self.min_resources not in ("smallest", "exhaust") and (
-            not isinstance(self.min_resources, Integral) or self.min_resources <= 0
-        ):
-            raise ValueError(
-                "min_resources must be either 'smallest', 'exhaust', "
-                "or a positive integer "
-                "no greater than max_resources."
-            )
-
         if isinstance(self, HalvingRandomSearchCV):
             if self.min_resources == self.n_candidates == "exhaust":
                 # for n_candidates=exhaust to work, we need to know what
@@ -155,12 +149,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 # know the actual number of candidates.
                 raise ValueError(
                     "n_candidates and min_resources cannot be both set to 'exhaust'."
-                )
-            if self.n_candidates != "exhaust" and (
-                not isinstance(self.n_candidates, Integral) or self.n_candidates <= 0
-            ):
-                raise ValueError(
-                    "n_candidates must be either 'exhaust' or a positive integer"
                 )
 
         self.min_resources_ = self.min_resources
@@ -184,7 +172,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         if self.max_resources_ == "auto":
             if not self.resource == "n_samples":
                 raise ValueError(
-                    "max_resources can only be 'auto' if resource='n_samples'"
+                    "resource can only be 'n_samples' when max_resources='auto'"
                 )
             self.max_resources_ = _num_samples(X)
 
@@ -200,11 +188,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 "an empty dataset X."
             )
 
-        if not isinstance(self.refit, bool):
-            raise ValueError(
-                f"refit is expected to be a boolean. Got {type(self.refit)} instead."
-            )
-
     @staticmethod
     def _select_best_index(refit, refit_metric, results):
         """Custom refit callable to return the index of the best candidate.
@@ -217,7 +200,15 @@ class BaseSuccessiveHalving(BaseSearchCV):
         """
         last_iter = np.max(results["iter"])
         last_iter_indices = np.flatnonzero(results["iter"] == last_iter)
-        best_idx = np.argmax(results["mean_test_score"][last_iter_indices])
+
+        test_scores = results["mean_test_score"][last_iter_indices]
+        # If all scores are NaNs there is no way to pick between them,
+        # so we (arbitrarily) declare the zero'th entry the best one
+        if np.isnan(test_scores).all():
+            best_idx = 0
+        else:
+            best_idx = np.nanargmax(test_scores)
+
         return last_iter_indices[best_idx]
 
     def fit(self, X, y=None, groups=None, **fit_params):
@@ -227,8 +218,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
         ----------
 
         X : array-like, shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_output), optional
             Target relative to X for classification or regression;
@@ -240,8 +231,14 @@ class BaseSuccessiveHalving(BaseSearchCV):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
         **fit_params : dict of string -> object
-            Parameters passed to the ``fit`` method of the estimator
+            Parameters passed to the ``fit`` method of the estimator.
+
+        Returns
+        -------
+        self : object
+            Instance of fitted estimator.
         """
+        self._validate_params()
         self._checked_cv_orig = check_cv(
             self.cv, y, classifier=is_classifier(self.estimator)
         )
@@ -284,7 +281,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             last_iteration = n_required_iterations - 1
             self.min_resources_ = max(
                 self.min_resources_,
-                self.max_resources_ // self.factor ** last_iteration,
+                self.max_resources_ // self.factor**last_iteration,
             )
 
         # n_possible_iterations is the number of iterations that we can
@@ -314,7 +311,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.n_candidates_ = []
 
         for itr in range(n_iterations):
-
             power = itr  # default
             if self.aggressive_elimination:
                 # this will set n_resources to the initial value (i.e. the
@@ -323,7 +319,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 # eliminated), and then go on as usual.
                 power = max(0, itr - n_required_iterations + n_possible_iterations)
 
-            n_resources = int(self.factor ** power * self.min_resources_)
+            n_resources = int(self.factor**power * self.min_resources_)
             # guard, probably not needed
             n_resources = min(n_resources, self.max_resources_)
             self.n_resources_.append(n_resources)
@@ -410,7 +406,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     Parameters
     ----------
-    estimator : estimator object.
+    estimator : estimator object
         This is assumed to implement the scikit-learn estimator interface.
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
@@ -496,7 +492,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             deactivating shuffling (`shuffle=False`), or by setting the
             `cv`'s `random_state` parameter to an integer.
 
-    scoring : string, callable, or None, default=None
+    scoring : str, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
@@ -513,7 +509,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``
+        step, which will always raise the error. Default is ``np.nan``.
 
     return_train_score : bool, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -582,8 +578,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``. It contains many informations for
-        analysing the results of a search.
+        imported into a pandas ``DataFrame``. It contains lots of information
+        for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
 
@@ -626,10 +622,20 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         the underlying estimator is a classifier.
 
     n_features_in_ : int
-        Number of features seen during :term:`fit`. Only defined if the
-        underlying estimator exposes such an attribute when fit.
+        Number of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `n_features_in_` when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `feature_names_in_` when fit.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -640,6 +646,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     -----
     The parameters selected are those that maximize the score of the held-out
     data, according to the scoring parameter.
+
+    All parameter combinations scored with a NaN will share the lowest rank.
 
     Examples
     --------
@@ -662,6 +670,11 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     """
 
     _required_parameters = ["estimator", "param_grid"]
+
+    _parameter_constraints: dict = {
+        **BaseSuccessiveHalving._parameter_constraints,
+        "param_grid": [dict, list],
+    }
 
     def __init__(
         self,
@@ -699,7 +712,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             aggressive_elimination=aggressive_elimination,
         )
         self.param_grid = param_grid
-        _check_param_grid(self.param_grid)
 
     def _generate_candidate_params(self):
         return ParameterGrid(self.param_grid)
@@ -730,7 +742,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     Parameters
     ----------
-    estimator : estimator object.
+    estimator : estimator object
         This is assumed to implement the scikit-learn estimator interface.
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
@@ -741,7 +753,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
 
-    n_candidates : int, default='exhaust'
+    n_candidates : "exhaust" or int, default="exhaust"
         The number of candidate parameters to sample, at the first
         iteration. Using 'exhaust' will sample enough candidates so that the
         last iteration uses as many resources as possible, based on
@@ -822,7 +834,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
             deactivating shuffling (`shuffle=False`), or by setting the
             `cv`'s `random_state` parameter to an integer.
 
-    scoring : string, callable, or None, default=None
+    scoring : str, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
@@ -839,7 +851,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``
+        step, which will always raise the error. Default is ``np.nan``.
 
     return_train_score : bool, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -910,8 +922,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``. It contains many informations for
-        analysing the results of a search.
+        imported into a pandas ``DataFrame``. It contains lots of information
+        for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
 
@@ -954,10 +966,20 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         the underlying estimator is a classifier.
 
     n_features_in_ : int
-        Number of features seen during :term:`fit`. Only defined if the
-        underlying estimator exposes such an attribute when fit.
+        Number of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `n_features_in_` when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `feature_names_in_` when fit.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -969,6 +991,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     The parameters selected are those that maximize the score of the held-out
     data, according to the scoring parameter.
 
+    All parameter combinations scored with a NaN will share the lowest rank.
+
     Examples
     --------
 
@@ -977,6 +1001,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     >>> from sklearn.experimental import enable_halving_search_cv  # noqa
     >>> from sklearn.model_selection import HalvingRandomSearchCV
     >>> from scipy.stats import randint
+    >>> import numpy as np
     ...
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = RandomForestClassifier(random_state=0)
@@ -993,6 +1018,15 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     """
 
     _required_parameters = ["estimator", "param_distributions"]
+
+    _parameter_constraints: dict = {
+        **BaseSuccessiveHalving._parameter_constraints,
+        "param_distributions": [dict],
+        "n_candidates": [
+            Interval(Integral, 0, None, closed="neither"),
+            StrOptions({"exhaust"}),
+        ],
+    }
 
     def __init__(
         self,

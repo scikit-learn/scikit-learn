@@ -22,7 +22,7 @@ from datetime import datetime
 scikit_classifier_results = []
 scikit_regressor_results = []
 
-mu_second = 0.0 + 10 ** 6  # number of microseconds in a second
+mu_second = 0.0 + 10**6  # number of microseconds in a second
 
 
 def bench_scikit_tree_classifier(X, Y):
@@ -60,7 +60,6 @@ def bench_scikit_tree_regressor(X, Y):
 
 
 if __name__ == "__main__":
-
     print("============================================")
     print("Warning: this is going to take a looong time")
     print("============================================")

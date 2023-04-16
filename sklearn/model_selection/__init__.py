@@ -32,6 +32,8 @@ from ._search import RandomizedSearchCV
 from ._search import ParameterGrid
 from ._search import ParameterSampler
 
+from ._plot import LearningCurveDisplay
+
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
     # TODO: remove this check once the estimator is no longer experimental.
@@ -68,7 +70,20 @@ __all__ = [
     "cross_val_score",
     "cross_validate",
     "learning_curve",
+    "LearningCurveDisplay",
     "permutation_test_score",
     "train_test_split",
     "validation_curve",
 ]
+
+
+# TODO: remove this check once the estimator is no longer experimental.
+def __getattr__(name):
+    if name in {"HalvingGridSearchCV", "HalvingRandomSearchCV"}:
+        raise ImportError(
+            f"{name} is experimental and the API might change without any "
+            "deprecation cycle. To use it, you need to explicitly import "
+            "enable_halving_search_cv:\n"
+            "from sklearn.experimental import enable_halving_search_cv"
+        )
+    raise AttributeError(f"module {__name__} has no attribute {name}")

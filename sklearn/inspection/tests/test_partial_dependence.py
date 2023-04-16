@@ -1,6 +1,7 @@
 """
 Testing for the partial dependence module.
 """
+import warnings
 
 import numpy as np
 import pytest
@@ -64,7 +65,6 @@ multioutput_regression_data = (
 iris = load_iris()
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "Estimator, method, data",
     [
@@ -84,7 +84,7 @@ iris = load_iris()
 )
 @pytest.mark.parametrize("grid_resolution", (5, 10))
 @pytest.mark.parametrize("features", ([1], [1, 2]))
-@pytest.mark.parametrize("kind", ("legacy", "average", "individual", "both"))
+@pytest.mark.parametrize("kind", ("average", "individual", "both"))
 def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
     # Check that partial_dependence has consistent output shape for different
     # kinds of estimators:
@@ -93,6 +93,8 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
     # - multi-task regressors
 
     est = Estimator()
+    if hasattr(est, "n_estimators"):
+        est.set_params(n_estimators=2)  # speed-up computations
 
     # n_target corresponds to the number of classes (1 for binary classif) or
     # the number of tasks / outputs in multi task settings. It's equal to 1 for
@@ -109,8 +111,7 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
         kind=kind,
         grid_resolution=grid_resolution,
     )
-    # FIXME: Remove 'legacy' support in 1.1
-    pdp, axes = result if kind == "legacy" else (result, result["values"])
+    pdp, axes = result, result["grid_values"]
 
     expected_pdp_shape = (n_targets, *[grid_resolution for _ in range(len(features))])
     expected_ice_shape = (
@@ -118,9 +119,7 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
         n_instances,
         *[grid_resolution for _ in range(len(features))],
     )
-    if kind == "legacy":
-        assert pdp.shape == expected_pdp_shape
-    elif kind == "average":
+    if kind == "average":
         assert pdp.average.shape == expected_pdp_shape
     elif kind == "individual":
         assert pdp.individual.shape == expected_ice_shape
@@ -140,8 +139,9 @@ def test_grid_from_X():
     # the unique values instead of the percentiles)
     percentiles = (0.05, 0.95)
     grid_resolution = 100
+    is_categorical = [False, False]
     X = np.asarray([[1, 2], [3, 4]])
-    grid, axes = _grid_from_X(X, percentiles, grid_resolution)
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution)
     assert_array_equal(grid, [[1, 2], [1, 4], [3, 2], [3, 4]])
     assert_array_equal(axes, X.T)
 
@@ -152,7 +152,9 @@ def test_grid_from_X():
 
     # n_unique_values > grid_resolution
     X = rng.normal(size=(20, 2))
-    grid, axes = _grid_from_X(X, percentiles, grid_resolution=grid_resolution)
+    grid, axes = _grid_from_X(
+        X, percentiles, is_categorical, grid_resolution=grid_resolution
+    )
     assert grid.shape == (grid_resolution * grid_resolution, X.shape[1])
     assert np.asarray(axes).shape == (2, grid_resolution)
 
@@ -160,11 +162,64 @@ def test_grid_from_X():
     n_unique_values = 12
     X[n_unique_values - 1 :, 0] = 12345
     rng.shuffle(X)  # just to make sure the order is irrelevant
-    grid, axes = _grid_from_X(X, percentiles, grid_resolution=grid_resolution)
+    grid, axes = _grid_from_X(
+        X, percentiles, is_categorical, grid_resolution=grid_resolution
+    )
     assert grid.shape == (n_unique_values * grid_resolution, X.shape[1])
     # axes is a list of arrays of different shapes
     assert axes[0].shape == (n_unique_values,)
     assert axes[1].shape == (grid_resolution,)
+
+
+@pytest.mark.parametrize(
+    "grid_resolution",
+    [
+        2,  # since n_categories > 2, we should not use quantiles resampling
+        100,
+    ],
+)
+def test_grid_from_X_with_categorical(grid_resolution):
+    """Check that `_grid_from_X` always sample from categories and does not
+    depend from the percentiles.
+    """
+    pd = pytest.importorskip("pandas")
+    percentiles = (0.05, 0.95)
+    is_categorical = [True]
+    X = pd.DataFrame({"cat_feature": ["A", "B", "C", "A", "B", "D", "E"]})
+    grid, axes = _grid_from_X(
+        X, percentiles, is_categorical, grid_resolution=grid_resolution
+    )
+    assert grid.shape == (5, X.shape[1])
+    assert axes[0].shape == (5,)
+
+
+@pytest.mark.parametrize("grid_resolution", [3, 100])
+def test_grid_from_X_heterogeneous_type(grid_resolution):
+    """Check that `_grid_from_X` always sample from categories and does not
+    depend from the percentiles.
+    """
+    pd = pytest.importorskip("pandas")
+    percentiles = (0.05, 0.95)
+    is_categorical = [True, False]
+    X = pd.DataFrame(
+        {
+            "cat": ["A", "B", "C", "A", "B", "D", "E", "A", "B", "D"],
+            "num": [1, 1, 1, 2, 5, 6, 6, 6, 6, 8],
+        }
+    )
+    nunique = X.nunique()
+
+    grid, axes = _grid_from_X(
+        X, percentiles, is_categorical, grid_resolution=grid_resolution
+    )
+    if grid_resolution == 3:
+        assert grid.shape == (15, 2)
+        assert axes[0].shape[0] == nunique["num"]
+        assert axes[1].shape[0] == grid_resolution
+    else:
+        assert grid.shape == (25, 2)
+        assert axes[0].shape[0] == nunique["cat"]
+        assert axes[1].shape[0] == nunique["cat"]
 
 
 @pytest.mark.parametrize(
@@ -181,8 +236,9 @@ def test_grid_from_X():
 )
 def test_grid_from_X_error(grid_resolution, percentiles, err_msg):
     X = np.asarray([[1, 2], [3, 4]])
+    is_categorical = [False]
     with pytest.raises(ValueError, match=err_msg):
-        _grid_from_X(X, grid_resolution=grid_resolution, percentiles=percentiles)
+        _grid_from_X(X, percentiles, is_categorical, grid_resolution)
 
 
 @pytest.mark.parametrize("target_feature", range(5))
@@ -381,7 +437,7 @@ def test_partial_dependence_easy_target(est, power):
         est, features=[target_variable], X=X, grid_resolution=1000, kind="average"
     )
 
-    new_X = pdp["values"][0].reshape(-1, 1)
+    new_X = pdp["grid_values"][0].reshape(-1, 1)
     new_y = pdp["average"][0]
     # add polynomial features if needed
     new_X = PolynomialFeatures(degree=power).fit_transform(new_X)
@@ -431,7 +487,7 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
     "estimator, params, err_msg",
     [
         (
-            KMeans(),
+            KMeans(random_state=0, n_init="auto"),
             {"features": [0]},
             "'estimator' must be a fitted regressor or classifier",
         ),
@@ -601,7 +657,7 @@ def test_partial_dependence_sample_weight():
 
     pdp = partial_dependence(clf, X, features=[1], kind="average")
 
-    assert np.corrcoef(pdp["average"], pdp["values"])[0, 1] > 0.99
+    assert np.corrcoef(pdp["average"], pdp["grid_values"])[0, 1] > 0.99
 
 
 def test_hist_gbdt_sw_not_supported():
@@ -639,8 +695,8 @@ def test_partial_dependence_pipeline():
     )
     assert_allclose(pdp_pipe["average"], pdp_clf["average"])
     assert_allclose(
-        pdp_pipe["values"][0],
-        pdp_clf["values"][0] * scaler.scale_[features] + scaler.mean_[features],
+        pdp_pipe["grid_values"][0],
+        pdp_clf["grid_values"][0] * scaler.scale_[features] + scaler.mean_[features],
     )
 
 
@@ -708,11 +764,11 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
     if preprocessor is not None:
         scaler = preprocessor.named_transformers_["standardscaler"]
         assert_allclose(
-            pdp_pipe["values"][1],
-            pdp_clf["values"][1] * scaler.scale_[1] + scaler.mean_[1],
+            pdp_pipe["grid_values"][1],
+            pdp_clf["grid_values"][1] * scaler.scale_[1] + scaler.mean_[1],
         )
     else:
-        assert_allclose(pdp_pipe["values"][1], pdp_clf["values"][1])
+        assert_allclose(pdp_pipe["grid_values"][1], pdp_clf["grid_values"][1])
 
 
 @pytest.mark.parametrize(
@@ -743,7 +799,7 @@ def test_partial_dependence_feature_type(features, expected_pd_shape):
         pipe, df, features=features, grid_resolution=10, kind="average"
     )
     assert pdp_pipe["average"].shape == expected_pd_shape
-    assert len(pdp_pipe["values"]) == len(pdp_pipe["average"].shape) - 1
+    assert len(pdp_pipe["grid_values"]) == len(pdp_pipe["average"].shape) - 1
 
 
 @pytest.mark.parametrize(
@@ -785,14 +841,45 @@ def test_kind_average_and_average_of_individual(Estimator, data):
     assert_allclose(avg_ind, pdp_avg["average"])
 
 
-def test_warning_for_kind_legacy():
+# TODO(1.5): Remove when bunch values is deprecated in 1.5
+def test_partial_dependence_bunch_values_deprecated():
+    """Test that deprecation warning is raised when values is accessed."""
+
     est = LogisticRegression()
-    (X, y), n_targets = binary_classification_data
+    (X, y), _ = binary_classification_data
     est.fit(X, y)
 
-    err_msg = "A Bunch will be returned in place of 'predictions' from version 1.1"
-    with pytest.warns(FutureWarning, match=err_msg):
-        partial_dependence(est, X=X, features=[1, 2])
+    pdp_avg = partial_dependence(est, X=X, features=[1, 2], kind="average")
 
-    with pytest.warns(FutureWarning, match=err_msg):
-        partial_dependence(est, X=X, features=[1, 2], kind="legacy")
+    msg = (
+        "Key: 'values', is deprecated in 1.3 and will be "
+        "removed in 1.5. Please use 'grid_values' instead"
+    )
+
+    with warnings.catch_warnings():
+        # Does not raise warnings with "grid_values"
+        warnings.simplefilter("error", FutureWarning)
+        grid_values = pdp_avg["grid_values"]
+
+    with pytest.warns(FutureWarning, match=msg):
+        # Warns for "values"
+        values = pdp_avg["values"]
+
+    # "values" and "grid_values" are the same object
+    assert values is grid_values
+
+
+def test_mixed_type_categorical():
+    """Check that we raise a proper error when a column has mixed types and
+    the sorting of `np.unique` will fail."""
+    X = np.array(["A", "B", "C", np.nan], dtype=object).reshape(-1, 1)
+    y = np.array([0, 1, 0, 1])
+
+    from sklearn.preprocessing import OrdinalEncoder
+
+    clf = make_pipeline(
+        OrdinalEncoder(encoded_missing_value=-1),
+        LogisticRegression(),
+    ).fit(X, y)
+    with pytest.raises(ValueError, match="The column #0 contains mixed data types"):
+        partial_dependence(clf, X, features=[0])

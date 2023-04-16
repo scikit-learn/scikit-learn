@@ -2453,7 +2453,6 @@ model* train(const problem *prob, const parameter *param, BlasFunctions *blas_fu
 	int l = prob->l;
 	int n = prob->n;
 	int w_size = prob->n;
-	int n_iter;
 	model *model_ = Malloc(model,1);
 
 	if(prob->bias>=0)

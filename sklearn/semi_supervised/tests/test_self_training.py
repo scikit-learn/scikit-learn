@@ -34,42 +34,6 @@ y_train_missing_strings = np.vectorize(mapping.get)(y_train_missing_labels).asty
 y_train_missing_strings[y_train_missing_labels == -1] = -1
 
 
-def test_missing_predict_proba():
-    # Check that an error is thrown if predict_proba is not implemented
-    base_estimator = SVC(probability=False, gamma="scale")
-    self_training = SelfTrainingClassifier(base_estimator)
-
-    with pytest.raises(ValueError, match=r"base_estimator \(SVC\) should"):
-        self_training.fit(X_train, y_train_missing_labels)
-
-
-def test_none_classifier():
-    st = SelfTrainingClassifier(None)
-    with pytest.raises(ValueError, match="base_estimator cannot be None"):
-        st.fit(X_train, y_train_missing_labels)
-
-
-@pytest.mark.parametrize("max_iter, threshold", [(-1, 1.0), (-100, -2), (-10, 10)])
-def test_invalid_params(max_iter, threshold):
-    # Test negative iterations
-    base_estimator = SVC(gamma="scale", probability=True)
-    st = SelfTrainingClassifier(base_estimator, max_iter=max_iter)
-    with pytest.raises(ValueError, match="max_iter must be >= 0 or None"):
-        st.fit(X_train, y_train)
-
-    base_estimator = SVC(gamma="scale", probability=True)
-    st = SelfTrainingClassifier(base_estimator, threshold=threshold)
-    with pytest.raises(ValueError, match="threshold must be in"):
-        st.fit(X_train, y_train)
-
-
-def test_invalid_params_selection_crit():
-    st = SelfTrainingClassifier(KNeighborsClassifier(), criterion="foo")
-
-    with pytest.raises(ValueError, match="criterion must be either"):
-        st.fit(X_train, y_train)
-
-
 def test_warns_k_best():
     st = SelfTrainingClassifier(KNeighborsClassifier(), criterion="k_best", k_best=1000)
     with pytest.warns(UserWarning, match="k_best is larger than"):
@@ -318,7 +282,7 @@ def test_k_best_selects_best():
 
 def test_base_estimator_meta_estimator():
     # Check that a meta-estimator relying on an estimator implementing
-    # `predict_proba` will work even if it does expose this method before being
+    # `predict_proba` will work even if it does not expose this method before being
     # fitted.
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/19119
@@ -332,10 +296,30 @@ def test_base_estimator_meta_estimator():
         cv=2,
     )
 
-    # make sure that the `base_estimator` does not expose `predict_proba`
-    # without being fitted
-    assert not hasattr(base_estimator, "predict_proba")
-
+    assert hasattr(base_estimator, "predict_proba")
     clf = SelfTrainingClassifier(base_estimator=base_estimator)
     clf.fit(X_train, y_train_missing_labels)
     clf.predict_proba(X_test)
+
+    base_estimator = StackingClassifier(
+        estimators=[
+            ("svc_1", SVC(probability=False)),
+            ("svc_2", SVC(probability=False)),
+        ],
+        final_estimator=SVC(probability=False),
+        cv=2,
+    )
+
+    assert not hasattr(base_estimator, "predict_proba")
+    clf = SelfTrainingClassifier(base_estimator=base_estimator)
+    with pytest.raises(AttributeError):
+        clf.fit(X_train, y_train_missing_labels)
+
+
+def test_missing_predict_proba():
+    # Check that an error is thrown if predict_proba is not implemented
+    base_estimator = SVC(probability=False, gamma="scale")
+    self_training = SelfTrainingClassifier(base_estimator)
+
+    with pytest.raises(AttributeError, match="predict_proba is not available"):
+        self_training.fit(X_train, y_train_missing_labels)

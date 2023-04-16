@@ -13,18 +13,20 @@ web page of Sam Roweis:
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
 # License: BSD 3 clause
 
-from os.path import dirname, exists, join
+from os.path import exists
 from os import makedirs, remove
 
 import numpy as np
-from scipy.io.matlab import loadmat
+from scipy.io import loadmat
 import joblib
 
 from . import get_data_home
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
 from ._base import _pkl_filepath
+from ._base import load_descr
 from ..utils import check_random_state, Bunch
+from ..utils._param_validation import validate_params
 
 # The original data can be found at:
 # https://cs.nyu.edu/~roweis/data/olivettifaces.mat
@@ -35,6 +37,15 @@ FACES = RemoteFileMetadata(
 )
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+    }
+)
 def fetch_olivetti_faces(
     *,
     data_home=None,
@@ -100,6 +111,8 @@ def fetch_olivetti_faces(
             Description of the modified Olivetti Faces Dataset.
 
     (data, target) : tuple if `return_X_y=True`
+        Tuple with the `data` and `target` objects described above.
+
         .. versionadded:: 0.22
     """
     data_home = get_data_home(data_home=data_home)
@@ -137,9 +150,7 @@ def fetch_olivetti_faces(
         target = target[order]
     faces_vectorized = faces.reshape(len(faces), -1)
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "olivetti_faces.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("olivetti_faces.rst")
 
     if return_X_y:
         return faces_vectorized, target

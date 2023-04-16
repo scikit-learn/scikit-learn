@@ -11,7 +11,7 @@ class KMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
     """
 
     param_names = ["representation", "algorithm", "init"]
-    params = (["dense", "sparse"], ["full", "elkan"], ["random", "k-means++"])
+    params = (["dense", "sparse"], ["lloyd", "elkan"], ["random", "k-means++"])
 
     def setup_cache(self):
         super().setup_cache()
@@ -37,7 +37,7 @@ class KMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
             init=init,
             n_init=1,
             max_iter=max_iter,
-            tol=-1,
+            tol=0,
             random_state=0,
         )
 

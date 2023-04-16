@@ -13,7 +13,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_almost_equal
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import (
     ColumnTransformer,
     make_column_transformer,
@@ -22,10 +22,9 @@ from sklearn.compose import (
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
-from sklearn.feature_extraction import DictVectorizer
 
 
-class Trans(BaseEstimator):
+class Trans(TransformerMixin, BaseEstimator):
     def fit(self, X, y=None):
         return self
 
@@ -136,6 +135,23 @@ def test_column_transformer():
     assert_array_equal(both.fit_transform(X_array), 0.1 * X_res_both)
     assert_array_equal(both.fit(X_array).transform(X_array), 0.1 * X_res_both)
     assert len(both.transformers_) == 1
+
+
+def test_column_transformer_tuple_transformers_parameter():
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+
+    transformers = [("trans1", Trans(), [0]), ("trans2", Trans(), [1])]
+
+    ct_with_list = ColumnTransformer(transformers)
+    ct_with_tuple = ColumnTransformer(tuple(transformers))
+
+    assert_array_equal(
+        ct_with_list.fit_transform(X_array), ct_with_tuple.fit_transform(X_array)
+    )
+    assert_array_equal(
+        ct_with_list.fit(X_array).transform(X_array),
+        ct_with_tuple.fit(X_array).transform(X_array),
+    )
 
 
 def test_column_transformer_dataframe():
@@ -497,8 +513,8 @@ def test_column_transformer_sparse_threshold():
     for thres in [0.75001, 1]:
         col_trans = ColumnTransformer(
             [
-                ("trans1", OneHotEncoder(sparse=True), [0]),
-                ("trans2", OneHotEncoder(sparse=False), [1]),
+                ("trans1", OneHotEncoder(sparse_output=True), [0]),
+                ("trans2", OneHotEncoder(sparse_output=False), [1]),
             ],
             sparse_threshold=thres,
         )
@@ -509,8 +525,8 @@ def test_column_transformer_sparse_threshold():
     for thres in [0.75, 0]:
         col_trans = ColumnTransformer(
             [
-                ("trans1", OneHotEncoder(sparse=True), [0]),
-                ("trans2", OneHotEncoder(sparse=False), [1]),
+                ("trans1", OneHotEncoder(sparse_output=True), [0]),
+                ("trans2", OneHotEncoder(sparse_output=False), [1]),
             ],
             sparse_threshold=thres,
         )
@@ -522,8 +538,8 @@ def test_column_transformer_sparse_threshold():
     for thres in [0.33, 0, 1]:
         col_trans = ColumnTransformer(
             [
-                ("trans1", OneHotEncoder(sparse=False), [0]),
-                ("trans2", OneHotEncoder(sparse=False), [1]),
+                ("trans1", OneHotEncoder(sparse_output=False), [0]),
+                ("trans2", OneHotEncoder(sparse_output=False), [1]),
             ],
             sparse_threshold=thres,
         )
@@ -709,6 +725,7 @@ def test_column_transformer_get_set_params():
         "trans2__with_std": True,
         "transformers": ct.transformers,
         "transformer_weights": None,
+        "verbose_feature_names_out": True,
         "verbose": False,
     }
 
@@ -729,6 +746,7 @@ def test_column_transformer_get_set_params():
         "trans2__with_std": True,
         "transformers": ct.transformers,
         "transformer_weights": None,
+        "verbose_feature_names_out": True,
         "verbose": False,
     }
 
@@ -769,131 +787,22 @@ def test_column_transformer_cloning():
     assert hasattr(ct.transformers_[0][1], "mean_")
 
 
-def test_column_transformer_get_feature_names_raises():
+def test_column_transformer_get_feature_names():
     X_array = np.array([[0.0, 1.0, 2.0], [2.0, 4.0, 6.0]]).T
     ct = ColumnTransformer([("trans", Trans(), [0, 1])])
     # raise correct error when not fitted
     with pytest.raises(NotFittedError):
-        ct.get_feature_names()
+        ct.get_feature_names_out()
     # raise correct error when no feature names are available
     ct.fit(X_array)
-    msg = r"Transformer trans \(type Trans\) does not provide " r"get_feature_names"
+    msg = re.escape(
+        "Transformer trans (type Trans) does not provide get_feature_names_out"
+    )
     with pytest.raises(AttributeError, match=msg):
-        ct.get_feature_names()
-
-
-@pytest.mark.parametrize(
-    "X, keys",
-    [
-        (
-            np.array(
-                [[{"a": 1, "b": 2}, {"a": 3, "b": 4}], [{"c": 5}, {"c": 6}]],
-                dtype=object,
-            ).T,
-            ("a", "b", "c"),
-        ),
-        (
-            np.array([[{1: 1, 2: 2}, {1: 3, 2: 4}], [{3: 5}, {3: 6}]], dtype=object).T,
-            ("1", "2", "3"),
-        ),
-    ],
-)
-def test_column_transformer_get_feature_names(X, keys):
-    ct = ColumnTransformer([("col" + str(i), DictVectorizer(), i) for i in range(2)])
-    ct.fit(X)
-    assert ct.get_feature_names() == [f"col0__{key}" for key in keys[:2]] + [
-        f"col1__{keys[2]}"
-    ]
-
-    # drop transformer
-    ct = ColumnTransformer([("col0", DictVectorizer(), 0), ("col1", "drop", 1)])
-    ct.fit(X)
-    assert ct.get_feature_names() == [f"col0__{key}" for key in keys[:2]]
-
-    # passthrough transformer
-    ct = ColumnTransformer([("trans", "passthrough", [0, 1])])
-    ct.fit(X)
-    assert ct.get_feature_names() == ["x0", "x1"]
-
-    ct = ColumnTransformer([("trans", DictVectorizer(), 0)], remainder="passthrough")
-    ct.fit(X)
-    assert ct.get_feature_names() == [f"trans__{key}" for key in keys[:2]] + ["x1"]
-
-    ct = ColumnTransformer([("trans", "passthrough", [1])], remainder="passthrough")
-    ct.fit(X)
-    assert ct.get_feature_names() == ["x1", "x0"]
-
-    ct = ColumnTransformer(
-        [("trans", "passthrough", lambda x: [1])], remainder="passthrough"
-    )
-    ct.fit(X)
-    assert ct.get_feature_names() == ["x1", "x0"]
-
-    ct = ColumnTransformer(
-        [("trans", "passthrough", np.array([False, True]))], remainder="passthrough"
-    )
-    ct.fit(X)
-    assert ct.get_feature_names() == ["x1", "x0"]
-
-    ct = ColumnTransformer(
-        [("trans", "passthrough", slice(1, 2))], remainder="passthrough"
-    )
-    ct.fit(X)
-    assert ct.get_feature_names() == ["x1", "x0"]
-
-
-def test_column_transformer_get_feature_names_dataframe():
-    # passthough transformer with a dataframe
-    pd = pytest.importorskip("pandas")
-    X = np.array(
-        [[{"a": 1, "b": 2}, {"a": 3, "b": 4}], [{"c": 5}, {"c": 6}]], dtype=object
-    ).T
-    X_df = pd.DataFrame(X, columns=["col0", "col1"])
-
-    ct = ColumnTransformer([("trans", "passthrough", ["col0", "col1"])])
-    ct.fit(X_df)
-    assert ct.get_feature_names() == ["col0", "col1"]
-
-    ct = ColumnTransformer([("trans", "passthrough", [0, 1])])
-    ct.fit(X_df)
-    assert ct.get_feature_names() == ["col0", "col1"]
-
-    ct = ColumnTransformer([("col0", DictVectorizer(), 0)], remainder="passthrough")
-    ct.fit(X_df)
-    assert ct.get_feature_names() == ["col0__a", "col0__b", "col1"]
-
-    ct = ColumnTransformer(
-        [("trans", "passthrough", ["col1"])], remainder="passthrough"
-    )
-    ct.fit(X_df)
-    assert ct.get_feature_names() == ["col1", "col0"]
-
-    ct = ColumnTransformer(
-        [("trans", "passthrough", lambda x: x[["col1"]].columns)],
-        remainder="passthrough",
-    )
-    ct.fit(X_df)
-    assert ct.get_feature_names() == ["col1", "col0"]
-
-    ct = ColumnTransformer(
-        [("trans", "passthrough", np.array([False, True]))], remainder="passthrough"
-    )
-    ct.fit(X_df)
-    assert ct.get_feature_names() == ["col1", "col0"]
-
-    ct = ColumnTransformer(
-        [("trans", "passthrough", slice(1, 2))], remainder="passthrough"
-    )
-    ct.fit(X_df)
-    assert ct.get_feature_names() == ["col1", "col0"]
-
-    ct = ColumnTransformer([("trans", "passthrough", [1])], remainder="passthrough")
-    ct.fit(X_df)
-    assert ct.get_feature_names() == ["col1", "col0"]
+        ct.get_feature_names_out()
 
 
 def test_column_transformer_special_strings():
-
     # one 'drop' -> ignore
     X_array = np.array([[0.0, 1.0, 2.0], [2.0, 4.0, 6.0]]).T
     ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", "drop", [1])])
@@ -918,15 +827,6 @@ def test_column_transformer_special_strings():
     assert_array_equal(ct.fit(X_array).transform(X_array), exp)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] != "remainder"
-
-    # None itself / other string is not valid
-    for val in [None, "other"]:
-        ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", None, [1])])
-        msg = "All estimators should implement"
-        with pytest.raises(TypeError, match=msg):
-            ct.fit_transform(X_array)
-        with pytest.raises(TypeError, match=msg):
-            ct.fit(X_array)
 
 
 def test_column_transformer_remainder():
@@ -971,15 +871,6 @@ def test_column_transformer_remainder():
     assert ct.transformers_[-1][0] == "remainder"
     assert ct.transformers_[-1][1] == "passthrough"
     assert_array_equal(ct.transformers_[-1][2], [1])
-
-    # error on invalid arg
-    ct = ColumnTransformer([("trans1", Trans(), [0])], remainder=1)
-    msg = "remainder keyword needs to be one of 'drop', 'passthrough', or estimator."
-    with pytest.raises(ValueError, match=msg):
-        ct.fit(X_array)
-
-    with pytest.raises(ValueError, match=msg):
-        ct.fit_transform(X_array)
 
     # check default for make_column_transformer
     ct = make_column_transformer((Trans(), [0]))
@@ -1140,6 +1031,7 @@ def test_column_transformer_get_set_params_with_remainder():
         "trans1__with_std": True,
         "transformers": ct.transformers,
         "transformer_weights": None,
+        "verbose_feature_names_out": True,
         "verbose": False,
     }
 
@@ -1159,9 +1051,9 @@ def test_column_transformer_get_set_params_with_remainder():
         "trans1": "passthrough",
         "transformers": ct.transformers,
         "transformer_weights": None,
+        "verbose_feature_names_out": True,
         "verbose": False,
     }
-
     assert ct.get_params() == exp
 
 
@@ -1317,8 +1209,7 @@ def test_column_transformer_negative_column_indexes():
 @pytest.mark.parametrize("array_type", [np.asarray, sparse.csr_matrix])
 def test_column_transformer_mask_indexing(array_type):
     # Regression test for #14510
-    # Boolean array-like does not behave as boolean array with NumPy < 1.12
-    # and sparse matrices as well
+    # Boolean array-like does not behave as boolean array with sparse matrices.
     X = np.transpose([[1, 2, 3], [4, 5, 6], [5, 6, 7], [8, 9, 10]])
     X = array_type(X)
     column_transformer = ColumnTransformer(
@@ -1451,7 +1342,42 @@ def test_feature_names_empty_columns(empty_col):
     )
 
     ct.fit(df)
-    assert ct.get_feature_names() == ["ohe__x0_a", "ohe__x0_b", "ohe__x1_z"]
+    assert_array_equal(
+        ct.get_feature_names_out(), ["ohe__col1_a", "ohe__col1_b", "ohe__col2_z"]
+    )
+
+
+@pytest.mark.parametrize(
+    "selector",
+    [
+        [1],
+        lambda x: [1],
+        ["col2"],
+        lambda x: ["col2"],
+        [False, True],
+        lambda x: [False, True],
+    ],
+)
+def test_feature_names_out_pandas(selector):
+    """Checks name when selecting only the second column"""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"col1": ["a", "a", "b"], "col2": ["z", "z", "z"]})
+    ct = ColumnTransformer([("ohe", OneHotEncoder(), selector)])
+    ct.fit(df)
+
+    assert_array_equal(ct.get_feature_names_out(), ["ohe__col2_z"])
+
+
+@pytest.mark.parametrize(
+    "selector", [[1], lambda x: [1], [False, True], lambda x: [False, True]]
+)
+def test_feature_names_out_non_pandas(selector):
+    """Checks name when selecting the second column with numpy array"""
+    X = [["a", "z"], ["a", "z"], ["b", "z"]]
+    ct = ColumnTransformer([("ohe", OneHotEncoder(), selector)])
+    ct.fit(X)
+
+    assert_array_equal(ct.get_feature_names_out(), ["ohe__x1_z"])
 
 
 @pytest.mark.parametrize("remainder", ["passthrough", StandardScaler()])
@@ -1587,11 +1513,647 @@ def test_feature_name_validation_missing_columns_drop_passthough():
     assert_allclose(df_dropped_trans, df_fit_trans)
 
 
-@pytest.mark.parametrize("selector", [[], [False, False]])
-def test_get_feature_names_empty_selection(selector):
-    """Test that get_feature_names is only called for transformers that
-    were selected. Non-regression test for #19550.
+def test_feature_names_in_():
+    """Feature names are stored in column transformer.
+
+    Column transformer deliberately does not check for column name consistency.
+    It only checks that the non-dropped names seen in `fit` are seen
+    in `transform`. This behavior is already tested in
+    `test_feature_name_validation_missing_columns_drop_passthough`"""
+
+    pd = pytest.importorskip("pandas")
+
+    feature_names = ["a", "c", "d"]
+    df = pd.DataFrame([[1, 2, 3]], columns=feature_names)
+    ct = ColumnTransformer([("bycol", Trans(), ["a", "d"])], remainder="passthrough")
+
+    ct.fit(df)
+    assert_array_equal(ct.feature_names_in_, feature_names)
+    assert isinstance(ct.feature_names_in_, np.ndarray)
+    assert ct.feature_names_in_.dtype == object
+
+
+class TransWithNames(Trans):
+    def __init__(self, feature_names_out=None):
+        self.feature_names_out = feature_names_out
+
+    def get_feature_names_out(self, input_features=None):
+        if self.feature_names_out is not None:
+            return np.asarray(self.feature_names_out, dtype=object)
+        return input_features
+
+
+@pytest.mark.parametrize(
+    "transformers, remainder, expected_names",
+    [
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", ["d"]),
+            ],
+            "passthrough",
+            ["bycol1__d", "bycol1__c", "bycol2__d", "remainder__a", "remainder__b"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", ["d"]),
+            ],
+            "drop",
+            ["bycol1__d", "bycol1__c", "bycol2__d"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["b"]),
+                ("bycol2", "drop", ["d"]),
+            ],
+            "passthrough",
+            ["bycol1__b", "remainder__a", "remainder__c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["pca1", "pca2"]), ["a", "b", "d"]),
+            ],
+            "passthrough",
+            ["bycol1__pca1", "bycol1__pca2", "remainder__c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a", "b"]), ["d"]),
+                ("bycol2", "passthrough", ["b"]),
+            ],
+            "drop",
+            ["bycol1__a", "bycol1__b", "bycol2__b"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames([f"pca{i}" for i in range(2)]), ["b"]),
+                ("bycol2", TransWithNames([f"pca{i}" for i in range(2)]), ["b"]),
+            ],
+            "passthrough",
+            [
+                "bycol1__pca0",
+                "bycol1__pca1",
+                "bycol2__pca0",
+                "bycol2__pca1",
+                "remainder__a",
+                "remainder__c",
+                "remainder__d",
+            ],
+        ),
+        (
+            [
+                ("bycol1", "drop", ["d"]),
+            ],
+            "drop",
+            [],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), slice(1, 3)),
+            ],
+            "drop",
+            ["bycol1__b", "bycol1__c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["b"]),
+                ("bycol2", "drop", slice(3, 4)),
+            ],
+            "passthrough",
+            ["bycol1__b", "remainder__a", "remainder__c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", slice(3, 4)),
+            ],
+            "passthrough",
+            ["bycol1__d", "bycol1__c", "bycol2__d", "remainder__a", "remainder__b"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), slice("b", "c")),
+            ],
+            "drop",
+            ["bycol1__b", "bycol1__c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["b"]),
+                ("bycol2", "drop", slice("c", "d")),
+            ],
+            "passthrough",
+            ["bycol1__b", "remainder__a"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", slice("c", "d")),
+            ],
+            "passthrough",
+            [
+                "bycol1__d",
+                "bycol1__c",
+                "bycol2__c",
+                "bycol2__d",
+                "remainder__a",
+                "remainder__b",
+            ],
+        ),
+    ],
+)
+def test_verbose_feature_names_out_true(transformers, remainder, expected_names):
+    """Check feature_names_out for verbose_feature_names_out=True (default)"""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
+    ct = ColumnTransformer(
+        transformers,
+        remainder=remainder,
+    )
+    ct.fit(df)
+
+    names = ct.get_feature_names_out()
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, expected_names)
+
+
+@pytest.mark.parametrize(
+    "transformers, remainder, expected_names",
+    [
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", ["a"]),
+            ],
+            "passthrough",
+            ["d", "c", "a", "b"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a"]), ["d", "c"]),
+                ("bycol2", "passthrough", ["d"]),
+            ],
+            "drop",
+            ["a", "d"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["b"]),
+                ("bycol2", "drop", ["d"]),
+            ],
+            "passthrough",
+            ["b", "a", "c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["pca1", "pca2"]), ["a", "b", "d"]),
+            ],
+            "passthrough",
+            ["pca1", "pca2", "c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a", "c"]), ["d"]),
+                ("bycol2", "passthrough", ["d"]),
+            ],
+            "drop",
+            ["a", "c", "d"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames([f"pca{i}" for i in range(2)]), ["b"]),
+                ("bycol2", TransWithNames([f"kpca{i}" for i in range(2)]), ["b"]),
+            ],
+            "passthrough",
+            ["pca0", "pca1", "kpca0", "kpca1", "a", "c", "d"],
+        ),
+        (
+            [
+                ("bycol1", "drop", ["d"]),
+            ],
+            "drop",
+            [],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), slice(1, 2)),
+                ("bycol2", "drop", ["d"]),
+            ],
+            "passthrough",
+            ["b", "a", "c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["b"]),
+                ("bycol2", "drop", slice(3, 4)),
+            ],
+            "passthrough",
+            ["b", "a", "c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", slice(0, 2)),
+            ],
+            "drop",
+            ["d", "c", "a", "b"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), slice("a", "b")),
+                ("bycol2", "drop", ["d"]),
+            ],
+            "passthrough",
+            ["a", "b", "c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["b"]),
+                ("bycol2", "drop", slice("c", "d")),
+            ],
+            "passthrough",
+            ["b", "a"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", slice("a", "b")),
+            ],
+            "drop",
+            ["d", "c", "a", "b"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", slice("b", "b")),
+            ],
+            "drop",
+            ["d", "c", "b"],
+        ),
+    ],
+)
+def test_verbose_feature_names_out_false(transformers, remainder, expected_names):
+    """Check feature_names_out for verbose_feature_names_out=False"""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
+    ct = ColumnTransformer(
+        transformers,
+        remainder=remainder,
+        verbose_feature_names_out=False,
+    )
+    ct.fit(df)
+
+    names = ct.get_feature_names_out()
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, expected_names)
+
+
+@pytest.mark.parametrize(
+    "transformers, remainder, colliding_columns",
+    [
+        (
+            [
+                ("bycol1", TransWithNames(), ["b"]),
+                ("bycol2", "passthrough", ["b"]),
+            ],
+            "drop",
+            "['b']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["c", "d"]), ["c"]),
+                ("bycol2", "passthrough", ["c"]),
+            ],
+            "drop",
+            "['c']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a"]), ["b"]),
+                ("bycol2", "passthrough", ["b"]),
+            ],
+            "passthrough",
+            "['a']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a"]), ["b"]),
+                ("bycol2", "drop", ["b"]),
+            ],
+            "passthrough",
+            "['a']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["c", "b"]), ["b"]),
+                ("bycol2", "passthrough", ["c", "b"]),
+            ],
+            "drop",
+            "['b', 'c']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a"]), ["b"]),
+                ("bycol2", "passthrough", ["a"]),
+                ("bycol3", TransWithNames(["a"]), ["b"]),
+            ],
+            "passthrough",
+            "['a']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a", "b"]), ["b"]),
+                ("bycol2", "passthrough", ["a"]),
+                ("bycol3", TransWithNames(["b"]), ["c"]),
+            ],
+            "passthrough",
+            "['a', 'b']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames([f"pca{i}" for i in range(6)]), ["b"]),
+                ("bycol2", TransWithNames([f"pca{i}" for i in range(6)]), ["b"]),
+            ],
+            "passthrough",
+            "['pca0', 'pca1', 'pca2', 'pca3', 'pca4', ...]",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a", "b"]), slice(1, 2)),
+                ("bycol2", "passthrough", ["a"]),
+                ("bycol3", TransWithNames(["b"]), ["c"]),
+            ],
+            "passthrough",
+            "['a', 'b']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a", "b"]), ["b"]),
+                ("bycol2", "passthrough", slice(0, 1)),
+                ("bycol3", TransWithNames(["b"]), ["c"]),
+            ],
+            "passthrough",
+            "['a', 'b']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a", "b"]), slice("b", "c")),
+                ("bycol2", "passthrough", ["a"]),
+                ("bycol3", TransWithNames(["b"]), ["c"]),
+            ],
+            "passthrough",
+            "['a', 'b']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a", "b"]), ["b"]),
+                ("bycol2", "passthrough", slice("a", "a")),
+                ("bycol3", TransWithNames(["b"]), ["c"]),
+            ],
+            "passthrough",
+            "['a', 'b']",
+        ),
+    ],
+)
+def test_verbose_feature_names_out_false_errors(
+    transformers, remainder, colliding_columns
+):
+    """Check feature_names_out for verbose_feature_names_out=False"""
+
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
+    ct = ColumnTransformer(
+        transformers,
+        remainder=remainder,
+        verbose_feature_names_out=False,
+    )
+    ct.fit(df)
+
+    msg = re.escape(
+        f"Output feature names: {colliding_columns} are not unique. Please set "
+        "verbose_feature_names_out=True to add prefixes to feature names"
+    )
+    with pytest.raises(ValueError, match=msg):
+        ct.get_feature_names_out()
+
+
+@pytest.mark.parametrize("verbose_feature_names_out", [True, False])
+@pytest.mark.parametrize("remainder", ["drop", "passthrough"])
+def test_column_transformer_set_output(verbose_feature_names_out, remainder):
+    """Check column transformer behavior with set_output."""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"], index=[10])
+    ct = ColumnTransformer(
+        [("first", TransWithNames(), ["a", "c"]), ("second", TransWithNames(), ["d"])],
+        remainder=remainder,
+        verbose_feature_names_out=verbose_feature_names_out,
+    )
+    X_trans = ct.fit_transform(df)
+    assert isinstance(X_trans, np.ndarray)
+
+    ct.set_output(transform="pandas")
+
+    df_test = pd.DataFrame([[1, 2, 3, 4]], columns=df.columns, index=[20])
+    X_trans = ct.transform(df_test)
+    assert isinstance(X_trans, pd.DataFrame)
+
+    feature_names_out = ct.get_feature_names_out()
+    assert_array_equal(X_trans.columns, feature_names_out)
+    assert_array_equal(X_trans.index, df_test.index)
+
+
+@pytest.mark.parametrize("remainder", ["drop", "passthrough"])
+@pytest.mark.parametrize("fit_transform", [True, False])
+def test_column_transform_set_output_mixed(remainder, fit_transform):
+    """Check ColumnTransformer outputs mixed types correctly."""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(
+        {
+            "pet": pd.Series(["dog", "cat", "snake"], dtype="category"),
+            "color": pd.Series(["green", "blue", "red"], dtype="object"),
+            "age": [1.4, 2.1, 4.4],
+            "height": [20, 40, 10],
+            "distance": pd.Series([20, pd.NA, 100], dtype="Int32"),
+        }
+    )
+    ct = ColumnTransformer(
+        [
+            (
+                "color_encode",
+                OneHotEncoder(sparse_output=False, dtype="int8"),
+                ["color"],
+            ),
+            ("age", StandardScaler(), ["age"]),
+        ],
+        remainder=remainder,
+        verbose_feature_names_out=False,
+    ).set_output(transform="pandas")
+    if fit_transform:
+        X_trans = ct.fit_transform(df)
+    else:
+        X_trans = ct.fit(df).transform(df)
+
+    assert isinstance(X_trans, pd.DataFrame)
+    assert_array_equal(X_trans.columns, ct.get_feature_names_out())
+
+    expected_dtypes = {
+        "color_blue": "int8",
+        "color_green": "int8",
+        "color_red": "int8",
+        "age": "float64",
+        "pet": "category",
+        "height": "int64",
+        "distance": "Int32",
+    }
+    for col, dtype in X_trans.dtypes.items():
+        assert dtype == expected_dtypes[col]
+
+
+@pytest.mark.parametrize("remainder", ["drop", "passthrough"])
+def test_column_transform_set_output_after_fitting(remainder):
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(
+        {
+            "pet": pd.Series(["dog", "cat", "snake"], dtype="category"),
+            "age": [1.4, 2.1, 4.4],
+            "height": [20, 40, 10],
+        }
+    )
+    ct = ColumnTransformer(
+        [
+            (
+                "color_encode",
+                OneHotEncoder(sparse_output=False, dtype="int16"),
+                ["pet"],
+            ),
+            ("age", StandardScaler(), ["age"]),
+        ],
+        remainder=remainder,
+        verbose_feature_names_out=False,
+    )
+
+    # fit without calling set_output
+    X_trans = ct.fit_transform(df)
+    assert isinstance(X_trans, np.ndarray)
+    assert X_trans.dtype == "float64"
+
+    ct.set_output(transform="pandas")
+    X_trans_df = ct.transform(df)
+    expected_dtypes = {
+        "pet_cat": "int16",
+        "pet_dog": "int16",
+        "pet_snake": "int16",
+        "height": "int64",
+        "age": "float64",
+    }
+    for col, dtype in X_trans_df.dtypes.items():
+        assert dtype == expected_dtypes[col]
+
+
+# PandasOutTransformer that does not define get_feature_names_out and always expects
+# the input to be a DataFrame.
+class PandasOutTransformer(BaseEstimator):
+    def __init__(self, offset=1.0):
+        self.offset = offset
+
+    def fit(self, X, y=None):
+        pd = pytest.importorskip("pandas")
+        assert isinstance(X, pd.DataFrame)
+        return self
+
+    def transform(self, X, y=None):
+        pd = pytest.importorskip("pandas")
+        assert isinstance(X, pd.DataFrame)
+        return X - self.offset
+
+    def set_output(self, transform=None):
+        # This transformer will always output a DataFrame regardless of the
+        # configuration.
+        return self
+
+
+@pytest.mark.parametrize(
+    "trans_1, expected_verbose_names, expected_non_verbose_names",
+    [
+        (
+            PandasOutTransformer(offset=2.0),
+            ["trans_0__feat1", "trans_1__feat0"],
+            ["feat1", "feat0"],
+        ),
+        (
+            "drop",
+            ["trans_0__feat1"],
+            ["feat1"],
+        ),
+        (
+            "passthrough",
+            ["trans_0__feat1", "trans_1__feat0"],
+            ["feat1", "feat0"],
+        ),
+    ],
+)
+def test_transformers_with_pandas_out_but_not_feature_names_out(
+    trans_1, expected_verbose_names, expected_non_verbose_names
+):
+    """Check that set_config(transform="pandas") is compatible with more transformers.
+
+    Specifically, if transformers returns a DataFrame, but does not define
+    `get_feature_names_out`.
     """
-    ct = ColumnTransformer([("ohe", OneHotEncoder(drop="first"), selector)])
-    ct.fit([[1, 2], [3, 4]])
-    assert ct.get_feature_names() == []
+    pd = pytest.importorskip("pandas")
+
+    X_df = pd.DataFrame({"feat0": [1.0, 2.0, 3.0], "feat1": [2.0, 3.0, 4.0]})
+    ct = ColumnTransformer(
+        [
+            ("trans_0", PandasOutTransformer(offset=3.0), ["feat1"]),
+            ("trans_1", trans_1, ["feat0"]),
+        ]
+    )
+    X_trans_np = ct.fit_transform(X_df)
+    assert isinstance(X_trans_np, np.ndarray)
+
+    # `ct` does not have `get_feature_names_out` because `PandasOutTransformer` does
+    # not define the method.
+    with pytest.raises(AttributeError, match="not provide get_feature_names_out"):
+        ct.get_feature_names_out()
+
+    # The feature names are prefixed because verbose_feature_names_out=True is default
+    ct.set_output(transform="pandas")
+    X_trans_df0 = ct.fit_transform(X_df)
+    assert_array_equal(X_trans_df0.columns, expected_verbose_names)
+
+    ct.set_params(verbose_feature_names_out=False)
+    X_trans_df1 = ct.fit_transform(X_df)
+    assert_array_equal(X_trans_df1.columns, expected_non_verbose_names)
+
+
+@pytest.mark.parametrize(
+    "empty_selection",
+    [[], np.array([False, False]), [False, False]],
+    ids=["list", "bool", "bool_int"],
+)
+def test_empty_selection_pandas_output(empty_selection):
+    """Check that pandas output works when there is an empty selection.
+
+    Non-regression test for gh-25487
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame([[1.0, 2.2], [3.0, 1.0]], columns=["a", "b"])
+    ct = ColumnTransformer(
+        [
+            ("categorical", "passthrough", empty_selection),
+            ("numerical", StandardScaler(), ["a", "b"]),
+        ],
+        verbose_feature_names_out=True,
+    )
+    ct.set_output(transform="pandas")
+    X_out = ct.fit_transform(X)
+    assert_array_equal(X_out.columns, ["numerical__a", "numerical__b"])
+
+    ct.set_params(verbose_feature_names_out=False)
+    X_out = ct.fit_transform(X)
+    assert_array_equal(X_out.columns, ["a", "b"])

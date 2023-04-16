@@ -4,17 +4,9 @@ set -e
 set -x
 
 PYTHON_VERSION=$1
-BITNESS=$2
-
-if [[ "$PYTHON_VERSION" == "36" || "$BITNESS" == "32" ]]; then
-    # Python 3.6 and 32-bit architectures are not supported
-    # by the official Docker images: Tests will just be run
-    # on the host (instead of the minimal Docker container).
-    exit 0
-fi
 
 TEMP_FOLDER="$HOME/AppData/Local/Temp"
-WHEEL_PATH=$(ls -d $TEMP_FOLDER/*/repaired_wheel/*)
+WHEEL_PATH=$(ls -d $TEMP_FOLDER/**/*/repaired_wheel/*)
 WHEEL_NAME=$(basename $WHEEL_PATH)
 
 cp $WHEEL_PATH $WHEEL_NAME

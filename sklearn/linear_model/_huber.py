@@ -1,6 +1,7 @@
 # Authors: Manoj Kumar mks542@nyu.edu
 # License: BSD 3 clause
 
+from numbers import Integral, Real
 import numpy as np
 
 from scipy import optimize
@@ -8,6 +9,7 @@ from scipy import optimize
 from ..base import BaseEstimator, RegressorMixin
 from ._base import LinearModel
 from ..utils import axis0_safe_slice
+from ..utils._param_validation import Interval
 from ..utils.validation import _check_sample_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.optimize import _check_optimize_result
@@ -76,7 +78,7 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
     n_sw_outliers = np.sum(outliers_sw)
     outlier_loss = (
         2.0 * epsilon * np.sum(outliers_sw * outliers)
-        - sigma * n_sw_outliers * epsilon ** 2
+        - sigma * n_sw_outliers * epsilon**2
     )
 
     # Calculate the quadratic loss due to the non-outliers.-
@@ -110,7 +112,7 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
 
     # Gradient due to sigma.
     grad[-1] = n_samples
-    grad[-1] -= n_sw_outliers * epsilon ** 2
+    grad[-1] -= n_sw_outliers * epsilon**2
     grad[-1] -= squared_loss / sigma
 
     # Gradient due to the intercept.
@@ -124,18 +126,19 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
 
 
 class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
-    """Linear regression model that is robust to outliers.
+    """L2-regularized linear regression model that is robust to outliers.
 
     The Huber Regressor optimizes the squared loss for the samples where
-    ``|(y - X'w) / sigma| < epsilon`` and the absolute loss for the samples
-    where ``|(y - X'w) / sigma| > epsilon``, where w and sigma are parameters
+    ``|(y - Xw - c) / sigma| < epsilon`` and the absolute loss for the samples
+    where ``|(y - Xw - c) / sigma| > epsilon``, where the model coefficients
+    ``w``, the intercept ``c`` and the scale ``sigma`` are parameters
     to be optimized. The parameter sigma makes sure that if y is scaled up
     or down by a certain factor, one does not need to rescale epsilon to
     achieve the same robustness. Note that this does not take into account
     the fact that the different features of X may be of different scales.
 
-    This makes sure that the loss function is not heavily influenced by the
-    outliers while not completely ignoring their effect.
+    The Huber loss function has the advantage of not being heavily influenced
+    by the outliers while not completely ignoring their effect.
 
     Read more in the :ref:`User Guide <huber_regression>`
 
@@ -143,17 +146,19 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    epsilon : float, greater than 1.0, default=1.35
+    epsilon : float, default=1.35
         The parameter epsilon controls the number of samples that should be
         classified as outliers. The smaller the epsilon, the more robust it is
-        to outliers.
+        to outliers. Epsilon must be in the range `[1, inf)`.
 
     max_iter : int, default=100
         Maximum number of iterations that
         ``scipy.optimize.minimize(method="L-BFGS-B")`` should run for.
 
     alpha : float, default=0.0001
-        Regularization parameter.
+        Strength of the squared L2 regularization. Note that the penalty is
+        equal to ``alpha * ||w||^2``.
+        Must be in the range `[0, inf)`.
 
     warm_start : bool, default=False
         This is useful if the stored attributes of a previously used model
@@ -173,18 +178,24 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     Attributes
     ----------
     coef_ : array, shape (n_features,)
-        Features got by optimizing the Huber loss.
+        Features got by optimizing the L2-regularized Huber loss.
 
     intercept_ : float
         Bias.
 
     scale_ : float
-        The value by which ``|y - X'w - c|`` is scaled down.
+        The value by which ``|y - Xw - c|`` is scaled down.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_iter_ : int
         Number of iterations that
@@ -198,6 +209,19 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     outliers_ : array, shape (n_samples,)
         A boolean mask which is set to True where the samples are identified
         as outliers.
+
+    See Also
+    --------
+    RANSACRegressor : RANSAC (RANdom SAmple Consensus) algorithm.
+    TheilSenRegressor : Theil-Sen Estimator robust multivariate regression model.
+    SGDRegressor : Fitted by minimizing a regularized empirical loss with SGD.
+
+    References
+    ----------
+    .. [1] Peter J. Huber, Elvezio M. Ronchetti, Robust Statistics
+           Concomitant scale estimates, pg 172
+    .. [2] Art B. Owen (2006), A robust hybrid of lasso and ridge regression.
+           https://statweb.stanford.edu/~owen/reports/hhu.pdf
 
     Examples
     --------
@@ -221,14 +245,16 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     Huber coefficients: [17.7906... 31.0106...]
     >>> print("Linear Regression coefficients:", linear.coef_)
     Linear Regression coefficients: [-1.9221...  7.0226...]
-
-    References
-    ----------
-    .. [1] Peter J. Huber, Elvezio M. Ronchetti, Robust Statistics
-           Concomitant scale estimates, pg 172
-    .. [2] Art B. Owen (2006), A robust hybrid of lasso and ridge regression.
-           https://statweb.stanford.edu/~owen/reports/hhu.pdf
     """
+
+    _parameter_constraints: dict = {
+        "epsilon": [Interval(Real, 1.0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "warm_start": ["boolean"],
+        "fit_intercept": ["boolean"],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+    }
 
     def __init__(
         self,
@@ -253,8 +279,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like, shape (n_samples,)
             Target vector relative to X.
@@ -265,7 +291,9 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Returns
         -------
         self : object
+            Fitted `HuberRegressor` estimator.
         """
+        self._validate_params()
         X, y = self._validate_data(
             X,
             y,
@@ -276,11 +304,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         )
 
         sample_weight = _check_sample_weight(sample_weight, X)
-
-        if self.epsilon < 1.0:
-            raise ValueError(
-                "epsilon should be greater than or equal to 1.0, got %f" % self.epsilon
-            )
 
         if self.warm_start and hasattr(self, "coef_"):
             parameters = np.concatenate((self.coef_, [self.intercept_, self.scale_]))

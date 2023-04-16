@@ -1,14 +1,14 @@
 """Test the covtype loader, if the data is available,
 or if specifically requested via environment variable
-(e.g. for travis cron job)."""
+(e.g. for CI jobs)."""
 from functools import partial
 import pytest
 from sklearn.datasets.tests.test_common import check_return_X_y
 
 
-def test_fetch(fetch_covtype_fxt):
-    data1 = fetch_covtype_fxt(shuffle=True, random_state=42)
-    data2 = fetch_covtype_fxt(shuffle=True, random_state=37)
+def test_fetch(fetch_covtype_fxt, global_random_seed):
+    data1 = fetch_covtype_fxt(shuffle=True, random_state=global_random_seed)
+    data2 = fetch_covtype_fxt(shuffle=True, random_state=global_random_seed + 1)
 
     X1, X2 = data1["data"], data2["data"]
     assert (581012, 54) == X1.shape
@@ -19,6 +19,10 @@ def test_fetch(fetch_covtype_fxt):
     y1, y2 = data1["target"], data2["target"]
     assert (X1.shape[0],) == y1.shape
     assert (X1.shape[0],) == y2.shape
+
+    descr_prefix = ".. _covtype_dataset:"
+    assert data1.DESCR.startswith(descr_prefix)
+    assert data2.DESCR.startswith(descr_prefix)
 
     # test return_X_y option
     fetch_func = partial(fetch_covtype_fxt)

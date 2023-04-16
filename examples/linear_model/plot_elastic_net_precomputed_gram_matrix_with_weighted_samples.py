@@ -17,8 +17,6 @@ is computed.
 
 """
 
-print(__doc__)
-
 # %%
 # Let's start by loading the dataset and creating some sample weights.
 import numpy as np
@@ -38,7 +36,7 @@ normalized_weights = sample_weight * (n_samples / (sample_weight.sum()))
 # weights, we must first center the design matrix,  and rescale it by the
 # normalized weights prior to computing the gram matrix.
 X_offset = np.average(X, axis=0, weights=normalized_weights)
-X_centered = (X - np.average(X, axis=0, weights=normalized_weights))
+X_centered = X - np.average(X, axis=0, weights=normalized_weights)
 X_scaled = X_centered * np.sqrt(normalized_weights)[:, np.newaxis]
 gram = np.dot(X_scaled.T, X_scaled)
 

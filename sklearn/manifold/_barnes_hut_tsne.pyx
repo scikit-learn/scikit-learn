@@ -1,7 +1,3 @@
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: cdivision=True
-#
 # Author: Christopher Moody <chrisemoody@gmail.com>
 # Author: Nick Travers <nickt@squareup.com>
 # Implementation by Chris Moody & Nick Travers
@@ -10,15 +6,15 @@
 
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 from libc.stdio cimport printf
-from libc.math cimport sqrt, log
+from libc.math cimport log
 from libc.stdlib cimport malloc, free
 from cython.parallel cimport prange, parallel
 
 from ..neighbors._quad_tree cimport _QuadTree
 
-np.import_array()
+cnp.import_array()
 
 
 cdef char* EMPTY_STRING = ""
@@ -49,8 +45,8 @@ cdef extern from "time.h":
 
 cdef float compute_gradient(float[:] val_P,
                             float[:, :] pos_reference,
-                            np.int64_t[:] neighbors,
-                            np.int64_t[:] indptr,
+                            cnp.int64_t[:] neighbors,
+                            cnp.int64_t[:] indptr,
                             float[:, :] tot_force,
                             _QuadTree qt,
                             float theta,
@@ -58,7 +54,7 @@ cdef float compute_gradient(float[:] val_P,
                             long start,
                             long stop,
                             bint compute_error,
-                            int num_threads) nogil:
+                            int num_threads) noexcept nogil:
     # Having created the tree, calculate the gradient
     # in two components, the positive and negative forces
     cdef:
@@ -107,16 +103,16 @@ cdef float compute_gradient(float[:] val_P,
 
 cdef float compute_gradient_positive(float[:] val_P,
                                      float[:, :] pos_reference,
-                                     np.int64_t[:] neighbors,
-                                     np.int64_t[:] indptr,
+                                     cnp.int64_t[:] neighbors,
+                                     cnp.int64_t[:] indptr,
                                      float* pos_f,
                                      int n_dimensions,
                                      int dof,
                                      double sum_Q,
-                                     np.int64_t start,
+                                     cnp.int64_t start,
                                      int verbose,
                                      bint compute_error,
-                                     int num_threads) nogil:
+                                     int num_threads) noexcept nogil:
     # Sum over the following expression for i not equal to j
     # grad_i = p_ij (1 + ||y_i - y_j||^2)^-1 (y_i - y_j)
     # This is equivalent to compute_edge_forces in the authors' code
@@ -181,7 +177,7 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
                                       float theta,
                                       long start,
                                       long stop,
-                                      int num_threads) nogil:
+                                      int num_threads) noexcept nogil:
     if stop == -1:
         stop = pos_reference.shape[0]
     cdef:
@@ -262,8 +258,8 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
 
 def gradient(float[:] val_P,
              float[:, :] pos_output,
-             np.int64_t[:] neighbors,
-             np.int64_t[:] indptr,
+             cnp.int64_t[:] neighbors,
+             cnp.int64_t[:] indptr,
              float[:, :] forces,
              float theta,
              int n_dimensions,
@@ -273,7 +269,7 @@ def gradient(float[:] val_P,
              bint compute_error=1,
              int num_threads=1):
     # This function is designed to be called from external Python
-    # it passes the 'forces' array by reference and fills thats array
+    # it passes the 'forces' array by reference and fills that's array
     # up in-place
     cdef float C
     cdef int n

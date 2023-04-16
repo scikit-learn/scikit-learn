@@ -102,7 +102,7 @@ def bench(clfs):
 
 def plot_train_losses(clfs):
     plt.figure()
-    for (name, _, _, train_losses, _, _, durations) in clfs:
+    for name, _, _, train_losses, _, _, durations in clfs:
         plt.plot(durations, train_losses, "-o", label=name)
         plt.legend(loc=0)
         plt.xlabel("seconds")
@@ -111,7 +111,7 @@ def plot_train_losses(clfs):
 
 def plot_train_scores(clfs):
     plt.figure()
-    for (name, _, _, _, train_scores, _, durations) in clfs:
+    for name, _, _, _, train_scores, _, durations in clfs:
         plt.plot(durations, train_scores, "-o", label=name)
         plt.legend(loc=0)
         plt.xlabel("seconds")
@@ -121,7 +121,7 @@ def plot_train_scores(clfs):
 
 def plot_test_scores(clfs):
     plt.figure()
-    for (name, _, _, _, _, test_scores, durations) in clfs:
+    for name, _, _, _, _, test_scores, durations in clfs:
         plt.plot(durations, test_scores, "-o", label=name)
         plt.legend(loc=0)
         plt.xlabel("seconds")
@@ -132,13 +132,13 @@ def plot_test_scores(clfs):
 def plot_dloss(clfs):
     plt.figure()
     pobj_final = []
-    for (name, _, _, train_losses, _, _, durations) in clfs:
+    for name, _, _, train_losses, _, _, durations in clfs:
         pobj_final.append(train_losses[-1])
 
     indices = np.argsort(pobj_final)
     pobj_best = pobj_final[indices[0]]
 
-    for (name, _, _, train_losses, _, _, durations) in clfs:
+    for name, _, _, train_losses, _, _, durations in clfs:
         log_pobj = np.log(abs(np.array(train_losses) - pobj_best)) / np.log(10)
 
         plt.plot(durations, log_pobj, "-o", label=name)
@@ -149,7 +149,7 @@ def plot_dloss(clfs):
 
 def get_max_squared_sum(X):
     """Get the maximum row-wise sum of squares"""
-    return np.sum(X ** 2, axis=1).max()
+    return np.sum(X**2, axis=1).max()
 
 
 rcv1 = fetch_rcv1()
@@ -240,7 +240,7 @@ clfs = [
         SGDClassifier(
             alpha=1.0 / C / n_samples,
             penalty="l2",
-            loss="log",
+            loss="log_loss",
             fit_intercept=fit_intercept,
             verbose=0,
         ),

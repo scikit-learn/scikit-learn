@@ -162,7 +162,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter, nls_max_iter, alpha, l1_rati
         proj_grad_W = squared_norm(gradW * np.logical_or(gradW < 0, W > 0))
         proj_grad_H = squared_norm(gradH * np.logical_or(gradH < 0, H > 0))
 
-        if (proj_grad_W + proj_grad_H) / init_grad < tol ** 2:
+        if (proj_grad_W + proj_grad_H) / init_grad < tol**2:
             break
 
         # update W
@@ -219,7 +219,8 @@ class _PGNMF(NMF):
             tol=tol,
             max_iter=max_iter,
             random_state=random_state,
-            alpha=alpha,
+            alpha_W=alpha,
+            alpha_H=alpha,
             l1_ratio=l1_ratio,
         )
         self.nls_max_iter = nls_max_iter

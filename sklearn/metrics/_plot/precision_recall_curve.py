@@ -1,21 +1,21 @@
-from .base import _get_response
-
 from .. import average_precision_score
 from .. import precision_recall_curve
+from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 
-from ...utils import check_matplotlib_support
 
-
-class PrecisionRecallDisplay:
+class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     """Precision Recall visualization.
 
-    It is recommend to use :func:`~sklearn.metrics.plot_precision_recall_curve`
-    to create a visualizer. All parameters are stored as attributes.
+    It is recommend to use
+    :func:`~sklearn.metrics.PrecisionRecallDisplay.from_estimator` or
+    :func:`~sklearn.metrics.PrecisionRecallDisplay.from_predictions` to create
+    a :class:`~sklearn.metrics.PredictionRecallDisplay`. All parameters are
+    stored as attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
 
     Parameters
-    -----------
+    ----------
     precision : ndarray
         Precision values.
 
@@ -49,11 +49,26 @@ class PrecisionRecallDisplay:
     --------
     precision_recall_curve : Compute precision-recall pairs for different
         probability thresholds.
-    plot_precision_recall_curve : Plot Precision Recall Curve for binary
-        classifiers.
+    PrecisionRecallDisplay.from_estimator : Plot Precision Recall Curve given
+        a binary classifier.
+    PrecisionRecallDisplay.from_predictions : Plot Precision Recall Curve
+        using predictions from a binary classifier.
+
+    Notes
+    -----
+    The average precision (cf. :func:`~sklearn.metrics.average_precision`) in
+    scikit-learn is computed without any interpolation. To be consistent with
+    this metric, the precision-recall curve is plotted without any
+    interpolation as well (step-wise style).
+
+    You can change this style by passing the keyword argument
+    `drawstyle="default"` in :meth:`plot`, :meth:`from_estimator`, or
+    :meth:`from_predictions`. However, the curve will not be strictly
+    consistent with the reported average precision.
 
     Examples
     --------
+    >>> import matplotlib.pyplot as plt
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.metrics import (precision_recall_curve,
     ...                              PrecisionRecallDisplay)
@@ -70,6 +85,7 @@ class PrecisionRecallDisplay:
     >>> disp = PrecisionRecallDisplay(precision=precision, recall=recall)
     >>> disp.plot()
     <...>
+    >>> plt.show()
     """
 
     def __init__(
@@ -99,8 +115,8 @@ class PrecisionRecallDisplay:
             created.
 
         name : str, default=None
-            Name of precision recall curve for labeling. If `None`, use the
-            name of the estimator.
+            Name of precision recall curve for labeling. If `None`, use
+            `estimator_name` if not `None`, otherwise no labeling is shown.
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -109,10 +125,19 @@ class PrecisionRecallDisplay:
         -------
         display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
             Object that stores computed values.
-        """
-        check_matplotlib_support("PrecisionRecallDisplay.plot")
 
-        name = self.estimator_name if name is None else name
+        Notes
+        -----
+        The average precision (cf. :func:`~sklearn.metrics.average_precision`)
+        in scikit-learn is computed without any interpolation. To be consistent
+        with this metric, the precision-recall curve is plotted without any
+        interpolation as well (step-wise style).
+
+        You can change this style by passing the keyword argument
+        `drawstyle="default"`. However, the curve will not be strictly
+        consistent with the reported average precision.
+        """
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
         line_kwargs = {"drawstyle": "steps-post"}
         if self.average_precision is not None and name is not None:
@@ -123,117 +148,245 @@ class PrecisionRecallDisplay:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
-        import matplotlib.pyplot as plt
-
-        if ax is None:
-            fig, ax = plt.subplots()
-
-        (self.line_,) = ax.plot(self.recall, self.precision, **line_kwargs)
+        (self.line_,) = self.ax_.plot(self.recall, self.precision, **line_kwargs)
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
         )
 
         xlabel = "Recall" + info_pos_label
         ylabel = "Precision" + info_pos_label
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
         if "label" in line_kwargs:
-            ax.legend(loc="lower left")
+            self.ax_.legend(loc="lower left")
 
-        self.ax_ = ax
-        self.figure_ = ax.figure
         return self
 
+    @classmethod
+    def from_estimator(
+        cls,
+        estimator,
+        X,
+        y,
+        *,
+        sample_weight=None,
+        pos_label=None,
+        drop_intermediate=False,
+        response_method="auto",
+        name=None,
+        ax=None,
+        **kwargs,
+    ):
+        """Plot precision-recall curve given an estimator and some data.
 
-def plot_precision_recall_curve(
-    estimator,
-    X,
-    y,
-    *,
-    sample_weight=None,
-    response_method="auto",
-    name=None,
-    ax=None,
-    pos_label=None,
-    **kwargs,
-):
-    """Plot Precision Recall Curve for binary classifiers.
+        Parameters
+        ----------
+        estimator : estimator instance
+            Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+            in which the last estimator is a classifier.
 
-    Extra keyword arguments will be passed to matplotlib's `plot`.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input values.
 
-    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+        y : array-like of shape (n_samples,)
+            Target values.
 
-    Parameters
-    ----------
-    estimator : estimator instance
-        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
-        in which the last estimator is a classifier.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
 
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Input values.
+        pos_label : str or int, default=None
+            The class considered as the positive class when computing the
+            precision and recall metrics. By default, `estimators.classes_[1]`
+            is considered as the positive class.
 
-    y : array-like of shape (n_samples,)
-        Binary target values.
+        drop_intermediate : bool, default=False
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted precision-recall curve. This is useful in order to
+            create lighter precision-recall curves.
 
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights.
+            .. versionadded:: 1.3
 
-    response_method : {'predict_proba', 'decision_function', 'auto'}, \
-                      default='auto'
-        Specifies whether to use :term:`predict_proba` or
-        :term:`decision_function` as the target response. If set to 'auto',
-        :term:`predict_proba` is tried first and if it does not exist
-        :term:`decision_function` is tried next.
+        response_method : {'predict_proba', 'decision_function', 'auto'}, \
+            default='auto'
+            Specifies whether to use :term:`predict_proba` or
+            :term:`decision_function` as the target response. If set to 'auto',
+            :term:`predict_proba` is tried first and if it does not exist
+            :term:`decision_function` is tried next.
 
-    name : str, default=None
-        Name for labeling curve. If `None`, the name of the
-        estimator is used.
+        name : str, default=None
+            Name for labeling curve. If `None`, no name is used.
 
-    ax : matplotlib axes, default=None
-        Axes object to plot on. If `None`, a new figure and axes is created.
+        ax : matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is created.
 
-    pos_label : str or int, default=None
-        The class considered as the positive class when computing the precision
-        and recall metrics. By default, `estimators.classes_[1]` is considered
-        as the positive class.
+        **kwargs : dict
+            Keyword arguments to be passed to matplotlib's `plot`.
 
-        .. versionadded:: 0.24
+        Returns
+        -------
+        display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
 
-    **kwargs : dict
-        Keyword arguments to be passed to matplotlib's `plot`.
+        See Also
+        --------
+        PrecisionRecallDisplay.from_predictions : Plot precision-recall curve
+            using estimated probabilities or output of decision function.
 
-    Returns
-    -------
-    display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
-        Object that stores computed values.
+        Notes
+        -----
+        The average precision (cf. :func:`~sklearn.metrics.average_precision`)
+        in scikit-learn is computed without any interpolation. To be consistent
+        with this metric, the precision-recall curve is plotted without any
+        interpolation as well (step-wise style).
 
-    See Also
-    --------
-    precision_recall_curve : Compute precision-recall pairs for different
-        probability thresholds.
-    PrecisionRecallDisplay : Precision Recall visualization.
-    """
-    check_matplotlib_support("plot_precision_recall_curve")
+        You can change this style by passing the keyword argument
+        `drawstyle="default"`. However, the curve will not be strictly
+        consistent with the reported average precision.
 
-    y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label
-    )
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import make_classification
+        >>> from sklearn.metrics import PrecisionRecallDisplay
+        >>> from sklearn.model_selection import train_test_split
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> X, y = make_classification(random_state=0)
+        >>> X_train, X_test, y_train, y_test = train_test_split(
+        ...         X, y, random_state=0)
+        >>> clf = LogisticRegression()
+        >>> clf.fit(X_train, y_train)
+        LogisticRegression()
+        >>> PrecisionRecallDisplay.from_estimator(
+        ...    clf, X_test, y_test)
+        <...>
+        >>> plt.show()
+        """
+        y_pred, pos_label, name = cls._validate_and_get_response_values(
+            estimator,
+            X,
+            y,
+            response_method=response_method,
+            pos_label=pos_label,
+            name=name,
+        )
 
-    precision, recall, _ = precision_recall_curve(
-        y, y_pred, pos_label=pos_label, sample_weight=sample_weight
-    )
-    average_precision = average_precision_score(
-        y, y_pred, pos_label=pos_label, sample_weight=sample_weight
-    )
+        return cls.from_predictions(
+            y,
+            y_pred,
+            sample_weight=sample_weight,
+            name=name,
+            pos_label=pos_label,
+            drop_intermediate=drop_intermediate,
+            ax=ax,
+            **kwargs,
+        )
 
-    name = name if name is not None else estimator.__class__.__name__
+    @classmethod
+    def from_predictions(
+        cls,
+        y_true,
+        y_pred,
+        *,
+        sample_weight=None,
+        pos_label=None,
+        drop_intermediate=False,
+        name=None,
+        ax=None,
+        **kwargs,
+    ):
+        """Plot precision-recall curve given binary class predictions.
 
-    viz = PrecisionRecallDisplay(
-        precision=precision,
-        recall=recall,
-        average_precision=average_precision,
-        estimator_name=name,
-        pos_label=pos_label,
-    )
+        Parameters
+        ----------
+        y_true : array-like of shape (n_samples,)
+            True binary labels.
 
-    return viz.plot(ax=ax, name=name, **kwargs)
+        y_pred : array-like of shape (n_samples,)
+            Estimated probabilities or output of decision function.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
+        pos_label : str or int, default=None
+            The class considered as the positive class when computing the
+            precision and recall metrics.
+
+        drop_intermediate : bool, default=False
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted precision-recall curve. This is useful in order to
+            create lighter precision-recall curves.
+
+            .. versionadded:: 1.3
+
+        name : str, default=None
+            Name for labeling curve. If `None`, name will be set to
+            `"Classifier"`.
+
+        ax : matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is created.
+
+        **kwargs : dict
+            Keyword arguments to be passed to matplotlib's `plot`.
+
+        Returns
+        -------
+        display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
+
+        See Also
+        --------
+        PrecisionRecallDisplay.from_estimator : Plot precision-recall curve
+            using an estimator.
+
+        Notes
+        -----
+        The average precision (cf. :func:`~sklearn.metrics.average_precision`)
+        in scikit-learn is computed without any interpolation. To be consistent
+        with this metric, the precision-recall curve is plotted without any
+        interpolation as well (step-wise style).
+
+        You can change this style by passing the keyword argument
+        `drawstyle="default"`. However, the curve will not be strictly
+        consistent with the reported average precision.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import make_classification
+        >>> from sklearn.metrics import PrecisionRecallDisplay
+        >>> from sklearn.model_selection import train_test_split
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> X, y = make_classification(random_state=0)
+        >>> X_train, X_test, y_train, y_test = train_test_split(
+        ...         X, y, random_state=0)
+        >>> clf = LogisticRegression()
+        >>> clf.fit(X_train, y_train)
+        LogisticRegression()
+        >>> y_pred = clf.predict_proba(X_test)[:, 1]
+        >>> PrecisionRecallDisplay.from_predictions(
+        ...    y_test, y_pred)
+        <...>
+        >>> plt.show()
+        """
+        pos_label, name = cls._validate_from_predictions_params(
+            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+        )
+
+        precision, recall, _ = precision_recall_curve(
+            y_true,
+            y_pred,
+            pos_label=pos_label,
+            sample_weight=sample_weight,
+            drop_intermediate=drop_intermediate,
+        )
+        average_precision = average_precision_score(
+            y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
+        )
+
+        viz = PrecisionRecallDisplay(
+            precision=precision,
+            recall=recall,
+            average_precision=average_precision,
+            estimator_name=name,
+            pos_label=pos_label,
+        )
+
+        return viz.plot(ax=ax, name=name, **kwargs)

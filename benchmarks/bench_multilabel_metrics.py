@@ -34,8 +34,8 @@ METRICS = {
 FORMATS = {
     "sequences": lambda y: [list(np.flatnonzero(s)) for s in y],
     "dense": lambda y: y,
-    "csr": lambda y: sp.csr_matrix(y),
-    "csc": lambda y: sp.csc_matrix(y),
+    "csr": sp.csr_matrix,
+    "csc": sp.csc_matrix,
 }
 
 

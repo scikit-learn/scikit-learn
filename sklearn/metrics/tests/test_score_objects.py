@@ -31,6 +31,7 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
     top_k_accuracy_score,
+    matthews_corrcoef,
 )
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics import check_scoring
@@ -40,7 +41,7 @@ from sklearn.metrics._scorer import (
     _MultimetricScorer,
     _check_multimetric_scoring,
 )
-from sklearn.metrics import make_scorer, get_scorer, SCORERS
+from sklearn.metrics import make_scorer, get_scorer, SCORERS, get_scorer_names
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
@@ -102,6 +103,9 @@ CLF_SCORERS = [
     "roc_auc_ovo",
     "roc_auc_ovr_weighted",
     "roc_auc_ovo_weighted",
+    "matthews_corrcoef",
+    "positive_likelihood_ratio",
+    "neg_negative_likelihood_ratio",
 ]
 
 # All supervised cluster scorers (They behave like classification metric)
@@ -218,8 +222,8 @@ class DummyScorer:
 
 def test_all_scorers_repr():
     # Test that all scorers have a working repr
-    for name, scorer in SCORERS.items():
-        repr(scorer)
+    for name in get_scorer_names():
+        repr(get_scorer(name))
 
 
 def check_scoring_validator_for_single_metric_usecases(scoring_validator):
@@ -393,6 +397,7 @@ def test_make_scorer():
         ("jaccard_macro", partial(jaccard_score, average="macro")),
         ("jaccard_micro", partial(jaccard_score, average="micro")),
         ("top_k_accuracy", top_k_accuracy_score),
+        ("matthews_corrcoef", matthews_corrcoef),
     ],
 )
 def test_classification_binary_scores(scorer_name, metric):
@@ -403,7 +408,7 @@ def test_classification_binary_scores(scorer_name, metric):
     clf = LinearSVC(random_state=0)
     clf.fit(X_train, y_train)
 
-    score = SCORERS[scorer_name](clf, X_test, y_test)
+    score = get_scorer(scorer_name)(clf, X_test, y_test)
     expected_score = metric(y_test, clf.predict(X_test))
     assert_almost_equal(score, expected_score)
 
@@ -441,7 +446,7 @@ def test_classification_multiclass_scores(scorer_name, metric):
 
     clf = DecisionTreeClassifier(random_state=0)
     clf.fit(X_train, y_train)
-    score = SCORERS[scorer_name](clf, X_test, y_test)
+    score = get_scorer(scorer_name)(clf, X_test, y_test)
     expected_score = metric(y_test, clf.predict(X_test))
     assert score == pytest.approx(expected_score)
 
@@ -572,7 +577,7 @@ def test_supervised_cluster_scorers():
     # Test clustering scorers against gold standard labeling.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    km = KMeans(n_clusters=3)
+    km = KMeans(n_clusters=3, n_init="auto")
     km.fit(X_train)
     for name in CLUSTER_SCORERS:
         score1 = get_scorer(name)(km, X_test, y_test)
@@ -614,7 +619,8 @@ def test_classification_scorer_sample_weight():
     # get sensible estimators for each metric
     estimator = _make_estimators(X_train, y_train, y_ml_train)
 
-    for name, scorer in SCORERS.items():
+    for name in get_scorer_names():
+        scorer = get_scorer(name)
         if name in REGRESSION_SCORERS:
             # skip the regression scores
             continue
@@ -669,7 +675,8 @@ def test_regression_scorer_sample_weight():
     reg = DecisionTreeRegressor(random_state=0)
     reg.fit(X_train, y_train)
 
-    for name, scorer in SCORERS.items():
+    for name in get_scorer_names():
+        scorer = get_scorer(name)
         if name not in REGRESSION_SCORERS:
             # skip classification scorers
             continue
@@ -698,7 +705,7 @@ def test_regression_scorer_sample_weight():
             )
 
 
-@pytest.mark.parametrize("name", SCORERS)
+@pytest.mark.parametrize("name", get_scorer_names())
 def test_scorer_memmap_input(name):
     # Non-regression test for #6147: some score functions would
     # return singleton memmap when computed on memmap data instead of scalar
@@ -712,7 +719,7 @@ def test_scorer_memmap_input(name):
 
     # UndefinedMetricWarning for P / R scores
     with ignore_warnings():
-        scorer, estimator = SCORERS[name], ESTIMATORS[name]
+        scorer, estimator = get_scorer(name), ESTIMATORS[name]
         if name in MULTILABEL_ONLY_SCORERS:
             score = scorer(estimator, X_mm, y_ml_mm_1)
         else:
@@ -734,8 +741,10 @@ def test_scoring_is_not_metric():
 
 
 @pytest.mark.parametrize(
-    "scorers,expected_predict_count,"
-    "expected_predict_proba_count,expected_decision_func_count",
+    (
+        "scorers,expected_predict_count,"
+        "expected_predict_proba_count,expected_decision_func_count"
+    ),
     [
         (
             {
@@ -779,7 +788,7 @@ def test_multimetric_scorer_calls_method_once(
     mock_est.classes_ = np.array([0, 1])
 
     scorer_dict = _check_multimetric_scoring(LogisticRegression(), scorers)
-    multi_scorer = _MultimetricScorer(**scorer_dict)
+    multi_scorer = _MultimetricScorer(scorers=scorer_dict)
     results = multi_scorer(mock_est, X, y)
 
     assert set(scorers) == set(results)  # compare dict keys
@@ -806,7 +815,7 @@ def test_multimetric_scorer_calls_method_once_classifier_no_decision():
 
     scorers = ["roc_auc", "neg_log_loss"]
     scorer_dict = _check_multimetric_scoring(clf, scorers)
-    scorer = _MultimetricScorer(**scorer_dict)
+    scorer = _MultimetricScorer(scorers=scorer_dict)
     scorer(clf, X, y)
 
     assert predict_proba_call_cnt == 1
@@ -829,7 +838,7 @@ def test_multimetric_scorer_calls_method_once_regressor_threshold():
 
     scorers = {"neg_mse": "neg_mean_squared_error", "r2": "roc_auc"}
     scorer_dict = _check_multimetric_scoring(clf, scorers)
-    scorer = _MultimetricScorer(**scorer_dict)
+    scorer = _MultimetricScorer(scorers=scorer_dict)
     scorer(clf, X, y)
 
     assert predict_called_cnt == 1
@@ -852,7 +861,7 @@ def test_multimetric_scorer_sanity_check():
     clf.fit(X, y)
 
     scorer_dict = _check_multimetric_scoring(clf, scorers)
-    multi_scorer = _MultimetricScorer(**scorer_dict)
+    multi_scorer = _MultimetricScorer(scorers=scorer_dict)
 
     result = multi_scorer(clf, X, y)
 
@@ -864,6 +873,49 @@ def test_multimetric_scorer_sanity_check():
     for key, value in result.items():
         score_name = scorers[key]
         assert_allclose(value, separate_scores[score_name])
+
+
+@pytest.mark.parametrize("raise_exc", [True, False])
+def test_multimetric_scorer_exception_handling(raise_exc):
+    """Check that the calling of the `_MultimetricScorer` returns
+    exception messages in the result dict for the failing scorers
+    in case of `raise_exc` is `False` and if `raise_exc` is `True`,
+    then the proper exception is raised.
+    """
+    scorers = {
+        "failing_1": "neg_mean_squared_log_error",
+        "non_failing": "neg_median_absolute_error",
+        "failing_2": "neg_mean_squared_log_error",
+    }
+
+    X, y = make_classification(
+        n_samples=50, n_features=2, n_redundant=0, random_state=0
+    )
+    y *= -1  # neg_mean_squared_log_error fails if y contains negative values
+
+    clf = DecisionTreeClassifier().fit(X, y)
+
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
+    multi_scorer = _MultimetricScorer(scorers=scorer_dict, raise_exc=raise_exc)
+
+    error_msg = (
+        "Mean Squared Logarithmic Error cannot be used when targets contain"
+        " negative values."
+    )
+
+    if raise_exc:
+        with pytest.raises(ValueError, match=error_msg):
+            multi_scorer(clf, X, y)
+    else:
+        result = multi_scorer(clf, X, y)
+
+        exception_message_1 = result["failing_1"]
+        score = result["non_failing"]
+        exception_message_2 = result["failing_2"]
+
+        assert isinstance(exception_message_1, str) and error_msg in exception_message_1
+        assert isinstance(score, float)
+        assert isinstance(exception_message_2, str) and error_msg in exception_message_2
 
 
 @pytest.mark.parametrize(
@@ -1104,7 +1156,7 @@ def test_non_symmetric_metric_pos_label(
     ids=["ThresholdScorer", "ProbaScorer", "PredictScorer"],
 )
 def test_scorer_select_proba_error(scorer):
-    # check that we raise the the proper error when passing an unknown
+    # check that we raise the proper error when passing an unknown
     # pos_label
     X, y = make_classification(
         n_classes=2, n_informative=3, n_samples=20, random_state=0
@@ -1115,6 +1167,17 @@ def test_scorer_select_proba_error(scorer):
     err_msg = "is not a valid label"
     with pytest.raises(ValueError, match=err_msg):
         scorer(lr, X, y)
+
+
+def test_get_scorer_return_copy():
+    # test that get_scorer returns a copy
+    assert get_scorer("roc_auc") is not get_scorer("roc_auc")
+
+
+# TODO(1.3) Remove
+def test_SCORERS_deprecated():
+    with pytest.warns(FutureWarning, match="is deprecated and will be removed in v1.3"):
+        SCORERS["roc_auc"]
 
 
 def test_scorer_no_op_multiclass_select_proba():

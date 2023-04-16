@@ -1,11 +1,13 @@
 # Author: Lars Buitinck
 # License: 3-clause BSD
+from numbers import Real
 
 import numpy as np
 from ..base import BaseEstimator
 from ._base import SelectorMixin
 from ..utils.sparsefuncs import mean_variance_axis, min_max_axis
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval
 
 
 class VarianceThreshold(SelectorMixin, BaseEstimator):
@@ -33,6 +35,21 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    SelectFromModel: Meta-transformer for selecting features based on
+        importance weights.
+    SelectPercentile : Select features according to a percentile of the highest
+        scores.
+    SequentialFeatureSelector : Transformer that performs Sequential Feature
+        Selection.
+
     Notes
     -----
     Allows NaN in the input.
@@ -43,6 +60,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
     The following dataset has integer features, two of which are the same
     in every sample. These are removed with the default setting for threshold::
 
+        >>> from sklearn.feature_selection import VarianceThreshold
         >>> X = [[0, 2, 0, 3], [0, 1, 4, 3], [0, 1, 1, 3]]
         >>> selector = VarianceThreshold()
         >>> selector.fit_transform(X)
@@ -50,6 +68,10 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
                [1, 4],
                [1, 1]])
     """
+
+    _parameter_constraints: dict = {
+        "threshold": [Interval(Real, 0, None, closed="left")]
+    }
 
     def __init__(self, threshold=0.0):
         self.threshold = threshold
@@ -60,7 +82,8 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Sample vectors from which to compute variances.
+            Data from which to compute variances, where `n_samples` is
+            the number of samples and `n_features` is the number of features.
 
         y : any, default=None
             Ignored. This parameter exists only for compatibility with
@@ -68,8 +91,10 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
+            Returns the instance itself.
         """
+        self._validate_params()
         X = self._validate_data(
             X,
             accept_sparse=("csr", "csc"),
@@ -92,8 +117,6 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
             # for constant features
             compare_arr = np.array([self.variances_, peak_to_peaks])
             self.variances_ = np.nanmin(compare_arr, axis=0)
-        elif self.threshold < 0.0:
-            raise ValueError(f"Threshold must be non-negative. Got: {self.threshold}")
 
         if np.all(~np.isfinite(self.variances_) | (self.variances_ <= self.threshold)):
             msg = "No feature in X meets the variance threshold {0:.5f}"

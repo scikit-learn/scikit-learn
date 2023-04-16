@@ -1,6 +1,6 @@
 """Test the rcv1 loader, if the data is available,
 or if specifically requested via environment variable
-(e.g. for travis cron job)."""
+(e.g. for CI jobs)."""
 
 import scipy.sparse as sp
 import numpy as np
@@ -10,7 +10,7 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 
 
-def test_fetch_rcv1(fetch_rcv1_fxt):
+def test_fetch_rcv1(fetch_rcv1_fxt, global_random_seed):
     data1 = fetch_rcv1_fxt(shuffle=False)
     X1, Y1 = data1.data, data1.target
     cat_list, s1 = data1.target_names.tolist(), data1.sample_id
@@ -27,6 +27,9 @@ def test_fetch_rcv1(fetch_rcv1_fxt):
     assert (804414,) == s1.shape
     assert 103 == len(cat_list)
 
+    # test descr
+    assert data1.DESCR.startswith(".. _rcv1_dataset:")
+
     # test ordering of categories
     first_categories = ["C11", "C12", "C13", "C14", "C15", "C151"]
     assert_array_equal(first_categories, cat_list[:6])
@@ -39,7 +42,9 @@ def test_fetch_rcv1(fetch_rcv1_fxt):
         assert num == Y1[:, j].data.size
 
     # test shuffling and subset
-    data2 = fetch_rcv1_fxt(shuffle=True, subset="train", random_state=77)
+    data2 = fetch_rcv1_fxt(
+        shuffle=True, subset="train", random_state=global_random_seed
+    )
     X2, Y2 = data2.data, data2.target
     s2 = data2.sample_id
 
