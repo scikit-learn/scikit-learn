@@ -58,7 +58,7 @@ def _fit_and_score(
     else:  # prefit estimator, only a validation set is provided
         X_val, y_val, sw_val = X, y, sample_weight
 
-    if score_method == {"tnr", "tpr"}:
+    if score_method in {"tnr", "tpr"}:
         fpr, tpr, potential_thresholds = scorer(
             classifier, X_val, y_val, sample_weight=sw_val
         )
@@ -77,8 +77,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         The classifier, fitted or not fitted, for which we want to optimize
         the decision threshold used during `predict`.
 
-    objective_metric : {"tpr", "tnr"}, str or callable,  \
-            default="balanced_accuracy"
+    objective_metric : {"tpr", "tnr"}, str or callable, default="balanced_accuracy"
         The objective metric to be optimized. Can be one of:
 
         * a string associated to a scoring function (see model evaluation
@@ -95,8 +94,14 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         want to find the decision threshold when `objective_metric` is equal to
         `"tpr"` or `"tnr"`.
 
-    response_method : {"auto", "decision_function", "predict_proba"}, \
-            default="auto"
+    pos_label : int, float, bool or str, default=None
+        The label of the positive class. Used with `objective_metric="tpr"` or
+        `"tnr"`. When `pos_label=None`, if `y_true` is in `{-1, 1}` or `{0, 1}`,
+        `pos_label` is set to 1, otherwise an error will be raised. When using a
+        scorer, `pos_label` can be passed as a keyword argument to
+        :func:`~sklearn.metrics.make_scorer`.
+
+    response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
         Methods by the classifier `base_estimator` corresponding to the
         decision function for which we want to find a threshold. It can be:
 
@@ -110,8 +115,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         The number of decision threshold to use when discretizing the output
         of the classifier `method`.
 
-    cv : int, float, cross-validation generator, iterable or "prefit", \
-            default=None
+    cv : int, float, cross-validation generator, iterable or "prefit", default=None
         Determines the cross-validation splitting strategy to train classifier.
         Possible inputs for cv are:
 
@@ -152,12 +156,30 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         underlying estimator exposes such an attribute when fit.
     """
 
+    _parameter_constraints: dict = {
+        "estimator": [
+            HasMethods(["fit", "predict_proba"]),
+            HasMethods(["fit", "decision_function"]),
+        ],
+        "objective_metric": [
+            StrOptions(set(get_scorer_names()) | {"tpr", "tnr"}),
+            callable,
+        ],
+        "objective_value": [Real, None],
+        "pos_label": [Real, str, "boolean", None],
+        "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
+        "n_thresholds": [Interval(Integral, 1, None, closed="left")],
+        "cv": ["cv_object", StrOptions({"prefit"})],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(
         self,
         estimator,
         *,
         objective_metric="balanced_accuracy",
         objective_value=None,
+        pos_label=None,
         response_method="auto",
         n_thresholds=1_000,
         cv=None,
@@ -166,29 +188,14 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         self.estimator = estimator
         self.objective_metric = objective_metric
         self.objective_value = objective_value
+        self.pos_label = pos_label
         self.response_method = response_method
         self.n_thresholds = n_thresholds
         self.cv = cv
         self.n_jobs = n_jobs
 
-    _parameter_constraints: dict = {
-        "estimator": [
-            HasMethods(["fit", "predict_proba"]),
-            HasMethods(["fit", "decision_function"]),
-        ],
-        "objective_metric": [
-            StrOptions(set(get_scorer_names()) | {"tpr", "fpr"}),
-            callable,
-        ],
-        "objective_value": [Real, None],
-        "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
-        "n_thresholds": [Interval(Integral, 1, None, closed="left")],
-        "cv": ["cv_object", StrOptions({"prefit"})],
-        "n_jobs": [Integral, None],
-    }
-
     def fit(self, X, y, sample_weight=None, **fit_params):
-        """Fit the calibrated model.
+        """Fit the classifier and post-tune the decision threshold.
 
         Parameters
         ----------
@@ -229,10 +236,10 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         else:
             self._response_method = self.response_method
 
-        if self.objective_metric in {"tpr", "fpr"}:
+        if self.objective_metric in {"tpr", "tnr"}:
             if self.objective_value is None:
                 raise ValueError(
-                    "When `objective_metric` is 'tpr' or 'fpr', `objective_value` must "
+                    "When `objective_metric` is 'tpr' or 'tnr', `objective_value` must "
                     "be provided. Got None instead."
                 )
             objective_value = self.objective_value
@@ -255,8 +262,15 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             classifier = clone(self.estimator)
             split = cv.split(X, y)
 
-        if self.objective_metric in {"tpr", "fpr"}:
-            self._scorer = make_scorer(roc_curve, needs_threshold=True)
+        if self.objective_metric in {"tpr", "tnr"}:
+            if (
+                self._response_method == "predict_proba"
+                or self._response_method[0] == "predict_proba"
+            ):
+                params_scorer = {"needs_proba": True, "pos_label": self.pos_label}
+            else:
+                params_scorer = {"needs_threshold": True, "pos_label": self.pos_label}
+            self._scorer = make_scorer(roc_curve, **params_scorer)
         else:
             scoring = check_scoring(classifier, scoring=self.objective_metric)
             # transform a binary metric into a curve metric for all possible decision
@@ -283,6 +297,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                 for train_idx, val_idx in split
             )
         )
+        # print(thresholds, scores)
 
         min_threshold = np.min([th.min() for th in thresholds])
         max_threshold = np.max([th.max() for th in thresholds])
