@@ -680,9 +680,12 @@ def test_estimator_warnings():
             MetadataRouter(owner="test").add(
                 method_mapping="predict", estimator=RegressorMetadata()
             ),
-            "{'estimator': {'mapping': [{'callee': 'predict', 'caller': 'predict'}],"
-            " 'router': {'fit': {'sample_weight': <RequestType.ERROR_IF_PASSED: None>},"
-            " 'score': {'sample_weight': <RequestType.ERROR_IF_PASSED: None>}}}}",
+            (
+                "{'estimator': {'mapping': [{'callee': 'predict', 'caller':"
+                " 'predict'}], 'router': {'fit': {'sample_weight':"
+                " <RequestType.ERROR_IF_PASSED: None>}, 'score': {'sample_weight':"
+                " <RequestType.ERROR_IF_PASSED: None>}}}}"
+            ),
         ),
     ],
 )
