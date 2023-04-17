@@ -82,19 +82,23 @@ def _grid_from_X(X, percentiles, grid_resolution, custom_values):
     if grid_resolution <= 1:
         raise ValueError("'grid_resolution' must be strictly greater than 1.")
 
+    custom_values = {k: np.asarray(v) for k, v in custom_values.items()}
+    if any(v.ndim != 1 for v in custom_values.values()):
+
+        error_string = ", ".join(
+            f"{str(k)} - {v.ndim} dimensions" for k, v in custom_values.items() if v.ndim != 1
+        )
+
+        raise ValueError(
+            "The custom grid for some features is not a one-dimensional array."
+            f"{error_string}"
+        )
+
     values = []
     for feature in range(X.shape[1]):
         if feature in custom_values:
             # Use values in the custom range
-            feature_range = custom_values[feature]
-            if not isinstance(feature_range, np.ndarray):
-                feature_range = np.array(feature_range)
-            if feature_range.ndim != 1:
-                raise ValueError(
-                    "Grid for feature {} is not a one-dimensional array. Got {}"
-                    " dimensions".format(feature, feature_range.ndim)
-                )
-            axis = feature_range
+            axis = custom_values[feature]
         else:
             uniques = np.unique(_safe_indexing(X, feature, axis=1))
             if uniques.shape[0] < grid_resolution:
@@ -501,13 +505,18 @@ def partial_dependence(
     custom_values = custom_values or {}
     if isinstance(features, (str, int)):
         features = [features]
-    custom_values_idx = {
+
+    X_subset = _safe_indexing(X, features_indices, axis=1)
+
+    custom_values = custom_values or {}
+    custom_values_for_X_subset = {
         index: custom_values.get(feature)
         for index, feature in enumerate(features)
         if feature in custom_values
     }
+
     grid, values = _grid_from_X(
-        _safe_indexing(X, features_indices, axis=1),
+        X_subset,
         percentiles,
         grid_resolution,
         custom_values_idx,
