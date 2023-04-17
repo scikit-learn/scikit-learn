@@ -510,7 +510,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         n_samples = X_binned_train.shape[0]
         scoring_is_predefined_string = self.scoring in _SCORERS
-        compute_raw_predictions_val = (
+        need_raw_predictions_val = (
             self._use_validation_data or scoring_is_predefined_string
         )
         # First time calling fit, or no warm start
@@ -548,7 +548,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 # populate train_score and validation_score with the
                 # predictions of the initial model (before the first tree)
 
-                if compute_raw_predictions_val:
+                if need_raw_predictions_val:
                     raw_predictions_val = np.zeros(
                         shape=(X_binned_val.shape[0], self.n_trees_per_iteration_),
                         dtype=self._baseline_prediction.dtype,
@@ -634,7 +634,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Compute raw predictions
             raw_predictions = self._raw_predict(X_binned_train, n_threads=n_threads)
-            if self.do_early_stopping_ and compute_raw_predictions_val:
+            if self.do_early_stopping_ and need_raw_predictions_val:
                 raw_predictions_val = self._raw_predict(
                     X_binned_val, n_threads=n_threads
                 )
@@ -752,7 +752,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             should_early_stop = False
             if self.do_early_stopping_:
                 # Update raw_predictions_val with the newest tree(s)
-                if compute_raw_predictions_val:
+                if need_raw_predictions_val:
                     for k, pred in enumerate(self._predictors[-1]):
                         raw_predictions_val[:, k] += pred.predict_binned(
                             X_binned_val,
