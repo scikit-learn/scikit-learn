@@ -449,7 +449,7 @@ def notebook_modification_function(notebook_content, notebook_filename):
     if "seaborn" in notebook_content_str:
         code_lines.append("%pip install seaborn")
     if "plotly.express" in notebook_content_str:
-        code_lines.extend(["%pip install plotly", "import pandas"])
+        code_lines.append("%pip install plotly")
     if "skimage" in notebook_content_str:
         code_lines.append("%pip install scikit-image")
     if "fetch_" in notebook_content_str:
@@ -460,13 +460,9 @@ def notebook_modification_function(notebook_content, notebook_filename):
                 "pyodide_http.patch_all()",
             ]
         )
-    if (
-        # TODO(1.4) the default fetch_openml parser will be pandas so any
-        # notebook using fetch_openml will need 'import pandas'
-        'parser="pandas"' in notebook_content_str
-        or "as_frame=True" in notebook_content_str
-    ):
-        code_lines.extend("import pandas")
+    # always import matplotlib and pandas to avoid Pyodide limitation with
+    # imports inside functions
+    code_lines.extend(["import matplotlib", "import pandas"])
 
     if code_lines:
         code_lines = ["# JupyterLite-specific code"] + code_lines
