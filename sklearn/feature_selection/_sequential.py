@@ -177,7 +177,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         cv=5,
         n_jobs=None,
     ):
-
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.tol = tol
@@ -210,13 +209,15 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         if self.n_features_to_select in ("warn", None):
             # for backwards compatibility
             warnings.warn(
-                "Leaving `n_features_to_select` to "
-                "None is deprecated in 1.0 and will become 'auto' "
-                "in 1.3. To keep the same behaviour as with None "
-                "(i.e. select half of the features) and avoid "
-                "this warning, you should manually set "
-                "`n_features_to_select='auto'` and set tol=None "
-                "when creating an instance.",
+                (
+                    "Leaving `n_features_to_select` to "
+                    "None is deprecated in 1.0 and will become 'auto' "
+                    "in 1.3. To keep the same behaviour as with None "
+                    "(i.e. select half of the features) and avoid "
+                    "this warning, you should manually set "
+                    "`n_features_to_select='auto'` and set tol=None "
+                    "when creating an instance."
+                ),
                 FutureWarning,
             )
 

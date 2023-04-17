@@ -30,16 +30,16 @@ from .preprocessing import label_binarize, LabelEncoder
 from .utils import (
     column_or_1d,
     indexable,
-    check_matplotlib_support,
     _safe_indexing,
 )
-from .utils._response import _get_response_values_binary
 
-from .utils.multiclass import check_classification_targets, type_of_target
+from .utils.multiclass import check_classification_targets
 from .utils.parallel import delayed, Parallel
 from .utils._param_validation import StrOptions, HasMethods, Hidden
+from .utils._plotting import _BinaryClassifierCurveDisplayMixin
 from .utils.validation import (
     _check_fit_params,
+    _check_pos_label_consistency,
     _check_sample_weight,
     _num_samples,
     check_consistent_length,
@@ -48,7 +48,6 @@ from .utils.validation import (
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
-from .metrics._base import _check_pos_label_consistency
 from sklearn.utils import Bunch
 from .utils.metadata_routing import (
     MetadataRouter,
@@ -294,8 +293,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     "`estimator` since `base_estimator` is deprecated."
                 )
             warnings.warn(
-                "`base_estimator` was renamed to `estimator` in version 1.2 and "
-                "will be removed in 1.4.",
+                (
+                    "`base_estimator` was renamed to `estimator` in version 1.2 and "
+                    "will be removed in 1.4."
+                ),
                 FutureWarning,
             )
             estimator = self.base_estimator
@@ -347,8 +348,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     "`estimator` since `base_estimator` is deprecated."
                 )
             warnings.warn(
-                "`base_estimator` was renamed to `estimator` in version 1.2 and "
-                "will be removed in 1.4.",
+                (
+                    "`base_estimator` was renamed to `estimator` in version 1.2 and "
+                    "will be removed in 1.4."
+                ),
                 FutureWarning,
             )
             estimator = self.base_estimator
@@ -1068,7 +1071,7 @@ def calibration_curve(
     return prob_true, prob_pred
 
 
-class CalibrationDisplay:
+class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
     """Calibration curve (also known as reliability diagram) visualization.
 
     It is recommended to use
@@ -1179,13 +1182,8 @@ class CalibrationDisplay:
         display : :class:`~sklearn.calibration.CalibrationDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support("CalibrationDisplay.plot")
-        import matplotlib.pyplot as plt
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
-        if ax is None:
-            fig, ax = plt.subplots()
-
-        name = self.estimator_name if name is None else name
         info_pos_label = (
             f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
         )
@@ -1196,20 +1194,20 @@ class CalibrationDisplay:
         line_kwargs.update(**kwargs)
 
         ref_line_label = "Perfectly calibrated"
-        existing_ref_line = ref_line_label in ax.get_legend_handles_labels()[1]
+        existing_ref_line = ref_line_label in self.ax_.get_legend_handles_labels()[1]
         if ref_line and not existing_ref_line:
-            ax.plot([0, 1], [0, 1], "k:", label=ref_line_label)
-        self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[0]
+            self.ax_.plot([0, 1], [0, 1], "k:", label=ref_line_label)
+        self.line_ = self.ax_.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[
+            0
+        ]
 
         # We always have to show the legend for at least the reference line
-        ax.legend(loc="lower right")
+        self.ax_.legend(loc="lower right")
 
         xlabel = f"Mean predicted probability {info_pos_label}"
         ylabel = f"Fraction of positives {info_pos_label}"
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
-        self.ax_ = ax
-        self.figure_ = ax.figure
         return self
 
     @classmethod
@@ -1315,15 +1313,15 @@ class CalibrationDisplay:
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
         >>> plt.show()
         """
-        method_name = f"{cls.__name__}.from_estimator"
-        check_matplotlib_support(method_name)
-
-        check_is_fitted(estimator)
-        y_prob, pos_label = _get_response_values_binary(
-            estimator, X, response_method="predict_proba", pos_label=pos_label
+        y_prob, pos_label, name = cls._validate_and_get_response_values(
+            estimator,
+            X,
+            y,
+            response_method="predict_proba",
+            pos_label=pos_label,
+            name=name,
         )
 
-        name = name if name is not None else estimator.__class__.__name__
         return cls.from_predictions(
             y,
             y_prob,
@@ -1433,26 +1431,19 @@ class CalibrationDisplay:
         >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
         >>> plt.show()
         """
-        method_name = f"{cls.__name__}.from_predictions"
-        check_matplotlib_support(method_name)
-
-        target_type = type_of_target(y_true)
-        if target_type != "binary":
-            raise ValueError(
-                f"The target y is not binary. Got {target_type} type of target."
-            )
+        pos_label_validated, name = cls._validate_from_predictions_params(
+            y_true, y_prob, sample_weight=None, pos_label=pos_label, name=name
+        )
 
         prob_true, prob_pred = calibration_curve(
             y_true, y_prob, n_bins=n_bins, strategy=strategy, pos_label=pos_label
         )
-        name = "Classifier" if name is None else name
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
 
         disp = cls(
             prob_true=prob_true,
             prob_pred=prob_pred,
             y_prob=y_prob,
             estimator_name=name,
-            pos_label=pos_label,
+            pos_label=pos_label_validated,
         )
         return disp.plot(ax=ax, ref_line=ref_line, **kwargs)

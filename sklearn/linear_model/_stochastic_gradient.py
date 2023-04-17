@@ -492,7 +492,6 @@ def _get_plain_sgd_function(input_dtype):
 
 
 class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
-
     loss_functions = {
         "hinge": (Hinge, 1.0),
         "squared_hinge": (SquaredHinge, 1.0),
@@ -541,7 +540,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         warm_start=False,
         average=False,
     ):
-
         super().__init__(
             loss=loss,
             penalty=penalty,
@@ -709,9 +707,11 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
-                "Maximum number of iteration reached before "
-                "convergence. Consider increasing max_iter to "
-                "improve the fit.",
+                (
+                    "Maximum number of iteration reached before "
+                    "convergence. Consider increasing max_iter to "
+                    "improve the fit."
+                ),
                 ConvergenceWarning,
             )
         return self
@@ -1360,7 +1360,6 @@ class SGDClassifier(BaseSGDClassifier):
 
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
-
     loss_functions = {
         "squared_error": (SquaredLoss,),
         "huber": (Huber, DEFAULT_EPSILON),
@@ -1556,9 +1555,11 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
-                "Maximum number of iteration reached before "
-                "convergence. Consider increasing max_iter to "
-                "improve the fit.",
+                (
+                    "Maximum number of iteration reached before "
+                    "convergence. Consider increasing max_iter to "
+                    "improve the fit."
+                ),
                 ConvergenceWarning,
             )
 
@@ -2285,7 +2286,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         self.t_ += self.n_iter_ * n_samples
 
         if self.average > 0:
-
             self._average_intercept = np.atleast_1d(average_intercept)
             self._standard_intercept = np.atleast_1d(intercept)
 
@@ -2443,9 +2443,11 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
-                "Maximum number of iteration reached before "
-                "convergence. Consider increasing max_iter to "
-                "improve the fit.",
+                (
+                    "Maximum number of iteration reached before "
+                    "convergence. Consider increasing max_iter to "
+                    "improve the fit."
+                ),
                 ConvergenceWarning,
             )
 
