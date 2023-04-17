@@ -908,7 +908,7 @@ Since :math:`X_c` and :math:`y_c` are the centered versions of X and y, we have
 
 .. math::  ||X w + w_0 1_s - y||_2^2 + \alpha ||w||_2^2 = ||X_c w - y_c ||_2^2  + \alpha ||w||_2^2 + \bar{r}^2 n
 
-Let's consider the derivative of the above equation with respect to :math:`w_0`
+Let's consider the derivative of the above expression with respect to :math:`w_0`
 and setting it to 0. The first two terms do not depend on :math:`w_0`,
 therefore we only need to set the derivative of the last term to 0 to obtain
 the following value of the intercept at the minimum:
