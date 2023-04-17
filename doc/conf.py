@@ -434,7 +434,7 @@ def notebook_modification_function(notebook_content, notebook_filename):
         "Running the scikit-learn examples in JupyterLite is experimental and you may"
         " encounter some unexpected behavior.\n\nThe main difference is that imports"
         " will take a lot longer than usual, for example the first `import sklearn` can"
-        " take roughly 20-30s.\n\nIf you notice problems, feel free to open an"
+        " take roughly 10-20s.\n\nIf you notice problems, feel free to open an"
         " [issue](https://github.com/scikit-learn/scikit-learn/issues/new/choose)"
         " about it."
     )
