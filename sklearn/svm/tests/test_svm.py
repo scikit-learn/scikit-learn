@@ -1420,3 +1420,18 @@ def test_dual_auto(loss):
     # OvR, L2, N < M (2,6)
     dual = _choose_dual_automatically(loss, "l2", "ovr", np.asarray(X).T)
     assert dual is True
+
+
+def test_dual_auto_edge_cases():
+    # Hinge, OvR, L2, N > M (6,2)
+    dual = _choose_dual_automatically("hinge", "l2", "ovr", np.asarray(X))
+    assert dual is True  # only supports True
+    dual = _choose_dual_automatically(
+        "epsilon_insensitive", "l2", "ovr", np.asarray(X)
+    )
+    assert dual is True  # only supports True
+    # SqHinge, OvR, L1, N < M (2,6)
+    dual = _choose_dual_automatically(
+        "squared_hinge", "l1", "ovr", np.asarray(X).T
+    )
+    assert dual is False  # only supports False
