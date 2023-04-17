@@ -30,7 +30,8 @@ from ...utils._param_validation import Interval, StrOptions
 from ...utils._param_validation import RealNotInt
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.multiclass import check_classification_targets
-from ...metrics import check_scoring, _SCORERS
+from ...metrics import check_scoring
+from ...metrics._scorer import _SCORERS
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
