@@ -391,4 +391,9 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.decision_function(X)
 
     def _more_tags(self):
-        return {"binary_only": True}
+        return {
+            "binary_only": True,
+            "_xfail_checks": {
+                "check_classifiers_train": "Threshold at probability 0.5 does not hold"
+            },
+        }
