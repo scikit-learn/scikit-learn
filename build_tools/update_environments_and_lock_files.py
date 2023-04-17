@@ -181,7 +181,7 @@ conda_build_metadata_list = [
         "build_name": "pylatest_pip_openblas_pandas",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channel": "defaults",
+        "channel": "conda-forge",
         # sphinx in conda_dependencies as a temporary work-around for
         # https://github.com/conda-incubator/conda-lock/issues/309
         "conda_dependencies": ["python", "ccache", "sphinx"],
@@ -192,6 +192,12 @@ conda_build_metadata_list = [
         ),
         "package_constraints": {
             "python": "3.9",
+            # TODO: remove the following pin when we have a solution since the current
+            # environment defeat the purpose of the test (e.g. `pylastest`).
+            # pandas 2.0 depends on tzdata as well as python installed via conda
+            # We currently have a mix of conda/pip and run into the following issue:
+            # https://github.com/conda/conda-lock/issues/179
+            "pandas": "1.5.3",
         },
     },
     {
