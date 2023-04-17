@@ -465,12 +465,13 @@ def notebook_modification_function(notebook_content, notebook_filename):
     code_lines.extend(["import matplotlib", "import pandas"])
     # TODO temporary work-around for OpenML CORS headers issue
     # https://github.com/openml/OpenML/issues/1135
-    code_lines.extend(
-        [
-            "from sklearn.datasets import _openml",
-            "_openml._OPENML_PREFIX = 'https://api.openml.org/'",
-        ]
-    )
+    if "fetch_openml" in notebook_content_str:
+        code_lines.extend(
+            [
+                "from sklearn.datasets import _openml",
+                "_openml._OPENML_PREFIX = 'https://api.openml.org/'",
+            ]
+        )
 
     if code_lines:
         code_lines = ["# JupyterLite-specific code"] + code_lines
