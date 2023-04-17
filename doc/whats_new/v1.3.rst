@@ -368,7 +368,7 @@ Changelog
 
 - |Fix| Fixes a bug where `thresholds` provided by :func:`metrics.roc_curve` could be
   larger than `1.0` even for `y_score` being a probability estimate.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`26194` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
