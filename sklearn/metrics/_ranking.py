@@ -1085,7 +1085,9 @@ def roc_curve(
     fps = np.r_[0, fps]
     # make sure to not have a thresholds exceeding 1 for what could look like a
     # probability estimate and not a decision function
-    max_threshold = 1 if thresholds.max() <= 1 else thresholds[0] + 1
+    max_threshold = (
+        min(1, thresholds[0] + 1) if thresholds.max() <= 1 else thresholds[0] + 1
+    )
     thresholds = np.r_[max_threshold, thresholds]
 
     if fps[-1] <= 0:
