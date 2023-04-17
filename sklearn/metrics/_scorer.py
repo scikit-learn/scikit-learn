@@ -63,6 +63,7 @@ from .cluster import adjusted_mutual_info_score
 from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 
+from ..utils import Bunch
 from ..utils.multiclass import type_of_target
 from ..base import is_regressor
 from ..utils._param_validation import validate_params
@@ -71,6 +72,7 @@ from ..utils.metadata_routing import MetadataRequest
 from ..utils.metadata_routing import MetadataRouter
 from ..utils.metadata_routing import process_routing
 from ..utils.metadata_routing import get_routing_for_object
+from ..utils.metadata_routing import _routing_enabled
 
 
 def _cached_call(cache, estimator, method, *args, **kwargs):
@@ -115,16 +117,22 @@ class _MultimetricScorer:
         cache = {} if self._use_cache(estimator) else None
         cached_call = partial(_cached_call, cache)
 
-        params = process_routing(self, "score", kwargs)
+        if _routing_enabled():
+            routed_params = process_routing(self, "score", kwargs)
+        else:
+            # they all get the same args, and they all get them all
+            routed_params = Bunch(
+                **{name: Bunch(score=kwargs) for name in self._scorers}
+            )
 
         for name, scorer in self._scorers.items():
             try:
                 if isinstance(scorer, _BaseScorer):
                     score = scorer._score(
-                        cached_call, estimator, *args, **params.get(name).score
+                        cached_call, estimator, *args, **routed_params.get(name).score
                     )
                 else:
-                    score = scorer(estimator, *args, **params.get(name).score)
+                    score = scorer(estimator, *args, **routed_params.get(name).score)
                 scores[name] = score
             except Exception as e:
                 if self._raise_exc:
@@ -233,7 +241,7 @@ class _BaseScorer(_MetadataRequester):
             kwargs_string,
         )
 
-    def __call__(self, estimator, X, y_true, **kwargs):
+    def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -248,17 +256,32 @@ class _BaseScorer(_MetadataRequester):
         y_true : array-like
             Gold standard target values for X.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
         **kwargs : dict
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 2.0
+            Only available if `enable_metadata_routing=True`. See the
+            :ref:`User Guide <metadata_routing>`.
+
+            .. versionadded:: 1.4
 
         Returns
         -------
         score : float
             Score function applied to prediction of estimator on X.
         """
+        if kwargs and not _routing_enabled():
+            raise ValueError(
+                "kwargs is only supported if enable_metadata_routing=True. See"
+                " the User Guide for more information."
+            )
+
+        if sample_weight is not None:
+            kwargs["sample_weight"] = sample_weight
+
         return self._score(partial(_cached_call, None), estimator, X, y_true, **kwargs)
 
     def _factory_args(self):
@@ -284,7 +307,7 @@ class _BaseScorer(_MetadataRequester):
         Please see :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
-        .. versionadded:: 2.0
+        .. versionadded:: 1.4
 
         Parameters
         ----------
@@ -332,7 +355,7 @@ class _PredictScorer(_BaseScorer):
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 2.0
+            .. versionadded:: 1.4
 
         Returns
         -------
@@ -377,7 +400,7 @@ class _ProbaScorer(_BaseScorer):
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 2.0
+            .. versionadded:: 1.4
 
         Returns
         -------
@@ -404,8 +427,11 @@ class _ProbaScorer(_BaseScorer):
         scoring_kwargs = {**self._kwargs, **kwargs}
         # this is for backward compatibility to avoid passing sample_weight
         # to the scorer if it's None
-        # TODO(1.3) Probably remove
-        if scoring_kwargs.get("sample_weight", -1) is None:
+        # TODO: Probably remove when deprecating enable_metadata_routing
+        if (
+            "sample_weight" in scoring_kwargs
+            and scoring_kwargs["sample_weight"] is None
+        ):
             del scoring_kwargs["sample_weight"]
 
         return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
@@ -441,7 +467,7 @@ class _ThresholdScorer(_BaseScorer):
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 2.0
+            .. versionadded:: 1.4
 
         Returns
         -------
@@ -489,9 +515,13 @@ class _ThresholdScorer(_BaseScorer):
         scoring_kwargs = {**self._kwargs, **kwargs}
         # this is for backward compatibility to avoid passing sample_weight
         # to the scorer if it's None
-        # TODO(1.3) Probably remove
-        if scoring_kwargs.get("sample_weight", -1) is None:
+        # TODO: Probably remove when deprecating enable_metadata_routing
+        if (
+            "sample_weight" in scoring_kwargs
+            and scoring_kwargs["sample_weight"] is None
+        ):
             del scoring_kwargs["sample_weight"]
+
         return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
     def _factory_args(self):
@@ -552,7 +582,7 @@ class _PassthroughScorer:
     def get_metadata_routing(self):
         """Get requested data properties.
 
-        .. versionadded:: 2.0
+        .. versionadded:: 1.4
 
         Returns
         -------
@@ -924,9 +954,9 @@ class _DeprecatedScorers(dict):
 
     def __getitem__(self, item):
         warnings.warn(
-            "sklearn.metrics.SCORERS is deprecated and will be removed in v1.3. "
-            "Please use sklearn.metrics.get_scorer_names to get a list of available "
-            "scorers and sklearn.metrics.get_metric to get scorer.",
+            "sklearn.metrics.SCORERS is deprecated and will be removed in v1.3."
+            " Please use sklearn.metrics.get_scorer_names to get a list of"
+            " available scorers and sklearn.metrics.get_metric to get scorer.",
             FutureWarning,
         )
         return super().__getitem__(item)

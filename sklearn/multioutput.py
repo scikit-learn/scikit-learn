@@ -30,11 +30,16 @@ from .base import (
     is_classifier,
 )
 from .model_selection import cross_val_predict
-from .utils import _print_elapsed_time, check_random_state
-from .utils.metadata_routing import MetadataRouter, MethodMapping, process_routing
+from .utils import _print_elapsed_time, check_random_state, Bunch
+from .utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    process_routing,
+    _routing_enabled,
+)
 from .utils.metaestimators import available_if
 from .utils.multiclass import check_classification_targets
-from .utils.validation import check_is_fitted
+from .utils.validation import _check_fit_params, check_is_fitted, has_fit_parameter
 from .utils.parallel import delayed, Parallel
 from .utils._param_validation import HasMethods, StrOptions
 
@@ -84,7 +89,7 @@ def _available_if_estimator_has(attr):
 
 
 class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit", "predict"])],
         "n_jobs": [Integral, None],
     }
@@ -121,15 +126,25 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             weights.
 
         **partial_fit_params : dict of str -> object
-            Parameters passed to the ``estimator.partial_fit`` method of each step.
+            Parameters passed to the ``estimator.partial_fit`` method of each
+            sub-estimator.
 
-            .. versionadded:: 2.0
+            Only available if `enable_metadata_routing=True`. See the
+            :ref:`User Guide <metadata_routing>`.
+
+            .. versionadded:: 1.4
 
         Returns
         -------
         self : object
             Returns a fitted instance.
         """
+        if partial_fit_params and not _routing_enabled():
+            raise ValueError(
+                "partial_fit_params is only supported if enable_metadata_routing=True."
+                " See the User Guide for more information."
+            )
+
         first_time = not hasattr(self, "estimators_")
 
         if first_time:
@@ -143,12 +158,27 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                 "multi-output regression but has only one."
             )
 
-        routed_params = process_routing(
-            obj=self,
-            method="partial_fit",
-            other_params=partial_fit_params,
-            sample_weight=sample_weight,
-        )
+        if _routing_enabled():
+            routed_params = process_routing(
+                obj=self,
+                method="partial_fit",
+                other_params=partial_fit_params,
+                sample_weight=sample_weight,
+            )
+        else:
+            if sample_weight is not None and not has_fit_parameter(
+                self.estimator, "sample_weight"
+            ):
+                raise ValueError(
+                    "Underlying estimator does not support sample weights."
+                )
+
+            if sample_weight is not None:
+                routed_params = Bunch(
+                    estimator=Bunch(partial_fit=Bunch(sample_weight=sample_weight))
+                )
+            else:
+                routed_params = Bunch(estimator=Bunch(partial_fit=Bunch()))
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_partial_fit_estimator)(
@@ -212,9 +242,25 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                 "multi-output regression but has only one."
             )
 
-        routed_params = process_routing(
-            obj=self, method="fit", other_params=fit_params, sample_weight=sample_weight
-        )
+        if _routing_enabled():
+            routed_params = process_routing(
+                obj=self,
+                method="fit",
+                other_params=fit_params,
+                sample_weight=sample_weight,
+            )
+        else:
+            if sample_weight is not None and not has_fit_parameter(
+                self.estimator, "sample_weight"
+            ):
+                raise ValueError(
+                    "Underlying estimator does not support sample weights."
+                )
+
+            fit_params_validated = _check_fit_params(X, fit_params)
+            routed_params = Bunch(estimator=Bunch(fit=fit_params_validated))
+            if sample_weight is not None:
+                routed_params.estimator.fit["sample_weight"] = sample_weight
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_estimator)(
@@ -269,21 +315,11 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = (
-            MetadataRouter(owner=self.__class__.__name__).add(
-                estimator=self.estimator,
-                method_mapping=MethodMapping()
-                .add(callee="partial_fit", caller="partial_fit")
-                .add(callee="fit", caller="fit"),
-            )
-            # the fit method already accepts everything, therefore we don't
-            # specify parameters. The value passed to ``child`` needs to be the
-            # same as what's passed to ``add`` above, in this case
-            # `"estimator"`.
-            .warn_on(child="estimator", method="fit", params=None)
-            # the partial_fit method at the time of this change (v1.2) only
-            # supports sample_weight, therefore we only include this metadata.
-            .warn_on(child="estimator", method="partial_fit", params=["sample_weight"])
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping()
+            .add(callee="partial_fit", caller="partial_fit")
+            .add(callee="fit", caller="fit"),
         )
         return router
 
@@ -375,9 +411,13 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
             weights.
 
         **partial_fit_params : dict of str -> object
-            Parameters passed to the ``estimator.partial_fit`` method of each step.
+            Parameters passed to the ``estimator.partial_fit`` method of each
+            sub-estimator.
 
-            .. versionadded:: 2.0
+            Only available if `enable_metadata_routing=True`. See the
+            :ref:`User Guide <metadata_routing>`.
+
+            .. versionadded:: 1.4
 
         Returns
         -------
@@ -579,7 +619,6 @@ def _available_if_base_estimator_has(attr):
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
-
     _parameter_constraints: dict = {
         "base_estimator": [HasMethods(["fit", "predict"])],
         "order": ["array-like", StrOptions({"random"}), None],
@@ -659,7 +698,12 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         del Y_pred_chain
 
-        routed_params = process_routing(obj=self, method="fit", other_params=fit_params)
+        if _routing_enabled():
+            routed_params = process_routing(
+                obj=self, method="fit", other_params=fit_params
+            )
+        else:
+            routed_params = Bunch(estimator=Bunch(fit=fit_params))
 
         for chain_idx, estimator in enumerate(self.estimators_):
             message = self._log_message(
@@ -851,13 +895,19 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method of each step.
 
-            .. versionadded:: 2.0
+            .. versionadded:: 1.4
 
         Returns
         -------
         self : object
             Class instance.
         """
+        if fit_params and not _routing_enabled():
+            raise ValueError(
+                "fit_params is only supported if enable_metadata_routing=True. "
+                "See the User Guide for more information."
+            )
+
         self._validate_params()
 
         super().fit(X, Y, **fit_params)
@@ -1087,13 +1137,9 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = (
-            MetadataRouter(owner=self.__class__.__name__)
-            .add(
-                estimator=self.base_estimator,
-                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
-            )
-            .warn_on(child="estimator", method="fit", params=None)
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            estimator=self.base_estimator,
+            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
         )
         return router
 
