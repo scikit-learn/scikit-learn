@@ -1083,7 +1083,10 @@ def roc_curve(
     # to make sure that the curve starts at (0, 0)
     tps = np.r_[0, tps]
     fps = np.r_[0, fps]
-    thresholds = np.r_[thresholds[0] + 1, thresholds]
+    # make sure to not have a thresholds exceeding 1 for what could look like a
+    # probability estimate and not a decision function
+    max_threshold = 1 if thresholds.max() <= 1 else thresholds[0] + 1
+    thresholds = np.r_[max_threshold, thresholds]
 
     if fps[-1] <= 0:
         warnings.warn(

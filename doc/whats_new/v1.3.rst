@@ -366,6 +366,10 @@ Changelog
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Fix| Fixes a bug where `thresholds` provided by :func:`metrics.roc_curve` could be
+  larger than `1.0` even for `y_score` being a probability estimate.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
