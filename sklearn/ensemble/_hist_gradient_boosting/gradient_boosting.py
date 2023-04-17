@@ -548,6 +548,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 # populate train_score and validation_score with the
                 # predictions of the initial model (before the first tree)
 
+                # Create raw_predictions_val for storing the raw predictions of
+                # the validation data.
                 if need_raw_predictions_val:
                     raw_predictions_val = np.zeros(
                         shape=(X_binned_val.shape[0], self.n_trees_per_iteration_),
@@ -563,9 +565,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # can optimize a bit and avoid repeating computing the
                     # predictions of the previous trees. We'll re-use
                     # raw_predictions (as it's needed for training anyway) for
-                    # evaluating the training loss, and create
-                    # raw_predictions_val for storing the raw predictions of
-                    # the validation data.
+                    # evaluating the training loss.
 
                     self._check_early_stopping_loss(
                         raw_predictions=raw_predictions,
@@ -598,7 +598,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         self._random_seed,
                     )
 
-                    # scoring is a predefined metric string
+                    # If the scorer is a predefined string, then we optimize
+                    # the evaluation by using the raw predictions.
                     if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
                             indices_small_train
@@ -772,6 +773,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     )
 
                 else:
+                    # If the scorer is a predefined string, then we optimize
+                    # the evaluation by using the raw predictions.
                     if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
                             indices_small_train
