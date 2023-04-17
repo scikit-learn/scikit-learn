@@ -426,6 +426,12 @@ def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
     return fdescr
 
 
+@validate_params(
+    {
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def load_wine(*, return_X_y=False, as_frame=False):
     """Load and return the wine dataset (classification).
 
