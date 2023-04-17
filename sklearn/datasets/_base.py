@@ -21,7 +21,9 @@ from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
 from ..utils.fixes import _open_binary, _open_text, _read_text, _contents
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import validate_params, StrOptions
+from pathlib import PosixPath
+
 
 import numpy as np
 
@@ -98,6 +100,19 @@ def _convert_data_dataframe(
     return combined_df, X, y
 
 
+@validate_params(
+    {
+        "container_path": [PosixPath, str],
+        "description": [str, None],
+        "categories": [list, None],
+        "load_content": ["boolean"],
+        "shuffle": ["boolean"],
+        "encoding": [str, None],
+        "decode_error": [StrOptions({"strict", "ignore", "replace"})],
+        "random_state": ["random_state"],
+        "allowed_extensions": [list, None],
+    }
+)
 def load_files(
     container_path,
     *,
