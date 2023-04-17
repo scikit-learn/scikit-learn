@@ -231,9 +231,6 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
         Distance matrix to other samples, where only non-zero elements are
         considered neighbors. Matrix is in CSR format.
     """
-    if not issparse(graph):
-        raise TypeError(f"Input graph must be a sparse matrix, got {graph!r} instead.")
-
     if graph.format == "csr" and _is_sorted_by_data(graph):
         return graph
 
