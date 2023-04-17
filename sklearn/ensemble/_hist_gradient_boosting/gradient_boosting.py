@@ -511,8 +511,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         n_samples = X_binned_train.shape[0]
         scoring_is_predefined_string = self.scoring in _SCORERS
-        need_raw_predictions_val = (
-            self._use_validation_data or scoring_is_predefined_string
+        need_raw_predictions_val = X_binned_val is not None and (
+            scoring_is_predefined_string or self.scoring == "loss"
         )
         # First time calling fit, or no warm start
         if not (self._is_fitted() and self.warm_start):
