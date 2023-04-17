@@ -151,14 +151,6 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-:mod:`sklearn.feature_selection`
-................................
-
-- |Enhancement| All selectors in :mod:`sklearn.feature_selection` will preserve
-  a DataFrame's dtype when transformed. :pr:`25102` by `Thomas Fan`_.
-
-- |Fix| :class:`feature_selection.SequentialFeatureSelector`'s `cv` parameter
-  now supports generators. :pr:`25973` by `Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.base`
 ...................
@@ -275,6 +267,15 @@ Changelog
   meaning that it is note required to call `fit` before calling `transform`.
   Parameter validation only happens at `fit` time.
   :pr:`24230` by :user:`Guillaume Lemaitre <glemaitre>`.
+  
+:mod:`sklearn.feature_selection`
+................................
+
+- |Enhancement| All selectors in :mod:`sklearn.feature_selection` will preserve
+  a DataFrame's dtype when transformed. :pr:`25102` by `Thomas Fan`_.
+
+- |Fix| :class:`feature_selection.SequentialFeatureSelector`'s `cv` parameter
+  now supports generators. :pr:`25973` by `Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.impute`
 .....................
@@ -308,6 +309,11 @@ Changelog
   :class:`linear_model.ARDRegression` to expose the actual number of iterations
   required to reach the stopping criterion.
   :pr:`25697` by :user:`John Pangas <jpangas>`.
+  
+- |Fix| Use a more robust criterion to detect convergence of
+  :class:`linear_model.LogisticRegression(penalty="l1", solver="liblinear")`
+  on linearly separable problems.
+  :pr:`25214` by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.metrics`
 ......................
