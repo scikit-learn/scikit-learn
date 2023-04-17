@@ -30,7 +30,7 @@ from ...utils._param_validation import Interval, StrOptions
 from ...utils._param_validation import RealNotInt
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.multiclass import check_classification_targets
-from ...metrics import check_scoring
+from ...metrics import check_scoring, _SCORERS
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
@@ -509,10 +509,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             print("Fitting gradient boosted rounds:")
 
         n_samples = X_binned_train.shape[0]
-        compute_raw_predictions_val = self._use_validation_data and isinstance(
-            self.scoring, str
+        scoring_is_predefined_string = self.scoring in _SCORERS
+        compute_raw_predictions_val = (
+            self._use_validation_data or scoring_is_predefined_string
         )
-
         # First time calling fit, or no warm start
         if not (self._is_fitted() and self.warm_start):
             # Clear random state and score attributes
@@ -599,7 +599,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     )
 
                     # scoring is a predefined metric string
-                    if isinstance(self.scoring, str):
+                    if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
                             indices_small_train
                         ]
@@ -772,7 +772,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     )
 
                 else:
-                    if isinstance(self.scoring, str):
+                    if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
                             indices_small_train
                         ]
