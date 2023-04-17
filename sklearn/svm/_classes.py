@@ -13,22 +13,18 @@ from ..utils._param_validation import Interval, StrOptions, Hidden
 
 
 def _choose_dual_automatically(loss, penalty, multi_class, X):
-    """Choose dual parameter value wrt to loss, penalty and shape of the data"""
+    """Choose dual parameter value wrt to loss, penalty and shape of the data."""
     if X.shape[0] < X.shape[1]:
         try:
-            # check if the combination of parameters supports
-            # dual formulation
             _get_liblinear_solver_type(multi_class, penalty, loss, True)
             return True
-        except ValueError:
+        except ValueError:  # dual not supported for the combination
             return False
     else:
         try:
-            # check if the combination of parameters doesn't support
-            # dual formulation
             _get_liblinear_solver_type(multi_class, penalty, loss, False)
             return False
-        except ValueError:
+        except ValueError:  # primal not supported by the combination
             return True
 
 
