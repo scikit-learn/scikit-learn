@@ -425,6 +425,7 @@ sphinx_gallery_conf = {
     "inspect_global_variables": False,
     "remove_config_comments": True,
     "plot_gallery": "True",
+    "recommender": {"enable": True, "n_examples": 5},
 }
 
 
