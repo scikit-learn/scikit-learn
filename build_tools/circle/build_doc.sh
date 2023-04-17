@@ -177,10 +177,6 @@ mamba install "$(get_dep conda-lock min)" -y
 conda-lock install --log-level WARNING --name $CONDA_ENV_NAME $LOCK_FILE
 source activate $CONDA_ENV_NAME
 
-# TODO remove once all features we need are in a sphinx-gallery release, e.g.
-# https://github.com/sphinx-gallery/sphinx-gallery/pull/1105
-pip install git+https://github.com/sphinx-gallery/sphinx-gallery
-
 show_installed_libraries
 
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
