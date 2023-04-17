@@ -894,8 +894,8 @@ follows (after rearranging the terms and factorizing by :math:`1_s`):
 
 .. math::  ||X w + w_0 1_s - y||_2^2 = ||X_c w - y_c +  (\bar{X}^{T} w  + w_0  - \bar{y}) 1_s ||_2^2
 
-Let's define the scalar :math:`\bar{r} = \bar{X}^{T} w  + w_0  - \bar{y}`. We
-can now expand:
+Let's define now the scalar :math:`\bar{r} = \bar{X}^{T} w  + w_0  - \bar{y}`. We
+can now expand the data-fit term of the original ridge problem as follows:
 
 .. math::  ||X w + w_0 1_s - y||_2^2 = ||X_c w - y_c ||_2^2 + ||\bar{r} 1_s ||_2^2 + 2 \bar{r} 1_s^{T} (X_c w - y_c)
 
@@ -908,10 +908,19 @@ Since :math:`X_c` and :math:`y_c` are the centered versions of X and y, we have
 
 .. math::  ||X w + w_0 1_s - y||_2^2 + \alpha ||w||_2^2 = ||X_c w - y_c ||_2^2  + \alpha ||w||_2^2 + \bar{r}^2 n
 
-The first two terms of the right hand side do not depend on :math:`w_0` and are
-minimized by :math:`\hat{w}` the solution of the centered ridge without
-intercept. The third term is positive and therefore subsequently minimized to
-zero by setting :math:`\hat{w_0} = \bar{y} - \bar{X}^{T} \hat{w}`.
+Let's consider the derivative of the above equation with respect to :math:`w_0`
+and setting it to 0. The first two terms do not depend on :math:`w_0`,
+therefore we only need to set the derivative of the last term to 0 to obtain
+the following value of the intercept at the minimum:
+
+.. math::  \hat{w_0} = \bar{y} - \bar{X}^{T} \hat{w}
+
+and as a result, at the minimum, :math:`\bar{r} = 0` and therefore:
+
+.. math::  ||X w + \hat{w_0} 1_s - y||_2^2 + \alpha ||w||_2^2 = ||X_c w - y_c ||_2^2  + \alpha ||w||_2^2
+
+This is minimized by :math:`\hat{w}` the solution of the centered ridge without
+intercept.
 
 Note that the same argument holds for any other penalized linear regression
 estimator (as long as the penalty is such that the solution is unique).
