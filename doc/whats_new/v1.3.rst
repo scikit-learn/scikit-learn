@@ -446,8 +446,9 @@ Changelog
 :mod:`sklearn.svm`
 ..................
 
-    |Enhancement| `dual` parameter now accepts `auto` option for :class:`svm.LinearSVC` and :class:`svm.LinearSVR`.
-    :pr:`26093` by :user:`Gleb Levitski <glevv>`.
+- |API| `dual` parameter now accepts `auto` option for
+  :class:`svm.LinearSVC` and :class:`svm.LinearSVR`.
+  :pr:`26093` by :user:`Gleb Levitski <glevv>`.
 
 :mod:`sklearn.tree`
 ...................
