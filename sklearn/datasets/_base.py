@@ -270,6 +270,14 @@ def load_files(
     )
 
 
+@validate_params(
+    {
+        "data_file_name": [str],
+        "data_module": [str],
+        "descr_file_name": [str, None],
+        "descr_module": [str],
+    }
+)
 def load_csv_data(
     data_file_name,
     *,

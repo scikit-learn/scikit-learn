@@ -130,6 +130,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.fetch_rcv1",
     "sklearn.datasets.fetch_species_distributions",
     "sklearn.datasets.load_breast_cancer",
+    "sklearn.datasets.load_csv_data",
     "sklearn.datasets.load_diabetes",
     "sklearn.datasets.load_iris",
     "sklearn.datasets.load_svmlight_file",
