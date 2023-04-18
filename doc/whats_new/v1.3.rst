@@ -294,8 +294,9 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Efficiency| Avoid uncessary data scaling and conversion to sparse data
-  structures in :class:`linear_model.LinearRegression` when not necessary.
+- |Efficiency| Avoid data scaling when `sample_weight=None` and other
+  unnecessary data copies and unexpected dense to sparse data conversion in
+  :class:`linear_model.LinearRegression`.
   :pr:`26207` by :user:`Olivier Grisel <ogrisel>`.
 
 - |Enhancement| :class:`linear_model.SGDClassifier`,
