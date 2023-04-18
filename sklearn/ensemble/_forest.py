@@ -348,10 +348,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
 
-        feature_names_in_ = []
-        if hasattr(X, "columns"):
-            feature_names_in_ = X.columns.to_list()
-
         X, y = self._validate_data(
             X,
             y,
@@ -481,7 +477,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     verbose=self.verbose,
                     class_weight=self.class_weight,
                     n_samples_bootstrap=n_samples_bootstrap,
-                    feature_names_in_=feature_names_in_,
+                    feature_names_in_=getattr(self, "feature_names_in_", None),
                 )
                 for i, t in enumerate(trees)
             )
