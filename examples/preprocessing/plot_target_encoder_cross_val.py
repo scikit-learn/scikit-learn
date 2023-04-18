@@ -36,7 +36,8 @@ kbins = KBinsDiscretizer(
 )
 X_informative = kbins.fit_transform((y + noise).reshape(-1, 1))
 
-# Permute the feature to remove the information from the ordering
+# Remove the linear relationship between y and the bin index by permuting the values of
+# X_informative
 permuted_categories = rng.permutation(n_categories)
 X_informative = permuted_categories[X_informative.astype(np.int32)]
 
@@ -73,12 +74,12 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 # %%
 # Training a Ridge Regressor
-# ===========================
-# In this section, we train ridge regressors on the dataset with and without
+# ==========================
+# In this section, we train a ridge regressor on the dataset with and without
 # encoding and explore the influence of target encoder with and without the
 # interval cross validation. First, we see the Ridge model trained on the
-# raw features will underfit, because the order of the informative feature is
-# not informative:
+# raw features will have low performance, because the order of the informative
+# feature is not informative:
 from sklearn.linear_model import Ridge
 import sklearn
 
