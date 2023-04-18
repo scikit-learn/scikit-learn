@@ -315,13 +315,9 @@ def _rescale_data(X, y, sample_weight):
 
     y_rescaled : {array-like, sparse matrix}
     """
+    # Assume that _validate_data and _check_sample_weight have been called by
+    # the caller.
     n_samples = X.shape[0]
-    sample_weight = np.asarray(sample_weight)
-
-    if sample_weight.ndim == 0:
-        # XXX: compat for scalar weight: do we really need to support this?
-        sample_weight = np.full(n_samples, sample_weight, dtype=sample_weight.dtype)
-
     sample_weight_sqrt = np.sqrt(sample_weight)
 
     if sp.issparse(X) or sp.issparse(y):
