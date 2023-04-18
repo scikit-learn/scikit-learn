@@ -773,6 +773,33 @@ def test_sample_y_shapes(normalize_y, n_targets):
     assert y_samples.shape == y_test_shape
 
 
+@pytest.mark.parametrize("verbose", [1, 2])
+def test_verbose(verbose):
+    kernel = kernel = 1.0 * ExpSineSquared(
+        1.0, 5.0, periodicity_bounds=(1e-2, 1e1)
+    ) + WhiteKernel(1e-1)
+    gpr = GaussianProcessRegressor(kernel=kernel, verbose=verbose)
+    res = gpr.fit(X, y)
+    assert len(res.explored_theta) == len(res.explored_theta_log)
+    assert res.explored_theta[-1].all() == res.kernel_.theta.all()
+
+
+def my_optimizer(obj_func, theta, bounds):
+    theta_array = np.array([1, 1, 1, 1])
+    return theta_array, 0, [theta_array], [0]
+
+
+@pytest.mark.parametrize("optimizer", [my_optimizer])
+def test_verbose_optimizer(optimizer):
+    kernel = kernel = 1.0 * ExpSineSquared(
+        1.0, 5.0, periodicity_bounds=(1e-2, 1e1)
+    ) + WhiteKernel(1e-1)
+    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=my_optimizer, verbose=2)
+    res = gpr.fit(X, y)
+    assert len(res.explored_theta) == len(res.explored_theta_log)
+    assert res.explored_theta[-1].all() == res.kernel_.theta.all()
+
+
 class CustomKernel(C):
     """
     A custom kernel that has a diag method that returns the first column of the

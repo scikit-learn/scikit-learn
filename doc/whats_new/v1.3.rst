@@ -277,6 +277,34 @@ Changelog
 - |Fix| :class:`feature_selection.SequentialFeatureSelector`'s `cv` parameter
   now supports generators. :pr:`25973` by `Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Enhancement| :class:`_gpr.GaussianProcessRegressor` Add parameter `verbose`
+  to check whether user wants to track theta and corresponding log margimal
+  likelihood. In `_constrained_optimization`, if verbose >= 1, then an array
+  self.explored_theta that tracks explored theta and self.explored_theta_log
+  that tracks coresponding log marginal likelihood would be defined.
+  :pr:`26012` by :user:`Yuchen Zhou <ROMEEZHOU>`
+
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Enhancement| :class:`_gpr.GaussianProcessRegressor` Add attribute
+  `explored_theta`, a nparray to store the explored theta
+  :pr:`26012` by :user:`Yuchen Zhou <ROMEEZHOU>`
+
+:mod:`sklearn.impute`
+.....................
+
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Enhancement| :class:`_gpr.GaussianProcessRegressor` Add attribute
+  `explored_theta_log`, a nparray to store the corresponding value of
+  log marginal likelihood of explored theta
+  :pr:`26012` by :user:`Yuchen Zhou <ROMEEZHOU>`
+
 :mod:`sklearn.impute`
 .....................
 
