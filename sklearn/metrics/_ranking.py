@@ -1056,7 +1056,7 @@ def roc_curve(
     >>> tpr
     array([0. , 0.5, 0.5, 1. , 1. ])
     >>> thresholds
-    array([1.8 , 0.8 , 0.4 , 0.35, 0.1 ])
+    array([1.0 , 0.8 , 0.4 , 0.35, 0.1 ])
     """
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
@@ -1085,12 +1085,12 @@ def roc_curve(
     fps = np.r_[0, fps]
     # _binary_clf_curve returns decreasing thresholds, hence:
     max_threshold, min_threshold = thresholds[0], thresholds[-1]
-    if min_threshold >=0 and max_threshold <= 1:
-         # Ensure that probability thresholds stay in the [0-1] range.
-         max_threshold = min(1, max_threshold + 1)
+    if min_threshold >= 0 and max_threshold <= 1:
+        # Ensure that probability thresholds stay in the [0-1] range.
+        max_threshold = min(1, max_threshold + 1)
     else:
-         # Unbounded range for decision_function threshold values.
-         max_threshold = max_threshold + 1
+        # Unbounded range for decision_function threshold values.
+        max_threshold = max_threshold + 1
     thresholds = np.r_[max_threshold, thresholds]
 
     if fps[-1] <= 0:
