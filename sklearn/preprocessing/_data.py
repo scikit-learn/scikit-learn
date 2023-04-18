@@ -2987,7 +2987,7 @@ def quantile_transform(
     )
     if axis == 0:
         X = n.fit_transform(X)
-    else:
+    else:  # axis == 1
         X = n.fit_transform(X.T).T
     return X
 

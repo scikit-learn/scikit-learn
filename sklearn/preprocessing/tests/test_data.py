@@ -2246,19 +2246,6 @@ def test_fit_cold_start():
         scaler.fit_transform(X_2d)
 
 
-def test_quantile_transform_valid_axis():
-    X = np.array([[0, 25, 50, 75, 100], [2, 4, 6, 8, 10], [2.6, 4.1, 2.3, 9.5, 0.1]])
-
-    with pytest.raises(
-        ValueError,
-        match=(
-            "The 'axis' parameter of quantile_transform must be a int among {0, 1}. Got"
-            " 2 instead."
-        ),
-    ):
-        quantile_transform(X.T, axis=2)
-
-
 @pytest.mark.parametrize("method", ["box-cox", "yeo-johnson"])
 def test_power_transformer_notfitted(method):
     pt = PowerTransformer(method=method)
