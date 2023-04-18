@@ -324,6 +324,7 @@ def _rescale_data(X, y, sample_weight):
         sw_matrix = sparse.dia_matrix(
             (sample_weight_sqrt, 0), shape=(n_samples, n_samples)
         )
+
     if sp.issparse(X):
         X = safe_sparse_dot(sw_matrix, X)
     else:
