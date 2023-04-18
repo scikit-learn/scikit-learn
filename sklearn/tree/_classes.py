@@ -23,7 +23,6 @@ from math import ceil
 from numbers import Integral, Real
 
 import numpy as np
-import pandas as pd
 from scipy.sparse import issparse
 
 from ..base import BaseEstimator
@@ -886,9 +885,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         self : DecisionTreeClassifier
             Fitted estimator.
         """
-        if isinstance(X, pd.DataFrame):
-            self.feature_names_in_ = X.columns.to_list()
-
         super().fit(
             X,
             y,

@@ -46,7 +46,6 @@ import threading
 
 from abc import ABCMeta, abstractmethod
 import numpy as np
-import pandas as pd
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 
@@ -349,8 +348,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
 
-        feature_names_in_ = None
-        if isinstance(X, pd.DataFrame):
+        feature_names_in_ = []
+        if hasattr(X, "columns"):
             feature_names_in_ = X.columns.to_list()
 
         X, y = self._validate_data(
