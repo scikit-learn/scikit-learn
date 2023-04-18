@@ -1016,10 +1016,10 @@ def roc_curve(
         Increasing true positive rates such that element `i` is the true
         positive rate of predictions with score >= `thresholds[i]`.
 
-    thresholds : ndarray of shape = (n_thresholds,)
+    thresholds : ndarray of shape (n_thresholds,)
         Decreasing thresholds on the decision function used to compute
         fpr and tpr. `thresholds[0]` represents no instances being predicted
-        and is arbitrarily set to `max(y_score) + 1`.
+        and is arbitrarily set to `max(y_score) + eps`.
 
     See Also
     --------

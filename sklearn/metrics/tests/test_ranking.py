@@ -2201,15 +2201,17 @@ def test_ranking_metric_pos_label_types(metric, classes):
         assert not np.isnan(thresholds).any()
 
 
-def test_roc_curve_with_probablity_estimates():
+def test_roc_curve_with_probablity_estimates(global_random_seed):
     """Check that thresholds do not exceed 1.0 when `y_score` is a probability
     estimate.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/26193
     """
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     y_true = rng.randint(0, 2, size=10)
     y_score = rng.rand(10)
     _, _, thresholds = roc_curve(y_true, y_score)
-    assert np.logical_or(thresholds <= 1, thresholds >= 0).all()
+    assert np.logical_or(
+        thresholds <= 1 + np.info(y_score.dtype).eps, thresholds >= 0
+    ).all()
