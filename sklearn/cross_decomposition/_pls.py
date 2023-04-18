@@ -531,8 +531,7 @@ class PLSRegression(_PLS):
     Parameters
     ----------
     n_components : int, default=2
-        Number of components to keep. Should be in `[1, min(n_samples,
-        n_features, n_targets)]`.
+        Number of components to keep. Should be in `[1, n_features]`.
 
     scale : bool, default=True
         Whether to scale `X` and `Y`.

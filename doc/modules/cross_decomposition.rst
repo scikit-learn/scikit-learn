@@ -158,7 +158,7 @@ These two modifications affect the output of `predict` and `transform`,
 which are not the same as for :class:`PLSCanonical`. Also, while the number
 of components is limited by `min(n_samples, n_features, n_targets)` in
 :class:`PLSCanonical`, here the limit is the rank of :math:`X^TX`, i.e.
-`min(n_samples, n_features)`.
+`n_features`.
 
 :class:`PLSRegression` is also known as PLS1 (single targets) and PLS2
 (multiple targets). Much like :class:`~sklearn.linear_model.Lasso`,
