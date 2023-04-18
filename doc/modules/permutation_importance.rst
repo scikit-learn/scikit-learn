@@ -6,15 +6,27 @@ Permutation feature importance
 
 .. currentmodule:: sklearn.inspection
 
-Permutation feature importance is a model inspection technique that can be used
-for any :term:`fitted` :term:`estimator` when the data is tabular. This is
-especially useful for non-linear or opaque :term:`estimators`. The permutation
-feature importance is defined to be the decrease in a model score when a single
-feature value is randomly shuffled [1]_. This procedure breaks the relationship
-between the feature and the target, thus the drop in the model score is
-indicative of how much the model depends on the feature. This technique
-benefits from being model agnostic and can be calculated many times with
-different permutations of the feature.
+Permutation feature importance is a model inspection technique that measures the
+contribution of each feature to a :term:`fitted` model's performance on a given
+tabular dataset. This technique is particularly useful for non-linear or opaque
+:term:`estimators`, and involves randomly shuffling the values of a single
+feature and observing the resulting decrease in the model's score [1]_. By
+breaking the relationship between the feature and the target, we can determine
+how much the model relies on such feature. One key advantage of permutation
+feature importance is that it is model-agnostic, i.e. it can be applied to any
+fitted estimator. Moreover, it can be calculated multiple times with different
+permutations of the feature, providing a robust measure of feature importance
+for the specific trained model.
+
+The figure below shows the permutation feature importance of a
+:class:`~sklearn.ensemble.RandomForestClassifier` trained on an augmented
+version of the titanic dataset that contains a `random_cat` and a `random_num`
+features:
+
+.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_permutation_importance_002.png
+   :target: ../auto_examples/inspection/plot_permutation_importance.html
+   :align: center
+   :scale: 70
 
 .. warning::
 
@@ -74,12 +86,11 @@ highlight which features contribute the most to the generalization power of the
 inspected model. Features that are important on the training set but not on the
 held-out set might cause the model to overfit.
 
-The permutation feature importance is the decrease in a model score when a single
-feature value is randomly shuffled. The score function to be used for the
-computation of importances can be specified with the `scoring` argument,
-which also accepts multiple scorers. Using multiple scorers is more computationally
-efficient than sequentially calling :func:`permutation_importance` several times
-with a different scorer, as it reuses model predictions.
+The permutation feature importance depends on the score function that can be
+specified with the `scoring` argument. Said argument accepts multiple scorers,
+which is more computationally efficient than sequentially calling
+:func:`permutation_importance` several times with a different scorer, as it
+reuses model predictions.
 
 An example of using multiple scorers is shown below, employing a list of metrics,
 but more input formats are possible, as documented in :ref:`multimetric_scoring`.
@@ -156,9 +167,9 @@ over low cardinality features such as binary features or categorical variables
 with a small number of possible categories.
 
 Permutation-based feature importances do not exhibit such a bias. Additionally,
-the permutation feature importance may be computed performance metric on the
-model predictions and can be used to analyze any model class (not
-just tree-based models).
+the permutation feature importance may be computed with any performance metric
+on the model predictions and can be used to analyze any model class (not just
+tree-based models).
 
 The following example highlights the limitations of impurity-based feature
 importance in contrast to permutation-based feature importance:
