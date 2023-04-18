@@ -46,6 +46,7 @@ import threading
 
 from abc import ABCMeta, abstractmethod
 import numpy as np
+import pandas as pd
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 
@@ -156,11 +157,15 @@ def _parallel_build_trees(
     verbose=0,
     class_weight=None,
     n_samples_bootstrap=None,
+    feature_names_in_=None,
 ):
     """
     Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
+
+    if feature_names_in_ is not None:
+        tree.feature_names_in_ = feature_names_in_
 
     if bootstrap:
         n_samples = X.shape[0]
@@ -343,9 +348,19 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # Validate or convert input data
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
+
+        feature_names_in_ = None
+        if isinstance(X, pd.DataFrame):
+            feature_names_in_ = X.columns.to_list()
+
         X, y = self._validate_data(
-            X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE
+            X,
+            y,
+            multi_output=True,
+            accept_sparse="csc",
+            dtype=DTYPE,
         )
+
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -467,6 +482,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     verbose=self.verbose,
                     class_weight=self.class_weight,
                     n_samples_bootstrap=n_samples_bootstrap,
+                    feature_names_in_=feature_names_in_,
                 )
                 for i, t in enumerate(trees)
             )
