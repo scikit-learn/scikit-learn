@@ -1083,11 +1083,14 @@ def roc_curve(
     # to make sure that the curve starts at (0, 0)
     tps = np.r_[0, tps]
     fps = np.r_[0, fps]
-    # make sure to not have a thresholds exceeding 1 for what could look like a
-    # probability estimate and not a decision function
-    max_threshold = (
-        min(1, thresholds[0] + 1) if thresholds.max() <= 1 else thresholds[0] + 1
-    )
+    # _binary_clf_curve returns decreasing thresholds, hence:
+    max_threshold, min_threshold = thresholds[0], thresholds[-1]
+    if min_threshold >=0 and max_threshold <= 1:
+         # Ensure that probability thresholds stay in the [0-1] range.
+         max_threshold = min(1, max_threshold + 1)
+    else:
+         # Unbounded range for decision_function threshold values.
+         max_threshold = max_threshold + 1
     thresholds = np.r_[max_threshold, thresholds]
 
     if fps[-1] <= 0:
