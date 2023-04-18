@@ -46,7 +46,7 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
     If ``grid_resolution`` is bigger than the number of unique values in the
     j-th column of X or if the feature is a categorical feature (by inspecting
     `is_categorical`) , then those unique values will be used instead.
-    
+
     Parameters
     ----------
     X : array-like of shape (n_samples, n_target_features)
@@ -93,9 +93,10 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
 
     custom_values = {k: np.asarray(v) for k, v in custom_values.items()}
     if any(v.ndim != 1 for v in custom_values.values()):
-
         error_string = ", ".join(
-            f"{str(k)} - {v.ndim} dimensions" for k, v in custom_values.items() if v.ndim != 1
+            f"{str(k)} - {v.ndim} dimensions"
+            for k, v in custom_values.items()
+            if v.ndim != 1
         )
 
         raise ValueError(
@@ -178,7 +179,6 @@ def _partial_dependence_recursion(est, grid, features):
 
 
 def _partial_dependence_brute(est, grid, features, X, response_method):
-
     predictions = []
     averaged_predictions = []
 
