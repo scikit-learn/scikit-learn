@@ -143,3 +143,48 @@ print(f"Done in {toc_bwd - tic_bwd:.3f}s")
 # attribute. The forward SFS is faster than the backward SFS because it only
 # needs to perform `n_features_to_select = 2` iterations, while the backward
 # SFS needs to perform `n_features - n_features_to_select = 8` iterations.
+
+# %%
+# Selecting Features Using Sequential Feature Selection and Negative tol Values
+# -----------------------------------------------------------------------------
+#
+# We begin by loading the Breast Cancer dataset, consisting of 30 different
+# features and 569 samples.
+from sklearn.datasets import load_breast_cancer
+import numpy as np
+
+breast_cancer_data = load_breast_cancer()
+X, y = breast_cancer_data.data, breast_cancer_data.target
+feature_names = np.array(breast_cancer_data.feature_names)
+print(breast_cancer_data.DESCR)
+
+# %%
+# We will make use of the :class:`~sklearn.linear_model.LogisticRegression`
+# estimator with :class:`~sklearn.feature_selection.SequentialFeatureSelector`
+# to perform the feature selection.
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_selection import SequentialFeatureSelector
+from time import time
+import warnings
+warnings.filterwarnings("ignore")
+
+lr = LogisticRegression(max_iter=50)
+
+def get_features_and_time(n_features_to_select, tol, direction, trial_no):
+    start = time()
+    sfs = SequentialFeatureSelector(lr, n_features_to_select=n_features_to_select,
+                                    tol=tol, direction=direction).fit(X,y)
+    end = time()
+    print(f"Trial {trial_no}:\nn_features_to_select: {n_features_to_select}\ntol: {tol}\ndirection: {direction}")
+    print(f"Features selected: {feature_names[sfs.get_support()]}")
+    print(f"Done in {end - start:.3f}s")
+
+trial_no = 0
+for n_features_to_select, tol, direction in zip(["auto" for _ in range(3)], [-0.1, -1e-2, -1e-3], ["backward" for _ in range(3)]):
+    trial_no += 1
+    get_features_and_time(n_features_to_select=n_features_to_select, tol=tol, direction=direction, trial_no=trial_no)
+
+# %%
+# We can see that the number of features selected is greater for
+# negative values of `tol` closer to zero. The time taken for feature selection
+# also decreases as the values of `tol` come closer to zero.
