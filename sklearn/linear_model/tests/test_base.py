@@ -661,7 +661,8 @@ def test_dtype_preprocess_data(global_random_seed):
 
 
 @pytest.mark.parametrize("n_targets", [None, 2])
-def test_rescale_data_dense(n_targets, global_random_seed):
+@pytest.mark.parametrize("sparse_data", [True, False])
+def test_rescale_data(n_targets, sparse_data, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
@@ -672,14 +673,34 @@ def test_rescale_data_dense(n_targets, global_random_seed):
         y = rng.rand(n_samples)
     else:
         y = rng.rand(n_samples, n_targets)
-    rescaled_X, rescaled_y, sqrt_sw = _rescale_data(X, y, sample_weight)
-    rescaled_X2 = X * sqrt_sw[:, np.newaxis]
+
+    expected_sqrt_sw = np.sqrt(sample_weight)
+    expected_rescaled_X = X * expected_sqrt_sw[:, np.newaxis]
+
     if n_targets is None:
-        rescaled_y2 = y * sqrt_sw
+        expected_rescaled_y = y * expected_sqrt_sw
     else:
-        rescaled_y2 = y * sqrt_sw[:, np.newaxis]
-    assert_array_almost_equal(rescaled_X, rescaled_X2)
-    assert_array_almost_equal(rescaled_y, rescaled_y2)
+        expected_rescaled_y = y * expected_sqrt_sw[:, np.newaxis]
+
+    if sparse_data:
+        X = sparse.csr_matrix(X)
+        if n_targets is None:
+            y = sparse.csr_matrix(y.reshape(-1, 1))
+        else:
+            y = sparse.csr_matrix(y)
+
+    rescaled_X, rescaled_y, sqrt_sw = _rescale_data(X, y, sample_weight)
+
+    assert_allclose(sqrt_sw, expected_sqrt_sw)
+
+    if sparse_data:
+        rescaled_X = rescaled_X.toarray()
+        rescaled_y = rescaled_y.toarray()
+        if n_targets is None:
+            rescaled_y = rescaled_y.ravel()
+
+    assert_allclose(rescaled_X, expected_rescaled_X)
+    assert_allclose(rescaled_y, expected_rescaled_y)
 
 
 def test_fused_types_make_dataset():
