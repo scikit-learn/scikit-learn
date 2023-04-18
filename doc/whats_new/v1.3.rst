@@ -267,7 +267,7 @@ Changelog
   meaning that it is note required to call `fit` before calling `transform`.
   Parameter validation only happens at `fit` time.
   :pr:`24230` by :user:`Guillaume Lemaitre <glemaitre>`.
-  
+
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -294,6 +294,11 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Efficiency| Avoid data scaling when `sample_weight=None` and other
+  unnecessary data copies and unexpected dense to sparse data conversion in
+  :class:`linear_model.LinearRegression`.
+  :pr:`26207` by :user:`Olivier Grisel <ogrisel>`.
+
 - |Enhancement| :class:`linear_model.SGDClassifier`,
   :class:`linear_model.SGDRegressor` and :class:`linear_model.SGDOneClassSVM`
   now preserve dtype for `numpy.float32`.
@@ -309,7 +314,7 @@ Changelog
   :class:`linear_model.ARDRegression` to expose the actual number of iterations
   required to reach the stopping criterion.
   :pr:`25697` by :user:`John Pangas <jpangas>`.
-  
+
 - |Fix| Use a more robust criterion to detect convergence of
   :class:`linear_model.LogisticRegression(penalty="l1", solver="liblinear")`
   on linearly separable problems.
