@@ -596,7 +596,6 @@ def partial_dependence(
 
     X_subset = _safe_indexing(X, features_indices, axis=1)
 
-    custom_values = custom_values or {}
     custom_values_for_X_subset = {
         index: custom_values.get(feature)
         for index, feature in enumerate(features)
@@ -608,7 +607,7 @@ def partial_dependence(
         percentiles,
         is_categorical,
         grid_resolution,
-        custom_values_idx,
+        custom_values_for_X_subset,
     )
 
     if method == "brute":

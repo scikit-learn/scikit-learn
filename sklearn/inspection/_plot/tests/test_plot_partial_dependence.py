@@ -46,10 +46,22 @@ def custom_values_helper(feature, grid_resolution):
         *mquantiles(feature, (0.05, 0.95), axis=0), num=grid_resolution, endpoint=True
     )
 
+def custom_values_helper(feature, grid_resolution):
+    return np.linspace(
+        *mquantiles(feature, (0.05, 0.95), axis=0), num=grid_resolution, endpoint=True
+    )
+
+
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("grid_resolution", [10, 20])
 @pytest.mark.parametrize("use_custom_values", [True, False])
-def test_plot_partial_dependence(grid_resolution, use_custom_values, pyplot, clf_diabetes, diabetes):
+def test_plot_partial_dependence(
+    use_custom_values,
+    grid_resolution,
+    pyplot,
+    clf_diabetes,
+    diabetes,
+):
     # Test partial dependence plot function.
     # Use columns 0 & 2 as 1 is not quantitative (sex)
     feature_names = diabetes.feature_names
@@ -59,7 +71,6 @@ def test_plot_partial_dependence(grid_resolution, use_custom_values, pyplot, clf
             0: custom_values_helper(diabetes.data[:, 0], grid_resolution),
             2: custom_values_helper(diabetes.data[:, 2], grid_resolution),
         }
-
     disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
@@ -279,7 +290,9 @@ def test_plot_partial_dependence_str_features(
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("use_custom_values", [True, False])
-def test_plot_partial_dependence_custom_axes(use_custom_values, pyplot, clf_diabetes, diabetes):
+def test_plot_partial_dependence_custom_axes(
+    use_custom_values, pyplot, clf_diabetes, diabetes
+):
     grid_resolution = 25
     fig, (ax1, ax2) = pyplot.subplots(1, 2)
 
@@ -410,7 +423,16 @@ def test_plot_partial_dependence_incorrent_num_axes(
             "bmi": custom_values_helper(bmi, grid_resolution),
         }
 
-    disp = PartialDependenceDisplay.from_estimator(
+    age = diabetes.data[:, diabetes.feature_names.index("age")]
+    bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
+    custom_values = None
+    if use_custom_values:
+        custom_values = {
+            "age": custom_values_helper(age, grid_resolution),
+            "bmi": custom_values_helper(bmi, grid_resolution),
+        }
+
+    disp = PartialDependenceDisplay.from_estimator((
         clf_diabetes,
         diabetes.data,
         ["age", "bmi"],
@@ -438,7 +460,9 @@ def test_plot_partial_dependence_incorrent_num_axes(
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("use_custom_values", [True, False])
-def test_plot_partial_dependence_with_same_axes(use_custom_values, pyplot, clf_diabetes, diabetes):
+def test_plot_partial_dependence_with_same_axes(
+    use_custom_values, pyplot, clf_diabetes, diabetes
+):
     # The first call to plot_partial_dependence will create two new axes to
     # place in the space of the passed in axes, which results in a total of
     # three axes in the figure.
@@ -491,7 +515,9 @@ def test_plot_partial_dependence_with_same_axes(use_custom_values, pyplot, clf_d
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("use_custom_values", [True, False])
-def test_plot_partial_dependence_feature_name_reuse(use_custom_values, pyplot, clf_diabetes, diabetes):
+def test_plot_partial_dependence_feature_name_reuse(
+    use_custom_values, pyplot, clf_diabetes, diabetes
+):
     # second call to plot does not change the feature names from the first
     # call
     grid_resolution = 10
@@ -566,7 +592,7 @@ def test_plot_partial_dependence_multiclass(
     target = iris.target_names[iris.target]
     clf_symbol = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf_symbol.fit(iris.data, target)
-    
+
     disp_symbol = PartialDependenceDisplay.from_estimator(
         clf_symbol,
         iris.data,
@@ -611,7 +637,6 @@ multioutput_regression_data = make_regression(n_samples=50, n_targets=2, random_
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("target", [0, 1])
 @pytest.mark.parametrize("use_custom_values", [True, False])
-
 def test_plot_partial_dependence_multioutput(use_custom_values, pyplot, target):
     # Test partial dependence plot function on multi-output input.
     X, y = multioutput_regression_data
