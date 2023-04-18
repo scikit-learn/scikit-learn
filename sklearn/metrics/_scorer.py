@@ -18,14 +18,14 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-import copy
-import warnings
 from collections.abc import Iterable
 from functools import partial
 from collections import Counter
 from traceback import format_exc
 
 import numpy as np
+import copy
+import warnings
 
 from . import (
     r2_score,
@@ -178,6 +178,8 @@ class _MultimetricScorer:
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
+        .. versionadded:: 1.3
+
         Returns
         -------
         routing : MetadataRouter
@@ -266,7 +268,7 @@ class _BaseScorer(_MetadataRequester):
             Only available if `enable_metadata_routing=True`. See the
             :ref:`User Guide <metadata_routing>`.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.3
 
         Returns
         -------
@@ -307,7 +309,7 @@ class _BaseScorer(_MetadataRequester):
         Please see :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.3
 
         Parameters
         ----------
@@ -355,7 +357,7 @@ class _PredictScorer(_BaseScorer):
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.3
 
         Returns
         -------
@@ -400,7 +402,7 @@ class _ProbaScorer(_BaseScorer):
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.3
 
         Returns
         -------
@@ -467,7 +469,7 @@ class _ThresholdScorer(_BaseScorer):
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.3
 
         Returns
         -------
@@ -582,7 +584,10 @@ class _PassthroughScorer:
     def get_metadata_routing(self):
         """Get requested data properties.
 
-        .. versionadded:: 1.4
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.3
 
         Returns
         -------

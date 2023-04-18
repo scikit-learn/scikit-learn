@@ -7,9 +7,9 @@
 #
 # License: BSD 3 clause
 
-from inspect import signature
 from numbers import Integral
 import warnings
+from inspect import signature
 from functools import partial
 
 from math import log

@@ -132,7 +132,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             Only available if `enable_metadata_routing=True`. See the
             :ref:`User Guide <metadata_routing>`.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.3
 
         Returns
         -------
@@ -309,6 +309,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
+        .. versionadded:: 1.3
+
         Returns
         -------
         routing : MetadataRouter
@@ -417,7 +419,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
             Only available if `enable_metadata_routing=True`. See the
             :ref:`User Guide <metadata_routing>`.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.3
 
         Returns
         -------
@@ -895,7 +897,10 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method of each step.
 
-            .. versionadded:: 1.4
+            Only available if `enable_metadata_routing=True`. See the
+            :ref:`User Guide <metadata_routing>`.
+
+            .. versionadded:: 1.3
 
         Returns
         -------
@@ -985,6 +990,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
+
+        .. versionadded:: 1.3
 
         Returns
         -------
@@ -1130,6 +1137,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
+
+        .. versionadded:: 1.3
 
         Returns
         -------

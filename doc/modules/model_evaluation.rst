@@ -231,7 +231,8 @@ the following two rules:
 - Advanced: If it requires extra metadata to be passed to it, it should expose
   a ``get_metadata_routing`` method returning the requested metadata. The user
   should be able to set the requested metadata via a ``set_score_request``
-  method. Please see :ref:`User Guide <metadata_routing>` for more details.
+  method. Please see :ref:`User Guide <metadata_routing>` and :ref:`Developer
+  Guide <sphx_glr_auto_examples_plot_metadata_routing.py>` for more details.
 
 
 .. note:: **Using custom scorers in functions where n_jobs > 1**
