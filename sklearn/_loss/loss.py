@@ -674,15 +674,6 @@ class HuberLoss(BaseLoss):
         self.approx_hessian = True
         self.constant_hessian = False
 
-    def set_delta(self, y_true, raw_prediction, sample_weight=None):
-        """Calculate and set self.closs.delta based on self.quantile."""
-        abserr = np.abs(y_true - raw_prediction)
-        if sample_weight is None:
-            delta = np.percentile(abserr, 100 * self.quantile, axis=0)
-        else:
-            delta = _weighted_percentile(abserr, sample_weight, 100 * self.quantile)
-        self.closs.delta = float(delta)
-
     def fit_intercept_only(self, y_true, sample_weight=None):
         """Compute raw_prediction of an intercept-only model.
 
