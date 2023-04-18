@@ -60,7 +60,7 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
 
     # Ignore pkg_resources deprecation warnings used by pyamg
     TEST_CMD="$TEST_CMD -W 'ignore:pkg_resources is deprecated as an API:DeprecationWarning'"
-    TEST_CMD="$TEST_CMD -W 'ignore:Deprecated call to `pkg_resources:DeprecationWarning:DeprecationWarning'"
+    TEST_CMD="$TEST_CMD -W 'ignore:Deprecated call to `pkg_resources:DeprecationWarning'"
 
     # In some case, exceptions are raised (by bug) in tests, and captured by pytest,
     # but not raised again. This is for instance the case when Cython directives are
