@@ -148,6 +148,11 @@ print(f"Done in {toc_bwd - tic_bwd:.3f}s")
 # Selecting Features Using Sequential Feature Selection and Negative tol Values
 # -----------------------------------------------------------------------------
 #
+# :class:`~sklearn.feature_selection.SequentialFeatureSelector` can be used
+# to remove features present in the dataset and return a
+# smaller subset of the original features with `direction="backward"`
+# and a negative value of `tol`.
+#
 # We begin by loading the Breast Cancer dataset, consisting of 30 different
 # features and 569 samples.
 from sklearn.datasets import load_breast_cancer
