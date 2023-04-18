@@ -317,12 +317,31 @@ def _rescale_data(X, y, sample_weight):
     """
     n_samples = X.shape[0]
     sample_weight = np.asarray(sample_weight)
+
     if sample_weight.ndim == 0:
+        # XXX: compat for scalar weight: do we really need to support this?
         sample_weight = np.full(n_samples, sample_weight, dtype=sample_weight.dtype)
+
     sample_weight_sqrt = np.sqrt(sample_weight)
-    sw_matrix = sparse.dia_matrix((sample_weight_sqrt, 0), shape=(n_samples, n_samples))
-    X = safe_sparse_dot(sw_matrix, X)
-    y = safe_sparse_dot(sw_matrix, y)
+
+    if sp.issparse(X) or sp.issparse(y):
+        sw_matrix = sparse.dia_matrix(
+            (sample_weight_sqrt, 0), shape=(n_samples, n_samples)
+        )
+    if sp.issparse(X):
+        X = safe_sparse_dot(sw_matrix, X)
+    else:
+        # XXX: we do not do inplace multiplication on X for consistency
+        # with the sparse case and because the _rescale_data currently
+        # does not make it explicit if it's ok to do it or not.
+        X = X * sample_weight_sqrt[:, np.newaxis]
+    if sp.issparse(y):
+        y = safe_sparse_dot(sw_matrix, y)
+    else:
+        if y.ndim == 1:
+            y = y * sample_weight_sqrt
+        else:
+            y = y * sample_weight_sqrt[:, np.newaxis]
     return X, y, sample_weight_sqrt
 
 
@@ -651,9 +670,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             X, y, accept_sparse=accept_sparse, y_numeric=True, multi_output=True
         )
 
-        sample_weight = _check_sample_weight(
-            sample_weight, X, dtype=X.dtype, only_non_negative=True
-        )
+        has_sw = sample_weight is not None
+        if has_sw:
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, only_non_negative=True
+            )
 
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
@@ -664,7 +685,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         )
 
         # Sample weight can be implemented via a simple rescaling.
-        X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight)
+        if has_sw:
+            X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight)
 
         if self.positive:
             if y.ndim < 2:
@@ -678,11 +700,21 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         elif sp.issparse(X):
             X_offset_scale = X_offset / X_scale
 
-            def matvec(b):
-                return X.dot(b) - sample_weight_sqrt * b.dot(X_offset_scale)
+            if has_sw:
 
-            def rmatvec(b):
-                return X.T.dot(b) - X_offset_scale * b.dot(sample_weight_sqrt)
+                def matvec(b):
+                    return X.dot(b) - sample_weight_sqrt * b.dot(X_offset_scale)
+
+                def rmatvec(b):
+                    return X.T.dot(b) - X_offset_scale * b.dot(sample_weight_sqrt)
+
+            else:
+
+                def matvec(b):
+                    return X.dot(b) - b.dot(X_offset_scale)
+
+                def rmatvec(b):
+                    return X.T.dot(b) - X_offset_scale * b.sum()
 
             X_centered = sparse.linalg.LinearOperator(
                 shape=X.shape, matvec=matvec, rmatvec=rmatvec
