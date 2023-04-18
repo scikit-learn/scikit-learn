@@ -331,6 +331,7 @@ def _rescale_data(X, y, sample_weight):
         # with the sparse case and because the _rescale_data currently
         # does not make it explicit if it's ok to do it or not.
         X = X * sample_weight_sqrt[:, np.newaxis]
+
     if sp.issparse(y):
         y = safe_sparse_dot(sw_matrix, y)
     else:
