@@ -360,7 +360,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return loss, coef_grads, intercept_grads
 
     def _initialize(self, y, layer_units, dtype):
-        # set all attributes, allocate weights etc for first call
+        # set all attributes, allocate weights etc. for first call
         # Initialize parameters
         self.n_iter_ = 0
         self.t_ = 0
@@ -553,7 +553,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         layer_units,
         incremental,
     ):
-
         params = self.coefs_ + self.intercepts_
         if not incremental or not hasattr(self, "_optimizer"):
             if self.solver == "sgd":

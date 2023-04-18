@@ -73,10 +73,10 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     # monkey patches the urlopen function. Important note: Do NOT use this
     # in combination with a regular cache directory, as the files that are
     # stored as cache should not be mixed up with real openml datasets
-    url_prefix_data_description = "https://openml.org/api/v1/json/data/"
-    url_prefix_data_features = "https://openml.org/api/v1/json/data/features/"
-    url_prefix_download_data = "https://openml.org/data/v1/"
-    url_prefix_data_list = "https://openml.org/api/v1/json/data/list/"
+    url_prefix_data_description = "https://api.openml.org/api/v1/json/data/"
+    url_prefix_data_features = "https://api.openml.org/api/v1/json/data/features/"
+    url_prefix_download_data = "https://api.openml.org/data/v1/"
+    url_prefix_data_list = "https://api.openml.org/api/v1/json/data/list/"
 
     path_suffix = ".gz"
     read_fn = gzip.open
@@ -85,7 +85,9 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 
     def _file_name(url, suffix):
         output = (
-            re.sub(r"\W", "-", url[len("https://openml.org/") :]) + suffix + path_suffix
+            re.sub(r"\W", "-", url[len("https://api.openml.org/") :])
+            + suffix
+            + path_suffix
         )
         # Shorten the filenames to have better compatibility with windows 10
         # and filenames > 260 characters
@@ -186,6 +188,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 
 ###############################################################################
 # Test the behaviour of `fetch_openml` depending of the input parameters.
+
 
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
@@ -375,7 +378,7 @@ def test_fetch_openml_consistency_parser(monkeypatch, data_id):
         pandas_series = frame_pandas[series.name]
         if pd.api.types.is_numeric_dtype(pandas_series):
             return series.astype(pandas_series.dtype)
-        elif pd.api.types.is_categorical_dtype(pandas_series):
+        elif isinstance(pandas_series.dtype, pd.CategoricalDtype):
             # Compare categorical features by converting categorical liac uses
             # strings to denote the categories, we rename the categories to make
             # them comparable to the pandas parser. Fixing this behavior in
@@ -974,6 +977,7 @@ def test_fetch_openml_types_inference(
 ###############################################################################
 # Test some more specific behaviour
 
+
 # TODO(1.4): remove this filterwarning decorator
 @pytest.mark.filterwarnings("ignore:The default value of `parser` will change")
 @pytest.mark.parametrize(
@@ -1210,8 +1214,10 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response, dataset_params):
             40945,
             {"data_id": 40945, "as_frame": False},
             ValueError,
-            "STRING attributes are not supported for array representation. Try"
-            " as_frame=True",
+            (
+                "STRING attributes are not supported for array representation. Try"
+                " as_frame=True"
+            ),
         ),
         (
             2,
@@ -1635,6 +1641,7 @@ def test_fetch_openml_quotechar_escapechar(monkeypatch):
 
 ###############################################################################
 # Deprecation-changed parameters
+
 
 # TODO(1.4): remove this test
 def test_fetch_openml_deprecation_parser(monkeypatch):

@@ -184,9 +184,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         if self.solver == "warn":
             warnings.warn(
-                "The default solver will change from 'interior-point' to 'highs' in "
-                "version 1.4. Set `solver='highs'` or to the desired solver to silence "
-                "this warning.",
+                (
+                    "The default solver will change from 'interior-point' to 'highs' in"
+                    " version 1.4. Set `solver='highs'` or to the desired solver to"
+                    " silence this warning."
+                ),
                 FutureWarning,
             )
             solver = "interior-point"

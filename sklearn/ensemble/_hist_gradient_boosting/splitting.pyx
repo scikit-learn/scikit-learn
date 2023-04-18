@@ -10,9 +10,9 @@
 cimport cython
 from cython.parallel import prange
 import numpy as np
+from libc.math cimport INFINITY
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
-from numpy.math cimport INFINITY
 
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
@@ -499,9 +499,9 @@ cdef class Splitter:
                 split_infos[split_info_idx].feature_idx = feature_idx
 
                 # For each feature, find best bin to split on
-                # Start with a gain of -1 (if no better split is found, that
+                # Start with a gain of -1 if no better split is found, that
                 # means one of the constraints isn't respected
-                # (min_samples_leaf, etc) and the grower will later turn the
+                # (min_samples_leaf, etc.) and the grower will later turn the
                 # node into a leaf.
                 split_infos[split_info_idx].gain = -1
                 split_infos[split_info_idx].is_categorical = is_categorical[feature_idx]
@@ -569,15 +569,15 @@ cdef class Splitter:
         free(split_infos)
         return out
 
-    cdef unsigned int _find_best_feature_to_split_helper(
+    cdef int _find_best_feature_to_split_helper(
         self,
         split_info_struct * split_infos,  # IN
         int n_allowed_features,
     ) noexcept nogil:
         """Return the index of split_infos with the best feature split."""
         cdef:
-            unsigned int split_info_idx
-            unsigned int best_split_info_idx = 0
+            int split_info_idx
+            int best_split_info_idx = 0
 
         for split_info_idx in range(1, n_allowed_features):
             if (split_infos[split_info_idx].gain > split_infos[best_split_info_idx].gain):

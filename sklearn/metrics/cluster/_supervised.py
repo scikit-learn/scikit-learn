@@ -170,6 +170,12 @@ def contingency_matrix(
 # clustering measures
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    }
+)
 def pair_confusion_matrix(labels_true, labels_pred):
     """Pair confusion matrix arising from two clusterings [1]_.
 
@@ -248,6 +254,12 @@ def pair_confusion_matrix(labels_true, labels_pred):
     return C
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    }
+)
 def rand_score(labels_true, labels_pred):
     """Rand index.
 
@@ -319,6 +331,12 @@ def rand_score(labels_true, labels_pred):
     return numerator / denominator
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    }
+)
 def adjusted_rand_score(labels_true, labels_pred):
     """Rand index adjusted for chance.
 
@@ -346,10 +364,10 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,), dtype=int
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,), dtype=int
         Cluster labels to evaluate.
 
     Returns
@@ -421,6 +439,13 @@ def adjusted_rand_score(labels_true, labels_pred):
     return 2.0 * (tp * tn - fn * fp) / ((tp + fn) * (fn + tn) + (tp + fp) * (fp + tn))
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "beta": [Interval(Real, 0, None, closed="left")],
+    }
+)
 def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     """Compute the homogeneity and completeness and V-Measure scores at once.
 
@@ -979,6 +1004,13 @@ def adjusted_mutual_info_score(
     return ami
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "average_method": [StrOptions({"arithmetic", "max", "min", "geometric"})],
+    }
+)
 def normalized_mutual_info_score(
     labels_true, labels_pred, *, average_method="arithmetic"
 ):
@@ -1006,15 +1038,14 @@ def normalized_mutual_info_score(
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
     labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    average_method : str, default='arithmetic'
-        How to compute the normalizer in the denominator. Possible options
-        are 'min', 'geometric', 'arithmetic', and 'max'.
+    average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
+        How to compute the normalizer in the denominator.
 
         .. versionadded:: 0.20
 
@@ -1087,6 +1118,13 @@ def normalized_mutual_info_score(
     return mi / normalizer
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "sparse": ["boolean"],
+    }
+)
 def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     """Measure the similarity of two clusterings of a set of points.
 
@@ -1112,10 +1150,10 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
     Parameters
     ----------
-    labels_true : int array, shape = (``n_samples``,)
+    labels_true : array-like of shape (n_samples,), dtype=int
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array, shape = (``n_samples``, )
+    labels_pred : array-like of shape (n_samples,), dtype=int
         A clustering of the data into disjoint subsets.
 
     sparse : bool, default=False
@@ -1165,6 +1203,11 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     return np.sqrt(tk / pk) * np.sqrt(tk / qk) if tk != 0.0 else 0.0
 
 
+@validate_params(
+    {
+        "labels": ["array-like"],
+    }
+)
 def entropy(labels):
     """Calculate the entropy for a labeling.
 
