@@ -18,7 +18,7 @@ procedure to prevent overfitting.
 # Create Synthetic Dataset
 # ========================
 # For this example, we build a dataset with three categorical features: an informative
-# and feature with medium cardinality, an uninformative feature with medium cardinality,
+# feature with medium cardinality, an uninformative feature with medium cardinality,
 # and an uninformative feature with high cardinality. First, we generate the informative
 # feature:
 from sklearn.preprocessing import KBinsDiscretizer
@@ -46,11 +46,11 @@ X_informative = permuted_categories[X_informative.astype(np.int32)]
 X_shuffled = rng.permutation(X_informative)
 
 # %%
-# The uninformative feature with high cardinality is generated that is independent of
+# The uninformative feature with high cardinality is generated so that is independent of
 # the target variable. We will show that target encoding without cross validation will
 # cause catastrophic overfitting for the downstream regressor. These high cardinality
-# features are typically unique identifies for samples which should be generally be
-# removed from machine learning dataset. In this example, We generate them to show how
+# features are basically unique identifiers for samples which should be generally be
+# removed from machine learning dataset. In this example, we generate them to show how
 # :class:`TargetEncoder`'s default cross validation behavior mitigates the overfitting
 # issue automatically.
 X_near_unique_categories = rng.choice(
@@ -72,7 +72,7 @@ X = pd.DataFrame(
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 # %%
-# Training a Ridge Regressors
+# Training a Ridge Regressor
 # ===========================
 # In this section, we train ridge regressors on the dataset with and without
 # encoding and explore the influence of target encoder with and without the
