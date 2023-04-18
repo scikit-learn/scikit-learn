@@ -21,8 +21,10 @@ from sklearn.inspection import PartialDependenceDisplay
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
-    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*",
+    (
+        "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
+        "matplotlib.*"
+    ),
 )
 
 
@@ -41,10 +43,12 @@ def clf_diabetes(diabetes):
     clf.fit(diabetes.data, diabetes.target)
     return clf
 
+
 def custom_values_helper(feature, grid_resolution):
     return np.linspace(
         *mquantiles(feature, (0.05, 0.95), axis=0), num=grid_resolution, endpoint=True
     )
+
 
 def custom_values_helper(feature, grid_resolution):
     return np.linspace(
@@ -413,15 +417,6 @@ def test_plot_partial_dependence_incorrent_num_axes(
     axes_formats = [list(axes.ravel()), tuple(axes.ravel()), axes]
 
     msg = "Expected ax to have 2 axes, got {}".format(nrows * ncols)
-    
-    age = diabetes.data[:, diabetes.feature_names.index("age")]
-    bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
-    custom_values = None
-    if use_custom_values:
-        custom_values = {
-            "age": custom_values_helper(age, grid_resolution),
-            "bmi": custom_values_helper(bmi, grid_resolution),
-        }
 
     age = diabetes.data[:, diabetes.feature_names.index("age")]
     bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
@@ -432,7 +427,16 @@ def test_plot_partial_dependence_incorrent_num_axes(
             "bmi": custom_values_helper(bmi, grid_resolution),
         }
 
-    disp = PartialDependenceDisplay.from_estimator((
+    age = diabetes.data[:, diabetes.feature_names.index("age")]
+    bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
+    custom_values = None
+    if use_custom_values:
+        custom_values = {
+            "age": custom_values_helper(age, grid_resolution),
+            "bmi": custom_values_helper(bmi, grid_resolution),
+        }
+
+    disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
         ["age", "bmi"],
@@ -554,9 +558,7 @@ def test_plot_partial_dependence_feature_name_reuse(
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("use_custom_values", [True, False])
-def test_plot_partial_dependence_multiclass(
-    use_custom_values, pyplot
-):
+def test_plot_partial_dependence_multiclass(use_custom_values, pyplot):
     grid_resolution = 25
     clf_int = GradientBoostingClassifier(n_estimators=10, random_state=1)
     iris = load_iris()
