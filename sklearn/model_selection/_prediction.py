@@ -38,6 +38,39 @@ def _estimator_has(attr):
 def _fit_and_score(
     classifier, X, y, sample_weight, train_idx, val_idx, scorer, score_method
 ):
+    """Fit a classifier and compute the scores for different decision thresholds.
+
+    Parameters
+    ----------
+    classifier : estimator instance
+        The classifier to fit and used for scoring. If `classifier` is already fitted,
+        it will be used as is.
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        The entire dataset.
+    y : array-like of shape (n_samples,)
+        The entire target vector.
+    sample_weight : array-like of shape (n_samples,)
+        Some optional associated sample weights.
+    train_idx : ndarray of shape (n_train_samples,) or None
+        The indices of the training set. If `None`, `classifier` is expected to be
+        already fitted.
+    val_idx : ndarray of shape (n_val_samples,)
+        The indices of the validation set used to score `classifier`.
+    scorer : scorer instance
+        The scorer taking `classifier` and the validation set as input and outputting
+        decision thresholds and scores.
+    score_method : str or callable
+        The scoring method to use. Used to detect `tpr` and `tnr` since they are not
+        an usual scikit-learn scorer and need to be handled differently.
+
+    Returns
+    -------
+    thresholds : ndarray of shape (n_thresholds,)
+        The decision thresholds used to compute the scores. They are returned in
+        increasing order.
+    scores : ndarray of shape (n_thresholds,)
+        The scores computed for each decision threshold.
+    """
     fit_parameters = signature(classifier.fit).parameters
     supports_sw = "sample_weight" in fit_parameters
 
@@ -64,7 +97,7 @@ def _fit_and_score(
         )
         if score_method == "tnr":
             return potential_thresholds[::-1], (1 - fpr)[::-1]
-        return potential_thresholds, tpr
+        return potential_thresholds[::-1], tpr[::-1]
     return scorer(classifier, X_val, y_val, sample_weight=sw_val)
 
 
@@ -143,6 +176,9 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     ----------
     decision_threshold_ : float
         The new decision threshold.
+
+    objective_score_ : float
+        The score of the objective metric associated with the decision threshold found.
 
     classes_ : ndarray of shape (n_classes,)
         The class labels.
@@ -297,14 +333,13 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                 for train_idx, val_idx in split
             )
         )
-        # print(thresholds, scores)
 
         min_threshold = np.min([th.min() for th in thresholds])
         max_threshold = np.max([th.max() for th in thresholds])
-        ascending = thresholds[0].argmin() == 0
-        start = min_threshold if ascending else max_threshold
-        stop = max_threshold if ascending else min_threshold
-        thresholds_interpolated = np.linspace(start, stop, num=self.n_thresholds)
+        thresholds_interpolated = np.linspace(
+            min_threshold, max_threshold, num=self.n_thresholds
+        )
+
         mean_score = np.mean(
             [
                 np.interp(thresholds_interpolated, th, sc)
@@ -312,10 +347,18 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             ],
             axis=0,
         )
+        mean_score_argsort = np.argsort(mean_score)
+        mean_score, thresholds_interpolated = (
+            mean_score[mean_score_argsort],
+            thresholds_interpolated[mean_score_argsort],
+        )
+
         if objective_value == "highest":
-            best_idx = mean_score.argmax()
+            best_idx = mean_score.size - 1
         else:
             best_idx = np.searchsorted(mean_score, objective_value)
+
+        self.objective_score_ = mean_score[best_idx]
         self.decision_threshold_ = thresholds_interpolated[best_idx]
 
         if hasattr(self.estimator_, "n_features_in_"):

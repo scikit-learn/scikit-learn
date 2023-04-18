@@ -134,12 +134,13 @@ def test_cutoffclassifier_with_string_targets(response_method, metric):
     model = CutOffClassifier(
         estimator=make_pipeline(StandardScaler(), LogisticRegression()),
         objective_metric=metric,
-        objective_value=0.5,
+        objective_value=0.9,
         pos_label="cancer",
         response_method=response_method,
+        n_thresholds=10,
     ).fit(X, y)
     assert_array_equal(model.classes_, np.sort(classes))
     y_pred = model.predict(X[[0], :])
     assert y_pred.item(0) in classes
 
-    print(model.decision_threshold_)
+    # print(model.decision_threshold_, model.objective_score_)
