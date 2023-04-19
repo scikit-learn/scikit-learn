@@ -463,15 +463,6 @@ def notebook_modification_function(notebook_content, notebook_filename):
     # always import matplotlib and pandas to avoid Pyodide limitation with
     # imports inside functions
     code_lines.extend(["import matplotlib", "import pandas"])
-    # TODO temporary work-around for OpenML CORS headers issue
-    # https://github.com/openml/OpenML/issues/1135
-    if "fetch_openml" in notebook_content_str:
-        code_lines.extend(
-            [
-                "from sklearn.datasets import _openml",
-                "_openml._OPENML_PREFIX = 'https://api.openml.org/'",
-            ]
-        )
 
     if code_lines:
         code_lines = ["# JupyterLite-specific code"] + code_lines
@@ -505,11 +496,6 @@ sphinx_gallery_conf = {
     "inspect_global_variables": False,
     "remove_config_comments": True,
     "plot_gallery": "True",
-    # Remove %matplotlib inline cell which does not work in JupyterLite if you
-    # have not imported matplotlib before. TODO it can be removed when
-    # https://github.com/sphinx-gallery/sphinx-gallery/pull/1099 is in a
-    # released version
-    "first_notebook_cell": None,
 }
 
 
