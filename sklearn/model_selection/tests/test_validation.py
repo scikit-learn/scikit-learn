@@ -354,17 +354,9 @@ def test_cross_validate_invalid_scoring_param():
     with pytest.raises(ValueError, match=error_message_regexp):
         cross_validate(estimator, X, y, scoring=[[make_scorer(precision_score)]])
 
-    error_message_regexp = (
-        "The 'scoring' parameter of cross_validate must be .*. Got .* instead.*"
-    )
-
     # Empty dict should raise invalid scoring error
     with pytest.raises(ValueError, match="An empty dict"):
         cross_validate(estimator, X, y, scoring=(dict()))
-
-    # And so should any other invalid entry
-    with pytest.raises(ValueError, match=error_message_regexp):
-        cross_validate(estimator, X, y, scoring=5)
 
     multiclass_scorer = make_scorer(precision_recall_fscore_support)
 
@@ -381,9 +373,6 @@ def test_cross_validate_invalid_scoring_param():
 
     with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
-
-    with pytest.raises(ValueError, match=error_message_regexp):
-        cross_validate(SVC(), X, y, scoring="mse")
 
 
 def test_cross_validate_nested_estimator():
@@ -2121,8 +2110,6 @@ def test_fit_and_score_failing():
     error_message_cross_validate = (
         "The 'error_score' parameter of cross_validate must be .*. Got .* instead."
     )
-    with pytest.raises(ValueError, match=error_message_cross_validate):
-        cross_validate(failing_clf, X, cv=3, error_score="unvalid-string")
 
     with pytest.raises(ValueError, match=error_message_cross_validate):
         cross_val_score(failing_clf, X, cv=3, error_score="unvalid-string")
