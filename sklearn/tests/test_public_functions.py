@@ -128,6 +128,10 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.fetch_lfw_people",
     "sklearn.datasets.fetch_olivetti_faces",
     "sklearn.datasets.fetch_rcv1",
+    "sklearn.datasets.fetch_species_distributions",
+    "sklearn.datasets.load_breast_cancer",
+    "sklearn.datasets.load_diabetes",
+    "sklearn.datasets.load_iris",
     "sklearn.datasets.load_svmlight_file",
     "sklearn.datasets.load_svmlight_files",
     "sklearn.datasets.make_biclusters",
@@ -173,6 +177,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.classification_report",
     "sklearn.metrics.cluster.adjusted_mutual_info_score",
     "sklearn.metrics.cluster.contingency_matrix",
+    "sklearn.metrics.cluster.entropy",
     "sklearn.metrics.cluster.fowlkes_mallows_score",
     "sklearn.metrics.cluster.homogeneity_completeness_v_measure",
     "sklearn.metrics.cluster.normalized_mutual_info_score",
@@ -238,6 +243,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.top_k_accuracy_score",
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.train_test_split",
+    "sklearn.neighbors.sort_graph_by_row_values",
     "sklearn.preprocessing.add_dummy_feature",
     "sklearn.preprocessing.binarize",
     "sklearn.preprocessing.label_binarize",
@@ -249,6 +255,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.tree.export_text",
     "sklearn.tree.plot_tree",
     "sklearn.utils.gen_batches",
+    "sklearn.utils.resample",
 ]
 
 
@@ -276,6 +283,7 @@ PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.decomposition.fastica", "sklearn.decomposition.FastICA"),
     ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
     ("sklearn.preprocessing.minmax_scale", "sklearn.preprocessing.MinMaxScaler"),
+    ("sklearn.preprocessing.power_transform", "sklearn.preprocessing.PowerTransformer"),
     ("sklearn.preprocessing.robust_scale", "sklearn.preprocessing.RobustScaler"),
 ]
 
