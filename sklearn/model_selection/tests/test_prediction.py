@@ -354,24 +354,50 @@ def test_cutoffclassifier_with_string_targets(response_method, metric):
     assert_array_equal(np.sort(np.unique(y_pred)), np.sort(classes))
 
 
-def test_cutoffclassifier_refit():
+@pytest.mark.parametrize("with_sample_weight", [True, False])
+def test_cutoffclassifier_refit(with_sample_weight, global_random_seed):
     """Check the behaviour of the `refit` parameter."""
+    rng = np.random.RandomState(global_random_seed)
     X, y = make_classification(n_samples=100, random_state=0)
+    if with_sample_weight:
+        sample_weight = rng.randn(X.shape[0])
+    else:
+        sample_weight = None
 
     # check that `estimator_` if fitted on the full dataset when `refit=True`
     estimator = LogisticRegression()
-    model = CutOffClassifier(estimator, refit=True).fit(X, y)
+    model = CutOffClassifier(estimator, refit=True).fit(
+        X, y, sample_weight=sample_weight
+    )
 
     assert model.estimator_ is not estimator
-    estimator.fit(X, y)
+    estimator.fit(X, y, sample_weight=sample_weight)
     assert_allclose(model.estimator_.coef_, estimator.coef_)
     assert_allclose(model.estimator_.intercept_, estimator.intercept_)
-    model.predict(X)
 
-    # check that `estimator_` was not altered when `refit=False`
-    estimator = LogisticRegression().fit(X, y)
+    # check that `estimator_` was not altered when `refit=False` and `cv="prefit"`
+    estimator = LogisticRegression().fit(X, y, sample_weight=sample_weight)
     coef = estimator.coef_.copy()
-    model = CutOffClassifier(estimator, cv="prefit", refit=False).fit(X, y)
+    model = CutOffClassifier(estimator, cv="prefit", refit=False).fit(
+        X, y, sample_weight=sample_weight
+    )
 
     assert model.estimator_ is estimator
     assert_allclose(model.estimator_.coef_, coef)
+
+    # check that we train `estimator_` on the training split of a given cross-validation
+    estimator = LogisticRegression()
+    cv = [
+        (np.arange(50), np.arange(50, 100)),
+    ]  # single split
+    model = CutOffClassifier(estimator, cv=cv, refit=False).fit(
+        X, y, sample_weight=sample_weight
+    )
+
+    assert model.estimator_ is not estimator
+    if with_sample_weight:
+        sw_train = sample_weight[cv[0][0]]
+    else:
+        sw_train = None
+    estimator.fit(X[cv[0][0]], y[cv[0][0]], sample_weight=sw_train)
+    assert_allclose(model.estimator_.coef_, estimator.coef_)
