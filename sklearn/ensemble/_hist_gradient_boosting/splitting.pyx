@@ -499,9 +499,9 @@ cdef class Splitter:
                 split_infos[split_info_idx].feature_idx = feature_idx
 
                 # For each feature, find best bin to split on
-                # Start with a gain of -1 (if no better split is found, that
+                # Start with a gain of -1 if no better split is found, that
                 # means one of the constraints isn't respected
-                # (min_samples_leaf, etc) and the grower will later turn the
+                # (min_samples_leaf, etc.) and the grower will later turn the
                 # node into a leaf.
                 split_infos[split_info_idx].gain = -1
                 split_infos[split_info_idx].is_categorical = is_categorical[feature_idx]

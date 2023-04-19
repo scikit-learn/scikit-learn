@@ -381,7 +381,7 @@ def test_no_refit():
             and hasattr(grid_search, "best_params_")
         )
 
-        # Make sure the functions predict/transform etc raise meaningful
+        # Make sure the functions predict/transform etc. raise meaningful
         # error messages
         for fn_name in (
             "predict",

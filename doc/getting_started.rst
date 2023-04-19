@@ -37,8 +37,8 @@ The :term:`fit` method generally accepts 2 inputs:
   represented as rows and features are represented as columns.
 - The target values :term:`y` which are real numbers for regression tasks, or
   integers for classification (or any other discrete set of values). For
-  unsupervized learning tasks, ``y`` does not need to be specified. ``y`` is
-  usually 1d array where the ``i`` th entry corresponds to the target of the
+  unsupervised learning tasks, ``y`` does not need to be specified. ``y`` is
+  usually a 1d array where the ``i`` th entry corresponds to the target of the
   ``i`` th sample (row) of ``X``.
 
 Both ``X`` and ``y`` are usually expected to be numpy arrays or equivalent
