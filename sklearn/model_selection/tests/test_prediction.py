@@ -1,16 +1,197 @@
 import numpy as np
 import pytest
 
-from sklearn.datasets import load_breast_cancer, make_classification
+from sklearn.datasets import load_breast_cancer, load_iris, make_classification
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import balanced_accuracy_score, fbeta_score, f1_score, make_scorer
+from sklearn.metrics import (
+    balanced_accuracy_score,
+    fbeta_score,
+    f1_score,
+    make_scorer,
+    roc_curve,
+)
+from sklearn.metrics._scorer import _ContinuousScorer
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 from sklearn.model_selection import CutOffClassifier
+from sklearn.model_selection._prediction import _fit_and_score
+
+
+@pytest.mark.parametrize(
+    "scorer, score_method",
+    [
+        (
+            _ContinuousScorer(
+                score_func=balanced_accuracy_score,
+                sign=1,
+                response_method="predict_proba",
+                kwargs={},
+            ),
+            "balanced_accuracy",
+        ),
+        (
+            make_scorer(roc_curve, needs_proba=True),
+            "tpr",
+        ),
+        (
+            make_scorer(roc_curve, needs_proba=True),
+            "tnr",
+        ),
+    ],
+)
+def test_fit_and_score_scorers(scorer, score_method):
+    """Check that `_fit_and_score` returns thresholds in ascending order for the
+    different accepted scorers."""
+    X, y = make_classification(n_samples=100, random_state=0)
+    train_idx, val_idx = np.arange(50), np.arange(50, 100)
+    classifier = LogisticRegression()
+
+    thresholds, scores = _fit_and_score(
+        classifier,
+        X,
+        y,
+        sample_weight=None,
+        train_idx=train_idx,
+        val_idx=val_idx,
+        scorer=scorer,
+        score_method=score_method,
+    )
+
+    assert_array_equal(np.argsort(thresholds), np.arange(len(thresholds)))
+    assert np.logical_and(scores >= 0, scores <= 1).all()
+
+
+@pytest.mark.parametrize(
+    "scorer, score_method, expected_score",
+    [
+        (
+            _ContinuousScorer(
+                score_func=balanced_accuracy_score,
+                sign=1,
+                response_method="predict_proba",
+                kwargs={},
+            ),
+            "balanced_accuracy",
+            [0.5, 1.0],
+        ),
+        (
+            make_scorer(roc_curve, needs_proba=True),
+            "tpr",
+            [1.0, 1.0, 0.0],
+        ),
+        (
+            make_scorer(roc_curve, needs_proba=True),
+            "tnr",
+            [0.0, 1.0, 1.0],
+        ),
+    ],
+)
+def test_fit_and_score_prefit(scorer, score_method, expected_score):
+    """Check the behaviour with a prefit classifier."""
+    X, y = make_classification(n_samples=100, random_state=0)
+
+    # `train_idx is None` to indicate that the classifier is prefit
+    train_idx, val_idx = None, np.arange(50, 100)
+    classifier = DecisionTreeClassifier(random_state=0)
+
+    with pytest.raises(NotFittedError):
+        _fit_and_score(
+            classifier,
+            X,
+            y,
+            sample_weight=None,
+            train_idx=train_idx,
+            val_idx=val_idx,
+            scorer=scorer,
+            score_method=score_method,
+        )
+
+    classifier.fit(X, y)
+    # make sure that the classifier memorized the full dataset such that
+    # we get perfect predictions and thus match the expected score
+    assert classifier.score(X[val_idx], y[val_idx]) == pytest.approx(1.0)
+
+    thresholds, scores = _fit_and_score(
+        classifier,
+        X,
+        y,
+        sample_weight=None,
+        train_idx=train_idx,
+        val_idx=val_idx,
+        scorer=scorer,
+        score_method=score_method,
+    )
+    assert_array_equal(np.argsort(thresholds), np.arange(len(thresholds)))
+    assert_allclose(scores, expected_score)
+
+
+@pytest.mark.parametrize(
+    "scorer, score_method",
+    [
+        (
+            _ContinuousScorer(
+                score_func=balanced_accuracy_score,
+                sign=1,
+                response_method="predict_proba",
+                kwargs={},
+            ),
+            "balanced_accuracy",
+        ),
+        (
+            make_scorer(roc_curve, needs_proba=True),
+            "tpr",
+        ),
+        (
+            make_scorer(roc_curve, needs_proba=True),
+            "tnr",
+        ),
+    ],
+)
+def test_fit_and_score_sample_weight(scorer, score_method):
+    """Check that we dispatch the sample-weight to fit and score the classifier."""
+    X, y = load_iris(return_X_y=True)
+    X, y = X[:100], y[:100]  # only 2 classes
+
+    # create a dataset and repeat twice the sample of class #0
+    X_repeated, y_repeated = np.vstack([X, X[y == 0]]), np.hstack([y, y[y == 0]])
+    # create a sample weight vector that is equivalent to the repeated dataset
+    sample_weight = np.ones_like(y_repeated)
+    sample_weight[:50] *= 2
+
+    classifier = LogisticRegression()
+    train_repeated_idx = np.arange(X_repeated.shape[0])
+    val_repeated_idx = np.arange(X_repeated.shape[0])
+    thresholds_repeated, scores_repeated = _fit_and_score(
+        classifier,
+        X_repeated,
+        y_repeated,
+        sample_weight=None,
+        train_idx=train_repeated_idx,
+        val_idx=val_repeated_idx,
+        scorer=scorer,
+        score_method=score_method,
+    )
+
+    train_idx, val_idx = np.arange(X.shape[0]), np.arange(X.shape[0])
+    thresholds, scores = _fit_and_score(
+        classifier,
+        X,
+        y,
+        sample_weight=sample_weight,
+        train_idx=train_idx,
+        val_idx=val_idx,
+        scorer=scorer,
+        score_method=score_method,
+    )
+
+    assert_allclose(thresholds_repeated, thresholds)
+    assert_allclose(scores_repeated, scores)
 
 
 def test_cutoffclassifier_no_binary():

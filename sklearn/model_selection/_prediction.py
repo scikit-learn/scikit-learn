@@ -55,7 +55,8 @@ def _fit_and_score(
         The indices of the training set. If `None`, `classifier` is expected to be
         already fitted.
     val_idx : ndarray of shape (n_val_samples,)
-        The indices of the validation set used to score `classifier`.
+        The indices of the validation set used to score `classifier`. If `train_idx`,
+        the entire set will be used.
     scorer : scorer instance
         The scorer taking `classifier` and the validation set as input and outputting
         decision thresholds and scores.
@@ -67,7 +68,7 @@ def _fit_and_score(
     -------
     thresholds : ndarray of shape (n_thresholds,)
         The decision thresholds used to compute the scores. They are returned in
-        increasing order.
+        ascending order.
     scores : ndarray of shape (n_thresholds,)
         The scores computed for each decision threshold.
     """
@@ -90,6 +91,7 @@ def _fit_and_score(
             classifier.fit(X_train, y_train)
     else:  # prefit estimator, only a validation set is provided
         X_val, y_val, sw_val = X, y, sample_weight
+        check_is_fitted(classifier, "classes_")
 
     if score_method in {"tnr", "tpr"}:
         fpr, tpr, potential_thresholds = scorer(
@@ -334,6 +336,8 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             )
         )
 
+        # thresholds are sorted in ascending order which is necessary for the
+        # interpolation of the score below
         min_threshold = np.min([th.min() for th in thresholds])
         max_threshold = np.max([th.max() for th in thresholds])
         thresholds_interpolated = np.linspace(
@@ -347,15 +351,17 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             ],
             axis=0,
         )
-        mean_score_argsort = np.argsort(mean_score)
-        mean_score, thresholds_interpolated = (
-            mean_score[mean_score_argsort],
-            thresholds_interpolated[mean_score_argsort],
-        )
 
-        if objective_value == "highest":
-            best_idx = mean_score.size - 1
-        else:
+        if objective_value == "highest":  # find best score
+            # we don't need to sort the scores and directly take the maximum
+            best_idx = mean_score.argmax()
+        else:  # seeking for a specific objective value
+            # we need to sort the scores before applying `np.searchsorted`
+            mean_score_argsort = np.argsort(mean_score)
+            mean_score, thresholds_interpolated = (
+                mean_score[mean_score_argsort],
+                thresholds_interpolated[mean_score_argsort],
+            )
             best_idx = np.searchsorted(mean_score, objective_value)
 
         self.objective_score_ = mean_score[best_idx]
