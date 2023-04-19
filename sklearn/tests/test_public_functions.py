@@ -243,6 +243,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.top_k_accuracy_score",
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.train_test_split",
+    "sklearn.neighbors.sort_graph_by_row_values",
     "sklearn.preprocessing.add_dummy_feature",
     "sklearn.preprocessing.binarize",
     "sklearn.preprocessing.label_binarize",
@@ -254,6 +255,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.tree.export_text",
     "sklearn.tree.plot_tree",
     "sklearn.utils.gen_batches",
+    "sklearn.utils.resample",
 ]
 
 
