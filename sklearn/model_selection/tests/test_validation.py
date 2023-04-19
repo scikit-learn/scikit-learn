@@ -10,6 +10,7 @@ from time import sleep
 import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
+from scipy.sparse import issparse
 from sklearn.exceptions import FitFailedWarning
 
 from sklearn.model_selection.tests.test_search import FailingClassifier
@@ -505,11 +506,11 @@ def check_cross_validate_single_metric(clf, X, y, scores, cv):
     )
     for k, est in enumerate(mse_scores_dict["estimator"]):
         est_coef = est.coef_.copy()
-        if isinstance(est_coef, (csr_matrix, coo_matrix)):
+        if issparse(est_coef):
             est_coef = est_coef.toarray()
 
         fitted_est_coef = fitted_estimators[k].coef_.copy()
-        if isinstance(fitted_est_coef, (csr_matrix, coo_matrix)):
+        if issparse(fitted_est_coef):
             fitted_est_coef = fitted_est_coef.toarray()
 
         assert_almost_equal(est_coef, fitted_est_coef)
