@@ -243,7 +243,7 @@ def graphical_lasso(
 
     Parameters
     ----------
-    emp_cov : ndarray of shape (n_features, n_features)
+    emp_cov : array-like of shape (n_features, n_features)
         Empirical covariance from which to compute the covariance estimate.
 
     alpha : float
