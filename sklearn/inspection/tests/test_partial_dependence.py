@@ -253,7 +253,11 @@ def test_grid_from_X_with_categorical(grid_resolution):
     is_categorical = [True]
     X = pd.DataFrame({"cat_feature": ["A", "B", "C", "A", "B", "D", "E"]})
     grid, axes = _grid_from_X(
-        X, percentiles, is_categorical, grid_resolution=grid_resolution
+        X,
+        percentiles,
+        is_categorical,
+        grid_resolution=grid_resolution,
+        custom_values={},
     )
     assert grid.shape == (5, X.shape[1])
     assert axes[0].shape == (5,)
@@ -276,7 +280,11 @@ def test_grid_from_X_heterogeneous_type(grid_resolution):
     nunique = X.nunique()
 
     grid, axes = _grid_from_X(
-        X, percentiles, is_categorical, grid_resolution=grid_resolution
+        X,
+        percentiles,
+        is_categorical,
+        grid_resolution=grid_resolution,
+        custom_values={},
     )
     if grid_resolution == 3:
         assert grid.shape == (15, 2)
