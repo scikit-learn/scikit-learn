@@ -50,7 +50,7 @@ X_shuffled = rng.permutation(X_informative)
 # The uninformative feature with high cardinality is generated so that is independent of
 # the target variable. We will show that target encoding without cross validation will
 # cause catastrophic overfitting for the downstream regressor. These high cardinality
-# features are basically unique identifiers for samples which should be generally be
+# features are basically unique identifiers for samples which should generally be
 # removed from machine learning dataset. In this example, we generate them to show how
 # :class:`TargetEncoder`'s default cross validation behavior mitigates the overfitting
 # issue automatically.
@@ -142,7 +142,7 @@ print(
 )
 
 # %%
-# The ridge model overfits, because it assigns more weights to the extremely high
+# The ridge model overfits, because it assigns more weight to the extremely high
 # cardinality feature relative to the informative feature.
 coefs_no_cv = pd.Series(
     model_no_cv.coef_, index=model_no_cv.feature_names_in_
