@@ -280,30 +280,6 @@ def test_grid_from_X_heterogeneous_type(grid_resolution):
 
 
 @pytest.mark.parametrize(
-    "custom_grid, features",
-    [
-        (
-            {
-                1: np.array([1, 2, 3]),
-                2: np.array([1, 2, 3]),
-                "foo": np.array([4, 5, 6]),
-            },
-            [1, 2, "foo"],
-        ),
-        (
-            {1: [1, 2, 3], 2: np.array([1, 2, 3]), "foo": np.array([4, 5, 6])},
-            [1, "foo", 2],
-        ),
-    ],
-)
-def test_grid_from_custom_grid(custom_grid, features):
-    grid, values = _grid_from_custom_grid(features, custom_grid)
-    np.testing.assert_array_equal(grid, cartesian(values))
-    for val, feature in zip(values, features):
-        np.testing.assert_array_equal(val, custom_grid[feature])
-
-
-@pytest.mark.parametrize(
     "grid_resolution, percentiles, err_msg",
     [
         (2, (0, 0.0001), "percentiles are too close"),

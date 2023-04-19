@@ -48,12 +48,6 @@ def custom_values_helper(feature, grid_resolution):
     )
 
 
-def custom_values_helper(feature, grid_resolution):
-    return np.linspace(
-        *mquantiles(feature, (0.05, 0.95), axis=0), num=grid_resolution, endpoint=True
-    )
-
-
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("grid_resolution", [10, 20])
 @pytest.mark.parametrize("use_custom_values", [True, False])
