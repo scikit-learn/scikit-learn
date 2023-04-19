@@ -117,6 +117,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.cluster_optics_xi",
     "sklearn.cluster.ward_tree",
     "sklearn.covariance.empirical_covariance",
+    "sklearn.covariance.ledoit_wolf_shrinkage",
     "sklearn.covariance.shrunk_covariance",
     "sklearn.datasets.dump_svmlight_file",
     "sklearn.datasets.fetch_20newsgroups",
