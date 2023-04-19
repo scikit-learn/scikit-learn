@@ -3,12 +3,15 @@
 Permutation Importance with Multicollinear or Correlated Features
 =================================================================
 
-In this example, we compute the permutation importance on the Wisconsin
-breast cancer dataset using :func:`~sklearn.inspection.permutation_importance`.
-The :class:`~sklearn.ensemble.RandomForestClassifier` can easily get about 97%
-accuracy on a test dataset. Because this dataset contains multicollinear
-features, the permutation importance will show that none of the features are
-important. One approach to handling multicollinearity is by performing
+In this example, we compute the
+:func:`~sklearn.inspection.permutation_importance` of the features to a trained
+:class:`~sklearn.ensemble.RandomForestClassifier` using the
+:ref:`breast_cancer_dataset`. The model can easily get about 97% accuracy on a
+test dataset. Because this dataset contains multicollinear features, the
+permutation importance shows that none of the features are important, in
+contradiction with the high test accuracy.
+
+We demo a possible approach to handling multicollinearity, which consists of
 hierarchical clustering on the features' Spearman rank-order correlations,
 picking a threshold, and keeping a single feature from each cluster.
 
@@ -18,41 +21,34 @@ picking a threshold, and keeping a single feature from each cluster.
 
 """
 
-from collections import defaultdict
-
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy.stats import spearmanr
-from scipy.cluster import hierarchy
-from scipy.spatial.distance import squareform
-
-from sklearn.datasets import load_breast_cancer
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.inspection import permutation_importance
-from sklearn.model_selection import train_test_split
-
 # %%
 # Random Forest Feature Importance on Breast Cancer Data
 # ------------------------------------------------------
 # First, we train a random forest on the breast cancer dataset and evaluate
 # its accuracy on a test set:
+from sklearn.datasets import load_breast_cancer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+
 data = load_breast_cancer()
 X, y = data.data, data.target
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
 clf = RandomForestClassifier(n_estimators=100, random_state=42)
 clf.fit(X_train, y_train)
-print("Accuracy on test data: {:.2f}".format(clf.score(X_test, y_test)))
+print(f"Baseline accuracy on test data: {clf.score(X_test, y_test):.2}")
 
 # %%
 # Next, we plot the tree based feature importance and the permutation
-# importance. The permutation importance plot shows that permuting a feature
-# drops the accuracy by at most `0.012`, which would suggest that none of the
-# features are important. This is in contradiction with the high test accuracy
-# computed above: some feature must be important. The permutation importance
-# is calculated on the training set to show how much the model relies on each
-# feature during training.
-result = permutation_importance(clf, X_train, y_train, n_repeats=10, random_state=42)
+# importance. The permutation importance is calculated on the training set to
+# show how much the model relies on each feature during training.
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.inspection import permutation_importance
+
+result = permutation_importance(
+    clf, X_train, y_train, n_repeats=10, random_state=42, n_jobs=2
+)
 perm_sorted_idx = result.importances_mean.argsort()
 
 tree_importance_sorted_idx = np.argsort(clf.feature_importances_)
@@ -63,23 +59,55 @@ ax1.barh(tree_indices, clf.feature_importances_[tree_importance_sorted_idx], hei
 ax1.set_yticks(tree_indices)
 ax1.set_yticklabels(data.feature_names[tree_importance_sorted_idx])
 ax1.set_ylim((0, len(clf.feature_importances_)))
+ax1.set_xlabel("Gini importance")
 ax2.boxplot(
     result.importances[perm_sorted_idx].T,
     vert=False,
     labels=data.feature_names[perm_sorted_idx],
 )
-fig.tight_layout()
-plt.show()
+ax2.set_xlabel("Decrease in accuracy score")
+fig.suptitle(
+    "Impurity-based vs. permutation importances on multicollinear features (train set)"
+)
+_ = fig.tight_layout()
+
+# %%
+# The permutation importance plot shows that permuting a feature drops the
+# accuracy by at most `0.012`, which would suggest that none of the features are
+# important. This is in contradiction with the high test accuracy computed as
+# baseline: some feature must be important.
+#
+# Similarly, the change in accuracy score computed on the test set appears to be
+# driven by chance:
+result = permutation_importance(
+    clf, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
+)
+perm_sorted_idx = result.importances_mean.argsort()
+
+fig, ax = plt.subplots(figsize=(6, 6))
+ax.boxplot(
+    result.importances[perm_sorted_idx].T,
+    vert=False,
+    labels=data.feature_names[perm_sorted_idx],
+)
+ax.set_title("Permutation Importances on multicollinear features\n(test set)")
+ax.axvline(x=0, color="k", linestyle="--")
+ax.set_xlabel("Decrease in accuracy score")
+_ = ax.figure.tight_layout()
 
 # %%
 # Handling Multicollinear Features
 # --------------------------------
-# When features are collinear, permutating one feature will have little
-# effect on the models performance because it can get the same information
-# from a correlated feature. One way to handle multicollinear features is by
-# performing hierarchical clustering on the Spearman rank-order correlations,
-# picking a threshold, and keeping a single feature from each cluster. First,
-# we plot a heatmap of the correlated features:
+# When features are collinear, permutating one feature will have little effect
+# on the models performance because it can get the same information from a
+# correlated feature. One way to handle multicollinear features is by performing
+# hierarchical clustering on the Spearman rank-order correlations, picking a
+# threshold, and keeping a single feature from each cluster. First, we plot a
+# heatmap of the correlated features:
+from scipy.stats import spearmanr
+from scipy.cluster import hierarchy
+from scipy.spatial.distance import squareform
+
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 corr = spearmanr(X).correlation
 
@@ -105,11 +133,13 @@ fig.tight_layout()
 plt.show()
 
 # %%
-# Next, we manually pick a threshold by visual inspection of the dendrogram
-# to group our features into clusters and choose a feature from each cluster to
+# Next, we manually pick a threshold by visual inspection of the dendrogram to
+# group our features into clusters and choose a feature from each cluster to
 # keep, select those features from our dataset, and train a new random forest.
-# The test accuracy of the new random forest did not change much compared to
-# the random forest trained on the complete dataset.
+# The test accuracy of the new random forest did not change much compared to the
+# random forest trained on the complete dataset.
+from collections import defaultdict
+
 cluster_ids = hierarchy.fcluster(dist_linkage, 1, criterion="distance")
 cluster_id_to_feature_ids = defaultdict(list)
 for idx, cluster_id in enumerate(cluster_ids):
