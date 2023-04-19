@@ -773,7 +773,6 @@ class PartialDependenceDisplay:
             pd_line_kw=pd_line_kw,
             contour_kw=contour_kw,
             centered=centered,
-            ax=ax,
             kind=kind,
             subsample=subsample,
             random_state=random_state,
