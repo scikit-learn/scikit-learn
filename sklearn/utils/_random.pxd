@@ -26,7 +26,8 @@ cpdef sample_without_replacement(cnp.int_t n_population,
 cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
     """Generate a pseudo-random np.uint32 from a np.uint32 seed"""
     # seed shouldn't ever be 0.
-    if (seed[0] == 0): seed[0] = DEFAULT_SEED
+    if (seed[0] == 0):
+        seed[0] = DEFAULT_SEED
 
     seed[0] ^= <UINT32_t>(seed[0] << 13)
     seed[0] ^= <UINT32_t>(seed[0] >> 17)
