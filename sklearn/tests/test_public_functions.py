@@ -280,6 +280,7 @@ PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.cluster.affinity_propagation", "sklearn.cluster.AffinityPropagation"),
     ("sklearn.cluster.mean_shift", "sklearn.cluster.MeanShift"),
     ("sklearn.cluster.spectral_clustering", "sklearn.cluster.SpectralClustering"),
+    ("sklearn.covariance.graphical_lasso", "sklearn.covariance.GraphicalLasso"),
     ("sklearn.covariance.ledoit_wolf", "sklearn.covariance.LedoitWolf"),
     ("sklearn.covariance.oas", "sklearn.covariance.OAS"),
     ("sklearn.decomposition.dict_learning", "sklearn.decomposition.DictionaryLearning"),

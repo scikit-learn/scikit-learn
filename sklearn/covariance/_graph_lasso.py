@@ -24,6 +24,7 @@ from ..utils.validation import (
 )
 from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import validate_params
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
@@ -211,6 +212,14 @@ def alpha_max(emp_cov):
     return np.max(np.abs(A))
 
 
+@validate_params(
+    {
+        "emp_cov": ["array-like"],
+        "cov_init": ["array-like", None],
+        "return_costs": ["boolean"],
+        "return_n_iter": ["boolean"],
+    }
+)
 def graphical_lasso(
     emp_cov,
     alpha,
@@ -234,7 +243,7 @@ def graphical_lasso(
 
     Parameters
     ----------
-    emp_cov : ndarray of shape (n_features, n_features)
+    emp_cov : array-like of shape (n_features, n_features)
         Empirical covariance from which to compute the covariance estimate.
 
     alpha : float
