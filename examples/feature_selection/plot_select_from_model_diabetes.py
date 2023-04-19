@@ -145,8 +145,8 @@ print(f"Done in {toc_bwd - tic_bwd:.3f}s")
 # SFS needs to perform `n_features - n_features_to_select = 8` iterations.
 
 # %%
-# Selecting Features Using Sequential Feature Selection and Negative tol Values
-# -----------------------------------------------------------------------------
+# Selecting features using Sequential Feature Selection and negative tolerance values
+# -----------------------------------------------------------------------------------
 #
 # :class:`~sklearn.feature_selection.SequentialFeatureSelector` can be used
 # to remove features present in the dataset and return a
