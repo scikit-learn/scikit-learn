@@ -114,7 +114,7 @@ cdef class _QuadTree:
         self._resize(capacity=self.cell_count)
 
     cdef int insert_point(self, DTYPE_t[3] point, SIZE_t point_index,
-                          SIZE_t cell_id=0) nogil except -1:
+                          SIZE_t cell_id=0) except -1 nogil:
         """Insert a point in the QuadTree."""
         cdef int ax
         cdef SIZE_t selected_child
@@ -179,7 +179,7 @@ cdef class _QuadTree:
     # XXX: This operation is not Thread safe
     cdef SIZE_t _insert_point_in_new_child(self, DTYPE_t[3] point, Cell* cell,
                                           SIZE_t point_index, SIZE_t size=1
-                                          ) nogil:
+                                          ) noexcept nogil:
         """Create a child of cell which will contain point."""
 
         # Local variable definition
@@ -248,7 +248,7 @@ cdef class _QuadTree:
         return cell_id
 
 
-    cdef bint _is_duplicate(self, DTYPE_t[3] point1, DTYPE_t[3] point2) nogil:
+    cdef bint _is_duplicate(self, DTYPE_t[3] point1, DTYPE_t[3] point2) noexcept nogil:
         """Check if the two given points are equals."""
         cdef int i
         cdef bint res = True
@@ -258,7 +258,7 @@ cdef class _QuadTree:
         return res
 
 
-    cdef SIZE_t _select_child(self, DTYPE_t[3] point, Cell* cell) nogil:
+    cdef SIZE_t _select_child(self, DTYPE_t[3] point, Cell* cell) noexcept nogil:
         """Select the child of cell which contains the given query point."""
         cdef:
             int i
@@ -272,7 +272,7 @@ cdef class _QuadTree:
                 selected_child += 1
         return cell.children[selected_child]
 
-    cdef void _init_cell(self, Cell* cell, SIZE_t parent, SIZE_t depth) nogil:
+    cdef void _init_cell(self, Cell* cell, SIZE_t parent, SIZE_t depth) noexcept nogil:
         """Initialize a cell structure with some constants."""
         cell.parent = parent
         cell.is_leaf = True
@@ -283,7 +283,7 @@ cdef class _QuadTree:
             cell.children[i] = SIZE_MAX
 
     cdef void _init_root(self, DTYPE_t[3] min_bounds, DTYPE_t[3] max_bounds
-                         ) nogil:
+                         ) noexcept nogil:
         """Initialize the root node with the given space boundaries"""
         cdef:
             int i
@@ -302,7 +302,7 @@ cdef class _QuadTree:
         self.cell_count += 1
 
     cdef int _check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
-                                  ) nogil except -1:
+                                  ) except -1 nogil:
         """Check that the given point is in the cell boundaries."""
 
         if self.verbose >= 50:
@@ -370,7 +370,7 @@ cdef class _QuadTree:
 
     cdef long summarize(self, DTYPE_t[3] point, DTYPE_t* results,
                         float squared_theta=.5, SIZE_t cell_id=0, long idx=0
-                        ) nogil:
+                        ) noexcept nogil:
         """Summarize the tree compared to a query point.
 
         Input arguments
@@ -426,7 +426,7 @@ cdef class _QuadTree:
 
         # Check whether we can use this node as a summary
         # It's a summary node if the angular size as measured from the point
-        # is relatively small (w.r.t. to theta) or if it is a leaf node.
+        # is relatively small (w.r.t. theta) or if it is a leaf node.
         # If it can be summarized, we use the cell center of mass
         # Otherwise, we go a higher level of resolution and into the leaves.
         if cell.is_leaf or (
@@ -461,7 +461,7 @@ cdef class _QuadTree:
         return self._get_cell(query_pt, 0)
 
     cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=0
-                       ) nogil except -1:
+                       ) except -1 nogil:
         """guts of get_cell.
 
         Return the id of the cell containing the query point or raise ValueError
@@ -566,7 +566,7 @@ cdef class _QuadTree:
             raise ValueError("Can't initialize array!")
         return arr
 
-    cdef int _resize(self, SIZE_t capacity) nogil except -1:
+    cdef int _resize(self, SIZE_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays.
 
@@ -578,7 +578,7 @@ cdef class _QuadTree:
             with gil:
                 raise MemoryError()
 
-    cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) nogil except -1:
+    cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) except -1 nogil:
         """Guts of _resize
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)

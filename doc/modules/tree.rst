@@ -508,7 +508,7 @@ Log Loss or Entropy:
   leaf :math:`m` as their probability. Using the **Shannon entropy as tree node
   splitting criterion is equivalent to minimizing the log loss** (also known as
   cross-entropy and multinomial deviance) between the true labels :math:`y_i`
-  and the probalistic predictions :math:`T_k(x_i)` of the tree model :math:`T` for class :math:`k`.
+  and the probabilistic predictions :math:`T_k(x_i)` of the tree model :math:`T` for class :math:`k`.
 
   To see this, first recall that the log loss of a tree model :math:`T`
   computed on a dataset :math:`D` is defined as follows:

@@ -356,8 +356,10 @@ def _solve_lbfgs(
         result = optimize.minimize(func, x0, **config)
         if not result["success"]:
             warnings.warn(
-                "The lbfgs solver did not converge. Try increasing max_iter "
-                f"or tol. Currently: max_iter={max_iter} and tol={tol}",
+                (
+                    "The lbfgs solver did not converge. Try increasing max_iter "
+                    f"or tol. Currently: max_iter={max_iter} and tol={tol}"
+                ),
                 ConvergenceWarning,
             )
         coefs[i] = result["x"]
@@ -571,7 +573,6 @@ def _ridge_regression(
     check_input=True,
     fit_intercept=False,
 ):
-
     has_sw = sample_weight is not None
 
     if solver == "auto":
@@ -781,7 +782,6 @@ def _ridge_regression(
 
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
-
     _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
         "fit_intercept": ["boolean"],
@@ -820,7 +820,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
-
         if self.solver == "lbfgs" and not self.positive:
             raise ValueError(
                 "'lbfgs' solver can be used only when positive=True. "
@@ -962,8 +961,23 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         For 'lbfgs' solver, the default value is 15000.
 
     tol : float, default=1e-4
-        Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
-        'cholesky'.
+        The precision of the solution (`coef_`) is determined by `tol` which
+        specifies a different convergence criterion for each solver:
+
+        - 'svd': `tol` has no impact.
+
+        - 'cholesky': `tol` has no impact.
+
+        - 'sparse_cg': norm of residuals smaller than `tol`.
+
+        - 'lsqr': `tol` is set as atol and btol of scipy.sparse.linalg.lsqr,
+          which control the norm of the residual vector in terms of the norms of
+          matrix and coefficients.
+
+        - 'sag' and 'saga': relative change of coef smaller than `tol`.
+
+        - 'lbfgs': maximum of the absolute (projected) gradient=max|residuals|
+          smaller than `tol`.
 
         .. versionchanged:: 1.2
            Default value changed from 1e-3 to 1e-4 for consistency with other linear
@@ -1252,8 +1266,23 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         The default value is determined by scipy.sparse.linalg.
 
     tol : float, default=1e-4
-        Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
-        'cholesky'.
+        The precision of the solution (`coef_`) is determined by `tol` which
+        specifies a different convergence criterion for each solver:
+
+        - 'svd': `tol` has no impact.
+
+        - 'cholesky': `tol` has no impact.
+
+        - 'sparse_cg': norm of residuals smaller than `tol`.
+
+        - 'lsqr': `tol` is set as atol and btol of scipy.sparse.linalg.lsqr,
+          which control the norm of the residual vector in terms of the norms of
+          matrix and coefficients.
+
+        - 'sag' and 'saga': relative change of coef smaller than `tol`.
+
+        - 'lbfgs': maximum of the absolute (projected) gradient=max|residuals|
+          smaller than `tol`.
 
         .. versionchanged:: 1.2
            Default value changed from 1e-3 to 1e-4 for consistency with other linear
@@ -2071,7 +2100,6 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
-
     _parameter_constraints: dict = {
         "alphas": ["array-like", Interval(Real, 0, None, closed="neither")],
         "fit_intercept": ["boolean"],

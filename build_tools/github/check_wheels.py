@@ -14,14 +14,13 @@ n_wheels = len(build_matrix)
 # plus one more for the sdist
 n_wheels += 1
 
-# aarch64 builds from travis
-travis_config_path = Path.cwd() / ".travis.yml"
-with travis_config_path.open("r") as f:
-    travis_config = yaml.safe_load(f)
+# arm64 builds from cirrus
+cirrus_path = Path.cwd() / "build_tools" / "cirrus" / "arm_wheel.yml"
+with cirrus_path.open("r") as f:
+    cirrus_config = yaml.safe_load(f)
 
-jobs = travis_config["jobs"]["include"]
-travis_builds = [j for j in jobs if any("CIBW_BUILD" in env for env in j["env"])]
-n_wheels += len(travis_builds)
+n_wheels += len(cirrus_config["macos_arm64_wheel_task"]["matrix"])
+n_wheels += len(cirrus_config["linux_arm64_wheel_task"]["matrix"])
 
 dist_files = list(Path("dist").glob("**/*"))
 n_dist_files = len(dist_files)

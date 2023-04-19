@@ -1700,35 +1700,6 @@ def test_little_tree_with_small_max_samples(ForestClass):
     assert tree1.node_count > tree2.node_count, msg
 
 
-# TODO: Remove in v1.3
-@pytest.mark.parametrize(
-    "Estimator",
-    [
-        ExtraTreesClassifier,
-        ExtraTreesRegressor,
-        RandomForestClassifier,
-        RandomForestRegressor,
-    ],
-)
-def test_max_features_deprecation(Estimator):
-    """Check warning raised for max_features="auto" deprecation."""
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator(max_features="auto")
-
-    err_msg = (
-        r"`max_features='auto'` has been deprecated in 1.1 "
-        r"and will be removed in 1.3. To keep the past behaviour, "
-        r"explicitly set `max_features=(1.0|'sqrt')` or remove this "
-        r"parameter as it is also the default value for RandomForest"
-        r"(Regressors|Classifiers) and ExtraTrees(Regressors|"
-        r"Classifiers)\."
-    )
-
-    with pytest.warns(FutureWarning, match=err_msg):
-        est.fit(X, y)
-
-
 @pytest.mark.parametrize("Forest", FOREST_REGRESSORS)
 def test_mse_criterion_object_segfault_smoke_test(Forest):
     # This is a smoke test to ensure that passing a mutable criterion
@@ -1807,3 +1778,16 @@ def test_read_only_buffer(monkeypatch):
 
     clf = RandomForestClassifier(n_jobs=2, random_state=rng)
     cross_val_score(clf, X, y, cv=2)
+
+
+@pytest.mark.parametrize("class_weight", ["balanced_subsample", None])
+def test_round_samples_to_one_when_samples_too_low(class_weight):
+    """Check low max_samples works and is rounded to one.
+
+    Non-regression test for gh-24037.
+    """
+    X, y = datasets.load_wine(return_X_y=True)
+    forest = RandomForestClassifier(
+        n_estimators=10, max_samples=1e-4, class_weight=class_weight, random_state=0
+    )
+    forest.fit(X, y)

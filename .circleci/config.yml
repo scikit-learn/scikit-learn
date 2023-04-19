@@ -1,6 +1,21 @@
 version: 2.1
 
 jobs:
+  lint:
+    docker:
+      - image: cimg/python:3.8.12
+    steps:
+      - checkout
+      - run:
+          name: dependencies
+          command: |
+            source build_tools/shared.sh
+            # Include pytest compatibility with mypy
+            pip install pytest flake8 $(get_dep mypy min) $(get_dep black min)
+      - run:
+          name: linting
+          command: ./build_tools/linting.sh
+
   doc-min-dependencies:
     docker:
       - image: cimg/python:3.8.12
@@ -46,6 +61,8 @@ jobs:
       - OPENBLAS_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
       - LOCK_FILE: build_tools/circle/doc_linux-64_conda.lock
+      # Disable sphinx parallelism to avoid EOFError or job stalling in CircleCI
+      - SPHINX_NUMJOBS: 1
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -98,8 +115,13 @@ workflows:
   version: 2
   build-doc-and-deploy:
     jobs:
-      - doc
-      - doc-min-dependencies
+      - lint
+      - doc:
+          requires:
+            - lint
+      - doc-min-dependencies:
+          requires:
+            - lint
       - deploy:
           requires:
             - doc

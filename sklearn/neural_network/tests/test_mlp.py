@@ -752,7 +752,7 @@ def test_warm_start_full_iteration(MLPEstimator):
     clf.fit(X, y)
     assert max_iter == clf.n_iter_
     clf.fit(X, y)
-    assert 2 * max_iter == clf.n_iter_
+    assert max_iter == clf.n_iter_
 
 
 def test_n_iter_no_change():
@@ -926,3 +926,43 @@ def test_mlp_warm_start_with_early_stopping(MLPEstimator):
     mlp.set_params(max_iter=20)
     mlp.fit(X_iris, y_iris)
     assert len(mlp.validation_scores_) > n_validation_scores
+
+
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+@pytest.mark.parametrize("solver", ["sgd", "adam", "lbfgs"])
+def test_mlp_warm_start_no_convergence(MLPEstimator, solver):
+    """Check that we stop the number of iteration at `max_iter` when warm starting.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24764
+    """
+    model = MLPEstimator(
+        solver=solver,
+        warm_start=True,
+        early_stopping=False,
+        max_iter=10,
+        n_iter_no_change=np.inf,
+        random_state=0,
+    )
+
+    with pytest.warns(ConvergenceWarning):
+        model.fit(X_iris, y_iris)
+    assert model.n_iter_ == 10
+
+    model.set_params(max_iter=20)
+    with pytest.warns(ConvergenceWarning):
+        model.fit(X_iris, y_iris)
+    assert model.n_iter_ == 20
+
+
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_mlp_partial_fit_after_fit(MLPEstimator):
+    """Check partial fit does not fail after fit when early_stopping=True.
+
+    Non-regression test for gh-25693.
+    """
+    mlp = MLPEstimator(early_stopping=True, random_state=0).fit(X_iris, y_iris)
+
+    msg = "partial_fit does not support early_stopping=True"
+    with pytest.raises(ValueError, match=msg):
+        mlp.partial_fit(X_iris, y_iris)

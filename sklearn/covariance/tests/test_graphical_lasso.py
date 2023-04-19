@@ -66,6 +66,29 @@ def test_graphical_lasso(random_state=0):
     assert_array_almost_equal(precs[0], precs[1])
 
 
+def test_graphical_lasso_when_alpha_equals_0():
+    """Test graphical_lasso's early return condition when alpha=0."""
+    X = np.random.randn(100, 10)
+    emp_cov = empirical_covariance(X, assume_centered=True)
+
+    model = GraphicalLasso(alpha=0, covariance="precomputed").fit(emp_cov)
+    assert_allclose(model.precision_, np.linalg.inv(emp_cov))
+
+    _, precision = graphical_lasso(emp_cov, alpha=0)
+    assert_allclose(precision, np.linalg.inv(emp_cov))
+
+
+@pytest.mark.parametrize("mode", ["cd", "lars"])
+def test_graphical_lasso_n_iter(mode):
+    X, _ = datasets.make_classification(n_samples=5_000, n_features=20, random_state=0)
+    emp_cov = empirical_covariance(X)
+
+    _, _, n_iter = graphical_lasso(
+        emp_cov, 0.2, mode=mode, max_iter=2, return_n_iter=True
+    )
+    assert n_iter == 2
+
+
 def test_graphical_lasso_iris():
     # Hard-coded solution from R glasso package for alpha=1.0
     # (need to set penalize.diagonal to FALSE)
@@ -240,3 +263,17 @@ def test_graphical_lasso_cv_scores():
 
     assert_allclose(cov.cv_results_["mean_test_score"], expected_mean)
     assert_allclose(cov.cv_results_["std_test_score"], expected_std)
+
+
+# TODO(1.5): remove in 1.5
+def test_graphical_lasso_cov_init_deprecation():
+    """Check that we raise a deprecation warning if providing `cov_init` in
+    `graphical_lasso`."""
+    rng, dim, n_samples = np.random.RandomState(0), 20, 100
+    prec = make_sparse_spd_matrix(dim, alpha=0.95, random_state=0)
+    cov = linalg.inv(prec)
+    X = rng.multivariate_normal(np.zeros(dim), cov, size=n_samples)
+
+    emp_cov = empirical_covariance(X)
+    with pytest.warns(FutureWarning, match="cov_init parameter is deprecated"):
+        graphical_lasso(emp_cov, alpha=0.1, cov_init=emp_cov)

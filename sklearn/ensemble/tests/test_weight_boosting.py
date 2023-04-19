@@ -630,3 +630,21 @@ def test_base_estimator_property_deprecated(AdaBoost):
     )
     with pytest.warns(FutureWarning, match=warn_msg):
         model.base_estimator_
+
+
+# TODO(1.4): remove in 1.4
+def test_deprecated_base_estimator_parameters_can_be_set():
+    """Check that setting base_estimator parameters works.
+
+    During the deprecation cycle setting "base_estimator__*" params should
+    work.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/25470
+    """
+    # This implicitly sets "estimator", it is how old code (pre v1.2) would
+    # have instantiated AdaBoostClassifier and back then it would set
+    # "base_estimator".
+    clf = AdaBoostClassifier(DecisionTreeClassifier())
+
+    with pytest.warns(FutureWarning, match="Parameter 'base_estimator' of"):
+        clf.set_params(base_estimator__max_depth=2)

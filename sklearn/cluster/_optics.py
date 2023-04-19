@@ -20,6 +20,7 @@ from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
 from ..metrics.pairwise import _VALID_METRICS
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils._param_validation import Interval, HasMethods, StrOptions, validate_params
+from ..utils._param_validation import RealNotInt
 from ..utils.validation import check_memory
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
@@ -89,6 +90,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
         Sparse matrices are only supported by scikit-learn metrics.
         See the documentation for scipy.spatial.distance for details on these
         metrics.
+
+        .. note::
+           `'kulsinski'` is deprecated from SciPy 1.9 and will removed in SciPy 1.11.
 
     p : float, default=2
         Parameter for the Minkowski metric from
@@ -230,7 +234,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
     _parameter_constraints: dict = {
         "min_samples": [
             Interval(Integral, 2, None, closed="left"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval(RealNotInt, 0, 1, closed="both"),
         ],
         "max_eps": [Interval(Real, 0, None, closed="both")],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
@@ -242,7 +246,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         "predecessor_correction": ["boolean"],
         "min_cluster_size": [
             Interval(Integral, 2, None, closed="left"),
-            Interval(Real, 0, 1, closed="right"),
+            Interval(RealNotInt, 0, 1, closed="right"),
             None,
         ],
         "algorithm": [StrOptions({"auto", "brute", "ball_tree", "kd_tree"})],
@@ -428,7 +432,7 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
         "X": [np.ndarray, "sparse matrix"],
         "min_samples": [
             Interval(Integral, 2, None, closed="left"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval(RealNotInt, 0, 1, closed="both"),
         ],
         "max_eps": [Interval(Real, 0, None, closed="both")],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
@@ -488,6 +492,9 @@ def compute_optics_graph(
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
+
+        .. note::
+           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     p : int, default=2
         Parameter for the Minkowski metric from
@@ -612,8 +619,10 @@ def compute_optics_graph(
             )
     if np.all(np.isinf(reachability_)):
         warnings.warn(
-            "All reachability values are inf. Set a larger"
-            " max_eps or all data will be considered outliers.",
+            (
+                "All reachability values are inf. Set a larger"
+                " max_eps or all data will be considered outliers."
+            ),
             UserWarning,
         )
     return ordering, core_distances_, reachability_, predecessor_
@@ -711,6 +720,24 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     return labels
 
 
+@validate_params(
+    {
+        "reachability": [np.ndarray],
+        "predecessor": [np.ndarray],
+        "ordering": [np.ndarray],
+        "min_samples": [
+            Interval(Integral, 2, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="both"),
+        ],
+        "min_cluster_size": [
+            Interval(Integral, 2, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="both"),
+            None,
+        ],
+        "xi": [Interval(Real, 0, 1, closed="both")],
+        "predecessor_correction": ["boolean"],
+    }
+)
 def cluster_optics_xi(
     *,
     reachability,

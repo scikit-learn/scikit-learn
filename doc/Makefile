@@ -7,12 +7,8 @@ SPHINXBUILD  ?= sphinx-build
 PAPER         =
 BUILDDIR      = _build
 
-# Disable multiple jobs on OSX
-ifeq ($(shell uname), Darwin)
-	SPHINX_NUMJOBS ?= 1
-else
-	SPHINX_NUMJOBS ?= auto
-endif
+# Run sequential by default, unless SPHINX_NUMJOBS is set.
+SPHINX_NUMJOBS ?= 1
 
 ifneq ($(EXAMPLES_PATTERN),)
     EXAMPLES_PATTERN_OPTS := -D sphinx_gallery_conf.filename_pattern="$(EXAMPLES_PATTERN)"

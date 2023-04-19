@@ -14,7 +14,7 @@ from ._bitset cimport in_bitset_2d_memoryview
 
 
 def _predict_from_raw_data(  # raw data = non-binned data
-        node_struct [:] nodes,
+        const node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
         const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
         const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
@@ -34,12 +34,12 @@ def _predict_from_raw_data(  # raw data = non-binned data
 
 
 cdef inline Y_DTYPE_C _predict_one_from_raw_data(
-        node_struct [:] nodes,
+        const node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
         const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
         const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
         const unsigned int [::1] f_idx_map,
-        const int row) nogil:
+        const int row) noexcept nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
 
@@ -108,7 +108,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
         const int row,
-        const unsigned char missing_values_bin_idx) nogil:
+        const unsigned char missing_values_bin_idx) noexcept nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
 

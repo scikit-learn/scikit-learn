@@ -360,23 +360,16 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         self._build_f(X, y)
         return self
 
-    def transform(self, T):
-        """Transform new data by linear interpolation.
+    def _transform(self, T):
+        """`_transform` is called by both `transform` and `predict` methods.
 
-        Parameters
-        ----------
-        T : array-like of shape (n_samples,) or (n_samples, 1)
-            Data to transform.
+        Since `transform` is wrapped to output arrays of specific types (e.g.
+        NumPy arrays, pandas DataFrame), we cannot make `predict` call `transform`
+        directly.
 
-            .. versionchanged:: 0.24
-               Also accepts 2d array with 1 feature.
-
-        Returns
-        -------
-        y_pred : ndarray of shape (n_samples,)
-            The transformed data.
+        The above behaviour could be changed in the future, if we decide to output
+        other type of arrays when calling `predict`.
         """
-
         if hasattr(self, "X_thresholds_"):
             dtype = self.X_thresholds_.dtype
         else:
@@ -397,6 +390,24 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         return res
 
+    def transform(self, T):
+        """Transform new data by linear interpolation.
+
+        Parameters
+        ----------
+        T : array-like of shape (n_samples,) or (n_samples, 1)
+            Data to transform.
+
+            .. versionchanged:: 0.24
+               Also accepts 2d array with 1 feature.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,)
+            The transformed data.
+        """
+        return self._transform(T)
+
     def predict(self, T):
         """Predict new data by linear interpolation.
 
@@ -410,7 +421,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         y_pred : ndarray of shape (n_samples,)
             Transformed data.
         """
-        return self.transform(T)
+        return self._transform(T)
 
     # We implement get_feature_names_out here instead of using
     # `ClassNamePrefixFeaturesOutMixin`` because `input_features` are ignored.
