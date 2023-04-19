@@ -102,7 +102,7 @@ def _convert_data_dataframe(
 
 @validate_params(
     {
-        "container_path": [PosixPath, str],
+        "container_path": [PosixPath, str, Path],
         "description": [str, None],
         "categories": [list, None],
         "load_content": ["boolean"],
