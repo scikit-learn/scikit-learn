@@ -24,8 +24,28 @@ picking a threshold, and keeping a single feature from each cluster.
 # %%
 # Random Forest Feature Importance on Breast Cancer Data
 # ------------------------------------------------------
-# First, we train a random forest on the breast cancer dataset and evaluate
-# its accuracy on a test set:
+#
+# First, we define a function to ease the plotting:
+import matplotlib.pyplot as plt
+from sklearn.inspection import permutation_importance
+
+
+def plot_permutation_importance(clf, X, y, ax):
+    result = permutation_importance(clf, X, y, n_repeats=10, random_state=42, n_jobs=2)
+    perm_sorted_idx = result.importances_mean.argsort()
+
+    ax.boxplot(
+        result.importances[perm_sorted_idx].T,
+        vert=False,
+        labels=X.columns[perm_sorted_idx],
+    )
+    ax.axvline(x=0, color="k", linestyle="--")
+    return ax
+
+
+# %%
+# We then train a :class:`~sklearn.ensemble.RandomForestClassifier` on the
+# :ref:`breast_cancer_dataset` and evaluate its accuracy on a test set:
 from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
@@ -42,13 +62,6 @@ print(f"Baseline accuracy on test data: {clf.score(X_test, y_test):.2}")
 # importance. The permutation importance is calculated on the training set to
 # show how much the model relies on each feature during training.
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.inspection import permutation_importance
-
-result = permutation_importance(
-    clf, X_train, y_train, n_repeats=10, random_state=42, n_jobs=2
-)
-perm_sorted_idx = result.importances_mean.argsort()
 
 tree_importance_sorted_idx = np.argsort(clf.feature_importances_)
 tree_indices = np.arange(0, len(clf.feature_importances_)) + 0.5
@@ -59,11 +72,7 @@ ax1.set_yticks(tree_indices)
 ax1.set_yticklabels(X.columns[tree_importance_sorted_idx])
 ax1.set_ylim((0, len(clf.feature_importances_)))
 ax1.set_xlabel("Gini importance")
-ax2.boxplot(
-    result.importances[perm_sorted_idx].T,
-    vert=False,
-    labels=X.columns[perm_sorted_idx],
-)
+plot_permutation_importance(clf, X_train, y_train, ax2)
 ax2.set_xlabel("Decrease in accuracy score")
 fig.suptitle(
     "Impurity-based vs. permutation importances on multicollinear features (train set)"
@@ -78,19 +87,10 @@ _ = fig.tight_layout()
 #
 # Similarly, the change in accuracy score computed on the test set appears to be
 # driven by chance:
-result = permutation_importance(
-    clf, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
-)
-perm_sorted_idx = result.importances_mean.argsort()
 
 fig, ax = plt.subplots(figsize=(6, 6))
-ax.boxplot(
-    result.importances[perm_sorted_idx].T,
-    vert=False,
-    labels=X.columns[perm_sorted_idx],
-)
+plot_permutation_importance(clf, X_test, y_test, ax)
 ax.set_title("Permutation Importances on multicollinear features\n(test set)")
-ax.axvline(x=0, color="k", linestyle="--")
 ax.set_xlabel("Decrease in accuracy score")
 _ = ax.figure.tight_layout()
 
@@ -149,26 +149,17 @@ X_test_sel = X_test[selected_features_names]
 clf_sel = RandomForestClassifier(n_estimators=100, random_state=42)
 clf_sel.fit(X_train_sel, y_train)
 print(
-    "Accuracy on test data with features removed:"
+    "Baseline accuracy on test data with features removed:"
     f" {clf_sel.score(X_test_sel, y_test):.2}"
 )
 
 # %%
 # We can finally explore the permutation importance of the selected subset of
 # features:
-result = permutation_importance(
-    clf_sel, X_test_sel, y_test, n_repeats=10, random_state=42, n_jobs=2
-)
-perm_sorted_idx = result.importances_mean.argsort()
 
 fig, ax = plt.subplots(figsize=(6, 6))
-ax.boxplot(
-    result.importances[perm_sorted_idx].T,
-    vert=False,
-    labels=X.columns[perm_sorted_idx],
-)
+plot_permutation_importance(clf_sel, X_test_sel, y_test, ax)
 ax.set_title("Permutation Importances on multicollinear features\n(test set)")
-ax.axvline(x=0, color="k", linestyle="--")
 ax.set_xlabel("Decrease in accuracy score")
 ax.figure.tight_layout()
 plt.show()
