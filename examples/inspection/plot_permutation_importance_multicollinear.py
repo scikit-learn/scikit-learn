@@ -152,7 +152,6 @@ X_test_sel = X_test[:, selected_features]
 clf_sel = RandomForestClassifier(n_estimators=100, random_state=42)
 clf_sel.fit(X_train_sel, y_train)
 print(
-    "Accuracy on test data with features removed: {:.2f}".format(
-        clf_sel.score(X_test_sel, y_test)
-    )
+    "Accuracy on test data with features removed:"
+    f" {clf_sel.score(X_test_sel, y_test):.2}"
 )
