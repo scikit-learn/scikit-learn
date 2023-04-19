@@ -22,20 +22,20 @@ cdef class BaseCriterion:
     """Abstract interface for criterion."""    
 
     # Internal structures
-    cdef const DOUBLE_t[:] sample_weight # Sample weights
+    cdef const DOUBLE_t[:] sample_weight  # Sample weights
 
-    cdef const SIZE_t[:] sample_indices  # Sample indices in X, y
-    cdef SIZE_t start                    # samples[start:pos] are the samples in the left node
-    cdef SIZE_t pos                      # samples[pos:end] are the samples in the right node
+    cdef const SIZE_t[:] sample_indices   # Sample indices in X, y
+    cdef SIZE_t start                     # samples[start:pos] are the samples in the left node
+    cdef SIZE_t pos                       # samples[pos:end] are the samples in the right node
     cdef SIZE_t end
 
-    cdef SIZE_t n_outputs                # Number of outputs
-    cdef SIZE_t n_samples                # Number of samples
-    cdef SIZE_t n_node_samples           # Number of samples in the node (end-start)
-    cdef double weighted_n_samples       # Weighted number of samples (in total)
-    cdef double weighted_n_node_samples  # Weighted number of samples in the node
-    cdef double weighted_n_left          # Weighted number of samples in the left node
-    cdef double weighted_n_right         # Weighted number of samples in the right node
+    cdef SIZE_t n_outputs                 # Number of outputs
+    cdef SIZE_t n_samples                 # Number of samples
+    cdef SIZE_t n_node_samples            # Number of samples in the node (end-start)
+    cdef double weighted_n_samples        # Weighted number of samples (in total)
+    cdef double weighted_n_node_samples   # Weighted number of samples in the node
+    cdef double weighted_n_left           # Weighted number of samples in the left node
+    cdef double weighted_n_right          # Weighted number of samples in the right node
 
     # Core methods that criterion class _must_ implement.
     cdef int reset(self) except -1 nogil
@@ -68,7 +68,7 @@ cdef class BaseCriterion:
 cdef class Criterion(BaseCriterion):
     """Abstract interface for supervised impurity criteria."""
 
-    cdef const DOUBLE_t[:, ::1] y
+    cdef const DOUBLE_t[:, ::1] y         # Values of y
 
     cdef int init(
         self,

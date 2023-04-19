@@ -1203,6 +1203,11 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     return np.sqrt(tk / pk) * np.sqrt(tk / qk) if tk != 0.0 else 0.0
 
 
+@validate_params(
+    {
+        "labels": ["array-like"],
+    }
+)
 def entropy(labels):
     """Calculate the entropy for a labeling.
 
