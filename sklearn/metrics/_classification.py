@@ -1902,7 +1902,7 @@ def precision_recall_fscore_support_pred(
 
     >>> precision_recall_fscore_support_pred(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
-    (array([0.        , 0.        , 0.66666667]),
+    (array([0.        , 0.        , 0.66...]),
     array([0., 0., 1.]),
     array([0. , 0. , 0.8]),
     array([2, 2, 2]),
