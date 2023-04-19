@@ -621,12 +621,7 @@ def test_lasso_lars_vs_lasso_cd_positive():
         assert error < 0.01
 
     # The range of alphas chosen for coefficient comparison here is restricted
-    # as compared with the above test without the positive option. This is due
-    # to the circumstance that the Lars-Lasso algorithm does not converge to
-    # the least-squares-solution for small alphas, see 'Least Angle Regression'
-    # by Efron et al 2004. The coefficients are typically in congruence up to
-    # the smallest alpha reached by the Lars-Lasso algorithm and start to
-    # diverge thereafter.  See
+    # as compared with the above test without the positive option. See
     # https://gist.github.com/michigraber/7e7d7c75eca694c7a6ff
 
     for alpha in np.linspace(6e-1, 1 - 1e-2, 20):
