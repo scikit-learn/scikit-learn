@@ -45,21 +45,28 @@ def _fit_and_score(
     classifier : estimator instance
         The classifier to fit and used for scoring. If `classifier` is already fitted,
         it will be used as is.
+
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The entire dataset.
+
     y : array-like of shape (n_samples,)
         The entire target vector.
+
     sample_weight : array-like of shape (n_samples,)
         Some optional associated sample weights.
+
     train_idx : ndarray of shape (n_train_samples,) or None
         The indices of the training set. If `None`, `classifier` is expected to be
         already fitted.
+
     val_idx : ndarray of shape (n_val_samples,)
         The indices of the validation set used to score `classifier`. If `train_idx`,
         the entire set will be used.
+
     scorer : scorer instance
         The scorer taking `classifier` and the validation set as input and outputting
         decision thresholds and scores.
+
     score_method : str or callable
         The scoring method to use. Used to detect `tpr` and `tnr` since they are not
         an usual scikit-learn scorer and need to be handled differently.
@@ -69,6 +76,7 @@ def _fit_and_score(
     thresholds : ndarray of shape (n_thresholds,)
         The decision thresholds used to compute the scores. They are returned in
         ascending order.
+
     scores : ndarray of shape (n_thresholds,)
         The scores computed for each decision threshold.
     """
