@@ -126,8 +126,7 @@ ax2.set_xticks(dendro_idx)
 ax2.set_yticks(dendro_idx)
 ax2.set_xticklabels(dendro["ivl"], rotation="vertical")
 ax2.set_yticklabels(dendro["ivl"])
-fig.tight_layout()
-plt.show()
+_ = fig.tight_layout()
 
 # %%
 # Next, we manually pick a threshold by visual inspection of the dendrogram to
@@ -153,3 +152,23 @@ print(
     "Accuracy on test data with features removed:"
     f" {clf_sel.score(X_test_sel, y_test):.2}"
 )
+
+# %%
+# We can finally explore the permutation importance of the selected subset of
+# features:
+result = permutation_importance(
+    clf_sel, X_test_sel, y_test, n_repeats=10, random_state=42, n_jobs=2
+)
+perm_sorted_idx = result.importances_mean.argsort()
+
+fig, ax = plt.subplots(figsize=(6, 6))
+ax.boxplot(
+    result.importances[perm_sorted_idx].T,
+    vert=False,
+    labels=X.columns[perm_sorted_idx],
+)
+ax.set_title("Permutation Importances on multicollinear features\n(test set)")
+ax.axvline(x=0, color="k", linestyle="--")
+ax.set_xlabel("Decrease in accuracy score")
+ax.figure.tight_layout()
+plt.show()
