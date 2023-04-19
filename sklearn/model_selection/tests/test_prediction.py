@@ -203,6 +203,25 @@ def test_cutoffclassifier_no_binary():
 
 
 @pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        ({"cv": "prefit", "refit": True}, "When cv='prefit', refit cannot be True."),
+        (
+            {"cv": 10, "refit": False},
+            "When cv has several folds, refit cannot be False.",
+        ),
+    ],
+)
+def test_cutoffclassifier_conflit_cv_refit(params, err_msg):
+    """Check that we raise an informative error message when `cv` and `refit`
+    cannot be used together.
+    """
+    X, y = make_classification(n_samples=100, random_state=0)
+    with pytest.raises(ValueError, match=err_msg):
+        CutOffClassifier(LogisticRegression(), **params).fit(X, y)
+
+
+@pytest.mark.parametrize(
     "estimator",
     [LogisticRegression(), SVC(), GradientBoostingClassifier(n_estimators=4)],
 )
@@ -318,10 +337,8 @@ def test_cutoffclassifier_with_string_targets(response_method, metric):
         objective_value=0.9,
         pos_label="cancer",
         response_method=response_method,
-        n_thresholds=10,
+        n_thresholds=100,
     ).fit(X, y)
     assert_array_equal(model.classes_, np.sort(classes))
     y_pred = model.predict(X[[0], :])
     assert y_pred.item(0) in classes
-
-    # print(model.decision_threshold_, model.objective_score_)

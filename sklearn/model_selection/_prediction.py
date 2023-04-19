@@ -7,7 +7,7 @@ from ..base import BaseEstimator, ClassifierMixin, MetaEstimatorMixin, clone
 from ..metrics import check_scoring, get_scorer_names, make_scorer, roc_curve
 from ..metrics._scorer import _ContinuousScorer
 from ..utils import _safe_indexing
-from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._response import _get_response_values_binary
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import type_of_target
@@ -19,7 +19,7 @@ from ..utils.validation import (
     indexable,
 )
 
-from ._split import check_cv
+from ._split import check_cv, StratifiedShuffleSplit
 
 
 def _estimator_has(attr):
@@ -175,12 +175,25 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+    refit : "auto" or bool, default="auto"
+        Whether or not to refit the classifier on the entire training set once
+        the decision threshold has been found. By default, `refit="auto"` is
+        equivalent to `refit=False` when `cv` is a float number using a single
+        shuffle split or `cv="prefit"` otherwise `refit=True` in all other
+        cases. Note that forcing `refit=False` on cross-validation having more
+        than a single split will raise an error. Similarly, `refit=True` in
+        conjunction with `cv="prefit"` will raise an error.
+
     n_jobs : int, default=None
         The number of jobs to run in parallel. When `cv` represents a
         cross-validation strategy, the fitting and scoring on each data split
         is done in parallel. ``None`` means 1 unless in a
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
+
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of cross-validation when `cv` is a float.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -215,8 +228,14 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         "pos_label": [Real, str, "boolean", None],
         "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
         "n_thresholds": [Interval(Integral, 1, None, closed="left")],
-        "cv": ["cv_object", StrOptions({"prefit"})],
+        "cv": [
+            "cv_object",
+            StrOptions({"prefit"}),
+            Interval(RealNotInt, 0.0, 1.0, closed="right"),
+        ],
+        "refit": ["boolean", StrOptions({"auto"})],
         "n_jobs": [Integral, None],
+        "random_state": ["random_state"],
     }
 
     def __init__(
@@ -229,7 +248,9 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         response_method="auto",
         n_thresholds=1_000,
         cv=None,
+        refit="auto",
         n_jobs=None,
+        random_state=None,
     ):
         self.estimator = estimator
         self.objective_metric = objective_metric
@@ -238,7 +259,9 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         self.response_method = response_method
         self.n_thresholds = n_thresholds
         self.cv = cv
+        self.refit = refit
         self.n_jobs = n_jobs
+        self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the classifier and post-tune the decision threshold.
@@ -275,7 +298,20 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
-        cv = self.cv if self.cv == "prefit" else check_cv(self.cv, y, classifier=True)
+        if isinstance(self.cv, Real) and 0 < self.cv <= 1:
+            cv = StratifiedShuffleSplit(
+                n_splits=1, test_size=self.cv, random_state=self.random_state
+            )
+            refit = False if self.refit == "auto" else self.refit
+        elif self.cv == "prefit":
+            if self.refit is True:
+                raise ValueError("When cv='prefit', refit cannot be True.")
+            cv, refit = self.cv, False
+        else:
+            cv = check_cv(self.cv, y=y, classifier=True)
+            if self.refit is False:
+                raise ValueError("When cv has several folds, refit cannot be False.")
+            refit = True
 
         if self.response_method == "auto":
             self._response_method = ["predict_proba", "decision_function"]
@@ -294,12 +330,16 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
 
         fit_parameters = signature(self.estimator.fit).parameters
         supports_sw = "sample_weight" in fit_parameters
-        if sample_weight is not None and supports_sw:
-            self.estimator_ = clone(self.estimator).fit(
-                X, y, sample_weight, **fit_params
-            )
+
+        if refit:
+            if sample_weight is not None and supports_sw:
+                self.estimator_ = clone(self.estimator).fit(
+                    X, y, sample_weight, **fit_params
+                )
+            else:
+                self.estimator_ = clone(self.estimator).fit(X, y, **fit_params)
         else:
-            self.estimator_ = clone(self.estimator).fit(X, y, **fit_params)
+            self.estimator_ = self.estimator
 
         if cv == "prefit":
             classifier = self.estimator
