@@ -30,8 +30,7 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
-data = load_breast_cancer()
-X, y = data.data, data.target
+X, y = load_breast_cancer(return_X_y=True, as_frame=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
 clf = RandomForestClassifier(n_estimators=100, random_state=42)
@@ -57,13 +56,13 @@ tree_indices = np.arange(0, len(clf.feature_importances_)) + 0.5
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 ax1.barh(tree_indices, clf.feature_importances_[tree_importance_sorted_idx], height=0.7)
 ax1.set_yticks(tree_indices)
-ax1.set_yticklabels(data.feature_names[tree_importance_sorted_idx])
+ax1.set_yticklabels(X.columns[tree_importance_sorted_idx])
 ax1.set_ylim((0, len(clf.feature_importances_)))
 ax1.set_xlabel("Gini importance")
 ax2.boxplot(
     result.importances[perm_sorted_idx].T,
     vert=False,
-    labels=data.feature_names[perm_sorted_idx],
+    labels=X.columns[perm_sorted_idx],
 )
 ax2.set_xlabel("Decrease in accuracy score")
 fig.suptitle(
@@ -88,7 +87,7 @@ fig, ax = plt.subplots(figsize=(6, 6))
 ax.boxplot(
     result.importances[perm_sorted_idx].T,
     vert=False,
-    labels=data.feature_names[perm_sorted_idx],
+    labels=X.columns[perm_sorted_idx],
 )
 ax.set_title("Permutation Importances on multicollinear features\n(test set)")
 ax.axvline(x=0, color="k", linestyle="--")
@@ -119,9 +118,7 @@ np.fill_diagonal(corr, 1)
 # hierarchical clustering using Ward's linkage.
 distance_matrix = 1 - np.abs(corr)
 dist_linkage = hierarchy.ward(squareform(distance_matrix))
-dendro = hierarchy.dendrogram(
-    dist_linkage, labels=data.feature_names.tolist(), ax=ax1, leaf_rotation=90
-)
+dendro = hierarchy.dendrogram(dist_linkage, labels=X.columns, ax=ax1, leaf_rotation=90)
 dendro_idx = np.arange(0, len(dendro["ivl"]))
 
 ax2.imshow(corr[dendro["leaves"], :][:, dendro["leaves"]])
@@ -145,9 +142,10 @@ cluster_id_to_feature_ids = defaultdict(list)
 for idx, cluster_id in enumerate(cluster_ids):
     cluster_id_to_feature_ids[cluster_id].append(idx)
 selected_features = [v[0] for v in cluster_id_to_feature_ids.values()]
+selected_features_names = X.columns[selected_features]
 
-X_train_sel = X_train[:, selected_features]
-X_test_sel = X_test[:, selected_features]
+X_train_sel = X_train[selected_features_names]
+X_test_sel = X_test[selected_features_names]
 
 clf_sel = RandomForestClassifier(n_estimators=100, random_state=42)
 clf_sel.fit(X_train_sel, y_train)
