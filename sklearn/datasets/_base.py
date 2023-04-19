@@ -24,7 +24,6 @@ from ..utils import check_pandas_support
 from ..utils.fixes import _open_binary, _open_text, _read_text, _contents
 from ..utils._param_validation import validate_params, Interval
 
-
 import numpy as np
 
 from urllib.request import urlretrieve
