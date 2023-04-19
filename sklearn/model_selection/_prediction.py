@@ -106,7 +106,7 @@ def _fit_and_score(
             )
         else:
             sw_train, sw_val = None, None
-        fit_params_train = _check_fit_params(X_train, fit_params, train_idx)
+        fit_params_train = _check_fit_params(X, fit_params, indices=train_idx)
         if supports_sw:
             classifier.fit(X_train, y_train, sample_weight=sw_train, **fit_params_train)
         else:

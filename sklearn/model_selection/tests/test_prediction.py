@@ -17,7 +17,12 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils._mocking import CheckingClassifier
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose,
+    assert_array_equal,
+)
 
 from sklearn.model_selection import CutOffClassifier
 from sklearn.model_selection._prediction import _fit_and_score
@@ -199,7 +204,51 @@ def test_fit_and_score_sample_weight(scorer, score_method):
     assert_allclose(scores_repeated, scores)
 
 
-# TODO: add a test for `fit_params` for the `_fit_and_score` function
+@pytest.mark.parametrize(
+    "scorer, score_method",
+    [
+        (
+            _ContinuousScorer(
+                score_func=balanced_accuracy_score,
+                sign=1,
+                response_method="predict_proba",
+                kwargs={},
+            ),
+            "balanced_accuracy",
+        ),
+        (
+            make_scorer(roc_curve, needs_proba=True),
+            "tpr",
+        ),
+        (
+            make_scorer(roc_curve, needs_proba=True),
+            "tnr",
+        ),
+    ],
+)
+@pytest.mark.parametrize("fit_params_type", ["list", "array"])
+def test_fit_and_score_fit_params(scorer, score_method, fit_params_type):
+    """Check that we pass `fit_params` to the classifier when calling `fit`."""
+    X, y = make_classification(n_samples=100, random_state=0)
+    fit_params = {
+        "a": _convert_container(y, fit_params_type),
+        "b": _convert_container(y, fit_params_type),
+    }
+
+    classifier = CheckingClassifier(expected_fit_params=["a", "b"])
+    train_idx, val_idx = np.arange(50), np.arange(50, 100)
+
+    _fit_and_score(
+        classifier,
+        X,
+        y,
+        sample_weight=None,
+        fit_params=fit_params,
+        train_idx=train_idx,
+        val_idx=val_idx,
+        scorer=scorer,
+        score_method=score_method,
+    )
 
 
 def test_cutoffclassifier_no_binary():
@@ -411,4 +460,18 @@ def test_cutoffclassifier_refit(with_sample_weight, global_random_seed):
     assert_allclose(model.estimator_.coef_, estimator.coef_)
 
 
-# TODO: add a test to check that `fit_params` is dispatched properly
+@pytest.mark.parametrize("objective_metric", ["tpr", "tnr", "balanced_accuracy"])
+@pytest.mark.parametrize("fit_params_type", ["list", "array"])
+def test_cutoffclassifier_fit_params(objective_metric, fit_params_type):
+    """Check that we pass `fit_params` to the classifier when calling `fit`."""
+    X, y = make_classification(n_samples=100, random_state=0)
+    fit_params = {
+        "a": _convert_container(y, fit_params_type),
+        "b": _convert_container(y, fit_params_type),
+    }
+
+    classifier = CheckingClassifier(expected_fit_params=["a", "b"])
+    model = CutOffClassifier(
+        classifier, objective_metric=objective_metric, objective_value=0.5
+    )
+    model.fit(X, y, **fit_params)
