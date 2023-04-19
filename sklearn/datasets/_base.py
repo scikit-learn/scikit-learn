@@ -22,7 +22,6 @@ from ..utils import check_random_state
 from ..utils import check_pandas_support
 from ..utils.fixes import _open_binary, _open_text, _read_text, _contents
 from ..utils._param_validation import validate_params, StrOptions
-from pathlib import PosixPath
 
 
 import numpy as np
@@ -102,7 +101,7 @@ def _convert_data_dataframe(
 
 @validate_params(
     {
-        "container_path": [PosixPath, str, Path],
+        "container_path": [str, Path],
         "description": [str, None],
         "categories": [list, None],
         "load_content": ["boolean"],
