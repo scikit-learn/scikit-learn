@@ -4,6 +4,7 @@ from numbers import Integral, Real
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin, MetaEstimatorMixin, clone
+from ..exceptions import NotFittedError
 from ..metrics import check_scoring, get_scorer_names, make_scorer, roc_curve
 from ..metrics._scorer import _ContinuousScorer
 from ..utils import _safe_indexing
@@ -306,12 +307,21 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         elif self.cv == "prefit":
             if self.refit is True:
                 raise ValueError("When cv='prefit', refit cannot be True.")
+            try:
+                check_is_fitted(self.estimator, "classes_")
+            except NotFittedError as exc:
+                raise NotFittedError(
+                    """When cv='prefit', `estimator` must be fitted."""
+                ) from exc
             cv, refit = self.cv, False
         else:
             cv = check_cv(self.cv, y=y, classifier=True)
-            if self.refit is False:
+            if self.refit is False and cv.get_n_splits() > 1:
                 raise ValueError("When cv has several folds, refit cannot be False.")
-            refit = True
+            if self.refit == "auto":
+                refit = True if cv.get_n_splits() == 1 else False
+            else:
+                refit = self.refit
 
         if self.response_method == "auto":
             self._response_method = ["predict_proba", "decision_function"]
@@ -331,22 +341,35 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         fit_parameters = signature(self.estimator.fit).parameters
         supports_sw = "sample_weight" in fit_parameters
 
-        if refit:
-            if sample_weight is not None and supports_sw:
-                self.estimator_ = clone(self.estimator).fit(
-                    X, y, sample_weight, **fit_params
-                )
-            else:
-                self.estimator_ = clone(self.estimator).fit(X, y, **fit_params)
-        else:
-            self.estimator_ = self.estimator
-
+        # in the following block, we:
+        # - define the final classifier `self.estimator_` and train it if necessary
+        # - define `classifier` to be used to post-tune the decision threshold
+        # - define `split` to be used to fit/score `classifier`
         if cv == "prefit":
-            classifier = self.estimator
-            split = ([None, range(_num_samples(X))],)
+            self.estimator_ = self.estimator
+            classifier = self.estimator_
+            splits = ([None, range(_num_samples(X))],)
         else:
+            self.estimator_ = clone(self.estimator)
             classifier = clone(self.estimator)
-            split = cv.split(X, y)
+            splits = cv.split(X, y)
+
+            if refit:
+                # train on the whole dataset
+                X_train, y_train, sw_train = X, y, sample_weight
+            else:
+                # single split cross-validation
+                train_idx, _ = next(cv.split(X, y))
+                X_train = _safe_indexing(X, train_idx)
+                y_train = _safe_indexing(y, train_idx)
+                if sample_weight is not None:
+                    sw_train = _safe_indexing(sample_weight, train_idx)
+                else:
+                    sw_train = None
+            if sw_train is not None and supports_sw:
+                self.estimator_.fit(X_train, y_train, sample_weight=sw_train)
+            else:
+                self.estimator_.fit(X_train, y_train)
 
         if self.objective_metric in {"tpr", "tnr"}:
             if (
@@ -380,7 +403,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                     self._scorer,
                     self.objective_metric,
                 )
-                for train_idx, val_idx in split
+                for train_idx, val_idx in splits
             )
         )
 

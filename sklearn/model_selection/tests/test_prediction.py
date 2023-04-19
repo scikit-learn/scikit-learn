@@ -203,21 +203,31 @@ def test_cutoffclassifier_no_binary():
 
 
 @pytest.mark.parametrize(
-    "params, err_msg",
+    "params, err_type, err_msg",
     [
-        ({"cv": "prefit", "refit": True}, "When cv='prefit', refit cannot be True."),
+        (
+            {"cv": "prefit", "refit": True},
+            ValueError,
+            "When cv='prefit', refit cannot be True.",
+        ),
         (
             {"cv": 10, "refit": False},
+            ValueError,
             "When cv has several folds, refit cannot be False.",
+        ),
+        (
+            {"cv": "prefit", "refit": False},
+            NotFittedError,
+            "`estimator` must be fitted.",
         ),
     ],
 )
-def test_cutoffclassifier_conflit_cv_refit(params, err_msg):
+def test_cutoffclassifier_conflit_cv_refit(params, err_type, err_msg):
     """Check that we raise an informative error message when `cv` and `refit`
     cannot be used together.
     """
     X, y = make_classification(n_samples=100, random_state=0)
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(err_type, match=err_msg):
         CutOffClassifier(LogisticRegression(), **params).fit(X, y)
 
 
@@ -340,5 +350,28 @@ def test_cutoffclassifier_with_string_targets(response_method, metric):
         n_thresholds=100,
     ).fit(X, y)
     assert_array_equal(model.classes_, np.sort(classes))
-    y_pred = model.predict(X[[0], :])
-    assert y_pred.item(0) in classes
+    y_pred = model.predict(X)
+    assert_array_equal(np.sort(np.unique(y_pred)), np.sort(classes))
+
+
+def test_cutoffclassifier_refit():
+    """Check the behaviour of the `refit` parameter."""
+    X, y = make_classification(n_samples=100, random_state=0)
+
+    # check that `estimator_` if fitted on the full dataset when `refit=True`
+    estimator = LogisticRegression()
+    model = CutOffClassifier(estimator, refit=True).fit(X, y)
+
+    assert model.estimator_ is not estimator
+    estimator.fit(X, y)
+    assert_allclose(model.estimator_.coef_, estimator.coef_)
+    assert_allclose(model.estimator_.intercept_, estimator.intercept_)
+    model.predict(X)
+
+    # check that `estimator_` was not altered when `refit=False`
+    estimator = LogisticRegression().fit(X, y)
+    coef = estimator.coef_.copy()
+    model = CutOffClassifier(estimator, cv="prefit", refit=False).fit(X, y)
+
+    assert model.estimator_ is estimator
+    assert_allclose(model.estimator_.coef_, coef)
