@@ -11,7 +11,7 @@
 # receive values from a numpy array of dtype np.float64, the type float64_t must be
 # used.
 #
-# TODO: Stop defining custom types locally or globally like DTYPE_t and friends and
+# TODO: Stop defining custom types locally or globally like DTYPE_t and friends and
 # use these consistently throughout the codebase.
 # NOTE: Extend this list as needed when converting more cython extensions.
 ctypedef unsigned char uint8_t
