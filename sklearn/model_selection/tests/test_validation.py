@@ -382,7 +382,7 @@ def test_cross_validate_invalid_scoring_param():
     with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
 
-    with pytest.raises(ValueError, match="'mse' is not a valid scoring value."):
+    with pytest.raises(ValueError, match=error_message_regexp):
         cross_validate(SVC(), X, y, scoring="mse")
 
 
@@ -405,7 +405,8 @@ def test_cross_validate_nested_estimator():
     assert all(isinstance(estimator, Pipeline) for estimator in estimators)
 
 
-def test_cross_validate():
+@pytest.mark.parametrize("use_sparse", [False, True])
+def test_cross_validate(use_sparse: bool):
     # Compute train and test mse/r2 scores
     cv = KFold()
 
@@ -416,6 +417,10 @@ def test_cross_validate():
     # Classification
     X_clf, y_clf = make_classification(n_samples=30, random_state=0)
     clf = SVC(kernel="linear", random_state=0)
+
+    if use_sparse:
+        X_reg = csr_matrix(X_reg)
+        X_clf = csr_matrix(X_clf)
 
     for X, y, est in ((X_reg, y_reg, reg), (X_clf, y_clf, clf)):
         # It's okay to evaluate regression metrics on classification too
@@ -510,7 +515,15 @@ def check_cross_validate_single_metric(clf, X, y, scores, cv):
         clf, X, y, scoring="neg_mean_squared_error", return_estimator=True, cv=cv
     )
     for k, est in enumerate(mse_scores_dict["estimator"]):
-        assert_almost_equal(est.coef_, fitted_estimators[k].coef_)
+        est_coef = est.coef_.copy()
+        if isinstance(est_coef, (csr_matrix, coo_matrix)):
+            est_coef = est_coef.toarray()
+
+        fitted_est_coef = fitted_estimators[k].coef_.copy()
+        if isinstance(fitted_est_coef, (csr_matrix, coo_matrix)):
+            fitted_est_coef = fitted_est_coef.toarray()
+
+        assert_almost_equal(est_coef, fitted_est_coef)
         assert_almost_equal(est.intercept_, fitted_estimators[k].intercept_)
 
 

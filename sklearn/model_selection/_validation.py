@@ -32,10 +32,12 @@ from ..utils.parallel import delayed, Parallel
 from ..utils.metaestimators import _safe_split
 from ..utils._param_validation import (
     HasMethods,
+    Integral,
     StrOptions,
     validate_params,
 )
 from ..metrics import check_scoring
+from ..metrics import get_scorer_names
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
@@ -55,15 +57,22 @@ __all__ = [
 @validate_params(
     {
         "estimator": [HasMethods("fit")],
-        "X": ["array-like"],
+        "X": ["array-like", "sparse matrix"],
         "y": ["array-like", None],
         "groups": ["array-like", None],
-        "scoring": [str, callable, list, tuple, dict, None],
+        "scoring": [
+            StrOptions(set(get_scorer_names())),
+            callable,
+            list,
+            tuple,
+            dict,
+            None,
+        ],
         "cv": ["cv_object"],
-        "n_jobs": [int, None],
+        "n_jobs": [Integral, None],
         "verbose": ["verbose"],
         "fit_params": [dict, None],
-        "pre_dispatch": [int, str],
+        "pre_dispatch": [Integral, str],
         "return_train_score": ["boolean"],
         "return_estimator": ["boolean"],
         "return_indices": ["boolean"],
@@ -96,7 +105,7 @@ def cross_validate(
     estimator : estimator object implementing 'fit'
         The object to use to fit the data.
 
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data to fit. Can be for example a list, or an array.
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
