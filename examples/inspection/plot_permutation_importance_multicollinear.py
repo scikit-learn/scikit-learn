@@ -118,7 +118,9 @@ np.fill_diagonal(corr, 1)
 # hierarchical clustering using Ward's linkage.
 distance_matrix = 1 - np.abs(corr)
 dist_linkage = hierarchy.ward(squareform(distance_matrix))
-dendro = hierarchy.dendrogram(dist_linkage, labels=X.columns, ax=ax1, leaf_rotation=90)
+dendro = hierarchy.dendrogram(
+    dist_linkage, labels=X.columns.to_list(), ax=ax1, leaf_rotation=90
+)
 dendro_idx = np.arange(0, len(dendro["ivl"]))
 
 ax2.imshow(corr[dendro["leaves"], :][:, dendro["leaves"]])
