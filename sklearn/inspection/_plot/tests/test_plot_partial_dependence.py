@@ -340,7 +340,6 @@ def test_plot_partial_dependence_custom_axes(
 )
 @pytest.mark.parametrize("use_custom_values", [True, False])
 def test_plot_partial_dependence_passing_numpy_axes(
-    plot_partial_dependence,
     pyplot,
     clf_diabetes,
     diabetes,
