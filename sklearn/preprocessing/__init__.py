@@ -38,6 +38,8 @@ from ._discretization import KBinsDiscretizer
 from ._polynomial import PolynomialFeatures
 from ._polynomial import SplineTransformer
 
+from ._outlier import FixOutliers
+
 
 __all__ = [
     "Binarizer",
@@ -69,4 +71,5 @@ __all__ = [
     "label_binarize",
     "quantile_transform",
     "power_transform",
+    "FixOutliers",
 ]
