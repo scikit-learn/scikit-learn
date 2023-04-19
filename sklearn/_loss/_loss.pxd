@@ -44,6 +44,13 @@ cdef class CyPinballLoss(CyLossFunction):
     cdef double_pair cy_grad_hess(self, double y_true, double raw_prediction) noexcept nogil
 
 
+cdef class CyHuberLoss(CyLossFunction):
+    cdef public double delta  # public makes it accessible from Python
+    cdef double cy_loss(self, double y_true, double raw_prediction) noexcept nogil
+    cdef double cy_gradient(self, double y_true, double raw_prediction) noexcept nogil
+    cdef double_pair cy_grad_hess(self, double y_true, double raw_prediction) noexcept nogil
+
+
 cdef class CyHalfPoissonLoss(CyLossFunction):
     cdef double cy_loss(self, double y_true, double raw_prediction) noexcept nogil
     cdef double cy_gradient(self, double y_true, double raw_prediction) noexcept nogil
@@ -71,6 +78,12 @@ cdef class CyHalfTweedieLossIdentity(CyLossFunction):
 
 
 cdef class CyHalfBinomialLoss(CyLossFunction):
+    cdef double cy_loss(self, double y_true, double raw_prediction) noexcept nogil
+    cdef double cy_gradient(self, double y_true, double raw_prediction) noexcept nogil
+    cdef double_pair cy_grad_hess(self, double y_true, double raw_prediction) noexcept nogil
+
+
+cdef class CyExponentialLoss(CyLossFunction):
     cdef double cy_loss(self, double y_true, double raw_prediction) noexcept nogil
     cdef double cy_gradient(self, double y_true, double raw_prediction) noexcept nogil
     cdef double_pair cy_grad_hess(self, double y_true, double raw_prediction) noexcept nogil
