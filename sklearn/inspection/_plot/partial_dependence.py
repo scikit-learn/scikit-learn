@@ -773,10 +773,6 @@ class PartialDependenceDisplay:
             pd_line_kw=pd_line_kw,
             contour_kw=contour_kw,
             centered=centered,
-            kind=kind,
-            subsample=subsample,
-            random_state=random_state,
-            custom_values=custom_values,
         )
 
     def _get_sample_count(self, n_samples):
