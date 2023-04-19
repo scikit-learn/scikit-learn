@@ -1067,6 +1067,12 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     )
 
 
+@validate_params(
+    {
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def load_linnerud(*, return_X_y=False, as_frame=False):
     """Load and return the physical exercise Linnerud dataset.
 
