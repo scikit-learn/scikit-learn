@@ -57,6 +57,7 @@ def test_fit_and_score_scorers(scorer, score_method):
         X,
         y,
         sample_weight=None,
+        fit_params={},
         train_idx=train_idx,
         val_idx=val_idx,
         scorer=scorer,
@@ -106,6 +107,7 @@ def test_fit_and_score_prefit(scorer, score_method, expected_score):
             X,
             y,
             sample_weight=None,
+            fit_params={},
             train_idx=train_idx,
             val_idx=val_idx,
             scorer=scorer,
@@ -122,6 +124,7 @@ def test_fit_and_score_prefit(scorer, score_method, expected_score):
         X,
         y,
         sample_weight=None,
+        fit_params={},
         train_idx=train_idx,
         val_idx=val_idx,
         scorer=scorer,
@@ -172,6 +175,7 @@ def test_fit_and_score_sample_weight(scorer, score_method):
         X_repeated,
         y_repeated,
         sample_weight=None,
+        fit_params={},
         train_idx=train_repeated_idx,
         val_idx=val_repeated_idx,
         scorer=scorer,
@@ -184,6 +188,7 @@ def test_fit_and_score_sample_weight(scorer, score_method):
         X,
         y,
         sample_weight=sample_weight,
+        fit_params={},
         train_idx=train_idx,
         val_idx=val_idx,
         scorer=scorer,
@@ -192,6 +197,9 @@ def test_fit_and_score_sample_weight(scorer, score_method):
 
     assert_allclose(thresholds_repeated, thresholds)
     assert_allclose(scores_repeated, scores)
+
+
+# TODO: add a test for `fit_params` for the `_fit_and_score` function
 
 
 def test_cutoffclassifier_no_binary():
@@ -401,3 +409,6 @@ def test_cutoffclassifier_refit(with_sample_weight, global_random_seed):
         sw_train = None
     estimator.fit(X[cv[0][0]], y[cv[0][0]], sample_weight=sw_train)
     assert_allclose(model.estimator_.coef_, estimator.coef_)
+
+
+# TODO: add a test to check that `fit_params` is dispatched properly

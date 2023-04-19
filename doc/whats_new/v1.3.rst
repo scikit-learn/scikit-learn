@@ -355,7 +355,7 @@ Changelog
 
 - |MajorFeature| :class:`model_selection.CutOffClassifier` calibrates decision threshold
   function of a binary classifier by maximizing a classification metric through
-  cross-validatin.
+  cross-validation.
   :pr:`26120` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.naive_bayes`

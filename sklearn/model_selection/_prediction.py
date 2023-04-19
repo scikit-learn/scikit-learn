@@ -14,6 +14,7 @@ from ..utils.metaestimators import available_if
 from ..utils.multiclass import type_of_target
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
+    _check_fit_params,
     _check_sample_weight,
     _num_samples,
     check_is_fitted,
@@ -37,7 +38,15 @@ def _estimator_has(attr):
 
 
 def _fit_and_score(
-    classifier, X, y, sample_weight, train_idx, val_idx, scorer, score_method
+    classifier,
+    X,
+    y,
+    sample_weight,
+    fit_params,
+    train_idx,
+    val_idx,
+    scorer,
+    score_method,
 ):
     """Fit a classifier and compute the scores for different decision thresholds.
 
@@ -55,6 +64,9 @@ def _fit_and_score(
 
     sample_weight : array-like of shape (n_samples,)
         Some optional associated sample weights.
+
+    fit_params : dict
+        Parameters to pass to the `fit` method of the underlying classifier.
 
     train_idx : ndarray of shape (n_train_samples,) or None
         The indices of the training set. If `None`, `classifier` is expected to be
@@ -94,10 +106,11 @@ def _fit_and_score(
             )
         else:
             sw_train, sw_val = None, None
+        fit_params_train = _check_fit_params(X_train, fit_params, train_idx)
         if supports_sw:
-            classifier.fit(X_train, y_train, sample_weight=sw_train)
+            classifier.fit(X_train, y_train, sample_weight=sw_train, **fit_params_train)
         else:
-            classifier.fit(X_train, y_train)
+            classifier.fit(X_train, y_train, **fit_params_train)
     else:  # prefit estimator, only a validation set is provided
         X_val, y_val, sw_val = X, y, sample_weight
         check_is_fitted(classifier, "classes_")
@@ -357,6 +370,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             if refit:
                 # train on the whole dataset
                 X_train, y_train, sw_train = X, y, sample_weight
+                fit_params_train = _check_fit_params(X, fit_params, indices=None)
             else:
                 # single split cross-validation
                 train_idx, _ = next(cv.split(X, y))
@@ -366,10 +380,14 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                     sw_train = _safe_indexing(sample_weight, train_idx)
                 else:
                     sw_train = None
+                fit_params_train = _check_fit_params(X, fit_params, indices=train_idx)
+
             if sw_train is not None and supports_sw:
-                self.estimator_.fit(X_train, y_train, sample_weight=sw_train)
+                self.estimator_.fit(
+                    X_train, y_train, sample_weight=sw_train, **fit_params_train
+                )
             else:
-                self.estimator_.fit(X_train, y_train)
+                self.estimator_.fit(X_train, y_train, **fit_params_train)
 
         if self.objective_metric in {"tpr", "tnr"}:
             if (
@@ -398,6 +416,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                     X,
                     y,
                     sample_weight,
+                    fit_params,
                     train_idx,
                     val_idx,
                     self._scorer,
