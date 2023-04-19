@@ -196,7 +196,11 @@ def test_grid_from_X():
     X[n_unique_values - 1 :, 0] = 12345
     col_1_range = [0, 2, 3]
     grid, axes = _grid_from_X(
-        X, percentiles, grid_resolution=grid_resolution, custom_values={1: col_1_range}
+        X,
+        percentiles,
+        is_categorical=is_categorical,
+        grid_resolution=grid_resolution,
+        custom_values={1: col_1_range},
     )
     assert grid.shape == (n_unique_values * len(col_1_range), X.shape[1])
     # axes is a list of arrays of different shapes
@@ -209,7 +213,11 @@ def test_grid_from_X():
     col_0_range = [0, 2, 3, 4, 5, 6]
     grid_resolution = 5
     grid, axes = _grid_from_X(
-        X, percentiles, grid_resolution=grid_resolution, custom_values={0: col_0_range}
+        X,
+        percentiles,
+        is_categorical=is_categorical,
+        grid_resolution=grid_resolution,
+        custom_values={0: col_0_range},
     )
     assert grid.shape == (grid_resolution * len(col_0_range), X.shape[1])
     # axes is a list of arrays of different shapes
@@ -222,6 +230,7 @@ def test_grid_from_X():
     grid, axes = _grid_from_X(
         X,
         percentiles,
+        is_categorical=is_categorical,
         grid_resolution=grid_resolution,
         custom_values={1: ["a", "b", "c"]},
     )
