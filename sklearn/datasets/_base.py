@@ -102,7 +102,7 @@ def _convert_data_dataframe(
 
 @validate_params(
     {
-        "container_path": [str, Path],
+        "container_path": [str, os.PathLike],
         "description": [str, None],
         "categories": [list, None],
         "load_content": ["boolean"],
