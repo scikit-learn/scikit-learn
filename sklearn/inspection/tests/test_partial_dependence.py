@@ -627,7 +627,8 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
         (
             LinearRegression(),
             {"features": [0, 1], "custom_values": {0: [1, 2, 3], 1: np.ones((3, 3))}},
-            "Grid for feature 1 is not a one-dimensional array. Got 2 dimensions",
+            "The custom grid for some features is not a one-dimensional array. "
+            "Feature 1: 2 dimensions",
         ),
     ],
 )
