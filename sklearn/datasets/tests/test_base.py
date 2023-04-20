@@ -98,7 +98,7 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2, load_files
 def test_load_files_w_categories_desc_and_encoding(
     test_category_dir_1, test_category_dir_2, load_files_root
 ):
-    category = os.path.abspath(test_category_dir_1).split("/").pop()
+    category = os.path.abspath(test_category_dir_1).split(os.sep).pop()
     categories = []
     categories.append(category)
     res = load_files(
