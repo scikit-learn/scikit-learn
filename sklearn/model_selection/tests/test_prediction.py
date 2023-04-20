@@ -169,7 +169,7 @@ def test_fit_and_score_sample_weight(scorer, score_method):
     # create a dataset and repeat twice the sample of class #0
     X_repeated, y_repeated = np.vstack([X, X[y == 0]]), np.hstack([y, y[y == 0]])
     # create a sample weight vector that is equivalent to the repeated dataset
-    sample_weight = np.ones_like(y_repeated)
+    sample_weight = np.ones_like(y)
     sample_weight[:50] *= 2
 
     classifier = LogisticRegression()
@@ -279,7 +279,7 @@ def test_cutoffclassifier_no_binary():
         ),
     ],
 )
-def test_cutoffclassifier_conflit_cv_refit(params, err_type, err_msg):
+def test_cutoffclassifier_conflict_cv_refit(params, err_type, err_msg):
     """Check that we raise an informative error message when `cv` and `refit`
     cannot be used together.
     """
@@ -566,5 +566,27 @@ def test_cutoffclassifier_objective_metric_dict(global_random_seed):
     assert np.mean(model.predict(X) == 0) > 0.9
 
 
-# TODO: add a test to check that we pass sample_weight when computing the confusion
-# matrix
+def test_cutoffclassifier_sample_weight_cost_matrix():
+    """Check that we dispatch the `sample_weight` to the scorer when computing the
+    confusion matrix."""
+    X, y = load_iris(return_X_y=True)
+    X, y = X[:100], y[:100]  # only 2 classes
+
+    # create a dataset and repeat twice the sample of class #0
+    X_repeated, y_repeated = np.vstack([X, X[y == 0]]), np.hstack([y, y[y == 0]])
+    # create a sample weight vector that is equivalent to the repeated dataset
+    sample_weight = np.ones_like(y)
+    sample_weight[:50] *= 2
+
+    # we use a prefit classifier to simplify the test
+    cv = "prefit"
+    estimator = LogisticRegression().fit(X, y)
+    cost_matrix = {"tp": 1, "tn": 1, "fp": 1, "fn": 1}
+
+    model_repeat = CutOffClassifier(estimator, cv=cv, objective_metric=cost_matrix)
+    model_repeat.fit(X_repeated, y_repeated, sample_weight=None)
+
+    model_sw = CutOffClassifier(estimator, cv=cv, objective_metric=cost_matrix)
+    model_sw.fit(X, y, sample_weight=sample_weight)
+
+    assert model_repeat.objective_score_ == pytest.approx(model_sw.objective_score_)

@@ -25,6 +25,7 @@ from ..utils.validation import (
     _check_sample_weight,
     _check_pos_label_consistency,
     _num_samples,
+    check_consistent_length,
     check_is_fitted,
     indexable,
 )
@@ -101,6 +102,9 @@ def _fit_and_score(
     scores : ndarray of shape (n_thresholds,)
         The scores computed for each decision threshold.
     """
+    arrays = (X, y) if sample_weight is None else (X, y, sample_weight)
+    check_consistent_length(*arrays)
+
     fit_parameters = signature(classifier.fit).parameters
     supports_sw = "sample_weight" in fit_parameters
 
