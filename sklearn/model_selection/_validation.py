@@ -32,6 +32,7 @@ from ..utils.parallel import delayed, Parallel
 from ..utils.metaestimators import _safe_split
 from ..utils._param_validation import (
     HasMethods,
+    Interval,
     Integral,
     StrOptions,
     validate_params,
@@ -1238,11 +1239,11 @@ def _check_is_permutation(indices, n_samples):
 @validate_params(
     {
         "estimator": [HasMethods("fit")],
-        "X": ["array-like"],
+        "X": ["array-like", "sparse matrix"],
         "y": ["array-like", None],
         "groups": ["array-like", None],
         "cv": ["cv_object"],
-        "n_permutations": [Integral],
+        "n_permutations": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],
         "random_state": ["random_state"],
         "verbose": ["verbose"],
