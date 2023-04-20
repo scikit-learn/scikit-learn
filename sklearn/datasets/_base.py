@@ -22,8 +22,7 @@ from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
 from ..utils.fixes import _open_binary, _open_text, _read_text, _contents
-from ..utils._param_validation import validate_params, Interval, StrOptions
-
+from ..utils._param_validation import validate_params, Interval
 
 import numpy as np
 
@@ -100,19 +99,6 @@ def _convert_data_dataframe(
     return combined_df, X, y
 
 
-@validate_params(
-    {
-        "container_path": [str, Path],
-        "description": [str, None],
-        "categories": [list, None],
-        "load_content": ["boolean"],
-        "shuffle": ["boolean"],
-        "encoding": [str, None],
-        "decode_error": [StrOptions({"strict", "ignore", "replace"})],
-        "random_state": ["random_state"],
-        "allowed_extensions": [list, None],
-    }
-)
 def load_files(
     container_path,
     *,
@@ -1266,6 +1252,11 @@ def load_sample_images():
     return Bunch(images=images, filenames=filenames, DESCR=descr)
 
 
+@validate_params(
+    {
+        "image_name": [str],
+    }
+)
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image.
 
