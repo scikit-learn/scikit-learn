@@ -4,7 +4,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 import pytest
 
-from sklearn._config import config_context
+from sklearn._config import config_context, get_config
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import LeaveOneOut
 from sklearn.utils import deprecated
@@ -717,19 +717,27 @@ def test_skip_nested_validation(prefer_skip_nested_validation):
             g(b=1)
 
 
-def test_skip_nested_validation_and_config_context():
-    """Check that nested validation respects the config_context."""
+@pytest.mark.parametrize(
+    "skip_parameter_validation, prefer_skip_nested_validation, expected_skipped",
+    [
+        (True, True, True),
+        (True, False, True),
+        (False, True, True),
+        (False, False, False),
+    ],
+)
+def test_skip_nested_validation_and_config_context(
+    skip_parameter_validation, prefer_skip_nested_validation, expected_skipped
+):
+    """Check interaction between global skip and local skip."""
 
-    @validate_params({"a": [int]})
-    def f(a):
-        pass
+    @validate_params(
+        {"a": [int]}, prefer_skip_nested_validation=prefer_skip_nested_validation
+    )
+    def g(a):
+        return get_config()["skip_parameter_validation"]
 
-    @validate_params({"b": [int]}, prefer_skip_nested_validation=False)
-    def g(b):
-        # calls f with a bad parameter type
-        return f(a="1")
+    with config_context(skip_parameter_validation=skip_parameter_validation):
+        actual_skipped = g(1)
 
-    # validation is skipped when either prefer_skip_nested_validation or
-    # skip_parameter_validation is True.
-    with config_context(skip_parameter_validation=True):
-        g(b="1")
+    assert actual_skipped == expected_skipped

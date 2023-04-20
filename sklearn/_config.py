@@ -137,7 +137,7 @@ def set_config(
         .. versionadded:: 1.2
 
     skip_parameter_validation : bool, default=None
-        If `True`, disable the validation of the hyper-parameters types and values in
+        If `True`, disable the validation of the hyper-parameters' types and values in
         the fit method of estimators and for arguments passed to public helper
         functions. It can save time in some situations but can lead to low level
         crashes and exceptions with confusing error messages.
@@ -266,7 +266,7 @@ def config_context(
         .. versionadded:: 1.2
 
     skip_parameter_validation : bool, default=None
-        If `True`, disable the validation of the hyper-parameters types and values in
+        If `True`, disable the validation of the hyper-parameters' types and values in
         the fit method of estimators and for arguments passed to public helper
         functions. It can save time in some situations but can lead to low level
         crashes and exceptions with confusing error messages.
