@@ -1874,10 +1874,12 @@ class NMF(_BaseNMF):
 
     def _more_tags(self):
         return {
-            "allow_nan": (
-                self.solver == "mu"
-                and self.init not in [None, "nndsvd", "nndsvda", "nndsvdar"]
-            )
+            "allow_nan": self.solver == "mu" and self.init not in [
+                None,
+                "nndsvd",
+                "nndsvda",
+                "nndsvdar",
+            ]
         }
 
 
