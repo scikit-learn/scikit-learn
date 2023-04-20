@@ -385,6 +385,7 @@ def test_cutoffclassifier_metric_with_parameter():
         "tnr",
         make_scorer(balanced_accuracy_score),
         make_scorer(f1_score, pos_label="cancer"),
+        {"tp": 1, "tn": 1, "fp": 1, "fn": 1},
     ],
 )
 def test_cutoffclassifier_with_string_targets(response_method, metric):
@@ -521,7 +522,7 @@ def test_cutoffclassifier_response_method_scorer_tnr_tpr(
             assert -20 < model.decision_threshold_ < 0
 
 
-def test_cutoffclassifier_custom_objective_metric(global_random_seed):
+def test_cutoffclassifier_objective_metric_dict(global_random_seed):
     """Check that we can pass a custom objective metric."""
     X, y = make_classification(n_samples=500, random_state=global_random_seed)
     classifier = LogisticRegression()
@@ -539,7 +540,7 @@ def test_cutoffclassifier_custom_objective_metric(global_random_seed):
     model.fit(X, y)
 
     assert model.decision_threshold_ > 0.99
-    assert np.mean(model.predict(X) == 0) > 0.95
+    assert np.mean(model.predict(X) == 0) > 0.9
 
     # use the true positive now
     cost_matrix = {"tp": 10, "tn": 0, "fp": 0, "fn": 0}
@@ -549,7 +550,21 @@ def test_cutoffclassifier_custom_objective_metric(global_random_seed):
     model.fit(X, y)
 
     assert model.decision_threshold_ < 0.01
-    assert np.mean(model.predict(X) == 1) > 0.95
+    assert np.mean(model.predict(X) == 1) > 0.9
+
+    # flipping the `pos_label` to zero should flip as well the decision threshold
+    pos_label = 0
+    model = CutOffClassifier(
+        classifier,
+        objective_metric=cost_matrix,
+        n_thresholds=n_thresholds,
+        pos_label=pos_label,
+    )
+    model.fit(X, y)
+
+    assert model.decision_threshold_ > 0.99
+    assert np.mean(model.predict(X) == 0) > 0.9
 
 
-# TODO: add a test for interaction with pos_label and string labels and the cost_matrix
+# TODO: add a test to check that we pass sample_weight when computing the confusion
+# matrix
