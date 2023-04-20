@@ -14,8 +14,8 @@ ctypedef fused G_DTYPE_C:
 
 # Struct to return 2 doubles
 ctypedef struct double_pair:
-   double val1
-   double val2
+    double val1
+    double val2
 
 
 # C base class for loss functions
@@ -39,6 +39,13 @@ cdef class CyAbsoluteError(CyLossFunction):
 
 cdef class CyPinballLoss(CyLossFunction):
     cdef readonly double quantile  # readonly makes it accessible from Python
+    cdef double cy_loss(self, double y_true, double raw_prediction) noexcept nogil
+    cdef double cy_gradient(self, double y_true, double raw_prediction) noexcept nogil
+    cdef double_pair cy_grad_hess(self, double y_true, double raw_prediction) noexcept nogil
+
+
+cdef class CyHuberLoss(CyLossFunction):
+    cdef public double delta  # public makes it accessible from Python
     cdef double cy_loss(self, double y_true, double raw_prediction) noexcept nogil
     cdef double cy_gradient(self, double y_true, double raw_prediction) noexcept nogil
     cdef double_pair cy_grad_hess(self, double y_true, double raw_prediction) noexcept nogil
@@ -71,6 +78,12 @@ cdef class CyHalfTweedieLossIdentity(CyLossFunction):
 
 
 cdef class CyHalfBinomialLoss(CyLossFunction):
+    cdef double cy_loss(self, double y_true, double raw_prediction) noexcept nogil
+    cdef double cy_gradient(self, double y_true, double raw_prediction) noexcept nogil
+    cdef double_pair cy_grad_hess(self, double y_true, double raw_prediction) noexcept nogil
+
+
+cdef class CyExponentialLoss(CyLossFunction):
     cdef double cy_loss(self, double y_true, double raw_prediction) noexcept nogil
     cdef double cy_gradient(self, double y_true, double raw_prediction) noexcept nogil
     cdef double_pair cy_grad_hess(self, double y_true, double raw_prediction) noexcept nogil

@@ -22,13 +22,13 @@ setup_ccache() {
     ccache -M 0
 }
 
-MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh"
+MAMBAFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh"
 
 # Install Mambaforge
-wget $MINICONDA_URL -O mambaforge.sh
-MINICONDA_PATH=$HOME/miniconda
-chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MINICONDA_PATH
-export PATH=$MINICONDA_PATH/bin:$PATH
+wget $MAMBAFORGE_URL -O mambaforge.sh
+MAMBAFORGE_PATH=$HOME/mambaforge
+bash ./mambaforge.sh -b -p $MAMBAFORGE_PATH
+export PATH=$MAMBAFORGE_PATH/bin:$PATH
 mamba init --all --verbose
 mamba update --yes mamba
 mamba update --yes conda
