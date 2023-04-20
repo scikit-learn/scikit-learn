@@ -1254,7 +1254,7 @@ def load_sample_images():
 
 @validate_params(
     {
-        "image_name": [str],
+        "image_name": [StrOptions({"china.jpg", "flower.jpg"})],
     }
 )
 def load_sample_image(image_name):
