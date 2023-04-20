@@ -12,7 +12,7 @@ from .common cimport X_BINNED_DTYPE_C
 # https://en.wikipedia.org/wiki/Bitwise_operation
 
 
-cdef inline void init_bitset(BITSET_DTYPE_C bitset) noexcept nogil: # OUT
+cdef inline void init_bitset(BITSET_DTYPE_C bitset) noexcept nogil:  # OUT
     cdef:
         unsigned int i
 
