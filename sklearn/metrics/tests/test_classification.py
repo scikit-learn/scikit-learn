@@ -321,6 +321,26 @@ def test_classification_report_zero_division_warning(zero_division):
             assert not record
 
 
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
+def test_classification_report_pred_zero_division_warning(zero_division):
+    y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
+    with warnings.catch_warnings(record=True) as record:
+        classification_report(
+            y_true,
+            y_pred,
+            zero_division=zero_division,
+            output_dict=True,
+            output_pred=True,
+        )
+        if zero_division == "warn":
+            assert len(record) > 1
+            for item in record:
+                msg = "Use `zero_division` parameter to control this behavior."
+                assert msg in str(item.message)
+        else:
+            assert not record
+
+
 def test_multilabel_accuracy_score_subset_accuracy():
     # Dense label indicator matrix format
     y1 = np.array([[0, 1, 1], [1, 0, 1]])
@@ -1473,6 +1493,33 @@ weighted avg       0.45      0.51      0.46       104
 """
 
     report = classification_report(y_true, y_pred)
+    assert report == expected_report
+
+
+def test_classification_report_output_pred():
+    # Test performance report
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
+
+    # print classification report with class names
+    expected_report = """\
+              precision    recall  f1-score   support predicted
+
+      setosa       0.83      0.79      0.81        24        23
+  versicolor       0.33      0.10      0.15        31         9
+   virginica       0.42      0.90      0.57        20        43
+
+    accuracy                           0.53        75        75
+   macro avg       0.53      0.60      0.51        75        75
+weighted avg       0.51      0.53      0.47        75        75
+"""
+    report = classification_report(
+        y_true,
+        y_pred,
+        labels=np.arange(len(iris.target_names)),
+        target_names=iris.target_names,
+        output_pred=True,
+    )
     assert report == expected_report
 
 
