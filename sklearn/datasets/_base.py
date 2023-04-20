@@ -1252,6 +1252,11 @@ def load_sample_images():
     return Bunch(images=images, filenames=filenames, DESCR=descr)
 
 
+@validate_params(
+    {
+        "image_name": [str],
+    }
+)
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image.
 

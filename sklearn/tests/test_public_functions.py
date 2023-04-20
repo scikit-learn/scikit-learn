@@ -135,6 +135,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.load_digits",
     "sklearn.datasets.load_iris",
     "sklearn.datasets.load_linnerud",
+    "sklearn.datasets.load_sample_image",
     "sklearn.datasets.load_svmlight_file",
     "sklearn.datasets.load_svmlight_files",
     "sklearn.datasets.load_wine",
