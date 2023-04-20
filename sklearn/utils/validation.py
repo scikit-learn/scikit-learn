@@ -78,9 +78,11 @@ def _deprecate_positional_args(func=None, *, version="1.3"):
             ]
             args_msg = ", ".join(args_msg)
             warnings.warn(
-                f"Pass {args_msg} as keyword args. From version "
-                f"{version} passing these as positional arguments "
-                "will result in an error",
+                (
+                    f"Pass {args_msg} as keyword args. From version "
+                    f"{version} passing these as positional arguments "
+                    "will result in an error"
+                ),
                 FutureWarning,
             )
             kwargs.update(zip(sig.parameters, args))
@@ -628,12 +630,8 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
 
 
 def _is_extension_array_dtype(array):
-    try:
-        from pandas.api.types import is_extension_array_dtype
-
-        return is_extension_array_dtype(array)
-    except ImportError:
-        return False
+    # Pandas extension arrays have a dtype with an na_value
+    return hasattr(array, "dtype") and hasattr(array.dtype, "na_value")
 
 
 def check_array(
@@ -652,7 +650,6 @@ def check_array(
     estimator=None,
     input_name="",
 ):
-
     """Input validation on an array, list, sparse matrix or similar.
 
     By default, the input is checked to be a non-empty 2D array containing
@@ -1209,17 +1206,19 @@ def column_or_1d(y, *, dtype=None, warn=False):
 
     shape = y.shape
     if len(shape) == 1:
-        return _asarray_with_order(xp.reshape(y, -1), order="C", xp=xp)
+        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
-                "A column-vector y was passed when a 1d array was"
-                " expected. Please change the shape of y to "
-                "(n_samples, ), for example using ravel().",
+                (
+                    "A column-vector y was passed when a 1d array was"
+                    " expected. Please change the shape of y to "
+                    "(n_samples, ), for example using ravel()."
+                ),
                 DataConversionWarning,
                 stacklevel=2,
             )
-        return _asarray_with_order(xp.reshape(y, -1), order="C", xp=xp)
+        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
 
     raise ValueError(
         "y should be a 1d array, got an array of shape {} instead.".format(shape)
@@ -1328,8 +1327,10 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
             raise ValueError("Array must be symmetric")
         if raise_warning:
             warnings.warn(
-                "Array is not symmetric, and will be converted "
-                "to symmetric by average with its transpose.",
+                (
+                    "Array is not symmetric, and will be converted "
+                    "to symmetric by average with its transpose."
+                ),
                 stacklevel=2,
             )
         if sp.issparse(array):
@@ -2150,3 +2151,55 @@ def _check_monotonic_cst(estimator, monotonic_cst=None):
                 f"X has {estimator.n_features_in_} features."
             )
     return monotonic_cst
+
+
+def _check_pos_label_consistency(pos_label, y_true):
+    """Check if `pos_label` need to be specified or not.
+
+    In binary classification, we fix `pos_label=1` if the labels are in the set
+    {-1, 1} or {0, 1}. Otherwise, we raise an error asking to specify the
+    `pos_label` parameters.
+
+    Parameters
+    ----------
+    pos_label : int, str or None
+        The positive label.
+    y_true : ndarray of shape (n_samples,)
+        The target vector.
+
+    Returns
+    -------
+    pos_label : int
+        If `pos_label` can be inferred, it will be returned.
+
+    Raises
+    ------
+    ValueError
+        In the case that `y_true` does not have label in {-1, 1} or {0, 1},
+        it will raise a `ValueError`.
+    """
+    # ensure binary classification if pos_label is not specified
+    # classes.dtype.kind in ('O', 'U', 'S') is required to avoid
+    # triggering a FutureWarning by calling np.array_equal(a, b)
+    # when elements in the two arrays are not comparable.
+    classes = np.unique(y_true)
+    if pos_label is None and (
+        classes.dtype.kind in "OUS"
+        or not (
+            np.array_equal(classes, [0, 1])
+            or np.array_equal(classes, [-1, 1])
+            or np.array_equal(classes, [0])
+            or np.array_equal(classes, [-1])
+            or np.array_equal(classes, [1])
+        )
+    ):
+        classes_repr = ", ".join(repr(c) for c in classes)
+        raise ValueError(
+            f"y_true takes value in {{{classes_repr}}} and pos_label is not "
+            "specified: either make y_true take value in {0, 1} or "
+            "{-1, 1} or pass pos_label explicitly."
+        )
+    elif pos_label is None:
+        pos_label = 1
+
+    return pos_label
