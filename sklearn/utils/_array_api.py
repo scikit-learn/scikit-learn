@@ -326,7 +326,7 @@ def get_namespace(*arrays):
         the namespace defaults to NumPy.
 
     is_array_api_compliant : bool
-        True of the arrays are containers that implement the Array API spec.
+        True if the arrays are containers that implement the Array API spec.
         Always False when array_api_dispatch=False.
     """
     array_api_dispatch = get_config()["array_api_dispatch"]
@@ -400,7 +400,7 @@ def _convert_to_numpy(array, xp):
 def _estimator_with_converted_arrays(estimator, converter):
     """Create new estimator which converting all attributes that are arrays.
 
-    The converted is called on all NumPy arrays and arrays that support the
+    The converter is called on all NumPy arrays and arrays that support the
     `DLPack interface <https://dmlc.github.io/dlpack/latest/>`__.
 
     Parameters
