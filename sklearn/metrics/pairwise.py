@@ -963,8 +963,10 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     # TODO(1.4): remove sum_over_features
     if sum_over_features != "deprecated":
         warnings.warn(
-            "`sum_over_features` is deprecated in version 1.2 and will be"
-            " removed in version 1.4.",
+            (
+                "`sum_over_features` is deprecated in version 1.2 and will be"
+                " removed in version 1.4."
+            ),
             FutureWarning,
         )
     else:
@@ -1553,7 +1555,7 @@ def additive_chi2_kernel(X, Y=None):
       International Journal of Computer Vision 2007
       https://hal.archives-ouvertes.fr/hal-00171412/document
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y, accept_sparse=False)
     if (X < 0).any():
         raise ValueError("X contains negative values.")
     if Y is not X and (Y < 0).any():

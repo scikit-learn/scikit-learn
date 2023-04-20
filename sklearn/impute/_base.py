@@ -299,7 +299,6 @@ class SimpleImputer(_BaseImputer):
         self.copy = copy
 
     def _validate_input(self, X, in_fit):
-
         if self.strategy in ("most_frequent", "constant"):
             # If input is a list of strings, dtype = object.
             # Otherwise ValueError is raised in SimpleImputer
@@ -380,10 +379,12 @@ class SimpleImputer(_BaseImputer):
         self._validate_params()
         if self.verbose != "deprecated":
             warnings.warn(
-                "The 'verbose' parameter was deprecated in version "
-                "1.1 and will be removed in 1.3. A warning will "
-                "always be raised upon the removal of empty columns "
-                "in the future version.",
+                (
+                    "The 'verbose' parameter was deprecated in version "
+                    "1.1 and will be removed in 1.3. A warning will "
+                    "always be raised upon the removal of empty columns "
+                    "in the future version."
+                ),
                 FutureWarning,
             )
 
@@ -684,8 +685,8 @@ class SimpleImputer(_BaseImputer):
 
     def _more_tags(self):
         return {
-            "allow_nan": (
-                _is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values)
+            "allow_nan": _is_pandas_na(self.missing_values) or is_scalar_nan(
+                self.missing_values
             )
         }
 

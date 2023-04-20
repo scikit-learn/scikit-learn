@@ -618,7 +618,6 @@ def csc_median_axis_0(X):
     median = np.zeros(n_features)
 
     for f_ind, (start, end) in enumerate(zip(indptr[:-1], indptr[1:])):
-
         # Prevent modifying X in place
         data = np.copy(X.data[start:end])
         nz = n_samples - data.size
