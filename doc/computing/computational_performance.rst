@@ -195,7 +195,7 @@ support vectors.
 .. centered:: |nusvr_model_complexity|
 
 For :mod:`sklearn.ensemble` of trees (e.g. RandomForest, GBT,
-ExtraTrees etc) the number of trees and their depth play the most
+ExtraTrees, etc.) the number of trees and their depth play the most
 important role. Latency and throughput should scale linearly with the number
 of trees. In this case we used directly the ``n_estimators`` parameter of
 :class:`~ensemble.GradientBoostingRegressor`.
