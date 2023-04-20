@@ -35,20 +35,24 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
         int feature_idx
 
     for feature_idx in range(data.shape[1]):
-        _map_col_to_bins(data[:, feature_idx],
-                             binning_thresholds[feature_idx],
-                             is_categorical[feature_idx],
-                             missing_values_bin_idx,
-                             n_threads,
-                             binned[:, feature_idx])
+        _map_col_to_bins(
+            data[:, feature_idx],
+            binning_thresholds[feature_idx],
+            is_categorical[feature_idx],
+            missing_values_bin_idx,
+            n_threads,
+            binned[:, feature_idx]
+        )
 
 
-cdef void _map_col_to_bins(const X_DTYPE_C [:] data,
-                               const X_DTYPE_C [:] binning_thresholds,
-                               const unsigned char is_categorical,
-                               const unsigned char missing_values_bin_idx,
-                               int n_threads,
-                               X_BINNED_DTYPE_C [:] binned):
+cdef void _map_col_to_bins(
+    const X_DTYPE_C [:] data,
+    const X_DTYPE_C [:] binning_thresholds,
+    const unsigned char is_categorical,
+    const unsigned char missing_values_bin_idx,
+    int n_threads,
+    X_BINNED_DTYPE_C [:] binned
+):
     """Binary search to find the bin index for each value in the data."""
     cdef:
         int i
