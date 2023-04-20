@@ -24,6 +24,7 @@ from sklearn._loss.loss import (
     HalfSquaredError,
     HalfTweedieLoss,
     HalfTweedieLossIdentity,
+    HuberLoss,
     PinballLoss,
 )
 from sklearn.utils import assert_all_finite
@@ -36,6 +37,7 @@ LOSS_INSTANCES = [loss() for loss in ALL_LOSSES]
 # HalfTweedieLoss(power=1.5) is already there as default
 LOSS_INSTANCES += [
     PinballLoss(quantile=0.25),
+    HuberLoss(quantile=0.75),
     HalfTweedieLoss(power=-1.5),
     HalfTweedieLoss(power=0),
     HalfTweedieLoss(power=1),
@@ -52,9 +54,11 @@ def loss_instance_name(param):
     if isinstance(param, BaseLoss):
         loss = param
         name = loss.__class__.__name__
-        if hasattr(loss, "quantile"):
+        if isinstance(loss, PinballLoss):
             name += f"(quantile={loss.closs.quantile})"
-        elif hasattr(loss, "power"):
+        elif isinstance(loss, HuberLoss):
+            name += f"(quantile={loss.quantile}"
+        elif hasattr(loss, "closs") and hasattr(loss.closs, "power"):
             name += f"(power={loss.closs.power})"
         return name
     else:
@@ -153,6 +157,7 @@ Y_COMMON_PARAMS = [
     (HalfSquaredError(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
     (AbsoluteError(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
     (PinballLoss(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
+    (HuberLoss(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
     (HalfPoissonLoss(), [0.1, 100], [-np.inf, -3, -0.1, np.inf]),
     (HalfGammaLoss(), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
     (HalfTweedieLoss(power=-3), [0.1, 100], [-np.inf, np.inf]),
@@ -173,6 +178,7 @@ Y_COMMON_PARAMS = [
 Y_TRUE_PARAMS = [  # type: ignore
     # (loss, [y success], [y fail])
     (HalfPoissonLoss(), [0], []),
+    (HuberLoss(), [0], []),
     (HalfTweedieLoss(power=-3), [-100, -0.1, 0], []),
     (HalfTweedieLoss(power=0), [-100, 0], []),
     (HalfTweedieLoss(power=1.5), [0], []),
@@ -226,6 +232,8 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
         (PinballLoss(quantile=0.5), 1.0, 5.0, 2),
         (PinballLoss(quantile=0.25), 1.0, 5.0, 4 * (1 - 0.25)),
         (PinballLoss(quantile=0.25), 5.0, 1.0, 4 * 0.25),
+        (HuberLoss(quantile=0.5, delta=3), 1.0, 5.0, 3 * (4 - 3 / 2)),
+        (HuberLoss(quantile=0.5, delta=3), 1.0, 3.0, 0.5 * 2**2),
         (HalfPoissonLoss(), 2.0, np.log(4), 4 - 2 * np.log(4)),
         (HalfGammaLoss(), 2.0, np.log(4), np.log(4) + 2 / 4),
         (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4**2),
@@ -1090,6 +1098,19 @@ def test_init_gradient_and_hessian_raises(loss, params, err_msg):
             "quantile == 0, must be > 0.",
         ),
         (PinballLoss, {"quantile": 1.1}, ValueError, "quantile == 1.1, must be < 1."),
+        (
+            HuberLoss,
+            {"quantile": None},
+            TypeError,
+            "quantile must be an instance of float, not NoneType.",
+        ),
+        (
+            HuberLoss,
+            {"quantile": 0},
+            ValueError,
+            "quantile == 0, must be > 0.",
+        ),
+        (HuberLoss, {"quantile": 1.1}, ValueError, "quantile == 1.1, must be < 1."),
     ],
 )
 def test_loss_init_parameter_validation(loss, params, err_type, err_msg):
