@@ -127,13 +127,14 @@ def _fit_and_score(
         X_val, y_val, sw_val = X, y, sample_weight
         check_is_fitted(classifier, "classes_")
 
-    if isinstance(score_method, str) and score_method in {"tnr", "tpr"}:
+    if isinstance(score_method, str) and score_method in {
+        "max_tpr_at_tnr_constraint",
+        "max_tnr_at_tpr_constraint",
+    }:
         fpr, tpr, potential_thresholds = scorer(
             classifier, X_val, y_val, sample_weight=sw_val
         )
-        if score_method == "tnr":
-            return potential_thresholds[::-1], (1 - fpr)[::-1]
-        return potential_thresholds[::-1], tpr[::-1]
+        return potential_thresholds[::-1], (tpr[::-1], (1 - fpr)[::-1])
     return scorer(classifier, X_val, y_val, sample_weight=sw_val)
 
 
@@ -146,29 +147,30 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         The classifier, fitted or not fitted, for which we want to optimize
         the decision threshold used during `predict`.
 
-    objective_metric : {"tpr", "tnr"}, str, dict or callable, \
-            default="balanced_accuracy"
+    objective_metric : {"max_tpr_at_tnr_constraint", "max_tnr_at_tpr_constraint"}, \
+            str, dict or callable, default="balanced_accuracy"
         The objective metric to be optimized. Can be one of:
 
         * a string associated to a scoring function (see model evaluation
           documentation);
         * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`;
-        * `"tpr"`: find the decision threshold for a true positive ratio (TPR)
-          of `objective_value`;
-        * `"tnr"`: find the decision threshold for a true negative ratio (TNR)
-          of `objective_value`.
-        * a dictionary representing a cost-matrix. The keys of the dictionary
-          should be: `("tp", "fp", "tn", "fn")`. The values of the dictionary
-          corresponds to the cost/gain.
+        * `"max_tnr_at_tpr_constraint"`: find the decision threshold for a true
+          positive ratio (TPR) of `constraint_value`;
+        * `"max_tpr_at_tnr_constraint"`: find the decision threshold for a true
+          negative ratio (TNR) of `constraint_value`.
+        * a dictionary to be used as cost-sensitive matrix. The keys of the
+          dictionary should be: `("tp", "fp", "tn", "fn")`. The values of the
+          dictionary corresponds costs (negative values) and gains (positive
+          values).
 
-    objective_value : float, default=None
+    constraint_value : float, default=None
         The value associated with the `objective_metric` metric for which we
         want to find the decision threshold when `objective_metric` is equal to
-        `"tpr"` or `"tnr"`.
+        `"max_tnr_at_tpr_constraint"` or `"max_tpr_at_tnr_constraint"`.
 
     pos_label : int, float, bool or str, default=None
-        The label of the positive class. Used when `objective_metric` is `"tpr"`,
-        `"tnr"`, or a dictionary representing a cost-matrix.
+        The label of the positive class. Used when `objective_metric` is
+        `"max_tnr_at_tpr_constraint"`"`, `"max_tpr_at_tnr_constraint"`, or a dictionary.
         When `pos_label=None`, if `y_true` is in `{-1, 1}` or `{0, 1}`,
         `pos_label` is set to 1, otherwise an error will be raised. When using a
         scorer, `pos_label` can be passed as a keyword argument to
@@ -251,11 +253,14 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             HasMethods(["fit", "decision_function"]),
         ],
         "objective_metric": [
-            StrOptions(set(get_scorer_names()) | {"tpr", "tnr"}),
+            StrOptions(
+                set(get_scorer_names())
+                | {"max_tnr_at_tpr_constraint", "max_tpr_at_tnr_constraint"}
+            ),
             callable,
             MutableMapping,
         ],
-        "objective_value": [Real, None],
+        "constraint_value": [Real, None],
         "pos_label": [Real, str, "boolean", None],
         "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
         "n_thresholds": [Interval(Integral, 1, None, closed="left")],
@@ -274,7 +279,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         estimator,
         *,
         objective_metric="balanced_accuracy",
-        objective_value=None,
+        constraint_value=None,
         pos_label=None,
         response_method="auto",
         n_thresholds=1_000,
@@ -285,7 +290,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     ):
         self.estimator = estimator
         self.objective_metric = objective_metric
-        self.objective_value = objective_value
+        self.constraint_value = constraint_value
         self.pos_label = pos_label
         self.response_method = response_method
         self.n_thresholds = n_thresholds
@@ -359,17 +364,18 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             self._response_method = self.response_method
 
         if isinstance(self.objective_metric, str) and self.objective_metric in {
-            "tpr",
-            "tnr",
+            "max_tpr_at_tnr_constraint",
+            "max_tnr_at_tpr_constraint",
         }:
-            if self.objective_value is None:
+            if self.constraint_value is None:
                 raise ValueError(
-                    "When `objective_metric` is 'tpr' or 'tnr', `objective_value` must "
-                    "be provided. Got None instead."
+                    "When `objective_metric` is 'max_tpr_at_tnr_constraint' or "
+                    "'max_tnr_at_tpr_constraint', `constraint_value` must be provided. "
+                    "Got None instead."
                 )
-            objective_value = self.objective_value
+            constraint_value = self.constraint_value
         else:
-            objective_value = "highest"
+            constraint_value = "highest"
 
         fit_parameters = signature(self.estimator.fit).parameters
         supports_sw = "sample_weight" in fit_parameters
@@ -418,14 +424,13 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                 )
             pos_label = _check_pos_label_consistency(self.pos_label, y)
 
-            def cost_score_func(y_true, y_pred, **kwargs):
-                tp_cost, tn_cost, fp_cost, fn_cost = (
-                    kwargs["tp"],
-                    kwargs["tn"],
-                    kwargs["fp"],
-                    kwargs["fn"],
+            def cost_sensitive_score_func(y_true, y_pred, **kwargs):
+                costs_and_gain = np.array(
+                    [
+                        [kwargs["tn"], kwargs["fp"]],
+                        [kwargs["fn"], kwargs["tp"]],
+                    ]
                 )
-                cost_matrix = np.array([[tn_cost, fp_cost], [fn_cost, tp_cost]])
 
                 sample_weight = kwargs.get("sample_weight", None)
                 cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
@@ -436,10 +441,10 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                     # reorder the confusion matrix to be aligned with the cost-matrix
                     cm = cm[::-1, ::-1]
 
-                return (cost_matrix * cm).sum()
+                return (costs_and_gain * cm).sum()
 
             self._scorer = _ContinuousScorer(
-                score_func=cost_score_func,
+                score_func=cost_sensitive_score_func,
                 sign=1,
                 response_method=self._response_method,
                 kwargs={
@@ -447,7 +452,10 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                     "pos_label": pos_label,
                 },
             )
-        elif self.objective_metric in {"tpr", "tnr"}:
+        elif self.objective_metric in {
+            "max_tnr_at_tpr_constraint",
+            "max_tpr_at_tnr_constraint",
+        }:
             if (
                 self._response_method == "predict_proba"
                 or self._response_method[0] == "predict_proba"
@@ -494,28 +502,34 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             min_threshold, max_threshold, num=self.n_thresholds
         )
 
-        mean_score = np.mean(
-            [
-                np.interp(thresholds_interpolated, th, sc)
-                for th, sc in zip(thresholds, scores)
-            ],
-            axis=0,
-        )
-
-        if objective_value == "highest":  # find best score
-            # we don't need to sort the scores and directly take the maximum
-            best_idx = mean_score.argmax()
-        else:  # seeking for a specific objective value
-            # we need to sort the scores before applying `np.searchsorted`
-            mean_score_argsort = np.argsort(mean_score)
-            mean_score, thresholds_interpolated = (
-                mean_score[mean_score_argsort],
-                thresholds_interpolated[mean_score_argsort],
+        def _mean_interpolated_score(thresholds, scores):
+            return np.mean(
+                [
+                    np.interp(thresholds_interpolated, th, sc)
+                    for th, sc in zip(thresholds, scores)
+                ],
+                axis=0,
             )
-            best_idx = np.searchsorted(mean_score, objective_value)
 
-        self.objective_score_ = mean_score[best_idx]
-        self.decision_threshold_ = thresholds_interpolated[best_idx]
+        if constraint_value == "highest":  # find best score
+            # we don't need to sort the scores and directly take the maximum
+            mean_score = _mean_interpolated_score(thresholds, scores)
+            best_idx = mean_score.argmax()
+            self.objective_score_ = mean_score[best_idx]
+            self.decision_threshold_ = thresholds_interpolated[best_idx]
+        else:
+            tpr, tnr = zip(*scores)
+            mean_tpr = _mean_interpolated_score(thresholds, tpr)
+            mean_tnr = _mean_interpolated_score(thresholds, tnr)
+
+            if self.objective_metric == "max_tpr_at_tnr_constraint":
+                mask = mean_tnr >= constraint_value
+                best_idx = mean_tpr[mask].argmax()
+            else:
+                mask = mean_tpr >= constraint_value
+                best_idx = mean_tnr[mask].argmax()
+            self.objective_score_ = (mean_tpr[mask][best_idx], mean_tnr[mask][best_idx])
+            self.decision_threshold_ = thresholds_interpolated[mask][best_idx]
 
         if hasattr(self.estimator_, "n_features_in_"):
             self.n_features_in_ = self.estimator_.n_features_in_
