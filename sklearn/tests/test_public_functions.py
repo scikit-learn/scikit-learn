@@ -248,6 +248,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.cross_validate",
     "sklearn.model_selection.train_test_split",
+    "sklearn.model_selection.validation_curve",
     "sklearn.neighbors.sort_graph_by_row_values",
     "sklearn.preprocessing.add_dummy_feature",
     "sklearn.preprocessing.binarize",
