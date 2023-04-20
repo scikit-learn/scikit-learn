@@ -98,11 +98,9 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2, load_files
 def test_load_files_w_categories_desc_and_encoding(
     test_category_dir_1, test_category_dir_2, load_files_root
 ):
-    category = os.path.abspath(test_category_dir_1).split("/").pop()
-    categories = []
-    categories.append(category)
+    category = os.path.abspath(test_category_dir_1).split(os.sep).pop()
     res = load_files(
-        load_files_root, description="test", categories=categories, encoding="utf-8"
+        load_files_root, description="test", categories=[category], encoding="utf-8"
     )
 
     assert len(res.filenames) == 1
