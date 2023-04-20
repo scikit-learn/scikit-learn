@@ -378,6 +378,9 @@ def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
             array = numpy.array(array, order=order, dtype=dtype)
         else:
             array = numpy.asarray(array, order=order, dtype=dtype)
+
+        # At this point array is a NumPy ndarray. We convert it to an array
+        # container that is consistent with the input's namespace.
         return xp.asarray(array)
     else:
         return xp.asarray(array, dtype=dtype, copy=copy)
