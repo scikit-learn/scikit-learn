@@ -291,6 +291,12 @@ extension_config = {
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
         },
+        {
+            "sources": ["_argkmin_lrd.pyx.tp"],
+            "language": "c++",
+            "include_np": True,
+            "extra_compile_args": ["-std=c++11"],
+        },
     ],
     "preprocessing": [
         {"sources": ["_csr_polynomial_expansion.pyx"], "include_np": True},

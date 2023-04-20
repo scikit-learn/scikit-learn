@@ -8,6 +8,7 @@ import warnings
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ..base import OutlierMixin
+from ..metrics._pairwise_distances_reduction import ArgKminLRD
 from numbers import Real
 
 from ..utils._param_validation import Interval, StrOptions
@@ -287,19 +288,39 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
             )
         self.n_neighbors_ = max(1, min(self.n_neighbors, n_samples - 1))
 
-        self._distances_fit_X_, _neighbors_indices_fit_X_ = self.kneighbors(
-            n_neighbors=self.n_neighbors_
-        )
-
-        if self._fit_X.dtype == np.float32:
-            self._distances_fit_X_ = self._distances_fit_X_.astype(
-                self._fit_X.dtype,
-                copy=False,
+        if self._fit_method == "brute" and ArgKminLRD.is_usable_for(
+            X=self._fit_X,
+            Y=self._fit_X,
+            metric=self.effective_metric_,
+        ):
+            (
+                self._lrd,
+                _neighbors_indices_fit_X_,
+                self._distances_fit_X_,
+            ) = ArgKminLRD.compute(
+                X=self._fit_X,
+                Y=self._fit_X,
+                k=self.n_neighbors_ + 1,
+                metric=self.effective_metric_,
+                metric_kwargs=self.effective_metric_params_,
+                strategy="auto",
+                return_distance=True,
+                train=True,
+            )
+        else:
+            self._distances_fit_X_, _neighbors_indices_fit_X_ = self.kneighbors(
+                n_neighbors=self.n_neighbors_
             )
 
-        self._lrd = self._local_reachability_density(
-            self._distances_fit_X_, _neighbors_indices_fit_X_
-        )
+            if self._fit_X.dtype == np.float32:
+                self._distances_fit_X_ = self._distances_fit_X_.astype(
+                    self._fit_X.dtype,
+                    copy=False,
+                )
+
+            self._lrd = self._local_reachability_density(
+                self._distances_fit_X_, _neighbors_indices_fit_X_
+            )
 
         # Compute lof score over training samples to define offset_:
         lrd_ratios_array = (
