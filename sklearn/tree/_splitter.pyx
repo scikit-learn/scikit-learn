@@ -417,13 +417,13 @@ cdef inline int node_split_best(
 # by the values in feature_values. Algorithm: Introsort (Musser, SP&E, 1997).
 cdef inline void sort(DTYPE_t* feature_values, SIZE_t* samples, SIZE_t n) noexcept nogil:
     if n == 0:
-      return
+        return
     cdef int maxd = 2 * <int>log(n)
     introsort(feature_values, samples, n, maxd)
 
 
 cdef inline void swap(DTYPE_t* feature_values, SIZE_t* samples,
-        SIZE_t i, SIZE_t j) noexcept nogil:
+                      SIZE_t i, SIZE_t j) noexcept nogil:
     # Helper for sort
     feature_values[i], feature_values[j] = feature_values[j], feature_values[i]
     samples[i], samples[j] = samples[j], samples[i]
@@ -831,6 +831,7 @@ cdef class DensePartitioner:
                 partition_end -= 1
                 samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
+
 @final
 cdef class SparsePartitioner:
     """Partitioner specialized for sparse CSC data.
@@ -903,8 +904,11 @@ cdef class SparsePartitioner:
         # Sort the positive and negative parts of `feature_values`
         sort(&feature_values[self.start], &samples[self.start], self.end_negative - self.start)
         if self.start_positive < self.end:
-            sort(&feature_values[self.start_positive], &samples[self.start_positive],
-                    self.end - self.start_positive)
+            sort(
+                &feature_values[self.start_positive],
+                &samples[self.start_positive],
+                self.end - self.start_positive
+            )
 
         # Update index_to_samples to take into account the sort
         for p in range(self.start, self.end_negative):
@@ -1146,7 +1150,6 @@ cdef inline void extract_nnz_index_to_samples(const INT32_t[::1] X_indices,
                 index = index_to_samples[X_indices[k]]
                 sparse_swap(index_to_samples, samples, index, start_positive_)
 
-
             elif X_data[k] < 0:
                 feature_values[end_negative_] = X_data[k]
                 index = index_to_samples[X_indices[k]]
@@ -1209,14 +1212,13 @@ cdef inline void extract_nnz_binary_search(const INT32_t[::1] X_indices,
                       sorted_samples[p], &k, &indptr_start)
 
         if k != -1:
-             # If k != -1, we have found a non zero value
+            # If k != -1, we have found a non zero value
 
             if X_data[k] > 0:
                 start_positive_ -= 1
                 feature_values[start_positive_] = X_data[k]
                 index = index_to_samples[X_indices[k]]
                 sparse_swap(index_to_samples, samples, index, start_positive_)
-
 
             elif X_data[k] < 0:
                 feature_values[end_negative_] = X_data[k]
@@ -1233,7 +1235,7 @@ cdef inline void extract_nnz_binary_search(const INT32_t[::1] X_indices,
 cdef inline void sparse_swap(SIZE_t[::1] index_to_samples, SIZE_t[::1] samples,
                              SIZE_t pos_1, SIZE_t pos_2) noexcept nogil:
     """Swap sample pos_1 and pos_2 preserving sparse invariant."""
-    samples[pos_1], samples[pos_2] =  samples[pos_2], samples[pos_1]
+    samples[pos_1], samples[pos_2] = samples[pos_2], samples[pos_1]
     index_to_samples[samples[pos_1]] = pos_1
     index_to_samples[samples[pos_2]] = pos_2
 
