@@ -394,6 +394,8 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                 self._response_method == "predict_proba"
                 or self._response_method[0] == "predict_proba"
             ):
+                # `needs_proba=True` will first try to use `predict_proba` and then
+                # `decision_function`
                 params_scorer = {"needs_proba": True, "pos_label": self.pos_label}
             else:
                 params_scorer = {"needs_threshold": True, "pos_label": self.pos_label}

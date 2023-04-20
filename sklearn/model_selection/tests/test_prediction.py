@@ -475,3 +475,47 @@ def test_cutoffclassifier_fit_params(objective_metric, fit_params_type):
         classifier, objective_metric=objective_metric, objective_value=0.5
     )
     model.fit(X, y, **fit_params)
+
+
+@pytest.mark.parametrize(
+    "objective_metric, objective_value", [("tpr", 0.5), ("tnr", 0.5)]
+)
+@pytest.mark.parametrize(
+    "response_method", ["auto", "decision_function", "predict_proba"]
+)
+def test_cutoffclassifier_response_method_scorer_tnr_tpr(
+    objective_metric, objective_value, response_method, global_random_seed
+):
+    """Check that we use the proper scorer and forwarding the requested response method
+    for `tnr` and `tpr`.
+    """
+    X, y = make_classification(n_samples=100, random_state=global_random_seed)
+    classifier = LogisticRegression()
+
+    model = CutOffClassifier(
+        classifier,
+        objective_metric=objective_metric,
+        objective_value=objective_value,
+        response_method=response_method,
+    )
+    model.fit(X, y)
+
+    # Note that optimizing TPR will increase the decision threshold while optimizing
+    # TNR will decrease it. We therefore use the centered threshold (i.e. 0.5 for
+    # probabilities and 0.0 for decision function) to check that the decision threshold
+    # is properly set.
+    if response_method in ("auto", "predict_proba"):
+        # "auto" will fall back  in priority on `predict_proba` if `estimator`
+        # supports it.
+        # we expect the decision threshold to be in [0, 1]
+        if objective_metric == "tpr":
+            assert 0.5 < model.decision_threshold_ < 1
+        else:  # "tnr"
+            assert 0 < model.decision_threshold_ < 0.5
+    else:  # "decision_function"
+        # we expect the decision function to be centered in 0.0 and to be larger than
+        # -1 and 1.
+        if objective_metric == "tpr":
+            assert 0 < model.decision_threshold_ < 20
+        else:  # "tnr"
+            assert -20 < model.decision_threshold_ < 0
