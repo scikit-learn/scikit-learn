@@ -1,3 +1,4 @@
+from collections.abc import MutableMapping
 from inspect import signature
 from numbers import Integral, Real
 
@@ -5,7 +6,13 @@ import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin, MetaEstimatorMixin, clone
 from ..exceptions import NotFittedError
-from ..metrics import check_scoring, get_scorer_names, make_scorer, roc_curve
+from ..metrics import (
+    check_scoring,
+    confusion_matrix,
+    get_scorer_names,
+    make_scorer,
+    roc_curve,
+)
 from ..metrics._scorer import _ContinuousScorer
 from ..utils import _safe_indexing
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
@@ -16,6 +23,7 @@ from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_fit_params,
     _check_sample_weight,
+    _check_pos_label_consistency,
     _num_samples,
     check_is_fitted,
     indexable,
@@ -115,7 +123,7 @@ def _fit_and_score(
         X_val, y_val, sw_val = X, y, sample_weight
         check_is_fitted(classifier, "classes_")
 
-    if score_method in {"tnr", "tpr"}:
+    if isinstance(score_method, str) and score_method in {"tnr", "tpr"}:
         fpr, tpr, potential_thresholds = scorer(
             classifier, X_val, y_val, sample_weight=sw_val
         )
@@ -134,17 +142,20 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         The classifier, fitted or not fitted, for which we want to optimize
         the decision threshold used during `predict`.
 
-    objective_metric : {"tpr", "tnr"}, str or callable, default="balanced_accuracy"
+    objective_metric : {"tpr", "tnr"}, str, dict or callable, \
+            default="balanced_accuracy"
         The objective metric to be optimized. Can be one of:
 
         * a string associated to a scoring function (see model evaluation
           documentation);
-        * a scorer callable object / function with the signature
-          `metric(estimator, X, y)`;
+        * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`;
         * `"tpr"`: find the decision threshold for a true positive ratio (TPR)
           of `objective_value`;
         * `"tnr"`: find the decision threshold for a true negative ratio (TNR)
           of `objective_value`.
+        * a dictionary representing a cost-matrix. The keys of the dictionary
+          should be: `("tp", "fp", "tn", "fn")`. The values of the dictionary
+          corresponds to the cost/gain.
 
     objective_value : float, default=None
         The value associated with the `objective_metric` metric for which we
@@ -152,8 +163,9 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         `"tpr"` or `"tnr"`.
 
     pos_label : int, float, bool or str, default=None
-        The label of the positive class. Used with `objective_metric="tpr"` or
-        `"tnr"`. When `pos_label=None`, if `y_true` is in `{-1, 1}` or `{0, 1}`,
+        The label of the positive class. Used when `objective_metric` is `"tpr"`,
+        `"tnr"`, or a dictionary representing a cost-matrix.
+        When `pos_label=None`, if `y_true` is in `{-1, 1}` or `{0, 1}`,
         `pos_label` is set to 1, otherwise an error will be raised. When using a
         scorer, `pos_label` can be passed as a keyword argument to
         :func:`~sklearn.metrics.make_scorer`.
@@ -237,6 +249,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         "objective_metric": [
             StrOptions(set(get_scorer_names()) | {"tpr", "tnr"}),
             callable,
+            MutableMapping,
         ],
         "objective_value": [Real, None],
         "pos_label": [Real, str, "boolean", None],
@@ -341,7 +354,10 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         else:
             self._response_method = self.response_method
 
-        if self.objective_metric in {"tpr", "tnr"}:
+        if isinstance(self.objective_metric, str) and self.objective_metric in {
+            "tpr",
+            "tnr",
+        }:
             if self.objective_value is None:
                 raise ValueError(
                     "When `objective_metric` is 'tpr' or 'tnr', `objective_value` must "
@@ -389,7 +405,45 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             else:
                 self.estimator_.fit(X_train, y_train, **fit_params_train)
 
-        if self.objective_metric in {"tpr", "tnr"}:
+        if isinstance(self.objective_metric, MutableMapping):
+            keys = set(self.objective_metric.keys())
+            if not keys == {"tp", "tn", "fp", "fn"}:
+                raise ValueError(
+                    "Invalid keys in `objective_metric`. Valid keys are "
+                    f"'tp', 'tn', 'fp', and 'fn'. Got {keys} instead."
+                )
+            pos_label = _check_pos_label_consistency(self.pos_label, y)
+
+            def cost_score_func(y_true, y_pred, **kwargs):
+                tp_cost, tn_cost, fp_cost, fn_cost = (
+                    kwargs["tp"],
+                    kwargs["tn"],
+                    kwargs["fp"],
+                    kwargs["fn"],
+                )
+                cost_matrix = np.array([[tn_cost, fp_cost], [fn_cost, tp_cost]])
+
+                sample_weight = kwargs.get("sample_weight", None)
+                cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+
+                pos_label, classes = kwargs["pos_label"], np.unique(y_true)
+                pos_label_idx = np.searchsorted(classes, pos_label)
+                if pos_label_idx == 0:
+                    # reorder the confusion matrix to be aligned with the cost-matrix
+                    cm = cm[::-1, ::-1]
+
+                return (cost_matrix * cm).sum()
+
+            self._scorer = _ContinuousScorer(
+                score_func=cost_score_func,
+                sign=1,
+                response_method=self._response_method,
+                kwargs={
+                    **self.objective_metric,
+                    "pos_label": pos_label,
+                },
+            )
+        elif self.objective_metric in {"tpr", "tnr"}:
             if (
                 self._response_method == "predict_proba"
                 or self._response_method[0] == "predict_proba"

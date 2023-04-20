@@ -519,3 +519,37 @@ def test_cutoffclassifier_response_method_scorer_tnr_tpr(
             assert 0 < model.decision_threshold_ < 20
         else:  # "tnr"
             assert -20 < model.decision_threshold_ < 0
+
+
+def test_cutoffclassifier_custom_objective_metric(global_random_seed):
+    """Check that we can pass a custom objective metric."""
+    X, y = make_classification(n_samples=500, random_state=global_random_seed)
+    classifier = LogisticRegression()
+
+    # we need to set a small number of thresholds to avoid ties and picking a too low
+    # threshold.
+    n_thresholds = 5
+
+    # affect a high gain to true negative and force the classifier to mainly
+    # predict the negative class.
+    cost_matrix = {"tp": 0, "tn": 10, "fp": 0, "fn": 0}
+    model = CutOffClassifier(
+        classifier, objective_metric=cost_matrix, n_thresholds=n_thresholds
+    )
+    model.fit(X, y)
+
+    assert model.decision_threshold_ > 0.99
+    assert np.mean(model.predict(X) == 0) > 0.95
+
+    # use the true positive now
+    cost_matrix = {"tp": 10, "tn": 0, "fp": 0, "fn": 0}
+    model = CutOffClassifier(
+        classifier, objective_metric=cost_matrix, n_thresholds=n_thresholds
+    )
+    model.fit(X, y)
+
+    assert model.decision_threshold_ < 0.01
+    assert np.mean(model.predict(X) == 1) > 0.95
+
+
+# TODO: add a test for interaction with pos_label and string labels and the cost_matrix
