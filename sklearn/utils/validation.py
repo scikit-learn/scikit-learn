@@ -2162,14 +2162,14 @@ def _check_pos_label_consistency(pos_label, y_true):
 
     Parameters
     ----------
-    pos_label : int, str or None
+    pos_label : int, float, bool, str or None
         The positive label.
     y_true : ndarray of shape (n_samples,)
         The target vector.
 
     Returns
     -------
-    pos_label : int
+    pos_label : int, float, bool or str
         If `pos_label` can be inferred, it will be returned.
 
     Raises
