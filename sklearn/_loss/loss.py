@@ -111,7 +111,7 @@ class BaseLoss:
         Indicates whether n_classes > 2 is allowed.
     """
 
-    # For decision trees:
+    # For gradient boosted decision trees:
     # This variable indicates whether the loss requires the leaves values to
     # be updated once the tree has been trained. The trees are trained to
     # predict a Newton-Raphson step (see grower._finalize_leaf()). But for
@@ -120,8 +120,8 @@ class BaseLoss:
     # procedure. See the original paper Greedy Function Approximation: A
     # Gradient Boosting Machine by Friedman
     # (https://statweb.stanford.edu/~jhf/ftp/trebst.pdf) for the theory.
-    need_update_leaves_values = False
     differentiable = True
+    need_update_leaves_values = False
     is_multiclass = False
 
     def __init__(self, closs, link, n_classes=None):
