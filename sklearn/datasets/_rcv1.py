@@ -26,6 +26,7 @@ from ._base import load_descr
 from ._svmlight_format_io import load_svmlight_files
 from ..utils import shuffle as shuffle_
 from ..utils import Bunch
+from ..utils._param_validation import validate_params, StrOptions
 
 
 # The original vectorized data can be found at:
@@ -76,6 +77,16 @@ TOPICS_METADATA = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "subset": [StrOptions({"train", "test", "all"})],
+        "download_if_missing": ["boolean"],
+        "random_state": ["random_state"],
+        "shuffle": ["boolean"],
+        "return_X_y": ["boolean"],
+    }
+)
 def fetch_rcv1(
     *,
     data_home=None,

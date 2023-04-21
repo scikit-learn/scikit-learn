@@ -120,11 +120,9 @@ n_runs = 1
 N_COMPONENTS = [250, 500, 1000, 2000]
 
 for n_components in N_COMPONENTS:
-
     ps_lsvm_time = 0
     ps_lsvm_score = 0
     for _ in range(n_runs):
-
         pipeline = make_pipeline(
             PolynomialCountSketch(n_components=n_components, degree=4),
             LinearSVC(),

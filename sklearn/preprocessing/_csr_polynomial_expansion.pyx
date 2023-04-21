@@ -1,12 +1,7 @@
 # Authors: Andrew nystrom <awnystrom@gmail.com>
 #          Meekail Zain <zainmeekail@gmail.com>
-from libc.limits cimport INT_MAX, LONG_MAX
-from libc.math cimport sqrt, pow
 cimport numpy as cnp
 cnp.import_array()
-
-from scipy.sparse import csr_matrix
-import numpy as np
 
 ctypedef cnp.int8_t FLAG_t
 
@@ -33,8 +28,10 @@ cdef extern from *:
     """
     ctypedef long long LARGEST_INT_t
 
+
 def _get_sizeof_LARGEST_INT_t():
     return sizeof(LARGEST_INT_t)
+
 
 # TODO: use `cnp.{int,float}{32,64}` when cython#5230 is resolved:
 # https://github.com/cython/cython/issues/5230
@@ -75,7 +72,7 @@ cdef inline cnp.int64_t _deg3_column(
     LARGEST_INT_t j,
     LARGEST_INT_t k,
     FLAG_t interaction_only
-    ) nogil:
+) nogil:
     """Compute the index of the column for a degree 3 expansion
 
     n_features is the dimensionality of the input data, i, j and k are the indices
@@ -96,11 +93,14 @@ cdef inline cnp.int64_t _deg3_column(
             ) / 6 + n_features * j + k
         )
 
+
 def py_calc_expanded_nnz_deg2(n, interaction_only):
     return n * (n + 1) // 2 - interaction_only * n
 
+
 def py_calc_expanded_nnz_deg3(n, interaction_only):
     return n * (n**2 + 3 * n + 2) // 6 - interaction_only * n**2
+
 
 cpdef cnp.int64_t _calc_expanded_nnz(
     LARGEST_INT_t n,

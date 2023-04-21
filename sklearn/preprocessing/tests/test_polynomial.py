@@ -190,6 +190,7 @@ def test_spline_transformer_get_base_knot_positions(
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
 def test_spline_transformer_periodic_linear_regression(bias, intercept):
     """Test that B-splines fit a periodic curve pretty well."""
+
     # "+ 3" to avoid the value 0 in assert_allclose
     def f(x):
         return np.sin(2 * np.pi * x) - np.sin(8 * np.pi * x) + 3
@@ -596,8 +597,8 @@ def test_polynomial_feature_names():
 
     # test some unicode
     poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
-    feature_names = poly.get_feature_names_out(["\u0001F40D", "\u262E", "\u05D0"])
-    assert_array_equal(["1", "\u0001F40D", "\u262E", "\u05D0"], feature_names)
+    feature_names = poly.get_feature_names_out(["\u0001F40D", "\u262e", "\u05d0"])
+    assert_array_equal(["1", "\u0001F40D", "\u262e", "\u05d0"], feature_names)
 
 
 @pytest.mark.parametrize(
