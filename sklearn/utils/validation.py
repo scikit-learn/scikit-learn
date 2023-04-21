@@ -747,7 +747,7 @@ def check_array(
             "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html"
         )
 
-    xp, is_array_api = get_namespace(array)
+    xp, is_array_api_compliant = get_namespace(array)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -757,7 +757,7 @@ def check_array(
     dtype_numeric = isinstance(dtype, str) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
-    if not is_array_api and not hasattr(dtype_orig, "kind"):
+    if not is_array_api_compliant and not hasattr(dtype_orig, "kind"):
         # not a data type (e.g. a column named dtype in a pandas DataFrame)
         dtype_orig = None
 
@@ -799,7 +799,11 @@ def check_array(
             dtype_orig = None
 
     if dtype_numeric:
-        if dtype_orig is not None and dtype_orig.kind == "O":
+        if (
+            dtype_orig is not None
+            and hasattr(dtype_orig, "kind")
+            and dtype_orig.kind == "O"
+        ):
             # if input is object, convert to float.
             dtype = xp.float64
         else:
@@ -822,6 +826,9 @@ def check_array(
         array = array.astype(new_dtype)
         # Since we converted here, we do not need to convert again later
         dtype = None
+
+    if dtype is not None and _is_numpy_namespace(xp):
+        dtype = np.dtype(dtype)
 
     if force_all_finite not in (True, False, "allow-nan"):
         raise ValueError(
@@ -922,7 +929,7 @@ def check_array(
                     "if it contains a single sample.".format(array)
                 )
 
-        if dtype_numeric and array.dtype.kind in "USV":
+        if dtype_numeric and hasattr(array.dtype, "kind") and array.dtype.kind in "USV":
             raise ValueError(
                 "dtype='numeric' is not compatible with arrays of bytes/strings."
                 "Convert your data to numeric values explicitly instead."
@@ -960,7 +967,7 @@ def check_array(
             )
 
     if copy:
-        if xp.__name__ in {"numpy", "numpy.array_api"}:
+        if _is_numpy_namespace(xp):
             # only make a copy if `array` and `array_orig` may share memory`
             if np.may_share_memory(array, array_orig):
                 array = _asarray_with_order(
