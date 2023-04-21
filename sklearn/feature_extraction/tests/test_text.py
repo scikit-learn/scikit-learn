@@ -5,6 +5,7 @@ import pytest
 import warnings
 from scipy import sparse
 
+import sklearn
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
@@ -1646,3 +1647,21 @@ def test_vectorizers_do_not_have_set_output(Estimator):
     """Check that vectorizers do not define set_output."""
     est = Estimator()
     assert not hasattr(est, "set_output")
+
+
+@pytest.mark.parametrize(
+    "Vectorizer", [CountVectorizer, TfidfVectorizer, HashingVectorizer]
+)
+def test_vectorizer_errors_with_pandas_output_configuration(Vectorizer):
+    """Raise error for vectorizers because sparse dataframes are not supported."""
+
+    pytest.importorskip("pandas")
+    error_msg = "Pandas output does not support sparse data"
+
+    vec = Vectorizer().fit(JUNK_FOOD_DOCS)
+    with sklearn.config_context(transform_output="pandas"):
+        with pytest.raises(ValueError, match=error_msg):
+            vec.transform(JUNK_FOOD_DOCS)
+
+        with pytest.raises(ValueError, match=error_msg):
+            vec.fit_transform(JUNK_FOOD_DOCS)

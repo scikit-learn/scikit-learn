@@ -297,6 +297,11 @@ Changelog
   Parameter validation only happens at `fit` time.
   :pr:`24230` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |FIX| :class:`feature_extraction.text.CountVectorizer`,
+  :class:`feature_extraction.text.TfidfVectorizer`, and
+  :class:`feature_extraction.text.HashingVectorizer` now correctly raises an error
+  when the global output is configured to be pandas. :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.feature_selection`
 ................................
 
