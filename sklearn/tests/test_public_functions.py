@@ -246,6 +246,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.roc_curve",
     "sklearn.metrics.top_k_accuracy_score",
     "sklearn.metrics.zero_one_loss",
+    "sklearn.model_selection.cross_val_predict",
     "sklearn.model_selection.cross_validate",
     "sklearn.model_selection.train_test_split",
     "sklearn.neighbors.sort_graph_by_row_values",
