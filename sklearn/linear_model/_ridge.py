@@ -34,8 +34,7 @@ from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics import check_scoring
@@ -374,6 +373,31 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
         return ["csr", "csc", "coo"]
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix", sp_linalg.LinearOperator],
+        "y": ["array-like"],
+        "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
+        "sample_weight": [
+            Interval(Real, None, None, closed="neither"),
+            "array-like",
+            None,
+        ],
+        "solver": [
+            StrOptions(
+                {"auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"}
+            )
+        ],
+        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "verbose": ["verbose"],
+        "positive": ["boolean"],
+        "random_state": ["random_state"],
+        "return_n_iter": ["boolean"],
+        "return_intercept": ["boolean"],
+        "check_input": ["boolean"],
+    }
+)
 def ridge_regression(
     X,
     y,
@@ -396,11 +420,11 @@ def ridge_regression(
 
     Parameters
     ----------
-    X : {ndarray, sparse matrix, LinearOperator} of shape \
+    X : {array-like, sparse matrix, LinearOperator} of shape \
         (n_samples, n_features)
         Training data.
 
-    y : ndarray of shape (n_samples,) or (n_samples, n_targets)
+    y : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values.
 
     alpha : float or array-like of shape (n_targets,)
