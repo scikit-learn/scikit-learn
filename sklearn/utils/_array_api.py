@@ -460,6 +460,28 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         return float(xp.sum(sample_score))
 
 
+def _nanmin(X, axis=None):
+    xp, _ = get_namespace(X)
+    if _is_numpy_namespace(xp):
+        return numpy.nanmin(X, axis=axis)
+
+    else:
+        X = xp.min(xp.where(~xp.isnan(X), X, xp.asarray(+xp.inf)), axis=axis)
+        # Replace Infs from all NaN slices with NaN again
+        return xp.where(~xp.isinf(X), X, xp.nan)
+
+
+def _nanmax(X, axis=None):
+    xp, _ = get_namespace(X)
+    if _is_numpy_namespace(xp):
+        return numpy.nanmax(X, axis=axis)
+
+    else:
+        X = xp.max(xp.where(~xp.isnan(X), X, xp.asarray(-xp.inf)), axis=axis)
+        # Replace Infs from all NaN slices with NaN again
+        return xp.where(~xp.isneginf(X), X, xp.nan)
+
+
 def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
     """Helper to support the order kwarg only for NumPy-backed arrays
 
