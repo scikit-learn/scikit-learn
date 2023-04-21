@@ -367,8 +367,8 @@ Changelog
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
 
 - |Fix| Fixes a bug in :func:`metrics.roc_curve` where we add `eps` instead of 1.0
-  to `max(y_score)` for the starting point `tpr=0` and `fpr=0`. It avoids to have values
-  outised of [0, 1] range for probability estimates.
+  to `max(y_score)` for the starting point `tpr=0` and `fpr=0`. It avoids getting
+  values significantly outside of the [0, 1] range for probability estimates.
   :pr:`26194` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
