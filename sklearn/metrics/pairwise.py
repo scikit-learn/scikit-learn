@@ -1555,7 +1555,7 @@ def additive_chi2_kernel(X, Y=None):
       International Journal of Computer Vision 2007
       https://hal.archives-ouvertes.fr/hal-00171412/document
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y, accept_sparse=False)
     if (X < 0).any():
         raise ValueError("X contains negative values.")
     if Y is not X and (Y < 0).any():
@@ -1568,9 +1568,9 @@ def additive_chi2_kernel(X, Y=None):
 
 @validate_params(
     {
-        "X": ["array-like", "sparse matrix"],
-        "Y": ["array-like", "sparse matrix", None],
-        "gamma": [Interval(Real, None, None, closed="neither")],
+        "X": ["array-like"],
+        "Y": ["array-like", None],
+        "gamma": [Interval(Real, None, None, closed="neither"), Hidden(np.ndarray)],
     }
 )
 def chi2_kernel(X, Y=None, gamma=1.0):
