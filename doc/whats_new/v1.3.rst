@@ -300,7 +300,7 @@ Changelog
 - |FIX| :class:`feature_extraction.text.CountVectorizer`,
   :class:`feature_extraction.text.TfidfVectorizer`, and
   :class:`feature_extraction.text.HashingVectorizer` now correctly raises an error
-  when the global output is configured to be pandas. :pr:`xxxxx` by `Thomas Fan`_.
+  when the global output is configured to be pandas. :pr:`26253` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_selection`
 ................................
