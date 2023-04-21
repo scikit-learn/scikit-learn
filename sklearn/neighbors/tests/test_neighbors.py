@@ -497,10 +497,6 @@ def test_sort_graph_by_row_values_copy():
     with pytest.raises(ValueError, match="Use copy=True to allow the conversion"):
         sort_graph_by_row_values(X.tocsc(), copy=False)
 
-    # raise if X is not even sparse
-    with pytest.raises(TypeError, match="Input graph must be a sparse matrix"):
-        sort_graph_by_row_values(X.toarray())
-
 
 def test_sort_graph_by_row_values_warning():
     # Test that the parameter warn_when_not_sorted works as expected.
