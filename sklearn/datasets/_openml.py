@@ -519,19 +519,21 @@ def _load_arff_response(
             url, data_home, n_retries, delay, arff_params
         )
     except Exception as exc:
-        if parser == "pandas":
-            from pandas.errors import ParserError
+        if parser != "pandas":
+            raise
 
-            if isinstance(exc, ParserError):
-                # A parsing error could come from providing the wrong quotechar
-                # to pandas. By default, we use a double quote. Thus, we retry
-                # with a single quote before to raise the error.
-                arff_params["read_csv_kwargs"] = {"quotechar": "'"}
-                X, y, frame, categories = _open_url_and_load_gzip_file(
-                    url, data_home, n_retries, delay, arff_params
-                )
-            else:
-                raise
+        from pandas.errors import ParserError
+
+        if not isinstance(exc, ParserError):
+            raise
+
+        # A parsing error could come from providing the wrong quotechar
+        # to pandas. By default, we use a double quote. Thus, we retry
+        # with a single quote before to raise the error.
+        arff_params["read_csv_kwargs"] = {"quotechar": "'"}
+        X, y, frame, categories = _open_url_and_load_gzip_file(
+            url, data_home, n_retries, delay, arff_params
+        )
 
     return X, y, frame, categories
 
