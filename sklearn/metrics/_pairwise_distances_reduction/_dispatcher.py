@@ -7,6 +7,7 @@ from typing import List
 from scipy.sparse import isspmatrix_csr, issparse
 
 from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
+from .. import DistanceMetric, DistanceMetric32
 
 from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
 from ._argkmin import (
@@ -122,7 +123,10 @@ class BaseDistancesReductionDispatcher:
             and (is_numpy_c_ordered(Y) or is_valid_sparse_matrix(Y))
             and X.dtype == Y.dtype
             and X.dtype in (np.float32, np.float64)
-            and metric in cls.valid_metrics()
+            and (
+                metric in cls.valid_metrics()
+                or isinstance(metric, (DistanceMetric, DistanceMetric32))
+            )
         )
 
         return is_usable

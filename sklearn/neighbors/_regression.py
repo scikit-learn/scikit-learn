@@ -72,7 +72,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric : str or callable, default='minkowski'
+    metric : str, DistanceMetric object or callable, default='minkowski'
         Metric to use for distance computation. Default is "minkowski", which
         results in the standard Euclidean distance when p = 2. See the
         documentation of `scipy.spatial.distance
@@ -89,6 +89,9 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         vectors as inputs and must return one value indicating the distance
         between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
+
+        If metric is a DistanceMetric object, it will be passed directly to
+        the underlying computation routines.
 
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.

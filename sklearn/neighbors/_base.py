@@ -23,6 +23,7 @@ from ._kd_tree import KDTree
 from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
+from ..metrics import DistanceMetric, DistanceMetric32
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..metrics._pairwise_distances_reduction import (
     ArgKmin,
@@ -390,7 +391,12 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
         "p": [Interval(Real, 0, None, closed="right"), None],
-        "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
+        "metric": [
+            StrOptions(set(itertools.chain(*VALID_METRICS.values()))),
+            callable,
+            DistanceMetric,
+            DistanceMetric32,
+        ],
         "metric_params": [dict, None],
         "n_jobs": [Integral, None],
     }
@@ -420,7 +426,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.algorithm == "auto":
             if self.metric == "precomputed":
                 alg_check = "brute"
-            elif callable(self.metric) or self.metric in VALID_METRICS["ball_tree"]:
+            elif (
+                callable(self.metric)
+                or self.metric in VALID_METRICS["ball_tree"]
+                or isinstance(self.metric, (DistanceMetric, DistanceMetric32))
+            ):
                 alg_check = "ball_tree"
             else:
                 alg_check = "brute"
@@ -436,7 +446,9 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "in very poor performance."
                     % self.metric
                 )
-        elif self.metric not in VALID_METRICS[alg_check]:
+        elif self.metric not in VALID_METRICS[alg_check] and not isinstance(
+            self.metric, (DistanceMetric, DistanceMetric32)
+        ):
             raise ValueError(
                 "Metric '%s' not valid. Use "
                 "sorted(sklearn.neighbors.VALID_METRICS['%s']) "
@@ -805,7 +817,6 @@ class KNeighborsMixin:
                 "n_neighbors does not take %s value, enter integer value"
                 % type(n_neighbors)
             )
-
         query_is_train = X is None
         if query_is_train:
             X = self._fit_X

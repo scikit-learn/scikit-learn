@@ -37,7 +37,7 @@ from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
 
-from ._dist_metrics import DistanceMetric
+from ._dist_metrics import DistanceMetric, DistanceMetric32
 
 from . import cluster
 from .cluster import adjusted_mutual_info_score
@@ -122,6 +122,7 @@ __all__ = [
     "DetCurveDisplay",
     "det_curve",
     "DistanceMetric",
+    "DistanceMetric32",
     "euclidean_distances",
     "explained_variance_score",
     "f1_score",
