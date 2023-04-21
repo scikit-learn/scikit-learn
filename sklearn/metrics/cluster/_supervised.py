@@ -254,6 +254,12 @@ def pair_confusion_matrix(labels_true, labels_pred):
     return C
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    }
+)
 def rand_score(labels_true, labels_pred):
     """Rand index.
 
@@ -325,6 +331,12 @@ def rand_score(labels_true, labels_pred):
     return numerator / denominator
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    }
+)
 def adjusted_rand_score(labels_true, labels_pred):
     """Rand index adjusted for chance.
 
@@ -352,10 +364,10 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,), dtype=int
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,), dtype=int
         Cluster labels to evaluate.
 
     Returns
@@ -427,6 +439,13 @@ def adjusted_rand_score(labels_true, labels_pred):
     return 2.0 * (tp * tn - fn * fp) / ((tp + fn) * (fn + tn) + (tp + fp) * (fp + tn))
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "beta": [Interval(Real, 0, None, closed="left")],
+    }
+)
 def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     """Compute the homogeneity and completeness and V-Measure scores at once.
 
@@ -1184,6 +1203,11 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     return np.sqrt(tk / pk) * np.sqrt(tk / qk) if tk != 0.0 else 0.0
 
 
+@validate_params(
+    {
+        "labels": ["array-like"],
+    }
+)
 def entropy(labels):
     """Calculate the entropy for a labeling.
 
