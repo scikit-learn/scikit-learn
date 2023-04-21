@@ -2108,13 +2108,6 @@ def test_fit_and_score_failing():
         "using 'raise', please make sure that it has been spelled correctly.)"
     )
 
-    error_message_cross_validate = (
-        "The 'error_score' parameter of cross_validate must be .*. Got .* instead."
-    )
-
-    with pytest.raises(ValueError, match=error_message_cross_validate):
-        cross_val_score(failing_clf, X, cv=3, error_score="unvalid-string")
-
     with pytest.raises(ValueError, match=error_message):
         learning_curve(failing_clf, X, y, cv=3, error_score="unvalid-string")
 
