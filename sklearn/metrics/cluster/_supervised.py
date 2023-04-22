@@ -532,6 +532,12 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     return homogeneity, completeness, v_measure_score
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    }
+)
 def homogeneity_score(labels_true, labels_pred):
     """Homogeneity metric of a cluster labeling given a ground truth.
 
@@ -601,6 +607,12 @@ def homogeneity_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[0]
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    }
+)
 def completeness_score(labels_true, labels_pred):
     """Compute completeness metric of a cluster labeling given a ground truth.
 
@@ -670,6 +682,13 @@ def completeness_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[1]
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "beta": [Interval(Real, 0, None, closed="left")],
+    }
+)
 def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     """V-measure cluster labeling given a ground truth.
 
