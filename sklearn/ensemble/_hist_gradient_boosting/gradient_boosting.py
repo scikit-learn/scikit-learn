@@ -63,12 +63,15 @@ def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
       - PinballLoss: quantile(y_true - raw_prediction).
 
     More background:
-    For the standard gradient descent method in "Greedy Function Approximation: A
-    Gradient Boosting Machine" by Friedman, all loss functions but the squared loss
-    need a line search step. But BaseHistGradientBoosting implements a so called Newton
-    boosting where the trees are fitted to a 2nd order approximations of the loss in
-    terms of gradients and hessians. In this case, the line search step is only
-    necessary if the loss is not smooth, i.e. not differentiable.
+    For the standard gradient descent method according to "Greedy Function
+    Approximation: A Gradient Boosting Machine" by Friedman, all loss functions but the
+    squared loss need a line search step. BaseHistGradientBoosting, however, implements
+    a so called Newton boosting where the trees are fitted to a 2nd order
+    approximations of the loss in terms of gradients and hessians. In this case, the
+    line search step is only necessary if the loss is not smooth, i.e. not
+    differentiable, which renders the 2nd order approximation invalid. In fact,
+    non-smooth losses arbitrarily set hessians to 1 and effectively use the standard
+    gradient descent method with line search.
     """
     # TODO: Ideally this should be computed in parallel over the leaves using something
     # similar to _update_raw_predictions(), but this requires a cython version of

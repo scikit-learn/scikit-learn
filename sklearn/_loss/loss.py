@@ -541,6 +541,10 @@ class AbsoluteError(BaseLoss):
     For a given sample x_i, the absolute error is defined as::
 
         loss(x_i) = |y_true_i - raw_prediction_i|
+
+    Note that the exact hessian = 0 almost everywhere (except at one point, therefore
+    differentiable = False). Optimization routines like in HGBT, however, need a
+    hessian > 0. Therefore, we assign 1.
     """
 
     differentiable = False
@@ -582,6 +586,10 @@ class PinballLoss(BaseLoss):
                              u * quantile       if u >= 0
 
     Note: 2 * PinballLoss(quantile=0.5) equals AbsoluteError().
+
+    Note that the exact hessian = 0 almost everywhere (except at one point, therefore
+    differentiable = False). Optimization routines like in HGBT, however, need a
+    hessian > 0. Therefore, we assign 1.
 
     Additional Attributes
     ---------------------
