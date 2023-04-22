@@ -112,7 +112,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         self.pos_label = pos_label
         self.sampling_uncertainty = sampling_uncertainty
 
-    def plot(self, ax=None, *, name=None, plot_uncertainty=False, uncertainty_n_std=None, **kwargs):
+    def plot(self, ax=None, *, name=None, plot_uncertainty=False, **kwargs):
         """Plot visualization.
 
         Extra keyword arguments will be passed to matplotlib's `plot`.
@@ -184,8 +184,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         if plot_uncertainty:
             plot_sampling_uncertainty(
                 self.ax_,
-                sampling_uncertainty=self.sampling_uncertainty,
-                norm_n_std=uncertainty_n_std)
+                sampling_uncertainty=self.sampling_uncertainty)
 
         return self
 
@@ -203,8 +202,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         name=None,
         ax=None,
         plot_uncertainty=False,
-        uncertainty_n_std=None,
-        uncertainty_n_bins=None,
+        uncertainty_n_std=3,
+        uncertainty_n_bins=500,
         **kwargs,
     ):
         """Plot precision-recall curve given an estimator and some data.
@@ -254,14 +253,14 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.2.3
 
-        uncertainty_n_std : int, default=None
+        uncertainty_n_std : int, default=3
            Number of standard deviation to plot for sampling uncertainty level.
            Relevant only if plot_uncertainty = True.
            see more in :meth:`sklearn.metrics._plot.uncertainty.plot_sampling_uncertainty`
 
             .. versionadded:: 1.2.3
 
-        uncertainty_n_bins : int, default=None
+        uncertainty_n_bins : int, default=500
            Number of bins to use for the 2D grid to compute uncertainty for each point.
            Relevant only if plot_uncertainty = True.
            see more in :meth:`sklearn.metrics._plot.uncertainty.compute_sampling_uncertainty`
@@ -344,8 +343,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         name=None,
         ax=None,
         plot_uncertainty=False,
-        uncertainty_n_std=None,
-        uncertainty_n_bins=None,
+        uncertainty_n_std=3,
+        uncertainty_n_bins=500,
         **kwargs,
     ):
         """Plot precision-recall curve given binary class predictions.
@@ -384,14 +383,14 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.2.3
 
-        uncertainty_n_std : int, default=None
+        uncertainty_n_std : int, default=3
            Number of standard deviation to plot for sampling uncertainty level.
            Relevant only if plot_uncertainty = True.
            see more in :meth:`sklearn.metrics._plot.uncertainty.plot_sampling_uncertainty`
 
             .. versionadded:: 1.2.3
 
-        uncertainty_n_bins : int, default=None
+        uncertainty_n_bins : int, default=500
            Number of bins to use for the 2D grid to compute uncertainty for each point.
            Relevant only if plot_uncertainty = True.
            see more in :meth:`sklearn.metrics._plot.uncertainty.compute_sampling_uncertainty`
@@ -456,7 +455,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         )
 
         if plot_uncertainty:
-            sampling_uncertainty = compute_sampling_uncertainty("precision_recall", y_true, y_pred, thresholds, uncertainty_n_bins)
+            print(f"{uncertainty_n_std=}  {uncertainty_n_bins=}")
+            sampling_uncertainty = compute_sampling_uncertainty("precision_recall", y_true, y_pred, thresholds, uncertainty_n_std, uncertainty_n_bins)
         else:
             sampling_uncertainty = None
 
@@ -469,4 +469,4 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             sampling_uncertainty=sampling_uncertainty,
         )
 
-        return viz.plot(ax=ax, name=name, plot_uncertainty=plot_uncertainty, uncertainty_n_std=uncertainty_n_std, **kwargs)
+        return viz.plot(ax=ax, name=name, plot_uncertainty=plot_uncertainty, **kwargs)

@@ -73,20 +73,7 @@ def nll(rec, prec, x_tp, x_fp, x_tn, x_fn, phat_fnc):
     return nll_value - nll_minimum
 
 
-def get_grid(X_term1, X_term2, Y_term1, Y_term2, n_bins=100, epsilon=1e-4, n_sigma=6):
-    """For a point on the curve x=X_term1/(X_term1+X_term2) and y=Y_term1/(Y_term1+Y_term2),
-    make a rough estimate for the range of (x,y) values grid to scan.
-    Works for both (Recall,Precision) or (FPR,TPR).
-    """
-    x = get_range_axis(X_term1, X_term2, n_bins, epsilon, n_sigma)
-    y = get_range_axis(Y_term1, Y_term2, n_bins, epsilon, n_sigma)
-
-    RX, PY = np.meshgrid(x, y)
-
-    return RX, PY
-
-
-def get_range_axis(term1, term2, nbins, epsilon, n_sigma):
+def get_range_axis(term1, term2, epsilon, n_sigma):
     """
     Works for all of those: Recall, Precision, FPR and TPR = term1/(term1+term2)
 
@@ -127,7 +114,7 @@ def get_range_axis(term1, term2, nbins, epsilon, n_sigma):
     V_max = min(V + n_sigma * sigma_V, max_V_clip)  # max_V_clip to have nice contours
     V_min = max(V - n_sigma * sigma_V, epsilon)  # epsilon to prevent division by 0
 
-    return np.linspace(V_max, V_min, nbins)
+    return V_max, V_min
 
 
 def get_scaling_factor(norm_n_std):
@@ -155,7 +142,7 @@ def get_confusion_matrix(y_true, y_pred, thresholds):
     return TP, FP, TN, FN
 
 
-def compute_sampling_uncertainty(curve, y_true, y_pred, thresholds, n_bins=None):
+def compute_sampling_uncertainty(curve, y_true, y_pred, thresholds, norm_n_std, n_bins, epsilon=1e-4):
     """Compute sampling uncertainty, with profile likelihoods based on Wilks’ theorem.
     It consists of the following steps:
 
@@ -183,20 +170,24 @@ def compute_sampling_uncertainty(curve, y_true, y_pred, thresholds, n_bins=None)
     thresholds : ndarray of shape (n_thresholds,)
         Thresholds corresponding to the points to plot.
 
-    n_bins : int, default=None
-        Number of bins to use for the 2D grid to compute uncertainty for each point.
-        If set to None, then it falls back to default value: 100.
-    """
+    norm_n_std : int
+        Number of standard deviation to plot for sampling uncertainty level.
 
-    # Set default parameter
-    if n_bins is None:
-        n_bins = 100
+    n_bins : int
+        Number of bins to use for the 2D grid to compute uncertainty for each point.
+
+    epsilon : float, default=1e-4
+        Small number to avoid division by zero and plotting edge cases
+    """
 
     TP, FP, TN, FN = get_confusion_matrix(y_true, y_pred, thresholds)
 
+    # Create the grid, used for all the curve points
+    ls = np.linspace(0+epsilon, 1-epsilon, n_bins)  #[1:-1]
+    RX, PY = np.meshgrid(ls, ls)
+    CHI2 = np.full_like(RX, np.inf)
+
     # For each point in the curve...
-    n_contour_points = 0
-    sampling_uncertainty = []
     for x_tp, x_fp, x_tn, x_fn in zip(TP, FP, TN, FN):
 
         if curve == "precision_recall":
@@ -218,18 +209,32 @@ def compute_sampling_uncertainty(curve, y_true, y_pred, thresholds, n_bins=None)
             Y_term1 = x_tp
             Y_term2 = x_fn
         else:
-            raise ValueError(f"Unknowed curve: {curve}")
+            raise ValueError(f"Unknown curve: {curve}")
 
-        RX, PY = get_grid(X_term1, X_term2, Y_term1, Y_term2, n_bins=n_bins)
-        n_contour_points += RX.shape[0] * RX.shape[1]
-        chi2 = nll(RX, PY, x_tp, x_fp, x_tn, x_fn, phat)
+        # Get a rough range of values to evaluate via approximation to cover a larger norm_n_std + 3 sigmas
+        x_max, x_min = get_range_axis(X_term1, X_term2, epsilon, norm_n_std+3)
+        y_max, y_min = get_range_axis(Y_term1, Y_term2, epsilon, norm_n_std+3)
 
-        sampling_uncertainty.append((RX, PY, chi2))
+        # Get the matrix position index
+        x_min_idx = np.searchsorted(ls, x_min, side='left')
+        x_max_idx = np.searchsorted(ls, x_max, side='right')
+        y_min_idx = np.searchsorted(ls, y_min, side='left')
+        y_max_idx = np.searchsorted(ls, y_max, side='right')
 
-    return sampling_uncertainty
+        # Get a submatrix view
+        RX_v = RX[y_min_idx:y_max_idx, x_min_idx:x_max_idx]
+        PY_v = PY[y_min_idx:y_max_idx, x_min_idx:x_max_idx]
+
+        # Compute chi2 for this view
+        CHI2_v = nll(RX_v, PY_v, x_tp, x_fp, x_tn, x_fn, phat)
+
+        # Aggregate with the entire grid, and keep always the minimum chi2
+        CHI2[y_min_idx:y_max_idx, x_min_idx:x_max_idx] = np.minimum(CHI2[y_min_idx:y_max_idx, x_min_idx:x_max_idx], CHI2_v)
+
+    return RX, PY, CHI2, norm_n_std
 
 
-def plot_sampling_uncertainty(ax, sampling_uncertainty, norm_n_std=None):
+def plot_sampling_uncertainty(ax, sampling_uncertainty):
     """Plot the contour (i.e. isoline) for the observed points.
     Using Wilks’ theorem stating that the profile log likelihood ratio is described asymptotically by a chi2 distribution.
 
@@ -238,25 +243,21 @@ def plot_sampling_uncertainty(ax, sampling_uncertainty, norm_n_std=None):
     ax : Matplotlib Axes
         Axes object to plot on.
 
-    sampling_uncertainty : list of tuples (RX, RY, chi2)
+    sampling_uncertainty : tuple (RX, RY, CHI2)
         The sampling uncertainty for each point on the curve.
 
-    norm_n_std : int, default=None
+    norm_n_std : int
         Number of standard deviation to plot for sampling uncertainty level.
         Relevant only if plot_uncertainty = True.
-        If None fall back to default value (3).
     """
-    if not sampling_uncertainty:
-        raise ValueError("Sampling uncertainty is empty, so we cannot plot it.")
-            
-    # Set default parameter
-    if norm_n_std is None:
-        norm_n_std = 3
+    if sampling_uncertainty is None:
+        raise ValueError("Sampling uncertainty is None, so we cannot plot it.")
+    
+    RX, PY, CHI2, norm_n_std = sampling_uncertainty
 
     scale = get_scaling_factor(norm_n_std)
     levels = [scale**2]
     levels = [0.0] + levels#.tolist()
 
     # For each point in the curve plot a contour based on uncertainty level
-    for RX, PY, chi2 in sampling_uncertainty:
-        ax.contourf(RX, PY, chi2, levels=levels, alpha=0.50, colors='lightblue')
+    ax.contourf(RX, PY, CHI2, levels=levels, alpha=0.50, colors='lightblue')
