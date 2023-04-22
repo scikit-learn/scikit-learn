@@ -13,7 +13,7 @@ import math
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import check_array, check_consistent_length
 from .utils.validation import _check_sample_weight, check_is_fitted
-from .utils._param_validation import Interval, StrOptions
+from .utils._param_validation import Interval, StrOptions, validate_params
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 
 
@@ -79,6 +79,15 @@ def check_increasing(x, y):
     return increasing_bool
 
 
+@validate_params(
+    {
+        "y": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "y_min": [Interval(Real, None, None, closed="neither"), None],
+        "y_max": [Interval(Real, None, None, closed="neither"), None],
+        "increasing": ["boolean"],
+    }
+)
 def isotonic_regression(
     y, *, sample_weight=None, y_min=None, y_max=None, increasing=True
 ):
