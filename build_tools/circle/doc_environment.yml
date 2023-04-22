@@ -27,6 +27,8 @@ dependencies:
   - sphinx-prompt
   - plotly
   - pooch
+  - sphinxext-opengraph
   - pip
   - pip:
-    - sphinxext-opengraph
+    - jupyterlite-sphinx
+    - jupyterlite-pyodide-kernel

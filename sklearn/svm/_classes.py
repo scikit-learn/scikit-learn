@@ -796,7 +796,6 @@ class SVC(BaseSVC):
         break_ties=False,
         random_state=None,
     ):
-
         super().__init__(
             kernel=kernel,
             degree=degree,
@@ -1064,7 +1063,6 @@ class NuSVC(BaseSVC):
         break_ties=False,
         random_state=None,
     ):
-
         super().__init__(
             kernel=kernel,
             degree=degree,
@@ -1279,7 +1277,6 @@ class SVR(RegressorMixin, BaseLibSVM):
         verbose=False,
         max_iter=-1,
     ):
-
         super().__init__(
             kernel=kernel,
             degree=degree,
@@ -1488,7 +1485,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         verbose=False,
         max_iter=-1,
     ):
-
         super().__init__(
             kernel=kernel,
             degree=degree,
@@ -1686,7 +1682,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         verbose=False,
         max_iter=-1,
     ):
-
         super().__init__(
             kernel,
             degree,

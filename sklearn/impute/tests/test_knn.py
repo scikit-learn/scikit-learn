@@ -227,7 +227,6 @@ def test_knn_imputer_verify(na):
 
 @pytest.mark.parametrize("na", [np.nan, -1])
 def test_knn_imputer_one_n_neighbors(na):
-
     X = np.array([[0, 0], [na, 2], [4, 3], [5, na], [7, 7], [na, 8], [14, 13]])
 
     X_imputed = np.array([[0, 0], [4, 2], [4, 3], [5, 3], [7, 7], [7, 8], [14, 13]])
@@ -255,7 +254,6 @@ def test_knn_imputer_all_samples_are_neighbors(na):
 
 @pytest.mark.parametrize("na", [np.nan, -1])
 def test_knn_imputer_weight_uniform(na):
-
     X = np.array([[0, 0], [na, 2], [4, 3], [5, 6], [7, 7], [9, 8], [11, 10]])
 
     # Test with "uniform" weight (or unweighted)
@@ -431,7 +429,6 @@ def test_knn_imputer_weight_distance(na):
 
 
 def test_knn_imputer_callable_metric():
-
     # Define callable metric that returns the l1 norm:
     def custom_callable(x, y, missing_values=np.nan, squared=False):
         x = np.ma.array(x, mask=np.isnan(x))
@@ -457,7 +454,6 @@ def test_knn_imputer_callable_metric():
 # for a small dataset. However, it should raise a UserWarning that we ignore.
 @pytest.mark.filterwarnings("ignore:adhere to working_memory")
 def test_knn_imputer_with_simple_example(na, working_memory):
-
     X = np.array(
         [
             [0, na, 0, na],

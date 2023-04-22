@@ -10,10 +10,6 @@
     <p>Arturo Amor</p>
     </div>
     <div>
-    <a href='https://github.com/betatim'><img src='https://avatars.githubusercontent.com/u/1448859?v=4' class='avatar' /></a> <br />
-    <p>Tim Head</p>
-    </div>
-    <div>
     <a href='https://github.com/alfaro96'><img src='https://avatars.githubusercontent.com/u/32649176?v=4' class='avatar' /></a> <br />
     <p>Juan Carlos Alfaro Jiménez</p>
     </div>

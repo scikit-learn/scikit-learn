@@ -69,7 +69,7 @@ def lars_path(
     y : None or array-like of shape (n_samples,)
         Input targets.
 
-    Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
+    Xy : array-like of shape (n_features,) or (n_features, n_targets), \
             default=None
         `Xy = np.dot(X.T, y)` that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
@@ -215,7 +215,7 @@ def lars_path_gram(
 
     Parameters
     ----------
-    Xy : array-like of shape (n_samples,) or (n_samples, n_targets)
+    Xy : array-like of shape (n_features,) or (n_features, n_targets)
         Xy = np.dot(X.T, y).
 
     Gram : array-like of shape (n_features, n_features)
@@ -362,7 +362,7 @@ def _lars_path_solver(
     y : None or ndarray of shape (n_samples,)
         Input targets.
 
-    Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
+    Xy : array-like of shape (n_features,) or (n_features, n_targets), \
             default=None
         `Xy = np.dot(X.T, y)` that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
@@ -587,7 +587,6 @@ def _lars_path_solver(
         if n_iter >= max_iter or n_active >= n_features:
             break
         if not drop:
-
             ##########################################################
             # Append x_j to the Cholesky factorization of (Xa * Xa') #
             #                                                        #
@@ -776,7 +775,6 @@ def _lars_path_solver(
 
         # See if any coefficient has changed sign
         if drop and method == "lasso":
-
             # handle the case when idx is not length of 1
             for ii in idx:
                 arrayfuncs.cholesky_delete(L[:n_active, :n_active], ii)
@@ -1110,7 +1108,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
-        Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
+        Xy : array-like of shape (n_features,) or (n_features, n_targets), \
                 default=None
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomputed.

@@ -158,14 +158,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self._get_penalty_type(self.penalty)
         self._get_learning_rate_type(self.learning_rate)
 
-        # TODO(1.3): remove "log"
-        if self.loss == "log":
-            warnings.warn(
-                "The loss 'log' was deprecated in v1.1 and will be removed in version "
-                "1.3. Use `loss='log_loss'` which is equivalent.",
-                FutureWarning,
-            )
-
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``."""
         loss_ = self.loss_functions[loss]
@@ -500,14 +492,11 @@ def _get_plain_sgd_function(input_dtype):
 
 
 class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
-
-    # TODO(1.3): Remove "log""
     loss_functions = {
         "hinge": (Hinge, 1.0),
         "squared_hinge": (SquaredHinge, 1.0),
         "perceptron": (Hinge, 0.0),
         "log_loss": (Log,),
-        "log": (Log,),
         "modified_huber": (ModifiedHuber,),
         "squared_error": (SquaredLoss,),
         "huber": (Huber, DEFAULT_EPSILON),
@@ -517,7 +506,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
     _parameter_constraints: dict = {
         **BaseSGD._parameter_constraints,
-        "loss": [StrOptions(set(loss_functions), deprecated={"log"})],
+        "loss": [StrOptions(set(loss_functions))],
         "early_stopping": ["boolean"],
         "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
@@ -551,7 +540,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         warm_start=False,
         average=False,
     ):
-
         super().__init__(
             loss=loss,
             penalty=penalty,
@@ -719,9 +707,11 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
-                "Maximum number of iteration reached before "
-                "convergence. Consider increasing max_iter to "
-                "improve the fit.",
+                (
+                    "Maximum number of iteration reached before "
+                    "convergence. Consider increasing max_iter to "
+                    "improve the fit."
+                ),
                 ConvergenceWarning,
             )
         return self
@@ -950,7 +940,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     Parameters
     ----------
-    loss : {'hinge', 'log_loss', 'log', 'modified_huber', 'squared_hinge',\
+    loss : {'hinge', 'log_loss', 'modified_huber', 'squared_hinge',\
         'perceptron', 'squared_error', 'huber', 'epsilon_insensitive',\
         'squared_epsilon_insensitive'}, default='hinge'
         The loss function to be used.
@@ -958,7 +948,7 @@ class SGDClassifier(BaseSGDClassifier):
         - 'hinge' gives a linear SVM.
         - 'log_loss' gives logistic regression, a probabilistic classifier.
         - 'modified_huber' is another smooth loss that brings tolerance to
-           outliers as well as probability estimates.
+          outliers as well as probability estimates.
         - 'squared_hinge' is like hinge but is quadratically penalized.
         - 'perceptron' is the linear loss used by the perceptron algorithm.
         - The other losses, 'squared_error', 'huber', 'epsilon_insensitive' and
@@ -968,10 +958,6 @@ class SGDClassifier(BaseSGDClassifier):
 
         More details about the losses formulas can be found in the
         :ref:`User Guide <sgd_mathematical_formulation>`.
-
-        .. deprecated:: 1.1
-            The loss 'log' was deprecated in v1.1 and will be removed
-            in version 1.3. Use `loss='log_loss'` which is equivalent.
 
     penalty : {'l2', 'l1', 'elasticnet', None}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -1249,8 +1235,7 @@ class SGDClassifier(BaseSGDClassifier):
         )
 
     def _check_proba(self):
-        # TODO(1.3): Remove "log"
-        if self.loss not in ("log_loss", "log", "modified_huber"):
+        if self.loss not in ("log_loss", "modified_huber"):
             raise AttributeError(
                 "probability estimates are not available for loss=%r" % self.loss
             )
@@ -1295,8 +1280,7 @@ class SGDClassifier(BaseSGDClassifier):
         """
         check_is_fitted(self)
 
-        # TODO(1.3): Remove "log"
-        if self.loss in ("log_loss", "log"):
+        if self.loss == "log_loss":
             return self._predict_proba_lr(X)
 
         elif self.loss == "modified_huber":
@@ -1376,7 +1360,6 @@ class SGDClassifier(BaseSGDClassifier):
 
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
-
     loss_functions = {
         "squared_error": (SquaredLoss,),
         "huber": (Huber, DEFAULT_EPSILON),
@@ -1572,9 +1555,11 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
-                "Maximum number of iteration reached before "
-                "convergence. Consider increasing max_iter to "
-                "improve the fit.",
+                (
+                    "Maximum number of iteration reached before "
+                    "convergence. Consider increasing max_iter to "
+                    "improve the fit."
+                ),
                 ConvergenceWarning,
             )
 
@@ -2301,7 +2286,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         self.t_ += self.n_iter_ * n_samples
 
         if self.average > 0:
-
             self._average_intercept = np.atleast_1d(average_intercept)
             self._standard_intercept = np.atleast_1d(intercept)
 
@@ -2459,9 +2443,11 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
-                "Maximum number of iteration reached before "
-                "convergence. Consider increasing max_iter to "
-                "improve the fit.",
+                (
+                    "Maximum number of iteration reached before "
+                    "convergence. Consider increasing max_iter to "
+                    "improve the fit."
+                ),
                 ConvergenceWarning,
             )
 
