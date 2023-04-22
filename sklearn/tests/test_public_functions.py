@@ -130,6 +130,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.fetch_olivetti_faces",
     "sklearn.datasets.fetch_rcv1",
     "sklearn.datasets.fetch_species_distributions",
+    "sklearn.datasets.get_data_home",
     "sklearn.datasets.load_breast_cancer",
     "sklearn.datasets.load_diabetes",
     "sklearn.datasets.load_digits",
