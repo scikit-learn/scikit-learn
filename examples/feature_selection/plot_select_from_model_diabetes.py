@@ -120,9 +120,6 @@ print(
 print(f"Done in {toc_bwd - tic_bwd:.3f}s")
 
 # %%
-# Discussion
-# ----------
-#
 # Interestingly, forward and backward selection have selected the same set of
 # features. In general, this isn't the case and the two methods would lead to
 # different results.
@@ -145,8 +142,8 @@ print(f"Done in {toc_bwd - tic_bwd:.3f}s")
 # SFS needs to perform `n_features - n_features_to_select = 8` iterations.
 
 # %%
-# Selecting features using Sequential Feature Selection and negative tolerance values
-# -----------------------------------------------------------------------------------
+# Using negative tolerance values
+# -------------------------------
 #
 # :class:`~sklearn.feature_selection.SequentialFeatureSelector` can be used
 # to remove features present in the dataset and return a
