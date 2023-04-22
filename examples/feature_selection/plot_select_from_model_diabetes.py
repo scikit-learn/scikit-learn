@@ -140,8 +140,7 @@ print(f"Done in {toc_bwd - tic_bwd:.3f}s")
 # attribute. The forward SFS is faster than the backward SFS because it only
 # needs to perform `n_features_to_select = 2` iterations, while the backward
 # SFS needs to perform `n_features - n_features_to_select = 8` iterations.
-
-# %%
+#
 # Using negative tolerance values
 # -------------------------------
 #
