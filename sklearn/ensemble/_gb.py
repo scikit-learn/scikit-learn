@@ -75,7 +75,7 @@ _LOSSES.update(
 )
 
 
-def _init_raw_predictions(X, estimator, loss):
+def _init_raw_predictions(X, estimator, loss, use_predict_proba):
     """Return the initial raw predictions.
 
     Parameters
@@ -86,6 +86,8 @@ def _init_raw_predictions(X, estimator, loss):
         The estimator to use to compute the predictions.
     loss : BaseLoss
         An instace of a loss function class.
+    use_predict_proba : bool
+        Whether estimator.predict_proba is used instead of estimator.predict.
 
     Returns
     -------
@@ -97,8 +99,12 @@ def _init_raw_predictions(X, estimator, loss):
     """
     # TODO: Use loss.fit_intercept_only where appropriate instead of
     # DummyRegressor.
-    if is_classifier(estimator):
-        predictions = estimator.predict_proba(X)
+    if use_predict_proba:
+        try:
+            predictions = estimator.predict_proba(X)
+        except AttributeError as e:
+            msg = "The given init estimator does not provide a predict_proba method."
+            raise AttributeError(msg) from e
         if not loss.is_multiclass:
             predictions = predictions[:, 1]  # probability of positive class
         eps = np.finfo(np.float32).eps  # FIXME: This is quite large!
@@ -743,7 +749,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         else:  # regular estimator whose input checking failed
                             raise
 
-                raw_predictions = _init_raw_predictions(X_train, self.init_, self._loss)
+                raw_predictions = _init_raw_predictions(
+                    X_train, self.init_, self._loss, is_classifier(self)
+                )
 
             begin_at_stage = 0
 
@@ -939,7 +947,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 shape=(X.shape[0], self.n_trees_per_iteration_), dtype=np.float64
             )
         else:
-            raw_predictions = _init_raw_predictions(X, self.init_, self._loss)
+            raw_predictions = _init_raw_predictions(
+                X, self.init_, self._loss, is_classifier(self)
+            )
         return raw_predictions
 
     def _raw_predict(self, X):
