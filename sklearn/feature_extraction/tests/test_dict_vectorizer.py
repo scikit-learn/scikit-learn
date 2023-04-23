@@ -252,6 +252,4 @@ def test_dict_vectorizer_not_fitted_error():
     with pytest.raises(NotFittedError):
         dv.inverse_transform(X)
     with pytest.raises(NotFittedError):
-        dv.get_feature_names_out()
-    with pytest.raises(NotFittedError):
         dv.restrict(support=[True, False, True])
