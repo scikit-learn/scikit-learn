@@ -5,7 +5,7 @@
 .. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=main
 .. _Azure: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=main
 
-.. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/main.svg?style=shield&circle-token=:circle-token
+.. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/main.svg?style=shield
 .. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
 
 .. |CirrusCI| image:: https://img.shields.io/cirrus/github/scikit-learn/scikit-learn/main?label=Cirrus%20CI
@@ -34,7 +34,7 @@
 
 .. |PythonMinVersion| replace:: 3.8
 .. |NumPyMinVersion| replace:: 1.17.3
-.. |SciPyMinVersion| replace:: 1.3.2
+.. |SciPyMinVersion| replace:: 1.5.0
 .. |JoblibMinVersion| replace:: 1.1.1
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0
 .. |MatplotlibMinVersion| replace:: 3.1.3

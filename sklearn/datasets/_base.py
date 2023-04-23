@@ -14,14 +14,15 @@ from collections import namedtuple
 import os
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
-from importlib import resources
 from pathlib import Path
+from numbers import Integral
 
 from ..preprocessing import scale
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
-from ..utils.fixes import _open_binary, _open_text, _read_text
+from ..utils.fixes import _open_binary, _open_text, _read_text, _contents
+from ..utils._param_validation import validate_params, Interval
 
 import numpy as np
 
@@ -426,6 +427,12 @@ def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
     return fdescr
 
 
+@validate_params(
+    {
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def load_wine(*, return_X_y=False, as_frame=False):
     """Load and return the wine dataset (classification).
 
@@ -546,6 +553,7 @@ def load_wine(*, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params({"return_X_y": ["boolean"], "as_frame": ["boolean"]})
 def load_iris(*, return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
@@ -669,6 +677,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params({"return_X_y": ["boolean"], "as_frame": ["boolean"]})
 def load_breast_cancer(*, return_X_y=False, as_frame=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
@@ -818,6 +827,13 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params(
+    {
+        "n_class": [Interval(Integral, 1, 10, closed="both")],
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     """Load and return the digits dataset (classification).
 
@@ -951,6 +967,9 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params(
+    {"return_X_y": ["boolean"], "as_frame": ["boolean"], "scaled": ["boolean"]}
+)
 def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     """Load and return the diabetes dataset (regression).
 
@@ -1062,6 +1081,12 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     )
 
 
+@validate_params(
+    {
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def load_linnerud(*, return_X_y=False, as_frame=False):
     """Load and return the physical exercise Linnerud dataset.
 
@@ -1216,7 +1241,7 @@ def load_sample_images():
     descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
 
     filenames, images = [], []
-    for filename in sorted(resources.contents(IMAGES_MODULE)):
+    for filename in sorted(_contents(IMAGES_MODULE)):
         if filename.endswith(".jpg"):
             filenames.append(filename)
             with _open_binary(IMAGES_MODULE, filename) as image_file:

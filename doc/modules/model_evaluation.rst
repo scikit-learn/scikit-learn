@@ -1531,16 +1531,18 @@ And the decision values do not require such processing.
     .. [HT2001] Hand, D.J. and Till, R.J., (2001). `A simple generalisation
        of the area under the ROC curve for multiple class classification problems.
        <http://link.springer.com/article/10.1023/A:1010920819831>`_
-       Machine learning, 45(2), pp.171-186.
+       Machine learning, 45(2), pp. 171-186.
 
     .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009).
        `An Experimental Comparison of Performance Measures for Classification.
        <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
        Pattern Recognition Letters. 30. 27-38.
 
-    .. [PD2000] Provost, F., Domingos, P. (2000). Well-trained PETs: Improving
-       probability estimation trees (Section 6.2), CeDER Working Paper #IS-00-04,
-       Stern School of Business, New York University.
+    .. [PD2000] Provost, F., Domingos, P. (2000). `Well-trained PETs: Improving
+       probability estimation trees
+       <https://fosterprovost.com/publication/well-trained-pets-improving-probability-estimation-trees/>`_
+       (Section 6.2), CeDER Working Paper #IS-00-04, Stern School of Business,
+       New York University.
 
     .. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
        <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_

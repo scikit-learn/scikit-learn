@@ -226,7 +226,6 @@ class BisectingKMeans(_BaseKMeans):
         algorithm="lloyd",
         bisecting_strategy="biggest_inertia",
     ):
-
         super().__init__(
             n_clusters=n_clusters,
             init=init,

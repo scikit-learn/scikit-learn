@@ -2,6 +2,12 @@ import os
 from joblib import cpu_count
 
 
+# Module level cache for cpu_count as we do not expect this to change during
+# the lifecycle of a Python program. This dictionary is keyed by
+# only_physical_cores.
+_CPU_COUNTS = {}
+
+
 def _openmp_parallelism_enabled():
     """Determines whether scikit-learn has been built with OpenMP
 
@@ -12,7 +18,7 @@ def _openmp_parallelism_enabled():
     return SKLEARN_OPENMP_PARALLELISM_ENABLED
 
 
-cpdef _openmp_effective_n_threads(n_threads=None):
+cpdef _openmp_effective_n_threads(n_threads=None, only_physical_cores=True):
     """Determine the effective number of threads to be used for OpenMP calls
 
     - For ``n_threads = None``,
@@ -33,6 +39,15 @@ cpdef _openmp_effective_n_threads(n_threads=None):
 
     - Raise a ValueError for ``n_threads = 0``.
 
+    Passing the `only_physical_cores=False` flag makes it possible to use extra
+    threads for SMT/HyperThreading logical cores. It has been empirically
+    observed that using as many threads as available SMT cores can slightly
+    improve the performance in some cases, but can severely degrade
+    performance other times. Therefore it is recommended to use
+    `only_physical_cores=True` unless an empirical study has been conducted to
+    assess the impact of SMT on a case-by-case basis (using various input data
+    shapes, in particular small data shapes).
+
     If scikit-learn is built without OpenMP support, always return 1.
     """
     if n_threads == 0:
@@ -47,7 +62,12 @@ cpdef _openmp_effective_n_threads(n_threads=None):
         # to exceed the number of cpus.
         max_n_threads = omp_get_max_threads()
     else:
-        max_n_threads = min(omp_get_max_threads(), cpu_count())
+        try:
+            n_cpus = _CPU_COUNTS[only_physical_cores]
+        except KeyError:
+            n_cpus = cpu_count(only_physical_cores=only_physical_cores)
+            _CPU_COUNTS[only_physical_cores] = n_cpus
+        max_n_threads = min(omp_get_max_threads(), n_cpus)
 
     if n_threads is None:
         return max_n_threads
