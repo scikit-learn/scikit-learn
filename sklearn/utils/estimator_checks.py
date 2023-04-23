@@ -3063,16 +3063,15 @@ def check_interaction_of_class_and_sample_weight_excluding_class(
     """
     rng = np.random.RandomState(42)
     err_msg_sw = (
-        f"For {name}, using class_weight as zero to one class is not"
-        "equivalent to making the sample_weight for the samples from that"
+        f"For {name}, using class_weight as zero to one class is not "
+        "equivalent to making the sample_weight for the samples from that "
         "class equals zero."
     )
     err_msg_exclude = (
-        f"For {name}, using class_weight as zero to one class is not"
+        f"For {name}, using class_weight as zero to one class is not "
         "equivalent to excluding the samples from that class."
     )
     for n_classes in range(3, 10):
-        # Note: If estimator has class_weight then it must be a classifier
         X, y = make_classification(
             n_samples=200,
             n_classes=n_classes,
@@ -3128,7 +3127,7 @@ def check_interaction_of_class_and_sample_weight_excluding_samples(
     # Note: this test is similar to check_sample_weights_invariance.
     rng = np.random.RandomState(42)
     err_msg = (
-        f"For {name}, while using class weight, setting some sample's weight"
+        f"For {name}, while using class weight, setting some sample's weight "
         "to zero is not equivalent to excluding those samples from training."
     )
     for n_classes in range(2, 10):
@@ -3145,17 +3144,15 @@ def check_interaction_of_class_and_sample_weight_excluding_samples(
         }
 
         # Model with some sample_weight set to 0
-        estimator_sw = (
-            clone(estimator_orig).set_params(class_weight=class_weight_dict)
-        )
+        estimator_sw = clone(estimator_orig).set_params(class_weight=class_weight_dict)
         set_random_state(estimator_sw, random_state=0)
         estimator_sw.fit(X, y, sample_weight=sample_weight)
 
         # Model excluding samples with 0 sample weight
         X_exclude = X[sample_weight > 0]
         y_exclude = y[sample_weight > 0]
-        estimator_exclude = (
-            clone(estimator_orig).set_params(class_weight=class_weight_dict)
+        estimator_exclude = clone(estimator_orig).set_params(
+            class_weight=class_weight_dict
         )
         set_random_state(estimator_exclude, random_state=0)
         estimator_exclude.fit(X_exclude, y_exclude)
