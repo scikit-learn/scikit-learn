@@ -297,6 +297,14 @@ Changelog
   Parameter validation only happens at `fit` time.
   :pr:`24230` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |API| Changed error type from :class:`AttributeError` to 
+  :class:`exceptions.NotFittedError` in unfitted instances of 
+  :class:`feature_extraction.DictVectorizer` for the following methods:
+  :func:`feature_extraction.DictVectorizer.inverse_transform`, 
+  :func:`feature_extraction.DictVectorizer.restrict`, 
+  :func:`feature_extraction.DictVectorizer.transform`.
+  :pr:`24838` by :user:`Lorenz Hertel <LoHertel>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
