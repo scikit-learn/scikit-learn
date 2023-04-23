@@ -3054,9 +3054,7 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_interaction_of_class_and_sample_weight_excluding_class(
-    name, estimator_orig
-):
+def check_interaction_of_class_and_sample_weight_excluding_class(name, estimator_orig):
     """Setting a class weights to zero is equivalent to excluding the samples
     associated to this class from the calibration even when using non uniform
     sample weights.
@@ -3076,16 +3074,14 @@ def check_interaction_of_class_and_sample_weight_excluding_class(
             n_samples=200,
             n_classes=n_classes,
             n_informative=2 * n_classes,
-            random_state=0
+            random_state=0,
         )
         y = _enforce_estimator_tags_y(estimator_orig, y)
         sample_weight = rng.uniform(size=y.shape[0])
 
         # Model using `class_weight` with 0 weight for class 0
         class_weight_dict = {cls: 1 if cls != 0 else 0 for cls in range(n_classes)}
-        estimator_cw = (
-            clone(estimator_orig).set_params(class_weight=class_weight_dict)
-        )
+        estimator_cw = clone(estimator_orig).set_params(class_weight=class_weight_dict)
         set_random_state(estimator_cw, random_state=0)
         estimator_cw.fit(X, y, sample_weight=sample_weight)
 
@@ -3095,9 +3091,7 @@ def check_interaction_of_class_and_sample_weight_excluding_class(
         sample_weight_exclude = sample_weight[y != 0]
         estimator_exclude = clone(estimator_orig)
         set_random_state(estimator_exclude, random_state=0)
-        estimator_exclude.fit(
-            X_exclude, y_exclude, sample_weight=sample_weight_exclude
-        )
+        estimator_exclude.fit(X_exclude, y_exclude, sample_weight=sample_weight_exclude)
 
         # Model setting `sample_weight` to 0 for samples from class 0
         sample_weight_zero_weight_first = np.where(y == 0, 0, sample_weight)
@@ -3135,7 +3129,7 @@ def check_interaction_of_class_and_sample_weight_excluding_samples(
             n_samples=200,
             n_classes=n_classes,
             n_informative=2 * n_classes,
-            random_state=0
+            random_state=0,
         )
 
         sample_weight = rng.binomial(1, 0.8, size=y.shape[0])
