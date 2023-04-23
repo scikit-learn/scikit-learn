@@ -406,6 +406,9 @@ Changelog
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Fix| Deprecate `matching` as a metric to be consistent with `scipy.spatial.distance`.
+  :pr:`26264` by :user:`Barata T. Onggo <magnusbarata>`
+
 :mod:`sklearn.model_selection`
 ..............................
 
