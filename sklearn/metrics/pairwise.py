@@ -1742,7 +1742,6 @@ _VALID_METRICS = [
     "hamming",
     "jaccard",
     "mahalanobis",
-    "matching",
     "minkowski",
     "rogerstanimoto",
     "russellrao",
@@ -1758,6 +1757,9 @@ _VALID_METRICS = [
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     _VALID_METRICS += ["kulsinski"]
+if sp_base_version < parse_version("1.9"):
+    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
+    _VALID_METRICS += ["matching"]
 
 _NAN_METRICS = ["nan_euclidean"]
 
@@ -2150,7 +2152,6 @@ def pairwise_distances(
 PAIRWISE_BOOLEAN_FUNCTIONS = [
     "dice",
     "jaccard",
-    "matching",
     "rogerstanimoto",
     "russellrao",
     "sokalmichener",
@@ -2160,6 +2161,9 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     PAIRWISE_BOOLEAN_FUNCTIONS += ["kulsinski"]
+if sp_base_version < parse_version("1.9"):
+    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
+    PAIRWISE_BOOLEAN_FUNCTIONS += ["matching"]
 
 # Helper functions - distance
 PAIRWISE_KERNEL_FUNCTIONS = {
