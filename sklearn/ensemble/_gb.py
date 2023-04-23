@@ -844,8 +844,25 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # subsampling
             if do_oob:
                 sample_mask = _random_sample_mask(n_samples, n_inbag, random_state)
+                # Older versions of GBT had its own loss functions. With the new common
+                # private loss function submodule _loss, we often are a factor of 2
+                # away from the old version. Here we keep backwards compatibility for
+                # oob_scores_ and oob_improvement_, even if the old way is quite
+                # inconsistent (sometimes the gradient is half the gradient, sometimes
+                # not).
+                if isinstance(
+                    self._loss,
+                    (
+                        HalfSquaredError,
+                        HalfBinomialLoss,
+                        HalfMultinomialLoss,
+                    ),
+                ):
+                    factor = 2
+                else:
+                    factor = 1
                 if i == 0:  # store the initial loss to compute the OOB score
-                    initial_loss = self._loss(
+                    initial_loss = factor * self._loss(
                         y[~sample_mask],
                         raw_predictions[~sample_mask],
                         sample_weight[~sample_mask],
@@ -866,12 +883,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             # track loss
             if do_oob:
-                self.train_score_[i] = self._loss(
+                self.train_score_[i] = factor * self._loss(
                     y[sample_mask],
                     raw_predictions[sample_mask],
                     sample_weight[sample_mask],
                 )
-                self.oob_scores_[i] = self._loss(
+                self.oob_scores_[i] = factor * self._loss(
                     y[~sample_mask],
                     raw_predictions[~sample_mask],
                     sample_weight[~sample_mask],
