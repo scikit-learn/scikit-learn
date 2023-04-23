@@ -73,6 +73,7 @@ from ..preprocessing import scale
 from ..datasets import (
     load_iris,
     make_blobs,
+    make_classification,
     make_multilabel_classification,
     make_regression,
 )
@@ -164,6 +165,8 @@ def _yield_classifier_checks(classifier):
         yield check_estimators_unfitted
     if "class_weight" in classifier.get_params().keys():
         yield check_class_weight_classifiers
+        yield check_interaction_of_class_and_sample_weight_excluding_class
+        yield check_interaction_of_class_and_sample_weight_excluding_samples
 
     yield check_non_transformer_estimators_n_iter
     # test if predict_proba is a monotonic transformation of decision_function
@@ -3048,6 +3051,121 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
         coef_manual,
         err_msg="Classifier %s is not computing class_weight=balanced properly." % name,
     )
+
+
+@ignore_warnings(category=FutureWarning)
+def check_interaction_of_class_and_sample_weight_excluding_class(
+    name, estimator_orig
+):
+    """Setting a class weights to zero is equivalent to excluding the samples
+    associated to this class from the calibration even when using non uniform
+    sample weights.
+    """
+    rng = np.random.RandomState(42)
+    err_msg_sw = (
+        f"For {name}, using class_weight as zero to one class is not"
+        "equivalent to making the sample_weight for the samples from that"
+        "class equals zero."
+    )
+    err_msg_exclude = (
+        f"For {name}, using class_weight as zero to one class is not"
+        "equivalent to excluding the samples from that class."
+    )
+    for n_classes in range(3, 10):
+        # Note: If estimator has class_weight then it must be a classifier
+        X, y = make_classification(
+            n_samples=200,
+            n_classes=n_classes,
+            n_informative=2 * n_classes,
+            random_state=0
+        )
+        y = _enforce_estimator_tags_y(estimator_orig, y)
+        sample_weight = rng.uniform(size=y.shape[0])
+
+        # Model using `class_weight` with 0 weight for class 0
+        class_weight_dict = {cls: 1 if cls != 0 else 0 for cls in range(n_classes)}
+        estimator_cw = (
+            clone(estimator_orig).set_params(class_weight=class_weight_dict)
+        )
+        set_random_state(estimator_cw, random_state=0)
+        estimator_cw.fit(X, y, sample_weight=sample_weight)
+
+        # Model excluding samples from class 0
+        X_exclude = X[y != 0]
+        y_exclude = y[y != 0]
+        sample_weight_exclude = sample_weight[y != 0]
+        estimator_exclude = clone(estimator_orig)
+        set_random_state(estimator_exclude, random_state=0)
+        estimator_exclude.fit(
+            X_exclude, y_exclude, sample_weight=sample_weight_exclude
+        )
+
+        # Model setting `sample_weight` to 0 for samples from class 0
+        sample_weight_zero_weight_first = np.where(y == 0, 0, sample_weight)
+        estimator_sw = clone(estimator_orig)
+        set_random_state(estimator_sw, random_state=0)
+        estimator_sw.fit(X, y, sample_weight=sample_weight_zero_weight_first)
+
+        # Checking if the output is the same
+        for method in ["predict", "predict_proba", "decision_function", "transform"]:
+            if hasattr(estimator_orig, method):
+                pred_cw = getattr(estimator_cw, method)(X)
+                pred_sw = getattr(estimator_sw, method)(X)
+                pred_exclude = getattr(estimator_sw, method)(X)
+                assert_allclose_dense_sparse(pred_cw, pred_sw, err_msg=err_msg_sw)
+                assert_allclose_dense_sparse(
+                    pred_cw, pred_exclude, err_msg=err_msg_exclude
+                )
+
+
+@ignore_warnings(category=FutureWarning)
+def check_interaction_of_class_and_sample_weight_excluding_samples(
+    name, estimator_orig
+):
+    """Setting sample_weight to 0 is equivalent to removing corresponding
+    samples even when using non uniform class_weight.
+    """
+    # Note: this test is similar to check_sample_weights_invariance.
+    rng = np.random.RandomState(42)
+    err_msg = (
+        f"For {name}, while using class weight, setting some sample's weight"
+        "to zero is not equivalent to excluding those samples from training."
+    )
+    for n_classes in range(2, 10):
+        X, y = make_classification(
+            n_samples=200,
+            n_classes=n_classes,
+            n_informative=2 * n_classes,
+            random_state=0
+        )
+
+        sample_weight = rng.binomial(1, 0.8, size=y.shape[0])
+        class_weight_dict = {
+            cls: np.random.RandomState(cls).randint(1, 6) for cls in range(n_classes)
+        }
+
+        # Model with some sample_weight set to 0
+        estimator_sw = (
+            clone(estimator_orig).set_params(class_weight=class_weight_dict)
+        )
+        set_random_state(estimator_sw, random_state=0)
+        estimator_sw.fit(X, y, sample_weight=sample_weight)
+
+        # Model excluding samples with 0 sample weight
+        X_exclude = X[sample_weight > 0]
+        y_exclude = y[sample_weight > 0]
+        estimator_exclude = (
+            clone(estimator_orig).set_params(class_weight=class_weight_dict)
+        )
+        set_random_state(estimator_exclude, random_state=0)
+        estimator_exclude.fit(X_exclude, y_exclude)
+
+        # Checking if the output is the same
+        for method in ["predict", "predict_proba", "decision_function", "transform"]:
+            if hasattr(estimator_orig, method):
+                pred_sw = getattr(estimator_sw, method)(X)
+                pred_exclude = getattr(estimator_sw, method)(X)
+                assert_allclose_dense_sparse(pred_sw, pred_exclude, err_msg=err_msg)
 
 
 @ignore_warnings(category=FutureWarning)
