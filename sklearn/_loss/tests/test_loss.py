@@ -1,3 +1,4 @@
+from itertools import product
 import pickle
 
 import numpy as np
@@ -979,6 +980,44 @@ def test_binomial_and_multinomial_loss(global_random_seed):
         binom.loss(y_true=y_train, raw_prediction=raw_prediction),
         multinom.loss(y_true=y_train, raw_prediction=raw_multinom),
     )
+
+
+def test_binomial_vs_alternative_formulation():
+    """Tast that both formulations of the binomial deviance agree.
+
+    Often, the binomial deviance or log loss is written in terms of a variable
+    z in {-1, +1}, but we use y in {0, 1}, hence y = 2 * y - 1.
+    ESL II Eq. (10.18):
+
+        -loglike(z, f) = log(1 + exp(-2 * z * f))
+
+    Note:
+        - ESL 2*f = raw_prediction, hence the factor 2 of ESL disappears.
+        - Deviance = -2*loglike + .., but HalfBinomialLoss is half of the
+          deviance, hence the factor of 2 cancels in the comparison.
+    """
+
+    def alt_loss(y, raw_pred):
+        z = 2 * y - 1
+        return np.mean(np.log(1 + np.exp(-z * raw_pred)))
+
+    bin_loss = HalfBinomialLoss()
+
+    test_data = product(
+        (np.array([0.0, 0, 0]), np.array([1.0, 1, 1])),
+        (np.array([-5.0, -5, -5]), np.array([3.0, 3, 3])),
+    )
+
+    for datum in test_data:
+        assert bin_loss(*datum) == approx(alt_loss(*datum))
+
+    # check the negative gradient against alternative formula from ESLII
+    def alt_gradient(y, raw_pred):
+        z = 2 * y - 1
+        return z / (1 + np.exp(z * raw_pred))
+
+    for datum in test_data:
+        assert bin_loss.gradient(*datum) == approx(alt_gradient(*datum))
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
