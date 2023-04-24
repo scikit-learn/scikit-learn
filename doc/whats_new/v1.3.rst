@@ -483,6 +483,10 @@ Changelog
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
+- |Fix| :class:`PowerTransformer` no longer causes overflow for certain input data when
+  fitting with the Yeo-Johnson method.
+  :pr:`26188` by :user:`Laurent Sorber <lsorber>`.
+
 :mod:`sklearn.tree`
 ...................
 
