@@ -69,8 +69,15 @@ def test_fit_and_score_scorers(scorer, score_method):
         score_method=score_method,
     )
 
-    assert_array_equal(np.argsort(thresholds), np.arange(len(thresholds)))
-    assert np.logical_and(scores >= 0, scores <= 1).all()
+    if score_method in {"max_tnr_at_tpr_constraint", "max_tpr_at_tnr_constraint"}:
+        assert_array_equal(np.argsort(thresholds), np.arange(len(thresholds)))
+        assert isinstance(scores, tuple) and len(scores) == 2
+        for sc in scores:
+            assert np.logical_and(sc >= 0, sc <= 1).all()
+    else:
+        assert_array_equal(np.argsort(thresholds), np.arange(len(thresholds)))
+        assert isinstance(scores, np.ndarray)
+        assert np.logical_and(scores >= 0, scores <= 1).all()
 
 
 @pytest.mark.parametrize(
@@ -89,12 +96,12 @@ def test_fit_and_score_scorers(scorer, score_method):
         (
             make_scorer(roc_curve, needs_proba=True),
             "max_tnr_at_tpr_constraint",
-            [1.0, 1.0, 0.0],
+            [[1.0, 1.0, 0.0], [0.0, 1.0, 1.0]],
         ),
         (
             make_scorer(roc_curve, needs_proba=True),
             "max_tpr_at_tnr_constraint",
-            [0.0, 1.0, 1.0],
+            [[1.0, 1.0, 0.0], [0.0, 1.0, 1.0]],
         ),
     ],
 )
@@ -342,21 +349,21 @@ def test_cutoffclassifier_with_constraint_value(response_method):
     assert score_optimized > score_baseline
 
 
-# def test_cutoffclassifier_limit_tpr_tnr():
-#     """Check that an objective value of 0 give opposite predictions with objective
-#     metrics `max_tnr_at_tpr_constraint` and `max_tpr_at_tnr_constraint`.
-#     """
-#     X, y = load_breast_cancer(return_X_y=True)
-#     estimator = make_pipeline(StandardScaler(), LogisticRegression())
-#     clf = CutOffClassifier(
-#         estimator=estimator,
-#         objective_metric="max_tnr_at_tpr_constraint",
-#         constraint_value=0,
-#     )
-#     y_pred_tpr = clf.fit(X, y).predict(X)
-#     clf.set_params(objective_metric="max_tpr_at_tnr_constraint")
-#     y_pred_tnr = (~clf.fit(X, y).predict(X).astype(bool)).astype(int)
-#     assert np.mean(y_pred_tnr == y_pred_tpr) > 0.98
+def test_cutoffclassifier_limit_tpr_tnr():
+    """Check that an objective value of 0 give opposite predictions with objective
+    metrics `max_tnr_at_tpr_constraint` and `max_tpr_at_tnr_constraint`.
+    """
+    X, y = load_breast_cancer(return_X_y=True)
+    estimator = make_pipeline(StandardScaler(), LogisticRegression())
+    clf = CutOffClassifier(
+        estimator=estimator,
+        objective_metric="max_tnr_at_tpr_constraint",
+        constraint_value=0,
+    )
+    y_pred_tpr = clf.fit(X, y).predict(X)
+    clf.set_params(objective_metric="max_tpr_at_tnr_constraint")
+    y_pred_tnr = (~clf.fit(X, y).predict(X).astype(bool)).astype(int)
+    assert np.mean(y_pred_tnr == y_pred_tpr) == pytest.approx(1.0)
 
 
 def test_cutoffclassifier_metric_with_parameter():
@@ -387,7 +394,10 @@ def test_cutoffclassifier_metric_with_parameter():
         "max_tpr_at_tnr_constraint",
         make_scorer(balanced_accuracy_score),
         make_scorer(f1_score, pos_label="cancer"),
-        {"tp": 1, "tn": 1, "fp": 1, "fn": 1},
+        # penalize false negative since we have an imbalanced dataset and the
+        # accuracy would not be a good metric to optimize the decision
+        # threshold
+        {"tp": 1, "tn": 1, "fp": 1, "fn": -10},
     ],
 )
 def test_cutoffclassifier_with_string_targets(response_method, metric):

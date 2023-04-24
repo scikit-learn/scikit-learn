@@ -99,8 +99,11 @@ def _fit_and_score(
         The decision thresholds used to compute the scores. They are returned in
         ascending order.
 
-    scores : ndarray of shape (n_thresholds,)
-        The scores computed for each decision threshold.
+    scores : ndarray of shape (n_thresholds,) or tuple os such arrays
+        The scores computed for each decision threshold. When `score_method` is
+        `"max_tpr_at_tnr_constraint"` or `"max_tnr_at_tpr_constraint"`, `scores` is a
+        tuple of two arrays, the first one containing the true positive rates and the
+        second one containing the true negative rates.
     """
     arrays = (X, y) if sample_weight is None else (X, y, sample_weight)
     check_consistent_length(*arrays)
@@ -456,12 +459,18 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             "max_tnr_at_tpr_constraint",
             "max_tpr_at_tnr_constraint",
         }:
-            if (
-                self._response_method == "predict_proba"
-                or self._response_method[0] == "predict_proba"
+            if self._response_method == "predict_proba":
+                params_scorer = {"needs_proba": True, "pos_label": self.pos_label}
+            elif (
+                isinstance(self._response_method, list)
+                and self._response_method[0] == "predict_proba"
+                and hasattr(classifier, "predict_proba")
             ):
-                # `needs_proba=True` will first try to use `predict_proba` and then
-                # `decision_function`
+                # TODO: this is due to a limitation in `make_scorer`: ideally, we should
+                # be able to pass a list of response methods to `make_scorer` and give
+                # priority to `predict_proba` other `decision_function`.
+                # Here, we manually check if the classifier provide `predict_proba` to
+                # use `needs_proba` instead and ensure that no error will be raised.
                 params_scorer = {"needs_proba": True, "pos_label": self.pos_label}
             else:
                 params_scorer = {"needs_threshold": True, "pos_label": self.pos_label}
@@ -494,10 +503,26 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             )
         )
 
+        # we add/subtract an arbitrary value to the min/max thresholds to ensure that
+        # we get the case where `y_pred` will be all zeros and all ones.
+        if hasattr(classifier, "predict_proba") and (
+            self._response_method == "predict_proba"
+            or (
+                isinstance(self._response_method, list)
+                and self._response_method[0] == "predict_proba"
+                and isinstance(self._scorer, _ContinuousScorer)
+            )
+        ):
+            # `predict_proba` was used to compute scores
+            min_threshold = 0.0 - np.finfo(np.float64).eps
+            max_threshold = 1.0 + np.finfo(np.float64).eps
+        else:
+            # `decision_function` was used to compute scores
+            min_threshold = np.min([th.min() for th in thresholds]) - 1.0
+            max_threshold = np.max([th.max() for th in thresholds]) + 1.0
+
         # thresholds are sorted in ascending order which is necessary for the
         # interpolation of the score below
-        min_threshold = np.min([th.min() for th in thresholds])
-        max_threshold = np.max([th.max() for th in thresholds])
         thresholds_interpolated = np.linspace(
             min_threshold, max_threshold, num=self.n_thresholds
         )
