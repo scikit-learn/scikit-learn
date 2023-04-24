@@ -13,6 +13,8 @@ endif
 
 ifeq ($(CI), true)
     SPHINX_NUMJOBS_NOPLOT_DEFAULT=2
+else ($(shell uname), Darwin)
+    SPHINX_NUMJOBS_NOPLOT_DEFAULT=1
 else
     SPHINX_NUMJOBS_NOPLOT_DEFAULT=auto
 endif
