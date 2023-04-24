@@ -205,7 +205,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
           If the method is not implemented by the classifier, it will raise an
           error.
 
-    n_thresholds : int, default=1000
+    n_thresholds : int, default=100
         The number of decision threshold to use when discretizing the output
         of the classifier `method`.
 
