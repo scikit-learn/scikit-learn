@@ -171,6 +171,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_selection.r_regression",
     "sklearn.inspection.permutation_importance",
     "sklearn.linear_model.orthogonal_mp",
+    "sklearn.manifold.trustworthiness",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
     "sklearn.metrics.average_precision_score",

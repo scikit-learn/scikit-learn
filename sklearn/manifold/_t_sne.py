@@ -21,7 +21,7 @@ from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMi
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
-from ..utils._param_validation import Interval, StrOptions, Hidden
+from ..utils._param_validation import Interval, StrOptions, Hidden, validate_params
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances, _VALID_METRICS
 
@@ -443,6 +443,14 @@ def _gradient_descent(
     return p, error, i
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "X_embedded": ["array-like", "sparse matrix"],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "metric": [StrOptions(set(_VALID_METRICS).union({"precomputed"})), callable],
+    }
+)
 def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     r"""Indicate to what extent the local structure is retained.
 
