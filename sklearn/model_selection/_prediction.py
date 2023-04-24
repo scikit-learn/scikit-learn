@@ -143,8 +143,9 @@ def _fit_and_score(
             precision, recall, potential_thresholds = scorer(
                 classifier, X_val, y_val, sample_weight=sw_val
             )
-            # thresholds are in increasing order, we also have one missing threshold
-            # TODO: check what to do with the missing threshold or additional scores.
+            # thresholds are in increasing order
+            # the last element of the precision and recall is not associated with any
+            # threshold and should be discarded
             return potential_thresholds, (precision[:-1], recall[:-1])
     return scorer(classifier, X_val, y_val, sample_weight=sw_val)
 
@@ -250,8 +251,13 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     decision_threshold_ : float
         The new decision threshold.
 
-    objective_score_ : float
+    objective_score_ : float or tuple of float
         The score of the objective metric associated with the decision threshold found.
+        When `objective_metric` is one of `"max_tpr_at_tnr_constraint"`,
+        `"max_tnr_at_tpr_constraint"`, `"max_precision_at_recall_constraint"`,
+        `"max_recall_at_precision_constraint"`, it will corresponds to a tuple of
+        two float values: the first one is the score of the metric which is constrained
+        and the second one is the score of the maximized metric.
 
     classes_ : ndarray of shape (n_classes,)
         The class labels.
@@ -305,7 +311,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         constraint_value=None,
         pos_label=None,
         response_method="auto",
-        n_thresholds=1_000,
+        n_thresholds=100,
         cv=None,
         refit="auto",
         n_jobs=None,
@@ -543,12 +549,12 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             )
         ):
             # `predict_proba` was used to compute scores
-            min_threshold = 0.0 - np.finfo(np.float64).eps
-            max_threshold = 1.0 + np.finfo(np.float64).eps
+            min_threshold = 0.0
+            max_threshold = 1.0
         else:
             # `decision_function` was used to compute scores
-            min_threshold = np.min([th.min() for th in thresholds]) - 1.0
-            max_threshold = np.max([th.max() for th in thresholds]) + 1.0
+            min_threshold = np.min([th.min() for th in thresholds])
+            max_threshold = np.max([th.max() for th in thresholds])
 
         # thresholds are sorted in ascending order which is necessary for the
         # interpolation of the score below
@@ -582,6 +588,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                 ]
 
             def _get_best_idx(constrained_score, maximized_score):
+                """Find the index of the best score constrained by another score."""
                 indices = np.arange(len(constrained_score))
                 mask = constrained_score >= constraint_value
                 mask_idx = maximized_score[mask].argmax()

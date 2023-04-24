@@ -10,6 +10,7 @@ from sklearn.metrics import (
     fbeta_score,
     f1_score,
     make_scorer,
+    precision_recall_curve,
     roc_curve,
 )
 from sklearn.metrics._scorer import _ContinuousScorer
@@ -48,6 +49,14 @@ from sklearn.model_selection._prediction import _fit_and_score
             make_scorer(roc_curve, needs_proba=True),
             "max_tpr_at_tnr_constraint",
         ),
+        (
+            make_scorer(precision_recall_curve, needs_proba=True),
+            "max_precision_at_recall_constraint",
+        ),
+        (
+            make_scorer(precision_recall_curve, needs_proba=True),
+            "max_recall_at_precision_constraint",
+        ),
     ],
 )
 def test_fit_and_score_scorers(scorer, score_method):
@@ -69,7 +78,7 @@ def test_fit_and_score_scorers(scorer, score_method):
         score_method=score_method,
     )
 
-    if score_method in {"max_tnr_at_tpr_constraint", "max_tpr_at_tnr_constraint"}:
+    if score_method.startswith("max_"):
         assert_array_equal(np.argsort(thresholds), np.arange(len(thresholds)))
         assert isinstance(scores, tuple) and len(scores) == 2
         for sc in scores:
@@ -102,6 +111,16 @@ def test_fit_and_score_scorers(scorer, score_method):
             make_scorer(roc_curve, needs_proba=True),
             "max_tpr_at_tnr_constraint",
             [[0.0, 1.0, 1.0], [1.0, 1.0, 0.0]],
+        ),
+        (
+            make_scorer(precision_recall_curve, needs_proba=True),
+            "max_precision_at_recall_constraint",
+            [[0.5, 1.0], [1.0, 1.0]],
+        ),
+        (
+            make_scorer(precision_recall_curve, needs_proba=True),
+            "max_recall_at_precision_constraint",
+            [[0.5, 1.0], [1.0, 1.0]],
         ),
     ],
 )
@@ -165,6 +184,14 @@ def test_fit_and_score_prefit(scorer, score_method, expected_score):
         (
             make_scorer(roc_curve, needs_proba=True),
             "max_tpr_at_tnr_constraint",
+        ),
+        (
+            make_scorer(precision_recall_curve, needs_proba=True),
+            "max_precision_at_recall_constraint",
+        ),
+        (
+            make_scorer(precision_recall_curve, needs_proba=True),
+            "max_recall_at_precision_constraint",
         ),
     ],
 )
@@ -230,6 +257,14 @@ def test_fit_and_score_sample_weight(scorer, score_method):
         (
             make_scorer(roc_curve, needs_proba=True),
             "max_tpr_at_tnr_constraint",
+        ),
+        (
+            make_scorer(precision_recall_curve, needs_proba=True),
+            "max_precision_at_recall_constraint",
+        ),
+        (
+            make_scorer(precision_recall_curve, needs_proba=True),
+            "max_recall_at_precision_constraint",
         ),
     ],
 )
@@ -349,21 +384,28 @@ def test_cutoffclassifier_with_constraint_value(response_method):
     assert score_optimized > score_baseline
 
 
-def test_cutoffclassifier_limit_tpr_tnr():
-    """Check that an objective value of 0 give opposite predictions with objective
-    metrics `max_tnr_at_tpr_constraint` and `max_tpr_at_tnr_constraint`.
+@pytest.mark.parametrize(
+    "metrics",
+    [
+        ("max_tpr_at_tnr_constraint", "max_tnr_at_tpr_constraint"),
+        ("max_tnr_at_tpr_constraint", "max_tpr_at_tnr_constraint"),
+    ],
+)
+def test_cutoffclassifier_limit_metric_tradeoff(metrics):
+    """Check that an objective value of 0 give opposite predictions with tnr/tpr and
+    precision/recall.
     """
     X, y = load_breast_cancer(return_X_y=True)
     estimator = make_pipeline(StandardScaler(), LogisticRegression())
-    clf = CutOffClassifier(
+    model = CutOffClassifier(
         estimator=estimator,
-        objective_metric="max_tnr_at_tpr_constraint",
+        objective_metric=metrics[0],
         constraint_value=0,
     )
-    y_pred_tpr = clf.fit(X, y).predict(X)
-    clf.set_params(objective_metric="max_tpr_at_tnr_constraint")
-    y_pred_tnr = (~clf.fit(X, y).predict(X).astype(bool)).astype(int)
-    assert np.mean(y_pred_tnr == y_pred_tpr) == pytest.approx(1.0)
+    y_pred_1 = model.fit(X, y).predict(X)
+    model.set_params(objective_metric=metrics[1])
+    y_pred_2 = (~model.fit(X, y).predict(X).astype(bool)).astype(int)
+    assert np.mean(y_pred_1 == y_pred_2) == pytest.approx(1.0)
 
 
 def test_cutoffclassifier_metric_with_parameter():
@@ -392,6 +434,8 @@ def test_cutoffclassifier_metric_with_parameter():
     [
         "max_tnr_at_tpr_constraint",
         "max_tpr_at_tnr_constraint",
+        "max_precision_at_recall_constraint",
+        "max_recall_at_precision_constraint",
         make_scorer(balanced_accuracy_score),
         make_scorer(f1_score, pos_label="cancer"),
         # penalize false negative since we have an imbalanced dataset and the
@@ -475,7 +519,13 @@ def test_cutoffclassifier_refit(with_sample_weight, global_random_seed):
 
 @pytest.mark.parametrize(
     "objective_metric",
-    ["max_tnr_at_tpr_constraint", "max_tpr_at_tnr_constraint", "balanced_accuracy"],
+    [
+        "max_tnr_at_tpr_constraint",
+        "max_tpr_at_tnr_constraint",
+        "max_precision_at_recall_constraint",
+        "max_recall_at_precision_constraint",
+        "balanced_accuracy",
+    ],
 )
 @pytest.mark.parametrize("fit_params_type", ["list", "array"])
 def test_cutoffclassifier_fit_params(objective_metric, fit_params_type):
@@ -495,16 +545,21 @@ def test_cutoffclassifier_fit_params(objective_metric, fit_params_type):
 
 @pytest.mark.parametrize(
     "objective_metric, constraint_value",
-    [("max_tnr_at_tpr_constraint", 0.5), ("max_tpr_at_tnr_constraint", 0.5)],
+    [
+        ("max_tnr_at_tpr_constraint", 0.5),
+        ("max_tpr_at_tnr_constraint", 0.5),
+        ("max_precision_at_recall_constraint", 0.5),
+        ("max_recall_at_precision_constraint", 0.5),
+    ],
 )
 @pytest.mark.parametrize(
     "response_method", ["auto", "decision_function", "predict_proba"]
 )
-def test_cutoffclassifier_response_method_scorer_tnr_tpr(
+def test_cutoffclassifier_response_method_scorer_with_constraint_metric(
     objective_metric, constraint_value, response_method, global_random_seed
 ):
     """Check that we use the proper scorer and forwarding the requested response method
-    for `max_tpr_at_tnr_constraint` and `max_tnr_at_tpr_constraint`.
+    for TNR/TPR and precision/recall metrics.
     """
     X, y = make_classification(n_samples=100, random_state=global_random_seed)
     classifier = LogisticRegression()
@@ -517,24 +572,26 @@ def test_cutoffclassifier_response_method_scorer_tnr_tpr(
     )
     model.fit(X, y)
 
-    # Note that optimizing TPR will increase the decision threshold while optimizing
-    # TNR will decrease it. We therefore use the centered threshold (i.e. 0.5 for
-    # probabilities and 0.0 for decision function) to check that the decision threshold
-    # is properly set.
     if response_method in ("auto", "predict_proba"):
         # "auto" will fall back  in priority on `predict_proba` if `estimator`
         # supports it.
         # we expect the decision threshold to be in [0, 1]
-        if objective_metric == "max_tnr_at_tpr_constraint":
-            assert 0.5 < model.decision_threshold_ < 1
-        else:  # "max_tpr_at_tnr_constraint"
-            assert 0 < model.decision_threshold_ < 0.5
+        if objective_metric in (
+            "max_tnr_at_tpr_constraint",
+            "max_precision_at_recall_constraint",
+        ):
+            assert 0.5 <= model.decision_threshold_ <= 1
+        else:  # "max_tpr_at_tnr_constraint" or "max_recall_at_precision_constraint"
+            assert 0 <= model.decision_threshold_ <= 0.5
     else:  # "decision_function"
         # we expect the decision function to be centered in 0.0 and to be larger than
         # -1 and 1.
-        if objective_metric == "max_tnr_at_tpr_constraint":
+        if objective_metric in (
+            "max_tnr_at_tpr_constraint",
+            "max_precision_at_recall_constraint",
+        ):
             assert 0 < model.decision_threshold_ < 20
-        else:  # "max_tpr_at_tnr_constraint"
+        else:  # "max_tpr_at_tnr_constraint" or "max_recall_at_precision_constraint"
             assert -20 < model.decision_threshold_ < 0
 
 
@@ -606,6 +663,3 @@ def test_cutoffclassifier_sample_weight_costs_and_again():
     model_sw.fit(X, y, sample_weight=sample_weight)
 
     assert model_repeat.objective_score_ == pytest.approx(model_sw.objective_score_)
-
-
-# TODO: add a test for the precision/recall case
