@@ -211,10 +211,7 @@ def null_space(
         "method": [StrOptions({"standard", "hessian", "modified", "ltsa"})],
         "hessian_tol": [Interval(Real, 0, None, closed="left")],
         "modified_tol": [Interval(Real, 0, None, closed="left")],
-        "random_state": [
-            Interval(Integral, None, None, closed="neither"),
-            "random_state",
-        ],
+        "random_state": ["random_state"],
         "n_jobs": [Interval(Integral, 1, None, closed="left"), None],
     }
 )
