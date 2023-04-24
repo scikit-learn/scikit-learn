@@ -96,12 +96,12 @@ def test_fit_and_score_scorers(scorer, score_method):
         (
             make_scorer(roc_curve, needs_proba=True),
             "max_tnr_at_tpr_constraint",
-            [[1.0, 1.0, 0.0], [0.0, 1.0, 1.0]],
+            [[0.0, 1.0, 1.0], [1.0, 1.0, 0.0]],
         ),
         (
             make_scorer(roc_curve, needs_proba=True),
             "max_tpr_at_tnr_constraint",
-            [[1.0, 1.0, 0.0], [0.0, 1.0, 1.0]],
+            [[0.0, 1.0, 1.0], [1.0, 1.0, 0.0]],
         ),
     ],
 )
@@ -606,3 +606,6 @@ def test_cutoffclassifier_sample_weight_costs_and_again():
     model_sw.fit(X, y, sample_weight=sample_weight)
 
     assert model_repeat.objective_score_ == pytest.approx(model_sw.objective_score_)
+
+
+# TODO: add a test for the precision/recall case

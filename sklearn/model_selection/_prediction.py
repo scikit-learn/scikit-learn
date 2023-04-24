@@ -11,6 +11,7 @@ from ..metrics import (
     confusion_matrix,
     get_scorer_names,
     make_scorer,
+    precision_recall_curve,
     roc_curve,
 )
 from ..metrics._scorer import _ContinuousScorer
@@ -90,8 +91,8 @@ def _fit_and_score(
         decision thresholds and scores.
 
     score_method : str or callable
-        The scoring method to use. Used to detect `tpr` and `tnr` since they are not
-        an usual scikit-learn scorer and need to be handled differently.
+        The scoring method to use. Used to detect if we compute TPR/TNR or precision/
+        recall.
 
     Returns
     -------
@@ -100,10 +101,8 @@ def _fit_and_score(
         ascending order.
 
     scores : ndarray of shape (n_thresholds,) or tuple os such arrays
-        The scores computed for each decision threshold. When `score_method` is
-        `"max_tpr_at_tnr_constraint"` or `"max_tnr_at_tpr_constraint"`, `scores` is a
-        tuple of two arrays, the first one containing the true positive rates and the
-        second one containing the true negative rates.
+        The scores computed for each decision threshold. When TPR/TNR or precision/
+        recall are computed, `scores` is a tuple of two arrays.
     """
     arrays = (X, y) if sample_weight is None else (X, y, sample_weight)
     check_consistent_length(*arrays)
@@ -130,14 +129,23 @@ def _fit_and_score(
         X_val, y_val, sw_val = X, y, sample_weight
         check_is_fitted(classifier, "classes_")
 
-    if isinstance(score_method, str) and score_method in {
-        "max_tpr_at_tnr_constraint",
-        "max_tnr_at_tpr_constraint",
-    }:
-        fpr, tpr, potential_thresholds = scorer(
-            classifier, X_val, y_val, sample_weight=sw_val
-        )
-        return potential_thresholds[::-1], (tpr[::-1], (1 - fpr)[::-1])
+    if isinstance(score_method, str):
+        if score_method in {"max_tpr_at_tnr_constraint", "max_tnr_at_tpr_constraint"}:
+            fpr, tpr, potential_thresholds = scorer(
+                classifier, X_val, y_val, sample_weight=sw_val
+            )
+            # thresholds are in decreasing order
+            return potential_thresholds[::-1], ((1 - fpr)[::-1], tpr[::-1])
+        elif score_method in {
+            "max_precision_at_recall_constraint",
+            "max_recall_at_precision_constraint",
+        }:
+            precision, recall, potential_thresholds = scorer(
+                classifier, X_val, y_val, sample_weight=sw_val
+            )
+            # thresholds are in increasing order, we also have one missing threshold
+            # TODO: check what to do with the missing threshold or additional scores.
+            return potential_thresholds, (precision[:-1], recall[:-1])
     return scorer(classifier, X_val, y_val, sample_weight=sw_val)
 
 
@@ -150,8 +158,9 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         The classifier, fitted or not fitted, for which we want to optimize
         the decision threshold used during `predict`.
 
-    objective_metric : {"max_tpr_at_tnr_constraint", "max_tnr_at_tpr_constraint"}, \
-            str, dict or callable, default="balanced_accuracy"
+    objective_metric : {"max_tpr_at_tnr_constraint", "max_tnr_at_tpr_constraint", \
+            "max_precision_at_recall_constraint, "max_recall_at_precision_constraint"} \
+            , str, dict or callable, default="balanced_accuracy"
         The objective metric to be optimized. Can be one of:
 
         * a string associated to a scoring function (see model evaluation
@@ -161,6 +170,10 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
           positive ratio (TPR) of `constraint_value`;
         * `"max_tpr_at_tnr_constraint"`: find the decision threshold for a true
           negative ratio (TNR) of `constraint_value`.
+        * `"max_precision_at_recall_constraint"`: find the decision threshold for a
+          recall of `constraint_value`;
+        * `"max_recall_at_precision_constraint"`: find the decision threshold for a
+          precision of `constraint_value`.
         * a dictionary to be used as cost-sensitive matrix. The keys of the
           dictionary should be: `("tp", "fp", "tn", "fn")`. The values of the
           dictionary corresponds costs (negative values) and gains (positive
@@ -168,8 +181,10 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
 
     constraint_value : float, default=None
         The value associated with the `objective_metric` metric for which we
-        want to find the decision threshold when `objective_metric` is equal to
-        `"max_tnr_at_tpr_constraint"` or `"max_tpr_at_tnr_constraint"`.
+        want to find the decision threshold when `objective_metric` is equal one of
+        `"max_tnr_at_tpr_constraint"`, `"max_tpr_at_tnr_constraint"`,
+        `"max_precision_at_recall_constraint"`, or
+        `"max_recall_at_precision_constraint".
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class. Used when `objective_metric` is
@@ -258,7 +273,12 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         "objective_metric": [
             StrOptions(
                 set(get_scorer_names())
-                | {"max_tnr_at_tpr_constraint", "max_tpr_at_tnr_constraint"}
+                | {
+                    "max_tnr_at_tpr_constraint",
+                    "max_tpr_at_tnr_constraint",
+                    "max_precision_at_recall_constraint",
+                    "max_recall_at_precision_constraint",
+                }
             ),
             callable,
             MutableMapping,
@@ -369,12 +389,15 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         if isinstance(self.objective_metric, str) and self.objective_metric in {
             "max_tpr_at_tnr_constraint",
             "max_tnr_at_tpr_constraint",
+            "max_precision_at_recall_constraint",
+            "max_recall_at_precision_constraint",
         }:
             if self.constraint_value is None:
                 raise ValueError(
-                    "When `objective_metric` is 'max_tpr_at_tnr_constraint' or "
-                    "'max_tnr_at_tpr_constraint', `constraint_value` must be provided. "
-                    "Got None instead."
+                    "When `objective_metric` is 'max_tpr_at_tnr_constraint', "
+                    "'max_tnr_at_tpr_constraint', 'max_precision_at_recall_constraint',"
+                    " or 'max_recall_at_precision_constraint', `constraint_value` must "
+                    "be provided. Got None instead."
                 )
             constraint_value = self.constraint_value
         else:
@@ -458,6 +481,8 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         elif self.objective_metric in {
             "max_tnr_at_tpr_constraint",
             "max_tpr_at_tnr_constraint",
+            "max_precision_at_recall_constraint",
+            "max_recall_at_precision_constraint",
         }:
             if self._response_method == "predict_proba":
                 params_scorer = {"needs_proba": True, "pos_label": self.pos_label}
@@ -474,7 +499,12 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                 params_scorer = {"needs_proba": True, "pos_label": self.pos_label}
             else:
                 params_scorer = {"needs_threshold": True, "pos_label": self.pos_label}
-            self._scorer = make_scorer(roc_curve, **params_scorer)
+
+            if "tpr" in self.objective_metric:  # tpr/tnr
+                score_func = roc_curve
+            else:  # precision/recall
+                score_func = precision_recall_curve
+            self._scorer = make_scorer(score_func, **params_scorer)
         else:
             scoring = check_scoring(classifier, scoring=self.objective_metric)
             # transform a binary metric into a curve metric for all possible decision
@@ -510,7 +540,6 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             or (
                 isinstance(self._response_method, list)
                 and self._response_method[0] == "predict_proba"
-                and isinstance(self._scorer, _ContinuousScorer)
             )
         ):
             # `predict_proba` was used to compute scores
@@ -543,18 +572,36 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             self.objective_score_ = mean_score[best_idx]
             self.decision_threshold_ = thresholds_interpolated[best_idx]
         else:
-            tpr, tnr = zip(*scores)
-            mean_tpr = _mean_interpolated_score(thresholds, tpr)
-            mean_tnr = _mean_interpolated_score(thresholds, tnr)
+            if "tpr" in self.objective_metric:  # tpr/tnr
+                mean_tnr, mean_tpr = [
+                    _mean_interpolated_score(thresholds, sc) for sc in zip(*scores)
+                ]
+            else:  # precision/recall
+                mean_precision, mean_recall = [
+                    _mean_interpolated_score(thresholds, sc) for sc in zip(*scores)
+                ]
+
+            def _get_best_idx(constrained_score, maximized_score):
+                indices = np.arange(len(constrained_score))
+                mask = constrained_score >= constraint_value
+                mask_idx = maximized_score[mask].argmax()
+                return indices[mask][mask_idx]
 
             if self.objective_metric == "max_tpr_at_tnr_constraint":
-                mask = mean_tnr >= constraint_value
-                best_idx = mean_tpr[mask].argmax()
-            else:
-                mask = mean_tpr >= constraint_value
-                best_idx = mean_tnr[mask].argmax()
-            self.objective_score_ = (mean_tpr[mask][best_idx], mean_tnr[mask][best_idx])
-            self.decision_threshold_ = thresholds_interpolated[mask][best_idx]
+                constrained_score, maximized_score = mean_tnr, mean_tpr
+            elif self.objective_metric == "max_tnr_at_tpr_constraint":
+                constrained_score, maximized_score = mean_tpr, mean_tnr
+            elif self.objective_metric == "max_precision_at_recall_constraint":
+                constrained_score, maximized_score = mean_recall, mean_precision
+            else:  # max_recall_at_precision_constraint
+                constrained_score, maximized_score = mean_precision, mean_recall
+
+            best_idx = _get_best_idx(constrained_score, maximized_score)
+            self.objective_score_ = (
+                constrained_score[best_idx],
+                maximized_score[best_idx],
+            )
+            self.decision_threshold_ = thresholds_interpolated[best_idx]
 
         if hasattr(self.estimator_, "n_features_in_"):
             self.n_features_in_ = self.estimator_.n_features_in_
