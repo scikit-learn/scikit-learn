@@ -872,7 +872,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             (
                 HalfSquaredError,
                 HalfBinomialLoss,
-                HalfMultinomialLoss,
             ),
         ):
             factor = 2
