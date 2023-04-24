@@ -172,13 +172,13 @@ from time import time
 for tol in [-1e-2, -1e-3, -1e-4]:
     start = time()
     feature_selector = SequentialFeatureSelector(
-                    LogisticRegression(),
-                    n_features_to_select="auto",
-                    direction="backward",
-                    scoring="roc_auc",
-                    tol=tol,
-                    n_jobs=2,
-                )
+        LogisticRegression(),
+        n_features_to_select="auto",
+        direction="backward",
+        scoring="roc_auc",
+        tol=tol,
+        n_jobs=2,
+    )
     model = make_pipeline(StandardScaler(), feature_selector)
     model.fit(X, y)
     end = time()
