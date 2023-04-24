@@ -251,7 +251,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     decision_threshold_ : float
         The new decision threshold.
 
-    objective_score_ : float or tuple of float
+    objective_score_ : float or tuple of floats
         The score of the objective metric associated with the decision threshold found.
         When `objective_metric` is one of `"max_tpr_at_tnr_constraint"`,
         `"max_tnr_at_tpr_constraint"`, `"max_precision_at_recall_constraint"`,
@@ -539,8 +539,6 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             )
         )
 
-        # we add/subtract an arbitrary value to the min/max thresholds to ensure that
-        # we get the case where `y_pred` will be all zeros and all ones.
         if hasattr(classifier, "predict_proba") and (
             self._response_method == "predict_proba"
             or (
@@ -556,8 +554,6 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             min_threshold = np.min([th.min() for th in thresholds])
             max_threshold = np.max([th.max() for th in thresholds])
 
-        # thresholds are sorted in ascending order which is necessary for the
-        # interpolation of the score below
         thresholds_interpolated = np.linspace(
             min_threshold, max_threshold, num=self.n_thresholds
         )
@@ -572,7 +568,6 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             )
 
         if constraint_value == "highest":  # find best score
-            # we don't need to sort the scores and directly take the maximum
             mean_score = _mean_interpolated_score(thresholds, scores)
             best_idx = mean_score.argmax()
             self.objective_score_ = mean_score[best_idx]
@@ -701,6 +696,11 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         return {
             "binary_only": True,
             "_xfail_checks": {
-                "check_classifiers_train": "Threshold at probability 0.5 does not hold"
+                "check_classifiers_train": "Threshold at probability 0.5 does not hold",
+                "check_sample_weights_invariance": (
+                    "Due to the cross-validation and sample ordering, removing a sample"
+                    " is not strictly equal to putting is weight to zero. Specific unit"
+                    " tests are added for CutOffClassifier specifically."
+                ),
             },
         }

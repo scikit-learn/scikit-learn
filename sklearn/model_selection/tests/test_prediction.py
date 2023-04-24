@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from sklearn.base import clone
 from sklearn.datasets import load_breast_cancer, load_iris, make_classification
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.exceptions import NotFittedError
@@ -663,3 +664,32 @@ def test_cutoffclassifier_sample_weight_costs_and_again():
     model_sw.fit(X, y, sample_weight=sample_weight)
 
     assert model_repeat.objective_score_ == pytest.approx(model_sw.objective_score_)
+
+
+def test_cutoffclassifier_cv_zeros_sample_weights_equivalence():
+    """Check that passing removing some sample from the dataset `X` is
+    equivalent to passing a `sample_weight` with a factor 0."""
+    X, y = load_iris(return_X_y=True)
+    # Scale the data to avoid any convergence issue
+    X = StandardScaler().fit_transform(X)
+    # Only use 2 classes and select samples such that 2-fold cross-validation
+    # split will lead to an equivalence with a `sample_weight` of 0
+    X = np.vstack((X[:40], X[50:90]))
+    y = np.hstack((y[:40], y[50:90]))
+    sample_weight = np.zeros_like(y)
+    sample_weight[::2] = 1
+
+    estimator = LogisticRegression()
+    model_without_weights = CutOffClassifier(estimator, cv=2)
+    model_with_weights = clone(model_without_weights)
+
+    model_with_weights.fit(X, y, sample_weight=sample_weight)
+    model_without_weights.fit(X[::2], y[::2])
+
+    assert_allclose(
+        model_with_weights.estimator_.coef_, model_without_weights.estimator_.coef_
+    )
+
+    y_pred_with_weights = model_with_weights.predict_proba(X)
+    y_pred_without_weights = model_without_weights.predict_proba(X)
+    assert_allclose(y_pred_with_weights, y_pred_without_weights)
