@@ -59,6 +59,7 @@ from ..utils import column_or_1d
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
+from ..utils.stats import _weighted_percentile
 
 from ._base import BaseEnsemble
 from ._gradient_boosting import predict_stages
@@ -285,6 +286,16 @@ def _update_terminal_regions(
     )
 
 
+def set_huber_delta(loss, y_true, raw_prediction, sample_weight=None):
+    """Calculate and set self.closs.delta based on self.quantile."""
+    abserr = np.abs(y_true - raw_prediction.squeeze())
+    if sample_weight is None:
+        delta = np.quantile(abserr, loss.quantile, axis=0, method="inverted_cdf")
+    else:
+        delta = _weighted_percentile(abserr, sample_weight, 100 * loss.quantile)
+    loss.closs.delta = float(delta)
+
+
 class VerboseReporter:
     """Reports verbose output to stdout.
 
@@ -459,6 +470,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # in update_terminal_regions(), and gradients need to be evaluated at
         # iteration i - 1.
         raw_predictions_copy = raw_predictions.copy()
+        if isinstance(self._loss, HuberLoss):
+            set_huber_delta(
+                loss=self._loss, y_true=y, raw_prediction=raw_predictions_copy
+            )
         gradient = self._loss.gradient(
             y_true=y,
             raw_prediction=raw_predictions_copy,
