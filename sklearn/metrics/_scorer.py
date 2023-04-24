@@ -819,9 +819,11 @@ class _DeprecatedScorers(dict):
 
     def __getitem__(self, item):
         warnings.warn(
-            "sklearn.metrics.SCORERS is deprecated and will be removed in v1.3. "
-            "Please use sklearn.metrics.get_scorer_names to get a list of available "
-            "scorers and sklearn.metrics.get_metric to get scorer.",
+            (
+                "sklearn.metrics.SCORERS is deprecated and will be removed in v1.3."
+                " Please use sklearn.metrics.get_scorer_names to get a list of"
+                " available scorers and sklearn.metrics.get_metric to get scorer."
+            ),
             FutureWarning,
         )
         return super().__getitem__(item)
