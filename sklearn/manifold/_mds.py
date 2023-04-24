@@ -16,7 +16,7 @@ from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
-from ..utils._param_validation import Interval, StrOptions, Hidden
+from ..utils._param_validation import Interval, StrOptions, Hidden, validate_params
 from ..utils.parallel import delayed, Parallel
 
 
@@ -168,6 +168,26 @@ def _smacof_single(
     return X, stress, it + 1
 
 
+@validate_params(
+    {
+        "dissimilarities": ["array-like"],
+        "metric": ["boolean"],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "init": ["array-like", None],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "verbose": [Interval(Integral, None, None, closed="neither")],
+        "eps": [Interval(Real, None, None, closed="neither")],
+        "random_state": ["random_state"],
+        "return_n_iter": ["boolean"],
+        "normalized_stress": [
+            "boolean",
+            StrOptions({"auto"}),
+            Hidden(StrOptions({"warn"})),
+        ],
+    }
+)
 def smacof(
     dissimilarities,
     *,
@@ -205,7 +225,7 @@ def smacof(
 
     Parameters
     ----------
-    dissimilarities : ndarray of shape (n_samples, n_samples)
+    dissimilarities : array-like of shape (n_samples, n_samples)
         Pairwise dissimilarities between the points. Must be symmetric.
 
     metric : bool, default=True
@@ -219,7 +239,7 @@ def smacof(
         ``init`` is used to determine the dimensionality of the embedding
         space.
 
-    init : ndarray of shape (n_samples, n_components), default=None
+    init : array-like of shape (n_samples, n_components), default=None
         Starting configuration of the embedding to initialize the algorithm. By
         default, the algorithm is initialized with a randomly chosen array.
 
