@@ -260,7 +260,7 @@ Changelog
   cardinality greater than `max_bins` or encoded with values greater than
   `max_bins`. For categories with cardinality higher than `max_bins`, the
   infrequent categories are grouped together such there are only `max_bins`
-  categories. :pr:`xxxxx` by `Thomas Fan`_.
+  categories. :pr:`26268` by `Thomas Fan`_.
 
 - |Efficiency| :class:`ensemble.IsolationForest` predict time is now faster
   (typically by a factor of 8 or more). Internally, the estimator now precomputes
