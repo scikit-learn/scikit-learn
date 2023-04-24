@@ -19,7 +19,7 @@ from ..base import (
 )
 from ..utils import check_random_state, check_array
 from ..utils._arpack import _init_arpack_v0
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.fixes import _eigh
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
@@ -199,6 +199,25 @@ def null_space(
         raise ValueError("Unrecognized eigen_solver '%s'" % eigen_solver)
 
 
+@validate_params(
+    {
+        "X": ["array-like", NearestNeighbors],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "reg": [Interval(Real, 0, None, closed="left")],
+        "eigen_solver": [StrOptions({"auto", "arpack", "dense"})],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "method": [StrOptions({"standard", "hessian", "modified", "ltsa"})],
+        "hessian_tol": [Interval(Real, 0, None, closed="left")],
+        "modified_tol": [Interval(Real, 0, None, closed="left")],
+        "random_state": [
+            Interval(Integral, None, None, closed="neither"),
+            "random_state",
+        ],
+        "n_jobs": [Interval(Integral, 1, None, closed="left"), None],
+    }
+)
 def locally_linear_embedding(
     X,
     *,

@@ -172,6 +172,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.inspection.permutation_importance",
     "sklearn.linear_model.orthogonal_mp",
     "sklearn.metrics.accuracy_score",
+    "sklearn.manifold.locally_linear_embedding",
     "sklearn.metrics.auc",
     "sklearn.metrics.average_precision_score",
     "sklearn.metrics.balanced_accuracy_score",
