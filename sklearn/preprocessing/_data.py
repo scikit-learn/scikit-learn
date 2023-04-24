@@ -3342,7 +3342,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
             # Regularize the exponents to avoid blowing them up for a marginal gain in
             # log likelihood
-            x_trans_exp = np.log(np.abs(x_trans))
+            x_trans_exp = np.log(np.abs(x_trans[x_trans != 0]))
             loglike -= 1e-3 * np.sum(np.abs(x_trans_exp[np.isfinite(x_trans_exp)]))
 
             return -loglike
