@@ -165,39 +165,26 @@ print(breast_cancer_data.DESCR)
 # to perform the feature selection.
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from time import time
-import warnings
 
-warnings.filterwarnings("ignore")
-
-lr = LogisticRegression(max_iter=50)
-
-
-def get_features_and_time(n_features_to_select, tol, direction, trial_no):
+for tol in [-1e-2, -1e-3, -1e-4]:
     start = time()
-    sfs = SequentialFeatureSelector(
-        lr, n_features_to_select=n_features_to_select, tol=tol, direction=direction
-    ).fit(X, y)
+    feature_selector = SequentialFeatureSelector(
+                    LogisticRegression(),
+                    n_features_to_select="auto",
+                    direction="backward",
+                    scoring="roc_auc",
+                    tol=tol,
+                    n_jobs=2,
+                )
+    model = make_pipeline(StandardScaler(), feature_selector)
+    model.fit(X, y)
     end = time()
-    print(
-        f"Trial {trial_no}:\nn_features_to_select: {n_features_to_select}\ntol:"
-        f" {tol}\ndirection: {direction}"
-    )
-    print(f"Features selected: {feature_names[sfs.get_support()]}")
+    print(f"\ntol: {tol}")
+    print(f"Features selected: {feature_names[model[-1].get_support()]}")
     print(f"Done in {end - start:.3f}s")
-
-
-trial_no = 0
-for n_features_to_select, tol, direction in zip(
-    ["auto" for _ in range(3)], [-0.1, -1e-2, -1e-3], ["backward" for _ in range(3)]
-):
-    trial_no += 1
-    get_features_and_time(
-        n_features_to_select=n_features_to_select,
-        tol=tol,
-        direction=direction,
-        trial_no=trial_no,
-    )
 
 # %%
 # We can see that the number of features selected is greater for
