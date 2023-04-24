@@ -225,7 +225,7 @@ def _update_terminal_regions(
                 # Function Approximation" by Friedman and "Additive Logistic
                 # Regression" by Friedman, Hastie, Tibshirani. This factor is, however,
                 # wrong or at least arbitrary as it directly multiplies the
-                # learning_rate. We keep it for backwards compatibility.
+                # learning_rate. We keep it for backward compatibility.
                 numerator = np.average(residual_, weights=sw)
                 numerator *= (K - 1) / K
                 # denominator = (diagonal) hessian = prob * (1 - prob)
@@ -861,29 +861,30 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # the addition of each successive stage
             y_val_pred_iter = self._staged_raw_predict(X_val, check_input=False)
 
+        # Older versions of GBT had its own loss functions. With the new common
+        # private loss function submodule _loss, we often are a factor of 2
+        # away from the old version. Here we keep backward compatibility for
+        # oob_scores_ and oob_improvement_, even if the old way is quite
+        # inconsistent (sometimes the gradient is half the gradient, sometimes
+        # not).
+        if isinstance(
+            self._loss,
+            (
+                HalfSquaredError,
+                HalfBinomialLoss,
+                HalfMultinomialLoss,
+            ),
+        ):
+            factor = 2
+        else:
+            factor = 1
+
         # perform boosting iterations
         i = begin_at_stage
         for i in range(begin_at_stage, self.n_estimators):
             # subsampling
             if do_oob:
                 sample_mask = _random_sample_mask(n_samples, n_inbag, random_state)
-                # Older versions of GBT had its own loss functions. With the new common
-                # private loss function submodule _loss, we often are a factor of 2
-                # away from the old version. Here we keep backwards compatibility for
-                # oob_scores_ and oob_improvement_, even if the old way is quite
-                # inconsistent (sometimes the gradient is half the gradient, sometimes
-                # not).
-                if isinstance(
-                    self._loss,
-                    (
-                        HalfSquaredError,
-                        HalfBinomialLoss,
-                        HalfMultinomialLoss,
-                    ),
-                ):
-                    factor = 2
-                else:
-                    factor = 1
                 if i == 0:  # store the initial loss to compute the OOB score
                     initial_loss = factor * self._loss(
                         y[~sample_mask],
@@ -921,7 +922,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 self.oob_score_ = self.oob_scores_[-1]
             else:
                 # no need to fancy index w/ no subsampling
-                self.train_score_[i] = self._loss(y, raw_predictions, sample_weight)
+                self.train_score_[i] = factor * self._loss(
+                    y, raw_predictions, sample_weight
+                )
 
             if self.verbose > 0:
                 verbose_reporter.update(i, self)
