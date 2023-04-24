@@ -212,7 +212,7 @@ def null_space(
         "hessian_tol": [Interval(Real, 0, None, closed="left")],
         "modified_tol": [Interval(Real, 0, None, closed="left")],
         "random_state": ["random_state"],
-        "n_jobs": [Interval(Integral, 1, None, closed="left"), None],
+        "n_jobs": [Integral, None],
     }
 )
 def locally_linear_embedding(
