@@ -13,6 +13,7 @@ from sklearn._loss.loss import (
 from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_low_rank_matrix
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
+from sklearn.preprocessing import OrdinalEncoder
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.base import is_regressor
@@ -1165,49 +1166,6 @@ def test_categorical_spec_no_categories(Est, categorical_features, as_array):
 @pytest.mark.parametrize(
     "Est", (HistGradientBoostingClassifier, HistGradientBoostingRegressor)
 )
-@pytest.mark.parametrize(
-    "use_pandas, feature_name", [(False, "at index 0"), (True, "'f0'")]
-)
-def test_categorical_bad_encoding_errors(Est, use_pandas, feature_name):
-    # Test errors when categories are encoded incorrectly
-
-    gb = Est(categorical_features=[True], max_bins=2)
-
-    if use_pandas:
-        pd = pytest.importorskip("pandas")
-        X = pd.DataFrame({"f0": [0, 1, 2]})
-    else:
-        X = np.array([[0, 1, 2]]).T
-    y = np.arange(3)
-    msg = (
-        f"Categorical feature {feature_name} is expected to have a "
-        "cardinality <= 2 but actually has a cardinality of 3."
-    )
-    with pytest.raises(ValueError, match=msg):
-        gb.fit(X, y)
-
-    if use_pandas:
-        X = pd.DataFrame({"f0": [0, 2]})
-    else:
-        X = np.array([[0, 2]]).T
-    y = np.arange(2)
-    msg = (
-        f"Categorical feature {feature_name} is expected to be encoded "
-        "with values < 2 but the largest value for the encoded categories "
-        "is 2.0."
-    )
-    with pytest.raises(ValueError, match=msg):
-        gb.fit(X, y)
-
-    # nans are ignored in the counts
-    X = np.array([[0, 1, np.nan]]).T
-    y = np.arange(3)
-    gb.fit(X, y)
-
-
-@pytest.mark.parametrize(
-    "Est", (HistGradientBoostingClassifier, HistGradientBoostingRegressor)
-)
 def test_uint8_predict(Est):
     # Non regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/18408
@@ -1388,3 +1346,131 @@ def test_unknown_category_that_are_negative():
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
 
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
+
+
+@pytest.mark.parametrize(
+    "Hist", [HistGradientBoostingClassifier, HistGradientBoostingRegressor]
+)
+def test_categorical_cardinality_higher_than_n_bins(Hist):
+    """Check categorical works when the cardinality is greater than max_bins."""
+
+    rng = np.random.RandomState(42)
+    n_samples = 5_000
+    n_cardinality = 100
+    max_bins = 64
+    f_num = rng.rand(n_samples)
+    f_cat = rng.randint(n_cardinality, size=n_samples)
+    # f_cat is an informative feature
+    y = f_cat % 3 == 0
+    categorical_features = np.asarray([False, True])
+
+    X = np.c_[f_num, f_cat]
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    hist_kwargs = dict(max_iter=10, max_bins=max_bins, random_state=0)
+    hist_native = Hist(categorical_features=categorical_features, **hist_kwargs)
+    hist_native.fit(X_train, y_train)
+
+    # Use a preprocessor with an ordinal encoder should that gives the same model
+    column_transformer = make_column_transformer(
+        ("passthrough", ~categorical_features),
+        (
+            OrdinalEncoder(
+                handle_unknown="use_encoded_value",
+                unknown_value=np.nan,
+                encoded_missing_value=np.nan,
+                max_categories=max_bins,
+                dtype=np.float64,
+            ),
+            categorical_features,
+        ),
+    )
+    hist_with_prep = make_pipeline(
+        column_transformer,
+        Hist(categorical_features=categorical_features, **hist_kwargs),
+    )
+    hist_with_prep.fit(X_train, y_train)
+
+    assert len(hist_native._predictors) == len(hist_with_prep[-1]._predictors)
+    for predictor_1, predictor_2 in zip(
+        hist_native._predictors, hist_with_prep[-1]._predictors
+    ):
+        assert len(predictor_1[0].nodes) == len(predictor_2[0].nodes)
+
+    score_native = hist_native.score(X_test, y_test)
+    score_with_prep = hist_with_prep.score(X_test, y_test)
+    assert score_with_prep == pytest.approx(score_native)
+
+
+@pytest.mark.parametrize(
+    "Hist", [HistGradientBoostingClassifier, HistGradientBoostingRegressor]
+)
+def test_categorical_encoding_higher_than_n_bins(Hist):
+    """Check that categorical encoding can be greater than n_bins."""
+
+    rng = np.random.RandomState(42)
+    n_samples = 5_000
+    n_cardinality = 4
+    max_bins = 10
+    f_num = rng.rand(n_samples)
+    f_cat = rng.randint(n_cardinality, size=n_samples)
+    # f_cat is an informative feature
+    y = f_cat % 3 == 0
+    X1 = np.c_[f_num, f_cat]
+    categorical_features = [False, True]
+
+    # Categorical feature above max_bins
+    f_cat_ = f_cat.copy()
+    f_cat_[f_cat_ == 3] = max_bins + 1
+    X2 = np.c_[f_num, f_cat_]
+
+    X1_train, X1_test, X2_train, X2_test, y_train, y_test = train_test_split(
+        X1, X2, y, random_state=0
+    )
+
+    hist_kwargs = dict(max_iter=10, max_bins=max_bins, random_state=0)
+    hist_in_bounds = Hist(categorical_features=categorical_features, **hist_kwargs)
+    hist_in_bounds.fit(X1_train, y_train)
+    score_in_bounds = hist_in_bounds.score(X1_test, y_test)
+
+    hist_out_of_bounds = Hist(categorical_features=categorical_features, **hist_kwargs)
+    hist_out_of_bounds.fit(X2_train, y_train)
+    score_out_of_bounds = hist_out_of_bounds.score(X2_test, y_test)
+
+    assert len(hist_in_bounds._predictors) == len(hist_out_of_bounds._predictors)
+    for predictor_1, predictor_2 in zip(
+        hist_in_bounds._predictors, hist_out_of_bounds._predictors
+    ):
+        assert len(predictor_1[0].nodes) == len(predictor_2[0].nodes)
+
+    assert score_in_bounds == pytest.approx(score_out_of_bounds)
+
+
+def test_categorical_category_first():
+    """Check that categorical features gives correct result as the first feature."""
+    rng = np.random.RandomState(42)
+    n_samples = 5_000
+    n_cardinality = 12
+    max_bins = 10
+    f_num = rng.rand(n_samples)
+    f_cat = rng.randint(n_cardinality, size=n_samples)
+
+    # f_cat is an informative feature
+    y = f_cat % 3 == 0
+    X = np.c_[f_cat, f_num]
+    categorical_features = [True, False]
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    hist_kwargs = dict(max_iter=20, max_bins=max_bins, random_state=0)
+    # Without categorical features we get lower performance
+    hist_no_cat = HistGradientBoostingRegressor(**hist_kwargs)
+    hist_no_cat.fit(X_train, y_train)
+    assert hist_no_cat.score(X_test, y_test) <= 0.65
+
+    hist_with_cat = HistGradientBoostingRegressor(
+        categorical_features=categorical_features, **hist_kwargs
+    )
+    hist_with_cat.fit(X_train, y_train)
+    assert hist_with_cat.score(X_test, y_test) >= 0.95
