@@ -1429,3 +1429,206 @@ def test_gbr_degenerate_feature_importances():
     y = np.ones((10,))
     gbr = GradientBoostingRegressor().fit(X, y)
     assert_array_equal(gbr.feature_importances_, np.zeros(10, dtype=np.float64))
+
+
+def test_huber_vs_mean_and_median():
+    """Check that huber lies between absolute and squared error."""
+    n_rep = 100
+    n_samples = 10
+    y = np.tile(np.arange(n_samples), n_rep)
+    x1 = np.minimum(y, n_samples / 2)
+    x2 = np.minimum(-y, -n_samples / 2)
+    X = np.c_[x1, x2]
+
+    rng = np.random.RandomState(42)
+    # We want an asymmetric distribution.
+    y = y + rng.exponential(scale=1, size=y.shape)
+
+    gbt_absolute_error = GradientBoostingRegressor(loss="absolute_error").fit(X, y)
+    gbt_huber = GradientBoostingRegressor(loss="huber").fit(X, y)
+    gbt_squared_error = GradientBoostingRegressor().fit(X, y)
+
+    assert np.all(gbt_absolute_error.predict(X) <= gbt_huber.predict(X))
+    assert np.all(gbt_huber.predict(X) <= gbt_squared_error.predict(X))
+
+
+def test_squared_error_exact_backward_compat():
+    """Test squared error GBT backward compat on a simple dataset.
+
+    The results to compare against are taken from scikit-learn v1.2.0.
+    """
+    n_samples = 10
+    y = np.arange(n_samples)
+    x1 = np.minimum(y, n_samples / 2)
+    x2 = np.minimum(-y, -n_samples / 2)
+    X = np.c_[x1, x2]
+    gbt = GradientBoostingRegressor(loss="squared_error", n_estimators=100).fit(X, y)
+
+    pred_result = np.array(
+        [
+            1.39245726e-04,
+            1.00010468e00,
+            2.00007043e00,
+            3.00004051e00,
+            4.00000802e00,
+            4.99998972e00,
+            5.99996312e00,
+            6.99993395e00,
+            7.99989372e00,
+            8.99985660e00,
+        ]
+    )
+    assert_allclose(gbt.predict(X), pred_result, atol=1e-10)
+
+    train_score = np.array(
+        [
+            4.87246390e-08,
+            3.95590036e-08,
+            3.21267865e-08,
+            2.60970300e-08,
+            2.11820178e-08,
+            1.71995782e-08,
+            1.39695549e-08,
+            1.13391770e-08,
+            9.19931587e-09,
+            7.47000575e-09,
+        ]
+    )
+    assert_allclose(gbt.train_score_[-10:], train_score, atol=1e-10)
+
+
+def test_huber_exact_backward_compat():
+    """Test huber GBT backward compat on a simple dataset.
+
+    The results to compare against are taken from scikit-learn v1.2.0.
+    """
+    n_samples = 10
+    y = np.arange(n_samples)
+    x1 = np.minimum(y, n_samples / 2)
+    x2 = np.minimum(-y, -n_samples / 2)
+    X = np.c_[x1, x2]
+    gbt = GradientBoostingRegressor(loss="huber", n_estimators=100, alpha=0.8).fit(X, y)
+
+    assert_allclose(gbt._loss.closs.delta, 0.0001655688041282133)
+
+    pred_result = np.array(
+        [
+            1.48120765e-04,
+            9.99949174e-01,
+            2.00116957e00,
+            2.99986716e00,
+            4.00012064e00,
+            5.00002462e00,
+            5.99998898e00,
+            6.99692549e00,
+            8.00006356e00,
+            8.99985099e00,
+        ]
+    )
+    assert_allclose(gbt.predict(X), pred_result, atol=1e-10)
+
+    train_score = np.array(
+        [
+            2.59484709e-07,
+            2.19165900e-07,
+            1.89644782e-07,
+            1.64556454e-07,
+            1.38705110e-07,
+            1.20373736e-07,
+            1.04746082e-07,
+            9.13835687e-08,
+            8.20245756e-08,
+            7.17122188e-08,
+        ]
+    )
+    assert_allclose(gbt.train_score_[-10:], train_score, atol=1e-10)
+
+
+def test_binomial_error_exact_backward_compat():
+    """Test binary log_loss GBT backward compat on a simple dataset.
+
+    The results to compare against are taken from scikit-learn v1.2.0.
+    """
+    n_samples = 10
+    y = np.arange(n_samples) % 2
+    x1 = np.minimum(y, n_samples / 2)
+    x2 = np.minimum(-y, -n_samples / 2)
+    X = np.c_[x1, x2]
+    gbt = GradientBoostingClassifier(loss="log_loss", n_estimators=100).fit(X, y)
+
+    pred_result = np.array(
+        [
+            [9.99978098e-01, 2.19017313e-05],
+            [2.19017313e-05, 9.99978098e-01],
+            [9.99978098e-01, 2.19017313e-05],
+            [2.19017313e-05, 9.99978098e-01],
+            [9.99978098e-01, 2.19017313e-05],
+            [2.19017313e-05, 9.99978098e-01],
+            [9.99978098e-01, 2.19017313e-05],
+            [2.19017313e-05, 9.99978098e-01],
+            [9.99978098e-01, 2.19017313e-05],
+            [2.19017313e-05, 9.99978098e-01],
+        ]
+    )
+    assert_allclose(gbt.predict_proba(X), pred_result, atol=1e-10)
+
+    train_score = np.array(
+        [
+            1.07742210e-04,
+            9.74889078e-05,
+            8.82113863e-05,
+            7.98167784e-05,
+            7.22210566e-05,
+            6.53481907e-05,
+            5.91293869e-05,
+            5.35023988e-05,
+            4.84109045e-05,
+            4.38039423e-05,
+        ]
+    )
+    assert_allclose(gbt.train_score_[-10:], train_score, atol=1e-10)
+
+
+def test_multinomial_error_exact_backward_compat():
+    """Test multiclass log_loss GBT backward compat on a simple dataset.
+
+    The results to compare against are taken from scikit-learn v1.2.0.
+    """
+    n_samples = 10
+    y = np.arange(n_samples) % 4
+    x1 = np.minimum(y, n_samples / 2)
+    x2 = np.minimum(-y, -n_samples / 2)
+    X = np.c_[x1, x2]
+    gbt = GradientBoostingClassifier(loss="log_loss", n_estimators=100).fit(X, y)
+
+    pred_result = np.array(
+        [
+            [9.99999727e-01, 1.11956255e-07, 8.04921671e-08, 8.04921668e-08],
+            [1.11956254e-07, 9.99999727e-01, 8.04921671e-08, 8.04921668e-08],
+            [1.19417637e-07, 1.19417637e-07, 9.99999675e-01, 8.60526098e-08],
+            [1.19417637e-07, 1.19417637e-07, 8.60526088e-08, 9.99999675e-01],
+            [9.99999727e-01, 1.11956255e-07, 8.04921671e-08, 8.04921668e-08],
+            [1.11956254e-07, 9.99999727e-01, 8.04921671e-08, 8.04921668e-08],
+            [1.19417637e-07, 1.19417637e-07, 9.99999675e-01, 8.60526098e-08],
+            [1.19417637e-07, 1.19417637e-07, 8.60526088e-08, 9.99999675e-01],
+            [9.99999727e-01, 1.11956255e-07, 8.04921671e-08, 8.04921668e-08],
+            [1.11956254e-07, 9.99999727e-01, 8.04921671e-08, 8.04921668e-08],
+        ]
+    )
+    assert_allclose(gbt.predict_proba(X), pred_result, atol=1e-10)
+
+    train_score = np.array(
+        [
+            1.13300150e-06,
+            9.75183397e-07,
+            8.39348103e-07,
+            7.22433588e-07,
+            6.21804338e-07,
+            5.35191943e-07,
+            4.60643966e-07,
+            3.96479930e-07,
+            3.41253434e-07,
+            2.93719550e-07,
+        ]
+    )
+    assert_allclose(gbt.train_score_[-10:], train_score, atol=1e-10)
