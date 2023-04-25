@@ -746,10 +746,11 @@ enable the gathering of infrequent categories are `min_frequency` and
    this fraction of the total number of samples will be considered infrequent.
    The default value is 1, which means every category is encoded separately.
 
-2. `max_categories` is either `None` or any integer greater than 1. This
-   parameter sets an upper limit to the number of output features for each
-   input feature. `max_categories` includes the feature that combines
-   infrequent categories.
+2. `max_categories` is either `None`, any integer greater than 1, or (for
+   :class:`OrdinalEncoder` only) a dictionary mapping a valid feature name to
+   any integer greater than 1. This parameter sets an upper limit to the number
+   of output features for each input feature. `max_categories` includes the
+   feature that combines infrequent categories.
 
 In the following example with :class:`OrdinalEncoder`, the categories `'dog' and
 'snake'` are considered infrequent::

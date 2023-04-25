@@ -2091,6 +2091,87 @@ def test_ordinal_encoder_infrequent_three_levels(kwargs):
     assert_array_equal(X_inverse, expected_inverse)
 
 
+@pytest.mark.parametrize(
+    "kwargs, expected_infrequent_categories, expected_trans, expected_inverse",
+    [
+        (
+            {"max_categories": {"x0": 3, "x1": 3, "x2": 3}},
+            [["a", "d"], ["e", "h"], ["i", "l"]],
+            [[2] * 3, [0] * 3, [1] * 3, [2] * 3, [-1] * 3],
+            [
+                ["infrequent_sklearn"] * 3,
+                ["b", "f", "j"],
+                ["c", "g", "k"],
+                ["infrequent_sklearn"] * 3,
+                [None] * 3,
+            ],
+        ),
+        (
+            {"max_categories": {"x0": 3}},
+            [["a", "d"], None, None],
+            [[2, 0, 0], [0, 1, 1], [1, 2, 2], [2, 3, 3], [-1] * 3],
+            [
+                ["infrequent_sklearn", "e", "i"],
+                ["b", "f", "j"],
+                ["c", "g", "k"],
+                ["infrequent_sklearn", "h", "l"],
+                [None] * 3,
+            ],
+        ),
+        (
+            {"max_categories": {"x0": 3, "x1": 2, "x2": 1}},
+            [["a", "d"], ["e", "g", "h"], ["i", "j", "k", "l"]],
+            [[2, 1, 0], [0, 0, 0], [1, 1, 0], [2, 1, 0], [-1] * 3],
+            [
+                ["infrequent_sklearn"] * 3,
+                ["b", "f", "infrequent_sklearn"],
+                ["c", "infrequent_sklearn", "infrequent_sklearn"],
+                ["infrequent_sklearn"] * 3,
+                [None] * 3,
+            ],
+        ),
+    ],
+)
+def test_ordinal_encoder_infrequent_three_levels_multiple_features(
+    kwargs, expected_infrequent_categories, expected_trans, expected_inverse
+):
+    """Test parameters for grouping multiple features into the infrequent category."""
+
+    X_train = (
+        [["a", "e", "i"]] * 5
+        + [["b", "f", "j"]] * 20
+        + [["c", "g", "k"]] * 10
+        + [["d", "h", "l"]] * 3
+    )
+    ordinal = OrdinalEncoder(
+        handle_unknown="use_encoded_value", unknown_value=-1, **kwargs
+    ).fit(X_train)
+    assert_array_equal(
+        ordinal.categories_,
+        [["a", "b", "c", "d"], ["e", "f", "g", "h"], ["i", "j", "k", "l"]],
+    )
+
+    assert len(ordinal.infrequent_categories_) == len(expected_infrequent_categories)
+    for expected, actual in zip(
+        ordinal.infrequent_categories_, expected_infrequent_categories
+    ):
+        assert_array_equal(expected, actual)
+
+    X_test = [
+        ["a", "e", "i"],
+        ["b", "f", "j"],
+        ["c", "g", "k"],
+        ["d", "h", "l"],
+        ["x", "y", "z"],
+    ]
+
+    X_trans = ordinal.transform(X_test)
+    assert_allclose(X_trans, expected_trans)
+
+    X_inverse = ordinal.inverse_transform(X_trans)
+    assert_array_equal(X_inverse, expected_inverse)
+
+
 def test_ordinal_encoder_infrequent_three_levels_user_cats():
     """Test that the order of the categories provided by a user is respected.
 
@@ -2148,7 +2229,29 @@ def test_ordinal_encoder_infrequent_mixed():
     assert_array_equal(X_inverse, expected_inverse)
 
 
-def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
+@pytest.mark.parametrize(
+    "kwargs, expected_infrequent_categories, expected_trans",
+    [
+        (
+            {"max_categories": 3},
+            [["a", "b"], [0, 3, 12], ["bird", "snake"]],
+            [[2, 2, 0], [2, 2, 2], [1, 1, 2], [0, 0, 1]],
+        ),
+        (
+            {"max_categories": {"str": 3}},
+            [["a", "b"], None, None],
+            [[2, 4, 1], [2, 0, 3], [1, 3, 0], [0, 2, 2]],
+        ),
+        (
+            {"max_categories": {"str": 3, "int": 2, "categorical": 1}},
+            [["a", "b"], [0, 3, 5, 12], ["bird", "cat", "dog", "snake"]],
+            [[2, 1, 0], [2, 1, 0], [1, 0, 0], [0, 1, 0]],
+        ),
+    ],
+)
+def test_ordinal_encoder_infrequent_multiple_categories_dtypes(
+    kwargs, expected_infrequent_categories, expected_trans
+):
     """Test infrequent categories with a pandas DataFrame with multiple dtypes."""
 
     pd = pytest.importorskip("pandas")
@@ -2165,7 +2268,7 @@ def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
         columns=["str", "int", "categorical"],
     )
 
-    ordinal = OrdinalEncoder(max_categories=3).fit(X)
+    ordinal = OrdinalEncoder(**kwargs).fit(X)
     # X[:, 0] 'a', 'b', 'c' have the same frequency. 'a' and 'b' will be
     # considered infrequent because they appear first when sorted
 
@@ -2175,9 +2278,11 @@ def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
 
     # X[:, 2] "snake" and "bird" or infrequent
 
-    assert_array_equal(ordinal.infrequent_categories_[0], ["a", "b"])
-    assert_array_equal(ordinal.infrequent_categories_[1], [0, 3, 12])
-    assert_array_equal(ordinal.infrequent_categories_[2], ["bird", "snake"])
+    assert len(ordinal.infrequent_categories_) == len(expected_infrequent_categories)
+    for expected, actual in zip(
+        ordinal.infrequent_categories_, expected_infrequent_categories
+    ):
+        assert_array_equal(expected, actual)
 
     X_test = pd.DataFrame(
         {
@@ -2190,7 +2295,6 @@ def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
         },
         columns=["str", "int", "categorical"],
     )
-    expected_trans = [[2, 2, 0], [2, 2, 2], [1, 1, 2], [0, 0, 1]]
 
     X_trans = ordinal.transform(X_test)
     assert_allclose(X_trans, expected_trans)

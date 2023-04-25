@@ -250,16 +250,37 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             for category, indices in zip(self.categories_, infrequent_indices)
         ]
 
+    def _check_max_categories(self):
+        """
+        This function checks whether the value of max_categories
+        enables infrequent categories.
+        """
+        max_categories = getattr(self, "max_categories", None)
+        return max_categories is not None and max_categories >= 1
+
     def _check_infrequent_enabled(self):
         """
         This functions checks whether _infrequent_enabled is True or False.
         This has to be called after parameter validation in the fit function.
         """
-        max_categories = getattr(self, "max_categories", None)
         min_frequency = getattr(self, "min_frequency", None)
         self._infrequent_enabled = (
-            max_categories is not None and max_categories >= 1
+            self._check_max_categories()
         ) or min_frequency is not None
+
+    def _has_infrequent_categories(self, n_current_features, col_idx):
+        """
+        This function checks if there are any infrequent categories.
+        """
+        return (
+            self.max_categories is not None and self.max_categories < n_current_features
+        )
+
+    def _get_frequent_category_count(self, col_idx):
+        """
+        This functions computes the number of frequent categories.
+        """
+        return self.max_categories - 1
 
     def _identify_infrequent(self, category_count, n_samples, col_idx):
         """Compute the infrequent indices.
@@ -290,9 +311,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             infrequent_mask = np.zeros(category_count.shape[0], dtype=bool)
 
         n_current_features = category_count.size - infrequent_mask.sum() + 1
-        if self.max_categories is not None and self.max_categories < n_current_features:
+        if self._has_infrequent_categories(n_current_features, col_idx):
             # max_categories includes the one infrequent category
-            frequent_category_count = self.max_categories - 1
+            frequent_category_count = self._get_frequent_category_count(col_idx)
             if frequent_category_count == 0:
                 # All categories are infrequent
                 infrequent_mask[:] = True
@@ -1294,11 +1315,13 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         .. versionadded:: 1.3
             Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
 
-    max_categories : int, default=None
+    max_categories : int or dict, default=None
         Specifies an upper limit to the number of output categories for each input
         feature when considering infrequent categories. If there are infrequent
         categories, `max_categories` includes the category representing the
-        infrequent categories along with the frequent categories. If `None`,
+        infrequent categories along with the frequent categories.
+        If `max_categories` is a dictionary, each key-value pair represents the
+        upper limit to the number of output categories per feature. If `None`,
         there is no limit to the number of output features.
 
         `max_categories` do **not** take into account missing or unknown
@@ -1419,7 +1442,11 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "encoded_missing_value": [Integral, type(np.nan)],
         "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
         "unknown_value": [Integral, type(np.nan), None],
-        "max_categories": [Interval(Integral, 1, None, closed="left"), None],
+        "max_categories": [
+            Interval(Integral, 1, None, closed="left"),
+            dict,
+            None,
+        ],
         "min_frequency": [
             Interval(Integral, 1, None, closed="left"),
             Interval(RealNotInt, 0, 1, closed="neither"),
@@ -1445,6 +1472,84 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.encoded_missing_value = encoded_missing_value
         self.min_frequency = min_frequency
         self.max_categories = max_categories
+
+    def _validate_max_categories_dict(self):
+        """
+        This functions validates max_categories when it is a dictionary.
+        """
+        if len(self.max_categories) == 0:
+            raise ValueError("max_categories dictionary must be non-empty.")
+
+        for feature_name in self.max_categories.keys():
+            if not isinstance(feature_name, str):
+                raise TypeError(
+                    "feature in max_categories dictionary "
+                    "must be a string, "
+                    f"got {type(feature_name).__name__} for {feature_name}."
+                )
+
+        feature_names = set(_check_feature_names_in(self))
+        if self.max_categories.keys() > feature_names:
+            excess_feature_names = ", ".join(
+                sorted(self.max_categories.keys() - feature_names)
+            )
+            raise ValueError(
+                "features in max_categories dictionary "
+                "must be a valid feature name, "
+                f"got {excess_feature_names}."
+            )
+
+        for max_count in self.max_categories.values():
+            if not isinstance(max_count, Integral):
+                raise TypeError(
+                    "value in max_categories dictionary "
+                    "must be an integer, "
+                    f"got {type(max_count).__name__} for {max_count}."
+                )
+            if max_count < 1:
+                raise ValueError(
+                    "value in max_categories dictionary "
+                    "must be at least 1, "
+                    f"got {max_count}."
+                )
+
+    def _check_max_categories(self):
+        """
+        This function checks whether the value of max_categories
+        enables infrequent categories.
+        """
+        max_categories = getattr(self, "max_categories", None)
+
+        if max_categories is None:
+            return False
+        elif isinstance(max_categories, Integral):
+            return max_categories >= 1
+        else:
+            return all(max_count >= 1 for max_count in max_categories.values())
+
+    def _has_infrequent_categories(self, n_current_features, col_idx):
+        """
+        This function checks if there are any infrequent categories.
+        """
+        if self.max_categories is None:
+            return False
+        elif isinstance(self.max_categories, Integral):
+            return self.max_categories < n_current_features
+        else:
+            feature_name = _check_feature_names_in(self)[col_idx]
+            return (
+                feature_name in self.max_categories
+            ) and self.max_categories[feature_name] < n_current_features
+
+    def _get_frequent_category_count(self, col_idx):
+        """
+        This functions computes the number of frequent categories.
+        """
+        if isinstance(self.max_categories, Integral):
+            return self.max_categories - 1
+        else:
+            feature_name = _check_feature_names_in(self)[col_idx]
+            return self.max_categories[feature_name] - 1
 
     def fit(self, X, y=None):
         """
@@ -1487,6 +1592,11 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 "handle_unknown is 'use_encoded_value', "
                 f"got {self.unknown_value}."
             )
+
+        if isinstance(self.max_categories, dict):
+            self._check_n_features(X, reset=True)
+            self._check_feature_names(X, reset=True)
+            self._validate_max_categories_dict()
 
         # `_fit` will only raise an error when `self.handle_unknown="error"`
         fit_results = self._fit(
