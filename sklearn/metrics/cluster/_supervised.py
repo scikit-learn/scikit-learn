@@ -476,7 +476,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
@@ -556,7 +556,7 @@ def homogeneity_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
@@ -631,7 +631,7 @@ def completeness_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
@@ -713,7 +713,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
