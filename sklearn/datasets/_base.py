@@ -35,6 +35,11 @@ IMAGES_MODULE = "sklearn.datasets.images"
 RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "checksum"])
 
 
+@validate_params(
+    {
+        "data_home": [str, os.PathLike, None],
+    }
+)
 def get_data_home(data_home=None) -> str:
     """Return the path of the scikit-learn data directory.
 
@@ -58,7 +63,7 @@ def get_data_home(data_home=None) -> str:
 
     Returns
     -------
-    data_home: str
+    data_home: str or path-like, default=None
         The path to scikit-learn data directory.
     """
     if data_home is None:
