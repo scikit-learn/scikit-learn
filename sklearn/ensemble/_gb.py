@@ -949,7 +949,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
-        ``init`` has to provide :meth:`fit` and :meth:`predict_proba`. If
+        ``init`` has to provide :term:`fit` and :term:`predict_proba`. If
         'zero', the initial raw predictions are set to zero. By default, a
         ``DummyEstimator`` predicting the classes priors is used.
 
