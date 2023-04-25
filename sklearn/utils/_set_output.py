@@ -57,7 +57,7 @@ def _wrap_in_pandas_container(
             data_to_wrap.columns = columns
         return data_to_wrap
 
-    return pd.DataFrame(data_to_wrap, index=index, columns=columns)
+    return pd.DataFrame(data_to_wrap, index=index, columns=columns, copy=False)
 
 
 def _get_output_config(method, estimator=None):

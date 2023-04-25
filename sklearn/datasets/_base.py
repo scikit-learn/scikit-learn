@@ -91,7 +91,7 @@ def _convert_data_dataframe(
 ):
     pd = check_pandas_support("{} with as_frame=True".format(caller_name))
     if not sparse_data:
-        data_df = pd.DataFrame(data, columns=feature_names)
+        data_df = pd.DataFrame(data, columns=feature_names, copy=False)
     else:
         data_df = pd.DataFrame.sparse.from_spmatrix(data, columns=feature_names)
 
