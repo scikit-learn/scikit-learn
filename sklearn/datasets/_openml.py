@@ -903,7 +903,7 @@ def fetch_openml(
         data_home = None
     else:
         data_home = get_data_home(data_home=data_home)
-        data_home = join(data_home, "openml")
+        data_home = join(str(data_home), "openml")
 
     # check valid function arguments. data_id XOR (name, version) should be
     # provided
