@@ -221,6 +221,20 @@ class _BaseScorer:
         """Return non-default make_scorer arguments for repr."""
         return ""
 
+    def _from_scores_to_class_labels(self, y_score, threshold, classes):
+        """Threshold `y_score` and return the associated class labels."""
+        pos_label = self._get_pos_label()
+        if pos_label is None:
+            map_thresholded_score_to_label = np.array([0, 1])
+        else:
+            pos_label_idx = np.flatnonzero(classes == pos_label)[0]
+            neg_label_idx = np.flatnonzero(classes != pos_label)[0]
+            map_thresholded_score_to_label = np.array([neg_label_idx, pos_label_idx])
+
+        return classes[
+            map_thresholded_score_to_label[(y_score >= threshold).astype(int)]
+        ]
+
 
 class _PredictScorer(_BaseScorer):
     def _score(self, method_caller, estimator, X, y_true, sample_weight=None):
@@ -394,14 +408,6 @@ class _ContinuousScorer(_BaseScorer):
             Score function applied to prediction of estimator on X.
         """
         pos_label = self._get_pos_label()
-        # TODO: this part is also repeated in the predict of `CutOffClassifier`
-        # We should refactor this
-        if pos_label is None:
-            map_pred_to_label = np.array([0, 1])
-        else:
-            pos_label_idx = np.flatnonzero(estimator.classes_ == pos_label)[0]
-            neg_label_idx = np.flatnonzero(estimator.classes_ != pos_label)[0]
-            map_pred_to_label = np.array([neg_label_idx, pos_label_idx])
         y_score = method_caller(estimator, self.response_method, X, pos_label=pos_label)
 
         if sample_weight is not None:
@@ -410,18 +416,16 @@ class _ContinuousScorer(_BaseScorer):
             score_func = self._score_func
 
         potential_thresholds = np.unique(y_score)
-        score_thresholds = np.array(
-            [
-                self._sign
-                * score_func(
-                    y_true,
-                    estimator.classes_[map_pred_to_label[(y_score >= th).astype(int)]],
-                    **self._kwargs,
-                )
-                for th in potential_thresholds
-            ]
-        )
-        return potential_thresholds, score_thresholds
+        score_thresholds = [
+            self._sign
+            * score_func(
+                y_true,
+                self._from_scores_to_class_labels(y_score, th, estimator.classes_),
+                **self._kwargs,
+            )
+            for th in potential_thresholds
+        ]
+        return potential_thresholds, np.array(score_thresholds)
 
 
 @validate_params(
