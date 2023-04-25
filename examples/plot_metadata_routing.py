@@ -622,9 +622,16 @@ except Exception as e:
 # Third Party Development and scikit-learn Dependency
 # ---------------------------------------------------
 #
-# As seen above, information is communicated between classes using a dictionary
-# representation as the output of ``get_metadata_routing``. Therefore it is
-# possible for a third party library to not have a hard dependency on
-# scikit-learn, and internally (re)implement or vendor the functionality
-# required to present the dictionary representation of the routing data to
-# other classes inside and outside scikit-learn.
+# As seen above, information is communicated between classes using
+# :class:`~utils.metadata_routing.MetadataRequest` and
+# :class:`~utils.metadata_routing.MetadataRouter`. It is strongly not advised,
+# but possible to vendor the tools related to metadata-routing if you strictly
+# want to have a scikit-learn compatible estimator, without depending on the
+# scikit-learn package. If the following conditions are met, you do NOT need to
+# modify your code at all:
+#  - your estimator inherits from :class:`~base.BaseEstimator`
+#  - the parameters consumed by your estimator's methods, e.g. ``fit``, are
+#    explicitly defined in the method's signature, as opposed to being
+#    ``*args`` or ``*kwargs``.
+#  - you do not route any metadata to the underlying objects, i.e. you're not a
+#    *router*.

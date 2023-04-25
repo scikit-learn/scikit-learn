@@ -8,9 +8,10 @@ Metadata Routing
 
 .. note::
   This feature, default metadata routing, and the API related to it are **all
-  experimental**, and might change without the usual deprecation cycle. By
-  default this feature is not enabled. You can enable this feature  by setting
-  the ``enable_metadata_routing`` flag to ``True``:
+  experimental** and many of them are **not implemented** yet, and might change
+  without the usual deprecation cycle. By default this feature is not enabled.
+  You can enable this feature  by setting the ``enable_metadata_routing`` flag
+  to ``True``:
 
     >>> import sklearn
     >>> sklearn.set_config(enable_metadata_routing=True)

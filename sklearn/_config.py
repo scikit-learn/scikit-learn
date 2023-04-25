@@ -146,7 +146,7 @@ def set_config(
         - `False`: Metadata routing is disabled, use the old syntax.
         - `None`: Configuration is unchanged
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.3
 
     See Also
     --------
@@ -276,7 +276,7 @@ def config_context(
         - `False`: Metadata routing is disabled, use the old syntax.
         - `None`: Configuration is unchanged
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.3
 
     Yields
     ------
