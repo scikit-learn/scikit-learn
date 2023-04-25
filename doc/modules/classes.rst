@@ -1218,6 +1218,16 @@ Hyper-parameter optimizers
    model_selection.RandomizedSearchCV
    model_selection.HalvingRandomSearchCV
 
+Model post-fit tuning
+---------------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   model_selection.CutOffClassifier
 
 Model validation
 ----------------
