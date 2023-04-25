@@ -22,7 +22,7 @@ from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
 from ..utils.fixes import _open_binary, _open_text, _read_text, _contents
-from ..utils._param_validation import validate_params, Interval
+from ..utils._param_validation import validate_params, Interval, StrOptions
 
 import numpy as np
 
@@ -35,6 +35,11 @@ IMAGES_MODULE = "sklearn.datasets.images"
 RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "checksum"])
 
 
+@validate_params(
+    {
+        "data_home": [str, os.PathLike, None],
+    }
+)
 def get_data_home(data_home=None) -> str:
     """Return the path of the scikit-learn data directory.
 
@@ -58,7 +63,7 @@ def get_data_home(data_home=None) -> str:
 
     Returns
     -------
-    data_home: str
+    data_home: str or path-like, default=None
         The path to scikit-learn data directory.
     """
     if data_home is None:
@@ -68,12 +73,17 @@ def get_data_home(data_home=None) -> str:
     return data_home
 
 
+@validate_params(
+    {
+        "data_home": [str, os.PathLike, None],
+    }
+)
 def clear_data_home(data_home=None):
     """Delete all the content of the data home cache.
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
         is `~/sklearn_learn_data`.
     """
@@ -99,6 +109,19 @@ def _convert_data_dataframe(
     return combined_df, X, y
 
 
+@validate_params(
+    {
+        "container_path": [str, os.PathLike],
+        "description": [str, None],
+        "categories": [list, None],
+        "load_content": ["boolean"],
+        "shuffle": ["boolean"],
+        "encoding": [str, None],
+        "decode_error": [StrOptions({"strict", "ignore", "replace"})],
+        "random_state": ["random_state"],
+        "allowed_extensions": [list, None],
+    }
+)
 def load_files(
     container_path,
     *,
