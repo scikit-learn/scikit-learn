@@ -151,7 +151,17 @@ def _fit_and_score(
 
 
 class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
-    """Decision threshold calibration for binary classification.
+    """Decision threshold tuning for binary classification.
+
+    This estimator post-tunes the decision threshold (cut-off point) that is
+    used for converting probabilities (i.e. output of `predict_proba`) or
+    decision function (i.e. output of `decision_function`) into a predicted
+    class. The tuning is done by maximizing a binary metric, potentially
+    constrained by a another metric.
+
+    Read more in the :ref:`User Guide <cutoffclassifier>`.
+
+    .. versionadded:: 1.3
 
     Parameters
     ----------
@@ -248,6 +258,9 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
 
     Attributes
     ----------
+    estimator_ : estimator instance
+        The fitted classifier used when predicting.
+
     decision_threshold_ : float
         The new decision threshold.
 
@@ -269,6 +282,55 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
+
+    See Also
+    --------
+    sklearn.calibration.CalibratedClassifierCV : Estimator that calibrates
+        probabilities.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.metrics import classification_report
+    >>> from sklearn.model_selection import CutOffClassifier, train_test_split
+    >>> X, y = make_classification(
+    ...     n_samples=1_000, weights=[0.9, 0.1], class_sep=0.8, random_state=42
+    ... )
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, stratify=y, random_state=42
+    ... )
+    >>> classifier = RandomForestClassifier(random_state=0).fit(X_train, y_train)
+    >>> print(classification_report(y_test, classifier.predict(X_test)))
+                  precision    recall  f1-score   support
+    <BLANKLINE>
+               0       0.94      0.99      0.96       224
+               1       0.80      0.46      0.59        26
+    <BLANKLINE>
+        accuracy                           0.93       250
+       macro avg       0.87      0.72      0.77       250
+    weighted avg       0.93      0.93      0.92       250
+    <BLANKLINE>
+    >>> classifier_tuned = CutOffClassifier(
+    ...     classifier, objective_metric="max_precision_at_recall_constraint",
+    ...     constraint_value=0.7,
+    ... ).fit(X_train, y_train)
+    >>> print(
+    ...     f"Cut-off point found at {classifier_tuned.decision_threshold_:.3f} for a "
+    ...     f"recall of {classifier_tuned.objective_score_[0]:.3f} and a precision of "
+    ...     f"{classifier_tuned.objective_score_[1]:.3f}."
+    ... )
+    Cut-off point found at 0.384 for a recall of 0.703 and a precision of 0.714.
+    >>> print(classification_report(y_test, classifier_tuned.predict(X_test)))
+                  precision    recall  f1-score   support
+    <BLANKLINE>
+               0       0.95      0.97      0.96       224
+               1       0.71      0.58      0.64        26
+    <BLANKLINE>
+        accuracy                           0.93       250
+       macro avg       0.83      0.78      0.80       250
+    weighted avg       0.93      0.93      0.93       250
+    <BLANKLINE>
     """
 
     _parameter_constraints: dict = {
