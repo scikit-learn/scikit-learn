@@ -393,7 +393,16 @@ class _ContinuousScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        y_score = method_caller(estimator, self.response_method, X)
+        pos_label = self._get_pos_label()
+        # TODO: this part is also repeated in the predict of `CutOffClassifier`
+        # We should refactor this
+        if pos_label is None:
+            map_pred_to_label = np.array([0, 1])
+        else:
+            pos_label_idx = np.flatnonzero(estimator.classes_ == pos_label)[0]
+            neg_label_idx = np.flatnonzero(estimator.classes_ != pos_label)[0]
+            map_pred_to_label = np.array([neg_label_idx, pos_label_idx])
+        y_score = method_caller(estimator, self.response_method, X, pos_label=pos_label)
 
         if sample_weight is not None:
             score_func = partial(self._score_func, sample_weight=sample_weight)
@@ -406,7 +415,7 @@ class _ContinuousScorer(_BaseScorer):
                 self._sign
                 * score_func(
                     y_true,
-                    estimator.classes_[(y_score >= th).astype(int)],
+                    estimator.classes_[map_pred_to_label[(y_score >= th).astype(int)]],
                     **self._kwargs,
                 )
                 for th in potential_thresholds

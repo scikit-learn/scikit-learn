@@ -694,11 +694,19 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         """
         check_is_fitted(self, "estimator_")
         pos_label = self._scorer._get_pos_label()
+        # TODO: this part is also repeated in the predict of `_ContinuousScorer`
+        # We should refactor this
+        if pos_label is None:
+            map_pred_to_label = np.array([0, 1])
+        else:
+            pos_label_idx = np.flatnonzero(self.classes_ == pos_label)[0]
+            neg_label_idx = np.flatnonzero(self.classes_ != pos_label)[0]
+            map_pred_to_label = np.array([neg_label_idx, pos_label_idx])
         y_score, _ = _get_response_values_binary(
             self.estimator_, X, self._response_method, pos_label=pos_label
         )
-        y_pred = (y_score >= self.decision_threshold_).astype(int)
-        return self.classes_[y_pred]
+        y_pred_pos_label = (y_score >= self.decision_threshold_).astype(int)
+        return self.classes_[map_pred_to_label[y_pred_pos_label]]
 
     @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):

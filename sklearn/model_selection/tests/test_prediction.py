@@ -439,10 +439,7 @@ def test_cutoffclassifier_metric_with_parameter():
         "max_recall_at_precision_constraint",
         make_scorer(balanced_accuracy_score),
         make_scorer(f1_score, pos_label="cancer"),
-        # penalize false negative since we have an imbalanced dataset and the
-        # accuracy would not be a good metric to optimize the decision
-        # threshold
-        {"tp": 1, "tn": 1, "fp": 1, "fn": -10},
+        {"tp": 5, "tn": 1, "fp": -1, "fn": -1},
     ],
 )
 def test_cutoffclassifier_with_string_targets(response_method, metric):
@@ -454,7 +451,7 @@ def test_cutoffclassifier_with_string_targets(response_method, metric):
     # Encode numeric targets by meaningful strings. We purposely designed the class
     # names such that the `pos_label` is the first alphabetically sorted class and thus
     # encoded as 0.
-    classes = np.array(["healthy", "cancer"], dtype=object)
+    classes = np.array(["cancer", "healthy"], dtype=object)
     y = classes[y]
     model = CutOffClassifier(
         estimator=make_pipeline(StandardScaler(), LogisticRegression()),
@@ -626,7 +623,8 @@ def test_cutoffclassifier_objective_metric_dict(global_random_seed):
     assert model.decision_threshold_ < 0.01
     assert np.mean(model.predict(X) == 1) > 0.9
 
-    # flipping the `pos_label` to zero should flip as well the decision threshold
+    # flipping the `pos_label` to zero should force the classifier to always predict 0
+    # and thus have a low threshold
     pos_label = 0
     model = CutOffClassifier(
         classifier,
@@ -636,7 +634,7 @@ def test_cutoffclassifier_objective_metric_dict(global_random_seed):
     )
     model.fit(X, y)
 
-    assert model.decision_threshold_ > 0.99
+    assert model.decision_threshold_ < 0.01
     assert np.mean(model.predict(X) == 0) > 0.9
 
 
@@ -655,7 +653,7 @@ def test_cutoffclassifier_sample_weight_costs_and_again():
     # we use a prefit classifier to simplify the test
     cv = "prefit"
     estimator = LogisticRegression().fit(X, y)
-    costs_and_again = {"tp": 1, "tn": 1, "fp": 1, "fn": 1}
+    costs_and_again = {"tp": 1, "tn": 1, "fp": -1, "fn": -1}
 
     model_repeat = CutOffClassifier(estimator, cv=cv, objective_metric=costs_and_again)
     model_repeat.fit(X_repeated, y_repeated, sample_weight=None)
@@ -693,3 +691,8 @@ def test_cutoffclassifier_cv_zeros_sample_weights_equivalence():
     y_pred_with_weights = model_with_weights.predict_proba(X)
     y_pred_without_weights = model_without_weights.predict_proba(X)
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
+
+
+# TODO write non-regression test when pos_label corresponds to idx #0
+# Before we did not think to potentially remap the the output of the comparison
+# to the original labels.

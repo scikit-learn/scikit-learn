@@ -1246,3 +1246,6 @@ def test_continuous_scorer():
     thresholds, scores = scorer(estimator, X, y)
 
     assert all(scores <= 0)
+
+
+# TODO: add more test involving `pos_label` in the continuous scorer
