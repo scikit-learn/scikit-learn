@@ -22,7 +22,7 @@ from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
 from ..utils.fixes import _open_binary, _open_text, _read_text, _contents
-from ..utils._param_validation import validate_params, Interval
+from ..utils._param_validation import validate_params, Interval, StrOptions
 
 import numpy as np
 
