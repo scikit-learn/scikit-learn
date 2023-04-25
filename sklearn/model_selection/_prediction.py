@@ -320,7 +320,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     ...     f"recall of {classifier_tuned.objective_score_[0]:.3f} and a precision of "
     ...     f"{classifier_tuned.objective_score_[1]:.3f}."
     ... )
-    Cut-off point found at 0.3.. for a recall of 0.7.. and a precision of 0.7...
+    Cut-off point found at 0.3... for a recall of 0.7... and a precision of 0.7...
     >>> print(classification_report(y_test, classifier_tuned.predict(X_test)))
                   precision    recall  f1-score   support
     <BLANKLINE>
