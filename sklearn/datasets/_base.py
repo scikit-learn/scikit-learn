@@ -68,12 +68,17 @@ def get_data_home(data_home=None) -> str:
     return data_home
 
 
+@validate_params(
+    {
+        "data_home": [str, os.PathLike, None],
+    }
+)
 def clear_data_home(data_home=None):
     """Delete all the content of the data home cache.
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
         is `~/sklearn_learn_data`.
     """
