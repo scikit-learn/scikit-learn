@@ -45,6 +45,12 @@ def _pairwise_similarity(a, b, similarity):
     return result
 
 
+# @validate_params(
+#         {
+
+
+#         }
+# )
 def consensus_score(a, b, *, similarity="jaccard"):
     """The similarity of two sets of biclusters.
 
