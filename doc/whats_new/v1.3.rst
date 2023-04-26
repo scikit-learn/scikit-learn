@@ -691,6 +691,12 @@ Changelog
   categorical encoding based on target mean conditioned on the value of the
   category. :pr:`25334` by `Thomas Fan`_.
 
+- |MajorFeature| :class:`preprocessing.MinMaxScaler` now
+  supports the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
+  support is considered experimental and might evolve without being subject to
+  our usual rolling deprecation cycle policy. See
+  :ref:`array_api` for more details. :pr:`26243` by `Tim Head`_.
+
 - |Feature| :class:`preprocessing.OrdinalEncoder` now supports grouping
   infrequent categories into a single feature. Grouping infrequent categories
   is enabled by specifying how to select infrequent categories with
