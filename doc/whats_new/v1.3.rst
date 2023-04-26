@@ -184,6 +184,13 @@ Changelog
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| `compose.ColumnTransformer` raises an informative error when the transformer's
+  output Pandas indexes are not consistent with each other and output is configured
+  to be pandas. :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.covariance`
 .........................
 

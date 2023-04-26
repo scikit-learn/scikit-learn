@@ -854,6 +854,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 pd = check_pandas_support("transform")
                 output = pd.concat(Xs, axis=1)
 
+                output_samples = output.shape[0]
+                if any(X.shape[0] != output_samples for X in Xs):
+                    raise ValueError(
+                        "Concatenating DataFrames from the transformer's output lead to"
+                        " an inconsistent number of samples. The output may have Pandas"
+                        " Indexes that do not match."
+                    )
+
                 # If all transformers define `get_feature_names_out`, then transform
                 # will adjust the column names to be consistent with
                 # verbose_feature_names_out. Here we prefix the feature names if
