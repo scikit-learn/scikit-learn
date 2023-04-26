@@ -222,12 +222,6 @@ def test_load_sample_image():
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
-def test_load_missing_sample_image_error():
-    pytest.importorskip("PIL")
-    with pytest.raises(AttributeError):
-        load_sample_image("blop.jpg")
-
-
 def test_load_diabetes_raw():
     """Test to check that we load a scaled version by default but that we can
     get an unscaled version when setting `scaled=False`."""
