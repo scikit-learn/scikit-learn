@@ -13,6 +13,8 @@ from sklearn.metrics import (
     f1_score,
     make_scorer,
     precision_recall_curve,
+    precision_score,
+    recall_score,
     roc_curve,
 )
 from sklearn.metrics._scorer import _ContinuousScorer
@@ -705,6 +707,39 @@ def test_cutoffclassifier_error_constant_learner():
         CutOffClassifier(estimator).fit(X, y)
 
 
-# TODO write non-regression test when pos_label corresponds to idx #0
-# Before we did not think to potentially remap the the output of the comparison
-# to the original labels.
+@pytest.mark.parametrize(
+    "objective_metric",
+    ["max_precision_at_recall_constraint", "max_recall_at_precision_constraint"],
+)
+@pytest.mark.parametrize("pos_label", [0, 1])
+def test_cutoffclassifier_pos_label_constraint_metric(
+    objective_metric, pos_label, global_random_seed
+):
+    X, y = make_classification(
+        n_samples=5_000,
+        weights=[0.6, 0.4],
+        random_state=global_random_seed,
+    )
+
+    # prefit the estimator to avoid variability due to the cross-validation
+    estimator = LogisticRegression().fit(X, y)
+
+    constraint_value = 0.7
+    model = CutOffClassifier(
+        estimator,
+        objective_metric=objective_metric,
+        constraint_value=constraint_value,
+        cv="prefit",
+        pos_label=pos_label,
+    ).fit(X, y)
+
+    precision = precision_score(y, model.predict(X), pos_label=pos_label)
+    recall = recall_score(y, model.predict(X), pos_label=pos_label)
+
+    # due to internal interpolation, the scores will vary slightly
+    if objective_metric == "max_precision_at_recall_constraint":
+        assert recall == pytest.approx(model.objective_score_[0], abs=1e-3)
+        assert precision == pytest.approx(model.objective_score_[1], abs=1e-3)
+    else:
+        assert precision == pytest.approx(model.objective_score_[0], abs=1e-3)
+        assert recall == pytest.approx(model.objective_score_[1], abs=1e-3)
