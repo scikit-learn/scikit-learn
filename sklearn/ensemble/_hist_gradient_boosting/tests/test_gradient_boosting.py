@@ -1362,7 +1362,7 @@ def test_categorical_cardinality_higher_than_n_bins(Hist):
     f_cat = rng.randint(n_cardinality, size=n_samples)
     # f_cat is an informative feature
     y = f_cat % 3 == 0
-    categorical_features = np.asarray([False, True])
+    categorical_features = np.array([False, True])
 
     X = np.c_[f_num, f_cat]
 

@@ -224,10 +224,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         self._is_categorical_remapped = categorical_remapped
 
-        # OrdinalEncoder will map categories to [0,..., cardinality - 1]
-        # If categories are not grouped into infrequent categories, then OrdinalEncoder
+        # If the cardinality is lower than max_bins then OrdinalEncoder
         # will map categories to [0, ..., cardinality - 1]
-        # If there are infrequent categories, then OrdinalEncoder will map categories to
+        # Otherwise, the most infrequent categories are binned together by
+        # OrdinalEncoder such that all values are mapped to an index in:
         # [0, ..., max_bins - 1].
         renamed_categories = [
             np.arange(min(len(c), self.max_bins), dtype=X_DTYPE) for c in categories_
@@ -1328,7 +1328,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
            Added support for feature names.
 
         .. versionchanged:: 1.3
-           Support categories with cardinality higher than `max_bins`.
+           Support categories with cardinality higher than `max_bins` by
+           collapsing the most infrequent categories in a dedicated bin.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
@@ -1676,10 +1677,10 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
 
-        For categories with cardinality higher than `max_bins`, the
-        infrequent categories are grouped together such there are only `max_bins`
-        categories. Negative values for categorical features are treated as
-        missing values.
+        For categories with cardinality higher than `max_bins`, the most
+        infrequent categories are grouped together such that there are only
+        `max_bins` categories. Negative values for categorical features are
+        treated as missing values.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
