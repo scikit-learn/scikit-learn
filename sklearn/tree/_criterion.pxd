@@ -82,9 +82,9 @@ cdef class ClassificationCriterion(Criterion):
     cdef SIZE_t[::1] n_classes
     cdef SIZE_t max_n_classes
 
-    cdef double[:, ::1] sum_total   # The sum of the weighted count of each label.
-    cdef double[:, ::1] sum_left    # Same as above, but for the left side of the split
-    cdef double[:, ::1] sum_right   # Same as above, but for the right side of the split
+    cdef double[:, ::1] sum_total    # The sum of the weighted count of each label.
+    cdef double[:, ::1] sum_left     # Same as above, but for the left side of the split
+    cdef double[:, ::1] sum_right    # Same as above, but for the right side of the split
     cdef double[:, ::1] sum_missing  # Same as above, but for missing values in X
 
 cdef class RegressionCriterion(Criterion):
@@ -92,7 +92,7 @@ cdef class RegressionCriterion(Criterion):
 
     cdef double sq_sum_total
 
-    cdef double[::1] sum_total   # The sum of w*y.
-    cdef double[::1] sum_left    # Same as above, but for the left side of the split
-    cdef double[::1] sum_right   # Same as above, but for the right side of the split
+    cdef double[::1] sum_total    # The sum of w*y.
+    cdef double[::1] sum_left     # Same as above, but for the left side of the split
+    cdef double[::1] sum_right    # Same as above, but for the right side of the split
     cdef double[::1] sum_missing  # Same as above, but for missing values in X
