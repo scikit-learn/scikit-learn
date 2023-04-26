@@ -19,7 +19,7 @@ cdef extern from *:
     """
     #ifdef __SIZEOF_INT128__
         typedef __int128 LARGEST_INT_t;
-    #elif __clang__
+    #elif __clang__ && !__i386__
         typedef _BitInt(128) LARGEST_INT_t;
     #else
         typedef long long LARGEST_INT_t;
