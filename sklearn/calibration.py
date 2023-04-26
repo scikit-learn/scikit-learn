@@ -7,7 +7,7 @@
 #
 # License: BSD 3 clause
 
-from numbers import Integral
+from numbers import Integral, Real
 import warnings
 from inspect import signature
 from functools import partial
@@ -913,7 +913,7 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
     {
         "y_true": ["array-like"],
         "y_prob": ["array-like"],
-        "pos_label": [str, Interval(Integral, None, None, closed="neither"), None],
+        "pos_label": [Real, str, "boolean", None],
         "n_bins": [Interval(Integral, 1, None, closed="left")],
         "strategy": [StrOptions({"uniform", "quantile"})],
     }
