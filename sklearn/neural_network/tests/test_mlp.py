@@ -35,7 +35,6 @@ from sklearn.utils._testing import (
     set_random_state
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
-from sklearn.utils._tags import _safe_tags
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
@@ -1026,26 +1025,25 @@ def test_mlp_diverging_loss():
     assert isinstance(mlp.validation_scores_[-1], float)
 
 
-@pytest.mark.parametrize("weighted_class", [i for i in range(3)])
-def test_mlp_classifier_with_sample_weights(weighted_class):
-    """test sample and class weights:
-    check that at least threshold % of samples (from chosen class)
-    have higher score vs. training without sample or class weights
+@pytest.mark.parametrize("weighted_class", [i for i in range(2)])
+@pytest.mark.parametrize("X,y", classification_datasets)
+def test_mlp_classifier_with_sample_weights(weighted_class, X, y):
+    """Test MLPClassifier with sample weights.
 
-    test uses the digits dataset, and chooses parametrically class
-    to apply weights for (classes set to digits 0,1 and 2 though
-    all classes 0-9 should pass this test with threshold=0.15)
+    check that at least threshold % of samples (from chosen class)
+    have higher score than training without sample or class weights
+
+    This test uses the classification_datasets to test both multiclass
+    and binary classifications, and chooses parametrically class to
+    apply weights for (classes set to digits 0,1 though all classes
+    should pass this test with threshold=0.15)
     """
 
-    weighted_class = weighted_class
     standard_weight = 1.0
     high_weight = 5.0
     threshold = 0.15
     split_size = 0.5
 
-    # data preprocess
-    X, y = load_digits(return_X_y=True)
-    X = X / X.max()
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, train_size=split_size, random_state=0
     )
@@ -1068,3 +1066,45 @@ def test_mlp_classifier_with_sample_weights(weighted_class):
         sample_weighted_score > score
     ).sum() / sample_weighted_score.shape[0]
     assert samples_with_greater_score > threshold
+
+
+@pytest.mark.parametrize("X,y", [(X_digits_binary, y_digits_binary)])
+@pytest.mark.parametrize("weighted_y", range(2))
+def test_mlp_regressor_with_sample_weight(X, y, weighted_y):
+    """Test MLPRegressor with sample weights"""
+    standard_weight = 1.0
+    high_weight = 10.0
+    split_size = 0.5
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=split_size, random_state=0
+    )
+    normalizer = StandardScaler()
+    y_train_normalized = normalizer.fit_transform(np.expand_dims(y_train, -1))
+
+    sample_weight = np.ones((X_train.shape[0])) * standard_weight
+    weighted_mask = y_train == weighted_y
+    sample_weight[weighted_mask] = high_weight
+
+    weighted_mask_test = y_test == weighted_y
+
+    base_reg = MLPRegressor(random_state=0)
+    base_reg.fit(X_train, y_train_normalized)
+    y_pred = np.ravel(
+        normalizer.inverse_transform(
+            np.expand_dims(base_reg.predict(X_test[weighted_mask_test]), -1)
+        )
+    )
+    base_error = ((y_pred - y_test[weighted_mask_test]) ** 2).mean()
+
+    # with sample weight
+    reg = MLPRegressor(random_state=0)
+    reg.fit(X_train, y_train_normalized, sample_weight=sample_weight)
+    y_pred = np.ravel(
+        normalizer.inverse_transform(
+            np.expand_dims(reg.predict(X_test[weighted_mask_test]), -1)
+        )
+    )
+    error = ((y_pred - y_test[weighted_mask_test]) ** 2).mean()
+
+    assert error < base_error

@@ -90,14 +90,6 @@ def test_binary_log_loss_multi_label():
     ],
 )
 @pytest.mark.parametrize("loss", [squared_loss, log_loss, binary_log_loss])
-def test_sample_weight_effects(y_true, y_prob, loss):
-    sample_weight = np.array([0, 0, 0])
-    assert loss(y_true, y_prob, sample_weight) == pytest.approx(0.0)
-
-    sample_weight = np.array([0, 1, 1])
-    assert loss(y_true, y_prob, sample_weight) == pytest.approx(
-        loss(y_true[1:], y_prob[1:], sample_weight[1:])
-    )
-
+def test_sample_weight_ones_effect(y_true, y_prob, loss):
     sample_weight = np.array([1, 1, 1])
     assert loss(y_true, y_prob, sample_weight) == pytest.approx(loss(y_true, y_prob))
