@@ -695,7 +695,7 @@ Changelog
   supports the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
   support is considered experimental and might evolve without being subject to
   our usual rolling deprecation cycle policy. See
-  :ref:`array_api` for more details. :pr:`26243` by `Tim Head`_.
+  :ref:`array_api` for more details. :pr:`26243` by `Tim Head <betatim>`_.
 
 - |Feature| :class:`preprocessing.OrdinalEncoder` now supports grouping
   infrequent categories into a single feature. Grouping infrequent categories
