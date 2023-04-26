@@ -1537,9 +1537,9 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             return self.max_categories < n_current_features
         else:
             feature_name = _check_feature_names_in(self)[col_idx]
-            return (
-                feature_name in self.max_categories
-            ) and self.max_categories[feature_name] < n_current_features
+            return (feature_name in self.max_categories) and self.max_categories[
+                feature_name
+            ] < n_current_features
 
     def _get_frequent_category_count(self, col_idx):
         """
