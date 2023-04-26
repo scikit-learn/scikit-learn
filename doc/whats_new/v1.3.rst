@@ -189,7 +189,7 @@ Changelog
 
 - |Fix| `compose.ColumnTransformer` raises an informative error when the transformer's
   output Pandas indexes are not consistent with each other and output is configured
-  to be pandas. :pr:`xxxxx` by `Thomas Fan`_.
+  to be pandas. :pr:`26286` by `Thomas Fan`_.
 
 :mod:`sklearn.covariance`
 .........................
