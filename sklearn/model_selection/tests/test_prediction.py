@@ -279,7 +279,7 @@ def test_fit_and_score_fit_params(scorer, score_method, fit_params_type):
         "b": _convert_container(y, fit_params_type),
     }
 
-    classifier = CheckingClassifier(expected_fit_params=["a", "b"])
+    classifier = CheckingClassifier(expected_fit_params=["a", "b"], random_state=0)
     train_idx, val_idx = np.arange(50), np.arange(50, 100)
 
     _fit_and_score(
@@ -536,7 +536,7 @@ def test_cutoffclassifier_fit_params(objective_metric, fit_params_type):
         "b": _convert_container(y, fit_params_type),
     }
 
-    classifier = CheckingClassifier(expected_fit_params=["a", "b"])
+    classifier = CheckingClassifier(expected_fit_params=["a", "b"], random_state=0)
     model = CutOffClassifier(
         classifier, objective_metric=objective_metric, constraint_value=0.5
     )
