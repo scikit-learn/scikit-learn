@@ -1488,7 +1488,7 @@ def learning_curve(
     ----------
     estimator : object type that implements the "fit" method.
         An object of that type which is cloned for each validation. It must
-        also implement "predict" unless `scoring` is a callable that don't
+        also implement "predict" unless `scoring` is a callable that doesn't
         rely on "predict" to compute a score.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
