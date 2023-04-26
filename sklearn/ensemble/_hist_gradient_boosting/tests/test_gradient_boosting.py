@@ -1362,19 +1362,23 @@ def test_categorical_cardinality_higher_than_n_bins(Hist):
     f_cat = rng.randint(n_cardinality, size=n_samples)
     # f_cat is an informative feature
     y = f_cat % 3 == 0
-    categorical_features = np.array([False, True])
+    categorical_features = np.array([True, False])
 
-    X = np.c_[f_num, f_cat]
+    X = np.c_[f_cat, f_num]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
     hist_kwargs = dict(max_iter=10, max_bins=max_bins, random_state=0)
-    hist_native = Hist(categorical_features=categorical_features, **hist_kwargs)
+    hist_native = Hist(
+        categorical_features=categorical_features,
+        on_high_cardinality_categories="bin_least_frequent",
+        **hist_kwargs,
+    )
     hist_native.fit(X_train, y_train)
 
-    # Use a preprocessor with an ordinal encoder should that gives the same model
+    # Using a preprocessor with max_categories=max_bins should give the same model
+    # as the native implementation which uses the same preprocessing strategy
     column_transformer = make_column_transformer(
-        ("passthrough", ~categorical_features),
         (
             OrdinalEncoder(
                 handle_unknown="use_encoded_value",
@@ -1385,6 +1389,7 @@ def test_categorical_cardinality_higher_than_n_bins(Hist):
             ),
             categorical_features,
         ),
+        ("passthrough", ~categorical_features),
     )
     hist_with_prep = make_pipeline(
         column_transformer,
@@ -1402,6 +1407,8 @@ def test_categorical_cardinality_higher_than_n_bins(Hist):
     score_with_prep = hist_with_prep.score(X_test, y_test)
     assert score_with_prep == pytest.approx(score_native)
 
+    assert_allclose(hist_native.predict(X_test), hist_with_prep.predict(X_test))
+
 
 @pytest.mark.parametrize(
     "Hist", [HistGradientBoostingClassifier, HistGradientBoostingRegressor]
@@ -1417,13 +1424,13 @@ def test_categorical_encoding_higher_than_n_bins(Hist):
     f_cat = rng.randint(n_cardinality, size=n_samples)
     # f_cat is an informative feature
     y = f_cat % 3 == 0
-    X1 = np.c_[f_num, f_cat]
-    categorical_features = [False, True]
+    X1 = np.c_[f_cat, f_num]
+    categorical_features = [True, False]
 
     # Categorical feature above max_bins
     f_cat_ = f_cat.copy()
     f_cat_[f_cat_ == 3] = max_bins + 1
-    X2 = np.c_[f_num, f_cat_]
+    X2 = np.c_[f_cat_, f_num]
 
     X1_train, X1_test, X2_train, X2_test, y_train, y_test = train_test_split(
         X1, X2, y, random_state=0
@@ -1434,7 +1441,11 @@ def test_categorical_encoding_higher_than_n_bins(Hist):
     hist_in_bounds.fit(X1_train, y_train)
     score_in_bounds = hist_in_bounds.score(X1_test, y_test)
 
-    hist_out_of_bounds = Hist(categorical_features=categorical_features, **hist_kwargs)
+    hist_out_of_bounds = Hist(
+        categorical_features=categorical_features,
+        on_high_cardinality_categories="bin_least_frequent",
+        **hist_kwargs,
+    )
     hist_out_of_bounds.fit(X2_train, y_train)
     score_out_of_bounds = hist_out_of_bounds.score(X2_test, y_test)
 
@@ -1445,32 +1456,3 @@ def test_categorical_encoding_higher_than_n_bins(Hist):
         assert len(predictor_1[0].nodes) == len(predictor_2[0].nodes)
 
     assert score_in_bounds == pytest.approx(score_out_of_bounds)
-
-
-def test_categorical_category_first():
-    """Check that categorical features gives correct result as the first feature."""
-    rng = np.random.RandomState(42)
-    n_samples = 5_000
-    n_cardinality = 12
-    max_bins = 10
-    f_num = rng.rand(n_samples)
-    f_cat = rng.randint(n_cardinality, size=n_samples)
-
-    # f_cat is an informative feature
-    y = f_cat % 3 == 0
-    X = np.c_[f_cat, f_num]
-    categorical_features = [True, False]
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-
-    hist_kwargs = dict(max_iter=20, max_bins=max_bins, random_state=0)
-    # Without categorical features we get lower performance
-    hist_no_cat = HistGradientBoostingRegressor(**hist_kwargs)
-    hist_no_cat.fit(X_train, y_train)
-    assert hist_no_cat.score(X_test, y_test) <= 0.65
-
-    hist_with_cat = HistGradientBoostingRegressor(
-        categorical_features=categorical_features, **hist_kwargs
-    )
-    hist_with_cat.fit(X_train, y_train)
-    assert hist_with_cat.score(X_test, y_test) >= 0.95

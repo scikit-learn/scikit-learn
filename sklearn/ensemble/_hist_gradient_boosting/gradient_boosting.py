@@ -20,7 +20,6 @@ from ..._loss.loss import (
 from ...base import BaseEstimator, RegressorMixin, ClassifierMixin, is_classifier
 from ...compose import ColumnTransformer
 from ...preprocessing import OrdinalEncoder
-from ...preprocessing import FunctionTransformer
 from ...utils import check_random_state, resample, compute_sample_weight
 from ...utils.validation import (
     check_is_fitted,
@@ -111,6 +110,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "tol": [Interval(Real, 0, None, closed="left")],
         "max_bins": [Interval(Integral, 2, 255, closed="both")],
         "categorical_features": ["array-like", None],
+        "on_high_cardinality_categories": [StrOptions({"error", "bin_least_frequent"})],
         "warm_start": ["boolean"],
         "early_stopping": [StrOptions({"auto"}), "boolean"],
         "scoring": [str, callable, None],
@@ -131,6 +131,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         l2_regularization,
         max_bins,
         categorical_features,
+        on_high_cardinality_categories,
         monotonic_cst,
         interaction_cst,
         warm_start,
@@ -153,6 +154,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.monotonic_cst = monotonic_cst
         self.interaction_cst = interaction_cst
         self.categorical_features = categorical_features
+        self.on_high_cardinality_categories = on_high_cardinality_categories
         self.warm_start = warm_start
         self.early_stopping = early_stopping
         self.scoring = scoring
@@ -180,21 +182,41 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         return sample_weight
 
-    def _check_X(self, X, *, reset):
+    def _preprocess_X(self, X, *, reset):
+        """Preprocess and validate X.
+
+        Parameters
+        ----------
+        X : {array-like, pandas DataFrame} of shape (n_samples, n_features)
+            Input data.
+
+        reset : bool
+            Whether to reset the `n_features_in_` and `feature_names_in_ attributes.
+
+        Returns
+        -------
+        X : ndarray of shape (n_samples, n_features)
+            Validated input data.
+
+        known_categories : list of ndarray of shape (n_categories,)
+            List of known categories for each categorical feature.
+        """
         X = self._validate_data(X, dtype=[X_DTYPE], force_all_finite=False, reset=reset)
 
         if not reset:
+            if self._preprocessor is None:
+                return X
             return self._preprocessor.transform(X)
 
         self.is_categorical_, known_categories, requires_encoder = (
             self._check_categories(X)
         )
-        n_features = X.shape[1]
-
         if not requires_encoder:
-            self._preprocessor = FunctionTransformer().set_output(transform="default")
+            self._preprocessor = None
             self._is_categorical_remapped = self.is_categorical_
             return X, known_categories
+
+        n_features = X.shape[1]
 
         # Create categories to pass into ordinal_encoder based on known_categories
         categories_ = [c for c in known_categories if c is not None]
@@ -210,17 +232,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         self._preprocessor = ColumnTransformer(
             [
-                ("numerical", "passthrough", ~self.is_categorical_),
                 ("encoder", ordinal_encoder, self.is_categorical_),
+                ("numerical", "passthrough", ~self.is_categorical_),
             ]
         )
         self._preprocessor.set_output(transform="default")
         X = self._preprocessor.fit_transform(X)
 
-        # Column Transformer places the categorical features at the end.
+        # The ColumnTransformer's output places the categorical features at the
+        # beginning
         categorical_remapped = np.zeros(n_features, dtype=bool)
         n_categorical = self.is_categorical_.sum()
-        categorical_remapped[-n_categorical:] = True
+        categorical_remapped[:n_categorical] = True
 
         self._is_categorical_remapped = categorical_remapped
 
@@ -234,7 +257,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         ]
 
         numerical_features = n_features - n_categorical
-        known_categories = [None] * numerical_features + renamed_categories
+        known_categories = renamed_categories + [None] * numerical_features
         return X, known_categories
 
     def _check_categories(self, X):
@@ -338,9 +361,33 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if negative_categories.any():
                     categories = categories[~negative_categories]
 
-                if not requires_encoding:
-                    is_numerical = categories.dtype.kind in {"i", "u", "f"}
-                    requires_encoding = is_numerical and (
+                if self.on_high_cardinality_categories == "error":
+                    if hasattr(self, "feature_names_in_"):
+                        feature_name = f"'{self.feature_names_in_[f_idx]}'"
+                    else:
+                        feature_name = f"at index {f_idx}"
+
+                    if categories.size > self.max_bins:
+                        raise ValueError(
+                            f"Categorical feature {feature_name} is expected to have a"
+                            f" cardinality <= {self.max_bins} but actually has a"
+                            f" cardinality of {categories.size}. Consider using"
+                            " `on_high_cardinality_categories=`bin_least_frequent`,"
+                            " preprocess the feature using TargetEncoder, or expanding"
+                            " the feature into many low cardinality categorical"
+                            " features."
+                        )
+                    if (categories >= self.max_bins).any():
+                        raise ValueError(
+                            f"Categorical feature {feature_name} is expected to be"
+                            f" encoded with values < {self.max_bins} but the largest"
+                            f" value for the encoded categories is {categories.max()}."
+                            " Consider using"
+                            " `on_high_cardinality_categories=`bin_least_frequent` or"
+                            " preprocess the data."
+                        )
+                elif not requires_encoding:
+                    requires_encoding = (
                         categories.size > self.max_bins
                         or (categories >= self.max_bins).any()
                     )
@@ -416,8 +463,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_compute_hist_time = 0.0  # time spent computing histograms
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.0
-        X, known_categories = self._check_X(X, reset=True)
-        y = self._encode_y(_check_y(y, estimator=self))
+        X, known_categories = self._preprocess_X(X, reset=True)
+        y = _check_y(y, estimator=self)
+        y = self._encode_y(y)
         check_consistent_length(X, y)
         # Do not create unit sample weights by default to later skip some
         # computation
@@ -1075,7 +1123,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         check_is_fitted(self)
         is_binned = getattr(self, "_in_fit", False)
         if not is_binned:
-            X = self._check_X(X, reset=False)
+            X = self._preprocess_X(X, reset=False)
         if X.shape[1] != self._n_features:
             raise ValueError(
                 "X has {} features but this estimator was trained with "
@@ -1142,7 +1190,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        X = self._check_X(X, reset=False)
+        X = self._preprocess_X(X, reset=False)
         if X.shape[1] != self._n_features:
             raise ValueError(
                 "X has {} features but this estimator was trained with "
@@ -1331,6 +1379,17 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
            Support categories with cardinality higher than `max_bins` by
            collapsing the most infrequent categories in a dedicated bin.
 
+    on_high_cardinality_categories : {"error", "bin_least_frequent"}, default="error"
+        Whether to raise an error or to bin together the least frequent categorical
+        features.
+
+        - `"error"`: Raises an error when the cardinality of a categorical feature
+          is higher than `max_bins` or is encoded with a value greater than `max_bins`.
+        - `"bin_least_frequent"`: Bins the least frequent categorical features
+          such that there is no more than `max_bins` categories.
+
+        .. versionadded:: 1.3
+
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
         following integer values:
@@ -1503,6 +1562,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         l2_regularization=0.0,
         max_bins=255,
         categorical_features=None,
+        on_high_cardinality_categories="error",
         monotonic_cst=None,
         interaction_cst=None,
         warm_start=False,
@@ -1526,6 +1586,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             monotonic_cst=monotonic_cst,
             interaction_cst=interaction_cst,
             categorical_features=categorical_features,
+            on_high_cardinality_categories=on_high_cardinality_categories,
             early_stopping=early_stopping,
             warm_start=warm_start,
             scoring=scoring,
@@ -1691,6 +1752,17 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         .. versionchanged:: 1.3
            Support categories with cardinality higher than `max_bins`.
+
+    on_high_cardinality_categories : {"error", "bin_least_frequent"}, default="error"
+        Whether to raise an error or to bin together the least frequent categorical
+        features.
+
+        - `"error"`: Raises an error when the cardinality of a categorical feature
+          is higher than `max_bins` or is encoded with a value greater than `max_bins`.
+        - `"bin_least_frequent"`: Bins the least frequent categorical features
+          such that there is no more than `max_bins` categories.
+
+        .. versionadded:: 1.3
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
@@ -1864,6 +1936,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         l2_regularization=0.0,
         max_bins=255,
         categorical_features=None,
+        on_high_cardinality_categories="error",
         monotonic_cst=None,
         interaction_cst=None,
         warm_start=False,
@@ -1886,6 +1959,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             l2_regularization=l2_regularization,
             max_bins=max_bins,
             categorical_features=categorical_features,
+            on_high_cardinality_categories=on_high_cardinality_categories,
             monotonic_cst=monotonic_cst,
             interaction_cst=interaction_cst,
             warm_start=warm_start,
