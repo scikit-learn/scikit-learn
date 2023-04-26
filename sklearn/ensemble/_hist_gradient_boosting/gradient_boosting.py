@@ -1363,10 +1363,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
 
-        For categories with cardinality higher than `max_bins`, the
-        infrequent categories are grouped together such there are only `max_bins`
-        categories. Negative values for categorical features are treated as
-        missing values.
+        Negative values for categorical features are treated as missing values.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
@@ -1738,10 +1735,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
 
-        For categories with cardinality higher than `max_bins`, the most
-        infrequent categories are grouped together such that there are only
-        `max_bins` categories. Negative values for categorical features are
-        treated as missing values.
+        Negative values for categorical features are treated as missing values.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
