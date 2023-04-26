@@ -9,6 +9,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     balanced_accuracy_score,
+    confusion_matrix,
     fbeta_score,
     f1_score,
     make_scorer,
@@ -712,9 +713,11 @@ def test_cutoffclassifier_error_constant_learner():
     ["max_precision_at_recall_constraint", "max_recall_at_precision_constraint"],
 )
 @pytest.mark.parametrize("pos_label", [0, 1])
-def test_cutoffclassifier_pos_label_constraint_metric(
+def test_cutoffclassifier_pos_label_precision_recall(
     objective_metric, pos_label, global_random_seed
 ):
+    """Check that `pos_label` is dispatched correctly by checking the precision and
+    recall score found during the optimization and the one found at `predict` time."""
     X, y = make_classification(
         n_samples=5_000,
         weights=[0.6, 0.4],
@@ -743,3 +746,43 @@ def test_cutoffclassifier_pos_label_constraint_metric(
     else:
         assert precision == pytest.approx(model.objective_score_[0], abs=1e-3)
         assert recall == pytest.approx(model.objective_score_[1], abs=1e-3)
+
+
+@pytest.mark.parametrize(
+    "objective_metric", ["max_tnr_at_tpr_constraint", "max_tpr_at_tnr_constraint"]
+)
+@pytest.mark.parametrize("pos_label", [0, 1])
+def test_cutoffclassifier_pos_label_tnr_tpr(objective_metric, pos_label):
+    """Check that `pos_label` is dispatched correctly by checking the TNR and TPR
+    score found during the optimization and the one found at `predict` time."""
+    X, y = make_classification(n_samples=5_000, weights=[0.6, 0.4], random_state=42)
+
+    # prefit the estimator to avoid variability due to the cross-validation
+    estimator = LogisticRegression().fit(X, y)
+
+    constraint_value = 0.7
+    model = CutOffClassifier(
+        estimator,
+        objective_metric=objective_metric,
+        constraint_value=constraint_value,
+        cv="prefit",
+        pos_label=pos_label,
+    ).fit(X, y)
+
+    def tnr_tpr_score(y_true, y_pred, pos_label=pos_label):
+        cm = confusion_matrix(y_true, y_pred)
+        if pos_label == 0:
+            cm = cm[::-1, ::-1]
+        tn, fp, fn, tp = cm.ravel()
+        tnr = tn / (tn + fp)
+        tpr = tp / (tp + fn)
+        return tnr, tpr
+
+    tnr, tpr = tnr_tpr_score(y, model.predict(X), pos_label=pos_label)
+    # due to internal interpolation, the scores will vary slightly
+    if objective_metric == "max_tnr_at_tpr_constraint":
+        assert tpr == pytest.approx(model.objective_score_[0], abs=0.05)
+        assert tnr == pytest.approx(model.objective_score_[1], abs=0.05)
+    else:
+        assert tnr == pytest.approx(model.objective_score_[0], abs=0.05)
+        assert tpr == pytest.approx(model.objective_score_[1], abs=0.05)
