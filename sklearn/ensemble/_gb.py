@@ -260,26 +260,6 @@ def _update_terminal_regions(
                 )
                 tree.value[leaf, 0, 0] = update
 
-            # # LAD
-            # terminal_region = np.where(terminal_regions == leaf)[0]
-            # sample_weight = sample_weight.take(terminal_region, axis=0)
-            # diff = y.take(terminal_region, axis=0) - raw_predictions.take(
-            #     terminal_region, axis=0
-            # )
-            # tree.value[leaf, 0, 0] = _weighted_percentile(
-            #     diff, sample_weight, percentile=50
-            # )
-
-            # # Quantile
-            # terminal_region = np.where(terminal_regions == leaf)[0]
-            # diff = y.take(terminal_region, axis=0) - raw_predictions.take(
-            #     terminal_region, axis=0
-            # )
-            # sample_weight = sample_weight.take(terminal_region, axis=0)
-
-            # val = _weighted_percentile(diff, sample_weight, self.percentile)
-            # tree.value[leaf, 0] = val
-
     # update predictions (both in-bag and out-of-bag)
     raw_prediction[:, k] += learning_rate * tree.value[:, 0, 0].take(
         terminal_regions, axis=0
