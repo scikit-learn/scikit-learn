@@ -166,6 +166,7 @@ print(breast_cancer_data.DESCR)
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import roc_auc_score
 
 for tol in [-1e-2, -1e-3, -1e-4]:
     start = time()
