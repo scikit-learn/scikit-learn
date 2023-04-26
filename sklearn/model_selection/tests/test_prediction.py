@@ -713,16 +713,10 @@ def test_cutoffclassifier_error_constant_learner():
     ["max_precision_at_recall_constraint", "max_recall_at_precision_constraint"],
 )
 @pytest.mark.parametrize("pos_label", [0, 1])
-def test_cutoffclassifier_pos_label_precision_recall(
-    objective_metric, pos_label, global_random_seed
-):
+def test_cutoffclassifier_pos_label_precision_recall(objective_metric, pos_label):
     """Check that `pos_label` is dispatched correctly by checking the precision and
     recall score found during the optimization and the one found at `predict` time."""
-    X, y = make_classification(
-        n_samples=5_000,
-        weights=[0.6, 0.4],
-        random_state=global_random_seed,
-    )
+    X, y = make_classification(n_samples=5_000, weights=[0.6, 0.4], random_state=42)
 
     # prefit the estimator to avoid variability due to the cross-validation
     estimator = LogisticRegression().fit(X, y)
@@ -786,3 +780,41 @@ def test_cutoffclassifier_pos_label_tnr_tpr(objective_metric, pos_label):
     else:
         assert tnr == pytest.approx(model.objective_score_[0], abs=0.05)
         assert tpr == pytest.approx(model.objective_score_[1], abs=0.05)
+
+
+@pytest.mark.parametrize(
+    "metric_type",
+    ["string", "scorer_without_pos_label", "scorer_with_pos_label"],
+)
+@pytest.mark.parametrize("pos_label", [0, 1])
+def test_cutoffclassifier_pos_label_single_metric(pos_label, metric_type):
+    """Check that `pos_label` is dispatched correctly when getting a scorer linked to
+    a known metric. By default, the scorer in scikit-learn only have a default value
+    for `pos_label` which is 1.
+    """
+    X, y = make_classification(n_samples=100, weights=[0.6, 0.4], random_state=42)
+
+    # prefit the estimator to avoid variability due to the cross-validation
+    estimator = LogisticRegression().fit(X, y)
+
+    if metric_type == "string":
+        objective_metric = "precision"
+    elif metric_type == "scorer_without_pos_label":
+        objective_metric = make_scorer(precision_score)
+    else:  # metric_type == "scorer_with_pos_label"
+        objective_metric = make_scorer(precision_score, pos_label=pos_label)
+
+    model = CutOffClassifier(
+        estimator,
+        objective_metric=objective_metric,
+        cv="prefit",
+        pos_label=pos_label,
+        n_thresholds=500,
+    ).fit(X, y)
+
+    precision = precision_score(y, model.predict(X), pos_label=pos_label)
+    assert precision == pytest.approx(model.objective_score_, abs=1e-3)
+
+
+# TODO: check side effect when `n_samples > n_thresholds` where optimizing a score
+# could lead to making constant predictions of `~pos_label`.

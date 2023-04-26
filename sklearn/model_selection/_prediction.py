@@ -575,13 +575,21 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             self._scorer = make_scorer(score_func, **params_scorer)
         else:
             scoring = check_scoring(classifier, scoring=self.objective_metric)
+            # add `pos_label` if requested by the scorer function
+            scorer_kwargs = {**scoring._kwargs}
+            signature_scoring_func = signature(scoring._score_func)
+            if (
+                "pos_label" in signature_scoring_func.parameters
+                and "pos_label" not in scorer_kwargs
+            ):
+                scorer_kwargs["pos_label"] = self.pos_label
             # transform a binary metric into a curve metric for all possible decision
             # thresholds
             self._scorer = _ContinuousScorer(
                 score_func=scoring._score_func,
                 sign=scoring._sign,
                 response_method=self._response_method,
-                kwargs=scoring._kwargs,
+                kwargs=scorer_kwargs,
             )
 
         thresholds, scores = zip(

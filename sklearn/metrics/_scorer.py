@@ -415,6 +415,9 @@ class _ContinuousScorer(_BaseScorer):
         else:
             score_func = self._score_func
 
+        # TODO: this is pretty slow if we have a lot of `potential_thresholds`
+        # We could parallelize but then we are inside a nested parallel loop where the
+        # external parallelism is on the CV.
         potential_thresholds = np.unique(y_score)
         score_thresholds = [
             self._sign
