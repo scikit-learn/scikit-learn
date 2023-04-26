@@ -256,8 +256,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             np.arange(min(len(c), self.max_bins), dtype=X_DTYPE) for c in categories_
         ]
 
-        numerical_features = n_features - n_categorical
-        known_categories = renamed_categories + [None] * numerical_features
+        n_numerical = n_features - n_categorical
+        known_categories = renamed_categories + [None] * n_numerical
         return X, known_categories
 
     def _check_categories(self, X):
@@ -369,7 +369,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                     if categories.size > self.max_bins:
                         raise ValueError(
-                            f"Categorical feature {feature_name} is expected to have a"
+                            f"Categorical feature {feature_name} is expected to have"
                             f" cardinality <= {self.max_bins} but actually has a"
                             f" cardinality of {categories.size}. Consider using"
                             " `on_high_cardinality_categories=`bin_least_frequent`,"

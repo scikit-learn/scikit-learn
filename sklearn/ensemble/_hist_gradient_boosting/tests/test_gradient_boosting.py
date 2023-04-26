@@ -1456,3 +1456,25 @@ def test_categorical_encoding_higher_than_n_bins(Hist):
         assert len(predictor_1[0].nodes) == len(predictor_2[0].nodes)
 
     assert score_in_bounds == pytest.approx(score_out_of_bounds)
+
+
+@pytest.mark.parametrize(
+    "Hist", [HistGradientBoostingClassifier, HistGradientBoostingRegressor]
+)
+def test_categorical_errors(Hist):
+    """Check errors are raised for invalid categorical features."""
+    max_bins = 5
+    X = np.array([[max_bins + 1, 0, 2, 3, 1, 2, 0]]).T
+    y = [0, 1, 0, 1, 0, 1, 0]
+
+    hist = Hist(max_bins=max_bins, random_state=0, categorical_features=[0])
+
+    msg = "Categorical feature at index 0 is expected to be encoded with values < 5"
+    with pytest.raises(ValueError, match=msg):
+        hist.fit(X, y)
+
+    msg = "Categorical feature at index 0 is expected to have cardinality <= 5"
+    X = np.array([[0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 5]]).T
+    y = [0] * 10 + [1] * 11
+    with pytest.raises(ValueError, match=msg):
+        hist.fit(X, y)
