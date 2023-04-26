@@ -56,7 +56,6 @@ from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.dummy import DummyClassifier
 
 
 REGRESSION_SCORERS = [
@@ -1249,31 +1248,40 @@ def test_continuous_scorer():
     assert all(scores <= 0)
 
 
-def test_continuous_scorer_pos_label():
+def test_continuous_scorer_pos_label(global_random_seed):
     """Check that we propagate properly the `pos_label` parameter to the scorer."""
-    X, _ = make_classification(n_samples=100, random_state=0)
-    y = np.hstack([np.ones(75), np.zeros(25)])
+    n_samples = 30
+    X, y = make_classification(
+        n_samples=n_samples, weights=[0.9, 0.1], random_state=global_random_seed
+    )
+    estimator = LogisticRegression().fit(X, y)
 
-    estimator = DummyClassifier(strategy="constant", constant=1).fit(X, y)
-
-    # By setting `pos_label=1`, we force the scorer to use the probability p(c=1) that
-    # is always 100% for the dummy classifier predicting only 1.
     scorer = _ContinuousScorer(
-        precision_score,
+        recall_score,
         sign=1,
         response_method="predict_proba",
         kwargs={"pos_label": 1},
     )
-    thresholds, scores = scorer(estimator, X, y)
-    print(thresholds, scores)
+    thresholds_pos_label_1, scores_pos_label_1 = scorer(estimator, X, y)
 
-    # By setting `pos_label=0`, we force the scorer to use the probability p(c=0) that
-    # is always 0% for the dummy classifier predicting only 1.
     scorer = _ContinuousScorer(
-        precision_score,
+        recall_score,
         sign=1,
         response_method="predict_proba",
         kwargs={"pos_label": 0},
     )
-    thresholds, scores = scorer(estimator, X, y)
-    print(thresholds, scores)
+    thresholds_pos_label_0, scores_pos_label_0 = scorer(estimator, X, y)
+
+    # If `pos_label` is not forwarded to the scorer, the thresholds will be equal.
+    # Make sure that this is not the case.
+    # assert not (thresholds_pos_label_1 == thresholds_pos_label_0).all()
+    # Since we have an imbalanced problem, the thresholds should represent higher
+    # probabilities level when `pos_label=0` than with `pos_label=1`.
+    assert np.sum(thresholds_pos_label_1 < 0.15) > 2 / 3 * n_samples
+    assert np.sum(thresholds_pos_label_0 > 0.85) > 2 / 3 * n_samples
+
+    # The recall cannot be negative and `pos_label=1` should have a higher recall
+    # since there is less samples to be considered.
+    assert 0.0 < scores_pos_label_0.min() < scores_pos_label_1.min()
+    assert scores_pos_label_0.max() == pytest.approx(1.0)
+    assert scores_pos_label_1.max() == pytest.approx(1.0)
