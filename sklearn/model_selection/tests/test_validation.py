@@ -2094,7 +2094,6 @@ def test_fit_and_score_failing():
     failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
     # dummy X data
     X = np.arange(1, 10)
-    y = np.ones(9)
     fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0, None, None]
     # passing error score to trigger the warning message
     fit_and_score_kwargs = {"error_score": "raise"}
@@ -2103,11 +2102,6 @@ def test_fit_and_score_failing():
         _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
 
     # check that functions upstream pass error_score param to _fit_and_score
-    error_message = re.escape(
-        "error_score must be the string 'raise' or a numeric value. (Hint: if "
-        "using 'raise', please make sure that it has been spelled correctly.)"
-    )
-
     error_message_cross_validate = (
         "The 'error_score' parameter of cross_validate must be .*. Got .* instead."
     )
