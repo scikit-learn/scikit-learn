@@ -256,6 +256,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.v_measure_score",
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.cross_validate",
+    "sklearn.model_selection.learning_curve",
     "sklearn.model_selection.permutation_test_score",
     "sklearn.model_selection.train_test_split",
     "sklearn.model_selection.validation_curve",
