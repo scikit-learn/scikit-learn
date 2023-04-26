@@ -736,9 +736,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     early_stopping,
                     X_val,
                     y_val,
-                    sample_weight=None
-                    if sample_weight_val is None
-                    else sample_weight_val,
+                    sample_weight_val,
                 )
 
                 # for learning rate that needs to be updated at iteration end
