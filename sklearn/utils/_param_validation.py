@@ -159,6 +159,15 @@ def validate_params(parameter_constraints, *, prefer_skip_nested_validation=Fals
         If True, the validation of parameters of inner estimators or functions
         called by the decorated function will be skipped.
 
+        This is useful to avoid validating many times the parameters passed by the
+        user from the public facing API. It's also useful to avoid validating
+        parameters that we pass internally to inner functions that are guaranteed to
+        be valid by the test suite.
+
+        It should be set to True for most functions, except for those that receive
+        non-validated objects as parameters or that are just wrappers around classes
+        because they only perform a partial validation.
+
     Returns
     -------
     decorated_function : function or method
