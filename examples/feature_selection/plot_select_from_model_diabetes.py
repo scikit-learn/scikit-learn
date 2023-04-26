@@ -183,7 +183,7 @@ for tol in [-1e-2, -1e-3, -1e-4]:
     end = time()
     print(f"\ntol: {tol}")
     print(f"Features selected: {feature_names[model[1].get_support()]}")
-    print(f"ROC AUC score: {roc_auc_score(y, model.predict_proba(X)[:, 1])}")
+    print(f"ROC AUC score: {roc_auc_score(y, model.predict_proba(X)[:, 1]):.3f}")
     print(f"Done in {end - start:.3f}s")
 
 # %%
