@@ -1820,7 +1820,7 @@ def _incremental_fit_estimator(
 
 @validate_params(
     {
-        "estimator": [HasMethods(["fit", "predict"])],
+        "estimator": [HasMethods(["fit"])],
         "X": ["array-like", "sparse matrix"],
         "y": ["array-like", None],
         "param_name": [str],
@@ -1864,8 +1864,10 @@ def validation_curve(
 
     Parameters
     ----------
-    estimator : object type that implements the "fit" and "predict" methods
-        An object of that type which is cloned for each validation.
+    estimator : object type that implements the "fit" method.
+        An object of that type which is cloned for each validation. It must
+        also implement "predict" unless `scoring` is a callable that doesn't
+        rely on "predict" to compute a score.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Training vector, where `n_samples` is the number of samples and
