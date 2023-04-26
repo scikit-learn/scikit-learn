@@ -477,7 +477,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         gradient = self._loss.gradient(
             y_true=y,
             raw_prediction=raw_predictions_copy,
-            sample_weight=sample_weight,
+            sample_weight=None,  # We pass sample_weights to the tree directly.
         )
 
         for k in range(self.n_trees_per_iteration_):

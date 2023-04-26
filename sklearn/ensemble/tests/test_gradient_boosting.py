@@ -1478,7 +1478,7 @@ def test_squared_error_exact_backward_compat():
             8.99985660e00,
         ]
     )
-    assert_allclose(gbt.predict(X), pred_result, atol=1e-10)
+    assert_allclose(gbt.predict(X), pred_result, rtol=1e-8)
 
     train_score = np.array(
         [
@@ -1494,7 +1494,45 @@ def test_squared_error_exact_backward_compat():
             7.47000575e-09,
         ]
     )
-    assert_allclose(gbt.train_score_[-10:], train_score, atol=1e-10)
+    assert_allclose(gbt.train_score_[-10:], train_score, rtol=1e-8)
+
+    # Same but with sample_weights
+    sample_weights = np.tile([1, 10], n_samples // 2)
+    gbt = GradientBoostingRegressor(loss="squared_error", n_estimators=100).fit(
+        X, y, sample_weight=sample_weights
+    )
+
+    pred_result = np.array(
+        [
+            1.52391462e-04,
+            1.00011168e00,
+            2.00007724e00,
+            3.00004638e00,
+            4.00001302e00,
+            4.99999873e00,
+            5.99997093e00,
+            6.99994329e00,
+            7.99991290e00,
+            8.99988727e00,
+        ]
+    )
+    assert_allclose(gbt.predict(X), pred_result, rtol=1e-6)
+
+    train_score = np.array(
+        [
+            4.12445296e-08,
+            3.34418322e-08,
+            2.71151383e-08,
+            2.19782469e-08,
+            1.78173649e-08,
+            1.44461976e-08,
+            1.17120123e-08,
+            9.49485678e-09,
+            7.69772505e-09,
+            6.24155316e-09,
+        ]
+    )
+    assert_allclose(gbt.train_score_[-10:], train_score, rtol=1e-8)
 
 
 def test_huber_exact_backward_compat():
@@ -1525,7 +1563,7 @@ def test_huber_exact_backward_compat():
             8.99985099e00,
         ]
     )
-    assert_allclose(gbt.predict(X), pred_result, atol=1e-10)
+    assert_allclose(gbt.predict(X), pred_result, rtol=1e-8)
 
     train_score = np.array(
         [
@@ -1541,7 +1579,7 @@ def test_huber_exact_backward_compat():
             7.17122188e-08,
         ]
     )
-    assert_allclose(gbt.train_score_[-10:], train_score, atol=1e-10)
+    assert_allclose(gbt.train_score_[-10:], train_score, rtol=1e-8)
 
 
 def test_binomial_error_exact_backward_compat():
@@ -1570,7 +1608,7 @@ def test_binomial_error_exact_backward_compat():
             [2.19017313e-05, 9.99978098e-01],
         ]
     )
-    assert_allclose(gbt.predict_proba(X), pred_result, atol=1e-10)
+    assert_allclose(gbt.predict_proba(X), pred_result, rtol=1e-8)
 
     train_score = np.array(
         [
@@ -1586,7 +1624,7 @@ def test_binomial_error_exact_backward_compat():
             4.38039423e-05,
         ]
     )
-    assert_allclose(gbt.train_score_[-10:], train_score, atol=1e-10)
+    assert_allclose(gbt.train_score_[-10:], train_score, rtol=1e-8)
 
 
 def test_multinomial_error_exact_backward_compat():
@@ -1615,7 +1653,7 @@ def test_multinomial_error_exact_backward_compat():
             [1.11956254e-07, 9.99999727e-01, 8.04921671e-08, 8.04921668e-08],
         ]
     )
-    assert_allclose(gbt.predict_proba(X), pred_result, atol=1e-10)
+    assert_allclose(gbt.predict_proba(X), pred_result, rtol=1e-8)
 
     train_score = np.array(
         [
@@ -1631,4 +1669,4 @@ def test_multinomial_error_exact_backward_compat():
             2.93719550e-07,
         ]
     )
-    assert_allclose(gbt.train_score_[-10:], train_score, atol=1e-10)
+    assert_allclose(gbt.train_score_[-10:], train_score, rtol=1e-8)
