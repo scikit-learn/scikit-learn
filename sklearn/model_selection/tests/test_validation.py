@@ -2118,17 +2118,6 @@ def test_fit_and_score_failing():
     with pytest.raises(ValueError, match=error_message):
         learning_curve(failing_clf, X, y, cv=3, error_score="unvalid-string")
 
-    with pytest.raises(ValueError, match=error_message):
-        validation_curve(
-            failing_clf,
-            X,
-            y,
-            param_name="parameter",
-            param_range=[FailingClassifier.FAILING_PARAMETER],
-            cv=3,
-            error_score="unvalid-string",
-        )
-
     assert failing_clf.score() == 0.0  # FailingClassifier coverage
 
 
