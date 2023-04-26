@@ -164,10 +164,8 @@ print(breast_cancer_data.DESCR)
 # estimator with :class:`~sklearn.feature_selection.SequentialFeatureSelector`
 # to perform the feature selection.
 from sklearn.linear_model import LogisticRegression
-from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from time import time
 
 for tol in [-1e-2, -1e-3, -1e-4]:
     start = time()
