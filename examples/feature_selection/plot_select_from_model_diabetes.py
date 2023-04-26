@@ -185,6 +185,6 @@ for tol in [-1e-2, -1e-3, -1e-4]:
     print(f"Done in {end - start:.3f}s")
 
 # %%
-# We can see that the number of features selected is greater for
-# negative values of `tol` closer to zero. The time taken for feature selection
-# also decreases as the values of `tol` come closer to zero.
+# We can see that the number of features selected tend to increase as negative
+# values of `tol` approach to zero. The time taken for feature selection also
+# decreases as the values of `tol` come closer to zero.
