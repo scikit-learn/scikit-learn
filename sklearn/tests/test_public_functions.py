@@ -110,6 +110,7 @@ def _check_function_param_validation(
 
 
 PARAM_VALIDATION_FUNCTION_LIST = [
+    "sklearn.calibration.calibration_curve",
     "sklearn.cluster.cluster_optics_dbscan",
     "sklearn.cluster.compute_optics_graph",
     "sklearn.cluster.estimate_bandwidth",
@@ -138,6 +139,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.load_files",
     "sklearn.datasets.load_iris",
     "sklearn.datasets.load_linnerud",
+    "sklearn.datasets.load_sample_image",
     "sklearn.datasets.load_svmlight_file",
     "sklearn.datasets.load_svmlight_files",
     "sklearn.datasets.load_wine",
@@ -172,6 +174,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_selection.mutual_info_classif",
     "sklearn.feature_selection.mutual_info_regression",
     "sklearn.feature_selection.r_regression",
+    "sklearn.inspection.partial_dependence",
     "sklearn.inspection.permutation_importance",
     "sklearn.linear_model.orthogonal_mp",
     "sklearn.linear_model.ridge_regression",
@@ -181,6 +184,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.balanced_accuracy_score",
     "sklearn.metrics.brier_score_loss",
     "sklearn.metrics.calinski_harabasz_score",
+    "sklearn.metrics.completeness_score",
     "sklearn.metrics.class_likelihood_ratios",
     "sklearn.metrics.classification_report",
     "sklearn.metrics.cluster.adjusted_mutual_info_score",
@@ -206,6 +210,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.get_scorer",
     "sklearn.metrics.hamming_loss",
     "sklearn.metrics.hinge_loss",
+    "sklearn.metrics.homogeneity_score",
     "sklearn.metrics.jaccard_score",
     "sklearn.metrics.label_ranking_average_precision_score",
     "sklearn.metrics.label_ranking_loss",
@@ -249,6 +254,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.roc_auc_score",
     "sklearn.metrics.roc_curve",
     "sklearn.metrics.top_k_accuracy_score",
+    "sklearn.metrics.v_measure_score",
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.cross_validate",
     "sklearn.model_selection.permutation_test_score",
