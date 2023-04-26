@@ -133,6 +133,8 @@ METHODS = [
 # set_{method}_request methods.
 REQUESTER_DOC = """        Request metadata passed to the ``{method}`` method.
 
+        Note that this method is only relevant if
+        ``enable_metadata_routing=True`` (see :func:`sklearn.set_config`).
         Please see :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
