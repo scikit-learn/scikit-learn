@@ -454,6 +454,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             set_huber_delta(
                 loss=self._loss, y_true=y, raw_prediction=raw_predictions_copy
             )
+        # TODO: Call self._loss.loss_gradient and use it to set train_score_.
+        # But note that train_score_[i] is the score after fitting the i-th tree.
         gradient = self._loss.gradient(
             y_true=y,
             raw_prediction=raw_predictions_copy,
