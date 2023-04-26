@@ -463,7 +463,7 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
 def _nanmin(X, axis=None):
     xp, _ = get_namespace(X)
     if _is_numpy_namespace(xp):
-        return numpy.nanmin(X, axis=axis)
+        return xp.asarray(numpy.nanmin(X, axis=axis))
 
     else:
         X = xp.min(xp.where(~xp.isnan(X), X, xp.asarray(+xp.inf)), axis=axis)

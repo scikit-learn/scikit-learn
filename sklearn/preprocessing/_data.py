@@ -22,7 +22,6 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
-
 from ..utils import check_array
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils import _array_api
@@ -549,8 +548,10 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
+        xp, _ = get_namespace(X)
+
         X = check_array(
-            X, copy=self.copy, dtype=FLOAT_DTYPES, force_all_finite="allow-nan"
+            X, copy=self.copy, dtype=(xp.float64, xp.float32, xp.float16), force_all_finite="allow-nan"
         )
 
         X -= self.min_
