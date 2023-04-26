@@ -3,6 +3,7 @@ import pytest
 
 from sklearn.base import clone
 from sklearn.datasets import load_breast_cancer, load_iris, make_classification
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
@@ -473,6 +474,7 @@ def test_cutoffclassifier_refit(with_sample_weight, global_random_seed):
     X, y = make_classification(n_samples=100, random_state=0)
     if with_sample_weight:
         sample_weight = rng.randn(X.shape[0])
+        sample_weight = np.abs(sample_weight, out=sample_weight)
     else:
         sample_weight = None
 
@@ -691,6 +693,16 @@ def test_cutoffclassifier_cv_zeros_sample_weights_equivalence():
     y_pred_with_weights = model_with_weights.predict_proba(X)
     y_pred_without_weights = model_without_weights.predict_proba(X)
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
+
+
+def test_cutoffclassifier_error_constant_learner():
+    """Check that we raise an error message when providing an estimator that predicts
+    only a single class."""
+    X, y = make_classification(random_state=0)
+    estimator = DummyClassifier(strategy="constant", constant=1)
+    err_msg = "The provided estimator makes constant predictions."
+    with pytest.raises(ValueError, match=err_msg):
+        CutOffClassifier(estimator).fit(X, y)
 
 
 # TODO write non-regression test when pos_label corresponds to idx #0

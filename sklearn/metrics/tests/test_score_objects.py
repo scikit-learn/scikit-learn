@@ -56,6 +56,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.dummy import DummyClassifier
 
 
 REGRESSION_SCORERS = [
@@ -1248,4 +1249,31 @@ def test_continuous_scorer():
     assert all(scores <= 0)
 
 
-# TODO: add more test involving `pos_label` in the continuous scorer
+def test_continuous_scorer_pos_label():
+    """Check that we propagate properly the `pos_label` parameter to the scorer."""
+    X, _ = make_classification(n_samples=100, random_state=0)
+    y = np.hstack([np.ones(75), np.zeros(25)])
+
+    estimator = DummyClassifier(strategy="constant", constant=1).fit(X, y)
+
+    # By setting `pos_label=1`, we force the scorer to use the probability p(c=1) that
+    # is always 100% for the dummy classifier predicting only 1.
+    scorer = _ContinuousScorer(
+        precision_score,
+        sign=1,
+        response_method="predict_proba",
+        kwargs={"pos_label": 1},
+    )
+    thresholds, scores = scorer(estimator, X, y)
+    print(thresholds, scores)
+
+    # By setting `pos_label=0`, we force the scorer to use the probability p(c=0) that
+    # is always 0% for the dummy classifier predicting only 1.
+    scorer = _ContinuousScorer(
+        precision_score,
+        sign=1,
+        response_method="predict_proba",
+        kwargs={"pos_label": 0},
+    )
+    thresholds, scores = scorer(estimator, X, y)
+    print(thresholds, scores)

@@ -601,6 +601,12 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             )
         )
 
+        if any(len(th) == 1 for th in thresholds):
+            raise ValueError(
+                "The provided estimator makes constant predictions. Therefore, it is "
+                "impossible to optimize the decision threshold."
+            )
+
         if hasattr(classifier, "predict_proba") and (
             self._response_method == "predict_proba"
             or (
