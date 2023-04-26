@@ -237,13 +237,13 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
             HasMethods(["fit", "predict_proba"]),
             HasMethods(["fit", "decision_function"]),
         ],
-        "X": ["array-like"],
+        "X": ["array-like", "sparse matrix"],
         "features": ["array-like", Integral, str],
         "categorical_features": ["array-like", None],
         "feature_names": ["array-like", None],
         "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
         "percentiles": [tuple],
-        "grid_resolution": [Interval(Integral, 1, None, closed="neither")],
+        "grid_resolution": [Interval(Integral, 1, None, closed="left")],
         "method": [StrOptions({"auto", "recursion", "brute"})],
         "kind": [StrOptions({"average", "individual", "both"})],
     }
@@ -293,7 +293,7 @@ def partial_dependence(
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
 
-    X : {array-like or dataframe} of shape (n_samples, n_features)
+    X : {array-like, sparse matrix or dataframe} of shape (n_samples, n_features)
         ``X`` is used to generate a grid of values for the target
         ``features`` (where the partial dependence will be evaluated), and
         also to generate values for the complement features when the
