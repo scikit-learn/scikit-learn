@@ -226,8 +226,8 @@ neighbors of samples with missing values::
       Missing value estimation methods for DNA microarrays, BIOINFORMATICS
       Vol. 17 no. 6, 2001 Pages 520-525.
 
-Keeping the number of features constants
-========================================
+Keeping the number of features constant
+=======================================
 
 By default, the scikit-learn imputers will drop fully empty features, i.e.
 columns containing only missing values. For instance::
