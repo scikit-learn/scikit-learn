@@ -10,6 +10,7 @@ from time import sleep
 import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
+from scipy.sparse import issparse
 from sklearn.exceptions import FitFailedWarning
 
 from sklearn.model_selection.tests.test_search import FailingClassifier
@@ -354,17 +355,9 @@ def test_cross_validate_invalid_scoring_param():
     with pytest.raises(ValueError, match=error_message_regexp):
         cross_validate(estimator, X, y, scoring=[[make_scorer(precision_score)]])
 
-    error_message_regexp = (
-        ".*scoring is invalid.*Refer to the scoring glossary for details:.*"
-    )
-
     # Empty dict should raise invalid scoring error
     with pytest.raises(ValueError, match="An empty dict"):
         cross_validate(estimator, X, y, scoring=(dict()))
-
-    # And so should any other invalid entry
-    with pytest.raises(ValueError, match=error_message_regexp):
-        cross_validate(estimator, X, y, scoring=5)
 
     multiclass_scorer = make_scorer(precision_recall_fscore_support)
 
@@ -381,9 +374,6 @@ def test_cross_validate_invalid_scoring_param():
 
     with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
-
-    with pytest.raises(ValueError, match="'mse' is not a valid scoring value."):
-        cross_validate(SVC(), X, y, scoring="mse")
 
 
 def test_cross_validate_nested_estimator():
@@ -405,7 +395,8 @@ def test_cross_validate_nested_estimator():
     assert all(isinstance(estimator, Pipeline) for estimator in estimators)
 
 
-def test_cross_validate():
+@pytest.mark.parametrize("use_sparse", [False, True])
+def test_cross_validate(use_sparse: bool):
     # Compute train and test mse/r2 scores
     cv = KFold()
 
@@ -416,6 +407,10 @@ def test_cross_validate():
     # Classification
     X_clf, y_clf = make_classification(n_samples=30, random_state=0)
     clf = SVC(kernel="linear", random_state=0)
+
+    if use_sparse:
+        X_reg = csr_matrix(X_reg)
+        X_clf = csr_matrix(X_clf)
 
     for X, y, est in ((X_reg, y_reg, reg), (X_clf, y_clf, clf)):
         # It's okay to evaluate regression metrics on classification too
@@ -510,7 +505,15 @@ def check_cross_validate_single_metric(clf, X, y, scores, cv):
         clf, X, y, scoring="neg_mean_squared_error", return_estimator=True, cv=cv
     )
     for k, est in enumerate(mse_scores_dict["estimator"]):
-        assert_almost_equal(est.coef_, fitted_estimators[k].coef_)
+        est_coef = est.coef_.copy()
+        if issparse(est_coef):
+            est_coef = est_coef.toarray()
+
+        fitted_est_coef = fitted_estimators[k].coef_.copy()
+        if issparse(fitted_est_coef):
+            fitted_est_coef = fitted_est_coef.toarray()
+
+        assert_almost_equal(est_coef, fitted_est_coef)
         assert_almost_equal(est.intercept_, fitted_estimators[k].intercept_)
 
 
@@ -2104,10 +2107,12 @@ def test_fit_and_score_failing():
         "error_score must be the string 'raise' or a numeric value. (Hint: if "
         "using 'raise', please make sure that it has been spelled correctly.)"
     )
-    with pytest.raises(ValueError, match=error_message):
-        cross_validate(failing_clf, X, cv=3, error_score="unvalid-string")
 
-    with pytest.raises(ValueError, match=error_message):
+    error_message_cross_validate = (
+        "The 'error_score' parameter of cross_validate must be .*. Got .* instead."
+    )
+
+    with pytest.raises(ValueError, match=error_message_cross_validate):
         cross_val_score(failing_clf, X, cv=3, error_score="unvalid-string")
 
     with pytest.raises(ValueError, match=error_message):

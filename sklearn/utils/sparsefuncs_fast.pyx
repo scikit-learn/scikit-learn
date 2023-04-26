@@ -6,9 +6,8 @@
 #
 # License: BSD 3 clause
 
-#!python
-
 from libc.math cimport fabs, sqrt, isnan
+
 cimport numpy as cnp
 import numpy as np
 from cython cimport floating
@@ -41,7 +40,6 @@ def _sqeuclidean_row_norms_sparse(
     cdef:
         integral n_samples = X_indptr.shape[0] - 1
         integral i, j
-        double sum_
 
     dtype = np.float32 if floating is float else np.float64
 
@@ -500,7 +498,6 @@ def _inplace_csr_row_normalize_l1(
 ):
     cdef:
         unsigned long long n_samples = shape[0]
-        unsigned long long n_features = shape[1]
 
         # the column indices for row i are stored in:
         #    indices[indptr[i]:indices[i+1]]
@@ -538,7 +535,6 @@ def _inplace_csr_row_normalize_l2(
 ):
     cdef:
         unsigned long long n_samples = shape[0]
-        unsigned long long n_features = shape[1]
         unsigned long long i
         integral j
         double sum_
