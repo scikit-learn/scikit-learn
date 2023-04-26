@@ -174,18 +174,11 @@ def squared_loss(y_true, y_pred, sample_weight=None):
     loss : float
         The degree to which the samples are correctly predicted.
     """
+    temp = (y_true - y_pred) ** 2
     if sample_weight is None:
-        return ((y_true - y_pred) ** 2).mean() / 2
+        sample_weight = 1.0
 
-    nonzero_count = np.count_nonzero(sample_weight)
-    if nonzero_count == 0:
-        return 0.0
-
-    return (
-        (((y_true - y_pred) ** 2).mean(axis=-1) * sample_weight).sum()
-        / nonzero_count
-        / 2
-    )
+    return (temp.T * sample_weight).mean() / 2
 
 
 def log_loss(y_true, y_prob, sample_weight=None):
@@ -219,13 +212,9 @@ def log_loss(y_true, y_prob, sample_weight=None):
     temp = xlogy(y_true, y_prob)
 
     if sample_weight is None:
-        return -temp.sum() / y_prob.shape[0]
+        sample_weight = 1.0
 
-    nonzero_count = np.count_nonzero(sample_weight)
-    if nonzero_count == 0:
-        return 0.0
-
-    return (-temp.sum(axis=-1) * sample_weight).sum() / nonzero_count
+    return (-temp.T * sample_weight).sum() / y_prob.shape[0]
 
 
 def binary_log_loss(y_true, y_prob, sample_weight=None):
@@ -257,13 +246,9 @@ def binary_log_loss(y_true, y_prob, sample_weight=None):
     temp = xlogy(y_true, y_prob) + xlogy(1 - y_true, 1 - y_prob)
 
     if sample_weight is None:
-        return -temp.sum() / y_prob.shape[0]
+        sample_weight = 1.0
 
-    nonzero_count = np.count_nonzero(sample_weight)
-    if nonzero_count == 0:
-        return 0.0
-
-    return (-temp.sum(axis=-1) * sample_weight).sum() / nonzero_count
+    return (-temp.T * sample_weight).sum() / y_prob.shape[0]
 
 
 LOSS_FUNCTIONS = {
