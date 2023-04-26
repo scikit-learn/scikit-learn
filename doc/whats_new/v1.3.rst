@@ -256,11 +256,11 @@ Changelog
   :pr:`24882` by :user:`Ashwin Mathur <awinml>`.
 
 - |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` supports categories with
-  cardinality greater than `max_bins` or encoded with values greater than
-  `max_bins`. For categories with cardinality higher than `max_bins`, the
-  infrequent categories are grouped together such there are only `max_bins`
-  categories. :pr:`26268` by `Thomas Fan`_.
+  :class:`ensemble.HistGradientBoostingRegressor` now has a
+  `on_high_cardinality_categories="bin_least_frequent"`. option to automatically
+  encode high cardinality categories. For categories with cardinality higher
+  than `max_bins`, the infrequent categories are grouped together such there are
+  only `max_bins` categories. :pr:`26268` by `Thomas Fan`_.
 
 - |Efficiency| :class:`ensemble.IsolationForest` predict time is now faster
   (typically by a factor of 8 or more). Internally, the estimator now precomputes
