@@ -551,7 +551,10 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         xp, _ = get_namespace(X)
 
         X = check_array(
-            X, copy=self.copy, dtype=(xp.float64, xp.float32, xp.float16), force_all_finite="allow-nan"
+            X,
+            copy=self.copy,
+            dtype=(xp.float64, xp.float32, xp.float16),
+            force_all_finite="allow-nan",
         )
 
         X -= self.min_
