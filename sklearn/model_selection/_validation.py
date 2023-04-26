@@ -15,6 +15,7 @@ import warnings
 import numbers
 import time
 from functools import partial
+from numbers import Real
 from traceback import format_exc
 from contextlib import suppress
 from collections import Counter
@@ -29,7 +30,15 @@ from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
 from ..utils.parallel import delayed, Parallel
 from ..utils.metaestimators import _safe_split
+from ..utils._param_validation import (
+    HasMethods,
+    Interval,
+    Integral,
+    StrOptions,
+    validate_params,
+)
 from ..metrics import check_scoring
+from ..metrics import get_scorer_names
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
@@ -46,6 +55,31 @@ __all__ = [
 ]
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods("fit")],
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", None],
+        "groups": ["array-like", None],
+        "scoring": [
+            StrOptions(set(get_scorer_names())),
+            callable,
+            list,
+            tuple,
+            dict,
+            None,
+        ],
+        "cv": ["cv_object"],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+        "fit_params": [dict, None],
+        "pre_dispatch": [Integral, str],
+        "return_train_score": ["boolean"],
+        "return_estimator": ["boolean"],
+        "return_indices": ["boolean"],
+        "error_score": [StrOptions({"raise"}), Real],
+    }
+)
 def cross_validate(
     estimator,
     X,
@@ -72,7 +106,7 @@ def cross_validate(
     estimator : estimator object implementing 'fit'
         The object to use to fit the data.
 
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data to fit. Can be for example a list, or an array.
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
@@ -140,11 +174,6 @@ def cross_validate(
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
 
             - An int, giving the exact number of total jobs that are
               spawned
@@ -1207,6 +1236,21 @@ def _check_is_permutation(indices, n_samples):
     return True
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods("fit")],
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", None],
+        "groups": ["array-like", None],
+        "cv": ["cv_object"],
+        "n_permutations": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "random_state": ["random_state"],
+        "verbose": ["verbose"],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "fit_params": [dict, None],
+    }
+)
 def permutation_test_score(
     estimator,
     X,

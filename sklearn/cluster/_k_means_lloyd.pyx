@@ -87,7 +87,7 @@ def lloyd_iter_chunked_dense(
         int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
-        int chunk_idx, n_samples_chunk_eff
+        int chunk_idx
         int start, end
 
         int j, k
@@ -153,8 +153,9 @@ def lloyd_iter_chunked_dense(
 
     if update_centers:
         omp_destroy_lock(&lock)
-        _relocate_empty_clusters_dense(X, sample_weight, centers_old,
-                                    centers_new, weight_in_clusters, labels)
+        _relocate_empty_clusters_dense(
+            X, sample_weight, centers_old, centers_new, weight_in_clusters, labels
+        )
 
         _average_centers(centers_new, weight_in_clusters)
         _center_shift(centers_old, centers_new, center_shift)
@@ -278,7 +279,7 @@ def lloyd_iter_chunked_sparse(
         int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
-        int chunk_idx, n_samples_chunk_eff = 0
+        int chunk_idx
         int start = 0, end = 0
 
         int j, k

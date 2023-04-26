@@ -7,7 +7,7 @@
 #
 # License: BSD 3 clause
 
-from numbers import Integral
+from numbers import Integral, Real
 import warnings
 from inspect import signature
 from functools import partial
@@ -35,7 +35,13 @@ from .utils import (
 
 from .utils.multiclass import check_classification_targets
 from .utils.parallel import delayed, Parallel
-from .utils._param_validation import StrOptions, HasMethods, Hidden
+from .utils._param_validation import (
+    StrOptions,
+    HasMethods,
+    Hidden,
+    validate_params,
+    Interval,
+)
 from .utils._plotting import _BinaryClassifierCurveDisplayMixin
 from .utils.validation import (
     _check_fit_params,
@@ -960,6 +966,15 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_prob": ["array-like"],
+        "pos_label": [Real, str, "boolean", None],
+        "n_bins": [Interval(Integral, 1, None, closed="left")],
+        "strategy": [StrOptions({"uniform", "quantile"})],
+    }
+)
 def calibration_curve(
     y_true,
     y_prob,
@@ -985,7 +1000,7 @@ def calibration_curve(
     y_prob : array-like of shape (n_samples,)
         Probabilities of the positive class.
 
-    pos_label : int or str, default=None
+    pos_label : int, float, bool or str, default=None
         The label of the positive class.
 
         .. versionadded:: 1.1
@@ -1099,7 +1114,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
 
-    pos_label : str or int, default=None
+    pos_label : int, float, bool or str, default=None
         The positive class when computing the calibration curve.
         By default, `estimators.classes_[1]` is considered as the
         positive class.
@@ -1265,7 +1280,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
             By default, `estimators.classes_[1]` is considered as the
             positive class.
@@ -1383,7 +1398,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
             By default, `estimators.classes_[1]` is considered as the
             positive class.

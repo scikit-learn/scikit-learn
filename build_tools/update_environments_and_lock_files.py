@@ -88,9 +88,15 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
-        "conda_dependencies": common_dependencies + ["ccache"],
+        "conda_dependencies": common_dependencies + [
+            "ccache",
+            "pytorch",
+            "pytorch-cpu",
+            "array-api-compat",
+        ],
         "package_constraints": {
             "blas": "[build=mkl]",
+            "pytorch": "1.13",
         },
     },
     {
@@ -310,8 +316,8 @@ conda_build_metadata_list = [
             "plotly",
             "pooch",
             "sphinxext-opengraph",
-            "pip",
         ],
+        "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel"],
         "package_constraints": {
             "python": "3.9",
             # XXX: sphinx > 6.0 does not correctly generate searchindex.js
