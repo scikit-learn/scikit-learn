@@ -788,11 +788,11 @@ def export_graphviz(
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    feature_names : list of str, default=None
-        Names of each of the features.
+    feature_names : array-like of shape(n_features,), default=None
+        An array containing the feature names.
         If None, generic names will be used ("x[0]", "x[1]", ...).
 
-    class_names : list of str or bool, default=None
+    class_names : array-like or bool, default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
         If ``True``, shows a symbolic representation of the class name.
