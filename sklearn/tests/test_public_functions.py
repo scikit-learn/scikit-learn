@@ -110,6 +110,7 @@ def _check_function_param_validation(
 
 
 PARAM_VALIDATION_FUNCTION_LIST = [
+    "sklearn.calibration.calibration_curve",
     "sklearn.cluster.cluster_optics_dbscan",
     "sklearn.cluster.compute_optics_graph",
     "sklearn.cluster.estimate_bandwidth",
@@ -173,6 +174,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_selection.mutual_info_classif",
     "sklearn.feature_selection.mutual_info_regression",
     "sklearn.feature_selection.r_regression",
+    "sklearn.inspection.partial_dependence",
     "sklearn.inspection.permutation_importance",
     "sklearn.linear_model.orthogonal_mp",
     "sklearn.metrics.accuracy_score",
@@ -254,8 +256,10 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.v_measure_score",
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.cross_validate",
+    "sklearn.model_selection.learning_curve",
     "sklearn.model_selection.permutation_test_score",
     "sklearn.model_selection.train_test_split",
+    "sklearn.model_selection.validation_curve",
     "sklearn.neighbors.sort_graph_by_row_values",
     "sklearn.preprocessing.add_dummy_feature",
     "sklearn.preprocessing.binarize",
