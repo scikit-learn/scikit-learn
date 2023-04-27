@@ -379,14 +379,18 @@ def test_cutoffclassifier_with_constraint_value(response_method):
     y = np.hstack([y[indices_neg], y[indices_pos]])
 
     lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
+    n_thresholds = 100
     model = CutOffClassifier(
         estimator=lr,
         objective_metric="balanced_accuracy",
         response_method=response_method,
+        n_thresholds=n_thresholds,
     )
     score_optimized = balanced_accuracy_score(y, model.fit(X, y).predict(X))
     score_baseline = balanced_accuracy_score(y, lr.predict(X))
     assert score_optimized > score_baseline
+    assert model.decision_thresholds_.shape == (n_thresholds,)
+    assert model.objective_scores_.shape == (n_thresholds,)
 
 
 @pytest.mark.parametrize(
@@ -567,13 +571,17 @@ def test_cutoffclassifier_response_method_scorer_with_constraint_metric(
     X, y = make_classification(n_samples=100, random_state=global_random_seed)
     classifier = LogisticRegression()
 
+    n_thresholds = 100
     model = CutOffClassifier(
         classifier,
         objective_metric=objective_metric,
         constraint_value=constraint_value,
         response_method=response_method,
+        n_thresholds=n_thresholds,
     )
     model.fit(X, y)
+    assert model.decision_thresholds_.shape == (n_thresholds,)
+    assert all(score.shape == (n_thresholds,) for score in model.objective_scores_)
 
     if response_method in ("auto", "predict_proba"):
         # "auto" will fall back  in priority on `predict_proba` if `estimator`
@@ -615,6 +623,9 @@ def test_cutoffclassifier_objective_metric_dict(global_random_seed):
     )
     model.fit(X, y)
 
+    assert model.decision_thresholds_.shape == (n_thresholds,)
+    assert model.objective_scores_.shape == (n_thresholds,)
+
     assert model.decision_threshold_ > 0.99
     assert np.mean(model.predict(X) == 0) > 0.9
 
@@ -624,6 +635,9 @@ def test_cutoffclassifier_objective_metric_dict(global_random_seed):
         classifier, objective_metric=costs_and_again, n_thresholds=n_thresholds
     )
     model.fit(X, y)
+
+    assert model.decision_thresholds_.shape == (n_thresholds,)
+    assert model.objective_scores_.shape == (n_thresholds,)
 
     assert model.decision_threshold_ < 0.01
     assert np.mean(model.predict(X) == 1) > 0.9
@@ -638,6 +652,9 @@ def test_cutoffclassifier_objective_metric_dict(global_random_seed):
         pos_label=pos_label,
     )
     model.fit(X, y)
+
+    assert model.decision_thresholds_.shape == (n_thresholds,)
+    assert model.objective_scores_.shape == (n_thresholds,)
 
     assert model.decision_threshold_ < 0.01
     assert np.mean(model.predict(X) == 0) > 0.9

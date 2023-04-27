@@ -272,6 +272,12 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         two float values: the first one is the score of the metric which is constrained
         and the second one is the score of the maximized metric.
 
+    decision_thresholds_ : ndarray of shape (n_thresholds,)
+        All decision thresholds that were evaluated.
+
+    objective_scores_ : ndarray of shape (n_thresholds,)
+        The scores of the objective metric associated with the decision thresholds.
+
     classes_ : ndarray of shape (n_classes,)
         The class labels.
 
@@ -600,7 +606,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                 kwargs=scorer_kwargs,
             )
 
-        thresholds, scores = zip(
+        cv_thresholds, cv_scores = zip(
             *Parallel(n_jobs=self.n_jobs)(
                 delayed(_fit_and_score)(
                     classifier,
@@ -617,41 +623,49 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             )
         )
 
-        if any(len(th) == 1 for th in thresholds):
+        if any(len(th) == 1 for th in cv_thresholds):
             raise ValueError(
                 "The provided estimator makes constant predictions. Therefore, it is "
                 "impossible to optimize the decision threshold."
             )
 
         # find the global min and max thresholds across all folds
-        min_threshold = np.min([th.min() for th in thresholds])
-        max_threshold = np.max([th.max() for th in thresholds])
-        thresholds_interpolated = np.linspace(
+        min_threshold = np.min([th.min() for th in cv_thresholds])
+        max_threshold = np.max([th.max() for th in cv_thresholds])
+        self.decision_thresholds_ = np.linspace(
             min_threshold, max_threshold, num=self.n_thresholds
         )
 
-        def _mean_interpolated_score(thresholds, scores):
+        def _mean_interpolated_score(threshold_interpolated, cv_thresholds, cv_scores):
             return np.mean(
                 [
-                    np.interp(thresholds_interpolated, th, sc)
-                    for th, sc in zip(thresholds, scores)
+                    np.interp(threshold_interpolated, th, sc)
+                    for th, sc in zip(cv_thresholds, cv_scores)
                 ],
                 axis=0,
             )
 
         if constraint_value == "highest":  # find best score
-            mean_score = _mean_interpolated_score(thresholds, scores)
-            best_idx = mean_score.argmax()
-            self.objective_score_ = mean_score[best_idx]
-            self.decision_threshold_ = thresholds_interpolated[best_idx]
+            self.objective_scores_ = _mean_interpolated_score(
+                self.decision_thresholds_, cv_thresholds, cv_scores
+            )
+            best_idx = self.objective_scores_.argmax()
+            self.objective_score_ = self.objective_scores_[best_idx]
+            self.decision_threshold_ = self.decision_thresholds_[best_idx]
         else:
             if "tpr" in self.objective_metric:  # tpr/tnr
                 mean_tnr, mean_tpr = [
-                    _mean_interpolated_score(thresholds, sc) for sc in zip(*scores)
+                    _mean_interpolated_score(
+                        self.decision_thresholds_, cv_thresholds, sc
+                    )
+                    for sc in zip(*cv_scores)
                 ]
             else:  # precision/recall
                 mean_precision, mean_recall = [
-                    _mean_interpolated_score(thresholds, sc) for sc in zip(*scores)
+                    _mean_interpolated_score(
+                        self.decision_thresholds_, cv_thresholds, sc
+                    )
+                    for sc in zip(*cv_scores)
                 ]
 
             def _get_best_idx(constrained_score, maximized_score):
@@ -670,12 +684,13 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             else:  # max_recall_at_precision_constraint
                 constrained_score, maximized_score = mean_precision, mean_recall
 
+            self.objective_scores_ = (constrained_score, maximized_score)
             best_idx = _get_best_idx(constrained_score, maximized_score)
             self.objective_score_ = (
                 constrained_score[best_idx],
                 maximized_score[best_idx],
             )
-            self.decision_threshold_ = thresholds_interpolated[best_idx]
+            self.decision_threshold_ = self.decision_thresholds_[best_idx]
 
         if hasattr(self.estimator_, "n_features_in_"):
             self.n_features_in_ = self.estimator_.n_features_in_
