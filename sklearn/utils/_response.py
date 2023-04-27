@@ -47,7 +47,7 @@ def _get_response_values(
           preference. The method returned corresponds to the first method in
           the list and which is implemented by `estimator`.
 
-    pos_label : str or int, default=None
+    pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing
         the metrics. By default, `estimators.classes_[1]` is
         considered as the positive class.
@@ -58,7 +58,7 @@ def _get_response_values(
         Target scores calculated from the provided response_method
         and `pos_label`.
 
-    pos_label : str, int or None
+    pos_label : int, float, bool, str or None
         The class considered as the positive class when computing
         the metrics. Returns `None` if `estimator` is a regressor.
 
@@ -133,24 +133,24 @@ def _get_response_values_binary(estimator, X, response_method, pos_label=None):
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    response_method: {'auto', 'predict_proba', 'decision_function'}
+    response_method : {'auto', 'predict_proba', 'decision_function'}
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. If set to 'auto',
         :term:`predict_proba` is tried first and if it does not exist
         :term:`decision_function` is tried next.
 
-    pos_label : str or int, default=None
+    pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing
         the metrics. By default, `estimators.classes_[1]` is
         considered as the positive class.
 
     Returns
     -------
-    y_pred: ndarray of shape (n_samples,)
+    y_pred : ndarray of shape (n_samples,)
         Target scores calculated from the provided response_method
         and pos_label.
 
-    pos_label: str or int
+    pos_label : int, float, bool or str
         The class considered as the positive class when computing
         the metrics.
     """
