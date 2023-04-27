@@ -271,6 +271,11 @@ def test_graphviz_errors():
     with pytest.raises(ValueError, match=message):
         export_graphviz(clf, None, feature_names=["a", "b", "c"])
 
+    # Check error when argument is not an estimator
+    message = "is not an estimator instance"
+    with pytest.raises(TypeError, match=message):
+        export_graphviz(clf.fit(X, y).tree_)
+
     # Check class_names error
     out = StringIO()
     with pytest.raises(IndexError):
