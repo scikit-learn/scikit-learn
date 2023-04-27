@@ -78,9 +78,11 @@ def _deprecate_positional_args(func=None, *, version="1.3"):
             ]
             args_msg = ", ".join(args_msg)
             warnings.warn(
-                f"Pass {args_msg} as keyword args. From version "
-                f"{version} passing these as positional arguments "
-                "will result in an error",
+                (
+                    f"Pass {args_msg} as keyword args. From version "
+                    f"{version} passing these as positional arguments "
+                    "will result in an error"
+                ),
                 FutureWarning,
             )
             kwargs.update(zip(sig.parameters, args))
@@ -593,17 +595,17 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
     # Check these early for pandas versions without extension dtypes
     from pandas.api.types import (
         is_bool_dtype,
-        is_sparse,
         is_float_dtype,
         is_integer_dtype,
     )
+    from pandas import SparseDtype
 
     if is_bool_dtype(pd_dtype):
         # bool and extension booleans need early converstion because __array__
         # converts mixed dtype dataframes into object dtypes
         return True
 
-    if is_sparse(pd_dtype):
+    if isinstance(pd_dtype, SparseDtype):
         # Sparse arrays will be converted later in `check_array`
         return False
 
@@ -612,7 +614,7 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
     except ImportError:
         return False
 
-    if is_sparse(pd_dtype) or not is_extension_array_dtype(pd_dtype):
+    if isinstance(pd_dtype, SparseDtype) or not is_extension_array_dtype(pd_dtype):
         # Sparse arrays will be converted later in `check_array`
         # Only handle extension arrays for integer and floats
         return False
@@ -628,12 +630,8 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
 
 
 def _is_extension_array_dtype(array):
-    try:
-        from pandas.api.types import is_extension_array_dtype
-
-        return is_extension_array_dtype(array)
-    except ImportError:
-        return False
+    # Pandas extension arrays have a dtype with an na_value
+    return hasattr(array, "dtype") and hasattr(array.dtype, "na_value")
 
 
 def check_array(
@@ -652,7 +650,6 @@ def check_array(
     estimator=None,
     input_name="",
 ):
-
     """Input validation on an array, list, sparse matrix or similar.
 
     By default, the input is checked to be a non-empty 2D array containing
@@ -750,7 +747,7 @@ def check_array(
             "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html"
         )
 
-    xp, is_array_api = get_namespace(array)
+    xp, is_array_api_compliant = get_namespace(array)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -760,7 +757,7 @@ def check_array(
     dtype_numeric = isinstance(dtype, str) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
-    if not is_array_api and not hasattr(dtype_orig, "kind"):
+    if not is_array_api_compliant and not hasattr(dtype_orig, "kind"):
         # not a data type (e.g. a column named dtype in a pandas DataFrame)
         dtype_orig = None
 
@@ -772,7 +769,10 @@ def check_array(
         # throw warning if columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be preserved (later).
         with suppress(ImportError):
-            from pandas.api.types import is_sparse
+            from pandas import SparseDtype
+
+            def is_sparse(dtype):
+                return isinstance(dtype, SparseDtype)
 
             if not hasattr(array, "sparse") and array.dtypes.apply(is_sparse).any():
                 warnings.warn(
@@ -802,7 +802,11 @@ def check_array(
             dtype_orig = None
 
     if dtype_numeric:
-        if dtype_orig is not None and dtype_orig.kind == "O":
+        if (
+            dtype_orig is not None
+            and hasattr(dtype_orig, "kind")
+            and dtype_orig.kind == "O"
+        ):
             # if input is object, convert to float.
             dtype = xp.float64
         else:
@@ -826,6 +830,9 @@ def check_array(
         # Since we converted here, we do not need to convert again later
         dtype = None
 
+    if dtype is not None and _is_numpy_namespace(xp):
+        dtype = np.dtype(dtype)
+
     if force_all_finite not in (True, False, "allow-nan"):
         raise ValueError(
             'force_all_finite should be a bool or "allow-nan". Got {!r} instead'.format(
@@ -843,7 +850,10 @@ def check_array(
     # When all dataframe columns are sparse, convert to a sparse array
     if hasattr(array, "sparse") and array.ndim > 1:
         with suppress(ImportError):
-            from pandas.api.types import is_sparse
+            from pandas import SparseDtype  # noqa: F811
+
+            def is_sparse(dtype):
+                return isinstance(dtype, SparseDtype)
 
             if array.dtypes.apply(is_sparse).all():
                 # DataFrame.sparse only supports `to_coo`
@@ -925,7 +935,7 @@ def check_array(
                     "if it contains a single sample.".format(array)
                 )
 
-        if dtype_numeric and array.dtype.kind in "USV":
+        if dtype_numeric and hasattr(array.dtype, "kind") and array.dtype.kind in "USV":
             raise ValueError(
                 "dtype='numeric' is not compatible with arrays of bytes/strings."
                 "Convert your data to numeric values explicitly instead."
@@ -963,7 +973,7 @@ def check_array(
             )
 
     if copy:
-        if xp.__name__ in {"numpy", "numpy.array_api"}:
+        if _is_numpy_namespace(xp):
             # only make a copy if `array` and `array_orig` may share memory`
             if np.may_share_memory(array, array_orig):
                 array = _asarray_with_order(
@@ -1213,9 +1223,11 @@ def column_or_1d(y, *, dtype=None, warn=False):
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
-                "A column-vector y was passed when a 1d array was"
-                " expected. Please change the shape of y to "
-                "(n_samples, ), for example using ravel().",
+                (
+                    "A column-vector y was passed when a 1d array was"
+                    " expected. Please change the shape of y to "
+                    "(n_samples, ), for example using ravel()."
+                ),
                 DataConversionWarning,
                 stacklevel=2,
             )
@@ -1328,8 +1340,10 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
             raise ValueError("Array must be symmetric")
         if raise_warning:
             warnings.warn(
-                "Array is not symmetric, and will be converted "
-                "to symmetric by average with its transpose.",
+                (
+                    "Array is not symmetric, and will be converted "
+                    "to symmetric by average with its transpose."
+                ),
                 stacklevel=2,
             )
         if sp.issparse(array):
@@ -2161,14 +2175,14 @@ def _check_pos_label_consistency(pos_label, y_true):
 
     Parameters
     ----------
-    pos_label : int, str or None
+    pos_label : int, float, bool, str or None
         The positive label.
     y_true : ndarray of shape (n_samples,)
         The target vector.
 
     Returns
     -------
-    pos_label : int
+    pos_label : int, float, bool or str
         If `pos_label` can be inferred, it will be returned.
 
     Raises

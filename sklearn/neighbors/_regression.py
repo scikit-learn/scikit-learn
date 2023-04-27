@@ -479,9 +479,11 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         else:
             y_pred = np.array(
                 [
-                    np.average(_y[ind, :], axis=0, weights=weights[i])
-                    if len(ind)
-                    else empty_obs
+                    (
+                        np.average(_y[ind, :], axis=0, weights=weights[i])
+                        if len(ind)
+                        else empty_obs
+                    )
                     for (i, ind) in enumerate(neigh_ind)
                 ]
             )
