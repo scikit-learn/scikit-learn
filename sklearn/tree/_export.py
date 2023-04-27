@@ -924,8 +924,8 @@ def _compute_depth(tree, node):
 @validate_params(
     {
         "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
-        "feature_names": [list, None],
-        "class_names": [list, None],
+        "feature_names": ["array-like", None],
+        "class_names": ["array-like", None],
         "max_depth": [Interval(Integral, 0, None, closed="left"), None],
         "spacing": [Interval(Integral, 1, None, closed="left"), None],
         "decimals": [Interval(Integral, 0, None, closed="left"), None],
@@ -953,16 +953,16 @@ def export_text(
         It can be an instance of
         DecisionTreeClassifier or DecisionTreeRegressor.
 
-    feature_names : list of str, default=None
-        A list of length n_features containing the feature names.
+    feature_names : array-like of shape (n_features,), default=None
+        An array containing the feature names.
         If None generic names will be used ("feature_0", "feature_1", ...).
 
-    class_names : list or None, default=None
+    class_names : array-like or None, default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
 
         - if `None`, the class names are delegated to `decision_tree.classes_`;
-        - if a list, then `class_names` will be used as class names instead
+        - if an array, then `class_names` will be used as class names instead
           of `decision_tree.classes_`. The length of `class_names` must match
           the length of `decision_tree.classes_`.
 
@@ -1015,7 +1015,7 @@ def export_text(
             class_names = decision_tree.classes_
         elif len(class_names) != len(decision_tree.classes_):
             raise ValueError(
-                "When `class_names` is a list, it should contain as"
+                "When `class_names` is an array, it should contain as"
                 " many items as `decision_tree.classes_`. Got"
                 f" {len(class_names)} while the tree was fitted with"
                 f" {len(decision_tree.classes_)} classes."
@@ -1037,7 +1037,7 @@ def export_text(
     else:
         value_fmt = "{}{} value: {}\n"
 
-    if feature_names:
+    if feature_names is not None:
         feature_names_ = [
             feature_names[i] if i != _tree.TREE_UNDEFINED else None
             for i in tree_.feature

@@ -352,7 +352,7 @@ def test_export_text_errors():
     with pytest.raises(ValueError, match=err_msg):
         export_text(clf, feature_names=["a"])
     err_msg = (
-        "When `class_names` is a list, it should contain as"
+        "When `class_names` is an array, it should contain as"
         " many items as `decision_tree.classes_`. Got 1 while"
         " the tree was fitted with 2 classes."
     )
