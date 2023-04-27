@@ -237,6 +237,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.laplacian_kernel",
     "sklearn.metrics.pairwise.linear_kernel",
+    "sklearn.metrics.pairwise.manhattan_distances",
     "sklearn.metrics.pairwise.nan_euclidean_distances",
     "sklearn.metrics.pairwise.paired_cosine_distances",
     "sklearn.metrics.pairwise.paired_euclidean_distances",
