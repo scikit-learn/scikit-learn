@@ -217,8 +217,8 @@ def check_classification_targets(y):
     ]:
         raise ValueError(
             f"Unknown label type: {y_type}. Maybe you are trying to fit a "
-            "classifier which expects discrete classes as output on a "
-            "regression target having continuous values."
+            "classifier, which expects discrete classes on a "
+            "regression target with continuous values."
         )
 
 
