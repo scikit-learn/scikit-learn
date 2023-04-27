@@ -250,21 +250,22 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             for category, indices in zip(self.categories_, infrequent_indices)
         ]
 
-    def _max_categories_enable_infrequent(self):
+    def _max_categories_enable_infrequent(self, max_categories):
         """
         This function checks whether the value of max_categories
         enables infrequent categories.
         """
-        return self.max_categories is not None and self.max_categories >= 1
+        return max_categories is not None and max_categories >= 1
 
     def _check_infrequent_enabled(self):
         """
         This functions checks whether _infrequent_enabled is True or False.
         This has to be called after parameter validation in the fit function.
         """
+        max_categories = getattr(self, "max_categories", None)
         min_frequency = getattr(self, "min_frequency", None)
         self._infrequent_enabled = (
-            self._max_categories_enable_infrequent()
+            self._max_categories_enable_infrequent(max_categories)
         ) or min_frequency is not None
 
     def _has_infrequent_categories(self, n_current_features, col_idx):
@@ -1547,12 +1548,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 )
         self.max_categories = max_categories
 
-    def _max_categories_enable_infrequent(self):
+    def _max_categories_enable_infrequent(self, max_categories):
         """
         This function checks whether the value of max_categories
         enables infrequent categories.
         """
-        return all(self.max_categories)
+        return any(max_categories)
 
     def _has_infrequent_categories(self, n_current_features, col_idx):
         """
