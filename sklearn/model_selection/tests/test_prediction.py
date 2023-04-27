@@ -814,7 +814,3 @@ def test_cutoffclassifier_pos_label_single_metric(pos_label, metric_type):
 
     precision = precision_score(y, model.predict(X), pos_label=pos_label)
     assert precision == pytest.approx(model.objective_score_, abs=1e-3)
-
-
-# TODO: check side effect when `n_samples > n_thresholds` where optimizing a score
-# could lead to making constant predictions of `~pos_label`.

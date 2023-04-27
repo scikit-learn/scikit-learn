@@ -418,6 +418,9 @@ class _ContinuousScorer(_BaseScorer):
         # TODO: this is pretty slow if we have a lot of `potential_thresholds`
         # We could parallelize but then we are inside a nested parallel loop where the
         # external parallelism is on the CV.
+        # Another guess would be to interpolate the potential thresholds at this moment.
+        # Easy for the probability case but not for the decision function case since it
+        # is not bounded.
         potential_thresholds = np.unique(y_score)
         score_thresholds = [
             self._sign

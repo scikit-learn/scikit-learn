@@ -582,7 +582,15 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                 "pos_label" in signature_scoring_func.parameters
                 and "pos_label" not in scorer_kwargs
             ):
-                scorer_kwargs["pos_label"] = self.pos_label
+                if self.pos_label is None:
+                    # Since the provided `pos_label` is the default, we need to
+                    # use the default value of the scoring function that can be either
+                    # `None` or `1`.
+                    scorer_kwargs["pos_label"] = signature_scoring_func.parameters[
+                        "pos_label"
+                    ].default
+                else:
+                    scorer_kwargs["pos_label"] = self.pos_label
             # transform a binary metric into a curve metric for all possible decision
             # thresholds
             self._scorer = _ContinuousScorer(
@@ -615,21 +623,9 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                 "impossible to optimize the decision threshold."
             )
 
-        if hasattr(classifier, "predict_proba") and (
-            self._response_method == "predict_proba"
-            or (
-                isinstance(self._response_method, list)
-                and self._response_method[0] == "predict_proba"
-            )
-        ):
-            # `predict_proba` was used to compute scores
-            min_threshold = 0.0
-            max_threshold = 1.0
-        else:
-            # `decision_function` was used to compute scores
-            min_threshold = np.min([th.min() for th in thresholds])
-            max_threshold = np.max([th.max() for th in thresholds])
-
+        # find the global min and max thresholds across all folds
+        min_threshold = np.min([th.min() for th in thresholds])
+        max_threshold = np.max([th.max() for th in thresholds])
         thresholds_interpolated = np.linspace(
             min_threshold, max_threshold, num=self.n_thresholds
         )
