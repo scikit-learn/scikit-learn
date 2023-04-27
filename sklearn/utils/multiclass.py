@@ -216,9 +216,9 @@ def check_classification_targets(y):
         "multilabel-sequences",
     ]:
         raise ValueError(
-            "Unknown label type: %r"
-            "Maybe you are trying to fit a classifier for discrete classes"
-            "on a regression target with continuous values" % y_type
+            f"Unknown label type: {y_type}. Maybe you are trying to fit a "
+            "classifier which expects discrete classes as output on a "
+            "regression target having continuous values."
         )
 
 
