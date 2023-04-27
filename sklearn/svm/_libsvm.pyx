@@ -167,14 +167,11 @@ def fit(
     cdef svm_model *model
     cdef const char *error_msg
     cdef cnp.npy_intp SV_len
-    cdef cnp.npy_intp nr
-
 
     if len(sample_weight) == 0:
         sample_weight = np.ones(X.shape[0], dtype=np.float64)
     else:
-        assert (
-            sample_weight.shape[0] == X.shape[0],
+        assert sample_weight.shape[0] == X.shape[0], (
             f"sample_weight and X have incompatible shapes: sample_weight has "
             f"{sample_weight.shape[0]} samples while X has {X.shape[0]}"
         )
@@ -228,7 +225,7 @@ def fit(
 
     # from here until the end, we just copy the data returned by
     # svm_train
-    SV_len  = get_l(model)
+    SV_len = get_l(model)
     n_class = get_nr(model)
 
     cdef int[::1] n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.intc)
@@ -270,7 +267,7 @@ def fit(
     cdef cnp.float64_t[::1] probA
     cdef cnp.float64_t[::1] probB
     if probability != 0:
-        if svm_type < 2: # SVC and NuSVC
+        if svm_type < 2:  # SVC and NuSVC
             probA = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
             probB = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
             copy_probB(<char*> &probB[0], model, <cnp.npy_intp*> probB.shape)
@@ -451,7 +448,7 @@ def predict(
     )
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
-    #TODO: use check_model
+    # TODO: use check_model
     try:
         dec_values = np.empty(X.shape[0])
         with nogil:
@@ -605,7 +602,7 @@ def predict_proba(
 
 
 def decision_function(
-    const cnp.float64_t[:,::1] X,
+    const cnp.float64_t[:, ::1] X,
     const cnp.int32_t[::1] support,
     const cnp.float64_t[:, ::1] SV,
     const cnp.int32_t[::1] nSV,
@@ -841,16 +838,12 @@ def cross_validation(
 
     cdef svm_parameter param
     cdef svm_problem problem
-    cdef svm_model *model
     cdef const char *error_msg
-    cdef cnp.npy_intp SV_len
-    cdef cnp.npy_intp nr
 
     if len(sample_weight) == 0:
         sample_weight = np.ones(X.shape[0], dtype=np.float64)
     else:
-        assert (
-            sample_weight.shape[0] == X.shape[0],
+        assert sample_weight.shape[0] == X.shape[0], (
             f"sample_weight and X have incompatible shapes: sample_weight has "
             f"{sample_weight.shape[0]} samples while X has {X.shape[0]}"
         )
@@ -896,7 +889,7 @@ def cross_validation(
         random_seed,
     )
 
-    error_msg = svm_check_parameter(&problem, &param);
+    error_msg = svm_check_parameter(&problem, &param)
     if error_msg:
         raise ValueError(error_msg)
 

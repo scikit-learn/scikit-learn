@@ -54,6 +54,7 @@ from sklearn.utils import (
     _IS_32BIT,
     _in_unstable_openblas_configuration,
 )
+from sklearn.utils._array_api import _check_array_api_dispatch
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -389,6 +390,12 @@ def set_random_state(estimator, random_state=0):
 
 
 try:
+    _check_array_api_dispatch(True)
+    ARRAY_API_COMPAT_FUNCTIONAL = True
+except ImportError:
+    ARRAY_API_COMPAT_FUNCTIONAL = False
+
+try:
     import pytest
 
     skip_if_32bit = pytest.mark.skipif(_IS_32BIT, reason="skipped on 32bit platforms")
@@ -399,6 +406,10 @@ try:
     )
     skip_if_no_parallel = pytest.mark.skipif(
         not joblib.parallel.mp, reason="joblib is in serial mode"
+    )
+    skip_if_array_api_compat_not_configured = pytest.mark.skipif(
+        not ARRAY_API_COMPAT_FUNCTIONAL,
+        reason="requires array_api_compat installed and a new enough version of NumPy",
     )
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
@@ -832,7 +843,7 @@ def _convert_container(container, constructor_name, columns_name=None, dtype=Non
         return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == "dataframe":
         pd = pytest.importorskip("pandas")
-        return pd.DataFrame(container, columns=columns_name, dtype=dtype)
+        return pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas")
         return pd.Series(container, dtype=dtype)
