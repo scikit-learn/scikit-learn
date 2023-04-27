@@ -4,6 +4,7 @@ Testing for export functions of decision trees (sklearn.tree.export).
 from re import finditer, search
 from textwrap import dedent
 
+import numpy as np
 from numpy.random import RandomState
 import pytest
 
@@ -20,6 +21,9 @@ y = [-1, -1, -1, 1, 1, 1]
 y2 = [[-1, 1], [-1, 1], [-1, 1], [1, 2], [1, 2], [1, 3]]
 w = [1, 1, 1, 0.5, 0.5, 0.5]
 y_degraded = [1, 1, 1, 1, 1, 1]
+
+# constructors for feature names and class names
+constructors = [list, np.array]
 
 
 def test_graphviz_toy():
@@ -49,9 +53,6 @@ def test_graphviz_toy():
     assert contents1 == contents2
 
     # Test with feature_names
-    contents1 = export_graphviz(
-        clf, feature_names=["feature0", "feature1"], out_file=None
-    )
     contents2 = (
         "digraph Tree {\n"
         'node [shape=box, fontname="helvetica"] ;\n'
@@ -67,10 +68,13 @@ def test_graphviz_toy():
         "}"
     )
 
-    assert contents1 == contents2
+    for cons in constructors:
+        contents1 = export_graphviz(
+            clf, feature_names=cons(["feature0", "feature1"]), out_file=None
+        )
+        assert contents1 == contents2
 
     # Test with class_names
-    contents1 = export_graphviz(clf, class_names=["yes", "no"], out_file=None)
     contents2 = (
         "digraph Tree {\n"
         'node [shape=box, fontname="helvetica"] ;\n'
@@ -88,7 +92,9 @@ def test_graphviz_toy():
         "}"
     )
 
-    assert contents1 == contents2
+    for cons in constructors:
+        contents1 = export_graphviz(clf, class_names=cons(["yes", "no"]), out_file=None)
+        assert contents1 == contents2
 
     # Test plot_options
     contents1 = export_graphviz(
@@ -383,7 +389,8 @@ def test_export_text():
     |--- b >  0.00
     |   |--- class: 1
     """).lstrip()
-    assert export_text(clf, feature_names=["a", "b"]) == expected_report
+    for cons in constructors:
+        assert export_text(clf, feature_names=cons(["a", "b"])) == expected_report
 
     expected_report = dedent("""
     |--- feature_1 <= 0.00
@@ -391,7 +398,8 @@ def test_export_text():
     |--- feature_1 >  0.00
     |   |--- class: dog
     """).lstrip()
-    assert export_text(clf, class_names=["cat", "dog"]) == expected_report
+    for cons in constructors:
+        assert export_text(clf, class_names=cons(["cat", "dog"])) == expected_report
 
     expected_report = dedent("""
     |--- feature_1 <= 0.00
