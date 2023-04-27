@@ -1188,6 +1188,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     def _add_prefix_for_feature_names_out(self, transformer_with_feature_names_out):
         """Add prefix for feature names out that includes the transformer names.
+        
         Parameters
         ----------
         transformer_with_feature_names_out : list of tuples of (str, array-like of str)
