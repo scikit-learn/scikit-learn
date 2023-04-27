@@ -1190,6 +1190,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         ----------
         transformer_with_feature_names_out : list of tuples of (str, array-like of str)
             The tuple consistent of the transformer's name and its feature names out.
+
         Returns
         -------
         feature_names_out : ndarray of shape (n_features,), dtype=str
