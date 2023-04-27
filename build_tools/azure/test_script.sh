@@ -58,7 +58,7 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     # Ignore distutils deprecation warning, used by joblib internally
     TEST_CMD="$TEST_CMD -Wignore:distutils\ Version\ classes\ are\ deprecated:DeprecationWarning"
 
-    # Ignore pkg_resources deprecation warnings used by pyamg
+    # Ignore pkg_resources deprecation warnings triggered by pyamg
     TEST_CMD="$TEST_CMD -W 'ignore:pkg_resources is deprecated as an API:DeprecationWarning'"
     TEST_CMD="$TEST_CMD -W 'ignore:Deprecated call to \`pkg_resources:DeprecationWarning'"
 
