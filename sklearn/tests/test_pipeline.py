@@ -1149,7 +1149,6 @@ def test_feature_union_passthrough_get_feature_names_out_false():
         [("pca", pca), ("passthrough", "passthrough")], verbose_feature_names_out=False
     )
     ft.fit(X)
-    print(ft.get_feature_names_out())
     assert_array_equal(
         [
             "pca0",
