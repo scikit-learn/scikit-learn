@@ -192,8 +192,11 @@ conda_build_metadata_list = [
         ),
         "package_constraints": {
             "python": "3.9",
-            # TODO: remove the following pin when we have a solution since the current
-            # environment defeat the purpose of the test (e.g. `pylastest`).
+            # TODO: remove the following pin when we have a solution since
+            # pinning a pandas version partially defeats the purpose of the
+            # `pylastest` CI configurations which are meant to test
+            # scikit-learn against the most recently released versions of
+            # its dependencies.
             # pandas 2.0 depends on tzdata as well as python installed via conda
             # We currently have a mix of conda/pip and run into the following issue:
             # https://github.com/conda/conda-lock/issues/179
