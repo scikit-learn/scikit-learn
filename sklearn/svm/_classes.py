@@ -57,8 +57,9 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     dual : "auto" or bool, default=True
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
-        `dual="auto"` will choose the best option considering `n_samples`,
-        `n_features`, `loss` and `penalty`.
+        `dual="auto"` will choose the value of the parameter automatically,
+        based on the values of `n_samples`, `n_features`, `loss`
+        and `penalty`.
 
         .. versionchanged:: 1.3
            The default value will change from `True` to `"auto"` in 1.5.
@@ -294,7 +295,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.classes_ = np.unique(y)
 
         if self.dual == "auto":
-            self._dual = _choose_dual_automatically(
+            _dual = _choose_dual_automatically(
                 self.loss, self.penalty, self.multi_class, X
             )
         elif self.dual == "warn":
@@ -305,9 +306,9 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 ),
                 FutureWarning,
             )
-            self._dual = True
+            _dual = True
         else:
-            self._dual = self.dual
+            _dual = self.dual
 
         self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
@@ -317,7 +318,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             self.intercept_scaling,
             self.class_weight,
             self.penalty,
-            self._dual,
+            _dual,
             self.verbose,
             self.max_iter,
             self.tol,
@@ -403,8 +404,8 @@ class LinearSVR(RegressorMixin, LinearModel):
     dual : "auto" or bool, default=True
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
-        `dual="auto"` will choose the best option considering `n_samples`,
-        `n_features` and `loss`.
+        `dual="auto"` will choose the value of the parameter automatically,
+        based on the values of `n_samples`, `n_features` and `loss`.
 
         .. versionchanged:: 1.3
            The default value will change from `True` to `"auto"` in 1.5.
@@ -560,7 +561,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         penalty = "l2"  # SVR only accepts l2 penalty
 
         if self.dual == "auto":
-            self._dual = _choose_dual_automatically(self.loss, penalty, "ovr", X)
+            _dual = _choose_dual_automatically(self.loss, penalty, "ovr", X)
         elif self.dual == "warn":
             warnings.warn(
                 (
@@ -569,9 +570,9 @@ class LinearSVR(RegressorMixin, LinearModel):
                 ),
                 FutureWarning,
             )
-            self._dual = True
+            _dual = True
         else:
-            self._dual = self.dual
+            _dual = self.dual
 
         self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
@@ -581,7 +582,7 @@ class LinearSVR(RegressorMixin, LinearModel):
             self.intercept_scaling,
             None,
             penalty,
-            self._dual,
+            _dual,
             self.verbose,
             self.max_iter,
             self.tol,
