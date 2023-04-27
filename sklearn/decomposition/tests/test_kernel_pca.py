@@ -523,3 +523,28 @@ def test_kernel_pca_feature_names_out():
 
     names = kpca.get_feature_names_out()
     assert_array_equal([f"kernelpca{i}" for i in range(2)], names)
+
+
+def test_kernel_pca_inverse_correct_gamma():
+    """Check that gamma is set correctly when not provided.
+
+    Non-regression test for #26280
+    """
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+
+    kpca1 = KernelPCA(
+        n_components=2, random_state=rng, fit_inverse_transform=True, kernel="rbf"
+    ).fit(X)
+    kpca2 = KernelPCA(
+        n_components=2,
+        gamma=1 / X.shape[1],
+        random_state=rng,
+        fit_inverse_transform=True,
+        kernel="rbf",
+    ).fit(X)
+
+    reconstructed_X1 = kpca1.inverse_transform(kpca1.transform(X))
+    reconstructed_X2 = kpca2.inverse_transform(kpca1.transform(X))
+
+    assert (reconstructed_X1 == reconstructed_X2).all()
