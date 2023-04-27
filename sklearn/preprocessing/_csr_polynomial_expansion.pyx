@@ -6,15 +6,16 @@ ctypedef uint8_t FLAG_t
 
 # We use the following verbatim block to determine whether the current
 # platform's compiler supports 128-bit integer values intrinsically.
-# This should work for GCC and CLANG, but doesn't for MSVC. We prefer to use
-# 128-bit integers when possible because the intermediate calculations have a
-# non-trivial risk of overflow. It is, however, very unlikely to come up on an
-# average use case, hence 64-bit integers (i.e. `long long`) are "good enough"
-# for most common cases. There is not much we can do to efficiently mitigate
-# the overflow risk on the Windows platform at this time. Consider this a
-# "best effort" design decision that could be revisited later in case someone
-# comes up with a safer option that does not hurt the performance of the common
-# cases.
+# This should work for GCC and CLANG on 64-bit architectures, but doesn't for
+# MSVC on any architecture. We prefer to use 128-bit integers when possible
+# because the intermediate calculations have a non-trivial risk of overflow. It
+# is, however, very unlikely to come up on an average use case, hence 64-bit
+# integers (i.e. `long long`) are "good enough" for most common cases. There is
+# not much we can do to efficiently mitigate  the overflow risk on the Windows
+# platform at this time. Consider this a "best effort" design decision that
+# could be revisited later in case someone comes up with a safer option that
+# does not hurt the performance of the common cases.
+# See `test_sizeof_LARGEST_INT_t()`for more information on exact type expectations.
 cdef extern from *:
     """
     #ifdef __SIZEOF_INT128__
@@ -28,6 +29,8 @@ cdef extern from *:
     ctypedef long long LARGEST_INT_t
 
 
+# Determine the size of `LARGEST_INT_t` at runtime.
+# Used in `test_sizeof_LARGEST_INT_t`.
 def _get_sizeof_LARGEST_INT_t():
     return sizeof(LARGEST_INT_t)
 
