@@ -924,8 +924,8 @@ def _compute_depth(tree, node):
 @validate_params(
     {
         "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
-        "feature_names": ["array-like", None],
-        "class_names": ["array-like", None],
+        "feature_names": [list, np.ndarray, None],
+        "class_names": [list, np.ndarray, None],
         "max_depth": [Interval(Integral, 0, None, closed="left"), None],
         "spacing": [Interval(Integral, 1, None, closed="left"), None],
         "decimals": [Interval(Integral, 0, None, closed="left"), None],
@@ -953,18 +953,18 @@ def export_text(
         It can be an instance of
         DecisionTreeClassifier or DecisionTreeRegressor.
 
-    feature_names : array-like of shape (n_features,), default=None
-        An array containing the feature names.
+    feature_names : list or ndarray of shape (n_features,), default=None
+        A list or an array containing the feature names.
         If None generic names will be used ("feature_0", "feature_1", ...).
 
-    class_names : array-like or None, default=None
+    class_names : list, ndarray, or None, default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
 
         - if `None`, the class names are delegated to `decision_tree.classes_`;
-        - if an array, then `class_names` will be used as class names instead
-          of `decision_tree.classes_`. The length of `class_names` must match
-          the length of `decision_tree.classes_`.
+        - if a list or an array, then `class_names` will be used as class names
+          instead of `decision_tree.classes_`. The length of `class_names` must
+          match the length of `decision_tree.classes_`.
 
         .. versionadded:: 1.3
 
