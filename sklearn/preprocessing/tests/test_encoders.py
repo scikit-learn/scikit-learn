@@ -2095,7 +2095,7 @@ def test_ordinal_encoder_infrequent_three_levels(kwargs):
     "kwargs, expected_infrequent_categories, expected_trans, expected_inverse",
     [
         (
-            {"max_categories": {"x0": 3, "x1": 3, "x2": 3}},
+            {"max_categories": [3, 3, 3]},
             [["a", "d"], ["e", "h"], ["i", "l"]],
             [[2] * 3, [0] * 3, [1] * 3, [2] * 3, [-1] * 3],
             [
@@ -2107,7 +2107,7 @@ def test_ordinal_encoder_infrequent_three_levels(kwargs):
             ],
         ),
         (
-            {"max_categories": {"x0": 3}},
+            {"max_categories": [3, None, None]},
             [["a", "d"], None, None],
             [[2, 0, 0], [0, 1, 1], [1, 2, 2], [2, 3, 3], [-1] * 3],
             [
@@ -2119,7 +2119,7 @@ def test_ordinal_encoder_infrequent_three_levels(kwargs):
             ],
         ),
         (
-            {"max_categories": {"x0": 3, "x1": 2, "x2": 1}},
+            {"max_categories": [3, 2, 1]},
             [["a", "d"], ["e", "g", "h"], ["i", "j", "k", "l"]],
             [[2, 1, 0], [0, 0, 0], [1, 1, 0], [2, 1, 0], [-1] * 3],
             [
@@ -2236,6 +2236,11 @@ def test_ordinal_encoder_infrequent_mixed():
             {"max_categories": 3},
             [["a", "b"], [0, 3, 12], ["bird", "snake"]],
             [[2, 2, 0], [2, 2, 2], [1, 1, 2], [0, 0, 1]],
+        ),
+        (
+            {"max_categories": [3, None, None]},
+            [["a", "b"], None, None],
+            [[2, 4, 1], [2, 0, 3], [1, 3, 0], [0, 2, 2]],
         ),
         (
             {"max_categories": {"str": 3}},
