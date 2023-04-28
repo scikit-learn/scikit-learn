@@ -43,7 +43,6 @@ random sampling procedures.
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Guillaume Lemaitre <glemaitre>`.
 
-
 Changes impacting all modules
 -----------------------------
 
