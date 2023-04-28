@@ -1341,7 +1341,7 @@ def test_gaussian_mixture_single_component_stable():
 def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(monkeypatch):
     """When all init are provided, the Gaussian parameters are not estimated.
 
-    Non-regression test for gh26015.
+    Non-regression test for gh-26015.
     """
 
     mock = Mock(side_effect=_estimate_gaussian_parameters)
