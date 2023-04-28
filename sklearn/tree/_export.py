@@ -861,7 +861,7 @@ def export_graphviz(
         feature_names = check_array(
             feature_names, ensure_2d=False, dtype=None, ensure_min_samples=0
         )
-    if class_names is not None:
+    if class_names is not None and not isinstance(class_names, bool):
         class_names = check_array(
             class_names, ensure_2d=False, dtype=None, ensure_min_samples=0
         )
