@@ -843,7 +843,7 @@ def _convert_container(container, constructor_name, columns_name=None, dtype=Non
         return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == "dataframe":
         pd = pytest.importorskip("pandas")
-        return pd.DataFrame(container, columns=columns_name, dtype=dtype)
+        return pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas")
         return pd.Series(container, dtype=dtype)
