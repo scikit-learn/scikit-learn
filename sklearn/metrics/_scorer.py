@@ -427,15 +427,6 @@ class _ProbaScorer(_BaseScorer):
             y_pred = self._select_proba_binary(y_pred, clf.classes_)
 
         scoring_kwargs = {**self._kwargs, **kwargs}
-        # this is for backward compatibility to avoid passing sample_weight
-        # to the scorer if it's None
-        # TODO: Probably remove when deprecating enable_metadata_routing
-        if (
-            "sample_weight" in scoring_kwargs
-            and scoring_kwargs["sample_weight"] is None
-        ):
-            del scoring_kwargs["sample_weight"]
-
         return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
     def _factory_args(self):
@@ -515,15 +506,6 @@ class _ThresholdScorer(_BaseScorer):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
         scoring_kwargs = {**self._kwargs, **kwargs}
-        # this is for backward compatibility to avoid passing sample_weight
-        # to the scorer if it's None
-        # TODO: Probably remove when deprecating enable_metadata_routing
-        if (
-            "sample_weight" in scoring_kwargs
-            and scoring_kwargs["sample_weight"] is None
-        ):
-            del scoring_kwargs["sample_weight"]
-
         return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
     def _factory_args(self):
