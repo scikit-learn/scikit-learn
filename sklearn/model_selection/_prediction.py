@@ -195,7 +195,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         want to find the decision threshold when `objective_metric` is equal one of
         `"max_tnr_at_tpr_constraint"`, `"max_tpr_at_tnr_constraint"`,
         `"max_precision_at_recall_constraint"`, or
-        `"max_recall_at_precision_constraint".
+        `"max_recall_at_precision_constraint"`.
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class. Used when `objective_metric` is

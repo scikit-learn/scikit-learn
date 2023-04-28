@@ -18,8 +18,9 @@ We use the :class:`~sklearn.model_selection.CutOffClassifier` to tune the
 cut-off point of the decision function to minimize the business cost provided to us.
 
 .. topic:: References
-   .. [1] "Statlog (German Credit Data) Data Set", UCI Machine Learning Repository,
-        https://archive.ics.uci.edu/ml/datasets/Statlog+%28German+Credit+Data%29
+
+    .. [1] "Statlog (German Credit Data) Data Set", UCI Machine Learning Repository,
+       https://archive.ics.uci.edu/ml/datasets/Statlog+%28German+Credit+Data%29
 """
 
 # %%
