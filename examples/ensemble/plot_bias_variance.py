@@ -185,7 +185,6 @@ for n, (name, estimator) in enumerate(estimators):
     plt.ylim([0, 0.1])
 
     if n == n_estimators - 1:
-
         plt.legend(loc=(1.1, 0.5))
 
 plt.subplots_adjust(right=0.75)

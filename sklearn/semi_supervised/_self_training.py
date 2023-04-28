@@ -215,9 +215,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             self.k_best > X.shape[0] - np.sum(has_label)
         ):
             warnings.warn(
-                "k_best is larger than the amount of unlabeled "
-                "samples. All unlabeled samples will be labeled in "
-                "the first iteration",
+                (
+                    "k_best is larger than the amount of unlabeled "
+                    "samples. All unlabeled samples will be labeled in "
+                    "the first iteration"
+                ),
                 UserWarning,
             )
 
