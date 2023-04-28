@@ -346,28 +346,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
-        # TODO(1.4): Remove when base_estimator is removed
-        if self.base_estimator != "deprecated":
-            if self.estimator is not None:
-                raise ValueError(
-                    "Both `base_estimator` and `estimator` are set. Only set "
-                    "`estimator` since `base_estimator` is deprecated."
-                )
-            warnings.warn(
-                (
-                    "`base_estimator` was renamed to `estimator` in version 1.2 and "
-                    "will be removed in 1.4."
-                ),
-                FutureWarning,
-            )
-            estimator = self.base_estimator
-        else:
-            estimator = self.estimator
-
-        if estimator is None:
-            # we want all classifiers that don't expose a random_state
-            # to be deterministic (and we don't want to expose this one).
-            estimator = self._get_estimator()
+        estimator = self._get_estimator()
 
         self.calibrated_classifiers_ = []
         if self.cv == "prefit":
