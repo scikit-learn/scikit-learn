@@ -330,11 +330,11 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     >>> print(classification_report(y_test, classifier_tuned.predict(X_test)))
                   precision    recall  f1-score   support
     <BLANKLINE>
-               0       0.95      0.97      0.96       224
-               1       0.71      0.58      0.64        26
+               0       0.96      0.96      0.96       224
+               1       0.68      0.65      0.67        26
     <BLANKLINE>
         accuracy                           0.93       250
-       macro avg       0.83      0.78      0.80       250
+       macro avg       0.82      0.81      0.81       250
     weighted avg       0.93      0.93      0.93       250
     <BLANKLINE>
     """
@@ -451,7 +451,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
             if self.refit is False and cv.get_n_splits() > 1:
                 raise ValueError("When cv has several folds, refit cannot be False.")
             if self.refit == "auto":
-                refit = True if cv.get_n_splits() == 1 else False
+                refit = cv.get_n_splits() > 1
             else:
                 refit = self.refit
 

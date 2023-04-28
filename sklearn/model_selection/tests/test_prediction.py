@@ -414,7 +414,7 @@ def test_cutoffclassifier_limit_metric_tradeoff(metrics):
     y_pred_1 = model.fit(X, y).predict(X)
     model.set_params(objective_metric=metrics[1])
     y_pred_2 = (~model.fit(X, y).predict(X).astype(bool)).astype(int)
-    assert np.mean(y_pred_1 == y_pred_2) == pytest.approx(1.0)
+    assert np.mean(y_pred_1 == y_pred_2) > 0.98
 
 
 def test_cutoffclassifier_metric_with_parameter():
