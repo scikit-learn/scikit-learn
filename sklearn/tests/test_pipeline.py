@@ -39,6 +39,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import FunctionTransformer
 
 
 iris = load_iris()
@@ -1163,84 +1164,56 @@ def test_feature_union_passthrough_get_feature_names_out_false():
 
 
 def test_feature_union_passthrough_get_feature_names_out_false_errors():
-    """
-    Check feature_names_out for verbose_feature_names_out=False,
-    Collisions in feature names
-    """
+    """Check get_feature_names_out and non-verbose names and colliding names."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([[1, 2], [2, 3]], columns=["a", "b"])
 
-    # Class to test feature names collisions
-    class CollidingFeatureNamesTransformer:
-        def fit(self, X, y=None):
-            return self
-
-        def transform(self, X):
-            return X[:, :2]
-
-        def get_feature_names_out(self, input_features=None):
-            return np.array(["colliding_name", "colliding_name"])
-
-    # Test with verbose_feature_names_out=False when collisions occur
-    transformer1 = CollidingFeatureNamesTransformer()
-    transformer2 = CollidingFeatureNamesTransformer()
-
-    fu = FeatureUnion(
-        [("t1", transformer1), ("t2", transformer2)],
+    select_a = FunctionTransformer(
+        lambda X: X[["a"]], feature_names_out=lambda self, _: np.asarray(["a"])
+    )
+    union = FeatureUnion(
+        [("t1", StandardScaler()), ("t2", select_a)],
         verbose_feature_names_out=False,
     )
-
-    X = np.random.rand(10, 4)
-
-    fu.fit(X)
+    union.fit(X)
 
     msg = re.escape(
-        "Output feature names: ['colliding_name'] are not unique. "
+        "Output feature names: ['a'] are not unique. "
         "Please set verbose_feature_names_out=True to add prefixes to feature names"
     )
 
-    # Replace the escaped ",\\ " with the optional non-capturing group
-    # to match error message
-    msg = msg.replace(",\\\\ ", "(?:, )?")
-
     with pytest.raises(ValueError, match=msg):
-        fu.get_feature_names_out()
+        union.get_feature_names_out()
 
 
 def test_feature_union_passthrough_get_feature_names_out_false_errors_overlap_over_5():
+    """Check get_feature_names_out and non-verbose
+    names with more than 5 overlapping names.
     """
-    Check feature_names_out for verbose_feature_names_out=False,
-    Collisions in feature names
-    There are more than 5 overlapping names
-    """
-
-    class CollidingFeatureNamesTransformer:
-        def __init__(self, names):
-            self.names = names
-
-        def fit(self, X, y=None):
-            return self
-
-        def transform(self, X):
-            return X[:, : len(self.names)]
-
-        def get_feature_names_out(self, input_features=None):
-            return np.array(self.names)
-
-    # Test with verbose_feature_names_out=False when collisions occur
-    transformer1 = CollidingFeatureNamesTransformer(
-        ["overlap1", "overlap2", "overlap3", "overlap4", "overlap5", "overlap6"]
-    )
-    transformer2 = CollidingFeatureNamesTransformer(
-        ["overlap1", "overlap2", "overlap3", "overlap4", "overlap5", "overlap6"]
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame(
+        [[1, 2, 3, 4, 5, 6], [2, 3, 4, 5, 6, 7]],
+        columns=[
+            "overlap1",
+            "overlap2",
+            "overlap3",
+            "overlap4",
+            "overlap5",
+            "overlap6",
+        ],
     )
 
-    fu = FeatureUnion(
-        [("t1", transformer1), ("t2", transformer2)],
+    select_overlap = FunctionTransformer(
+        lambda X: X.iloc[:, :6],
+        feature_names_out=lambda self, _: np.asarray(
+            ["overlap1", "overlap2", "overlap3", "overlap4", "overlap5", "overlap6"]
+        ),
+    )
+    union = FeatureUnion(
+        [("t1", StandardScaler()), ("t2", select_overlap)],
         verbose_feature_names_out=False,
     )
-
-    X = np.random.rand(10, 6)
-
-    fu.fit(X)
+    union.fit(X)
 
     msg = (
         r"Output feature names: \['overlap1', 'overlap2', 'overlap3'(?:, 'overlap4',"
@@ -1249,12 +1222,8 @@ def test_feature_union_passthrough_get_feature_names_out_false_errors_overlap_ov
         r" feature names"
     )
 
-    # Replace the escaped ",\\ " with the optional non-capturing group
-    # to match error message
-    msg = msg.replace(",\\\\ ", "(?:, )?")
-
     with pytest.raises(ValueError, match=msg):
-        fu.get_feature_names_out()
+        union.get_feature_names_out()
 
 
 def test_step_name_validation():
