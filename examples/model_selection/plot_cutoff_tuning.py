@@ -162,7 +162,11 @@ numerical_columns = selector(dtype_exclude="category")(X)
 
 preprocessor = ColumnTransformer(
     [
-        ("categorical", OrdinalEncoder(), categorical_columns),
+        (
+            "categorical",
+            OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1),
+            categorical_columns,
+        ),
         ("numerical", "passthrough", numerical_columns),
     ],
     verbose_feature_names_out=False,
@@ -267,106 +271,6 @@ model_tuned = CutOffClassifier(
 )
 model_tuned.fit(X_train, y_train)
 
-# %%
-# We plot the ROC and Precision-Recall curves for the vanilla model and the tuned model.
-# Also we plot the cut-off points that would be used by each model.
-from sklearn.metrics import PrecisionRecallDisplay, RocCurveDisplay
-
-fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21, 6))
-
-linestyles = ("dashed", "dotted")
-markerstyles = ("o", ">")
-colors = ("tab:blue", "tab:orange")
-names = ("Vanilla GBDT", "Tuned GBDT")
-for idx, (est, linestyle, marker, color, name) in enumerate(
-    zip((model, model_tuned), linestyles, markerstyles, colors, names)
-):
-    decision_threshold = getattr(est, "decision_threshold_", 0.5)
-    PrecisionRecallDisplay.from_estimator(
-        est,
-        X_test,
-        y_test,
-        pos_label=pos_label,
-        linestyle=linestyle,
-        color=color,
-        ax=axs[0],
-        name=name,
-    )
-# %%
-# We plot the ROC and Precision-Recall curves for the vanilla model and the tuned model.
-# Also we plot the cut-off points that would be used by each model.
-from sklearn.metrics import PrecisionRecallDisplay, RocCurveDisplay
-
-fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21, 6))
-
-linestyles = ("dashed", "dotted")
-markerstyles = ("o", ">")
-colors = ("tab:blue", "tab:orange")
-names = ("Vanilla GBDT", "Tuned GBDT")
-for idx, (est, linestyle, marker, color, name) in enumerate(
-    zip((model, model_tuned), linestyles, markerstyles, colors, names)
-):
-    decision_threshold = getattr(est, "decision_threshold_", 0.5)
-    PrecisionRecallDisplay.from_estimator(
-        est,
-        X_test,
-        y_test,
-        pos_label=pos_label,
-        linestyle=linestyle,
-        color=color,
-        ax=axs[0],
-        name=name,
-    )
-# %%
-# We plot the ROC and Precision-Recall curves for the vanilla model and the tuned model.
-# Also we plot the cut-off points that would be used by each model.
-from sklearn.metrics import PrecisionRecallDisplay, RocCurveDisplay
-
-fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21, 6))
-
-linestyles = ("dashed", "dotted")
-markerstyles = ("o", ">")
-colors = ("tab:blue", "tab:orange")
-names = ("Vanilla GBDT", "Tuned GBDT")
-for idx, (est, linestyle, marker, color, name) in enumerate(
-    zip((model, model_tuned), linestyles, markerstyles, colors, names)
-):
-    decision_threshold = getattr(est, "decision_threshold_", 0.5)
-    PrecisionRecallDisplay.from_estimator(
-        est,
-        X_test,
-        y_test,
-        pos_label=pos_label,
-        linestyle=linestyle,
-        color=color,
-        ax=axs[0],
-        name=name,
-    )
-# %%
-# We plot the ROC and Precision-Recall curves for the vanilla model and the tuned model.
-# Also we plot the cut-off points that would be used by each model.
-from sklearn.metrics import PrecisionRecallDisplay, RocCurveDisplay
-
-fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21, 6))
-
-linestyles = ("dashed", "dotted")
-markerstyles = ("o", ">")
-colors = ("tab:blue", "tab:orange")
-names = ("Vanilla GBDT", "Tuned GBDT")
-for idx, (est, linestyle, marker, color, name) in enumerate(
-    zip((model, model_tuned), linestyles, markerstyles, colors, names)
-):
-    decision_threshold = getattr(est, "decision_threshold_", 0.5)
-    PrecisionRecallDisplay.from_estimator(
-        est,
-        X_test,
-        y_test,
-        pos_label=pos_label,
-        linestyle=linestyle,
-        color=color,
-        ax=axs[0],
-        name=name,
-    )
 # %%
 # We plot the ROC and Precision-Recall curves for the vanilla model and the tuned model.
 # Also we plot the cut-off points that would be used by each model.
