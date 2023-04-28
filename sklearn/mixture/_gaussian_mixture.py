@@ -702,6 +702,8 @@ class GaussianMixture(BaseMixture):
             )
 
     def _initialize_parameters(self, X, random_state):
+        # If all the initial parameters are all provided, then there is no need to run
+        # the initialization.
         compute_resp = (
             self.weights_init is None
             or self.means_init is None
