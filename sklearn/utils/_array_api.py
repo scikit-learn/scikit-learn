@@ -186,6 +186,13 @@ class _ArrayAPIWrapper:
     def __getattr__(self, name):
         return getattr(self._namespace, name)
 
+    @property
+    def float16(self):
+        if self._namespace.__name__ == "numpy.array_api":
+            return numpy.float16
+        else:
+            return self._namespace.float16
+
     def take(self, X, indices, *, axis=0):
         # When array_api supports `take` we can use this directly
         # https://github.com/data-apis/array-api/issues/177
@@ -468,18 +475,18 @@ def _nanmin(X, axis=None):
     else:
         X = xp.min(xp.where(~xp.isnan(X), X, xp.asarray(+xp.inf)), axis=axis)
         # Replace Infs from all NaN slices with NaN again
-        return xp.where(~xp.isinf(X), X, xp.nan)
+        return xp.where(~xp.isinf(X), X, xp.asarray(xp.nan))
 
 
 def _nanmax(X, axis=None):
     xp, _ = get_namespace(X)
     if _is_numpy_namespace(xp):
-        return numpy.nanmax(X, axis=axis)
+        return xp.asarray(numpy.nanmax(X, axis=axis))
 
     else:
         X = xp.max(xp.where(~xp.isnan(X), X, xp.asarray(-xp.inf)), axis=axis)
         # Replace Infs from all NaN slices with NaN again
-        return xp.where(~xp.isneginf(X), X, xp.nan)
+        return xp.where(~xp.isneginf(X), X, xp.asarray(xp.nan))
 
 
 def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
