@@ -483,6 +483,12 @@ Changelog
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
+- |Enhancement| Added support for passing `max_categories` as `array-like` or
+  `dict` in :class:`preprocessing.OrdinalEncoder`. This allows specifying the
+  maximum number of output categories for each input feature instead of being
+  restricted to setting a global maximum number of output categories.
+  :pr:`26284` by :user:`Andrew Wang <Andrew-Wang-IB45>`.
+
 :mod:`sklearn.tree`
 ...................
 
