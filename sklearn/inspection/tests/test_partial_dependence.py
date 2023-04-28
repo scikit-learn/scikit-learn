@@ -556,14 +556,6 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
         return self
 
 
-# this error message causes issues with black formatting
-# the regular linter wants it one way and the azure linter
-# wants it a different way. This hack makes both happy.
-long_error_message = "The custom grid for some features is"
-long_error_message += " not a one-dimensional array. "
-long_error_message += "\nFeature 1: 2 dimensions"
-
-
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "estimator, params, err_msg",
@@ -635,7 +627,10 @@ long_error_message += "\nFeature 1: 2 dimensions"
         (
             LinearRegression(),
             {"features": [0, 1], "custom_values": {0: [1, 2, 3], 1: np.ones((3, 3))}},
-            long_error_message,
+            (
+                "The custom grid for some features is not a one-dimensional array. "
+                "Feature 1: 2 dimensions"
+            ),
         ),
     ],
 )
