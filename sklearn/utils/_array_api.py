@@ -171,9 +171,9 @@ class _ArrayAPIWrapper:
 
     This wrapper makes it possible for scikit-learn maintainers to
     deal with discrepancies between different implementations of the
-    Python array API standard and its evolution over time.
+    Python Array API standard and its evolution over time.
 
-    The Python array API standard specification:
+    The Python Array API standard specification:
     https://data-apis.org/array-api/latest/
 
     Documentation of the NumPy implementation:
