@@ -67,6 +67,11 @@ jobs:
       condition: and(succeeded(),
                      eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true'),
                      eq(variables['SELECTED_TESTS'], ''))
+    - script: |
+        build_tools/azure/combine_coverage_reports.sh
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
+      displayName: 'Combine coverage'
     - task: PublishTestResults@2
       inputs:
         testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
