@@ -1187,39 +1187,21 @@ def test_feature_union_passthrough_get_feature_names_out_false_errors():
 
 
 def test_feature_union_passthrough_get_feature_names_out_false_errors_overlap_over_5():
-    """Check get_feature_names_out and non-verbose
-    names with more than 5 overlapping names.
-    """
+    """Check get_feature_names_out w/ non-verbose names and >= 5 colliding names."""
     pd = pytest.importorskip("pandas")
-    X = pd.DataFrame(
-        [[1, 2, 3, 4, 5, 6], [2, 3, 4, 5, 6, 7]],
-        columns=[
-            "overlap1",
-            "overlap2",
-            "overlap3",
-            "overlap4",
-            "overlap5",
-            "overlap6",
-        ],
-    )
+    X = pd.DataFrame([list(range(10))], columns=[f"f{i}" for i in range(10)])
 
-    select_overlap = FunctionTransformer(
-        lambda X: X.iloc[:, :6],
-        feature_names_out=lambda self, _: np.asarray(
-            ["overlap1", "overlap2", "overlap3", "overlap4", "overlap5", "overlap6"]
-        ),
-    )
     union = FeatureUnion(
-        [("t1", StandardScaler()), ("t2", select_overlap)],
+        [("t1", "passthrough"), ("t2", "passthrough")],
         verbose_feature_names_out=False,
     )
+
     union.fit(X)
 
-    msg = (
-        r"Output feature names: \['overlap1', 'overlap2', 'overlap3'(?:, 'overlap4',"
-        r" 'overlap5')?, \.\.\.\] "
-        r"are not unique\. Please set verbose_feature_names_out=True to add prefixes to"
-        r" feature names"
+    msg = re.escape(
+        "Output feature names: ['f0', 'f1', 'f2', 'f3', 'f4', ...] "
+        "are not unique. Please set verbose_feature_names_out=True to add prefixes to"
+        " feature names"
     )
 
     with pytest.raises(ValueError, match=msg):
