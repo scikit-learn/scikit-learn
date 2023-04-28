@@ -13,6 +13,7 @@ from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
 from ..utils import check_array, is_scalar_nan, _safe_indexing
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
+from ..utils.validation import _is_arraylike_not_scalar
 from ..utils._param_validation import Interval, StrOptions, Hidden
 from ..utils._param_validation import RealNotInt
 from ..utils._mask import _get_mask
@@ -1485,12 +1486,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Check the max_categories and convert to the corresponding array.
         """
         max_categories = self.max_categories
-        if max_categories is None or isinstance(max_categories, Integral):
-            max_categories = np.full(
-                shape=self.n_features_in_,
-                fill_value=max_categories,
-            )
-        elif isinstance(max_categories, dict):
+        if isinstance(max_categories, dict):
             max_categories = np.full(
                 shape=self.n_features_in_,
                 fill_value=None,
@@ -1553,20 +1549,33 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         This function checks whether the value of max_categories
         enables infrequent categories.
         """
-        return any(max_categories)
+        if max_categories is None:
+            return False
+        elif isinstance(max_categories, Integral):
+            return max_categories >= 1
+        else:
+            return any(max_categories)
 
     def _has_infrequent_categories(self, n_current_features, col_idx):
         """
         This function checks if there are any infrequent categories.
         """
-        max_count = self.max_categories[col_idx]
-        return max_count is not None and max_count < n_current_features
+        if self.max_categories is None:
+            return False
+        if isinstance(self.max_categories, Integral):
+            return self.max_categories < n_current_features
+        else:
+            max_count = self.max_categories[col_idx]
+            return max_count is not None and max_count < n_current_features
 
     def _get_frequent_category_count(self, col_idx):
         """
         This functions computes the number of frequent categories.
         """
-        return self.max_categories[col_idx] - 1
+        if isinstance(self.max_categories, Integral):
+            return self.max_categories - 1
+        else:
+            return self.max_categories[col_idx] - 1
 
     def fit(self, X, y=None):
         """
@@ -1610,9 +1619,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 f"got {self.unknown_value}."
             )
 
-        self._check_n_features(X, reset=True)
-        self._check_feature_names(X, reset=True)
-        self._check_max_categories()
+        if isinstance(self.max_categories, dict) or _is_arraylike_not_scalar(
+            self.max_categories
+        ):
+            self._check_n_features(X, reset=True)
+            self._check_feature_names(X, reset=True)
+            self._check_max_categories()
 
         # `_fit` will only raise an error when `self.handle_unknown="error"`
         fit_results = self._fit(
