@@ -397,6 +397,8 @@ def get_namespace(*arrays):
 
     namespace, is_array_api_compliant = array_api_compat.get_namespace(*arrays), True
 
+    # These namespaces need additional wrapping to smooth out small differences
+    # between implementations
     if namespace.__name__ in {"numpy.array_api", "cupy.array_api"}:
         namespace = _ArrayAPIWrapper(namespace)
 
