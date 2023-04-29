@@ -1187,7 +1187,7 @@ def test_feature_union_passthrough_get_feature_names_out_false_errors():
 
 
 def test_feature_union_passthrough_get_feature_names_out_false_errors_overlap_over_5():
-    """Check get_feature_names_out w/ non-verbose names and >= 5 colliding names."""
+    """Check get_feature_names_out with non-verbose names and >= 5 colliding names."""
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([list(range(10))], columns=[f"f{i}" for i in range(10)])
 
