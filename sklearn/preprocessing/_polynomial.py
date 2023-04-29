@@ -1001,14 +1001,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # TODO: Remove this conditional error when the minimum supported version of
             # SciPy is 1.9.2
             # `scipy.sparse.hstack` breaks in scipy<1.9.2
-            # when `n_output_features_ > max_int32`
+            # when `n_features_out_ > max_int32`
             max_int32 = np.iinfo(np.int32).max
             all_int32 = True
             for mat in output_list:
                 all_int32 &= mat.indices.dtype == np.int32
             if (
                 sp_version < parse_version("1.9.2")
-                and self.n_output_features_ > max_int32
+                and self.n_features_out_ > max_int32
                 and all_int32
             ):
                 raise ValueError(
