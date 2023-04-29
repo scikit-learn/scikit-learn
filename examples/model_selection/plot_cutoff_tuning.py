@@ -366,6 +366,8 @@ scoring["cost_gain"](model_tuned, X_test, y_test)
 # We observe that the decision generalized on the testing set leading to a better
 # business score.
 #
+# .. _cutoffclassifier_no_cv:
+#
 # Consideration regarding model refitting and cross-validation
 # ------------------------------------------------------------
 #

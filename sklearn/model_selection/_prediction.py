@@ -223,18 +223,25 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         Determines the cross-validation splitting strategy to train classifier.
         Possible inputs for cv are:
 
-        * None, to use the default 5-fold stratified K-fold cross validation;
-        * An integer number, to specify the number of folds in a stratified
-          k-fold;
-        * A float number, to specify a single shuffle split. The floating
-          number should be in (0, 1) and represent the size of the validation
-          set;
+        * `None`, to use the default 5-fold stratified K-fold cross validation;
+        * An integer number, to specify the number of folds in a stratified k-fold;
+        * A float number, to specify a single shuffle split. The floating number should
+          be in (0, 1) and represent the size of the validation set;
         * An object to be used as a cross-validation generator;
         * An iterable yielding train, test splits;
-        * "prefit", to bypass the cross-validation.
+        * `"prefit"`, to bypass the cross-validation.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. warning::
+            Using `cv="prefit"` and passing the same dataset for fitting `estimator`
+            and tuning the cut-off point is subject to undesired overfitting. You can
+            refer to :ref:`cutoffclassifier_no_cv` for an example.
+
+            This option should only be used when the set used to fit `estimator` is
+            different from the one used to tune the cut-off point (by calling
+            :meth:`CutOffClassifier.fit`).
 
     refit : "auto" or bool, default="auto"
         Whether or not to refit the classifier on the entire training set once
