@@ -2391,10 +2391,8 @@ def test_learning_curve_some_failing_fits_warning(error_score, global_random_see
     X, y = make_classification(
         n_classes=3, n_informative=6, shuffle=False, random_state=global_random_seed
     )
-
     svc = SVC(random_state=global_random_seed)
     svc.fit(X, y)
-
     warning_message = re.compile(
         f"10 fits failed out of a total of 50.+The score on these train-test partitions"
         f" for these parameters will be set to nan.+If these failures are not expected,"
@@ -2402,7 +2400,6 @@ def test_learning_curve_some_failing_fits_warning(error_score, global_random_see
         f" number of classes has to be greater than one; got 1 class",
         flags=re.DOTALL,
     )
-
     with pytest.warns(FitFailedWarning, match=warning_message):
         train_sizes, train_scores, test_scores = learning_curve(
             svc, X, y, cv=10, error_score=error_score
