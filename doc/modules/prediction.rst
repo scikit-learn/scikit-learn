@@ -35,10 +35,9 @@ the positive class with probability value greater than 0.5 (obtained with
 Similar rules apply for other classification problems.
 
 While these approaches are reasonable as default behaviors, they might not be
-adapted to some cases. The context and nature of the use case will define the
+adapted to some cases. The context and nature of the use case define the
 expected behavior of the classifier and thus the strategy to convert soft
-predictions into hard predictions. We will illustrate this point with an
-example.
+predictions into hard predictions. We illustrate this point with an example.
 
 Let's imagine the deployment of a predictive model helping medical doctors to
 detect cancers. In a setting where this model would be a tool to discard
@@ -54,4 +53,31 @@ Post-tuning of the decision threshold
 One solution to address the problem stated in the introduction is to tune the
 decision threshold of the classifier once this model has been trained. The
 :class:`CutOffClassifier` allows to tune this threshold using an internal
-cross-validation.
+cross-validation. The optimum threshold is tuned to maximize a given metric
+with or without constraints.
+
+The following image illustrate the tuning of the cut-off point for a gradient
+boosting classifier. While the vanilla and tuned classifiers provide the same
+Receiver Operating Characteristic (ROC) and Precision-Recall curves, and thus
+the same :term:`predict_proba` outputs, the "hard" predictions defer because of
+the tuned cut-off point. The vanilla classifier predicts the class of interest
+for a probability greater than 0.5 while the tuned classifier predict the class
+of interest for a very low probability (around 0.02). This cut-off point is
+maximizes a utility metric defined by the business case (in this case an
+insurance company).
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cutoff_tuning_002.png
+   :target: ../auto_examples/model_selection/plot_cutoff_tuning.html
+   :align: center
+
+Available options to tune the cut-off point
+-------------------------------------------
+
+Important notes regarding the internal cross-validation
+-------------------------------------------------------
+
+Examples
+--------
+
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_cutoff_tuning.py` example for
+  an example of tuning the decision threshold of a classifier.
