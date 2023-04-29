@@ -1521,6 +1521,13 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                         )
                     max_categories[feature_idx] = max_count
         else:
+            max_categories = np.asarray(max_categories)
+            if max_categories.shape[0] != self.n_features_in_:
+                raise ValueError(
+                    f"max_categories has shape {max_categories.shape} but the "
+                    f"input data X has {self.n_features_in_} features."
+                )
+
             unexpected_max_counts = set(
                 max_count
                 for max_count in max_categories
@@ -1536,12 +1543,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     f"values: {list(unexpected_max_counts)}."
                 )
 
-            max_categories = np.asarray(max_categories)
-            if max_categories.shape[0] != self.n_features_in_:
-                raise ValueError(
-                    f"max_categories has shape {self.max_categories.shape} but the"
-                    f" input data X has {self.n_features_in_} features."
-                )
         self.max_categories = max_categories
 
     def _max_categories_enable_infrequent(self, max_categories):

@@ -2412,3 +2412,126 @@ def test_ordinal_encoder_missing_appears_infrequent():
     )
     X_trans = ordinal.transform(X_test)
     assert_allclose(X_trans, [[2, 1], [2, 0], [np.nan, 0], [1, 0], [0, 1]])
+
+
+def test_ordinal_encoder_missing_feature_names():
+    """Check behavior when max_categories specifies features on a dataset without
+    feature names."""
+    X = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object).T
+    ordinal = OrdinalEncoder(max_categories={"x0": 3})
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "OrdinalEncoder was not fitted on data with feature names. Pass"
+            " max_categories as an integer array instead."
+        ),
+    ):
+        ordinal.fit(X)
+
+
+def test_ordinal_encoder_unexpected_feature_names():
+    """Check behavior when max_categories specifies features that are not present on a
+    dataset."""
+    pd = pytest.importorskip("pandas")
+    categorical_dtype = pd.CategoricalDtype(["bird", "cat", "dog", "snake"])
+    X = pd.DataFrame(
+        {
+            "str": ["a", "f", "c", "f", "f", "a", "c", "b", "b"],
+            "int": [5, 3, 0, 10, 10, 12, 0, 3, 5],
+            "categorical": pd.Series(
+                ["dog"] * 4 + ["cat"] * 3 + ["snake"] + ["bird"],
+                dtype=categorical_dtype,
+            ),
+        },
+        columns=["str", "int", "categorical"],
+    )
+
+    max_categories = {"str": 3, "int": 2, "categorical": 1, "unexpected": 13}
+    ordinal = OrdinalEncoder(max_categories=max_categories)
+
+    msg = re.escape(
+        "max_categories contains 1 unexpected feature names: ['unexpected']."
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        ordinal.fit(X)
+
+
+@pytest.mark.parametrize(
+    "max_categories, incorrect_feature, incorrect_value",
+    [
+        ({"str": 3, "int": None, "categorical": 1}, "int", None),
+        ({"str": 3, "int": 2, "categorical": 0}, "categorical", 0),
+    ],
+)
+def test_ordinal_encoder_max_categories_dict_invalid_types(
+    max_categories, incorrect_feature, incorrect_value
+):
+    """Check behavior when max_categories as a dictionary contains values that are
+    invalid."""
+    pd = pytest.importorskip("pandas")
+    categorical_dtype = pd.CategoricalDtype(["bird", "cat", "dog", "snake"])
+    X = pd.DataFrame(
+        {
+            "str": ["a", "f", "c", "f", "f", "a", "c", "b", "b"],
+            "int": [5, 3, 0, 10, 10, 12, 0, 3, 5],
+            "categorical": pd.Series(
+                ["dog"] * 4 + ["cat"] * 3 + ["snake"] + ["bird"],
+                dtype=categorical_dtype,
+            ),
+        },
+        columns=["str", "int", "categorical"],
+    )
+
+    ordinal = OrdinalEncoder(max_categories=max_categories)
+
+    msg = re.escape(
+        f"max_categories['{incorrect_feature}'] must be an integer at least 1. "
+        f"Got {incorrect_value}."
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        ordinal.fit(X)
+
+
+@pytest.mark.parametrize("max_categories", [[], [3, 2], [[3, 2, 1]]])
+def test_ordinal_encoder_max_categories_array_like_invalid_shape(max_categories):
+    """Check behavior when max_categories as an array_like has an invalid shape."""
+    X = (
+        [["a", "e", "i"]] * 5
+        + [["b", "f", "j"]] * 20
+        + [["c", "g", "k"]] * 10
+        + [["d", "h", "l"]] * 3
+    )
+
+    ordinal = OrdinalEncoder(max_categories=max_categories)
+
+    msg = re.escape(
+        f"max_categories has shape {np.asarray(max_categories).shape} but the "
+        "input data X has 3 features."
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        ordinal.fit(X)
+
+
+def test_ordinal_encoder_max_categories_array_like_invalid_types():
+    """Check behavior when max_categories as an array_like contains values that
+    are invalid."""
+    X = (
+        [["a", "e", "i"]] * 5
+        + [["b", "f", "j"]] * 20
+        + [["c", "g", "k"]] * 10
+        + [["d", "h", "l"]] * 3
+    )
+
+    ordinal = OrdinalEncoder(max_categories=[3, None, 0])
+
+    msg = re.escape(
+        "max_categories must be an array-like of None or integers at least 1. "
+        "Observed values: [0]."
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        ordinal.fit(X)
