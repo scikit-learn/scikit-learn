@@ -2158,9 +2158,11 @@ def test_cross_validate_some_failing_fits_warning(error_score):
         "ValueError: Classifier fit failed with 1 values too high"
     )
     warning_message = re.compile(
-        "2 fits failed.+total of 3.+The score on these"
-        " train-test partitions for these parameters will be set to"
-        f" {cross_validate_kwargs['error_score']}.+{individual_fit_error_message}",
+        (
+            "2 fits failed.+total of 3.+The score on these"
+            " train-test partitions for these parameters will be set to"
+            f" {cross_validate_kwargs['error_score']}.+{individual_fit_error_message}"
+        ),
         flags=re.DOTALL,
     )
 
@@ -2181,8 +2183,10 @@ def test_cross_validate_all_failing_fits_error(error_score):
 
     individual_fit_error_message = "ValueError: Failing classifier failed as required"
     error_message = re.compile(
-        "All the 7 fits failed.+your model is misconfigured.+"
-        f"{individual_fit_error_message}",
+        (
+            "All the 7 fits failed.+your model is misconfigured.+"
+            f"{individual_fit_error_message}"
+        ),
         flags=re.DOTALL,
     )
 
@@ -2394,10 +2398,13 @@ def test_learning_curve_some_failing_fits_warning(error_score, global_random_see
     svc = SVC(random_state=global_random_seed)
     svc.fit(X, y)
     warning_message = re.compile(
-        f"10 fits failed out of a total of 50.+The score on these train-test partitions"
-        f" for these parameters will be set to nan.+If these failures are not expected,"
-        f" you can try to debug them by setting error_score='raise'.+ValueError: The"
-        f" number of classes has to be greater than one; got 1 class",
+        (
+            f"10 fits failed out of a total of 50.+The score on these train-test"
+            f" partitions for these parameters will be set to nan.+If these failures"
+            f" are not expected, you can try to debug them by setting"
+            f" error_score='raise'.+ValueError: The number of classes has to be greater"
+            f" than one; got 1 class"
+        ),
         flags=re.DOTALL,
     )
     with pytest.warns(FitFailedWarning, match=warning_message):
