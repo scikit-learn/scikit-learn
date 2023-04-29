@@ -34,7 +34,6 @@ def test_sample_without_replacement_algorithms():
 
 
 def check_edge_case_of_sample_int(sample_without_replacement):
-
     # n_population < n_sample
     with pytest.raises(ValueError):
         sample_without_replacement(0, 1)
@@ -94,9 +93,9 @@ def check_sample_int_distribution(sample_without_replacement):
 
         output = {}
         for i in range(n_trials):
-            output[
-                frozenset(sample_without_replacement(n_population, n_samples))
-            ] = None
+            output[frozenset(sample_without_replacement(n_population, n_samples))] = (
+                None
+            )
 
             if len(output) == n_expected:
                 break

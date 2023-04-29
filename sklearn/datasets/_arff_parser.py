@@ -187,7 +187,7 @@ def _liac_arff_parser(
 
         # calculate chunksize
         first_row = next(arff_container["data"])
-        first_df = pd.DataFrame([first_row], columns=columns_names)
+        first_df = pd.DataFrame([first_row], columns=columns_names, copy=False)
 
         row_bytes = first_df.memory_usage(deep=True).sum()
         chunksize = get_chunk_n_rows(row_bytes)
@@ -196,7 +196,9 @@ def _liac_arff_parser(
         columns_to_keep = [col for col in columns_names if col in columns_to_select]
         dfs = [first_df[columns_to_keep]]
         for data in _chunk_generator(arff_container["data"], chunksize):
-            dfs.append(pd.DataFrame(data, columns=columns_names)[columns_to_keep])
+            dfs.append(
+                pd.DataFrame(data, columns=columns_names, copy=False)[columns_to_keep]
+            )
         frame = pd.concat(dfs, ignore_index=True)
         del dfs, first_df
 
@@ -427,7 +429,7 @@ def _pandas_arff_parser(
     categorical_columns = [
         name
         for name, dtype in frame.dtypes.items()
-        if pd.api.types.is_categorical_dtype(dtype)
+        if isinstance(dtype, pd.CategoricalDtype)
     ]
     for col in categorical_columns:
         frame[col] = frame[col].cat.rename_categories(strip_single_quotes)
@@ -442,7 +444,7 @@ def _pandas_arff_parser(
     categories = {
         name: dtype.categories.tolist()
         for name, dtype in frame.dtypes.items()
-        if pd.api.types.is_categorical_dtype(dtype)
+        if isinstance(dtype, pd.CategoricalDtype)
     }
     return X, y, None, categories
 

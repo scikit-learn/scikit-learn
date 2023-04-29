@@ -1687,7 +1687,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> from sklearn.decomposition import DictionaryLearning
     >>> X, dictionary, code = make_sparse_coded_signal(
     ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
-    ...     random_state=42, data_transposed=False
+    ...     random_state=42,
     ... )
     >>> dict_learner = DictionaryLearning(
     ...     n_components=15, transform_algorithm='lasso_lars', transform_alpha=0.1,
@@ -1754,7 +1754,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         positive_dict=False,
         transform_max_iter=1000,
     ):
-
         super().__init__(
             transform_algorithm,
             transform_n_nonzero_coefs,
@@ -2059,7 +2058,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> from sklearn.decomposition import MiniBatchDictionaryLearning
     >>> X, dictionary, code = make_sparse_coded_signal(
     ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
-    ...     random_state=42, data_transposed=False)
+    ...     random_state=42)
     >>> dict_learner = MiniBatchDictionaryLearning(
     ...     n_components=15, batch_size=3, transform_algorithm='lasso_lars',
     ...     transform_alpha=0.1, random_state=42)
@@ -2133,7 +2132,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         tol=1e-3,
         max_no_improvement=10,
     ):
-
         super().__init__(
             transform_algorithm,
             transform_n_nonzero_coefs,
@@ -2347,10 +2345,12 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         if self.n_iter != "deprecated":
             warnings.warn(
-                "'n_iter' is deprecated in version 1.1 and will be removed "
-                "in version 1.4. Use 'max_iter' and let 'n_iter' to its default "
-                "value instead. 'n_iter' is also ignored if 'max_iter' is "
-                "specified.",
+                (
+                    "'n_iter' is deprecated in version 1.1 and will be removed "
+                    "in version 1.4. Use 'max_iter' and let 'n_iter' to its default "
+                    "value instead. 'n_iter' is also ignored if 'max_iter' is "
+                    "specified."
+                ),
                 FutureWarning,
             )
             n_iter = self.n_iter
@@ -2378,7 +2378,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self._B = np.zeros((n_features, self._n_components), dtype=X_train.dtype)
 
         if self.max_iter is not None:
-
             # Attributes to monitor the convergence
             self._ewa_cost = None
             self._ewa_cost_min = None

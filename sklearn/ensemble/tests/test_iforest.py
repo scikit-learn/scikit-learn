@@ -339,3 +339,21 @@ def test_base_estimator_property_deprecated():
     )
     with pytest.warns(FutureWarning, match=warn_msg):
         model.base_estimator_
+
+
+def test_iforest_preserve_feature_names():
+    """Check that feature names are preserved when contamination is not "auto".
+
+    Feature names are required for consistency checks during scoring.
+
+    Non-regression test for Issue #25844
+    """
+    pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(0)
+
+    X = pd.DataFrame(data=rng.randn(4), columns=["a"])
+    model = IsolationForest(random_state=0, contamination=0.05)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        model.fit(X)

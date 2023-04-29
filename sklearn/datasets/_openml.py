@@ -22,7 +22,7 @@ from ..utils import check_pandas_support  # noqa
 
 __all__ = ["fetch_openml"]
 
-_OPENML_PREFIX = "https://openml.org/"
+_OPENML_PREFIX = "https://api.openml.org/"
 _SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/2"
 _DATA_INFO = "api/v1/json/data/{}"
 _DATA_FEATURES = "api/v1/json/data/features/{}"
@@ -519,19 +519,21 @@ def _load_arff_response(
             url, data_home, n_retries, delay, arff_params
         )
     except Exception as exc:
-        if parser == "pandas":
-            from pandas.errors import ParserError
+        if parser != "pandas":
+            raise
 
-            if isinstance(exc, ParserError):
-                # A parsing error could come from providing the wrong quotechar
-                # to pandas. By default, we use a double quote. Thus, we retry
-                # with a single quote before to raise the error.
-                arff_params["read_csv_kwargs"] = {"quotechar": "'"}
-                X, y, frame, categories = _open_url_and_load_gzip_file(
-                    url, data_home, n_retries, delay, arff_params
-                )
-            else:
-                raise
+        from pandas.errors import ParserError
+
+        if not isinstance(exc, ParserError):
+            raise
+
+        # A parsing error could come from providing the wrong quotechar
+        # to pandas. By default, we use a double quote. Thus, we retry
+        # with a single quote before to raise the error.
+        arff_params["read_csv_kwargs"] = {"quotechar": "'"}
+        X, y, frame, categories = _open_url_and_load_gzip_file(
+            url, data_home, n_retries, delay, arff_params
+        )
 
     return X, y, frame, categories
 
@@ -901,7 +903,7 @@ def fetch_openml(
         data_home = None
     else:
         data_home = get_data_home(data_home=data_home)
-        data_home = join(data_home, "openml")
+        data_home = join(str(data_home), "openml")
 
     # check valid function arguments. data_id XOR (name, version) should be
     # provided
@@ -966,12 +968,14 @@ def fetch_openml(
         # TODO(1.4): remove this warning
         parser = "liac-arff"
         warn(
-            "The default value of `parser` will change from `'liac-arff'` to "
-            "`'auto'` in 1.4. You can set `parser='auto'` to silence this "
-            "warning. Therefore, an `ImportError` will be raised from 1.4 if "
-            "the dataset is dense and pandas is not installed. Note that the pandas "
-            "parser may return different data types. See the Notes Section in "
-            "fetch_openml's API doc for details.",
+            (
+                "The default value of `parser` will change from `'liac-arff'` to"
+                " `'auto'` in 1.4. You can set `parser='auto'` to silence this warning."
+                " Therefore, an `ImportError` will be raised from 1.4 if the dataset is"
+                " dense and pandas is not installed. Note that the pandas parser may"
+                " return different data types. See the Notes Section in fetch_openml's"
+                " API doc for details."
+            ),
             FutureWarning,
         )
 
@@ -1007,9 +1011,11 @@ def fetch_openml(
                     # TODO(1.4): In version 1.4, we will raise an error instead of
                     # a warning.
                     warn(
-                        "From version 1.4, `parser='auto'` with `as_frame=False` "
-                        "will use pandas. Either install pandas or set explicitely "
-                        "`parser='liac-arff'` to preserve the current behavior.",
+                        (
+                            "From version 1.4, `parser='auto'` with `as_frame=False` "
+                            "will use pandas. Either install pandas or set explicitely "
+                            "`parser='liac-arff'` to preserve the current behavior."
+                        ),
                         FutureWarning,
                     )
                     parser_ = "liac-arff"

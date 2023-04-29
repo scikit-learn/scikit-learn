@@ -154,6 +154,9 @@ def set_config(
     if enable_cython_pairwise_dist is not None:
         local_config["enable_cython_pairwise_dist"] = enable_cython_pairwise_dist
     if array_api_dispatch is not None:
+        from .utils._array_api import _check_array_api_dispatch
+
+        _check_array_api_dispatch(array_api_dispatch)
         local_config["array_api_dispatch"] = array_api_dispatch
     if transform_output is not None:
         local_config["transform_output"] = transform_output

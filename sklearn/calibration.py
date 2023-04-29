@@ -7,7 +7,7 @@
 #
 # License: BSD 3 clause
 
-from numbers import Integral
+from numbers import Integral, Real
 import warnings
 from inspect import signature
 from functools import partial
@@ -25,31 +25,35 @@ from .base import (
     RegressorMixin,
     clone,
     MetaEstimatorMixin,
-    is_classifier,
 )
 from .preprocessing import label_binarize, LabelEncoder
 from .utils import (
     column_or_1d,
     indexable,
-    check_matplotlib_support,
+    _safe_indexing,
 )
 
 from .utils.multiclass import check_classification_targets
 from .utils.parallel import delayed, Parallel
-from .utils._param_validation import StrOptions, HasMethods, Hidden
+from .utils._param_validation import (
+    StrOptions,
+    HasMethods,
+    Hidden,
+    validate_params,
+    Interval,
+)
+from .utils._plotting import _BinaryClassifierCurveDisplayMixin
 from .utils.validation import (
     _check_fit_params,
+    _check_pos_label_consistency,
     _check_sample_weight,
     _num_samples,
     check_consistent_length,
     check_is_fitted,
 )
-from .utils import _safe_indexing
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
-from .metrics._base import _check_pos_label_consistency
-from .metrics._plot.base import _get_response
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -308,9 +312,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
-        for sample_aligned_params in fit_params.values():
-            check_consistent_length(y, sample_aligned_params)
-
         # TODO(1.4): Remove when base_estimator is removed
         if self.base_estimator != "deprecated":
             if self.estimator is not None:
@@ -319,8 +320,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     "`estimator` since `base_estimator` is deprecated."
                 )
             warnings.warn(
-                "`base_estimator` was renamed to `estimator` in version 1.2 and "
-                "will be removed in 1.4.",
+                (
+                    "`base_estimator` was renamed to `estimator` in version 1.2 and "
+                    "will be removed in 1.4."
+                ),
                 FutureWarning,
             )
             estimator = self.base_estimator
@@ -906,12 +909,20 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_prob": ["array-like"],
+        "pos_label": [Real, str, "boolean", None],
+        "n_bins": [Interval(Integral, 1, None, closed="left")],
+        "strategy": [StrOptions({"uniform", "quantile"})],
+    }
+)
 def calibration_curve(
     y_true,
     y_prob,
     *,
     pos_label=None,
-    normalize="deprecated",
     n_bins=5,
     strategy="uniform",
 ):
@@ -932,21 +943,10 @@ def calibration_curve(
     y_prob : array-like of shape (n_samples,)
         Probabilities of the positive class.
 
-    pos_label : int or str, default=None
+    pos_label : int, float, bool or str, default=None
         The label of the positive class.
 
         .. versionadded:: 1.1
-
-    normalize : bool, default="deprecated"
-        Whether y_prob needs to be normalized into the [0, 1] interval, i.e.
-        is not a proper probability. If True, the smallest value in y_prob
-        is linearly mapped onto 0 and the largest one onto 1.
-
-        .. deprecated:: 1.1
-            The normalize argument is deprecated in v1.1 and will be removed in v1.3.
-            Explicitly normalizing `y_prob` will reproduce this behavior, but it is
-            recommended that a proper probability is used (i.e. a classifier's
-            `predict_proba` positive class).
 
     n_bins : int, default=5
         Number of bins to discretize the [0, 1] interval. A bigger number
@@ -995,19 +995,6 @@ def calibration_curve(
     check_consistent_length(y_true, y_prob)
     pos_label = _check_pos_label_consistency(pos_label, y_true)
 
-    # TODO(1.3): Remove normalize conditional block.
-    if normalize != "deprecated":
-        warnings.warn(
-            "The normalize argument is deprecated in v1.1 and will be removed in v1.3."
-            " Explicitly normalizing y_prob will reproduce this behavior, but it is"
-            " recommended that a proper probability is used (i.e. a classifier's"
-            " `predict_proba` positive class or `decision_function` output calibrated"
-            " with `CalibratedClassifierCV`).",
-            FutureWarning,
-        )
-        if normalize:  # Normalize predicted values into interval [0, 1]
-            y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
-
     if y_prob.min() < 0 or y_prob.max() > 1:
         raise ValueError("y_prob has values outside [0, 1].")
 
@@ -1042,7 +1029,7 @@ def calibration_curve(
     return prob_true, prob_pred
 
 
-class CalibrationDisplay:
+class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
     """Calibration curve (also known as reliability diagram) visualization.
 
     It is recommended to use
@@ -1070,7 +1057,7 @@ class CalibrationDisplay:
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
 
-    pos_label : str or int, default=None
+    pos_label : int, float, bool or str, default=None
         The positive class when computing the calibration curve.
         By default, `estimators.classes_[1]` is considered as the
         positive class.
@@ -1153,13 +1140,8 @@ class CalibrationDisplay:
         display : :class:`~sklearn.calibration.CalibrationDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support("CalibrationDisplay.plot")
-        import matplotlib.pyplot as plt
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
-        if ax is None:
-            fig, ax = plt.subplots()
-
-        name = self.estimator_name if name is None else name
         info_pos_label = (
             f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
         )
@@ -1170,20 +1152,20 @@ class CalibrationDisplay:
         line_kwargs.update(**kwargs)
 
         ref_line_label = "Perfectly calibrated"
-        existing_ref_line = ref_line_label in ax.get_legend_handles_labels()[1]
+        existing_ref_line = ref_line_label in self.ax_.get_legend_handles_labels()[1]
         if ref_line and not existing_ref_line:
-            ax.plot([0, 1], [0, 1], "k:", label=ref_line_label)
-        self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[0]
+            self.ax_.plot([0, 1], [0, 1], "k:", label=ref_line_label)
+        self.line_ = self.ax_.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[
+            0
+        ]
 
         # We always have to show the legend for at least the reference line
-        ax.legend(loc="lower right")
+        self.ax_.legend(loc="lower right")
 
         xlabel = f"Mean predicted probability {info_pos_label}"
         ylabel = f"Fraction of positives {info_pos_label}"
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
-        self.ax_ = ax
-        self.figure_ = ax.figure
         return self
 
     @classmethod
@@ -1241,7 +1223,7 @@ class CalibrationDisplay:
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
             By default, `estimators.classes_[1]` is considered as the
             positive class.
@@ -1289,17 +1271,15 @@ class CalibrationDisplay:
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
         >>> plt.show()
         """
-        method_name = f"{cls.__name__}.from_estimator"
-        check_matplotlib_support(method_name)
-
-        if not is_classifier(estimator):
-            raise ValueError("'estimator' should be a fitted classifier.")
-
-        y_prob, pos_label = _get_response(
-            X, estimator, response_method="predict_proba", pos_label=pos_label
+        y_prob, pos_label, name = cls._validate_and_get_response_values(
+            estimator,
+            X,
+            y,
+            response_method="predict_proba",
+            pos_label=pos_label,
+            name=name,
         )
 
-        name = name if name is not None else estimator.__class__.__name__
         return cls.from_predictions(
             y,
             y_prob,
@@ -1361,7 +1341,7 @@ class CalibrationDisplay:
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
             By default, `estimators.classes_[1]` is considered as the
             positive class.
@@ -1409,20 +1389,19 @@ class CalibrationDisplay:
         >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
         >>> plt.show()
         """
-        method_name = f"{cls.__name__}.from_estimator"
-        check_matplotlib_support(method_name)
+        pos_label_validated, name = cls._validate_from_predictions_params(
+            y_true, y_prob, sample_weight=None, pos_label=pos_label, name=name
+        )
 
         prob_true, prob_pred = calibration_curve(
             y_true, y_prob, n_bins=n_bins, strategy=strategy, pos_label=pos_label
         )
-        name = "Classifier" if name is None else name
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
 
         disp = cls(
             prob_true=prob_true,
             prob_pred=prob_pred,
             y_prob=y_prob,
             estimator_name=name,
-            pos_label=pos_label,
+            pos_label=pos_label_validated,
         )
         return disp.plot(ax=ax, ref_line=ref_line, **kwargs)
