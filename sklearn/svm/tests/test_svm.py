@@ -1083,7 +1083,9 @@ def test_svr_coef_sign():
     y = np.random.RandomState(12).randn(10)
 
     for svr in [
-        svm.SVR(kernel="linear"), svm.NuSVR(kernel="linear"), svm.LinearSVR(dual="auto")
+        svm.SVR(kernel="linear"),
+        svm.NuSVR(kernel="linear"),
+        svm.LinearSVR(dual="auto"),
     ]:
         svr.fit(X, y)
         assert_array_almost_equal(
