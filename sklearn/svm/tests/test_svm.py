@@ -216,8 +216,8 @@ def test_svr():
         svm.NuSVR(kernel="linear", nu=0.4, C=1.0),
         svm.NuSVR(kernel="linear", nu=0.4, C=10.0),
         svm.SVR(kernel="linear", C=10.0),
-        svm.LinearSVR(C=10.0),
-        svm.LinearSVR(C=10.0),
+        svm.LinearSVR(dual="auto", C=10.0),
+        svm.LinearSVR(dual="auto", C=10.0),
     ):
         clf.fit(diabetes.data, diabetes.target)
         assert clf.score(diabetes.data, diabetes.target) > 0.02
@@ -1082,7 +1082,9 @@ def test_svr_coef_sign():
     X = np.random.RandomState(21).randn(10, 3)
     y = np.random.RandomState(12).randn(10)
 
-    for svr in [svm.SVR(kernel="linear"), svm.NuSVR(kernel="linear"), svm.LinearSVR()]:
+    for svr in [
+        svm.SVR(kernel="linear"), svm.NuSVR(kernel="linear"), svm.LinearSVR(dual="auto")
+    ]:
         svr.fit(X, y)
         assert_array_almost_equal(
             svr.predict(X), np.dot(X, svr.coef_.ravel()) + svr.intercept_
