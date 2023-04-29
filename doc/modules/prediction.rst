@@ -61,9 +61,9 @@ boosting classifier. While the vanilla and tuned classifiers provide the same
 Receiver Operating Characteristic (ROC) and Precision-Recall curves, and thus
 the same :term:`predict_proba` outputs, the "hard" predictions defer because of
 the tuned cut-off point. The vanilla classifier predicts the class of interest
-for a probability greater than 0.5 while the tuned classifier predict the class
-of interest for a very low probability (around 0.02). This cut-off point is
-maximizes a utility metric defined by the business case (in this case an
+for a probability greater than 0.5 while the tuned classifier predicts the
+class of interest for a very low probability (around 0.02). This cut-off point
+is maximizes a utility metric defined by the business case (in this case an
 insurance company).
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cutoff_tuning_002.png
