@@ -20,7 +20,7 @@ cut-off point of the decision function to minimize the business cost provided to
 .. topic:: References
 
     .. [1] "Statlog (German Credit Data) Data Set", UCI Machine Learning Repository,
-       https://archive.ics.uci.edu/ml/datasets/Statlog+%28German+Credit+Data%29
+       `Link <https://archive.ics.uci.edu/ml/datasets/Statlog+%28German+Credit+Data%29>`_.  # noqa
 """
 
 # %%
