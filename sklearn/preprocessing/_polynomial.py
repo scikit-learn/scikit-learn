@@ -1036,7 +1036,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 )
             XBS = sparse.hstack(output_list)
         elif self.sparse_output:
-            # TODO: Remove with scipy 1.10. See comment above.
+            # TODO: Remove ones scipy 1.10 is the minimum version. See comments above.
             XBS = sparse.csr_matrix(XBS)
 
         if self.include_bias:
