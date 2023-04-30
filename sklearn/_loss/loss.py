@@ -105,6 +105,7 @@ class BaseLoss:
     approx_hessian : bool
         Indicates whether the hessian is approximated or exact. If,
         approximated, it should be larger or equal to the exact one.
+    canonical_link : bool
     constant_hessian : bool
         Indicates whether the hessian is one for this loss.
     is_multiclass : bool
@@ -128,6 +129,7 @@ class BaseLoss:
         self.closs = closs
         self.link = link
         self.approx_hessian = False
+        self.canonical_link = False
         self.constant_hessian = False
         self.n_classes = n_classes
         self.interval_y_true = Interval(-np.inf, np.inf, False, False)
@@ -526,6 +528,7 @@ class HalfSquaredError(BaseLoss):
 
     def __init__(self, sample_weight=None):
         super().__init__(closs=CyHalfSquaredError(), link=IdentityLink())
+        self.canonical_link = True
         self.constant_hessian = sample_weight is None
 
 
@@ -549,6 +552,8 @@ class AbsoluteError(BaseLoss):
     def __init__(self, sample_weight=None):
         super().__init__(closs=CyAbsoluteError(), link=IdentityLink())
         self.approx_hessian = True
+        # Canonical link is only defined for losses that elicit the expectation / mean.
+        self.canonical_link = None
         self.constant_hessian = sample_weight is None
 
     def fit_intercept_only(self, y_true, sample_weight=None):
@@ -606,6 +611,8 @@ class PinballLoss(BaseLoss):
             link=IdentityLink(),
         )
         self.approx_hessian = True
+        # Canonical link is only defined for losses that elicit the expectation / mean.
+        self.canonical_link = None
         self.constant_hessian = sample_weight is None
 
     def fit_intercept_only(self, y_true, sample_weight=None):
@@ -674,6 +681,8 @@ class HuberLoss(BaseLoss):
             link=IdentityLink(),
         )
         self.approx_hessian = True
+        # Canonical link is only defined for losses that elicit the expectation / mean.
+        self.canonical_link = None
         self.constant_hessian = False
 
     def fit_intercept_only(self, y_true, sample_weight=None):
@@ -719,6 +728,7 @@ class HalfPoissonLoss(BaseLoss):
     def __init__(self, sample_weight=None):
         super().__init__(closs=CyHalfPoissonLoss(), link=LogLink())
         self.interval_y_true = Interval(0, np.inf, True, False)
+        self.canonical_link = True
 
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
         term = xlogy(y_true, y_true) - y_true
@@ -801,6 +811,10 @@ class HalfTweedieLoss(BaseLoss):
         else:
             self.interval_y_true = Interval(0, np.inf, False, False)
 
+        if self.closs.power == 1:
+            # Poisson loss with log link.
+            self.canonical_link = True
+
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
         if self.closs.power == 0:
             return HalfSquaredError().constant_to_optimal_zero(
@@ -863,7 +877,9 @@ class HalfTweedieLossIdentity(BaseLoss):
             self.interval_y_true = Interval(0, np.inf, False, False)
 
         if self.closs.power == 0:
+            # Squared error with identity
             self.interval_y_pred = Interval(-np.inf, np.inf, False, False)
+            self.canonical_link = True
         else:
             self.interval_y_pred = Interval(0, np.inf, False, False)
 
@@ -907,6 +923,7 @@ class HalfBinomialLoss(BaseLoss):
             n_classes=2,
         )
         self.interval_y_true = Interval(0, 1, True, True)
+        self.canonical_link = True
 
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
         # This is non-zero only if y_true is neither 0 nor 1.
@@ -982,6 +999,7 @@ class HalfMultinomialLoss(BaseLoss):
         )
         self.interval_y_true = Interval(0, np.inf, True, False)
         self.interval_y_pred = Interval(0, 1, False, False)
+        self.canonical_link = True
 
     def in_y_true_range(self, y):
         """Return True if y is in the valid range of y_true.
