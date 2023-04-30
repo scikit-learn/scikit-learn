@@ -461,7 +461,7 @@ Changelog
   categorical encoding based on target mean conditioned on the value of the
   category. :pr:`25334` by `Thomas Fan`_.
 
-  - |Enhancement| A new parameter `sparse_output` was added to
+- |Enhancement| A new parameter `sparse_output` was added to
   :class:`SplineTransformer`, available as of SciPy 1.8. If `sparse_output=True`,
   :class:`SplineTransformer` returns a sparse CSR matrix.
   :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
