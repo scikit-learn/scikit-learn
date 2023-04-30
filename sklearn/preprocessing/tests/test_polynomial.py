@@ -423,7 +423,7 @@ def test_spline_transformer_sparse_output(
     sp_version >= parse_version("1.8.0"),
     reason="The option `sparse_output` is available as of scipy 1.8.0",
 )
-def test_spline_transformer_sparse_output_raise_error_for_old_scipy(X_y_data, solver):
+def test_spline_transformer_sparse_output_raise_error_for_old_scipy():
     """Test that SplineTransformer with sparse=True raises for scipy<1.8.0."""
     X = [[1], [2]]
     with pytest.raises(ValueError, match="scipy>=1.8.0"):
