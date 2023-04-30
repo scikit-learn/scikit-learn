@@ -912,7 +912,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 if use_sparse:
                     mask_inv = ~mask
                     x = X[:, i].copy()
-                    # Set some arbitrary value outside boundary that will be reassigned
+                    # Set some arbitrary values outside boundary that will be reassigned
                     # later.
                     x[mask_inv] = spl.t[self.degree]
                     XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k)
