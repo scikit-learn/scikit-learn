@@ -76,7 +76,7 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |Fix| :attr:`preprocessing.OneHotEncoder.drop_idx_` now properly 
+- |Fix| :attr:`preprocessing.OneHotEncoder.drop_idx_` now properly
   references the dropped category in the `categories_` attribute
   when there are infrequent categories. :pr:`25589` by `Thomas Fan`_.
 
@@ -928,11 +928,6 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
-
-- |Enhancement| A new parameter `sparse` was added to :class:`SplineTransformer`,
-  available as of SciPy 1.8. If `sparse=True`, :class:`SplineTransformer` returns
-  a sparse CSR matrix.
-  :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| :class:`preprocessing.FunctionTransformer` will always try to set
   `n_features_in_` and `feature_names_in_` regardless of the `validate` parameter.

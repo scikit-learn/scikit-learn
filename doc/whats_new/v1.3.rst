@@ -461,6 +461,11 @@ Changelog
   categorical encoding based on target mean conditioned on the value of the
   category. :pr:`25334` by `Thomas Fan`_.
 
+  - |Enhancement| A new parameter `sparse_output` was added to
+  :class:`SplineTransformer`, available as of SciPy 1.8. If `sparse_output=True`,
+  :class:`SplineTransformer` returns a sparse CSR matrix.
+  :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Enhancement| Adds a `feature_name_combiner` parameter to
   :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
   feature names to be returned by :meth:`get_feature_names_out`.
