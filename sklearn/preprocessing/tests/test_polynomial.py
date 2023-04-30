@@ -432,10 +432,20 @@ def test_spline_transformer_sparse_output_raise_error_for_old_scipy(X_y_data, so
 
 @pytest.mark.parametrize("n_knots", [5, 10])
 @pytest.mark.parametrize("include_bias", [True, False])
-@pytest.mark.parametrize("degree", [3, 5])
-def test_spline_transformer_n_features_out(n_knots, include_bias, degree):
+@pytest.mark.parametrize("degree", [3, 4])
+@pytest.mark.parametrize(
+    "extrapolation", ["error", "constant", "linear", "continue", "periodic"]
+)
+def test_spline_transformer_n_features_out(
+    n_knots, include_bias, degree, extrapolation
+):
     """Test that transform results in n_features_out_ features."""
-    splt = SplineTransformer(n_knots=n_knots, degree=degree, include_bias=include_bias)
+    splt = SplineTransformer(
+        n_knots=n_knots,
+        degree=degree,
+        include_bias=include_bias,
+        extrapolation=extrapolation,
+    )
     X = np.linspace(0, 1, 10)[:, None]
     splt.fit(X)
 

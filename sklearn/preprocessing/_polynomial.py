@@ -850,12 +850,18 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         n_splines = self.bsplines_[0].c.shape[1]
         degree = self.degree
 
-        # With sparse_output=True, we call BSpline.design_matrix which uses
-        # extrapolate=False under the hood.
-        # TODO: With scipy v1.10, use new extrapolate argument in design_matrix(..).
+        # TODO: Remove this condition, once scipy 1.10 is the minimum version.
+        #       Only scipy > 1.10 supports design_matrix(.., extrapolate=..).
+        #       The default (implicit in scipy < 1.10) is extrapolate=False.
+        scipy_1_10 = sp_version >= parse_version("1.10.0")
         # Note: self.bsplines_[0].extrapolate is True for extrapolation in
         # ["periodic", "continue"]
-        use_sparse = self.sparse_output and not self.bsplines_[0].extrapolate
+        if scipy_1_10:
+            use_sparse = self.sparse_output
+            kwargs_extrapolate = {"extrapolate": self.bsplines_[0].extrapolate}
+        else:
+            use_sparse = self.sparse_output and not self.bsplines_[0].extrapolate
+            kwargs_extrapolate = dict()
 
         # Note that scipy BSpline returns float64 arrays and converts input
         # x=X[:, i] to c-contiguous float64.
@@ -887,7 +893,15 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     x = X[:, i]
 
                 if use_sparse:
-                    XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k)
+                    XBS_sparse = BSpline.design_matrix(
+                        x, spl.t, spl.k, **kwargs_extrapolate
+                    )
+                    if self.extrapolation == "periodic":
+                        # See the construction of coef in fit. We need to add the last
+                        # degree spline basis function to the first degree ones and
+                        # then drop the last ones.
+                        XBS_sparse[:, :degree] += XBS_sparse[:, -degree:]
+                        XBS_sparse = XBS_sparse[:, :-degree]
                 else:
                     XBS[:, (i * n_splines) : ((i + 1) * n_splines)] = spl(x)
             else:  # extrapolation in ("constant", "linear")
@@ -916,7 +930,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # 'continue' is already returned as is by scipy BSplines
             if self.extrapolation == "error":
                 # BSpline with extrapolate=False does not raise an error, but
-                # output np.nan.
+                # outputs np.nan.
                 if (use_sparse and np.any(np.isnan(XBS_sparse.data))) or (
                     not use_sparse
                     and np.any(
@@ -1015,7 +1029,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     "In scipy versions `<1.9.2`, the function `scipy.sparse.hstack`"
                     " produces negative columns when:\n1. The output shape contains"
                     " `n_cols` too large to be represented by a 32bit signed"
-                    " integer.\n2. All sub-matrices to be stacked have indices of"
+                    " integer.\n. All sub-matrices to be stacked have indices of"
                     " dtype `np.int32`.\nTo avoid this error, either use a version"
                     " of scipy `>=1.9.2` or alter the `PolynomialFeatures`"
                     " transformer to produce fewer than 2^31 output features"
