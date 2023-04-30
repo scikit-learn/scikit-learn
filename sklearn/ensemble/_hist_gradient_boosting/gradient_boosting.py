@@ -8,6 +8,7 @@ from numbers import Real, Integral
 
 import numpy as np
 from timeit import default_timer as time
+from ..._loss.link import LogLink
 from ..._loss.loss import (
     _LOSSES,
     BaseLoss,
@@ -91,6 +92,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "max_depth": [Interval(Integral, 1, None, closed="left"), None],
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
+        "max_bins": [Interval(Integral, 2, 255, closed="both")],
+        "categorical_features": ["array-like", None],
         "monotonic_cst": ["array-like", dict, None],
         "interaction_cst": [
             list,
@@ -98,18 +101,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             StrOptions({"pairwise", "no_interactions"}),
             None,
         ],
-        "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
+        "warm_start": ["boolean"],
+        "early_stopping": [StrOptions({"auto"}), "boolean"],
+        "scoring": [str, callable, None],
         "validation_fraction": [
             Interval(RealNotInt, 0, 1, closed="neither"),
             Interval(Integral, 1, None, closed="left"),
             None,
         ],
+        "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "max_bins": [Interval(Integral, 2, 255, closed="both")],
-        "categorical_features": ["array-like", None],
-        "warm_start": ["boolean"],
-        "early_stopping": [StrOptions({"auto"}), "boolean"],
-        "scoring": [str, callable, None],
+        "post_fit_calibration": ["boolean"],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
     }
@@ -135,6 +137,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         validation_fraction,
         n_iter_no_change,
         tol,
+        post_fit_calibration,
         verbose,
         random_state,
     ):
@@ -155,6 +158,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
+        self.post_fit_calibration = post_fit_calibration
         self.verbose = verbose
         self.random_state = random_state
 
@@ -756,6 +760,51 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if should_early_stop:
                 break
 
+        if self.post_fit_calibration and self._loss.canonical_link is False:
+            # We compare "x is False" instead of "not x" to exclude
+            # canonical_link = None.
+            # TODO: Decide whether to use the whole X or just X_train.
+            # For the time being, we go with X_train as it is a bit shorter to
+            # implement.
+            # We want to achieve the balance property
+            #    sum(predictions) = sum(inverse_link(raw_predictions)) = sum(y)
+            # Therefore, we modify _baseline_prediction accordingly.
+            mean_pred = np.average(
+                self._loss.link.inverse(raw_predictions), weights=sample_weight_train
+            )
+            mean_y = np.average(y_train, weights=sample_weight_train)
+            if isinstance(self._loss.link, LogLink):
+                correction = self._loss.link.link(mean_y / mean_pred)
+            else:
+                raise NotImplementedError()
+            self._baseline_prediction += correction
+            raw_predictions = correction
+
+            # Recalculate scores
+            if self.do_early_stopping_:
+                if self.scoring == "loss":
+                    # Update raw_predictions_val
+                    raw_predictions_val += correction
+                    if self._use_validation_data:
+                        self._check_early_stopping_loss(
+                            raw_predictions=raw_predictions,
+                            y_train=y_train,
+                            sample_weight_train=sample_weight_train,
+                            raw_predictions_val=raw_predictions_val,
+                            y_val=y_val,
+                            sample_weight_val=sample_weight_val,
+                            n_threads=n_threads,
+                        )
+                    else:
+                        self._check_early_stopping_scorer(
+                            X_binned_small_train,
+                            y_small_train,
+                            sample_weight_small_train,
+                            X_binned_val,
+                            y_val,
+                            sample_weight_val,
+                        )
+
         if self.verbose:
             duration = time() - fit_start_time
             n_total_leaves = sum(
@@ -1352,6 +1401,12 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         stopping. The higher the tolerance, the more likely we are to early
         stop: higher tolerance means that it will be harder for subsequent
         iterations to be considered an improvement upon the reference score.
+    post_fit_calibration: bool, default=True
+        If `loss` is `"gamma"`, then, after the fit is more or less finished, a
+        constant is added to the raw_predictions in link space such that on the
+        training data (minus the `validation_fraction`), the balance property
+        is fulfilled: the weighted average of predictions (`predict`) equals the
+        weighted average of observations, i.e. `np.average(y, weights=sample_weight)`.
     verbose : int, default=0
         The verbosity level. If not zero, print some information about the
         fitting process.
@@ -1459,6 +1514,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         validation_fraction=0.1,
         n_iter_no_change=10,
         tol=1e-7,
+        post_fit_calibration=True,
         verbose=0,
         random_state=None,
     ):
@@ -1480,6 +1536,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change,
             tol=tol,
+            post_fit_calibration=post_fit_calibration,
             verbose=verbose,
             random_state=random_state,
         )
@@ -1838,6 +1895,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change,
             tol=tol,
+            post_fit_calibration=False,  # no non-canonical links
             verbose=verbose,
             random_state=random_state,
         )
