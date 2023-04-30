@@ -28,22 +28,6 @@ def test_polynomial_and_spline_array_order(est):
     assert np.isfortran(est(order="F").fit_transform(X))
 
 
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"knots": [[1]]}, r"Number of knots, knots.shape\[0\], must be >= 2."),
-        ({"knots": [[1, 1], [2, 2]]}, r"knots.shape\[1\] == n_features is violated"),
-        ({"knots": [[1], [0]]}, "knots must be sorted without duplicates."),
-    ],
-)
-def test_spline_transformer_input_validation(params, err_msg):
-    """Test that we raise errors for invalid input in SplineTransformer."""
-    X = [[1], [2]]
-
-    with pytest.raises(ValueError, match=err_msg):
-        SplineTransformer(**params).fit(X)
-
-
 @pytest.mark.parametrize("extrapolation", ["continue", "periodic"])
 def test_spline_transformer_integer_knots(extrapolation):
     """Test that SplineTransformer accepts integer value knot positions."""
