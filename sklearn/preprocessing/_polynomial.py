@@ -900,6 +900,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         # See the construction of coef in fit. We need to add the last
                         # degree spline basis function to the first degree ones and
                         # then drop the last ones.
+                        # Note: See comment about SparseEfficiencyWarning below.
+                        XBS_sparse = XBS_sparse.tolil()
                         XBS_sparse[:, :degree] += XBS_sparse[:, -degree:]
                         XBS_sparse = XBS_sparse[:, :-degree]
                 else:
