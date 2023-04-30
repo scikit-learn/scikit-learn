@@ -658,11 +658,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc", "coo"], dtype=DTYPE, multi_output=True
         )
-        y = self._encode_y(y=y, sample_weight=sample_weight)
-        y = column_or_1d(y, warn=True)  # TODO: Is this still required?
-
         sample_weight_is_none = sample_weight is None
         sample_weight = _check_sample_weight(sample_weight, X)
+        y = self._encode_y(y=y, sample_weight=sample_weight)
+        y = column_or_1d(y, warn=True)  # TODO: Is this still required?
 
         self._set_max_features()
 
