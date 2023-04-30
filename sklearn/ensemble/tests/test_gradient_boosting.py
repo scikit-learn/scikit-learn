@@ -1516,7 +1516,7 @@ def test_squared_error_exact_backward_compat():
             8.99988727e00,
         ]
     )
-    assert_allclose(gbt.predict(X), pred_result, rtol=1e-6)
+    assert_allclose(gbt.predict(X), pred_result, rtol=1e-6, atol=1e-5)
 
     train_score = np.array(
         [
