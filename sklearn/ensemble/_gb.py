@@ -435,20 +435,13 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         assert sample_mask.dtype == bool
         original_y = y
 
-        # Need to pass a copy of raw_predictions to gradient()
-        # because raw_predictions is partially updated at the end of the loop
-        # in update_terminal_regions(), and gradients need to be evaluated at
-        # iteration i - 1.
-        raw_predictions_copy = raw_predictions.copy()
         if isinstance(self._loss, HuberLoss):
-            set_huber_delta(
-                loss=self._loss, y_true=y, raw_prediction=raw_predictions_copy
-            )
+            set_huber_delta(loss=self._loss, y_true=y, raw_prediction=raw_predictions)
         # TODO: Call self._loss.loss_gradient and use it to set train_score_.
         # But note that train_score_[i] is the score after fitting the i-th tree.
         gradient = self._loss.gradient(
             y_true=y,
-            raw_prediction=raw_predictions_copy,
+            raw_prediction=raw_predictions,
             sample_weight=None,  # We pass sample_weights to the tree directly.
         )
 
