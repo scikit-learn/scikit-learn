@@ -851,7 +851,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         degree = self.degree
 
         # TODO: Remove this condition, once scipy 1.10 is the minimum version.
-        #       Only scipy > 1.10 supports design_matrix(.., extrapolate=..).
+        #       Only scipy => 1.10 supports design_matrix(.., extrapolate=..).
         #       The default (implicit in scipy < 1.10) is extrapolate=False.
         scipy_1_10 = sp_version >= parse_version("1.10.0")
         # Note: self.bsplines_[0].extrapolate is True for extrapolation in

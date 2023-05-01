@@ -355,9 +355,10 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
         n_knots=4, degree=degree, include_bias=bias, extrapolation="error"
     )
     splt.fit(X)
-    with pytest.raises(ValueError):
+    msg = "X contains values beyond the limits of the knots"
+    with pytest.raises(ValueError, match=msg):
         splt.transform([[-10]])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=msg):
         splt.transform([[5]])
 
 
@@ -425,9 +426,11 @@ def test_spline_transformer_sparse_output(
         np.linspace(X_min - 5, X_min, 10), np.linspace(X_max, X_max + 5, 10)
     ]
     if extrapolation == "error":
-        with pytest.raises(ValueError):
+        msg = "X contains values beyond the limits of the knots"
+        with pytest.raises(ValueError, match=msg):
             splt_dense.transform(X_extra)
-        with pytest.raises(ValueError):
+        msg = "Out of bounds"
+        with pytest.raises(ValueError, match=msg):
             splt_sparse.transform(X_extra)
     else:
         assert_allclose(
