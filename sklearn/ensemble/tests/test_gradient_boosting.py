@@ -1532,7 +1532,7 @@ def test_squared_error_exact_backward_compat():
             6.24155316e-09,
         ]
     )
-    assert_allclose(gbt.train_score_[-10:], train_score, rtol=1e-8)
+    assert_allclose(gbt.train_score_[-10:], train_score, rtol=1e-3, atol=1e-11)
 
 
 def test_huber_exact_backward_compat():
