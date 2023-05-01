@@ -40,7 +40,6 @@ def _create_expansion(X, interaction_only, deg, n_features, cumulative_size=0):
 
     if expanded_col == 0:
         return None
-    assert expanded_col > 0
     # This only checks whether each block needs 64bit integers upon
     # expansion. We prefer to keep int32 indexing where we can,
     # since currently SciPy's CSR construction downcasts when possible,
