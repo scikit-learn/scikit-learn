@@ -752,7 +752,7 @@ def test_linear_regression_sample_weight_consistency(
     if fit_intercept:
         intercept = reg.intercept_
 
-    # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None
+    # 1) sample_weight=np.ones(..) must be equivalent to sample_weight=None
     # same check as check_sample_weights_invariance(name, reg, kind="ones"), but we also
     # test with sparse input.
     sample_weight = np.ones_like(y)
@@ -802,7 +802,7 @@ def test_linear_regression_sample_weight_consistency(
             assert_allclose(reg.intercept_, intercept_0)
 
     # 5) check that multiplying sample_weight by 2 is equivalent to repeating
-    # correspoding samples twice
+    # corresponding samples twice
     if sparseX:
         X2 = sparse.vstack([X, X[: n_samples // 2]], format="csc")
     else:

@@ -1978,7 +1978,7 @@ def test_lbfgs_solver_error():
 @pytest.mark.parametrize("sparseX", [False, True])
 @pytest.mark.parametrize("data", ["tall", "wide"])
 @pytest.mark.parametrize("solver", SOLVERS + ["lbfgs"])
-def test_ridge_sample_weight_consistentcy(fit_intercept, sparseX, data, solver):
+def test_ridge_sample_weight_consistency(fit_intercept, sparseX, data, solver):
     """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
@@ -2047,7 +2047,7 @@ def test_ridge_sample_weight_consistentcy(fit_intercept, sparseX, data, solver):
         assert_allclose(reg2.intercept_, intercept)
 
     # 4) check that multiplying sample_weight by 2 is equivalent
-    # to repeating correspoding samples twice
+    # to repeating corresponding samples twice
     if sparseX:
         X = X.toarray()
     X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
