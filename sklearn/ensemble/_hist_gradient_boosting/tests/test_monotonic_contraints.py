@@ -1,4 +1,5 @@
 import re
+import warnings
 import numpy as np
 import pytest
 
@@ -244,21 +245,32 @@ def test_predictions(global_random_seed, use_feature_names):
     # First feature (POS)
     # assert pred is all increasing when f_0 is all increasing
     X = np.c_[linspace, constant]
-    pred = gbdt.predict(X)
+    if use_feature_names:
+        with pytest.warns(UserWarning, match="X does not have valid feature names"):
+            pred = gbdt.predict(X)
+    else:
+        pred = gbdt.predict(X)
     assert is_increasing(pred)
     # assert pred actually follows the variations of f_0
     X = np.c_[sin, constant]
-    pred = gbdt.predict(X)
+    with warnings.catch_warnings():
+        # No need to repeatedly test for the same UserWanring
+        warnings.simplefilter("ignore", UserWarning)
+        pred = gbdt.predict(X)
     assert np.all((np.diff(pred) >= 0) == (np.diff(sin) >= 0))
 
     # Second feature (NEG)
     # assert pred is all decreasing when f_1 is all increasing
     X = np.c_[constant, linspace]
-    pred = gbdt.predict(X)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        pred = gbdt.predict(X)
     assert is_decreasing(pred)
     # assert pred actually follows the inverse variations of f_1
     X = np.c_[constant, sin]
-    pred = gbdt.predict(X)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        pred = gbdt.predict(X)
     assert ((np.diff(pred) <= 0) == (np.diff(sin) >= 0)).all()
 
 
