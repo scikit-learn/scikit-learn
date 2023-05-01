@@ -1352,6 +1352,15 @@ class RandomForestClassifier(ForestClassifier):
     search of the best split. To obtain a deterministic behaviour during
     fitting, ``random_state`` has to be fixed.
 
+    **Note:** Scikit-learn 0.21 and latest versions introduces two new implementations of
+    gradient boosting trees, namely :class:`HistGradientBoostingClassifier`<https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingClassifier.html>
+    and :class:`HistGradientBoostingRegressor`<https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html>.
+    
+    These histogram-based estimators can be **orders of magnitude faster**
+    than :class:`RandomForestClassifier`,
+    :class:`RandomForestRegressor` when the number of samples is larger
+    than tens of thousands of samples.
+
     References
     ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
@@ -1691,6 +1700,15 @@ class RandomForestRegressor(ForestRegressor):
     The default value ``max_features=1.0`` uses ``n_features``
     rather than ``n_features / 3``. The latter was originally suggested in
     [1], whereas the former was more recently justified empirically in [2].
+
+    **Note:** Scikit-learn 0.21 and latest versions introduces two new implementations of
+    gradient boosting trees, namely :class:`HistGradientBoostingClassifier`<https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingClassifier.html>
+    and :class:`HistGradientBoostingRegressor`<https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html>.
+    
+    These histogram-based estimators can be **orders of magnitude faster**
+    than :class:`RandomForestClassifier`,
+    :class:`RandomForestRegressor` when the number of samples is larger
+    than tens of thousands of samples.
 
     References
     ----------

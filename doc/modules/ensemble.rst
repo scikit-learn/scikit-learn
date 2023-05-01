@@ -109,6 +109,22 @@ set of classifiers is created by introducing randomness in the classifier
 construction.  The prediction of the ensemble is given as the averaged
 prediction of the individual classifiers.
 
+.. note:: Scikit-learn 0.21 introduces two new implementations of
+gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
+and :class:`HistGradientBoostingRegressor`, inspired by
+`LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
+
+These histogram-based estimators can be **orders of magnitude faster**
+than :class:`RandomForestClassifier` and
+:class:`RandomForestRegressor` when the number of samples is larger
+than tens of thousands of samples.
+
+They also have built-in support for missing values, which avoids the need
+for an imputer.
+
+These estimators are described in more detail below in
+:ref:`histogram_based_gradient_boosting`.
+
 As other classifiers, forest classifiers have to be fitted with two
 arrays: a sparse or dense array X of shape ``(n_samples, n_features)``
 holding the training samples, and an array Y of shape ``(n_samples,)``
