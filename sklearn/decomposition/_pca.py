@@ -14,7 +14,6 @@ from math import log, sqrt
 from numbers import Integral, Real
 
 import numpy as np
-from scipy import linalg
 from scipy.special import gammaln
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
@@ -28,6 +27,7 @@ from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
 from ..utils._param_validation import RealNotInt
+from ..utils._array_api import get_namespace, _is_torch_namespace
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -109,8 +109,10 @@ def _infer_dimension(spectrum, n_samples):
 
     The returned value will be in [1, n_features - 1].
     """
-    ll = np.empty_like(spectrum)
-    ll[0] = -np.inf  # we don't want to return n_components = 0
+    xp, _ = get_namespace(spectrum)
+
+    ll = xp.empty_like(spectrum)
+    ll[0] = -xp.inf  # we don't want to return n_components = 0
     for rank in range(1, spectrum.shape[0]):
         ll[rank] = _assess_dimension(spectrum, rank, n_samples)
     return ll.argmax()
@@ -380,6 +382,9 @@ class PCA(_BasePCA):
         "power_iteration_normalizer": [StrOptions({"auto", "QR", "LU", "none"})],
         "random_state": ["random_state"],
     }
+    _pca_torch_arpack_solver_error_message: str = (
+        "PCA with arpack solver does not support PyTorch tensors."
+    )
 
     def __init__(
         self,
@@ -474,6 +479,7 @@ class PCA(_BasePCA):
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
+        xp, _ = get_namespace(X)
 
         # Raise an error for sparse input.
         # This is more informative than the generic one raised by check_array.
@@ -482,9 +488,13 @@ class PCA(_BasePCA):
                 "PCA does not support sparse input. See "
                 "TruncatedSVD for a possible alternative."
             )
+        # Raise an error for torch input and arpack or randomized solver.
+        # TODO support randomized solver for torch tensors
+        if self.svd_solver in ["arpack", "randomized"] and _is_torch_namespace(xp):
+            raise TypeError(self._pca_torch_arpack_solver_error_message)
 
         X = self._validate_data(
-            X, dtype=[np.float64, np.float32], ensure_2d=True, copy=self.copy
+            X, dtype=[xp.float64, xp.float32], ensure_2d=True, copy=self.copy
         )
 
         # Handle n_components==None
@@ -516,6 +526,8 @@ class PCA(_BasePCA):
 
     def _fit_full(self, X, n_components):
         """Fit the model by computing full SVD on X."""
+        xp, _ = get_namespace(X)
+
         n_samples, n_features = X.shape
 
         if n_components == "mle":
@@ -531,10 +543,10 @@ class PCA(_BasePCA):
             )
 
         # Center data
-        self.mean_ = np.mean(X, axis=0)
+        self.mean_ = xp.mean(X, axis=0)
         X -= self.mean_
 
-        U, S, Vt = linalg.svd(X, full_matrices=False)
+        U, S, Vt = xp.linalg.svd(X, full_matrices=False)
         # flip eigenvectors' sign to enforce deterministic output
         U, Vt = svd_flip(U, Vt)
 
@@ -544,7 +556,7 @@ class PCA(_BasePCA):
         explained_variance_ = (S**2) / (n_samples - 1)
         total_var = explained_variance_.sum()
         explained_variance_ratio_ = explained_variance_ / total_var
-        singular_values_ = S.copy()  # Store the singular values.
+        singular_values_ = xp.asarray(S, copy=True)  # Store the singular values.
 
         # Postprocess the number of components required
         if n_components == "mle":
@@ -556,7 +568,7 @@ class PCA(_BasePCA):
             # their variance is always greater than n_components float
             # passed. More discussion in issue: #15669
             ratio_cumsum = stable_cumsum(explained_variance_ratio_)
-            n_components = np.searchsorted(ratio_cumsum, n_components, side="right") + 1
+            n_components = xp.searchsorted(ratio_cumsum, n_components, side="right") + 1
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
@@ -577,6 +589,8 @@ class PCA(_BasePCA):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
         on X.
         """
+        xp, _ = get_namespace(X)
+
         n_samples, n_features = X.shape
 
         if isinstance(n_components, str):
@@ -602,7 +616,7 @@ class PCA(_BasePCA):
         random_state = check_random_state(self.random_state)
 
         # Center data
-        self.mean_ = np.mean(X, axis=0)
+        self.mean_ = xp.mean(X, axis=0)
         X -= self.mean_
 
         if svd_solver == "arpack":
@@ -636,12 +650,12 @@ class PCA(_BasePCA):
         # Workaround in-place variance calculation since at the time numpy
         # did not have a way to calculate variance in-place.
         N = X.shape[0] - 1
-        np.square(X, out=X)
-        np.sum(X, axis=0, out=X[0])
+        xp.square(X, out=X)
+        xp.sum(X, axis=0, out=X[0])
         total_var = (X[0] / N).sum()
 
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
-        self.singular_values_ = S.copy()  # Store the singular values.
+        self.singular_values_ = xp.asarray(S)  # Store the singular values.
 
         if self.n_components_ < min(n_features, n_samples):
             self.noise_variance_ = total_var - self.explained_variance_.sum()

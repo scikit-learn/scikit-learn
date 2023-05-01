@@ -72,6 +72,11 @@ def _is_numpy_namespace(xp):
     return xp.__name__ in {"numpy", "array_api_compat.numpy", "numpy.array_api"}
 
 
+def _is_torch_namespace(xp):
+    """Return True if xp is backed by PyTorch."""
+    return xp.__name__ in {"torch", "array_api_compat.torch"}
+
+
 def isdtype(dtype, kind, *, xp):
     """Returns a boolean indicating whether a provided dtype is of type "kind".
 

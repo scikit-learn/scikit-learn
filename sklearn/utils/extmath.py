@@ -800,16 +800,18 @@ def svd_flip(u, v, u_based_decision=True):
     v_adjusted : ndarray
         Array v with adjusted rows and the same dimensions as v.
     """
+    xp, _ = get_namespace(u)
+
     if u_based_decision:
         # columns of u, rows of v
-        max_abs_cols = np.argmax(np.abs(u), axis=0)
-        signs = np.sign(u[max_abs_cols, range(u.shape[1])])
+        max_abs_cols = xp.argmax(xp.abs(u), axis=0)
+        signs = xp.sign(u[max_abs_cols, range(u.shape[1])])
         u *= signs
         v *= signs[:, np.newaxis]
     else:
         # rows of v, columns of u
-        max_abs_rows = np.argmax(np.abs(v), axis=1)
-        signs = np.sign(v[range(v.shape[0]), max_abs_rows])
+        max_abs_rows = xp.argmax(xp.abs(v), axis=1)
+        signs = xp.sign(v[range(v.shape[0]), max_abs_rows])
         u *= signs
         v *= signs[:, np.newaxis]
     return u, v
@@ -1139,10 +1141,12 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     out : ndarray
         Array with the cumulative sums along the chosen axis.
     """
-    out = np.cumsum(arr, axis=axis, dtype=np.float64)
-    expected = np.sum(arr, axis=axis, dtype=np.float64)
-    if not np.all(
-        np.isclose(
+    xp, _ = get_namespace(arr)
+
+    out = xp.cumsum(arr, axis=axis, dtype=np.float64)
+    expected = xp.sum(arr, axis=axis, dtype=np.float64)
+    if not xp.all(
+        xp.isclose(
             out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
         )
     ):
