@@ -57,6 +57,7 @@ from ..utils import check_random_state
 from ..utils import check_array
 from ..utils import column_or_1d
 from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils.fixes import percentile
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.stats import _weighted_percentile
@@ -258,7 +259,8 @@ def set_huber_delta(loss, y_true, raw_prediction, sample_weight=None):
     """Calculate and set self.closs.delta based on self.quantile."""
     abserr = np.abs(y_true - raw_prediction.squeeze())
     if sample_weight is None:
-        delta = np.quantile(abserr, loss.quantile, axis=0, method="inverted_cdf")
+        # Same as np.quantile(abserr, loss.quantile, axis=0, method="inverted_cdf")
+        delta = percentile(abserr, 100 * loss.quantile, axis=0, method="lower")
     else:
         delta = _weighted_percentile(abserr, sample_weight, 100 * loss.quantile)
     loss.closs.delta = float(delta)
