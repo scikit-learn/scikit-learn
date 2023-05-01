@@ -27,7 +27,6 @@ from time import time
 import warnings
 
 import numpy as np
-from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
@@ -427,8 +426,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         sample_weight,
         sample_mask,
         random_state,
-        X_csc=None,
-        X_csr=None,
     ):
         """Fit another stage of ``n_trees_per_iteration_`` trees."""
         # FIXME: Replace assert by raise ValueError.
@@ -473,7 +470,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 # no inplace multiplication!
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
-            X = X_csr if X_csr is not None else X
             tree.fit(X, residual, sample_weight=sample_weight, check_input=False)
 
             # update tree leaves
@@ -816,8 +812,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             verbose_reporter = VerboseReporter(verbose=self.verbose)
             verbose_reporter.init(self, begin_at_stage)
 
-        X_csc = csc_matrix(X) if issparse(X) else None
-        X_csr = csr_matrix(X) if issparse(X) else None
+        if issparse(X):
+            X = csr_matrix(X)
 
         if self.n_iter_no_change is not None:
             loss_history = np.full(self.n_iter_no_change, np.inf)
@@ -864,8 +860,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_weight,
                 sample_mask,
                 random_state,
-                X_csc,
-                X_csr,
             )
 
             # track loss
