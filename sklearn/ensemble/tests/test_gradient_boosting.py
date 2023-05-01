@@ -1152,9 +1152,9 @@ def test_probability_exponential(global_random_seed):
 @pytest.mark.parametrize(
     ("loss", "value"),
     [
-        ("huber", 0.5),
         ("squared_error", 0.5),
         ("absolute_error", 0.0),
+        ("huber", 0.0),
         ("quantile", 0.5),
     ],
 )
