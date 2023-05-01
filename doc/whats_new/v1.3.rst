@@ -181,7 +181,7 @@ Changelog
 :mod:`sklearn.covariance`
 .........................
 
-- |Fix| Allow :func:`covariance.empirical_covariance` now gives an informative
+- |Fix| :func:`covariance.empirical_covariance` now gives an informative
   error message when input is not appropriate.
   :pr:`26108` by :user:`Quentin Barthélemy <qbarthelemy>`.
 
