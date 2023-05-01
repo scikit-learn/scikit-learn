@@ -1289,6 +1289,12 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.20
 
+    n_trees_per_iteration_ : int
+        The number of trees that are built at each iteration. For regressors, this is
+        always 1.
+
+        .. versionadded:: 1.3.0
+
     feature_importances_ : ndarray of shape (n_features,)
         The impurity-based feature importances.
         The higher, the more important the feature.
@@ -1898,6 +1904,17 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     Attributes
     ----------
+    n_estimators_ : int
+        The number of estimators as selected by early stopping (if
+        ``n_iter_no_change`` is specified). Otherwise it is set to
+        ``n_estimators``.
+
+    n_trees_per_iteration_ : int
+        The number of trees that are built at each iteration. For regressors, this is
+        always 1.
+
+        .. versionadded:: 1.3.0
+
     feature_importances_ : ndarray of shape (n_features,)
         The impurity-based feature importances.
         The higher, the more important the feature.
@@ -1939,11 +1956,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     estimators_ : ndarray of DecisionTreeRegressor of shape (n_estimators, 1)
         The collection of fitted sub-estimators.
-
-    n_estimators_ : int
-        The number of estimators as selected by early stopping (if
-        ``n_iter_no_change`` is specified). Otherwise it is set to
-        ``n_estimators``.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
