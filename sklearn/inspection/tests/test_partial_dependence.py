@@ -846,9 +846,9 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
     "features, custom_values, expected_pd_shape",
     [
         (0, None, (3, 10)),
-        (0, {0: [1, 2, 3]}, (3, 3)),
+        (0, {0: [1.0, 2.0, 3.0]}, (3, 3)),
         (iris.feature_names[0], None, (3, 10)),
-        (iris.feature_names[0], {iris.feature_names[0]: np.array([1, 2])}, (3, 2)),
+        (iris.feature_names[0], {iris.feature_names[0]: np.array([1.0, 2.0])}, (3, 2)),
         ([0, 2], None, (3, 10, 10)),
         ([0, 2], {2: [7, 8, 9, 10]}, (3, 10, 4)),
         ([iris.feature_names[i] for i in (0, 2)], None, (3, 10, 10)),
