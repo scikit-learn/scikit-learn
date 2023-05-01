@@ -133,10 +133,11 @@ def _update_terminal_regions(
 ):
     """Update the leaf values to be predicted by the tree and raw_prediction.
 
-    The current predictions of the model are updated.
+    The current predictions of the model (of this stage) are updated.
 
     Additionally, if loss.need_update_leaves_values is True, the terminal regions
-    (=leaves) of the given tree are updated as well.
+    (=leaves) of the given tree are updated as well. This corresponds to the line
+    search step in "Greedy Function Approximation" by Friedman.
 
     Update equals:
         loss.fit_intercept_only(y_true - raw_prediction)
@@ -171,7 +172,6 @@ def _update_terminal_regions(
          ``learning_rate``.
     k : int, default=0
         The index of the estimator being updated.
-
     """
     # compute leaf for each sample in ``X``.
     terminal_regions = tree.apply(X)
@@ -183,16 +183,6 @@ def _update_terminal_regions(
 
         # update each leaf (= perform line search)
         for leaf in np.nonzero(tree.children_left == TREE_LEAF)[0]:
-            # self._update_terminal_region(
-            #     tree,
-            #     masked_terminal_regions,
-            #     leaf,
-            #     X,
-            #     y,
-            #     residual,
-            #     raw_predictions[:, k],
-            #     sample_weight,
-            # )
             indices = np.nonzero(terminal_regions == leaf)[0]  # of terminal regions
             y_ = y.take(indices, axis=0)
             sw = None if sample_weight is None else sample_weight[indices]
@@ -203,12 +193,11 @@ def _update_terminal_regions(
                 #    sum(w * (y - prob)) / sum(w * prob * (1 - prob))
                 # we take advantage that: y - prob = residual
                 residual_ = residual.take(indices, axis=0)
-                # numerator = negative gradient
+                prob = y_ - residual_
+                # numerator = negative gradient = y - prob
                 numerator = np.average(residual_, weights=sw)
                 # denominator = hessian = prob * (1 - prob)
-                denominator = np.average(
-                    (y_ - residual_) * (1 - y_ + residual_), weights=sw
-                )
+                denominator = np.average(prob * (1 - prob), weights=sw)
 
                 # prevents overflow and division by zero
                 sw_sum = indices.shape[0] if sw is None else np.sum(sw)
@@ -219,6 +208,7 @@ def _update_terminal_regions(
             elif isinstance(loss, HalfMultinomialLoss):
                 # we take advantage that: y - prob = residual
                 residual_ = residual.take(indices, axis=0)
+                prob = y_ - residual_
                 K = loss.n_classes
                 # numerator = negative gradient * (k - 1) / k
                 # Note: The factor (k - 1)/k appears in the original papers "Greedy
@@ -229,9 +219,7 @@ def _update_terminal_regions(
                 numerator = np.average(residual_, weights=sw)
                 numerator *= (K - 1) / K
                 # denominator = (diagonal) hessian = prob * (1 - prob)
-                denominator = np.average(
-                    (y_ - residual_) * (1 - y_ + residual_), weights=sw
-                )
+                denominator = np.average(prob * (1 - prob), weights=sw)
 
                 # prevents overflow and division by zero
                 sw_sum = indices.shape[0] if sw is None else np.sum(sw)
@@ -240,12 +228,12 @@ def _update_terminal_regions(
                 else:
                     tree.value[leaf, 0, 0] = numerator / denominator
             elif isinstance(loss, ExponentialLoss):
-                y_ = 2.0 * y_ - 1.0
+                z = 2.0 * y_ - 1.0  # z is -1 or +1
                 raw_pred = raw_prediction[indices, k]
                 # numerator = negative gradient
-                numerator = np.average(y_ * np.exp(-y_ * raw_pred), weights=sw)
+                numerator = np.average(z * np.exp(-z * raw_pred), weights=sw)
                 # denominator = hessian
-                denominator = np.average(np.exp(-y_ * raw_pred), weights=sw)
+                denominator = np.average(np.exp(-z * raw_pred), weights=sw)
 
                 # prevents overflow and division by zero
                 sw_sum = indices.shape[0] if sw is None else np.sum(sw)
