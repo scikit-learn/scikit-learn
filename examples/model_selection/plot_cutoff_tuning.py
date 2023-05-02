@@ -256,6 +256,8 @@ scoring["cost_gain"](model, X_test, y_test)
 # :class:`~sklearn.metrics.CutOffClassifier` class is here to help us. It automatically
 # compute the cost-gain for all possible cut-off points and choose the optimal one.
 #
+# .. _cost_sensitive_learning_example:
+#
 # Tuning the cut-off point
 # ------------------------
 #

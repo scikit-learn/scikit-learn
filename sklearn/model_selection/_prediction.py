@@ -271,6 +271,9 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     decision_threshold_ : float
         The new decision threshold.
 
+    decision_thresholds_ : ndarray of shape (n_thresholds,)
+        All decision thresholds that were evaluated.
+
     objective_score_ : float or tuple of floats
         The score of the objective metric associated with the decision threshold found.
         When `objective_metric` is one of `"max_tpr_at_tnr_constraint"`,
@@ -278,9 +281,6 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
         `"max_recall_at_precision_constraint"`, it will corresponds to a tuple of
         two float values: the first one is the score of the metric which is constrained
         and the second one is the score of the maximized metric.
-
-    decision_thresholds_ : ndarray of shape (n_thresholds,)
-        All decision thresholds that were evaluated.
 
     objective_scores_ : ndarray of shape (n_thresholds,)
         The scores of the objective metric associated with the decision thresholds.

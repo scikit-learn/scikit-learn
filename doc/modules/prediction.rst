@@ -50,10 +50,10 @@ classify a patient having a cancer for a lower probability than 0.5.
 Post-tuning of the decision threshold
 =====================================
 
-One solution to address the problem stated in the introduction is to tune the
-decision threshold of the classifier once this model has been trained. The
-:class:`CutOffClassifier` allows to tune this threshold using an internal
-cross-validation. The optimum threshold is tuned to maximize a given metric
+One solution to address the problem stated in the introduction is to tune the decision
+threshold of the classifier once this model has been trained. The
+:class:`~sklearn.model_selection.CutOffClassifier` allows to tune this threshold using
+an internal cross-validation. The optimum threshold is tuned to maximize a given metric
 with or without constraints.
 
 The following image illustrate the tuning of the cut-off point for a gradient
@@ -73,8 +73,78 @@ insurance company).
 Available options to tune the cut-off point
 -------------------------------------------
 
+The cut-off point can be tuned with different strategies controlled by the parameter
+`objective_metric`.
+
+A straightforward use case is to maximize a pre-defined scikit-learn metric. These
+metrics can be found by calling the function :func:`~sklearn.metrics.get_scorer_names`.
+We provide an example where we maximize the balanced accuracy.
+
+.. note::
+
+    It is important to notice that these metrics comes with default parameter, notably
+    the label of the class of interested (i.e. `pos_label`). Thus, if this label is not
+    the right one for your application, you need to define a scorer and pass the right
+    `pos_label` (and additional parameters) using the
+    :func:`~sklearn.metrics.make_scorer`. You should refer to :ref:`scoring` to get all
+    information to define your own scoring function. For instance, we show how to pass
+    the information to the scorer that the label of interest is `0` when maximizing the
+    :func:`~sklearn.metrics.f1_score`:
+
+        >>> from sklearn.metrics import make_scorer, f1_score
+        >>> X, y = make_classification(
+        ...    n_samples=1_000, weights=[0.1, 0.9], random_state=0)
+        >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+        >>> pos_label = 0
+        >>> scorer = make_scorer(f1_score, pos_label=pos_label)
+        >>> model = CutOffClassifier(classifier, objective_metric=scorer).fit(
+        ...     X_train, y_train)
+        >>> scorer(model, X_test, y_test)
+        0.82...
+        >>> # compare it with the internal score found by cross-validation
+        >>> model.objective_score_
+        0.86...
+
+A second strategy aims at maximizing a metric while imposing constraints on another
+metric. Four pre-defined options exist, 2 that uses the Receiver Operating
+Characteristic (ROC) statistic and 2 that uses the Precision-Recall statistic.
+
+- `"max_tpr_at_tnr_constraint"`: maximizes the True Positive Rate (TPR) such that the
+  True Negative Rate (TNR) is the closest to a given value.
+- `"max_tnr_at_tpr_constraint"`: maximizes the TNR such that the TPR is the closest to
+  a given value.
+- `"max_precision_at_recall_constraint"`: maximizes the precision such that the recall
+    is the closest to a given value.
+- `"max_recall_at_precision_constraint"`: maximizes the recall such that the precision
+    is the closest to a given value.
+
+For these options, the `constraint_value` parameter needs to be defined. In addition,
+you can use the `pos_label` parameter to indicate the label of the class of interest.
+
+The final strategy maximizes a custom utility function. This problem is also known as
+cost-sensitive learning. The utility function is defined by providing dictionary
+containing the cost-gain associated with the entries of the confusion matrix. The keys
+are defined as `{"tn", "fp", "fn", "tp"}`. The class of interest is defined using the
+`pos_label` parameter. Refer to :ref:`cost_sensitive_learning_example` for an example
+depicting the use of such a utility function.
+
 Important notes regarding the internal cross-validation
 -------------------------------------------------------
+
+By default :class:`~sklearn.model_selection.CutOffClassifier` uses a 5-fold stratified
+cross-validation to tune the cut-off point. The parameter `cv` allows to control the
+cross-validation strategy. It is possible to go around cross-validation by passing
+`cv="prefit"` and provide an already fitted classifier. In this case, the cut-off point
+is tuned on the data provided to the `fit` method.
+
+However, you should be extremely careful when using this option. You should never use
+the same data for training the classifier and tuning the cut-off point at the risk of
+overfitting. Refer to :ref:`cutoffclassifier_no_cv` that shows such overfitting. If
+you are in a situation where you have limited resources, you should can consider using
+a float number that will use a single split internally.
+
+The option `cv="prefit"` should only be used when the provided classifier was already
+trained on some data and you want to tune (or re-tune) on a new validation set.
 
 Examples
 --------
