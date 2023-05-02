@@ -102,3 +102,6 @@ sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pyx
 sklearn/neighbors/_ball_tree.pyx
 sklearn/neighbors/_binary_tree.pxi
 sklearn/neighbors/_kd_tree.pyx
+
+# Default JupyterLite content
+jupyterlite_contents

@@ -55,7 +55,7 @@ cdef class KDTree{{name_suffix}}(BinaryTree{{name_suffix}}):
 {{endfor}}
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a KD Tree
 #
 #   Note that these functions use the concept of "reduced distance".

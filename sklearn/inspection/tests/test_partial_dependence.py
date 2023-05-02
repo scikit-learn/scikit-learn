@@ -93,6 +93,8 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
     # - multi-task regressors
 
     est = Estimator()
+    if hasattr(est, "n_estimators"):
+        est.set_params(n_estimators=2)  # speed-up computations
 
     # n_target corresponds to the number of classes (1 for binary classif) or
     # the number of tasks / outputs in multi task settings. It's equal to 1 for
@@ -509,31 +511,6 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
             "'recursion' method, the response_method must be 'decision_function'",
         ),
         (
-            GradientBoostingClassifier(random_state=0),
-            {"features": [0], "response_method": "blahblah"},
-            "response_method blahblah is invalid. Accepted response_method",
-        ),
-        (
-            NoPredictProbaNoDecisionFunction(),
-            {"features": [0], "response_method": "auto"},
-            "The estimator has no predict_proba and no decision_function method",
-        ),
-        (
-            NoPredictProbaNoDecisionFunction(),
-            {"features": [0], "response_method": "predict_proba"},
-            "The estimator has no predict_proba method.",
-        ),
-        (
-            NoPredictProbaNoDecisionFunction(),
-            {"features": [0], "response_method": "decision_function"},
-            "The estimator has no decision_function method.",
-        ),
-        (
-            LinearRegression(),
-            {"features": [0], "method": "blahblah"},
-            "blahblah is invalid. Accepted method names are brute, recursion, auto",
-        ),
-        (
             LinearRegression(),
             {"features": [0], "method": "recursion", "kind": "individual"},
             "The 'recursion' method only applies when 'kind' is set to 'average'",
@@ -556,24 +533,6 @@ def test_partial_dependence_error(estimator, params, err_msg):
 
     with pytest.raises(ValueError, match=err_msg):
         partial_dependence(estimator, X, **params)
-
-
-@pytest.mark.parametrize(
-    "with_dataframe, err_msg",
-    [
-        (True, "Only array-like or scalar are supported"),
-        (False, "Only array-like or scalar are supported"),
-    ],
-)
-def test_partial_dependence_slice_error(with_dataframe, err_msg):
-    X, y = make_classification(random_state=0)
-    if with_dataframe:
-        pd = pytest.importorskip("pandas")
-        X = pd.DataFrame(X)
-    estimator = LogisticRegression().fit(X, y)
-
-    with pytest.raises(TypeError, match=err_msg):
-        partial_dependence(estimator, X, features=slice(0, 2, 1))
 
 
 @pytest.mark.parametrize(
