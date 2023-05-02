@@ -885,7 +885,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         self : DecisionTreeClassifier
             Fitted estimator.
         """
-
         super().fit(
             X,
             y,
