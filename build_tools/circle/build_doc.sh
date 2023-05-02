@@ -158,7 +158,7 @@ sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
 
 # Install Rust
 # TODO: needs to find out which package requires this
-curl https://sh.rustup.rs -sSf | sh
+curl https://sh.rustup.rs -sSf | sh -y
 
 # deactivate circleci virtualenv and setup a conda env instead
 if [[ `type -t deactivate` ]]; then
