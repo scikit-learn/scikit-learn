@@ -366,9 +366,9 @@ Changelog
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
 
-- |Fix| Fixes a bug in :func:`metrics.roc_curve` where we add `eps` instead of 1.0
-  to `max(y_score)` for the starting point `tpr=0` and `fpr=0`. It avoids getting
-  values significantly outside of the [0, 1] range for probability estimates.
+- |Fix| In :func:`metrics.roc_curve`, use the threshold value `np.inf` instead of
+  arbritrary `max(y_score) + 1`. This threshold is associated with the ROC curve point
+  `tpr=0` and `fpr=0`.
   :pr:`26194` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
