@@ -478,7 +478,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X = self._validate_data(
             X,
             reset=first_pass,
-            dtype=(xp.float64, xp.float32, xp.float16),
+            dtype=_array_api.supported_float_dtypes(xp),
             force_all_finite="allow-nan",
         )
 
@@ -522,7 +522,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X = self._validate_data(
             X,
             copy=self.copy,
-            dtype=(xp.float64, xp.float32, xp.float16),
+            dtype=_array_api.supported_float_dtypes(xp),
             force_all_finite="allow-nan",
             reset=False,
         )
@@ -553,7 +553,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X = check_array(
             X,
             copy=self.copy,
-            dtype=(xp.float64, xp.float32, xp.float16),
+            dtype=_array_api.supported_float_dtypes(xp),
             force_all_finite="allow-nan",
         )
 

@@ -145,7 +145,7 @@ def _isdtype_single(dtype, kind, *, xp):
                 for k in ("signed integer", "unsigned integer")
             )
         elif kind == "real floating":
-            return dtype in {xp.float32, xp.float64}
+            return dtype in supported_float_dtypes(xp)
         elif kind == "complex floating":
             # Some name spaces do not have complex, such as cupy.array_api
             # and numpy.array_api
@@ -164,6 +164,14 @@ def _isdtype_single(dtype, kind, *, xp):
             raise ValueError(f"Unrecognized data type kind: {kind!r}")
     else:
         return dtype == kind
+
+
+def supported_float_dtypes(xp):
+    """Supported floating point types for the namespace"""
+    if hasattr(xp, "float16"):
+        return (xp.float64, xp.float32, xp.float16)
+    else:
+        return (xp.float64, xp.float32)
 
 
 class _ArrayAPIWrapper:
@@ -185,13 +193,6 @@ class _ArrayAPIWrapper:
 
     def __getattr__(self, name):
         return getattr(self._namespace, name)
-
-    @property
-    def float16(self):
-        if self._namespace.__name__ == "numpy.array_api":
-            return numpy.float16
-        else:
-            return self._namespace.float16
 
     def take(self, X, indices, *, axis=0):
         # When array_api supports `take` we can use this directly
