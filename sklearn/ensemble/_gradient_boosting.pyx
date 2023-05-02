@@ -32,7 +32,6 @@ cdef void _predict_regression_tree_inplace_fast_dense(
     double *value,
     double scale,
     Py_ssize_t k,
-    Py_ssize_t n_samples,
     cnp.float64_t[:, :] out
 ) noexcept nogil:
     """Predicts output for regression tree and stores it in ``out[i, k]``.
