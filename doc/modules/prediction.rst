@@ -91,6 +91,7 @@ We provide an example where we maximize the balanced accuracy.
     the information to the scorer that the label of interest is `0` when maximizing the
     :func:`~sklearn.metrics.f1_score`:
 
+        >>> from sklearn.model_selection import train_test_split
         >>> from sklearn.metrics import make_scorer, f1_score
         >>> X, y = make_classification(
         ...    n_samples=1_000, weights=[0.1, 0.9], random_state=0)
