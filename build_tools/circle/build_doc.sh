@@ -160,6 +160,7 @@ sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
 # TODO: needs to find out which package requires this
 curl https://sh.rustup.rs -sSf > rustup-init.sh
 bash rustup-init.sh -y
+source "$HOME/.cargo/env"
 
 # deactivate circleci virtualenv and setup a conda env instead
 if [[ `type -t deactivate` ]]; then
@@ -177,7 +178,7 @@ ccache -M 512M
 export CCACHE_COMPRESS=1
 
 # pin conda-lock to latest released version (needs manual update from time to time)
-mamba install "$(get_dep conda-lock min)" -y
+mamba install "$(get_dep conda-lock min)" -y --verbose
 
 conda-lock install --log-level WARNING --name $CONDA_ENV_NAME $LOCK_FILE
 source activate $CONDA_ENV_NAME
