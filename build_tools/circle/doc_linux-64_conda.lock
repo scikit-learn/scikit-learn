@@ -62,7 +62,7 @@ https://conda.anaconda.org/conda-forge/linux-64/lz4-c-1.9.4-hcb278e6_0.conda#318
 https://conda.anaconda.org/conda-forge/linux-64/mpg123-1.31.3-hcb278e6_0.conda#141a126675b6d1a4eabb111a4a353898
 https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.3-h27087fc_1.tar.bz2#4acfc691e64342b9dae57cf2adc63238
 https://conda.anaconda.org/conda-forge/linux-64/nspr-4.35-h27087fc_0.conda#da0ec11a6454ae19bff5b02ed881a2b1
-https://conda.anaconda.org/conda-forge/linux-64/openssl-3.1.0-hd590300_2.conda#bf5eccefb2189cb3c9a1bf8051c6e588
+https://conda.anaconda.org/conda-forge/linux-64/openssl-3.1.0-hd590300_3.conda#8f24d371ed9efb3f0b0de383fb81d51c
 https://conda.anaconda.org/conda-forge/linux-64/pixman-0.40.0-h36c2ea0_0.tar.bz2#660e72c82f2e75a6b3fe6a6e75c79f19
 https://conda.anaconda.org/conda-forge/linux-64/pthread-stubs-0.4-h36c2ea0_1001.tar.bz2#22dad4df6e8630e8dff2428f6f6a7036
 https://conda.anaconda.org/conda-forge/linux-64/snappy-1.1.10-h9fff704_0.conda#e6d228cd0bb74a51dd18f5bfce0b4115
@@ -237,7 +237,7 @@ https://conda.anaconda.org/conda-forge/linux-64/cryptography-40.0.2-py39h079d5ae
 https://conda.anaconda.org/conda-forge/linux-64/gstreamer-1.22.0-h25f0c4b_2.conda#461541cb1b387c2a28ab6217f3d38502
 https://conda.anaconda.org/conda-forge/linux-64/harfbuzz-6.0.0-h3ff4399_1.conda#73d2c2d25fdcec40c24929bab9f44831
 https://conda.anaconda.org/conda-forge/linux-64/imagecodecs-2023.1.23-py39h9e8eca3_2.conda#32dec18d45c74c2405021eb8dc42a521
-https://conda.anaconda.org/conda-forge/noarch/imageio-2.28.0-pyh24c5eb1_0.conda#5d92e9ade8cb85dac4b47a01334d5cb7
+https://conda.anaconda.org/conda-forge/noarch/imageio-2.28.1-pyh24c5eb1_0.conda#ef3541a8cd9a55879932486a097b7fed
 https://conda.anaconda.org/conda-forge/noarch/importlib-resources-5.12.0-pyhd8ed1ab_0.conda#3544c818f0720c89eb16ae6940ab440b
 https://conda.anaconda.org/conda-forge/noarch/importlib_metadata-6.6.0-hd8ed1ab_0.conda#3cbc9615f10a3d471532b83e4250b971
 https://conda.anaconda.org/conda-forge/linux-64/pandas-2.0.1-py39h40cae4c_0.conda#43cc9508f3aa24ed5dd021b0a1091a8c
@@ -283,7 +283,6 @@ https://conda.anaconda.org/conda-forge/noarch/seaborn-0.12.2-hd8ed1ab_0.conda#50
 # pip ptyprocess @ https://files.pythonhosted.org/packages/22/a6/858897256d0deac81a172289110f31629fc4cee19b6f01283303e18c8db3/ptyprocess-0.7.0-py2.py3-none-any.whl#sha256=4b41f3967fce3af57cc7e94b888626c18bf37a083e3651ca8feeb66d492fef35
 # pip pyrsistent @ https://files.pythonhosted.org/packages/64/de/375aa14daaee107f987da76ca32f7a907fea00fa8b8afb67dc09bec0de91/pyrsistent-0.19.3-py3-none-any.whl#sha256=ccf0d6bd208f8111179f0c26fdf84ed7c3891982f2edaeae7422575f47e66b64
 # pip python-json-logger @ https://files.pythonhosted.org/packages/35/a6/145655273568ee78a581e734cf35beb9e33a370b29c5d3c8fee3744de29f/python_json_logger-2.0.7-py3-none-any.whl#sha256=f380b826a991ebbe3de4d897aeec42760035ac760345e57b812938dc8b35e2bd
-# pip pywinpty @ https://files.pythonhosted.org/packages/d3/89/2b9113eabacfe3bbebcdf95c24772e2267c7b6b9fed6e35bffba2080a4c1/pywinpty-2.0.10.tar.gz#sha256=cdbb5694cf8c7242c2ecfaca35c545d31fa5d5814c3d67a4e628f803f680ebea
 # pip rfc3986-validator @ https://files.pythonhosted.org/packages/9e/51/17023c0f8f1869d8806b979a2bffa3f861f26a3f1a66b094288323fba52f/rfc3986_validator-0.1.1-py2.py3-none-any.whl#sha256=2f235c432ef459970b4306369336b9d5dbdda31b510ca1e327636e01f528bfa9
 # pip send2trash @ https://files.pythonhosted.org/packages/a9/78/e4df1e080ed790acf3a704edf521006dd96b9841bd2e2a462c0d255e0565/Send2Trash-1.8.2-py3-none-any.whl#sha256=a384719d99c07ce1eefd6905d2decb6f8b7ed054025bb0e618919f945de4f679
 # pip sniffio @ https://files.pythonhosted.org/packages/c3/a0/5dba8ed157b0136607c7f2151db695885606968d1fae123dc3391e0cfdbf/sniffio-1.3.0-py3-none-any.whl#sha256=eecefdce1e5bbfb7ad2eeaabf7c1eeb404d7757c379bd1f7e5cce9d8bf425384
