@@ -109,7 +109,7 @@ We provide an example where we maximize the balanced accuracy.
 
 A second strategy aims at maximizing a metric while imposing constraints on another
 metric. Four pre-defined options exist, 2 that uses the Receiver Operating
-Characteristic (ROC) statistic and 2 that uses the Precision-Recall statistic.
+Characteristic (ROC) statistics and 2 that uses the Precision-Recall statistics.
 
 - `"max_tpr_at_tnr_constraint"`: maximizes the True Positive Rate (TPR) such that the
   True Negative Rate (TNR) is the closest to a given value.
