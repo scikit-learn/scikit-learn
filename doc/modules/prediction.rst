@@ -116,9 +116,9 @@ Characteristic (ROC) statistic and 2 that uses the Precision-Recall statistic.
 - `"max_tnr_at_tpr_constraint"`: maximizes the TNR such that the TPR is the closest to
   a given value.
 - `"max_precision_at_recall_constraint"`: maximizes the precision such that the recall
-    is the closest to a given value.
+  is the closest to a given value.
 - `"max_recall_at_precision_constraint"`: maximizes the recall such that the precision
-    is the closest to a given value.
+  is the closest to a given value.
 
 For these options, the `constraint_value` parameter needs to be defined. In addition,
 you can use the `pos_label` parameter to indicate the label of the class of interest.
