@@ -221,9 +221,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             inds = np.where(row)[0]
             if len(inds):
                 name = " ".join(
-                    "%s^%d" % (input_features[ind], exp)
-                    if exp != 1
-                    else input_features[ind]
+                    (
+                        "%s^%d" % (input_features[ind], exp)
+                        if exp != 1
+                        else input_features[ind]
+                    )
                     for ind, exp in zip(inds, row[inds])
                 )
             else:
@@ -517,7 +519,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         recommended to manually set the knot values to control the period.
 
     include_bias : bool, default=True
-        If True (default), then the last spline element inside the data range
+        If False, then the last spline element inside the data range
         of a feature is dropped. As B-splines sum to one over the spline basis
         functions for each data point, they implicitly include a bias term,
         i.e. a column of ones. It acts as an intercept term in a linear models.

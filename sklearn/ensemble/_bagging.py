@@ -741,7 +741,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         verbose=0,
         base_estimator="deprecated",
     ):
-
         super().__init__(
             estimator=estimator,
             n_estimators=n_estimators,

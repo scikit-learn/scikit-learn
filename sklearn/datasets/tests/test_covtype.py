@@ -6,9 +6,9 @@ import pytest
 from sklearn.datasets.tests.test_common import check_return_X_y
 
 
-def test_fetch(fetch_covtype_fxt):
-    data1 = fetch_covtype_fxt(shuffle=True, random_state=42)
-    data2 = fetch_covtype_fxt(shuffle=True, random_state=37)
+def test_fetch(fetch_covtype_fxt, global_random_seed):
+    data1 = fetch_covtype_fxt(shuffle=True, random_state=global_random_seed)
+    data2 = fetch_covtype_fxt(shuffle=True, random_state=global_random_seed + 1)
 
     X1, X2 = data1["data"], data2["data"]
     assert (581012, 54) == X1.shape
