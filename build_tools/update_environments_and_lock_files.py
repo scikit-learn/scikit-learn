@@ -187,7 +187,7 @@ conda_build_metadata_list = [
         "build_name": "pylatest_pip_openblas_pandas",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channel": "default",
+        "channel": "defaults",
         # sphinx in conda_dependencies as a temporary work-around for
         # https://github.com/conda-incubator/conda-lock/issues/309
         "conda_dependencies": ["python", "ccache", "sphinx"],

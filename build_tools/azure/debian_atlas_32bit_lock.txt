@@ -6,7 +6,7 @@
 #
 attrs==23.1.0
     # via pytest
-coverage==7.2.3
+coverage==7.2.5
     # via pytest-cov
 cython==0.29.34
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
