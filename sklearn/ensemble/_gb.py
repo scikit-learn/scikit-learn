@@ -174,7 +174,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         n_iter_no_change=None,
         tol=1e-4,
     ):
-
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.loss = loss
@@ -598,7 +597,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # perform boosting iterations
         i = begin_at_stage
         for i in range(begin_at_stage, self.n_estimators):
-
             # subsampling
             if do_oob:
                 sample_mask = _random_sample_mask(n_samples, n_inbag, random_state)
@@ -951,7 +949,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
-        ``init`` has to provide :meth:`fit` and :meth:`predict_proba`. If
+        ``init`` has to provide :term:`fit` and :term:`predict_proba`. If
         'zero', the initial raw predictions are set to zero. By default, a
         ``DummyEstimator`` predicting the classes priors is used.
 
@@ -1189,7 +1187,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         tol=1e-4,
         ccp_alpha=0.0,
     ):
-
         super().__init__(
             loss=loss,
             learning_rate=learning_rate,
@@ -1743,7 +1740,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         tol=1e-4,
         ccp_alpha=0.0,
     ):
-
         super().__init__(
             loss=loss,
             learning_rate=learning_rate,

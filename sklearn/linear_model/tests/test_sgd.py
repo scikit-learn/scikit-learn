@@ -180,6 +180,7 @@ true_result5 = [0, 1, 1]
 ###############################################################################
 # Common Test Case to classification and regression
 
+
 # a simple implementation of ASGD to use for testing
 # uses squared loss to find the gradient
 def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
@@ -1392,6 +1393,7 @@ def test_loss_function_epsilon(klass):
 
 ###############################################################################
 # SGD One Class SVM Test Case
+
 
 # a simple implementation of ASGD to use for testing SGDOneClassSVM
 def asgd_oneclass(klass, X, eta, nu, coef_init=None, offset_init=0.0):

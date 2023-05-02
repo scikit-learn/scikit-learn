@@ -1,9 +1,11 @@
+import builtins
 import time
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
 from sklearn import get_config, set_config, config_context
+import sklearn
 from sklearn.utils.parallel import delayed, Parallel
 
 
@@ -145,3 +147,45 @@ def test_config_threadsafe():
         ]
 
     assert items == [False, True, False, True]
+
+
+def test_config_array_api_dispatch_error(monkeypatch):
+    """Check error is raised when array_api_compat is not installed."""
+
+    # Hide array_api_compat import
+    orig_import = builtins.__import__
+
+    def mocked_import(name, *args, **kwargs):
+        if name == "array_api_compat":
+            raise ImportError
+        return orig_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", mocked_import)
+
+    with pytest.raises(ImportError, match="array_api_compat is required"):
+        with config_context(array_api_dispatch=True):
+            pass
+
+    with pytest.raises(ImportError, match="array_api_compat is required"):
+        set_config(array_api_dispatch=True)
+
+
+def test_config_array_api_dispatch_error_numpy(monkeypatch):
+    """Check error when NumPy is too old"""
+    # Pretend that array_api_compat is installed.
+    orig_import = builtins.__import__
+
+    def mocked_import(name, *args, **kwargs):
+        if name == "array_api_compat":
+            return object()
+        return orig_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", mocked_import)
+    monkeypatch.setattr(sklearn.utils._array_api.numpy, "__version__", "1.20")
+
+    with pytest.raises(ImportError, match="NumPy must be 1.21 or newer"):
+        with config_context(array_api_dispatch=True):
+            pass
+
+    with pytest.raises(ImportError, match="NumPy must be 1.21 or newer"):
+        set_config(array_api_dispatch=True)

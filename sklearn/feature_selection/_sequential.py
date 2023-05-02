@@ -39,8 +39,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     n_features_to_select : "auto", int or float, default='warn'
         If `"auto"`, the behaviour depends on the `tol` parameter:
 
-        - if `tol` is not `None`, then features are selected until the score
-          improvement does not exceed `tol`.
+        - if `tol` is not `None`, then features are selected while the score
+          change does not exceed `tol`.
         - otherwise, half of the features are selected.
 
         If integer, the parameter is the absolute number of features to select.
@@ -53,7 +53,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
            The default changed from `None` to `"warn"` in 1.1 and will become
            `"auto"` in 1.3. `None` and `'warn'` will be removed in 1.3.
            To keep the same behaviour as `None`, set
-           `n_features_to_select="auto" and `tol=None`.
+           `n_features_to_select="auto"` and `tol=None`.
 
     tol : float, default=None
         If the score is not incremented by at least `tol` between two
@@ -177,7 +177,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         cv=5,
         n_jobs=None,
     ):
-
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.tol = tol
@@ -210,13 +209,15 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         if self.n_features_to_select in ("warn", None):
             # for backwards compatibility
             warnings.warn(
-                "Leaving `n_features_to_select` to "
-                "None is deprecated in 1.0 and will become 'auto' "
-                "in 1.3. To keep the same behaviour as with None "
-                "(i.e. select half of the features) and avoid "
-                "this warning, you should manually set "
-                "`n_features_to_select='auto'` and set tol=None "
-                "when creating an instance.",
+                (
+                    "Leaving `n_features_to_select` to "
+                    "None is deprecated in 1.0 and will become 'auto' "
+                    "in 1.3. To keep the same behaviour as with None "
+                    "(i.e. select half of the features) and avoid "
+                    "this warning, you should manually set "
+                    "`n_features_to_select='auto'` and set tol=None "
+                    "when creating an instance."
+                ),
                 FutureWarning,
             )
 

@@ -381,8 +381,10 @@ def test_min_gain_to_split():
 
 
 @pytest.mark.parametrize(
-    "X_binned, all_gradients, has_missing_values, n_bins_non_missing, "
-    " expected_split_on_nan, expected_bin_idx, expected_go_to_left",
+    (
+        "X_binned, all_gradients, has_missing_values, n_bins_non_missing, "
+        " expected_split_on_nan, expected_bin_idx, expected_go_to_left"
+    ),
     [
         # basic sanity check with no missing values: given the gradient
         # values, the split must occur on bin_idx=3
@@ -672,8 +674,10 @@ def _assert_categories_equals_bitset(categories, bitset):
 
 
 @pytest.mark.parametrize(
-    "X_binned, all_gradients, expected_categories_left, n_bins_non_missing,"
-    "missing_values_bin_idx, has_missing_values, expected_missing_go_to_left",
+    (
+        "X_binned, all_gradients, expected_categories_left, n_bins_non_missing,"
+        "missing_values_bin_idx, has_missing_values, expected_missing_go_to_left"
+    ),
     [
         # 4 categories
         (

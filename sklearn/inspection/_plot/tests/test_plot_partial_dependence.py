@@ -21,8 +21,10 @@ from sklearn.inspection import PartialDependenceDisplay
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
-    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*",
+    (
+        "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
+        "matplotlib.*"
+    ),
 )
 
 
@@ -608,16 +610,6 @@ dummy_classification_data = make_classification(random_state=0)
             dummy_classification_data,
             {"features": [1], "categorical_features": [1], "kind": "individual"},
             "It is not possible to display individual effects",
-        ),
-        (
-            dummy_classification_data,
-            {"features": [1], "kind": "foo"},
-            "Values provided to `kind` must be one of",
-        ),
-        (
-            dummy_classification_data,
-            {"features": [0, 1], "kind": ["foo", "individual"]},
-            "Values provided to `kind` must be one of",
         ),
     ],
 )

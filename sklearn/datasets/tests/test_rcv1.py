@@ -10,7 +10,7 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 
 
-def test_fetch_rcv1(fetch_rcv1_fxt):
+def test_fetch_rcv1(fetch_rcv1_fxt, global_random_seed):
     data1 = fetch_rcv1_fxt(shuffle=False)
     X1, Y1 = data1.data, data1.target
     cat_list, s1 = data1.target_names.tolist(), data1.sample_id
@@ -42,7 +42,9 @@ def test_fetch_rcv1(fetch_rcv1_fxt):
         assert num == Y1[:, j].data.size
 
     # test shuffling and subset
-    data2 = fetch_rcv1_fxt(shuffle=True, subset="train", random_state=77)
+    data2 = fetch_rcv1_fxt(
+        shuffle=True, subset="train", random_state=global_random_seed
+    )
     X2, Y2 = data2.data, data2.target
     s2 = data2.sample_id
 
