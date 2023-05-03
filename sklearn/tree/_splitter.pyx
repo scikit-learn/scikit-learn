@@ -963,25 +963,24 @@ cdef class DensePartitioner:
         right-most end of `samples`, that is `samples[end_non_missing:end]`.
         """
         cdef:
+            # Local invariance: start <= p <= partition_end <= end
             SIZE_t start = self.start
-            SIZE_t end
-            SIZE_t p, partition_end
+            SIZE_t p = start
+            SIZE_t end = self.end - 1
+            SIZE_t partition_end = end - best_n_missing
             SIZE_t[::1] samples = self.samples
             const DTYPE_t[:, :] X = self.X
             DTYPE_t current_value
-            SIZE_t end_non_missing = self.end - best_n_missing
 
         # Move missing values to the end
         if best_n_missing != 0:
-            p, partition_end, end = start, end_non_missing, self.end - 1
-
             while p < partition_end:
-                # Keep misisng values at the end
+                # Keep missing values at the end
                 if isnan(X[samples[end], best_feature]):
                     end -= 1
                     continue
 
-                # Move missing values to the end
+                # Swap missing value with the sample at the end
                 current_value = X[samples[p], best_feature]
                 if isnan(current_value):
                     samples[p], samples[end] = samples[end], samples[p]
@@ -991,16 +990,15 @@ cdef class DensePartitioner:
                 if current_value <= best_threshold:
                     p += 1
                 else:
-                    partition_end -= 1
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
+                    partition_end -= 1
         else:
-            p, partition_end = start, end_non_missing
             while p < partition_end:
                 if X[samples[p], best_feature] <= best_threshold:
                     p += 1
                 else:
-                    partition_end -= 1
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
+                    partition_end -= 1
 
 
 @final
