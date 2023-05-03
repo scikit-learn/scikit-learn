@@ -667,7 +667,8 @@ cdef class HellingerDistance(ClassificationCriterion):
             The memory address to save the impurity of the right node to
         """
         cdef:
-            # taking only first sum_left and sum_right because only single label is supported
+            # taking only first sum_left and sum_right because only single label is
+            # supported
             double[::1] sum_left = self.sum_left[0]
             double[::1] sum_right = self.sum_right[0]
 
