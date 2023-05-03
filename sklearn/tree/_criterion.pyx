@@ -656,7 +656,6 @@ cdef class HellingerDistance(ClassificationCriterion):
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
         """Evaluate the impurity in children nodes.
-        
         i.e. the impurity of the left child (samples[start:pos]) and the
         impurity the right child (samples[pos:end]) using Hellinger distance.
 
