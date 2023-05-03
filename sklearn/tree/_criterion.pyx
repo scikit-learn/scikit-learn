@@ -648,9 +648,7 @@ cdef class HellingerDistance(ClassificationCriterion):
         self.children_impurity(&impurity_left, &impurity_right)
 
         # hellinger score is sqrt of children impurity sum
-        impurity_sum = impurity_right + impurity_left
-        if impurity_sum >= 0:
-            impurity_sum = sqrt(impurity_sum)
+        impurity_sum = sqrt(impurity_right + impurity_left)
 
         return impurity_sum
 
