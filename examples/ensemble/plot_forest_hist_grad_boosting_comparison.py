@@ -13,7 +13,7 @@ according to each estimator:
   regression and binary classification problems. Furthermore, the actual number
   of trees required by the model depends on the stopping criteria.
 
-HGBTs use gradient boosting to iteratively improve the model's performance by
+HGBT use gradient boosting to iteratively improve the model's performance by
 fitting each tree to the negative gradient of the loss function with respect to
 the predicted value. RFs, on the other hand, are based on bagging and use a
 majority vote to predict the outcome.
@@ -65,7 +65,7 @@ models = {
     ),
 }
 param_grids = {
-    "Random Forest": {"n_estimators": [5, 10, 20, 50, 100, 200]},
+    "Random Forest": {"n_estimators": [5, 10, 20, 50, 100]},
     "HistGradientBoosting": {"max_iter": [5, 10, 20, 50, 100, 200]},
 }
 cv = KFold(n_splits=3, shuffle=True, random_state=0)
@@ -125,20 +125,19 @@ for idx, result in enumerate(results):
 plt.show()
 
 # %%
-# Both histogram gradient boosting and random forest models improve when
-# increasing the number of trees in the ensemble. However, the scores reach a
-# plateau where adding new trees just makes fitting and scoring slower.
+# Both HGBT and RF models improve when increasing the number of trees in the
+# ensemble. However, the scores reach a plateau where adding new trees just
+# makes fitting and scoring slower.
 #
-# Unlike RFs, HGBTs models offer an early-stopping option (See
+# Unlike RF, HGBT models offer an early-stopping option (See
 # :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`)
 # to avoid adding new unnecessary trees. Internally, the algorithm uses an
 # out-of-sample set to compute the generalization performance of the model at
 # each addition of a tree. Thus, if the generalization performance is not
-# improving for more than `n_iter_no_change` iterations, it stops adding
-# trees.
+# improving for more than `n_iter_no_change` iterations, it stops adding trees.
 #
-# Last but not least, in this example the training time of RFs is much larger
-# than the training time of HGBTs, even for relatively low values of
+# Last but not least, in this example the training time of RF is much larger
+# than the training time of HGBT, even for relatively low values of
 # `n_estimators`. The reason is that boosting models rely on shallow trees,
 # which predict faster. Nevertheless, the training time of RFs can be reduced as
 # they fit trees independently, which in practice means that
