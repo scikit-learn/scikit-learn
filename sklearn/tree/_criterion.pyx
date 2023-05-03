@@ -15,13 +15,12 @@
 
 from libc.string cimport memcpy
 from libc.string cimport memset
-from libc.math cimport fabs, sqrt, pow
+from libc.math cimport fabs, sqrt, pow, INFINITY
 
 import numpy as np
 cimport numpy as cnp
 cnp.import_array()
 
-from numpy.math cimport INFINITY
 from scipy.special.cython_special cimport xlogy
 
 from ._utils cimport log

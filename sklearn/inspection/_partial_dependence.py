@@ -22,6 +22,13 @@ from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
 from ..utils import Bunch
+from ..utils._param_validation import (
+    HasMethods,
+    Integral,
+    Interval,
+    StrOptions,
+    validate_params,
+)
 from ..tree import DecisionTreeRegressor
 from ..ensemble import RandomForestRegressor
 from ..exceptions import NotFittedError
@@ -87,8 +94,20 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
         raise ValueError("'grid_resolution' must be strictly greater than 1.")
 
     values = []
+    # TODO: we should handle missing values (i.e. `np.nan`) specifically and store them
+    # in a different Bunch attribute.
     for feature, is_cat in enumerate(is_categorical):
-        uniques = np.unique(_safe_indexing(X, feature, axis=1))
+        try:
+            uniques = np.unique(_safe_indexing(X, feature, axis=1))
+        except TypeError as exc:
+            # `np.unique` will fail in the presence of `np.nan` and `str` categories
+            # due to sorting. Temporary, we reraise an error explaining the problem.
+            raise ValueError(
+                f"The column #{feature} contains mixed data types. Finding unique "
+                "categories fail due to sorting. It usually means that the column "
+                "contains `np.nan` values together with `str` categories. Such use "
+                "case is not yet supported in scikit-learn."
+            ) from exc
         if is_cat or uniques.shape[0] < grid_resolution:
             # Use the unique values either because:
             # - feature has low resolution use unique values
@@ -127,7 +146,6 @@ def _partial_dependence_recursion(est, grid, features):
 
 
 def _partial_dependence_brute(est, grid, features, X, response_method):
-
     predictions = []
     averaged_predictions = []
 
@@ -212,6 +230,24 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
     return averaged_predictions, predictions
 
 
+@validate_params(
+    {
+        "estimator": [
+            HasMethods(["fit", "predict"]),
+            HasMethods(["fit", "predict_proba"]),
+            HasMethods(["fit", "decision_function"]),
+        ],
+        "X": ["array-like", "sparse matrix"],
+        "features": ["array-like", Integral, str],
+        "categorical_features": ["array-like", None],
+        "feature_names": ["array-like", None],
+        "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
+        "percentiles": [tuple],
+        "grid_resolution": [Interval(Integral, 1, None, closed="left")],
+        "method": [StrOptions({"auto", "recursion", "brute"})],
+        "kind": [StrOptions({"average", "individual", "both"})],
+    }
+)
 def partial_dependence(
     estimator,
     X,
@@ -257,13 +293,13 @@ def partial_dependence(
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
 
-    X : {array-like or dataframe} of shape (n_samples, n_features)
+    X : {array-like, sparse matrix or dataframe} of shape (n_samples, n_features)
         ``X`` is used to generate a grid of values for the target
         ``features`` (where the partial dependence will be evaluated), and
         also to generate values for the complement features when the
         `method` is 'brute'.
 
-    features : array-like of {int, str}
+    features : array-like of {int, str, bool} or int or str
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
 
@@ -414,25 +450,10 @@ def partial_dependence(
     if not (hasattr(X, "__array__") or sparse.issparse(X)):
         X = check_array(X, force_all_finite="allow-nan", dtype=object)
 
-    accepted_responses = ("auto", "predict_proba", "decision_function")
-    if response_method not in accepted_responses:
-        raise ValueError(
-            "response_method {} is invalid. Accepted response_method names "
-            "are {}.".format(response_method, ", ".join(accepted_responses))
-        )
-
     if is_regressor(estimator) and response_method != "auto":
         raise ValueError(
             "The response_method parameter is ignored for regressors and "
             "must be 'auto'."
-        )
-
-    accepted_methods = ("brute", "recursion", "auto")
-    if method not in accepted_methods:
-        raise ValueError(
-            "method {} is invalid. Accepted method names are {}.".format(
-                method, ", ".join(accepted_methods)
-            )
         )
 
     if kind != "average":

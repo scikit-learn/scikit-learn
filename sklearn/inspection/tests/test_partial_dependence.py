@@ -93,6 +93,8 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
     # - multi-task regressors
 
     est = Estimator()
+    if hasattr(est, "n_estimators"):
+        est.set_params(n_estimators=2)  # speed-up computations
 
     # n_target corresponds to the number of classes (1 for binary classif) or
     # the number of tasks / outputs in multi task settings. It's equal to 1 for
@@ -509,31 +511,6 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
             "'recursion' method, the response_method must be 'decision_function'",
         ),
         (
-            GradientBoostingClassifier(random_state=0),
-            {"features": [0], "response_method": "blahblah"},
-            "response_method blahblah is invalid. Accepted response_method",
-        ),
-        (
-            NoPredictProbaNoDecisionFunction(),
-            {"features": [0], "response_method": "auto"},
-            "The estimator has no predict_proba and no decision_function method",
-        ),
-        (
-            NoPredictProbaNoDecisionFunction(),
-            {"features": [0], "response_method": "predict_proba"},
-            "The estimator has no predict_proba method.",
-        ),
-        (
-            NoPredictProbaNoDecisionFunction(),
-            {"features": [0], "response_method": "decision_function"},
-            "The estimator has no decision_function method.",
-        ),
-        (
-            LinearRegression(),
-            {"features": [0], "method": "blahblah"},
-            "blahblah is invalid. Accepted method names are brute, recursion, auto",
-        ),
-        (
             LinearRegression(),
             {"features": [0], "method": "recursion", "kind": "individual"},
             "The 'recursion' method only applies when 'kind' is set to 'average'",
@@ -556,24 +533,6 @@ def test_partial_dependence_error(estimator, params, err_msg):
 
     with pytest.raises(ValueError, match=err_msg):
         partial_dependence(estimator, X, **params)
-
-
-@pytest.mark.parametrize(
-    "with_dataframe, err_msg",
-    [
-        (True, "Only array-like or scalar are supported"),
-        (False, "Only array-like or scalar are supported"),
-    ],
-)
-def test_partial_dependence_slice_error(with_dataframe, err_msg):
-    X, y = make_classification(random_state=0)
-    if with_dataframe:
-        pd = pytest.importorskip("pandas")
-        X = pd.DataFrame(X)
-    estimator = LogisticRegression().fit(X, y)
-
-    with pytest.raises(TypeError, match=err_msg):
-        partial_dependence(estimator, X, features=slice(0, 2, 1))
 
 
 @pytest.mark.parametrize(
@@ -865,3 +824,19 @@ def test_partial_dependence_bunch_values_deprecated():
 
     # "values" and "grid_values" are the same object
     assert values is grid_values
+
+
+def test_mixed_type_categorical():
+    """Check that we raise a proper error when a column has mixed types and
+    the sorting of `np.unique` will fail."""
+    X = np.array(["A", "B", "C", np.nan], dtype=object).reshape(-1, 1)
+    y = np.array([0, 1, 0, 1])
+
+    from sklearn.preprocessing import OrdinalEncoder
+
+    clf = make_pipeline(
+        OrdinalEncoder(encoded_missing_value=-1),
+        LogisticRegression(),
+    ).fit(X, y)
+    with pytest.raises(ValueError, match="The column #0 contains mixed data types"):
+        partial_dependence(clf, X, features=[0])

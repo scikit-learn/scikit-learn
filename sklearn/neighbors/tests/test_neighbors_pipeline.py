@@ -132,7 +132,6 @@ def test_tsne():
     X = rng.randn(20, 2)
 
     for metric in ["minkowski", "sqeuclidean"]:
-
         # compare the chained version and the compact version
         est_chain = make_pipeline(
             KNeighborsTransformer(

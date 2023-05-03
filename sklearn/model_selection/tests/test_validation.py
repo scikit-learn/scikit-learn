@@ -10,6 +10,7 @@ from time import sleep
 import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
+from scipy.sparse import issparse
 from sklearn.exceptions import FitFailedWarning
 
 from sklearn.model_selection.tests.test_search import FailingClassifier
@@ -63,7 +64,7 @@ from sklearn.neural_network import MLPRegressor
 
 from sklearn.impute import SimpleImputer
 
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, scale
 from sklearn.pipeline import Pipeline
 
 from io import StringIO
@@ -354,17 +355,9 @@ def test_cross_validate_invalid_scoring_param():
     with pytest.raises(ValueError, match=error_message_regexp):
         cross_validate(estimator, X, y, scoring=[[make_scorer(precision_score)]])
 
-    error_message_regexp = (
-        ".*scoring is invalid.*Refer to the scoring glossary for details:.*"
-    )
-
     # Empty dict should raise invalid scoring error
     with pytest.raises(ValueError, match="An empty dict"):
         cross_validate(estimator, X, y, scoring=(dict()))
-
-    # And so should any other invalid entry
-    with pytest.raises(ValueError, match=error_message_regexp):
-        cross_validate(estimator, X, y, scoring=5)
 
     multiclass_scorer = make_scorer(precision_recall_fscore_support)
 
@@ -381,9 +374,6 @@ def test_cross_validate_invalid_scoring_param():
 
     with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
-
-    with pytest.raises(ValueError, match="'mse' is not a valid scoring value."):
-        cross_validate(SVC(), X, y, scoring="mse")
 
 
 def test_cross_validate_nested_estimator():
@@ -405,7 +395,8 @@ def test_cross_validate_nested_estimator():
     assert all(isinstance(estimator, Pipeline) for estimator in estimators)
 
 
-def test_cross_validate():
+@pytest.mark.parametrize("use_sparse", [False, True])
+def test_cross_validate(use_sparse: bool):
     # Compute train and test mse/r2 scores
     cv = KFold()
 
@@ -416,6 +407,10 @@ def test_cross_validate():
     # Classification
     X_clf, y_clf = make_classification(n_samples=30, random_state=0)
     clf = SVC(kernel="linear", random_state=0)
+
+    if use_sparse:
+        X_reg = csr_matrix(X_reg)
+        X_clf = csr_matrix(X_clf)
 
     for X, y, est in ((X_reg, y_reg, reg), (X_clf, y_clf, clf)):
         # It's okay to evaluate regression metrics on classification too
@@ -510,7 +505,15 @@ def check_cross_validate_single_metric(clf, X, y, scores, cv):
         clf, X, y, scoring="neg_mean_squared_error", return_estimator=True, cv=cv
     )
     for k, est in enumerate(mse_scores_dict["estimator"]):
-        assert_almost_equal(est.coef_, fitted_estimators[k].coef_)
+        est_coef = est.coef_.copy()
+        if issparse(est_coef):
+            est_coef = est_coef.toarray()
+
+        fitted_est_coef = fitted_estimators[k].coef_.copy()
+        if issparse(fitted_est_coef):
+            fitted_est_coef = fitted_est_coef.toarray()
+
+        assert_almost_equal(est_coef, fitted_est_coef)
         assert_almost_equal(est.intercept_, fitted_estimators[k].intercept_)
 
 
@@ -1980,7 +1983,6 @@ def test_cross_val_predict_with_method_multilabel_rf_rare_class():
 
 
 def get_expected_predictions(X, y, cv, classes, est, method):
-
     expected_predictions = np.zeros([len(y), classes])
     func = getattr(est, method)
 
@@ -2001,7 +2003,6 @@ def get_expected_predictions(X, y, cv, classes, est, method):
 
 
 def test_cross_val_predict_class_subset():
-
     X = np.arange(200).reshape(100, 2)
     y = np.array([x // 10 for x in range(100)])
     classes = 10
@@ -2093,7 +2094,6 @@ def test_fit_and_score_failing():
     failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
     # dummy X data
     X = np.arange(1, 10)
-    y = np.ones(9)
     fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0, None, None]
     # passing error score to trigger the warning message
     fit_and_score_kwargs = {"error_score": "raise"}
@@ -2102,29 +2102,12 @@ def test_fit_and_score_failing():
         _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
 
     # check that functions upstream pass error_score param to _fit_and_score
-    error_message = re.escape(
-        "error_score must be the string 'raise' or a numeric value. (Hint: if "
-        "using 'raise', please make sure that it has been spelled correctly.)"
+    error_message_cross_validate = (
+        "The 'error_score' parameter of cross_validate must be .*. Got .* instead."
     )
-    with pytest.raises(ValueError, match=error_message):
-        cross_validate(failing_clf, X, cv=3, error_score="unvalid-string")
 
-    with pytest.raises(ValueError, match=error_message):
+    with pytest.raises(ValueError, match=error_message_cross_validate):
         cross_val_score(failing_clf, X, cv=3, error_score="unvalid-string")
-
-    with pytest.raises(ValueError, match=error_message):
-        learning_curve(failing_clf, X, y, cv=3, error_score="unvalid-string")
-
-    with pytest.raises(ValueError, match=error_message):
-        validation_curve(
-            failing_clf,
-            X,
-            y,
-            param_name="parameter",
-            param_range=[FailingClassifier.FAILING_PARAMETER],
-            cv=3,
-            error_score="unvalid-string",
-        )
 
     assert failing_clf.score() == 0.0  # FailingClassifier coverage
 
@@ -2175,9 +2158,11 @@ def test_cross_validate_some_failing_fits_warning(error_score):
         "ValueError: Classifier fit failed with 1 values too high"
     )
     warning_message = re.compile(
-        "2 fits failed.+total of 3.+The score on these"
-        " train-test partitions for these parameters will be set to"
-        f" {cross_validate_kwargs['error_score']}.+{individual_fit_error_message}",
+        (
+            "2 fits failed.+total of 3.+The score on these"
+            " train-test partitions for these parameters will be set to"
+            f" {cross_validate_kwargs['error_score']}.+{individual_fit_error_message}"
+        ),
         flags=re.DOTALL,
     )
 
@@ -2198,8 +2183,10 @@ def test_cross_validate_all_failing_fits_error(error_score):
 
     individual_fit_error_message = "ValueError: Failing classifier failed as required"
     error_message = re.compile(
-        "All the 7 fits failed.+your model is misconfigured.+"
-        f"{individual_fit_error_message}",
+        (
+            "All the 7 fits failed.+your model is misconfigured.+"
+            f"{individual_fit_error_message}"
+        ),
         flags=re.DOTALL,
     )
 
@@ -2399,3 +2386,28 @@ def test_learning_curve_partial_fit_regressors():
 
     # Does not error
     learning_curve(MLPRegressor(), X, y, exploit_incremental_learning=True, cv=2)
+
+
+def test_cross_validate_return_indices(global_random_seed):
+    """Check the behaviour of `return_indices` in `cross_validate`."""
+    X, y = load_iris(return_X_y=True)
+    X = scale(X)  # scale features for better convergence
+    estimator = LogisticRegression()
+
+    cv = KFold(n_splits=3, shuffle=True, random_state=global_random_seed)
+    cv_results = cross_validate(estimator, X, y, cv=cv, n_jobs=2, return_indices=False)
+    assert "indices" not in cv_results
+
+    cv_results = cross_validate(estimator, X, y, cv=cv, n_jobs=2, return_indices=True)
+    assert "indices" in cv_results
+    train_indices = cv_results["indices"]["train"]
+    test_indices = cv_results["indices"]["test"]
+    assert len(train_indices) == cv.n_splits
+    assert len(test_indices) == cv.n_splits
+
+    assert_array_equal([indices.size for indices in train_indices], 100)
+    assert_array_equal([indices.size for indices in test_indices], 50)
+
+    for split_idx, (expected_train_idx, expected_test_idx) in enumerate(cv.split(X, y)):
+        assert_array_equal(train_indices[split_idx], expected_train_idx)
+        assert_array_equal(test_indices[split_idx], expected_test_idx)

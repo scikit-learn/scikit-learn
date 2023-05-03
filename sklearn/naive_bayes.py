@@ -627,8 +627,11 @@ class _BaseDiscreteNB(_BaseNB):
         if _force_alpha == "warn" and alpha_min < alpha_lower_bound:
             _force_alpha = False
             warnings.warn(
-                "The default value for `force_alpha` will change to `True` in 1.4. To"
-                " suppress this warning, manually set the value of `force_alpha`.",
+                (
+                    "The default value for `force_alpha` will change to `True` in 1.4."
+                    " To suppress this warning, manually set the value of"
+                    " `force_alpha`."
+                ),
                 FutureWarning,
             )
         if alpha_min < alpha_lower_bound and not _force_alpha:

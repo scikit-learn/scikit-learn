@@ -17,20 +17,16 @@ dtypes = [('64', 'double'),
           ('32', 'float')]
 
 }}
-{{for name_suffix, c_type in dtypes}}
-
-#------------------------------------------------------------------------------
-
-"""
-Dataset abstractions for sequential data access.
-WARNING: Do not edit .pxd file directly, it is generated from .pxd.tp
-"""
+"""Dataset abstractions for sequential data access."""
 
 cimport numpy as cnp
 
 # SequentialDataset and its two concrete subclasses are (optionally randomized)
 # iterators over the rows of a matrix X and corresponding target values y.
 
+{{for name_suffix, c_type in dtypes}}
+
+#------------------------------------------------------------------------------
 
 cdef class SequentialDataset{{name_suffix}}:
     cdef int current_index

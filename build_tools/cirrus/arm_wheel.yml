@@ -4,16 +4,17 @@ macos_arm64_wheel_task:
   env:
     CONFTEST_PATH: ${CIRRUS_WORKING_DIR}/conftest.py
     CONFTEST_NAME: conftest.py
-    CIBW_ENVIRONMENT: OMP_NUM_THREADS=2
-                      OPENBLAS_NUM_THREADS=2
-                      SKLEARN_SKIP_NETWORK_TESTS=1
+    CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
                       SKLEARN_BUILD_PARALLEL=5
-                      CPU_COUNT=2
     CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
     CIBW_TEST_REQUIRES: pytest pandas threadpoolctl pytest-xdist
     CIBW_BUILD_VERBOSITY: 1
     PATH: $HOME/mambaforge/bin/:$PATH
     CONDA_HOME: $HOME/mambaforge
+    # Upload tokens have been encrypted via the CirrusCI interface:
+    # https://cirrus-ci.org/guide/writing-tasks/#encrypted-variables
+    # See `maint_tools/update_tracking_issue.py` for details on the permissions the token requires.
+    BOT_GITHUB_TOKEN: ENCRYPTED[9b50205e2693f9e4ce9a3f0fcb897a259289062fda2f5a3b8aaa6c56d839e0854a15872f894a70fca337dd4787274e0f]
   matrix:
     - env:
         CIBW_BUILD: cp38-macosx_arm64
@@ -30,6 +31,11 @@ macos_arm64_wheel_task:
 
   cibuildwheel_script:
     - bash build_tools/wheels/build_wheels.sh
+    - bash build_tools/cirrus/update_tracking_issue.sh true
+
+  on_failure:
+    update_tracker_script:
+      - bash build_tools/cirrus/update_tracking_issue.sh false
 
   wheels_artifacts:
     path: "wheelhouse/*"
@@ -45,14 +51,15 @@ linux_arm64_wheel_task:
   env:
     CONFTEST_PATH: ${CIRRUS_WORKING_DIR}/conftest.py
     CONFTEST_NAME: conftest.py
-    CIBW_ENVIRONMENT: OMP_NUM_THREADS=2
-                      OPENBLAS_NUM_THREADS=2
-                      SKLEARN_SKIP_NETWORK_TESTS=1
+    CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
                       SKLEARN_BUILD_PARALLEL=5
-                      CPU_COUNT=4
     CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
     CIBW_TEST_REQUIRES: pytest pandas threadpoolctl pytest-xdist
     CIBW_BUILD_VERBOSITY: 1
+    # Upload tokens have been encrypted via the CirrusCI interface:
+    # https://cirrus-ci.org/guide/writing-tasks/#encrypted-variables
+    # See `maint_tools/update_tracking_issue.py` for details on the permissions the token requires.
+    BOT_GITHUB_TOKEN: ENCRYPTED[9b50205e2693f9e4ce9a3f0fcb897a259289062fda2f5a3b8aaa6c56d839e0854a15872f894a70fca337dd4787274e0f]
   matrix:
     - env:
         CIBW_BUILD: cp38-manylinux_aarch64
@@ -66,6 +73,11 @@ linux_arm64_wheel_task:
   cibuildwheel_script:
     - apt install -y python3 python-is-python3
     - bash build_tools/wheels/build_wheels.sh
+    - bash build_tools/cirrus/update_tracking_issue.sh true
+
+  on_failure:
+    update_tracker_script:
+      - bash build_tools/cirrus/update_tracking_issue.sh false
 
   wheels_artifacts:
     path: "wheelhouse/*"
