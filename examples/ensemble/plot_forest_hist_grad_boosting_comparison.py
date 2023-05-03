@@ -88,7 +88,7 @@ for name, model in models.items():
 
 import matplotlib.pyplot as plt
 
-fig, axs = plt.subplots(nrows=2, ncols=2, sharex=True, figsize=(10, 8))
+fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
 for idx, result in enumerate(results):
     cv_results = result["cv_results"]
 
