@@ -489,7 +489,6 @@ class PCA(_BasePCA):
                 "TruncatedSVD for a possible alternative."
             )
         # Raise an error for torch input and arpack or randomized solver.
-        # TODO support randomized solver for torch tensors
         if self.svd_solver in ["arpack", "randomized"] and _is_torch_namespace(xp):
             raise TypeError(self._pca_torch_arpack_solver_error_message)
 

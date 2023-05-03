@@ -50,13 +50,22 @@ def test_pca_array_torch(device, dtype, svd_solver, n_components):
             X_transformed_torch = pca_torch.fit_transform(X_torch)
             X_transformed_np = pca_np.fit_transform(X_np)
 
-            assert type(X_transformed_np) == np.ndarray, "Invalid type"
-            assert type(X_transformed_torch) == torch.Tensor, "Invalid type"
-            assert_allclose(X_transformed_np, X_transformed_torch, atol=1e-3)
+            cov_np = pca_np.get_covariance()
+            cov_torch = pca_torch.get_covariance()
 
-            # TODO introduce pytorch support for below methods
-            # cov = pca.get_covariance()
-            # precision = pca.get_precision()
+            precision_np = pca_np.get_precision()
+            precision_torch = pca_torch.get_precision()
+
+            for name, arr_np, arr_torch in zip(
+                ["X", "cov", "prec"],
+                [X_transformed_np, cov_np, precision_np],
+                [X_transformed_torch, cov_torch, precision_torch],
+            ):
+                assert type(arr_np) == np.ndarray, f"Invalid type for {name}"
+                assert type(arr_torch) == torch.Tensor, f"Invalid type for {name}"
+                assert_allclose(
+                    arr_np, arr_torch, atol=1e-3, err_msg=f"Divergent values for {name}"
+                )
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)

@@ -9,10 +9,10 @@
 # License: BSD 3 clause
 
 import numpy as np
-from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils.validation import check_is_fitted
+from ..utils._array_api import get_namespace
 from abc import ABCMeta, abstractmethod
 
 
@@ -37,13 +37,18 @@ class _BasePCA(
         cov : array of shape=(n_features, n_features)
             Estimated covariance of data.
         """
+        xp, _ = get_namespace(self.components_)
+
         components_ = self.components_
         exp_var = self.explained_variance_
         if self.whiten:
-            components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
-        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.0)
-        cov = np.dot(components_.T * exp_var_diff, components_)
-        cov.flat[:: len(cov) + 1] += self.noise_variance_  # modify diag inplace
+            components_ = components_ * xp.sqrt(exp_var[:, np.newaxis])
+        exp_var_diff = xp.maximum(
+            exp_var - self.noise_variance_, xp.zeros_like(exp_var)
+        )
+        cov = (components_.T * exp_var_diff) @ components_
+        # TODO use views instead?
+        cov.reshape(-1)[:: len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
 
     def get_precision(self):
@@ -57,26 +62,33 @@ class _BasePCA(
         precision : array, shape=(n_features, n_features)
             Estimated precision of data.
         """
+        xp, _ = get_namespace(self.components_)
+
         n_features = self.components_.shape[1]
 
         # handle corner cases first
         if self.n_components_ == 0:
-            return np.eye(n_features) / self.noise_variance_
+            return xp.eye(n_features) / self.noise_variance_
 
-        if np.isclose(self.noise_variance_, 0.0, atol=0.0):
-            return linalg.inv(self.get_covariance())
+        if xp.isclose(
+            self.noise_variance_, xp.zeros_like(self.noise_variance_), atol=0.0
+        ):
+            return xp.linalg.inv(self.get_covariance())
 
         # Get precision using matrix inversion lemma
         components_ = self.components_
         exp_var = self.explained_variance_
         if self.whiten:
-            components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
-        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.0)
-        precision = np.dot(components_, components_.T) / self.noise_variance_
-        precision.flat[:: len(precision) + 1] += 1.0 / exp_var_diff
-        precision = np.dot(components_.T, np.dot(linalg.inv(precision), components_))
+            components_ = components_ * xp.sqrt(exp_var[:, np.newaxis])
+        exp_var_diff = xp.maximum(
+            exp_var - self.noise_variance_, xp.zeros_like(exp_var)
+        )
+        precision = components_ @ components_.T / self.noise_variance_
+        # TODO use views instead?
+        precision.reshape(-1)[:: len(precision) + 1] += 1.0 / exp_var_diff
+        precision = components_.T @ xp.linalg.inv(precision) @ components_
         precision /= -(self.noise_variance_**2)
-        precision.flat[:: len(precision) + 1] += 1.0 / self.noise_variance_
+        precision.reshape(-1)[:: len(precision) + 1] += 1.0 / self.noise_variance_
         return precision
 
     @abstractmethod
@@ -115,14 +127,16 @@ class _BasePCA(
             Projection of X in the first principal components, where `n_samples`
             is the number of samples and `n_components` is the number of the components.
         """
+        xp, _ = get_namespace(X)
+
         check_is_fitted(self)
 
-        X = self._validate_data(X, dtype=[np.float64, np.float32], reset=False)
+        X = self._validate_data(X, dtype=[xp.float64, xp.float32], reset=False)
         if self.mean_ is not None:
             X = X - self.mean_
-        X_transformed = np.dot(X, self.components_.T)
+        X_transformed = X @ self.components_.T
         if self.whiten:
-            X_transformed /= np.sqrt(self.explained_variance_)
+            X_transformed /= xp.sqrt(self.explained_variance_)
         return X_transformed
 
     def inverse_transform(self, X):
@@ -147,16 +161,16 @@ class _BasePCA(
         If whitening is enabled, inverse_transform will compute the
         exact inverse operation, which includes reversing whitening.
         """
+        xp, _ = get_namespace(X)
+
         if self.whiten:
             return (
-                np.dot(
-                    X,
-                    np.sqrt(self.explained_variance_[:, np.newaxis]) * self.components_,
-                )
+                X
+                @ (np.sqrt(self.explained_variance_[:, np.newaxis]) * self.components_)
                 + self.mean_
             )
         else:
-            return np.dot(X, self.components_) + self.mean_
+            return X @ self.components_ + self.mean_
 
     @property
     def _n_features_out(self):

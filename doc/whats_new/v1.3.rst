@@ -230,6 +230,9 @@ Changelog
   :class:`decomposition.MiniBatchNMF` which can produce different results than previous
   versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
 
+- |Enhancement| :class:`decomposition/PCA` now supports the
+  `PyTorch <https://pytorch.org/>`__ for `full` solver. See :pr:`26315`
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
