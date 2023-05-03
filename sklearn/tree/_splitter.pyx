@@ -972,27 +972,33 @@ cdef class DensePartitioner:
             const DTYPE_t[:, :] X = self.X
             DTYPE_t current_value
 
-        # Move missing values to the end
         if best_n_missing != 0:
+            # Move samples with missing values to the end while partitioning the
+            # non-missing samples
             while p < partition_end:
-                # Keep missing values at the end
+                # Keep samples with missing values at the end
                 if isnan(X[samples[end], best_feature]):
                     end -= 1
                     continue
 
-                # Swap missing value with the sample at the end
+                # Swap sample with missing values with the sample at the end
                 current_value = X[samples[p], best_feature]
                 if isnan(current_value):
                     samples[p], samples[end] = samples[end], samples[p]
                     end -= 1
-                    continue
 
+                    # The swapped sample at the end is always a non-missing value, so
+                    # we can continue the algorithm without checking for missingness.
+                    current_value = X[samples[p], best_feature]
+
+                # Parition the non-missing samples
                 if current_value <= best_threshold:
                     p += 1
                 else:
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
                     partition_end -= 1
         else:
+            # Partitioning routine when there are no missing values
             while p < partition_end:
                 if X[samples[p], best_feature] <= best_threshold:
                     p += 1
