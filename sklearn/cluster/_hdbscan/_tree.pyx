@@ -467,7 +467,8 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] _do_labelling(
         if cluster != root_cluster:
             label = cluster_label_map[cluster]
         elif len(clusters) == 1 and allow_single_cluster:
-            # There can only be one parent
+            # There can only be one edge with this particular child hence this
+            # expression extracts a unique, scalar lambda value.
             parent_lambda = lambda_array[child_array == n]
             if cluster_selection_epsilon != 0.0:
                 threshold = 1 / cluster_selection_epsilon
