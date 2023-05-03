@@ -755,6 +755,10 @@ def test_validate_data_cast_to_ndarray():
     assert X_df_out is df
     assert y_series_out is y
 
+    msg = "Validation should be done on X, y or both."
+    with pytest.raises(ValueError, match=msg):
+        no_op._validate_data()
+
 
 def test_clone_keeps_output_config():
     """Check that clone keeps the set_output config."""
