@@ -1019,7 +1019,7 @@ def test_binomial_vs_alternative_formulation():
         return -z / (1 + np.exp(z * raw_pred))
 
     for datum in test_data:
-        assert bin_loss.gradient(*datum) == approx(alt_gradient(*datum))
+        assert_allclose(bin_loss.gradient(*datum), alt_gradient(*datum))
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
