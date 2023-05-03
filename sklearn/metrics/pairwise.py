@@ -35,6 +35,7 @@ from ..utils._param_validation import (
     Real,
     Hidden,
     MissingValues,
+    StrOptions,
 )
 
 from ._pairwise_distances_reduction import ArgKmin
@@ -904,6 +905,13 @@ def haversine_distances(X, Y=None):
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "sum_over_features": ["boolean", Hidden(StrOptions({"deprecated"}))],
+    }
+)
 def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     """Compute the L1 distances between the vectors in X and Y.
 
@@ -914,10 +922,10 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_X, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
         An array where each row is a sample and each column is a feature.
 
-    Y : array-like of shape (n_samples_Y, n_features), default=None
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), default=None
         An array where each row is a sample and each column is a feature.
         If `None`, method uses `Y=X`.
 
