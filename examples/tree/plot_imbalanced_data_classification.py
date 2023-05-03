@@ -50,7 +50,6 @@ xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1), np.arange(y_min, y_max, 0.01)
 
 # Create plot per criterion
 for sub_plot_idx, criterion in enumerate(criterions):
-
     # Add subplot to figure
     fig.add_subplot(1, max_subplots, sub_plot_idx * 2 + 1)
 
