@@ -634,7 +634,6 @@ cdef class HellingerDistance(ClassificationCriterion):
     """
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node.
-        
         Evaluate the Hellinger distance criterion as impurity of the current node,
         i.e. the impurity of samples[start:end]. The smaller the impurity the
         better.
