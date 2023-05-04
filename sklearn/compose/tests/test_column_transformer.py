@@ -22,6 +22,7 @@ from sklearn.compose import (
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
+from sklearn.feature_selection import VarianceThreshold
 
 
 class Trans(TransformerMixin, BaseEstimator):
@@ -2157,3 +2158,27 @@ def test_empty_selection_pandas_output(empty_selection):
     ct.set_params(verbose_feature_names_out=False)
     X_out = ct.fit_transform(X)
     assert_array_equal(X_out.columns, ["a", "b"])
+
+
+def test_remainder_set_output():
+    """Check that the output is set for the remainder.
+
+    Non-regression test for #26306.
+    """
+
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"a": [True, False, True], "b": [1, 2, 3]})
+
+    ct = make_column_transformer(
+        (VarianceThreshold(), make_column_selector(dtype_include=bool)),
+        remainder=VarianceThreshold(),
+        verbose_feature_names_out=False,
+    )
+    ct.set_output(transform="pandas")
+
+    out = ct.fit_transform(df)
+    pd.testing.assert_frame_equal(out, df)
+
+    ct.set_output(transform="default")
+    out = ct.fit_transform(df)
+    assert isinstance(out, np.ndarray)
