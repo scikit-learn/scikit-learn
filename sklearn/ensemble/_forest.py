@@ -1674,8 +1674,7 @@ class RandomForestRegressor(ForestRegressor):
     sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
     sklearn.ensemble.ExtraTreesRegressor : Ensemble of extremely randomized
         tree regressors.
-    sklearn.ensemble.HistGradientBoostingRegressor : Gradient boosting that
-        is a non-parametric model accepting monotonicity constraints.
+    sklearn.ensemble.HistGradientBoostingRegressor : A Histogram-based Gradient Boosting Regression Tree, very fast for big datasets (n_samples >= 10 000).
 
     Notes
     -----
