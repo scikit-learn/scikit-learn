@@ -514,7 +514,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If `None`, then samples are equally weighted.
-            Only supported if the underlying regressor supports sample
+            Only supported if the underlying classifier supports sample
             weights.
 
         **fit_params : dict of string -> object

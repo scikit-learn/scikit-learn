@@ -336,6 +336,14 @@ def test_default_requests():
     assert_request_is_empty(est_request)
 
 
+def test_process_routing_invalid_object():
+    class InvalidObject:
+        pass
+
+    with pytest.raises(AttributeError, match="has not implemented the routing"):
+        process_routing(InvalidObject(), "fit", {})
+
+
 def test_simple_metadata_routing():
     # Tests that metadata is properly routed
 
