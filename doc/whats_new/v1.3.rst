@@ -510,6 +510,15 @@ Changelog
   during `transform` with no prior call to `fit` or `fit_transform`.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
+- |Enhancement| :class:`preprocessing.PolynomialFeatures` now calculates the
+  number of expanded terms a-priori when dealing with sparse `csr` matrices
+  in order to optimize the choice of `dtype` for `indices` and `indptr`. It
+  can now output `csr` matrices with `np.int32` `indices/indptr` components
+  when there are few enough elements, and will automatically use `np.int64`
+  for sufficiently large matrices.
+  :pr:`20524` by :user:`niuk-a <niuk-a>` and
+  :pr:`23731` by :user:`Meekail Zain <micky774>`
+
 - |API| A `FutureWarning` is now raised when instantiating a class which inherits from
   a deprecated base class (i.e. decorated by :class:`utils.deprecated`) and which
   overrides the `__init__` method.
