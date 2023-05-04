@@ -22,9 +22,6 @@ y2 = [[-1, 1], [-1, 1], [-1, 1], [1, 2], [1, 2], [1, 3]]
 w = [1, 1, 1, 0.5, 0.5, 0.5]
 y_degraded = [1, 1, 1, 1, 1, 1]
 
-# constructors for feature names and class names
-constructors = [list, np.array]
-
 
 def test_graphviz_toy():
     # Check correctness of export_graphviz
@@ -53,6 +50,9 @@ def test_graphviz_toy():
     assert contents1 == contents2
 
     # Test with feature_names
+    contents1 = export_graphviz(
+        clf, feature_names=["feature0", "feature1"], out_file=None
+    )
     contents2 = (
         "digraph Tree {\n"
         'node [shape=box, fontname="helvetica"] ;\n'
@@ -68,13 +68,10 @@ def test_graphviz_toy():
         "}"
     )
 
-    for cons in constructors:
-        contents1 = export_graphviz(
-            clf, feature_names=cons(["feature0", "feature1"]), out_file=None
-        )
-        assert contents1 == contents2
+    assert contents1 == contents2
 
     # Test with class_names
+    contents1 = export_graphviz(clf, class_names=["yes", "no"], out_file=None)
     contents2 = (
         "digraph Tree {\n"
         'node [shape=box, fontname="helvetica"] ;\n'
@@ -92,9 +89,7 @@ def test_graphviz_toy():
         "}"
     )
 
-    for cons in constructors:
-        contents1 = export_graphviz(clf, class_names=cons(["yes", "no"]), out_file=None)
-        assert contents1 == contents2
+    assert contents1 == contents2
 
     # Test plot_options
     contents1 = export_graphviz(
@@ -255,6 +250,57 @@ def test_graphviz_toy():
     )
 
 
+def test_graphviz_array_support():
+    # Check that export_graphviz supports feature names
+    # and class names as arrays
+    clf = DecisionTreeClassifier(
+        max_depth=3, min_samples_split=2, criterion="gini", random_state=2
+    )
+    clf.fit(X, y)
+
+    # Test with feature_names
+    contents1 = export_graphviz(
+        clf, feature_names=np.array(["feature0", "feature1"]), out_file=None
+    )
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="feature0 <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        'value = [3, 3]"] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
+
+    assert contents1 == contents2
+
+    # Test with class_names
+    contents1 = export_graphviz(clf, class_names=np.array(["yes", "no"]), out_file=None)
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        'value = [3, 3]\\nclass = yes"] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]\\n'
+        'class = yes"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]\\n'
+        'class = no"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
+
+    assert contents1 == contents2
+
+
 def test_graphviz_errors():
     # Check for errors of export_graphviz
     clf = DecisionTreeClassifier(max_depth=3, min_samples_split=2)
@@ -389,8 +435,7 @@ def test_export_text():
     |--- b >  0.00
     |   |--- class: 1
     """).lstrip()
-    for cons in constructors:
-        assert export_text(clf, feature_names=cons(["a", "b"])) == expected_report
+    assert export_text(clf, feature_names=["a", "b"]) == expected_report
 
     expected_report = dedent("""
     |--- feature_1 <= 0.00
@@ -398,8 +443,7 @@ def test_export_text():
     |--- feature_1 >  0.00
     |   |--- class: dog
     """).lstrip()
-    for cons in constructors:
-        assert export_text(clf, class_names=cons(["cat", "dog"])) == expected_report
+    assert export_text(clf, class_names=["cat", "dog"]) == expected_report
 
     expected_report = dedent("""
     |--- feature_1 <= 0.00
@@ -459,6 +503,29 @@ def test_export_text():
         export_text(reg, decimals=1, show_weights=True, feature_names=["first"])
         == expected_report
     )
+
+
+def test_export_text_graphviz_support():
+    # Check that export_text supports feature names
+    # and class names as arrays
+    clf = DecisionTreeClassifier(max_depth=2, random_state=0)
+    clf.fit(X, y)
+
+    expected_report = dedent("""
+    |--- b <= 0.00
+    |   |--- class: -1
+    |--- b >  0.00
+    |   |--- class: 1
+    """).lstrip()
+    assert export_text(clf, feature_names=np.array(["a", "b"])) == expected_report
+
+    expected_report = dedent("""
+    |--- feature_1 <= 0.00
+    |   |--- class: cat
+    |--- feature_1 >  0.00
+    |   |--- class: dog
+    """).lstrip()
+    assert export_text(clf, class_names=np.array(["cat", "dog"])) == expected_report
 
 
 def test_plot_tree_entropy(pyplot):
