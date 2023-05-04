@@ -1001,24 +1001,20 @@ def test_binomial_vs_alternative_formulation():
         z = 2 * y - 1
         return np.mean(np.log(1 + np.exp(-z * raw_pred)))
 
+    def alt_gradient(y, raw_pred):
+        # alternative gradient formula according to ESL
+        z = 2 * y - 1
+        return -z / (1 + np.exp(z * raw_pred))
+
     bin_loss = HalfBinomialLoss()
 
-    test_data = list(
-        product(
-            (np.array([0.0, 0, 0]), np.array([1.0, 1, 1])),
-            (np.array([-5.0, -5, -5]), np.array([3.0, 3, 3])),
-        )
+    test_data = product(
+        (np.array([0.0, 0, 0]), np.array([1.0, 1, 1])),
+        (np.array([-5.0, -5, -5]), np.array([3.0, 3, 3])),
     )
 
     for datum in test_data:
         assert bin_loss(*datum) == approx(alt_loss(*datum))
-
-    # check the gradient against alternative formula from ESLII
-    def alt_gradient(y, raw_pred):
-        z = 2 * y - 1
-        return -z / (1 + np.exp(z * raw_pred))
-
-    for datum in test_data:
         assert_allclose(bin_loss.gradient(*datum), alt_gradient(*datum))
 
 
