@@ -167,9 +167,9 @@ class _BaseScorer:
         self._sign = sign
 
     def _get_pos_label(self):
-        score_func_params = signature(self._score_func).parameters
         if "pos_label" in self._kwargs:
             return self._kwargs["pos_label"]
+        score_func_params = signature(self._score_func).parameters
         if "pos_label" in score_func_params:
             return score_func_params["pos_label"].default
         return None
