@@ -188,7 +188,7 @@ Changelog
 ......................
 
 - |Fix| :class:`compose.ColumnTransformer` correctly sets the output of the
-  remainder when `set_output` is called. :pr:`xxxxx` by `Thomas Fan`_.
+  remainder when `set_output` is called. :pr:`26323` by `Thomas Fan`_.
 
 :mod:`sklearn.covariance`
 .........................
