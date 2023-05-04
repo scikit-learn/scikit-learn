@@ -49,12 +49,12 @@ y.value_counts().sort_index()
 # with 3 splits and 5 repetitions.
 #
 # We compare the following strategies:
-#
-# * :class:`~sklearn.tree.DecisionTreeClassifier` which supports multiclass
-#   classification by default. The sequential partitioning of the training
-#   dataset isolates data point and affect to the most frequent class
-#   present in the partition. Thus, the decision tree is able to deal with
-#   multiclass classification.
+
+# * :class:~sklearn.tree.DecisionTreeClassifier can handle multiclass
+#   classification without needing any special adjustments. It works by breaking
+#   down the training data into smaller subsets and focusing on the most common
+#   class in each subset. By repeating this process, the model can accurately
+#   classify input data into multiple different classes.
 # * :class:`~sklearn.multiclass.OneVsOneClassifier` trains a set of binary
 #   classifiers where each classifier is trained to distinguish between
 #   two classes.
