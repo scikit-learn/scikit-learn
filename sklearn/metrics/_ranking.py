@@ -248,12 +248,14 @@ def average_precision_score(
         )
 
     elif y_type == "multiclass":
-        y_true = label_binarize(y_true, classes=present_labels)
-        if pos_label not in present_labels:
+        if pos_label != 1:
             raise ValueError(
-                f"pos_label={pos_label} is not a valid label. It should be "
-                f"one of {present_labels}"
+                "Parameter pos_label is fixed to 1 for multiclass y_true. "
+                "Do not set pos_label or set pos_label to 1."
             )
+        else:
+            y_true = label_binarize(y_true, classes=present_labels)
+
     average_precision = partial(
         _binary_uninterpolated_average_precision, pos_label=pos_label
     )
@@ -1783,11 +1785,9 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     if y_true.min() < 0:
         # TODO(1.4): Replace warning w/ ValueError
         warnings.warn(
-            (
-                "ndcg_score should not be used on negative y_true values. ndcg_score"
-                " will raise a ValueError on negative y_true values starting from"
-                " version 1.4."
-            ),
+            "ndcg_score should not be used on negative y_true values. ndcg_score"
+            " will raise a ValueError on negative y_true values starting from"
+            " version 1.4.",
             FutureWarning,
         )
     if y_true.ndim > 1 and y_true.shape[1] <= 1:
@@ -1945,10 +1945,8 @@ def top_k_accuracy_score(
 
     if k >= n_classes:
         warnings.warn(
-            (
-                f"'k' ({k}) greater than or equal to 'n_classes' ({n_classes}) "
-                "will result in a perfect score and is therefore meaningless."
-            ),
+            f"'k' ({k}) greater than or equal to 'n_classes' ({n_classes}) "
+            "will result in a perfect score and is therefore meaningless.",
             UndefinedMetricWarning,
         )
 
