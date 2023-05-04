@@ -315,6 +315,62 @@ def test_linear_regression_positive_vs_nonpositive_when_positive(global_random_s
     assert np.mean((reg.coef_ - regn.coef_) ** 2) < 1e-6
 
 
+@pytest.mark.parametrize("sparse_X", [True, False])
+@pytest.mark.parametrize("use_sw", [True, False])
+def test_inplace_data_preprocessing(sparse_X, use_sw, global_random_seed):
+    # Check that the data is not modified inplace by the linear regression
+    # estimator.
+    rng = np.random.RandomState(global_random_seed)
+    original_X_data = rng.randn(10, 12)
+    original_y_data = rng.randn(10, 2)
+    orginal_sw_data = rng.rand(10)
+
+    if sparse_X:
+        X = sparse.csr_matrix(original_X_data)
+    else:
+        X = original_X_data.copy()
+    y = original_y_data.copy()
+    # XXX: Note hat y_sparse is not supported (broken?) in the current
+    # implementation of LinearRegression.
+
+    if use_sw:
+        sample_weight = orginal_sw_data.copy()
+    else:
+        sample_weight = None
+
+    # Do not allow inplace preprocessing of X and y:
+    reg = LinearRegression()
+    reg.fit(X, y, sample_weight=sample_weight)
+    if sparse_X:
+        assert_allclose(X.toarray(), original_X_data)
+    else:
+        assert_allclose(X, original_X_data)
+    assert_allclose(y, original_y_data)
+
+    if use_sw:
+        assert_allclose(sample_weight, orginal_sw_data)
+
+    # Allow inplace preprocessing of X and y
+    reg = LinearRegression(copy_X=False)
+    reg.fit(X, y, sample_weight=sample_weight)
+    if sparse_X:
+        # No optimization relying on the inplace modification of sparse input
+        # data has been implemented at this time.
+        assert_allclose(X.toarray(), original_X_data)
+    else:
+        # X has been offset (and optionally rescaled by sample weights)
+        # inplace. The 0.42 threshold is arbitrary and has been found to be
+        # robust to any random seed in the admissible range.
+        assert np.linalg.norm(X - original_X_data) > 0.42
+
+    # y should not have been modified inplace by LinearRegression.fit.
+    assert_allclose(y, original_y_data)
+
+    if use_sw:
+        # Sample weights have no reason to ever be modified inplace.
+        assert_allclose(sample_weight, orginal_sw_data)
+
+
 def test_linear_regression_pd_sparse_dataframe_warning():
     pd = pytest.importorskip("pandas")
 
@@ -596,7 +652,6 @@ def test_dtype_preprocess_data(global_random_seed):
 
     for fit_intercept in [True, False]:
         for normalize in [True, False]:
-
             Xt_32, yt_32, X_mean_32, y_mean_32, X_scale_32 = _preprocess_data(
                 X_32,
                 y_32,
@@ -662,7 +717,8 @@ def test_dtype_preprocess_data(global_random_seed):
 
 
 @pytest.mark.parametrize("n_targets", [None, 2])
-def test_rescale_data_dense(n_targets, global_random_seed):
+@pytest.mark.parametrize("sparse_data", [True, False])
+def test_rescale_data(n_targets, sparse_data, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
@@ -673,14 +729,34 @@ def test_rescale_data_dense(n_targets, global_random_seed):
         y = rng.rand(n_samples)
     else:
         y = rng.rand(n_samples, n_targets)
-    rescaled_X, rescaled_y, sqrt_sw = _rescale_data(X, y, sample_weight)
-    rescaled_X2 = X * sqrt_sw[:, np.newaxis]
+
+    expected_sqrt_sw = np.sqrt(sample_weight)
+    expected_rescaled_X = X * expected_sqrt_sw[:, np.newaxis]
+
     if n_targets is None:
-        rescaled_y2 = y * sqrt_sw
+        expected_rescaled_y = y * expected_sqrt_sw
     else:
-        rescaled_y2 = y * sqrt_sw[:, np.newaxis]
-    assert_array_almost_equal(rescaled_X, rescaled_X2)
-    assert_array_almost_equal(rescaled_y, rescaled_y2)
+        expected_rescaled_y = y * expected_sqrt_sw[:, np.newaxis]
+
+    if sparse_data:
+        X = sparse.csr_matrix(X)
+        if n_targets is None:
+            y = sparse.csr_matrix(y.reshape(-1, 1))
+        else:
+            y = sparse.csr_matrix(y)
+
+    rescaled_X, rescaled_y, sqrt_sw = _rescale_data(X, y, sample_weight)
+
+    assert_allclose(sqrt_sw, expected_sqrt_sw)
+
+    if sparse_data:
+        rescaled_X = rescaled_X.toarray()
+        rescaled_y = rescaled_y.toarray()
+        if n_targets is None:
+            rescaled_y = rescaled_y.ravel()
+
+    assert_allclose(rescaled_X, expected_rescaled_X)
+    assert_allclose(rescaled_y, expected_rescaled_y)
 
 
 def test_fused_types_make_dataset():

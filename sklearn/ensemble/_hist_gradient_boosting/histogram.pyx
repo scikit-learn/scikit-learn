@@ -129,9 +129,7 @@ cdef class HistogramBuilder:
             int f_idx
             int i
             # need local views to avoid python interactions
-            unsigned char hessians_are_constant = \
-                self.hessians_are_constant
-            int n_features = self.n_features
+            unsigned char hessians_are_constant = self.hessians_are_constant
             int n_allowed_features = self.n_features
             G_H_DTYPE_C [::1] ordered_gradients = self.ordered_gradients
             G_H_DTYPE_C [::1] gradients = self.gradients
@@ -259,7 +257,6 @@ cdef class HistogramBuilder:
         cdef:
             int feature_idx
             int f_idx
-            int n_features = self.n_features
             int n_allowed_features = self.n_features
             hist_struct [:, ::1] histograms = np.empty(
                 shape=(self.n_features, self.n_bins),

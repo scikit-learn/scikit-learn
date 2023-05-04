@@ -67,6 +67,7 @@ import sklearn
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 
 from sklearn.utils._testing import TempMemmap
+from sklearn.utils._testing import skip_if_array_api_compat_not_configured
 
 
 def test_as_float_array():
@@ -1839,6 +1840,7 @@ def test_pandas_array_returns_ndarray(input_values):
     assert_allclose(result, input_values)
 
 
+@skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
 def test_check_array_array_api_has_non_finite(array_namespace):
     """Checks that Array API arrays checks non-finite correctly."""

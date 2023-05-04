@@ -188,10 +188,12 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             y_sel_t = self.transformer_.transform(y_sel)
             if not np.allclose(y_sel, self.transformer_.inverse_transform(y_sel_t)):
                 warnings.warn(
-                    "The provided functions or transformer are"
-                    " not strictly inverse of each other. If"
-                    " you are sure you want to proceed regardless"
-                    ", set 'check_inverse=False'",
+                    (
+                        "The provided functions or transformer are"
+                        " not strictly inverse of each other. If"
+                        " you are sure you want to proceed regardless"
+                        ", set 'check_inverse=False'"
+                    ),
                     UserWarning,
                 )
 

@@ -1,12 +1,9 @@
 from .. import auc
 from .. import roc_curve
-from .._base import _check_pos_label_consistency
-
-from ...utils import check_matplotlib_support
-from ...utils._response import _get_response_values_binary
+from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 
 
-class RocCurveDisplay:
+class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     """ROC Curve visualization.
 
     It is recommend to use
@@ -31,7 +28,7 @@ class RocCurveDisplay:
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
 
-    pos_label : str or int, default=None
+    pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing the roc auc
         metrics. By default, `estimators.classes_[1]` is considered
         as the positive class.
@@ -128,9 +125,7 @@ class RocCurveDisplay:
         display : :class:`~sklearn.metrics.plot.RocCurveDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support("RocCurveDisplay.plot")
-
-        name = self.estimator_name if name is None else name
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
         line_kwargs = {}
         if self.roc_auc is not None and name is not None:
@@ -151,30 +146,25 @@ class RocCurveDisplay:
         if chance_level_kw is not None:
             chance_level_line_kw.update(**chance_level_kw)
 
-        import matplotlib.pyplot as plt
-
-        if ax is None:
-            fig, ax = plt.subplots()
-
-        (self.line_,) = ax.plot(self.fpr, self.tpr, **line_kwargs)
+        (self.line_,) = self.ax_.plot(self.fpr, self.tpr, **line_kwargs)
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
         )
 
         xlabel = "False Positive Rate" + info_pos_label
         ylabel = "True Positive Rate" + info_pos_label
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
         if plot_chance_level:
-            (self.chance_level_,) = ax.plot((0, 1), (0, 1), **chance_level_line_kw)
+            (self.chance_level_,) = self.ax_.plot(
+                (0, 1), (0, 1), **chance_level_line_kw
+            )
         else:
             self.chance_level_ = None
 
-        if "label" in line_kwargs:
-            ax.legend(loc="lower right")
+        if "label" in line_kwargs or "label" in chance_level_line_kw:
+            self.ax_.legend(loc="lower right")
 
-        self.ax_ = ax
-        self.figure_ = ax.figure
         return self
 
     @classmethod
@@ -223,7 +213,7 @@ class RocCurveDisplay:
             :term:`predict_proba` is tried first and if it does not exist
             :term:`decision_function` is tried next.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The class considered as the positive class when computing the roc auc
             metrics. By default, `estimators.classes_[1]` is considered
             as the positive class.
@@ -277,15 +267,13 @@ class RocCurveDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_estimator")
-
-        name = estimator.__class__.__name__ if name is None else name
-
-        y_pred, pos_label = _get_response_values_binary(
+        y_pred, pos_label, name = cls._validate_and_get_response_values(
             estimator,
             X,
+            y,
             response_method=response_method,
             pos_label=pos_label,
+            name=name,
         )
 
         return cls.from_predictions(
@@ -340,7 +328,7 @@ class RocCurveDisplay:
             on a plotted ROC curve. This is useful in order to create lighter
             ROC curves.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
             is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
             error will be raised.
@@ -396,7 +384,9 @@ class RocCurveDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_predictions")
+        pos_label_validated, name = cls._validate_from_predictions_params(
+            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+        )
 
         fpr, tpr, _ = roc_curve(
             y_true,
@@ -407,11 +397,12 @@ class RocCurveDisplay:
         )
         roc_auc = auc(fpr, tpr)
 
-        name = "Classifier" if name is None else name
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
-
         viz = RocCurveDisplay(
-            fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=name, pos_label=pos_label
+            fpr=fpr,
+            tpr=tpr,
+            roc_auc=roc_auc,
+            estimator_name=name,
+            pos_label=pos_label_validated,
         )
 
         return viz.plot(
