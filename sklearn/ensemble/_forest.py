@@ -1674,7 +1674,9 @@ class RandomForestRegressor(ForestRegressor):
     sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
     sklearn.ensemble.ExtraTreesRegressor : Ensemble of extremely randomized
         tree regressors.
-    sklearn.ensemble.HistGradientBoostingRegressor : A Histogram-based Gradient Boosting Regression Tree, very fast for big datasets (n_samples >= 10 000).
+    sklearn.ensemble.HistGradientBoostingRegressor : A Histogram-based Gradient
+        Boosting Regression Tree, very fast for big datasets (n_samples >=
+        10_000).
 
     Notes
     -----
