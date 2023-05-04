@@ -7,11 +7,10 @@ Metadata Routing
 ================
 
 .. note::
-  This feature, default metadata routing, and the API related to it are **all
-  experimental** and many of them are **not implemented** yet, and might change
-  without the usual deprecation cycle. By default this feature is not enabled.
-  You can enable this feature  by setting the ``enable_metadata_routing`` flag
-  to ``True``:
+  The Metadata Routing API is experimental, and is not implemented yet for many
+  estimators. It may change without the usual deprecation cycle. By default
+  this feature is not enabled. You can enable this feature  by setting the
+  ``enable_metadata_routing`` flag to ``True``:
 
     >>> import sklearn
     >>> sklearn.set_config(enable_metadata_routing=True)
@@ -19,7 +18,7 @@ Metadata Routing
 This guide demonstrates how metadata such as ``sample_weight`` can be routed
 and passed along to estimators, scorers, and CV splitters through
 meta-estimators such as ``Pipeline`` and ``GridSearchCV``. In order to pass
-metadata to a method such as ``fit`` or ``score``, the object accepting the
+metadata to a method such as ``fit`` or ``score``, the object consuming the
 metadata, must *request* it. For estimators and splitters this is done via
 ``set_*_request`` methods, e.g. ``set_fit_request(...)``, and for scorers this
 is done via ``set_score_request`` method. For grouped splitters such as
@@ -69,8 +68,8 @@ Both of these *consumers* know how to use metadata called ``"sample_weight"``::
   ...     lr,
   ...     X,
   ...     y,
-  ...     cv=GroupKFold(),
   ...     props={"sample_weight": my_weights, "groups": my_groups},
+  ...     cv=GroupKFold(),
   ...     scoring=weighted_acc,
   ... )
 
@@ -84,7 +83,7 @@ Error handling: if ``props={"sample_weigh": my_weights, ...}`` were passed
 Weighted scoring and unweighted fitting
 ---------------------------------------
 
-All scikit-learn estimators requires weights to be either explicitly requested
+All Scikit-learn estimators require weights to be either explicitly requested
 or not requested (i.e. ``UNREQUESTED``) when used in another router such as a
 ``Pipeline`` or a ``*GridSearchCV``. To perform a unweighted fit, we need to
 configure :class:`~linear_model.LogisticRegressionCV` to not request sample
@@ -109,16 +108,16 @@ weights along::
 Note the usage of ``RequestType`` which in this case is equivalent to
 ``False``; the type is explained further at the end of this document.
 
-If :class:`~linear_model.LogisticRegressionCV` does not call
-``set_fit_request``, :func:`~model_selection.cross_validate` will raise an
-error because weights is passed in but
+If :meth:`~linear_model.LogisticRegressionCV.set_fit_request` has not
+been called, :func:`~model_selection.cross_validate` will raise an
+error because `sample_weight` is passed in but
 :class:`~linear_model.LogisticRegressionCV` would not be explicitly configured
 to recognize the weights.
 
 Unweighted feature selection
 ----------------------------
 
-Unlike ``LogisticRegressionCV``, ``SelectKBest`` doesn't accept weights and
+Unlike ``LogisticRegressionCV``, ``SelectKBest`` doesn't consume weights and
 therefore `"sample_weight"` is not routed to it::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
@@ -201,7 +200,7 @@ supports ``sample_weight`` in ``fit`` and ``score``, it exposes
 For the scorers, this is done the same way, using ``set_score_request`` method.
 
 If a metadata, e.g. ``sample_weight``, is passed by the user, the metadata
-request for all objects which potentially can accept ``sample_weight`` should
+request for all objects which potentially can consume ``sample_weight`` should
 be set by the user, otherwise an error is raised by the router object. For
 example, the following code raises an error, since it hasn't been explicitly
 specified whether ``sample_weight`` should be passed to the estimator's scorer
