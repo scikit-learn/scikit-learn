@@ -2,6 +2,7 @@
 ===============================================================
 Comparing Random Forests and Histogram Gradient Boosting models
 ===============================================================
+
 In this example we compare the performance of Random Forest (RF) and Histogram
 Gradient Boosting (HGBT) models in terms of score and computation time for a
 given dataset. Here we vary the parameters that control the number of trees
@@ -20,6 +21,9 @@ majority vote to predict the outcome.
 
 For more information on ensemble models, see the :ref:`User Guide <ensemble>`.
 """
+
+# Author:  Arturo Amor <david-arturo.amor-quiroz@inria.fr>
+# License: BSD 3 clause
 
 # %%
 # Load dataset
