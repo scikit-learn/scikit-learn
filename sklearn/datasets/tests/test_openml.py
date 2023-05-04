@@ -73,10 +73,10 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     # monkey patches the urlopen function. Important note: Do NOT use this
     # in combination with a regular cache directory, as the files that are
     # stored as cache should not be mixed up with real openml datasets
-    url_prefix_data_description = "https://openml.org/api/v1/json/data/"
-    url_prefix_data_features = "https://openml.org/api/v1/json/data/features/"
-    url_prefix_download_data = "https://openml.org/data/v1/"
-    url_prefix_data_list = "https://openml.org/api/v1/json/data/list/"
+    url_prefix_data_description = "https://api.openml.org/api/v1/json/data/"
+    url_prefix_data_features = "https://api.openml.org/api/v1/json/data/features/"
+    url_prefix_download_data = "https://api.openml.org/data/v1/"
+    url_prefix_data_list = "https://api.openml.org/api/v1/json/data/list/"
 
     path_suffix = ".gz"
     read_fn = gzip.open
@@ -85,7 +85,9 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 
     def _file_name(url, suffix):
         output = (
-            re.sub(r"\W", "-", url[len("https://openml.org/") :]) + suffix + path_suffix
+            re.sub(r"\W", "-", url[len("https://api.openml.org/") :])
+            + suffix
+            + path_suffix
         )
         # Shorten the filenames to have better compatibility with windows 10
         # and filenames > 260 characters

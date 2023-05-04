@@ -18,7 +18,6 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from collections.abc import Iterable
 from functools import partial
 from collections import Counter
 from traceback import format_exc
@@ -65,7 +64,7 @@ from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
 from ..base import is_regressor
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import HasMethods, StrOptions, validate_params
 
 
 def _cached_call(cache, estimator, method, *args, **kwargs):
@@ -451,79 +450,6 @@ def _passthrough_scorer(estimator, *args, **kwargs):
     return estimator.score(*args, **kwargs)
 
 
-def check_scoring(estimator, scoring=None, *, allow_none=False):
-    """Determine scorer from user options.
-
-    A TypeError will be thrown if the estimator cannot be scored.
-
-    Parameters
-    ----------
-    estimator : estimator object implementing 'fit'
-        The object to use to fit the data.
-
-    scoring : str or callable, default=None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
-        If None, the provided estimator object's `score` method is used.
-
-    allow_none : bool, default=False
-        If no scoring is specified and the estimator has no score function, we
-        can either return None or raise an exception.
-
-    Returns
-    -------
-    scoring : callable
-        A scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
-    """
-    if not hasattr(estimator, "fit"):
-        raise TypeError(
-            "estimator should be an estimator implementing 'fit' method, %r was passed"
-            % estimator
-        )
-    if isinstance(scoring, str):
-        return get_scorer(scoring)
-    elif callable(scoring):
-        # Heuristic to ensure user has not passed a metric
-        module = getattr(scoring, "__module__", None)
-        if (
-            hasattr(module, "startswith")
-            and module.startswith("sklearn.metrics.")
-            and not module.startswith("sklearn.metrics._scorer")
-            and not module.startswith("sklearn.metrics.tests.")
-        ):
-            raise ValueError(
-                "scoring value %r looks like it is a metric "
-                "function rather than a scorer. A scorer should "
-                "require an estimator as its first parameter. "
-                "Please use `make_scorer` to convert a metric "
-                "to a scorer." % scoring
-            )
-        return get_scorer(scoring)
-    elif scoring is None:
-        if hasattr(estimator, "score"):
-            return _passthrough_scorer
-        elif allow_none:
-            return None
-        else:
-            raise TypeError(
-                "If no scoring is specified, the estimator passed should "
-                "have a 'score' method. The estimator %r does not." % estimator
-            )
-    elif isinstance(scoring, Iterable):
-        raise ValueError(
-            "For evaluating multiple scores, use "
-            "sklearn.model_selection.cross_validate instead. "
-            "{0} was passed.".format(scoring)
-        )
-    else:
-        raise ValueError(
-            "scoring value should either be a callable, string or None. %r was passed"
-            % scoring
-        )
-
-
 def _check_multimetric_scoring(estimator, scoring):
     """Check the scoring parameter in cases when multiple metrics are allowed.
 
@@ -882,3 +808,67 @@ for name, metric in [
         _SCORERS[qualified_name] = make_scorer(metric, pos_label=None, average=average)
 
 SCORERS = _DeprecatedScorers(_SCORERS)
+
+
+@validate_params(
+    {
+        "estimator": [HasMethods("fit")],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "allow_none": ["boolean"],
+    }
+)
+def check_scoring(estimator, scoring=None, *, allow_none=False):
+    """Determine scorer from user options.
+
+    A TypeError will be thrown if the estimator cannot be scored.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    scoring : str or callable, default=None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+        If None, the provided estimator object's `score` method is used.
+
+    allow_none : bool, default=False
+        If no scoring is specified and the estimator has no score function, we
+        can either return None or raise an exception.
+
+    Returns
+    -------
+    scoring : callable
+        A scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+    """
+    if isinstance(scoring, str):
+        return get_scorer(scoring)
+    if callable(scoring):
+        # Heuristic to ensure user has not passed a metric
+        module = getattr(scoring, "__module__", None)
+        if (
+            hasattr(module, "startswith")
+            and module.startswith("sklearn.metrics.")
+            and not module.startswith("sklearn.metrics._scorer")
+            and not module.startswith("sklearn.metrics.tests.")
+        ):
+            raise ValueError(
+                "scoring value %r looks like it is a metric "
+                "function rather than a scorer. A scorer should "
+                "require an estimator as its first parameter. "
+                "Please use `make_scorer` to convert a metric "
+                "to a scorer." % scoring
+            )
+        return get_scorer(scoring)
+    if scoring is None:
+        if hasattr(estimator, "score"):
+            return _passthrough_scorer
+        elif allow_none:
+            return None
+        else:
+            raise TypeError(
+                "If no scoring is specified, the estimator passed should "
+                "have a 'score' method. The estimator %r does not." % estimator
+            )
