@@ -792,7 +792,7 @@ def export_graphviz(
         An array containing the feature names.
         If None, generic names will be used ("x[0]", "x[1]", ...).
 
-    class_names : array-like or bool, default=None
+    class_names : array-like of shape (n_classes,) or bool, default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
         If ``True``, shows a symbolic representation of the class name.
@@ -965,7 +965,7 @@ def export_text(
         An array containing the feature names.
         If None generic names will be used ("feature_0", "feature_1", ...).
 
-    class_names : list, ndarray, or None, default=None
+    class_names : array-like of shape (n_classes,), default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
 
