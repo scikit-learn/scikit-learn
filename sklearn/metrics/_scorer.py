@@ -378,7 +378,7 @@ class _ThresholdScorer(_BaseScorer):
 
 
 class _ContinuousScorer(_BaseScorer):
-    """ "Scorer taking a continuous response and output a score for each threshold."""
+    """Scorer taking a continuous response and output a score for each threshold."""
 
     def __init__(self, score_func, sign, response_method, kwargs):
         super().__init__(score_func=score_func, sign=sign, kwargs=kwargs)
