@@ -1336,8 +1336,9 @@ class RandomForestClassifier(ForestClassifier):
     sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
     sklearn.ensemble.ExtraTreesClassifier : Ensemble of extremely randomized
         tree classifiers.
-    sklearn.ensemble.HistGradientBoostingClassifier : Gradient boosting that
-        is a non-parametric model accepting monotonicity constraints.
+    sklearn.ensemble.HistGradientBoostingRegressor : A Histogram-based Gradient
+        Boosting Classification Tree, very fast for big datasets (n_samples >=
+        10_000).
 
     Notes
     -----
