@@ -45,6 +45,12 @@ X, y = fetch_california_housing(return_X_y=True, as_frame=True)
 # of the Random Forest, but can also increase the computational cost and the
 # risk of overfitting.
 #
+# .. Note::
+#  Tuning the `n_estimators` for random forests generally result in a waste of
+#  computer power. In practice one just need to ensure that it is large enough so
+#  that doubling its value does not lead to a significant improvement of the
+#  testing score.
+#
 # `max_iter` is a hyperparameter of Hist Gradient Boosting that determines the
 # maximum number of boosting iterations to be performed during the training
 # process. Each iteration of the boosting process fits a new decision tree to
