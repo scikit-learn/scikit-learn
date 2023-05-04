@@ -169,3 +169,8 @@ plt.show()
 # :class:`~sklearn.ensemble.RandomForestClassifier` can be run on multiple cores
 # using the `n_jobs` parameter, here set to 2 due to limitations on the
 # documentation builder.
+#
+# Overall, the performance of HGBT versus parallelized RF depends on the
+# specific characteristics of the dataset and the modeling task. It's always a
+# good idea to try both models and compare their performance on your specific
+# problem to determine which model is the best fit.
