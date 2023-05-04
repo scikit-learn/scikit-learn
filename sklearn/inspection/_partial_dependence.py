@@ -359,6 +359,7 @@ def _partial_dependence_brute(
         ],
         "X": ["array-like", "sparse matrix"],
         "features": ["array-like", Integral, str],
+        "sample_weight": ["array-like", None],
         "categorical_features": ["array-like", None],
         "feature_names": ["array-like", None],
         "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
