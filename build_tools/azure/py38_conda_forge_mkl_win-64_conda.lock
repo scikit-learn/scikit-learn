@@ -10,9 +10,10 @@ https://conda.anaconda.org/conda-forge/win-64/python_abi-3.8-3_cp38.conda#c6df94
 https://conda.anaconda.org/conda-forge/win-64/ucrt-10.0.22621.0-h57928b3_0.tar.bz2#72608f6cd3e5898229c3ea16deb1ac43
 https://conda.anaconda.org/conda-forge/win-64/m2w64-gmp-6.1.0-2.tar.bz2#53a1c73e1e3d185516d7e3af177596d9
 https://conda.anaconda.org/conda-forge/win-64/m2w64-libwinpthread-git-5.0.0.4634.697f757-2.tar.bz2#774130a326dee16f1ceb05cc687ee4f0
-https://conda.anaconda.org/conda-forge/win-64/vs2015_runtime-14.34.31931-h4c5c07a_11.conda#d86b4f666b9d98bd05ebf3f6ab93a758
+https://conda.anaconda.org/conda-forge/win-64/vc14_runtime-14.34.31931-h5081d32_16.conda#22125178654c6a8a393f9743d585704b
 https://conda.anaconda.org/conda-forge/win-64/m2w64-gcc-libs-core-5.3.0-7.tar.bz2#4289d80fb4d272f1f3b56cfe87ac90bd
-https://conda.anaconda.org/conda-forge/win-64/vc-14.3-h3d8a991_11.conda#146b4d4baf7d24755f7330aa9106b097
+https://conda.anaconda.org/conda-forge/win-64/vc-14.3-hb25d44b_16.conda#ea326b37e3bd6d2616988e09f3a9396c
+https://conda.anaconda.org/conda-forge/win-64/vs2015_runtime-14.34.31931-hed1258a_16.conda#0374eae69b6dbfb27c3dc27167109eb4
 https://conda.anaconda.org/conda-forge/win-64/bzip2-1.0.8-h8ffe710_4.tar.bz2#7c03c66026944073040cb19a4f3ec3c9
 https://conda.anaconda.org/conda-forge/win-64/icu-72.1-h63175ca_0.conda#a108731562663d787066bd17c9595114
 https://conda.anaconda.org/conda-forge/win-64/lerc-4.0.0-h63175ca_0.tar.bz2#1900cb3cab5055833cfddb0ba233b074
@@ -26,7 +27,7 @@ https://conda.anaconda.org/conda-forge/win-64/libsqlite-3.40.0-hcfcfb64_1.conda#
 https://conda.anaconda.org/conda-forge/win-64/libwebp-base-1.3.0-hcfcfb64_0.conda#381a3645c51cbf478872899b16490318
 https://conda.anaconda.org/conda-forge/win-64/libzlib-1.2.13-hcfcfb64_4.tar.bz2#0cc5c5cc64ee1637f37f8540a175854c
 https://conda.anaconda.org/conda-forge/win-64/m2w64-gcc-libgfortran-5.3.0-6.tar.bz2#066552ac6b907ec6d72c0ddab29050dc
-https://conda.anaconda.org/conda-forge/win-64/openssl-3.1.0-hcfcfb64_2.conda#abbedae9914982c3fc4982415de3755e
+https://conda.anaconda.org/conda-forge/win-64/openssl-3.1.0-hcfcfb64_3.conda#70ef20ae131da584481da2fbc6aa31c8
 https://conda.anaconda.org/conda-forge/win-64/pthreads-win32-2.9.1-hfa6e2cd_3.tar.bz2#e2da8758d7d51ff6aa78a14dfb9dbed4
 https://conda.anaconda.org/conda-forge/win-64/tk-8.6.12-h8ffe710_0.tar.bz2#c69a5047cc9291ae40afd4a1ad6f0c0f
 https://conda.anaconda.org/conda-forge/win-64/xz-5.2.6-h8d14728_0.tar.bz2#515d77642eaa3639413c6b1bc3f94219
@@ -53,7 +54,7 @@ https://conda.anaconda.org/conda-forge/win-64/freetype-2.12.1-h546665d_1.conda#1
 https://conda.anaconda.org/conda-forge/noarch/idna-3.4-pyhd8ed1ab_0.tar.bz2#34272b248891bddccc64479f9a7fffed
 https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.0.0-pyhd8ed1ab_0.conda#f800d2da156d08e289b14e87e43c1ae5
 https://conda.anaconda.org/conda-forge/win-64/kiwisolver-1.4.4-py38hb1fd069_1.tar.bz2#1dcc50e3241f9e4e59713eec2653abd5
-https://conda.anaconda.org/conda-forge/win-64/libclang13-16.0.2-default_h45d3cf4_0.conda#8c22224c2ecead4074f53d83b5f272cb
+https://conda.anaconda.org/conda-forge/win-64/libclang13-16.0.3-default_h45d3cf4_0.conda#becebfc80b7a71f9b37d17793127da65
 https://conda.anaconda.org/conda-forge/win-64/libglib-2.76.2-he8f3873_0.conda#fe5f7847f63496b1053fd6e71d12f9c2
 https://conda.anaconda.org/conda-forge/win-64/libhwloc-2.9.1-h51c2c0f_0.conda#8ec5920f3ed67faa0264a36c0b533ed0
 https://conda.anaconda.org/conda-forge/win-64/libtiff-4.5.0-h6c8260b_6.conda#12628df645fcf0f74922138858724831
@@ -86,7 +87,7 @@ https://conda.anaconda.org/conda-forge/noarch/importlib-metadata-6.6.0-pyha770c7
 https://conda.anaconda.org/conda-forge/noarch/importlib_resources-5.12.0-pyhd8ed1ab_0.conda#e5fd2260a231ee63b6969f4801082f2b
 https://conda.anaconda.org/conda-forge/noarch/joblib-1.2.0-pyhd8ed1ab_0.tar.bz2#7583652522d71ad78ba536bba06940eb
 https://conda.anaconda.org/conda-forge/win-64/lcms2-2.15-h3e3b177_1.conda#a76c36ad1b4b87f038d67890122d08ec
-https://conda.anaconda.org/conda-forge/win-64/libclang-16.0.2-default_h8b4101f_0.conda#bf92512726320ca013e7d242327e5bdc
+https://conda.anaconda.org/conda-forge/win-64/libclang-16.0.3-default_h8b4101f_0.conda#5ae0b35dff3bb829b0d70345990be22d
 https://conda.anaconda.org/conda-forge/win-64/libxcb-1.13-hcd874cb_1004.tar.bz2#a6d7fd030532378ecb6ba435cd9f8234
 https://conda.anaconda.org/conda-forge/win-64/openjpeg-2.5.0-ha2aaf27_2.conda#db0490689232e8e38c312281df6f31a2
 https://conda.anaconda.org/conda-forge/noarch/pip-23.1.2-pyhd8ed1ab_0.conda#7288da0d36821349cf1126e8670292df
