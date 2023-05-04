@@ -685,8 +685,10 @@ def test_micro_averaged_ovr_roc_auc(global_random_seed):
             ["a", "a", "b"],
         ),
         (
-            "Number of classes in y_true not equal to the number of columns "
-            "in 'y_score'",
+            (
+                "Number of classes in y_true not equal to the number of columns "
+                "in 'y_score'"
+            ),
             np.array([0, 2, 0, 2]),
             None,
         ),
@@ -696,26 +698,34 @@ def test_micro_averaged_ovr_roc_auc(global_random_seed):
             ["a", "c", "b"],
         ),
         (
-            "Number of given labels, 2, not equal to the number of columns in "
-            "'y_score', 3",
+            (
+                "Number of given labels, 2, not equal to the number of columns in "
+                "'y_score', 3"
+            ),
             np.array([0, 1, 2, 2]),
             [0, 1],
         ),
         (
-            "Number of given labels, 2, not equal to the number of columns in "
-            "'y_score', 3",
+            (
+                "Number of given labels, 2, not equal to the number of columns in "
+                "'y_score', 3"
+            ),
             np.array(["a", "b", "c", "c"]),
             ["a", "b"],
         ),
         (
-            "Number of given labels, 4, not equal to the number of columns in "
-            "'y_score', 3",
+            (
+                "Number of given labels, 4, not equal to the number of columns in "
+                "'y_score', 3"
+            ),
             np.array([0, 1, 2, 2]),
             [0, 1, 2, 3],
         ),
         (
-            "Number of given labels, 4, not equal to the number of columns in "
-            "'y_score', 3",
+            (
+                "Number of given labels, 4, not equal to the number of columns in "
+                "'y_score', 3"
+            ),
             np.array(["a", "b", "c", "c"]),
             ["a", "b", "c", "d"],
         ),
@@ -2168,8 +2178,10 @@ def test_top_k_accuracy_score_warning(y_true, k):
             [0, 1],
             [[0.5, 0.2, 0.2], [0.3, 0.4, 0.2]],
             None,
-            "`y_true` is binary while y_score is 2d with 3 classes. If"
-            " `y_true` does not contain all the labels, `labels` must be provided",
+            (
+                "`y_true` is binary while y_score is 2d with 3 classes. If"
+                " `y_true` does not contain all the labels, `labels` must be provided"
+            ),
         ),
     ],
 )
