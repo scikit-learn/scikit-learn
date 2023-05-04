@@ -86,7 +86,7 @@ models = {
 }
 param_grids = {
     "Random Forest": {"n_estimators": [5, 10, 20, 50, 100]},
-    "HistGradientBoosting": {"max_iter": [5, 10, 20, 50, 100, 200]},
+    "HistGradientBoosting": {"max_iter": [5, 10, 20, 50, 100, 200, 300]},
 }
 cv = KFold(n_splits=3, shuffle=True, random_state=0)
 results = []
@@ -108,7 +108,7 @@ for name, model in models.items():
 
 import matplotlib.pyplot as plt
 
-fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
+fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
 for idx, result in enumerate(results):
     cv_results = result["cv_results"]
 
@@ -131,8 +131,9 @@ for idx, result in enumerate(results):
     )
     axs[0, idx].set_xlabel(param_name)
     axs[0, idx].set_ylabel("Score")
+    axs[0, idx].set_ylim(0.45, 0.95)
     axs[0, idx].set_title(result["model"])
-    axs[0, idx].legend()
+    axs[0, idx].legend(loc="lower right")
     axs[1, idx].errorbar(
         param_values, train_times, yerr=train_time_err, label="Train time"
     )
@@ -141,7 +142,10 @@ for idx, result in enumerate(results):
     )
     axs[1, idx].set_xlabel(param_name)
     axs[1, idx].set_ylabel("time (s)")
-    axs[1, idx].legend()
+    axs[1, idx].set_yscale("log")
+    axs[1, idx].set_ylim(0.001, 5)
+    axs[1, idx].legend(loc="lower right")
+plt.subplots_adjust(wspace=0.25)
 plt.show()
 
 # %%
