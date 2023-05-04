@@ -32,8 +32,6 @@ cdef void _predict_regression_tree_inplace_fast_dense(
     double *value,
     double scale,
     Py_ssize_t k,
-    Py_ssize_t n_samples,
-    Py_ssize_t n_features,
     cnp.float64_t[:, :] out
 ) noexcept nogil:
     """Predicts output for regression tree and stores it in ``out[i, k]``.
@@ -60,16 +58,12 @@ cdef void _predict_regression_tree_inplace_fast_dense(
     k : int
         The index of the tree output to be predicted. Must satisfy
         0 <= ``k`` < ``K``.
-    n_samples : int
-        The number of samples in the input array ``X``;
-        ``n_samples == X.shape[0]``.
-    n_features : int
-        The number of features; ``n_samples == X.shape[1]``.
     out : memory view on array of type np.float64_t
         The data array where the predictions are stored.
         ``out`` is assumed to be a two-dimensional array of
         shape ``(n_samples, K)``.
     """
+    cdef SIZE_t n_samples = X.shape[0]
     cdef Py_ssize_t i
     cdef Node *node
     for i in range(n_samples):
@@ -212,8 +206,6 @@ def predict_stages(
                     value=tree.value,
                     scale=scale,
                     k=k,
-                    n_samples=X.shape[0],
-                    n_features=X.shape[1],
                     out=out
                 )
                 # out[:, k] += scale * tree.predict(X).ravel()
