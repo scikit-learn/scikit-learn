@@ -32,6 +32,16 @@ For more information on ensemble models, see the :ref:`User Guide <ensemble>`.
 from sklearn.datasets import fetch_california_housing
 
 X, y = fetch_california_housing(return_X_y=True, as_frame=True)
+n_samples, n_features = X.shape
+
+# %%
+# HGBT models may be faster than a parallelized RF in certain cases. For
+# instance, HGBT can handle high-dimensional data more efficiently than RF due
+# to its use of histogram-based binning, which reduces the number of splits that
+# need to be evaluated when growing the trees. Also HGBT can be faster than RF
+# for very large datasets, especially when the number of samples is larger than
+# tens of thousands.
+print(f"The dataset consists of {n_samples} samples and {n_features} features")
 
 # %%
 # Compute score and computation times
