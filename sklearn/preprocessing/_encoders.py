@@ -70,6 +70,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     def _fit(
         self,
         X,
+        sample_weight=None,
         handle_unknown="error",
         force_all_finite=True,
         return_counts=False,
@@ -98,7 +99,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             Xi = X_list[i]
 
             if self.categories == "auto":
-                result = _unique(Xi, return_counts=compute_counts)
+                result = _unique(
+                    Xi, sample_weight=sample_weight, return_counts=compute_counts
+                )
                 if compute_counts:
                     cats, counts = result
                     category_counts.append(counts)
@@ -147,7 +150,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         )
                         raise ValueError(msg)
                 if compute_counts:
-                    category_counts.append(_get_counts(Xi, cats))
+                    category_counts.append(_get_counts(Xi, cats, sample_weight))
 
             self.categories_.append(cats)
 
@@ -281,6 +284,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             If there are infrequent categories, indices of infrequent
             categories. Otherwise None.
         """
+        # TODO ohe_sw: We would have to change this...
+        # But it really makes sense... :(
         if isinstance(self.min_frequency, numbers.Integral):
             infrequent_mask = category_count < self.min_frequency
         elif isinstance(self.min_frequency, numbers.Real):
@@ -953,7 +958,7 @@ class OneHotEncoder(_BaseEncoder):
 
         return output
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """
         Fit OneHotEncoder to X.
 
@@ -971,6 +976,8 @@ class OneHotEncoder(_BaseEncoder):
         self
             Fitted encoder.
         """
+        # TODO ohe_sw: Add to docstring that `sample_weight` is only used when
+        # `max_categories` or `min_frequency` are not default values.
         self._validate_params()
 
         if self.sparse != "deprecated":
@@ -986,6 +993,7 @@ class OneHotEncoder(_BaseEncoder):
 
         self._fit(
             X,
+            sample_weight=sample_weight,
             handle_unknown=self.handle_unknown,
             force_all_finite="allow-nan",
         )

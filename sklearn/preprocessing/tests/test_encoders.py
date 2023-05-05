@@ -2303,3 +2303,63 @@ def test_ordinal_encoder_missing_appears_infrequent():
     )
     X_trans = ordinal.transform(X_test)
     assert_allclose(X_trans, [[2, 1], [2, 0], [np.nan, 0], [1, 0], [0, 1]])
+
+
+@pytest.mark.parametrize(
+    "X, sample_weight, expected_shape",
+    [
+        (
+            [
+                ["car", 3],
+                ["bike", 3],
+                ["car", 1],
+                ["bike", 3],
+                ["boat", 2],
+                ["airplane", 4],
+            ],
+            np.array([2, 2.5, 0.5, 0.1, 0, 0]),
+            (6, 5),
+        ),
+        (
+            [["car"], ["car"], ["bike"], ["bike"], ["boat"], ["airplane"]],
+            np.array([5, 5, 0.1, 0.3, 4, 0.9]),
+            (6, 3),
+        ),
+    ],
+)
+def test_one_hot_encoder_sample_weight_min_frequency(X, sample_weight, expected_shape):
+    ohe = OneHotEncoder(min_frequency=2)
+    X_trans = ohe.fit_transform(X, sample_weight=sample_weight)
+
+    print(X_trans.toarray())
+    assert X_trans.shape == expected_shape
+
+
+@pytest.mark.parametrize(
+    "X, sample_weight, expected_shape",
+    [
+        (
+            [
+                ["car", 3],
+                ["bike", 3],
+                ["car", 1],
+                ["bike", 3],
+                ["boat", 2],
+                ["airplane", 4],
+            ],
+            np.array([2, 2.5, 0.5, 0.1, 0, 0]),
+            (6, 4),
+        ),
+        (
+            [["car"], ["car"], ["bike"], ["bike"], ["boat"], ["airplane"]],
+            np.array([5, 5, 0.1, 0.3, 4, 0.9]),
+            (6, 2),
+        ),
+    ],
+)
+def test_one_hot_encoder_sample_weight_max_categories(X, sample_weight, expected_shape):
+    ohe = OneHotEncoder(max_categories=2)
+    X_trans = ohe.fit_transform(X, sample_weight=sample_weight)
+
+    print(X_trans.toarray())
+    assert X_trans.shape == expected_shape
