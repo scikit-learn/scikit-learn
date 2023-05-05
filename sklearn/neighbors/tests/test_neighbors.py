@@ -107,7 +107,6 @@ def _parse_metric(metric, dtype=None):
         return metric
     if isinstance(metric, dict):
         return metric[dtype]()
-    return -1
 
 
 def _generate_test_params_for(metric: str, n_features: int):
