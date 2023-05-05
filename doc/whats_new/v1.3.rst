@@ -419,7 +419,7 @@ Changelog
   :pr:`25659` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.multioutput`
-.........................
+..........................
 
 - |Fix| :func:`getattr` on :meth:`multioutput.MultiOutputRegressor.partial_fit`
   and :meth:`multioutput.MultiOutputClassifier.partial_fit` now correctly raise
