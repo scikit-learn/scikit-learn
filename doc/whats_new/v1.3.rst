@@ -467,6 +467,10 @@ Changelog
   The callable combines input arguments `(input_feature, category)` to a string.
   :pr:`22506` by :user:`Mario Kostelac <mariokostelac>`.
 
+- |Enhancement| Adds support for `sample_weight` in
+  :class:`preprocessing.OneHotEncoder`. TODO ohe_sw.
+  :pr:`26330` by :user:`Carlo Lemos <vitaliset>`.
+
 - |Enhancement| Added support for `sample_weight` in
   :class:`preprocessing.KBinsDiscretizer`. This allows specifying the parameter
   `sample_weight` for each sample to be used while fitting. The option is only

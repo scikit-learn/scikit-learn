@@ -56,6 +56,7 @@ def _unique(values, *, sample_weight=None, return_inverse=False, return_counts=F
 
 def _unique_groupby_sum(arr, sample_weight, return_inverse=False, return_counts=False):
     # TODO ohe_sw: add one line docstring
+    # TODO ohe_sw: create tests
     sample_weight = _check_sample_weight(sample_weight, arr)
 
     sorted_indices = np.argsort(arr)
