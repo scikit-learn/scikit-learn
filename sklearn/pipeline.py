@@ -421,7 +421,14 @@ class Pipeline(_BaseComposition):
 
         return self
 
-    @available_if(_final_estimator_has("transform"))
+    def _can_fit_transform(self):
+        return (
+            self._final_estimator == "passthrough"
+            or hasattr(self._final_estimator, "transform")
+            or hasattr(self._final_estimator, "fit_transform")
+        )
+
+    @available_if(_can_fit_transform)
     def fit_transform(self, X, y=None, **fit_params):
         """Fit the model and transform with the final estimator.
 
