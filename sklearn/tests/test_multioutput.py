@@ -19,6 +19,7 @@ from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import OrthogonalMatchingPursuit
 from sklearn.linear_model import Ridge
+from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
 from sklearn.linear_model import LinearRegression
@@ -773,7 +774,16 @@ def test_multioutputregressor_ducktypes_fitted_estimator():
 )
 def test_fit_params_no_routing(Cls, method):
     X, y = make_classification(n_samples=50)
-    clf = Cls(LogisticRegression())
+    clf = Cls(PassiveAggressiveClassifier())
 
     with pytest.raises(ValueError, match="is only supported if"):
-        getattr(clf, method)(X, y, sample_weight=1)
+        getattr(clf, method)(X, y, test=1)
+
+
+def test_multioutput_regressor_has_partial_fit():
+    # Test that an unfitted MultiOutputRegressor handles available_if for
+    # partial_fit correctly
+    est = MultiOutputRegressor(LinearRegression())
+    msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
+    with pytest.raises(AttributeError, match=msg):
+        getattr(est, "partial_fit")
