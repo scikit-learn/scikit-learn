@@ -230,6 +230,11 @@ Changelog
   :class:`decomposition.MiniBatchNMF` which can produce different results than previous
   versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
 
+- |Fix| :class:`decomposition.KernelPCA` now uses the correct `gamma` if `gamma` is
+  `None` every time the kernel is called. It should be equal to `1/num_features` of
+  the data that it is initially fitted on.
+  :pr:`26337` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
