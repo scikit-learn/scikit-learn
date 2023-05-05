@@ -195,7 +195,7 @@ def is_multilabel(y):
         )
 
 
-def check_classification_targets(y):
+def check_classification_targets(y, n_samples=None):
     """Ensure that target y is of a non-regression type.
 
     Only the following target types (as defined in type_of_target) are allowed:
@@ -206,6 +206,9 @@ def check_classification_targets(y):
     ----------
     y : array-like
         Target values.
+
+    n_samples : int, default=None
+        Number of samples in the data.
     """
     y_type = type_of_target(y, input_name="y")
     if y_type not in [
@@ -220,6 +223,13 @@ def check_classification_targets(y):
             "classifier, which expects discrete classes on a "
             "regression target with continuous values."
         )
+
+    if n_samples is not None:
+        if len(np.unique(y)) > round(0.5 * n_samples):
+            warnings.warn(
+                "The number of unique classes is greater than 50% of the samples. You"
+                " are likely feeding bad targets."
+            )
 
 
 def type_of_target(y, input_name=""):

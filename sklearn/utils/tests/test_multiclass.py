@@ -204,6 +204,24 @@ def test_unique_labels():
     assert_array_equal(unique_labels(np.ones((4, 5)), np.ones((5, 5))), np.arange(5))
 
 
+def test_unique_labels_and_samples():
+    """Raises a warning when the number of unique classes is
+    larger than 50% of `n_samples`"""
+
+    X = np.array(
+        [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12, 13, 14], [15, 16, 17, 18, 19]]
+    )
+    y = np.array([0, 1, 1, 2, 3, 4, 5])
+
+    warning_message = (
+        "The number of unique classes is greater than 50% of the samples. You are"
+        " likely feeding bad targets."
+    )
+
+    with pytest.warns(UserWarning, match=warning_message):
+        check_classification_targets(y=y, n_samples=X.shape[0])
+
+
 def test_unique_labels_non_specific():
     # Test unique_labels with a variety of collected examples
 
