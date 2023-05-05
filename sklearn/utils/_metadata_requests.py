@@ -138,6 +138,24 @@ REQUESTER_DOC = """        Request metadata passed to the ``{method}`` method.
         Please see :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
+        The options for each parameter are:
+
+        - ``True``: metadata is requested, and \
+passed to ``{method}`` if provided. The request is ignored if \
+metadata is not provided.
+
+        - ``False``: metadata is not requested and the meta-estimator \
+will not pass it to ``{method}``.
+
+        - ``None``: metadata is not requested, and the meta-estimator \
+will raise an error if the user provides it.
+
+        - ``str``: metadata should be passed to the meta-estimator with \
+this given alias instead of the original name.
+
+        The default (``UNCHANGED``) retains the existing request. This allows
+        you to change the request for some parameters and not others.
+
         .. versionadded:: 1.3
 
         Parameters
@@ -145,25 +163,7 @@ REQUESTER_DOC = """        Request metadata passed to the ``{method}`` method.
 """
 REQUESTER_DOC_PARAM = """        {metadata} : RequestType, str, True, False, or None, \
                     default=UNCHANGED
-            Whether ``{metadata}`` should be passed to ``{method}`` by
-            meta-estimators or not, and if yes, should it have an alias.
-
-            - True or RequestType.REQUESTED: ``{metadata}`` is requested, and \
-passed to ``{method}`` if provided. The request is ignored if \
-``{metadata}`` is not provided.
-
-            - False or RequestType.UNREQUESTED: ``{metadata}`` is not requested \
-and the meta-estimator will not pass it to ``{method}``.
-
-            - None or RequestType.ERROR_IF_PASSED: ``{metadata}`` is not \
-requested, and the meta-estimator will raise an error if the user provides \
-``{metadata}``.
-
-            - str: ``{metadata}`` should be passed to the meta-estimator with \
-this given alias instead of the original name.
-
-            The default (UNCHANGED) retains the existing request. This allows
-            you to change the request for some parameters and not others.
+            Metadata routing for ``{metadata}`` parameter in ``{method}``.
 
 """
 REQUESTER_DOC_RETURN = """        Returns
