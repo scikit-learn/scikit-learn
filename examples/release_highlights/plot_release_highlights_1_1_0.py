@@ -106,7 +106,7 @@ plt.tight_layout()
 # :class:`OneHotEncoder` supports aggregating infrequent categories into a single
 # output for each feature. The parameters to enable the gathering of infrequent
 # categories are `min_frequency` and `max_categories`. See the
-# :ref:`User Guide <one_hot_encoder_infrequent_categories>` for more details.
+# :ref:`User Guide <encoder_infrequent_categories>` for more details.
 from sklearn.preprocessing import OneHotEncoder
 import numpy as np
 

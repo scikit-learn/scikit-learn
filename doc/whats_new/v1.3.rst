@@ -406,6 +406,11 @@ Changelog
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Fix| In :func:`metrics.roc_curve`, use the threshold value `np.inf` instead of
+  arbritrary `max(y_score) + 1`. This threshold is associated with the ROC curve point
+  `tpr=0` and `fpr=0`.
+  :pr:`26194` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -486,6 +491,12 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
+- |MajorFeature| :class:`tree.DecisionTreeRegressor` and
+  :class:`tree.DecisionTreeClassifier` support missing values when
+  `splitter='best'` and criterion is `gini`, `entropy`, or `log_loss`,
+  for classification or `squared_error`, `friedman_mse`, or `poisson`
+  for regression. :pr:`23595` by `Thomas Fan`_.
+
 - |Enhancement| Adds a `class_names` parameter to
   :func:`tree.export_text`. This allows specifying the parameter `class_names`
   for each target class in ascending numerical order.
@@ -498,6 +509,15 @@ Changelog
   introduced to ensure stateless transformers don't raise `NotFittedError`
   during `transform` with no prior call to `fit` or `fit_transform`.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
+
+- |Enhancement| :class:`preprocessing.PolynomialFeatures` now calculates the
+  number of expanded terms a-priori when dealing with sparse `csr` matrices
+  in order to optimize the choice of `dtype` for `indices` and `indptr`. It
+  can now output `csr` matrices with `np.int32` `indices/indptr` components
+  when there are few enough elements, and will automatically use `np.int64`
+  for sufficiently large matrices.
+  :pr:`20524` by :user:`niuk-a <niuk-a>` and
+  :pr:`23731` by :user:`Meekail Zain <micky774>`
 
 - |API| A `FutureWarning` is now raised when instantiating a class which inherits from
   a deprecated base class (i.e. decorated by :class:`utils.deprecated`) and which
