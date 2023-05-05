@@ -49,48 +49,6 @@ def test_graphviz_toy():
 
     assert contents1 == contents2
 
-    # Test with feature_names
-    contents1 = export_graphviz(
-        clf, feature_names=["feature0", "feature1"], out_file=None
-    )
-    contents2 = (
-        "digraph Tree {\n"
-        'node [shape=box, fontname="helvetica"] ;\n'
-        'edge [fontname="helvetica"] ;\n'
-        '0 [label="feature0 <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
-        'value = [3, 3]"] ;\n'
-        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n'
-        "0 -> 1 [labeldistance=2.5, labelangle=45, "
-        'headlabel="True"] ;\n'
-        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n'
-        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
-        'headlabel="False"] ;\n'
-        "}"
-    )
-
-    assert contents1 == contents2
-
-    # Test with class_names
-    contents1 = export_graphviz(clf, class_names=["yes", "no"], out_file=None)
-    contents2 = (
-        "digraph Tree {\n"
-        'node [shape=box, fontname="helvetica"] ;\n'
-        'edge [fontname="helvetica"] ;\n'
-        '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
-        'value = [3, 3]\\nclass = yes"] ;\n'
-        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]\\n'
-        'class = yes"] ;\n'
-        "0 -> 1 [labeldistance=2.5, labelangle=45, "
-        'headlabel="True"] ;\n'
-        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]\\n'
-        'class = no"] ;\n'
-        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
-        'headlabel="False"] ;\n'
-        "}"
-    )
-
-    assert contents1 == contents2
-
     # Test plot_options
     contents1 = export_graphviz(
         clf,
@@ -250,9 +208,10 @@ def test_graphviz_toy():
     )
 
 
-def test_graphviz_array_support():
-    # Check that export_graphviz supports feature names
-    # and class names as arrays
+@pytest.mark.parametrize("constructor", [list, np.array])
+def test_graphviz_feature_class_names_array_support(constructor):
+    # Check that export_graphviz treats feature names
+    # and class names correctly and supports arrays
     clf = DecisionTreeClassifier(
         max_depth=3, min_samples_split=2, criterion="gini", random_state=2
     )
@@ -260,7 +219,7 @@ def test_graphviz_array_support():
 
     # Test with feature_names
     contents1 = export_graphviz(
-        clf, feature_names=np.array(["feature0", "feature1"]), out_file=None
+        clf, feature_names=constructor(["feature0", "feature1"]), out_file=None
     )
     contents2 = (
         "digraph Tree {\n"
@@ -280,7 +239,9 @@ def test_graphviz_array_support():
     assert contents1 == contents2
 
     # Test with class_names
-    contents1 = export_graphviz(clf, class_names=np.array(["yes", "no"]), out_file=None)
+    contents1 = export_graphviz(
+        clf, class_names=constructor(["yes", "no"]), out_file=None
+    )
     contents2 = (
         "digraph Tree {\n"
         'node [shape=box, fontname="helvetica"] ;\n'
@@ -430,22 +391,6 @@ def test_export_text():
     assert export_text(clf, max_depth=10) == expected_report
 
     expected_report = dedent("""
-    |--- b <= 0.00
-    |   |--- class: -1
-    |--- b >  0.00
-    |   |--- class: 1
-    """).lstrip()
-    assert export_text(clf, feature_names=["a", "b"]) == expected_report
-
-    expected_report = dedent("""
-    |--- feature_1 <= 0.00
-    |   |--- class: cat
-    |--- feature_1 >  0.00
-    |   |--- class: dog
-    """).lstrip()
-    assert export_text(clf, class_names=["cat", "dog"]) == expected_report
-
-    expected_report = dedent("""
     |--- feature_1 <= 0.00
     |   |--- weights: [3.00, 0.00] class: -1
     |--- feature_1 >  0.00
@@ -505,9 +450,10 @@ def test_export_text():
     )
 
 
-def test_export_text_graphviz_support():
-    # Check that export_text supports feature names
-    # and class names as arrays
+@pytest.mark.parametrize("constructor", [list, np.array])
+def test_export_text_feature_class_names_array_support(constructor):
+    # Check that export_graphviz treats feature names
+    # and class names correctly and supports arrays
     clf = DecisionTreeClassifier(max_depth=2, random_state=0)
     clf.fit(X, y)
 
@@ -517,7 +463,7 @@ def test_export_text_graphviz_support():
     |--- b >  0.00
     |   |--- class: 1
     """).lstrip()
-    assert export_text(clf, feature_names=np.array(["a", "b"])) == expected_report
+    assert export_text(clf, feature_names=constructor(["a", "b"])) == expected_report
 
     expected_report = dedent("""
     |--- feature_1 <= 0.00
@@ -525,7 +471,7 @@ def test_export_text_graphviz_support():
     |--- feature_1 >  0.00
     |   |--- class: dog
     """).lstrip()
-    assert export_text(clf, class_names=np.array(["cat", "dog"])) == expected_report
+    assert export_text(clf, class_names=constructor(["cat", "dog"])) == expected_report
 
 
 def test_plot_tree_entropy(pyplot):
