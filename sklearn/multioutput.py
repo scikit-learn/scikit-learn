@@ -76,18 +76,11 @@ def _available_if_estimator_has(attr):
     """
 
     def _check(self):
-        if hasattr(self, "estimator"):
-            estimator = (
-                self.estimator_ if hasattr(self, "estimator_") else self.estimator
-            )
-            if hasattr(estimator, attr):
-                return True
+        if hasattr(self.estimator, attr):
+            return True
 
-        if hasattr(self, "estimators"):
-            estimators = (
-                self.estimators_ if hasattr(self, "estimators_") else self.estimators
-            )
-            return all(hasattr(est, attr) for est in estimators)
+        if hasattr(self, "estimators_"):
+            return all(hasattr(est, attr) for est in self.estimators_)
 
         return False
 
