@@ -459,6 +459,10 @@ Changelog
   `pandas.DataFrame`
   :pr:`25220` by :user:`Ian Thompson <it176131>`.
 
+- |Fix| :meth:`pipeline.Pipeline.fit_transform` now raises an `AttributeError`
+  if the last step of the pipeline does not support `fit_transform`.
+  :pr:`26325` by `Adrin Jalali`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
