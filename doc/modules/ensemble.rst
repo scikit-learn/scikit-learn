@@ -109,22 +109,6 @@ set of classifiers is created by introducing randomness in the classifier
 construction.  The prediction of the ensemble is given as the averaged
 prediction of the individual classifiers.
 
-.. note::
-
-  Scikit-learn 0.21 introduces two new implementations of gradient boosting trees, 
-  namely :class:`HistGradientBoostingClassifier` and :class:`HistGradientBoostingRegressor`, 
-  which is inspired by `LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
-  These histogram-based estimators can be **orders of magnitude faster**
-  than :class:`RandomForestClassifier` and
-  :class:`RandomForestRegressor` when the number of samples is larger
-  than tens of thousands of samples.
-
-  They also have built-in support for missing values, which avoids the need
-  for an imputer.
-
-  These estimators are described in more detail below in
-  :ref:`histogram_based_gradient_boosting`.
-
 As other classifiers, forest classifiers have to be fitted with two
 arrays: a sparse or dense array X of shape ``(n_samples, n_features)``
 holding the training samples, and an array Y of shape ``(n_samples,)``
@@ -165,6 +149,16 @@ an overall better model.
 In contrast to the original publication [B2001]_, the scikit-learn
 implementation combines classifiers by averaging their probabilistic
 prediction, instead of letting each classifier vote for a single class.
+
+Comparison of Histogram-based Gradient Boosting Trees over Random Forests in terms of computational cost:
+
+   - Building shallow trees: HGBT can be computationally more efficient than RF when building shallow trees because it only needs to consider a limited number of bins to construct the splits, whereas RF builds deep trees that require more iterations to reach optimal splits.
+
+   - Sequential boosting: In HGBT, the trees are built sequentially, with each tree correcting the mistakes of the previous trees. This can be more computationally efficient than RF, where all the trees are built independently and in parallel.
+
+   - Efficient binning: HGBT uses an efficient binning algorithm that can handle large datasets with a high number of features. The binning algorithm can pre-process the data to speed up the subsequent tree construction. In contrast, RF does not use binning and relies on randomly selecting features at each split, which can be computationally expensive.
+
+Overall, the computational cost of HGBT versus RF depends on the specific characteristics of the dataset and the modeling task. It's always a good idea to try both models and compare their performance and computational efficiency on your specific problem to determine which model is the best fit.
 
 Extremely Randomized Trees
 --------------------------
