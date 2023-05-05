@@ -581,15 +581,24 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self.algorithm not in ("auto", "brute"):
                 warnings.warn("cannot use tree with sparse input: using brute force")
 
-            if self.effective_metric_ not in VALID_METRICS_SPARSE[
-                "brute"
-            ] and not callable(self.effective_metric_):
+            if (
+                self.effective_metric_ not in VALID_METRICS_SPARSE["brute"]
+                and not callable(self.effective_metric_)
+                and not isinstance(
+                    self.effective_metric_, (DistanceMetric, DistanceMetric32)
+                )
+            ):
                 raise ValueError(
                     "Metric '%s' not valid for sparse input. "
                     "Use sorted(sklearn.neighbors."
                     "VALID_METRICS_SPARSE['brute']) "
                     "to get valid options. "
-                    "Metric can also be a callable function." % (self.effective_metric_)
+                    "Metric can also be a callable function."
+                    % (
+                        self.effective_metric_
+                        if isinstance(self.effective_metric_, str)
+                        else self.effective_metric_.__class__.__name__
+                    )
                 )
             self._fit_X = X.copy()
             self._tree = None
