@@ -81,7 +81,6 @@ def _unique_groupby_sum(arr, sample_weight, return_inverse=False, return_counts=
     if return_counts:
         results.append(group_sums)
 
-    print(*results)
     if len(results) > 1:
         return tuple(results)
     return results[0]
