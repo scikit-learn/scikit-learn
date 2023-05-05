@@ -418,6 +418,14 @@ Changelog
   `return_indices` to return the train-test indices of each cv split.
   :pr:`25659` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.multioutput`
+.........................
+
+- |Fix| :func:`getattr` on :meth:`multioutput.MultiOutputRegressor.partial_fit`
+  and :meth:`multioutput.MultiOutputClassifier.partial_fit` now correctly raise
+  an `AttributeError` if done before calling `fit`. :pr:`26333` by `Adrin
+  Jalali`_.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
