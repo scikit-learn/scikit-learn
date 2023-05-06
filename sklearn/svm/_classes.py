@@ -565,9 +565,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         )
         penalty = "l2"  # SVR only accepts l2 penalty
 
-        _dual = _validate_dual_parameter(
-            self.dual, self.loss, penalty, "ovr", X
-        )
+        _dual = _validate_dual_parameter(self.dual, self.loss, penalty, "ovr", X)
 
         self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
