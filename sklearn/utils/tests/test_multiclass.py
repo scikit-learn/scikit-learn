@@ -208,9 +208,6 @@ def test_unique_labels_and_samples():
     """Raises a warning when the number of unique classes is
     larger than 50% of `n_samples`"""
 
-    X = np.array(
-        [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12, 13, 14], [15, 16, 17, 18, 19]]
-    )
     y = np.array([0, 1, 1, 2, 3, 4, 5])
 
     warning_message = (
@@ -218,7 +215,7 @@ def test_unique_labels_and_samples():
     )
 
     with pytest.warns(UserWarning, match=warning_message):
-        check_classification_targets(y=y)
+        type_of_target(y=y)
 
 
 def test_unique_labels_non_specific():
