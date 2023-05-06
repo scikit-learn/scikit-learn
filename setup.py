@@ -293,7 +293,7 @@ extension_config = {
         },
     ],
     "preprocessing": [
-        {"sources": ["_csr_polynomial_expansion.pyx"], "include_np": True},
+        {"sources": ["_csr_polynomial_expansion.pyx"]},
         {
             "sources": ["_target_encoder_fast.pyx"],
             "include_np": True,
