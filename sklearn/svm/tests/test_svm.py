@@ -15,7 +15,7 @@ from numpy.testing import assert_allclose
 from scipy import sparse
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.svm import LinearSVC, OneClassSVM, SVR, NuSVR, LinearSVR
-from sklearn.svm._classes import _choose_dual_automatically
+from sklearn.svm._classes import _validate_dual_parameter
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
@@ -1416,19 +1416,21 @@ def test_dual_auto_deprecation_warning(Estimator):
 @pytest.mark.parametrize("loss", ["squared_hinge", "squared_epsilon_insensitive"])
 def test_dual_auto(loss):
     # OvR, L2, N > M (6,2)
-    dual = _choose_dual_automatically(loss, "l2", "ovr", np.asarray(X))
+    dual = _validate_dual_parameter("auto", loss, "l2", "ovr", np.asarray(X))
     assert dual is False
     # OvR, L2, N < M (2,6)
-    dual = _choose_dual_automatically(loss, "l2", "ovr", np.asarray(X).T)
+    dual = _validate_dual_parameter("auto", loss, "l2", "ovr", np.asarray(X).T)
     assert dual is True
 
 
 def test_dual_auto_edge_cases():
     # Hinge, OvR, L2, N > M (6,2)
-    dual = _choose_dual_automatically("hinge", "l2", "ovr", np.asarray(X))
+    dual = _validate_dual_parameter("auto", "hinge", "l2", "ovr", np.asarray(X))
     assert dual is True  # only supports True
-    dual = _choose_dual_automatically("epsilon_insensitive", "l2", "ovr", np.asarray(X))
+    dual = _validate_dual_parameter(
+        "auto", "epsilon_insensitive", "l2", "ovr", np.asarray(X)
+    )
     assert dual is True  # only supports True
     # SqHinge, OvR, L1, N < M (2,6)
-    dual = _choose_dual_automatically("squared_hinge", "l1", "ovr", np.asarray(X).T)
+    dual = _validate_dual_parameter("auto", "squared_hinge", "l1", "ovr", np.asarray(X).T)
     assert dual is False  # only supports False
