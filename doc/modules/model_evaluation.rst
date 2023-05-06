@@ -1086,7 +1086,7 @@ with a svm classifier in a binary class problem::
   >>> y = [-1, 1]
   >>> est = svm.LinearSVC(dual="auto", random_state=0)
   >>> est.fit(X, y)
-  LinearSVC(dual="auto", random_state=0)
+  LinearSVC(dual='auto', random_state=0)
   >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
   >>> pred_decision
   array([-2.18...,  2.36...,  0.09...])
@@ -1101,7 +1101,7 @@ with a svm classifier in a multiclass problem::
   >>> labels = np.array([0, 1, 2, 3])
   >>> est = svm.LinearSVC(dual="auto")
   >>> est.fit(X, Y)
-  LinearSVC(dual="auto")
+  LinearSVC(dual='auto')
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
   >>> hinge_loss(y_true, pred_decision, labels=labels)
