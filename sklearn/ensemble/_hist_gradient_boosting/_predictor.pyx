@@ -147,7 +147,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
 def _compute_partial_dependence(
     node_struct [:] nodes,
     const X_DTYPE_C [:, ::1] X,
-    int [:] target_features,
+    unsigned int [:] target_features,
     Y_DTYPE_C [:] out
 ):
     """Partial dependence of the response on the ``target_features`` set.

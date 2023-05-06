@@ -1189,7 +1189,7 @@ cdef class Tree:
         return arr
 
     def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
-                                   int[::1] target_features,
+                                   unsigned int[::1] target_features,
                                    double[::1] out):
         """Partial dependence of the response on the ``target_feature`` set.
 
