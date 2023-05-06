@@ -12,20 +12,33 @@ from ..utils.multiclass import check_classification_targets
 from ..utils._param_validation import Interval, StrOptions, Hidden
 
 
-def _choose_dual_automatically(loss, penalty, multi_class, X):
-    """Choose dual parameter value wrt to loss, penalty and shape of the data."""
-    if X.shape[0] < X.shape[1]:
-        try:
-            _get_liblinear_solver_type(multi_class, penalty, loss, True)
+def _validate_dual_parameter(dual, loss, penalty, multi_class, X):
+    """Helper function to assign the value of dual parameter."""
+    if dual == "auto":
+        if X.shape[0] < X.shape[1]:
+            try:
+                _get_liblinear_solver_type(multi_class, penalty, loss, True)
+                return True
+            except ValueError:  # dual not supported for the combination
+                return False
+        else:
+            try:
+                _get_liblinear_solver_type(multi_class, penalty, loss, False)
+                return False
+            except ValueError:  # primal not supported by the combination
+                return True
+    # TODO 1.5
+    elif self.dual == "warn":
+            warnings.warn(
+                (
+                    "The default value of `dual` will change from `True` to `'auto'` in"
+                    " 1.5. Set the value of `dual` explicitly to suppress the warning."
+                ),
+                FutureWarning,
+            )
             return True
-        except ValueError:  # dual not supported for the combination
-            return False
     else:
-        try:
-            _get_liblinear_solver_type(multi_class, penalty, loss, False)
-            return False
-        except ValueError:  # primal not supported by the combination
-            return True
+        return dual
 
 
 class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
@@ -60,7 +73,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         `dual="auto"` will choose the value of the parameter automatically,
         based on the values of `n_samples`, `n_features`, `loss`, `multi_class`
         and `penalty`. If `n_samples` < `n_features` and optmizer supports
-        chosen `loss`, `multi_class` and `penalty`, then dual wil be set to True
+        chosen `loss`, `multi_class` and `penalty`, then dual will be set to True
         and will be set to False otherwise.
 
         .. versionchanged:: 1.3
@@ -296,21 +309,9 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
-        if self.dual == "auto":
-            _dual = _choose_dual_automatically(
-                self.loss, self.penalty, self.multi_class, X
-            )
-        elif self.dual == "warn":
-            warnings.warn(
-                (
-                    "The default value of `dual` will change from `True` to `'auto'` in"
-                    " 1.5. Set the value of `dual` explicitly to suppress the warning."
-                ),
-                FutureWarning,
-            )
-            _dual = True
-        else:
-            _dual = self.dual
+        _dual = _validate_dual_parameter(
+            self.dual, self.loss, self.penalty, self.multi_class, X
+        )
 
         self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
@@ -409,7 +410,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         `dual="auto"` will choose the value of the parameter automatically,
         based on the values of `n_samples`, `n_features` and `loss`. If
         `n_samples` < `n_features` and optmizer supports chosen `loss`,
-        then dual wil be set to True and will be set to False otherwise.
+        then dual will be set to True and will be set to False otherwise.
 
         .. versionchanged:: 1.3
            The default value will change from `True` to `"auto"` in 1.5.
@@ -564,19 +565,9 @@ class LinearSVR(RegressorMixin, LinearModel):
         )
         penalty = "l2"  # SVR only accepts l2 penalty
 
-        if self.dual == "auto":
-            _dual = _choose_dual_automatically(self.loss, penalty, "ovr", X)
-        elif self.dual == "warn":
-            warnings.warn(
-                (
-                    "The default value of `dual` will change from `True` to `'auto'` in"
-                    " 1.5. Set the value of `dual` explicitly to suppress the warning."
-                ),
-                FutureWarning,
-            )
-            _dual = True
-        else:
-            _dual = self.dual
+        _dual = _validate_dual_parameter(
+            self.dual, self.loss, penalty, "ovr", X
+        )
 
         self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
