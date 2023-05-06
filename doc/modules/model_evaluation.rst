@@ -1360,7 +1360,7 @@ function::
     >>> tpr
     array([0. , 0.5, 0.5, 1. , 1. ])
     >>> thresholds
-    array([1.8 , 0.8 , 0.4 , 0.35, 0.1 ])
+    array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
 
 Compared to metrics such as the subset accuracy, the Hamming loss, or the
 F1 score, ROC doesn't require optimizing a threshold for each label.
