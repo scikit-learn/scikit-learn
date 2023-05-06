@@ -1432,5 +1432,7 @@ def test_dual_auto_edge_cases():
     )
     assert dual is True  # only supports True
     # SqHinge, OvR, L1, N < M (2,6)
-    dual = _validate_dual_parameter("auto", "squared_hinge", "l1", "ovr", np.asarray(X).T)
+    dual = _validate_dual_parameter(
+        "auto", "squared_hinge", "l1", "ovr", np.asarray(X).T
+    )
     assert dual is False  # only supports False
