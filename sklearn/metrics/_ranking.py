@@ -253,8 +253,7 @@ def average_precision_score(
                 "Parameter pos_label is fixed to 1 for multiclass y_true. "
                 "Do not set pos_label or set pos_label to 1."
             )
-        else:
-            y_true = label_binarize(y_true, classes=present_labels)
+        y_true = label_binarize(y_true, classes=present_labels)
 
     average_precision = partial(
         _binary_uninterpolated_average_precision, pos_label=pos_label
