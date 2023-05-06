@@ -39,8 +39,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     n_features_to_select : "auto", int or float, default='warn'
         If `"auto"`, the behaviour depends on the `tol` parameter:
 
-        - if `tol` is not `None`, then features are selected until the score
-          improvement does not exceed `tol`.
+        - if `tol` is not `None`, then features are selected while the score
+          change does not exceed `tol`.
         - otherwise, half of the features are selected.
 
         If integer, the parameter is the absolute number of features to select.
@@ -53,7 +53,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
            The default changed from `None` to `"warn"` in 1.1 and will become
            `"auto"` in 1.3. `None` and `'warn'` will be removed in 1.3.
            To keep the same behaviour as `None`, set
-           `n_features_to_select="auto" and `tol=None`.
+           `n_features_to_select="auto"` and `tol=None`.
 
     tol : float, default=None
         If the score is not incremented by at least `tol` between two
