@@ -88,7 +88,7 @@ classifiers = [
         make_pipeline(
             StandardScaler(),
             KBinsDiscretizer(encode="onehot"),
-            LinearSVC(random_state=0),
+            LinearSVC(random_state=0, dual="auto"),
         ),
         {
             "kbinsdiscretizer__n_bins": np.arange(5, 8),
