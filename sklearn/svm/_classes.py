@@ -29,14 +29,14 @@ def _validate_dual_parameter(dual, loss, penalty, multi_class, X):
                 return True
     # TODO 1.5
     elif self.dual == "warn":
-            warnings.warn(
-                (
-                    "The default value of `dual` will change from `True` to `'auto'` in"
-                    " 1.5. Set the value of `dual` explicitly to suppress the warning."
-                ),
-                FutureWarning,
-            )
-            return True
+        warnings.warn(
+            (
+                "The default value of `dual` will change from `True` to `'auto'` in"
+                " 1.5. Set the value of `dual` explicitly to suppress the warning."
+            ),
+            FutureWarning,
+        )
+        return True
     else:
         return dual
 
