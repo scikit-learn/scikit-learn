@@ -1276,8 +1276,10 @@ def fbeta_score(
 
     The `beta` parameter represents the ratio of recall importance to
     precision importance. `beta > 1` gives more weight to recall, while
-    `beta < 1` favors precision. For example, `beta = 2` makes recall
-    twice as important as precision, while `beta = 0.5` does the opposite.
+    `beta < 1` favors precision. For example, `beta = 2` makes recall twice
+    as important as precision, while `beta = 0.5` does the opposite.
+    Asymptotically, `beta -> +inf` considers only recall, and `beta -> 0`
+    only precision.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
