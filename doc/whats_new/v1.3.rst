@@ -512,7 +512,7 @@ Changelog
   extension arrays and object dtypes by return an ndarray with object dtype.
   :pr:`25814` by `Thomas Fan`_.
 
-- |Enhancement| :func:`utils.multiclass.check_classification_targets` raises
+- |Enhancement| :func:`utils.multiclass.type_of_target` raises
   a warning when the number of unique classes is greater than 50% of
   `n_samples`. :pr:`26335` by :user:`Rahil Parikh <rprkh>`.
 
