@@ -141,7 +141,7 @@ multi-class strategy, thus training `n_classes` models.
 
     >>> lin_clf = svm.LinearSVC(dual="auto")
     >>> lin_clf.fit(X, Y)
-    LinearSVC(dual="auto")
+    LinearSVC(dual='auto')
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
