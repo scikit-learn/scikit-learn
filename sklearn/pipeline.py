@@ -421,6 +421,14 @@ class Pipeline(_BaseComposition):
 
         return self
 
+    def _can_fit_transform(self):
+        return (
+            self._final_estimator == "passthrough"
+            or hasattr(self._final_estimator, "transform")
+            or hasattr(self._final_estimator, "fit_transform")
+        )
+
+    @available_if(_can_fit_transform)
     def fit_transform(self, X, y=None, **fit_params):
         """Fit the model and transform with the final estimator.
 
@@ -744,12 +752,34 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][1].classes_
 
     def _more_tags(self):
+        tags = {
+            "_xfail_checks": {
+                "check_dont_overwrite_parameters": (
+                    "Pipeline changes the `steps` parameter, which it shouldn't."
+                    "Therefore this test is x-fail until we fix this."
+                ),
+                "check_estimators_overwrite_params": (
+                    "Pipeline changes the `steps` parameter, which it shouldn't."
+                    "Therefore this test is x-fail until we fix this."
+                ),
+            }
+        }
+
         try:
-            return {"pairwise": _safe_tags(self.steps[0][1], "pairwise")}
+            tags["pairwise"] = _safe_tags(self.steps[0][1], "pairwise")
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
-            return {}
+            pass
+
+        try:
+            tags["multioutput"] = _safe_tags(self.steps[-1][1], "multioutput")
+        except (ValueError, AttributeError, TypeError):
+            # This happens when the `steps` is not a list of (name, estimator)
+            # tuples and `fit` is not called yet to validate the steps.
+            pass
+
+        return tags
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
