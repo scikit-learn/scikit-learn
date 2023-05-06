@@ -971,6 +971,9 @@ class OneHotEncoder(_BaseEncoder):
             Ignored. This parameter exists only for compatibility with
             :class:`~sklearn.pipeline.Pipeline`.
 
+       sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+
         Returns
         -------
         self
