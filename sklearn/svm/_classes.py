@@ -28,7 +28,7 @@ def _validate_dual_parameter(dual, loss, penalty, multi_class, X):
             except ValueError:  # primal not supported by the combination
                 return True
     # TODO 1.5
-    elif self.dual == "warn":
+    elif dual == "warn":
         warnings.warn(
             (
                 "The default value of `dual` will change from `True` to `'auto'` in"
