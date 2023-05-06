@@ -214,12 +214,11 @@ def test_unique_labels_and_samples():
     y = np.array([0, 1, 1, 2, 3, 4, 5])
 
     warning_message = (
-        "The number of unique classes is greater than 50% of the samples. You are"
-        " likely feeding bad targets."
+        r"The number of unique classes is greater than 50% of the samples."
     )
 
     with pytest.warns(UserWarning, match=warning_message):
-        check_classification_targets(y=y, n_samples=X.shape[0])
+        check_classification_targets(y=y)
 
 
 def test_unique_labels_non_specific():

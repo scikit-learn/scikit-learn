@@ -195,7 +195,7 @@ def is_multilabel(y):
         )
 
 
-def check_classification_targets(y, n_samples=None):
+def check_classification_targets(y):
     """Ensure that target y is of a non-regression type.
 
     Only the following target types (as defined in type_of_target) are allowed:
@@ -206,9 +206,6 @@ def check_classification_targets(y, n_samples=None):
     ----------
     y : array-like
         Target values.
-
-    n_samples : int, default=None
-        Number of samples in the data.
     """
     y_type = type_of_target(y, input_name="y")
     if y_type not in [
@@ -223,13 +220,6 @@ def check_classification_targets(y, n_samples=None):
             "classifier, which expects discrete classes on a "
             "regression target with continuous values."
         )
-
-    if n_samples is not None:
-        if len(np.unique(y)) > round(0.5 * n_samples):
-            warnings.warn(
-                "The number of unique classes is greater than 50% of the samples. You"
-                " are likely feeding bad targets."
-            )
 
 
 def type_of_target(y, input_name=""):
@@ -397,7 +387,13 @@ def type_of_target(y, input_name=""):
 
     # Check multiclass
     first_row = y[0] if not issparse(y) else y.getrow(0).data
-    if xp.unique_values(y).shape[0] > 2 or (y.ndim == 2 and len(first_row) > 1):
+    classes = xp.unique_values(y)
+    if classes.shape[0] > round(0.5 * y.shape[0]):
+        warnings.warn(
+            r"The number of unique classes is greater than 50% of the samples."
+        )
+
+    if classes.shape[0] > 2 or (y.ndim == 2 and len(first_row) > 1):
         # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         return "multiclass" + suffix
     else:
