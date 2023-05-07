@@ -880,7 +880,7 @@ def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
     classes = np.unique(labels)
     classes_repr = ", ".join(repr(c) for c in classes)
     msg = (
-        f"y_true takes value in {{{classes_repr}}} and pos_label is not "
+        "y_true takes value in {b'a', b'b'} and pos_label is not "
         "specified: either make y_true take value in {0, 1} or "
         "{-1, 1} or pass pos_label explicitly."
     )
@@ -1236,7 +1236,7 @@ def test_score_scale_invariance():
 
 
 @pytest.mark.parametrize(
-    "y_true, y_score, expected_fpr, expected_fnr",
+    "y_true,y_score,expected_fpr,expected_fnr",
     [
         ([0, 0, 1], [0, 0.5, 1], [0], [0]),
         ([0, 0, 1], [0, 0.25, 0.5], [0], [0]),
@@ -1269,7 +1269,7 @@ def test_det_curve_toydata(y_true, y_score, expected_fpr, expected_fnr):
 
 
 @pytest.mark.parametrize(
-    "y_true, y_score, expected_fpr, expected_fnr",
+    "y_true,y_score,expected_fpr,expected_fnr",
     [
         ([1, 0], [0.5, 0.5], [1], [0]),
         ([0, 1], [0.5, 0.5], [1], [0]),
