@@ -476,7 +476,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
@@ -532,6 +532,12 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     return homogeneity, completeness, v_measure_score
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    }
+)
 def homogeneity_score(labels_true, labels_pred):
     """Homogeneity metric of a cluster labeling given a ground truth.
 
@@ -550,7 +556,7 @@ def homogeneity_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
@@ -601,6 +607,12 @@ def homogeneity_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[0]
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    }
+)
 def completeness_score(labels_true, labels_pred):
     """Compute completeness metric of a cluster labeling given a ground truth.
 
@@ -619,7 +631,7 @@ def completeness_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
@@ -670,6 +682,13 @@ def completeness_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[1]
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "beta": [Interval(Real, 0, None, closed="left")],
+    }
+)
 def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     """V-measure cluster labeling given a ground truth.
 
@@ -694,7 +713,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
