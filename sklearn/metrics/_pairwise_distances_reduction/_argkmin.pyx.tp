@@ -1,5 +1,3 @@
-cimport numpy as cnp
-
 from libc.stdlib cimport free, malloc
 from libc.float cimport DBL_MAX
 from cython cimport final
@@ -7,7 +5,7 @@ from cython.parallel cimport parallel, prange
 
 from ...utils._heap cimport heap_push
 from ...utils._sorting cimport simultaneous_sort
-from ...utils._typedefs cimport ITYPE_t, DTYPE_t
+from ...utils._typedefs cimport intp_t, float64_t
 
 import numpy as np
 import warnings
@@ -16,10 +14,6 @@ from numbers import Integral
 from scipy.sparse import issparse
 from ...utils import check_array, check_scalar, _in_unstable_openblas_configuration
 from ...utils.fixes import threadpool_limits
-from ...utils._typedefs import ITYPE, DTYPE
-
-
-cnp.import_array()
 
 {{for name_suffix in ['64', '32']}}
 
@@ -41,7 +35,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         cls,
         X,
         Y,
-        ITYPE_t k,
+        intp_t k,
         str metric="euclidean",
         chunk_size=None,
         dict metric_kwargs=None,
@@ -61,11 +55,9 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
 
         No instance should directly be created outside of this class method.
         """
-        if (
-            metric in ("euclidean", "sqeuclidean")
-            and not (issparse(X) or issparse(Y))
-        ):
-            # Specialized implementation of ArgKmin for the Euclidean distance.
+        if metric in ("euclidean", "sqeuclidean"):
+            # Specialized implementation of ArgKmin for the Euclidean distance
+            # for the dense-dense and sparse-sparse cases.
             # This implementation computes the distances by chunk using
             # a decomposition of the Squared Euclidean distance.
             # This specialisation has an improved arithmetic intensity for both
@@ -106,7 +98,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         DatasetsPair{{name_suffix}} datasets_pair,
         chunk_size=None,
         strategy=None,
-        ITYPE_t k=1,
+        intp_t k=1,
     ):
         super().__init__(
             datasets_pair=datasets_pair,
@@ -124,16 +116,16 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         #   - when parallelizing on Y, the pointers of those heaps are referencing
         #   small heaps which are thread-wise-allocated and whose content will be
         #   merged with the main heaps'.
-        self.heaps_r_distances_chunks = <DTYPE_t **> malloc(
-            sizeof(DTYPE_t *) * self.chunks_n_threads
+        self.heaps_r_distances_chunks = <float64_t **> malloc(
+            sizeof(float64_t *) * self.chunks_n_threads
         )
-        self.heaps_indices_chunks = <ITYPE_t **> malloc(
-            sizeof(ITYPE_t *) * self.chunks_n_threads
+        self.heaps_indices_chunks = <intp_t **> malloc(
+            sizeof(intp_t *) * self.chunks_n_threads
         )
 
         # Main heaps which will be returned as results by `ArgKmin{{name_suffix}}.compute`.
-        self.argkmin_indices = np.full((self.n_samples_X, self.k), 0, dtype=ITYPE)
-        self.argkmin_distances = np.full((self.n_samples_X, self.k), DBL_MAX, dtype=DTYPE)
+        self.argkmin_indices = np.full((self.n_samples_X, self.k), 0, dtype=np.intp)
+        self.argkmin_distances = np.full((self.n_samples_X, self.k), DBL_MAX, dtype=np.float64)
 
     def __dealloc__(self):
         if self.heaps_indices_chunks is not NULL:
@@ -144,51 +136,50 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
 
     cdef void _compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
-    ) nogil:
+        intp_t X_start,
+        intp_t X_end,
+        intp_t Y_start,
+        intp_t Y_end,
+        intp_t thread_num,
+    ) noexcept nogil:
         cdef:
-            ITYPE_t i, j
-            ITYPE_t n_samples_X = X_end - X_start
-            ITYPE_t n_samples_Y = Y_end - Y_start
-            DTYPE_t *heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
-            ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
+            intp_t i, j
+            intp_t n_samples_X = X_end - X_start
+            intp_t n_samples_Y = Y_end - Y_start
+            float64_t *heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
+            intp_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
         # Pushing the distances and their associated indices on a heap
         # which by construction will keep track of the argkmin.
         for i in range(n_samples_X):
             for j in range(n_samples_Y):
                 heap_push(
-                    heaps_r_distances + i * self.k,
-                    heaps_indices + i * self.k,
-                    self.k,
-                    self.datasets_pair.surrogate_dist(X_start + i, Y_start + j),
-                    Y_start + j,
+                    values=heaps_r_distances + i * self.k,
+                    indices=heaps_indices + i * self.k,
+                    size=self.k,
+                    val=self.datasets_pair.surrogate_dist(X_start + i, Y_start + j),
+                    val_idx=Y_start + j,
                 )
 
     cdef void _parallel_on_X_init_chunk(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-    ) nogil:
+        intp_t thread_num,
+        intp_t X_start,
+        intp_t X_end,
+    ) noexcept nogil:
         # As this strategy is embarrassingly parallel, we can set each
         # thread's heaps pointer to the proper position on the main heaps.
         self.heaps_r_distances_chunks[thread_num] = &self.argkmin_distances[X_start, 0]
         self.heaps_indices_chunks[thread_num] = &self.argkmin_indices[X_start, 0]
 
-    @final
     cdef void _parallel_on_X_prange_iter_finalize(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-    ) nogil:
+        intp_t thread_num,
+        intp_t X_start,
+        intp_t X_end,
+    ) noexcept nogil:
         cdef:
-            ITYPE_t idx
+            intp_t idx
 
         # Sorting the main heaps portion associated to `X[X_start:X_end]`
         # in ascending order w.r.t the distances.
@@ -201,11 +192,11 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
 
     cdef void _parallel_on_Y_init(
         self,
-    ) nogil:
+    ) noexcept nogil:
         cdef:
             # Maximum number of scalar elements (the last chunks can be smaller)
-            ITYPE_t heaps_size = self.X_n_samples_chunk * self.k
-            ITYPE_t thread_num
+            intp_t heaps_size = self.X_n_samples_chunk * self.k
+            intp_t thread_num
 
         # The allocation is done in parallel for data locality purposes: this way
         # the heaps used in each threads are allocated in pages which are closer
@@ -217,19 +208,19 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
             # As chunks of X are shared across threads, so must their
             # heaps. To solve this, each thread has its own heaps
             # which are then synchronised back in the main ones.
-            self.heaps_r_distances_chunks[thread_num] = <DTYPE_t *> malloc(
-                heaps_size * sizeof(DTYPE_t)
+            self.heaps_r_distances_chunks[thread_num] = <float64_t *> malloc(
+                heaps_size * sizeof(float64_t)
             )
-            self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(
-                heaps_size * sizeof(ITYPE_t)
+            self.heaps_indices_chunks[thread_num] = <intp_t *> malloc(
+                heaps_size * sizeof(intp_t)
             )
 
     cdef void _parallel_on_Y_parallel_init(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-    ) nogil:
+        intp_t thread_num,
+        intp_t X_start,
+        intp_t X_end,
+    ) noexcept nogil:
         # Initialising heaps (memset can't be used here)
         for idx in range(self.X_n_samples_chunk * self.k):
             self.heaps_r_distances_chunks[thread_num][idx] = DBL_MAX
@@ -238,11 +229,11 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
     @final
     cdef void _parallel_on_Y_synchronize(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-    ) nogil:
+        intp_t X_start,
+        intp_t X_end,
+    ) noexcept nogil:
         cdef:
-            ITYPE_t idx, jdx, thread_num
+            intp_t idx, jdx, thread_num
         with nogil, parallel(num_threads=self.effective_n_threads):
             # Synchronising the thread heaps with the main heaps.
             # This is done in parallel sample-wise (no need for locks).
@@ -255,18 +246,18 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
                 for thread_num in range(self.chunks_n_threads):
                     for jdx in range(self.k):
                         heap_push(
-                            &self.argkmin_distances[X_start + idx, 0],
-                            &self.argkmin_indices[X_start + idx, 0],
-                            self.k,
-                            self.heaps_r_distances_chunks[thread_num][idx * self.k + jdx],
-                            self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
+                            values=&self.argkmin_distances[X_start + idx, 0],
+                            indices=&self.argkmin_indices[X_start + idx, 0],
+                            size=self.k,
+                            val=self.heaps_r_distances_chunks[thread_num][idx * self.k + jdx],
+                            val_idx=self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
                         )
 
     cdef void _parallel_on_Y_finalize(
         self,
-    ) nogil:
+    ) noexcept nogil:
         cdef:
-            ITYPE_t idx, thread_num
+            intp_t idx, thread_num
 
         with nogil, parallel(num_threads=self.chunks_n_threads):
             # Deallocating temporary datastructures
@@ -284,15 +275,15 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
                 )
         return
 
-    cdef void compute_exact_distances(self) nogil:
+    cdef void compute_exact_distances(self) noexcept nogil:
         cdef:
-            ITYPE_t i, j
-            DTYPE_t[:, ::1] distances = self.argkmin_distances
+            intp_t i, j
+            float64_t[:, ::1] distances = self.argkmin_distances
         for i in prange(self.n_samples_X, schedule='static', nogil=True,
                         num_threads=self.effective_n_threads):
             for j in range(self.k):
                 distances[i, j] = self.datasets_pair.distance_metric._rdist_to_dist(
-                    # Guard against eventual -0., causing nan production.
+                    # Guard against potential -0., causing nan production.
                     max(distances[i, j], 0.)
                 )
 
@@ -304,7 +295,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
 
             # Values are returned identically to the way `KNeighborsMixin.kneighbors`
             # returns values. This is counter-intuitive but this allows not using
-            # complex adaptations where `ArgKmin{{name_suffix}}.compute` is called.
+            # complex adaptations where `ArgKmin.compute` is called.
             return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
 
         return np.asarray(self.argkmin_indices)
@@ -322,16 +313,15 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
         self,
         X,
         Y,
-        ITYPE_t k,
+        intp_t k,
         bint use_squared_distances=False,
         chunk_size=None,
         strategy=None,
         metric_kwargs=None,
     ):
         if (
-            metric_kwargs is not None and
-            len(metric_kwargs) > 0 and
-            "Y_norm_squared" not in metric_kwargs
+            isinstance(metric_kwargs, dict) and
+            (metric_kwargs.keys() - {"X_norm_squared", "Y_norm_squared"})
         ):
             warnings.warn(
                 f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't "
@@ -348,7 +338,7 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
             k=k,
         )
         cdef:
-            ITYPE_t dist_middle_terms_chunks_size = self.Y_n_samples_chunk * self.X_n_samples_chunk
+            intp_t dist_middle_terms_chunks_size = self.Y_n_samples_chunk * self.X_n_samples_chunk
 
         self.middle_term_computer = MiddleTermComputer{{name_suffix}}.get_for(
             X,
@@ -365,54 +355,65 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
                 metric_kwargs.pop("Y_norm_squared"),
                 ensure_2d=False,
                 input_name="Y_norm_squared",
-                dtype=np.float64
+                dtype=np.float64,
             )
         else:
             self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(
-                Y, self.effective_n_threads
+                Y,
+                self.effective_n_threads,
             )
 
-        # Do not recompute norms if datasets are identical.
-        self.X_norm_squared = (
-            self.Y_norm_squared if X is Y else
-            _sqeuclidean_row_norms{{name_suffix}}(
-                X, self.effective_n_threads
+        if metric_kwargs is not None and "X_norm_squared" in metric_kwargs:
+            self.X_norm_squared = check_array(
+                metric_kwargs.pop("X_norm_squared"),
+                ensure_2d=False,
+                input_name="X_norm_squared",
+                dtype=np.float64,
             )
-        )
+        else:
+            # Do not recompute norms if datasets are identical.
+            self.X_norm_squared = (
+                self.Y_norm_squared if X is Y else
+                _sqeuclidean_row_norms{{name_suffix}}(
+                    X,
+                    self.effective_n_threads,
+                )
+            )
+
         self.use_squared_distances = use_squared_distances
 
     @final
-    cdef void compute_exact_distances(self) nogil:
+    cdef void compute_exact_distances(self) noexcept nogil:
         if not self.use_squared_distances:
             ArgKmin{{name_suffix}}.compute_exact_distances(self)
 
     @final
     cdef void _parallel_on_X_parallel_init(
         self,
-        ITYPE_t thread_num,
-    ) nogil:
+        intp_t thread_num,
+    ) noexcept nogil:
         ArgKmin{{name_suffix}}._parallel_on_X_parallel_init(self, thread_num)
         self.middle_term_computer._parallel_on_X_parallel_init(thread_num)
 
     @final
     cdef void _parallel_on_X_init_chunk(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-    ) nogil:
+        intp_t thread_num,
+        intp_t X_start,
+        intp_t X_end,
+    ) noexcept nogil:
         ArgKmin{{name_suffix}}._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
         self.middle_term_computer._parallel_on_X_init_chunk(thread_num, X_start, X_end)
 
     @final
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
-    ) nogil:
+        intp_t X_start,
+        intp_t X_end,
+        intp_t Y_start,
+        intp_t Y_end,
+        intp_t thread_num,
+    ) noexcept nogil:
         ArgKmin{{name_suffix}}._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             self,
             X_start, X_end,
@@ -426,29 +427,29 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
     @final
     cdef void _parallel_on_Y_init(
         self,
-    ) nogil:
+    ) noexcept nogil:
         ArgKmin{{name_suffix}}._parallel_on_Y_init(self)
         self.middle_term_computer._parallel_on_Y_init()
 
     @final
     cdef void _parallel_on_Y_parallel_init(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-    ) nogil:
+        intp_t thread_num,
+        intp_t X_start,
+        intp_t X_end,
+    ) noexcept nogil:
         ArgKmin{{name_suffix}}._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
         self.middle_term_computer._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
 
     @final
     cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
-    ) nogil:
+        intp_t X_start,
+        intp_t X_end,
+        intp_t Y_start,
+        intp_t Y_end,
+        intp_t thread_num,
+    ) noexcept nogil:
         ArgKmin{{name_suffix}}._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             self,
             X_start, X_end,
@@ -462,41 +463,43 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
     @final
     cdef void _compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
-    ) nogil:
+        intp_t X_start,
+        intp_t X_end,
+        intp_t Y_start,
+        intp_t Y_end,
+        intp_t thread_num,
+    ) noexcept nogil:
         cdef:
-            ITYPE_t i, j
-            ITYPE_t n_X = X_end - X_start
-            ITYPE_t n_Y = Y_end - Y_start
-            DTYPE_t * dist_middle_terms = self.middle_term_computer._compute_dist_middle_terms(
+            intp_t i, j
+            float64_t sqeuclidean_dist_i_j
+            intp_t n_X = X_end - X_start
+            intp_t n_Y = Y_end - Y_start
+            float64_t * dist_middle_terms = self.middle_term_computer._compute_dist_middle_terms(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
-            DTYPE_t * heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
-            ITYPE_t * heaps_indices = self.heaps_indices_chunks[thread_num]
-
+            float64_t * heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
+            intp_t * heaps_indices = self.heaps_indices_chunks[thread_num]
 
         # Pushing the distance and their associated indices on heaps
         # which keep tracks of the argkmin.
         for i in range(n_X):
             for j in range(n_Y):
+                sqeuclidean_dist_i_j = (
+                    self.X_norm_squared[i + X_start] +
+                    dist_middle_terms[i * n_Y + j] +
+                    self.Y_norm_squared[j + Y_start]
+                )
+
+                # Catastrophic cancellation might cause -0. to be present,
+                # e.g. when computing d(x_i, y_i) when X is Y.
+                sqeuclidean_dist_i_j = max(0., sqeuclidean_dist_i_j)
+
                 heap_push(
-                    heaps_r_distances + i * self.k,
-                    heaps_indices + i * self.k,
-                    self.k,
-                    # Using the squared euclidean distance as the rank-preserving distance:
-                    #
-                    #             ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
-                    #
-                    (
-                        self.X_norm_squared[i + X_start] +
-                        dist_middle_terms[i * n_Y + j] +
-                        self.Y_norm_squared[j + Y_start]
-                    ),
-                    j + Y_start,
+                    values=heaps_r_distances + i * self.k,
+                    indices=heaps_indices + i * self.k,
+                    size=self.k,
+                    val=sqeuclidean_dist_i_j,
+                    val_idx=j + Y_start,
                 )
 
 {{endfor}}

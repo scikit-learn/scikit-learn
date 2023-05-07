@@ -10,22 +10,48 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_allclose_dense_sparse,
+    assert_allclose,
 )
 
 X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
 
 
 @pytest.mark.parametrize(
-    "strategy, expected",
+    "strategy, expected, sample_weight",
     [
-        ("uniform", [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]]),
-        ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]]),
-        ("quantile", [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]]),
+        ("uniform", [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]], None),
+        ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]], None),
+        ("quantile", [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]], None),
+        (
+            "quantile",
+            [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]],
+            [1, 1, 2, 1],
+        ),
+        (
+            "quantile",
+            [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]],
+            [1, 1, 1, 1],
+        ),
+        (
+            "quantile",
+            [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 1, 1, 1]],
+            [0, 1, 1, 1],
+        ),
+        (
+            "kmeans",
+            [[0, 0, 0, 0], [1, 1, 1, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
+            [1, 0, 3, 1],
+        ),
+        (
+            "kmeans",
+            [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
+            [1, 1, 1, 1],
+        ),
     ],
 )
-def test_fit_transform(strategy, expected):
+def test_fit_transform(strategy, expected, sample_weight):
     est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=strategy)
-    est.fit(X)
+    est.fit(X, sample_weight=sample_weight)
     assert_array_equal(expected, est.transform(X))
 
 
@@ -33,6 +59,18 @@ def test_valid_n_bins():
     KBinsDiscretizer(n_bins=2).fit_transform(X)
     KBinsDiscretizer(n_bins=np.array([2])[0]).fit_transform(X)
     assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(int)
+
+
+@pytest.mark.parametrize("strategy", ["uniform"])
+def test_kbinsdiscretizer_wrong_strategy_with_weights(strategy):
+    """Check that we raise an error when the wrong strategy is used."""
+    sample_weight = np.ones(shape=(len(X)))
+    est = KBinsDiscretizer(n_bins=3, strategy=strategy)
+    err_msg = (
+        "`sample_weight` was provided but it cannot be used with strategy='uniform'."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, sample_weight=sample_weight)
 
 
 def test_invalid_n_bins_array():
@@ -74,17 +112,45 @@ def test_invalid_n_bins_array():
 
 
 @pytest.mark.parametrize(
-    "strategy, expected",
+    "strategy, expected, sample_weight",
     [
-        ("uniform", [[0, 0, 0, 0], [0, 1, 1, 0], [1, 2, 2, 1], [1, 2, 2, 2]]),
-        ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 2, 2, 2]]),
-        ("quantile", [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]]),
+        ("uniform", [[0, 0, 0, 0], [0, 1, 1, 0], [1, 2, 2, 1], [1, 2, 2, 2]], None),
+        ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 2, 2, 2]], None),
+        ("quantile", [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]], None),
+        (
+            "quantile",
+            [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]],
+            [1, 1, 3, 1],
+        ),
+        (
+            "quantile",
+            [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 1, 1, 1]],
+            [0, 1, 3, 1],
+        ),
+        # (
+        #     "quantile",
+        #     [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]],
+        #     [1, 1, 1, 1],
+        # ),
+        #
+        # TODO: This test case above aims to test if the case where an array of
+        #       ones passed in sample_weight parameter is equal to the case when
+        #       sample_weight is None.
+        #       Unfortunately, the behavior of `_weighted_percentile` when
+        #       `sample_weight = [1, 1, 1, 1]` are currently not equivalent.
+        #       This problem has been adressed in issue :
+        #       https://github.com/scikit-learn/scikit-learn/issues/17370
+        (
+            "kmeans",
+            [[0, 0, 0, 0], [0, 1, 1, 0], [1, 1, 1, 1], [1, 2, 2, 2]],
+            [1, 0, 3, 1],
+        ),
     ],
 )
-def test_fit_transform_n_bins_array(strategy, expected):
+def test_fit_transform_n_bins_array(strategy, expected, sample_weight):
     est = KBinsDiscretizer(
         n_bins=[2, 3, 3, 3], encode="ordinal", strategy=strategy
-    ).fit(X)
+    ).fit(X, sample_weight=sample_weight)
     assert_array_equal(expected, est.transform(X))
 
     # test the shape of bin_edges_
@@ -92,6 +158,28 @@ def test_fit_transform_n_bins_array(strategy, expected):
     assert est.bin_edges_.shape == (n_features,)
     for bin_edges, n_bins in zip(est.bin_edges_, est.n_bins_):
         assert bin_edges.shape == (n_bins + 1,)
+
+
+@pytest.mark.filterwarnings("ignore: Bins whose width are too small")
+def test_kbinsdiscretizer_effect_sample_weight():
+    """Check the impact of `sample_weight` one computed quantiles."""
+    X = np.array([[-2], [-1], [1], [3], [500], [1000]])
+    # add a large number of bins such that each sample with a non-null weight
+    # will be used as bin edge
+    est = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
+    est.fit(X, sample_weight=[1, 1, 1, 1, 0, 0])
+    assert_allclose(est.bin_edges_[0], [-2, -1, 1, 3])
+    assert_allclose(est.transform(X), [[0.0], [1.0], [2.0], [2.0], [2.0], [2.0]])
+
+
+@pytest.mark.parametrize("strategy", ["kmeans", "quantile"])
+def test_kbinsdiscretizer_no_mutating_sample_weight(strategy):
+    """Make sure that `sample_weight` is not changed in place."""
+    est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=strategy)
+    sample_weight = np.array([1, 3, 1, 2], dtype=np.float64)
+    sample_weight_copy = np.copy(sample_weight)
+    est.fit(X, sample_weight=sample_weight)
+    assert_allclose(sample_weight, sample_weight_copy)
 
 
 @pytest.mark.parametrize("strategy", ["uniform", "kmeans", "quantile"])

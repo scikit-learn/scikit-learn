@@ -137,6 +137,23 @@ def test_column_transformer():
     assert len(both.transformers_) == 1
 
 
+def test_column_transformer_tuple_transformers_parameter():
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+
+    transformers = [("trans1", Trans(), [0]), ("trans2", Trans(), [1])]
+
+    ct_with_list = ColumnTransformer(transformers)
+    ct_with_tuple = ColumnTransformer(tuple(transformers))
+
+    assert_array_equal(
+        ct_with_list.fit_transform(X_array), ct_with_tuple.fit_transform(X_array)
+    )
+    assert_array_equal(
+        ct_with_list.fit(X_array).transform(X_array),
+        ct_with_tuple.fit(X_array).transform(X_array),
+    )
+
+
 def test_column_transformer_dataframe():
     pd = pytest.importorskip("pandas")
 
@@ -786,7 +803,6 @@ def test_column_transformer_get_feature_names():
 
 
 def test_column_transformer_special_strings():
-
     # one 'drop' -> ignore
     X_array = np.array([[0.0, 1.0, 2.0], [2.0, 4.0, 6.0]]).T
     ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", "drop", [1])])
@@ -811,15 +827,6 @@ def test_column_transformer_special_strings():
     assert_array_equal(ct.fit(X_array).transform(X_array), exp)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] != "remainder"
-
-    # None itself / other string is not valid
-    for val in [None, "other"]:
-        ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", None, [1])])
-        msg = "All estimators should implement"
-        with pytest.raises(TypeError, match=msg):
-            ct.fit_transform(X_array)
-        with pytest.raises(TypeError, match=msg):
-            ct.fit(X_array)
 
 
 def test_column_transformer_remainder():
@@ -864,15 +871,6 @@ def test_column_transformer_remainder():
     assert ct.transformers_[-1][0] == "remainder"
     assert ct.transformers_[-1][1] == "passthrough"
     assert_array_equal(ct.transformers_[-1][2], [1])
-
-    # error on invalid arg
-    ct = ColumnTransformer([("trans1", Trans(), [0])], remainder=1)
-    msg = "remainder keyword needs to be one of 'drop', 'passthrough', or estimator."
-    with pytest.raises(ValueError, match=msg):
-        ct.fit(X_array)
-
-    with pytest.raises(ValueError, match=msg):
-        ct.fit_transform(X_array)
 
     # check default for make_column_transformer
     ct = make_column_transformer((Trans(), [0]))
@@ -2130,3 +2128,32 @@ def test_transformers_with_pandas_out_but_not_feature_names_out(
     ct.set_params(verbose_feature_names_out=False)
     X_trans_df1 = ct.fit_transform(X_df)
     assert_array_equal(X_trans_df1.columns, expected_non_verbose_names)
+
+
+@pytest.mark.parametrize(
+    "empty_selection",
+    [[], np.array([False, False]), [False, False]],
+    ids=["list", "bool", "bool_int"],
+)
+def test_empty_selection_pandas_output(empty_selection):
+    """Check that pandas output works when there is an empty selection.
+
+    Non-regression test for gh-25487
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame([[1.0, 2.2], [3.0, 1.0]], columns=["a", "b"])
+    ct = ColumnTransformer(
+        [
+            ("categorical", "passthrough", empty_selection),
+            ("numerical", StandardScaler(), ["a", "b"]),
+        ],
+        verbose_feature_names_out=True,
+    )
+    ct.set_output(transform="pandas")
+    X_out = ct.fit_transform(X)
+    assert_array_equal(X_out.columns, ["numerical__a", "numerical__b"])
+
+    ct.set_params(verbose_feature_names_out=False)
+    X_out = ct.fit_transform(X)
+    assert_array_equal(X_out.columns, ["a", "b"])

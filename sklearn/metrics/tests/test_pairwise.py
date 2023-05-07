@@ -16,6 +16,7 @@ except ImportError:
     from scipy.spatial.distance import minkowski as wminkowski
 
 from sklearn.utils.fixes import sp_version, parse_version
+from sklearn.utils.parallel import delayed, Parallel
 
 import pytest
 
@@ -52,6 +53,7 @@ from sklearn.metrics.pairwise import check_paired_arrays
 from sklearn.metrics.pairwise import paired_distances
 from sklearn.metrics.pairwise import paired_euclidean_distances
 from sklearn.metrics.pairwise import paired_manhattan_distances
+from sklearn.metrics.pairwise import paired_cosine_distances
 from sklearn.metrics.pairwise import _euclidean_distances_upcast
 from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
@@ -225,7 +227,7 @@ def test_pairwise_boolean_distance(metric):
     with ignore_warnings(category=DataConversionWarning):
         for Z in [Y, None]:
             res = pairwise_distances(X, Z, metric=metric)
-            res[np.isnan(res)] = 0
+            np.nan_to_num(res, nan=0, posinf=0, neginf=0, copy=False)
             assert np.sum(res != 0) == 0
 
     # non-boolean arrays are converted to boolean for boolean
@@ -390,8 +392,6 @@ def test_pairwise_kernels(metric):
     Y_sparse = csr_matrix(Y)
     if metric in ["chi2", "additive_chi2"]:
         # these don't support sparse matrices yet
-        with pytest.raises(ValueError):
-            pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
         return
     K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
     assert_allclose(K1, K2)
@@ -978,7 +978,6 @@ def test_nan_euclidean_distances_equal_to_euclidean_distance(squared):
 @pytest.mark.parametrize("X", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]])])
 @pytest.mark.parametrize("Y", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]]), None])
 def test_nan_euclidean_distances_infinite_values(X, Y):
-
     with pytest.raises(ValueError) as excinfo:
         nan_euclidean_distances(X, Y=Y)
 
@@ -1002,7 +1001,6 @@ def test_nan_euclidean_distances_infinite_values(X, Y):
     ],
 )
 def test_nan_euclidean_distances_2x2(X, X_diag, missing_value):
-
     exp_dist = np.array([[0.0, X_diag], [X_diag, 0]])
 
     dist = nan_euclidean_distances(X, missing_values=missing_value)
@@ -1178,6 +1176,14 @@ def test_paired_manhattan_distances():
     assert_allclose(D, [1.0, 2.0])
 
 
+def test_paired_cosine_distances():
+    # Check the paired manhattan distances computation
+    X = [[0], [0]]
+    Y = [[1], [2]]
+    D = paired_cosine_distances(X, Y)
+    assert_allclose(D, [0.5, 0.5])
+
+
 def test_chi_square_kernel():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
@@ -1230,12 +1236,6 @@ def test_chi_square_kernel():
     # different n_features in X and Y
     with pytest.raises(ValueError):
         chi2_kernel([[0, 1]], [[0.2, 0.2, 0.6]])
-
-    # sparse matrices
-    with pytest.raises(ValueError):
-        chi2_kernel(csr_matrix(X), csr_matrix(Y))
-    with pytest.raises(ValueError):
-        additive_chi2_kernel(csr_matrix(X), csr_matrix(Y))
 
 
 @pytest.mark.parametrize(
@@ -1549,3 +1549,14 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
     dist = pairwise_distances(X, Y, metric=metric, **params)
 
     assert_allclose(dist, expected_dist)
+
+
+def test_sparse_manhattan_readonly_dataset():
+    # Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/7981
+    matrices1 = [csr_matrix(np.ones((5, 5)))]
+    matrices2 = [csr_matrix(np.ones((5, 5)))]
+    # Joblib memory maps datasets which makes them read-only.
+    # The following call was reporting as failing in #7981, but this must pass.
+    Parallel(n_jobs=2, max_nbytes=0)(
+        delayed(manhattan_distances)(m1, m2) for m1, m2 in zip(matrices1, matrices2)
+    )

@@ -84,9 +84,10 @@ from sklearn import set_config
 set_config(transform_output="pandas")
 
 num_pipe = make_pipeline(SimpleImputer(), StandardScaler())
+num_cols = ["age", "fare"]
 ct = ColumnTransformer(
     (
-        ("numerical", num_pipe, ["age", "fare"]),
+        ("numerical", num_pipe, num_cols),
         (
             "categorical",
             OneHotEncoder(
@@ -114,3 +115,24 @@ _ = coef.sort_values().plot.barh()
 # This resets `transform_output` to its default value to avoid impacting other
 # examples when generating the scikit-learn documentation
 set_config(transform_output="default")
+
+# %%
+# When configuring the output type with :func:`config_context` the
+# configuration at the time when `transform` or `fit_transform` are
+# called is what counts. Setting these only when you construct or fit
+# the transformer has no effect.
+from sklearn import config_context
+
+scaler = StandardScaler()
+scaler.fit(X_train[num_cols])
+
+# %%
+with config_context(transform_output="pandas"):
+    # the output of transform will be a Pandas DataFrame
+    X_test_scaled = scaler.transform(X_test[num_cols])
+X_test_scaled.head()
+
+# %%
+# outside of the context manager, the output will be a NumPy array
+X_test_scaled = scaler.transform(X_test[num_cols])
+X_test_scaled[:5]

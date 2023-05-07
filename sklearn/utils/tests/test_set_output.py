@@ -1,4 +1,5 @@
 import pytest
+from collections import namedtuple
 
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -33,7 +34,9 @@ def test__wrap_in_pandas_container_dense_update_columns_and_index():
 
     new_df = _wrap_in_pandas_container(X_df, columns=new_columns, index=new_index)
     assert_array_equal(new_df.columns, new_columns)
-    assert_array_equal(new_df.index, new_index)
+
+    # Index does not change when the input is a DataFrame
+    assert_array_equal(new_df.index, X_df.index)
 
 
 def test__wrap_in_pandas_container_error_validation():
@@ -237,3 +240,76 @@ def test__wrap_in_pandas_container_column_errors():
     X_np = np.asarray([[1, 3], [2, 4], [3, 5]])
     X_wrapped = _wrap_in_pandas_container(X_np, columns=get_columns)
     assert_array_equal(X_wrapped.columns, range(X_np.shape[1]))
+
+
+def test_set_output_mro():
+    """Check that multi-inheritance resolves to the correct class method.
+
+    Non-regression test gh-25293.
+    """
+
+    class Base(_SetOutputMixin):
+        def transform(self, X):
+            return "Base"  # noqa
+
+    class A(Base):
+        pass
+
+    class B(Base):
+        def transform(self, X):
+            return "B"
+
+    class C(A, B):
+        pass
+
+    assert C().transform(None) == "B"
+
+
+class EstimatorWithSetOutputIndex(_SetOutputMixin):
+    def fit(self, X, y=None):
+        self.n_features_in_ = X.shape[1]
+        return self
+
+    def transform(self, X, y=None):
+        import pandas as pd
+
+        # transform by giving output a new index.
+        return pd.DataFrame(X.to_numpy(), index=[f"s{i}" for i in range(X.shape[0])])
+
+    def get_feature_names_out(self, input_features=None):
+        return np.asarray([f"X{i}" for i in range(self.n_features_in_)], dtype=object)
+
+
+def test_set_output_pandas_keep_index():
+    """Check that set_output does not override index.
+
+    Non-regression test for gh-25730.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame([[1, 2, 3], [4, 5, 6]], index=[0, 1])
+    est = EstimatorWithSetOutputIndex().set_output(transform="pandas")
+    est.fit(X)
+
+    X_trans = est.transform(X)
+    assert_array_equal(X_trans.index, ["s0", "s1"])
+
+
+class EstimatorReturnTuple(_SetOutputMixin):
+    def __init__(self, OutputTuple):
+        self.OutputTuple = OutputTuple
+
+    def transform(self, X, y=None):
+        return self.OutputTuple(X, 2 * X)
+
+
+def test_set_output_named_tuple_out():
+    """Check that namedtuples are kept by default."""
+    Output = namedtuple("Output", "X, Y")
+    X = np.asarray([[1, 2, 3]])
+    est = EstimatorReturnTuple(OutputTuple=Output)
+    X_trans = est.transform(X)
+
+    assert isinstance(X_trans, Output)
+    assert_array_equal(X_trans.X, X)
+    assert_array_equal(X_trans.Y, 2 * X)

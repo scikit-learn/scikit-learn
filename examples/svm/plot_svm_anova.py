@@ -26,7 +26,7 @@ X = np.hstack((X, 2 * rng.random((X.shape[0], 36))))
 # Create the pipeline
 # -------------------
 from sklearn.pipeline import Pipeline
-from sklearn.feature_selection import SelectPercentile, chi2
+from sklearn.feature_selection import SelectPercentile, f_classif
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
@@ -35,7 +35,7 @@ from sklearn.svm import SVC
 
 clf = Pipeline(
     [
-        ("anova", SelectPercentile(chi2)),
+        ("anova", SelectPercentile(f_classif)),
         ("scaler", StandardScaler()),
         ("svc", SVC(gamma="auto")),
     ]

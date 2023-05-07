@@ -18,14 +18,93 @@ from numbers import Real, Integral
 import numpy as np
 
 from . import empirical_covariance, EmpiricalCovariance
-from .._config import config_context
 from ..utils import check_array
-from ..utils._param_validation import Interval
+from ..utils._param_validation import Interval, validate_params
 
 
+def _ledoit_wolf(X, *, assume_centered, block_size):
+    """Estimate the shrunk Ledoit-Wolf covariance matrix."""
+    # for only one feature, the result is the same whatever the shrinkage
+    if len(X.shape) == 2 and X.shape[1] == 1:
+        if not assume_centered:
+            X = X - X.mean()
+        return np.atleast_2d((X**2).mean()), 0.0
+    n_features = X.shape[1]
+
+    # get Ledoit-Wolf shrinkage
+    shrinkage = ledoit_wolf_shrinkage(
+        X, assume_centered=assume_centered, block_size=block_size
+    )
+    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
+    mu = np.sum(np.trace(emp_cov)) / n_features
+    shrunk_cov = (1.0 - shrinkage) * emp_cov
+    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
+
+    return shrunk_cov, shrinkage
+
+
+def _oas(X, *, assume_centered=False):
+    """Estimate covariance with the Oracle Approximating Shrinkage algorithm.
+
+    The formulation is based on [1]_.
+    [1] "Shrinkage algorithms for MMSE covariance estimation.",
+        Chen, Y., Wiesel, A., Eldar, Y. C., & Hero, A. O.
+        IEEE Transactions on Signal Processing, 58(10), 5016-5029, 2010.
+        https://arxiv.org/pdf/0907.4698.pdf
+    """
+    if len(X.shape) == 2 and X.shape[1] == 1:
+        # for only one feature, the result is the same whatever the shrinkage
+        if not assume_centered:
+            X = X - X.mean()
+        return np.atleast_2d((X**2).mean()), 0.0
+
+    n_samples, n_features = X.shape
+
+    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
+
+    # The shrinkage is defined as:
+    # shrinkage = min(
+    # trace(S @ S.T) + trace(S)**2) / ((n + 1) (trace(S @ S.T) - trace(S)**2 / p), 1
+    # )
+    # where n and p are n_samples and n_features, respectively (cf. Eq. 23 in [1]).
+    # The factor 2 / p is omitted since it does not impact the value of the estimator
+    # for large p.
+
+    # Instead of computing trace(S)**2, we can compute the average of the squared
+    # elements of S that is equal to trace(S)**2 / p**2.
+    # See the definition of the Frobenius norm:
+    # https://en.wikipedia.org/wiki/Matrix_norm#Frobenius_norm
+    alpha = np.mean(emp_cov**2)
+    mu = np.trace(emp_cov) / n_features
+    mu_squared = mu**2
+
+    # The factor 1 / p**2 will cancel out since it is in both the numerator and
+    # denominator
+    num = alpha + mu_squared
+    den = (n_samples + 1) * (alpha - mu_squared / n_features)
+    shrinkage = 1.0 if den == 0 else min(num / den, 1.0)
+
+    # The shrunk covariance is defined as:
+    # (1 - shrinkage) * S + shrinkage * F (cf. Eq. 4 in [1])
+    # where S is the empirical covariance and F is the shrinkage target defined as
+    # F = trace(S) / n_features * np.identity(n_features) (cf. Eq. 3 in [1])
+    shrunk_cov = (1.0 - shrinkage) * emp_cov
+    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
+
+    return shrunk_cov, shrinkage
+
+
+###############################################################################
+# Public API
 # ShrunkCovariance estimator
 
 
+@validate_params(
+    {
+        "emp_cov": ["array-like"],
+        "shrinkage": [Interval(Real, 0, 1, closed="both")],
+    }
+)
 def shrunk_covariance(emp_cov, shrinkage=0.1):
     """Calculate a covariance matrix shrunk on the diagonal.
 
@@ -193,6 +272,13 @@ class ShrunkCovariance(EmpiricalCovariance):
 # Ledoit-Wolf estimator
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "assume_centered": ["boolean"],
+        "block_size": [Interval(Integral, 1, None, closed="left")],
+    }
+)
 def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
@@ -288,6 +374,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     return shrinkage
 
 
+@validate_params({"X": ["array-like"]})
 def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
@@ -325,31 +412,13 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
 
     where mu = trace(cov) / n_features
     """
-    X = check_array(X)
-    # for only one feature, the result is the same whatever the shrinkage
-    if len(X.shape) == 2 and X.shape[1] == 1:
-        if not assume_centered:
-            X = X - X.mean()
-        return np.atleast_2d((X**2).mean()), 0.0
-    if X.ndim == 1:
-        X = np.reshape(X, (1, -1))
-        warnings.warn(
-            "Only one sample available. You may want to reshape your data array"
-        )
-        n_features = X.size
-    else:
-        _, n_features = X.shape
+    estimator = LedoitWolf(
+        assume_centered=assume_centered,
+        block_size=block_size,
+        store_precision=False,
+    ).fit(X)
 
-    # get Ledoit-Wolf shrinkage
-    shrinkage = ledoit_wolf_shrinkage(
-        X, assume_centered=assume_centered, block_size=block_size
-    )
-    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
-    mu = np.sum(np.trace(emp_cov)) / n_features
-    shrunk_cov = (1.0 - shrinkage) * emp_cov
-    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
-
-    return shrunk_cov, shrinkage
+    return estimator.covariance_, estimator.shrinkage_
 
 
 class LedoitWolf(EmpiricalCovariance):
@@ -488,10 +557,9 @@ class LedoitWolf(EmpiricalCovariance):
             self.location_ = np.zeros(X.shape[1])
         else:
             self.location_ = X.mean(0)
-        with config_context(assume_finite=True):
-            covariance, shrinkage = ledoit_wolf(
-                X - self.location_, assume_centered=True, block_size=self.block_size
-            )
+        covariance, shrinkage = _ledoit_wolf(
+            X - self.location_, assume_centered=True, block_size=self.block_size
+        )
         self.shrinkage_ = shrinkage
         self._set_covariance(covariance)
 
@@ -499,8 +567,11 @@ class LedoitWolf(EmpiricalCovariance):
 
 
 # OAS estimator
+@validate_params({"X": ["array-like"]})
 def oas(X, *, assume_centered=False):
-    """Estimate covariance with the Oracle Approximating Shrinkage algorithm.
+    """Estimate covariance with the Oracle Approximating Shrinkage as proposed in [1]_.
+
+    Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
@@ -524,60 +595,36 @@ def oas(X, *, assume_centered=False):
 
     Notes
     -----
-    The regularised (shrunk) covariance is:
+    The regularised covariance is:
 
-    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features),
 
-    where mu = trace(cov) / n_features
+    where mu = trace(cov) / n_features and shrinkage is given by the OAS formula
+    (see [1]_).
 
-    The formula we used to implement the OAS is slightly modified compared
-    to the one given in the article. See :class:`OAS` for more details.
+    The shrinkage formulation implemented here differs from Eq. 23 in [1]_. In
+    the original article, formula (23) states that 2/p (p being the number of
+    features) is multiplied by Trace(cov*cov) in both the numerator and
+    denominator, but this operation is omitted because for a large p, the value
+    of 2/p is so small that it doesn't affect the value of the estimator.
+
+    References
+    ----------
+    .. [1] :arxiv:`"Shrinkage algorithms for MMSE covariance estimation.",
+           Chen, Y., Wiesel, A., Eldar, Y. C., & Hero, A. O.
+           IEEE Transactions on Signal Processing, 58(10), 5016-5029, 2010.
+           <0907.4698>`
     """
-    X = np.asarray(X)
-    # for only one feature, the result is the same whatever the shrinkage
-    if len(X.shape) == 2 and X.shape[1] == 1:
-        if not assume_centered:
-            X = X - X.mean()
-        return np.atleast_2d((X**2).mean()), 0.0
-    if X.ndim == 1:
-        X = np.reshape(X, (1, -1))
-        warnings.warn(
-            "Only one sample available. You may want to reshape your data array"
-        )
-        n_samples = 1
-        n_features = X.size
-    else:
-        n_samples, n_features = X.shape
-
-    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
-    mu = np.trace(emp_cov) / n_features
-
-    # formula from Chen et al.'s **implementation**
-    alpha = np.mean(emp_cov**2)
-    num = alpha + mu**2
-    den = (n_samples + 1.0) * (alpha - (mu**2) / n_features)
-
-    shrinkage = 1.0 if den == 0 else min(num / den, 1.0)
-    shrunk_cov = (1.0 - shrinkage) * emp_cov
-    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
-
-    return shrunk_cov, shrinkage
+    estimator = OAS(
+        assume_centered=assume_centered,
+    ).fit(X)
+    return estimator.covariance_, estimator.shrinkage_
 
 
 class OAS(EmpiricalCovariance):
-    """Oracle Approximating Shrinkage Estimator.
+    """Oracle Approximating Shrinkage Estimator as proposed in [1]_.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
-
-    OAS is a particular form of shrinkage described in
-    "Shrinkage Algorithms for MMSE Covariance Estimation"
-    Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
-
-    The formula used here does not correspond to the one given in the
-    article. In the original article, formula (23) states that 2/p is
-    multiplied by Trace(cov*cov) in both the numerator and denominator, but
-    this operation is omitted because for a large p, the value of 2/p is
-    so small that it doesn't affect the value of the estimator.
 
     Parameters
     ----------
@@ -635,15 +682,23 @@ class OAS(EmpiricalCovariance):
     -----
     The regularised covariance is:
 
-    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features),
 
-    where mu = trace(cov) / n_features
-    and shrinkage is given by the OAS formula (see References)
+    where mu = trace(cov) / n_features and shrinkage is given by the OAS formula
+    (see [1]_).
+
+    The shrinkage formulation implemented here differs from Eq. 23 in [1]_. In
+    the original article, formula (23) states that 2/p (p being the number of
+    features) is multiplied by Trace(cov*cov) in both the numerator and
+    denominator, but this operation is omitted because for a large p, the value
+    of 2/p is so small that it doesn't affect the value of the estimator.
 
     References
     ----------
-    "Shrinkage Algorithms for MMSE Covariance Estimation"
-    Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
+    .. [1] :arxiv:`"Shrinkage algorithms for MMSE covariance estimation.",
+           Chen, Y., Wiesel, A., Eldar, Y. C., & Hero, A. O.
+           IEEE Transactions on Signal Processing, 58(10), 5016-5029, 2010.
+           <0907.4698>`
 
     Examples
     --------
@@ -693,7 +748,7 @@ class OAS(EmpiricalCovariance):
         else:
             self.location_ = X.mean(0)
 
-        covariance, shrinkage = oas(X - self.location_, assume_centered=True)
+        covariance, shrinkage = _oas(X - self.location_, assume_centered=True)
         self.shrinkage_ = shrinkage
         self._set_covariance(covariance)
 

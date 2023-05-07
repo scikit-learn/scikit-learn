@@ -146,11 +146,6 @@ purpose.
     Scikit-learn 1.1 and later requires Python 3.8 or newer.
 
 
-.. note::
-
-   For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
-   are required.
-
 .. _install_on_apple_silicon_m1:
 
 Installing on Apple Silicon M1 hardware
@@ -247,7 +242,7 @@ NetBSD
 scikit-learn is available via `pkgsrc-wip
 <http://pkgsrc-wip.sourceforge.net/>`_:
 
-    http://pkgsrc.se/math/py-scikit-learn
+    https://pkgsrc.se/math/py-scikit-learn
 
 
 MacPorts for Mac OSX

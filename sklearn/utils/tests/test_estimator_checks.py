@@ -315,6 +315,43 @@ class NotInvariantSampleOrder(BaseEstimator):
         return X[:, 0]
 
 
+class OneClassSampleErrorClassifier(BaseBadClassifier):
+    """Classifier allowing to trigger different behaviors when `sample_weight` reduces
+    the number of classes to 1."""
+
+    def __init__(self, raise_when_single_class=False):
+        self.raise_when_single_class = raise_when_single_class
+
+    def fit(self, X, y, sample_weight=None):
+        X, y = check_X_y(
+            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+        )
+
+        self.has_single_class_ = False
+        self.classes_, y = np.unique(y, return_inverse=True)
+        n_classes_ = self.classes_.shape[0]
+        if n_classes_ < 2 and self.raise_when_single_class:
+            self.has_single_class_ = True
+            raise ValueError("normal class error")
+
+        # find the number of class after trimming
+        if sample_weight is not None:
+            if isinstance(sample_weight, np.ndarray) and len(sample_weight) > 0:
+                n_classes_ = np.count_nonzero(np.bincount(y, sample_weight))
+            if n_classes_ < 2:
+                self.has_single_class_ = True
+                raise ValueError("Nonsensical Error")
+
+        return self
+
+    def predict(self, X):
+        check_is_fitted(self)
+        X = check_array(X)
+        if self.has_single_class_:
+            return np.zeros(X.shape[0])
+        return np.ones(X.shape[0])
+
+
 class LargeSparseNotSupportedClassifier(BaseEstimator):
     def fit(self, X, y):
         X, y = self._validate_data(
@@ -561,6 +598,16 @@ def test_check_estimator():
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
     with raises(AssertionError, match=msg):
         check_estimator(NoSparseClassifier())
+
+    # check for classifiers reducing to less than two classes via sample weights
+    name = OneClassSampleErrorClassifier.__name__
+    msg = (
+        f"{name} failed when fitted on one label after sample_weight "
+        "trimming. Error message is not explicit, it should have "
+        "'class'."
+    )
+    with raises(AssertionError, match=msg):
+        check_estimator(OneClassSampleErrorClassifier())
 
     # Large indices test on bad estimator
     msg = (

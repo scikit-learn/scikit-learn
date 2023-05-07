@@ -5,7 +5,6 @@ import warnings
 from pickle import loads
 from pickle import dumps
 from functools import partial
-from importlib import resources
 
 import pytest
 import numpy as np
@@ -26,6 +25,7 @@ from sklearn.datasets._base import (
 )
 from sklearn.preprocessing import scale
 from sklearn.utils import Bunch
+from sklearn.utils.fixes import _is_resource
 from sklearn.datasets.tests.test_common import check_as_frame
 
 
@@ -98,10 +98,11 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2, load_files
 def test_load_files_w_categories_desc_and_encoding(
     test_category_dir_1, test_category_dir_2, load_files_root
 ):
-    category = os.path.abspath(test_category_dir_1).split("/").pop()
+    category = os.path.abspath(test_category_dir_1).split(os.sep).pop()
     res = load_files(
-        load_files_root, description="test", categories=category, encoding="utf-8"
+        load_files_root, description="test", categories=[category], encoding="utf-8"
     )
+
     assert len(res.filenames) == 1
     assert len(res.target_names) == 1
     assert res.DESCR == "test"
@@ -221,12 +222,6 @@ def test_load_sample_image():
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
-def test_load_missing_sample_image_error():
-    pytest.importorskip("PIL")
-    with pytest.raises(AttributeError):
-        load_sample_image("blop.jpg")
-
-
 def test_load_diabetes_raw():
     """Test to check that we load a scaled version by default but that we can
     get an unscaled version when setting `scaled=False`."""
@@ -278,7 +273,7 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, file
         assert "data_module" in bunch
         assert all(
             [
-                f in bunch and resources.is_resource(bunch["data_module"], bunch[f])
+                f in bunch and _is_resource(bunch["data_module"], bunch[f])
                 for f in filenames
             ]
         )

@@ -382,7 +382,7 @@ This strategy is illustrated below.
 
    *  Breunig, Kriegel, Ng, and Sander (2000)
       `LOF: identifying density-based local outliers.
-      <http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
+      <https://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
       Proc. ACM SIGMOD
 
 .. _novelty_with_lof:

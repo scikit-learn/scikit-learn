@@ -34,7 +34,7 @@ def _wrap_in_pandas_container(
         `range(n_features)`.
 
     index : array-like, default=None
-        Index for data.
+        Index for data. `index` is ignored if `data_to_wrap` is already a DataFrame.
 
     Returns
     -------
@@ -55,11 +55,9 @@ def _wrap_in_pandas_container(
     if isinstance(data_to_wrap, pd.DataFrame):
         if columns is not None:
             data_to_wrap.columns = columns
-        if index is not None:
-            data_to_wrap.index = index
         return data_to_wrap
 
-    return pd.DataFrame(data_to_wrap, index=index, columns=columns)
+    return pd.DataFrame(data_to_wrap, index=index, columns=columns, copy=False)
 
 
 def _get_output_config(method, estimator=None):
@@ -142,10 +140,15 @@ def _wrap_method_output(f, method):
         data_to_wrap = f(self, X, *args, **kwargs)
         if isinstance(data_to_wrap, tuple):
             # only wrap the first output for cross decomposition
-            return (
+            return_tuple = (
                 _wrap_data_with_container(method, data_to_wrap[0], X, self),
                 *data_to_wrap[1:],
             )
+            # Support for namedtuples `_make` is a documented API for namedtuples:
+            # https://docs.python.org/3/library/collections.html#collections.somenamedtuple._make
+            if hasattr(type(data_to_wrap), "_make"):
+                return type(data_to_wrap)._make(return_tuple)
+            return return_tuple
 
         return _wrap_data_with_container(method, data_to_wrap, X, self)
 
@@ -200,6 +203,10 @@ class _SetOutputMixin:
             if not hasattr(cls, method) or key not in auto_wrap_output_keys:
                 continue
             cls._sklearn_auto_wrap_output_keys.add(key)
+
+            # Only wrap methods defined by cls itself
+            if method not in cls.__dict__:
+                continue
             wrapped_method = _wrap_method_output(getattr(cls, method), key)
             setattr(cls, method, wrapped_method)
 

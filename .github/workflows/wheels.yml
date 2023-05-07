@@ -103,20 +103,6 @@ jobs:
             python: 311
             platform_id: macosx_x86_64
 
-          # MacOS arm64
-          - os: macos-latest
-            python: 38
-            platform_id: macosx_arm64
-          - os: macos-latest
-            python: 39
-            platform_id: macosx_arm64
-          - os: macos-latest
-            python: 310
-            platform_id: macosx_arm64
-          - os: macos-latest
-            python: 311
-            platform_id: macosx_arm64
-
     steps:
       - name: Checkout scikit-learn
         uses: actions/checkout@v3
@@ -130,9 +116,7 @@ jobs:
         env:
           CONFTEST_PATH: ${{ github.workspace }}/conftest.py
           CONFTEST_NAME: conftest.py
-          CIBW_ENVIRONMENT: OMP_NUM_THREADS=2
-                            OPENBLAS_NUM_THREADS=2
-                            SKLEARN_SKIP_NETWORK_TESTS=1
+          CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
@@ -142,11 +126,12 @@ jobs:
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
-          CIBW_TEST_COMMAND: bash {project}/build_tools/github/test_wheels.sh
+          CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
           CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }}
           CIBW_BUILD_VERBOSITY: 1
+          CONDA_HOME: /usr/local/miniconda
 
-        run: bash build_tools/github/build_wheels.sh
+        run: bash build_tools/wheels/build_wheels.sh
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3
@@ -186,8 +171,6 @@ jobs:
       - name: Test source distribution
         run: bash build_tools/github/test_source.sh
         env:
-          OMP_NUM_THREADS: 2
-          OPENBLAS_NUM_THREADS: 2
           SKLEARN_SKIP_NETWORK_TESTS: 1
 
       - name: Store artifacts
@@ -220,5 +203,6 @@ jobs:
           # Secret variables need to be mapped to environment variables explicitly
           SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
           SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
+          ARTIFACTS_PATH: dist/artifact
         # Force a replacement if the remote file already exists
         run: bash build_tools/github/upload_anaconda.sh

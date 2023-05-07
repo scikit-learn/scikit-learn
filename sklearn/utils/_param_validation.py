@@ -7,6 +7,7 @@ from inspect import signature
 from numbers import Integral
 from numbers import Real
 import operator
+import re
 import warnings
 
 import numpy as np
@@ -14,6 +15,14 @@ from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
 
 from .validation import _is_arraylike_not_scalar
+
+
+class InvalidParameterError(ValueError, TypeError):
+    """Custom exception to be raised when the parameter of a class/method/function
+    does not have a valid type or value.
+    """
+
+    # Inherits from ValueError and TypeError to keep backward compatibility.
 
 
 def validate_parameter_constraints(parameter_constraints, params, caller_name):
@@ -39,7 +48,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - the string "boolean"
         - the string "verbose"
         - the string "cv_object"
-        - the string "missing_values"
+        - a MissingValues object representing markers for missing values
         - a HasMethods object, representing method(s) an object must have
         - a Hidden object, representing a constraint not meant to be exposed to the user
 
@@ -50,13 +59,6 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
     caller_name : str
         The name of the estimator or function or method that called this function.
     """
-    if len(set(parameter_constraints) - set(params)) != 0:
-        raise ValueError(
-            f"The parameter constraints {list(parameter_constraints)}"
-            " contain unexpected parameters"
-            f" {set(parameter_constraints) - set(params)}"
-        )
-
     for param_name, param_val in params.items():
         # We allow parameters to not have a constraint so that third party estimators
         # can inherit from sklearn estimators without having to necessarily use the
@@ -92,7 +94,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
                     f" {constraints[-1]}"
                 )
 
-            raise ValueError(
+            raise InvalidParameterError(
                 f"The {param_name!r} parameter of {caller_name} must be"
                 f" {constraints_str}. Got {param_val!r} instead."
             )
@@ -123,14 +125,14 @@ def make_constraint(constraint):
         return _NoneConstraint()
     if isinstance(constraint, type):
         return _InstancesOf(constraint)
-    if isinstance(constraint, (Interval, StrOptions, Options, HasMethods)):
+    if isinstance(
+        constraint, (Interval, StrOptions, Options, HasMethods, MissingValues)
+    ):
         return constraint
     if isinstance(constraint, str) and constraint == "boolean":
         return _Booleans()
     if isinstance(constraint, str) and constraint == "verbose":
         return _VerboseHelper()
-    if isinstance(constraint, str) and constraint == "missing_values":
-        return _MissingValues()
     if isinstance(constraint, str) and constraint == "cv_object":
         return _CVObjects()
     if isinstance(constraint, Hidden):
@@ -166,7 +168,6 @@ def validate_params(parameter_constraints):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-
             func_sig = signature(func)
 
             # Map *args/**kwargs to the function signature
@@ -185,11 +186,36 @@ def validate_params(parameter_constraints):
             validate_parameter_constraints(
                 parameter_constraints, params, caller_name=func.__qualname__
             )
-            return func(*args, **kwargs)
+
+            try:
+                return func(*args, **kwargs)
+            except InvalidParameterError as e:
+                # When the function is just a wrapper around an estimator, we allow
+                # the function to delegate validation to the estimator, but we replace
+                # the name of the estimator by the name of the function in the error
+                # message to avoid confusion.
+                msg = re.sub(
+                    r"parameter of \w+ must be",
+                    f"parameter of {func.__qualname__} must be",
+                    str(e),
+                )
+                raise InvalidParameterError(msg) from e
 
         return wrapper
 
     return decorator
+
+
+class RealNotInt(Real):
+    """A type that represents reals that are not instances of int.
+
+    Behaves like float, but also works with values extracted from numpy arrays.
+    isintance(1, RealNotInt) -> False
+    isinstance(1.0, RealNotInt) -> True
+    """
+
+
+RealNotInt.register(float)
 
 
 def _type_name(t):
@@ -349,8 +375,11 @@ class Interval(_Constraint):
 
     Parameters
     ----------
-    type : {numbers.Integral, numbers.Real}
+    type : {numbers.Integral, numbers.Real, RealNotInt}
         The set of numbers in which to set the interval.
+
+        If RealNotInt, only reals that don't have the integer type
+        are allowed. For example 1.0 is allowed but 1 is not.
 
     left : float or int or None
         The left bound of the interval. None means left bound is -∞.
@@ -377,14 +406,6 @@ class Interval(_Constraint):
     `[0, +∞) U {+∞}`.
     """
 
-    @validate_params(
-        {
-            "type": [type],
-            "left": [Integral, Real, None],
-            "right": [Integral, Real, None],
-            "closed": [StrOptions({"left", "right", "both", "neither"})],
-        }
-    )
     def __init__(self, type, left, right, *, closed):
         super().__init__()
         self.type = type
@@ -395,6 +416,18 @@ class Interval(_Constraint):
         self._check_params()
 
     def _check_params(self):
+        if self.type not in (Integral, Real, RealNotInt):
+            raise ValueError(
+                "type must be either numbers.Integral, numbers.Real or RealNotInt."
+                f" Got {self.type} instead."
+            )
+
+        if self.closed not in ("left", "right", "both", "neither"):
+            raise ValueError(
+                "closed must be either 'left', 'right', 'both' or 'neither'. "
+                f"Got {self.closed} instead."
+            )
+
         if self.type is Integral:
             suffix = "for an interval over the integers."
             if self.left is not None and not isinstance(self.left, Integral):
@@ -409,6 +442,11 @@ class Interval(_Constraint):
                 raise ValueError(
                     f"right can't be None when closed == {self.closed} {suffix}"
                 )
+        else:
+            if self.left is not None and not isinstance(self.left, Real):
+                raise TypeError("Expecting left to be a real number.")
+            if self.right is not None and not isinstance(self.right, Real):
+                raise TypeError("Expecting right to be a real number.")
 
         if self.right is not None and self.left is not None and self.right <= self.left:
             raise ValueError(
@@ -444,6 +482,13 @@ class Interval(_Constraint):
         left_bound = "-inf" if self.left is None else self.left
         right_bound = "inf" if self.right is None else self.right
         right_bracket = "]" if self.closed in ("right", "both") else ")"
+
+        # better repr if the bounds were given as integers
+        if not self.type == Integral and isinstance(self.left, Real):
+            left_bound = float(left_bound)
+        if not self.type == Integral and isinstance(self.right, Real):
+            right_bound = float(right_bound)
+
         return (
             f"{type_str} in the range "
             f"{left_bracket}{left_bound}, {right_bound}{right_bracket}"
@@ -524,8 +569,10 @@ class _Booleans(_Constraint):
         # TODO(1.4) remove support for Integral.
         if isinstance(val, Integral) and not isinstance(val, bool):
             warnings.warn(
-                "Passing an int for a boolean parameter is deprecated in version 1.2 "
-                "and won't be supported anymore in version 1.4.",
+                (
+                    "Passing an int for a boolean parameter is deprecated in version"
+                    " 1.2 and won't be supported anymore in version 1.4."
+                ),
                 FutureWarning,
             )
 
@@ -563,31 +610,40 @@ class _VerboseHelper(_Constraint):
         )
 
 
-class _MissingValues(_Constraint):
+class MissingValues(_Constraint):
     """Helper constraint for the `missing_values` parameters.
 
     Convenience for
     [
         Integral,
         Interval(Real, None, None, closed="both"),
-        str,
-        None,
+        str,   # when numeric_only is False
+        None,  # when numeric_only is False
         _NanConstraint(),
         _PandasNAConstraint(),
     ]
+
+    Parameters
+    ----------
+    numeric_only : bool, default=False
+        Whether to consider only numeric missing value markers.
+
     """
 
-    def __init__(self):
+    def __init__(self, numeric_only=False):
         super().__init__()
+
+        self.numeric_only = numeric_only
+
         self._constraints = [
             _InstancesOf(Integral),
             # we use an interval of Real to ignore np.nan that has its own constraint
             Interval(Real, None, None, closed="both"),
-            _InstancesOf(str),
-            _NoneConstraint(),
             _NanConstraint(),
             _PandasNAConstraint(),
         ]
+        if not self.numeric_only:
+            self._constraints.extend([_InstancesOf(str), _NoneConstraint()])
 
     def is_satisfied_by(self, val):
         return any(c.is_satisfied_by(val) for c in self._constraints)
@@ -686,7 +742,7 @@ class Hidden:
         self.constraint = constraint
 
 
-def generate_invalid_param_val(constraint, constraints=None):
+def generate_invalid_param_val(constraint):
     """Return a value that does not satisfy the constraint.
 
     Raises a NotImplementedError if there exists no invalid value for this constraint.
@@ -698,10 +754,6 @@ def generate_invalid_param_val(constraint, constraints=None):
     constraint : _Constraint instance
         The constraint to generate a value for.
 
-    constraints : list of _Constraint instances or None, default=None
-        The list of all constraints for this parameter. If None, the list only
-        containing `constraint` is used.
-
     Returns
     -------
     val : object
@@ -710,7 +762,7 @@ def generate_invalid_param_val(constraint, constraints=None):
     if isinstance(constraint, StrOptions):
         return f"not {' or '.join(constraint.options)}"
 
-    if isinstance(constraint, _MissingValues):
+    if isinstance(constraint, MissingValues):
         return np.array([1, 2, 3])
 
     if isinstance(constraint, _VerboseHelper):
@@ -725,116 +777,31 @@ def generate_invalid_param_val(constraint, constraints=None):
     if isinstance(constraint, _CVObjects):
         return "not a cv object"
 
-    if not isinstance(constraint, Interval):
+    if isinstance(constraint, Interval) and constraint.type is Integral:
+        if constraint.left is not None:
+            return constraint.left - 1
+        if constraint.right is not None:
+            return constraint.right + 1
+
+        # There's no integer outside (-inf, +inf)
         raise NotImplementedError
 
-    # constraint is an interval
-    constraints = [constraint] if constraints is None else constraints
-    return _generate_invalid_param_val_interval(constraint, constraints)
+    if isinstance(constraint, Interval) and constraint.type in (Real, RealNotInt):
+        if constraint.left is not None:
+            return constraint.left - 1e-6
+        if constraint.right is not None:
+            return constraint.right + 1e-6
 
+        # bounds are -inf, +inf
+        if constraint.closed in ("right", "neither"):
+            return -np.inf
+        if constraint.closed in ("left", "neither"):
+            return np.inf
 
-def _generate_invalid_param_val_interval(interval, constraints):
-    """Return a value that does not satisfy an interval constraint.
+        # interval is [-inf, +inf]
+        return np.nan
 
-    Generating an invalid value for an integer interval depends on the other constraints
-    since an int is a real, meaning that it can be valid for a real interval.
-    Assumes that there can be at most 2 interval constraints: one integer interval
-    and/or one real interval.
-
-    This is only useful for testing purpose.
-
-    Parameters
-    ----------
-    interval : Interval instance
-        The interval to generate a value for.
-
-    constraints : list of _Constraint instances
-        The list of all constraints for this parameter.
-
-    Returns
-    -------
-    val : object
-        A value that does not satisfy the interval constraint.
-    """
-    if interval.type is Real:
-        # generate a non-integer value such that it can't be valid even if there's also
-        # an integer interval constraint.
-        if interval.left is None and interval.right is None:
-            if interval.closed in ("left", "neither"):
-                return np.inf
-            elif interval.closed in ("right", "neither"):
-                return -np.inf
-            else:
-                raise NotImplementedError
-
-        if interval.left is not None:
-            return np.floor(interval.left) - 0.5
-        else:  # right is not None
-            return np.ceil(interval.right) + 0.5
-
-    else:  # interval.type is Integral
-        if interval.left is None and interval.right is None:
-            raise NotImplementedError
-
-        # We need to check if there's also a real interval constraint to generate a
-        # value that is not valid for any of the 2 interval constraints.
-        real_intervals = [
-            i for i in constraints if isinstance(i, Interval) and i.type is Real
-        ]
-        real_interval = real_intervals[0] if real_intervals else None
-
-        if real_interval is None:
-            # Only the integer interval constraint -> easy
-            if interval.left is not None:
-                return interval.left - 1
-            else:  # interval.right is not None
-                return interval.right + 1
-
-        # There's also a real interval constraint. Try to find a value left to both or
-        # right to both or in between them.
-
-        # redefine left and right bounds to be smallest and largest valid integers in
-        # both intervals.
-        int_left = interval.left
-        if int_left is not None and interval.closed in ("right", "neither"):
-            int_left = int_left + 1
-
-        int_right = interval.right
-        if int_right is not None and interval.closed in ("left", "neither"):
-            int_right = int_right - 1
-
-        real_left = real_interval.left
-        if real_interval.left is not None:
-            real_left = int(np.ceil(real_interval.left))
-            if real_interval.closed in ("right", "neither"):
-                real_left = real_left + 1
-
-        real_right = real_interval.right
-        if real_interval.right is not None:
-            real_right = int(np.floor(real_interval.right))
-            if real_interval.closed in ("left", "neither"):
-                real_right = real_right - 1
-
-        if int_left is not None and real_left is not None:
-            # there exists an int left to both intervals
-            return min(int_left, real_left) - 1
-
-        if int_right is not None and real_right is not None:
-            # there exists an int right to both intervals
-            return max(int_right, real_right) + 1
-
-        if int_left is not None:
-            if real_right is not None and int_left - real_right >= 2:
-                # there exists an int between the 2 intervals
-                return int_left - 1
-            else:
-                raise NotImplementedError
-        else:  # int_right is not None
-            if real_left is not None and real_left - int_right >= 2:
-                # there exists an int between the 2 intervals
-                return int_right + 1
-            else:
-                raise NotImplementedError
+    raise NotImplementedError
 
 
 def generate_valid_param(constraint):
@@ -868,6 +835,14 @@ def generate_valid_param(constraint):
         return None
 
     if isinstance(constraint, _InstancesOf):
+        if constraint.type is np.ndarray:
+            # special case for ndarray since it can't be instantiated without arguments
+            return np.array([1, 2, 3])
+
+        if constraint.type in (Integral, Real):
+            # special case for Integral and Real since they are abstract classes
+            return 1
+
         return constraint.type()
 
     if isinstance(constraint, _Booleans):
@@ -876,8 +851,11 @@ def generate_valid_param(constraint):
     if isinstance(constraint, _VerboseHelper):
         return 1
 
-    if isinstance(constraint, _MissingValues):
+    if isinstance(constraint, MissingValues) and constraint.numeric_only:
         return np.nan
+
+    if isinstance(constraint, MissingValues) and not constraint.numeric_only:
+        return "missing"
 
     if isinstance(constraint, HasMethods):
         return type(

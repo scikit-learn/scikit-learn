@@ -22,6 +22,7 @@ recursive-exclude maint_tools *
 recursive-exclude benchmarks *
 recursive-exclude .binder *
 recursive-exclude .circleci *
+exclude .cirrus.star
 exclude .codecov.yml
 exclude .git-blame-ignore-revs
 exclude .mailmap

@@ -425,6 +425,31 @@ Objects that do not provide this method will be deep-copied
 (using the Python standard function ``copy.deepcopy``)
 if ``safe=False`` is passed to ``clone``.
 
+Estimators can customize the behavior of :func:`base.clone` by defining a
+`__sklearn_clone__` method. `__sklearn_clone__` must return an instance of the
+estimator. `__sklearn_clone__` is useful when an estimator needs to hold on to
+some state when :func:`base.clone` is called on the estimator. For example, a
+frozen meta-estimator for transformers can be defined as follows::
+
+    class FrozenTransformer(BaseEstimator):
+        def __init__(self, fitted_transformer):
+            self.fitted_transformer = fitted_transformer
+
+        def __getattr__(self, name):
+            # `fitted_transformer`'s attributes are now accessible
+            return getattr(self.fitted_transformer, name)
+
+        def __sklearn_clone__(self):
+            return self
+
+        def fit(self, X, y):
+            # Fitting does not change the state of the estimator
+            return self
+
+        def fit_transform(self, X, y=None):
+            # fit_transform only transforms the data
+            return self.fitted_transformer.transform(X, y)
+
 Pipeline compatibility
 ----------------------
 For an estimator to be usable together with ``pipeline.Pipeline`` in any but the
@@ -508,7 +533,7 @@ general only be determined at runtime.
 The current set of estimator tags are:
 
 allow_nan (default=False)
-    whether the estimator supports data with missing values encoded as np.NaN
+    whether the estimator supports data with missing values encoded as np.nan
 
 binary_only (default=False)
     whether estimator supports binary classification but lacks multi-class

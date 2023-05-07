@@ -242,7 +242,6 @@ class TreeGrower:
         shrinkage=1.0,
         n_threads=None,
     ):
-
         self._validate_parameters(
             X_binned,
             min_gain_to_split,
@@ -405,10 +404,6 @@ class TreeGrower:
             self._finalize_leaf(self.root)
             return
 
-        self.root.histograms = self.histogram_builder.compute_histograms_brute(
-            self.root.sample_indices
-        )
-
         if self.interaction_cst is not None:
             self.root.interaction_cst_indices = range(len(self.interaction_cst))
             allowed_features = set().union(*self.interaction_cst)
@@ -416,7 +411,15 @@ class TreeGrower:
                 allowed_features, dtype=np.uint32, count=len(allowed_features)
             )
 
+        tic = time()
+        self.root.histograms = self.histogram_builder.compute_histograms_brute(
+            self.root.sample_indices, self.root.allowed_features
+        )
+        self.total_compute_hist_time += time() - tic
+
+        tic = time()
         self._compute_best_split_and_push(self.root)
+        self.total_find_split_time += time() - tic
 
     def _compute_best_split_and_push(self, node):
         """Compute the best possible split (SplitInfo) of a given node.
@@ -560,7 +563,6 @@ class TreeGrower:
         should_split_left = not left_child_node.is_leaf
         should_split_right = not right_child_node.is_leaf
         if should_split_left or should_split_right:
-
             # We will compute the histograms of both nodes even if one of them
             # is a leaf, since computing the second histogram is very cheap
             # (using histogram subtraction).
@@ -576,13 +578,16 @@ class TreeGrower:
             # We use the brute O(n_samples) method on the child that has the
             # smallest number of samples, and the subtraction trick O(n_bins)
             # on the other one.
+            # Note that both left and right child have the same allowed_features.
             tic = time()
             smallest_child.histograms = self.histogram_builder.compute_histograms_brute(
-                smallest_child.sample_indices
+                smallest_child.sample_indices, smallest_child.allowed_features
             )
             largest_child.histograms = (
                 self.histogram_builder.compute_histograms_subtraction(
-                    node.histograms, smallest_child.histograms
+                    node.histograms,
+                    smallest_child.histograms,
+                    smallest_child.allowed_features,
                 )
             )
             self.total_compute_hist_time += time() - tic
