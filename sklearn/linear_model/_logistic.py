@@ -559,7 +559,8 @@ def _logistic_regression_path(
         else:
             coefs.append(w0.copy())
 
-        n_iter[i] = n_iter_i
+        # unpack 0-dim array to scalar
+        n_iter[i] = n_iter_i[0] if isinstance(n_iter_i, np.ndarray) else n_iter_i
 
     return np.array(coefs), np.array(Cs), n_iter
 
