@@ -153,15 +153,42 @@ prediction, instead of letting each classifier vote for a single class.
 A competitive alternative to random forests are
 :ref:`histogram_based_gradient_boosting` (HGBT) models:
 
-- Building trees: Random forests typically rely on deep trees (that overfit individually) which uses much computational resources, as they require several splittings and evaluations of candidate splits. Boosting models build shallow trees (that underfit individually) which are faster to fit and predict.
+-  Building trees: Random forests typically rely on deep trees (that overfit
+   individually) which uses much computational resources, as they require
+   several splittings and evaluations of candidate splits. Boosting models
+   build shallow trees (that underfit individually) which are faster to fit
+   and predict.
 
-- Sequential boosting: In histogram-based gradient boosting (HGBT), the decision trees are built sequentially, where each tree is trained to correct the errors made by the previous trees. This is achieved by assigning higher weights to the training instances that were misclassified in the previous iteration, which helps the next tree to focus on those instances and improve their classification. This process is repeated iteratively until a predefined number of trees are built or until the model's performance stops improving. 
+-  Sequential boosting: In histogram-based gradient boosting (HGBT), the
+   decision trees are built sequentially, where each tree is trained to
+   correct the errors made by the previous trees. This is achieved by
+   assigning higher weights to the training instances that were misclassified
+   in the previous iteration, which helps the next tree to focus on those
+   instances and improve their classification. This process is repeated
+   iteratively until a predefined number of trees are built or until the
+   model's performance stops improving.
 
-  In contrast, random forests (RF) use an ensemble of decision trees, where each tree is built independently and is not influenced by the other trees. The final prediction is made by taking the majority vote of all the trees in the ensemble. While RF can achieve high accuracy, they may require a larger number of trees to achieve the same level of accuracy as HGBT. This is because RF may not be able to correct errors made by previous trees as effectively as HGBT, which can lead to a larger number of trees needed to achieve the desired level of accuracy.
+   In contrast, random forests (RF) use an ensemble of decision trees, where
+   each tree is built independently and is not influenced by the other trees.
+   The final prediction is made by taking the majority vote of all the trees
+   in the ensemble. While RF can achieve high accuracy, they may require a
+   larger number of trees to achieve the same level of accuracy as HGBT. This
+   is because RF may not be able to correct errors made by previous trees as
+   effectively as HGBT, which can lead to a larger number of trees needed to
+   achieve the desired level of accuracy.
 
-- Efficient binning: Efficient binning: HGBT uses an efficient binning algorithm that can handle large datasets with a high number of features. The binning algorithm can pre-process the data to speed up the subsequent tree construction (see `Why-it's-faster <https://scikit-learn.org/stable/modules/ensemble.html#why-it-s-faster>`__). In contrast, the scikit-learn implementation of random forests does not use binning and relies on exact splitting, which can be computationally expensive.
+-  Efficient binning: Efficient binning: HGBT uses an efficient binning
+   algorithm that can handle large datasets with a high number of features.
+   The binning algorithm can pre-process the data to speed up the subsequent
+   tree construction (:ref:`see Why it's faster <Why_it's_faster>`). In
+   contrast, the scikit-learn implementation of random forests does not use
+   binning and relies on exact splitting, which can be computationally
+   expensive.
 
-Overall, the computational cost of HGBT versus RF depends on the specific characteristics of the dataset and the modeling task. It's always a good idea to try both models and compare their performance and computational efficiency on your specific problem to determine which model is the best fit.
+Overall, the computational cost of HGBT versus RF depends on the specific
+characteristics of the dataset and the modeling task. It's always a good idea
+to try both models and compare their performance and computational efficiency
+on your specific problem to determine which model is the best fit.
 
 Extremely Randomized Trees
 --------------------------
@@ -1224,7 +1251,7 @@ means that ``[{0}]`` is equivalent to ``[{0}, {1, 2}]``.
      2022. :doi:`Machine Learning Applications to Land and Structure Valuation
      <10.3390/jrfm15050193>`.
      Journal of Risk and Financial Management 15, no. 5: 193
-
+     
 Low-level parallelism
 ---------------------
 
@@ -1243,6 +1270,8 @@ The following parts are parallelized:
   parallelized over samples
 - gradient and hessians computations are parallelized over samples
 - predicting is parallelized over samples
+
+.. _Why_it's_faster:
 
 Why it's faster
 ---------------
