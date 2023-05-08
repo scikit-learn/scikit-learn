@@ -62,7 +62,8 @@ ignore = [
 # Exclude files are generated from tempita templates
 exclude= '''
 (
-    sklearn/_loss/_loss.pyx
+    asv_benchmarks/
+  | sklearn/_loss/_loss.pyx
   | sklearn/linear_model/_sag_fast.pyx
   | sklearn/linear_model/_sgd_fast.pyx
   | sklearn/utils/_seq_dataset.pyx

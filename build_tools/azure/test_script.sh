@@ -58,6 +58,10 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     # Ignore distutils deprecation warning, used by joblib internally
     TEST_CMD="$TEST_CMD -Wignore:distutils\ Version\ classes\ are\ deprecated:DeprecationWarning"
 
+    # Ignore pkg_resources deprecation warnings triggered by pyamg
+    TEST_CMD="$TEST_CMD -W 'ignore:pkg_resources is deprecated as an API:DeprecationWarning'"
+    TEST_CMD="$TEST_CMD -W 'ignore:Deprecated call to \`pkg_resources:DeprecationWarning'"
+
     # In some case, exceptions are raised (by bug) in tests, and captured by pytest,
     # but not raised again. This is for instance the case when Cython directives are
     # activated: IndexErrors (which aren't fatal) are raised on out-of-bound accesses.

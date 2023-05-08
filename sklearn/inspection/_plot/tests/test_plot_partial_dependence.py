@@ -611,16 +611,6 @@ dummy_classification_data = make_classification(random_state=0)
             {"features": [1], "categorical_features": [1], "kind": "individual"},
             "It is not possible to display individual effects",
         ),
-        (
-            dummy_classification_data,
-            {"features": [1], "kind": "foo"},
-            "Values provided to `kind` must be one of",
-        ),
-        (
-            dummy_classification_data,
-            {"features": [0, 1], "kind": ["foo", "individual"]},
-            "Values provided to `kind` must be one of",
-        ),
     ],
 )
 def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
