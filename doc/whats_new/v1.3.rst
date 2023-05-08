@@ -405,6 +405,11 @@ Changelog
 
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
+  
+- |Feature| :func:`metrics.average_precision_score` now supports the
+  multiclass case.
+  :pr:`17388` by :user:`Geoffrey Bolmier <gbolmier>` and
+  :pr:`24769` by :user:`Ashwin Mathur <awinml>`.
 
 - |Fix| In :func:`metrics.roc_curve`, use the threshold value `np.inf` instead of
   arbritrary `max(y_score) + 1`. This threshold is associated with the ROC curve point
@@ -466,6 +471,10 @@ Changelog
   `columns` attribute and all columns are strings. e.g. when `X` is a
   `pandas.DataFrame`
   :pr:`25220` by :user:`Ian Thompson <it176131>`.
+
+- |Fix| :meth:`pipeline.Pipeline.fit_transform` now raises an `AttributeError`
+  if the last step of the pipeline does not support `fit_transform`.
+  :pr:`26325` by `Adrin Jalali`_.
 
 :mod:`sklearn.preprocessing`
 ............................

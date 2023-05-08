@@ -135,9 +135,6 @@ def average_precision_score(
     trapezoidal rule, which uses linear interpolation and can be too
     optimistic.
 
-    Note: this implementation is restricted to the binary classification task
-    or multilabel classification task.
-
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
@@ -207,6 +204,17 @@ def average_precision_score(
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> average_precision_score(y_true, y_scores)
     0.83...
+    >>> y_true = np.array([0, 0, 1, 1, 2, 2])
+    >>> y_scores = np.array([
+    ...     [0.7, 0.2, 0.1],
+    ...     [0.4, 0.3, 0.3],
+    ...     [0.1, 0.8, 0.1],
+    ...     [0.2, 0.3, 0.5],
+    ...     [0.4, 0.4, 0.2],
+    ...     [0.1, 0.2, 0.7],
+    ... ])
+    >>> average_precision_score(y_true, y_scores)
+    0.77...
     """
 
     def _binary_uninterpolated_average_precision(
@@ -221,21 +229,32 @@ def average_precision_score(
         return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
     y_type = type_of_target(y_true, input_name="y_true")
-    if y_type == "multilabel-indicator" and pos_label != 1:
-        raise ValueError(
-            "Parameter pos_label is fixed to 1 for "
-            "multilabel-indicator y_true. Do not set "
-            "pos_label or set pos_label to 1."
-        )
-    elif y_type == "binary":
-        # Convert to Python primitive type to avoid NumPy type / Python str
-        # comparison. See https://github.com/numpy/numpy/issues/6784
-        present_labels = np.unique(y_true).tolist()
+
+    # Convert to Python primitive type to avoid NumPy type / Python str
+    # comparison. See https://github.com/numpy/numpy/issues/6784
+    present_labels = np.unique(y_true).tolist()
+
+    if y_type == "binary":
         if len(present_labels) == 2 and pos_label not in present_labels:
             raise ValueError(
                 f"pos_label={pos_label} is not a valid label. It should be "
                 f"one of {present_labels}"
             )
+
+    elif y_type == "multilabel-indicator" and pos_label != 1:
+        raise ValueError(
+            "Parameter pos_label is fixed to 1 for multilabel-indicator y_true. "
+            "Do not set pos_label or set pos_label to 1."
+        )
+
+    elif y_type == "multiclass":
+        if pos_label != 1:
+            raise ValueError(
+                "Parameter pos_label is fixed to 1 for multiclass y_true. "
+                "Do not set pos_label or set pos_label to 1."
+            )
+        y_true = label_binarize(y_true, classes=present_labels)
+
     average_precision = partial(
         _binary_uninterpolated_average_precision, pos_label=pos_label
     )
