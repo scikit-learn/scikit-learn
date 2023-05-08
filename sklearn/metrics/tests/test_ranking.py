@@ -877,7 +877,6 @@ def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
     # Check that using bytes class labels raises an informative
     # error for any supported string dtype:
     labels = _convert_container([b"a", b"b"], labels_type)
-    classes = np.unique(labels)
     msg = (
         "y_true takes value in {b'a', b'b'} and pos_label is not "
         "specified: either make y_true take value in {0, 1} or "
