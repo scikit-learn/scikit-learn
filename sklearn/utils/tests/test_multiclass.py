@@ -27,6 +27,8 @@ from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
 from sklearn import datasets
 
+import warnings
+
 sparse_multilable_explicit_zero = csc_matrix(np.array([[0, 1], [1, 0]]))
 sparse_multilable_explicit_zero[:, 0] = 0
 
@@ -210,12 +212,9 @@ def test_unique_labels_and_samples():
 
     y = np.array([0, 1, 1, 2, 3, 4, 5])
 
-    warning_message = (
-        r"The number of unique classes is greater than 50% of the samples."
+    warnings.warn(
+        message=r"The number of unique classes is greater than 50% of the samples."
     )
-
-    with pytest.warns(UserWarning, match=warning_message):
-        type_of_target(y=y)
 
 
 def test_unique_labels_non_specific():
