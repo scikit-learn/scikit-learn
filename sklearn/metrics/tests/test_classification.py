@@ -366,6 +366,15 @@ def test_precision_recall_f1_score_binary():
     assert_array_almost_equal(f, [0.80, 0.76], 2)
     assert_array_equal(s, [25, 25])
 
+    p2, r2, f2, s2, pr = precision_recall_fscore_support_pred(
+        y_true, y_pred, average=None
+    )
+    assert_array_almost_equal(p2, [0.73, 0.85], 2)
+    assert_array_almost_equal(r2, [0.88, 0.68], 2)
+    assert_array_almost_equal(f2, [0.80, 0.76], 2)
+    assert_array_equal(s2, [25, 25])
+    assert_array_equal(pr, [30, 20])
+
     # individual scoring function that can be used for grid search: in the
     # binary class case the score is the value of the measure for the positive
     # class (e.g. label == 1). This is deprecated for average != 'binary'.
@@ -453,6 +462,11 @@ def test_precision_recall_f_extra_labels():
     )
     assert_almost_equal(np.array([p, r, f]), np.array([3 / 4, 1, 5 / 6]))
 
+    p, r, f, _, _ = precision_recall_fscore_support_pred(
+        y_true, y_pred, average="samples", labels=[0, 1]
+    )
+    assert_almost_equal(np.array([p, r, f]), np.array([3 / 4, 1, 5 / 6]))
+
 
 @ignore_warnings
 def test_precision_recall_f_ignored_labels():
@@ -526,6 +540,9 @@ def test_precision_recall_f_unused_pos_label():
     )
     with pytest.warns(UserWarning, match=msg):
         precision_recall_fscore_support(
+            [1, 2, 1], [1, 2, 2], pos_label=2, average="macro"
+        )
+        precision_recall_fscore_support_pred(
             [1, 2, 1], [1, 2, 2], pos_label=2, average="macro"
         )
 
@@ -1086,6 +1103,13 @@ def test_precision_recall_f1_score_multiclass():
     assert_array_almost_equal(f, [0.81, 0.15, 0.57], 2)
     assert_array_equal(s, [24, 31, 20])
 
+    p, r, f, s, pr = precision_recall_fscore_support_pred(y_true, y_pred, average=None)
+    assert_array_almost_equal(p, [0.83, 0.33, 0.42], 2)
+    assert_array_almost_equal(r, [0.79, 0.09, 0.90], 2)
+    assert_array_almost_equal(f, [0.81, 0.15, 0.57], 2)
+    assert_array_equal(s, [24, 31, 20])
+    assert_array_equal(pr, [23, 9, 43])
+
     # averaging tests
     ps = precision_score(y_true, y_pred, pos_label=1, average="micro")
     assert_array_almost_equal(ps, 0.53, 2)
@@ -1132,12 +1156,22 @@ def test_precision_recall_f1_score_multiclass():
     assert_array_almost_equal(f, [0.81, 0.57, 0.15], 2)
     assert_array_equal(s, [24, 20, 31])
 
+    p, r, f, s, pr = precision_recall_fscore_support_pred(
+        y_true, y_pred, labels=[0, 2, 1], average=None
+    )
+    assert_array_almost_equal(p, [0.83, 0.41, 0.33], 2)
+    assert_array_almost_equal(r, [0.79, 0.90, 0.10], 2)
+    assert_array_almost_equal(f, [0.81, 0.57, 0.15], 2)
+    assert_array_equal(s, [24, 20, 31])
+    assert_array_equal(pr, [23, 43, 9])
+
 
 @pytest.mark.parametrize("average", ["samples", "micro", "macro", "weighted", None])
 def test_precision_refcall_f1_score_multilabel_unordered_labels(average):
     # test that labels need not be sorted in the multilabel case
     y_true = np.array([[1, 1, 0, 0]])
     y_pred = np.array([[0, 0, 1, 1]])
+
     p, r, f, s = precision_recall_fscore_support(
         y_true, y_pred, labels=[3, 0, 1, 2], warn_for=[], average=average
     )
@@ -1146,6 +1180,16 @@ def test_precision_refcall_f1_score_multilabel_unordered_labels(average):
     assert_array_equal(f, 0)
     if average is None:
         assert_array_equal(s, [0, 1, 1, 0])
+
+    p, r, f, s, pr = precision_recall_fscore_support_pred(
+        y_true, y_pred, labels=[3, 0, 1, 2], warn_for=[], average=None
+    )
+    assert_array_equal(p, 0)
+    assert_array_equal(r, 0)
+    assert_array_equal(f, 0)
+    if average is None:
+        assert_array_equal(s, [0, 1, 1, 0])
+        assert_array_equal(pr, [1, 0, 0, 1])
 
 
 def test_precision_recall_f1_score_binary_averaged():
@@ -1159,6 +1203,23 @@ def test_precision_recall_f1_score_binary_averaged():
     assert r == np.mean(rs)
     assert f == np.mean(fs)
     p, r, f, _ = precision_recall_fscore_support(y_true, y_pred, average="weighted")
+    support = np.bincount(y_true)
+    assert p == np.average(ps, weights=support)
+    assert r == np.average(rs, weights=support)
+    assert f == np.average(fs, weights=support)
+
+    ps, rs, fs, _, _ = precision_recall_fscore_support_pred(
+        y_true, y_pred, average=None
+    )
+    p, r, f, _, _ = precision_recall_fscore_support_pred(
+        y_true, y_pred, average="macro"
+    )
+    assert p == np.mean(ps)
+    assert r == np.mean(rs)
+    assert f == np.mean(fs)
+    p, r, f, _, _ = precision_recall_fscore_support_pred(
+        y_true, y_pred, average="weighted"
+    )
     support = np.bincount(y_true)
     assert p == np.average(ps, weights=support)
     assert r == np.average(rs, weights=support)
@@ -2032,6 +2093,46 @@ def test_precision_recall_f1_no_labels(beta, average, zero_division):
     assert_almost_equal(fbeta, float(zero_division))
 
 
+@pytest.mark.parametrize("beta", [1])
+@pytest.mark.parametrize("average", ["macro", "micro", "weighted", "samples"])
+@pytest.mark.parametrize("zero_division", [0, 1, np.nan])
+def test_precision_recall_f1_pred_no_labels(beta, average, zero_division):
+    y_true = np.zeros((20, 3))
+    y_pred = np.zeros_like(y_true)
+
+    p, r, f, s, pr = assert_no_warnings(
+        precision_recall_fscore_support_pred,
+        y_true,
+        y_pred,
+        average=average,
+        beta=beta,
+        zero_division=zero_division,
+    )
+    fbeta = assert_no_warnings(
+        fbeta_score,
+        y_true,
+        y_pred,
+        beta=beta,
+        average=average,
+        zero_division=zero_division,
+    )
+    assert s is None
+    assert pr is None
+
+    # if zero_division = nan, check that all metrics are nan and exit
+    if np.isnan(zero_division):
+        for metric in [p, r, f, fbeta]:
+            assert np.isnan(metric)
+        return
+
+    zero_division = float(zero_division)
+    assert_almost_equal(p, zero_division)
+    assert_almost_equal(r, zero_division)
+    assert_almost_equal(f, zero_division)
+
+    assert_almost_equal(fbeta, float(zero_division))
+
+
 @pytest.mark.parametrize("average", ["macro", "micro", "weighted", "samples"])
 def test_precision_recall_f1_no_labels_check_warnings(average):
     y_true = np.zeros((20, 3))
@@ -2045,6 +2146,27 @@ def test_precision_recall_f1_no_labels_check_warnings(average):
     assert_almost_equal(r, 0)
     assert_almost_equal(f, 0)
     assert s is None
+
+    with pytest.warns(UndefinedMetricWarning):
+        fbeta = fbeta_score(y_true, y_pred, average=average, beta=1.0)
+
+    assert_almost_equal(fbeta, 0)
+
+
+@pytest.mark.parametrize("average", ["macro", "micro", "weighted", "samples"])
+def test_precision_recall_f1_pred_no_labels_check_warnings(average):
+    y_true = np.zeros((20, 3))
+    y_pred = np.zeros_like(y_true)
+
+    func = precision_recall_fscore_support_pred
+    with pytest.warns(UndefinedMetricWarning):
+        p, r, f, s, pr = func(y_true, y_pred, average=average, beta=1.0)
+
+    assert_almost_equal(p, 0)
+    assert_almost_equal(r, 0)
+    assert_almost_equal(f, 0)
+    assert s is None
+    assert pr is None
 
     with pytest.warns(UndefinedMetricWarning):
         fbeta = fbeta_score(y_true, y_pred, average=average, beta=1.0)
