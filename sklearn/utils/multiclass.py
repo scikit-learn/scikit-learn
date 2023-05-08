@@ -394,7 +394,7 @@ def type_of_target(y, input_name=""):
             category=UserWarning,
             filename="sklearn/utils/tests/test_multiclass.py",
             lineno=-1,
-            line="type_of_target(y)"
+            line="type_of_target(y)",
         )
 
     if classes.shape[0] > 2 or (y.ndim == 2 and len(first_row) > 1):
