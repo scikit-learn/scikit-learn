@@ -1309,3 +1309,21 @@ def test_multimetric_scoring_metadata_routing():
     # This passes since routing is done.
     with config_context(enable_metadata_routing=True):
         multi_scorer(clf, X, y, sample_weight=1)
+
+
+def test_kwargs_without_metadata_routing_error():
+    # Test that kwargs are not supported in scorers if metadata routing is not
+    # enabled.
+    # TODO: remove when enable_metadata_routing is deprecated
+    def score(y_true, y_pred, param=None):
+        return 1  # pragma: no cover
+
+    X, y = make_classification(
+        n_samples=50, n_features=2, n_redundant=0, random_state=0
+    )
+
+    clf = DecisionTreeClassifier().fit(X, y)
+    scorer = make_scorer(score)
+    with config_context(enable_metadata_routing=False):
+        with pytest.raises(ValueError, match="kwargs is only supported if"):
+            scorer(clf, X, y, param="blah")
