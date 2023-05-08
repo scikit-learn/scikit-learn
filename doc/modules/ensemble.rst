@@ -1251,7 +1251,7 @@ means that ``[{0}]`` is equivalent to ``[{0}, {1, 2}]``.
      2022. :doi:`Machine Learning Applications to Land and Structure Valuation
      <10.3390/jrfm15050193>`.
      Journal of Risk and Financial Management 15, no. 5: 193
-     
+
 Low-level parallelism
 ---------------------
 
