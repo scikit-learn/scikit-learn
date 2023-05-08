@@ -1,3 +1,4 @@
+import copy
 import re
 from functools import partial
 
@@ -14,7 +15,11 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
-from sklearn.tests.test_metadata_routing import assert_request_is_empty, record_metadata
+from sklearn.tests.test_metadata_routing import (
+    assert_request_is_empty,
+    check_recorded_metadata,
+    record_metadata,
+)
 from sklearn.utils.metadata_routing import MetadataRouter
 
 N, M = 100, 4
@@ -32,7 +37,8 @@ class _Registry(list):
     # This list is used to get a reference to the sub-estimators, which are not
     # necessarily stored on the metaestimator. We need to override __deepcopy__
     # because the sub-estimators are probably cloned, which would result in a
-    # new copy of the list.
+    # new copy of the list, but we need copy and deep copy both to return the
+    # same instance.
     def __deepcopy__(self, memo):
         return self
 
@@ -212,6 +218,15 @@ The keys are as follows:
 METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATORS]
 
 
+def test_registry_copy():
+    # test that _Registry is not copied into a new instance.
+    a = _Registry()
+    b = _Registry()
+    assert a is not b
+    assert a is copy.copy(a)
+    assert a is copy.deepcopy(a)
+
+
 @pytest.mark.parametrize(
     "metaestimator",
     METAESTIMATORS,
@@ -272,16 +287,29 @@ def test_setting_request_removes_error(metaestimator):
         set_request_for_method = getattr(estimator, f"set_{method_name}_request")
         set_request_for_method(sample_weight=True, metadata=True)
 
-    with config_context(enable_metadata_routing=True):
-        cls = metaestimator["metaestimator"]
-        estimator_name = metaestimator["estimator_name"]
-        X = metaestimator["X"]
-        y = metaestimator["y"]
-        routing_methods = metaestimator["routing_methods"]
+    cls = metaestimator["metaestimator"]
+    estimator_name = metaestimator["estimator_name"]
+    X = metaestimator["X"]
+    y = metaestimator["y"]
+    routing_methods = metaestimator["routing_methods"]
+    preserves_metadata = metaestimator.get("preserves_metadata", True)
 
+    with config_context(enable_metadata_routing=True):
         for method_name in routing_methods:
-            estimator = metaestimator["estimator"]()
-            set_request(estimator, method_name)
-            instance = cls(**{estimator_name: estimator})
-            method = getattr(instance, method_name)
-            method(X, y, sample_weight=sample_weight, metadata=metadata)
+            for key in ["sample_weight", "metadata"]:
+                val = {"sample_weight": sample_weight, "metadata": metadata}[key]
+                kwargs = {key: val}
+
+                registry = _Registry()
+                estimator = metaestimator["estimator"](registry=registry)
+                set_request(estimator, method_name)
+                instance = cls(**{estimator_name: estimator})
+                method = getattr(instance, method_name)
+                method(X, y, **kwargs)
+
+                if preserves_metadata:
+                    # sanity check that registry is not empty, or else the test
+                    # passes trivially
+                    assert registry
+                    for estimator in registry:
+                        check_recorded_metadata(estimator, method_name, **kwargs)

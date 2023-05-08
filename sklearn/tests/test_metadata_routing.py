@@ -157,7 +157,7 @@ class ClassifierNoMetadata(ClassifierMixin, BaseEstimator):
         return self
 
     def predict(self, X):
-        return np.ones(len(X))
+        return np.ones(len(X))  # pragma: no cover
 
 
 class ClassifierFitMetadata(ClassifierMixin, BaseEstimator):
@@ -168,7 +168,7 @@ class ClassifierFitMetadata(ClassifierMixin, BaseEstimator):
         return self
 
     def predict(self, X):
-        return np.ones(len(X))
+        return np.ones(len(X))  # pragma: no cover
 
 
 class SimpleMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
@@ -914,34 +914,34 @@ def test_method_generation():
     class SimpleEstimator(BaseEstimator):
         # This class should have no set_{method}_request
         def fit(self, X, y):
-            pass
+            pass  # pragma: no cover
 
         def partial_fit(self, X, y):
-            pass
+            pass  # pragma: no cover
 
         def predict(self, X):
-            pass
+            pass  # pragma: no cover
 
         def predict_proba(self, X):
-            pass
+            pass  # pragma: no cover
 
         def predict_log_proba(self, X):
-            pass
+            pass  # pragma: no cover
 
         def decision_function(self, X):
-            pass
+            pass  # pragma: no cover
 
         def score(self, X, y):
-            pass
+            pass  # pragma: no cover
 
         def split(self, X, y=None):
-            pass
+            pass  # pragma: no cover
 
         def transform(self, X):
-            pass
+            pass  # pragma: no cover
 
         def inverse_transform(self, X):
-            pass
+            pass  # pragma: no cover
 
     for method in METHODS:
         assert not hasattr(SimpleEstimator(), f"set_{method}_request")
@@ -949,34 +949,34 @@ def test_method_generation():
     class SimpleEstimator(BaseEstimator):
         # This class should have every set_{method}_request
         def fit(self, X, y, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def partial_fit(self, X, y, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def predict(self, X, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def predict_proba(self, X, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def predict_log_proba(self, X, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def decision_function(self, X, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def score(self, X, y, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def split(self, X, y=None, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def transform(self, X, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def inverse_transform(self, X, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
     for method in METHODS:
         assert hasattr(SimpleEstimator(), f"set_{method}_request")
