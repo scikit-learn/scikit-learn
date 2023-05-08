@@ -81,13 +81,16 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
         return self
 
     def predict(self, X, sample_weight="default", metadata="default"):
-        if self.registry is not None:
-            self.registry.append(self)
+        pass  # pragma: no cover
 
-        record_metadata_not_default(
-            self, "predict", sample_weight=sample_weight, metadata=metadata
-        )
-        return np.zeros(shape=(len(X),))
+        # when needed, uncomment the implementation
+        # if self.registry is not None:
+        #     self.registry.append(self)
+
+        # record_metadata_not_default(
+        #     self, "predict", sample_weight=sample_weight, metadata=metadata
+        # )
+        # return np.zeros(shape=(len(X),))
 
 
 class ConsumingClassifier(ClassifierMixin, BaseEstimator):
@@ -127,13 +130,16 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         return self
 
     def predict(self, X, sample_weight="default", metadata="default"):
-        if self.registry is not None:
-            self.registry.append(self)
+        pass  # pragma: no cover
 
-        record_metadata_not_default(
-            self, "predict", sample_weight=sample_weight, metadata=metadata
-        )
-        return np.zeros(shape=(len(X),))
+        # when needed, uncomment the implementation
+        # if self.registry is not None:
+        #     self.registry.append(self)
+
+        # record_metadata_not_default(
+        #     self, "predict", sample_weight=sample_weight, metadata=metadata
+        # )
+        # return np.zeros(shape=(len(X),))
 
     def predict_proba(self, X, sample_weight="default", metadata="default"):
         if self.registry is not None:
@@ -145,13 +151,16 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         return np.asarray([[0.0, 1.0]] * len(X))
 
     def predict_log_proba(self, X, sample_weight="default", metadata="default"):
-        if self.registry is not None:
-            self.registry.append(self)
+        pass  # pragma: no cover
 
-        record_metadata_not_default(
-            self, "predict_log_proba", sample_weight=sample_weight, metadata=metadata
-        )
-        return np.zeros(shape=(len(X), 2))
+        # when needed, uncomment the implementation
+        # if self.registry is not None:
+        #     self.registry.append(self)
+
+        # record_metadata_not_default(
+        #     self, "predict_log_proba", sample_weight=sample_weight, metadata=metadata
+        # )
+        # return np.zeros(shape=(len(X), 2))
 
 
 METAESTIMATORS = [
@@ -269,7 +278,7 @@ def test_error_on_missing_requests(metaestimator):
 
                 instance = cls(**{estimator_name: estimator})
                 if "fit" not in method_name:  # instance needs to be fitted first
-                    instance.fit(X, y)
+                    instance.fit(X, y)  # pragma: no cover
                 with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
                     method = getattr(instance, method_name)
                     method(X, y, **kwargs)
