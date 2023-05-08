@@ -1732,6 +1732,7 @@ def precision_recall_fscore_support(
 
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
+
     precision = _prf_divide(
         tp_sum, pred_sum, "precision", "predicted", average, warn_for, zero_division
     )
@@ -1928,6 +1929,7 @@ def precision_recall_fscore_support_pred(
     true_sum = tp_sum + fn_sum
 
     if average == "micro":
+        tp_sum = np.array([tp_sum.sum()])
         pred_sum = np.array([pred_sum.sum()])
         true_sum = np.array([true_sum.sum()])
 
