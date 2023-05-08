@@ -304,6 +304,40 @@ def test_assert_request_is_empty():
     )
 
 
+@pytest.mark.parametrize(
+    "val, res",
+    [
+        (False, False),
+        (True, False),
+        (None, False),
+        ("$UNUSED$", False),
+        ("$WARN$", False),
+        ("invalid-input", False),
+        ("valid_arg", True),
+    ],
+)
+def test_request_type_is_alias(val, res):
+    # Test RequestType.is_alias
+    assert RequestType.is_alias(val) == res
+
+
+@pytest.mark.parametrize(
+    "val, res",
+    [
+        (False, True),
+        (True, True),
+        (None, True),
+        ("$UNUSED$", True),
+        ("$WARN$", True),
+        ("invalid-input", False),
+        ("alias_arg", False),
+    ],
+)
+def test_request_type_is_valid(val, res):
+    # Test RequestType.is_valid
+    assert RequestType.is_valid(val) == res
+
+
 def test_default_requests():
     class OddEstimator(BaseEstimator):
         __metadata_request__fit = {
@@ -334,6 +368,11 @@ def test_default_requests():
         "brand": RequestType(None),
     }
     assert_request_is_empty(est_request)
+
+
+def test_process_routing_invalid_method():
+    with pytest.raises(TypeError, match="Can only route and process input"):
+        process_routing(ClassifierFitMetadata(), "invalid_method", {})
 
 
 def test_process_routing_invalid_object():
