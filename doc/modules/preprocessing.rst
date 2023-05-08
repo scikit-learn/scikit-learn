@@ -941,6 +941,7 @@ learned in :meth:`~TargetEncoder.fit_transform`.
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder_cross_val.py`
 
 .. topic:: References
 

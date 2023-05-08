@@ -298,6 +298,12 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     return np.nan_to_num(sil_samples)
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "labels": ["array-like"],
+    }
+)
 def calinski_harabasz_score(X, labels):
     """Compute the Calinski and Harabasz score.
 
@@ -352,6 +358,12 @@ def calinski_harabasz_score(X, labels):
     )
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "labels": ["array-like"],
+    }
+)
 def davies_bouldin_score(X, labels):
     """Compute the Davies-Bouldin score.
 
