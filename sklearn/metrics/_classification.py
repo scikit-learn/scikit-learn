@@ -1894,7 +1894,7 @@ def precision_recall_fscore_support_pred(
     >>> precision_recall_fscore_support_pred(y_true, y_pred, average='macro')
     (0.22..., 0.33..., 0.26..., None, None)
     >>> precision_recall_fscore_support_pred(y_true, y_pred, average='micro')
-    (0.11..., 0.11..., 0.11..., None, None)
+    (0.33..., 0.33..., 0.33..., None, None)
     >>> precision_recall_fscore_support_pred(y_true, y_pred, average='weighted')
     (0.22..., 0.33..., 0.26..., None, None)
 
