@@ -336,7 +336,7 @@ modifying code and submitting a PR:
 
     .. prompt:: bash $
 
-        pip install --no-build-isolation -e .
+        pip install -v --no-use-pep517 --no-build-isolation -e .
 
     Use the ``--no-build-isolation`` flag to avoid compiling the whole project
     each time, only the files you have modified.
