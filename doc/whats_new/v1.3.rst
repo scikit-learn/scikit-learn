@@ -43,6 +43,12 @@ random sampling procedures.
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`decomposition.KernelPCA` now uses the correct `gamma` if `gamma` is
+  `None` every time the kernel is called. It should be equal to `1/num_features` of
+  the data that it is initially fitted on. As a consequence, the `KernelPCA` models
+  with `gamma=None` may produce different results through `inverse_transform`.
+  :pr:`26337` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -230,11 +236,6 @@ Changelog
   :class:`decomposition.MiniBatchNMF` which can produce different results than previous
   versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
 
-- |Fix| :class:`decomposition.KernelPCA` now uses the correct `gamma` if `gamma` is
-  `None` every time the kernel is called. It should be equal to `1/num_features` of
-  the data that it is initially fitted on.
-  :pr:`26337` by :user:`Yao Xiao <Charlie-XIAO>`.
-
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -410,7 +411,7 @@ Changelog
 
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
-  
+
 - |Feature| :func:`metrics.average_precision_score` now supports the
   multiclass case.
   :pr:`17388` by :user:`Geoffrey Bolmier <gbolmier>` and
