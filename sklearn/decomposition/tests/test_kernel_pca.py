@@ -533,18 +533,17 @@ def test_kernel_pca_inverse_correct_gamma():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
 
-    kpca1 = KernelPCA(
-        n_components=2, random_state=rng, fit_inverse_transform=True, kernel="rbf"
-    ).fit(X)
-    kpca2 = KernelPCA(
-        n_components=2,
-        gamma=1 / X.shape[1],
-        random_state=rng,
-        fit_inverse_transform=True,
-        kernel="rbf",
-    ).fit(X)
+    kwargs = {
+        "n_components": 2,
+        "random_state": rng,
+        "fit_inverse_transform": True,
+        "kernel": "rbf",
+    }
 
-    reconstructed_X1 = kpca1.inverse_transform(kpca1.transform(X))
-    reconstructed_X2 = kpca2.inverse_transform(kpca1.transform(X))
+    kpca1 = KernelPCA(gamma=None, **kwargs).fit(X)
+    kpca2 = KernelPCA(gamma=1 / X.shape[1], **kwargs).fit(X)
 
-    assert (reconstructed_X1 == reconstructed_X2).all()
+    X1_recon = kpca1.inverse_transform(kpca1.transform(X))
+    X2_recon = kpca2.inverse_transform(kpca1.transform(X))
+
+    assert_array_equal(X1_recon, X2_recon)
