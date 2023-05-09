@@ -159,31 +159,19 @@ A competitive alternative to random forests are
    build shallow trees (that underfit individually) which are faster to fit
    and predict.
 
--  Sequential boosting: In histogram-based gradient boosting (HGBT), the
-   decision trees are built sequentially, where each tree is trained to
-   correct the errors made by the previous trees. This is achieved by
-   assigning higher weights to the training instances that were misclassified
-   in the previous iteration, which helps the next tree to focus on those
-   instances and improve their classification. This process is repeated
-   iteratively until a predefined number of trees are built or until the
-   model's performance stops improving.
+-  Sequential boosting: In HGBT, the decision trees are built sequentially,
+   where each tree is trained to correct the errors made by the previous ones.
+   This allows them to iteratively improve the model's performance using
+   relatively few trees. In contrast, random forests use a majority vote to
+   predict the outcome, which can require a larger number of trees to achieve
+   the same level of accuracy.
 
-   In contrast, random forests (RF) use an ensemble of decision trees, where
-   each tree is built independently and is not influenced by the other trees.
-   The final prediction is made by taking the majority vote of all the trees
-   in the ensemble. While RF can achieve high accuracy, they may require a
-   larger number of trees to achieve the same level of accuracy as HGBT. This
-   is because RF may not be able to correct errors made by previous trees as
-   effectively as HGBT, which can lead to a larger number of trees needed to
-   achieve the desired level of accuracy.
-
--  Efficient binning: Efficient binning: HGBT uses an efficient binning
-   algorithm that can handle large datasets with a high number of features.
-   The binning algorithm can pre-process the data to speed up the subsequent
-   tree construction (:ref:`see Why it's faster <Why_it's_faster>`). In
-   contrast, the scikit-learn implementation of random forests does not use
-   binning and relies on exact splitting, which can be computationally
-   expensive.
+-  Efficient binning: HGBT uses an efficient binning algorithm that can handle
+   large datasets with a high number of features. The binning algorithm can
+   pre-process the data to speed up the subsequent tree construction (see
+   :ref:`Why it's faster <Why_it's_faster>`). In contrast, the scikit-learn
+   implementation of random forests does not use binning and relies on exact
+   splitting, which can be computationally expensive.
 
 Overall, the computational cost of HGBT versus RF depends on the specific
 characteristics of the dataset and the modeling task. It's always a good idea
