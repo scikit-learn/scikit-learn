@@ -475,6 +475,14 @@ def notebook_modification_function(notebook_content, notebook_filename):
     )
 
 
+default_global_config = sklearn.get_config()
+
+
+def reset_sklearn_config(gallery_conf, fname):
+    """Reset sklearn config to default values."""
+    sklearn.set_config(**default_global_config)
+
+
 sphinx_gallery_conf = {
     "doc_module": "sklearn",
     "backreferences_dir": os.path.join("modules", "generated"),
@@ -497,6 +505,7 @@ sphinx_gallery_conf = {
     "inspect_global_variables": False,
     "remove_config_comments": True,
     "plot_gallery": "True",
+    "reset_modules": ("matplotlib", "seaborn", reset_sklearn_config),
 }
 
 
