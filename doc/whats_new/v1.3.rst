@@ -416,7 +416,9 @@ Changelog
   `tpr=0` and `fpr=0`.
   :pr:`26194` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Deprecate `matching` as a metric to be consistent with `scipy.spatial.distance`.
+- |Fix| `matching` has been deprecated as a metric when SciPy>=1.9 is used
+  to be consistent with `scipy.spatial.distance` which does not support it
+  anymore.
   :pr:`26264` by :user:`Barata T. Onggo <magnusbarata>`
 
 :mod:`sklearn.model_selection`

@@ -664,7 +664,7 @@ def pairwise_distances_argmin_min(
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
         .. note::
-           `'matching'` has been removed since SciPy 1.9 (use `'hamming'` instead).
+           `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -787,7 +787,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
         .. note::
-           `'matching'` has been removed since SciPy 1.9 (use `'hamming'` instead).
+           `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -2032,7 +2032,7 @@ def pairwise_distances(
         `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     .. note::
-        `'matching'` has been removed since SciPy 1.9 (use `'hamming'` instead).
+        `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
 
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
     valid scipy.spatial.distance metrics), the scikit-learn implementation
