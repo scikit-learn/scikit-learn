@@ -256,7 +256,7 @@ def grid_to_graph(
 # From an image to a set of small image patches
 
 
-def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
+def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None, stride=(1, 1)):
     """Compute the number of patches that will be extracted in an image.
 
     Read more in the :ref:`User Guide <image_feature_extraction>`.
@@ -266,7 +266,7 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
     i_h : int
         The image height
     i_w : int
-        The image with
+        The image width
     p_h : int
         The height of a patch
     p_w : int
@@ -275,9 +275,11 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
         The maximum number of patches to extract. If `max_patches` is a float
         between 0 and 1, it is taken to be a proportion of the total number
         of patches. If `max_patches` is None, all possible patches are extracted.
+    stride : tuple of length arr.ndim, default=(1, 1)
+        Indicates stride at which extraction shall be performed.
     """
-    n_h = i_h - p_h + 1
-    n_w = i_w - p_w + 1
+    n_h = (i_h - p_h) // stride[0] + 1
+    n_w = (i_w - p_w) // stride[1] + 1
     all_patches = n_h * n_w
 
     if max_patches:
@@ -362,10 +364,13 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
             None,
         ],
         "random_state": ["random_state"],
+        "stride": [tuple, Integral],
     },
     prefer_skip_nested_validation=True,
 )
-def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None):
+def extract_patches_2d(
+    image, patch_size, *, max_patches=None, random_state=None, stride=1
+):
     """Reshape a 2D image into a collection of patches.
 
     The resulting patches are allocated in a dedicated array.
@@ -393,6 +398,10 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
         `max_patches` is not None. Use an int to make the randomness
         deterministic.
         See :term:`Glossary <random_state>`.
+
+    stride : int or tuple of length arr.ndim, default=1
+        Indicates stride at which extraction shall be performed.
+        If integer is given, then the stride is uniform in all dimensions.
 
     Returns
     -------
@@ -442,11 +451,26 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
     image = image.reshape((i_h, i_w, -1))
     n_colors = image.shape[-1]
 
+    if isinstance(stride, Number):
+        stride = (stride, stride)
+    if len(stride) == 2:
+        # We extended the 2D image into a 3D image.
+        # We can fix the stride to 1 for the third dimension.
+        stride = stride + (1,)
+
+    if isinstance(stride, tuple) and len(stride) != image.ndim:
+        raise ValueError(
+            "When stride is a tuple, its length should be the same "
+            "as the dimension of image. "
+            f"Got stride with {len(stride)} elements and image with "
+            f"{image.ndim} dimensions."
+        )
+
     extracted_patches = _extract_patches(
-        image, patch_shape=(p_h, p_w, n_colors), extraction_step=1
+        image, patch_shape=(p_h, p_w, n_colors), extraction_step=stride
     )
 
-    n_patches = _compute_n_patches(i_h, i_w, p_h, p_w, max_patches)
+    n_patches = _compute_n_patches(i_h, i_w, p_h, p_w, max_patches, stride=stride)
     if max_patches:
         rng = check_random_state(random_state)
         i_s = rng.randint(i_h - p_h + 1, size=n_patches)
@@ -464,10 +488,14 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
 
 
 @validate_params(
-    {"patches": [np.ndarray], "image_size": [tuple, Hidden(list)]},
+    {
+        "patches": [np.ndarray],
+        "image_size": [tuple, Hidden(list)],
+        "stride": [tuple, Integral],
+    },
     prefer_skip_nested_validation=True,
 )
-def reconstruct_from_patches_2d(patches, image_size):
+def reconstruct_from_patches_2d(patches, image_size, stride=1):
     """Reconstruct the image from all of its patches.
 
     Patches are assumed to overlap and the image is constructed by filling in
@@ -487,6 +515,10 @@ def reconstruct_from_patches_2d(patches, image_size):
     image_size : tuple of int (image_height, image_width) or \
         (image_height, image_width, n_channels)
         The size of the image that will be reconstructed.
+
+    stride : int or tuple of length arr.ndim, default=1
+        Indicates stride at which extraction shall be performed.
+        If integer is given, then the stride is uniform in all dimensions.
 
     Returns
     -------
@@ -510,20 +542,23 @@ def reconstruct_from_patches_2d(patches, image_size):
     >>> print(f"Reconstructed shape: {image_reconstructed.shape}")
     Reconstructed shape: (427, 640, 3)
     """
+
+    if isinstance(stride, Number):
+        stride = tuple([stride] * (patches.ndim - 1))
+
     i_h, i_w = image_size[:2]
     p_h, p_w = patches.shape[1:3]
     img = np.zeros(image_size)
     # compute the dimensions of the patches array
     n_h = i_h - p_h + 1
     n_w = i_w - p_w + 1
-    for p, (i, j) in zip(patches, product(range(n_h), range(n_w))):
+    mask = np.zeros((i_h, i_w, 1)[: len(image_size)])
+    for p, (i, j) in zip(
+        patches, product(range(0, n_h, stride[0]), range(0, n_w, stride[1]))
+    ):
         img[i : i + p_h, j : j + p_w] += p
-
-    for i in range(i_h):
-        for j in range(i_w):
-            # divide by the amount of overlap
-            # XXX: is this the most efficient way? memory-wise yes, cpu wise?
-            img[i, j] /= float(min(i + 1, p_h, i_h - i) * min(j + 1, p_w, i_w - j))
+        mask[i : i + p_h, j : j + p_w] += 1
+    img = np.divide(img, mask, where=mask != 0)
     return img
 
 
@@ -551,6 +586,12 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         `max_patches is not None`. Use an int to make the randomness
         deterministic.
         See :term:`Glossary <random_state>`.
+
+    stride : int or tuple of int, default=1
+        Indicates the stride at which extraction shall be performed.
+        If an integer is given, then the stride is uniform in both image dimension.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -588,12 +629,16 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             Interval(Integral, 1, None, closed="left"),
         ],
         "random_state": ["random_state"],
+        "stride": [tuple, Integral],
     }
 
-    def __init__(self, *, patch_size=None, max_patches=None, random_state=None):
+    def __init__(
+        self, *, patch_size=None, max_patches=None, random_state=None, stride=1
+    ):
         self.patch_size = patch_size
         self.max_patches = max_patches
         self.random_state = random_state
+        self.stride = stride
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
@@ -664,10 +709,26 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         X = np.reshape(X, (n_imgs, img_height, img_width, -1))
         n_channels = X.shape[-1]
 
+        stride = self.stride
+        if isinstance(stride, Number):
+            stride = (stride, stride)
+        if len(stride) == 2:
+            # We extended the 2D images into 3D images.
+            # We can fix the stride to 1 for the third dimension.
+            stride = stride + (1,)
+
+        if isinstance(stride, tuple) and len(stride) != X.ndim - 1:
+            raise ValueError(
+                "When stride is a tuple, its length should be the same "
+                "as the dimension of image. "
+                f"Got stride with {len(stride)} elements and images with "
+                f"{X.ndim - 1} dimensions."
+            )
+
         # compute the dimensions of the patches array
         patch_height, patch_width = patch_size
         n_patches = _compute_n_patches(
-            img_height, img_width, patch_height, patch_width, self.max_patches
+            img_height, img_width, patch_height, patch_width, self.max_patches, stride
         )
         patches_shape = (n_imgs * n_patches,) + patch_size
         if n_channels > 1:
@@ -681,6 +742,7 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
                 patch_size,
                 max_patches=self.max_patches,
                 random_state=random_state,
+                stride=stride,
             )
         return patches
 
