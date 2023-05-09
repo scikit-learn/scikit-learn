@@ -28,7 +28,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     estimator_name : str, default=None
         Name of estimator. If None, then the estimator name is not shown.
 
-    pos_label : str or int, default=None
+    pos_label : int, float, bool or str, default=None
         The class considered as the positive class. If None, the class will not
         be shown in the legend.
 
@@ -194,7 +194,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The class considered as the positive class when computing the
             precision and recall metrics. By default, `estimators.classes_[1]`
             is considered as the positive class.
@@ -306,7 +306,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The class considered as the positive class when computing the
             precision and recall metrics.
 

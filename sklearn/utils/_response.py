@@ -19,9 +19,6 @@ def _get_response_values(
     The response values are predictions, one scalar value for each sample in X
     that depends on the specific choice of `response_method`.
 
-    This helper only accepts multiclass classifiers with the `predict` response
-    method.
-
     If `estimator` is a binary classifier, also return the label for the
     effective positive class.
 
@@ -47,7 +44,7 @@ def _get_response_values(
           preference. The method returned corresponds to the first method in
           the list and which is implemented by `estimator`.
 
-    pos_label : str or int, default=None
+    pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing
         the metrics. By default, `estimators.classes_[1]` is
         considered as the positive class.
@@ -58,7 +55,7 @@ def _get_response_values(
         Target scores calculated from the provided response_method
         and `pos_label`.
 
-    pos_label : str, int or None
+    pos_label : int, float, bool, str or None
         The class considered as the positive class when computing
         the metrics. Returns `None` if `estimator` is a regressor.
 
@@ -75,14 +72,7 @@ def _get_response_values(
     if is_classifier(estimator):
         prediction_method = _check_response_method(estimator, response_method)
         classes = estimator.classes_
-
         target_type = "binary" if len(classes) <= 2 else "multiclass"
-
-        if target_type == "multiclass" and prediction_method.__name__ != "predict":
-            raise ValueError(
-                "With a multiclass estimator, the response method should be "
-                f"predict, got {prediction_method.__name__} instead."
-            )
 
         if pos_label is not None and pos_label not in classes.tolist():
             raise ValueError(
@@ -133,24 +123,24 @@ def _get_response_values_binary(estimator, X, response_method, pos_label=None):
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    response_method: {'auto', 'predict_proba', 'decision_function'}
+    response_method : {'auto', 'predict_proba', 'decision_function'}
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. If set to 'auto',
         :term:`predict_proba` is tried first and if it does not exist
         :term:`decision_function` is tried next.
 
-    pos_label : str or int, default=None
+    pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing
         the metrics. By default, `estimators.classes_[1]` is
         considered as the positive class.
 
     Returns
     -------
-    y_pred: ndarray of shape (n_samples,)
+    y_pred : ndarray of shape (n_samples,)
         Target scores calculated from the provided response_method
         and pos_label.
 
-    pos_label: str or int
+    pos_label : int, float, bool or str
         The class considered as the positive class when computing
         the metrics.
     """
