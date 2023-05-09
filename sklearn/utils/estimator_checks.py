@@ -165,8 +165,9 @@ def _yield_classifier_checks(classifier):
         yield check_estimators_unfitted
     if "class_weight" in classifier.get_params().keys():
         yield check_class_weight_classifiers
-        yield check_interaction_of_class_and_sample_weight_excluding_class
-        yield check_interaction_of_class_and_sample_weight_excluding_samples
+        if has_fit_parameter(classifier, "sample_weight"):
+            yield check_interaction_of_class_and_sample_weight_excluding_class
+            yield check_interaction_of_class_and_sample_weight_excluding_samples
 
     yield check_non_transformer_estimators_n_iter
     # test if predict_proba is a monotonic transformation of decision_function
