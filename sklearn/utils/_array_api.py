@@ -470,6 +470,13 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         return float(xp.sum(sample_score))
 
 
+def _isneginf(X):
+    xp, _ = get_namespace(X)
+    is_inf = xp.isinf(X)
+    signbit = xp.sign(X) < 0
+    return xp.logical_and(is_inf, signbit)
+
+
 def _nanmin(X, axis=None):
     xp, _ = get_namespace(X)
     if _is_numpy_namespace(xp):
@@ -489,7 +496,7 @@ def _nanmax(X, axis=None):
     else:
         X = xp.max(xp.where(~xp.isnan(X), X, xp.asarray(-xp.inf)), axis=axis)
         # Replace Infs from all NaN slices with NaN again
-        return xp.where(~xp.isneginf(X), X, xp.asarray(xp.nan))
+        return xp.where(~_isneginf(X), X, xp.asarray(xp.nan))
 
 
 def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
