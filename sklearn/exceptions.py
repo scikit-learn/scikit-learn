@@ -21,7 +21,7 @@ class UnsetMetadataPassedError(ValueError):
     """Exception class to raise if a metadata is passed which is not explicitly \
         requested.
 
-    .. versionadded:: 1.2
+    .. versionadded:: 1.3
 
     Parameters
     ----------

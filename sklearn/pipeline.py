@@ -76,13 +76,13 @@ class Pipeline(_BaseComposition):
         estimator.
 
     memory : str or object with the joblib.Memory interface, default=None
-        Used to cache the fitted transformers of the pipeline. By default,
-        no caching is performed. If a string is given, it is the path to
-        the caching directory. Enabling caching triggers a clone of
-        the transformers before fitting. Therefore, the transformer
-        instance given to the pipeline cannot be inspected
-        directly. Use the attribute ``named_steps`` or ``steps`` to
-        inspect estimators within the pipeline. Caching the
+        Used to cache the fitted transformers of the pipeline. The last step
+        will never be cached, even if it is a transformer. By default, no
+        caching is performed. If a string is given, it is the path to the
+        caching directory. Enabling caching triggers a clone of the transformers
+        before fitting. Therefore, the transformer instance given to the
+        pipeline cannot be inspected directly. Use the attribute ``named_steps``
+        or ``steps`` to inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
     verbose : bool, default=False
@@ -356,11 +356,13 @@ class Pipeline(_BaseComposition):
             # "fit_transform", and "fit_predict", since other methods don't
             # accept extra params at the time of this change.
             warnings.warn(
-                "Passing parameters with the step__parameter format is deprecated"
-                " and their support will be removed in version 1.4. Use metadata"
-                " routing instead. E.g.: make_pipeline("
-                " LogisticRegression().set_fit_request(sample_weight=True) ).fit(X,"
-                " y, sample_weight)",
+                (
+                    "Passing parameters with the step__parameter format is deprecated"
+                    " and their support will be removed in version 1.4. Use metadata"
+                    " routing instead. E.g.: make_pipeline("
+                    " LogisticRegression().set_fit_request(sample_weight=True) ).fit(X,"
+                    " y, sample_weight)"
+                ),
                 FutureWarning,
             )
 
@@ -407,13 +409,15 @@ class Pipeline(_BaseComposition):
             # doesn't accept any metadata, there will be no warnings, which is
             # the majority of the users.
             warnings.warn(
-                f"The steps {', '.join(warn)} in this pipeline have requested"
-                " metadata which you have provided, but you have not explicitly"
-                " set the `route_metadata_to_transform` for this Pipeline object."
-                " To silence this warning, either remove the requests from those"
-                " steps' transform method using their set_transform_request"
-                " method, or explicitly set route_metadata_to_transform to `True`"
-                " or `False` for this Pipeline object.",
+                (
+                    f"The steps {', '.join(warn)} in this pipeline have requested"
+                    " metadata which you have provided, but you have not explicitly"
+                    " set the `route_metadata_to_transform` for this Pipeline object."
+                    " To silence this warning, either remove the requests from those"
+                    " steps' transform method using their set_transform_request"
+                    " method, or explicitly set route_metadata_to_transform to `True`"
+                    " or `False` for this Pipeline object."
+                ),
                 FutureWarning,
             )
         return routed_params
@@ -500,6 +504,14 @@ class Pipeline(_BaseComposition):
 
         return self
 
+    def _can_fit_transform(self):
+        return (
+            self._final_estimator == "passthrough"
+            or hasattr(self._final_estimator, "transform")
+            or hasattr(self._final_estimator, "fit_transform")
+        )
+
+    @available_if(_can_fit_transform)
     def fit_transform(self, X, y=None, **params):
         """Fit the model and transform with the final estimator.
 
@@ -864,12 +876,34 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][1].classes_
 
     def _more_tags(self):
+        tags = {
+            "_xfail_checks": {
+                "check_dont_overwrite_parameters": (
+                    "Pipeline changes the `steps` parameter, which it shouldn't."
+                    "Therefore this test is x-fail until we fix this."
+                ),
+                "check_estimators_overwrite_params": (
+                    "Pipeline changes the `steps` parameter, which it shouldn't."
+                    "Therefore this test is x-fail until we fix this."
+                ),
+            }
+        }
+
         try:
-            return {"pairwise": _safe_tags(self.steps[0][1], "pairwise")}
+            tags["pairwise"] = _safe_tags(self.steps[0][1], "pairwise")
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
-            return {}
+            pass
+
+        try:
+            tags["multioutput"] = _safe_tags(self.steps[-1][1], "multioutput")
+        except (ValueError, AttributeError, TypeError):
+            # This happens when the `steps` is not a list of (name, estimator)
+            # tuples and `fit` is not called yet to validate the steps.
+            pass
+
+        return tags
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -1053,13 +1087,13 @@ def make_pipeline(*steps, memory=None, verbose=False):
         List of the scikit-learn estimators that are chained together.
 
     memory : str or object with the joblib.Memory interface, default=None
-        Used to cache the fitted transformers of the pipeline. By default,
-        no caching is performed. If a string is given, it is the path to
-        the caching directory. Enabling caching triggers a clone of
-        the transformers before fitting. Therefore, the transformer
-        instance given to the pipeline cannot be inspected
-        directly. Use the attribute ``named_steps`` or ``steps`` to
-        inspect estimators within the pipeline. Caching the
+        Used to cache the fitted transformers of the pipeline. The last step
+        will never be cached, even if it is a transformer. By default, no
+        caching is performed. If a string is given, it is the path to the
+        caching directory. Enabling caching triggers a clone of the transformers
+        before fitting. Therefore, the transformer instance given to the
+        pipeline cannot be inspected directly. Use the attribute ``named_steps``
+        or ``steps`` to inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
     verbose : bool, default=False

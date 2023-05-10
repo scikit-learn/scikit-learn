@@ -12,6 +12,7 @@ import pytest
 import joblib
 
 from numpy.testing import assert_allclose
+from sklearn import config_context
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
@@ -181,12 +182,6 @@ def teardown_module():
     shutil.rmtree(TEMP_FOLDER)
 
 
-class EstimatorWithoutFit:
-    """Dummy estimator to test scoring validators"""
-
-    pass
-
-
 class EstimatorWithFit(BaseEstimator):
     """Dummy estimator to test scoring validators"""
 
@@ -230,13 +225,6 @@ def test_all_scorers_repr():
 
 def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     # Test all branches of single metric usecases
-    estimator = EstimatorWithoutFit()
-    pattern = (
-        r"estimator should be an estimator implementing 'fit' method," r" .* was passed"
-    )
-    with pytest.raises(TypeError, match=pattern):
-        scoring_validator(estimator)
-
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
     scorer = scoring_validator(estimator)
@@ -634,7 +622,6 @@ def test_classification_scorer_sample_weight():
         else:
             target = y_test
         try:
-            scorer = scorer.set_score_request(sample_weight=True)
             weighted = scorer(
                 estimator[name], X_test, target, sample_weight=sample_weight
             )
@@ -746,8 +733,10 @@ def test_scoring_is_not_metric():
 
 
 @pytest.mark.parametrize(
-    "scorers,expected_predict_count,"
-    "expected_predict_proba_count,expected_decision_func_count",
+    (
+        "scorers,expected_predict_count,"
+        "expected_predict_proba_count,expected_decision_func_count"
+    ),
     [
         (
             {
@@ -775,13 +764,18 @@ def test_multimetric_scorer_calls_method_once(
     X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
 
     mock_est = Mock()
-    fit_func = Mock(return_value=mock_est)
-    predict_func = Mock(return_value=y)
+    mock_est._estimator_type = "classifier"
+    fit_func = Mock(return_value=mock_est, name="fit")
+    fit_func.__name__ = "fit"
+    predict_func = Mock(return_value=y, name="predict")
+    predict_func.__name__ = "predict"
 
     pos_proba = np.random.rand(X.shape[0])
     proba = np.c_[1 - pos_proba, pos_proba]
-    predict_proba_func = Mock(return_value=proba)
-    decision_function_func = Mock(return_value=pos_proba)
+    predict_proba_func = Mock(return_value=proba, name="predict_proba")
+    predict_proba_func.__name__ = "predict_proba"
+    decision_function_func = Mock(return_value=pos_proba, name="decision_function")
+    decision_function_func.__name__ = "decision_function"
 
     mock_est.fit = fit_func
     mock_est.predict = predict_func
@@ -977,7 +971,7 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
     lr = Perceptron().fit(X, y)
-    msg = "'Perceptron' object has no attribute 'predict_proba'"
+    msg = "Perceptron has none of the following attributes: predict_proba."
     with pytest.raises(AttributeError, match=msg):
         scorer(lr, X, y)
 
@@ -1207,67 +1201,129 @@ def test_scorer_no_op_multiclass_select_proba():
 
 @pytest.mark.parametrize("name", get_scorer_names(), ids=get_scorer_names())
 def test_scorer_metadata_request(name):
-    scorer = get_scorer(name)
-    assert hasattr(scorer, "set_score_request")
-    assert hasattr(scorer, "get_metadata_routing")
+    with config_context(enable_metadata_routing=True):
+        scorer = get_scorer(name)
+        assert hasattr(scorer, "set_score_request")
+        assert hasattr(scorer, "get_metadata_routing")
 
-    assert_request_is_empty(scorer.get_metadata_routing())
+        assert_request_is_empty(scorer.get_metadata_routing())
 
-    weighted_scorer = scorer.set_score_request(sample_weight=True)
-    # set_score_request should mutate the instance
-    assert weighted_scorer is scorer
+        weighted_scorer = scorer.set_score_request(sample_weight=True)
+        # set_score_request should mutate the instance
+        assert weighted_scorer is scorer
 
-    assert_request_is_empty(weighted_scorer.get_metadata_routing(), exclude="score")
-    assert (
-        weighted_scorer.get_metadata_routing().score.requests["sample_weight"]
-        == RequestType.REQUESTED
-    )
+        assert_request_is_empty(weighted_scorer.get_metadata_routing(), exclude="score")
+        assert (
+            weighted_scorer.get_metadata_routing().score.requests["sample_weight"]
+            == RequestType.REQUESTED
+        )
 
-    # make sure putting the scorer in a router doesn't request anything
-    router = MetadataRouter(owner="test").add(
-        method_mapping="score", scorer=get_scorer(name)
-    )
-    with pytest.raises(TypeError, match="got unexpected argument"):
+        # make sure putting the scorer in a router doesn't request anything
+        router = MetadataRouter(owner="test").add(
+            method_mapping="score", scorer=get_scorer(name)
+        )
+        with pytest.raises(TypeError, match="got unexpected argument"):
+            router.validate_metadata(params={"sample_weight": 1}, method="score")
+        routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
+        assert not routed_params.scorer.score
+
+        # make sure putting weighted_scorer in a router requests sample_weight
+        router = MetadataRouter(owner="test").add(
+            scorer=weighted_scorer, method_mapping="score"
+        )
         router.validate_metadata(params={"sample_weight": 1}, method="score")
-    routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
-    assert not routed_params.scorer.score
-
-    # make sure putting weighted_scorer in a router requests sample_weight
-    router = MetadataRouter(owner="test").add(
-        scorer=weighted_scorer, method_mapping="score"
-    )
-    router.validate_metadata(params={"sample_weight": 1}, method="score")
-    routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
-    assert list(routed_params.scorer.score.keys()) == ["sample_weight"]
+        routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
+        assert list(routed_params.scorer.score.keys()) == ["sample_weight"]
 
 
 def test_metadata_kwarg_conflict():
-    X, y = make_classification(
-        n_classes=3, n_informative=3, n_samples=20, random_state=0
-    )
-    lr = LogisticRegression().fit(X, y)
+    with config_context(enable_metadata_routing=True):
+        X, y = make_classification(
+            n_classes=3, n_informative=3, n_samples=20, random_state=0
+        )
+        lr = LogisticRegression().fit(X, y)
 
-    scorer = make_scorer(
-        roc_auc_score,
-        needs_proba=True,
-        multi_class="ovo",
-        labels=lr.classes_,
-    )
-    with pytest.warns(UserWarning, match="already set as kwargs"):
-        scorer.set_score_request(labels=True)
+        scorer = make_scorer(
+            roc_auc_score,
+            needs_proba=True,
+            multi_class="ovo",
+            labels=lr.classes_,
+        )
+        with pytest.warns(UserWarning, match="already set as kwargs"):
+            scorer.set_score_request(labels=True)
 
-    with pytest.warns(UserWarning, match="There is an overlap"):
-        scorer(lr, X, y, labels=lr.classes_)
+        with config_context(enable_metadata_routing=True):
+            with pytest.warns(UserWarning, match="There is an overlap"):
+                scorer(lr, X, y, labels=lr.classes_)
 
 
 def test_PassthroughScorer_metadata_request():
-    scorer = _PassthroughScorer(
-        estimator=LinearSVC()
-        .set_score_request(sample_weight="alias")
-        .set_fit_request(sample_weight=True)
+    with config_context(enable_metadata_routing=True):
+        scorer = _PassthroughScorer(
+            estimator=LinearSVC()
+            .set_score_request(sample_weight="alias")
+            .set_fit_request(sample_weight=True)
+        )
+        # test that _PassthroughScorer leaves everything other than `score` empty
+        assert_request_is_empty(scorer.get_metadata_routing(), exclude="score")
+        # test that _PassthroughScorer doesn't behave like a router and leaves
+        # the request as is.
+        assert scorer.get_metadata_routing().score.requests["sample_weight"] == "alias"
+
+
+def test_multimetric_scoring_metadata_routing():
+    # Test that _MultimetricScorer properly routes metadata.
+    def score1(y_true, y_pred):
+        return 1
+
+    def score2(y_true, y_pred, sample_weight="test"):
+        # make sure sample_weight is not passed
+        assert sample_weight == "test"
+        return 1
+
+    def score3(y_true, y_pred, sample_weight=None):
+        # make sure sample_weight is passed
+        assert sample_weight is not None
+        return 1
+
+    scorers = {
+        "score1": make_scorer(score1),
+        "score2": make_scorer(score2).set_score_request(sample_weight=False),
+        "score3": make_scorer(score3).set_score_request(sample_weight=True),
+    }
+
+    X, y = make_classification(
+        n_samples=50, n_features=2, n_redundant=0, random_state=0
     )
-    # test that _PassthroughScorer leaves everything other than `score` empty
-    assert_request_is_empty(scorer.get_metadata_routing(), exclude="score")
-    # test that _PassthroughScorer doesn't behave like a router and leaves
-    # the request as is.
-    assert scorer.get_metadata_routing().score.requests["sample_weight"] == "alias"
+
+    clf = DecisionTreeClassifier().fit(X, y)
+
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
+    multi_scorer = _MultimetricScorer(scorers=scorer_dict)
+    # this should fail, because metadata routing is not enabled and w/o it we
+    # don't support different metadata for different scorers.
+    # TODO: remove when enable_metadata_routing is deprecated
+    with pytest.raises(TypeError, match="got an unexpected keyword argument"):
+        multi_scorer(clf, X, y, sample_weight=1)
+
+    # This passes since routing is done.
+    with config_context(enable_metadata_routing=True):
+        multi_scorer(clf, X, y, sample_weight=1)
+
+
+def test_kwargs_without_metadata_routing_error():
+    # Test that kwargs are not supported in scorers if metadata routing is not
+    # enabled.
+    # TODO: remove when enable_metadata_routing is deprecated
+    def score(y_true, y_pred, param=None):
+        return 1  # pragma: no cover
+
+    X, y = make_classification(
+        n_samples=50, n_features=2, n_redundant=0, random_state=0
+    )
+
+    clf = DecisionTreeClassifier().fit(X, y)
+    scorer = make_scorer(score)
+    with config_context(enable_metadata_routing=False):
+        with pytest.raises(ValueError, match="kwargs is only supported if"):
+            scorer(clf, X, y, param="blah")

@@ -7,7 +7,7 @@ This is an example showing how the scikit-learn API can be used to cluster
 documents by topics using a `Bag of Words approach
 <https://en.wikipedia.org/wiki/Bag-of-words_model>`_.
 
-Two algorithms are demoed: :class:`~sklearn.cluster.KMeans` and its more
+Two algorithms are demonstrated, namely :class:`~sklearn.cluster.KMeans` and its more
 scalable variant, :class:`~sklearn.cluster.MiniBatchKMeans`. Additionally,
 latent semantic analysis is used to reduce dimensionality and discover latent
 patterns in the data.

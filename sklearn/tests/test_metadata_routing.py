@@ -157,7 +157,7 @@ class ClassifierNoMetadata(ClassifierMixin, BaseEstimator):
         return self
 
     def predict(self, X):
-        return np.ones(len(X))
+        return np.ones(len(X))  # pragma: no cover
 
 
 class ClassifierFitMetadata(ClassifierMixin, BaseEstimator):
@@ -168,7 +168,7 @@ class ClassifierFitMetadata(ClassifierMixin, BaseEstimator):
         return self
 
     def predict(self, X):
-        return np.ones(len(X))
+        return np.ones(len(X))  # pragma: no cover
 
 
 class SimpleMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
@@ -304,6 +304,40 @@ def test_assert_request_is_empty():
     )
 
 
+@pytest.mark.parametrize(
+    "val, res",
+    [
+        (False, False),
+        (True, False),
+        (None, False),
+        ("$UNUSED$", False),
+        ("$WARN$", False),
+        ("invalid-input", False),
+        ("valid_arg", True),
+    ],
+)
+def test_request_type_is_alias(val, res):
+    # Test RequestType.is_alias
+    assert RequestType.is_alias(val) == res
+
+
+@pytest.mark.parametrize(
+    "val, res",
+    [
+        (False, True),
+        (True, True),
+        (None, True),
+        ("$UNUSED$", True),
+        ("$WARN$", True),
+        ("invalid-input", False),
+        ("alias_arg", False),
+    ],
+)
+def test_request_type_is_valid(val, res):
+    # Test RequestType.is_valid
+    assert RequestType.is_valid(val) == res
+
+
 def test_default_requests():
     class OddEstimator(BaseEstimator):
         __metadata_request__fit = {
@@ -334,6 +368,19 @@ def test_default_requests():
         "brand": RequestType(None),
     }
     assert_request_is_empty(est_request)
+
+
+def test_process_routing_invalid_method():
+    with pytest.raises(TypeError, match="Can only route and process input"):
+        process_routing(ClassifierFitMetadata(), "invalid_method", {})
+
+
+def test_process_routing_invalid_object():
+    class InvalidObject:
+        pass
+
+    with pytest.raises(AttributeError, match="has not implemented the routing"):
+        process_routing(InvalidObject(), "fit", {})
 
 
 def test_simple_metadata_routing():
@@ -680,9 +727,12 @@ def test_estimator_warnings():
             MetadataRouter(owner="test").add(
                 method_mapping="predict", estimator=RegressorMetadata()
             ),
-            "{'estimator': {'mapping': [{'callee': 'predict', 'caller': 'predict'}],"
-            " 'router': {'fit': {'sample_weight': <RequestType.ERROR_IF_PASSED: None>},"
-            " 'score': {'sample_weight': <RequestType.ERROR_IF_PASSED: None>}}}}",
+            (
+                "{'estimator': {'mapping': [{'callee': 'predict', 'caller':"
+                " 'predict'}], 'router': {'fit': {'sample_weight':"
+                " <RequestType.ERROR_IF_PASSED: None>}, 'score': {'sample_weight':"
+                " <RequestType.ERROR_IF_PASSED: None>}}}}"
+            ),
         ),
     ],
 )
@@ -861,159 +911,6 @@ def test_metadata_routing_get_param_names():
     ) == router._get_param_names(method="fit", return_alias=False, ignore_self=True)
 
 
-def test_warn_on_invalid_child():
-    """Test that we error if the child is not known."""
-    with pytest.raises(ValueError, match="Unknown child"):
-        MetadataRouter(owner="test").add(
-            estimator=LinearRegression(), method_mapping="one-to-one"
-        ).warn_on(
-            child="invalid",
-            method="fit",
-            params=None,
-            raise_on="1.4",
-        )
-
-
-def test_router_deprecation_warning():
-    """This test checks the warning mechanism related to `warn_on`.
-
-    `warn_on` is there to handle backward compatibility in cases where the
-    meta-estimator is already doing some routing, and SLEP006 would break
-    existing user code. `warn_on` helps converting some of those errors to
-    warnings.
-
-    In different scenarios with a meta-estimator and a child estimator we test
-    if the warning is raised when it should, an error raised when it should,
-    and the combinations of the above cases.
-    """
-
-    class MetaEstimator(BaseEstimator, MetaEstimatorMixin):
-        def __init__(self, estimator):
-            self.estimator = estimator
-
-        def fit(self, X, y, **fit_params):
-            routed_params = process_routing(self, "fit", fit_params)
-            self.estimator_ = clone(self.estimator).fit(
-                X, y, **routed_params.estimator.fit
-            )
-
-        def predict(self, X, **predict_params):
-            routed_params = process_routing(self, "predict", predict_params)
-            return self.estimator_.predict(X, **routed_params.estimator.predict)
-
-        def get_metadata_routing(self):
-            return (
-                MetadataRouter(owner=self.__class__.__name__)
-                .add(estimator=self.estimator, method_mapping="one-to-one")
-                .warn_on(
-                    child="estimator",
-                    method="fit",
-                    params=None,
-                    raise_on="1.4",
-                )
-            )
-
-    class Estimator(BaseEstimator):
-        def fit(self, X, y, sample_weight=None, groups=None):
-            return self
-
-        def predict(self, X, sample_weight=None):
-            return np.ones(shape=len(X))
-
-    est = MetaEstimator(estimator=Estimator())
-    # the meta-estimator has set (using `warn_on`) to have a warning on `fit`.
-    with pytest.warns(
-        FutureWarning, match="From version 1.4 this results in the following error"
-    ):
-        est.fit(X, y, sample_weight=my_weights)
-
-    err_msg = (
-        "{params} are passed but are not explicitly set as requested or not for {owner}"
-    )
-    warn_msg = "From version 1.4 this results in the following error"
-    # but predict should raise since there is no warn_on set for it.
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            err_msg.format(params="[sample_weight]", owner="Estimator.predict")
-        ),
-    ):
-        est.predict(X, sample_weight=my_weights)
-
-    # In this case both a warning and an error are raised. The warning comes
-    # from the MetaEstimator, and the error from WeightedMetaRegressor since it
-    # doesn't have any warn_on set but sample_weight is passed.
-    est = MetaEstimator(estimator=WeightedMetaRegressor(estimator=RegressorMetadata()))
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            err_msg.format(params="[sample_weight]", owner="RegressorMetadata.fit")
-        ),
-    ):
-        with pytest.warns(FutureWarning, match=warn_msg):
-            est.fit(X, y, sample_weight=my_weights)
-
-    class WarningWeightedMetaRegressor(WeightedMetaRegressor):
-        """A WeightedMetaRegressor which warns instead."""
-
-        def get_metadata_routing(self):
-            router = (
-                MetadataRouter(owner=self.__class__.__name__)
-                .add_self(self)
-                .add(estimator=self.estimator, method_mapping="one-to-one")
-                .warn_on(
-                    child="estimator",
-                    method="fit",
-                    params=["sample_weight"],
-                    raise_on="1.4",
-                )
-                .warn_on(
-                    child="estimator",
-                    method="score",
-                    params=["sample_weight"],
-                    raise_on="1.4",
-                )
-            )
-            return router
-
-    # Now there's only a warning since both meta-estimators warn.
-    est = MetaEstimator(
-        estimator=WarningWeightedMetaRegressor(estimator=RegressorMetadata())
-    )
-    with pytest.warns(FutureWarning, match=warn_msg):
-        est.fit(X, y, sample_weight=my_weights)
-
-    # here we should raise because there is no warn_on for groups
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            err_msg.format(params="[sample_weight, groups]", owner="Estimator.fit")
-        ),
-    ):
-        # the sample_weight should still warn
-        with pytest.warns(FutureWarning, match=warn_msg):
-            WarningWeightedMetaRegressor(estimator=Estimator()).fit(
-                X, y, sample_weight=my_weights, groups=1
-            )
-
-    # but if the inner estimator has a non-default request, we fall back to
-    # raising an error
-    est = MetaEstimator(
-        estimator=WarningWeightedMetaRegressor(
-            estimator=RegressorMetadata().set_fit_request(sample_weight=True)
-        )
-    )
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            err_msg.format(
-                params="[sample_weight]", owner="WarningWeightedMetaRegressor.fit"
-            )
-        ),
-    ):
-        est.fit(X, y, sample_weight=my_weights)
-
-
 @pytest.mark.parametrize(
     "estimator, is_default_request",
     [
@@ -1056,37 +953,37 @@ def test_method_generation():
     class SimpleEstimator(BaseEstimator):
         # This class should have no set_{method}_request
         def fit(self, X, y):
-            pass
+            pass  # pragma: no cover
 
         def fit_predict(self, X, y):
             pass
 
         def partial_fit(self, X, y):
-            pass
+            pass  # pragma: no cover
 
         def predict(self, X):
-            pass
+            pass  # pragma: no cover
 
         def predict_proba(self, X):
-            pass
+            pass  # pragma: no cover
 
         def predict_log_proba(self, X):
-            pass
+            pass  # pragma: no cover
 
         def decision_function(self, X):
-            pass
+            pass  # pragma: no cover
 
         def score(self, X, y):
-            pass
+            pass  # pragma: no cover
 
         def split(self, X, y=None):
-            pass
+            pass  # pragma: no cover
 
         def transform(self, X):
-            pass
+            pass  # pragma: no cover
 
         def inverse_transform(self, X):
-            pass
+            pass  # pragma: no cover
 
     for method in METHODS:
         assert not hasattr(SimpleEstimator(), f"set_{method}_request")
@@ -1094,37 +991,37 @@ def test_method_generation():
     class SimpleEstimator(BaseEstimator):
         # This class should have every set_{method}_request
         def fit(self, X, y, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def fit_predict(self, X, y):
             pass
 
         def partial_fit(self, X, y, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def predict(self, X, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def predict_proba(self, X, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def predict_log_proba(self, X, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def decision_function(self, X, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def score(self, X, y, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def split(self, X, y=None, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def transform(self, X, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def inverse_transform(self, X, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
     for method in METHODS:
         assert hasattr(SimpleEstimator(), f"set_{method}_request")

@@ -18,14 +18,14 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-import copy
-import warnings
-from collections.abc import Iterable
-from functools import partial
 from collections import Counter
+from inspect import signature
+from functools import partial
 from traceback import format_exc
 
 import numpy as np
+import copy
+import warnings
 
 from . import (
     r2_score,
@@ -63,27 +63,32 @@ from .cluster import adjusted_mutual_info_score
 from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 
+from ..utils import Bunch
 from ..utils.multiclass import type_of_target
 from ..base import is_regressor
-from ..utils._param_validation import validate_params
 from ..utils.metadata_routing import _MetadataRequester
 from ..utils.metadata_routing import MetadataRequest
 from ..utils.metadata_routing import MetadataRouter
 from ..utils.metadata_routing import process_routing
 from ..utils.metadata_routing import get_routing_for_object
+from ..utils.metadata_routing import _routing_enabled
+from ..utils._response import _get_response_values
+from ..utils._param_validation import HasMethods, StrOptions, validate_params
 
 
-def _cached_call(cache, estimator, method, *args, **kwargs):
+def _cached_call(cache, estimator, response_method, *args, **kwargs):
     """Call estimator with method and args and kwargs."""
-    if cache is None:
-        return getattr(estimator, method)(*args, **kwargs)
+    if cache is not None and response_method in cache:
+        return cache[response_method]
 
-    try:
-        return cache[method]
-    except KeyError:
-        result = getattr(estimator, method)(*args, **kwargs)
-        cache[method] = result
-        return result
+    result, _ = _get_response_values(
+        estimator, *args, response_method=response_method, **kwargs
+    )
+
+    if cache is not None:
+        cache[response_method] = result
+
+    return result
 
 
 class _MultimetricScorer:
@@ -115,16 +120,22 @@ class _MultimetricScorer:
         cache = {} if self._use_cache(estimator) else None
         cached_call = partial(_cached_call, cache)
 
-        params = process_routing(self, "score", kwargs)
+        if _routing_enabled():
+            routed_params = process_routing(self, "score", kwargs)
+        else:
+            # they all get the same args, and they all get them all
+            routed_params = Bunch(
+                **{name: Bunch(score=kwargs) for name in self._scorers}
+            )
 
         for name, scorer in self._scorers.items():
             try:
                 if isinstance(scorer, _BaseScorer):
                     score = scorer._score(
-                        cached_call, estimator, *args, **params.get(name).score
+                        cached_call, estimator, *args, **routed_params.get(name).score
                     )
                 else:
-                    score = scorer(estimator, *args, **params.get(name).score)
+                    score = scorer(estimator, *args, **routed_params.get(name).score)
                 scores[name] = score
             except Exception as e:
                 if self._raise_exc:
@@ -170,6 +181,8 @@ class _MultimetricScorer:
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
+        .. versionadded:: 1.3
+
         Returns
         -------
         routing : MetadataRouter
@@ -187,40 +200,13 @@ class _BaseScorer(_MetadataRequester):
         self._score_func = score_func
         self._sign = sign
 
-    @staticmethod
-    def _check_pos_label(pos_label, classes):
-        if pos_label not in list(classes):
-            raise ValueError(f"pos_label={pos_label} is not a valid label: {classes}")
-
-    def _select_proba_binary(self, y_pred, classes):
-        """Select the column of the positive label in `y_pred` when
-        probabilities are provided.
-
-        Parameters
-        ----------
-        y_pred : ndarray of shape (n_samples, n_classes)
-            The prediction given by `predict_proba`.
-
-        classes : ndarray of shape (n_classes,)
-            The class labels for the estimator.
-
-        Returns
-        -------
-        y_pred : ndarray of shape (n_samples,)
-            Probability predictions of the positive class.
-        """
-        if y_pred.shape[1] == 2:
-            pos_label = self._kwargs.get("pos_label", classes[1])
-            self._check_pos_label(pos_label, classes)
-            col_idx = np.flatnonzero(classes == pos_label)[0]
-            return y_pred[:, col_idx]
-
-        err_msg = (
-            f"Got predict_proba of shape {y_pred.shape}, but need "
-            f"classifier with two classes for {self._score_func.__name__} "
-            "scoring"
-        )
-        raise ValueError(err_msg)
+    def _get_pos_label(self):
+        if "pos_label" in self._kwargs:
+            return self._kwargs["pos_label"]
+        score_func_params = signature(self._score_func).parameters
+        if "pos_label" in score_func_params:
+            return score_func_params["pos_label"].default
+        return None
 
     def __repr__(self):
         kwargs_string = "".join(
@@ -233,7 +219,7 @@ class _BaseScorer(_MetadataRequester):
             kwargs_string,
         )
 
-    def __call__(self, estimator, X, y_true, **kwargs):
+    def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -248,17 +234,32 @@ class _BaseScorer(_MetadataRequester):
         y_true : array-like
             Gold standard target values for X.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
         **kwargs : dict
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 1.2
+            Only available if `enable_metadata_routing=True`. See the
+            :ref:`User Guide <metadata_routing>`.
+
+            .. versionadded:: 1.3
 
         Returns
         -------
         score : float
             Score function applied to prediction of estimator on X.
         """
+        if kwargs and not _routing_enabled():
+            raise ValueError(
+                "kwargs is only supported if enable_metadata_routing=True. See"
+                " the User Guide for more information."
+            )
+
+        if sample_weight is not None:
+            kwargs["sample_weight"] = sample_weight
+
         return self._score(partial(_cached_call, None), estimator, X, y_true, **kwargs)
 
     def _factory_args(self):
@@ -284,7 +285,7 @@ class _BaseScorer(_MetadataRequester):
         Please see :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
-        .. versionadded:: 1.2
+        .. versionadded:: 1.3
 
         Parameters
         ----------
@@ -332,7 +333,7 @@ class _PredictScorer(_BaseScorer):
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 1.2
+            .. versionadded:: 1.3
 
         Returns
         -------
@@ -377,7 +378,7 @@ class _ProbaScorer(_BaseScorer):
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 1.2
+            .. versionadded:: 1.3
 
         Returns
         -------
@@ -393,21 +394,8 @@ class _ProbaScorer(_BaseScorer):
             kwargs=kwargs,
         )
 
-        y_type = type_of_target(y)
-        y_pred = method_caller(clf, "predict_proba", X)
-        if y_type == "binary" and y_pred.shape[1] <= 2:
-            # `y_type` could be equal to "binary" even in a multi-class
-            # problem: (when only 2 class are given to `y_true` during scoring)
-            # Thus, we need to check for the shape of `y_pred`.
-            y_pred = self._select_proba_binary(y_pred, clf.classes_)
-
+        y_pred = method_caller(clf, "predict_proba", X, pos_label=self._get_pos_label())
         scoring_kwargs = {**self._kwargs, **kwargs}
-        # this is for backward compatibility to avoid passing sample_weight
-        # to the scorer if it's None
-        # TODO(1.3) Probably remove
-        if scoring_kwargs.get("sample_weight", -1) is None:
-            del scoring_kwargs["sample_weight"]
-
         return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
     def _factory_args(self):
@@ -441,7 +429,7 @@ class _ThresholdScorer(_BaseScorer):
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 1.2
+            .. versionadded:: 1.3
 
         Returns
         -------
@@ -464,34 +452,20 @@ class _ThresholdScorer(_BaseScorer):
         if is_regressor(clf):
             y_pred = method_caller(clf, "predict", X)
         else:
+            pos_label = self._get_pos_label()
             try:
-                y_pred = method_caller(clf, "decision_function", X)
+                y_pred = method_caller(clf, "decision_function", X, pos_label=pos_label)
 
                 if isinstance(y_pred, list):
                     # For multi-output multi-class estimator
                     y_pred = np.vstack([p for p in y_pred]).T
-                elif y_type == "binary" and "pos_label" in self._kwargs:
-                    self._check_pos_label(self._kwargs["pos_label"], clf.classes_)
-                    if self._kwargs["pos_label"] == clf.classes_[0]:
-                        # The implicit positive class of the binary classifier
-                        # does not match `pos_label`: we need to invert the
-                        # predictions
-                        y_pred *= -1
 
             except (NotImplementedError, AttributeError):
-                y_pred = method_caller(clf, "predict_proba", X)
-
-                if y_type == "binary":
-                    y_pred = self._select_proba_binary(y_pred, clf.classes_)
-                elif isinstance(y_pred, list):
+                y_pred = method_caller(clf, "predict_proba", X, pos_label=pos_label)
+                if isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
         scoring_kwargs = {**self._kwargs, **kwargs}
-        # this is for backward compatibility to avoid passing sample_weight
-        # to the scorer if it's None
-        # TODO(1.3) Probably remove
-        if scoring_kwargs.get("sample_weight", -1) is None:
-            del scoring_kwargs["sample_weight"]
         return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
     def _factory_args(self):
@@ -552,7 +526,10 @@ class _PassthroughScorer:
     def get_metadata_routing(self):
         """Get requested data properties.
 
-        .. versionadded:: 1.2
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.3
 
         Returns
         -------
@@ -566,79 +543,6 @@ class _PassthroughScorer:
         res = MetadataRequest(owner=self._estimator.__class__.__name__)
         res.score = get_routing_for_object(self._estimator).score
         return res
-
-
-def check_scoring(estimator, scoring=None, *, allow_none=False):
-    """Determine scorer from user options.
-
-    A TypeError will be thrown if the estimator cannot be scored.
-
-    Parameters
-    ----------
-    estimator : estimator object implementing 'fit'
-        The object to use to fit the data.
-
-    scoring : str or callable, default=None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
-        If None, the provided estimator object's `score` method is used.
-
-    allow_none : bool, default=False
-        If no scoring is specified and the estimator has no score function, we
-        can either return None or raise an exception.
-
-    Returns
-    -------
-    scoring : callable
-        A scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
-    """
-    if not hasattr(estimator, "fit"):
-        raise TypeError(
-            "estimator should be an estimator implementing 'fit' method, %r was passed"
-            % estimator
-        )
-    if isinstance(scoring, str):
-        return get_scorer(scoring)
-    elif callable(scoring):
-        # Heuristic to ensure user has not passed a metric
-        module = getattr(scoring, "__module__", None)
-        if (
-            hasattr(module, "startswith")
-            and module.startswith("sklearn.metrics.")
-            and not module.startswith("sklearn.metrics._scorer")
-            and not module.startswith("sklearn.metrics.tests.")
-        ):
-            raise ValueError(
-                "scoring value %r looks like it is a metric "
-                "function rather than a scorer. A scorer should "
-                "require an estimator as its first parameter. "
-                "Please use `make_scorer` to convert a metric "
-                "to a scorer." % scoring
-            )
-        return get_scorer(scoring)
-    elif scoring is None:
-        if hasattr(estimator, "score"):
-            return _PassthroughScorer(estimator)
-        elif allow_none:
-            return None
-        else:
-            raise TypeError(
-                "If no scoring is specified, the estimator passed should "
-                "have a 'score' method. The estimator %r does not." % estimator
-            )
-    elif isinstance(scoring, Iterable):
-        raise ValueError(
-            "For evaluating multiple scores, use "
-            "sklearn.model_selection.cross_validate instead. "
-            "{0} was passed.".format(scoring)
-        )
-    else:
-        raise ValueError(
-            "scoring value should either be a callable, string or None. %r was passed"
-            % scoring
-        )
 
 
 def _check_multimetric_scoring(estimator, scoring):
@@ -924,9 +828,11 @@ class _DeprecatedScorers(dict):
 
     def __getitem__(self, item):
         warnings.warn(
-            "sklearn.metrics.SCORERS is deprecated and will be removed in v1.3. "
-            "Please use sklearn.metrics.get_scorer_names to get a list of available "
-            "scorers and sklearn.metrics.get_metric to get scorer.",
+            (
+                "sklearn.metrics.SCORERS is deprecated and will be removed in v1.3."
+                " Please use sklearn.metrics.get_scorer_names to get a list of"
+                " available scorers and sklearn.metrics.get_metric to get scorer."
+            ),
             FutureWarning,
         )
         return super().__getitem__(item)
@@ -997,3 +903,67 @@ for name, metric in [
         _SCORERS[qualified_name] = make_scorer(metric, pos_label=None, average=average)
 
 SCORERS = _DeprecatedScorers(_SCORERS)
+
+
+@validate_params(
+    {
+        "estimator": [HasMethods("fit")],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "allow_none": ["boolean"],
+    }
+)
+def check_scoring(estimator, scoring=None, *, allow_none=False):
+    """Determine scorer from user options.
+
+    A TypeError will be thrown if the estimator cannot be scored.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    scoring : str or callable, default=None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+        If None, the provided estimator object's `score` method is used.
+
+    allow_none : bool, default=False
+        If no scoring is specified and the estimator has no score function, we
+        can either return None or raise an exception.
+
+    Returns
+    -------
+    scoring : callable
+        A scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+    """
+    if isinstance(scoring, str):
+        return get_scorer(scoring)
+    if callable(scoring):
+        # Heuristic to ensure user has not passed a metric
+        module = getattr(scoring, "__module__", None)
+        if (
+            hasattr(module, "startswith")
+            and module.startswith("sklearn.metrics.")
+            and not module.startswith("sklearn.metrics._scorer")
+            and not module.startswith("sklearn.metrics.tests.")
+        ):
+            raise ValueError(
+                "scoring value %r looks like it is a metric "
+                "function rather than a scorer. A scorer should "
+                "require an estimator as its first parameter. "
+                "Please use `make_scorer` to convert a metric "
+                "to a scorer." % scoring
+            )
+        return get_scorer(scoring)
+    if scoring is None:
+        if hasattr(estimator, "score"):
+            return _PassthroughScorer(estimator)
+        elif allow_none:
+            return None
+        else:
+            raise TypeError(
+                "If no scoring is specified, the estimator passed should "
+                "have a 'score' method. The estimator %r does not." % estimator
+            )

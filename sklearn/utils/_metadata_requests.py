@@ -6,13 +6,15 @@ Metadata Routing Utility
 # License: BSD 3 clause
 
 import inspect
+from collections import namedtuple
 from copy import deepcopy
 from enum import Enum
+from typing import Optional, Union
 from warnings import warn
-from collections import namedtuple
-from typing import Union, Optional
-from ._bunch import Bunch
+
+from .. import get_config
 from ..exceptions import UnsetMetadataPassedError
+from ._bunch import Bunch
 
 # This namedtuple is used to store a (mapping, routing) pair. Mapping is a
 # MethodMapping object, and routing is the output of `get_metadata_routing`.
@@ -24,10 +26,24 @@ RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
 MethodPair = namedtuple("MethodPair", ["callee", "caller"])
 
 
+def _routing_enabled():
+    """Return whether metadata routing is enabled.
+
+    .. versionadded:: 1.3
+
+    Returns
+    -------
+    enabled : bool
+        Whether metadata routing is enabled. If the config is not set, it
+        defaults to False.
+    """
+    return get_config().get("enable_metadata_routing", False)
+
+
 class RequestType(Enum):
     """A metadata is requested either with a string alias or this enum.
 
-    .. versionadded:: 1.2
+    .. versionadded:: 1.3
     """
 
     # Metadata is not requested. It will not be routed to the object having the
@@ -118,35 +134,37 @@ METHODS = [
 # set_{method}_request methods.
 REQUESTER_DOC = """        Request metadata passed to the ``{method}`` method.
 
+        Note that this method is only relevant if
+        ``enable_metadata_routing=True`` (see :func:`sklearn.set_config`).
         Please see :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
-        .. versionadded:: 1.2
+        The options for each parameter are:
+
+        - ``True``: metadata is requested, and \
+passed to ``{method}`` if provided. The request is ignored if \
+metadata is not provided.
+
+        - ``False``: metadata is not requested and the meta-estimator \
+will not pass it to ``{method}``.
+
+        - ``None``: metadata is not requested, and the meta-estimator \
+will raise an error if the user provides it.
+
+        - ``str``: metadata should be passed to the meta-estimator with \
+this given alias instead of the original name.
+
+        The default (``UNCHANGED``) retains the existing request. This allows
+        you to change the request for some parameters and not others.
+
+        .. versionadded:: 1.3
 
         Parameters
         ----------
 """
 REQUESTER_DOC_PARAM = """        {metadata} : RequestType, str, True, False, or None, \
                     default=UNCHANGED
-            Whether ``{metadata}`` should be passed to ``{method}`` by
-            meta-estimators or not, and if yes, should it have an alias.
-
-            - True or RequestType.REQUESTED: ``{metadata}`` is requested, and \
-passed to ``{method}`` if provided. The request is ignored if \
-``{metadata}`` is not provided.
-
-            - False or RequestType.UNREQUESTED: ``{metadata}`` is not requested \
-and the meta-estimator will not pass it to ``{method}``.
-
-            - None or RequestType.ERROR_IF_PASSED: ``{metadata}`` is not \
-requested, and the meta-estimator will raise an error if the user provides \
-``{metadata}``.
-
-            - str: ``{metadata}`` should be passed to the meta-estimator with \
-this given alias instead of the original name.
-
-            The default (UNCHANGED) retains the existing request. This allows
-            you to change the request for some parameters and not others.
+            Metadata routing for ``{metadata}`` parameter in ``{method}``.
 
 """
 REQUESTER_DOC_RETURN = """        Returns
@@ -161,7 +179,7 @@ class MethodMetadataRequest:
 
     Refer to :class:`MetadataRequest` for how this class is used.
 
-    .. versionadded:: 1.2
+    .. versionadded:: 1.3
 
     Parameters
     ----------
@@ -353,7 +371,7 @@ class MetadataRequest:
     Consumer-only classes such as simple estimators return a serialized
     version of this class as the output of `get_metadata_routing()`.
 
-    .. versionadded:: 1.2
+    .. versionadded:: 1.3
 
     Parameters
     ----------
@@ -473,7 +491,7 @@ class MethodMapping:
     Iterating through an instance of this class will yield named
     ``MethodPair(callee, caller)`` tuples.
 
-    .. versionadded:: 1.2
+    .. versionadded:: 1.3
     """
 
     def __init__(self):
@@ -570,7 +588,7 @@ class MetadataRouter:
     :class:`~utils.metadata_requests.MetadataRequest` or a
     :class:`~utils.metadata_requests.MetadataRouter` instance.
 
-    .. versionadded:: 1.2
+    .. versionadded:: 1.3
 
     Parameters
     ----------
@@ -589,9 +607,6 @@ class MetadataRouter:
         # `add_self()`) is treated differently from the other objects which are
         # stored in _route_mappings.
         self._self = None
-        # this attribute is used to decide if there should be an error raised
-        # or a FutureWarning if a metadata is passed which is not requested.
-        self._warn_on = dict()
         self.owner = owner
 
     @property
@@ -801,79 +816,10 @@ class MetadataRouter:
             res[name] = Bunch()
             for _callee, _caller in mapping:
                 if _caller == caller:
-                    res[name][_callee] = self._route_warn_or_error(
-                        child=name, router=router, params=params, method=_callee
+                    res[name][_callee] = router._route_params(
+                        params=params, method=_callee
                     )
         return res
-
-    def _route_warn_or_error(self, *, child, router, params, method):
-        """Route parameters while handling error or deprecation warning choice.
-
-        This method warns instead of raising an error if the parent object
-        has set ``warn_on`` for the child object's method and the user has not
-        set any metadata request for that child object. This is used during the
-        deprecation cycle for backward compatibility.
-
-        Parameters
-        ----------
-        child : str
-            The name of the child object.
-
-        router : MetadataRouter or MetadataRequest
-            The router for the child object.
-
-        params : dict
-            The parameters to be routed.
-
-        method : str
-            The name of the callee method.
-
-        Returns
-        -------
-        dict
-            The routed parameters.
-        """
-        try:
-            routed_params = router._route_params(params=params, method=method)
-        except UnsetMetadataPassedError as e:
-            warn_on = self._warn_on.get(child, {})
-            if method not in warn_on:
-                # there is no warn_on set for this method of this child object,
-                # we raise as usual.
-                raise
-            if not router._is_default_request:
-                # the user has set at least one request value for this child
-                # object, but not for all of them. Therefore we raise as usual.
-                raise
-            # now we move everything which has a warn_on flag from
-            # `unrequested_params` to routed_params, and then raise if anything
-            # is left. Otherwise we have a perfectly formed `routed_params` and
-            # we return that.
-            warn_on_params = warn_on.get(method, {"params": [], "raise_on": "1.4"})
-            warn_keys = list(e.unrequested_params.keys())
-            routed_params = e.routed_params
-            # if params is None, we accept and warn on everything.
-            warn_params = warn_on_params["params"]
-            if warn_params is None:
-                warn_params = warn_keys
-
-            for param in warn_params:
-                if param in e.unrequested_params:
-                    routed_params[param] = e.unrequested_params.pop(param)
-
-            # check if anything is left, and if yes, we raise as usual
-            if e.unrequested_params:
-                raise
-
-            # Finally warn before returning the routed parameters.
-            warn(
-                "You are passing metadata for which the request values are not"
-                f" explicitly set: {', '.join(warn_keys)}. From version"
-                f" {warn_on_params['raise_on']} this results in the following error:"
-                f" {str(e)}",
-                FutureWarning,
-            )
-        return routed_params
 
     def validate_metadata(self, *, method, params):
         """Validate given metadata for a method.
@@ -904,58 +850,6 @@ class MetadataRouter:
                 f"{method} got unexpected argument(s) {extra_keys}, which are "
                 "not requested metadata in any object."
             )
-
-    def warn_on(self, *, child, method, params, raise_on="1.4"):
-        """Set where deprecation warnings on no set requests should occur.
-
-        This method is used in meta-estimators during the transition period for
-        backward compatibility. Expected behavior for meta-estimators on a code
-        such as ``RFE(Ridge()).fit(X, y, sample_weight=sample_weight)`` is to
-        raise a ``ValueError`` complaining about the fact that ``Ridge()`` has
-        not explicitly set the request values for ``sample_weight``. However,
-        this breaks backward compatibility for existing meta-estimators.
-
-        Calling this method on a ``MetadataRouter`` object such as
-        ``warn_on(child='estimator', method='fit', params=['sample_weight'])``
-        tells the router to raise a ``FutureWarning`` instead of a
-        ``ValueError`` if the child object has no set requests for
-        ``sample_weight`` during ``fit``.
-
-        You can find more information on how to use this method in the
-        developer guide:
-        :ref:`sphx_glr_auto_examples_plot_metadata_routing.py`.
-
-        Parameters
-        ----------
-        child : str
-            The name of the child object. The names come from the keyword
-            arguments passed to the ``add`` method.
-
-        method : str
-            The method for which there should be a ``FutureWarning``
-            instead of a ``ValueError`` for given params.
-
-        params : list of str
-            The list of parameters for which there should be a
-            ``FutureWarning`` instead of a ``ValueError``. If ``None``, the
-            rule is applied on all parameters.
-
-        raise_on : str, default="1.4"
-            The version after which there should be an error. Used in the
-            warning message to inform users.
-
-        Returns
-        -------
-        self : MetadataRouter
-            Returns `self`.
-        """
-        if child not in self._route_mappings:
-            raise ValueError(f"Unknown child object: {child}")
-
-        if child not in self._warn_on:
-            self._warn_on[child] = dict()
-        self._warn_on[child][method] = {"params": params, "raise_on": raise_on}
-        return self
 
     def _serialize(self):
         """Serialize the object.
@@ -1001,7 +895,7 @@ def get_routing_for_object(obj=None):
     intput, such that changing the output of this function will not change the
     original object.
 
-    .. versionadded:: 1.2
+    .. versionadded:: 1.3
 
     Parameters
     ----------
@@ -1039,7 +933,7 @@ class RequestMethod:
     """
     A descriptor for request methods.
 
-    .. versionadded:: 1.2
+    .. versionadded:: 1.3
 
     Parameters
     ----------
@@ -1134,7 +1028,7 @@ class RequestMethod:
 class _MetadataRequester:
     """Mixin class for adding metadata request functionality.
 
-    .. versionadded:: 1.2
+    .. versionadded:: 1.3
     """
 
     def __init_subclass__(cls, **kwargs):
@@ -1306,7 +1200,7 @@ def process_routing(obj, method, other_params, **kwargs):
     a call to this function would be:
     ``process_routing(self, fit_params, sample_weight=sample_weight)``.
 
-    .. versionadded:: 1.2
+    .. versionadded:: 1.3
 
     Parameters
     ----------

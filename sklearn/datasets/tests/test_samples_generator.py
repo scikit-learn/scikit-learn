@@ -283,18 +283,6 @@ def test_make_multilabel_classification_return_indicator_sparse():
         assert sp.issparse(Y)
 
 
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"n_classes": 0}, "'n_classes' should be an integer"),
-        ({"length": 0}, "'length' should be an integer"),
-    ],
-)
-def test_make_multilabel_classification_valid_arguments(params, err_msg):
-    with pytest.raises(ValueError, match=err_msg):
-        make_multilabel_classification(**params)
-
-
 def test_make_hastie_10_2():
     X, y = make_hastie_10_2(n_samples=100, random_state=0)
     assert X.shape == (100, 10), "X shape mismatch"
@@ -652,12 +640,6 @@ def test_make_moons_unbalanced():
         ValueError,
         match=r"`n_samples` can be either an int " r"or a two-element tuple.",
     ):
-        make_moons(n_samples=[1, 2, 3])
-
-    with pytest.raises(
-        ValueError,
-        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
-    ):
         make_moons(n_samples=(10,))
 
 
@@ -688,11 +670,6 @@ def test_make_circles():
             2,
         ), "Samples not correctly distributed across circles."
 
-    with pytest.raises(ValueError):
-        make_circles(factor=-0.01)
-    with pytest.raises(ValueError):
-        make_circles(factor=1.0)
-
 
 def test_make_circles_unbalanced():
     X, y = make_circles(n_samples=(2, 8))
@@ -704,12 +681,6 @@ def test_make_circles_unbalanced():
 
     with pytest.raises(
         ValueError,
-        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
-    ):
-        make_circles(n_samples=[1, 2, 3])
-
-    with pytest.raises(
-        ValueError,
-        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
+        match="When a tuple, n_samples must have exactly two elements.",
     ):
         make_circles(n_samples=(10,))

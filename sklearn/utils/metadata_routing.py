@@ -15,3 +15,4 @@ from ._metadata_requests import MetadataRequest  # noqa
 from ._metadata_requests import MethodMapping  # noqa
 from ._metadata_requests import process_routing  # noqa
 from ._metadata_requests import _MetadataRequester  # noqa
+from ._metadata_requests import _routing_enabled  # noqa

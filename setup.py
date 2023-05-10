@@ -55,85 +55,6 @@ from sklearn.externals._packaging.version import parse as parse_version  # noqa
 
 VERSION = sklearn.__version__
 
-# See: https://numpy.org/doc/stable/reference/c-api/deprecations.html
-DEFINE_MACRO_NUMPY_C_API = (
-    "NPY_NO_DEPRECATED_API",
-    "NPY_1_7_API_VERSION",
-)
-
-# XXX: add new extensions to this list when they
-# are not using the old NumPy C API (i.e. version 1.7)
-# TODO: when Cython>=3.0 is used, make sure all Cython extensions
-# use the newest NumPy C API by `#defining` `NPY_NO_DEPRECATED_API` to be
-# `NPY_1_7_API_VERSION`, and remove this list.
-# See: https://github.com/cython/cython/blob/1777f13461f971d064bd1644b02d92b350e6e7d1/docs/src/userguide/migrating_to_cy30.rst#numpy-c-api # noqa
-USE_NEWEST_NUMPY_C_API = (
-    "sklearn.__check_build._check_build",
-    "sklearn._loss._loss",
-    "sklearn._isotonic",
-    "sklearn.cluster._dbscan_inner",
-    "sklearn.cluster._hierarchical_fast",
-    "sklearn.cluster._k_means_common",
-    "sklearn.cluster._k_means_lloyd",
-    "sklearn.cluster._k_means_elkan",
-    "sklearn.cluster._k_means_minibatch",
-    "sklearn.datasets._svmlight_format_fast",
-    "sklearn.decomposition._cdnmf_fast",
-    "sklearn.decomposition._online_lda_fast",
-    "sklearn.ensemble._gradient_boosting",
-    "sklearn.ensemble._hist_gradient_boosting._gradient_boosting",
-    "sklearn.ensemble._hist_gradient_boosting.histogram",
-    "sklearn.ensemble._hist_gradient_boosting.splitting",
-    "sklearn.ensemble._hist_gradient_boosting._binning",
-    "sklearn.ensemble._hist_gradient_boosting._predictor",
-    "sklearn.ensemble._hist_gradient_boosting._bitset",
-    "sklearn.ensemble._hist_gradient_boosting.common",
-    "sklearn.ensemble._hist_gradient_boosting.utils",
-    "sklearn.feature_extraction._hashing_fast",
-    "sklearn.linear_model._cd_fast",
-    "sklearn.linear_model._sag_fast",
-    "sklearn.linear_model._sgd_fast",
-    "sklearn.manifold._barnes_hut_tsne",
-    "sklearn.manifold._utils",
-    "sklearn.metrics.cluster._expected_mutual_info_fast",
-    "sklearn.metrics._dist_metrics",
-    "sklearn.metrics._pairwise_distances_reduction._datasets_pair",
-    "sklearn.metrics._pairwise_distances_reduction._middle_term_computer",
-    "sklearn.metrics._pairwise_distances_reduction._base",
-    "sklearn.metrics._pairwise_distances_reduction._argkmin",
-    "sklearn.metrics._pairwise_distances_reduction._radius_neighbors",
-    "sklearn.metrics._pairwise_fast",
-    "sklearn.neighbors._ball_tree",
-    "sklearn.neighbors._kd_tree",
-    "sklearn.neighbors._partition_nodes",
-    "sklearn.neighbors._quad_tree",
-    "sklearn.preprocessing._csr_polynomial_expansion",
-    "sklearn.svm._liblinear",
-    "sklearn.svm._libsvm",
-    "sklearn.svm._libsvm_sparse",
-    "sklearn.svm._newrand",
-    "sklearn.tree._criterion",
-    "sklearn.tree._splitter",
-    "sklearn.tree._tree",
-    "sklearn.tree._utils",
-    "sklearn.utils._cython_blas",
-    "sklearn.utils._fast_dict",
-    "sklearn.utils._heap",
-    "sklearn.utils._isfinite",
-    "sklearn.utils._logistic_sigmoid",
-    "sklearn.utils._openmp_helpers",
-    "sklearn.utils._random",
-    "sklearn.utils._seq_dataset",
-    "sklearn.utils._sorting",
-    "sklearn.utils._typedefs",
-    "sklearn.utils._vector_sentinel",
-    "sklearn.utils._weight_vector",
-    "sklearn.utils.arrayfuncs",
-    "sklearn.utils.murmurhash",
-    "sklearn.utils.sparsefuncs_fast",
-)
-
-
 # Custom clean command to remove build artifacts
 
 
@@ -158,17 +79,20 @@ class CleanCommand(Command):
             shutil.rmtree("build")
         for dirpath, dirnames, filenames in os.walk("sklearn"):
             for filename in filenames:
-                if any(
-                    filename.endswith(suffix)
-                    for suffix in (".so", ".pyd", ".dll", ".pyc")
-                ):
+                root, extension = os.path.splitext(filename)
+
+                if extension in [".so", ".pyd", ".dll", ".pyc"]:
                     os.unlink(os.path.join(dirpath, filename))
-                    continue
-                extension = os.path.splitext(filename)[1]
+
                 if remove_c_files and extension in [".c", ".cpp"]:
                     pyx_file = str.replace(filename, extension, ".pyx")
                     if os.path.exists(os.path.join(dirpath, pyx_file)):
                         os.unlink(os.path.join(dirpath, filename))
+
+                if remove_c_files and extension == ".tp":
+                    if os.path.exists(os.path.join(dirpath, root)):
+                        os.unlink(os.path.join(dirpath, root))
+
             for dirname in dirnames:
                 if dirname == "__pycache__":
                     shutil.rmtree(os.path.join(dirpath, dirname))
@@ -196,12 +120,14 @@ class build_ext_subclass(build_ext):
     def build_extensions(self):
         from sklearn._build_utils.openmp_helpers import get_openmp_flag
 
+        # Always use NumPy 1.7 C API for all compiled extensions.
+        # See: https://numpy.org/doc/stable/reference/c-api/deprecations.html
+        DEFINE_MACRO_NUMPY_C_API = (
+            "NPY_NO_DEPRECATED_API",
+            "NPY_1_7_API_VERSION",
+        )
         for ext in self.extensions:
-            if ext.name in USE_NEWEST_NUMPY_C_API:
-                print(f"Using newest NumPy C API for extension {ext.name}")
-                ext.define_macros.append(DEFINE_MACRO_NUMPY_C_API)
-            else:
-                print(f"Using old NumPy C API (version 1.7) for extension {ext.name}")
+            ext.define_macros.append(DEFINE_MACRO_NUMPY_C_API)
 
         if sklearn._OPENMP_SUPPORTED:
             openmp_flag = get_openmp_flag()
@@ -270,7 +196,7 @@ extension_config = {
         {"sources": ["_check_build.pyx"]},
     ],
     "": [
-        {"sources": ["_isotonic.pyx"], "include_np": True},
+        {"sources": ["_isotonic.pyx"]},
     ],
     "_loss": [
         {"sources": ["_loss.pyx.tp"]},
@@ -339,7 +265,6 @@ extension_config = {
         {
             "sources": ["_middle_term_computer.pyx.tp", "_middle_term_computer.pxd.tp"],
             "language": "c++",
-            "include_np": True,
             "extra_compile_args": ["-std=c++11"],
         },
         {
@@ -355,6 +280,12 @@ extension_config = {
             "extra_compile_args": ["-std=c++11"],
         },
         {
+            "sources": ["_argkmin_classmode.pyx.tp"],
+            "language": "c++",
+            "include_np": True,
+            "extra_compile_args": ["-std=c++11"],
+        },
+        {
             "sources": ["_radius_neighbors.pyx.tp", "_radius_neighbors.pxd.tp"],
             "language": "c++",
             "include_np": True,
@@ -362,7 +293,13 @@ extension_config = {
         },
     ],
     "preprocessing": [
-        {"sources": ["_csr_polynomial_expansion.pyx"], "include_np": True},
+        {"sources": ["_csr_polynomial_expansion.pyx"]},
+        {
+            "sources": ["_target_encoder_fast.pyx"],
+            "include_np": True,
+            "language": "c++",
+            "extra_compile_args": ["-std=c++11"],
+        },
     ],
     "neighbors": [
         {"sources": ["_ball_tree.pyx"], "include_np": True},
@@ -449,8 +386,7 @@ extension_config = {
             "include_dirs": ["src"],
             "include_np": True,
         },
-        {"sources": ["_fast_dict.pyx"], "language": "c++", "include_np": True},
-        {"sources": ["_fast_dict.pyx"], "language": "c++", "include_np": True},
+        {"sources": ["_fast_dict.pyx"], "language": "c++"},
         {"sources": ["_openmp_helpers.pyx"]},
         {"sources": ["_seq_dataset.pyx.tp", "_seq_dataset.pxd.tp"], "include_np": True},
         {
@@ -459,9 +395,9 @@ extension_config = {
         },
         {"sources": ["_random.pyx"], "include_np": True},
         {"sources": ["_logistic_sigmoid.pyx"], "include_np": True},
-        {"sources": ["_typedefs.pyx"], "include_np": True},
-        {"sources": ["_heap.pyx"], "include_np": True},
-        {"sources": ["_sorting.pyx"], "include_np": True},
+        {"sources": ["_typedefs.pyx"]},
+        {"sources": ["_heap.pyx"]},
+        {"sources": ["_sorting.pyx"]},
         {"sources": ["_vector_sentinel.pyx"], "language": "c++", "include_np": True},
         {"sources": ["_isfinite.pyx"]},
     ],

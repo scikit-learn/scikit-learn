@@ -240,7 +240,7 @@ clfs = [
         SGDClassifier(
             alpha=1.0 / C / n_samples,
             penalty="l2",
-            loss="log",
+            loss="log_loss",
             fit_intercept=fit_intercept,
             verbose=0,
         ),

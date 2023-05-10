@@ -1,15 +1,9 @@
-from sklearn.base import is_classifier
-from .base import _get_response
-
 from .. import average_precision_score
 from .. import precision_recall_curve
-from .._base import _check_pos_label_consistency
-from .._classification import check_consistent_length
-
-from ...utils import check_matplotlib_support
+from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 
 
-class PrecisionRecallDisplay:
+class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     """Precision Recall visualization.
 
     It is recommend to use
@@ -34,7 +28,7 @@ class PrecisionRecallDisplay:
     estimator_name : str, default=None
         Name of estimator. If None, then the estimator name is not shown.
 
-    pos_label : str or int, default=None
+    pos_label : int, float, bool or str, default=None
         The class considered as the positive class. If None, the class will not
         be shown in the legend.
 
@@ -143,9 +137,7 @@ class PrecisionRecallDisplay:
         `drawstyle="default"`. However, the curve will not be strictly
         consistent with the reported average precision.
         """
-        check_matplotlib_support("PrecisionRecallDisplay.plot")
-
-        name = self.estimator_name if name is None else name
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
         line_kwargs = {"drawstyle": "steps-post"}
         if self.average_precision is not None and name is not None:
@@ -156,25 +148,18 @@ class PrecisionRecallDisplay:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
-        import matplotlib.pyplot as plt
-
-        if ax is None:
-            fig, ax = plt.subplots()
-
-        (self.line_,) = ax.plot(self.recall, self.precision, **line_kwargs)
+        (self.line_,) = self.ax_.plot(self.recall, self.precision, **line_kwargs)
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
         )
 
         xlabel = "Recall" + info_pos_label
         ylabel = "Precision" + info_pos_label
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
         if "label" in line_kwargs:
-            ax.legend(loc="lower left")
+            self.ax_.legend(loc="lower left")
 
-        self.ax_ = ax
-        self.figure_ = ax.figure
         return self
 
     @classmethod
@@ -186,6 +171,7 @@ class PrecisionRecallDisplay:
         *,
         sample_weight=None,
         pos_label=None,
+        drop_intermediate=False,
         response_method="auto",
         name=None,
         ax=None,
@@ -208,10 +194,17 @@ class PrecisionRecallDisplay:
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The class considered as the positive class when computing the
             precision and recall metrics. By default, `estimators.classes_[1]`
             is considered as the positive class.
+
+        drop_intermediate : bool, default=False
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted precision-recall curve. This is useful in order to
+            create lighter precision-recall curves.
+
+            .. versionadded:: 1.3
 
         response_method : {'predict_proba', 'decision_function', 'auto'}, \
             default='auto'
@@ -267,18 +260,14 @@ class PrecisionRecallDisplay:
         <...>
         >>> plt.show()
         """
-        method_name = f"{cls.__name__}.from_estimator"
-        check_matplotlib_support(method_name)
-        if not is_classifier(estimator):
-            raise ValueError(f"{method_name} only supports classifiers")
-        y_pred, pos_label = _get_response(
-            X,
+        y_pred, pos_label, name = cls._validate_and_get_response_values(
             estimator,
-            response_method,
+            X,
+            y,
+            response_method=response_method,
             pos_label=pos_label,
+            name=name,
         )
-
-        name = name if name is not None else estimator.__class__.__name__
 
         return cls.from_predictions(
             y,
@@ -286,6 +275,7 @@ class PrecisionRecallDisplay:
             sample_weight=sample_weight,
             name=name,
             pos_label=pos_label,
+            drop_intermediate=drop_intermediate,
             ax=ax,
             **kwargs,
         )
@@ -298,6 +288,7 @@ class PrecisionRecallDisplay:
         *,
         sample_weight=None,
         pos_label=None,
+        drop_intermediate=False,
         name=None,
         ax=None,
         **kwargs,
@@ -315,9 +306,16 @@ class PrecisionRecallDisplay:
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The class considered as the positive class when computing the
             precision and recall metrics.
+
+        drop_intermediate : bool, default=False
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted precision-recall curve. This is useful in order to
+            create lighter precision-recall curves.
+
+            .. versionadded:: 1.3
 
         name : str, default=None
             Name for labeling curve. If `None`, name will be set to
@@ -368,19 +366,20 @@ class PrecisionRecallDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_predictions")
-
-        check_consistent_length(y_true, y_pred, sample_weight)
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
+        pos_label, name = cls._validate_from_predictions_params(
+            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+        )
 
         precision, recall, _ = precision_recall_curve(
-            y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
+            y_true,
+            y_pred,
+            pos_label=pos_label,
+            sample_weight=sample_weight,
+            drop_intermediate=drop_intermediate,
         )
         average_precision = average_precision_score(
             y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
         )
-
-        name = name if name is not None else "Classifier"
 
         viz = PrecisionRecallDisplay(
             precision=precision,

@@ -37,7 +37,7 @@ from sklearn.utils.metadata_routing import MetadataRouter
 from sklearn.utils.metadata_routing import MethodMapping
 from sklearn.utils.metadata_routing import process_routing
 from sklearn.utils.validation import check_is_fitted
-from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.linear_model import LinearRegression
 
 N, M = 100, 4
 X = np.random.rand(N, M)
@@ -617,48 +617,21 @@ try:
 except Exception as e:
     print(e)
 
-# %%
-# You might want to give your users a period during which they see a
-# ``FutureWarning`` instead in order to have time to adapt to the new API. For
-# this, the :class:`~sklearn.utils.metadata_routing.MetadataRouter` provides a
-# `warn_on` method:
-
-
-class WarningMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
-    def __init__(self, estimator):
-        self.estimator = estimator
-
-    def fit(self, X, y, **fit_params):
-        params = process_routing(self, "fit", fit_params)
-        self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
-
-    def get_metadata_routing(self):
-        router = (
-            MetadataRouter(owner=self.__class__.__name__)
-            .add(estimator=self.estimator, method_mapping="one-to-one")
-            .warn_on(child="estimator", method="fit", params=None)
-        )
-        return router
-
-
-with warnings.catch_warnings(record=True) as record:
-    WarningMetaRegressor(estimator=LogisticRegression()).fit(
-        X, y, sample_weight=my_weights
-    )
-for w in record:
-    print(w.message)
-
-# %%
-# Note that in the above implementation, the value passed to ``child`` the same
-# as the key passed to the ``add`` method, in this case ``"estimator"``.
 
 # %%
 # Third Party Development and scikit-learn Dependency
 # ---------------------------------------------------
 #
-# As seen above, information is communicated between classes using a dictionary
-# representation as the output of ``get_metadata_routing``. Therefore it is
-# possible for a third party library to not have a hard dependency on
-# scikit-learn, and internally (re)implement or vendor the functionality
-# required to present the dictionary representation of the routing data to
-# other classes inside and outside scikit-learn.
+# As seen above, information is communicated between classes using
+# :class:`~utils.metadata_routing.MetadataRequest` and
+# :class:`~utils.metadata_routing.MetadataRouter`. It is strongly not advised,
+# but possible to vendor the tools related to metadata-routing if you strictly
+# want to have a scikit-learn compatible estimator, without depending on the
+# scikit-learn package. If the following conditions are met, you do NOT need to
+# modify your code at all:
+#  - your estimator inherits from :class:`~base.BaseEstimator`
+#  - the parameters consumed by your estimator's methods, e.g. ``fit``, are
+#    explicitly defined in the method's signature, as opposed to being
+#    ``*args`` or ``*kwargs``.
+#  - you do not route any metadata to the underlying objects, i.e. you're not a
+#    *router*.

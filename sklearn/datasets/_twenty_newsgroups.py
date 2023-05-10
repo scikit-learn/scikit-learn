@@ -345,6 +345,17 @@ def fetch_20newsgroups(
     return data
 
 
+@validate_params(
+    {
+        "subset": [StrOptions({"train", "test", "all"})],
+        "remove": [tuple],
+        "data_home": [str, None],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+        "normalize": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def fetch_20newsgroups_vectorized(
     *,
     subset="train",
@@ -516,11 +527,6 @@ def fetch_20newsgroups_vectorized(
     elif subset == "all":
         data = sp.vstack((X_train, X_test)).tocsr()
         target = np.concatenate((data_train.target, data_test.target))
-    else:
-        raise ValueError(
-            "%r is not a valid subset: should be one of ['train', 'test', 'all']"
-            % subset
-        )
 
     fdescr = load_descr("twenty_newsgroups.rst")
 
