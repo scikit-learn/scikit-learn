@@ -1,4 +1,3 @@
-from itertools import product
 import pickle
 
 import numpy as np
@@ -982,7 +981,9 @@ def test_binomial_and_multinomial_loss(global_random_seed):
     )
 
 
-def test_binomial_vs_alternative_formulation():
+@pytest.mark.parametrize("y_true", (np.array([0.0, 0, 0]), np.array([1.0, 1, 1])))
+@pytest.mark.parametrize("y_pred", (np.array([-5.0, -5, -5]), np.array([3.0, 3, 3])))
+def test_binomial_vs_alternative_formulation(y_true, y_pred, global_dtype):
     """Test that both formulations of the binomial deviance agree.
 
     Often, the binomial deviance or log loss is written in terms of a variable
@@ -1008,14 +1009,12 @@ def test_binomial_vs_alternative_formulation():
 
     bin_loss = HalfBinomialLoss()
 
-    test_data = product(
-        (np.array([0.0, 0, 0]), np.array([1.0, 1, 1])),
-        (np.array([-5.0, -5, -5]), np.array([3.0, 3, 3])),
-    )
+    y_true = y_true.astype(global_dtype)
+    y_pred = y_pred.astype(global_dtype)
+    datum = (y_true, y_pred)
 
-    for datum in test_data:
-        assert bin_loss(*datum) == approx(alt_loss(*datum))
-        assert_allclose(bin_loss.gradient(*datum), alt_gradient(*datum))
+    assert bin_loss(*datum) == approx(alt_loss(*datum))
+    assert_allclose(bin_loss.gradient(*datum), alt_gradient(*datum))
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
