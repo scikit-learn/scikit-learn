@@ -260,6 +260,6 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         Returns
         -------
         score : float
-            Mean accuracy of self.predict(X) w.r.t. y.
+            Mean accuracy of self.predict(X) with respect to y.
         """
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)

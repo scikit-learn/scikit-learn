@@ -391,7 +391,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         Returns
         -------
         score : float
-            D^2 of self.predict(X) w.r.t. y.
+            D^2 of self.predict(X) with respect to y.
         """
         # TODO: Adapt link to User Guide in the docstring, once
         # https://github.com/scikit-learn/scikit-learn/pull/22118 is merged.

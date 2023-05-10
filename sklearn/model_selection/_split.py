@@ -2167,7 +2167,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=None):
     """
-    Validation helper to check if the test/test sizes are meaningful w.r.t. the
+    Validation helper to check if the test/test sizes are meaningful with respect to the
     size of the data (n_samples).
     """
     if test_size is None and train_size is None:

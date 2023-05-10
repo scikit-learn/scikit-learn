@@ -2093,7 +2093,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Returns
         -------
         score : float
-            Score of self.predict(X) w.r.t. y.
+            Score of self.predict(X) with respect to y.
         """
         scoring = self.scoring or "accuracy"
         scoring = get_scorer(scoring)

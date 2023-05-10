@@ -819,7 +819,7 @@ cdef class CyLossFunction:
         pass
 
     cdef double cy_gradient(self, double y_true, double raw_prediction) noexcept nogil:
-        """Compute gradient of loss w.r.t. raw_prediction for a single sample.
+        """Compute gradient of loss with respect to raw_prediction for a single sample.
 
         Parameters
         ----------
@@ -831,14 +831,14 @@ cdef class CyLossFunction:
         Returns
         -------
         double
-            The derivative of the loss function w.r.t. `raw_prediction`.
+            The derivative of the loss function with respect to `raw_prediction`.
         """
         pass
 
     cdef double_pair cy_grad_hess(self, double y_true, double raw_prediction) noexcept nogil:
         """Compute gradient and hessian.
 
-        Gradient and hessian of loss w.r.t. raw_prediction for a single sample.
+        Gradient and hessian of loss with respect to raw_prediction for a single sample.
 
         This is usually diagonal in raw_prediction_i and raw_prediction_j.
         Therefore, we return the diagonal element i=j.
@@ -856,7 +856,7 @@ cdef class CyLossFunction:
         Returns
         -------
         double_pair
-            Gradient and hessian of the loss function w.r.t. `raw_prediction`.
+            Gradient and hessian of the loss function with respect to `raw_prediction`.
         """
         pass
 

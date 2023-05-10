@@ -1776,7 +1776,7 @@ likelihood ratios
 <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_
 :math:`LR_\pm` for binary classes, which can be interpreted as the ratio of
 post-test to pre-test odds as explained below. As a consequence, this metric is
-invariant w.r.t. the class prevalence (the number of samples in the positive
+invariant with respect to the class prevalence (the number of samples in the positive
 class divided by the total number of samples) and **can be extrapolated between
 populations regardless of any possible class imbalance.**
 

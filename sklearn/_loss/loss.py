@@ -204,7 +204,7 @@ class BaseLoss:
         gradient_out=None,
         n_threads=1,
     ):
-        """Compute loss and gradient w.r.t. raw_prediction for each input.
+        """Compute loss and gradient with respect to raw_prediction for each input.
 
         Parameters
         ----------

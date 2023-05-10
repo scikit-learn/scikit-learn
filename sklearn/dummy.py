@@ -437,7 +437,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         score : float
-            Mean accuracy of self.predict(X) w.r.t. y.
+            Mean accuracy of self.predict(X) with respect to y.
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
@@ -669,7 +669,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Returns
         -------
         score : float
-            R^2 of `self.predict(X)` w.r.t. y.
+            R^2 of `self.predict(X)` with respect to y.
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))

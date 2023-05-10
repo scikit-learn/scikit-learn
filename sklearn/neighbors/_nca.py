@@ -442,7 +442,7 @@ class NeighborhoodComponentsAnalysis(
         self.n_iter_ += 1
 
     def _loss_grad_lbfgs(self, transformation, X, same_class_mask, sign=1.0):
-        """Compute the loss and the loss gradient w.r.t. `transformation`.
+        """Compute the loss and the loss gradient with respect to `transformation`.
 
         Parameters
         ----------

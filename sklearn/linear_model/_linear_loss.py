@@ -235,7 +235,7 @@ class LinearModelLoss:
         n_threads=1,
         raw_prediction=None,
     ):
-        """Computes the sum of loss and gradient w.r.t. coef.
+        """Computes the sum of loss and gradient with respect to coef.
 
         Parameters
         ----------
@@ -310,7 +310,7 @@ class LinearModelLoss:
         n_threads=1,
         raw_prediction=None,
     ):
-        """Computes the gradient w.r.t. coef.
+        """Computes the gradient with respect to coef.
 
         Parameters
         ----------
@@ -383,7 +383,7 @@ class LinearModelLoss:
         hessian_out=None,
         raw_prediction=None,
     ):
-        """Computes gradient and hessian w.r.t. coef.
+        """Computes gradient and hessian with respect to coef.
 
         Parameters
         ----------
@@ -510,7 +510,7 @@ class LinearModelLoss:
     def gradient_hessian_product(
         self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
     ):
-        """Computes gradient and hessp (hessian product function) w.r.t. coef.
+        """Computes gradient and hessp (hessian product function) with respect to coef.
 
         Parameters
         ----------

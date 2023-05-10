@@ -243,7 +243,7 @@ Some scikit-learn objects are inherently random. These are usually estimators
 splitters (e.g. :class:`~sklearn.model_selection.KFold`). The randomness of
 these objects is controlled via their `random_state` parameter, as described
 in the :term:`Glossary <random_state>`. This section expands on the glossary
-entry, and describes good practices and common pitfalls w.r.t. this
+entry, and describes good practices and common pitfalls with respect to this
 subtle parameter.
 
 .. note:: Recommendation summary
@@ -400,7 +400,7 @@ each case**:
   will be different for each folds.
 
 While having a constant estimator RNG across folds isn't inherently wrong, we
-usually want CV results that are robust w.r.t. the estimator's randomness. As
+usually want CV results that are robust with respect to the estimator's randomness. As
 a result, passing an instance instead of an integer may be preferable, since
 it will allow the estimator RNG to vary for each fold.
 
@@ -551,7 +551,7 @@ Robustness of cross-validation results
 
 When we evaluate a randomized estimator performance by cross-validation, we
 want to make sure that the estimator can yield accurate predictions for new
-data, but we also want to make sure that the estimator is robust w.r.t. its
+data, but we also want to make sure that the estimator is robust with respect to its
 random initialization. For example, we would like the random weights
 initialization of a :class:`~sklearn.linear_model.SGDCLassifier` to be
 consistently good across all folds: otherwise, when we train that estimator

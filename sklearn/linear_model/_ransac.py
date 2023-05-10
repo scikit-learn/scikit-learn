@@ -139,7 +139,7 @@ class RANSACRegressor(
             N >= log(1 - probability) / log(1 - e**m)
 
         where the probability (confidence) is typically set to high value such
-        as 0.99 (the default) and e is the current fraction of inliers w.r.t.
+        as 0.99 (the default) and e is the current fraction of inliers with respect to
         the total number of samples.
 
     loss : str, callable, default='absolute_error'
