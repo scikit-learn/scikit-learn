@@ -652,12 +652,11 @@ class ArgKminLRD(BaseDistancesReductionDispatcher):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples_X, n_features)
-            The input array to be labelled.
+        X : ndarray or CSR matrix of shape (n_samples_X, n_features)
+            Input data.
 
-        Y : ndarray of shape (n_samples_Y, n_features)
-            The input array whose labels are provided through the `labels`
-            parameter.
+        Y : ndarray or CSR matrix of shape (n_samples_X, n_features)
+            Input data.
 
         k : int
             The number of nearest neighbors to consider.
@@ -705,6 +704,14 @@ class ArgKminLRD(BaseDistancesReductionDispatcher):
               - None (default) looks-up in scikit-learn configuration for
                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
 
+        return_distance : boolean, default=False
+            Return distances between each X vector and its
+            argkmin if set to True.
+
+        train : boolean, default=False
+            Specifies whether we are considering the computation in the
+            context of the fit method when training.
+
         Returns
         -------
         lrd : ndarray of shape (n_samples_X,)
@@ -746,3 +753,8 @@ class ArgKminLRD(BaseDistancesReductionDispatcher):
                 return_distance=return_distance,
                 train=train,
             )
+
+        raise ValueError(
+            "Only float64 or float32 datasets pairs are supported at this time, "
+            f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
+        )

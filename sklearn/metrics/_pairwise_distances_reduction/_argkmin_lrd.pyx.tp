@@ -9,6 +9,8 @@ from ...utils.fixes import threadpool_limits
 import numpy as np
 
 
+cdef float64_t EPS = 1e-10
+
 {{for name_suffix in ["32", "64"]}}
 
 from ._argkmin cimport ArgKmin{{name_suffix}}
@@ -19,7 +21,7 @@ cdef class ArgKminLRD{{name_suffix}}(ArgKmin{{name_suffix}}):
     {{name_suffix}}bit implementation of ArgKminLRD
     """
     cdef:
-        float64_t[:] lrd
+        float64_t[::1] lrd
         float64_t[:, ::1] actual_distances
         intp_t[:, ::1] actual_indices
         intp_t factor
@@ -89,28 +91,30 @@ cdef class ArgKminLRD{{name_suffix}}(ArgKmin{{name_suffix}}):
             intp_t sample_index, neighbor_rank, neighbor_idx
             float64_t dist_sample, dist_neighbor, dist_reach
             float64_t overall_reachability
-            float64_t[:, ::1] distances = self.argkmin_distances
-            intp_t[:, ::1] indices = self.argkmin_indices
 
-        for sample_index in prange(self.n_samples_X, schedule='static', nogil=True,
-                                   num_threads=self.effective_n_threads):
+        for sample_index in prange(
+            self.n_samples_X,
+            schedule='static',
+            nogil=True,
+            num_threads=self.effective_n_threads,
+        ):
             overall_reachability = 0
             for neighbor_rank in range(self.factor, self.k):
-                neighbor_idx = indices[sample_index, neighbor_rank]
+                neighbor_idx = self.argkmin_indices[sample_index, neighbor_rank]
                 dist_sample = self.datasets_pair.distance_metric._rdist_to_dist(
-                    fmax(distances[sample_index, neighbor_rank], 0.0)
+                    fmax(self.argkmin_distances[sample_index, neighbor_rank], 0.0)
                 )
                 dist_neighbor = self.datasets_pair.distance_metric._rdist_to_dist(
-                    fmax(distances[neighbor_idx, self.k - 1], 0.0)
+                    fmax(self.argkmin_distances[neighbor_idx, self.k - 1], 0.0)
                 )
                 dist_reach = fmax(dist_sample, dist_neighbor)
-                overall_reachability = overall_reachability + dist_reach
+                overall_reachability += dist_reach
                 self.actual_indices[sample_index, neighbor_rank - self.factor] = neighbor_idx
                 if return_distance:
                     self.actual_distances[sample_index, neighbor_rank - self.factor] = dist_sample
 
-            overall_reachability = overall_reachability / (self.k - 1) + 1e-10
-            self.lrd[sample_index] = 1.0 / overall_reachability
+            overall_reachability = overall_reachability / (self.k - 1)
+            self.lrd[sample_index] = 1.0 / (overall_reachability + EPS)
 
     def _finalize_results(self, bint return_distance):
         self._compute_local_reachability_density(return_distance=return_distance)

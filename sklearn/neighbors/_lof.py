@@ -312,14 +312,18 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
                 n_neighbors=self.n_neighbors_
             )
 
-            if self._fit_X.dtype == np.float32:
-                self._distances_fit_X_ = self._distances_fit_X_.astype(
-                    self._fit_X.dtype,
-                    copy=False,
-                )
-
             self._lrd = self._local_reachability_density(
                 self._distances_fit_X_, _neighbors_indices_fit_X_
+            )
+
+        if self._fit_X.dtype == np.float32:
+            self._distances_fit_X_ = self._distances_fit_X_.astype(
+                self._fit_X.dtype,
+                copy=False,
+            )
+            self._lrd = self._lrd.astype(
+                self._fit_X.dtype,
+                copy=False,
             )
 
         # Compute lof score over training samples to define offset_:
