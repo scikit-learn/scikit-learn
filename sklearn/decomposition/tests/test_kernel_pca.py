@@ -540,8 +540,12 @@ def test_kernel_pca_inverse_correct_gamma():
         "kernel": "rbf",
     }
 
+    expected_gamma = 1 / X.shape[1]
     kpca1 = KernelPCA(gamma=None, **kwargs).fit(X)
-    kpca2 = KernelPCA(gamma=1 / X.shape[1], **kwargs).fit(X)
+    kpca2 = KernelPCA(gamma=expected_gamma, **kwargs).fit(X)
+
+    assert kpca1.gamma_ == expected_gamma
+    assert kpca2.gamma_ == expected_gamma
 
     X1_recon = kpca1.inverse_transform(kpca1.transform(X))
     X2_recon = kpca2.inverse_transform(kpca1.transform(X))
