@@ -489,8 +489,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
         Y,
         k,
         weights,
-        labels,
-        unique_labels,
+        class_membership,
+        unique_classes,
         metric="euclidean",
         chunk_size=None,
         metric_kwargs=None,
@@ -504,8 +504,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
             The input array to be labelled.
 
         Y : ndarray of shape (n_samples_Y, n_features)
-            The input array whose labels are provided through the `labels`
-            parameter.
+            The input array whose class membership are provided through the
+            `class_membership` parameter.
 
         k : int
             The number of nearest neighbors to consider.
@@ -592,8 +592,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
                 Y=Y,
                 k=k,
                 weights=weights,
-                class_membership=np.array(labels, dtype=np.intp),
-                unique_labels=np.array(unique_labels, dtype=np.intp),
+                class_membership=np.array(class_membership, dtype=np.intp),
+                unique_labels=np.array(unique_classes, dtype=np.intp),
                 metric=metric,
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,
@@ -606,8 +606,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
                 Y=Y,
                 k=k,
                 weights=weights,
-                class_membership=np.array(labels, dtype=np.intp),
-                unique_labels=np.array(unique_labels, dtype=np.intp),
+                class_membership=np.array(class_membership, dtype=np.intp),
+                unique_labels=np.array(unique_classes, dtype=np.intp),
                 metric=metric,
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,
