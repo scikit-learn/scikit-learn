@@ -2,6 +2,16 @@ import numpy
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
+from sklearn.base import BaseEstimator
+from sklearn.utils._array_api import get_namespace
+from sklearn.utils._array_api import _NumPyAPIWrapper
+from sklearn.utils._array_api import _ArrayAPIWrapper
+from sklearn.utils._array_api import _asarray_with_order
+from sklearn.utils._array_api import _convert_to_numpy
+from sklearn.utils._array_api import _estimator_with_converted_arrays
+from sklearn.utils._array_api import supported_float_dtypes
+from sklearn.utils._testing import skip_if_array_api_compat_not_configured
+
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
@@ -255,6 +265,9 @@ def test_get_namespace_array_api_isdtype(wrapper):
     assert xp.isdtype(xp.float32, "real floating")
     assert xp.isdtype(xp.float64, "real floating")
     assert not xp.isdtype(xp.int32, "real floating")
+
+    for dtype in supported_float_dtypes(xp):
+        assert xp.isdtype(dtype, "real floating")
 
     assert xp.isdtype(xp.bool, "bool")
     assert not xp.isdtype(xp.float32, "bool")
