@@ -355,7 +355,7 @@ class Pipeline(_BaseComposition):
 
     # Estimator interface
 
-    def _fit(self, X, y=None, **fit_params_steps):
+    def _fit(self, X, y=None, routed_params=None):
         # shallow copy of steps - this should really be steps_
         self.steps = list(self.steps)
         self._validate_steps()
@@ -385,7 +385,7 @@ class Pipeline(_BaseComposition):
                 None,
                 message_clsname="Pipeline",
                 message=self._log_message(step_idx),
-                **fit_params_steps[name],
+                step_params=routed_params[name],
             )
             # Replace the transformer of the step with the fitted
             # transformer. This is necessary when loading the transformer
@@ -393,7 +393,7 @@ class Pipeline(_BaseComposition):
             self.steps[step_idx] = (name, fitted_transformer)
         return X
 
-    def fit(self, X, y=None, **fit_params):
+    def fit(self, X, y=None, **params):
         """Fit the model.
 
         Fit all the transformers one after the other and transform the
@@ -409,14 +409,14 @@ class Pipeline(_BaseComposition):
             Training targets. Must fulfill label requirements for all steps of
             the pipeline.
 
-        **fit_params : dict of string -> object
-            If `enable_metadata_routing=False` (default):
+        **params : dict of string -> object
+            - If `enable_metadata_routing=False` (default):
 
                 Parameters passed to the ``fit`` method of each step, where
                 each parameter name is prefixed such that parameter ``p`` for step
                 ``s`` has key ``s__p``.
 
-            If `enable_metadata_routing=True`:
+            - If `enable_metadata_routing=True`:
 
                 Parameters requested and accepted by steps. Each step must have
                 requested certain metadata for these parameters to be forwarded to
@@ -427,7 +427,7 @@ class Pipeline(_BaseComposition):
                 intermediate steps as well, if requested, and if
                 `enable_metadata_routing=True`.
 
-            See :ref:`Metadata Routing User Guide <metadata_routing>`_ for more
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
             details.
 
         Returns
@@ -436,14 +436,12 @@ class Pipeline(_BaseComposition):
             Pipeline with fitted steps.
         """
         self._validate_params()
-        fit_params_steps = self._check_method_params(method="fit", props=fit_params)
-        Xt = self._fit(X, y, **fit_params_steps)
+        routed_params = self._check_method_params(method="fit", props=params)
+        Xt = self._fit(X, y, routed_params)
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             if self._final_estimator != "passthrough":
                 last_step_name = self.steps[-1][0]
-                self._final_estimator.fit(
-                    Xt, y, **fit_params_steps[last_step_name]["fit"]
-                )
+                self._final_estimator.fit(Xt, y, **routed_params[last_step_name]["fit"])
 
         return self
 
@@ -473,13 +471,13 @@ class Pipeline(_BaseComposition):
             the pipeline.
 
         **params : dict of string -> object
-            If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default):
 
                 Parameters passed to the ``fit`` method of each step, where
                 each parameter name is prefixed such that parameter ``p`` for step
                 ``s`` has key ``s__p``.
 
-            If `enable_metadata_routing=True`:
+            - If `enable_metadata_routing=True`:
 
                 Parameters to be passed to steps' methods. If a step supports
                 ``fit_transform``, it is called, otherwise ``fit`` and
@@ -490,7 +488,7 @@ class Pipeline(_BaseComposition):
                 intermediate steps as well, if requested, and if
                 `enable_metadata_routing=True`.
 
-            See :ref:`Metadata Routing User Guide <metadata_routing>`_ for more
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
             details.
 
         Returns
@@ -499,16 +497,14 @@ class Pipeline(_BaseComposition):
             Transformed samples.
         """
         self._validate_params()
-        fit_params_steps = self._check_method_params(
-            method="fit_transform", props=params
-        )
-        Xt = self._fit(X, y, **fit_params_steps)
+        routed_params = self._check_method_params(method="fit_transform", props=params)
+        Xt = self._fit(X, y, routed_params)
 
         last_step = self._final_estimator
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             if last_step == "passthrough":
                 return Xt
-            last_step_params = fit_params_steps[self.steps[-1][0]]
+            last_step_params = routed_params[self.steps[-1][0]]
             if hasattr(last_step, "fit_transform"):
                 return last_step.fit_transform(
                     Xt, y, **last_step_params["fit_transform"]
@@ -519,7 +515,7 @@ class Pipeline(_BaseComposition):
                 )
 
     @available_if(_final_estimator_has("predict"))
-    def predict(self, X, **predict_params):
+    def predict(self, X, **params):
         """Transform the data, and apply `predict` with the final estimator.
 
         Call `transform` of each transformer in the pipeline. The transformed
@@ -532,13 +528,13 @@ class Pipeline(_BaseComposition):
             Data to predict on. Must fulfill input requirements of first step
             of the pipeline.
 
-        **predict_params : dict of string -> object
-            If `enable_metadata_routing=False` (default):
+        **params : dict of string -> object
+            - If `enable_metadata_routing=False` (default):
 
                 Parameters to the ``predict`` called at the end of all
                 transformations in the pipeline.
 
-            If `enable_metadata_routing=True`:
+            - If `enable_metadata_routing=True`:
 
                 Parameters to be passed to the steps' ``transform`` and
                 ``predict``.
@@ -550,7 +546,7 @@ class Pipeline(_BaseComposition):
                 intermediate steps as well, if requested, and if
                 `enable_metadata_routing=True`.
 
-            See :ref:`Metadata Routing User Guide <metadata_routing>`_ for more
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
             details.
 
             Note that while this may be used to return uncertainties from some
@@ -563,7 +559,7 @@ class Pipeline(_BaseComposition):
         y_pred : ndarray
             Result of calling `predict` on the final estimator.
         """
-        routed_params = self._check_method_params("predict", props=predict_params)
+        routed_params = self._check_method_params("predict", props=params)
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt, **routed_params[name].transform)
@@ -589,12 +585,12 @@ class Pipeline(_BaseComposition):
             of the pipeline.
 
         **params : dict of string -> object
-            If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default):
 
                 Parameters to the ``predict`` called at the end of all
                 transformations in the pipeline.
 
-            If `enable_metadata_routing=True`:
+            - If `enable_metadata_routing=True`:
 
                 Parameters to be passed to the steps' ``transform`` and
                 ``predict``.
@@ -606,7 +602,8 @@ class Pipeline(_BaseComposition):
                 intermediate steps as well, if requested, and if
                 `enable_metadata_routing=True`.
 
-            See :ref:`User Guide <metadata_routing>`_ for more details.
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
 
             Note that while this may be used to return uncertainties from some
             models with ``return_std`` or ``return_cov``, uncertainties that are
@@ -619,18 +616,18 @@ class Pipeline(_BaseComposition):
             Result of calling `fit_predict` on the final estimator.
         """
         self._validate_params()
-        fit_params_steps = self._check_method_params(method="fit_predict", props=params)
-        Xt = self._fit(X, y, **fit_params_steps)
+        routed_params = self._check_method_params(method="fit_predict", props=params)
+        Xt = self._fit(X, y, routed_params)
 
-        fit_params_last_step = fit_params_steps[self.steps[-1][0]]
+        params_last_step = routed_params[self.steps[-1][0]]
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             y_pred = self.steps[-1][1].fit_predict(
-                Xt, y, **fit_params_last_step.get("fit_predict", {})
+                Xt, y, **params_last_step.get("fit_predict", {})
             )
         return y_pred
 
     @available_if(_final_estimator_has("predict_proba"))
-    def predict_proba(self, X, **predict_proba_params):
+    def predict_proba(self, X, **params):
         """Transform the data, and apply `predict_proba` with the final estimator.
 
         Call `transform` of each transformer in the pipeline. The transformed
@@ -644,18 +641,33 @@ class Pipeline(_BaseComposition):
             Data to predict on. Must fulfill input requirements of first step
             of the pipeline.
 
-        **predict_proba_params : dict of string -> object
-            Parameters to the `predict_proba` called at the end of all
-            transformations in the pipeline.
+        **params : dict of string -> object
+            - If `enable_metadata_routing=False` (default):
+
+                Parameters to the `predict_proba` called at the end of all
+                transformations in the pipeline.
+
+            - If `enable_metadata_routing=True`:
+
+                Parameters to be passed to the steps' ``transform`` and
+                ``predict``.
+
+            .. versionadded:: 0.20
+
+            .. versionchanged:: 1.3
+                Parameters are now passed to the ``transform`` method of the
+                intermediate steps as well, if requested, and if
+                `enable_metadata_routing=True`.
+
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
 
         Returns
         -------
         y_proba : ndarray of shape (n_samples, n_classes)
             Result of calling `predict_proba` on the final estimator.
         """
-        routed_params = self._check_method_params(
-            method="predict_proba", props=predict_proba_params
-        )
+        routed_params = self._check_method_params(method="predict_proba", props=params)
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt, **routed_params[name].transform)
@@ -664,7 +676,7 @@ class Pipeline(_BaseComposition):
         )
 
     @available_if(_final_estimator_has("decision_function"))
-    def decision_function(self, X, **decision_function_params):
+    def decision_function(self, X, **params):
         """Transform the data, and apply `decision_function` with the final estimator.
 
         Call `transform` of each transformer in the pipeline. The transformed
@@ -678,14 +690,32 @@ class Pipeline(_BaseComposition):
             Data to predict on. Must fulfill input requirements of first step
             of the pipeline.
 
+        **params : dict of string -> object
+            - If `enable_metadata_routing=False` (default):
+
+                Ignored.
+
+            - If `enable_metadata_routing=True`:
+
+                Parameters to be passed to intermediate steps' ``transform``
+                and last step's ``decision_function``.
+
+            .. versionadded:: 1.3
+
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
+
         Returns
         -------
         y_score : ndarray of shape (n_samples, n_classes)
             Result of calling `decision_function` on the final estimator.
         """
-        routed_params = self._check_method_params(
-            method="decision_function", props=decision_function_params
-        )
+        if _routing_enabled():
+            routed_params = self._check_method_params(
+                method="decision_function", props=params
+            )
+        else:
+            routed_params = {}
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt, **routed_params[name].transform)
@@ -1118,7 +1148,7 @@ def _transform_one(transformer, X, y, weight, **fit_params):
 
 
 def _fit_transform_one(
-    transformer, X, y, weight, message_clsname="", message=None, **step_props
+    transformer, X, y, weight, message_clsname="", message=None, step_params=None
 ):
     """
     Fits ``transformer`` to ``X`` and ``y``. The transformed result is returned
@@ -1129,10 +1159,12 @@ def _fit_transform_one(
     """
     with _print_elapsed_time(message_clsname, message):
         if hasattr(transformer, "fit_transform"):
-            res = transformer.fit_transform(X, y, **step_props.get("fit_transform", {}))
+            res = transformer.fit_transform(
+                X, y, **step_params.get("fit_transform", {})
+            )
         else:
-            res = transformer.fit(X, y, **step_props.get("fit", {})).transform(
-                X, **step_props.get("transform", {})
+            res = transformer.fit(X, y, **step_params.get("fit", {})).transform(
+                X, **step_params.get("transform", {})
             )
 
     if weight is None:
