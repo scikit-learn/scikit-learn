@@ -925,11 +925,11 @@ def check_sample_weights_pandas_series(name, estimator_orig):
                 [3, 4],
             ]
         )
-        X = pd.DataFrame(_enforce_estimator_tags_X(estimator_orig, X))
+        X = pd.DataFrame(_enforce_estimator_tags_X(estimator_orig, X), copy=False)
         y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
         weights = pd.Series([1] * 12)
         if _safe_tags(estimator, key="multioutput_only"):
-            y = pd.DataFrame(y)
+            y = pd.DataFrame(y, copy=False)
         try:
             estimator.fit(X, y, sample_weight=weights)
         except ValueError:
@@ -3218,10 +3218,10 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
 
             y_ = np.asarray(y)
             if y_.ndim == 1:
-                y_ = pd.Series(y_)
+                y_ = pd.Series(y_, copy=False)
             else:
-                y_ = pd.DataFrame(y_)
-            X_ = pd.DataFrame(np.asarray(X))
+                y_ = pd.DataFrame(y_, copy=False)
+            X_ = pd.DataFrame(np.asarray(X), copy=False)
 
         except ImportError:
             raise SkipTest(
@@ -3897,7 +3897,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
     n_samples, n_features = X_orig.shape
 
     names = np.array([f"col_{i}" for i in range(n_features)])
-    X = pd.DataFrame(X_orig, columns=names)
+    X = pd.DataFrame(X_orig, columns=names, copy=False)
 
     if is_regressor(estimator):
         y = rng.normal(size=n_samples)
@@ -3985,7 +3985,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
     early_stopping_enabled = any(value is True for value in params.values())
 
     for invalid_name, additional_message in invalid_names:
-        X_bad = pd.DataFrame(X, columns=invalid_name)
+        X_bad = pd.DataFrame(X, columns=invalid_name, copy=False)
 
         expected_msg = re.escape(
             "The feature names should match those that were passed during fit.\n"
@@ -4094,7 +4094,7 @@ def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
         y_[::2, 1] *= 2
 
     feature_names_in = [f"col{i}" for i in range(n_features)]
-    df = pd.DataFrame(X, columns=feature_names_in)
+    df = pd.DataFrame(X, columns=feature_names_in, copy=False)
     X_transform = transformer.fit_transform(df, y=y_)
 
     # error is raised when `input_features` do not match feature_names_in
@@ -4324,7 +4324,7 @@ def _check_generated_dataframe(name, case, outputs_default, outputs_pandas):
     # We always rely on the output of `get_feature_names_out` of the
     # transformer used to generate the dataframe as a ground-truth of the
     # columns.
-    expected_dataframe = pd.DataFrame(X_trans, columns=feature_names_pandas)
+    expected_dataframe = pd.DataFrame(X_trans, columns=feature_names_pandas, copy=False)
 
     try:
         pd.testing.assert_frame_equal(df_trans, expected_dataframe)
@@ -4359,7 +4359,7 @@ def check_set_output_transform_pandas(name, transformer_orig):
     set_random_state(transformer)
 
     feature_names_in = [f"col{i}" for i in range(X.shape[1])]
-    df = pd.DataFrame(X, columns=feature_names_in)
+    df = pd.DataFrame(X, columns=feature_names_in, copy=False)
 
     transformer_default = clone(transformer).set_output(transform="default")
     outputs_default = _output_from_fit_transform(transformer_default, name, X, df, y)
@@ -4401,7 +4401,7 @@ def check_global_ouptut_transform_pandas(name, transformer_orig):
     set_random_state(transformer)
 
     feature_names_in = [f"col{i}" for i in range(X.shape[1])]
-    df = pd.DataFrame(X, columns=feature_names_in)
+    df = pd.DataFrame(X, columns=feature_names_in, copy=False)
 
     transformer_default = clone(transformer).set_output(transform="default")
     outputs_default = _output_from_fit_transform(transformer_default, name, X, df, y)

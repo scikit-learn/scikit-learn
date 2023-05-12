@@ -28,7 +28,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
 
-    pos_label : str or int, default=None
+    pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing the roc auc
         metrics. By default, `estimators.classes_[1]` is considered
         as the positive class.
@@ -213,7 +213,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             :term:`predict_proba` is tried first and if it does not exist
             :term:`decision_function` is tried next.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The class considered as the positive class when computing the roc auc
             metrics. By default, `estimators.classes_[1]` is considered
             as the positive class.
@@ -328,7 +328,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             on a plotted ROC curve. This is useful in order to create lighter
             ROC curves.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
             is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
             error will be raised.

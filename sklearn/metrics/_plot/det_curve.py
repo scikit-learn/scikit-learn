@@ -26,7 +26,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
 
-    pos_label : str or int, default=None
+    pos_label : int, float, bool or str, default=None
         The label of the positive class.
 
     Attributes
@@ -117,7 +117,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             to 'auto', :term:`predict_proba` is tried first and if it does not
             exist :term:`decision_function` is tried next.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
             is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
             error will be raised.
@@ -210,7 +210,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
             is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
             error will be raised.
