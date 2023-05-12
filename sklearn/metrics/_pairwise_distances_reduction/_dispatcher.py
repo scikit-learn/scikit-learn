@@ -637,7 +637,6 @@ class ArgKminLRD(BaseDistancesReductionDispatcher):
         metric_kwargs=None,
         strategy=None,
         return_distance=False,
-        train=False,
     ):
         """Compute the argkmin reduction for calculating the local reachability
         density.
@@ -708,10 +707,6 @@ class ArgKminLRD(BaseDistancesReductionDispatcher):
             Return distances between each X vector and its
             argkmin if set to True.
 
-        train : boolean, default=False
-            Specifies whether we are considering the computation in the
-            context of the fit method when training.
-
         Returns
         -------
         lrd : ndarray of shape (n_samples_X,)
@@ -738,7 +733,6 @@ class ArgKminLRD(BaseDistancesReductionDispatcher):
                 metric_kwargs=metric_kwargs,
                 strategy=strategy,
                 return_distance=return_distance,
-                train=train,
             )
 
         if X.dtype == Y.dtype == np.float32:
@@ -751,7 +745,6 @@ class ArgKminLRD(BaseDistancesReductionDispatcher):
                 metric_kwargs=metric_kwargs,
                 strategy=strategy,
                 return_distance=return_distance,
-                train=train,
             )
 
         raise ValueError(

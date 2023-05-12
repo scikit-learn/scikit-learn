@@ -305,7 +305,6 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
                 metric_kwargs=self.effective_metric_params_,
                 strategy="auto",
                 return_distance=True,
-                train=True,
             )
         else:
             self._distances_fit_X_, _neighbors_indices_fit_X_ = self.kneighbors(
