@@ -281,6 +281,10 @@ Changelog
   pandas' conventions.
   :pr:`25629` by `Thomas Fan`_.
 
+- |Fix| Fix deprecation of `base_estimator` in :class:`ensemble.AdaBoostClassifier`
+  and :class:`ensemble.AdaBoostRegressor` that was introduced in :pr:`23819`.
+  :pr:`26242` by :user:`Marko Toplak <markotoplak>`.
+
 :mod:`sklearn.exception`
 ........................
 - |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
