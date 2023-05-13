@@ -297,15 +297,15 @@ modifying code and submitting a PR:
    practice to never work on the ``main`` branch!
 
 10. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
-   run code style checks before each commit:
+    run code style checks before each commit:
 
-   .. prompt:: bash $
+    .. prompt:: bash $
 
-        pip install pre-commit
-        pre-commit install
+          pip install pre-commit
+          pre-commit install
 
-   pre-commit checks can be disabled for a particular commit with
-   `git commit -n`.
+    pre-commit checks can be disabled for a particular commit with
+    `git commit -n`.
 
 11. Develop the feature on your feature branch on your computer, using Git to
     do the version control. When you're done editing, add changed files using
