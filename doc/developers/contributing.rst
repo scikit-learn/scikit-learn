@@ -336,7 +336,7 @@ modifying code and submitting a PR:
 
     .. prompt:: bash $
 
-        pip install --no-build-isolation -e .
+        pip install -v --no-use-pep517 --no-build-isolation -e .
 
     Use the ``--no-build-isolation`` flag to avoid compiling the whole project
     each time, only the files you have modified.
@@ -548,8 +548,8 @@ message, the following actions are taken.
     [cd build gh]          CD is run only for GitHub Actions
     [cd build cirrus]      CD is run only for Cirrus CI
     [lint skip]            Azure pipeline skips linting
-    [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
-    [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy...
+    [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
+    [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy, ...
     [pypy]                 Build & test with PyPy
     [azure parallel]       Run Azure CI jobs in parallel
     [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
