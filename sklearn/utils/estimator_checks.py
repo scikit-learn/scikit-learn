@@ -3056,11 +3056,10 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_b(name, estimator_orig):
+def check_interaction_of_class_and_sample_weight_excluding_class(name, estimator_orig):
     """Setting a class weights to zero is equivalent to excluding the samples
     associated to this class from the calibration even when using non uniform
     sample weights.
-    check_interaction_of_class_and_sample_weight_excluding_class
     """
     # Note: this test is similar to
     # check_interaction_of_class_and_sample_weight_excluding_samples.
@@ -3124,12 +3123,11 @@ def check_b(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_a(
+def check_interaction_of_class_and_sample_weight_excluding_samples(
     name, estimator_orig
 ):
     """Setting sample_weight to 0 is equivalent to removing corresponding
     samples even when using non uniform class_weight.
-    check_interaction_of_class_and_sample_weight_excluding_samples
     """
     # Note: this test is similar to check_sample_weights_invariance and to
     # check_interaction_of_class_and_sample_weight_excluding_class.
