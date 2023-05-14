@@ -64,10 +64,61 @@ def test_binary_clf_curve_multiclass_error():
 def test_metric_threshold_curve_end_points(metric):
     rng = check_random_state(0)
     y_true = np.array([0] * 50 + [1] * 50)
-    y_pred = rng.normal(3, size=100)
-    min_pred, max_pred = min(y_pred), max(y_pred)
+    y_score = rng.normal(3, size=100)
+    min_pred, max_score = min(y_score), max(y_score)
 
-    metric_values, _ = metric_threshold_curve(y_true, y_pred, metric)
+    metric_values, _ = metric_threshold_curve(y_true, y_score, metric)
 
-    assert metric_values[0] == metric(y_true, (y_pred > min_pred) * 1)
-    assert metric_values[-1] == metric(y_true, (y_pred > max_pred) * 1)
+    assert metric_values[0] == metric(y_true, (y_score > min_pred) * 1)
+    assert metric_values[-1] == metric(y_true, (y_score > max_score) * 1)
+
+
+@pytest.mark.parametrize(
+    "metric", [partial(fbeta_score, beta=3), precision_score, recall_score],
+)
+def test_zero_sample_weight_equals_excluding(metric):
+    rng = check_random_state(0)
+    y_true = np.array([0] * 50 + [1] * 50)
+    y_score = rng.normal(3, size=100)
+
+    sample_weight = np.array([0] * 20, [1] * 8)
+    metric_values_sw, _ = metric_threshold_curve(
+        y_true, y_score, metric, sample_weight=sample_weight
+    )
+
+    y_true_exclude = y_true[sample_weight != 0]
+    y_score_exclude = y_score[sample_weight != 0]
+    metric_values_exclude, _ = metric_threshold_curve(
+        y_true_exclude, y_score_exclude, metric
+    )
+
+    assert_allclose(metric_values_sw, metric_values_exclude)
+
+
+def test_len_of_threshold_when_passing_int():
+    y = [0] * 500 + [1] * 500
+    y_score = list[range(1000)]
+    _, thresholds = metric_threshold_curve(
+        y, y_score, accuracy_score, threshold_grid=42
+    )
+
+    assert len(thresholds) == 42
+
+
+def test_passing_the_grid():
+    y = [0] * 500 + [1] * 500
+    y_score = list[range(1000)]
+
+    grid_sorted = np.array(list[range(200, 300)])
+    _, thresholds_sorted = metric_threshold_curve(
+        y, y_score, accuracy_score, threshold_grid=grid_sorted
+    )
+
+    assert_allclose(grid_sorted, thresholds_sorted)
+
+    grid_not_sorted = np.array(list[range(200, 300)][::-1])
+    _, thresholds_not_sorted = metric_threshold_curve(
+        y, y_score, accuracy_score, threshold_grid=grid_not_sorted
+    )
+
+    assert_allclose(grid_not_sorted, thresholds_not_sorted)
