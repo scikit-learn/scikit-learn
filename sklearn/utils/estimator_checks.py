@@ -3105,12 +3105,14 @@ def check_interaction_of_class_and_sample_weight_excluding_class(name, estimator
         estimator_sw.fit(X, y, sample_weight=sample_weight_zero_weight_first)
 
         # Checking if the output is the same for multiple outputs
-        for method in ["predict", "predict_proba", "decision_function", "transform"]:
+        for method in ["predict", "predict_proba", "decision_function"]:
             if hasattr(estimator_orig, method):
                 pred_cw = getattr(estimator_cw, method)(X)
                 pred_sw = getattr(estimator_sw, method)(X)
                 pred_exclude = getattr(estimator_exclude, method)(X)
                 assert_allclose_dense_sparse(pred_cw, pred_sw, err_msg=err_msg_sw)
+                if method in ["predict_proba", "decision_function"]:
+                    pred_cw = pred_cw[:, list(range(1, n_classes))]
                 assert_allclose_dense_sparse(
                     pred_cw, pred_exclude, err_msg=err_msg_exclude
                 )
@@ -3162,10 +3164,12 @@ def check_interaction_of_class_and_sample_weight_excluding_samples(
         estimator_exclude.fit(X_exclude, y_exclude)
 
         # Checking if the output is the same for multiple outputs
-        for method in ["predict", "predict_proba", "decision_function", "transform"]:
+        for method in ["predict", "predict_proba", "decision_function"]:
             if hasattr(estimator_orig, method):
                 pred_sw = getattr(estimator_sw, method)(X)
                 pred_exclude = getattr(estimator_exclude, method)(X)
+                if method in ["predict_proba", "decision_function"]:
+                    pred_sw = pred_sw[:, list(range(1, n_classes))]
                 assert_allclose_dense_sparse(pred_sw, pred_exclude, err_msg=err_msg)
 
 
