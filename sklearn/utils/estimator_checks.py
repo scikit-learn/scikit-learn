@@ -3109,7 +3109,7 @@ def check_interaction_of_class_and_sample_weight_excluding_class(name, estimator
             if hasattr(estimator_orig, method):
                 pred_cw = getattr(estimator_cw, method)(X)
                 pred_sw = getattr(estimator_sw, method)(X)
-                pred_exclude = getattr(estimator_sw, method)(X)
+                pred_exclude = getattr(estimator_exclude, method)(X)
                 assert_allclose_dense_sparse(pred_cw, pred_sw, err_msg=err_msg_sw)
                 assert_allclose_dense_sparse(
                     pred_cw, pred_exclude, err_msg=err_msg_exclude
@@ -3165,7 +3165,7 @@ def check_interaction_of_class_and_sample_weight_excluding_samples(
         for method in ["predict", "predict_proba", "decision_function", "transform"]:
             if hasattr(estimator_orig, method):
                 pred_sw = getattr(estimator_sw, method)(X)
-                pred_exclude = getattr(estimator_sw, method)(X)
+                pred_exclude = getattr(estimator_exclude, method)(X)
                 assert_allclose_dense_sparse(pred_sw, pred_exclude, err_msg=err_msg)
 
 
