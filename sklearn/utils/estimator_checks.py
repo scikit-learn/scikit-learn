@@ -165,7 +165,7 @@ def _yield_classifier_checks(classifier):
         yield check_estimators_unfitted
     if "class_weight" in classifier.get_params().keys():
         yield check_class_weight_classifiers
-        if has_fit_parameter(classifier, "sample_weight"):
+        if has_fit_parameter(classifier, "sample_weight") and not tags["pairwise"]:
             yield check_interaction_of_class_and_sample_weight_excluding_class
             yield check_interaction_of_class_and_sample_weight_excluding_samples
 
@@ -3070,7 +3070,11 @@ def check_interaction_of_class_and_sample_weight_excluding_class(name, estimator
         f"For {name}, using class_weight as zero to one class is not "
         "equivalent to excluding the samples from that class."
     )
-    for n_classes in range(3, 10):
+
+    tags = _safe_tags(estimator_orig)
+    max_classes = 2 if tags["binary_only"] else 9
+
+    for n_classes in range(2, max_classes + 1):
         X, y = make_classification(
             n_samples=200,
             n_classes=n_classes,
@@ -3125,7 +3129,11 @@ def check_interaction_of_class_and_sample_weight_excluding_samples(
         f"For {name}, while using class weight, setting some sample's weight "
         "to zero is not equivalent to excluding those samples from training."
     )
-    for n_classes in range(2, 10):
+
+    tags = _safe_tags(estimator_orig)
+    max_classes = 2 if tags["binary_only"] else 9
+
+    for n_classes in range(2, max_classes + 1):
         X, y = make_classification(
             n_samples=200,
             n_classes=n_classes,
