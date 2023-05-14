@@ -3110,7 +3110,7 @@ def check_interaction_of_class_and_sample_weight_excluding_class(name, estimator
                 pred_cw = getattr(estimator_cw, method)(X)
 
                 pred_sw = getattr(estimator_sw, method)(X)
-                assert_allclose_dense_sparse(pred_cw, pred_sw, err_msg=err_msg_sw + f"first assert. {method} - {n_classes}")
+                assert_allclose_dense_sparse(pred_cw, pred_sw, err_msg=err_msg_sw)
 
                 pred_exclude = getattr(estimator_exclude, method)(X)
                 if method in ["predict_proba", "decision_function"]:
@@ -3118,7 +3118,7 @@ def check_interaction_of_class_and_sample_weight_excluding_class(name, estimator
                     if method == "decision_function" and n_classes == 3:
                         pred_cw = pred_cw[:, 1]
                 assert_allclose_dense_sparse(
-                    pred_cw, pred_exclude, err_msg=err_msg_exclude + f"second assert. {method} - {n_classes}"
+                    pred_cw, pred_exclude, err_msg=err_msg_exclude
                 )
 
 
