@@ -103,7 +103,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         self.average_precision = average_precision
         self.pos_label = pos_label
 
-    def plot(self, ax=None, *, name=None, **kwargs):
+    def plot(self, ax=None, *, name=None, despine=False, **kwargs):
         """Plot visualization.
 
         Extra keyword arguments will be passed to matplotlib's `plot`.
@@ -117,6 +117,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         name : str, default=None
             Name of precision recall curve for labeling. If `None`, use
             `estimator_name` if not `None`, otherwise no labeling is shown.
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.3
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -157,6 +162,12 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         ylabel = "Precision" + info_pos_label
         self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
+        if despine:
+            for s in ["top", "right"]:
+                self.ax_.spines[s].set_visible(False)
+            for s in ["bottom", "left"]:
+                self.ax_.spines[s].set_bounds(0, 1)
+
         if "label" in line_kwargs:
             self.ax_.legend(loc="lower left")
 
@@ -175,6 +186,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         response_method="auto",
         name=None,
         ax=None,
+        despine=False,
         **kwargs,
     ):
         """Plot precision-recall curve given an estimator and some data.
@@ -218,6 +230,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.3
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -277,6 +294,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             pos_label=pos_label,
             drop_intermediate=drop_intermediate,
             ax=ax,
+            despine=despine,
             **kwargs,
         )
 
@@ -291,6 +309,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         drop_intermediate=False,
         name=None,
         ax=None,
+        despine=False,
         **kwargs,
     ):
         """Plot precision-recall curve given binary class predictions.
@@ -323,6 +342,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.3
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -389,4 +413,4 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             pos_label=pos_label,
         )
 
-        return viz.plot(ax=ax, name=name, **kwargs)
+        return viz.plot(ax=ax, name=name, despine=despine, **kwargs)
