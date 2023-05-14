@@ -98,28 +98,28 @@ def test_zero_sample_weight_equals_excluding(metric):
 
 def test_len_of_threshold_when_passing_int():
     y = [0] * 500 + [1] * 500
-    y_score = list[range(1000)]
+    y_score = list(range(1000))
     _, thresholds = metric_threshold_curve(
-        y, y_score, accuracy_score, threshold_grid=42
+        y, y_score, accuracy_score, threshold_grid=13
     )
 
-    assert len(thresholds) == 42
+    assert len(thresholds) == 13
 
 
 def test_passing_the_grid():
     y = [0] * 500 + [1] * 500
-    y_score = list[range(1000)]
+    y_score = list(range(1000))
 
-    grid_sorted = np.array(list[range(200, 300)])
+    grid_sorted = np.array(list(range(200, 300)))
     _, thresholds_sorted = metric_threshold_curve(
         y, y_score, accuracy_score, threshold_grid=grid_sorted
     )
 
     assert_allclose(grid_sorted, thresholds_sorted)
 
-    grid_not_sorted = np.array(list[range(200, 300)][::-1])
+    grid_not_sorted = grid_sorted[::-1]
     _, thresholds_not_sorted = metric_threshold_curve(
         y, y_score, accuracy_score, threshold_grid=grid_not_sorted
     )
 
-    assert_allclose(grid_not_sorted, thresholds_not_sorted)
+    assert_allclose(grid_sorted, thresholds_not_sorted)
