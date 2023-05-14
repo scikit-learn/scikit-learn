@@ -409,7 +409,7 @@ Changelog
 
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
-  
+
 - |Feature| :func:`metrics.average_precision_score` now supports the
   multiclass case.
   :pr:`17388` by :user:`Geoffrey Bolmier <gbolmier>` and
@@ -419,6 +419,13 @@ Changelog
   arbritrary `max(y_score) + 1`. This threshold is associated with the ROC curve point
   `tpr=0` and `fpr=0`.
   :pr:`26194` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :meth:`metrics.RocCurveDisplay.from_estimator`,
+  :meth:`metrics.RocCurveDisplay.from_predictions`,
+  :meth:`metrics.PrecisionRecallDisplay.from_estimator`, and
+  :meth:`metrics.PrecisionRecallDisplay.from_predictions` now accepts a new keyword
+  `despine` to remove the top and right spines of the plot in order to make it clearer.
+  :pr:`26367` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.model_selection`
 ..............................
