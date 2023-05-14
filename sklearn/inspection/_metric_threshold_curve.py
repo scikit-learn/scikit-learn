@@ -12,12 +12,13 @@ import numpy as np
 
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import (
+    _check_pos_label_consistency,
+    _check_sample_weight,
+)
 from ..utils import column_or_1d
 from ..utils.multiclass import type_of_target
 from ..utils._param_validation import validate_params, Interval
-
-from ..metrics._base import _check_pos_label_consistency
 
 
 @validate_params(
