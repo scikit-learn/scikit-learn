@@ -82,7 +82,7 @@ def test_zero_sample_weight_equals_excluding(metric):
     y_true = np.array([0] * 50 + [1] * 50)
     y_score = rng.normal(3, size=100)
 
-    sample_weight = np.array([0] * 20, [1] * 8)
+    sample_weight = np.array([0] * 20 + [1] * 80)
     metric_values_sw, _ = metric_threshold_curve(
         y_true, y_score, metric, sample_weight=sample_weight
     )
