@@ -317,3 +317,30 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)
     assert np.trapz(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+
+
+@pytest.mark.parametrize("despine", [True, False])
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+def test_plot_roc_curve_despine(pyplot, data_binary, despine, constructor_name):
+    # Check that the despine keyword is working correctly
+    X, y = data_binary
+
+    lr = LogisticRegression().fit(X, y)
+    lr.fit(X, y)
+
+    y_pred = lr.decision_function(X)
+
+    # safe guard for the binary if/else construction
+    assert constructor_name in ("from_estimator", "from_predictions")
+
+    if constructor_name == "from_estimator":
+        display = RocCurveDisplay.from_estimator(lr, X, y, despine=despine)
+    else:
+        display = RocCurveDisplay.from_predictions(y, y_pred, despine=despine)
+
+    for s in ["top", "right"]:
+        assert display.ax_.spines[s].get_visible() is not despine
+
+    if despine:
+        for s in ["bottom", "left"]:
+            assert display.ax_.spines[s].get_bounds() == (0, 1)

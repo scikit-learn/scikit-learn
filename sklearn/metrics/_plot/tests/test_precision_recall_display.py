@@ -256,3 +256,30 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
     avg_prec_limit = 0.95
     assert display.average_precision > avg_prec_limit
     assert -np.trapz(display.precision, display.recall) > avg_prec_limit
+
+
+@pytest.mark.parametrize("despine", [True, False])
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+def test_plot_precision_recall_despine(pyplot, despine, constructor_name):
+    # Check that the despine keyword is working correctly
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+
+    clf = LogisticRegression().fit(X, y)
+    clf.fit(X, y)
+
+    y_pred = clf.decision_function(X)
+
+    # safe guard for the binary if/else construction
+    assert constructor_name in ("from_estimator", "from_predictions")
+
+    if constructor_name == "from_estimator":
+        display = PrecisionRecallDisplay.from_estimator(clf, X, y, despine=despine)
+    else:
+        display = PrecisionRecallDisplay.from_predictions(y, y_pred, despine=despine)
+
+    for s in ["top", "right"]:
+        assert display.ax_.spines[s].get_visible() is not despine
+
+    if despine:
+        for s in ["bottom", "left"]:
+            assert display.ax_.spines[s].get_bounds() == (0, 1)
