@@ -3168,7 +3168,7 @@ def check_interaction_of_class_and_sample_weight_excluding_samples(
             if hasattr(estimator_orig, method):
                 pred_sw = getattr(estimator_sw, method)(X)
                 pred_exclude = getattr(estimator_exclude, method)(X)
-                if method in ["predict_proba", "decision_function"]:
+                if method in ["predict_proba", "decision_function"] and n_classes > 2:
                     pred_sw = pred_sw[:, list(range(1, n_classes))]
                 assert_allclose_dense_sparse(pred_sw, pred_exclude, err_msg=err_msg)
 
