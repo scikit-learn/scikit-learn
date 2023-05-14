@@ -56,6 +56,7 @@ kr = GridSearchCV(
     param_grid={"alpha": [1e0, 0.1, 1e-2, 1e-3], "gamma": np.logspace(-2, 2, 5)},
 )
 
+
 # %%
 # Compare times of SVR and Kernel Ridge Regression
 # ------------------------------------------------
@@ -136,12 +137,13 @@ _ = plt.legend()
 # Visualize training and prediction times
 # ---------------------------------------
 
+
 plt.figure()
 
 sizes = np.logspace(1, 3.8, 7).astype(int)
 for name, estimator in {
-    "KRR": KernelRidge(kernel="rbf", alpha=0.01, gamma=10),
-    "SVR": SVR(kernel="rbf", C=1e2, gamma=10),
+    "KRR": kr.best_estimator_,
+    "SVR": svr.best_estimator_,
 }.items():
     train_time = []
     test_time = []
@@ -193,8 +195,8 @@ from sklearn.model_selection import LearningCurveDisplay
 
 _, ax = plt.subplots()
 
-svr = SVR(kernel="rbf", C=1e1, gamma=0.1)
-kr = KernelRidge(kernel="rbf", alpha=0.1, gamma=0.1)
+svr = svr.best_estimator_
+kr = kr.best_estimator_
 
 common_params = {
     "X": X[:100],
