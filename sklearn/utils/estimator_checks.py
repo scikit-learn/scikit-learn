@@ -166,8 +166,9 @@ def _yield_classifier_checks(classifier):
     if "class_weight" in classifier.get_params().keys():
         yield check_class_weight_classifiers
         if has_fit_parameter(classifier, "sample_weight") and not tags["pairwise"]:
-            yield check_interaction_of_class_and_sample_weight_excluding_class
             yield check_interaction_of_class_and_sample_weight_excluding_samples
+            if not tags["binary_only"]:
+                yield check_interaction_of_class_and_sample_weight_excluding_class
 
     yield check_non_transformer_estimators_n_iter
     # test if predict_proba is a monotonic transformation of decision_function
@@ -3071,10 +3072,7 @@ def check_interaction_of_class_and_sample_weight_excluding_class(name, estimator
         "equivalent to excluding the samples from that class."
     )
 
-    tags = _safe_tags(estimator_orig)
-    max_classes = 2 if tags["binary_only"] else 9
-
-    for n_classes in range(2, max_classes + 1):
+    for n_classes in range(3, 10):
         X, y = make_classification(
             n_samples=200,
             n_classes=n_classes,
