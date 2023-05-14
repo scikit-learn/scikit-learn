@@ -3061,6 +3061,8 @@ def check_interaction_of_class_and_sample_weight_excluding_class(name, estimator
     associated to this class from the calibration even when using non uniform
     sample weights.
     """
+    # Note: this test is similar to
+    # check_interaction_of_class_and_sample_weight_excluding_samples.
     rng = np.random.RandomState(42)
     err_msg_sw = (
         f"For {name}, using class_weight as zero to one class is not "
@@ -3102,7 +3104,7 @@ def check_interaction_of_class_and_sample_weight_excluding_class(name, estimator
         set_random_state(estimator_sw, random_state=0)
         estimator_sw.fit(X, y, sample_weight=sample_weight_zero_weight_first)
 
-        # Checking if the output is the same
+        # Checking if the output is the same for multiple outputs
         for method in ["predict", "predict_proba", "decision_function", "transform"]:
             if hasattr(estimator_orig, method):
                 pred_cw = getattr(estimator_cw, method)(X)
@@ -3121,7 +3123,8 @@ def check_interaction_of_class_and_sample_weight_excluding_samples(
     """Setting sample_weight to 0 is equivalent to removing corresponding
     samples even when using non uniform class_weight.
     """
-    # Note: this test is similar to check_sample_weights_invariance.
+    # Note: this test is similar to check_sample_weights_invariance and to
+    # check_interaction_of_class_and_sample_weight_excluding_class.
     rng = np.random.RandomState(42)
     err_msg = (
         f"For {name}, while using class weight, setting some sample's weight "
@@ -3158,7 +3161,7 @@ def check_interaction_of_class_and_sample_weight_excluding_samples(
         set_random_state(estimator_exclude, random_state=0)
         estimator_exclude.fit(X_exclude, y_exclude)
 
-        # Checking if the output is the same
+        # Checking if the output is the same for multiple outputs
         for method in ["predict", "predict_proba", "decision_function", "transform"]:
             if hasattr(estimator_orig, method):
                 pred_sw = getattr(estimator_sw, method)(X)

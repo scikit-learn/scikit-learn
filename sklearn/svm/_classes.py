@@ -824,6 +824,9 @@ class SVC(BaseSVC):
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
+                "check_interaction_of_class_and_sample_weight_excluding_class": (
+                    "dual coefficients or intercepts are not finite"
+                ),
             }
         }
 
