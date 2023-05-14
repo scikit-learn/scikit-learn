@@ -69,6 +69,8 @@ def test_precision_recall_display_plotting(
 
     assert display.ax_.get_xlabel() == "Recall (Positive label: 1)"
     assert display.ax_.get_ylabel() == "Precision (Positive label: 1)"
+    assert display.ax_.get_xlim() == (-0.001, 1.001)
+    assert display.ax_.get_ylim() == (-0.001, 1.001)
 
     # plotting passing some new parameters
     display.plot(alpha=0.8, name="MySpecialEstimator")

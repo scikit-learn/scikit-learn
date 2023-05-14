@@ -156,6 +156,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         xlabel = "Recall" + info_pos_label
         ylabel = "Precision" + info_pos_label
         self.ax_.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set_xlim([-0.001, 1.001])
+        self.ax_.set_ylim([-0.001, 1.001])
 
         if "label" in line_kwargs:
             self.ax_.legend(loc="lower left")
