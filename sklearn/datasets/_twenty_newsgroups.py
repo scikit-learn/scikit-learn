@@ -46,6 +46,7 @@ from ._base import load_descr
 from ..feature_extraction.text import CountVectorizer
 from .. import preprocessing
 from ..utils import check_random_state, Bunch
+from ..utils._param_validation import StrOptions, validate_params
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +150,18 @@ def strip_newsgroup_footer(text):
         return text
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "subset": [StrOptions({"train", "test", "all"})],
+        "categories": ["array-like", None],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "remove": [tuple],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+    }
+)
 def fetch_20newsgroups(
     *,
     data_home=None,
@@ -287,10 +300,6 @@ def fetch_20newsgroups(
         data.data = data_lst
         data.target = np.array(target)
         data.filenames = np.array(filenames)
-    else:
-        raise ValueError(
-            "subset can only be 'train', 'test' or 'all', got '%s'" % subset
-        )
 
     fdescr = load_descr("twenty_newsgroups.rst")
 
@@ -336,6 +345,17 @@ def fetch_20newsgroups(
     return data
 
 
+@validate_params(
+    {
+        "subset": [StrOptions({"train", "test", "all"})],
+        "remove": [tuple],
+        "data_home": [str, None],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+        "normalize": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def fetch_20newsgroups_vectorized(
     *,
     subset="train",
@@ -507,11 +527,6 @@ def fetch_20newsgroups_vectorized(
     elif subset == "all":
         data = sp.vstack((X_train, X_test)).tocsr()
         target = np.concatenate((data_train.target, data_test.target))
-    else:
-        raise ValueError(
-            "%r is not a valid subset: should be one of ['train', 'test', 'all']"
-            % subset
-        )
 
     fdescr = load_descr("twenty_newsgroups.rst")
 

@@ -126,7 +126,7 @@ following rules before submitting:
 -  If you are submitting an algorithm or feature request, please verify that
    the algorithm fulfills our
    `new algorithm requirements
-   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
+   <https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
 
 -  If you are submitting a bug report, we strongly encourage you to follow the guidelines in
    :ref:`filing_bugs`.
@@ -254,7 +254,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov flake8 mypy numpydoc black==22.3.0
+        pip install pytest pytest-cov flake8 mypy numpydoc black==23.3.0
 
 .. _upstream:
 
@@ -336,7 +336,7 @@ modifying code and submitting a PR:
 
     .. prompt:: bash $
 
-        pip install --no-build-isolation -e .
+        pip install -v --no-use-pep517 --no-build-isolation -e .
 
     Use the ``--no-build-isolation`` flag to avoid compiling the whole project
     each time, only the files you have modified.
@@ -546,10 +546,12 @@ message, the following actions are taken.
     [ci skip]              CI is skipped completely
     [cd build]             CD is run (wheels and source distribution are built)
     [cd build gh]          CD is run only for GitHub Actions
+    [cd build cirrus]      CD is run only for Cirrus CI
     [lint skip]            Azure pipeline skips linting
-    [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
-    [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy...
+    [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
+    [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy, ...
     [pypy]                 Build & test with PyPy
+    [azure parallel]       Run Azure CI jobs in parallel
     [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
@@ -712,7 +714,7 @@ Building the documentation requires installing some additional packages:
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
                 scikit-image packaging seaborn sphinx-prompt \
-                sphinxext-opengraph plotly
+                sphinxext-opengraph plotly pooch
 
 To build the documentation, you need to be in the ``doc`` folder:
 
@@ -1410,7 +1412,7 @@ Reading the existing code base
 ==============================
 
 Reading and digesting an existing code base is always a difficult exercise
-that takes time and experience to main. Even though we try to write simple
+that takes time and experience to master. Even though we try to write simple
 code in general, understanding the code can seem overwhelming at first,
 given the sheer size of the project. Here is a list of tips that may help
 make this task easier and faster (in no particular order).
@@ -1447,9 +1449,10 @@ make this task easier and faster (in no particular order).
   <https://joblib.readthedocs.io/>`_. ``out`` is then an iterable containing
   the values returned by ``some_function`` for each call.
 - We use `Cython <https://cython.org/>`_ to write fast code. Cython code is
-  located in ``.pyx`` and ``.pxd`` files. Cython code has a more C-like
-  flavor: we use pointers, perform manual memory allocation, etc. Having
-  some minimal experience in C / C++ is pretty much mandatory here.
+  located in ``.pyx`` and ``.pxd`` files. Cython code has a more C-like flavor:
+  we use pointers, perform manual memory allocation, etc. Having some minimal
+  experience in C / C++ is pretty much mandatory here. For more information see
+  :ref:`cython`.
 - Master your tools.
 
   - With such a big project, being efficient with your favorite editor or

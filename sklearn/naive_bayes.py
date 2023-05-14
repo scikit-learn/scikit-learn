@@ -318,6 +318,8 @@ class GaussianNB(_BaseNB):
         # Compute (potentially weighted) mean and variance of new datapoints
         if sample_weight is not None:
             n_new = float(sample_weight.sum())
+            if np.isclose(n_new, 0.0):
+                return mu, var
             new_mu = np.average(X, axis=0, weights=sample_weight)
             new_var = np.average((X - new_mu) ** 2, axis=0, weights=sample_weight)
         else:
@@ -625,8 +627,11 @@ class _BaseDiscreteNB(_BaseNB):
         if _force_alpha == "warn" and alpha_min < alpha_lower_bound:
             _force_alpha = False
             warnings.warn(
-                "The default value for `force_alpha` will change to `True` in 1.4. To"
-                " suppress this warning, manually set the value of `force_alpha`.",
+                (
+                    "The default value for `force_alpha` will change to `True` in 1.4."
+                    " To suppress this warning, manually set the value of"
+                    " `force_alpha`."
+                ),
                 FutureWarning,
             )
         if alpha_min < alpha_lower_bound and not _force_alpha:

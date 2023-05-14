@@ -18,9 +18,6 @@ from ..tree._tree cimport SIZE_t
 from ..tree._tree cimport INT32_t
 from ..tree._utils cimport safe_realloc
 
-ctypedef cnp.int32_t int32
-ctypedef cnp.float64_t float64
-ctypedef cnp.uint8_t uint8
 
 # no namespace lookup for numpy dtype and array creation
 from numpy import zeros as np_zeros
@@ -29,15 +26,14 @@ from numpy import zeros as np_zeros
 # constant to mark tree leafs
 cdef SIZE_t TREE_LEAF = -1
 
-cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
-                                                      Node* root_node,
-                                                      double *value,
-                                                      double scale,
-                                                      Py_ssize_t k,
-                                                      Py_ssize_t K,
-                                                      Py_ssize_t n_samples,
-                                                      Py_ssize_t n_features,
-                                                      float64 *out):
+cdef void _predict_regression_tree_inplace_fast_dense(
+    const DTYPE_t[:, ::1] X,
+    Node* root_node,
+    double *value,
+    double scale,
+    Py_ssize_t k,
+    cnp.float64_t[:, :] out
+) noexcept nogil:
     """Predicts output for regression tree and stores it in ``out[i, k]``.
 
     This function operates directly on the data arrays of the tree
@@ -49,8 +45,8 @@ cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
 
     Parameters
     ----------
-    X : DTYPE_t pointer
-        The pointer to the data array of the input ``X``.
+    X : DTYPE_t 2d memory view
+        The memory view on the data ndarray of the input ``X``.
         Assumes that the array is c-continuous.
     root_node : tree Node pointer
         Pointer to the main node array of the :class:``sklearn.tree.Tree``.
@@ -62,50 +58,43 @@ cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
     k : int
         The index of the tree output to be predicted. Must satisfy
         0 <= ``k`` < ``K``.
-    K : int
-        The number of regression tree outputs. For regression and
-        binary classification ``K == 1``, for multi-class
-        classification ``K == n_classes``.
-    n_samples : int
-        The number of samples in the input array ``X``;
-        ``n_samples == X.shape[0]``.
-    n_features : int
-        The number of features; ``n_samples == X.shape[1]``.
-    out : np.float64_t pointer
-        The pointer to the data array where the predictions are stored.
+    out : memory view on array of type np.float64_t
+        The data array where the predictions are stored.
         ``out`` is assumed to be a two-dimensional array of
         shape ``(n_samples, K)``.
     """
+    cdef SIZE_t n_samples = X.shape[0]
     cdef Py_ssize_t i
     cdef Node *node
     for i in range(n_samples):
         node = root_node
         # While node not a leaf
         while node.left_child != TREE_LEAF:
-            if X[i * n_features + node.feature] <= node.threshold:
+            if X[i, node.feature] <= node.threshold:
                 node = root_node + node.left_child
             else:
                 node = root_node + node.right_child
-        out[i * K + k] += scale * value[node - root_node]
+        out[i, k] += scale * value[node - root_node]
 
-def _predict_regression_tree_stages_sparse(cnp.ndarray[object, ndim=2] estimators,
-                                           object X, double scale,
-                                           cnp.ndarray[float64, ndim=2] out):
+
+def _predict_regression_tree_stages_sparse(
+    object[:, :] estimators,
+    object X,
+    double scale,
+    cnp.float64_t[:, :] out
+):
     """Predicts output for regression tree inplace and adds scaled value to ``out[i, k]``.
 
     The function assumes that the ndarray that wraps ``X`` is csr_matrix.
     """
-    cdef DTYPE_t* X_data = <DTYPE_t*>(<cnp.ndarray> X.data).data
-    cdef INT32_t* X_indices = <INT32_t*>(<cnp.ndarray> X.indices).data
-    cdef INT32_t* X_indptr = <INT32_t*>(<cnp.ndarray> X.indptr).data
+    cdef const DTYPE_t[::1] X_data = X.data
+    cdef const INT32_t[::1] X_indices = X.indices
+    cdef const INT32_t[::1] X_indptr = X.indptr
 
     cdef SIZE_t n_samples = X.shape[0]
     cdef SIZE_t n_features = X.shape[1]
     cdef SIZE_t n_stages = estimators.shape[0]
     cdef SIZE_t n_outputs = estimators.shape[1]
-
-    # Initialize output
-    cdef float64* out_ptr = <float64*> out.data
 
     # Indices and temporary variables
     cdef SIZE_t sample_i
@@ -167,8 +156,7 @@ def _predict_regression_tree_stages_sparse(cnp.ndarray[object, ndim=2] estimator
                         node = root_node + node.left_child
                     else:
                         node = root_node + node.right_child
-                out_ptr[sample_i * n_outputs + output_i] += (scale
-                    * value[node - root_node])
+                out[sample_i, output_i] += scale * value[node - root_node]
 
     # Free auxiliary arrays
     free(X_sample)
@@ -177,9 +165,12 @@ def _predict_regression_tree_stages_sparse(cnp.ndarray[object, ndim=2] estimator
     free(values)
 
 
-def predict_stages(cnp.ndarray[object, ndim=2] estimators,
-                   object X, double scale,
-                   cnp.ndarray[float64, ndim=2] out):
+def predict_stages(
+    object[:, :] estimators,
+    object X,
+    double scale,
+    cnp.float64_t[:, :] out
+):
     """Add predictions of ``estimators`` to ``out``.
 
     Each estimator is scaled by ``scale`` before its prediction
@@ -195,11 +186,12 @@ def predict_stages(cnp.ndarray[object, ndim=2] estimators,
         if X.format != 'csr':
             raise ValueError("When X is a sparse matrix, a CSR format is"
                              " expected, got {!r}".format(type(X)))
-        _predict_regression_tree_stages_sparse(estimators, X, scale, out)
+        _predict_regression_tree_stages_sparse(
+            estimators=estimators, X=X, scale=scale, out=out
+        )
     else:
         if not isinstance(X, np.ndarray) or np.isfortran(X):
-            raise ValueError("X should be C-ordered np.ndarray,"
-                             " got {}".format(type(X)))
+            raise ValueError(f"X should be C-ordered np.ndarray, got {type(X)}")
 
         for i in range(n_estimators):
             for k in range(K):
@@ -209,57 +201,66 @@ def predict_stages(cnp.ndarray[object, ndim=2] estimators,
                 # and get data pointer
                 # need brackets because of casting operator priority
                 _predict_regression_tree_inplace_fast_dense(
-                    <DTYPE_t*> (<cnp.ndarray> X).data,
-                    tree.nodes, tree.value,
-                    scale, k, K, X.shape[0], X.shape[1],
-                    <float64 *> (<cnp.ndarray> out).data)
-                ## out[:, k] += scale * tree.predict(X).ravel()
+                    X=X,
+                    root_node=tree.nodes,
+                    value=tree.value,
+                    scale=scale,
+                    k=k,
+                    out=out
+                )
+                # out[:, k] += scale * tree.predict(X).ravel()
 
 
-def predict_stage(cnp.ndarray[object, ndim=2] estimators,
-                  int stage,
-                  object X, double scale,
-                  cnp.ndarray[float64, ndim=2] out):
+def predict_stage(
+    object[:, :] estimators,
+    int stage,
+    object X,
+    double scale,
+    cnp.float64_t[:, :] out
+):
     """Add predictions of ``estimators[stage]`` to ``out``.
 
     Each estimator in the stage is scaled by ``scale`` before
     its prediction is added to ``out``.
     """
-    return predict_stages(estimators[stage:stage + 1], X, scale, out)
+    return predict_stages(
+        estimators=estimators[stage:stage + 1], X=X, scale=scale, out=out
+    )
 
 
-def _random_sample_mask(cnp.npy_intp n_total_samples,
-                        cnp.npy_intp n_total_in_bag, random_state):
-     """Create a random sample mask where ``n_total_in_bag`` elements are set.
+def _random_sample_mask(
+    cnp.npy_intp n_total_samples,
+    cnp.npy_intp n_total_in_bag,
+    random_state
+):
+    """Create a random sample mask where ``n_total_in_bag`` elements are set.
 
-     Parameters
-     ----------
-     n_total_samples : int
-         The length of the resulting mask.
+    Parameters
+    ----------
+    n_total_samples : int
+        The length of the resulting mask.
 
-     n_total_in_bag : int
-         The number of elements in the sample mask which are set to 1.
+    n_total_in_bag : int
+        The number of elements in the sample mask which are set to 1.
 
-     random_state : RandomState
-         A numpy ``RandomState`` object.
+    random_state : RandomState
+        A numpy ``RandomState`` object.
 
-     Returns
-     -------
-     sample_mask : np.ndarray, shape=[n_total_samples]
-         An ndarray where ``n_total_in_bag`` elements are set to ``True``
-         the others are ``False``.
-     """
-     cdef cnp.ndarray[float64, ndim=1, mode="c"] rand = \
-          random_state.uniform(size=n_total_samples)
-     cdef cnp.ndarray[uint8, ndim=1, mode="c", cast=True] sample_mask = \
-          np_zeros((n_total_samples,), dtype=bool)
+    Returns
+    -------
+    sample_mask : np.ndarray, shape=[n_total_samples]
+        An ndarray where ``n_total_in_bag`` elements are set to ``True``
+        the others are ``False``.
+    """
+    cdef cnp.float64_t[::1] rand = random_state.uniform(size=n_total_samples)
+    cdef cnp.uint8_t[::1] sample_mask = np_zeros((n_total_samples,), dtype=bool)
 
-     cdef cnp.npy_intp n_bagged = 0
-     cdef cnp.npy_intp i = 0
+    cdef cnp.npy_intp n_bagged = 0
+    cdef cnp.npy_intp i = 0
 
-     for i in range(n_total_samples):
-         if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
-             sample_mask[i] = 1
-             n_bagged += 1
+    for i in range(n_total_samples):
+        if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
+            sample_mask[i] = 1
+            n_bagged += 1
 
-     return sample_mask
+    return sample_mask.base

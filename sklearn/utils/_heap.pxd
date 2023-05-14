@@ -2,13 +2,13 @@
 
 from cython cimport floating
 
-from ._typedefs cimport ITYPE_t
+from ._typedefs cimport intp_t
 
 
 cdef int heap_push(
     floating* values,
-    ITYPE_t* indices,
-    ITYPE_t size,
+    intp_t* indices,
+    intp_t size,
     floating val,
-    ITYPE_t val_idx,
-) nogil
+    intp_t val_idx,
+) noexcept nogil

@@ -62,7 +62,8 @@ numerical_columns_subset = [
 X = X[categorical_columns_subset + numerical_columns_subset]
 X[categorical_columns_subset] = X[categorical_columns_subset].astype("category")
 
-n_categorical_features = X.select_dtypes(include="category").shape[1]
+categorical_columns = X.select_dtypes(include="category").columns
+n_categorical_features = len(categorical_columns)
 n_numerical_features = X.select_dtypes(include="number").shape[1]
 
 print(f"Number of samples: {X.shape[0]}")
@@ -96,7 +97,7 @@ from sklearn.preprocessing import OneHotEncoder
 
 one_hot_encoder = make_column_transformer(
     (
-        OneHotEncoder(sparse=False, handle_unknown="ignore"),
+        OneHotEncoder(sparse_output=False, handle_unknown="ignore"),
         make_column_selector(dtype_include="category"),
     ),
     remainder="passthrough",
@@ -122,6 +123,10 @@ ordinal_encoder = make_column_transformer(
         make_column_selector(dtype_include="category"),
     ),
     remainder="passthrough",
+    # Use short feature names to make it easier to specify the categorical
+    # variables in the HistGradientBoostingRegressor in the next step
+    # of the pipeline.
+    verbose_feature_names_out=False,
 )
 
 hist_ordinal = make_pipeline(
@@ -146,13 +151,13 @@ hist_ordinal = make_pipeline(
 # The ordinal encoder will first output the categorical features, and then the
 # continuous (passed-through) features
 
-categorical_mask = [True] * n_categorical_features + [False] * n_numerical_features
 hist_native = make_pipeline(
     ordinal_encoder,
     HistGradientBoostingRegressor(
-        random_state=42, categorical_features=categorical_mask
+        random_state=42,
+        categorical_features=categorical_columns,
     ),
-)
+).set_output(transform="pandas")
 
 # %%
 # Model comparison

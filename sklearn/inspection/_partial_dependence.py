@@ -11,15 +11,24 @@ import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
+from ._pd_utils import _check_feature_names, _get_feature_index
 from ..base import is_classifier, is_regressor
 from ..utils.extmath import cartesian
 from ..utils import check_array
 from ..utils import check_matplotlib_support  # noqa
 from ..utils import _safe_indexing
+from ..utils import _safe_assign
 from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
 from ..utils import Bunch
+from ..utils._param_validation import (
+    HasMethods,
+    Integral,
+    Interval,
+    StrOptions,
+    validate_params,
+)
 from ..tree import DecisionTreeRegressor
 from ..ensemble import RandomForestRegressor
 from ..exceptions import NotFittedError
@@ -34,23 +43,30 @@ __all__ = [
 ]
 
 
-def _grid_from_X(X, percentiles, grid_resolution):
+def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
     """Generate a grid of points based on the percentiles of X.
 
     The grid is a cartesian product between the columns of ``values``. The
     ith column of ``values`` consists in ``grid_resolution`` equally-spaced
     points between the percentiles of the jth column of X.
+
     If ``grid_resolution`` is bigger than the number of unique values in the
-    jth column of X, then those unique values will be used instead.
+    j-th column of X or if the feature is a categorical feature (by inspecting
+    `is_categorical`) , then those unique values will be used instead.
 
     Parameters
     ----------
-    X : ndarray, shape (n_samples, n_target_features)
+    X : array-like of shape (n_samples, n_target_features)
         The data.
 
-    percentiles : tuple of floats
+    percentiles : tuple of float
         The percentiles which are used to construct the extreme values of
         the grid. Must be in [0, 1].
+
+    is_categorical : list of bool
+        For each feature, tells whether it is categorical or not. If a feature
+        is categorical, then the values used will be the unique ones
+        (i.e. categories) instead of the percentiles.
 
     grid_resolution : int
         The number of equally spaced points to be placed on the grid for each
@@ -58,7 +74,7 @@ def _grid_from_X(X, percentiles, grid_resolution):
 
     Returns
     -------
-    grid : ndarray, shape (n_points, n_target_features)
+    grid : ndarray of shape (n_points, n_target_features)
         A value for each feature at each point in the grid. ``n_points`` is
         always ``<= grid_resolution ** X.shape[1]``.
 
@@ -78,10 +94,24 @@ def _grid_from_X(X, percentiles, grid_resolution):
         raise ValueError("'grid_resolution' must be strictly greater than 1.")
 
     values = []
-    for feature in range(X.shape[1]):
-        uniques = np.unique(_safe_indexing(X, feature, axis=1))
-        if uniques.shape[0] < grid_resolution:
-            # feature has low resolution use unique vals
+    # TODO: we should handle missing values (i.e. `np.nan`) specifically and store them
+    # in a different Bunch attribute.
+    for feature, is_cat in enumerate(is_categorical):
+        try:
+            uniques = np.unique(_safe_indexing(X, feature, axis=1))
+        except TypeError as exc:
+            # `np.unique` will fail in the presence of `np.nan` and `str` categories
+            # due to sorting. Temporary, we reraise an error explaining the problem.
+            raise ValueError(
+                f"The column #{feature} contains mixed data types. Finding unique "
+                "categories fail due to sorting. It usually means that the column "
+                "contains `np.nan` values together with `str` categories. Such use "
+                "case is not yet supported in scikit-learn."
+            ) from exc
+        if is_cat or uniques.shape[0] < grid_resolution:
+            # Use the unique values either because:
+            # - feature has low resolution use unique values
+            # - feature is categorical
             axis = uniques
         else:
             # create axis based on percentiles and grid resolution
@@ -116,7 +146,6 @@ def _partial_dependence_recursion(est, grid, features):
 
 
 def _partial_dependence_brute(est, grid, features, X, response_method):
-
     predictions = []
     averaged_predictions = []
 
@@ -149,10 +178,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
     X_eval = X.copy()
     for new_values in grid:
         for i, variable in enumerate(features):
-            if hasattr(X_eval, "iloc"):
-                X_eval.iloc[:, variable] = new_values[i]
-            else:
-                X_eval[:, variable] = new_values[i]
+            _safe_assign(X_eval, new_values[i], column_indexer=variable)
 
         try:
             # Note: predictions is of shape
@@ -204,11 +230,31 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
     return averaged_predictions, predictions
 
 
+@validate_params(
+    {
+        "estimator": [
+            HasMethods(["fit", "predict"]),
+            HasMethods(["fit", "predict_proba"]),
+            HasMethods(["fit", "decision_function"]),
+        ],
+        "X": ["array-like", "sparse matrix"],
+        "features": ["array-like", Integral, str],
+        "categorical_features": ["array-like", None],
+        "feature_names": ["array-like", None],
+        "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
+        "percentiles": [tuple],
+        "grid_resolution": [Interval(Integral, 1, None, closed="left")],
+        "method": [StrOptions({"auto", "recursion", "brute"})],
+        "kind": [StrOptions({"average", "individual", "both"})],
+    }
+)
 def partial_dependence(
     estimator,
     X,
     features,
     *,
+    categorical_features=None,
+    feature_names=None,
     response_method="auto",
     percentiles=(0.05, 0.95),
     grid_resolution=100,
@@ -247,15 +293,36 @@ def partial_dependence(
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
 
-    X : {array-like or dataframe} of shape (n_samples, n_features)
+    X : {array-like, sparse matrix or dataframe} of shape (n_samples, n_features)
         ``X`` is used to generate a grid of values for the target
         ``features`` (where the partial dependence will be evaluated), and
         also to generate values for the complement features when the
         `method` is 'brute'.
 
-    features : array-like of {int, str}
+    features : array-like of {int, str, bool} or int or str
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
+
+    categorical_features : array-like of shape (n_features,) or shape \
+            (n_categorical_features,), dtype={bool, int, str}, default=None
+        Indicates the categorical features.
+
+        - `None`: no feature will be considered categorical;
+        - boolean array-like: boolean mask of shape `(n_features,)`
+            indicating which features are categorical. Thus, this array has
+            the same shape has `X.shape[1]`;
+        - integer or string array-like: integer indices or strings
+            indicating categorical features.
+
+        .. versionadded:: 1.2
+
+    feature_names : array-like of shape (n_features,), dtype=str, default=None
+        Name of each feature; `feature_names[i]` holds the name of the feature
+        with index `i`.
+        By default, the name of the feature corresponds to their numerical
+        index for NumPy array and their column name for pandas dataframe.
+
+        .. versionadded:: 1.2
 
     response_method : {'auto', 'predict_proba', 'decision_function'}, \
             default='auto'
@@ -306,11 +373,11 @@ def partial_dependence(
 
     kind : {'average', 'individual', 'both'}, default='average'
         Whether to return the partial dependence averaged across all the
-        samples in the dataset or one line per sample or both.
+        samples in the dataset or one value per sample or both.
         See Returns below.
 
         Note that the fast `method='recursion'` option is only available for
-        `kind='average'`. Plotting individual dependencies requires using the
+        `kind='average'`. Computing individual dependencies requires using the
         slower `method='brute'` option.
 
         .. versionadded:: 0.24
@@ -334,16 +401,26 @@ def partial_dependence(
             Only available when ``kind='both'``.
 
         values : seq of 1d ndarrays
+            The values with which the grid has been created.
+
+            .. deprecated:: 1.3
+                The key `values` has been deprecated in 1.3 and will be removed
+                in 1.5 in favor of `grid_values`. See `grid_values` for details
+                about the `values` attribute.
+
+        grid_values : seq of 1d ndarrays
             The values with which the grid has been created. The generated
-            grid is a cartesian product of the arrays in ``values``.
-            ``len(values) == len(features)``. The size of each array
-            ``values[j]`` is either ``grid_resolution``, or the number of
+            grid is a cartesian product of the arrays in ``grid_values`` where
+            ``len(grid_values) == len(features)``. The size of each array
+            ``grid_values[j]`` is either ``grid_resolution``, or the number of
             unique values in ``X[:, j]``, whichever is smaller.
+
+            .. versionadded:: 1.3
 
         ``n_outputs`` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
         For classical regression and binary classification ``n_outputs==1``.
-        ``n_values_feature_j`` corresponds to the size ``values[j]``.
+        ``n_values_feature_j`` corresponds to the size ``grid_values[j]``.
 
     See Also
     --------
@@ -373,25 +450,10 @@ def partial_dependence(
     if not (hasattr(X, "__array__") or sparse.issparse(X)):
         X = check_array(X, force_all_finite="allow-nan", dtype=object)
 
-    accepted_responses = ("auto", "predict_proba", "decision_function")
-    if response_method not in accepted_responses:
-        raise ValueError(
-            "response_method {} is invalid. Accepted response_method names "
-            "are {}.".format(response_method, ", ".join(accepted_responses))
-        )
-
     if is_regressor(estimator) and response_method != "auto":
         raise ValueError(
             "The response_method parameter is ignored for regressors and "
             "must be 'auto'."
-        )
-
-    accepted_methods = ("brute", "recursion", "auto")
-    if method not in accepted_methods:
-        raise ValueError(
-            "method {} is invalid. Accepted method names are {}.".format(
-                method, ", ".join(accepted_methods)
-            )
         )
 
     if kind != "average":
@@ -457,8 +519,43 @@ def partial_dependence(
         _get_column_indices(X, features), dtype=np.int32, order="C"
     ).ravel()
 
+    feature_names = _check_feature_names(X, feature_names)
+
+    n_features = X.shape[1]
+    if categorical_features is None:
+        is_categorical = [False] * len(features_indices)
+    else:
+        categorical_features = np.array(categorical_features, copy=False)
+        if categorical_features.dtype.kind == "b":
+            # categorical features provided as a list of boolean
+            if categorical_features.size != n_features:
+                raise ValueError(
+                    "When `categorical_features` is a boolean array-like, "
+                    "the array should be of shape (n_features,). Got "
+                    f"{categorical_features.size} elements while `X` contains "
+                    f"{n_features} features."
+                )
+            is_categorical = [categorical_features[idx] for idx in features_indices]
+        elif categorical_features.dtype.kind in ("i", "O", "U"):
+            # categorical features provided as a list of indices or feature names
+            categorical_features_idx = [
+                _get_feature_index(cat, feature_names=feature_names)
+                for cat in categorical_features
+            ]
+            is_categorical = [
+                idx in categorical_features_idx for idx in features_indices
+            ]
+        else:
+            raise ValueError(
+                "Expected `categorical_features` to be an array-like of boolean,"
+                f" integer, or string. Got {categorical_features.dtype} instead."
+            )
+
     grid, values = _grid_from_X(
-        _safe_indexing(X, features_indices, axis=1), percentiles, grid_resolution
+        _safe_indexing(X, features_indices, axis=1),
+        percentiles,
+        is_categorical,
+        grid_resolution,
     )
 
     if method == "brute":
@@ -481,14 +578,22 @@ def partial_dependence(
     averaged_predictions = averaged_predictions.reshape(
         -1, *[val.shape[0] for val in values]
     )
+    pdp_results = Bunch()
+
+    msg = (
+        "Key: 'values', is deprecated in 1.3 and will be removed in 1.5. "
+        "Please use 'grid_values' instead."
+    )
+    pdp_results._set_deprecated(
+        values, new_key="grid_values", deprecated_key="values", warning_message=msg
+    )
 
     if kind == "average":
-        return Bunch(average=averaged_predictions, values=values)
+        pdp_results["average"] = averaged_predictions
     elif kind == "individual":
-        return Bunch(individual=predictions, values=values)
+        pdp_results["individual"] = predictions
     else:  # kind='both'
-        return Bunch(
-            average=averaged_predictions,
-            individual=predictions,
-            values=values,
-        )
+        pdp_results["average"] = averaged_predictions
+        pdp_results["individual"] = predictions
+
+    return pdp_results

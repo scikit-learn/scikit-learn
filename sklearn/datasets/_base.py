@@ -14,13 +14,15 @@ from collections import namedtuple
 import os
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
-from importlib import resources
 from pathlib import Path
+from numbers import Integral
 
 from ..preprocessing import scale
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
+from ..utils.fixes import _open_binary, _open_text, _read_text, _contents
+from ..utils._param_validation import validate_params, Interval, StrOptions
 
 import numpy as np
 
@@ -33,6 +35,11 @@ IMAGES_MODULE = "sklearn.datasets.images"
 RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "checksum"])
 
 
+@validate_params(
+    {
+        "data_home": [str, os.PathLike, None],
+    }
+)
 def get_data_home(data_home=None) -> str:
     """Return the path of the scikit-learn data directory.
 
@@ -56,7 +63,7 @@ def get_data_home(data_home=None) -> str:
 
     Returns
     -------
-    data_home: str
+    data_home: str or path-like, default=None
         The path to scikit-learn data directory.
     """
     if data_home is None:
@@ -66,12 +73,17 @@ def get_data_home(data_home=None) -> str:
     return data_home
 
 
+@validate_params(
+    {
+        "data_home": [str, os.PathLike, None],
+    }
+)
 def clear_data_home(data_home=None):
     """Delete all the content of the data home cache.
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
         is `~/sklearn_learn_data`.
     """
@@ -84,7 +96,7 @@ def _convert_data_dataframe(
 ):
     pd = check_pandas_support("{} with as_frame=True".format(caller_name))
     if not sparse_data:
-        data_df = pd.DataFrame(data, columns=feature_names)
+        data_df = pd.DataFrame(data, columns=feature_names, copy=False)
     else:
         data_df = pd.DataFrame.sparse.from_spmatrix(data, columns=feature_names)
 
@@ -97,6 +109,19 @@ def _convert_data_dataframe(
     return combined_df, X, y
 
 
+@validate_params(
+    {
+        "container_path": [str, os.PathLike],
+        "description": [str, None],
+        "categories": [list, None],
+        "load_content": ["boolean"],
+        "shuffle": ["boolean"],
+        "encoding": [str, None],
+        "decode_error": [StrOptions({"strict", "ignore", "replace"})],
+        "random_state": ["random_state"],
+        "allowed_extensions": [list, None],
+    }
+)
 def load_files(
     container_path,
     *,
@@ -315,7 +340,7 @@ def load_csv_data(
         Description of the dataset (the content of `descr_file_name`).
         Only returned if `descr_file_name` is not None.
     """
-    with resources.open_text(data_module, data_file_name) as csv_file:
+    with _open_text(data_module, data_file_name) as csv_file:
         data_file = csv.reader(csv_file)
         temp = next(data_file)
         n_samples = int(temp[0])
@@ -388,7 +413,7 @@ def load_gzip_compressed_csv_data(
         Description of the dataset (the content of `descr_file_name`).
         Only returned if `descr_file_name` is not None.
     """
-    with resources.open_binary(data_module, data_file_name) as compressed_file:
+    with _open_binary(data_module, data_file_name) as compressed_file:
         compressed_file = gzip.open(compressed_file, mode="rt", encoding=encoding)
         data = np.loadtxt(compressed_file, **kwargs)
 
@@ -420,11 +445,17 @@ def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
     fdescr : str
         Content of `descr_file_name`.
     """
-    fdescr = resources.read_text(descr_module, descr_file_name)
+    fdescr = _read_text(descr_module, descr_file_name)
 
     return fdescr
 
 
+@validate_params(
+    {
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def load_wine(*, return_X_y=False, as_frame=False):
     """Load and return the wine dataset (classification).
 
@@ -545,6 +576,7 @@ def load_wine(*, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params({"return_X_y": ["boolean"], "as_frame": ["boolean"]})
 def load_iris(*, return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
@@ -668,6 +700,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params({"return_X_y": ["boolean"], "as_frame": ["boolean"]})
 def load_breast_cancer(*, return_X_y=False, as_frame=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
@@ -817,6 +850,13 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params(
+    {
+        "n_class": [Interval(Integral, 1, 10, closed="both")],
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     """Load and return the digits dataset (classification).
 
@@ -950,6 +990,9 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params(
+    {"return_X_y": ["boolean"], "as_frame": ["boolean"], "scaled": ["boolean"]}
+)
 def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     """Load and return the diabetes dataset (regression).
 
@@ -1061,6 +1104,12 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     )
 
 
+@validate_params(
+    {
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def load_linnerud(*, return_X_y=False, as_frame=False):
     """Load and return the physical exercise Linnerud dataset.
 
@@ -1132,12 +1181,12 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     target_filename = "linnerud_physiological.csv"
 
     # Read header and data
-    with resources.open_text(DATA_MODULE, data_filename) as f:
+    with _open_text(DATA_MODULE, data_filename) as f:
         header_exercise = f.readline().split()
         f.seek(0)  # reset file obj
         data_exercise = np.loadtxt(f, skiprows=1)
 
-    with resources.open_text(DATA_MODULE, target_filename) as f:
+    with _open_text(DATA_MODULE, target_filename) as f:
         header_physiological = f.readline().split()
         f.seek(0)  # reset file obj
         data_physiological = np.loadtxt(f, skiprows=1)
@@ -1215,10 +1264,10 @@ def load_sample_images():
     descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
 
     filenames, images = [], []
-    for filename in sorted(resources.contents(IMAGES_MODULE)):
+    for filename in sorted(_contents(IMAGES_MODULE)):
         if filename.endswith(".jpg"):
             filenames.append(filename)
-            with resources.open_binary(IMAGES_MODULE, filename) as image_file:
+            with _open_binary(IMAGES_MODULE, filename) as image_file:
                 pil_image = Image.open(image_file)
                 image = np.asarray(pil_image)
             images.append(image)
@@ -1226,6 +1275,11 @@ def load_sample_images():
     return Bunch(images=images, filenames=filenames, DESCR=descr)
 
 
+@validate_params(
+    {
+        "image_name": [StrOptions({"china.jpg", "flower.jpg"})],
+    }
+)
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image.
 

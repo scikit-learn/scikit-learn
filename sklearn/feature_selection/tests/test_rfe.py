@@ -505,8 +505,8 @@ def test_rfe_allow_nan_inf_in_x(cv):
     y = iris.target
 
     # add nan and inf value to X
-    X[0][0] = np.NaN
-    X[0][1] = np.Inf
+    X[0][0] = np.nan
+    X[0][1] = np.inf
 
     clf = MockClassifier()
     if cv is not None:

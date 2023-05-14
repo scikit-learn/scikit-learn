@@ -4,6 +4,7 @@ Test the fastica algorithm.
 import itertools
 import pytest
 import warnings
+import os
 
 import numpy as np
 from scipy import stats
@@ -75,6 +76,18 @@ def test_fastica_return_dtypes(global_dtype):
 )
 @pytest.mark.parametrize("add_noise", [True, False])
 def test_fastica_simple(add_noise, global_random_seed, global_dtype):
+    if (
+        global_random_seed == 20
+        and global_dtype == np.float32
+        and not add_noise
+        and os.getenv("DISTRIB") == "ubuntu"
+    ):
+        pytest.xfail(
+            "FastICA instability with Ubuntu Atlas build with float32 "
+            "global_dtype. For more details, see "
+            "https://github.com/scikit-learn/scikit-learn/issues/24131#issuecomment-1208091119"  # noqa
+        )
+
     # Test the FastICA algorithm on very simple data.
     rng = np.random.RandomState(global_random_seed)
     n_samples = 1000

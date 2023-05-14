@@ -16,7 +16,7 @@ import warnings
 
 import numpy as np
 from scipy import optimize
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from sklearn.metrics import get_scorer_names
 
@@ -34,7 +34,7 @@ from ..utils.extmath import row_norms
 from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import StrOptions, Interval
 from ..model_selection import check_cv
 from ..metrics import get_scorer
@@ -48,7 +48,6 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 
 
 def _check_solver(solver, penalty, dual):
-
     # TODO(1.4): Remove "none" option
     if solver not in ["liblinear", "saga"] and penalty not in ("l2", "none", None):
         raise ValueError(
@@ -484,7 +483,11 @@ def _logistic_regression_path(
             w0 = sol.solve(X=X, y=target, sample_weight=sample_weight)
             n_iter_i = sol.iteration
         elif solver == "liblinear":
-            coef_, intercept_, n_iter_i, = _fit_liblinear(
+            (
+                coef_,
+                intercept_,
+                n_iter_i,
+            ) = _fit_liblinear(
                 X,
                 target,
                 C,
@@ -885,7 +888,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
               and 'saga' are faster for large ones;
             - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
               'lbfgs' handle multinomial loss;
-            - 'liblinear' and is limited to one-versus-rest schemes.
+            - 'liblinear' is limited to one-versus-rest schemes.
             - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
               especially with one-hot encoded categorical features with rare
               categories. Note that it is limited to binary classification and the
@@ -1013,7 +1016,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     See Also
     --------
     SGDClassifier : Incrementally trained logistic regression (when given
-        the parameter ``loss="log"``).
+        the parameter ``loss="log_loss"``).
     LogisticRegressionCV : Logistic regression with built-in cross validation.
 
     Notes
@@ -1110,7 +1113,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         n_jobs=None,
         l1_ratio=None,
     ):
-
         self.penalty = penalty
         self.dual = dual
         self.tol = tol
@@ -1168,11 +1170,16 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 "(penalty={})".format(self.penalty)
             )
 
+        if self.penalty == "elasticnet" and self.l1_ratio is None:
+            raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
+
         # TODO(1.4): Remove "none" option
         if self.penalty == "none":
             warnings.warn(
-                "`penalty='none'`has been deprecated in 1.2 and will be removed in 1.4."
-                " To keep the past behaviour, set `penalty=None`.",
+                (
+                    "`penalty='none'`has been deprecated in 1.2 and will be removed in"
+                    " 1.4. To keep the past behaviour, set `penalty=None`."
+                ),
                 FutureWarning,
             )
 
@@ -1629,7 +1636,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         an OvR for the corresponding class. If the 'multi_class' option
         given is 'multinomial' then the same scores are repeated across
         all classes, since this is the multinomial class. Each dict value
-        has shape ``(n_folds, n_cs`` or ``(n_folds, n_cs, n_l1_ratios)`` if
+        has shape ``(n_folds, n_cs)`` or ``(n_folds, n_cs, n_l1_ratios)`` if
         ``penalty='elasticnet'``.
 
     C_ : ndarray of shape (n_classes,) or (n_classes - 1,)
@@ -1941,7 +1948,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         for index, (cls, encoded_label) in enumerate(
             zip(iter_classes, iter_encoded_labels)
         ):
-
             if multi_class == "ovr":
                 scores = self.scores_[cls]
                 coefs_paths = self.coefs_paths_[cls]
@@ -2087,7 +2093,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Returns
         -------
         score : float
-            Score of self.predict(X) wrt. y.
+            Score of self.predict(X) w.r.t. y.
         """
         scoring = self.scoring or "accuracy"
         scoring = get_scorer(scoring)

@@ -75,7 +75,7 @@ def get_contributors():
     # add missing contributors without GitHub accounts
     members |= {"Angel Soler Gollonet"}
     # remove CI bots
-    members -= {"sklearn-ci", "sklearn-wheels"}
+    members -= {"sklearn-ci", "sklearn-wheels", "sklearn-lgtm"}
     contributor_experience_team -= (
         core_devs  # remove ogrisel from contributor_experience_team
     )
@@ -161,18 +161,17 @@ def generate_table(contributors):
         lines.append("    <p>%s</p>" % (contributor["name"],))
         lines.append("    </div>")
     lines.append("    </div>")
-    return "\n".join(lines)
+    return "\n".join(lines) + "\n"
 
 
 def generate_list(contributors):
     lines = []
     for contributor in contributors:
         lines.append("- %s" % (contributor["name"],))
-    return "\n".join(lines)
+    return "\n".join(lines) + "\n"
 
 
 if __name__ == "__main__":
-
     (
         core_devs,
         emeritus,

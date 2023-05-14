@@ -223,12 +223,29 @@ for i, clf in enumerate((kernel_svm, nystroem_approx_svm, fourier_approx_svm)):
 
     # Put the result into a color plot
     Z = Z.reshape(grid.shape[:-1])
-    plt.contourf(multiples, multiples, Z, cmap=plt.cm.Paired)
+    levels = np.arange(10)
+    lv_eps = 0.01  # Adjust a mapping from calculated contour levels to color.
+    plt.contourf(
+        multiples,
+        multiples,
+        Z,
+        levels=levels - lv_eps,
+        cmap=plt.cm.tab10,
+        vmin=0,
+        vmax=10,
+        alpha=0.7,
+    )
     plt.axis("off")
 
     # Plot also the training points
     plt.scatter(
-        X[:, 0], X[:, 1], c=targets_train, cmap=plt.cm.Paired, edgecolors=(0, 0, 0)
+        X[:, 0],
+        X[:, 1],
+        c=targets_train,
+        cmap=plt.cm.tab10,
+        edgecolors=(0, 0, 0),
+        vmin=0,
+        vmax=10,
     )
 
     plt.title(titles[i])

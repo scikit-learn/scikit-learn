@@ -30,7 +30,6 @@ BOOLEAN_METRICS = [
     "matching",
     "jaccard",
     "dice",
-    "kulsinski",
     "rogerstanimoto",
     "russellrao",
     "sokalmichener",

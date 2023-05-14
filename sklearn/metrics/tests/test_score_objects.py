@@ -179,12 +179,6 @@ def teardown_module():
     shutil.rmtree(TEMP_FOLDER)
 
 
-class EstimatorWithoutFit:
-    """Dummy estimator to test scoring validators"""
-
-    pass
-
-
 class EstimatorWithFit(BaseEstimator):
     """Dummy estimator to test scoring validators"""
 
@@ -228,13 +222,6 @@ def test_all_scorers_repr():
 
 def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     # Test all branches of single metric usecases
-    estimator = EstimatorWithoutFit()
-    pattern = (
-        r"estimator should be an estimator implementing 'fit' method," r" .* was passed"
-    )
-    with pytest.raises(TypeError, match=pattern):
-        scoring_validator(estimator)
-
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
     scorer = scoring_validator(estimator)
@@ -741,8 +728,10 @@ def test_scoring_is_not_metric():
 
 
 @pytest.mark.parametrize(
-    "scorers,expected_predict_count,"
-    "expected_predict_proba_count,expected_decision_func_count",
+    (
+        "scorers,expected_predict_count,"
+        "expected_predict_proba_count,expected_decision_func_count"
+    ),
     [
         (
             {
@@ -770,13 +759,18 @@ def test_multimetric_scorer_calls_method_once(
     X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
 
     mock_est = Mock()
-    fit_func = Mock(return_value=mock_est)
-    predict_func = Mock(return_value=y)
+    mock_est._estimator_type = "classifier"
+    fit_func = Mock(return_value=mock_est, name="fit")
+    fit_func.__name__ = "fit"
+    predict_func = Mock(return_value=y, name="predict")
+    predict_func.__name__ = "predict"
 
     pos_proba = np.random.rand(X.shape[0])
     proba = np.c_[1 - pos_proba, pos_proba]
-    predict_proba_func = Mock(return_value=proba)
-    decision_function_func = Mock(return_value=pos_proba)
+    predict_proba_func = Mock(return_value=proba, name="predict_proba")
+    predict_proba_func.__name__ = "predict_proba"
+    decision_function_func = Mock(return_value=pos_proba, name="decision_function")
+    decision_function_func.__name__ = "decision_function"
 
     mock_est.fit = fit_func
     mock_est.predict = predict_func
@@ -786,7 +780,7 @@ def test_multimetric_scorer_calls_method_once(
     mock_est.classes_ = np.array([0, 1])
 
     scorer_dict = _check_multimetric_scoring(LogisticRegression(), scorers)
-    multi_scorer = _MultimetricScorer(**scorer_dict)
+    multi_scorer = _MultimetricScorer(scorers=scorer_dict)
     results = multi_scorer(mock_est, X, y)
 
     assert set(scorers) == set(results)  # compare dict keys
@@ -813,7 +807,7 @@ def test_multimetric_scorer_calls_method_once_classifier_no_decision():
 
     scorers = ["roc_auc", "neg_log_loss"]
     scorer_dict = _check_multimetric_scoring(clf, scorers)
-    scorer = _MultimetricScorer(**scorer_dict)
+    scorer = _MultimetricScorer(scorers=scorer_dict)
     scorer(clf, X, y)
 
     assert predict_proba_call_cnt == 1
@@ -836,7 +830,7 @@ def test_multimetric_scorer_calls_method_once_regressor_threshold():
 
     scorers = {"neg_mse": "neg_mean_squared_error", "r2": "roc_auc"}
     scorer_dict = _check_multimetric_scoring(clf, scorers)
-    scorer = _MultimetricScorer(**scorer_dict)
+    scorer = _MultimetricScorer(scorers=scorer_dict)
     scorer(clf, X, y)
 
     assert predict_called_cnt == 1
@@ -859,7 +853,7 @@ def test_multimetric_scorer_sanity_check():
     clf.fit(X, y)
 
     scorer_dict = _check_multimetric_scoring(clf, scorers)
-    multi_scorer = _MultimetricScorer(**scorer_dict)
+    multi_scorer = _MultimetricScorer(scorers=scorer_dict)
 
     result = multi_scorer(clf, X, y)
 
@@ -871,6 +865,49 @@ def test_multimetric_scorer_sanity_check():
     for key, value in result.items():
         score_name = scorers[key]
         assert_allclose(value, separate_scores[score_name])
+
+
+@pytest.mark.parametrize("raise_exc", [True, False])
+def test_multimetric_scorer_exception_handling(raise_exc):
+    """Check that the calling of the `_MultimetricScorer` returns
+    exception messages in the result dict for the failing scorers
+    in case of `raise_exc` is `False` and if `raise_exc` is `True`,
+    then the proper exception is raised.
+    """
+    scorers = {
+        "failing_1": "neg_mean_squared_log_error",
+        "non_failing": "neg_median_absolute_error",
+        "failing_2": "neg_mean_squared_log_error",
+    }
+
+    X, y = make_classification(
+        n_samples=50, n_features=2, n_redundant=0, random_state=0
+    )
+    y *= -1  # neg_mean_squared_log_error fails if y contains negative values
+
+    clf = DecisionTreeClassifier().fit(X, y)
+
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
+    multi_scorer = _MultimetricScorer(scorers=scorer_dict, raise_exc=raise_exc)
+
+    error_msg = (
+        "Mean Squared Logarithmic Error cannot be used when targets contain"
+        " negative values."
+    )
+
+    if raise_exc:
+        with pytest.raises(ValueError, match=error_msg):
+            multi_scorer(clf, X, y)
+    else:
+        result = multi_scorer(clf, X, y)
+
+        exception_message_1 = result["failing_1"]
+        score = result["non_failing"]
+        exception_message_2 = result["failing_2"]
+
+        assert isinstance(exception_message_1, str) and error_msg in exception_message_1
+        assert isinstance(score, float)
+        assert isinstance(exception_message_2, str) and error_msg in exception_message_2
 
 
 @pytest.mark.parametrize(
@@ -929,7 +966,7 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
     lr = Perceptron().fit(X, y)
-    msg = "'Perceptron' object has no attribute 'predict_proba'"
+    msg = "Perceptron has none of the following attributes: predict_proba."
     with pytest.raises(AttributeError, match=msg):
         scorer(lr, X, y)
 

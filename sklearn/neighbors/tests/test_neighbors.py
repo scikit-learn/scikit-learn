@@ -497,10 +497,6 @@ def test_sort_graph_by_row_values_copy():
     with pytest.raises(ValueError, match="Use copy=True to allow the conversion"):
         sort_graph_by_row_values(X.tocsc(), copy=False)
 
-    # raise if X is not even sparse
-    with pytest.raises(TypeError, match="Input graph must be a sparse matrix"):
-        sort_graph_by_row_values(X.toarray())
-
 
 def test_sort_graph_by_row_values_warning():
     # Test that the parameter warn_when_not_sorted works as expected.
@@ -675,15 +671,18 @@ def test_kneighbors_classifier_predict_proba(global_dtype):
     cls = neighbors.KNeighborsClassifier(n_neighbors=3, p=1)  # cityblock dist
     cls.fit(X, y)
     y_prob = cls.predict_proba(X)
-    real_prob = np.array(
-        [
-            [0, 2.0 / 3, 1.0 / 3],
-            [1.0 / 3, 2.0 / 3, 0],
-            [1.0 / 3, 0, 2.0 / 3],
-            [0, 1.0 / 3, 2.0 / 3],
-            [2.0 / 3, 1.0 / 3, 0],
-            [2.0 / 3, 1.0 / 3, 0],
-        ]
+    real_prob = (
+        np.array(
+            [
+                [0, 2, 1],
+                [1, 2, 0],
+                [1, 0, 2],
+                [0, 1, 2],
+                [2, 1, 0],
+                [2, 1, 0],
+            ]
+        )
+        / 3.0
     )
     assert_array_equal(real_prob, y_prob)
     # Check that it also works with non integer labels
@@ -1267,7 +1266,6 @@ def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
     for algorithm, weights in product(ALGORITHMS, [None, "uniform"]):
-
         rnn = neighbors.RadiusNeighborsRegressor(weights=weights, algorithm=algorithm)
         rnn.fit(X_train, y_train)
 
@@ -1496,6 +1494,63 @@ def test_neighbors_validate_parameters(Estimator):
     msg = re.escape("Found array with 0 feature(s)")
     with pytest.raises(ValueError, match=msg):
         nbrs.predict([[]])
+
+
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        neighbors.KNeighborsClassifier,
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+        neighbors.RadiusNeighborsRegressor,
+    ],
+)
+@pytest.mark.parametrize("n_features", [2, 100])
+@pytest.mark.parametrize("algorithm", ["auto", "brute"])
+def test_neighbors_minkowski_semimetric_algo_warn(Estimator, n_features, algorithm):
+    """
+    Validation of all classes extending NeighborsBase with
+    Minkowski semi-metrics (i.e. when 0 < p < 1). That proper
+    Warning is raised for `algorithm="auto"` and "brute".
+    """
+    X = rng.random_sample((10, n_features))
+    y = np.ones(10)
+
+    model = Estimator(p=0.1, algorithm=algorithm)
+    msg = (
+        "Mind that for 0 < p < 1, Minkowski metrics are not distance"
+        " metrics. Continuing the execution with `algorithm='brute'`."
+    )
+    with pytest.warns(UserWarning, match=msg):
+        model.fit(X, y)
+
+    assert model._fit_method == "brute"
+
+
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        neighbors.KNeighborsClassifier,
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+        neighbors.RadiusNeighborsRegressor,
+    ],
+)
+@pytest.mark.parametrize("n_features", [2, 100])
+@pytest.mark.parametrize("algorithm", ["kd_tree", "ball_tree"])
+def test_neighbors_minkowski_semimetric_algo_error(Estimator, n_features, algorithm):
+    """Check that we raise a proper error if `algorithm!='brute'` and `p<1`."""
+    X = rng.random_sample((10, 2))
+    y = np.ones(10)
+
+    model = Estimator(algorithm=algorithm, p=0.1)
+    msg = (
+        f'algorithm="{algorithm}" does not support 0 < p < 1 for '
+        "the Minkowski metric. To resolve this problem either "
+        'set p >= 1 or algorithm="brute".'
+    )
+    with pytest.raises(ValueError, match=msg):
+        model.fit(X, y)
 
 
 # TODO: remove when NearestNeighbors methods uses parameter validation mechanism
@@ -1779,7 +1834,6 @@ def test_k_and_radius_neighbors_train_is_not_query():
     # Test kneighbors et.al when query is not training data
 
     for algorithm in ALGORITHMS:
-
         nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
 
         X = [[0], [1]]

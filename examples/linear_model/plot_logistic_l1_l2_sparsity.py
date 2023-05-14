@@ -40,7 +40,7 @@ fig, axes = plt.subplots(3, 3)
 
 # Set regularization parameter
 for i, (C, axes_row) in enumerate(zip((1, 0.1, 0.01), axes)):
-    # turn down tolerance for short training time
+    # Increase tolerance for short training time
     clf_l1_LR = LogisticRegression(C=C, penalty="l1", tol=0.01, solver="saga")
     clf_l2_LR = LogisticRegression(C=C, penalty="l2", tol=0.01, solver="saga")
     clf_en_LR = LogisticRegression(

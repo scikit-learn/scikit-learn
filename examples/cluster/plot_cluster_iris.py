@@ -4,14 +4,18 @@
 K-means Clustering
 =========================================================
 
-The plots display firstly what a K-means algorithm would yield
-using three clusters. It is then shown what the effect of a bad
-initialization is on the classification process:
-By setting n_init to only 1 (default is 10), the amount of
-times that the algorithm will be run with different centroid
-seeds is reduced.
-The next plot displays what using eight clusters would deliver
-and finally the ground truth.
+The plot shows:
+
+- top left: What a K-means algorithm would yield using 8 clusters.
+
+- top right: What the effect of a bad initialization is
+  on the classification process: By setting n_init to only 1
+  (default is 10), the amount of times that the algorithm will
+  be run with different centroid seeds is reduced.
+
+- bottom left: What using eight clusters would deliver.
+
+- bottom right: The ground truth.
 
 """
 
@@ -43,7 +47,7 @@ estimators = [
 
 fig = plt.figure(figsize=(10, 8))
 titles = ["8 clusters", "3 clusters", "3 clusters, bad initialization"]
-for idx, (name, est) in enumerate(estimators):
+for idx, ((name, est), title) in enumerate(zip(estimators, titles)):
     ax = fig.add_subplot(2, 2, idx + 1, projection="3d", elev=48, azim=134)
     est.fit(X)
     labels = est.labels_
@@ -56,7 +60,7 @@ for idx, (name, est) in enumerate(estimators):
     ax.set_xlabel("Petal width")
     ax.set_ylabel("Sepal length")
     ax.set_zlabel("Petal length")
-    ax.set_title(titles[idx - 1])
+    ax.set_title(title)
 
 # Plot the ground truth
 ax = fig.add_subplot(2, 2, 4, projection="3d", elev=48, azim=134)
