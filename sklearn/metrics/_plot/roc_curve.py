@@ -131,7 +131,7 @@ class RocCurveDisplay:
 
         xlabel = "False Positive Rate" + info_pos_label
         ylabel = "True Positive Rate" + info_pos_label
-        ax.set(xlabel=xlabel, ylabel=ylabel, aspect="equal", box_aspect="box")
+        ax.set(xlabel=xlabel, ylabel=ylabel, aspect=1 / ax.get_data_ratio())
 
         if "label" in line_kwargs:
             ax.legend(loc="lower right")

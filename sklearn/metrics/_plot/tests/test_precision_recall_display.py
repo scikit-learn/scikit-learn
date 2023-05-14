@@ -103,6 +103,8 @@ def test_precision_recall_display_plotting(pyplot, constructor_name, response_me
 
     assert display.ax_.get_xlabel() == "Recall (Positive label: 1)"
     assert display.ax_.get_ylabel() == "Precision (Positive label: 1)"
+    assert display.ax_.get_adjustable() == "box"
+    assert display.ax_.get_aspect() == 1 / display.ax_.get_data_ratio()
 
     # plotting passing some new parameters
     display.plot(alpha=0.8, name="MySpecialEstimator")
