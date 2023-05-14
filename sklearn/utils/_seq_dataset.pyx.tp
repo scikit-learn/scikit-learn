@@ -22,14 +22,7 @@ dtypes = [('64', 'double', 'np.float64'),
           ('32', 'float', 'np.float32')]
 
 }}
-{{for name_suffix, c_type, np_type in dtypes}}
-
-#------------------------------------------------------------------------------
-
-"""
-Dataset abstractions for sequential data access.
-WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
-"""
+"""Dataset abstractions for sequential data access."""
 
 cimport cython
 from libc.limits cimport INT_MAX
@@ -39,6 +32,10 @@ import numpy as np
 cnp.import_array()
 
 from ._random cimport our_rand_r
+
+{{for name_suffix, c_type, np_type in dtypes}}
+
+#------------------------------------------------------------------------------
 
 cdef class SequentialDataset{{name_suffix}}:
     """Base class for datasets with sequential data access.
@@ -71,7 +68,7 @@ cdef class SequentialDataset{{name_suffix}}:
     """
 
     cdef void next(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
-                   int *nnz, {{c_type}} *y, {{c_type}} *sample_weight) nogil:
+                   int *nnz, {{c_type}} *y, {{c_type}} *sample_weight) noexcept nogil:
         """Get the next example ``x`` from the dataset.
 
         This method gets the next sample looping sequentially over all samples.
@@ -104,7 +101,7 @@ cdef class SequentialDataset{{name_suffix}}:
                      current_index)
 
     cdef int random(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
-                    int *nnz, {{c_type}} *y, {{c_type}} *sample_weight) nogil:
+                    int *nnz, {{c_type}} *y, {{c_type}} *sample_weight) noexcept nogil:
         """Get a random example ``x`` from the dataset.
 
         This method gets next sample chosen randomly over a uniform
@@ -141,7 +138,7 @@ cdef class SequentialDataset{{name_suffix}}:
                      current_index)
         return current_index
 
-    cdef void shuffle(self, cnp.uint32_t seed) nogil:
+    cdef void shuffle(self, cnp.uint32_t seed) noexcept nogil:
         """Permutes the ordering of examples."""
         # Fisher-Yates shuffle
         cdef int *ind = self.index_data_ptr
@@ -151,7 +148,7 @@ cdef class SequentialDataset{{name_suffix}}:
             j = i + our_rand_r(&seed) % (n - i)
             ind[i], ind[j] = ind[j], ind[i]
 
-    cdef int _get_next_index(self) nogil:
+    cdef int _get_next_index(self) noexcept nogil:
         cdef int current_index = self.current_index
         if current_index >= (self.n_samples - 1):
             current_index = -1
@@ -160,7 +157,7 @@ cdef class SequentialDataset{{name_suffix}}:
         self.current_index = current_index
         return self.current_index
 
-    cdef int _get_random_index(self) nogil:
+    cdef int _get_random_index(self) noexcept nogil:
         cdef int n = self.n_samples
         cdef int current_index = our_rand_r(&self.seed) % n
         self.current_index = current_index
@@ -168,7 +165,7 @@ cdef class SequentialDataset{{name_suffix}}:
 
     cdef void _sample(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
                       int *nnz, {{c_type}} *y, {{c_type}} *sample_weight,
-                      int current_index) nogil:
+                      int current_index) noexcept nogil:
         pass
 
     def _shuffle_py(self, cnp.uint32_t seed):
@@ -272,7 +269,7 @@ cdef class ArrayDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
 
     cdef void _sample(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
                       int *nnz, {{c_type}} *y, {{c_type}} *sample_weight,
-                      int current_index) nogil:
+                      int current_index) noexcept nogil:
         cdef long long sample_idx = self.index_data_ptr[current_index]
         cdef long long offset = sample_idx * self.X_stride
 
@@ -342,7 +339,7 @@ cdef class CSRDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
 
     cdef void _sample(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
                       int *nnz, {{c_type}} *y, {{c_type}} *sample_weight,
-                      int current_index) nogil:
+                      int current_index) noexcept nogil:
         cdef long long sample_idx = self.index_data_ptr[current_index]
         cdef long long offset = self.X_indptr_ptr[sample_idx]
         y[0] = self.Y_data_ptr[sample_idx]

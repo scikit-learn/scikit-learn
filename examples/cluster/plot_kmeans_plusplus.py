@@ -23,7 +23,7 @@ X, y_true = make_blobs(
 )
 X = X[:, ::-1]
 
-# Calculate seeds from kmeans++
+# Calculate seeds from k-means++
 centers_init, indices = kmeans_plusplus(X, n_clusters=4, random_state=0)
 
 # Plot init seeds along side sample data

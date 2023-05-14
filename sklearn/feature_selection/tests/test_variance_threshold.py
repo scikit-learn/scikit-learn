@@ -54,9 +54,9 @@ def test_zero_variance_floating_point_error():
 def test_variance_nan():
     arr = np.array(data, dtype=np.float64)
     # add single NaN and feature should still be included
-    arr[0, 0] = np.NaN
+    arr[0, 0] = np.nan
     # make all values in feature NaN and feature should be rejected
-    arr[:, 1] = np.NaN
+    arr[:, 1] = np.nan
 
     for X in [arr, csr_matrix(arr), csc_matrix(arr), bsr_matrix(arr)]:
         sel = VarianceThreshold().fit(X)

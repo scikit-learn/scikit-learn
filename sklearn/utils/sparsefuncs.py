@@ -452,7 +452,7 @@ def _sparse_min_or_max(X, axis, min_or_max):
         if X.nnz == 0:
             return zero
         m = min_or_max.reduce(X.data.ravel())
-        if X.nnz != np.product(X.shape):
+        if X.nnz != np.prod(X.shape):
             m = min_or_max(zero, m)
         return m
     if axis < 0:
@@ -618,7 +618,6 @@ def csc_median_axis_0(X):
     median = np.zeros(n_features)
 
     for f_ind, (start, end) in enumerate(zip(indptr[:-1], indptr[1:])):
-
         # Prevent modifying X in place
         data = np.copy(X.data[start:end])
         nz = n_samples - data.size
