@@ -219,12 +219,3 @@ class Perceptron(BaseSGDClassifier):
             class_weight=class_weight,
             n_jobs=n_jobs,
         )
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_interaction_of_class_and_sample_weight_excluding_class": (
-                    "class_weight as zero to one class is not equivalent to"
-                ),
-            }
-        }
