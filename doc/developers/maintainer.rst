@@ -375,7 +375,7 @@ Before merging,
   the `Co-authored-by: name <name@example.com>` tags in the detailed
   description. This will mark the PR as having `multiple co-authors
   <https://help.github.com/en/github/committing-changes-to-your-project/creating-a-commit-with-multiple-authors>`_.
-  Whether code contributions are significanly enough to merit co-authorship is
+  Whether code contributions are significantly enough to merit co-authorship is
   left to the maintainer's discretion, same as for the "what's new" entry.
 
 
@@ -397,8 +397,8 @@ experimental features / estimators that are subject to change without
 deprecation cycle.
 
 To create an experimental module, you can just copy and modify the content of
-`enable_hist_gradient_boosting.py
-<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/enable_hist_gradient_boosting.py>`__,
+`enable_halving_search_cv.py
+<https://github.com/scikit-learn/scikit-learn/blob/362cb92bb2f5b878229ea4f59519ad31c2fcee76/sklearn/experimental/enable_halving_search_cv.py>`__,
 or
 `enable_iterative_imputer.py
 <https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/enable_iterative_imputer.py>`_.

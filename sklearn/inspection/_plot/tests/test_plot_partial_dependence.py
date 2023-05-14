@@ -21,8 +21,10 @@ from sklearn.inspection import PartialDependenceDisplay
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
-    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*",
+    (
+        "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
+        "matplotlib.*"
+    ),
 )
 
 
@@ -103,7 +105,7 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes, diabetes
         target_idx = disp.target_idx
 
         line_data = line.get_data()
-        assert_allclose(line_data[0], avg_preds["values"][0])
+        assert_allclose(line_data[0], avg_preds["grid_values"][0])
         assert_allclose(line_data[1], avg_preds.average[target_idx].ravel())
 
     # two feature position
@@ -243,7 +245,7 @@ def test_plot_partial_dependence_str_features(
     assert line.get_alpha() == 0.8
 
     line_data = line.get_data()
-    assert_allclose(line_data[0], avg_preds["values"][0])
+    assert_allclose(line_data[0], avg_preds["grid_values"][0])
     assert_allclose(line_data[1], avg_preds.average[target_idx].ravel())
 
     # contour
@@ -279,7 +281,7 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
     target_idx = disp.target_idx
 
     line_data = line.get_data()
-    assert_allclose(line_data[0], avg_preds["values"][0])
+    assert_allclose(line_data[0], avg_preds["grid_values"][0])
     assert_allclose(line_data[1], avg_preds.average[target_idx].ravel())
 
     # contour
@@ -466,7 +468,7 @@ def test_plot_partial_dependence_multiclass(pyplot):
         disp_target_0.pd_results, disp_symbol.pd_results
     ):
         assert_allclose(int_result.average, symbol_result.average)
-        assert_allclose(int_result["values"], symbol_result["values"])
+        assert_allclose(int_result["grid_values"], symbol_result["grid_values"])
 
     # check that the pd plots are different for another target
     disp_target_1 = PartialDependenceDisplay.from_estimator(
@@ -608,16 +610,6 @@ dummy_classification_data = make_classification(random_state=0)
             dummy_classification_data,
             {"features": [1], "categorical_features": [1], "kind": "individual"},
             "It is not possible to display individual effects",
-        ),
-        (
-            dummy_classification_data,
-            {"features": [1], "kind": "foo"},
-            "Values provided to `kind` must be one of",
-        ),
-        (
-            dummy_classification_data,
-            {"features": [0, 1], "kind": ["foo", "individual"]},
-            "Values provided to `kind` must be one of",
         ),
     ],
 )

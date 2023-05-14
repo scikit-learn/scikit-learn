@@ -118,7 +118,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         max_iter,
         random_state,
     ):
-
         if self._impl not in LIBSVM_IMPL:
             raise ValueError(
                 "impl should be one of %s, %s was given" % (LIBSVM_IMPL, self._impl)
@@ -268,9 +267,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         dual_coef_finiteness = np.isfinite(dual_coef).all()
         if not (intercept_finiteness and dual_coef_finiteness):
             raise ValueError(
-                "The dual coefficients or intercepts are not finite. "
-                "The input data may contain large values and need to be"
-                "preprocessed."
+                "The dual coefficients or intercepts are not finite."
+                " The input data may contain large values and need to be"
+                " preprocessed."
             )
 
         # Since, in the case of SVC and NuSVC, the number of models optimized by

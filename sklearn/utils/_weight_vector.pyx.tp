@@ -26,8 +26,6 @@ dtypes = [('64', 'double', 1e-9),
 #
 # License: BSD 3 clause
 
-# WARNING: Do not edit this .pyx file directly, it is generated from its .pyx.tp
-
 cimport cython
 from libc.limits cimport INT_MAX
 from libc.math cimport sqrt
@@ -80,7 +78,7 @@ cdef class WeightVector{{name_suffix}}(object):
             self.average_b = 1.0
 
     cdef void add(self, {{c_type}} *x_data_ptr, int *x_ind_ptr, int xnnz,
-                  {{c_type}} c) nogil:
+                  {{c_type}} c) noexcept nogil:
         """Scales sample x by constant c and adds it to the weight vector.
 
         This operation updates ``sq_norm``.
@@ -98,9 +96,9 @@ cdef class WeightVector{{name_suffix}}(object):
         """
         cdef int j
         cdef int idx
-        cdef {{c_type}} val
-        cdef {{c_type}} innerprod = 0.0
-        cdef {{c_type}} xsqnorm = 0.0
+        cdef double val
+        cdef double innerprod = 0.0
+        cdef double xsqnorm = 0.0
 
         # the next two lines save a factor of 2!
         cdef {{c_type}} wscale = self.wscale
@@ -119,7 +117,7 @@ cdef class WeightVector{{name_suffix}}(object):
     # here: https://research.microsoft.com/pubs/192769/tricks-2012.pdf
     # by Leon Bottou
     cdef void add_average(self, {{c_type}} *x_data_ptr, int *x_ind_ptr, int xnnz,
-                          {{c_type}} c, {{c_type}} num_iter) nogil:
+                          {{c_type}} c, {{c_type}} num_iter) noexcept nogil:
         """Updates the average weight vector.
 
         Parameters
@@ -137,10 +135,10 @@ cdef class WeightVector{{name_suffix}}(object):
         """
         cdef int j
         cdef int idx
-        cdef {{c_type}} val
-        cdef {{c_type}} mu = 1.0 / num_iter
-        cdef {{c_type}} average_a = self.average_a
-        cdef {{c_type}} wscale = self.wscale
+        cdef double val
+        cdef double mu = 1.0 / num_iter
+        cdef double average_a = self.average_a
+        cdef double wscale = self.wscale
         cdef {{c_type}}* aw_data_ptr = self.aw_data_ptr
 
         for j in range(xnnz):
@@ -155,7 +153,7 @@ cdef class WeightVector{{name_suffix}}(object):
         self.average_a += mu * self.average_b * wscale
 
     cdef {{c_type}} dot(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
-                    int xnnz) nogil:
+                    int xnnz) noexcept nogil:
         """Computes the dot product of a sample x and the weight vector.
 
         Parameters
@@ -174,7 +172,7 @@ cdef class WeightVector{{name_suffix}}(object):
         """
         cdef int j
         cdef int idx
-        cdef {{c_type}} innerprod = 0.0
+        cdef double innerprod = 0.0
         cdef {{c_type}}* w_data_ptr = self.w_data_ptr
         for j in range(xnnz):
             idx = x_ind_ptr[j]
@@ -182,7 +180,7 @@ cdef class WeightVector{{name_suffix}}(object):
         innerprod *= self.wscale
         return innerprod
 
-    cdef void scale(self, {{c_type}} c) nogil:
+    cdef void scale(self, {{c_type}} c) noexcept nogil:
         """Scales the weight vector by a constant ``c``.
 
         It updates ``wscale`` and ``sq_norm``. If ``wscale`` gets too
@@ -193,7 +191,7 @@ cdef class WeightVector{{name_suffix}}(object):
         if self.wscale < {{reset_wscale_threshold}}:
             self.reset_wscale()
 
-    cdef void reset_wscale(self) nogil:
+    cdef void reset_wscale(self) noexcept nogil:
         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
         if self.aw_data_ptr != NULL:
             _axpy(self.n_features, self.average_a,
@@ -205,7 +203,7 @@ cdef class WeightVector{{name_suffix}}(object):
         _scal(self.n_features, self.wscale, self.w_data_ptr, 1)
         self.wscale = 1.0
 
-    cdef {{c_type}} norm(self) nogil:
+    cdef {{c_type}} norm(self) noexcept nogil:
         """The L2 norm of the weight vector. """
         return sqrt(self.sq_norm)
 

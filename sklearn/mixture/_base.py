@@ -137,10 +137,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 random_state=random_state,
             )
             resp[indices, np.arange(self.n_components)] = 1
-        else:
-            raise ValueError(
-                "Unimplemented initialization method '%s'" % self.init_params
-            )
 
         self._initialize(X, resp)
 

@@ -155,7 +155,6 @@ transformers = [
 ]
 
 for dataset_name, (X, y) in datasets:
-
     msg = f"Benchmarking on {dataset_name}:"
     print(f"\n{msg}\n" + str("-" * len(msg)))
 
@@ -243,7 +242,6 @@ axes = axes.ravel()
 i_ax = 0
 
 for dataset_name, (X, y) in datasets:
-
     msg = f"Benchmarking on {dataset_name}:"
     print(f"\n{msg}\n" + str("-" * len(msg)))
 

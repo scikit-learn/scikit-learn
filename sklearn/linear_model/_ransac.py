@@ -15,6 +15,7 @@ from ..utils.validation import check_is_fitted, _check_sample_weight
 from ._base import LinearRegression
 from ..utils.validation import has_fit_parameter
 from ..utils._param_validation import Interval, Options, StrOptions, HasMethods, Hidden
+from ..utils._param_validation import RealNotInt
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.spacing(1)
@@ -236,7 +237,7 @@ class RANSACRegressor(
         "estimator": [HasMethods(["fit", "score", "predict"]), None],
         "min_samples": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval(RealNotInt, 0, 1, closed="both"),
             None,
         ],
         "residual_threshold": [Interval(Real, 0, None, closed="left"), None],
@@ -282,7 +283,6 @@ class RANSACRegressor(
         random_state=None,
         base_estimator="deprecated",
     ):
-
         self.estimator = estimator
         self.min_samples = min_samples
         self.residual_threshold = residual_threshold
@@ -341,8 +341,10 @@ class RANSACRegressor(
 
         if self.base_estimator != "deprecated":
             warnings.warn(
-                "`base_estimator` was renamed to `estimator` in version 1.1 and "
-                "will be removed in 1.3.",
+                (
+                    "`base_estimator` was renamed to `estimator` in version 1.1 and "
+                    "will be removed in 1.3."
+                ),
                 FutureWarning,
             )
             self.estimator = self.base_estimator
@@ -539,10 +541,12 @@ class RANSACRegressor(
                 + self.n_skips_invalid_model_
             ) > self.max_skips:
                 warnings.warn(
-                    "RANSAC found a valid consensus set but exited"
-                    " early due to skipping more iterations than"
-                    " `max_skips`. See estimator attributes for"
-                    " diagnostics (n_skips*).",
+                    (
+                        "RANSAC found a valid consensus set but exited"
+                        " early due to skipping more iterations than"
+                        " `max_skips`. See estimator attributes for"
+                        " diagnostics (n_skips*)."
+                    ),
                     ConvergenceWarning,
                 )
 
