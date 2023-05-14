@@ -139,6 +139,7 @@ _ = plt.legend()
 
 
 plt.figure()
+print("xxxx")
 
 sizes = np.logspace(1, 3.8, 7).astype(int)
 for name, estimator in {
