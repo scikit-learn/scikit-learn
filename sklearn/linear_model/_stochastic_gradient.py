@@ -1358,7 +1358,7 @@ class SGDClassifier(BaseSGDClassifier):
                     "while using class weight, setting some sample's weight to zero "
                     "is not equivalent to excluding those samples"
                 ),
-                "check_b": (
+                "check_interaction_of_class_and_sample_weight_excluding_class": (
                     "class_weight as zero to one class is not equivalent to making "
                     "the sample_weight for the samples from that class equals zero"
                 ),
