@@ -1354,6 +1354,14 @@ class SGDClassifier(BaseSGDClassifier):
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
+                "check_interaction_of_class_and_sample_weight_excluding_samples": (
+                    "while using class weight, setting some sample's weight to zero "
+                    "is not equivalent to excluding those samples"
+                ),
+                "check_b": (
+                    "class_weight as zero to one class is not equivalent to making "
+                    "the sample_weight for the samples from that class equals zero"
+                ),
             },
             "preserves_dtype": [np.float64, np.float32],
         }
