@@ -74,7 +74,8 @@ def test_metric_threshold_curve_end_points(metric):
 
 
 @pytest.mark.parametrize(
-    "metric", [partial(fbeta_score, beta=3), precision_score, recall_score],
+    "metric",
+    [partial(fbeta_score, beta=3), precision_score, recall_score],
 )
 def test_zero_sample_weight_equals_excluding(metric):
     rng = check_random_state(0)
