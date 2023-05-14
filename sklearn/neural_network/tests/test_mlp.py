@@ -1023,6 +1023,14 @@ def test_mlp_diverging_loss():
     # In python, float("nan") != float("nan")
     assert str(mlp.validation_scores_[-1]) == str(np.nan)
     assert isinstance(mlp.validation_scores_[-1], float)
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_mlp_with_all_zero_sample_weight(MLPEstimator):
+    """Check that using all zero sample weight will raise an error"""
+    mlp = MLPEstimator(random_state=0)
+
+    msg = "sample_weight must not be all zeros"
+    with pytest.raises(ValueError, match=msg):
+        mlp.fit(X_iris, y_iris, sample_weight=np.zeros_like(y_iris))
 
 
 @pytest.mark.parametrize("weighted_class", [i for i in range(2)])
@@ -1067,6 +1075,12 @@ def test_mlp_classifier_with_sample_weights(weighted_class, X, y):
     ).sum() / sample_weighted_score.shape[0]
     assert samples_with_greater_score > threshold
 
+    # test sample weight with early stopping
+    clf_es = MLPClassifier(random_state=1, early_stopping=True, validation_fraction=0.2)
+    clf_es.fit(X_train, y_train, sample_weight=sample_weight)
+    # Training score will be smaller with early stopping
+    assert clf_es.score(X_train, y_train) < clf.score(X_train, y_train)
+
 
 @pytest.mark.parametrize("X,y", [(X_digits_binary, y_digits_binary)])
 @pytest.mark.parametrize("weighted_y", range(2))
@@ -1088,6 +1102,7 @@ def test_mlp_regressor_with_sample_weight(X, y, weighted_y):
 
     weighted_mask_test = y_test == weighted_y
 
+    # baseline without sample weight
     base_reg = MLPRegressor(random_state=0)
     base_reg.fit(X_train, y_train_normalized)
     y_pred = np.ravel(
@@ -1106,5 +1121,12 @@ def test_mlp_regressor_with_sample_weight(X, y, weighted_y):
         )
     )
     error = ((y_pred - y_test[weighted_mask_test]) ** 2).mean()
-
     assert error < base_error
+
+    # with early stopping
+    reg_es = MLPRegressor(random_state=0, early_stopping=True, validation_fraction=0.2)
+    reg_es.fit(X_train, y_train_normalized, sample_weight=sample_weight)
+    # Training score will be smaller with early stopping
+    assert reg_es.score(X_train, y_train_normalized) < reg.score(
+        X_train, y_train_normalized
+    )
