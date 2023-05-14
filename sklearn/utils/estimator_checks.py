@@ -166,9 +166,9 @@ def _yield_classifier_checks(classifier):
     if "class_weight" in classifier.get_params().keys():
         yield check_class_weight_classifiers
         if has_fit_parameter(classifier, "sample_weight") and not tags["pairwise"]:
-            yield check_a
+            yield check_interaction_of_class_and_sample_weight_excluding_samples
             if not tags["binary_only"]:
-                yield check_b
+                yield check_interaction_of_class_and_sample_weight_excluding_class
 
     yield check_non_transformer_estimators_n_iter
     # test if predict_proba is a monotonic transformation of decision_function
