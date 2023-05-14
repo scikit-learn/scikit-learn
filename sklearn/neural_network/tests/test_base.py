@@ -9,7 +9,7 @@ def test_binary_log_loss_1_prob_finite():
     y_true = np.array([[0, 0, 1]]).T
     y_prob = np.array([[0.9, 1.0, 1.0]]).T
 
-    loss = binary_log_loss(y_true, y_prob, sample_weight=np.ones(shape=y_prob.shape[0]))
+    loss = binary_log_loss(y_true, y_prob)
     assert np.isfinite(loss)
 
 
