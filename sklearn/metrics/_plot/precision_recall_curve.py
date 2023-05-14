@@ -211,7 +211,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         else:
             self.chance_level_ = None
 
-        if "label" in line_kwargs or "label" in chance_level_line_kw:
+        if "label" in line_kwargs or plot_chance_level:
             self.ax_.legend(loc="lower left")
 
         return self
