@@ -82,7 +82,7 @@ fourier_approx_svm = pipeline.Pipeline(
 )
 
 nystroem_approx_svm = pipeline.Pipeline(
-    [("feature_map", feature_map_nystroem), ("svm", svm.LinearSVC())]
+    [("feature_map", feature_map_nystroem), ("svm", svm.LinearSVC(dual="auto"))]
 )
 
 # fit and predict using linear and kernel svm:
