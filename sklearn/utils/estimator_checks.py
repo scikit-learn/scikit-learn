@@ -136,7 +136,7 @@ def _yield_checks(estimator):
 
     yield check_estimator_get_tags_default_keys
 
-    if tags["Array_API_support"]:
+    if tags["array_api_support"]:
         for array_namespace in ["numpy.array_api", "cupy.array_api"]:
             yield partial(check_array_api_input, array_namespace=array_namespace)
 

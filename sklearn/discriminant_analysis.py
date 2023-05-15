@@ -746,7 +746,7 @@ class LinearDiscriminantAnalysis(
         return super().decision_function(X)
 
     def _more_tags(self):
-        return {"Array_API_support": True}
+        return {"array_api_support": True}
 
 
 class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
