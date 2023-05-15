@@ -146,7 +146,7 @@ jobs:
   steps:
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: ${{ PYTHON_VERSION }}
+        versionSpec: $(PYTHON_VERSION)
         addToPath: true
 
     - bash: bash build_tools/azure/build_pyodide_wheel.sh
