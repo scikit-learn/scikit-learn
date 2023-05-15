@@ -6,6 +6,7 @@ from functools import partial, wraps
 from inspect import signature
 from numbers import Real, Integral
 
+import pytest
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
@@ -58,6 +59,7 @@ from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
 from ..utils.fixes import sp_version
 from ..utils.fixes import parse_version
 from ..utils.validation import check_is_fitted
+from ..utils._array_api import _convert_to_numpy
 from ..utils._param_validation import make_constraint
 from ..utils._param_validation import generate_invalid_param_val
 from ..utils._param_validation import InvalidParameterError
@@ -73,6 +75,7 @@ from ..preprocessing import scale
 from ..datasets import (
     load_iris,
     make_blobs,
+    make_classification,
     make_multilabel_classification,
     make_regression,
 )
@@ -132,6 +135,14 @@ def _yield_checks(estimator):
     yield partial(check_estimators_pickle, readonly_memmap=True)
 
     yield check_estimator_get_tags_default_keys
+
+    if tags["Array_API_support"]:
+        for array_namespace in ["numpy.array_api", "cupy.array_api"]:
+            yield partial(check_array_api_input, array_namespace=array_namespace)
+
+        for device in ["cpu", "cuda"]:
+            for dtype in ("float64", "float32"):
+                yield partial(check_array_api_input_torch, dtype=dtype, device=device)
 
 
 def _yield_classifier_checks(classifier):
@@ -845,6 +856,139 @@ def _generate_sparse_matrix(X_csr):
         X.indices = X.indices.astype("int64")
         X.indptr = X.indptr.astype("int64")
         yield sparse_format + "_64", X
+
+
+def check_array_api_input(name, estimator_orig, *, array_namespace):
+    """Check that the array_api Array gives the same results as ndarrays."""
+    xp = pytest.importorskip(array_namespace)
+
+    X, y = make_classification(random_state=42)
+
+    est = clone(estimator_orig)
+
+    X_xp = xp.asarray(X)
+    y_xp = xp.asarray(y)
+
+    est.fit(X, y)
+
+    array_attributes = {
+        key: value for key, value in vars(est).items() if isinstance(value, np.ndarray)
+    }
+
+    est_xp = clone(est)
+    with config_context(array_api_dispatch=True):
+        est_xp.fit(X_xp, y_xp)
+
+    # Fitted attributes which are arrays must have the same
+    # namespace as the one of the training data.
+    for key, attribute in array_attributes.items():
+        est_xp_param = getattr(est_xp, key)
+        assert hasattr(est_xp_param, "__array_namespace__")
+
+        est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
+        assert_allclose(
+            attribute, est_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
+        )
+
+    # Check estimator methods, if supported, give the same results
+    methods = (
+        "decision_function",
+        "predict",
+        "predict_log_proba",
+        "predict_proba",
+        "transform",
+        "inverse_transform",
+    )
+
+    for method_name in methods:
+        method = getattr(est, method_name, None)
+        if method is None:
+            continue
+
+        result = method(X)
+        with config_context(array_api_dispatch=True):
+            result_xp = getattr(est_xp, method_name)(X_xp)
+        assert hasattr(
+            result_xp, "__array_namespace__"
+        ), f"{method} did not output an array_namespace"
+
+        result_xp_np = _convert_to_numpy(result_xp, xp=xp)
+
+        assert_allclose(
+            result,
+            result_xp_np,
+            err_msg=f"{method} did not the return the same result",
+            atol=1e-5,
+        )
+
+
+def check_array_api_input_torch(name, estimator_orig, *, device, dtype):
+    """Check that using PyTorch gives the same results as ndarrays."""
+    torch = pytest.importorskip("torch")
+
+    if device == "cuda" and not torch.has_cuda:
+        pytest.skip("test requires cuda, which is not available")
+
+    X, y = make_classification(random_state=42)
+    X = X.astype(dtype)
+    y = y.astype(dtype)
+
+    X_xp = torch.asarray(X, device=device)
+    y_xp = torch.asarray(y, device=device)
+
+    est = clone(estimator_orig)
+    est.fit(X, y)
+
+    array_attributes = {
+        key: value for key, value in vars(est).items() if isinstance(value, np.ndarray)
+    }
+
+    est_xp = clone(est)
+    with config_context(array_api_dispatch=True):
+        est_xp.fit(X_xp, y_xp)
+
+    # Fitted attributes which are arrays must have the same
+    # namespace as the one of the training data.
+    for key, attribute in array_attributes.items():
+        est_xp_param = getattr(est_xp, key)
+        assert isinstance(est_xp_param, torch.Tensor)
+        assert est_xp_param.device.type == device
+
+        est_xp_param_np = _convert_to_numpy(est_xp_param, xp=torch)
+        assert_allclose(
+            attribute, est_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
+        )
+
+    # Check estimator methods, if supported, give the same results
+    methods = (
+        "decision_function",
+        "predict",
+        "predict_log_proba",
+        "predict_proba",
+        "transform",
+        "inverse_transform",
+    )
+
+    for method_name in methods:
+        method = getattr(est, method_name, None)
+        if method is None:
+            continue
+
+        result = method(X)
+        with config_context(array_api_dispatch=True):
+            result_xp = getattr(est_xp, method_name)(X_xp)
+
+        assert isinstance(result_xp, torch.Tensor)
+        assert result_xp.device.type == device
+
+        result_xp_np = _convert_to_numpy(result_xp, xp=torch)
+
+        assert_allclose(
+            result,
+            result_xp_np,
+            err_msg=f"{method} did not the return the same result",
+            atol=1e-5,
+        )
 
 
 def check_estimator_sparse_data(name, estimator_orig):

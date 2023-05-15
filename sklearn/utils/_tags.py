@@ -1,6 +1,7 @@
 import numpy as np
 
 _DEFAULT_TAGS = {
+    "Array_API_support": False,
     "non_deterministic": False,
     "requires_positive_X": False,
     "requires_positive_y": False,
