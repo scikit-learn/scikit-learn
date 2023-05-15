@@ -766,3 +766,12 @@ def test_multioutputregressor_ducktypes_fitted_estimator():
 
     # Does not raise
     reg.predict(X)
+
+
+def test_multioutput_regressor_has_partial_fit():
+    # Test that an unfitted MultiOutputRegressor handles available_if for
+    # partial_fit correctly
+    est = MultiOutputRegressor(LinearRegression())
+    msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
+    with pytest.raises(AttributeError, match=msg):
+        getattr(est, "partial_fit")
