@@ -2549,13 +2549,13 @@ def test_missing_values_poisson():
         (datasets.make_classification, DecisionTreeClassifier),
     ],
 )
-def test_missing_values_is_resilience(make_data, Tree):
+@pytest.mark.parametrize("sample_weight_train", [None, "ones"])
+def test_missing_values_is_resilience(make_data, Tree, sample_weight_train):
     """Check that trees can deal with missing values and have decent performance."""
 
     rng = np.random.RandomState(0)
     n_samples, n_features = 1000, 50
     X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
-
     # Create dataset with missing values
     X_missing = X.copy()
     X_missing[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
@@ -2563,15 +2563,18 @@ def test_missing_values_is_resilience(make_data, Tree):
         X_missing, y, random_state=0
     )
 
+    if sample_weight_train == "ones":
+        sample_weight_train = np.ones(X_missing_train.shape[0])
+
     # Train tree with missing values
     tree_with_missing = Tree(random_state=rng)
-    tree_with_missing.fit(X_missing_train, y_train)
+    tree_with_missing.fit(X_missing_train, y_train, sample_weight=sample_weight_train)
     score_with_missing = tree_with_missing.score(X_missing_test, y_test)
 
     # Train tree without missing values
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     tree = Tree(random_state=rng)
-    tree.fit(X_train, y_train)
+    tree.fit(X_train, y_train, sample_weight=sample_weight_train)
     score_without_missing = tree.score(X_test, y_test)
 
     # Score is still 90 percent of the tree's score that had no missing values
