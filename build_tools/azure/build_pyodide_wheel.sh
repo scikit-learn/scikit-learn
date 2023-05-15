@@ -2,7 +2,7 @@
 
 set -e
 
-# git clone https://github.com/emscripten-core/emsdk.git
+git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 ./emsdk install $EMSCRIPTEN_VERSION
 ./emsdk activate $EMSCRIPTEN_VERSION
