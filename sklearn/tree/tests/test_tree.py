@@ -2556,6 +2556,7 @@ def test_missing_values_is_resilience(make_data, Tree, sample_weight_train):
     rng = np.random.RandomState(0)
     n_samples, n_features = 1000, 50
     X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
+
     # Create dataset with missing values
     X_missing = X.copy()
     X_missing[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
