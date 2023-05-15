@@ -4,12 +4,12 @@
 #
 #    pip-compile --output-file=build_tools/azure/debian_atlas_32bit_lock.txt build_tools/azure/debian_atlas_32bit_requirements.txt
 #
+attrs==23.1.0
+    # via pytest
 coverage==7.2.5
     # via pytest-cov
 cython==0.29.34
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
-exceptiongroup==1.1.1
-    # via pytest
 iniconfig==2.0.0
     # via pytest
 joblib==1.1.1
@@ -18,7 +18,9 @@ packaging==23.1
     # via pytest
 pluggy==1.0.0
     # via pytest
-pytest==7.3.1
+py==1.11.0
+    # via pytest
+pytest==7.1.2
     # via
     #   -r build_tools/azure/debian_atlas_32bit_requirements.txt
     #   pytest-cov
