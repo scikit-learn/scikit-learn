@@ -40,12 +40,13 @@ expected behavior of the classifier and thus the strategy to convert soft
 predictions into hard predictions. We illustrate this point with an example.
 
 Let's imagine the deployment of a predictive model helping medical doctors to
-detect cancers. In a setting where this model would be a tool to discard
-obvious cases, doctors might be interested to have a high recall (all cancers
-cases should be tagged as such) to not miss any patient with a cancer. However,
-it will be at the cost of having more false positive predictions (i.e. lower
-precision). Thus, in terms of decision threshold, it would be better to
-classify a patient having a cancer for a lower probability than 0.5.
+detect cancers. In a setting where this model was a tool to discard obvious
+cases and false positives don't lead to potentially harmful treatments, doctors
+might be interested in having a high recall (all cancers cases should be tagged
+as such) to not miss any patient with a cancer. However, that is at the cost of
+having more false positive predictions (i.e. lower precision). Thus, in terms of
+decision threshold, it may be better to classify a patient as having a cancer
+for a probability lower than 0.5.
 
 Post-tuning of the decision threshold
 =====================================
@@ -59,11 +60,11 @@ with or without constraints.
 The following image illustrate the tuning of the cut-off point for a gradient
 boosting classifier. While the vanilla and tuned classifiers provide the same
 Receiver Operating Characteristic (ROC) and Precision-Recall curves, and thus
-the same :term:`predict_proba` outputs, the "hard" predictions defer because of
+the same :term:`predict_proba` outputs, the "hard" predictions differ because of
 the tuned cut-off point. The vanilla classifier predicts the class of interest
 for a probability greater than 0.5 while the tuned classifier predicts the
 class of interest for a very low probability (around 0.02). This cut-off point
-is maximizes a utility metric defined by the business case (in this case an
+optimizes a utility metric defined by the business case (in this case an
 insurance company).
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cutoff_tuning_002.png
@@ -82,7 +83,7 @@ We provide an example where we maximize the balanced accuracy.
 
 .. note::
 
-    It is important to notice that these metrics comes with default parameter, notably
+    It is important to notice that these metrics come with default parameters, notably
     the label of the class of interested (i.e. `pos_label`). Thus, if this label is not
     the right one for your application, you need to define a scorer and pass the right
     `pos_label` (and additional parameters) using the
@@ -142,7 +143,7 @@ is tuned on the data provided to the `fit` method.
 However, you should be extremely careful when using this option. You should never use
 the same data for training the classifier and tuning the cut-off point at the risk of
 overfitting. Refer to :ref:`cutoffclassifier_no_cv` that shows such overfitting. If
-you are in a situation where you have limited resources, you should can consider using
+you are in a situation where you have limited resources, you should consider using
 a float number that will use a single split internally.
 
 The option `cv="prefit"` should only be used when the provided classifier was already
