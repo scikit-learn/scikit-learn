@@ -248,17 +248,21 @@ class _BaseTreeExporter:
             color = list(self.colors["rgb"][np.argmax(value)])
             sorted_values = sorted(value, reverse=True)
             if len(sorted_values) == 1:
-                alpha = 0
+                alpha = 0.0
             else:
                 alpha = (sorted_values[0] - sorted_values[1]) / (1 - sorted_values[1])
         else:
             # Regression tree or multi-output
+            if isinstance(value, Iterable):
+                # regression tree
+                # When `value` was extracted, it could correspond to a classification
+                # tree with a single class or a regression tree. Here, there is no
+                # ambuiguity anymore and we can extract the value to be a single scalar.
+                value = value[0]
             color = list(self.colors["rgb"][0])
             alpha = (value - self.colors["bounds"][0]) / (
                 self.colors["bounds"][1] - self.colors["bounds"][0]
             )
-        # unpack numpy scalars
-        alpha = float(alpha[0] if isinstance(alpha, Iterable) else alpha)
         # compute the color as alpha against white
         color = [int(round(alpha * c + (1 - alpha) * 255, 0)) for c in color]
         # Return html color code in #RRGGBB format
