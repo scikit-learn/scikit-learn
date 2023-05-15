@@ -70,7 +70,7 @@ classifiers = [
         {"logisticregression__C": np.logspace(-1, 1, 3)},
     ),
     (
-        make_pipeline(StandardScaler(), LinearSVC(random_state=0)),
+        make_pipeline(StandardScaler(), LinearSVC(random_state=0, dual="auto")),
         {"linearsvc__C": np.logspace(-1, 1, 3)},
     ),
     (
