@@ -2623,10 +2623,10 @@ def test_sample_weight_non_uniform(make_data, Tree):
     # Create dataset with missing values
     X[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
 
+    # Zero sample weight is the same as removing the sample
     sample_weight = np.ones(X.shape[0])
     sample_weight[::2] = 0.0
 
-    # Train tree with missing values
     tree_with_sw = Tree(random_state=0)
     tree_with_sw.fit(X, y, sample_weight=sample_weight)
 
