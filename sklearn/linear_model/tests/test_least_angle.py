@@ -795,7 +795,7 @@ def test_lars_with_jitter(est):
 
 def test_X_none_gram_not_none():
     with pytest.raises(ValueError, match="X cannot be None if Gram is not None"):
-        lars_path(X=None, y=[1], Gram="not None")
+        lars_path(X=None, y=[1], Gram=True)
 
 
 def test_copy_X_with_auto_gram():

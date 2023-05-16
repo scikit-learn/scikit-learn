@@ -24,7 +24,7 @@ from ..base import RegressorMixin, MultiOutputMixin
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
 from ..utils import arrayfuncs, as_float_array  # type: ignore
 from ..utils import check_random_state
-from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..utils.parallel import delayed, Parallel
@@ -32,6 +32,24 @@ from ..utils.parallel import delayed, Parallel
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
 
 
+@validate_params(
+    {
+        "X": ["array-like", None],
+        "y": ["array-like", None],
+        "Xy": ["array-like", None],
+        "Gram": [StrOptions({"auto"}), "boolean", "array-like", None],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "alpha_min": [Interval(Real, 0, None, closed="left")],
+        "method": [StrOptions({"lar", "lasso"})],
+        "copy_X": ["boolean"],
+        "eps": [Interval(Real, 0, None, closed="neither"), None],
+        "copy_Gram": ["boolean"],
+        "verbose": ["verbose"],
+        "return_path": ["boolean"],
+        "return_n_iter": ["boolean"],
+        "positive": ["boolean"],
+    }
+)
 def lars_path(
     X,
     y,
@@ -74,7 +92,7 @@ def lars_path(
         `Xy = np.dot(X.T, y)` that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    Gram : None, 'auto', array-like of shape (n_features, n_features), \
+    Gram : None, 'auto', bool, array-like of shape (n_features, n_features), \
             default=None
         Precomputed Gram matrix (X' * X), if `'auto'`, the Gram
         matrix is precomputed from the given X, if there are more samples
@@ -1364,7 +1382,7 @@ def _lars_path_residues(
     y_test,
     Gram=None,
     copy=True,
-    method="lars",
+    method="lar",
     verbose=False,
     fit_intercept=True,
     normalize=False,
