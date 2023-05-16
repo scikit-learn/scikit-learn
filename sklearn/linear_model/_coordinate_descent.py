@@ -16,6 +16,7 @@ import numpy as np
 from scipy import sparse
 from joblib import effective_n_jobs
 
+
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data
@@ -31,6 +32,7 @@ from ..utils.validation import (
     column_or_1d,
 )
 from ..utils.parallel import delayed, Parallel
+from ..utils._param_validation import validate_params
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from . import _cd_fast as cd_fast  # type: ignore
@@ -171,6 +173,22 @@ def _alpha_grid(
     return np.geomspace(alpha_max, alpha_max * eps, num=n_alphas)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", "sparse matrix"],
+        "eps": [Interval(Real, 0, None, closed="neither")],
+        "n_alphas": [Interval(Integral, 0, None, closed="left")],
+        "alphas": ["array-like", None],
+        "precompute": [StrOptions({"auto"}), "boolean", "array-like"],
+        "Xy": ["array-like", None],
+        "copy_X": ["boolean"],
+        "coef_init": ["array-like", None],
+        "verbose": ["verbose"],
+        "return_n_iter": ["boolean"],
+        "positive": ["boolean"],
+    }
+)
 def lasso_path(
     X,
     y,
