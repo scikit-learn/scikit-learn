@@ -14,6 +14,7 @@ from sklearn.metrics._pairwise_distances_reduction import (
     BaseDistancesReductionDispatcher,
     ArgKmin,
     ArgKminClassMode,
+    ArgKminLRD,
     RadiusNeighbors,
     sqeuclidean_row_norms,
 )
@@ -768,6 +769,38 @@ def test_argkmin_classmode_factory_method_wrong_usages():
 
     # TODO: introduce assertions on UserWarnings once the Euclidean specialisation
     # of ArgKminClassMode is supported.
+
+
+def test_argkmin_lrd_factory_method_wrong_usages():
+    rng = np.random.RandomState(1)
+    X = rng.rand(100, 10)
+    Y = rng.rand(100, 10)
+    k = 5
+    metric = "manhattan"
+
+    msg = (
+        "Only float64 or float32 datasets pairs are supported at this time, "
+        "got: X.dtype=float32 and Y.dtype=float64"
+    )
+    with pytest.raises(ValueError, match=msg):
+        ArgKminLRD.compute(
+            X=X.astype(np.float32),
+            Y=Y,
+            k=k,
+            metric=metric,
+        )
+
+    msg = (
+        "Only float64 or float32 datasets pairs are supported at this time, "
+        "got: X.dtype=float64 and Y.dtype=int32"
+    )
+    with pytest.raises(ValueError, match=msg):
+        ArgKminLRD.compute(
+            X=X,
+            Y=Y.astype(np.int32),
+            k=k,
+            metric=metric,
+        )
 
 
 def test_radius_neighbors_factory_method_wrong_usages():
