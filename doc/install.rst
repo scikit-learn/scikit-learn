@@ -270,23 +270,23 @@ Anaconda offers scikit-learn as part of its free distribution.
 
 
 Intel Extension for Scikit-learn
--------------------
+--------------------------------
 
-Intel maintains an optimized x86 package, avaialbe in PyPi, conda 
-and conda-forge:
+Intel maintains an optimized x86_64 package, available in PyPI (via `pip`),
+and in the `main`, `conda-forge` and `intel` conda channels:
 
 .. prompt:: bash $
 
   conda install scikit-learn-intelex
 
-This pacage can accelerate existing intalation of scikit-learn and comes 
+This package can accelerate an existing installation of scikit-learn and comes 
 with alternative solvers for some common estimators. Those solvers come 
-from the oneDAL C++ library and are optimized for x86 architeture, 
-delivering most of performance for multi-core Intel CPUs.
+from the oneDAL C++ library and are optimized for the x86_64 architecture, 
+and are optimized for multi-core Intel CPUs.
 
 Note that those solvers are not enabled by default, please refer to the
 `scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/what-is-patching.html>`_ 
-documentation for more details on usage scenarious.
+documentation for more details on usage scenarios.
 
 .. prompt:: bash $
 
@@ -295,7 +295,7 @@ documentation for more details on usage scenarious.
 
 Compatibility with the standard scikit-learn solvers is checked by running the
 full scikit-learn test suite via automated continuous integration as reported
-on https://github.com/intel/scikit-learn-intelex. If you observe any issues
+on https://github.com/intel/scikit-learn-intelex. If you observe any issue
 with `scikit-learn-intelex`, please report the issue on their
 `issue tracker <https://github.com/intel/scikit-learn-intelex/issues>`__.
 
