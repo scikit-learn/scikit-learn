@@ -2617,7 +2617,7 @@ def test_missing_value_is_predictive():
 def test_sample_weight_non_uniform(make_data, Tree):
     """Check sample weight is correctly handled with missing values."""
     rng = np.random.RandomState(0)
-    n_samples, n_features = 1000, 50
+    n_samples, n_features = 1000, 10
     X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
 
     # Create dataset with missing values
