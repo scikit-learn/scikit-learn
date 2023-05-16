@@ -272,7 +272,7 @@ Anaconda offers scikit-learn as part of its free distribution.
 Intel Extension for Scikit-learn
 -------------------
 
-Intel maintains an optimized x86 package, avaialbe in PyPi, conda main 
+Intel maintains an optimized x86 package, avaialbe in PyPi, conda 
 and conda-forge:
 
 .. prompt:: bash $
@@ -295,7 +295,9 @@ documentation for more details on usage scenarious.
 
 Compatibility with the standard scikit-learn solvers is checked by running the
 full scikit-learn test suite via automated continuous integration as reported
-on https://github.com/intel/scikit-learn-intelex.
+on https://github.com/intel/scikit-learn-intelex. If you observe any issues
+with `scikit-learn-intelex`, please report the issue on their
+`issue tracker <https://github.com/intel/scikit-learn-intelex/issues>`__.
 
 
 WinPython for Windows
