@@ -16,6 +16,11 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.cluster._hdbscan.hdbscan import _OUTLIER_ENCODING
+from sklearn.cluster._hdbscan._tree import (
+    _do_labelling,
+    _condense_tree,
+    CONDENSED_dtype,
+)
 
 n_clusters_true = 3
 X, y = make_blobs(n_samples=200, random_state=10)
@@ -380,3 +385,75 @@ def test_hdbscan_precomputed_dense_nan():
     hdb = HDBSCAN(metric="precomputed")
     with pytest.raises(ValueError, match=msg):
         hdb.fit(X_nan)
+
+
+@pytest.mark.parametrize("allow_single_cluster", [True, False])
+@pytest.mark.parametrize("epsilon", [0, 0.1])
+def test_labelling_distinct(global_random_seed, allow_single_cluster, epsilon):
+    n_samples = 48
+    X, y = make_blobs(
+        n_samples,
+        random_state=global_random_seed,
+        # Ensure the clusters are distinct with no overlap
+        centers=[
+            [0, 0],
+            [10, 0],
+            [0, 10],
+        ],
+    )
+
+    est = HDBSCAN().fit(X)
+    condensed_tree = _condense_tree(
+        est._single_linkage_tree_, min_cluster_size=est.min_cluster_size
+    )
+    clusters = {n_samples + 2, n_samples + 3, n_samples + 4}
+    cluster_label_map = {n_samples + 2: 0, n_samples + 3: 1, n_samples + 4: 2}
+    labels = _do_labelling(
+        condensed_tree=condensed_tree,
+        clusters=clusters,
+        cluster_label_map=cluster_label_map,
+        allow_single_cluster=allow_single_cluster,
+        cluster_selection_epsilon=epsilon,
+    )
+
+    first_with_label = {_y: np.where(y == _y)[0][0] for _y in list(set(y))}
+    y_to_labels = {_y: labels[first_with_label[_y]] for _y in list(set(y))}
+    aligned_target = np.vectorize(y_to_labels.get)(y)
+    assert_array_equal(labels, aligned_target)
+
+
+def test_labelling_thresholding():
+    n_samples = 5
+    MAX_LAMBDA = 1.5
+    condensed_tree = np.array(
+        [
+            (5, 2, MAX_LAMBDA, 1),
+            (5, 1, 0.1, 1),
+            (5, 0, MAX_LAMBDA, 1),
+            (5, 3, 0.2, 1),
+            (5, 4, 0.3, 1),
+        ],
+        dtype=CONDENSED_dtype,
+    )
+    labels = _do_labelling(
+        condensed_tree=condensed_tree,
+        clusters={n_samples},
+        cluster_label_map={n_samples: 0, n_samples + 1: 1},
+        allow_single_cluster=True,
+        cluster_selection_epsilon=1,
+    )
+    num_noise = condensed_tree["value"] < 1
+    assert sum(num_noise) == sum(labels == -1)
+
+    labels = _do_labelling(
+        condensed_tree=condensed_tree,
+        clusters={n_samples},
+        cluster_label_map={n_samples: 0, n_samples + 1: 1},
+        allow_single_cluster=True,
+        cluster_selection_epsilon=0,
+    )
+    # The threshold should be calculated per-sample based on the largest
+    # lambda of any simbling node. In this case, all points are siblings
+    # and the largest value is exactly MAX_LAMBDA.
+    num_noise = condensed_tree["value"] < MAX_LAMBDA
+    assert sum(num_noise) == sum(labels == -1)

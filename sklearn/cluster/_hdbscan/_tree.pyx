@@ -87,7 +87,7 @@ cdef list bfs_from_hierarchy(
     return result
 
 
-cdef cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] _condense_tree(
+cpdef cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] _condense_tree(
     const HIERARCHY_t[::1] hierarchy,
     cnp.intp_t min_cluster_size=10
 ):
@@ -402,31 +402,60 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] labelling_at_cut(
     return result
 
 
-cdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] do_labelling(
-        cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] hierarchy,
+cpdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] _do_labelling(
+        cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] condensed_tree,
         set clusters,
         dict cluster_label_map,
         cnp.intp_t allow_single_cluster,
         cnp.float64_t cluster_selection_epsilon
 ):
+    """Given a condensed tree, clusters and a labeling map for the clusters,
+    return an array containing the labels of each point based on cluster
+    membership. Note that this is where points may be marked as noisy
+    outliers. The determination of some points as noise is in large, single-
+    cluster datasets is controlled by the `allow_single_cluster` and
+    `cluster_selection_epsilon` parameters.
+
+    Parameters
+    ----------
+    condensed_tree : ndarray of shape (n_samples,), dtype=CONDENSED_dtype
+        Effectively an edgelist encoding a parent/child pair, along with a
+        value and the corresponding cluster_size in each row providing a tree
+        structure.
+
+    clusters : set
+        The set of nodes corresponding to identified clusters. These node
+        values should be the same as those present in `condensed_tree`.
+
+    cluster_label_map : dict
+        A mapping from the node values present in `clusters` to the labels
+        which will be returned.
+
+    Returns
+    -------
+    labels : ndarray of shape (n_samples,)
+        The cluster labels for each point in the data set;
+        a label of -1 denotes a noise assignment.
+    """
 
     cdef:
         cnp.intp_t root_cluster
         cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] result
-        cnp.intp_t[:] parent_array, child_array
-        cnp.float64_t[:] lambda_array
+        cnp.ndarray[cnp.intp_t, ndim=1] parent_array, child_array
+        cnp.ndarray[cnp.float64_t, ndim=1] lambda_array
         TreeUnionFind union_find
         cnp.intp_t n, parent, child, cluster
+        cnp.float64_t threshold
 
-    child_array = hierarchy['child']
-    parent_array = hierarchy['parent']
-    lambda_array = hierarchy['value']
+    child_array = condensed_tree['child']
+    parent_array = condensed_tree['parent']
+    lambda_array = condensed_tree['value']
 
     root_cluster = np.min(parent_array)
     result = np.empty(root_cluster, dtype=np.intp)
     union_find = TreeUnionFind(np.max(parent_array) + 1)
 
-    for n in range(hierarchy.shape[0]):
+    for n in range(condensed_tree.shape[0]):
         child = child_array[n]
         parent = parent_array[n]
         if child not in clusters:
@@ -434,24 +463,23 @@ cdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] do_labelling(
 
     for n in range(root_cluster):
         cluster = union_find.find(n)
-        if cluster < root_cluster:
-            result[n] = NOISE
-        elif cluster == root_cluster:
-            if len(clusters) == 1 and allow_single_cluster:
-                if cluster_selection_epsilon != 0.0:
-                    if hierarchy['value'][hierarchy['child'] == n] >= 1 / cluster_selection_epsilon :
-                        result[n] = cluster_label_map[cluster]
-                    else:
-                        result[n] = NOISE
-                elif hierarchy['value'][hierarchy['child'] == n] >= \
-                     hierarchy['value'][hierarchy['parent'] == cluster].max():
-                    result[n] = cluster_label_map[cluster]
-                else:
-                    result[n] = NOISE
+        label = NOISE
+        if cluster != root_cluster:
+            label = cluster_label_map[cluster]
+        elif len(clusters) == 1 and allow_single_cluster:
+            # There can only be one edge with this particular child hence this
+            # expression extracts a unique, scalar lambda value.
+            parent_lambda = lambda_array[child_array == n]
+            if cluster_selection_epsilon != 0.0:
+                threshold = 1 / cluster_selection_epsilon
             else:
-                result[n] = NOISE
-        else:
-            result[n] = cluster_label_map[cluster]
+                # The threshold should be calculated per-sample based on the
+                # largest lambda of any simbling node.
+                threshold = lambda_array[parent_array == cluster].max()
+            if parent_lambda >= threshold:
+                label = cluster_label_map[cluster]
+
+        result[n] = label
 
     return result
 
@@ -536,7 +564,7 @@ cdef cnp.intp_t traverse_upwards(
         else:
             return leaf #return node closest to root
 
-    parent_eps = 1 / <cnp.float64_t> cluster_tree[cluster_tree['child'] == parent]['value']
+    parent_eps = 1 / cluster_tree[cluster_tree['child'] == parent]['value']
     if parent_eps > cluster_selection_epsilon:
         return parent
     else:
@@ -729,7 +757,7 @@ cdef tuple _get_clusters(
     cluster_map = {c: n for n, c in enumerate(sorted(list(clusters)))}
     reverse_cluster_map = {n: c for c, n in cluster_map.items()}
 
-    labels = do_labelling(
+    labels = _do_labelling(
         condensed_tree,
         clusters,
         cluster_map,
