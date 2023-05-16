@@ -12,8 +12,7 @@ from ...metrics._dist_metrics cimport DistanceMetric
 from ...cluster._hierarchical_fast cimport UnionFind
 from ...cluster._hdbscan._tree cimport HIERARCHY_t
 from ...cluster._hdbscan._tree import HIERARCHY_dtype
-from ...utils._typedefs cimport ITYPE_t, DTYPE_t
-from ...utils._typedefs import ITYPE, DTYPE
+from ...utils._typedefs cimport intp_t, float64_t, int64_t, uint8_t
 
 # Numpy structured dtype representing a single ordered edge in Prim's algorithm
 MST_edge_dtype = np.dtype([
@@ -25,12 +24,12 @@ MST_edge_dtype = np.dtype([
 # Packed shouldn't make a difference since they're all 8-byte quantities,
 # but it's included just to be safe.
 ctypedef packed struct MST_edge_t:
-    cnp.int64_t current_node
-    cnp.int64_t next_node
-    cnp.float64_t distance
+    int64_t current_node
+    int64_t next_node
+    float64_t distance
 
 cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
-    cnp.ndarray[cnp.float64_t, ndim=2] mutual_reachability
+    cnp.ndarray[float64_t, ndim=2] mutual_reachability
 ):
     """Compute the Minimum Spanning Tree (MST) representation of the mutual-
     reachability graph using Prim's algorithm.
@@ -49,14 +48,14 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
     cdef:
         # Note: we utilize ndarray's over memory-views to make use of numpy
         # binary indexing and sub-selection below.
-        cnp.ndarray[cnp.int64_t, ndim=1, mode='c'] current_labels
-        cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] min_reachability, left, right
+        cnp.ndarray[int64_t, ndim=1, mode='c'] current_labels
+        cnp.ndarray[float64_t, ndim=1, mode='c'] min_reachability, left, right
         cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst
 
-        cnp.ndarray[cnp.uint8_t, mode='c'] label_filter
+        cnp.ndarray[uint8_t, mode='c'] label_filter
 
-        cnp.int64_t n_samples = mutual_reachability.shape[0]
-        cnp.int64_t current_node, new_node_index, new_node, i
+        int64_t n_samples = len(mutual_reachability)
+        int64_t current_node, new_node_index, new_node, i
 
     mst = np.empty(n_samples - 1, dtype=MST_edge_dtype)
     current_labels = np.arange(n_samples, dtype=np.int64)
@@ -80,10 +79,10 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
 
 
 cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
-    const cnp.float64_t[:, ::1] raw_data,
-    const cnp.float64_t[::1] core_distances,
+    const float64_t[:, ::1] raw_data,
+    const float64_t[::1] core_distances,
     DistanceMetric dist_metric,
-    cnp.float64_t alpha=1.0
+    float64_t alpha=1.0
 ):
     """Compute the Minimum Spanning Tree (MST) representation of the mutual-
     reachability graph generated from the provided `raw_data` and
@@ -110,23 +109,23 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
     """
 
     cdef:
-        cnp.int8_t[::1] in_tree
-        cnp.float64_t[::1] min_reachability
-        cnp.int64_t[::1] current_sources
+        uint8_t[::1] in_tree
+        float64_t[::1] min_reachability
+        int64_t[::1] current_sources
         cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst
 
-        cnp.int64_t current_node, source_node, right_node, left_node, new_node, next_node_source
-        cnp.int64_t i, j, n_samples, num_features
+        int64_t current_node, source_node, new_node, next_node_source
+        int64_t i, j, n_samples, num_features
 
-        cnp.float64_t current_node_core_dist, new_reachability, mutual_reachability_distance
-        cnp.float64_t next_node_min_reach, pair_distance, next_node_core_dist
+        float64_t current_node_core_dist, new_reachability, mutual_reachability_distance
+        float64_t next_node_min_reach, pair_distance, next_node_core_dist
 
-    n_samples = raw_data.shape[0]
-    num_features = raw_data.shape[1]
+    n_samples = len(raw_data)
+    num_features = len(raw_data[0])
 
     mst = np.empty(n_samples - 1, dtype=MST_edge_dtype)
 
-    in_tree = np.zeros(n_samples, dtype=np.int8)
+    in_tree = np.zeros(n_samples, dtype=np.uint8)
     min_reachability = np.full(n_samples, fill_value=np.infty, dtype=np.float64)
     current_sources = np.ones(n_samples, dtype=np.int64)
 
@@ -213,11 +212,11 @@ cpdef cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] make_single_linkage(const MST_e
     cdef:
         cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] single_linkage
 
-        # Note mst.shape[0] is one fewer than the number of samples
-        cnp.int64_t n_samples = mst.shape[0] + 1
-        cnp.intp_t current_node_cluster, next_node_cluster
-        cnp.int64_t current_node, next_node, index
-        cnp.float64_t distance
+        # Note len(mst) is one fewer than the number of samples
+        int64_t n_samples = len(mst) + 1
+        intp_t current_node_cluster, next_node_cluster
+        int64_t current_node, next_node, i
+        float64_t distance
         UnionFind U = UnionFind(n_samples)
 
     single_linkage = np.zeros(n_samples - 1, dtype=HIERARCHY_dtype)

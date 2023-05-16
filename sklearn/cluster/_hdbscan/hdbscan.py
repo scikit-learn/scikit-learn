@@ -31,7 +31,7 @@ from ._linkage import (
 from ._tree import tree_to_labels, labelling_at_cut
 from ._tree import HIERARCHY_dtype
 
-FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
+FAST_METRICS = set(KDTree.valid_metrics() + BallTree.valid_metrics())
 
 # Encodings are arbitrary but must be strictly negative.
 # The current encodings are chosen as extensions to the -1 noise label.
@@ -137,10 +137,12 @@ def _hdbscan_brute(
     # Warn if the MST couldn't be constructed around the missing distances
     if np.isinf(min_spanning_tree["distance"]).any():
         warn(
-            "The minimum spanning tree contains edge weights with value "
-            "infinity. Potentially, you are missing too many distances "
-            "in the initial distance matrix for the given neighborhood "
-            "size.",
+            (
+                "The minimum spanning tree contains edge weights with value "
+                "infinity. Potentially, you are missing too many distances "
+                "in the initial distance matrix for the given neighborhood "
+                "size."
+            ),
             UserWarning,
         )
     return _process_mst(min_spanning_tree)
@@ -447,7 +449,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             None,
             Interval(Integral, left=1, right=None, closed="left"),
         ],
-        "metric": [StrOptions(set(FAST_METRICS + ["precomputed"])), callable],
+        "metric": [StrOptions(FAST_METRICS | {"precomputed"}), callable],
         "metric_params": [dict, None],
         "alpha": [Interval(Real, left=0, right=None, closed="neither")],
         "algorithm": [
@@ -593,12 +595,14 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             n_jobs=self.n_jobs,
             **self._metric_params,
         )
-        if self.algorithm == "kdtree" and self.metric not in KDTree.valid_metrics:
+        if self.algorithm == "kdtree" and self.metric not in KDTree.valid_metrics():
             raise ValueError(
                 f"{self.metric} is not a valid metric for a KDTree-based algorithm."
                 " Please select a different metric."
             )
-        elif self.algorithm == "balltree" and self.metric not in BallTree.valid_metrics:
+        elif (
+            self.algorithm == "balltree" and self.metric not in BallTree.valid_metrics()
+        ):
             raise ValueError(
                 f"{self.metric} is not a valid metric for a BallTree-based algorithm."
                 " Please select a different metric."
@@ -628,7 +632,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
-            elif self.metric in KDTree.valid_metrics:
+            elif self.metric in KDTree.valid_metrics():
                 # TODO: Benchmark KD vs Ball Tree efficiency
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "kd_tree"

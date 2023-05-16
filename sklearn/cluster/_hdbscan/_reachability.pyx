@@ -4,15 +4,15 @@
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: 3-clause BSD
 
-cimport cython
 cimport numpy as cnp
 
 import numpy as np
 from scipy.sparse import issparse
 from cython cimport floating, integral
 from libc.math cimport isfinite, INFINITY
-
+from ...utils._typedefs cimport intp_t
 cnp.import_array()
+
 
 def mutual_reachability_graph(
     distance_matrix, min_samples=5, max_distance=0.0
@@ -79,8 +79,8 @@ def mutual_reachability_graph(
 
 
 def _dense_mutual_reachability_graph(
-    cnp.ndarray[dtype=floating, ndim=2] distance_matrix,
-    cnp.intp_t further_neighbor_idx,
+    floating[:, :] distance_matrix,
+    intp_t further_neighbor_idx,
 ):
     """Dense implementation of mutual reachability graph.
 
@@ -96,7 +96,7 @@ def _dense_mutual_reachability_graph(
         The index of the furthest neighbor to use to define the core distances.
     """
     cdef:
-        cnp.intp_t i, j, n_samples = distance_matrix.shape[0]
+        intp_t i, j, n_samples = len(distance_matrix)
         floating mutual_reachibility_distance
         floating[::1] core_distances
 
@@ -121,12 +121,13 @@ def _dense_mutual_reachability_graph(
                 )
                 distance_matrix[i, j] = mutual_reachibility_distance
 
+
 def _sparse_mutual_reachability_graph(
     cnp.ndarray[floating, ndim=1, mode="c"] data,
     cnp.ndarray[integral, ndim=1, mode="c"] indices,
     cnp.ndarray[integral, ndim=1, mode="c"] indptr,
-    cnp.intp_t n_samples,
-    cnp.intp_t further_neighbor_idx,
+    intp_t n_samples,
+    intp_t further_neighbor_idx,
     floating max_distance,
 ):
     """Sparse implementation of mutual reachability graph.
