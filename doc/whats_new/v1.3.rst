@@ -281,6 +281,10 @@ Changelog
   pandas' conventions.
   :pr:`25629` by `Thomas Fan`_.
 
+- |Fix| Fix deprecation of `base_estimator` in :class:`ensemble.AdaBoostClassifier`
+  and :class:`ensemble.AdaBoostRegressor` that was introduced in :pr:`23819`.
+  :pr:`26242` by :user:`Marko Toplak <markotoplak>`.
+
 :mod:`sklearn.exception`
 ........................
 - |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
@@ -518,6 +522,10 @@ Changelog
   :func:`tree.export_text`. This allows specifying the parameter `class_names`
   for each target class in ascending numerical order.
   :pr:`25387` by :user:`William M <Akbeeh>` and :user:`crispinlogan <crispinlogan>`.
+
+- |Fix| :func:`tree.export_graphviz` and :func:`tree.export_text` now accepts
+  `feature_names` and `class_names` as array-like rather than lists.
+  :pr:`26289` by :user:`Yao Xiao <Charlie-XIAO>`
 
 :mod:`sklearn.utils`
 ....................
