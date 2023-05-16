@@ -670,7 +670,8 @@ def test_set_pipeline_steps():
     with pytest.raises(TypeError, match=msg):
         pipeline.fit([[1]], [1])
 
-    with pytest.raises(TypeError, match=msg):
+    msg = "This 'Pipeline' has no attribute 'fit_transform'"
+    with pytest.raises(AttributeError, match=msg):
         pipeline.fit_transform([[1]], [1])
 
 

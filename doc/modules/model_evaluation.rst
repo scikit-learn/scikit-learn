@@ -795,8 +795,10 @@ score:
    recall_score
 
 Note that the :func:`precision_recall_curve` function is restricted to the
-binary case. The :func:`average_precision_score` function works only in
-binary classification and multilabel indicator format.
+binary case. The :func:`average_precision_score` function supports multiclass
+and multilabel formats by computing each class score in a One-vs-the-rest (OvR)
+fashion and averaging them or not depending of its ``average`` argument value.
+
 The :func:`PredictionRecallDisplay.from_estimator` and
 :func:`PredictionRecallDisplay.from_predictions` functions will plot the
 precision-recall curve as follows.
@@ -913,7 +915,7 @@ In a multiclass and multilabel classification task, the notions of precision,
 recall, and F-measures can be applied to each label independently.
 There are a few ways to combine results across labels,
 specified by the ``average`` argument to the
-:func:`average_precision_score` (multilabel only), :func:`f1_score`,
+:func:`average_precision_score`, :func:`f1_score`,
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score` and :func:`recall_score` functions, as described
 :ref:`above <average>`. Note that if all labels are included, "micro"-averaging

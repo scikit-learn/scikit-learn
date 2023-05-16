@@ -281,6 +281,10 @@ Changelog
   pandas' conventions.
   :pr:`25629` by `Thomas Fan`_.
 
+- |Fix| Fix deprecation of `base_estimator` in :class:`ensemble.AdaBoostClassifier`
+  and :class:`ensemble.AdaBoostRegressor` that was introduced in :pr:`23819`.
+  :pr:`26242` by :user:`Marko Toplak <markotoplak>`.
+
 :mod:`sklearn.exception`
 ........................
 - |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
@@ -405,6 +409,11 @@ Changelog
 
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
+  
+- |Feature| :func:`metrics.average_precision_score` now supports the
+  multiclass case.
+  :pr:`17388` by :user:`Geoffrey Bolmier <gbolmier>` and
+  :pr:`24769` by :user:`Ashwin Mathur <awinml>`.
 
 - |Fix| In :func:`metrics.roc_curve`, use the threshold value `np.inf` instead of
   arbritrary `max(y_score) + 1`. This threshold is associated with the ROC curve point
@@ -417,6 +426,14 @@ Changelog
 - |Enhancement| :func:`model_selection.cross_validate` accepts a new parameter
   `return_indices` to return the train-test indices of each cv split.
   :pr:`25659` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| :func:`getattr` on :meth:`multioutput.MultiOutputRegressor.partial_fit`
+  and :meth:`multioutput.MultiOutputClassifier.partial_fit` now correctly raise
+  an `AttributeError` if done before calling `fit`. :pr:`26333` by `Adrin
+  Jalali`_.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -464,6 +481,10 @@ Changelog
   `pandas.DataFrame`
   :pr:`25220` by :user:`Ian Thompson <it176131>`.
 
+- |Fix| :meth:`pipeline.Pipeline.fit_transform` now raises an `AttributeError`
+  if the last step of the pipeline does not support `fit_transform`.
+  :pr:`26325` by `Adrin Jalali`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -506,6 +527,10 @@ Changelog
   :func:`tree.export_text`. This allows specifying the parameter `class_names`
   for each target class in ascending numerical order.
   :pr:`25387` by :user:`William M <Akbeeh>` and :user:`crispinlogan <crispinlogan>`.
+
+- |Fix| :func:`tree.export_graphviz` and :func:`tree.export_text` now accepts
+  `feature_names` and `class_names` as array-like rather than lists.
+  :pr:`26289` by :user:`Yao Xiao <Charlie-XIAO>`
 
 :mod:`sklearn.utils`
 ....................
