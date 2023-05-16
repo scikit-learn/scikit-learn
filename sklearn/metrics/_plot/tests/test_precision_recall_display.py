@@ -333,3 +333,23 @@ def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name
     # calling plot_chance_level=True should plot the chance level line
     display.plot(plot_chance_level=True)
     assert isinstance(display.chance_level_, mpl.lines.Line2D)
+
+
+def test_precision_recall_raise_no_prevalence(pyplot):
+    # Check that raises correctly when plotting chance level with
+    # no prvelance_pos_label is provided
+    precision = np.array([1, 0.5, 0])
+    recall = np.array([0, 0.5, 1])
+    display = PrecisionRecallDisplay(precision, recall)
+
+    msg = (
+        "You must provide prevalence_pos_label when constructing the "
+        "PrecisionRecallDisplay object in order to plot the chance "
+        "level line. Alternatively, you may use "
+        "PrecisionRecallDisplay.from_estimator or "
+        "PrecisionRecallDisplay.from_predictions "
+        "to automatically set prevalence_pos_label"
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        display.plot(plot_chance_level=True)

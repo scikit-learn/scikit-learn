@@ -195,7 +195,17 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         ylabel = "Precision" + info_pos_label
         self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
-        if plot_chance_level and self.prevalence_pos_label is not None:
+        if plot_chance_level:
+            if self.prevalence_pos_label is None:
+                raise ValueError(
+                    "You must provide prevalence_pos_label when constructing the "
+                    "PrecisionRecallDisplay object in order to plot the chance "
+                    "level line. Alternatively, you may use "
+                    "PrecisionRecallDisplay.from_estimator or "
+                    "PrecisionRecallDisplay.from_predictions "
+                    "to automatically set prevalence_pos_label"
+                )
+
             chance_level_line_kw = {
                 "label": f"Chance level (AP = {self.prevalence_pos_label:0.2f})",
                 "color": "k",
@@ -203,6 +213,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             }
             if chance_level_kw is not None:
                 chance_level_line_kw.update(chance_level_kw)
+
             (self.chance_level_,) = self.ax_.plot(
                 (0, 1),
                 (self.prevalence_pos_label, self.prevalence_pos_label),
