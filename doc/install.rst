@@ -269,26 +269,33 @@ python library for Windows, Mac OSX and Linux.
 Anaconda offers scikit-learn as part of its free distribution.
 
 
-Intel conda channel
+Intel Extension for Scikit-learn
 -------------------
 
-Intel maintains a dedicated conda channel that ships scikit-learn:
+Intel maintains an optimized x86 package, avaialbe in PyPi, conda main 
+and conda-forge:
 
 .. prompt:: bash $
 
-  conda install -c intel scikit-learn
+  conda install scikit-learn-intelex
 
-This version of scikit-learn comes with alternative solvers for some common
-estimators. Those solvers come from the DAAL C++ library and are optimized for
-multi-core Intel CPUs.
+This pacage can accelerate existing intalation of scikit-learn and comes 
+with alternative solvers for some common estimators. Those solvers come 
+from the oneDAL C++ library and are optimized for x86 architeture, 
+delivering most of performance for multi-core Intel CPUs.
 
 Note that those solvers are not enabled by default, please refer to the
-`daal4py <https://intelpython.github.io/daal4py/sklearn.html>`_ documentation
-for more details.
+`scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/what-is-patching.html>`_ 
+documentation for more details on usage scenarious.
+
+.. prompt:: bash $
+
+  from sklearnex import patch_sklearn
+  patch_sklearn()
 
 Compatibility with the standard scikit-learn solvers is checked by running the
 full scikit-learn test suite via automated continuous integration as reported
-on https://github.com/IntelPython/daal4py.
+on https://github.com/intel/scikit-learn-intelex.
 
 
 WinPython for Windows
