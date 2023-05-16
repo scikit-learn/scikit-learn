@@ -447,6 +447,19 @@ def orthogonal_mp(
         return np.squeeze(coef)
 
 
+@validate_params(
+    {
+        "Gram": ["array-like"],
+        "Xy": ["array-like"],
+        "n_nonzero_coefs": [Interval(Integral, 0, None, closed="neither"), None],
+        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "norms_squared": ["array-like", None],
+        "copy_Gram": ["boolean"],
+        "copy_Xy": ["boolean"],
+        "return_path": ["boolean"],
+        "return_n_iter": ["boolean"],
+    }
+)
 def orthogonal_mp_gram(
     Gram,
     Xy,
