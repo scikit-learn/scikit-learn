@@ -89,9 +89,7 @@ for m in ("euclidean", "manhattan"):
     for dtype, MAPPING in zip(
         (np.float64, np.float32), (METRIC_MAPPING, METRIC_MAPPING32)
     ):
-        metric = MAPPING.get(m, None)
-        if metric is not None:
-            d[dtype] = metric
+        d[dtype] = MAPPING[m]
     DISTANCE_METRIC_OBJS.append(d)
 
 P = (1, 2, 3, 4, np.inf)
@@ -105,8 +103,7 @@ neighbors.radius_neighbors_graph = ignore_warnings(neighbors.radius_neighbors_gr
 def _parse_metric(metric, dtype=None):
     if isinstance(metric, str):
         return metric
-    if isinstance(metric, dict):
-        return metric[dtype]()
+    return metric[dtype]()
 
 
 def _generate_test_params_for(metric: str, n_features: int):
@@ -205,7 +202,7 @@ def test_unsupervised_kneighbors(
 
     for algorithm in ALGORITHMS:
         if isinstance(metric, DistanceMetric32):
-            if "tree" in algorithm:
+            if "tree" in algorithm:  # pragma: nocover
                 pytest.skip(
                     "Neither KDTree nor BallTree support 32-bit distance metric objects"
                     " (DistanceMetric32)."
@@ -313,7 +310,7 @@ def test_neigh_predictions_algorithm_agnosticity(
 
     for algorithm in ALGORITHMS:
         if isinstance(metric, DistanceMetric32):
-            if "tree" in algorithm:
+            if "tree" in algorithm:  # pragma: nocover
                 pytest.skip(
                     "Neither KDTree nor BallTree support 32-bit distance metric objects"
                     " (DistanceMetric32)."
@@ -1678,7 +1675,7 @@ def test_neighbors_metrics(
         p = metric_params.pop("p", 2)
         for algorithm in algorithms:
             if isinstance(metric, DistanceMetric32):
-                if "tree" in algorithm:
+                if "tree" in algorithm:  # pragma: nocover
                     pytest.skip(
                         "Neither KDTree nor BallTree support 32-bit distance metric"
                         " objects (DistanceMetric32)."

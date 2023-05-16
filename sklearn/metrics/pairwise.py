@@ -1735,7 +1735,7 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
     return out
 
 
-_VALID_METRICS = [
+_VALID_METRICS: list = [
     "euclidean",
     "l2",
     "l1",
