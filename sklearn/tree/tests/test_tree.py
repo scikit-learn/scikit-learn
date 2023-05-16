@@ -2549,7 +2549,7 @@ def test_missing_values_poisson():
         (datasets.make_classification, DecisionTreeClassifier),
     ],
 )
-@pytest.mark.parametrize("sample_weight_train", [None, "ones"])
+@pytest.mark.parametrize("sample_weight_train", [None, "ones", "one_and_two"])
 def test_missing_values_is_resilience(make_data, Tree, sample_weight_train):
     """Check that trees can deal with missing values and have decent performance."""
 
@@ -2566,6 +2566,9 @@ def test_missing_values_is_resilience(make_data, Tree, sample_weight_train):
 
     if sample_weight_train == "ones":
         sample_weight_train = np.ones(X_missing_train.shape[0])
+    elif sample_weight_train == "one_and_two":
+        sample_weight_train = np.ones(X_missing_train.shape[0])
+        sample_weight_train[::2] = 2
 
     # Train tree with missing values
     tree_with_missing = Tree(random_state=rng)
