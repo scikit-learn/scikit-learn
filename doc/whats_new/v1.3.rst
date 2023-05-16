@@ -516,7 +516,7 @@ Changelog
   :class:`tree.DecisionTreeClassifier` support missing values when
   `splitter='best'` and criterion is `gini`, `entropy`, or `log_loss`,
   for classification or `squared_error`, `friedman_mse`, or `poisson`
-  for regression. :pr:`23595` by `Thomas Fan`_.
+  for regression. :pr:`23595`, :pr:`26376` by `Thomas Fan`_.
 
 - |Enhancement| Adds a `class_names` parameter to
   :func:`tree.export_text`. This allows specifying the parameter `class_names`
