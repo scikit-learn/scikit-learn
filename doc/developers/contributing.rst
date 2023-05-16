@@ -247,10 +247,10 @@ how to set up your git repository:
       git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
       cd scikit-learn
 
-3. Follow steps 2-7 in :ref:`install_bleeding_edge` to build scikit-learn in
+4. Follow steps 2-7 in :ref:`install_bleeding_edge` to build scikit-learn in
    development mode and return to this document.
 
-4. Install the development dependencies:
+5. Install the development dependencies:
 
    .. prompt:: bash $
 
@@ -258,7 +258,7 @@ how to set up your git repository:
 
 .. _upstream:
 
-5. Add the ``upstream`` remote. This saves a reference to the main
+6. Add the ``upstream`` remote. This saves a reference to the main
    scikit-learn repository, which you can use to keep your repository
    synchronized with the latest changes:
 
@@ -266,7 +266,7 @@ how to set up your git repository:
 
         git remote add upstream git@github.com:scikit-learn/scikit-learn.git
 
-6. Check that the `upstream` and `origin` remote aliases are configured correctly
+7. Check that the `upstream` and `origin` remote aliases are configured correctly
    by running `git remote -v` which should display::
 
         origin	git@github.com:YourLogin/scikit-learn.git (fetch)
@@ -278,7 +278,7 @@ You should now have a working installation of scikit-learn, and your git
 repository properly configured. The next steps now describe the process of
 modifying code and submitting a PR:
 
-7. Synchronize your ``main`` branch with the ``upstream/main`` branch,
+8. Synchronize your ``main`` branch with the ``upstream/main`` branch,
    more details on `GitHub Docs <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_:
 
    .. prompt:: bash $
@@ -287,7 +287,7 @@ modifying code and submitting a PR:
         git fetch upstream
         git merge upstream/main
 
-8. Create a feature branch to hold your development changes:
+9. Create a feature branch to hold your development changes:
 
     .. prompt:: bash $
 
@@ -296,18 +296,18 @@ modifying code and submitting a PR:
    and start making changes. Always use a feature branch. It's good
    practice to never work on the ``main`` branch!
 
-9. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
-   run code style checks before each commit:
+10. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
+    run code style checks before each commit:
 
-   .. prompt:: bash $
+    .. prompt:: bash $
 
-        pip install pre-commit
-        pre-commit install
+          pip install pre-commit
+          pre-commit install
 
-   pre-commit checks can be disabled for a particular commit with
-   `git commit -n`.
+    pre-commit checks can be disabled for a particular commit with
+    `git commit -n`.
 
-10. Develop the feature on your feature branch on your computer, using Git to
+11. Develop the feature on your feature branch on your computer, using Git to
     do the version control. When you're done editing, add changed files using
     ``git add`` and then ``git commit``:
 
@@ -323,7 +323,7 @@ modifying code and submitting a PR:
 
        git push -u origin my_feature
 
-11. Follow `these
+12. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
     instructions to create a pull request from your fork. This will send an
     email to the committers. You may want to consider sending an email to the
