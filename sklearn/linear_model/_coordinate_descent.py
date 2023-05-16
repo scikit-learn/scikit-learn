@@ -22,7 +22,7 @@ from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data
 from ..utils import check_array, check_scalar
 from ..utils.validation import check_random_state
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import (
@@ -32,7 +32,6 @@ from ..utils.validation import (
     column_or_1d,
 )
 from ..utils.parallel import delayed, Parallel
-from ..utils._param_validation import validate_params
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from . import _cd_fast as cd_fast  # type: ignore
@@ -177,8 +176,8 @@ def _alpha_grid(
     {
         "X": ["array-like", "sparse matrix"],
         "y": ["array-like", "sparse matrix"],
-        "eps": [Interval(Real, 0, None, closed="neither")],
-        "n_alphas": [Interval(Integral, 0, None, closed="left")],
+        "eps": [Interval(Real, 0, None, closed="neither"), None],
+        "n_alphas": [Interval(Integral, 0, None, closed="left"), None],
         "alphas": ["array-like", None],
         "precompute": [StrOptions({"auto"}), "boolean", "array-like"],
         "Xy": ["array-like", None],
@@ -236,11 +235,11 @@ def lasso_path(
         (n_samples, n_targets)
         Target values.
 
-    eps : float, default=1e-3
+    eps : float, default=1e-3, None
         Length of the path. ``eps=1e-3`` means that
         ``alpha_min / alpha_max = 1e-3``.
 
-    n_alphas : int, default=100
+    n_alphas : int, default=100, None
         Number of alphas along the regularization path.
 
     alphas : ndarray, default=None
