@@ -21,7 +21,7 @@ from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data
 from ..utils import check_array, check_scalar
 from ..utils.validation import check_random_state
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import (
@@ -345,6 +345,23 @@ def lasso_path(
     )
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", "sparse matrix"],
+        "l1_ratio": [Interval(Real, 0, 1.0, closed="both")],
+        "eps": [Interval(Real, 0, None, closed="neither"), None],
+        "n_alphas": [Interval(Integral, 0, None, closed="left"), None],
+        "alphas": ["array-like", None],
+        "precompute": [StrOptions({"auto"}), "boolean", "array-like"],
+        "Xy": ["array-like", None],
+        "copy_X": ["boolean"],
+        "coef_init": ["array-like", None],
+        "verbose": ["verbose"],
+        "return_n_iter": ["boolean"],
+        "positive": ["boolean"],
+    }
+)
 def enet_path(
     X,
     y,
@@ -402,11 +419,11 @@ def enet_path(
         Number between 0 and 1 passed to elastic net (scaling between
         l1 and l2 penalties). ``l1_ratio=1`` corresponds to the Lasso.
 
-    eps : float, default=1e-3
+    eps : float, default=1e-3, None
         Length of the path. ``eps=1e-3`` means that
         ``alpha_min / alpha_max = 1e-3``.
 
-    n_alphas : int, default=100
+    n_alphas : int, default=100, None
         Number of alphas along the regularization path.
 
     alphas : ndarray, default=None
