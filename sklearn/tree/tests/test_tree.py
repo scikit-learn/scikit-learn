@@ -2549,7 +2549,7 @@ def test_missing_values_poisson():
         (datasets.make_classification, DecisionTreeClassifier),
     ],
 )
-@pytest.mark.parametrize("sample_weight_train", [None, "ones", "one_and_two"])
+@pytest.mark.parametrize("sample_weight_train", [None, "ones"])
 def test_missing_values_is_resilience(make_data, Tree, sample_weight_train):
     """Check that trees can deal with missing values and have decent performance."""
 
@@ -2566,9 +2566,6 @@ def test_missing_values_is_resilience(make_data, Tree, sample_weight_train):
 
     if sample_weight_train == "ones":
         sample_weight_train = np.ones(X_missing_train.shape[0])
-    elif sample_weight_train == "one_and_two":
-        sample_weight_train = np.ones(X_missing_train.shape[0])
-        sample_weight_train[::2] = 2
 
     # Train tree with missing values
     tree_with_missing = Tree(random_state=rng)
@@ -2608,3 +2605,32 @@ def test_missing_value_is_predictive():
 
     assert tree.score(X_train, y_train) >= 0.85
     assert tree.score(X_test, y_test) >= 0.85
+
+
+@pytest.mark.parametrize(
+    "make_data, Tree",
+    [
+        (datasets.make_regression, DecisionTreeRegressor),
+        (datasets.make_classification, DecisionTreeClassifier),
+    ],
+)
+def test_sample_weight_non_uniform(make_data, Tree):
+    """Check sample weight is correctly handled with missing values."""
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 1000, 50
+    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
+
+    # Create dataset with missing values
+    X[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
+
+    sample_weight = np.ones(X.shape[0])
+    sample_weight[::2] = 0.0
+
+    # Train tree with missing values
+    tree_with_sw = Tree(random_state=0)
+    tree_with_sw.fit(X, y, sample_weight=sample_weight)
+
+    tree_samples_removed = Tree(random_state=0)
+    tree_samples_removed.fit(X[1::2, :], y[1::2])
+
+    assert_allclose(tree_samples_removed.predict(X), tree_with_sw.predict(X))
