@@ -10,7 +10,9 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 import joblib
+import pytest
 
+import sklearn
 from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import deprecated
@@ -35,6 +37,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
+from sklearn.utils import _array_api
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.estimator_checks import check_decision_proba_consistency
 from sklearn.utils._param_validation import Interval, StrOptions
@@ -42,6 +45,8 @@ from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
     _set_checking_parameters,
+    check_array_api_input,
+    check_array_api_input_torch,
     check_class_weight_balanced_linear_classifier,
     check_classifier_data_not_an_array,
     check_classifiers_multilabel_output_format_decision_function,
@@ -480,6 +485,41 @@ class PartialFitChecksName(BaseEstimator):
         self._validate_data(X, y, reset=reset)
         self._fitted = True
         return self
+
+
+class BrokenArrayAPI(BaseEstimator):
+    """Make different predictions when using Numpy and the Array API"""
+    def fit(self, X, y):
+        return self
+
+    def predict(self, X):
+        enabled = sklearn.get_config()["array_api_dispatch"]
+        xp, _ = _array_api.get_namespace(X)
+        if enabled:
+            return xp.asarray([1, 2, 3])
+        else:
+            return np.array([3, 2, 1])
+
+
+def test_check_array_api_input():
+    xp = pytest.importorskip("numpy.array_api")
+
+    with pytest.raises(AssertionError, match="Not equal to tolerance"):
+        check_array_api_input(
+            "BrokenArrayAPI", BrokenArrayAPI(), array_namespace="numpy.array_api"
+        )
+
+
+def test_check_array_api_input_torch():
+    xp = pytest.importorskip("torch")
+
+    with pytest.raises(AssertionError, match="Not equal to tolerance"):
+        check_array_api_input_torch(
+            "BrokenArrayAPI",
+            BrokenArrayAPI(),
+            device="cpu",
+            dtype="float32",
+        )
 
 
 def test_not_an_array_array_function():
