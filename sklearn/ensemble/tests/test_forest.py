@@ -1791,3 +1791,65 @@ def test_round_samples_to_one_when_samples_too_low(class_weight):
         n_estimators=10, max_samples=1e-4, class_weight=class_weight, random_state=0
     )
     forest.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "make_data, Forest",
+    [
+        (datasets.make_regression, RandomForestRegressor),
+        (datasets.make_classification, RandomForestClassifier),
+    ],
+)
+def test_missing_values_is_resilience(make_data, Forest):
+    """Check that forest can deal with missing values and have decent performance."""
+
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 1000, 10
+    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
+
+    # Create dataset with missing values
+    X_missing = X.copy()
+    X_missing[rng.choice([False, True], size=X.shape, p=[0.95, 0.05])] = np.nan
+    X_missing_train, X_missing_test, y_train, y_test = train_test_split(
+        X_missing, y, random_state=0
+    )
+
+    # Train forest with missing values
+    forest_with_missing = Forest(random_state=rng, n_estimators=50)
+    forest_with_missing.fit(X_missing_train, y_train)
+    score_with_missing = forest_with_missing.score(X_missing_test, y_test)
+
+    # Train forest without missing values
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    forest = Forest(random_state=rng, n_estimators=50)
+    forest.fit(X_train, y_train)
+    score_without_missing = forest.score(X_test, y_test)
+
+    # Score is still 80 percent of the forest's score that had no missing values
+    assert score_with_missing >= 0.80 * score_without_missing
+
+
+@pytest.mark.parametrize("Forest", [RandomForestClassifier, RandomForestRegressor])
+def test_missing_value_is_predictive(Forest):
+    """Check the forest learns when only the missing value is predictive."""
+    rng = np.random.RandomState(0)
+    n_samples = 1000
+
+    X = rng.standard_normal(size=(n_samples, 10))
+    y = rng.randint(0, high=2, size=n_samples)
+
+    # Create a predictive feature using `y` and with some noise
+    X_random_mask = rng.choice([False, True], size=n_samples, p=[0.95, 0.05])
+    y_mask = y.copy().astype(bool)
+    y_mask[X_random_mask] = ~y_mask[X_random_mask]
+
+    X_predictive = rng.standard_normal(size=n_samples)
+    X_predictive[y_mask] = np.nan
+
+    X[:, 5] = X_predictive
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
+    forest = Forest(random_state=rng, n_estimators=50).fit(X_train, y_train)
+
+    assert forest.score(X_train, y_train) >= 0.85
+    assert forest.score(X_test, y_test) >= 0.80

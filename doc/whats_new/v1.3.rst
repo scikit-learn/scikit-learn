@@ -240,6 +240,12 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |MajorFeature| :class:`ensemble.RandomForestClassifier` and
+  :class:`ensemble.RandomForestRegressor` support missing values when
+  the criterion is `gini`, `entropy`, or `log_loss`,
+  for classification or `squared_error`, `friedman_mse`, or `poisson`
+  for regression. :pr:`xxxxx` by `Thomas Fan`_.
+
 - |Feature| :class:`ensemble.HistGradientBoostingRegressor` now supports
   the Gamma deviance loss via `loss="gamma"`.
   Using the Gamma deviance as loss function comes in handy for modelling skewed

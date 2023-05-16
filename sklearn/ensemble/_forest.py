@@ -62,9 +62,11 @@ from ..tree import (
     ExtraTreeRegressor,
 )
 from ..tree._tree import DTYPE, DOUBLE
+from ..base import clone
 from ..utils import check_random_state, compute_sample_weight
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
+from ..utils._tags import _safe_tags
 from ..utils.parallel import delayed, Parallel
 from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.validation import (
@@ -156,6 +158,7 @@ def _parallel_build_trees(
     verbose=0,
     class_weight=None,
     n_samples_bootstrap=None,
+    feature_has_missing=None,
 ):
     """
     Private function used to fit a single tree in parallel."""
@@ -182,9 +185,21 @@ def _parallel_build_trees(
         elif class_weight == "balanced_subsample":
             curr_sample_weight *= compute_sample_weight("balanced", y, indices=indices)
 
-        tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
+        tree._fit(
+            X,
+            y,
+            sample_weight=curr_sample_weight,
+            check_input=False,
+            feature_has_missing=feature_has_missing,
+        )
     else:
-        tree.fit(X, y, sample_weight=sample_weight, check_input=False)
+        tree._fit(
+            X,
+            y,
+            sample_weight=sample_weight,
+            check_input=False,
+            feature_has_missing=feature_has_missing,
+        )
 
     return tree
 
@@ -343,9 +358,21 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # Validate or convert input data
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
+
         X, y = self._validate_data(
-            X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE
+            X,
+            y,
+            multi_output=True,
+            accept_sparse="csc",
+            dtype=DTYPE,
+            force_all_finite=False,
         )
+        # _compute_feature_has_missing checks if X has missing values and will raise
+        # an error if the underlying tree base estimator can't handle missing values.
+        estimator = clone(self.estimator)
+        estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
+        feature_has_missing = estimator._compute_feature_has_missing(X)
+
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -467,6 +494,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     verbose=self.verbose,
                     class_weight=self.class_weight,
                     n_samples_bootstrap=n_samples_bootstrap,
+                    feature_has_missing=feature_has_missing,
                 )
                 for i, t in enumerate(trees)
             )
@@ -592,7 +620,18 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         Validate X whenever one tries to predict, apply, predict_proba."""
         check_is_fitted(self)
-        X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr", reset=False)
+        if self.estimators_[0]._support_missing_values(X):
+            force_all_finite = "allow-nan"
+        else:
+            force_all_finite = True
+
+        X = self._validate_data(
+            X,
+            dtype=DTYPE,
+            accept_sparse="csr",
+            reset=False,
+            force_all_finite=force_all_finite,
+        )
         if issparse(X) and (X.indices.dtype != np.intc or X.indptr.dtype != np.intc):
             raise ValueError("No support for np.int64 index based sparse matrices")
         return X
@@ -631,6 +670,15 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         all_importances = np.mean(all_importances, axis=0, dtype=np.float64)
         return all_importances / np.sum(all_importances)
+
+    def _more_tags(self):
+        # Ignore errors because the parameters are not validated
+        try:
+            estimator = clone(self.estimator)
+            estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
+            return {"allow_nan": _safe_tags(estimator, key="allow_nan")}
+        except (AttributeError, TypeError):
+            return {}
 
 
 def _accumulate_prediction(predict, X, out, lock):
