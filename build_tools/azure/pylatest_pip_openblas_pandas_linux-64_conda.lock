@@ -10,7 +10,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/libgomp-11.2.0-h1234567_1.conda#b37
 https://repo.anaconda.com/pkgs/main/linux-64/libstdcxx-ng-11.2.0-h1234567_1.conda#57623d10a70e09e1d048c2b2b6f4e2dd
 https://repo.anaconda.com/pkgs/main/linux-64/_openmp_mutex-5.1-1_gnu.conda#71d281e9c2192cb3fa425655a8defb85
 https://repo.anaconda.com/pkgs/main/linux-64/libgcc-ng-11.2.0-h1234567_1.conda#a87728dabf3151fb9cfa990bd2eb0464
-https://repo.anaconda.com/pkgs/main/linux-64/libffi-3.4.2-h6a678d5_6.conda#6d65e299b535d3b3613b6d4bce901834
+https://repo.anaconda.com/pkgs/main/linux-64/libffi-3.4.4-h6a678d5_0.conda#06e288f9250abef59b9a367d151fc339
 https://repo.anaconda.com/pkgs/main/linux-64/ncurses-6.4-h6a678d5_0.conda#5558eec6e2191741a92f832ea826251c
 https://repo.anaconda.com/pkgs/main/linux-64/openssl-1.1.1t-h7f8727e_0.conda#0410db682c02665511bd4203ade48a32
 https://repo.anaconda.com/pkgs/main/linux-64/xz-5.4.2-h5eee18b_0.conda#bcd31de48a0dcb44bc5b99675800c5cc
@@ -21,7 +21,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/tk-8.6.12-h1ccaba5_0.conda#fa10ff4a
 https://repo.anaconda.com/pkgs/main/linux-64/sqlite-3.41.2-h5eee18b_0.conda#c7086c9ceb6cfe1c4c729a774a2d88a5
 https://repo.anaconda.com/pkgs/main/linux-64/python-3.9.16-h7a1cb2a_2.conda#6b4f255f11b3facb3fa17061757b8cc2
 https://repo.anaconda.com/pkgs/main/noarch/alabaster-0.7.12-pyhd3eb1b0_0.tar.bz2#21ad3b69a5ce6c22e724e9dbb4cffa65
-https://repo.anaconda.com/pkgs/main/linux-64/certifi-2022.12.7-py39h06a4308_0.conda#b4238d910e43d09651eebe8db79b5c68
+https://repo.anaconda.com/pkgs/main/linux-64/certifi-2023.5.7-py39h06a4308_0.conda#22fb6d26ae5933f8c2b29b5bf252f9aa
 https://repo.anaconda.com/pkgs/main/noarch/charset-normalizer-2.0.4-pyhd3eb1b0_0.conda#e7a441d94234b2b5fafee06e25dbf076
 https://repo.anaconda.com/pkgs/main/linux-64/colorama-0.4.6-py39h06a4308_0.conda#ae47f0eeea0e7780ddd4b269884b3e99
 https://repo.anaconda.com/pkgs/main/linux-64/docutils-0.18.1-py39h06a4308_3.conda#89b9d5302135916200139e107981baab
@@ -30,7 +30,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/imagesize-1.4.1-py39h06a4308_0.cond
 https://repo.anaconda.com/pkgs/main/linux-64/markupsafe-2.1.1-py39h7f8727e_0.conda#81867b86384d8b25db1141c360803b5f
 https://repo.anaconda.com/pkgs/main/linux-64/packaging-23.0-py39h06a4308_0.conda#a3da65d1bfc6e59f5411c11c0fd1315f
 https://repo.anaconda.com/pkgs/main/noarch/pycparser-2.21-pyhd3eb1b0_0.conda#135a72ff2a31150a3a3ff0b1edd41ca9
-https://repo.anaconda.com/pkgs/main/noarch/pygments-2.11.2-pyhd3eb1b0_0.conda#eff55c770961f459a734cf86768aac98
+https://repo.anaconda.com/pkgs/main/linux-64/pygments-2.15.1-py39h06a4308_0.conda#ef67ab61c85263b289eedab42f1f9179
 https://repo.anaconda.com/pkgs/main/linux-64/pysocks-1.7.1-py39h06a4308_0.conda#0a2dc6c521fd674b11a99dea461c2d84
 https://repo.anaconda.com/pkgs/main/linux-64/pytz-2022.7-py39h06a4308_0.conda#42b322e3f6795196a42b1c3ddbb7807b
 https://repo.anaconda.com/pkgs/main/linux-64/setuptools-66.0.0-py39h06a4308_0.conda#01bcb83d74778d25c2eb2d0958999954
@@ -58,7 +58,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/sphinx-5.0.2-py39h06a4308_0.conda#8
 # pip cython @ https://files.pythonhosted.org/packages/2f/6d/7dc0e08b5305ffb790043535460c2bf2e1d2a74e46e1e284d0886c6cb0ed/Cython-0.29.34-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_24_x86_64.whl#sha256=cfb2302ef617d647ee590a4c0a00ba3c2da05f301dcefe7721125565d2e51351
 # pip exceptiongroup @ https://files.pythonhosted.org/packages/61/97/17ed81b7a8d24d8f69b62c0db37abbd8c0042d4b3fc429c73dab986e7483/exceptiongroup-1.1.1-py3-none-any.whl#sha256=232c37c63e4f682982c8b6459f33a8981039e5fb8756b2074364e5055c498c9e
 # pip execnet @ https://files.pythonhosted.org/packages/81/c0/3072ecc23f4c5e0a1af35e3a222855cfd9c80a1a105ca67be3b6172637dd/execnet-1.9.0-py2.py3-none-any.whl#sha256=a295f7cc774947aac58dde7fdc85f4aa00c42adf5d8f5468fc630c1acf30a142
-# pip fonttools @ https://files.pythonhosted.org/packages/16/07/1c7547e27f559ec078801d522cc4d5127cdd4ef8e831c8ddcd9584668a07/fonttools-4.39.3-py3-none-any.whl#sha256=64c0c05c337f826183637570ac5ab49ee220eec66cf50248e8df527edfa95aeb
+# pip fonttools @ https://files.pythonhosted.org/packages/ad/5f/20da4f41e33e77723b0100ded6539529bd159319ed49d6459a4647cdc7ee/fonttools-4.39.4-py3-none-any.whl#sha256=106caf6167c4597556b31a8d9175a3fdc0356fdcd70ab19973c3b0d4c893c461
 # pip iniconfig @ https://files.pythonhosted.org/packages/ef/a6/62565a6e1cf69e10f5727360368e451d4b7f58beeac6173dc9db836a5b46/iniconfig-2.0.0-py3-none-any.whl#sha256=b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374
 # pip joblib @ https://files.pythonhosted.org/packages/91/d4/3b4c8e5a30604df4c7518c562d4bf0502f2fa29221459226e140cf846512/joblib-1.2.0-py3-none-any.whl#sha256=091138ed78f800342968c523bdde947e7a305b8594b910a0fea2ab83c3c6d385
 # pip kiwisolver @ https://files.pythonhosted.org/packages/a4/36/c414d75be311ce97ef7248edcc4fc05afae2998641bf6b592d43a9dee581/kiwisolver-1.4.4-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl#sha256=7c43e1e1206cd421cd92e6b3280d4385d41d7166b3ed577ac20444b6995a445f
