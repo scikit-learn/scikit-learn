@@ -24,7 +24,7 @@ from ..base import RegressorMixin, MultiOutputMixin
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
 from ..utils import arrayfuncs, as_float_array  # type: ignore
 from ..utils import check_random_state
-from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..utils.parallel import delayed, Parallel
@@ -186,6 +186,23 @@ def lars_path(
     )
 
 
+@validate_params(
+    {
+        "Xy": ["array-like"],
+        "Gram": ["array-like"],
+        "n_samples": [Interval(Integral, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "alpha_min": [Interval(Real, 0, None, closed="left")],
+        "method": [StrOptions({"lar", "lasso"})],
+        "copy_X": ["boolean"],
+        "eps": [Interval(Real, 0, None, closed="neither"), None],
+        "copy_Gram": ["boolean"],
+        "verbose": ["verbose"],
+        "return_path": ["boolean"],
+        "return_n_iter": ["boolean"],
+        "positive": ["boolean"],
+    }
+)
 def lars_path_gram(
     Xy,
     Gram,
@@ -221,7 +238,7 @@ def lars_path_gram(
     Gram : array-like of shape (n_features, n_features)
         Gram = np.dot(X.T * X).
 
-    n_samples : int or float
+    n_samples : int
         Equivalent size of sample.
 
     max_iter : int, default=500
