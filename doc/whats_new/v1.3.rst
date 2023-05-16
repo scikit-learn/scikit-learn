@@ -195,7 +195,7 @@ Changelog
   `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_,
   by :user:`Leland McInnes <lmcinnes>` et al.
 
-  :pr:`22616` by :user:`Meekail Zain <micky774>`
+  :pr:`26385` by :user:`Meekail Zain <micky774>`
 
 :mod:`sklearn.covariance`
 .........................
@@ -422,7 +422,7 @@ Changelog
 
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
-  
+
 - |Feature| :func:`metrics.average_precision_score` now supports the
   multiclass case.
   :pr:`17388` by :user:`Geoffrey Bolmier <gbolmier>` and
