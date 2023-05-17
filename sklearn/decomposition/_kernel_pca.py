@@ -185,7 +185,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
     gamma_ : float
         Kernel coefficient for rbf, poly and sigmoid kernels. When `gamma`
         is explicitly provided, this is just the same as `gamma`. When `gamma`
-        is `None`, this will reveal the true value of kernel coefficient.
+        is `None`, this is the actual value of kernel coefficient.
 
         .. versionadded:: 1.3
 

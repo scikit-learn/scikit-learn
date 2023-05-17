@@ -45,10 +45,10 @@ random sampling procedures.
 
 - |Fix| :class:`decomposition.KernelPCA` may produce different results through
   `inverse_transform` if `gamma` is `None`. Now it will be chosen correctly as
-  `1/num_features` of the data that it is fitted on, while previously it might
-  be incorrectly chosen as `1/num_features` of the data passed to `inverse_transform`.
-  An additional parameter `gamma_` is provided for revealing the true value of
-  `gamma` used each time the kernel is called.
+  `1/n_features` of the data that it is fitted on, while previously it might be
+  incorrectly chosen as `1/n_features` of the data passed to `inverse_transform`.
+  An new attribute `gamma_` is provided for revealing the actual value of `gamma`
+  used each time the kernel is called.
   :pr:`26337` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 Changes impacting all modules

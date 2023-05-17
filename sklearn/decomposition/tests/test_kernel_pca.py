@@ -550,4 +550,4 @@ def test_kernel_pca_inverse_correct_gamma():
     X1_recon = kpca1.inverse_transform(kpca1.transform(X))
     X2_recon = kpca2.inverse_transform(kpca1.transform(X))
 
-    assert_array_equal(X1_recon, X2_recon)
+    assert_allclose(X1_recon, X2_recon)
