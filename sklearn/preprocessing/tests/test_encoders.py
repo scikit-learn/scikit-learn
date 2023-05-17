@@ -2430,7 +2430,38 @@ def test_ordinal_encoder_missing_feature_names():
         ordinal.fit(X)
 
 
-def test_ordinal_encoder_unexpected_feature_names():
+@pytest.mark.parametrize(
+    "max_categories, unexpected_features, n_unexpected_features",
+    [
+        ({"str": 3, "int": 2, "categorical": 1, "unexpected": 13}, ["unexpected"], 1),
+        (
+            {
+                "str": 3,
+                "int": 2,
+                "categorical": 1,
+                "unexpected": 13,
+                "unexpected_2": 13,
+                "unexpected_3": 13,
+                "unexpected_3": 13,
+                "unexpected_4": 13,
+                "unexpected_5": 13,
+                "unexpected_6": 13,
+            },
+            [
+                "unexpected",
+                "unexpected_2",
+                "unexpected_3",
+                "unexpected_4",
+                "unexpected_5",
+                "...",
+            ],
+            6,
+        ),
+    ],
+)
+def test_ordinal_encoder_unexpected_feature_names(
+    max_categories, unexpected_features, n_unexpected_features
+):
     """Check behavior when max_categories specifies features that are not present on a
     dataset."""
     pd = pytest.importorskip("pandas")
@@ -2447,11 +2478,11 @@ def test_ordinal_encoder_unexpected_feature_names():
         columns=["str", "int", "categorical"],
     )
 
-    max_categories = {"str": 3, "int": 2, "categorical": 1, "unexpected": 13}
     ordinal = OrdinalEncoder(max_categories=max_categories)
 
     msg = re.escape(
-        "max_categories contains 1 unexpected feature names: ['unexpected']."
+        f"max_categories contains {n_unexpected_features} unexpected feature names:"
+        f" {unexpected_features}."
     )
 
     with pytest.raises(ValueError, match=msg):
