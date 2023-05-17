@@ -149,8 +149,11 @@ jobs:
         versionSpec: $(PYTHON_VERSION)
         addToPath: true
 
-    - bash: bash build_tools/azure/build_pyodide_wheel.sh
-      displayName: Build Pyodide wheel
+    - bash: bash build_tools/azure/install_pyodide.sh
+      displayName: Build Pyodide wheel and install it in a Pyodide venv
+
+    - bash: bash build_tools/azure/test_script_pyodide.sh
+      displayName: Test Pyodide wheel
 
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml

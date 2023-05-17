@@ -9,8 +9,13 @@ cd emsdk
 source emsdk_env.sh
 cd -
 
-pip install pyodide-build==$PYODIDE_VERSION
+pip install pyodide-build==$PYODIDE_VERSION pyodide-cli
 
 pyodide build
 
 ls -ltrh dist
+
+pyodide venv pyodide-venv
+source pyodide-venv/bin/activate
+
+pip install dist/*.whl
