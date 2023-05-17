@@ -18,7 +18,6 @@ from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weig
 from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.stats import _weighted_percentile
-from ..utils.fixes import sp_version, parse_version
 
 from ._csr_polynomial_expansion import (
     _csr_polynomial_expansion,

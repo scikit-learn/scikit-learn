@@ -20,7 +20,6 @@ from sklearn.preprocessing._csr_polynomial_expansion import (
     _calc_expanded_nnz,
     _get_sizeof_LARGEST_INT_t,
 )
-from sklearn.utils.fixes import parse_version, sp_version
 
 
 @pytest.mark.parametrize("est", (PolynomialFeatures, SplineTransformer))
