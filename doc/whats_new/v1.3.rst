@@ -521,12 +521,16 @@ Changelog
   :class:`tree.DecisionTreeClassifier` support missing values when
   `splitter='best'` and criterion is `gini`, `entropy`, or `log_loss`,
   for classification or `squared_error`, `friedman_mse`, or `poisson`
-  for regression. :pr:`23595` by `Thomas Fan`_.
+  for regression. :pr:`23595`, :pr:`26376` by `Thomas Fan`_.
 
 - |Enhancement| Adds a `class_names` parameter to
   :func:`tree.export_text`. This allows specifying the parameter `class_names`
   for each target class in ascending numerical order.
   :pr:`25387` by :user:`William M <Akbeeh>` and :user:`crispinlogan <crispinlogan>`.
+
+- |Fix| :func:`tree.export_graphviz` and :func:`tree.export_text` now accepts
+  `feature_names` and `class_names` as array-like rather than lists.
+  :pr:`26289` by :user:`Yao Xiao <Charlie-XIAO>`
 
 :mod:`sklearn.utils`
 ....................
