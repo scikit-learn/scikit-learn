@@ -64,7 +64,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "learning_rate": [Interval(Real, 0, None, closed="neither")],
         "random_state": ["random_state"],
-        "base_estimator": [HasMethods(["fit", "predict"]), StrOptions({"deprecated"})],
+        "base_estimator": [
+            HasMethods(["fit", "predict"]),
+            StrOptions({"deprecated"}),
+            None,
+        ],
     }
 
     @abstractmethod
