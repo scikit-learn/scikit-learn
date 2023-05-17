@@ -244,7 +244,7 @@ Changelog
   :class:`ensemble.RandomForestRegressor` support missing values when
   the criterion is `gini`, `entropy`, or `log_loss`,
   for classification or `squared_error`, `friedman_mse`, or `poisson`
-  for regression. :pr:`xxxxx` by `Thomas Fan`_.
+  for regression. :pr:`26391` by `Thomas Fan`_.
 
 - |Feature| :class:`ensemble.HistGradientBoostingRegressor` now supports
   the Gamma deviance loss via `loss="gamma"`.
@@ -415,7 +415,7 @@ Changelog
 
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
-  
+
 - |Feature| :func:`metrics.average_precision_score` now supports the
   multiclass case.
   :pr:`17388` by :user:`Geoffrey Bolmier <gbolmier>` and
