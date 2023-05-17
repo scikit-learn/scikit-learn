@@ -759,13 +759,18 @@ def test_multimetric_scorer_calls_method_once(
     X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
 
     mock_est = Mock()
-    fit_func = Mock(return_value=mock_est)
-    predict_func = Mock(return_value=y)
+    mock_est._estimator_type = "classifier"
+    fit_func = Mock(return_value=mock_est, name="fit")
+    fit_func.__name__ = "fit"
+    predict_func = Mock(return_value=y, name="predict")
+    predict_func.__name__ = "predict"
 
     pos_proba = np.random.rand(X.shape[0])
     proba = np.c_[1 - pos_proba, pos_proba]
-    predict_proba_func = Mock(return_value=proba)
-    decision_function_func = Mock(return_value=pos_proba)
+    predict_proba_func = Mock(return_value=proba, name="predict_proba")
+    predict_proba_func.__name__ = "predict_proba"
+    decision_function_func = Mock(return_value=pos_proba, name="decision_function")
+    decision_function_func.__name__ = "decision_function"
 
     mock_est.fit = fit_func
     mock_est.predict = predict_func
@@ -961,7 +966,7 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
     lr = Perceptron().fit(X, y)
-    msg = "'Perceptron' object has no attribute 'predict_proba'"
+    msg = "Perceptron has none of the following attributes: predict_proba."
     with pytest.raises(AttributeError, match=msg):
         scorer(lr, X, y)
 

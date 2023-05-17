@@ -125,6 +125,20 @@ def _assert_all_finite(
         first_pass_isfinite = xp.isfinite(xp.sum(X))
     if first_pass_isfinite:
         return
+
+    _assert_all_finite_element_wise(
+        X,
+        xp=xp,
+        allow_nan=allow_nan,
+        msg_dtype=msg_dtype,
+        estimator_name=estimator_name,
+        input_name=input_name,
+    )
+
+
+def _assert_all_finite_element_wise(
+    X, *, xp, allow_nan, msg_dtype=None, estimator_name=None, input_name=""
+):
     # Cython implementation doesn't support FP16 or complex numbers
     use_cython = (
         xp is np and X.data.contiguous and X.dtype.type in {np.float32, np.float64}
