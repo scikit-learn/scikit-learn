@@ -19,3 +19,4 @@ pyodide venv pyodide-venv
 source pyodide-venv/bin/activate
 
 pip install dist/*.whl
+pip list
