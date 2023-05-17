@@ -47,7 +47,7 @@ random sampling procedures.
   `inverse_transform` if `gamma` is `None`. Now it will be chosen correctly as
   `1/n_features` of the data that it is fitted on, while previously it might be
   incorrectly chosen as `1/n_features` of the data passed to `inverse_transform`.
-  An new attribute `gamma_` is provided for revealing the actual value of `gamma`
+  A new attribute `gamma_` is provided for revealing the actual value of `gamma`
   used each time the kernel is called.
   :pr:`26337` by :user:`Yao Xiao <Charlie-XIAO>`.
 
