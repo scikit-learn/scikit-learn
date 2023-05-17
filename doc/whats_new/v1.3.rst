@@ -420,6 +420,14 @@ Changelog
   `tpr=0` and `fpr=0`.
   :pr:`26194` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.mixture`
+......................
+
+- |Fix| The `n_init` parameter of classes :class:`mixture.GaussianMixture` and
+  :class:`BayesianGaussianMixture` now optimizes the model based on the score.
+  :pr:`24616` by :user:`Omar Salman <OmarManzoor>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
