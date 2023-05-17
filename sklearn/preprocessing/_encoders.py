@@ -13,10 +13,10 @@ from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
 from ..utils import check_array, is_scalar_nan, _safe_indexing
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
-from ..utils.validation import _is_arraylike_not_scalar
 from ..utils._param_validation import Interval, StrOptions, Hidden
 from ..utils._param_validation import RealNotInt
 from ..utils._mask import _get_mask
+from ..utils.validation import _is_arraylike_not_scalar
 
 from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
 
@@ -76,9 +76,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return_counts=False,
         return_and_ignore_missing_for_infrequent=False,
     ):
-        self._check_infrequent_enabled()
         self._check_n_features(X, reset=True)
         self._check_feature_names(X, reset=True)
+        self._check_infrequent_enabled()
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite
         )
@@ -251,37 +251,89 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             for category, indices in zip(self.categories_, infrequent_indices)
         ]
 
-    def _max_categories_enable_infrequent(self, max_categories):
+    def _validate_max_categories(self):
         """
-        This function checks whether the value of max_categories
-        enables infrequent categories.
+        Check max_categories and returns the corresponding array.
         """
-        return max_categories is not None and max_categories >= 1
+        max_categories = getattr(self, "max_categories", None)
+
+        if isinstance(max_categories, Integral) and max_categories >= 1:
+            return [max_categories] * self.n_features_in_
+
+        elif isinstance(max_categories, dict):
+            if not hasattr(self, "feature_names_in_"):
+                raise ValueError(
+                    f"{self.__class__.__name__} was not fitted on data "
+                    "with feature names. Pass max_categories as an integer "
+                    "array instead."
+                )
+
+            unexpected_feature_names = list(
+                set(self.max_categories) - set(self.feature_names_in_)
+            )
+            unexpected_feature_names.sort()  # deterministic error message
+            n_unexpeced = len(unexpected_feature_names)
+            if unexpected_feature_names:
+                if len(unexpected_feature_names) > 5:
+                    unexpected_feature_names = unexpected_feature_names[:5]
+                    unexpected_feature_names.append("...")
+                raise ValueError(
+                    f"max_categories contains {n_unexpeced} unexpected feature "
+                    f"names: {unexpected_feature_names}."
+                )
+
+            max_categories_array = [None] * self.n_features_in_
+            for feature_idx, feature_name in enumerate(self.feature_names_in_):
+                if feature_name in max_categories:
+                    max_count = max_categories[feature_name]
+                    if not (isinstance(max_count, Integral) and max_count >= 1):
+                        raise ValueError(
+                            f"max_categories['{feature_name}'] must be an "
+                            f"integer at least 1. Got {max_count!r}."
+                        )
+                    max_categories_array[feature_idx] = max_count
+            return max_categories_array if any(max_categories_array) else None
+
+        elif _is_arraylike_not_scalar(max_categories):
+            max_categories = np.asarray(max_categories)
+            if (
+                max_categories.ndim != 1
+                or max_categories.shape[0] != self.n_features_in_
+            ):
+                raise ValueError(
+                    f"max_categories has shape {max_categories.shape} but the "
+                    f"input data X has {self.n_features_in_} features."
+                )
+
+            unexpected_max_counts = set(
+                max_count
+                for max_count in max_categories
+                if not (
+                    max_count is None
+                    or (isinstance(max_count, Integral) and max_count >= 1)
+                )
+            )
+            if len(unexpected_max_counts):
+                raise ValueError(
+                    "max_categories must be an array-like of None or integers "
+                    "at least 1. Observed "
+                    f"values: {list(unexpected_max_counts)}."
+                )
+            return max_categories if any(max_categories) else None
+
+        else:
+            return None
 
     def _check_infrequent_enabled(self):
         """
         This functions checks whether _infrequent_enabled is True or False.
         This has to be called after parameter validation in the fit function.
         """
-        max_categories = getattr(self, "max_categories", None)
+        self._max_categories_per_feature = self._validate_max_categories()
         min_frequency = getattr(self, "min_frequency", None)
         self._infrequent_enabled = (
-            self._max_categories_enable_infrequent(max_categories)
+            self._max_categories_per_feature is not None
         ) or min_frequency is not None
-
-    def _has_infrequent_categories(self, n_current_features, col_idx):
-        """
-        This function checks if there are any infrequent categories.
-        """
-        return (
-            self.max_categories is not None and self.max_categories < n_current_features
-        )
-
-    def _get_frequent_category_count(self, col_idx):
-        """
-        This functions computes the number of frequent categories.
-        """
-        return self.max_categories - 1
 
     def _identify_infrequent(self, category_count, n_samples, col_idx):
         """Compute the infrequent indices.
@@ -312,9 +364,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             infrequent_mask = np.zeros(category_count.shape[0], dtype=bool)
 
         n_current_features = category_count.size - infrequent_mask.sum() + 1
-        if self._has_infrequent_categories(n_current_features, col_idx):
+        if self._max_categories_per_feature is not None:
+            max_categories = self._max_categories_per_feature[col_idx]
+        else:
+            max_categories = None
+
+        if max_categories is not None and max_categories < n_current_features:
             # max_categories includes the one infrequent category
-            frequent_category_count = self._get_frequent_category_count(col_idx)
+            frequent_category_count = max_categories - 1
             if frequent_category_count == 0:
                 # All categories are infrequent
                 infrequent_mask[:] = True
@@ -1481,103 +1538,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.min_frequency = min_frequency
         self.max_categories = max_categories
 
-    def _check_max_categories(self):
-        """
-        Check the max_categories and convert to the corresponding array.
-        """
-        max_categories = self.max_categories
-        if isinstance(max_categories, dict):
-            max_categories = np.full(
-                shape=self.n_features_in_,
-                fill_value=None,
-                dtype=object,
-            )
-            if not hasattr(self, "feature_names_in_"):
-                raise ValueError(
-                    f"{self.__class__.__name__} was not fitted on data "
-                    "with feature names. Pass max_categories as an integer "
-                    "array instead."
-                )
-            unexpected_feature_names = list(
-                set(self.max_categories) - set(self.feature_names_in_)
-            )
-            unexpected_feature_names.sort()  # deterministic error message
-            n_unexpeced = len(unexpected_feature_names)
-            if unexpected_feature_names:
-                if len(unexpected_feature_names) > 5:
-                    unexpected_feature_names = unexpected_feature_names[:5]
-                    unexpected_feature_names.append("...")
-                raise ValueError(
-                    f"max_categories contains {n_unexpeced} unexpected feature "
-                    f"names: {unexpected_feature_names}."
-                )
-            for feature_idx, feature_name in enumerate(self.feature_names_in_):
-                if feature_name in self.max_categories:
-                    max_count = self.max_categories[feature_name]
-                    if not (isinstance(max_count, Integral) and max_count >= 1):
-                        raise ValueError(
-                            f"max_categories['{feature_name}'] must be an "
-                            f"integer at least 1. Got {max_count!r}."
-                        )
-                    max_categories[feature_idx] = max_count
-        else:
-            max_categories = np.asarray(max_categories)
-            if max_categories.shape[0] != self.n_features_in_:
-                raise ValueError(
-                    f"max_categories has shape {max_categories.shape} but the "
-                    f"input data X has {self.n_features_in_} features."
-                )
-
-            unexpected_max_counts = set(
-                max_count
-                for max_count in max_categories
-                if not (
-                    max_count is None
-                    or (isinstance(max_count, Integral) and max_count >= 1)
-                )
-            )
-            if len(unexpected_max_counts):
-                raise ValueError(
-                    "max_categories must be an array-like of None or integers "
-                    "at least 1. Observed "
-                    f"values: {list(unexpected_max_counts)}."
-                )
-
-        self.max_categories = max_categories
-
-    def _max_categories_enable_infrequent(self, max_categories):
-        """
-        This function checks whether the value of max_categories
-        enables infrequent categories.
-        """
-        if max_categories is None:
-            return False
-        elif isinstance(max_categories, Integral):
-            return max_categories >= 1
-        else:
-            return any(max_categories)
-
-    def _has_infrequent_categories(self, n_current_features, col_idx):
-        """
-        This function checks if there are any infrequent categories.
-        """
-        if self.max_categories is None:
-            return False
-        if isinstance(self.max_categories, Integral):
-            return self.max_categories < n_current_features
-        else:
-            max_count = self.max_categories[col_idx]
-            return max_count is not None and max_count < n_current_features
-
-    def _get_frequent_category_count(self, col_idx):
-        """
-        This functions computes the number of frequent categories.
-        """
-        if isinstance(self.max_categories, Integral):
-            return self.max_categories - 1
-        else:
-            return self.max_categories[col_idx] - 1
-
     def fit(self, X, y=None):
         """
         Fit the OrdinalEncoder to X.
@@ -1619,13 +1579,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 "handle_unknown is 'use_encoded_value', "
                 f"got {self.unknown_value}."
             )
-
-        if isinstance(self.max_categories, dict) or _is_arraylike_not_scalar(
-            self.max_categories
-        ):
-            self._check_n_features(X, reset=True)
-            self._check_feature_names(X, reset=True)
-            self._check_max_categories()
 
         # `_fit` will only raise an error when `self.handle_unknown="error"`
         fit_results = self._fit(
