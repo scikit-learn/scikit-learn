@@ -241,7 +241,7 @@ class PCA(_BasePCA):
         The variance estimation uses `n_samples - 1` degrees of freedom.
 
         Equal to n_components largest eigenvalues
-        of the covariance matrix of X.
+        of the covariance matrix of X divided by `n_samples - 1`.
 
         .. versionadded:: 0.18
 
