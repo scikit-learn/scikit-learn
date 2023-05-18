@@ -1840,7 +1840,7 @@ def test_missing_value_is_predictive(Forest):
 
     # Create a predictive feature using `y` and with some noise
     X_random_mask = rng.choice([False, True], size=n_samples, p=[0.95, 0.05])
-    y_mask = y.copy().astype(bool)
+    y_mask = y.astype(bool)
     y_mask[X_random_mask] = ~y_mask[X_random_mask]
 
     X_predictive = rng.standard_normal(size=n_samples)
