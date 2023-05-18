@@ -85,7 +85,6 @@ from ._regression import d2_absolute_error_score
 
 from ._scorer import check_scoring
 from ._scorer import make_scorer
-from ._scorer import SCORERS
 from ._scorer import get_scorer
 from ._scorer import get_scorer_names
 
@@ -172,7 +171,6 @@ __all__ = [
     "RocCurveDisplay",
     "roc_auc_score",
     "roc_curve",
-    "SCORERS",
     "get_scorer_names",
     "silhouette_samples",
     "silhouette_score",

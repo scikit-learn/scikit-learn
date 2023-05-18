@@ -158,8 +158,3 @@ _ = coefs_no_cv.plot(kind="barh")
 # :class:`TargetEncoder` is a part of a :class:`~sklearn.pipeline.Pipeline` and the
 # pipeline is fitted, the pipeline will correctly call
 # :meth:`TargetEncoder.fit_transform` and pass the encoding along.
-
-# %%
-# This resets `transform_output` to its default value to avoid impacting other
-# examples when generating the scikit-learn documentation
-sklearn.set_config(transform_output="default")
