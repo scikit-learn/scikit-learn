@@ -198,9 +198,9 @@ def test_pca_singular_values(svd_solver, global_random_seed):
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_check_projection(svd_solver):
+def test_pca_check_projection(svd_solver, global_random_seed):
     # Test that the projection of data is correct
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n, p = 100, 3
     X = rng.randn(n, p) * 0.1
     X[:10] += np.array([3, 4, 5])
