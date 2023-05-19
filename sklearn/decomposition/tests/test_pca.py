@@ -213,10 +213,10 @@ def test_pca_check_projection(svd_solver, global_random_seed):
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_check_projection_list(svd_solver):
+def test_pca_check_projection_list(svd_solver, global_random_seed):
     # Test that the projection of data is correct
     X = [[1.0, 0.0], [0.0, 1.0]]
-    pca = PCA(n_components=1, svd_solver=svd_solver, random_state=0)
+    pca = PCA(n_components=1, svd_solver=svd_solver, random_state=global_random_seed)
     X_trans = pca.fit_transform(X)
     assert X_trans.shape, (2, 1)
     assert_allclose(X_trans.mean(), 0.00, atol=1e-12)
