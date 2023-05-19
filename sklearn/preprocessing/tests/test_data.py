@@ -2527,6 +2527,18 @@ def test_power_transformer_copy_False(method, standardize):
     assert X_trans is X_inv_trans
 
 
+def test_power_transformer_box_cox_raise_all_nans_col():
+    # Check that box-cox raises informative error message if
+    # any column is all nans
+    X = rng.random_sample((4, 5))
+    X[:, 0] = np.nan
+
+    err_msg = "Column must not be all nan."
+
+    with pytest.raises(ValueError, match=err_msg):
+        PowerTransformer("box-cox").fit_transform(X)
+
+
 @pytest.mark.parametrize(
     "X_2",
     [

@@ -3311,9 +3311,13 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         We here use scipy builtins which uses the brent optimizer.
         """
+        mask = np.isnan(x)
+        if np.all(mask):
+            raise ValueError("Column must not be all nan.")
+
         # the computation of lambda is influenced by NaNs so we need to
         # get rid of them
-        _, lmbda = stats.boxcox(x[~np.isnan(x)], lmbda=None)
+        _, lmbda = stats.boxcox(x[~mask], lmbda=None)
 
         return lmbda
 
