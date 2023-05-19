@@ -431,13 +431,13 @@ def test_pca_score3():
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_sanity_noise_variance(svd_solver):
+def test_pca_sanity_noise_variance(svd_solver, global_random_seed):
     # Sanity check for the noise_variance_. For more details see
     # https://github.com/scikit-learn/scikit-learn/issues/7568
     # https://github.com/scikit-learn/scikit-learn/issues/8541
     # https://github.com/scikit-learn/scikit-learn/issues/8544
     X, _ = datasets.load_digits(return_X_y=True)
-    pca = PCA(n_components=30, svd_solver=svd_solver, random_state=0)
+    pca = PCA(n_components=30, svd_solver=svd_solver, random_state=global_random_seed)
     pca.fit(X)
     assert np.all((pca.explained_variance_ - pca.noise_variance_) >= 0)
 
