@@ -399,7 +399,7 @@ def test_pca_score(svd_solver, global_random_seed):
     n, p = 1000, 3
     rng = np.random.RandomState(global_random_seed)
     X = rng.randn(n, p) * 0.1 + np.array([3, 4, 5])
-    pca = PCA(n_components=2, svd_solver=svd_solver)
+    pca = PCA(n_components=2, svd_solver=svd_solver, random_state=rng)
     pca.fit(X)
 
     ll1 = pca.score(X)
@@ -409,7 +409,7 @@ def test_pca_score(svd_solver, global_random_seed):
     ll2 = pca.score(rng.randn(n, p) * 0.2 + np.array([3, 4, 5]))
     assert ll1 > ll2
 
-    pca = PCA(n_components=2, whiten=True, svd_solver=svd_solver)
+    pca = PCA(n_components=2, whiten=True, svd_solver=svd_solver, random_state=rng)
     pca.fit(X)
     ll2 = pca.score(X)
     assert ll1 > ll2
