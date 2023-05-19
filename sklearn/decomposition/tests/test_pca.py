@@ -599,7 +599,7 @@ def test_small_eigenvalues_mle():
     assert _infer_dimension(spectrum, 10) == 1
 
 
-def test_mle_redundant_data():
+def test_mle_redundant_data(global_random_seed):
     # Test 'mle' with pathological X: only one relevant feature should give a
     # rank of 1
     X, _ = datasets.make_classification(
@@ -608,7 +608,7 @@ def test_mle_redundant_data():
         n_repeated=18,
         n_redundant=1,
         n_clusters_per_class=1,
-        random_state=42,
+        random_state=global_random_seed,
     )
     pca = PCA(n_components="mle").fit(X)
     assert pca.n_components_ == 1
