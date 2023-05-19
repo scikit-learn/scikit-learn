@@ -627,11 +627,11 @@ def test_fit_mle_too_few_samples():
         pca.fit(X)
 
 
-def test_mle_simple_case():
+def test_mle_simple_case(global_random_seed):
     # non-regression test for issue
     # https://github.com/scikit-learn/scikit-learn/issues/16730
     n_samples, n_dim = 1000, 10
-    X = np.random.RandomState(0).randn(n_samples, n_dim)
+    X = np.random.RandomState(global_random_seed).randn(n_samples, n_dim)
     X[:, -1] = np.mean(X[:, :-1], axis=-1)  # true X dim is ndim - 1
     pca_skl = PCA("mle", svd_solver="full")
     pca_skl.fit(X)
