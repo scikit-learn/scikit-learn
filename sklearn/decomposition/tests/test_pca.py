@@ -512,8 +512,8 @@ def test_pca_sparse_input(svd_solver):
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_deterministic_output(svd_solver):
-    rng = np.random.RandomState(0)
+def test_pca_deterministic_output(svd_solver, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     X = rng.rand(10, 10)
 
     transformed_X = np.zeros((20, 2))
