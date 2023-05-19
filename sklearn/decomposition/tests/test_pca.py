@@ -323,10 +323,10 @@ def test_n_components_mle_error(svd_solver):
         pca.fit(X)
 
 
-def test_pca_dim():
+def test_pca_dim(global_random_seed):
     # Check automated dimensionality setting
-    rng = np.random.RandomState(0)
-    n, p = 100, 5
+    rng = np.random.RandomState(global_random_seed)
+    n, p = 250, 5
     X = rng.randn(n, p) * 0.1
     X[:10] += np.array([3, 4, 5, 1, 2])
     pca = PCA(n_components="mle", svd_solver="full").fit(X)
