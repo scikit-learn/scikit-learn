@@ -394,10 +394,10 @@ def test_infer_dim_by_explained_variance(X, n_components, n_components_validated
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_score(svd_solver):
+def test_pca_score(svd_solver, global_random_seed):
     # Test that probabilistic PCA scoring yields a reasonable score
     n, p = 1000, 3
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(n, p) * 0.1 + np.array([3, 4, 5])
     pca = PCA(n_components=2, svd_solver=svd_solver)
     pca.fit(X)
