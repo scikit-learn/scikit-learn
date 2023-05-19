@@ -334,11 +334,11 @@ def test_pca_dim(global_random_seed):
     assert pca.n_components_ == 1
 
 
-def test_infer_dim_1():
+def test_infer_dim_1(global_random_seed):
     # TODO: explain what this is testing
     # Or at least use explicit variable names...
     n, p = 1000, 5
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = (
         rng.randn(n, p) * 0.1
         + rng.randn(n, 1) * np.array([3, 4, 5, 1, 2])
