@@ -688,9 +688,9 @@ def test_feature_names_out():
 
 
 @pytest.mark.parametrize("copy", [True, False])
-def test_variance_correctness(copy):
+def test_variance_correctness(copy, global_random_seed):
     """Check the accuracy of PCA's internal variance calculation"""
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(1000, 200)
     pca = PCA().fit(X)
     pca_var = pca.explained_variance_ / pca.explained_variance_ratio_
