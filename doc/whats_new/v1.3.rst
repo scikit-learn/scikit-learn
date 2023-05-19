@@ -428,6 +428,11 @@ Changelog
   `tpr=0` and `fpr=0`.
   :pr:`26194` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| The `'matching'` metric has been removed when using SciPy>=1.9
+  to be consistent with `scipy.spatial.distance` which does not support
+  `'matching'` anymore.
+  :pr:`26264` by :user:`Barata T. Onggo <magnusbarata>`
+
 :mod:`sklearn.model_selection`
 ..............................
 
