@@ -443,11 +443,13 @@ def test_pca_sanity_noise_variance(svd_solver, global_random_seed):
 
 
 @pytest.mark.parametrize("svd_solver", ["arpack", "randomized"])
-def test_pca_score_consistency_solvers(svd_solver):
+def test_pca_score_consistency_solvers(svd_solver, global_random_seed):
     # Check the consistency of score between solvers
     X, _ = datasets.load_digits(return_X_y=True)
-    pca_full = PCA(n_components=30, svd_solver="full", random_state=0)
-    pca_other = PCA(n_components=30, svd_solver=svd_solver, random_state=0)
+    pca_full = PCA(n_components=10, svd_solver="full", random_state=global_random_seed)
+    pca_other = PCA(
+        n_components=10, svd_solver=svd_solver, random_state=global_random_seed
+    )
     pca_full.fit(X)
     pca_other.fit(X)
     assert_allclose(pca_full.score(X), pca_other.score(X), rtol=5e-6)
