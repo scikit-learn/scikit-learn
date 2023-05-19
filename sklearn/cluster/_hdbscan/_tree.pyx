@@ -60,7 +60,7 @@ cdef list bfs_from_hierarchy(
     """
 
     cdef list process_queue, next_queue, result
-    cdef cnp.intp_t n_samples = len(hierarchy) + 1
+    cdef cnp.intp_t n_samples = hierarchy.shape[0] + 1
     cdef cnp.intp_t node
     process_queue = [bfs_root]
     result = []
@@ -115,8 +115,8 @@ cpdef cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] _condense_tree(
     """
 
     cdef:
-        cnp.intp_t root = 2 * len(hierarchy)
-        cnp.intp_t n_samples = len(hierarchy) + 1
+        cnp.intp_t root = 2 * hierarchy.shape[0]
+        cnp.intp_t n_samples = hierarchy.shape[0] + 1
         cnp.intp_t next_label = n_samples + 1
         list result_list, node_list = bfs_from_hierarchy(hierarchy, root)
 
@@ -281,7 +281,7 @@ cdef cnp.float64_t[::1] max_lambdas(cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] c
     current_parent = condensed_tree[0].parent
     max_lambda = condensed_tree[0].value
 
-    for idx in range(1, len(condensed_tree)):
+    for idx in range(1, PyArray_SHAPE(<PyArrayObject*> condensed_tree)[0]):
         parent = condensed_tree[idx].parent
         lambda_val = condensed_tree[idx].value
 
@@ -366,7 +366,7 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] labelling_at_cut(
         dict cluster_label_map
         HIERARCHY_t node
 
-    root = 2 * len(linkage)
+    root = 2 * linkage.shape[0]
     n_samples = root // 2 + 1
     result = np.empty(n_samples, dtype=np.intp)
     union_find = TreeUnionFind(root + 1)
@@ -454,7 +454,7 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] _do_labelling(
     result = np.empty(root_cluster, dtype=np.intp)
     union_find = TreeUnionFind(np.max(parent_array) + 1)
 
-    for n in range(len(condensed_tree)):
+    for n in range(PyArray_SHAPE(<PyArrayObject*> condensed_tree)[0]):
         child = child_array[n]
         parent = parent_array[n]
         if child not in clusters:
@@ -501,11 +501,11 @@ cdef cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] get_probabilities(
     parent_array = condensed_tree['parent']
     lambda_array = condensed_tree['value']
 
-    result = np.zeros(len(labels))
+    result = np.zeros(labels.shape[0])
     deaths = max_lambdas(condensed_tree)
     root_cluster = np.min(parent_array)
 
-    for n in range(len(condensed_tree)):
+    for n in range(PyArray_SHAPE(<PyArrayObject*> condensed_tree)[0]):
         point = child_array[n]
         if point >= root_cluster:
             continue
@@ -533,7 +533,7 @@ cpdef list recurse_leaf_dfs(
     cdef cnp.intp_t child
 
     children = cluster_tree[cluster_tree['parent'] == current_node]['child']
-    if len(children) == 0:
+    if children.shape[0] == 0:
         return [current_node,]
     else:
         return sum([recurse_leaf_dfs(cluster_tree, child) for child in children], [])
@@ -541,7 +541,7 @@ cpdef list recurse_leaf_dfs(
 
 cpdef list get_cluster_tree_leaves(cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] cluster_tree):
     cdef cnp.intp_t root
-    if len(cluster_tree) == 0:
+    if PyArray_SHAPE(<PyArrayObject*> cluster_tree)[0] == 0:
         return []
     root = cluster_tree['parent'].min()
     return recurse_leaf_dfs(cluster_tree, root)
@@ -711,7 +711,7 @@ cdef tuple _get_clusters(
                     if sub_node != node:
                         is_cluster[sub_node] = False
 
-        if cluster_selection_epsilon != 0.0 and len(cluster_tree) > 0:
+        if cluster_selection_epsilon != 0.0 and PyArray_SHAPE(<PyArrayObject*> cluster_tree)[0] > 0:
             eom_clusters = [c for c in is_cluster if is_cluster[c]]
             selected_clusters = []
             # first check if eom_clusters only has root node, which skips epsilon check.

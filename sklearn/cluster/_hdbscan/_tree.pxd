@@ -14,3 +14,7 @@ ctypedef packed struct CONDENSED_t:
     intp_t child
     float64_t value
     intp_t cluster_size
+
+cdef extern from "numpy/arrayobject.h":
+    ctypedef struct PyArrayObject
+    intp_t * PyArray_SHAPE(PyArrayObject *)
