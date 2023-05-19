@@ -106,13 +106,15 @@ def test_whitening(solver, copy):
 
 
 @pytest.mark.parametrize("svd_solver", ["arpack", "randomized"])
-def test_pca_explained_variance_equivalence_solver(svd_solver):
-    rng = np.random.RandomState(0)
+def test_pca_explained_variance_equivalence_solver(svd_solver, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 100, 80
     X = rng.randn(n_samples, n_features)
 
     pca_full = PCA(n_components=2, svd_solver="full")
-    pca_other = PCA(n_components=2, svd_solver=svd_solver, random_state=0)
+    pca_other = PCA(
+        n_components=2, svd_solver=svd_solver, random_state=global_random_seed
+    )
 
     pca_full.fit(X)
     pca_other.fit(X)
