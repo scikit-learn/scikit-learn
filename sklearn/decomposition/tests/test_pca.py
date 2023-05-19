@@ -298,9 +298,9 @@ def test_n_components_none(data, solver, n_components_):
 
 
 @pytest.mark.parametrize("svd_solver", ["auto", "full"])
-def test_n_components_mle(svd_solver):
+def test_n_components_mle(svd_solver, global_random_seed):
     # Ensure that n_components == 'mle' doesn't raise error for auto/full
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 600, 10
     X = rng.randn(n_samples, n_features)
     pca = PCA(n_components="mle", svd_solver=svd_solver)
