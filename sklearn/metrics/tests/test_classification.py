@@ -350,31 +350,86 @@ def test_precision_recall_f_ignored_labels():
             assert recall_13(average=average) != recall_all(average=average)
 
 
-def test_average_precision_score_score_non_binary_class():
-    # Test that average_precision_score function returns an error when trying
-    # to compute average_precision_score for multiclass task.
-    rng = check_random_state(404)
-    y_pred = rng.rand(10)
-
-    # y_true contains three different class values
-    y_true = rng.randint(0, 3, size=10)
-    err_msg = "multiclass format is not supported"
+def test_average_precision_score_non_binary_class():
+    """Test multiclass-multiouptut for `average_precision_score`."""
+    y_true = np.array(
+        [
+            [2, 2, 1],
+            [1, 2, 0],
+            [0, 1, 2],
+            [1, 2, 1],
+            [2, 0, 1],
+            [1, 2, 1],
+        ]
+    )
+    y_score = np.array(
+        [
+            [0.7, 0.2, 0.1],
+            [0.4, 0.3, 0.3],
+            [0.1, 0.8, 0.1],
+            [0.2, 0.3, 0.5],
+            [0.4, 0.4, 0.2],
+            [0.1, 0.2, 0.7],
+        ]
+    )
+    err_msg = "multiclass-multioutput format is not supported"
     with pytest.raises(ValueError, match=err_msg):
-        average_precision_score(y_true, y_pred)
+        average_precision_score(y_true, y_score, pos_label=2)
 
 
-def test_average_precision_score_duplicate_values():
-    # Duplicate values with precision-recall require a different
-    # processing than when computing the AUC of a ROC, because the
-    # precision-recall curve is a decreasing curve
-    # The following situation corresponds to a perfect
-    # test statistic, the average_precision_score should be 1
-    y_true = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1]
-    y_score = [0, 0.1, 0.1, 0.4, 0.5, 0.6, 0.6, 0.9, 0.9, 1, 1]
+@pytest.mark.parametrize(
+    "y_true, y_score",
+    [
+        (
+            [0, 0, 1, 2],
+            np.array(
+                [
+                    [0.7, 0.2, 0.1],
+                    [0.4, 0.3, 0.3],
+                    [0.1, 0.8, 0.1],
+                    [0.2, 0.3, 0.5],
+                ]
+            ),
+        ),
+        (
+            [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+            [0, 0.1, 0.1, 0.4, 0.5, 0.6, 0.6, 0.9, 0.9, 1, 1],
+        ),
+    ],
+)
+def test_average_precision_score_duplicate_values(y_true, y_score):
+    """
+    Duplicate values with precision-recall require a different
+    processing than when computing the AUC of a ROC, because the
+    precision-recall curve is a decreasing curve
+    The following situation corresponds to a perfect
+    test statistic, the average_precision_score should be 1.
+    """
     assert average_precision_score(y_true, y_score) == 1
 
 
-def test_average_precision_score_tied_values():
+@pytest.mark.parametrize(
+    "y_true, y_score",
+    [
+        (
+            [2, 2, 1, 1, 0],
+            np.array(
+                [
+                    [0.2, 0.3, 0.5],
+                    [0.2, 0.3, 0.5],
+                    [0.4, 0.5, 0.3],
+                    [0.4, 0.5, 0.3],
+                    [0.8, 0.5, 0.3],
+                ]
+            ),
+        ),
+        (
+            [0, 1, 1],
+            [0.5, 0.5, 0.6],
+        ),
+    ],
+)
+def test_average_precision_score_tied_values(y_true, y_score):
     # Here if we go from left to right in y_true, the 0 values are
     # separated from the 1 values, so it appears that we've
     # correctly sorted our classifications. But in fact the first two
@@ -382,8 +437,6 @@ def test_average_precision_score_tied_values():
     # could be swapped around, creating an imperfect sorting. This
     # imperfection should come through in the end score, making it less
     # than one.
-    y_true = [0, 1, 1]
-    y_score = [0.5, 0.5, 0.6]
     assert average_precision_score(y_true, y_score) != 1.0
 
 
