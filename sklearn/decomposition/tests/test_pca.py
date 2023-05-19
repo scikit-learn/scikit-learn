@@ -365,9 +365,9 @@ def test_infer_dim_2(global_random_seed):
     assert _infer_dimension(spect, n) > 1
 
 
-def test_infer_dim_3():
+def test_infer_dim_3(global_random_seed):
     n, p = 100, 5
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(n, p) * 0.1
     X[:10] += np.array([3, 4, 5, 1, 2])
     X[10:20] += np.array([6, 0, 7, 2, -1])
