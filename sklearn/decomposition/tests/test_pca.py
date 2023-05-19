@@ -130,16 +130,20 @@ def test_pca_explained_variance_equivalence_solver(svd_solver, global_random_see
 
 
 @pytest.mark.parametrize(
-    "X",
+    "make_X",
     [
-        np.random.RandomState(0).randn(100, 80),
-        datasets.make_classification(100, 80, n_informative=78, random_state=0)[0],
+        lambda seed: np.random.RandomState(seed).randn(100, 60),
+        lambda seed: datasets.make_classification(
+            100, 80, n_informative=78, random_state=seed
+        )[0],
     ],
     ids=["random-data", "correlated-data"],
 )
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_explained_variance_empirical(X, svd_solver):
-    pca = PCA(n_components=2, svd_solver=svd_solver, random_state=0)
+def test_pca_explained_variance_empirical(make_X, svd_solver, global_random_seed):
+    # parametrized factory make_X and global_random_seed determine dataset X
+    X = make_X(global_random_seed)
+    pca = PCA(n_components=2, svd_solver=svd_solver, random_state=global_random_seed)
     X_pca = pca.fit_transform(X)
     assert_allclose(pca.explained_variance_, np.var(X_pca, ddof=1, axis=0))
 
