@@ -651,14 +651,14 @@ def test_assess_dimesion_rank_one():
         assert _assess_dimension(s, rank, n_samples) == -np.inf
 
 
-def test_pca_randomized_svd_n_oversamples():
+def test_pca_randomized_svd_n_oversamples(global_random_seed):
     """Check that exposing and setting `n_oversamples` will provide accurate results
     even when `X` as a large number of features.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/20589
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_features = 100
     X = rng.randn(1_000, n_features)
 
@@ -671,7 +671,9 @@ def test_pca_randomized_svd_n_oversamples():
         random_state=0,
     ).fit(X)
     pca_full = PCA(n_components=1, svd_solver="full").fit(X)
-    pca_arpack = PCA(n_components=1, svd_solver="arpack", random_state=0).fit(X)
+    pca_arpack = PCA(
+        n_components=1, svd_solver="arpack", random_state=global_random_seed
+    ).fit(X)
 
     assert_allclose(np.abs(pca_full.components_), np.abs(pca_arpack.components_))
     assert_allclose(np.abs(pca_randomized.components_), np.abs(pca_arpack.components_))
