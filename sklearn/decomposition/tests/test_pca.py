@@ -153,8 +153,8 @@ def test_pca_explained_variance_empirical(make_X, svd_solver, global_random_seed
 
 
 @pytest.mark.parametrize("svd_solver", ["arpack", "randomized"])
-def test_pca_singular_values_consistency(svd_solver):
-    rng = np.random.RandomState(0)
+def test_pca_singular_values_consistency(svd_solver, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 100, 80
     X = rng.randn(n_samples, n_features)
 
