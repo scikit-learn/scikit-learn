@@ -147,7 +147,6 @@ Changes impacting all modules
 
 - |API| For classifiers and classification metrics, labels encoded as bytes
   is deprecated and will raise an error in v1.5.
-
   :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
 
 Changelog

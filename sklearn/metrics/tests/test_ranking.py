@@ -871,6 +871,7 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
         np.testing.assert_allclose(int_curve_part, float_curve_part)
 
 
+# TODO(1.5): Update test to check for error when bytes support is removed.
 @pytest.mark.parametrize("curve_func", [precision_recall_curve, roc_curve])
 @pytest.mark.parametrize("labels_type", ["list", "array"])
 def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
@@ -882,8 +883,13 @@ def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
         "specified: either make y_true take value in {0, 1} or "
         "{-1, 1} or pass pos_label explicitly."
     )
-    with pytest.raises(ValueError, match=msg):
-        curve_func(labels, [0.0, 1.0])
+    with warnings.catch_warnings(record=True) as record:
+        with pytest.raises(ValueError, match=msg):
+            curve_func(labels, [0.0, 1.0])
+
+        assert str(record[0].message).startswith(
+            "Support for labels represented as bytes is deprecated"
+        )
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
