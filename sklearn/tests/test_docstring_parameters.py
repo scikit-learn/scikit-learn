@@ -257,6 +257,9 @@ def test_fit_docstring_attributes(name, Estimator):
         est.set_params(n_init="auto")
 
     # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
+    if Estimator.__name__ in ("FastICA"):
+        est.set_params(whiten_solver="auto")
+
     if Estimator.__name__ in (
         "MultinomialNB",
         "ComplementNB",

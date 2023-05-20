@@ -175,7 +175,7 @@ def fastica(
     max_iter=200,
     tol=1e-04,
     w_init=None,
-    whiten_solver="svd",
+    whiten_solver="warn",
     random_state=None,
     return_X_mean=False,
     compute_sources=True,
@@ -242,8 +242,9 @@ def fastica(
         Initial un-mixing array. If `w_init=None`, then an array of values
         drawn from a normal distribution is used.
 
-    whiten_solver : {"eigh", "svd"}, default="svd"
-        The solver to use for whitening.
+    whiten_solver : {"auto", "eigh", "svd"}, default="auto"
+        The solver to use for whitening. Note that different solvers may
+        produce different solutions. See `sign_flip` for details.
 
         - "svd" is more stable numerically if the problem is degenerate, and
           often faster when `n_samples <= n_features`.
@@ -252,7 +253,13 @@ def fastica(
           `n_samples >= n_features`, and can be faster when
           `n_samples >= 50 * n_features`.
 
+        - "auto" uses the `eigh` solver when `n_samples >= 50 * n_features`
+
         .. versionadded:: 1.2
+
+        .. versionchanged:: 1.4
+            The default value for `whiten_solver` will change to "auto" in
+            version 1.4.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -406,8 +413,9 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         Initial un-mixing array. If `w_init=None`, then an array of values
         drawn from a normal distribution is used.
 
-    whiten_solver : {"eigh", "svd"}, default="svd"
-        The solver to use for whitening.
+    whiten_solver : {"auto", "eigh", "svd"}, default="auto"
+        The solver to use for whitening. Note that different solvers may
+        produce different solutions. See `sign_flip` for details.
 
         - "svd" is more stable numerically if the problem is degenerate, and
           often faster when `n_samples <= n_features`.
@@ -416,7 +424,14 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
           `n_samples >= n_features`, and can be faster when
           `n_samples >= 50 * n_features`.
 
+        - "auto" uses the `eigh` solver when `n_samples >= 50 * n_features`,
+          `svd` otherwise.
+
         .. versionadded:: 1.2
+
+        .. versionchanged:: 1.4
+            The default value for `whiten_solver` will change to "auto" in
+            version 1.4.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -480,7 +495,8 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     >>> X, _ = load_digits(return_X_y=True)
     >>> transformer = FastICA(n_components=7,
     ...         random_state=0,
-    ...         whiten='unit-variance')
+    ...         whiten='unit-variance',
+    ...         whiten_solver='auto')
     >>> X_transformed = transformer.fit_transform(X)
     >>> X_transformed.shape
     (1797, 7)
@@ -499,7 +515,10 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0.0, None, closed="left")],
         "w_init": ["array-like", None],
-        "whiten_solver": [StrOptions({"eigh", "svd"})],
+        "whiten_solver": [
+            StrOptions({"eigh", "svd", "auto"}),
+            Hidden(StrOptions({"warn"})),
+        ],
         "random_state": ["random_state"],
     }
 
@@ -514,7 +533,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         max_iter=200,
         tol=1e-4,
         w_init=None,
-        whiten_solver="svd",
+        whiten_solver="warn",
         random_state=None,
     ):
         super().__init__()
@@ -571,6 +590,24 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         XT = self._validate_data(
             X, copy=self._whiten, dtype=[np.float64, np.float32], ensure_min_samples=2
         ).T
+
+        # Benchmark validated heuristic
+        self._whiten_solver = self.whiten_solver
+        if self._whiten_solver == "warn" and self._whiten:
+            warnings.warn(
+                "From version 1.4 `whiten_solver='auto'` will be used by default."
+                " Manually set the value of `whiten_solver` to suppress this message."
+                " Note that `whiten_solver='auto'` may change the numerical output"
+                " of the model, but not its correctness. This can be alleviated by"
+                " setting `sign_flip=True`. See the `whiten_solver` and `sign_flip`"
+                " descriptions for details.",
+                FutureWarning,
+            )
+            self._whiten_solver = "svd"
+
+        if self._whiten_solver == "auto":
+            self._whiten_solver = "eigh" if XT.shape[1] >= 50 * XT.shape[0] else "svd"
+
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
 
@@ -609,7 +646,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             XT -= X_mean[:, np.newaxis]
 
             # Whitening and preprocessing by PCA
-            if self.whiten_solver == "eigh":
+            if self._whiten_solver == "eigh":
                 # Faster when num_samples >> n_features
                 d, u = linalg.eigh(XT.dot(X))
                 sort_indices = np.argsort(d)[::-1]
@@ -624,7 +661,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 d[degenerate_idx] = eps  # For numerical issues
                 np.sqrt(d, out=d)
                 d, u = d[sort_indices], u[:, sort_indices]
-            elif self.whiten_solver == "svd":
+            elif self._whiten_solver == "svd":
                 u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
 
             # Give consistent eigenvectors for both svd solvers

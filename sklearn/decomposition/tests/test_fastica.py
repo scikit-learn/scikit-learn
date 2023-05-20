@@ -51,7 +51,11 @@ def test_fastica_attributes_dtypes(global_dtype):
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10)).astype(global_dtype, copy=False)
     fica = FastICA(
-        n_components=5, max_iter=1000, whiten="unit-variance", random_state=0
+        n_components=5,
+        max_iter=1000,
+        whiten="unit-variance",
+        random_state=0,
+        whiten_solver="auto",
     ).fit(X)
     assert fica.components_.dtype == global_dtype
     assert fica.mixing_.dtype == global_dtype
@@ -63,7 +67,11 @@ def test_fastica_return_dtypes(global_dtype):
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10)).astype(global_dtype, copy=False)
     k_, mixing_, s_ = fastica(
-        X, max_iter=1000, whiten="unit-variance", random_state=rng
+        X,
+        max_iter=1000,
+        whiten="unit-variance",
+        random_state=rng,
+        whiten_solver="auto",
     )
     assert k_.dtype == global_dtype
     assert mixing_.dtype == global_dtype
@@ -120,10 +128,21 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
     for algo, nl, whiten in itertools.product(algos, nls, whitening):
         if whiten:
             k_, mixing_, s_ = fastica(
-                m.T, fun=nl, whiten=whiten, algorithm=algo, random_state=rng
+                m.T,
+                fun=nl,
+                whiten=whiten,
+                algorithm=algo,
+                random_state=rng,
+                whiten_solver="auto",
             )
             with pytest.raises(ValueError):
-                fastica(m.T, fun=np.tanh, whiten=whiten, algorithm=algo)
+                fastica(
+                    m.T,
+                    fun=np.tanh,
+                    whiten=whiten,
+                    algorithm=algo,
+                    whiten_solver="auto",
+                )
         else:
             pca = PCA(n_components=2, whiten=True, random_state=rng)
             X = pca.fit_transform(m.T)
@@ -131,7 +150,7 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
                 X, fun=nl, algorithm=algo, whiten=False, random_state=rng
             )
             with pytest.raises(ValueError):
-                fastica(X, fun=np.tanh, algorithm=algo)
+                fastica(X, fun=np.tanh, algorithm=algo, whiten_solver="auto")
         s_ = s_.T
         # Check that the mixing model described in the docstring holds:
         if whiten:
@@ -162,9 +181,15 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
 
     # Test FastICA class
     _, _, sources_fun = fastica(
-        m.T, fun=nl, algorithm=algo, random_state=global_random_seed
+        m.T,
+        fun=nl,
+        algorithm=algo,
+        random_state=global_random_seed,
+        whiten_solver="auto",
     )
-    ica = FastICA(fun=nl, algorithm=algo, random_state=global_random_seed)
+    ica = FastICA(
+        fun=nl, algorithm=algo, random_state=global_random_seed, whiten_solver="auto"
+    )
     sources = ica.fit_transform(m.T)
     assert ica.components_.shape == (2, 2)
     assert sources.shape == (1000, 2)
@@ -176,7 +201,7 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
 
     assert ica.mixing_.shape == (2, 2)
 
-    ica = FastICA(fun=np.tanh, algorithm=algo)
+    ica = FastICA(fun=np.tanh, algorithm=algo, whiten_solver="auto")
     with pytest.raises(ValueError):
         ica.fit(m.T)
 
@@ -217,7 +242,12 @@ def test_fastica_convergence_fail():
     )
     with pytest.warns(ConvergenceWarning, match=warn_msg):
         ica = FastICA(
-            algorithm="parallel", n_components=2, random_state=rng, max_iter=2, tol=0.0
+            algorithm="parallel",
+            n_components=2,
+            random_state=rng,
+            max_iter=2,
+            tol=0.0,
+            whiten_solver="auto",
         )
         ica.fit(m.T)
 
@@ -246,7 +276,11 @@ def test_non_square_fastica(add_noise):
     center_and_norm(m)
 
     k_, mixing_, s_ = fastica(
-        m.T, n_components=2, whiten="unit-variance", random_state=rng
+        m.T,
+        n_components=2,
+        whiten="unit-variance",
+        random_state=rng,
+        whiten_solver="auto",
     )
     s_ = s_.T
 
@@ -284,7 +318,11 @@ def test_fit_transform(global_random_seed, global_dtype):
         n_components_ = n_components if n_components is not None else X.shape[1]
 
         ica = FastICA(
-            n_components=n_components, max_iter=max_iter, whiten=whiten, random_state=0
+            n_components=n_components,
+            max_iter=max_iter,
+            whiten=whiten,
+            random_state=0,
+            whiten_solver="auto",
         )
         with warnings.catch_warnings():
             # make sure that numerical errors do not cause sqrt of negative
@@ -298,7 +336,11 @@ def test_fit_transform(global_random_seed, global_dtype):
         assert Xt.shape == (X.shape[0], n_components_)
 
         ica2 = FastICA(
-            n_components=n_components, max_iter=max_iter, whiten=whiten, random_state=0
+            n_components=n_components,
+            max_iter=max_iter,
+            whiten=whiten,
+            random_state=0,
+            whiten_solver="auto",
         )
         with warnings.catch_warnings():
             # make sure that numerical errors do not cause sqrt of negative
@@ -338,7 +380,9 @@ def test_inverse_transform(
     rng = np.random.RandomState(global_random_seed)
     X = rng.random_sample((n_samples, 10)).astype(global_dtype)
 
-    ica = FastICA(n_components=n_components, random_state=rng, whiten=whiten)
+    ica = FastICA(
+        n_components=n_components, random_state=rng, whiten=whiten, whiten_solver="auto"
+    )
     with warnings.catch_warnings():
         # For some dataset (depending on the value of global_dtype) the model
         # can fail to converge but this should not impact the definition of
@@ -373,11 +417,11 @@ def test_fastica_errors():
     X = rng.random_sample((n_samples, n_features))
     w_init = rng.randn(n_features + 1, n_features + 1)
     with pytest.raises(ValueError, match=r"alpha must be in \[1,2\]"):
-        fastica(X, fun_args={"alpha": 0})
+        fastica(X, fun_args={"alpha": 0}, whiten_solver="auto")
     with pytest.raises(
         ValueError, match="w_init has invalid shape.+" r"should be \(3L?, 3L?\)"
     ):
-        fastica(X, w_init=w_init)
+        fastica(X, w_init=w_init, whiten_solver="auto")
 
 
 def test_fastica_whiten_unit_variance():
@@ -388,13 +432,18 @@ def test_fastica_whiten_unit_variance():
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
     n_components = X.shape[1]
-    ica = FastICA(n_components=n_components, whiten="unit-variance", random_state=0)
+    ica = FastICA(
+        n_components=n_components,
+        whiten="unit-variance",
+        random_state=0,
+        whiten_solver="auto",
+    )
     Xt = ica.fit_transform(X)
 
     assert np.var(Xt) == pytest.approx(1.0)
 
 
-@pytest.mark.parametrize("ica", [FastICA(), FastICA(whiten=True)])
+@pytest.mark.parametrize("ica", [FastICA(), FastICA(whiten=True, whiten_solver="auto")])
 def test_fastica_whiten_default_value_deprecation(ica):
     """Test FastICA whiten default value deprecation.
 
@@ -420,7 +469,9 @@ def test_fastica_whiten_backwards_compatibility():
     with pytest.warns(FutureWarning):
         Xt_on_default = default_ica.fit_transform(X)
 
-    ica = FastICA(n_components=n_components, whiten=True, random_state=0)
+    ica = FastICA(
+        n_components=n_components, whiten=True, random_state=0, whiten_solver="auto"
+    )
     with pytest.warns(FutureWarning):
         Xt = ica.fit_transform(X)
 
@@ -458,7 +509,11 @@ def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
     expected_len = 3 + return_X_mean + return_n_iter
 
     out = fastica(
-        X, whiten=whiten, return_n_iter=return_n_iter, return_X_mean=return_X_mean
+        X,
+        whiten=whiten,
+        return_n_iter=return_n_iter,
+        return_X_mean=return_X_mean,
+        whiten_solver="auto",
     )
 
     assert len(out) == expected_len
@@ -510,3 +565,31 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
     msg = "There are some small singular values"
     with pytest.warns(UserWarning, match=msg):
         ica.fit(X)
+
+
+# TODO(1.4): to be removed
+def test_fastica_whiten_solver_future_warning():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((10, 10))
+
+    ica = FastICA(random_state=rng, whiten="unit-variance")
+    msg = "From version 1.4 `whiten_solver='auto'` will be used by default."
+    with pytest.warns(FutureWarning, match=msg):
+        ica.fit_transform(X)
+    assert ica.whiten_solver == "warn"
+    assert ica._whiten_solver == "svd"
+
+    # Test that it doesn't warn if whiten is explicitly set to False
+    ica = FastICA(random_state=rng, whiten=False)
+    ica.fit_transform(X)
+
+
+@pytest.mark.parametrize("n_samples", (199, 200))
+def test_fastica_whiten_solver_auto(n_samples):
+    """Check the heuristic that automatically chooses the solver."""
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((n_samples, 4))
+    ica = FastICA(random_state=rng, whiten="unit-variance", whiten_solver="auto")
+    ica.fit_transform(X)
+    solver = "eigh" if X.shape[0] >= 50 * X.shape[1] else "svd"
+    assert ica._whiten_solver == solver
