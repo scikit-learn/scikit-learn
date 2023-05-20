@@ -41,7 +41,7 @@ from sklearn.metrics._scorer import (
     _MultimetricScorer,
     _check_multimetric_scoring,
 )
-from sklearn.metrics import make_scorer, get_scorer, SCORERS, get_scorer_names
+from sklearn.metrics import make_scorer, get_scorer, get_scorer_names
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
@@ -1164,12 +1164,6 @@ def test_scorer_select_proba_error(scorer):
 def test_get_scorer_return_copy():
     # test that get_scorer returns a copy
     assert get_scorer("roc_auc") is not get_scorer("roc_auc")
-
-
-# TODO(1.3) Remove
-def test_SCORERS_deprecated():
-    with pytest.warns(FutureWarning, match="is deprecated and will be removed in v1.3"):
-        SCORERS["roc_auc"]
 
 
 def test_scorer_no_op_multiclass_select_proba():
