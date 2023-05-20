@@ -96,7 +96,7 @@ def _dense_mutual_reachability_graph(
         The index of the furthest neighbor to use to define the core distances.
     """
     cdef:
-        intp_t i, j, n_samples = len(distance_matrix)
+        intp_t i, j, n_samples = distance_matrix.shape[0]
         floating mutual_reachibility_distance
         floating[::1] core_distances
 

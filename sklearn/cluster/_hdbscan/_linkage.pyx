@@ -14,6 +14,10 @@ from ...cluster._hdbscan._tree cimport HIERARCHY_t
 from ...cluster._hdbscan._tree import HIERARCHY_dtype
 from ...utils._typedefs cimport intp_t, float64_t, int64_t, uint8_t
 
+cdef extern from "numpy/arrayobject.h":
+    ctypedef struct PyArrayObject
+    intp_t * PyArray_SHAPE(PyArrayObject *)
+
 # Numpy structured dtype representing a single ordered edge in Prim's algorithm
 MST_edge_dtype = np.dtype([
     ("current_node", np.int64),
@@ -54,7 +58,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
 
         cnp.ndarray[uint8_t, mode='c'] label_filter
 
-        int64_t n_samples = len(mutual_reachability)
+        int64_t n_samples = PyArray_SHAPE(<PyArrayObject*> mutual_reachability)[0]
         int64_t current_node, new_node_index, new_node, i
 
     mst = np.empty(n_samples - 1, dtype=MST_edge_dtype)
@@ -120,8 +124,8 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
         float64_t current_node_core_dist, new_reachability, mutual_reachability_distance
         float64_t next_node_min_reach, pair_distance, next_node_core_dist
 
-    n_samples = len(raw_data)
-    num_features = len(raw_data[0])
+    n_samples = raw_data.shape[0]
+    num_features = raw_data.shape[1]
 
     mst = np.empty(n_samples - 1, dtype=MST_edge_dtype)
 
@@ -212,8 +216,8 @@ cpdef cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] make_single_linkage(const MST_e
     cdef:
         cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] single_linkage
 
-        # Note len(mst) is one fewer than the number of samples
-        int64_t n_samples = len(mst) + 1
+        # Note mst.shape[0] is one fewer than the number of samples
+        int64_t n_samples = mst.shape[0] + 1
         intp_t current_node_cluster, next_node_cluster
         int64_t current_node, next_node, i
         float64_t distance
