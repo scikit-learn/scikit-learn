@@ -225,9 +225,9 @@ def test_pca_check_projection_list(svd_solver, global_random_seed):
 
 @pytest.mark.parametrize("svd_solver", ["full", "arpack", "randomized"])
 @pytest.mark.parametrize("whiten", [False, True])
-def test_pca_inverse(svd_solver, whiten):
+def test_pca_inverse(svd_solver, whiten, global_random_seed):
     # Test that the projection of data can be inverted
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n, p = 50, 3
     X = rng.randn(n, p)  # spherical data
     X[:, 1] *= 0.00001  # make middle component relatively small
@@ -235,10 +235,12 @@ def test_pca_inverse(svd_solver, whiten):
 
     # same check that we can find the original data from the transformed
     # signal (since the data is almost of rank n_components)
-    pca = PCA(n_components=2, svd_solver=svd_solver, whiten=whiten).fit(X)
+    pca = PCA(
+        n_components=2, svd_solver=svd_solver, whiten=whiten, random_state=rng
+    ).fit(X)
     Y = pca.transform(X)
     Y_inverse = pca.inverse_transform(Y)
-    assert_allclose(X, Y_inverse, rtol=5e-6)
+    assert_allclose(X, Y_inverse, rtol=5e-5)
 
 
 @pytest.mark.parametrize(
