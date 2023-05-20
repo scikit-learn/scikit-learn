@@ -125,11 +125,12 @@ plot(X, labels=labels_true, ground_truth=True)
 # %%
 # This dataset is more difficult for DBSCAN due to the varying densities and
 # spatial separation:
-#   - If `eps` is too large then we risk falsely clustering the two dense
-#     clusters as one since their mutual reachability will extend
-#     clusters.
-#   - If `eps` is too small, then we risk fragmenting the sparser clusters
-#     into many false clusters.
+#
+# - If `eps` is too large then we risk falsely clustering the two dense
+#   clusters as one since their mutual reachability will extend
+#   clusters.
+# - If `eps` is too small, then we risk fragmenting the sparser clusters
+#   into many false clusters.
 #
 # Not to mention this requires manually tuning choices of `eps` until we
 # find a tradeoff that we are comfortable with.

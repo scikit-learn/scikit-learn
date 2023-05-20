@@ -399,8 +399,8 @@ for centroids to be the mean of the points within a given region. These
 candidates are then filtered in a post-processing stage to eliminate
 near-duplicates to form the final set of centroids.
 
-The position of centroid candidates is iteratively adjusted using a technique called hill 
-climbing, which finds local maxima of the estimated probability density. 
+The position of centroid candidates is iteratively adjusted using a technique called hill
+climbing, which finds local maxima of the estimated probability density.
 Given a candidate centroid :math:`x` for iteration :math:`t`, the candidate
 is updated according to the following equation:
 
@@ -419,14 +419,14 @@ its neighborhood:
 
     m(x) = \frac{1}{|N(x)|} \sum_{x_j \in N(x)}x_j - x
 
-In general, the equation for :math:`m` depends on a kernel used for density estimation. 
+In general, the equation for :math:`m` depends on a kernel used for density estimation.
 The generic formula is:
 
 .. math::
 
     m(x) = \frac{\sum_{x_j \in N(x)}K(x_j - x)x_j}{\sum_{x_j \in N(x)}K(x_j - x)} - x
 
-In our implementation, :math:`K(x)` is equal to 1 if :math:`x` is small enough and is 
+In our implementation, :math:`K(x)` is equal to 1 if :math:`x` is small enough and is
 equal to 0 otherwise. Effectively :math:`K(y - x)` indicates whether :math:`y` is in
 the neighborhood of :math:`x`.
 
@@ -984,7 +984,7 @@ scales by building an alternative representation of the clustering problem.
 .. note::
 
   This implementation is adapted from the original implementation of HDBSCAN,
-  `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_.
+  `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_ based on [LJ2017]_.
 
 Mutual Reachability Graph
 -------------------------

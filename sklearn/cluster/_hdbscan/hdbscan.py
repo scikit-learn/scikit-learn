@@ -331,6 +331,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     store_centers : str, default=None
         Which, if any, cluster centers to compute and store. The options are:
+
         - `None` which does not compute nor store any centers.
         - `"centroid"` which calculates the center by taking the weighted
           average of their positions. Note that the algorithm uses the
@@ -343,7 +344,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
           same cluster but guarantees the output is an observed data point.
           The medoid is also well-defined for arbitrary metrics, and does not
           depend on a euclidean metric.
-        - `"both"`which computes and stores both forms of centers.
+        - `"both"` which computes and stores both forms of centers.
 
     copy : bool, default=False
         If `copy=True` then any time an in-place modifications would be made
@@ -357,6 +358,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     labels_ : ndarray of shape (n_samples,)
         Cluster labels for each point in the dataset given to :term:`fit`.
         Outliers are labeled as follows:
+
         - Noisy samples are given the label -1.
         - Samples with infinite elements (+/- np.inf) are given the label -2.
         - Samples with missing data are given the label -3, even if they
@@ -764,6 +766,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         labels : ndarray of shape (n_samples,)
             An array of cluster labels, one per datapoint.
             Outliers are labeled as follows:
+
             - Noisy samples are given the label -1.
             - Samples with infinite elements (+/- np.inf) are given the label -2.
             - Samples with missing data are given the label -3, even if they
