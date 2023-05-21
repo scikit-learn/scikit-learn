@@ -263,6 +263,11 @@ Changelog
   out-of-bag scores via the `oob_scores_` or `oob_score_` attributes.
   :pr:`24882` by :user:`Ashwin Mathur <awinml>`.
 
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` supports
+  `categorical_features="pandas"`, which treats columns with Pandas Categorical
+  dtype as categories in the algorithm. :pr:`xxxxx` by `Thomas Fan`_.
+
 - |Efficiency| :class:`ensemble.IsolationForest` predict time is now faster
   (typically by a factor of 8 or more). Internally, the estimator now precomputes
   decision path lengths per tree at `fit` time. It is therefore not possible

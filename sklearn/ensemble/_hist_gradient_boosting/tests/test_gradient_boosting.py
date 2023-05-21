@@ -1388,3 +1388,71 @@ def test_unknown_category_that_are_negative():
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
 
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
+
+
+@pytest.mark.parametrize(
+    "Hist", [HistGradientBoostingClassifier, HistGradientBoostingRegressor]
+)
+def test_pandas_categorical_results_same_as_ndarray(Hist):
+    """Check that pandas categorical give the same results as ndarray"""
+    pd = pytest.importorskip("pandas")
+
+    rng = np.random.RandomState(42)
+    n_samples = 5_000
+    n_cardinality = 50
+    max_bins = 100
+    f_num = rng.rand(n_samples)
+    f_cat = rng.randint(n_cardinality, size=n_samples)
+
+    # Make f_cat an informative feature
+    y = f_cat % 3 == 0
+
+    X = np.c_[f_cat, f_num]
+    X_df = pd.DataFrame(
+        {"f_num": f_num, "f_cat": pd.Series(f_cat, dtype="category")},
+        columns=["f_num", "f_cat"],
+    )
+
+    X_train, X_test, X_train_df, X_test_df, y_train, y_test = train_test_split(
+        X, X_df, y, random_state=0
+    )
+
+    hist_kwargs = dict(max_iter=10, max_bins=max_bins, random_state=0)
+    hist_np = Hist(categorical_features=[True, False], **hist_kwargs)
+    hist_np.fit(X_train, y_train)
+
+    hist_pd = Hist(categorical_features="pandas", **hist_kwargs)
+    hist_pd.fit(X_train_df, y_train)
+
+    assert len(hist_np._predictors) == len(hist_pd._predictors)
+    for predictor_1, predictor_2 in zip(hist_np._predictors, hist_pd._predictors):
+        assert len(predictor_1[0].nodes) == len(predictor_2[0].nodes)
+
+    score_np = hist_np.score(X_test, y_test)
+    score_pd = hist_pd.score(X_test_df, y_test)
+    assert score_np == pytest.approx(score_pd)
+    assert_allclose(hist_np.predict(X_test), hist_pd.predict(X_test_df))
+
+
+@pytest.mark.parametrize(
+    "Hist", [HistGradientBoostingClassifier, HistGradientBoostingRegressor]
+)
+def test_pandas_categorical_errors(Hist):
+    """Check error cases for pandas categorical feature."""
+    pd = pytest.importorskip("pandas")
+
+    msg = "categorical_features='pandas' is only supported for pandas"
+    hist = Hist(categorical_features="pandas")
+    with pytest.raises(ValueError, match=msg):
+        hist.fit(X_classification, y_classification)
+
+    msg = "Categorical feature 'f_cat' is expected to have a cardinality <= 16"
+    hist = Hist(categorical_features="pandas", max_bins=16)
+
+    rng = np.random.RandomState(42)
+    f_cat = rng.randint(0, high=100, size=100)
+    X_df = pd.DataFrame({"f_cat": pd.Series(f_cat, dtype="category")})
+    y = rng.randint(0, high=2, size=100)
+
+    with pytest.raises(ValueError, match=msg):
+        hist.fit(X_df, y)
