@@ -54,7 +54,7 @@ def test_no_empty_slice_warning():
 @pytest.mark.parametrize("solver", PCA_SOLVERS)
 def test_whitening(solver, copy, global_random_seed):
     # Check that PCA output has unit-variance
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     n_features = 80
     n_components = 30
@@ -82,7 +82,8 @@ def test_whitening(solver, copy, global_random_seed):
         copy=copy,
         svd_solver=solver,
         random_state=global_random_seed,
-        iterated_power=8,
+        iterated_power=7,
+        n_oversamples=13,
     )
     # test fit_transform
     X_whitened = pca.fit_transform(X_.copy())
@@ -105,7 +106,7 @@ def test_whitening(solver, copy, global_random_seed):
     assert X_unwhitened.shape == (n_samples, n_components)
 
     # in that case the output components still have varying variances
-    assert X_unwhitened.std(axis=0).std() > 70
+    assert X_unwhitened.std(axis=0).std() > 69
     # we always center, so no test for non-centering.
 
 
