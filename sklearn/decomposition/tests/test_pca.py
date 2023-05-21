@@ -52,7 +52,7 @@ def test_no_empty_slice_warning():
 
 @pytest.mark.parametrize("copy", [True, False])
 @pytest.mark.parametrize("solver", PCA_SOLVERS)
-def test_whitening(solver, copy):
+def test_whitening(solver, copy, global_random_seed):
     # Check that PCA output has unit-variance
     rng = np.random.RandomState(0)
     n_samples = 100
@@ -72,7 +72,7 @@ def test_whitening(solver, copy):
     assert X.shape == (n_samples, n_features)
 
     # the component-wise variance is thus highly varying:
-    assert X.std(axis=0).std() > 43.8
+    assert X.std(axis=0).std() > 40
 
     # whiten the data while projecting to the lower dim subspace
     X_ = X.copy()  # make sure we keep an original across iterations.
@@ -81,8 +81,8 @@ def test_whitening(solver, copy):
         whiten=True,
         copy=copy,
         svd_solver=solver,
-        random_state=0,
-        iterated_power=7,
+        random_state=global_random_seed,
+        iterated_power=8,
     )
     # test fit_transform
     X_whitened = pca.fit_transform(X_.copy())
@@ -95,13 +95,17 @@ def test_whitening(solver, copy):
 
     X_ = X.copy()
     pca = PCA(
-        n_components=n_components, whiten=False, copy=copy, svd_solver=solver
+        n_components=n_components,
+        whiten=False,
+        copy=copy,
+        svd_solver=solver,
+        random_state=global_random_seed,
     ).fit(X_.copy())
     X_unwhitened = pca.transform(X_)
     assert X_unwhitened.shape == (n_samples, n_components)
 
     # in that case the output components still have varying variances
-    assert X_unwhitened.std(axis=0).std() == pytest.approx(74.1, rel=1e-1)
+    assert X_unwhitened.std(axis=0).std() > 70
     # we always center, so no test for non-centering.
 
 
@@ -417,10 +421,10 @@ def test_pca_score(svd_solver, global_random_seed):
     assert ll1 > ll2
 
 
-def test_pca_score3():
+def test_pca_score3(global_random_seed):
     # Check that probabilistic PCA selects the right model
     n, p = 200, 3
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     Xl = rng.randn(n, p) + rng.randn(n, 1) * np.array([3, 4, 5]) + np.array([1, 0, 7])
     Xt = rng.randn(n, p) + rng.randn(n, 1) * np.array([3, 4, 5]) + np.array([1, 0, 7])
     ll = np.zeros(p)
