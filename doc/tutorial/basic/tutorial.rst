@@ -31,15 +31,7 @@ Learning problems fall into a few categories:
 
     * `classification
       <https://en.wikipedia.org/wiki/Classification_in_machine_learning>`_:
-      samples belong to two or more classes and we
-      want to learn from already labeled data how to predict the class
-      of unlabeled data. An example of a classification problem would
-      be handwritten digit recognition, in which the aim is
-      to assign each input vector to one of a finite number of discrete
-      categories.  Another way to think of classification is as a discrete
-      (as opposed to continuous) form of supervised learning where one has a
-      limited number of categories and for each of the n samples provided,
-      one is to try to label them with the correct category or class.
+       samples belong to two or more classes and we want to learn how to predict the class of unlabeled data from already labeled data. An example of a classification problem would be handwritten digit recognition, in which the aim is to assign each input vector to one of a finite number of discrete categories. Another way to think of classification is as a discrete (as opposed to continuous) form of supervised learning where one has a limited number of categories and for each of the n samples provided, one is to try to label them with the correct category or class.
 
     * `regression <https://en.wikipedia.org/wiki/Regression_analysis>`_:
       if the desired output consists of one or more
