@@ -2256,3 +2256,30 @@ def test_regressor_predict_on_arraylikes():
     est = KNeighborsRegressor(n_neighbors=1, algorithm="brute", weights=_weights)
     est.fit(X, y)
     assert_allclose(est.predict([[0, 2.5]]), [6])
+
+
+def test_KNeighborsClassifier_raise_on_all_zero_weights():
+    """Check that `predict` and `predict_proba` raises on sample of all zeros weights.
+
+    Related to Issue #25854.
+    """
+    X = [[0, 1], [1, 2], [2, 3], [3, 4]]
+    y = [0, 0, 1, 1]
+
+    def _weights(dist):
+        return np.vectorize(lambda x: 0 if x > 0.5 else 1)(dist)
+
+    est = neighbors.KNeighborsClassifier(n_neighbors=3, weights=_weights)
+    est.fit(X, y)
+
+    msg = (
+        "All neighbors of some sample is getting zero weights. "
+        "Please modify 'weights' to avoid this case if you are "
+        "using a user-defined function."
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        est.predict([[1.1, 1.1]])
+
+    with pytest.raises(ValueError, match=msg):
+        est.predict_proba([[1.1, 1.1]])

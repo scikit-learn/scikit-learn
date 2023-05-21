@@ -275,6 +275,12 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         for k, classes_k in enumerate(classes_):
             if weights is None:
                 mode, _ = _mode(_y[neigh_ind, k], axis=1)
+            elif np.all(weights == 0, axis=1).any():
+                raise ValueError(
+                    "All neighbors of some sample is getting zero weights. "
+                    "Please modify 'weights' to avoid this case if you are "
+                    "using a user-defined function."
+                )
             else:
                 mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
@@ -361,6 +367,12 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
             weights = np.ones_like(neigh_ind)
+        elif np.all(weights == 0, axis=1).any():
+            raise ValueError(
+                "All neighbors of some sample is getting zero weights. "
+                "Please modify 'weights' to avoid this case if you are "
+                "using a user-defined function."
+            )
 
         all_rows = np.arange(n_queries)
         probabilities = []
@@ -374,7 +386,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
             # normalize 'votes' into real [0,1] probabilities
             normalizer = proba_k.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
             proba_k /= normalizer
 
             probabilities.append(proba_k)
