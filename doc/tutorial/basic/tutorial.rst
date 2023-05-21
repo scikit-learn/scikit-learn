@@ -80,8 +80,8 @@ Loading an example dataset
 datasets for classification and the `diabetes dataset
 <https://www4.stat.ncsu.edu/~boos/var.select/diabetes.html>`_ for regression.
 
-In the following, we start a Python interpreter from our shell and then
-load the ``iris`` and ``digits`` datasets.  Our notational convention is that
+In the following, we start a Python interpreter(from shell) or an IDE of your choice, then
+import the ``iris`` and ``digits`` datasets from sklearn.  Our notational convention is that
 ``$`` denotes the shell prompt while ``>>>`` denotes the Python
 interpreter prompt::
 
