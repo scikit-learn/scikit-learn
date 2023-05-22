@@ -25,7 +25,6 @@ from traceback import format_exc
 
 import numpy as np
 import copy
-import warnings
 
 from . import (
     r2_score,
@@ -688,22 +687,6 @@ normalized_mutual_info_scorer = make_scorer(normalized_mutual_info_score)
 fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
 
 
-# TODO(1.3) Remove
-class _DeprecatedScorers(dict):
-    """A temporary class to deprecate SCORERS."""
-
-    def __getitem__(self, item):
-        warnings.warn(
-            (
-                "sklearn.metrics.SCORERS is deprecated and will be removed in v1.3."
-                " Please use sklearn.metrics.get_scorer_names to get a list of"
-                " available scorers and sklearn.metrics.get_metric to get scorer."
-            ),
-            FutureWarning,
-        )
-        return super().__getitem__(item)
-
-
 _SCORERS = dict(
     explained_variance=explained_variance_scorer,
     r2=r2_scorer,
@@ -767,8 +750,6 @@ for name, metric in [
     for average in ["macro", "micro", "samples", "weighted"]:
         qualified_name = "{0}_{1}".format(name, average)
         _SCORERS[qualified_name] = make_scorer(metric, pos_label=None, average=average)
-
-SCORERS = _DeprecatedScorers(_SCORERS)
 
 
 @validate_params(

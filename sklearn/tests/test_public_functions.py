@@ -271,6 +271,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.preprocessing.scale",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",
+    "sklearn.tree.export_graphviz",
     "sklearn.tree.export_text",
     "sklearn.tree.plot_tree",
     "sklearn.utils.gen_batches",

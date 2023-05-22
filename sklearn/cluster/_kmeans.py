@@ -894,6 +894,7 @@ class _BaseKMeans(
                     " explicitly to suppress the warning"
                 ),
                 FutureWarning,
+                stacklevel=2,
             )
             self._n_init = default_n_init
         if self._n_init == "auto":

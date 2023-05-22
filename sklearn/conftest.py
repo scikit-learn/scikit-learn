@@ -27,8 +27,8 @@ from sklearn.tests import random_seed
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
-        "Your version of pytest is too old, you should have "
-        "at least pytest >= {} installed.".format(PYTEST_MIN_VERSION)
+        f"Your version of pytest is too old. Got version {pytest.__version__}, you"
+        f" should have pytest >= {PYTEST_MIN_VERSION} installed."
     )
 
 scipy_datasets_require_network = sp_version >= parse_version("1.10")

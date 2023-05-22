@@ -11,5 +11,5 @@ scipy
 cython
 joblib
 threadpoolctl
-pytest==6.2.5
+pytest
 pytest-xdist

@@ -7,17 +7,17 @@
 --index-url https://d1yxz45j0ypngg.cloudfront.net/
 --extra-index-url https://pypi.org/simple
 
-attrs==22.2.0
-    # via pytest
 contourpy==1.0.7
     # via matplotlib
 cycler==0.11.0
     # via matplotlib
 cython==0.29.33
     # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
+exceptiongroup==1.1.1
+    # via pytest
 execnet==1.9.0
     # via pytest-xdist
-fonttools==4.38.0
+fonttools==4.39.4
     # via matplotlib
 iniconfig==2.0.0
     # via pytest
@@ -33,23 +33,21 @@ numpy==1.24.0
     #   contourpy
     #   matplotlib
     #   scipy
-packaging==23.0
+packaging==23.1
     # via
     #   matplotlib
     #   pytest
-pillow==9.3.0
+pillow==9.5.0
     # via matplotlib
 pluggy==1.0.0
     # via pytest
-py==1.11.0
-    # via pytest
 pyparsing==3.0.9
     # via matplotlib
-pytest==6.2.5
+pytest==7.3.1
     # via
     #   -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
     #   pytest-xdist
-pytest-xdist==3.1.0
+pytest-xdist==3.3.0
     # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
 python-dateutil==2.8.2
     # via matplotlib
@@ -59,5 +57,5 @@ six==1.16.0
     # via python-dateutil
 threadpoolctl==3.1.0
     # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
-toml==0.10.2
+tomli==2.0.1
     # via pytest

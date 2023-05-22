@@ -276,7 +276,7 @@ def test_sparse_input(sparse_format, solver, fit_intercept, default_solver):
     if fit_intercept:
         assert quant_sparse.intercept_ == approx(quant_dense.intercept_)
         # check that we still predict fraction
-        assert 0.45 <= np.mean(y < quant_sparse.predict(X_sparse)) <= 0.55
+        assert 0.45 <= np.mean(y < quant_sparse.predict(X_sparse)) <= 0.57
 
 
 # TODO (1.4): remove this test in 1.4

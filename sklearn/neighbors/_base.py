@@ -51,7 +51,6 @@ SCIPY_METRICS = [
     "hamming",
     "jaccard",
     "mahalanobis",
-    "matching",
     "minkowski",
     "rogerstanimoto",
     "russellrao",
@@ -64,6 +63,9 @@ SCIPY_METRICS = [
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     SCIPY_METRICS += ["kulsinski"]
+if sp_base_version < parse_version("1.9"):
+    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
+    SCIPY_METRICS += ["matching"]
 
 VALID_METRICS = dict(
     ball_tree=BallTree._valid_metrics,
