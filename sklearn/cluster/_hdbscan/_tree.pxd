@@ -1,5 +1,5 @@
 from ...utils._typedefs cimport intp_t, float64_t, uint8_t
-from numpy cimport PyArrayObject
+cimport numpy as cnp
 
 # This corresponds to the scipy.cluster.hierarchy format
 ctypedef packed struct HIERARCHY_t:
@@ -17,4 +17,4 @@ ctypedef packed struct CONDENSED_t:
     intp_t cluster_size
 
 cdef extern from "numpy/arrayobject.h":
-    intp_t * PyArray_SHAPE(PyArrayObject *)
+    intp_t * PyArray_SHAPE(cnp.PyArrayObject *)

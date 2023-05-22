@@ -281,7 +281,7 @@ cdef cnp.float64_t[::1] max_lambdas(cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] c
     current_parent = condensed_tree[0].parent
     max_lambda = condensed_tree[0].value
 
-    for idx in range(1, PyArray_SHAPE(<PyArrayObject*> condensed_tree)[0]):
+    for idx in range(1, PyArray_SHAPE(<cnp.PyArrayObject*> condensed_tree)[0]):
         parent = condensed_tree[idx].parent
         lambda_val = condensed_tree[idx].value
 
@@ -454,7 +454,7 @@ cpdef cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] _do_labelling(
     result = np.empty(root_cluster, dtype=np.intp)
     union_find = TreeUnionFind(np.max(parent_array) + 1)
 
-    for n in range(PyArray_SHAPE(<PyArrayObject*> condensed_tree)[0]):
+    for n in range(PyArray_SHAPE(<cnp.PyArrayObject*> condensed_tree)[0]):
         child = child_array[n]
         parent = parent_array[n]
         if child not in clusters:
@@ -505,7 +505,7 @@ cdef cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] get_probabilities(
     deaths = max_lambdas(condensed_tree)
     root_cluster = np.min(parent_array)
 
-    for n in range(PyArray_SHAPE(<PyArrayObject*> condensed_tree)[0]):
+    for n in range(PyArray_SHAPE(<cnp.PyArrayObject*> condensed_tree)[0]):
         point = child_array[n]
         if point >= root_cluster:
             continue
@@ -541,7 +541,7 @@ cpdef list recurse_leaf_dfs(
 
 cpdef list get_cluster_tree_leaves(cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] cluster_tree):
     cdef cnp.intp_t root
-    if PyArray_SHAPE(<PyArrayObject*> cluster_tree)[0] == 0:
+    if PyArray_SHAPE(<cnp.PyArrayObject*> cluster_tree)[0] == 0:
         return []
     root = cluster_tree['parent'].min()
     return recurse_leaf_dfs(cluster_tree, root)
@@ -711,7 +711,7 @@ cdef tuple _get_clusters(
                     if sub_node != node:
                         is_cluster[sub_node] = False
 
-        if cluster_selection_epsilon != 0.0 and PyArray_SHAPE(<PyArrayObject*> cluster_tree)[0] > 0:
+        if cluster_selection_epsilon != 0.0 and PyArray_SHAPE(<cnp.PyArrayObject*> cluster_tree)[0] > 0:
             eom_clusters = [c for c in is_cluster if is_cluster[c]]
             selected_clusters = []
             # first check if eom_clusters only has root node, which skips epsilon check.

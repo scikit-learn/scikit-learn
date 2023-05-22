@@ -13,10 +13,9 @@ from ...cluster._hierarchical_fast cimport UnionFind
 from ...cluster._hdbscan._tree cimport HIERARCHY_t
 from ...cluster._hdbscan._tree import HIERARCHY_dtype
 from ...utils._typedefs cimport intp_t, float64_t, int64_t, uint8_t
-from numpy cimport PyArrayObject
 
 cdef extern from "numpy/arrayobject.h":
-    intp_t * PyArray_SHAPE(PyArrayObject *)
+    intp_t * PyArray_SHAPE(cnp.PyArrayObject *)
 
 # Numpy structured dtype representing a single ordered edge in Prim's algorithm
 MST_edge_dtype = np.dtype([
@@ -58,7 +57,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
 
         cnp.ndarray[uint8_t, mode='c'] label_filter
 
-        int64_t n_samples = PyArray_SHAPE(<PyArrayObject*> mutual_reachability)[0]
+        int64_t n_samples = PyArray_SHAPE(<cnp.PyArrayObject*> mutual_reachability)[0]
         int64_t current_node, new_node_index, new_node, i
 
     mst = np.empty(n_samples - 1, dtype=MST_edge_dtype)
