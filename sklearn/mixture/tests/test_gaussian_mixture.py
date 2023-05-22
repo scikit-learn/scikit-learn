@@ -1325,6 +1325,56 @@ def test_gaussian_mixture_precisions_init_diag():
     )
 
 
+def test_gaussian_mixture_precisions_init():
+    def _generate_data(n_samples, n_features, n_components):
+        """Randomly generate samples and responsibilities"""
+        rs = np.random.RandomState(12345)
+        X = rs.random_sample((n_samples, n_features))
+        resp = rs.random_sample((n_samples, n_components))
+        resp /= resp.sum(axis=1)[:, np.newaxis]
+        return X, resp
+
+    def _calculate_precisions(X, resp, covariance_type):
+        """Calculate precision matrix and its Cholesky decomposition"""
+        reg_covar = 1e-6
+        weights, means, covariances = _estimate_gaussian_parameters(
+            X, resp, reg_covar, covariance_type
+        )
+        precisions_cholesky = _compute_precision_cholesky(covariances, covariance_type)
+
+        _, n_components = resp.shape
+        # Instantiate a `GaussianMixture` model in order to use its
+        # `_set_parameters` method to compute `precisions_` from
+        # `precisions_cholesky_`
+        gmm = GaussianMixture(
+            n_components=n_components, covariance_type=covariance_type
+        )
+        params = (weights, means, covariances, precisions_cholesky)
+        # pylint: disable-next=protected-access
+        gmm._set_parameters(params)
+        return gmm.precisions_, gmm.precisions_cholesky_
+
+    X, resp = _generate_data(n_samples=100, n_features=3, n_components=4)
+
+    for covariance_type in ("full", "tied", "diag", "spherical"):
+        # Arrange
+        precisions_init, precisions_cholesky = _calculate_precisions(
+            X, resp, covariance_type
+        )
+        desired_precisions_cholesky = precisions_cholesky
+
+        # Act
+        gmm = GaussianMixture(
+            covariance_type=covariance_type, precisions_init=precisions_init
+        )
+        # pylint: disable-next=protected-access
+        gmm._initialize(X, resp)
+        actual_precisions_cholesky = gmm.precisions_cholesky_
+
+        # Assert
+        assert_allclose(actual_precisions_cholesky, desired_precisions_cholesky)
+
+
 def test_gaussian_mixture_single_component_stable():
     """
     Non-regression test for #23032 ensuring 1-component GM works on only a
