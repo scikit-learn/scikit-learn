@@ -424,16 +424,27 @@ def test_pca_score(svd_solver, global_random_seed):
 
 def test_pca_score3(global_random_seed):
     # Check that probabilistic PCA selects the right model
-    n, p = 200, 3
+    n, p = 50, 3
     rng = np.random.RandomState(global_random_seed)
-    Xl = rng.randn(n, p) + rng.randn(n, 1) * np.array([3, 4, 5]) + np.array([1, 0, 7])
-    Xt = rng.randn(n, p) + rng.randn(n, 1) * np.array([3, 4, 5]) + np.array([1, 0, 7])
     ll = np.zeros(p)
-    for k in range(p):
-        pca = PCA(n_components=k, svd_solver="full")
-        pca.fit(Xl)
-        ll[k] = pca.score(Xt)
+    for _ in range(10):
+        X_train = (
+            rng.randn(n, p)
+            + rng.randn(n, 1) * np.array([3, 4, 5])
+            + np.array([1, 0, 7])
+        )
+        X_test = (
+            rng.randn(n, p)
+            + rng.randn(n, 1) * np.array([3, 4, 5])
+            + np.array([1, 0, 7])
+        )
+        for k in range(p):
+            pca = PCA(n_components=k, svd_solver="full")
+            pca.fit(X_train)
+            ll[k] += pca.score(X_test)
 
+    # Across multiple trials, the true data generating model should have
+    # accumulated the highest test score
     assert ll.argmax() == 1
 
 
