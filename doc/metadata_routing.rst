@@ -29,6 +29,13 @@ If you are developing a scikit-learn compatible estimator or meta-estimator,
 you can check our related developer guide:
 :ref:`sphx_glr_auto_examples_plot_metadata_routing.py`.
 
+.. note::
+  Note that the methods and requirements introduced in this document are only
+  relevant if you want to pass metadata (e.g. ``sample_weight``) to a method.
+  If you're only passing ``X`` and ``y`` and no other parameter / metadata to
+  methods such as ``fit``, ``transform``, etc, then you don't need to set
+  anything.
+
 Usage Examples
 **************
 Here we present a few examples to show different common use-cases. The examples
@@ -83,12 +90,12 @@ Error handling: if ``props={"sample_weigh": my_weights, ...}`` were passed
 Weighted scoring and unweighted fitting
 ---------------------------------------
 
-All Scikit-learn estimators require weights to be either explicitly requested
-or not requested (i.e. ``UNREQUESTED``) when used in another router such as a
-``Pipeline`` or a ``*GridSearchCV``. To perform a unweighted fit, we need to
-configure :class:`~linear_model.LogisticRegressionCV` to not request sample
-weights, so that :func:`~model_selection.cross_validate` does not pass the
-weights along::
+When passing metadata such as ``sample_weight`` around, all Scikit-learn estimators
+require weights to be either explicitly requested or not requested (i.e.
+``UNREQUESTED``) when used in another router such as a ``Pipeline`` or a
+``*GridSearchCV``. To perform a unweighted fit, we need to configure
+:class:`~linear_model.LogisticRegressionCV` to not request sample weights, so that
+:func:`~model_selection.cross_validate` does not pass the weights along::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True
