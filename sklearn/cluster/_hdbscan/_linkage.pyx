@@ -13,9 +13,9 @@ from ...cluster._hierarchical_fast cimport UnionFind
 from ...cluster._hdbscan._tree cimport HIERARCHY_t
 from ...cluster._hdbscan._tree import HIERARCHY_dtype
 from ...utils._typedefs cimport intp_t, float64_t, int64_t, uint8_t
+from numpy cimport PyArrayObject
 
 cdef extern from "numpy/arrayobject.h":
-    ctypedef struct PyArrayObject
     intp_t * PyArray_SHAPE(PyArrayObject *)
 
 # Numpy structured dtype representing a single ordered edge in Prim's algorithm
