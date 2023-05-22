@@ -17,7 +17,7 @@ from numbers import Integral
 import numpy as np
 
 from ..utils.validation import check_is_fitted, check_array
-from ..utils._param_validation import Interval, validate_params, StrOptions
+from ..utils._param_validation import Interval, validate_params, StrOptions, HasMethods
 
 from ..base import is_classifier
 
@@ -441,20 +441,6 @@ class _DOTTreeExporter(_BaseTreeExporter):
         else:
             self.characters = ["#", "[", "]", "<=", "\\n", '"', '"']
 
-        # validate
-        if isinstance(precision, Integral):
-            if precision < 0:
-                raise ValueError(
-                    "'precision' should be greater or equal to 0."
-                    " Got {} instead.".format(precision)
-                )
-        else:
-            raise ValueError(
-                "'precision' should be an integer. Got {} instead.".format(
-                    type(precision)
-                )
-            )
-
         # The depth of each node for plotting with 'leaf' option
         self.ranks = {"leaves": []}
         # The colors to render each node with
@@ -739,6 +725,26 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
 
 
+@validate_params(
+    {
+        "decision_tree": "no_validation",
+        "out_file": [str, None, HasMethods("write")],
+        "max_depth": [Interval(Integral, 0, None, closed="left"), None],
+        "feature_names": ["array-like", None],
+        "class_names": ["array-like", "boolean", None],
+        "label": [StrOptions({"all", "root", "none"})],
+        "filled": ["boolean"],
+        "leaves_parallel": ["boolean"],
+        "impurity": ["boolean"],
+        "node_ids": ["boolean"],
+        "proportion": ["boolean"],
+        "rotate": ["boolean"],
+        "rounded": ["boolean"],
+        "special_characters": ["boolean"],
+        "precision": [Interval(Integral, 0, None, closed="left"), None],
+        "fontname": [str],
+    }
+)
 def export_graphviz(
     decision_tree,
     out_file=None,
@@ -774,8 +780,8 @@ def export_graphviz(
 
     Parameters
     ----------
-    decision_tree : decision tree classifier
-        The decision tree to be exported to GraphViz.
+    decision_tree : object
+        The decision tree estimator to be exported to GraphViz.
 
     out_file : object or str, default=None
         Handle or name of the output file. If ``None``, the result is
