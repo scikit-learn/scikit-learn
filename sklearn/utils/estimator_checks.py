@@ -59,7 +59,7 @@ from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
 from ..utils.fixes import sp_version
 from ..utils.fixes import parse_version
 from ..utils.validation import check_is_fitted
-from ..utils._array_api import _convert_to_numpy
+from ..utils._array_api import _convert_to_numpy, get_namespace, device as array_device
 from ..utils._param_validation import make_constraint
 from ..utils._param_validation import generate_invalid_param_val
 from ..utils._param_validation import InvalidParameterError
@@ -137,12 +137,18 @@ def _yield_checks(estimator):
     yield check_estimator_get_tags_default_keys
 
     if tags["array_api_support"]:
-        for array_namespace in ["numpy.array_api", "cupy.array_api"]:
-            yield partial(check_array_api_input, array_namespace=array_namespace)
-
-        for device in ["cpu", "cuda"]:
-            for dtype in ("float64", "float32"):
-                yield partial(check_array_api_input_torch, dtype=dtype, device=device)
+        for array_namespace in ["numpy.array_api", "cupy.array_api", "torch"]:
+            if array_namespace == "torch":
+                for device in ["cpu", "cuda"]:
+                    for dtype in ("float64", "float32"):
+                        yield partial(
+                            check_array_api_input,
+                            array_namespace=array_namespace,
+                            dtype=dtype,
+                            device=device,
+                        )
+            else:
+                yield partial(check_array_api_input, array_namespace=array_namespace)
 
 
 def _yield_classifier_checks(classifier):
@@ -858,16 +864,22 @@ def _generate_sparse_matrix(X_csr):
         yield sparse_format + "_64", X
 
 
-def check_array_api_input(name, estimator_orig, *, array_namespace):
+def check_array_api_input(
+    name, estimator_orig, *, array_namespace, device="cpu", dtype="float64"
+):
     """Check that the array_api Array gives the same results as ndarrays."""
     xp = pytest.importorskip(array_namespace)
 
+    if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
+        pytest.skip("test requires cuda, which is not available")
+
     X, y = make_classification(random_state=42)
+    X = X.astype(dtype)
 
     est = clone(estimator_orig)
 
-    X_xp = xp.asarray(X)
-    y_xp = xp.asarray(y)
+    X_xp = xp.asarray(X, device=device)
+    y_xp = xp.asarray(y, device=device)
 
     est.fit(X, y)
 
@@ -883,7 +895,11 @@ def check_array_api_input(name, estimator_orig, *, array_namespace):
     # namespace as the one of the training data.
     for key, attribute in array_attributes.items():
         est_xp_param = getattr(est_xp, key)
-        assert hasattr(est_xp_param, "__array_namespace__")
+        assert (
+            get_namespace(est_xp_param)[0] == get_namespace(X_xp)[0]
+        ), f"'{key}' attribute is in wrong namespace"
+
+        assert array_device(est_xp_param) == array_device(X_xp)
 
         est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
         assert_allclose(
@@ -908,9 +924,12 @@ def check_array_api_input(name, estimator_orig, *, array_namespace):
         result = method(X)
         with config_context(array_api_dispatch=True):
             result_xp = getattr(est_xp, method_name)(X_xp)
-        assert hasattr(
-            result_xp, "__array_namespace__"
-        ), f"{method} did not output an array_namespace"
+
+        assert (
+            get_namespace(result_xp)[0] == get_namespace(X_xp)[0]
+        ), f"'{method}' output is in wrong namespace"
+
+        assert array_device(result_xp) == array_device(X_xp)
 
         result_xp_np = _convert_to_numpy(result_xp, xp=xp)
 
