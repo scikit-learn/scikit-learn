@@ -270,17 +270,17 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         n_outputs = len(classes_)
         n_queries = _num_samples(X)
         weights = _get_weights(neigh_dist, self.weights)
+        if weights is not None and np.all(weights == 0, axis=1).any():
+            raise ValueError(
+                "All neighbors of some sample is getting zero weights. "
+                "Please modify 'weights' to avoid this case if you are "
+                "using a user-defined function."
+            )
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
             if weights is None:
                 mode, _ = _mode(_y[neigh_ind, k], axis=1)
-            elif np.all(weights == 0, axis=1).any():
-                raise ValueError(
-                    "All neighbors of some sample is getting zero weights. "
-                    "Please modify 'weights' to avoid this case if you are "
-                    "using a user-defined function."
-                )
             else:
                 mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
