@@ -1195,29 +1195,42 @@ def test_scorer_no_op_multiclass_select_proba():
 
 @pytest.mark.parametrize("name", get_scorer_names(), ids=get_scorer_names())
 def test_scorer_metadata_request(name):
+    """Testing metadata requests for scorers.
+
+    This test checks many small things in a large test, to reduce the
+    boilerplate required for each section.
+    """
     with config_context(enable_metadata_routing=True):
+        # Make sure they expose the routing methods.
         scorer = get_scorer(name)
         assert hasattr(scorer, "set_score_request")
         assert hasattr(scorer, "get_metadata_routing")
 
+        # Check that by default no metadata is requested.
         assert_request_is_empty(scorer.get_metadata_routing())
 
         weighted_scorer = scorer.set_score_request(sample_weight=True)
-        # set_score_request should mutate the instance
+        # set_score_request should mutate the instance, rather than returning a
+        # new instance
         assert weighted_scorer is scorer
 
+        # make sure the scorer doesn't request anything on methods other than
+        # `score`, and that the requested value on `score` is correct.
         assert_request_is_empty(weighted_scorer.get_metadata_routing(), exclude="score")
         assert (
             weighted_scorer.get_metadata_routing().score.requests["sample_weight"]
             == RequestType.REQUESTED
         )
 
-        # make sure putting the scorer in a router doesn't request anything
+        # make sure putting the scorer in a router doesn't request anything by
+        # default
         router = MetadataRouter(owner="test").add(
             method_mapping="score", scorer=get_scorer(name)
         )
+        # make sure `sample_weight` is refused if passed.
         with pytest.raises(TypeError, match="got unexpected argument"):
             router.validate_metadata(params={"sample_weight": 1}, method="score")
+        # make sure `sample_weight` is not routed even if passed.
         routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
         assert not routed_params.scorer.score
 
@@ -1231,6 +1244,9 @@ def test_scorer_metadata_request(name):
 
 
 def test_metadata_kwarg_conflict():
+    """This test makes sure the right warning is raised if the user passes
+    some metadata both as a constructor to make_scorer, and during __call__.
+    """
     with config_context(enable_metadata_routing=True):
         X, y = make_classification(
             n_classes=3, n_informative=3, n_samples=20, random_state=0
@@ -1252,6 +1268,11 @@ def test_metadata_kwarg_conflict():
 
 
 def test_PassthroughScorer_metadata_request():
+    """Test that _PassthroughScorer properly routes metadata.
+
+    _PassthroughScorer should behave like a consumer, mirroring whatever is the
+    underlying score method.
+    """
     with config_context(enable_metadata_routing=True):
         scorer = _PassthroughScorer(
             estimator=LinearSVC()

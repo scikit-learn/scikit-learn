@@ -18,6 +18,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
+import warnings
 from collections import Counter
 from inspect import signature
 from functools import partial
@@ -237,8 +238,8 @@ class _BaseScorer(_MetadataRequester):
             Sample weights.
 
         **kwargs : dict
-            Other parameters passed to the scorer, e.g. sample_weight.
-            Refer to :func:`set_score_request` for more details.
+            Other parameters passed to the scorer. Refer to
+            :func:`set_score_request` for more details.
 
             Only available if `enable_metadata_routing=True`. See the
             :ref:`User Guide <metadata_routing>`.
@@ -256,17 +257,18 @@ class _BaseScorer(_MetadataRequester):
                 " the User Guide for more information."
             )
 
+        _kwargs = copy.deepcopy(kwargs)
         if sample_weight is not None:
-            kwargs["sample_weight"] = sample_weight
+            _kwargs["sample_weight"] = sample_weight
 
-        return self._score(partial(_cached_call, None), estimator, X, y_true, **kwargs)
+        return self._score(partial(_cached_call, None), estimator, X, y_true, **_kwargs)
 
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
         return ""
 
     def _warn_overlap(self, message, kwargs):
-        """Warn if there is any overlap between ``self._kwargs`` and kwargs.
+        """Warn if there is any overlap between ``self._kwargs`` and ``kwargs``.
 
         This method is intended to be used to check for overlap between
         ``self._kwargs`` and ``kwargs`` passed as metadata.
@@ -329,8 +331,8 @@ class _PredictScorer(_BaseScorer):
             Gold standard target values for X.
 
         **kwargs : dict
-            Other parameters passed to the scorer, e.g. sample_weight.
-            Refer to :func:`set_score_request` for more details.
+            Other parameters passed to the scorer. Refer to
+            :func:`set_score_request` for more details.
 
             .. versionadded:: 1.3
 
@@ -374,8 +376,8 @@ class _ProbaScorer(_BaseScorer):
             not probabilities.
 
         **kwargs : dict
-            Other parameters passed to the scorer, e.g. sample_weight.
-            Refer to :func:`set_score_request` for more details.
+            Other parameters passed to the scorer. Refer to
+            :func:`set_score_request` for more details.
 
             .. versionadded:: 1.3
 
@@ -425,8 +427,8 @@ class _ThresholdScorer(_BaseScorer):
             not decision function values.
 
         **kwargs : dict
-            Other parameters passed to the scorer, e.g. sample_weight.
-            Refer to :func:`set_score_request` for more details.
+            Other parameters passed to the scorer. Refer to
+            :func:`set_score_request` for more details.
 
             .. versionadded:: 1.3
 
