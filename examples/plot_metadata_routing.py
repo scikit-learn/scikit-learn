@@ -39,12 +39,13 @@ from sklearn.utils.metadata_routing import process_routing
 from sklearn.utils.validation import check_is_fitted
 from sklearn.linear_model import LinearRegression
 
-N, M = 100, 4
-X = np.random.rand(N, M)
-y = np.random.randint(0, 2, size=N)
-my_groups = np.random.randint(0, 10, size=N)
-my_weights = np.random.rand(N)
-my_other_weights = np.random.rand(N)
+n_samples, n_features = 100, 4
+rng = np.random.RandomState(42)
+X = rng.rand(n_samples, n_features)
+y = rng.randint(0, 2, size=n_samples)
+my_groups = rng.randint(0, 10, size=n_samples)
+my_weights = rng.rand(n_samples)
+my_other_weights = rng.rand(n_samples)
 
 # %%
 # This utility function is a dummy to check if a metadata is passed.
@@ -206,8 +207,9 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 # value}}}`` to pass to the underlying estimator's method. The ``object_name``
 # (``estimator`` in the above ``routed_params.estimator.fit`` example) is the
 # same as the one ``add``ed in the ``get_metadata_routing``.
-# ``validate_metadata`` makes sure all given metadata are requested. This is to
-# avoid silent bugs, and this is how it will work:
+# ``validate_metadata`` makes sure all given metadata are requested to avoid silent
+# bugs. Now, we illustrate the different behaviors and notably the type of errors
+# raised:
 
 est = MetaClassifier(estimator=ExampleClassifier().set_fit_request(sample_weight=True))
 est.fit(X, y, sample_weight=my_weights)
@@ -220,21 +222,21 @@ est.fit(X, y, sample_weight=my_weights)
 est.fit(X, y)
 
 # %%
-# If we pass an unknown metadata, it will be caught:
+# If we pass an unknown metadata, an error is raised:
 try:
     est.fit(X, y, test=my_weights)
 except TypeError as e:
     print(e)
 
 # %%
-# And if we pass something which is not explicitly requested:
+# And if we pass a metadata which is not explicitly requested:
 try:
     est.fit(X, y, sample_weight=my_weights).predict(X, groups=my_groups)
 except ValueError as e:
     print(e)
 
 # %%
-# Also, if we explicitly say it's not requested, but pass it:
+# Also, if we explicitly set it as not requested, but it is provided:
 est = MetaClassifier(
     estimator=ExampleClassifier()
     .set_fit_request(sample_weight=True)
@@ -246,12 +248,12 @@ except TypeError as e:
     print(e)
 
 # %%
-# Another concept to introduce is aliased metadata. This is when an estimator
+# Another concept to introduce is **aliased metadata**. This is when an estimator
 # requests a metadata with a different name than the default value. For
 # instance, in a setting where there are two estimators in a pipeline, one
 # could request ``sample_weight1`` and the other ``sample_weight2``. Note that
 # this doesn't change what the estimator expects, it only tells the
-# meta-estimator how to map provided metadata to what's required. Here's an
+# meta-estimator how to map the provided metadata to what's required. Here's an
 # example, where we pass ``aliased_sample_weight`` to the meta-estimator, but
 # the meta-estimator understands that ``aliased_sample_weight`` is an alias for
 # ``sample_weight``, and passes it as ``sample_weight`` to the underlying
@@ -309,7 +311,7 @@ meta_est = MetaClassifier(estimator=est).fit(X, y, aliased_sample_weight=my_weig
 # %%
 # Router and Consumer
 # -------------------
-# To show how a slightly more complicated case would work, consider a case
+# To show how a slightly more complex case would work, consider a case
 # where a meta-estimator uses some metadata, but it also routes them to an
 # underlying estimator. In this case, this meta-estimator is a consumer and a
 # router at the same time. This is how we can implement one, and it is very
@@ -319,6 +321,14 @@ meta_est = MetaClassifier(estimator=est).fit(X, y, aliased_sample_weight=my_weig
 class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def __init__(self, estimator):
         self.estimator = estimator
+
+    def get_metadata_routing(self):
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add_self(self)
+            .add(estimator=self.estimator, method_mapping="one-to-one")
+        )
+        return router
 
     def fit(self, X, y, sample_weight, **fit_params):
         if self.estimator is None:
@@ -348,23 +358,19 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
         params = request_router.route_params(params=predict_params, caller="predict")
         return self.estimator_.predict(X, **params.estimator.predict)
 
-    def get_metadata_routing(self):
-        router = (
-            MetadataRouter(owner=self.__class__.__name__)
-            .add_self(self)
-            .add(estimator=self.estimator, method_mapping="one-to-one")
-        )
-        return router
-
 
 # %%
 # The key parts where the above estimator differs from our previous
 # meta-estimator is accepting ``sample_weight`` explicitly in ``fit`` and
 # including it in ``fit_params``. Making ``sample_weight`` an explicit argument
 # makes sure ``set_fit_request(sample_weight=...)`` is present for this class.
+# In a sense, this means the estimator is both a consumer, as well as a router
+# of ``sample_weight``.
 #
 # In ``get_metadata_routing``, we add ``self`` to the routing using
-# ``add_self``. Now let's look at some examples:
+# ``add_self`` to indicate this estimator is consuming ``sample_weight`` as
+# well as being a router; which also adds a ``$self`` key to the routing info
+# as illustrated bellow. Now let's look at some examples:
 
 # %%
 # - No metadata requested
@@ -373,7 +379,7 @@ print_routing(est)
 
 
 # %%
-# - ``sample_weight`` requested by child estimator
+# - ``sample_weight`` requested by underlying estimator
 est = RouterConsumerClassifier(
     estimator=ExampleClassifier().set_fit_request(sample_weight=True)
 )
@@ -387,7 +393,7 @@ est = RouterConsumerClassifier(estimator=ExampleClassifier()).set_fit_request(
 print_routing(est)
 
 # %%
-# Note the difference in the requested meatada representations above.
+# Note the difference in the requested metadata representations above.
 #
 # - We can also alias the metadata to pass different values to them:
 
@@ -427,6 +433,20 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
         self.transformer = transformer
         self.classifier = classifier
 
+    def get_metadata_routing(self):
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add(
+                transformer=self.transformer,
+                method_mapping=MethodMapping()
+                .add(callee="fit", caller="fit")
+                .add(callee="transform", caller="fit")
+                .add(callee="transform", caller="predict"),
+            )
+            .add(classifier=self.classifier, method_mapping="one-to-one")
+        )
+        return router
+
     def fit(self, X, y, **fit_params):
         params = process_routing(self, "fit", fit_params)
 
@@ -443,20 +463,6 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
 
         X_transformed = self.transformer_.transform(X, **params.transformer.transform)
         return self.classifier_.predict(X_transformed, **params.classifier.predict)
-
-    def get_metadata_routing(self):
-        router = (
-            MetadataRouter(owner=self.__class__.__name__)
-            .add(
-                transformer=self.transformer,
-                method_mapping=MethodMapping()
-                .add(callee="fit", caller="fit")
-                .add(callee="transform", caller="fit")
-                .add(callee="transform", caller="predict"),
-            )
-            .add(classifier=self.classifier, method_mapping="one-to-one")
-        )
-        return router
 
 
 # %%
@@ -604,19 +610,6 @@ with warnings.catch_warnings(record=True) as record:
     MetaRegressor(estimator=ExampleRegressor()).fit(X, y, sample_weight=my_weights)
 for w in record:
     print(w.message)
-
-# %%
-# Deprecation to Give Users Time to Adapt their Code
-# --------------------------------------------------
-# With the introduction of metadata routing, following user code would raise an
-# error:
-
-try:
-    reg = MetaRegressor(estimator=LinearRegression())
-    reg.fit(X, y, sample_weight=my_weights)
-except Exception as e:
-    print(e)
-
 
 # %%
 # Third Party Development and scikit-learn Dependency
