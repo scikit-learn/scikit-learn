@@ -47,28 +47,22 @@ print(f"The dataset consists of {n_samples} samples and {n_features} features")
 # Compute score and computation times
 # -----------------------------------
 #
-# `n_estimators` is a hyperparameter of Random Forests that determines the
-# number of decision trees to be included in the ensemble. Each tree in the
-# ensemble is trained on a random subset of the training data, and the final
-# prediction of the ensemble is obtained by averaging the predictions of all the
-# individual trees. Increasing the number of trees can improve the performance
-# of the Random Forest, but can also increase the computational cost and the
-# risk of overfitting.
+# Notice that many parts of the implementation of
+# :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+# :class:`~sklearn.ensemble.HistGradientBoostingRegressor` are parallelized by
+# default.
 #
-# .. Note::
-#  Tuning the `n_estimators` for random forests generally result in a waste of
-#  computer power. In practice one just need to ensure that it is large enough so
-#  that doubling its value does not lead to a significant improvement of the
-#  testing score.
-#
-# `max_iter` is a hyperparameter of Hist Gradient Boosting that determines the
-# maximum number of boosting iterations to be performed during the training
-# process. Each iteration of the boosting process fits a new decision tree to
-# the residuals of the previous iteration, with the aim of gradually improving
-# the overall prediction accuracy. Increasing the number of boosting iterations
-# can improve the performance of the Hist Gradient Boosting model, but can also
-# increase the risk of overfitting and slow down the training process.
-#
+# The implementation of :class:`~sklearn.ensemble.RandomForestRegressor` and
+# :class:`~sklearn.ensemble.RandomForestClassifier` can also be run on multiple
+# cores by using the `n_jobs` parameter, here set to 2 due to limitations on the
+# documentation builder.
+
+import joblib
+
+N_CORES = joblib.cpu_count(only_physical_cores=True)
+print(f"Number of physical cores: {N_CORES}")
+
+# %%
 # The other parameters of both models were tuned but the procedure is not shown
 # here to keep the example simple.
 
@@ -101,8 +95,13 @@ for name, model in models.items():
     result = {"model": name, "cv_results": grid_search.cv_results_}
     results.append(result)
 
-
 # %%
+# .. Note::
+#  Tuning the `n_estimators` for RF generally results in a waste of computer
+#  power. In practice one just needs to ensure that it is large enough so that
+#  doubling its value does not lead to a significant improvement of the testing
+#  score.
+#
 # Plot results
 # ------------
 
@@ -163,12 +162,8 @@ plt.show()
 # Last but not least, in this example the training time of RF is much larger
 # than the training time of HGBT, even for relatively low values of
 # `n_estimators`. The reason is that boosting models rely on shallow trees,
-# which predict faster. Nevertheless, the training time of RFs can be reduced as
-# they fit trees independently, which in practice means that
-# :class:`~sklearn.ensemble.RandomForestRegressor` and
-# :class:`~sklearn.ensemble.RandomForestClassifier` can be run on multiple cores
-# using the `n_jobs` parameter, here set to 2 due to limitations on the
-# documentation builder.
+# which predict faster. Nevertheless, the training and predicting time of RF can
+# be reduced using the `n_jobs` parameter, as mentioned above.
 #
 # Overall, the performance of HGBT versus parallelized RF depends on the
 # specific characteristics of the dataset and the modeling task. It's always a
