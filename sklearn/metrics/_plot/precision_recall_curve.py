@@ -1,3 +1,5 @@
+from collections import Counter
+
 from .. import average_precision_score
 from .. import precision_recall_curve
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
@@ -34,10 +36,22 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         .. versionadded:: 0.24
 
+    prevalence_pos_label : float, default=None
+        The prevalence of the positive label. It is used for plotting the
+        chance level line. If None, the chance level line will not be plotted
+        even if `plot_chance_level` is set to True when plotting.
+
+        .. versionadded:: 1.3
+
     Attributes
     ----------
     line_ : matplotlib Artist
         Precision recall curve.
+
+    chance_level_ : matplotlib Artist or None
+        The chance level line. It is `None` if the chance level is not plotted.
+
+        .. versionadded:: 1.3
 
     ax_ : matplotlib Axes
         Axes with precision recall curve.
@@ -96,14 +110,26 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         average_precision=None,
         estimator_name=None,
         pos_label=None,
+        prevalence_pos_label=None,
     ):
         self.estimator_name = estimator_name
         self.precision = precision
         self.recall = recall
         self.average_precision = average_precision
         self.pos_label = pos_label
+        self.prevalence_pos_label = prevalence_pos_label
 
-    def plot(self, ax=None, *, name=None, despine=False, **kwargs):
+        
+    def plot(
+        self,
+        ax=None,
+        *,
+        name=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
+        despine=False,
+        **kwargs,
+    ):
         """Plot visualization.
 
         Extra keyword arguments will be passed to matplotlib's `plot`.
@@ -117,6 +143,19 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         name : str, default=None
             Name of precision recall curve for labeling. If `None`, use
             `estimator_name` if not `None`, otherwise no labeling is shown.
+
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level. The chance level is the prevalence
+            of the positive label computed from the data passed during
+            :meth:`from_estimator` or :meth:`from_predictions` call.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
 
         despine : bool, default=False
             Whether to remove the top and right spines from the plot.
@@ -154,6 +193,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         line_kwargs.update(**kwargs)
 
         (self.line_,) = self.ax_.plot(self.recall, self.precision, **line_kwargs)
+
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
         )
@@ -162,13 +202,40 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         ylabel = "Precision" + info_pos_label
         self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
+        if plot_chance_level:
+            if self.prevalence_pos_label is None:
+                raise ValueError(
+                    "You must provide prevalence_pos_label when constructing the "
+                    "PrecisionRecallDisplay object in order to plot the chance "
+                    "level line. Alternatively, you may use "
+                    "PrecisionRecallDisplay.from_estimator or "
+                    "PrecisionRecallDisplay.from_predictions "
+                    "to automatically set prevalence_pos_label"
+                )
+
+            chance_level_line_kw = {
+                "label": f"Chance level (AP = {self.prevalence_pos_label:0.2f})",
+                "color": "k",
+                "linestyle": "--",
+            }
+            if chance_level_kw is not None:
+                chance_level_line_kw.update(chance_level_kw)
+
+            (self.chance_level_,) = self.ax_.plot(
+                (0, 1),
+                (self.prevalence_pos_label, self.prevalence_pos_label),
+                **chance_level_line_kw,
+            )
+        else:
+            self.chance_level_ = None
+
         if despine:
             for s in ["top", "right"]:
                 self.ax_.spines[s].set_visible(False)
             for s in ["bottom", "left"]:
                 self.ax_.spines[s].set_bounds(0, 1)
 
-        if "label" in line_kwargs:
+        if "label" in line_kwargs or plot_chance_level:
             self.ax_.legend(loc="lower left")
 
         return self
@@ -186,6 +253,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         response_method="auto",
         name=None,
         ax=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
         despine=False,
         **kwargs,
     ):
@@ -230,6 +299,19 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
+
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level. The chance level is the prevalence
+            of the positive label computed from the data passed during
+            :meth:`from_estimator` or :meth:`from_predictions` call.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
 
         despine : bool, default=False
             Whether to remove the top and right spines from the plot.
@@ -294,6 +376,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             pos_label=pos_label,
             drop_intermediate=drop_intermediate,
             ax=ax,
+            plot_chance_level=plot_chance_level,
+            chance_level_kw=chance_level_kw,
             despine=despine,
             **kwargs,
         )
@@ -309,6 +393,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         drop_intermediate=False,
         name=None,
         ax=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
         despine=False,
         **kwargs,
     ):
@@ -342,6 +428,19 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
+
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level. The chance level is the prevalence
+            of the positive label computed from the data passed during
+            :meth:`from_estimator` or :meth:`from_predictions` call.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
 
         despine : bool, default=False
             Whether to remove the top and right spines from the plot.
@@ -405,12 +504,23 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
         )
 
+        class_count = Counter(y_true)
+        prevalence_pos_label = class_count[pos_label] / sum(class_count.values())
+
         viz = PrecisionRecallDisplay(
             precision=precision,
             recall=recall,
             average_precision=average_precision,
             estimator_name=name,
             pos_label=pos_label,
+            prevalence_pos_label=prevalence_pos_label,
         )
 
-        return viz.plot(ax=ax, name=name, despine=despine, **kwargs)
+        return viz.plot(
+            ax=ax,
+            name=name,
+            plot_chance_level=plot_chance_level,
+            chance_level_kw=chance_level_kw,
+            despine=despine,
+            **kwargs,
+        )
