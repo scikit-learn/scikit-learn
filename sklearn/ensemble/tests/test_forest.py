@@ -58,6 +58,7 @@ from sklearn.metrics import mean_squared_error
 
 from sklearn.tree._classes import SPARSE_SPLITTERS
 
+from unittest.mock import patch
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -1456,13 +1457,24 @@ def check_warm_start_oob(name):
         bootstrap=True,
         oob_score=False,
     )
-    est_3.fit(X, y)
-    assert not hasattr(est_3, "oob_score_")
 
-    est_3.set_params(oob_score=True)
-    ignore_warnings(est_3.fit)(X, y)
+    # Patch _set_oob_score_and_attributes() to track OOB computation
+    with patch.object(
+        est_3,
+        "_set_oob_score_and_attributes",
+        wraps=est_3._set_oob_score_and_attributes,
+    ) as mock_set_oob_score_and_attributes:
+        est_3.fit(X, y)
+        assert not hasattr(est_3, "oob_score_")
 
-    assert est.oob_score_ == est_3.oob_score_
+        est_3.set_params(oob_score=True)
+        ignore_warnings(est_3.fit)(X, y)
+
+        assert est.oob_score_ == est_3.oob_score_
+
+        # Test that oob_score is not recomputed if n_more_estimators is not
+        # changed
+        mock_set_oob_score_and_attributes.assert_called_once()
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
