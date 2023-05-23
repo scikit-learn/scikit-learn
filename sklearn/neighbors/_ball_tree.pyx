@@ -10,8 +10,7 @@ VALID_METRICS = ['EuclideanDistance', 'SEuclideanDistance',
                  'MinkowskiDistance', 'WMinkowskiDistance',
                  'MahalanobisDistance', 'HammingDistance',
                  'CanberraDistance', 'BrayCurtisDistance',
-                 'JaccardDistance', 'MatchingDistance',
-                 'DiceDistance',
+                 'JaccardDistance', 'DiceDistance',
                  'RogersTanimotoDistance', 'RussellRaoDistance',
                  'SokalMichenerDistance', 'SokalSneathDistance',
                  'PyFuncDistance', 'HaversineDistance']
@@ -25,7 +24,7 @@ cdef class BallTree(BinaryTree):
     pass
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a Ball Tree
 #
 #   Note that these functions use the concept of "reduced distance".
@@ -100,18 +99,18 @@ cdef int init_node(BinaryTree tree, NodeData_t[::1] node_data, intp_t i_node,
 
 
 cdef inline float64_t min_dist(BinaryTree tree, intp_t i_node,
-                             float64_t* pt) except -1 nogil:
+                               float64_t* pt) except -1 nogil:
     """Compute the minimum distance between a point and a node"""
     cdef float64_t dist_pt = tree.dist(pt, &tree.node_bounds[0, i_node, 0],
-                                     tree.data.shape[1])
+                                       tree.data.shape[1])
     return fmax(0, dist_pt - tree.node_data[i_node].radius)
 
 
 cdef inline float64_t max_dist(BinaryTree tree, intp_t i_node,
-                             float64_t* pt) except -1:
+                               float64_t* pt) except -1:
     """Compute the maximum distance between a point and a node"""
     cdef float64_t dist_pt = tree.dist(pt, &tree.node_bounds[0, i_node, 0],
-                                     tree.data.shape[1])
+                                       tree.data.shape[1])
     return dist_pt + tree.node_data[i_node].radius
 
 
@@ -119,7 +118,7 @@ cdef inline int min_max_dist(BinaryTree tree, intp_t i_node, float64_t* pt,
                              float64_t* min_dist, float64_t* max_dist) except -1 nogil:
     """Compute the minimum and maximum distance between a point and a node"""
     cdef float64_t dist_pt = tree.dist(pt, &tree.node_bounds[0, i_node, 0],
-                                     tree.data.shape[1])
+                                       tree.data.shape[1])
     cdef float64_t rad = tree.node_data[i_node].radius
     min_dist[0] = fmax(0, dist_pt - rad)
     max_dist[0] = dist_pt + rad
@@ -127,7 +126,7 @@ cdef inline int min_max_dist(BinaryTree tree, intp_t i_node, float64_t* pt,
 
 
 cdef inline float64_t min_rdist(BinaryTree tree, intp_t i_node,
-                              float64_t* pt) except -1 nogil:
+                                float64_t* pt) except -1 nogil:
     """Compute the minimum reduced-distance between a point and a node"""
     if tree.euclidean:
         return euclidean_dist_to_rdist(min_dist(tree, i_node, pt))
@@ -136,7 +135,7 @@ cdef inline float64_t min_rdist(BinaryTree tree, intp_t i_node,
 
 
 cdef inline float64_t max_rdist(BinaryTree tree, intp_t i_node,
-                              float64_t* pt) except -1:
+                                float64_t* pt) except -1:
     """Compute the maximum reduced-distance between a point and a node"""
     if tree.euclidean:
         return euclidean_dist_to_rdist(max_dist(tree, i_node, pt))
@@ -145,27 +144,27 @@ cdef inline float64_t max_rdist(BinaryTree tree, intp_t i_node,
 
 
 cdef inline float64_t min_dist_dual(BinaryTree tree1, intp_t i_node1,
-                                  BinaryTree tree2, intp_t i_node2) except -1:
+                                    BinaryTree tree2, intp_t i_node2) except -1:
     """compute the minimum distance between two nodes"""
     cdef float64_t dist_pt = tree1.dist(&tree2.node_bounds[0, i_node2, 0],
-                                      &tree1.node_bounds[0, i_node1, 0],
-                                      tree1.data.shape[1])
+                                        &tree1.node_bounds[0, i_node1, 0],
+                                        tree1.data.shape[1])
     return fmax(0, (dist_pt - tree1.node_data[i_node1].radius
                     - tree2.node_data[i_node2].radius))
 
 
 cdef inline float64_t max_dist_dual(BinaryTree tree1, intp_t i_node1,
-                                  BinaryTree tree2, intp_t i_node2) except -1:
+                                    BinaryTree tree2, intp_t i_node2) except -1:
     """compute the maximum distance between two nodes"""
     cdef float64_t dist_pt = tree1.dist(&tree2.node_bounds[0, i_node2, 0],
-                                      &tree1.node_bounds[0, i_node1, 0],
-                                      tree1.data.shape[1])
+                                        &tree1.node_bounds[0, i_node1, 0],
+                                        tree1.data.shape[1])
     return (dist_pt + tree1.node_data[i_node1].radius
             + tree2.node_data[i_node2].radius)
 
 
 cdef inline float64_t min_rdist_dual(BinaryTree tree1, intp_t i_node1,
-                                   BinaryTree tree2, intp_t i_node2) except -1:
+                                     BinaryTree tree2, intp_t i_node2) except -1:
     """compute the minimum reduced distance between two nodes"""
     if tree1.euclidean:
         return euclidean_dist_to_rdist(min_dist_dual(tree1, i_node1,
@@ -176,7 +175,7 @@ cdef inline float64_t min_rdist_dual(BinaryTree tree1, intp_t i_node1,
 
 
 cdef inline float64_t max_rdist_dual(BinaryTree tree1, intp_t i_node1,
-                                   BinaryTree tree2, intp_t i_node2) except -1:
+                                     BinaryTree tree2, intp_t i_node2) except -1:
     """compute the maximum reduced distance between two nodes"""
     if tree1.euclidean:
         return euclidean_dist_to_rdist(max_dist_dual(tree1, i_node1,

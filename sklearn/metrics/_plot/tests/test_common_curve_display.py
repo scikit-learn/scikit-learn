@@ -95,8 +95,10 @@ def test_display_curve_error_regression(pyplot, data_binary, Display):
         ),
         (
             "auto",
-            "MyClassifier has none of the following attributes: predict_proba,"
-            " decision_function.",
+            (
+                "MyClassifier has none of the following attributes: predict_proba,"
+                " decision_function."
+            ),
         ),
         (
             "bad_method",

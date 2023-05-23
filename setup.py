@@ -196,7 +196,7 @@ extension_config = {
         {"sources": ["_check_build.pyx"]},
     ],
     "": [
-        {"sources": ["_isotonic.pyx"], "include_np": True},
+        {"sources": ["_isotonic.pyx"]},
     ],
     "_loss": [
         {"sources": ["_loss.pyx.tp"]},
@@ -293,7 +293,7 @@ extension_config = {
         },
     ],
     "preprocessing": [
-        {"sources": ["_csr_polynomial_expansion.pyx"], "include_np": True},
+        {"sources": ["_csr_polynomial_expansion.pyx"]},
         {
             "sources": ["_target_encoder_fast.pyx"],
             "include_np": True,
@@ -386,8 +386,7 @@ extension_config = {
             "include_dirs": ["src"],
             "include_np": True,
         },
-        {"sources": ["_fast_dict.pyx"], "language": "c++", "include_np": True},
-        {"sources": ["_fast_dict.pyx"], "language": "c++", "include_np": True},
+        {"sources": ["_fast_dict.pyx"], "language": "c++"},
         {"sources": ["_openmp_helpers.pyx"]},
         {"sources": ["_seq_dataset.pyx.tp", "_seq_dataset.pxd.tp"], "include_np": True},
         {

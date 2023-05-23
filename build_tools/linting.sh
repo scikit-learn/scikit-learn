@@ -13,6 +13,9 @@ echo -e "No problem detected by flake8\n"
 mypy sklearn/
 echo -e "No problem detected by mypy\n"
 
+cython-lint sklearn/
+echo -e "No problem detected by cython-lint\n"
+
 # For docstrings and warnings of deprecated attributes to be rendered
 # properly, the property decorator must come before the deprecated decorator
 # (else they are treated as functions)

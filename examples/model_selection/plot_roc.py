@@ -324,7 +324,6 @@ pair_scores = []
 mean_tpr = dict()
 
 for ix, (label_a, label_b) in enumerate(pair_list):
-
     a_mask = y_test == label_a
     b_mask = y_test == label_b
     ab_mask = np.logical_or(a_mask, b_mask)

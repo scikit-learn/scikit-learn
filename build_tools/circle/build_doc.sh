@@ -174,7 +174,7 @@ export CCACHE_COMPRESS=1
 # pin conda-lock to latest released version (needs manual update from time to time)
 mamba install "$(get_dep conda-lock min)" -y
 
-conda-lock install --log-level WARNING --name $CONDA_ENV_NAME $LOCK_FILE
+conda-lock install --log-level DEBUG --name $CONDA_ENV_NAME $LOCK_FILE
 source activate $CONDA_ENV_NAME
 
 show_installed_libraries

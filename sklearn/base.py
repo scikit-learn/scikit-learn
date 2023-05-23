@@ -239,9 +239,11 @@ class BaseEstimator:
                 and self.__module__.startswith("sklearn.")
             ):
                 warnings.warn(
-                    f"Parameter 'base_estimator' of {self.__class__.__name__} is"
-                    " deprecated in favor of 'estimator'. See"
-                    f" {self.__class__.__name__}'s docstring for more details.",
+                    (
+                        f"Parameter 'base_estimator' of {self.__class__.__name__} is"
+                        " deprecated in favor of 'estimator'. See"
+                        f" {self.__class__.__name__}'s docstring for more details."
+                    ),
                     FutureWarning,
                     stacklevel=2,
                 )
@@ -546,7 +548,7 @@ class BaseEstimator:
 
         cast_to_ndarray : bool, default=True
             Cast `X` and `y` to ndarray with checks in `check_params`. If
-            `False`, `X` and `y` are unchanged and only `feature_names` and
+            `False`, `X` and `y` are unchanged and only `feature_names_in_` and
             `n_features_in_` are checked.
 
         **check_params : kwargs
@@ -574,21 +576,25 @@ class BaseEstimator:
         no_val_X = isinstance(X, str) and X == "no_validation"
         no_val_y = y is None or isinstance(y, str) and y == "no_validation"
 
+        if no_val_X and no_val_y:
+            raise ValueError("Validation should be done on X, y or both.")
+
         default_check_params = {"estimator": self}
         check_params = {**default_check_params, **check_params}
 
-        if no_val_X and no_val_y:
-            raise ValueError("Validation should be done on X, y or both.")
+        if not cast_to_ndarray:
+            if not no_val_X and no_val_y:
+                out = X
+            elif no_val_X and not no_val_y:
+                out = y
+            else:
+                out = X, y
         elif not no_val_X and no_val_y:
-            if cast_to_ndarray:
-                X = check_array(X, input_name="X", **check_params)
-            out = X
+            out = check_array(X, input_name="X", **check_params)
         elif no_val_X and not no_val_y:
-            if cast_to_ndarray:
-                y = _check_y(y, **check_params) if cast_to_ndarray else y
-            out = y
+            out = _check_y(y, **check_params)
         else:
-            if validate_separately and cast_to_ndarray:
+            if validate_separately:
                 # We need this because some estimators validate X and y
                 # separately, and in general, separately calling check_array()
                 # on X and y isn't equivalent to just calling check_X_y()
@@ -1035,8 +1041,8 @@ class _UnstableArchMixin:
 
     def _more_tags(self):
         return {
-            "non_deterministic": (
-                _IS_32BIT or platform.machine().startswith(("ppc", "powerpc"))
+            "non_deterministic": _IS_32BIT or platform.machine().startswith(
+                ("ppc", "powerpc")
             )
         }
 

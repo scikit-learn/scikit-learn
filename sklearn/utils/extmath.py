@@ -20,7 +20,7 @@ from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from ._array_api import get_namespace
+from ._array_api import get_namespace, _is_numpy_namespace
 
 
 def squared_norm(x):
@@ -42,8 +42,10 @@ def squared_norm(x):
     x = np.ravel(x, order="K")
     if np.issubdtype(x.dtype, np.integer):
         warnings.warn(
-            "Array type is integer, np.dot may overflow. "
-            "Data should be float type to avoid this issue",
+            (
+                "Array type is integer, np.dot may overflow. "
+                "Data should be float type to avoid this issue"
+            ),
             UserWarning,
         )
     return np.dot(x, x)
@@ -141,8 +143,10 @@ def density(w, **kwargs):
     """
     if kwargs:
         warnings.warn(
-            "Additional keyword arguments are deprecated in version 1.2 and will be"
-            " removed in version 1.4.",
+            (
+                "Additional keyword arguments are deprecated in version 1.2 and will be"
+                " removed in version 1.4."
+            ),
             FutureWarning,
         )
 
@@ -880,13 +884,13 @@ def softmax(X, copy=True):
     out : ndarray of shape (M, N)
         Softmax function evaluated at every point in x.
     """
-    xp, is_array_api = get_namespace(X)
+    xp, is_array_api_compliant = get_namespace(X)
     if copy:
         X = xp.asarray(X, copy=True)
     max_prob = xp.reshape(xp.max(X, axis=1), (-1, 1))
     X -= max_prob
 
-    if xp.__name__ in {"numpy", "numpy.array_api"}:
+    if _is_numpy_namespace(xp):
         # optimization for NumPy arrays
         np.exp(X, out=np.asarray(X))
     else:
@@ -1143,8 +1147,10 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
         )
     ):
         warnings.warn(
-            "cumsum was found to be unstable: "
-            "its last element does not correspond to sum",
+            (
+                "cumsum was found to be unstable: "
+                "its last element does not correspond to sum"
+            ),
             RuntimeWarning,
         )
     return out
