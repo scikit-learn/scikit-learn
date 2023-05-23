@@ -221,6 +221,9 @@ Changelog
   is deprecated and will be removed in v1.5.
   :pr:`25784` by :user:`Jérémie du Boisberranger`.
 
+- |Fix| :func:`datasets.fetch_openml` returns improved data types when
+  `as_frame=True` and `parser="liac-arff"`. :pr:`26386` by `Thomas Fan`_.
+
 :mod:`sklearn.decomposition`
 ............................
 
