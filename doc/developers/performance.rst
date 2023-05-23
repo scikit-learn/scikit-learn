@@ -74,8 +74,10 @@ following:
 
 When using Cython, use either
 
-   $ python setup.py build_ext -i
-   $ python setup.py install
+.. prompt:: bash $
+
+  python setup.py build_ext -i
+  python setup.py install
 
 to generate C files. You are responsible for adding .c/.cpp extensions along
 with build parameters in each submodule ``setup.py``.
@@ -179,22 +181,25 @@ It is however still interesting to check what's happening inside the
 ``_nls_subproblem`` function which is the hotspot if we only consider
 Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
-us install ``line_profiler`` and wire it to IPython::
+us install ``line_profiler`` and wire it to IPython:
 
-  $ pip install line_profiler
+.. prompt:: bash $
 
-- **Under IPython 0.13+**, first create a configuration profile::
+  pip install line_profiler
 
-    $ ipython profile create
+- **Under IPython 0.13+**, first create a configuration profile:
 
-  Then register the line_profiler extension in
-  ``~/.ipython/profile_default/ipython_config.py``::
+.. prompt:: bash $
+
+  ipython profile create
+
+Then register the line_profiler extension in
+``~/.ipython/profile_default/ipython_config.py``::
 
     c.TerminalIPythonApp.extensions.append('line_profiler')
     c.InteractiveShellApp.extensions.append('line_profiler')
 
-  This will register the ``%lprun`` magic command in the IPython terminal
-  application and the other frontends such as qtconsole and notebook.
+This will register the ``%lprun`` magic command in the IPython terminal application and the other frontends such as qtconsole and notebook.
 
 Now restart IPython and let us use this new toy::
 
@@ -252,26 +257,30 @@ Memory usage profiling
 
 You can analyze in detail the memory usage of any Python code with the help of
 `memory_profiler <https://pypi.org/project/memory_profiler/>`_. First,
-install the latest version::
+install the latest version:
 
-    $ pip install -U memory_profiler
+.. prompt:: bash $
+
+  pip install -U memory_profiler
 
 Then, setup the magics in a manner similar to ``line_profiler``.
 
-- **Under IPython 0.11+**, first create a configuration profile::
+- **Under IPython 0.11+**, first create a configuration profile:
 
-    $ ipython profile create
+.. prompt:: bash $
 
-  Then register the extension in
-  ``~/.ipython/profile_default/ipython_config.py``
-  alongside the line profiler::
+    ipython profile create
+
+
+Then register the extension in
+``~/.ipython/profile_default/ipython_config.py``
+alongside the line profiler::
 
     c.TerminalIPythonApp.extensions.append('memory_profiler')
     c.InteractiveShellApp.extensions.append('memory_profiler')
 
-  This will register the ``%memit`` and ``%mprun`` magic commands in the
-  IPython terminal application and the other frontends such as qtconsole and
-  notebook.
+This will register the ``%memit`` and ``%mprun`` magic commands in the
+IPython terminal application and the other frontends such as qtconsole and   notebook.
 
 ``%mprun`` is useful to examine, line-by-line, the memory usage of key
 functions in your program. It is very similar to ``%lprun``, discussed in the
@@ -304,8 +313,8 @@ For more details, see the docstrings of the magics, using ``%memit?`` and
 ``%mprun?``.
 
 
-Performance tips for the Cython developer
-=========================================
+Using Cython
+============
 
 If profiling of the Python code reveals that the Python interpreter
 overhead is larger by one order of magnitude or more than the cost of the
@@ -316,39 +325,9 @@ standalone function in a ``.pyx`` file, add static type declarations and
 then use Cython to generate a C program suitable to be compiled as a
 Python extension module.
 
-The official documentation available at http://docs.cython.org/ contains
-a tutorial and reference guide for developing such a module. In the
-following we will just highlight a couple of tricks that we found
-important in practice on the existing cython codebase in the scikit-learn
-project.
-
-TODO: html report, type declarations, bound checks, division by zero checks,
-memory alignment, direct blas calls...
-
-- https://www.youtube.com/watch?v=gMvkiQ-gOW8
-- http://conference.scipy.org/proceedings/SciPy2009/paper_1/
-- http://conference.scipy.org/proceedings/SciPy2009/paper_2/
-
-Using OpenMP
-------------
-
-Since scikit-learn can be built without OpenMP, it's necessary to
-protect each direct call to OpenMP. This can be done using the following
-syntax::
-
-  # importing OpenMP
-  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-      cimport openmp
-
-  # calling OpenMP
-  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-      max_threads = openmp.omp_get_max_threads()
-  ELSE:
-      max_threads = 1
-
-.. note::
-
-   Protecting the parallel loop, ``prange``, is already done by cython.
+The `Cython's documentation <http://docs.cython.org/>`_ contains a tutorial and
+reference guide for developing such a module.
+For more information about developing in Cython for scikit-learn, see :ref:`cython`.
 
 
 .. _profiling-compiled-extension:
@@ -367,7 +346,29 @@ Using yep and gperftools
 Easy profiling without special compilation options use yep:
 
 - https://pypi.org/project/yep/
-- http://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
+- https://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
+
+Using a debugger, gdb
+---------------------
+
+* It is helpful to use ``gdb`` to debug. In order to do so, one must use
+  a Python interpreter built with debug support (debug symbols and proper
+  optimization). To create a new conda environment (which you might need
+  to deactivate and reactivate after building/installing) with a source-built
+  CPython interpreter:
+
+  .. code-block:: bash
+
+         git clone https://github.com/python/cpython.git
+         conda create -n debug-scikit-dev
+         conda activate debug-scikit-dev
+         cd cpython
+         mkdir debug
+         cd debug
+         ../configure --prefix=$CONDA_PREFIX --with-pydebug
+         make EXTRA_CFLAGS='-DPy_DEBUG' -j<num_cores>
+         make install
+
 
 Using gprof
 -----------
@@ -388,10 +389,14 @@ kcachegrind
 ~~~~~~~~~~~
 
 ``yep`` can be used to create a profiling report.
-``kcachegrind`` provides a graphical environment to visualize this report::
+``kcachegrind`` provides a graphical environment to visualize this report:
+
+.. prompt:: bash $
 
   # Run yep to profile some python script
   python -m yep -c my_file.py
+
+.. prompt:: bash $
 
   # open my_file.py.callgrin with kcachegrind
   kcachegrind my_file.py.prof
@@ -412,4 +417,4 @@ See `joblib documentation <https://joblib.readthedocs.io>`_
 A simple algorithmic trick: warm restarts
 =========================================
 
-See the glossary entry for `warm_start <http://scikit-learn.org/dev/glossary.html#term-warm-start>`_
+See the glossary entry for :term:`warm_start`

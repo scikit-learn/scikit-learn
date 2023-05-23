@@ -5,7 +5,7 @@ Optical recognition of handwritten digits dataset
 
 **Data Set Characteristics:**
 
-    :Number of Instances: 5620
+    :Number of Instances: 1797
     :Number of Attributes: 64
     :Attribute Information: 8x8 image of integer pixels in the range 0..16.
     :Missing Attribute Values: None

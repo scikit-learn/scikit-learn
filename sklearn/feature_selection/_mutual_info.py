@@ -2,6 +2,7 @@
 # License: 3-clause BSD
 
 import numpy as np
+from numbers import Integral
 from scipy.sparse import issparse
 from scipy.special import digamma
 
@@ -9,10 +10,9 @@ from ..metrics.cluster import mutual_info_score
 from ..neighbors import NearestNeighbors, KDTree
 from ..preprocessing import scale
 from ..utils import check_random_state
-from ..utils.fixes import _astype_copy_false
 from ..utils.validation import check_array, check_X_y
-from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
+from ..utils._param_validation import Interval, StrOptions, validate_params
 
 
 def _compute_mi_cc(x, y, n_neighbors):
@@ -52,7 +52,7 @@ def _compute_mi_cc(x, y, n_neighbors):
     xy = np.hstack((x, y))
 
     # Here we rely on NearestNeighbors to select the fastest algorithm.
-    nn = NearestNeighbors(metric='chebyshev', n_neighbors=n_neighbors)
+    nn = NearestNeighbors(metric="chebyshev", n_neighbors=n_neighbors)
 
     nn.fit(xy)
     radius = nn.kneighbors()[0]
@@ -60,16 +60,20 @@ def _compute_mi_cc(x, y, n_neighbors):
 
     # KDTree is explicitly fit to allow for the querying of number of
     # neighbors within a specified radius
-    kd = KDTree(x, metric='chebyshev')
+    kd = KDTree(x, metric="chebyshev")
     nx = kd.query_radius(x, radius, count_only=True, return_distance=False)
     nx = np.array(nx) - 1.0
 
-    kd = KDTree(y, metric='chebyshev')
+    kd = KDTree(y, metric="chebyshev")
     ny = kd.query_radius(y, radius, count_only=True, return_distance=False)
     ny = np.array(ny) - 1.0
 
-    mi = (digamma(n_samples) + digamma(n_neighbors) -
-          np.mean(digamma(nx + 1)) - np.mean(digamma(ny + 1)))
+    mi = (
+        digamma(n_samples)
+        + digamma(n_neighbors)
+        - np.mean(digamma(nx + 1))
+        - np.mean(digamma(ny + 1))
+    )
 
     return max(0, mi)
 
@@ -135,11 +139,14 @@ def _compute_mi_cd(c, d, n_neighbors):
 
     kd = KDTree(c)
     m_all = kd.query_radius(c, radius, count_only=True, return_distance=False)
-    m_all = np.array(m_all) - 1.0
+    m_all = np.array(m_all)
 
-    mi = (digamma(n_samples) + np.mean(digamma(k_all)) -
-          np.mean(digamma(label_counts)) -
-          np.mean(digamma(m_all + 1)))
+    mi = (
+        digamma(n_samples)
+        + np.mean(digamma(k_all))
+        - np.mean(digamma(label_counts))
+        - np.mean(digamma(m_all))
+    )
 
     return max(0, mi)
 
@@ -190,8 +197,15 @@ def _iterate_columns(X, columns=None):
             yield X[:, i]
 
 
-def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
-                 n_neighbors=3, copy=True, random_state=None):
+def _estimate_mi(
+    X,
+    y,
+    discrete_features="auto",
+    discrete_target=False,
+    n_neighbors=3,
+    copy=True,
+    random_state=None,
+):
     """Estimate mutual information between the features and the target.
 
     Parameters
@@ -240,12 +254,12 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
     .. [2] B. C. Ross "Mutual Information between Discrete and Continuous
            Data Sets". PLoS ONE 9(2), 2014.
     """
-    X, y = check_X_y(X, y, accept_sparse='csc', y_numeric=not discrete_target)
+    X, y = check_X_y(X, y, accept_sparse="csc", y_numeric=not discrete_target)
     n_samples, n_features = X.shape
 
     if isinstance(discrete_features, (str, bool)):
         if isinstance(discrete_features, str):
-            if discrete_features == 'auto':
+            if discrete_features == "auto":
                 discrete_features = issparse(X)
             else:
                 raise ValueError("Invalid string value for discrete_features.")
@@ -253,7 +267,7 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
         discrete_mask.fill(discrete_features)
     else:
         discrete_features = check_array(discrete_features, ensure_2d=False)
-        if discrete_features.dtype != 'bool':
+        if discrete_features.dtype != "bool":
             discrete_mask = np.zeros(n_features, dtype=bool)
             discrete_mask[discrete_features] = True
         else:
@@ -268,29 +282,48 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
         if copy:
             X = X.copy()
 
-        if not discrete_target:
-            X[:, continuous_mask] = scale(X[:, continuous_mask],
-                                          with_mean=False, copy=False)
+        X[:, continuous_mask] = scale(
+            X[:, continuous_mask], with_mean=False, copy=False
+        )
 
         # Add small noise to continuous features as advised in Kraskov et. al.
-        X = X.astype(float, **_astype_copy_false(X))
+        X = X.astype(np.float64, copy=False)
         means = np.maximum(1, np.mean(np.abs(X[:, continuous_mask]), axis=0))
-        X[:, continuous_mask] += 1e-10 * means * rng.randn(
-                n_samples, np.sum(continuous_mask))
+        X[:, continuous_mask] += (
+            1e-10
+            * means
+            * rng.standard_normal(size=(n_samples, np.sum(continuous_mask)))
+        )
 
     if not discrete_target:
         y = scale(y, with_mean=False)
-        y += 1e-10 * np.maximum(1, np.mean(np.abs(y))) * rng.randn(n_samples)
+        y += (
+            1e-10
+            * np.maximum(1, np.mean(np.abs(y)))
+            * rng.standard_normal(size=n_samples)
+        )
 
-    mi = [_compute_mi(x, y, discrete_feature, discrete_target, n_neighbors) for
-          x, discrete_feature in zip(_iterate_columns(X), discrete_mask)]
+    mi = [
+        _compute_mi(x, y, discrete_feature, discrete_target, n_neighbors)
+        for x, discrete_feature in zip(_iterate_columns(X), discrete_mask)
+    ]
 
     return np.array(mi)
 
 
-@_deprecate_positional_args
-def mutual_info_regression(X, y, *, discrete_features='auto', n_neighbors=3,
-                           copy=True, random_state=None):
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+        "discrete_features": [StrOptions({"auto"}), "boolean", "array-like"],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "copy": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
+def mutual_info_regression(
+    X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
+):
     """Estimate mutual information for a continuous target variable.
 
     Mutual information (MI) [1]_ between two random variables is a non-negative
@@ -364,13 +397,22 @@ def mutual_info_regression(X, y, *, discrete_features='auto', n_neighbors=3,
     .. [4] L. F. Kozachenko, N. N. Leonenko, "Sample Estimate of the Entropy
            of a Random Vector", Probl. Peredachi Inf., 23:2 (1987), 9-16
     """
-    return _estimate_mi(X, y, discrete_features, False, n_neighbors,
-                        copy, random_state)
+    return _estimate_mi(X, y, discrete_features, False, n_neighbors, copy, random_state)
 
 
-@_deprecate_positional_args
-def mutual_info_classif(X, y, *, discrete_features='auto', n_neighbors=3,
-                        copy=True, random_state=None):
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+        "discrete_features": [StrOptions({"auto"}), "boolean", "array-like"],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "copy": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
+def mutual_info_classif(
+    X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
+):
     """Estimate mutual information for a discrete target variable.
 
     Mutual information (MI) [1]_ between two random variables is a non-negative
@@ -387,13 +429,13 @@ def mutual_info_classif(X, y, *, discrete_features='auto', n_neighbors=3,
 
     Parameters
     ----------
-    X : array-like or sparse matrix, shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Feature matrix.
 
     y : array-like of shape (n_samples,)
         Target vector.
 
-    discrete_features : {'auto', bool, array-like}, default='auto'
+    discrete_features : 'auto', bool or array-like, default='auto'
         If bool, then determines whether to consider all features discrete
         or continuous. If array, then it should be either a boolean mask
         with shape (n_features,) or array with indices of discrete features.
@@ -445,5 +487,4 @@ def mutual_info_classif(X, y, *, discrete_features='auto', n_neighbors=3,
            of a Random Vector:, Probl. Peredachi Inf., 23:2 (1987), 9-16
     """
     check_classification_targets(y)
-    return _estimate_mi(X, y, discrete_features, True, n_neighbors,
-                        copy, random_state)
+    return _estimate_mi(X, y, discrete_features, True, n_neighbors, copy, random_state)

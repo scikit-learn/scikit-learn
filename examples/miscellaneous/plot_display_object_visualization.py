@@ -12,8 +12,8 @@ is an alternative to using their corresponding plot functions when
 a model's predictions are already computed or expensive to compute. Note that
 this is advanced usage, and in general we recommend using their respective
 plot functions.
+
 """
-print(__doc__)
 
 # %%
 # Load Data and train model
@@ -22,14 +22,14 @@ print(__doc__)
 # `OpenML <https://www.openml.org/d/1464>`. This is a binary classification
 # problem where the target is whether an individual donated blood. Then the
 # data is split into a train and test dataset and a logistic regression is
-# fitted wtih the train dataset.
+# fitted with the train dataset.
 from sklearn.datasets import fetch_openml
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
-X, y = fetch_openml(data_id=1464, return_X_y=True)
+X, y = fetch_openml(data_id=1464, return_X_y=True, parser="pandas")
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
 
 clf = make_pipeline(StandardScaler(), LogisticRegression(random_state=0))
@@ -58,6 +58,7 @@ cm_display = ConfusionMatrixDisplay(cm).plot()
 # a decision function, we will use it to plot the roc curve:
 from sklearn.metrics import roc_curve
 from sklearn.metrics import RocCurveDisplay
+
 y_score = clf.decision_function(X_test)
 
 fpr, tpr, _ = roc_curve(y_test, y_score, pos_label=clf.classes_[1])
@@ -71,8 +72,7 @@ roc_display = RocCurveDisplay(fpr=fpr, tpr=tpr).plot()
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import PrecisionRecallDisplay
 
-prec, recall, _ = precision_recall_curve(y_test, y_score,
-                                         pos_label=clf.classes_[1])
+prec, recall, _ = precision_recall_curve(y_test, y_score, pos_label=clf.classes_[1])
 pr_display = PrecisionRecallDisplay(precision=prec, recall=recall).plot()
 
 # %%
@@ -85,6 +85,7 @@ pr_display = PrecisionRecallDisplay(precision=prec, recall=recall).plot()
 
 # sphinx_gallery_thumbnail_number = 4
 import matplotlib.pyplot as plt
+
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 
 roc_display.plot(ax=ax1)

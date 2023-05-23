@@ -21,15 +21,13 @@ flake8 to ignore the import, which appears as unused.
 
 from ..model_selection._search_successive_halving import (
     HalvingRandomSearchCV,
-    HalvingGridSearchCV
+    HalvingGridSearchCV,
 )
 
 from .. import model_selection
 
 # use settattr to avoid mypy errors when monkeypatching
-setattr(model_selection, "HalvingRandomSearchCV",
-        HalvingRandomSearchCV)
-setattr(model_selection, "HalvingGridSearchCV",
-        HalvingGridSearchCV)
+setattr(model_selection, "HalvingRandomSearchCV", HalvingRandomSearchCV)
+setattr(model_selection, "HalvingGridSearchCV", HalvingGridSearchCV)
 
-model_selection.__all__ += ['HalvingRandomSearchCV', 'HalvingGridSearchCV']
+model_selection.__all__ += ["HalvingRandomSearchCV", "HalvingGridSearchCV"]

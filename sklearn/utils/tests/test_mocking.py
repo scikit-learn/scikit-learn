@@ -10,7 +10,10 @@ from sklearn.utils import check_array
 from sklearn.utils import _safe_indexing
 from sklearn.utils._testing import _convert_container
 
-from sklearn.utils._mocking import CheckingClassifier
+from sklearn.utils._mocking import (
+    _MockEstimatorOnOffPrediction,
+    CheckingClassifier,
+)
 
 
 @pytest.fixture
@@ -26,24 +29,30 @@ def _fail(x):
     return False
 
 
-@pytest.mark.parametrize('kwargs', [
-    {},
-    {'check_X': _success},
-    {'check_y': _success},
-    {'check_X': _success, 'check_y': _success},
-])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {},
+        {"check_X": _success},
+        {"check_y": _success},
+        {"check_X": _success, "check_y": _success},
+    ],
+)
 def test_check_on_fit_success(iris, kwargs):
     X, y = iris
     CheckingClassifier(**kwargs).fit(X, y)
 
 
-@pytest.mark.parametrize('kwargs', [
-    {'check_X': _fail},
-    {'check_y': _fail},
-    {'check_X': _success, 'check_y': _fail},
-    {'check_X': _fail, 'check_y': _success},
-    {'check_X': _fail, 'check_y': _fail},
-])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"check_X": _fail},
+        {"check_y": _fail},
+        {"check_X": _success, "check_y": _fail},
+        {"check_X": _fail, "check_y": _success},
+        {"check_X": _fail, "check_y": _fail},
+    ],
+)
 def test_check_on_fit_fail(iris, kwargs):
     X, y = iris
     clf = CheckingClassifier(**kwargs)
@@ -71,9 +80,7 @@ def test_check_X_on_predict_fail(iris, pred_func):
         getattr(clf, pred_func)(X)
 
 
-@pytest.mark.parametrize(
-    "input_type", ["list", "array", "sparse", "dataframe"]
-)
+@pytest.mark.parametrize("input_type", ["list", "array", "sparse", "dataframe"])
 def test_checking_classifier(iris, input_type):
     # Check that the CheckingClassifier outputs what we expect
     X, y = iris
@@ -138,17 +145,20 @@ def test_checking_classifier_with_params(iris):
 def test_checking_classifier_fit_params(iris):
     # check the error raised when the number of samples is not the one expected
     X, y = iris
-    clf = CheckingClassifier(expected_fit_params=["sample_weight"])
+    clf = CheckingClassifier(expected_sample_weight=True)
     sample_weight = np.ones(len(X) // 2)
 
-    with pytest.raises(AssertionError, match="Fit parameter sample_weight"):
+    msg = f"sample_weight.shape == ({len(X) // 2},), expected ({len(X)},)!"
+    with pytest.raises(ValueError) as exc:
         clf.fit(X, y, sample_weight=sample_weight)
+    assert exc.value.args[0] == msg
 
 
 def test_checking_classifier_missing_fit_params(iris):
     X, y = iris
-    clf = CheckingClassifier(expected_fit_params=["sample_weight"])
-    with pytest.raises(AssertionError, match="Expected fit parameter"):
+    clf = CheckingClassifier(expected_sample_weight=True)
+    err_msg = "Expected sample_weight to be passed"
+    with pytest.raises(AssertionError, match=err_msg):
         clf.fit(X, y)
 
 
@@ -157,16 +167,15 @@ def test_checking_classifier_missing_fit_params(iris):
     [["predict"], ["predict", "predict_proba"]],
 )
 @pytest.mark.parametrize(
-    "predict_method",
-    ["predict", "predict_proba", "decision_function", "score"]
+    "predict_method", ["predict", "predict_proba", "decision_function", "score"]
 )
-def test_checking_classifier_methods_to_check(iris, methods_to_check,
-                                              predict_method):
+def test_checking_classifier_methods_to_check(iris, methods_to_check, predict_method):
     # check that methods_to_check allows to bypass checks
     X, y = iris
 
     clf = CheckingClassifier(
-        check_X=sparse.issparse, methods_to_check=methods_to_check,
+        check_X=sparse.issparse,
+        methods_to_check=methods_to_check,
     )
 
     clf.fit(X, y)
@@ -175,3 +184,29 @@ def test_checking_classifier_methods_to_check(iris, methods_to_check,
             getattr(clf, predict_method)(X)
     else:
         getattr(clf, predict_method)(X)
+
+
+@pytest.mark.parametrize(
+    "response_methods",
+    [
+        ["predict"],
+        ["predict", "predict_proba"],
+        ["predict", "decision_function"],
+        ["predict", "predict_proba", "decision_function"],
+    ],
+)
+def test_mock_estimator_on_off_prediction(iris, response_methods):
+    X, y = iris
+    estimator = _MockEstimatorOnOffPrediction(response_methods=response_methods)
+
+    estimator.fit(X, y)
+    assert hasattr(estimator, "classes_")
+    assert_array_equal(estimator.classes_, np.unique(y))
+
+    possible_responses = ["predict", "predict_proba", "decision_function"]
+    for response in possible_responses:
+        if response in response_methods:
+            assert hasattr(estimator, response)
+            assert getattr(estimator, response)(X) == response
+        else:
+            assert not hasattr(estimator, response)

@@ -1,5 +1,0 @@
-labels:
-  'Documentation':
-    - '\bDOC\b'
-  'Build / CI':
-    - '\bCI\b'

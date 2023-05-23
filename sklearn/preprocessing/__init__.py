@@ -23,10 +23,10 @@ from ._data import minmax_scale
 from ._data import quantile_transform
 from ._data import power_transform
 from ._data import PowerTransformer
-from ._data import PolynomialFeatures
 
 from ._encoders import OneHotEncoder
 from ._encoders import OrdinalEncoder
+from ._target_encoder import TargetEncoder
 
 from ._label import label_binarize
 from ._label import LabelBinarizer
@@ -35,33 +35,38 @@ from ._label import MultiLabelBinarizer
 
 from ._discretization import KBinsDiscretizer
 
+from ._polynomial import PolynomialFeatures
+from ._polynomial import SplineTransformer
+
 
 __all__ = [
-    'Binarizer',
-    'FunctionTransformer',
-    'KBinsDiscretizer',
-    'KernelCenterer',
-    'LabelBinarizer',
-    'LabelEncoder',
-    'MultiLabelBinarizer',
-    'MinMaxScaler',
-    'MaxAbsScaler',
-    'QuantileTransformer',
-    'Normalizer',
-    'OneHotEncoder',
-    'OrdinalEncoder',
-    'PowerTransformer',
-    'RobustScaler',
-    'StandardScaler',
-    'add_dummy_feature',
-    'PolynomialFeatures',
-    'binarize',
-    'normalize',
-    'scale',
-    'robust_scale',
-    'maxabs_scale',
-    'minmax_scale',
-    'label_binarize',
-    'quantile_transform',
-    'power_transform',
+    "Binarizer",
+    "FunctionTransformer",
+    "KBinsDiscretizer",
+    "KernelCenterer",
+    "LabelBinarizer",
+    "LabelEncoder",
+    "MultiLabelBinarizer",
+    "MinMaxScaler",
+    "MaxAbsScaler",
+    "QuantileTransformer",
+    "Normalizer",
+    "OneHotEncoder",
+    "OrdinalEncoder",
+    "PowerTransformer",
+    "RobustScaler",
+    "SplineTransformer",
+    "StandardScaler",
+    "TargetEncoder",
+    "add_dummy_feature",
+    "PolynomialFeatures",
+    "binarize",
+    "normalize",
+    "scale",
+    "robust_scale",
+    "maxabs_scale",
+    "minmax_scale",
+    "label_binarize",
+    "quantile_transform",
+    "power_transform",
 ]

@@ -2,23 +2,19 @@ import numpy as np
 import pytest
 from sklearn.tree._reingold_tilford import buchheim, Tree
 
-simple_tree = Tree("", 0,
-                   Tree("", 1),
-                   Tree("", 2))
+simple_tree = Tree("", 0, Tree("", 1), Tree("", 2))
 
-bigger_tree = Tree("", 0,
-                   Tree("", 1,
-                        Tree("", 3),
-                        Tree("", 4,
-                             Tree("", 7),
-                             Tree("", 8)
-                             ),
-                        ),
-                   Tree("", 2,
-                        Tree("", 5),
-                        Tree("", 6)
-                        )
-                   )
+bigger_tree = Tree(
+    "",
+    0,
+    Tree(
+        "",
+        1,
+        Tree("", 3),
+        Tree("", 4, Tree("", 7), Tree("", 8)),
+    ),
+    Tree("", 2, Tree("", 5), Tree("", 6)),
+)
 
 
 @pytest.mark.parametrize("tree, n_nodes", [(simple_tree, 3), (bigger_tree, 9)])
@@ -32,8 +28,9 @@ def test_buchheim(tree, n_nodes):
         if len(draw_tree.children):
             # these trees are always binary
             # parents are centered above children
-            assert draw_tree.x == (draw_tree.children[0].x
-                                   + draw_tree.children[1].x) / 2
+            assert (
+                draw_tree.x == (draw_tree.children[0].x + draw_tree.children[1].x) / 2
+            )
         return res
 
     layout = buchheim(tree)
@@ -43,8 +40,7 @@ def test_buchheim(tree, n_nodes):
     # we could also do it quicker using defaultdicts..
     depth = 0
     while True:
-        x_at_this_depth = [node[0] for node in coordinates
-                           if node[1] == depth]
+        x_at_this_depth = [node[0] for node in coordinates if node[1] == depth]
         if not x_at_this_depth:
             # reached all leafs
             break
