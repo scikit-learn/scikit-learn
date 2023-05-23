@@ -286,7 +286,7 @@ class LeavePOut(BaseCrossValidator):
 
 class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
     """Base class for KFold, *KFold, and TimeSeriesSplit.
-    
+
     * = {Group, Stratified, StratifiedGroup, MultilabelStratified}.
     """
 
@@ -1000,15 +1000,34 @@ class MultilabelStratifiedKFold(_BaseKFold):
         batches. Note that the samples within each split will not be shuffled.
 
     random_state : int or RandomState instance, default=None
-        `random_state` affects the ordering of the indices when `shuffle` is True,
-        and also determines tie-breaking in the iterative stratification process.
+        When `shuffle` is True, `random_state` affects the ordering of the
+        indices, which controls the randomness of each fold for each class.
+        Otherwise, leave `random_state` as `None`.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
     --------
     >>> import numpy as np
-    TODO
+    >>> from sklearn.model_selection import MultilabelStratifiedKFold
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([[0, 0], [0, 0], [0, 1], [0, 1], [1, 1], [1, 1], [1, 0], [1, 0]])
+    >>> groups = np.array([1, 1, 2, 2, 3, 3, 3, 4, 5, 5, 5, 5, 6, 6, 7, 8, 8])
+    >>> mskf = MultilabelStratifiedKFold(n_splits=2)
+    >>> mskf.get_n_splits(X, y)
+    2
+    >>> print(mskf)
+    MultilabelStratifiedKFold(n_splits=2, random_state=None, shuffle=False)
+    >>> for i, (train_index, test_index) in enumerate(mskf.split(X, y)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[1 3 5 7]
+      Test:  index=[0 2 4 6]
+    Fold 1:
+      Train: index=[0 2 4 6]
+      Test:  index=[1 3 5 7]
 
     Notes
     -----
@@ -1034,7 +1053,7 @@ class MultilabelStratifiedKFold(_BaseKFold):
     def __init__(self, n_splits=5, shuffle=False, random_state=None):
         super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
 
-    def _iter_test_indices(self, X, y):
+    def _iter_test_indices(self, X, y, groups):
         # Implementation is based on this project:
         # https://github.com/trent-b/iterative-stratification
         # and is subject to BSD 3 clause License.
@@ -1069,26 +1088,41 @@ class MultilabelStratifiedKFold(_BaseKFold):
         unprocessed_labels_mask = np.ones(n_unprocessed_labels, dtype=bool)
 
         while n_unprocessed_labels > 0:
-
-            # Find the label with the fewest (but at least one) remaining
-            # examples, breaking ties randomly
+            # Find the label with the fewest (at least one) remaining examples
             n_remaining = y[unprocessed_labels_mask].sum(axis=0)
 
-            # Only all-zero labels are left, distributed evenly
-            # TODO: maybe improve logic
+            # When only all-zero labels are left, try to distribute evenly
             if n_remaining.sum() == 0:
-                for sample_i in np.where(unprocessed_labels_mask)[0]:
-                    fold_i = np.where(c_folds == c_folds.max())[0]
-                    if fold_i.shape[0] > 1:
-                        fold_i = fold_i[rng.choice(fold_i.shape[0])]
-                    test_folds[sample_i] = fold_i
-                    c_folds[fold_i] -= 1
+                for i in np.where(unprocessed_labels_mask)[0]:
+                    max_fold = np.argmax(c_folds)
+                    test_folds[i] = max_fold
+                    c_folds[max_fold] -= 1
                 break
 
-            label_i = np.where(n_remaining > 0, n_remaining, np.inf).argmin()
-            # TODO
-            
+            min_label = np.argmin(np.where(n_remaining != 0, n_remaining, np.inf))
+            for i in np.where(y[:, min_label] & unprocessed_labels_mask)[0]:
+                # Find the subset with the largest number of desired examples for
+                # this label, breaking ties by considering the largest number of
+                # desired examples
+                label_folds = c_folds_per_label[:, min_label]
+                max_fold = np.where(label_folds == label_folds.max())[0]
 
+                if len(max_fold) > 1:
+                    max_fold = max_fold[np.argmax(c_folds[max_fold])]
+
+                test_folds[i] = max_fold
+                unprocessed_labels_mask[i] = False
+                n_unprocessed_labels -= 1
+
+                # Update desired number of examples
+                c_folds_per_label[max_fold, y[i]] -= 1
+                c_folds[max_fold] -= 1
+
+        if self.shuffle:
+            test_folds = test_folds[np.argsort(indices)]
+
+        for i in range(self.n_splits):
+            yield test_folds == i
 
     def split(self, X, y, groups=None):
         """Generate indices to split data into training and test set.
@@ -1103,7 +1137,7 @@ class MultilabelStratifiedKFold(_BaseKFold):
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
             ``X`` instead of actual training data.
 
-        y : array-like of shape (n_samples,)
+        y : array-like of shape (n_samples, n_labels)
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
