@@ -285,7 +285,10 @@ class LeavePOut(BaseCrossValidator):
 
 
 class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
-    """Base class for KFold, GroupKFold, and StratifiedKFold"""
+    """Base class for KFold, *KFold, and TimeSeriesSplit.
+    
+    * = {Group, Stratified, StratifiedGroup, MultilabelStratified}.
+    """
 
     @abstractmethod
     def __init__(self, n_splits, *, shuffle, random_state):
@@ -779,7 +782,7 @@ class StratifiedKFold(_BaseKFold):
 class StratifiedGroupKFold(_BaseKFold):
     """Stratified K-Folds iterator variant with non-overlapping groups.
 
-    This cross-validation object is a variation of StratifiedKFold attempts to
+    This cross-validation object is a variation of StratifiedKFold attempting to
     return stratified folds with non-overlapping groups. The folds are made by
     preserving the percentage of samples for each class.
 
@@ -976,6 +979,153 @@ class StratifiedGroupKFold(_BaseKFold):
                 min_samples_in_fold = samples_in_fold
                 best_fold = i
         return best_fold
+
+
+class MultilabelStratifiedKFold(_BaseKFold):
+    """Multilabel stratified K-Folds cross-validator.
+
+    This cross-validation object is a variation of StratifiedKFold attempting to
+    return stratified folds for multilabel data. The folds are made by preserving
+    the percentage of samples for each label.
+
+    Read more in TODO
+
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of folds. Must be at least 2.
+
+    shuffle : bool, default=False
+        Whether to shuffle stratification of the data before splitting into
+        batches. Note that the samples within each split will not be shuffled.
+
+    random_state : int or RandomState instance, default=None
+        `random_state` affects the ordering of the indices when `shuffle` is True,
+        and also determines tie-breaking in the iterative stratification process.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    TODO
+
+    Notes
+    -----
+    The implementation is designed to:
+
+    * TODO
+    * Produce the smallest number of folds and fold-label pairs with zero
+      positive examples, and maintain the ratio of positive to negative
+      examples on each label in each subset. [1]
+
+    See also
+    --------
+    TODO
+
+    Reference
+    ---------
+    .. [1] Sechidis, Konstantinos; Tsoumakas, Grigorios; Vlahavas, Ioannis.
+        "On the stratification of multi-label data." Machine Learning and
+        Knowledge Discovery in Databases (2011), 145--158.
+        http://lpis.csd.auth.gr/publications/sechidis-ecmlpkdd-2011.pdf
+    """
+
+    def __init__(self, n_splits=5, shuffle=False, random_state=None):
+        super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
+
+    def _iter_test_indices(self, X, y):
+        # Implementation is based on this project:
+        # https://github.com/trent-b/iterative-stratification
+        # and is subject to BSD 3 clause License.
+        rng = check_random_state(self.random_state)
+        y = np.asarray(y)
+        type_of_target_y = type_of_target(y)
+        if type_of_target_y != "multilabel-indicator":
+            raise ValueError(
+                "Supported target type is: {}. Got {!r} instead".format(
+                    "multilabel-indicator", type_of_target_y
+                )
+            )
+
+        n_samples = _num_samples(X)
+        indices = np.arange(n_samples)
+
+        if self.shuffle:
+            rng.shuffle(indices)
+            y = y[indices]
+
+        test_folds = np.zeros(n_samples)
+
+        # Sechidis, Konstantinos; Tsoumakas, Grigorios; Vlahavas, Ioannis.
+        # "On the stratification of multi-label data." Machine Learning and
+        # Knowledge Discovery in Databases (2011), 145--158.
+        # http://lpis.csd.auth.gr/publications/sechidis-ecmlpkdd-2011.pdf
+        props = np.asarray([1 / self.n_splits] * self.n_splits)
+        c_folds = n_samples * props
+        c_folds_per_label = np.outer(props, y.sum(axis=0))
+
+        n_unprocessed_labels = n_samples
+        unprocessed_labels_mask = np.ones(n_unprocessed_labels, dtype=bool)
+
+        while n_unprocessed_labels > 0:
+
+            # Find the label with the fewest (but at least one) remaining
+            # examples, breaking ties randomly
+            n_remaining = y[unprocessed_labels_mask].sum(axis=0)
+
+            # Only all-zero labels are left, distributed evenly
+            # TODO: maybe improve logic
+            if n_remaining.sum() == 0:
+                for sample_i in np.where(unprocessed_labels_mask)[0]:
+                    fold_i = np.where(c_folds == c_folds.max())[0]
+                    if fold_i.shape[0] > 1:
+                        fold_i = fold_i[rng.choice(fold_i.shape[0])]
+                    test_folds[sample_i] = fold_i
+                    c_folds[fold_i] -= 1
+                break
+
+            label_i = np.where(n_remaining > 0, n_remaining, np.inf).argmin()
+            # TODO
+            
+
+
+    def split(self, X, y, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+            Note that providing ``y`` is sufficient to generate the splits and
+            hence ``np.zeros(n_samples)`` may be used as a placeholder for
+            ``X`` instead of actual training data.
+
+        y : array-like of shape (n_samples,)
+            The target variable for supervised learning problems.
+            Stratification is done based on the y labels.
+
+        groups : object
+            Always ignored, exists for compatibility.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+
+        Notes
+        -----
+        Randomized CV splitters may return different results for each call of
+        split. You can make the results identical by setting `random_state`
+        to an integer.
+        """
+        y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
+        return super().split(X, y, groups)
 
 
 class TimeSeriesSplit(_BaseKFold):
