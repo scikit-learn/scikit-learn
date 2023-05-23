@@ -19,10 +19,10 @@ This guide demonstrates how metadata such as ``sample_weight`` can be routed
 and passed along to estimators, scorers, and CV splitters through
 meta-estimators such as ``Pipeline`` and ``GridSearchCV``. In order to pass
 metadata to a method such as ``fit`` or ``score``, the object consuming the
-metadata, must *request* it. For estimators and splitters this is done via
+metadata, must *request* it. For estimators and splitters, this is done via
 ``set_*_request`` methods, e.g. ``set_fit_request(...)``, and for scorers this
-is done via ``set_score_request`` method. For grouped splitters such as
-``GroupKFold`` a ``groups`` parameter is requested by default. This is best
+is done via the ``set_score_request`` method. For grouped splitters such as
+``GroupKFold``, a ``groups`` parameter is requested by default. This is best
 demonstrated by the following examples.
 
 If you are developing a scikit-learn compatible estimator or meta-estimator,
@@ -43,27 +43,26 @@ in this section require the following imports and data::
 
   >>> import numpy as np
   >>> from sklearn.metrics import make_scorer, accuracy_score
-  >>> from sklearn.linear_model import LogisticRegressionCV
-  >>> from sklearn.linear_model import LogisticRegression
-  >>> from sklearn.model_selection import cross_validate
-  >>> from sklearn.model_selection import GridSearchCV
-  >>> from sklearn.model_selection import GroupKFold
+  >>> from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
+  >>> from sklearn.model_selection import cross_validate, GridSearchCV, GroupKFold
   >>> from sklearn.feature_selection import SelectKBest
   >>> from sklearn.utils.metadata_requests import RequestType
   >>> from sklearn.pipeline import make_pipeline
   >>> n_samples, n_features = 100, 4
-  >>> X = np.random.rand(n_samples, n_features)
-  >>> y = np.random.randint(0, 2, size=n_samples)
-  >>> my_groups = np.random.randint(0, 10, size=n_samples)
-  >>> my_weights = np.random.rand(n_samples)
-  >>> my_other_weights = np.random.rand(n_samples)
+  >>> rng = np.random.RandomState(42)
+  >>> X = rng.rand(n_samples, n_features)
+  >>> y = rng.randint(0, 2, size=n_samples)
+  >>> my_groups = rng.randint(0, 10, size=n_samples)
+  >>> my_weights = rng.rand(n_samples)
+  >>> my_other_weights = rng.rand(n_samples)
 
 Weighted scoring and fitting
 ----------------------------
 
-Here ``GroupKFold`` requests ``groups`` by default. However, we need to
-explicitly request weights for our scorer and for ``LogisticRegressionCV``.
-Both of these *consumers* know how to use metadata called ``"sample_weight"``::
+Here :class:`~model_selection.GroupKFold` requests ``groups`` by default. However, we
+need to explicitly request weights for our scorer and the internal cross validation of
+:class:`~linear_model.LogisticRegressionCV`. Both of these *consumers* know how to use
+metadata called ``"sample_weight"``::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True
@@ -85,15 +84,15 @@ Note that in this example, ``my_weights`` is passed to both the scorer and
 
 Error handling: if ``props={"sample_weigh": my_weights, ...}`` were passed
 (note the typo), ``cross_validate`` would raise an error, since
-``sample_weigh`` was not requested by any of its children.
+``sample_weigh`` was not requested by any of its underlying objects.
 
 Weighted scoring and unweighted fitting
 ---------------------------------------
 
-When passing metadata such as ``sample_weight`` around, all Scikit-learn estimators
+When passing metadata such as ``sample_weight`` around, all scikit-learn estimators
 require weights to be either explicitly requested or not requested (i.e.
 ``UNREQUESTED``) when used in another router such as a ``Pipeline`` or a
-``*GridSearchCV``. To perform a unweighted fit, we need to configure
+``*GridSearchCV``. To perform an unweighted fit, we need to configure
 :class:`~linear_model.LogisticRegressionCV` to not request sample weights, so that
 :func:`~model_selection.cross_validate` does not pass the weights along::
 
@@ -124,8 +123,11 @@ to recognize the weights.
 Unweighted feature selection
 ----------------------------
 
-Unlike ``LogisticRegressionCV``, ``SelectKBest`` doesn't consume weights and
-therefore `"sample_weight"` is not routed to it::
+Setting request values for metadata are only required if the object, e.g. estimator,
+scorer, etc., is a consumer of that metadata Unlike
+:class:`~linear_model.LogisticRegressionCV`, :class:`~feature_selection.SelectKBest`
+doesn't consume weights and therefore no request value for ``sample_weight`` on its
+instance is set and ``sample_weight`` is not routed to it::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True
@@ -179,9 +181,9 @@ accepts and uses some metadata in at least one of its methods (``fit``,
 ``predict``, ``inverse_transform``, ``transform``, ``score``, ``split``).
 Meta-estimators which only forward the metadata to other objects (the child
 estimator, scorers, or splitters) and don't use the metadata themselves are not
-consumers. (Meta)Estimators which route metadata to other objects are
-*routers*. An (meta)estimator can be a consumer and a router at the same time.
-(Meta)Estimators and splitters expose a ``set_*_request`` method for each
+consumers. (Meta-)Estimators which route metadata to other objects are
+*routers*. A(n) (meta-)estimator can be a consumer and a router at the same time.
+(Meta-)Estimators and splitters expose a ``set_*_request`` method for each
 method which accepts at least one metadata. For instance, if an estimator
 supports ``sample_weight`` in ``fit`` and ``score``, it exposes
 ``estimator.set_fit_request(sample_weight=value)`` and
@@ -204,7 +206,7 @@ supports ``sample_weight`` in ``fit`` and ``score``, it exposes
   ``my_weights`` is done at the router level, and not by the object, e.g.
   estimator, itself.
 
-For the scorers, this is done the same way, using ``set_score_request`` method.
+Metadata are requested in the same way for scorers using ``set_score_request``.
 
 If a metadata, e.g. ``sample_weight``, is passed by the user, the metadata
 request for all objects which potentially can consume ``sample_weight`` should
