@@ -214,6 +214,10 @@ Changelog
   consistent with :func:`covariance.graphical_lasso`.
   :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
 
+- |Fix| :func:`covariance.empirical_covariance` now gives an informative
+  error message when input is not appropriate.
+  :pr:`26108` by :user:`Quentin Barthélemy <qbarthelemy>`.
+
 :mod:`sklearn.datasets`
 .......................
 
