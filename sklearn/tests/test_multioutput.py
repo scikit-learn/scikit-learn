@@ -773,6 +773,9 @@ def test_multioutputregressor_ducktypes_fitted_estimator():
     "Cls, method", [(ClassifierChain, "fit"), (MultiOutputClassifier, "partial_fit")]
 )
 def test_fit_params_no_routing(Cls, method):
+    """Check that we raise an error when passing metadata not requested by the
+    underlying classifier.
+    """
     X, y = make_classification(n_samples=50)
     clf = Cls(PassiveAggressiveClassifier())
 
