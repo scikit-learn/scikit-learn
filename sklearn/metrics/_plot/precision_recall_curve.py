@@ -119,7 +119,6 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         self.pos_label = pos_label
         self.prevalence_pos_label = prevalence_pos_label
 
-        
     def plot(
         self,
         ax=None,

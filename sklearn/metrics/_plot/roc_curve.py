@@ -174,7 +174,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             for s in ["bottom", "left"]:
                 self.ax_.spines[s].set_bounds(0, 1)
 
-        if "label" in line_kwargs or "label" in chance_level_line_kw:
+        if "label" in line_kwargs or plot_chance_level:
             self.ax_.legend(loc="lower right")
 
         return self
