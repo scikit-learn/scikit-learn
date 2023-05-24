@@ -109,7 +109,7 @@ def isotonic_regression(
 
     Returns
     -------
-    y_ : list of floats
+    y_ : ndarray of shape (n_samples,)
         Isotonic fit of y.
 
     References

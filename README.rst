@@ -5,7 +5,7 @@
 .. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=main
 .. _Azure: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=main
 
-.. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/main.svg?style=shield&circle-token=:circle-token
+.. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/main.svg?style=shield
 .. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
 
 .. |CirrusCI| image:: https://img.shields.io/cirrus/github/scikit-learn/scikit-learn/main?label=Cirrus%20CI
@@ -41,7 +41,7 @@
 .. |Scikit-ImageMinVersion| replace:: 0.16.2
 .. |PandasMinVersion| replace:: 1.0.5
 .. |SeabornMinVersion| replace:: 0.9.0
-.. |PytestMinVersion| replace:: 5.3.1
+.. |PytestMinVersion| replace:: 7.1.2
 .. |PlotlyMinVersion| replace:: 5.10.0
 
 .. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo.png
