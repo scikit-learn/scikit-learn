@@ -56,7 +56,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_
 # Define the classifiers
 # ----------------------
 #
-# Here we define two different classifiers. The goal is to visualy compare their
+# Here we define two different classifiers. The goal is to visually compare their
 # statistical performance across thresholds using the ROC and DET curves. There
 # is no particular reason why these classifiers are chosen other classifiers
 # available in scikit-learn.

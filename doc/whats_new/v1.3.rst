@@ -304,7 +304,7 @@ Changelog
 ........................
 - |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
   when a scikit-learn estimator is unpickled with a scikit-learn version that is
-  inconsistent with the sckit-learn verion the estimator was pickled with.
+  inconsistent with the sckit-learn version the estimator was pickled with.
   :pr:`25297` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
@@ -397,7 +397,7 @@ Changelog
 
 - |Fix| :func:`metric.ndcg_score` now gives a meaningful error message for input of
   length 1.
-  :pr:`25672` by :user:`Lene Preuss <lene>` and :user:`Wei-Chun Chu <wcchu>`.
+  :pr:`25672` by :user:`Lene Preuss <lens>` and :user:`Wei-Chun Chu <wcchu>`.
 
 - |Enhancement| :class:`metrics.silhouette_samples` nows accepts a sparse
   matrix of pairwise distances between samples, or a feature array.
@@ -437,7 +437,7 @@ Changelog
   :pr:`24769` by :user:`Ashwin Mathur <awinml>`.
 
 - |Fix| In :func:`metrics.roc_curve`, use the threshold value `np.inf` instead of
-  arbritrary `max(y_score) + 1`. This threshold is associated with the ROC curve point
+  arbitrary `max(y_score) + 1`. This threshold is associated with the ROC curve point
   `tpr=0` and `fpr=0`.
   :pr:`26194` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -579,7 +579,7 @@ Changelog
 - |FIX| Fixes :func:`utils.validation.check_array` to properly convert pandas
   extension arrays. :pr:`25813` and :pr:`26106` by `Thomas Fan`_.
 
-- |Fix| :func:`utils.validation.check_array` now suports pandas DataFrames with
+- |Fix| :func:`utils.validation.check_array` now supports pandas DataFrames with
   extension arrays and object dtypes by return an ndarray with object dtype.
   :pr:`25814` by `Thomas Fan`_.
 

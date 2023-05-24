@@ -100,7 +100,7 @@ ax2.set_ylabel("scaled hue")
 _ = ax2.set_title("KNN with scaling")
 
 # %%
-# Here the desicion boundary shows that fitting scaled or non-scaled data lead
+# Here the decision boundary shows that fitting scaled or non-scaled data lead
 # to completely different models. The reason is that the variable "proline" has
 # values which vary between 0 and 1,000; whereas the variable "hue" varies
 # between 1 and 10. Because of this, distances between samples are mostly

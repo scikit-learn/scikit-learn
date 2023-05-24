@@ -449,7 +449,7 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     linear_regression = Ridge(alpha=1e-6, solver="lsqr", fit_intercept=False)
 
     # Construct a random target variable. We need a large number of samples for
-    # this test to be stable accross all values of the random seed.
+    # this test to be stable across all values of the random seed.
     n_samples = 50_000
     rng = np.random.RandomState(global_random_seed)
     y = rng.randn(n_samples)
@@ -468,7 +468,7 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
 
     # Let's permute the labels to hide the fact that this feature is
     # informative to naive linear regression model trained on the raw ordinal
-    # values. As highlighed in the previous test, the target encoding should be
+    # values. As highlighted in the previous test, the target encoding should be
     # invariant to such a permutation.
     permutated_labels = rng.permutation(n_categories)
     X_informative = permutated_labels[X_informative.astype(np.int32)]

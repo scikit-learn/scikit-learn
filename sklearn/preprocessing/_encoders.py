@@ -1551,7 +1551,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 ]
 
                 if invalid_features:
-                    # Use feature names if they are avaliable
+                    # Use feature names if they are available
                     if hasattr(self, "feature_names_in_"):
                         invalid_features = self.feature_names_in_[invalid_features]
                     raise ValueError(

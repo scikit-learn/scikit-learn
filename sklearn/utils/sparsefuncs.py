@@ -475,7 +475,7 @@ def _sparse_nan_min_max(X, axis):
 
 
 def min_max_axis(X, axis, ignore_nan=False):
-    """Compute minimium and maximum along an axis on a CSR or CSC matrix.
+    """Compute minimum and maximum along an axis on a CSR or CSC matrix.
 
      Optionally ignore NaN values.
 

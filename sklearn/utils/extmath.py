@@ -567,7 +567,7 @@ def _randomized_eigsh(
 
     Strategy 'value': not implemented yet.
     Algorithms 5.3, 5.4 and 5.5 in the Halko et al paper should provide good
-    condidates for a future implementation.
+    candidates for a future implementation.
 
     Strategy 'module':
     The principle is that for diagonalizable matrices, the singular values and
