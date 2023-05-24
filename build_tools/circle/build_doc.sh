@@ -187,7 +187,7 @@ pip install -e . --no-build-isolation
 echo "ccache build summary:"
 ccache -s
 
-export OMP_NUM_THREADS=1
+# export OMP_NUM_THREADS=1
 
 if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
 then
