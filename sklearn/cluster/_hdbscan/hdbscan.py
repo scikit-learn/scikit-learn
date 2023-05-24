@@ -80,6 +80,28 @@ _OUTLIER_ENCODING = {
 
 
 def _brute_mst(mutual_reachability, min_samples):
+    """
+    Builds a minimum spanning tree (MST) from the provided mutual-reachability
+    values. This function dispatches to a custom Cython implementation for
+    dense arrays, and `scipy.sparse.csgraph.minimum_spanning_tree` for sparse
+    arrays/matrices.
+
+    Parameters
+    ----------
+    mututal_reachability_graph: {ndarray, sparse matrix} of shape \
+            (n_samples, n_samples)
+        Weighted adjacency matrix of the mutual reachability graph.
+
+    min_samples : int, default=None
+        The number of samples in a neighborhood for a point
+        to be considered as a core point. This includes the point itself.
+
+    Returns
+    -------
+    mst : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
+        The MST representation of the mutual-reahability graph. The MST is
+        represented as a collecteion of edges.
+    """
     if not issparse(mutual_reachability):
         return mst_from_mutual_reachability(mutual_reachability)
 
@@ -111,6 +133,21 @@ def _brute_mst(mutual_reachability, min_samples):
 
 
 def _process_mst(min_spanning_tree):
+    """
+    Builds a single-linkage tree (SLT) from the provided minimum spanning tree
+    (MST). The MST is first sorted then processed by a custom Cython routine.
+
+    Parameters
+    ----------
+    min_spanning_tree : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
+        The MST representation of the mutual-reahability graph. The MST is
+        represented as a collecteion of edges.
+
+    Returns
+    -------
+    single_linkage : ndarray of shape (n_samples - 1,), dtype=HIERARCHY_dtype
+        The single-linkage tree tree (dendrogram) built from the MST.
+    """
     # Sort edges of the min_spanning_tree by weight
     row_order = np.argsort(min_spanning_tree["distance"])
     min_spanning_tree = min_spanning_tree[row_order]
@@ -127,6 +164,61 @@ def _hdbscan_brute(
     copy=False,
     **metric_params,
 ):
+    """
+    Builds a single-linkage tree (SLT) from the input data `X`. If
+    `metric="precomputed"` then `X` must be a symmetric array of distances.
+    Otherwise, the pairwise distances are calculated directly and passed to
+    `mutual_reachability_graph`.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
+        Either the raw data from which to compute the pairwise distances,
+        or the precomputed distances.
+
+    min_samples : int, default=None
+        The number of samples in a neighborhood for a point
+        to be considered as a core point. This includes the point itself.
+
+    alpha : float, default=1.0
+        A distance scaling parameter as used in robust single linkage.
+
+    metric : str or callable, default='euclidean'
+        The metric to use when calculating distance between instances in a
+        feature array.
+
+        - If metric is a string or callable, it must be one of
+          the options allowed by :func:`~sklearn.metrics.pairwise.pairwise_distances`
+          for its metric parameter.
+
+        - If metric is "precomputed", X is assumed to be a distance matrix and
+          must be square.
+
+    n_jobs : int, default=None
+        The number of jobs to use for computing the pairwise distances. This
+        works by breaking down the pairwise matrix into n_jobs even slices and
+        computing them in parallel. This parameter is passed directly to
+        :func:`~sklearn.metrics.pairwise.pairwise_distances`.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    copy : bool, default=False
+        If `copy=True` then any time an in-place modifications would be made
+        that would overwrite `X`, a copy will first be made, guaranteeing that
+        the original data will be unchanged. Currently, it only applies when
+        `metric="precomputed"`, when passing a dense array or a CSR sparse
+        array/matrix.
+
+    metric_params : dict, default=None
+        Arguments passed to the distance metric.
+
+    Returns
+    -------
+    single_linkage : ndarray of shape (n_samples - 1,), dtype=HIERARCHY_dtype
+        The single-linkage tree tree (dendrogram) built from the MST.
+    """
     if metric == "precomputed":
         if X.shape[0] != X.shape[1]:
             raise ValueError(
@@ -184,6 +276,55 @@ def _hdbscan_prims(
     n_jobs=None,
     **metric_params,
 ):
+    """
+    Builds a single-linkage tree (SLT) from the input data `X`. If
+    `metric="precomputed"` then `X` must be a symmetric array of distances.
+    Otherwise, the pairwise distances are calculated directly and passed to
+    `mutual_reachability_graph`.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, n_features)
+        The raw data.
+
+    min_samples : int, default=None
+        The number of samples in a neighborhood for a point
+        to be considered as a core point. This includes the point itself.
+
+    alpha : float, default=1.0
+        A distance scaling parameter as used in robust single linkage.
+
+    metric : str or callable, default='euclidean'
+        The metric to use when calculating distance between instances in a
+        feature array. `metric` must be one of the options allowed by
+        :func:`~sklearn.metrics.pairwise.pairwise_distances` for its metric
+        parameter.
+
+    n_jobs : int, default=None
+        The number of jobs to use for computing the pairwise distances. This
+        works by breaking down the pairwise matrix into n_jobs even slices and
+        computing them in parallel. This parameter is passed directly to
+        :func:`~sklearn.metrics.pairwise.pairwise_distances`.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    copy : bool, default=False
+        If `copy=True` then any time an in-place modifications would be made
+        that would overwrite `X`, a copy will first be made, guaranteeing that
+        the original data will be unchanged. Currently, it only applies when
+        `metric="precomputed"`, when passing a dense array or a CSR sparse
+        array/matrix.
+
+    metric_params : dict, default=None
+        Arguments passed to the distance metric.
+
+    Returns
+    -------
+    single_linkage : ndarray of shape (n_samples - 1,), dtype=HIERARCHY_dtype
+        The single-linkage tree tree (dendrogram) built from the MST.
+    """
     # The Cython routines used require contiguous arrays
     X = np.asarray(X, order="C")
 
@@ -216,11 +357,12 @@ def remap_single_linkage_tree(tree, internal_to_raw, non_finite):
 
     Parameters
     ----------
-    tree: single_linkage_tree
+    tree : ndarray of shape (n_samples - 1,), dtype=HIERARCHY_dtype
+        The single-linkage tree tree (dendrogram) built from the MST.
     internal_to_raw: dict
-        a mapping from internal integer index to the raw integer index
-    finite_index: ndarray
-        Boolean array of which entries in the raw data were finite
+        A mapping from internal integer index to the raw integer index
+    non_finite : ndarray
+        Boolean array of which entries in the raw data are non-finite
     """
     finite_count = len(internal_to_raw)
 
@@ -731,6 +873,20 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         return self.labels_
 
     def _weighted_cluster_center(self, X):
+        """Calculate and store the centroids/medoids of each cluster.
+
+        This requires `X` to be a raw feature array, not precomputed
+        distances. Rather than return outputs directly, this helper method
+        instead stores them in the `self.{centroids, medoids}_` attributes.
+        The choice for which attributes are calculated and stored is mediated
+        by the value of `self.store_centers`.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            The feature array that the estimator was fit with.
+
+        """
         # Number of non-noise clusters
         n_clusters = len(set(self.labels_) - {-1, -2})
         mask = np.empty((X.shape[0],), dtype=np.bool_)
@@ -761,8 +917,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         return
 
     def dbscan_clustering(self, cut_distance, min_cluster_size=5):
-        """
-        Return clustering given by DBSCAN without border points.
+        """Return clustering given by DBSCAN without border points.
 
         Return clustering that would be equivalent to running DBSCAN* for a
         particular cut_distance (or epsilon) DBSCAN* can be thought of as

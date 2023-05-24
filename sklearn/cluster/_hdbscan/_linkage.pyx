@@ -230,7 +230,7 @@ cpdef cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] make_single_linkage(const MST_e
 
     Returns
     -------
-    single_linkage : ndarray of shape (n_samples - 1, 4)
+    single_linkage : ndarray of shape (n_samples - 1,), dtype=HIERARCHY_dtype
         The single-linkage tree tree (dendrogram) built from the MST. Each
         of the array represents the following:
 
