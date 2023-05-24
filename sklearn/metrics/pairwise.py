@@ -35,6 +35,7 @@ from ..utils._param_validation import (
     Real,
     Hidden,
     MissingValues,
+    StrOptions,
 )
 
 from ._pairwise_distances_reduction import ArgKmin
@@ -662,6 +663,9 @@ def pairwise_distances_argmin_min(
         .. note::
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
+        .. note::
+           `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
+
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
 
@@ -781,6 +785,9 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
 
         .. note::
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
+
+        .. note::
+           `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -904,6 +911,13 @@ def haversine_distances(X, Y=None):
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "sum_over_features": ["boolean", Hidden(StrOptions({"deprecated"}))],
+    }
+)
 def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     """Compute the L1 distances between the vectors in X and Y.
 
@@ -914,10 +928,10 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_X, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
         An array where each row is a sample and each column is a feature.
 
-    Y : array-like of shape (n_samples_Y, n_features), default=None
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), default=None
         An array where each row is a sample and each column is a feature.
         If `None`, method uses `Y=X`.
 
@@ -1742,7 +1756,6 @@ _VALID_METRICS = [
     "hamming",
     "jaccard",
     "mahalanobis",
-    "matching",
     "minkowski",
     "rogerstanimoto",
     "russellrao",
@@ -1758,6 +1771,9 @@ _VALID_METRICS = [
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     _VALID_METRICS += ["kulsinski"]
+if sp_base_version < parse_version("1.9"):
+    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
+    _VALID_METRICS += ["matching"]
 
 _NAN_METRICS = ["nan_euclidean"]
 
@@ -2015,6 +2031,9 @@ def pairwise_distances(
     .. note::
         `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
+    .. note::
+        `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
+
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
     valid scipy.spatial.distance metrics), the scikit-learn implementation
     will be used, which is faster and has support for sparse matrices (except
@@ -2150,7 +2169,6 @@ def pairwise_distances(
 PAIRWISE_BOOLEAN_FUNCTIONS = [
     "dice",
     "jaccard",
-    "matching",
     "rogerstanimoto",
     "russellrao",
     "sokalmichener",
@@ -2160,6 +2178,9 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     PAIRWISE_BOOLEAN_FUNCTIONS += ["kulsinski"]
+if sp_base_version < parse_version("1.9"):
+    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
+    PAIRWISE_BOOLEAN_FUNCTIONS += ["matching"]
 
 # Helper functions - distance
 PAIRWISE_KERNEL_FUNCTIONS = {
