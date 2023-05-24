@@ -190,13 +190,10 @@ fig.update_layout(
 # each addition of a tree. Thus, if the generalization performance is not
 # improving for more than `n_iter_no_change` iterations, it stops adding trees.
 #
-# Last but not least, in this example the training time of RF is much larger
-# than the training time of HGBT, even for relatively low values of
-# `n_estimators`. The reason is that boosting models rely on shallow trees,
-# which predict faster. Nevertheless, the training and predicting time of RF can
-# be reduced using the `n_jobs` parameter, as mentioned above.
-#
-# Overall, the performance of HGBT versus parallelized RF depends on the
-# specific characteristics of the dataset and the modeling task. It's always a
-# good idea to try both models and compare their performance on your specific
-# problem to determine which model is the best fit.
+# In this example HGBT performs uniformly better than RF in terms of test score
+# and computing time (train and predict). Nevertheless, the training and
+# predicting time of RF can be reduced using the `n_jobs` parameter, as
+# mentioned above. Overall, the performance of HGBT versus parallelized RF
+# depends on the specific characteristics of the dataset and the modeling task.
+# It's always a good idea to try both models and compare their performance on
+# your specific problem to determine which model is the best fit.
