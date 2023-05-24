@@ -35,12 +35,11 @@ X, y = fetch_california_housing(return_X_y=True, as_frame=True)
 n_samples, n_features = X.shape
 
 # %%
-# HGBT models may be faster than a parallelized RF in certain cases. For
-# instance, HGBT can handle high-dimensional data more efficiently than RF due
-# to its use of histogram-based binning, which reduces the number of splits that
-# need to be evaluated when growing the trees. Also HGBT can be faster than RF
-# for very large datasets, especially when the number of samples is larger than
-# tens of thousands.
+# HGBT uses a binning algorithm that can efficiently handle large datasets (tens
+# of thousands samples or more) with a high number of features (see
+# :ref:`Why_it's_faster`). The scikit-learn implementation of RF does not use
+# binning and relies on exact splitting, which can be computationally expensive.
+
 print(f"The dataset consists of {n_samples} samples and {n_features} features")
 
 # %%
