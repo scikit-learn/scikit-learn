@@ -640,6 +640,9 @@ _VALID_METRICS = [
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     _VALID_METRICS += ["kulsinski"]
+if sp_base_version < parse_version("1.9"):
+    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
+    _VALID_METRICS += ["matching"]
 
 _NAN_METRICS = ["nan_euclidean"]
 
