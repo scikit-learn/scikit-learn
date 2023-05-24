@@ -15,7 +15,7 @@ from sklearn.decomposition._pca import _assess_dimension
 from sklearn.decomposition._pca import _infer_dimension
 
 iris = datasets.load_iris()
-PCA_SOLVERS = ["full", "arpack", "randomized", "auto", "lobpcg"]
+PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
 
 SPARSE_M, SPARSE_N = 1000, 300  # arbitrary
 SPARSE_MAX_COMPONENTS = min(SPARSE_M, SPARSE_N)

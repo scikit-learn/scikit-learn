@@ -606,13 +606,13 @@ class PCA(_BasePCA):
         random_state = check_random_state(self.random_state)
 
         # Center data
+        total_var = None
         if issparse(X):
-            self.mean_, total_var = mean_variance_axis(X, axis=0)
-            total_var *= n_samples / (n_samples - 1)  # ddof=1
+            self.mean_, var = mean_variance_axis(X, axis=0)
+            total_var = var.sum() * n_samples / (n_samples - 1)  # ddof=1
             X = _implicitly_center(X, self.mean_)
         else:
             self.mean_ = np.mean(X, axis=0)
-            total_var = np.var(X, ddof=1, axis=0)
             X -= self.mean_
 
         if svd_solver == "arpack":
@@ -645,16 +645,12 @@ class PCA(_BasePCA):
 
         # Workaround in-place variance calculation for dense arrays since at
         # the time numpy did not have a way to calculate variance in-place.
+        if total_var is None:
+            np.square(X, out=X)
+            np.sum(X, axis=0, out=X[0])
+            total_var = (X[0] / (n_samples - 1)).sum()
 
-        # if total_var is None:
-        #     N = X.shape[0] - 1
-        #     np.square(X, out=X)
-        #     np.sum(X, axis=0, out=X[0])
-        #     total_var = (X[0] / N).sum()
-
-        self.explained_variance_ratio_ = (
-            self.explained_variance_ / total_var[:n_components]
-        )
+        self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = S.copy()  # Store the singular values.
         if self.n_components_ < min(n_features, n_samples):
             self.noise_variance_ = total_var - self.explained_variance_.sum()
