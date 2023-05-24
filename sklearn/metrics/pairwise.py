@@ -637,7 +637,7 @@ _VALID_METRICS = [
     "nan_euclidean",
     "haversine",
 ]
-if sp_base_version < parse_version("1.11"):
+if sp_base_version < parse_version("1.11"):  # pragma: no cover
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     _VALID_METRICS += ["kulsinski"]
 if sp_base_version < parse_version("1.9"):
