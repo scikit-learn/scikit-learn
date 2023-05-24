@@ -43,6 +43,14 @@ random sampling procedures.
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`decomposition.KernelPCA` may produce different results through
+  `inverse_transform` if `gamma` is `None`. Now it will be chosen correctly as
+  `1/n_features` of the data that it is fitted on, while previously it might be
+  incorrectly chosen as `1/n_features` of the data passed to `inverse_transform`.
+  A new attribute `gamma_` is provided for revealing the actual value of `gamma`
+  used each time the kernel is called.
+  :pr:`26337` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -206,12 +214,19 @@ Changelog
   consistent with :func:`covariance.graphical_lasso`.
   :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
 
+- |Fix| :func:`covariance.empirical_covariance` now gives an informative
+  error message when input is not appropriate.
+  :pr:`26108` by :user:`Quentin Barthélemy <qbarthelemy>`.
+
 :mod:`sklearn.datasets`
 .......................
 
 - |API| The `data_transposed` argument of :func:`datasets.make_sparse_coded_signal`
   is deprecated and will be removed in v1.5.
   :pr:`25784` by :user:`Jérémie du Boisberranger`.
+
+- |Fix| :func:`datasets.fetch_openml` returns improved data types when
+  `as_frame=True` and `parser="liac-arff"`. :pr:`26386` by `Thomas Fan`_.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -280,6 +295,10 @@ Changelog
   categorical features consistently as missing values, following LightGBM's and
   pandas' conventions.
   :pr:`25629` by `Thomas Fan`_.
+
+- |Fix| Fix deprecation of `base_estimator` in :class:`ensemble.AdaBoostClassifier`
+  and :class:`ensemble.AdaBoostRegressor` that was introduced in :pr:`23819`.
+  :pr:`26242` by :user:`Marko Toplak <markotoplak>`.
 
 :mod:`sklearn.exception`
 ........................
@@ -399,6 +418,12 @@ Changelog
   level. This line is exposed in the `chance_level_` attribute.
   :pr:`25987` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+- |Enhancement| :meth:`metrics.PrecisionRecallDisplay.from_estimator` and
+  :meth:`metrics.PrecisionRecallDisplay.from_predictions` now accept two new
+  keywords, `plot_chance_level` and `chance_level_kw` to plot the baseline
+  chance level. This line is exposed in the `chance_level_` attribute.
+  :pr:`26019` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 - |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
   not normalized, instead of actually normalizing them in the metric. Starting from
   1.5 this will raise an error. :pr:`25299` by :user:`Omar Salman <OmarManzoor`.
@@ -406,10 +431,20 @@ Changelog
 - |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
   removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Feature| :func:`metrics.average_precision_score` now supports the
+  multiclass case.
+  :pr:`17388` by :user:`Geoffrey Bolmier <gbolmier>` and
+  :pr:`24769` by :user:`Ashwin Mathur <awinml>`.
+
 - |Fix| In :func:`metrics.roc_curve`, use the threshold value `np.inf` instead of
   arbritrary `max(y_score) + 1`. This threshold is associated with the ROC curve point
   `tpr=0` and `fpr=0`.
   :pr:`26194` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| The `'matching'` metric has been removed when using SciPy>=1.9
+  to be consistent with `scipy.spatial.distance` which does not support
+  `'matching'` anymore.
+  :pr:`26264` by :user:`Barata T. Onggo <magnusbarata>`
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -417,6 +452,14 @@ Changelog
 - |Enhancement| :func:`model_selection.cross_validate` accepts a new parameter
   `return_indices` to return the train-test indices of each cv split.
   :pr:`25659` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| :func:`getattr` on :meth:`multioutput.MultiOutputRegressor.partial_fit`
+  and :meth:`multioutput.MultiOutputClassifier.partial_fit` now correctly raise
+  an `AttributeError` if done before calling `fit`. :pr:`26333` by `Adrin
+  Jalali`_.
 
 :mod:`sklearn.naive_bayes`
 ..........................
@@ -459,6 +502,10 @@ Changelog
   `pandas.DataFrame`
   :pr:`25220` by :user:`Ian Thompson <it176131>`.
 
+- |Fix| :meth:`pipeline.Pipeline.fit_transform` now raises an `AttributeError`
+  if the last step of the pipeline does not support `fit_transform`.
+  :pr:`26325` by `Adrin Jalali`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -495,12 +542,16 @@ Changelog
   :class:`tree.DecisionTreeClassifier` support missing values when
   `splitter='best'` and criterion is `gini`, `entropy`, or `log_loss`,
   for classification or `squared_error`, `friedman_mse`, or `poisson`
-  for regression. :pr:`23595` by `Thomas Fan`_.
+  for regression. :pr:`23595`, :pr:`26376` by `Thomas Fan`_.
 
 - |Enhancement| Adds a `class_names` parameter to
   :func:`tree.export_text`. This allows specifying the parameter `class_names`
   for each target class in ascending numerical order.
   :pr:`25387` by :user:`William M <Akbeeh>` and :user:`crispinlogan <crispinlogan>`.
+
+- |Fix| :func:`tree.export_graphviz` and :func:`tree.export_text` now accepts
+  `feature_names` and `class_names` as array-like rather than lists.
+  :pr:`26289` by :user:`Yao Xiao <Charlie-XIAO>`
 
 :mod:`sklearn.utils`
 ....................
