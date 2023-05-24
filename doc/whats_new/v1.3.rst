@@ -490,6 +490,10 @@ Changelog
   when `n_neighbors` is large and `algorithm="brute"` with non Euclidean metrics.
   :pr:`24076` by :user:`Meekail Zain <micky774>`, :user:`Julien Jerphanion <jjerphan>`.
 
+- |API| The support for metrics other than `euclidean` and `manhattan` and for
+  callables in :class:`neighbors.NearestNeighbors` is deprecated and will be removed in
+  version 1.5. :pr:`24083` by :user:`Valentin Laurent <Valentin-Laurent>`.
+
 :mod:`sklearn.neural_network`
 .............................
 
