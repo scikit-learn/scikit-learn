@@ -987,9 +987,9 @@ class MultilabelStratifiedKFold(_BaseKFold):
 
     This cross-validation object is a variation of StratifiedKFold attempting to
     return stratified folds for multilabel data. The folds are made by preserving
-    the percentage of samples for each label.
+    the percentage of samples of each target class per label.
 
-    Read more in the :ref:`User Guide <TODO>`.
+    Read more in the :ref:`User Guide <multilabel_stratified_k_fold>`.
 
     Parameters
     ----------
