@@ -174,8 +174,8 @@ fig.update_layout(
     xaxis=dict(title="Train time (s) - lower is better"),
     yaxis=dict(title="Test R2 score - higher is better"),
     xaxis2=dict(title="Predict time (s) - lower is better"),
-    legend=dict(traceorder="normal", bordercolor="Black", borderwidth=1),
-    title_text="Speed-accuracy trade-off of tree-based ensembles",
+    legend=dict(x=0.72, y=0.05, traceorder="normal", borderwidth=1),
+    title=dict(x=0.5, text="Speed-score trade-off of tree-based ensembles"),
 )
 
 # %%
