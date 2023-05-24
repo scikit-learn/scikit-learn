@@ -152,15 +152,18 @@ def test_deprecated_metrics():
     # Make sure no warning is raised when using euclidean or manhattan metric
     # Make sure a warning is raised for all other valid metrics
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        for metric in {"manhattan", "euclidean"}:
-            clf = NearestCentroid(metric=metric)
+    for metric in {"manhattan", "euclidean"}:
+        clf = NearestCentroid(metric=metric)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             clf.fit(X, y)
 
     for metric in NearestCentroid._valid_metrics - {"manhattan", "euclidean"}:
-        with pytest.warns(FutureWarning):
-            clf = NearestCentroid(metric=metric)
+        clf = NearestCentroid(metric=metric)
+        with pytest.warns(
+            FutureWarning,
+            match="Support for metrics other than euclidean and manhattan",
+        ):
             clf.fit(X, y)
 
 
