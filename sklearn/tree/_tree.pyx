@@ -953,7 +953,7 @@ cdef class Tree:
         """Finds the decision path (=node) for each sample in X."""
 
         # Check input
-        if not isspmatrix_csr(X):
+        if not isinstance(X, np.ndarray):
             raise ValueError("X should be in np.ndarray format, got %s"
                              % type(X))
 
@@ -1005,7 +1005,7 @@ cdef class Tree:
         """Finds the decision path (=node) for each sample in X."""
 
         # Check input
-        if not isinstance(X, np.ndarray):
+        if not isspmatrix_csr(X):
             raise ValueError("X should be in csr_matrix format, got %s"
                              % type(X))
 
