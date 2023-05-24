@@ -105,6 +105,13 @@ for name, model in models.items():
 #
 # Plot results
 # ------------
+# We can use a `plotly.express.scatter
+# <https://plotly.com/python-api-reference/generated/plotly.express.scatter.html>`_
+# to visualize the trade-off between elapsed computing time and mean test score.
+# Passing the cursor over a given point displays the corresponding parameters.
+# Error bars correspond to one standard deviation as computed in the different
+# folds of the cross-validation.
+
 import plotly.express as px
 import plotly.colors as colors
 from plotly.subplots import make_subplots
