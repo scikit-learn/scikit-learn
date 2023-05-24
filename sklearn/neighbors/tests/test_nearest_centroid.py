@@ -148,7 +148,7 @@ def test_manhattan_metric():
 
 # TODO(1.5): remove this test
 @pytest.mark.parametrize(
-    "metric", NearestCentroid._valid_metrics - {"manhattan", "euclidean"}
+    "metric", list(NearestCentroid._valid_metrics - {"manhattan", "euclidean"})
 )
 def test_deprecated_metrics(metric):
     # Check that a warning is raised for all deprecated metrics
