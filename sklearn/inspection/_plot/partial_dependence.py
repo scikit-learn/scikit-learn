@@ -6,7 +6,6 @@ from math import ceil
 import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
-from joblib import Parallel
 
 from .. import partial_dependence
 from .._pd_utils import _check_feature_names, _get_feature_index
@@ -16,7 +15,7 @@ from ...utils import check_array
 from ...utils import check_matplotlib_support  # noqa
 from ...utils import check_random_state
 from ...utils import _safe_indexing
-from ...utils.fixes import delayed
+from ...utils.parallel import delayed, Parallel
 from ...utils._encode import _unique
 
 
@@ -1237,16 +1236,20 @@ class PartialDependenceDisplay:
         # FIXME: remove in 1.3
         if self.pdp_lim != "deprecated":
             warnings.warn(
-                "The `pdp_lim` parameter is deprecated in version 1.1 and will be "
-                "removed in version 1.3. Provide `pdp_lim` to the `plot` method."
-                "instead.",
+                (
+                    "The `pdp_lim` parameter is deprecated in version 1.1 and will be "
+                    "removed in version 1.3. Provide `pdp_lim` to the `plot` method."
+                    "instead."
+                ),
                 FutureWarning,
             )
             if pdp_lim is not None and self.pdp_lim != pdp_lim:
                 warnings.warn(
-                    "`pdp_lim` has been passed in both the constructor and the `plot` "
-                    "method. For backward compatibility, the parameter from the "
-                    "constructor will be used.",
+                    (
+                        "`pdp_lim` has been passed in both the constructor and the"
+                        " `plot` method. For backward compatibility, the parameter from"
+                        " the constructor will be used."
+                    ),
                     UserWarning,
                 )
             pdp_lim = self.pdp_lim
@@ -1257,7 +1260,7 @@ class PartialDependenceDisplay:
         else:
             pd_results_ = []
             for kind_plot, pd_result in zip(kind, self.pd_results):
-                current_results = {"values": pd_result["values"]}
+                current_results = {"grid_values": pd_result["grid_values"]}
 
                 if kind_plot in ("individual", "both"):
                     preds = pd_result.individual
@@ -1275,7 +1278,7 @@ class PartialDependenceDisplay:
             # get global min and max average predictions of PD grouped by plot type
             pdp_lim = {}
             for kind_plot, pdp in zip(kind, pd_results_):
-                values = pdp["values"]
+                values = pdp["grid_values"]
                 preds = pdp.average if kind_plot == "average" else pdp.individual
                 min_pd = preds[self.target_idx].min()
                 max_pd = preds[self.target_idx].max()
@@ -1403,7 +1406,7 @@ class PartialDependenceDisplay:
         ):
             avg_preds = None
             preds = None
-            feature_values = pd_result["values"]
+            feature_values = pd_result["grid_values"]
             if kind_plot == "individual":
                 preds = pd_result.individual
             elif kind_plot == "average":

@@ -8,7 +8,7 @@ Multi-dimensional Scaling (MDS).
 from numbers import Integral, Real
 
 import numpy as np
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 import warnings
 
@@ -17,7 +17,7 @@ from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
 from ..utils._param_validation import Interval, StrOptions, Hidden
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 
 def _smacof_single(
@@ -297,9 +297,11 @@ def smacof(
     # TODO(1.4): Remove
     if normalized_stress == "warn":
         warnings.warn(
-            "The default value of `normalized_stress` will change to `'auto'` in"
-            " version 1.4. To suppress this warning, manually set the value of"
-            " `normalized_stress`.",
+            (
+                "The default value of `normalized_stress` will change to `'auto'` in"
+                " version 1.4. To suppress this warning, manually set the value of"
+                " `normalized_stress`."
+            ),
             FutureWarning,
         )
         normalized_stress = False

@@ -15,7 +15,6 @@ dependencies:
   - pytest
   - pytest-xdist=2.5.0
   - pillow
-  - codecov
   - pytest-cov
   - coverage
   - wheel

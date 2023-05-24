@@ -182,6 +182,13 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 
         .. versionadded:: 1.0
 
+    gamma_ : float
+        Kernel coefficient for rbf, poly and sigmoid kernels. When `gamma`
+        is explicitly provided, this is just the same as `gamma`. When `gamma`
+        is `None`, this is the actual value of kernel coefficient.
+
+        .. versionadded:: 1.3
+
     See Also
     --------
     FastICA : A fast algorithm for Independent Component Analysis.
@@ -300,7 +307,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         if callable(self.kernel):
             params = self.kernel_params or {}
         else:
-            params = {"gamma": self.gamma, "degree": self.degree, "coef0": self.coef0}
+            params = {"gamma": self.gamma_, "degree": self.degree, "coef0": self.coef0}
         return pairwise_kernels(
             X, Y, metric=self.kernel, filter_params=True, n_jobs=self.n_jobs, **params
         )
@@ -419,6 +426,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         if self.fit_inverse_transform and self.kernel == "precomputed":
             raise ValueError("Cannot fit_inverse_transform with a precomputed kernel.")
         X = self._validate_data(X, accept_sparse="csr", copy=self.copy_X)
+        self.gamma_ = 1 / X.shape[1] if self.gamma is None else self.gamma
         self._centerer = KernelCenterer()
         K = self._get_kernel(X)
         self._fit_transform(K)

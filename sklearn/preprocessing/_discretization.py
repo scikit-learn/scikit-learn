@@ -222,10 +222,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             if self.subsample == "warn":
                 if n_samples > 2e5:
                     warnings.warn(
-                        "In version 1.3 onwards, subsample=2e5 "
-                        "will be used by default. Set subsample explicitly to "
-                        "silence this warning in the mean time. Set "
-                        "subsample=None to disable subsampling explicitly.",
+                        (
+                            "In version 1.3 onwards, subsample=2e5 "
+                            "will be used by default. Set subsample explicitly to "
+                            "silence this warning in the mean time. Set "
+                            "subsample=None to disable subsampling explicitly."
+                        ),
                         FutureWarning,
                     )
             else:
@@ -448,6 +450,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(self, input_features)
         if hasattr(self, "_encoder"):
             return self._encoder.get_feature_names_out(input_features)

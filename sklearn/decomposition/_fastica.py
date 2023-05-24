@@ -121,8 +121,10 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
             break
     else:
         warnings.warn(
-            "FastICA did not converge. Consider increasing "
-            "tolerance or the maximum number of iterations.",
+            (
+                "FastICA did not converge. Consider increasing "
+                "tolerance or the maximum number of iterations."
+            ),
             ConvergenceWarning,
         )
 
@@ -556,9 +558,11 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         if self._whiten is True:
             warnings.warn(
-                "Starting in v1.3, whiten=True should be specified as "
-                "whiten='arbitrary-variance' (its current behaviour). This "
-                "behavior is deprecated in 1.1 and will raise ValueError in 1.3.",
+                (
+                    "Starting in v1.3, whiten=True should be specified as "
+                    "whiten='arbitrary-variance' (its current behaviour). This "
+                    "behavior is deprecated in 1.1 and will raise ValueError in 1.3."
+                ),
                 FutureWarning,
                 stacklevel=2,
             )

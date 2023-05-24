@@ -21,10 +21,11 @@ CHUNK_SIZE = 256
 
 
 cdef floating _euclidean_dense_dense(
-        floating* a,  # IN
-        floating* b,  # IN
+        const floating* a,  # IN
+        const floating* b,  # IN
         int n_features,
-        bint squared) nogil:
+        bint squared
+) noexcept nogil:
     """Euclidean distance between a dense and b dense"""
     cdef:
         int i
@@ -34,11 +35,14 @@ cdef floating _euclidean_dense_dense(
 
     # We manually unroll the loop for better cache optimization.
     for i in range(n):
-        result += ((a[0] - b[0]) * (a[0] - b[0])
-                  +(a[1] - b[1]) * (a[1] - b[1])
-                  +(a[2] - b[2]) * (a[2] - b[2])
-                  +(a[3] - b[3]) * (a[3] - b[3]))
-        a += 4; b += 4
+        result += (
+            (a[0] - b[0]) * (a[0] - b[0]) +
+            (a[1] - b[1]) * (a[1] - b[1]) +
+            (a[2] - b[2]) * (a[2] - b[2]) +
+            (a[3] - b[3]) * (a[3] - b[3])
+        )
+        a += 4
+        b += 4
 
     for i in range(rem):
         result += (a[i] - b[i]) * (a[i] - b[i])
@@ -46,18 +50,22 @@ cdef floating _euclidean_dense_dense(
     return result if squared else sqrt(result)
 
 
-def _euclidean_dense_dense_wrapper(floating[::1] a, floating[::1] b,
-                                   bint squared):
+def _euclidean_dense_dense_wrapper(
+    const floating[::1] a,
+    const floating[::1] b,
+    bint squared
+):
     """Wrapper of _euclidean_dense_dense for testing purpose"""
     return _euclidean_dense_dense(&a[0], &b[0], a.shape[0], squared)
 
 
 cdef floating _euclidean_sparse_dense(
-        floating[::1] a_data,  # IN
-        int[::1] a_indices,    # IN
-        floating[::1] b,       # IN
+        const floating[::1] a_data,  # IN
+        const int[::1] a_indices,    # IN
+        const floating[::1] b,       # IN
         floating b_squared_norm,
-        bint squared) nogil:
+        bint squared
+) noexcept nogil:
     """Euclidean distance between a sparse and b dense"""
     cdef:
         int nnz = a_indices.shape[0]
@@ -72,27 +80,29 @@ cdef floating _euclidean_sparse_dense(
 
     result += b_squared_norm
 
-    if result < 0: result = 0.0
+    if result < 0:
+        result = 0.0
 
     return result if squared else sqrt(result)
 
 
 def _euclidean_sparse_dense_wrapper(
-        floating[::1] a_data,
-        int[::1] a_indices,
-        floating[::1] b,
+        const floating[::1] a_data,
+        const int[::1] a_indices,
+        const floating[::1] b,
         floating b_squared_norm,
-        bint squared):
+        bint squared
+):
     """Wrapper of _euclidean_sparse_dense for testing purpose"""
     return _euclidean_sparse_dense(
         a_data, a_indices, b, b_squared_norm, squared)
 
 
 cpdef floating _inertia_dense(
-        floating[:, ::1] X,           # IN READ-ONLY
-        floating[::1] sample_weight,  # IN READ-ONLY
-        floating[:, ::1] centers,     # IN
-        int[::1] labels,              # IN
+        const floating[:, ::1] X,           # IN
+        const floating[::1] sample_weight,  # IN
+        const floating[:, ::1] centers,     # IN
+        const int[::1] labels,              # IN
         int n_threads,
         int single_label=-1,
 ):
@@ -122,10 +132,10 @@ cpdef floating _inertia_dense(
 
 
 cpdef floating _inertia_sparse(
-        X,                            # IN
-        floating[::1] sample_weight,  # IN
-        floating[:, ::1] centers,     # IN
-        int[::1] labels,              # IN
+        X,                                  # IN
+        const floating[::1] sample_weight,  # IN
+        const floating[:, ::1] centers,     # IN
+        const int[::1] labels,              # IN
         int n_threads,
         int single_label=-1,
 ):
@@ -162,12 +172,13 @@ cpdef floating _inertia_sparse(
 
 
 cpdef void _relocate_empty_clusters_dense(
-        floating[:, ::1] X,                # IN READ-ONLY
-        floating[::1] sample_weight,       # IN READ-ONLY
-        floating[:, ::1] centers_old,      # IN
-        floating[:, ::1] centers_new,      # INOUT
-        floating[::1] weight_in_clusters,  # INOUT
-        int[::1] labels):                  # IN
+        const floating[:, ::1] X,            # IN
+        const floating[::1] sample_weight,   # IN
+        const floating[:, ::1] centers_old,  # IN
+        floating[:, ::1] centers_new,        # INOUT
+        floating[::1] weight_in_clusters,    # INOUT
+        const int[::1] labels                # IN
+):
     """Relocate centers which have no sample assigned to them."""
     cdef:
         int[::1] empty_clusters = np.where(np.equal(weight_in_clusters, 0))[0].astype(np.int32)
@@ -203,14 +214,15 @@ cpdef void _relocate_empty_clusters_dense(
 
 
 cpdef void _relocate_empty_clusters_sparse(
-        floating[::1] X_data,              # IN
-        int[::1] X_indices,                # IN
-        int[::1] X_indptr,                 # IN
-        floating[::1] sample_weight,       # IN
-        floating[:, ::1] centers_old,      # IN
-        floating[:, ::1] centers_new,      # INOUT
-        floating[::1] weight_in_clusters,  # INOUT
-        int[::1] labels):                  # IN
+        const floating[::1] X_data,          # IN
+        const int[::1] X_indices,            # IN
+        const int[::1] X_indptr,             # IN
+        const floating[::1] sample_weight,   # IN
+        const floating[:, ::1] centers_old,  # IN
+        floating[:, ::1] centers_new,        # INOUT
+        floating[::1] weight_in_clusters,    # INOUT
+        const int[::1] labels                # IN
+):
     """Relocate centers which have no sample assigned to them."""
     cdef:
         int[::1] empty_clusters = np.where(np.equal(weight_in_clusters, 0))[0].astype(np.int32)
@@ -257,8 +269,9 @@ cpdef void _relocate_empty_clusters_sparse(
 
 
 cdef void _average_centers(
-        floating[:, ::1] centers,           # INOUT
-        floating[::1] weight_in_clusters):  # IN
+        floating[:, ::1] centers,               # INOUT
+        const floating[::1] weight_in_clusters  # IN
+):
     """Average new centers wrt weights."""
     cdef:
         int n_clusters = centers.shape[0]
@@ -274,9 +287,10 @@ cdef void _average_centers(
 
 
 cdef void _center_shift(
-        floating[:, ::1] centers_old,  # IN
-        floating[:, ::1] centers_new,  # IN
-        floating[::1] center_shift):   # OUT
+        const floating[:, ::1] centers_old,  # IN
+        const floating[:, ::1] centers_new,  # IN
+        floating[::1] center_shift           # OUT
+):
     """Compute shift between old and new centers."""
     cdef:
         int n_clusters = centers_old.shape[0]
@@ -288,7 +302,11 @@ cdef void _center_shift(
             &centers_new[j, 0], &centers_old[j, 0], n_features, False)
 
 
-def _is_same_clustering(int[::1] labels1, int[::1] labels2, n_clusters):
+def _is_same_clustering(
+    const int[::1] labels1,
+    const int[::1] labels2,
+    n_clusters
+):
     """Check if two arrays of labels are the same up to a permutation of the labels"""
     cdef int[::1] mapping = np.full(fill_value=-1, shape=(n_clusters,), dtype=np.int32)
     cdef int i

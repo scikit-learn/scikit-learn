@@ -17,7 +17,7 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.base import is_regressor
 from sklearn.pipeline import make_pipeline
-from sklearn.metrics import mean_poisson_deviance
+from sklearn.metrics import mean_gamma_deviance, mean_poisson_deviance
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.compose import make_column_transformer
@@ -80,22 +80,8 @@ def _make_dumb_dataset(n_samples):
     ],
 )
 def test_init_parameters_validation(GradientBoosting, X, y, params, err_msg):
-
     with pytest.raises(ValueError, match=err_msg):
         GradientBoosting(**params).fit(X, y)
-
-
-# TODO(1.3): remove
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-def test_invalid_classification_loss():
-    binary_clf = HistGradientBoostingClassifier(loss="binary_crossentropy")
-    err_msg = (
-        "loss='binary_crossentropy' is not defined for multiclass "
-        "classification with n_classes=3, use "
-        "loss='log_loss' instead"
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        binary_clf.fit(np.zeros(shape=(3, 2)), np.arange(3))
 
 
 @pytest.mark.parametrize(
@@ -113,7 +99,6 @@ def test_invalid_classification_loss():
 def test_early_stopping_regression(
     scoring, validation_fraction, early_stopping, n_iter_no_change, tol
 ):
-
     max_iter = 200
 
     X, y = make_regression(n_samples=50, random_state=0)
@@ -161,7 +146,6 @@ def test_early_stopping_regression(
 def test_early_stopping_classification(
     data, scoring, validation_fraction, early_stopping, n_iter_no_change, tol
 ):
-
     max_iter = 50
 
     X, y = data
@@ -221,7 +205,6 @@ def test_early_stopping_default(GradientBoosting, X, y):
     ],
 )
 def test_should_stop(scores, n_iter_no_change, tol, stopping):
-
     gbdt = HistGradientBoostingClassifier(n_iter_no_change=n_iter_no_change, tol=tol)
     assert gbdt._should_stop(scores) == stopping
 
@@ -248,8 +231,64 @@ def test_absolute_error_sample_weight():
     gbdt.fit(X, y, sample_weight=sample_weight)
 
 
+@pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 1.0, 2.0])])
+def test_gamma_y_positive(y):
+    # Test that ValueError is raised if any y_i <= 0.
+    err_msg = r"loss='gamma' requires strictly positive y."
+    gbdt = HistGradientBoostingRegressor(loss="gamma", random_state=0)
+    with pytest.raises(ValueError, match=err_msg):
+        gbdt.fit(np.zeros(shape=(len(y), 1)), y)
+
+
+def test_gamma():
+    # For a Gamma distributed target, we expect an HGBT trained with the Gamma deviance
+    # (loss) to give better results than an HGBT with any other loss function, measured
+    # in out-of-sample Gamma deviance as metric/score.
+    # Note that squared error could potentially predict negative values which is
+    # invalid (np.inf) for the Gamma deviance. A Poisson HGBT (having a log link)
+    # does not have that defect.
+    # Important note: It seems that a Poisson HGBT almost always has better
+    # out-of-sample performance than the Gamma HGBT, measured in Gamma deviance.
+    # LightGBM shows the same behaviour. Hence, we only compare to a squared error
+    # HGBT, but not to a Poisson deviance HGBT.
+    rng = np.random.RandomState(42)
+    n_train, n_test, n_features = 500, 100, 20
+    X = make_low_rank_matrix(
+        n_samples=n_train + n_test,
+        n_features=n_features,
+        random_state=rng,
+    )
+    # We create a log-linear Gamma model. This gives y.min ~ 1e-2, y.max ~ 1e2
+    coef = rng.uniform(low=-10, high=20, size=n_features)
+    # Numpy parametrizes gamma(shape=k, scale=theta) with mean = k * theta and
+    # variance = k * theta^2. We parametrize it instead with mean = exp(X @ coef)
+    # and variance = dispersion * mean^2 by setting k = 1 / dispersion,
+    # theta =  dispersion * mean.
+    dispersion = 0.5
+    y = rng.gamma(shape=1 / dispersion, scale=dispersion * np.exp(X @ coef))
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=n_test, random_state=rng
+    )
+    gbdt_gamma = HistGradientBoostingRegressor(loss="gamma", random_state=123)
+    gbdt_mse = HistGradientBoostingRegressor(loss="squared_error", random_state=123)
+    dummy = DummyRegressor(strategy="mean")
+    for model in (gbdt_gamma, gbdt_mse, dummy):
+        model.fit(X_train, y_train)
+
+    for X, y in [(X_train, y_train), (X_test, y_test)]:
+        loss_gbdt_gamma = mean_gamma_deviance(y, gbdt_gamma.predict(X))
+        # We restrict the squared error HGBT to predict at least the minimum seen y at
+        # train time to make it strictly positive.
+        loss_gbdt_mse = mean_gamma_deviance(
+            y, np.maximum(np.min(y_train), gbdt_mse.predict(X))
+        )
+        loss_dummy = mean_gamma_deviance(y, dummy.predict(X))
+        assert loss_gbdt_gamma < loss_dummy
+        assert loss_gbdt_gamma < loss_gbdt_mse
+
+
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
-def test_asymmetric_error(quantile):
+def test_quantile_asymmetric_error(quantile):
     """Test quantile regression for asymmetric distributed targets."""
     n_samples = 10_000
     rng = np.random.RandomState(42)
@@ -374,8 +413,10 @@ def test_missing_values_trivial():
 
 @pytest.mark.parametrize("problem", ("classification", "regression"))
 @pytest.mark.parametrize(
-    "missing_proportion, expected_min_score_classification, "
-    "expected_min_score_regression",
+    (
+        "missing_proportion, expected_min_score_classification, "
+        "expected_min_score_regression"
+    ),
     [(0.1, 0.97, 0.89), (0.2, 0.93, 0.81), (0.5, 0.79, 0.52)],
 )
 def test_missing_values_resilience(
@@ -614,20 +655,6 @@ def test_infinite_values_missing_values():
 
     assert stump_clf.fit(X, y_isinf).score(X, y_isinf) == 1
     assert stump_clf.fit(X, y_isnan).score(X, y_isnan) == 1
-
-
-# TODO(1.3): remove
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-def test_crossentropy_binary_problem():
-    # categorical_crossentropy should only be used if there are more than two
-    # classes present. PR #14869
-    X = [[1], [0]]
-    y = [0, 1]
-    gbrt = HistGradientBoostingClassifier(loss="categorical_crossentropy")
-    with pytest.raises(
-        ValueError, match="loss='categorical_crossentropy' is not suitable for"
-    ):
-        gbrt.fit(X, y)
 
 
 @pytest.mark.parametrize("scoring", [None, "loss"])
@@ -879,7 +906,6 @@ def test_custom_loss(Est, loss, X, y):
     ],
 )
 def test_staged_predict(HistGradientBoosting, X, y):
-
     # Test whether staged predictor eventually gives
     # the same prediction.
     X_train, X_test, y_train, y_test = train_test_split(
@@ -903,7 +929,6 @@ def test_staged_predict(HistGradientBoosting, X, y):
         else ["predict", "predict_proba", "decision_function"]
     )
     for method_name in method_names:
-
         staged_method = getattr(gb, "staged_" + method_name)
         staged_predictions = list(staged_method(X_test))
         assert len(staged_predictions) == gb.n_iter_
@@ -921,7 +946,10 @@ def test_staged_predict(HistGradientBoosting, X, y):
     "Est", (HistGradientBoostingRegressor, HistGradientBoostingClassifier)
 )
 @pytest.mark.parametrize("bool_categorical_parameter", [True, False])
-def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter):
+@pytest.mark.parametrize("missing_value", [np.nan, -1])
+def test_unknown_categories_nan(
+    insert_missing, Est, bool_categorical_parameter, missing_value
+):
     # Make sure no error is raised at predict if a category wasn't seen during
     # fit. We also make sure they're treated as nans.
 
@@ -941,7 +969,7 @@ def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter)
     if insert_missing:
         mask = rng.binomial(1, 0.01, size=X.shape).astype(bool)
         assert mask.sum() > 0
-        X[mask] = np.nan
+        X[mask] = missing_value
 
     est = Est(max_iter=20, categorical_features=categorical_features).fit(X, y)
     assert_array_equal(est.is_categorical_, [False, True])
@@ -950,7 +978,7 @@ def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter)
     # unknown categories will be treated as nans
     X_test = np.zeros((10, X.shape[1]), dtype=float)
     X_test[:5, 1] = 30
-    X_test[5:, 1] = np.nan
+    X_test[5:, 1] = missing_value
     assert len(np.unique(est.predict(X_test))) == 1
 
 
@@ -1263,32 +1291,6 @@ def test_interaction_cst_numerically():
         - est.predict(X_delta_0_d)
         > 0.01
     )
-
-
-# TODO(1.3): Remove
-@pytest.mark.parametrize(
-    "old_loss, new_loss, Estimator",
-    [
-        ("auto", "log_loss", HistGradientBoostingClassifier),
-        ("binary_crossentropy", "log_loss", HistGradientBoostingClassifier),
-        ("categorical_crossentropy", "log_loss", HistGradientBoostingClassifier),
-    ],
-)
-def test_loss_deprecated(old_loss, new_loss, Estimator):
-    if old_loss == "categorical_crossentropy":
-        X, y = X_multi_classification[:10], y_multi_classification[:10]
-        assert len(np.unique(y)) > 2
-    else:
-        X, y = X_classification[:10], y_classification[:10]
-
-    est1 = Estimator(loss=old_loss, random_state=0)
-
-    with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
-        est1.fit(X, y)
-
-    est2 = Estimator(loss=new_loss, random_state=0)
-    est2.fit(X, y)
-    assert_allclose(est1.predict(X), est2.predict(X))
 
 
 def test_no_user_warning_with_scoring():

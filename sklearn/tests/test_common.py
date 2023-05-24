@@ -112,8 +112,10 @@ def _sample_func(x, y=1):
                 class_weight="balanced",
                 warm_start=True,
             ),
-            "LogisticRegression(class_weight='balanced',random_state=1,"
-            "solver='newton-cg',warm_start=True)",
+            (
+                "LogisticRegression(class_weight='balanced',random_state=1,"
+                "solver='newton-cg',warm_start=True)"
+            ),
         ),
     ],
 )
@@ -131,7 +133,17 @@ def _tested_estimators(type_filter=None):
         yield estimator
 
 
-@parametrize_with_checks(list(_tested_estimators()))
+def _generate_pipeline():
+    for final_estimator in [Ridge(), LogisticRegression()]:
+        yield Pipeline(
+            steps=[
+                ("scaler", StandardScaler()),
+                ("final_estimator", final_estimator),
+            ]
+        )
+
+
+@parametrize_with_checks(list(chain(_tested_estimators(), _generate_pipeline())))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(category=(FutureWarning, ConvergenceWarning, UserWarning)):
@@ -230,13 +242,11 @@ def test_all_tests_are_importable():
     # Ensure that for each contentful subpackage, there is a test directory
     # within it that is also a subpackage (i.e. a directory with __init__.py)
 
-    HAS_TESTS_EXCEPTIONS = re.compile(
-        r"""(?x)
+    HAS_TESTS_EXCEPTIONS = re.compile(r"""(?x)
                                       \.externals(\.|$)|
                                       \.tests(\.|$)|
                                       \._
-                                      """
-    )
+                                      """)
     resource_modules = {
         "sklearn.datasets.data",
         "sklearn.datasets.descr",
@@ -281,16 +291,6 @@ def _generate_column_transformer_instances():
             ("trans1", StandardScaler(), [0, 1]),
         ]
     )
-
-
-def _generate_pipeline():
-    for final_estimator in [Ridge(), LogisticRegression()]:
-        yield Pipeline(
-            steps=[
-                ("scaler", StandardScaler()),
-                ("final_estimator", final_estimator),
-            ]
-        )
 
 
 def _generate_search_cv_instances():
@@ -462,36 +462,12 @@ ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT = [
     est for est in _tested_estimators() if hasattr(est, "get_feature_names_out")
 ]
 
-WHITELISTED_FAILING_ESTIMATORS = [
-    "DictVectorizer",
-    "GaussianRandomProjection",
-    "GenericUnivariateSelect",
-    "KBinsDiscretizer",
-    "MissingIndicator",
-    "RFE",
-    "RFECV",
-    "SelectFdr",
-    "SelectFpr",
-    "SelectFromModel",
-    "SelectFwe",
-    "SelectKBest",
-    "SelectPercentile",
-    "SequentialFeatureSelector",
-    "SparseRandomProjection",
-    "SplineTransformer",
-    "VarianceThreshold",
-]
-
 
 @pytest.mark.parametrize(
     "estimator", ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT, ids=_get_check_estimator_ids
 )
 def test_estimators_get_feature_names_out_error(estimator):
     estimator_name = estimator.__class__.__name__
-    if estimator_name in WHITELISTED_FAILING_ESTIMATORS:
-        return pytest.xfail(
-            reason=f"{estimator_name} is not failing with a consistent NotFittedError"
-        )
     _set_checking_parameters(estimator)
     check_get_feature_names_out_error(estimator_name, estimator)
 
