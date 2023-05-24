@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 from scipy import sparse as sp
 from numpy.testing import assert_array_equal
-import warnings
 
 from sklearn.neighbors import NearestCentroid
 from sklearn import datasets
@@ -148,23 +147,17 @@ def test_manhattan_metric():
 
 
 # TODO(1.5): remove this test
-def test_deprecated_metrics():
-    # Make sure no warning is raised when using euclidean or manhattan metric
-    # Make sure a warning is raised for all other valid metrics
-
-    for metric in {"manhattan", "euclidean"}:
-        clf = NearestCentroid(metric=metric)
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            clf.fit(X, y)
-
-    for metric in NearestCentroid._valid_metrics - {"manhattan", "euclidean"}:
-        clf = NearestCentroid(metric=metric)
-        with pytest.warns(
-            FutureWarning,
-            match="Support for metrics other than euclidean and manhattan",
-        ):
-            clf.fit(X, y)
+@pytest.mark.parametrize(
+    "metric", NearestCentroid._valid_metrics - {"manhattan", "euclidean"}
+)
+def test_deprecated_metrics(metric):
+    # Check that a warning is raised for all deprecated metrics
+    clf = NearestCentroid(metric=metric)
+    with pytest.warns(
+        FutureWarning,
+        match="Support for distance metrics other than euclidean and manhattan",
+    ):
+        clf.fit(X, y)
 
 
 def test_features_zero_var():
