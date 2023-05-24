@@ -6,7 +6,6 @@ neighbors.
 """
 
 import numpy as np
-import pytest
 
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.cluster.tests.common import generate_clustered_data
@@ -123,8 +122,6 @@ def test_isomap():
     assert_array_almost_equal(Xt_chain, Xt_compact)
 
 
-# TODO: Remove filterwarning in 1.2
-@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_tsne():
     # Test chaining KNeighborsTransformer and TSNE
     n_iter = 250
@@ -135,13 +132,13 @@ def test_tsne():
     X = rng.randn(20, 2)
 
     for metric in ["minkowski", "sqeuclidean"]:
-
         # compare the chained version and the compact version
         est_chain = make_pipeline(
             KNeighborsTransformer(
                 n_neighbors=n_neighbors, mode="distance", metric=metric
             ),
             TSNE(
+                init="random",
                 metric="precomputed",
                 perplexity=perplexity,
                 method="barnes_hut",
@@ -150,6 +147,7 @@ def test_tsne():
             ),
         )
         est_compact = TSNE(
+            init="random",
             metric=metric,
             perplexity=perplexity,
             n_iter=n_iter,

@@ -161,7 +161,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
     [0.5]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **NeighborsBase._parameter_constraints,
         "weights": [StrOptions({"uniform", "distance"}), callable, None],
     }
@@ -221,7 +221,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
 
         Parameters
         ----------
-        X : array-like of shape (n_queries, n_features), \
+        X : {array-like, sparse matrix} of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
@@ -369,7 +369,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
 
     See Also
     --------
-    NearestNeighbors : Regression based on nearest neighbors.
+    NearestNeighbors : Unsupervised learner for implementing neighbor searches.
     KNeighborsRegressor : Regression based on k-nearest neighbors.
     KNeighborsClassifier : Classifier based on the k-nearest neighbors.
     RadiusNeighborsClassifier : Classifier based on neighbors within a given radius.
@@ -393,7 +393,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
     [0.5]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **NeighborsBase._parameter_constraints,
         "weights": [StrOptions({"uniform", "distance"}), callable, None],
     }
@@ -448,7 +448,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
 
         Parameters
         ----------
-        X : array-like of shape (n_queries, n_features), \
+        X : {array-like, sparse matrix} of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
@@ -479,9 +479,11 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         else:
             y_pred = np.array(
                 [
-                    np.average(_y[ind, :], axis=0, weights=weights[i])
-                    if len(ind)
-                    else empty_obs
+                    (
+                        np.average(_y[ind, :], axis=0, weights=weights[i])
+                        if len(ind)
+                        else empty_obs
+                    )
                     for (i, ind) in enumerate(neigh_ind)
                 ]
             )

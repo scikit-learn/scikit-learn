@@ -174,7 +174,13 @@ Graph Routines
 Testing Functions
 =================
 
-- :func:`all_estimators` : returns a list of all estimators in
+- :func:`discovery.all_estimators` : returns a list of all estimators in
+  scikit-learn to test for consistent behavior and interfaces.
+
+- :func:`discovery.all_displays` : returns a list of all displays (related to
+  plotting API) in scikit-learn to test for consistent behavior and interfaces.
+
+- :func:`discovery.all_functions` : returns a list all functions in
   scikit-learn to test for consistent behavior and interfaces.
 
 Multiclass and multilabel utility function
@@ -194,7 +200,7 @@ Helper Functions
   to ``n``.  Used in :func:`~sklearn.decomposition.dict_learning` and
   :func:`~sklearn.cluster.k_means`.
 
-- :class:`gen_batches`: generator to create slices containing batch size elements 
+- :class:`gen_batches`: generator to create slices containing batch size elements
   from 0 to ``n``
 
 - :func:`safe_mask`: Helper function to convert a mask to the format expected

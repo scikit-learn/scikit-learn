@@ -147,10 +147,7 @@ in the kernel and by the regularization parameter alpha of KRR.
    :align: center
 
 The figure shows that both methods learn reasonable models of the target
-function. GPR correctly identifies the periodicity of the function to be
-roughly :math:`2*\pi` (6.28), while KRR chooses the doubled periodicity
-:math:`4*\pi` . Besides
-that, GPR provides reasonable confidence bounds on the prediction which are not
+function. GPR provides reasonable confidence bounds on the prediction which are not
 available for KRR. A major difference between the two methods is the time
 required for fitting and predicting: while fitting KRR is fast in principle,
 the grid-search for hyperparameter optimization scales exponentially with the
@@ -610,8 +607,11 @@ shown in the following figure:
 References
 ----------
 
-.. [RW2006] Carl Eduard Rasmussen and Christopher K.I. Williams, "Gaussian Processes for Machine Learning", MIT Press 2006, Link to an official complete PDF version of the book `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
+.. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
+   "Gaussian Processes for Machine Learning",
+   MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
 
-.. [Duv2014] David Duvenaud, "The Kernel Cookbook: Advice on Covariance functions", 2014, `Link <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_ .
+.. [Duv2014] `David Duvenaud, "The Kernel Cookbook: Advice on Covariance functions", 2014
+   <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
 .. currentmodule:: sklearn.gaussian_process

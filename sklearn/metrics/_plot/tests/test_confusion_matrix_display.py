@@ -54,27 +54,6 @@ def test_confusion_matrix_display_validation(pyplot):
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
-def test_confusion_matrix_display_invalid_option(pyplot, constructor_name):
-    """Check the error raise if an invalid parameter value is passed."""
-    X, y = make_classification(
-        n_samples=100, n_informative=5, n_classes=5, random_state=0
-    )
-    classifier = SVC().fit(X, y)
-    y_pred = classifier.predict(X)
-
-    # safe guard for the binary if/else construction
-    assert constructor_name in ("from_estimator", "from_predictions")
-    extra_params = {"normalize": "invalid"}
-
-    err_msg = r"normalize must be one of \{'true', 'pred', 'all', None\}"
-    with pytest.raises(ValueError, match=err_msg):
-        if constructor_name == "from_estimator":
-            ConfusionMatrixDisplay.from_estimator(classifier, X, y, **extra_params)
-        else:
-            ConfusionMatrixDisplay.from_predictions(y, y_pred, **extra_params)
-
-
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 @pytest.mark.parametrize("with_labels", [True, False])
 @pytest.mark.parametrize("with_display_labels", [True, False])
 def test_confusion_matrix_display_custom_labels(
@@ -354,10 +333,7 @@ def test_confusion_matrix_with_unknown_labels(pyplot, constructor_name):
 
 def test_colormap_max(pyplot):
     """Check that the max color is used for the color of the text."""
-
-    from matplotlib import cm
-
-    gray = cm.get_cmap("gray", 1024)
+    gray = pyplot.get_cmap("gray", 1024)
     confusion_matrix = np.array([[1.0, 0.0], [0.0, 1.0]])
 
     disp = ConfusionMatrixDisplay(confusion_matrix)
@@ -377,3 +353,31 @@ def test_im_kw_adjust_vmin_vmax(pyplot):
     clim = disp.im_.get_clim()
     assert clim[0] == pytest.approx(0.0)
     assert clim[1] == pytest.approx(0.8)
+
+
+def test_confusion_matrix_text_kw(pyplot):
+    """Check that text_kw is passed to the text call."""
+    font_size = 15.0
+    X, y = make_classification(random_state=0)
+    classifier = SVC().fit(X, y)
+
+    # from_estimator passes the font size
+    disp = ConfusionMatrixDisplay.from_estimator(
+        classifier, X, y, text_kw={"fontsize": font_size}
+    )
+    for text in disp.text_.reshape(-1):
+        assert text.get_fontsize() == font_size
+
+    # plot adjusts plot to new font size
+    new_font_size = 20.0
+    disp.plot(text_kw={"fontsize": new_font_size})
+    for text in disp.text_.reshape(-1):
+        assert text.get_fontsize() == new_font_size
+
+    # from_predictions passes the font size
+    y_pred = classifier.predict(X)
+    disp = ConfusionMatrixDisplay.from_predictions(
+        y, y_pred, text_kw={"fontsize": font_size}
+    )
+    for text in disp.text_.reshape(-1):
+        assert text.get_fontsize() == font_size

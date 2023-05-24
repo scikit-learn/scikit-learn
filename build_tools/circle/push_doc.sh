@@ -56,7 +56,7 @@ then
 	git rm -rf $dir/ && rm -rf $dir/
 fi
 cp -R $GENERATED_DOC_DIR $dir
-git config user.email "olivier.grisel+sklearn-ci@gmail.com"
+git config user.email "ci@scikit-learn.org"
 git config user.name $USERNAME
 git config push.default matching
 git add -f $dir/

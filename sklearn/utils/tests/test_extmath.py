@@ -6,7 +6,6 @@
 import numpy as np
 from scipy import sparse
 from scipy import linalg
-from scipy import stats
 from scipy.sparse.linalg import eigsh
 from scipy.special import expit
 
@@ -19,6 +18,7 @@ from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils.fixes import _mode, _eigh
 
 from sklearn.utils.extmath import density, _safe_accumulator_op
 from sklearn.utils.extmath import randomized_svd, _randomized_eigsh
@@ -49,6 +49,20 @@ def test_density():
         assert density(X_) == density(X)
 
 
+# TODO(1.4): Remove test
+def test_density_deprecated_kwargs():
+    """Check that future warning is raised when user enters keyword arguments."""
+    test_array = np.array([[1, 2, 3], [4, 5, 6]])
+    with pytest.warns(
+        FutureWarning,
+        match=(
+            "Additional keyword arguments are deprecated in version 1.2 and will be"
+            " removed in version 1.4."
+        ),
+    ):
+        density(test_array, a=1)
+
+
 def test_uniform_weights():
     # with uniform weights, results should be identical to stats.mode
     rng = np.random.RandomState(0)
@@ -56,7 +70,7 @@ def test_uniform_weights():
     weights = np.ones(x.shape)
 
     for axis in (None, 0, 1):
-        mode, score = stats.mode(x, axis)
+        mode, score = _mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
 
         assert_array_equal(mode, mode2)
@@ -219,8 +233,8 @@ def test_randomized_eigsh_compared_to_others(k):
     )
 
     # with LAPACK
-    eigvals_lapack, eigvecs_lapack = linalg.eigh(
-        X, eigvals=(n_features - k, n_features - 1)
+    eigvals_lapack, eigvecs_lapack = _eigh(
+        X, subset_by_index=(n_features - k, n_features - 1)
     )
     indices = eigvals_lapack.argsort()[::-1]
     eigvals_lapack = eigvals_lapack[indices]
@@ -623,6 +637,30 @@ def test_cartesian():
     assert_array_equal(x[:, np.newaxis], cartesian((x,)))
 
 
+@pytest.mark.parametrize(
+    "arrays, output_dtype",
+    [
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array([4, 5], dtype=np.int64)],
+            np.dtype(np.int64),
+        ),
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array([4, 5], dtype=np.float64)],
+            np.dtype(np.float64),
+        ),
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array(["x", "y"], dtype=object)],
+            np.dtype(object),
+        ),
+    ],
+)
+def test_cartesian_mix_types(arrays, output_dtype):
+    """Check that the cartesian product works with mixed types."""
+    output = cartesian(arrays)
+
+    assert output.dtype == output_dtype
+
+
 def test_logistic_sigmoid():
     # Check correctness and robustness of logistic sigmoid implementation
     def naive_log_logistic(x):
@@ -663,7 +701,6 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
 def test_incremental_weighted_mean_and_variance(
     mean, var, weight_loc, weight_scale, rng
 ):
-
     # Testing of correctness and numerical stability
     def _assert(X, sample_weight, expected_mean, expected_var):
         n = X.shape[0]

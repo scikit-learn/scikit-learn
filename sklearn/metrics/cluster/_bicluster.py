@@ -68,13 +68,18 @@ def consensus_score(a, b, *, similarity="jaccard"):
         any function that takes four arguments, each of which is a 1d
         indicator vector: (a_rows, a_columns, b_rows, b_columns).
 
+    Returns
+    -------
+    consensus_score : float
+       Consensus score, a non-negative value, sum of similarities
+       divided by size of larger set.
+
     References
     ----------
 
     * Hochreiter, Bodenhofer, et. al., 2010. `FABIA: factor analysis
       for bicluster acquisition
       <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2881408/>`__.
-
     """
     if similarity == "jaccard":
         similarity = _jaccard

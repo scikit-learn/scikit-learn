@@ -6,14 +6,14 @@ channels:
 dependencies:
   - python
   - ccache
+  - sphinx
   - pip
   - pip:
     - threadpoolctl
     - pytest
-    - pytest-xdist
-    - codecov
+    - pytest-xdist==2.5.0
     - pytest-cov
     - coverage
-    - sphinx
+    - pooch
     - numpydoc
     - python-dateutil

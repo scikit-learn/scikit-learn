@@ -163,11 +163,6 @@ def test_affinities():
     labels = sp.fit(X).labels_
     assert (X.shape[0],) == labels.shape
 
-    # raise error on unknown affinity
-    sp = SpectralClustering(n_clusters=2, affinity="<unknown>")
-    with pytest.raises(ValueError):
-        sp.fit(X)
-
 
 def test_cluster_qr():
     # cluster_qr by itself should not be used for clustering generic data
@@ -314,7 +309,7 @@ def test_spectral_clustering_np_matrix_raises():
     a np.matrix. See #10993"""
     X = np.matrix([[0.0, 2.0], [2.0, 0.0]])
 
-    msg = r"spectral_clustering does not support passing in affinity as an np\.matrix"
+    msg = r"np\.matrix is not supported. Please convert to a numpy array"
     with pytest.raises(TypeError, match=msg):
         spectral_clustering(X)
 

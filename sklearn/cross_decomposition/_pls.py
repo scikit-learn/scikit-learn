@@ -15,7 +15,7 @@ from scipy.linalg import svd
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..base import MultiOutputMixin
-from ..base import _ClassNamePrefixFeaturesOutMixin
+from ..base import ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.fixes import sp_version
 from ..utils.fixes import parse_version
@@ -159,7 +159,7 @@ def _svd_flip_1d(u, v):
 
 
 class _PLS(
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     RegressorMixin,
     MultiOutputMixin,
@@ -175,7 +175,7 @@ class _PLS(
     https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "scale": ["boolean"],
         "deflation_mode": [StrOptions({"regression", "canonical"})],
@@ -501,10 +501,12 @@ class _PLS(
         #            update the docstring of `coef_` and `intercept_` attribute
         if hasattr(self, "_coef_") and getattr(self, "_coef_warning", True):
             warnings.warn(
-                "The attribute `coef_` will be transposed in version 1.3 to be "
-                "consistent with other linear models in scikit-learn. Currently, "
-                "`coef_` has a shape of (n_features, n_targets) and in the future it "
-                "will have a shape of (n_targets, n_features).",
+                (
+                    "The attribute `coef_` will be transposed in version 1.3 to be"
+                    " consistent with other linear models in scikit-learn. Currently,"
+                    " `coef_` has a shape of (n_features, n_targets) and in the future"
+                    " it will have a shape of (n_targets, n_features)."
+                ),
                 FutureWarning,
             )
             # Only warn the first time
@@ -615,7 +617,7 @@ class PLSRegression(_PLS):
     >>> Y_pred = pls2.predict(X)
     """
 
-    _parameter_constraints = {**_PLS._parameter_constraints}
+    _parameter_constraints: dict = {**_PLS._parameter_constraints}
     for param in ("deflation_mode", "mode", "algorithm"):
         _parameter_constraints.pop(param)
 
@@ -760,7 +762,7 @@ class PLSCanonical(_PLS):
     >>> X_c, Y_c = plsca.transform(X, Y)
     """
 
-    _parameter_constraints = {**_PLS._parameter_constraints}
+    _parameter_constraints: dict = {**_PLS._parameter_constraints}
     for param in ("deflation_mode", "mode"):
         _parameter_constraints.pop(param)
 
@@ -882,7 +884,7 @@ class CCA(_PLS):
     >>> X_c, Y_c = cca.transform(X, Y)
     """
 
-    _parameter_constraints = {**_PLS._parameter_constraints}
+    _parameter_constraints: dict = {**_PLS._parameter_constraints}
     for param in ("deflation_mode", "mode", "algorithm"):
         _parameter_constraints.pop(param)
 
@@ -901,7 +903,7 @@ class CCA(_PLS):
         )
 
 
-class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Partial Least Square SVD.
 
     This transformer simply performs a SVD on the cross-covariance matrix
@@ -969,7 +971,7 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     ((4, 2), (4, 2))
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "scale": ["boolean"],
         "copy": ["boolean"],

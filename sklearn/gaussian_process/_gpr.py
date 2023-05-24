@@ -26,7 +26,7 @@ GPR_CHOLESKY_LOWER = True
 class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """Gaussian process regression (GPR).
 
-    The implementation is based on Algorithm 2.1 of [1]_.
+    The implementation is based on Algorithm 2.1 of [RW2006]_.
 
     In addition to standard scikit-learn estimator API,
     :class:`GaussianProcessRegressor`:
@@ -155,10 +155,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     References
     ----------
-    .. [1] `Rasmussen, Carl Edward.
-       "Gaussian processes in machine learning."
-       Summer school on machine learning. Springer, Berlin, Heidelberg, 2003
-       <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_.
+    .. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
+       "Gaussian Processes for Machine Learning",
+       MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
 
     Examples
     --------
@@ -175,7 +174,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "kernel": [None, Kernel],
         "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
         "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable, None],
@@ -325,9 +324,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             self.L_ = cholesky(K, lower=GPR_CHOLESKY_LOWER, check_finite=False)
         except np.linalg.LinAlgError as exc:
             exc.args = (
-                f"The kernel, {self.kernel_}, is not returning a positive "
-                "definite matrix. Try gradually increasing the 'alpha' "
-                "parameter of your GaussianProcessRegressor estimator.",
+                (
+                    f"The kernel, {self.kernel_}, is not returning a positive "
+                    "definite matrix. Try gradually increasing the 'alpha' "
+                    "parameter of your GaussianProcessRegressor estimator."
+                ),
             ) + exc.args
             raise
         # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
@@ -436,7 +437,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 # Compute variance of predictive distribution
                 # Use einsum to avoid explicitly forming the large matrix
                 # V^T @ V just to extract its diagonal afterward.
-                y_var = self.kernel_.diag(X)
+                y_var = self.kernel_.diag(X).copy()
                 y_var -= np.einsum("ij,ji->i", V.T, V)
 
                 # Check if any of the variances is negative because of

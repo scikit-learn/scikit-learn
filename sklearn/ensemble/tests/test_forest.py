@@ -11,6 +11,7 @@ Testing for the forest module (sklearn.ensemble.forest).
 import pickle
 import math
 from collections import defaultdict
+from functools import partial
 import itertools
 from itertools import combinations
 from itertools import product
@@ -22,11 +23,11 @@ from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
 from scipy.special import comb
 
+import joblib
+
 import pytest
 
-import joblib
-from numpy.testing import assert_allclose
-
+import sklearn
 from sklearn.dummy import DummyRegressor
 from sklearn.metrics import mean_poisson_deviance
 from sklearn.utils._testing import assert_almost_equal
@@ -46,9 +47,11 @@ from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomTreesEmbedding
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import explained_variance_score, f1_score
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
+from sklearn.utils.parallel import Parallel
 from sklearn.utils.validation import check_random_state
 
 from sklearn.metrics import mean_squared_error
@@ -503,7 +506,10 @@ def test_unfitted_feature_importances(name):
         ),
     ],
 )
-def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accuracy):
+@pytest.mark.parametrize("oob_score", [True, partial(f1_score, average="micro")])
+def test_forest_classifier_oob(
+    ForestClassifier, X, y, X_type, lower_bound_accuracy, oob_score
+):
     """Check that OOB score is close to score on a test set."""
     X = _convert_container(X, constructor_name=X_type)
     X_train, X_test, y_train, y_test = train_test_split(
@@ -515,7 +521,7 @@ def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accur
     classifier = ForestClassifier(
         n_estimators=40,
         bootstrap=True,
-        oob_score=True,
+        oob_score=oob_score,
         random_state=0,
     )
 
@@ -523,10 +529,13 @@ def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accur
     assert not hasattr(classifier, "oob_decision_function_")
 
     classifier.fit(X_train, y_train)
-    test_score = classifier.score(X_test, y_test)
+    if callable(oob_score):
+        test_score = oob_score(y_test, classifier.predict(X_test))
+    else:
+        test_score = classifier.score(X_test, y_test)
+        assert classifier.oob_score_ >= lower_bound_accuracy
 
     assert abs(test_score - classifier.oob_score_) <= 0.1
-    assert classifier.oob_score_ >= lower_bound_accuracy
 
     assert hasattr(classifier, "oob_score_")
     assert not hasattr(classifier, "oob_prediction_")
@@ -558,7 +567,8 @@ def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accur
         ),
     ],
 )
-def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2):
+@pytest.mark.parametrize("oob_score", [True, explained_variance_score])
+def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2, oob_score):
     """Check that forest-based regressor provide an OOB score close to the
     score on a test set."""
     X = _convert_container(X, constructor_name=X_type)
@@ -571,7 +581,7 @@ def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2):
     regressor = ForestRegressor(
         n_estimators=50,
         bootstrap=True,
-        oob_score=True,
+        oob_score=oob_score,
         random_state=0,
     )
 
@@ -579,10 +589,13 @@ def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2):
     assert not hasattr(regressor, "oob_prediction_")
 
     regressor.fit(X_train, y_train)
-    test_score = regressor.score(X_test, y_test)
+    if callable(oob_score):
+        test_score = oob_score(y_test, regressor.predict(X_test))
+    else:
+        test_score = regressor.score(X_test, y_test)
+        assert regressor.oob_score_ >= lower_bound_r2
 
     assert abs(test_score - regressor.oob_score_) <= 0.1
-    assert regressor.oob_score_ >= lower_bound_r2
 
     assert hasattr(regressor, "oob_score_")
     assert hasattr(regressor, "oob_prediction_")
@@ -1149,7 +1162,7 @@ def check_memory_layout(name, dtype):
     y = iris.target
     assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
-    if est.base_estimator.splitter in SPARSE_SPLITTERS:
+    if est.estimator.splitter in SPARSE_SPLITTERS:
         # csr matrix
         X = csr_matrix(iris.data, dtype=dtype)
         y = iris.target
@@ -1687,78 +1700,6 @@ def test_little_tree_with_small_max_samples(ForestClass):
     assert tree1.node_count > tree2.node_count, msg
 
 
-# FIXME: remove in 1.2
-@pytest.mark.parametrize(
-    "Estimator",
-    [
-        ExtraTreesClassifier,
-        ExtraTreesRegressor,
-        RandomForestClassifier,
-        RandomForestRegressor,
-        RandomTreesEmbedding,
-    ],
-)
-def test_n_features_deprecation(Estimator):
-    # Check that we raise the proper deprecation warning if accessing
-    # `n_features_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator().fit(X, y)
-
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        est.n_features_
-
-
-# TODO: Remove in v1.3
-@pytest.mark.parametrize(
-    "Estimator",
-    [
-        ExtraTreesClassifier,
-        ExtraTreesRegressor,
-        RandomForestClassifier,
-        RandomForestRegressor,
-    ],
-)
-def test_max_features_deprecation(Estimator):
-    """Check warning raised for max_features="auto" deprecation."""
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator(max_features="auto")
-
-    err_msg = (
-        r"`max_features='auto'` has been deprecated in 1.1 "
-        r"and will be removed in 1.3. To keep the past behaviour, "
-        r"explicitly set `max_features=(1.0|'sqrt')` or remove this "
-        r"parameter as it is also the default value for RandomForest"
-        r"(Regressors|Classifiers) and ExtraTrees(Regressors|"
-        r"Classifiers)\."
-    )
-
-    with pytest.warns(FutureWarning, match=err_msg):
-        est.fit(X, y)
-
-
-@pytest.mark.parametrize(
-    "old_criterion, new_criterion, Estimator",
-    [
-        # TODO(1.2): Remove "mse" and "mae"
-        ("mse", "squared_error", RandomForestRegressor),
-        ("mae", "absolute_error", RandomForestRegressor),
-    ],
-)
-def test_criterion_deprecated(old_criterion, new_criterion, Estimator):
-    est1 = Estimator(criterion=old_criterion, random_state=0)
-
-    with pytest.warns(
-        FutureWarning, match=f"Criterion '{old_criterion}' was deprecated"
-    ):
-        est1.fit(X, y)
-
-    est2 = Estimator(criterion=new_criterion, random_state=0)
-    est2.fit(X, y)
-    assert_allclose(est1.predict(X), est2.predict(X))
-
-
 @pytest.mark.parametrize("Forest", FOREST_REGRESSORS)
 def test_mse_criterion_object_segfault_smoke_test(Forest):
     # This is a smoke test to ensure that passing a mutable criterion
@@ -1799,3 +1740,54 @@ def test_random_trees_embedding_feature_names_out():
         ]
     ]
     assert_array_equal(expected_names, names)
+
+
+# TODO(1.4): remove in 1.4
+@pytest.mark.parametrize(
+    "name",
+    FOREST_ESTIMATORS,
+)
+def test_base_estimator_property_deprecated(name):
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    model = FOREST_ESTIMATORS[name]()
+    model.fit(X, y)
+
+    warn_msg = (
+        "Attribute `base_estimator_` was deprecated in version 1.2 and "
+        "will be removed in 1.4. Use `estimator_` instead."
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model.base_estimator_
+
+
+def test_read_only_buffer(monkeypatch):
+    """RandomForestClassifier must work on readonly sparse data.
+
+    Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/25333
+    """
+    monkeypatch.setattr(
+        sklearn.ensemble._forest,
+        "Parallel",
+        partial(Parallel, max_nbytes=100),
+    )
+    rng = np.random.RandomState(seed=0)
+
+    X, y = make_classification(n_samples=100, n_features=200, random_state=rng)
+    X = csr_matrix(X, copy=True)
+
+    clf = RandomForestClassifier(n_jobs=2, random_state=rng)
+    cross_val_score(clf, X, y, cv=2)
+
+
+@pytest.mark.parametrize("class_weight", ["balanced_subsample", None])
+def test_round_samples_to_one_when_samples_too_low(class_weight):
+    """Check low max_samples works and is rounded to one.
+
+    Non-regression test for gh-24037.
+    """
+    X, y = datasets.load_wine(return_X_y=True)
+    forest = RandomForestClassifier(
+        n_estimators=10, max_samples=1e-4, class_weight=class_weight, random_state=0
+    )
+    forest.fit(X, y)

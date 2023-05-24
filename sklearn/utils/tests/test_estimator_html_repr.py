@@ -205,7 +205,7 @@ def test_estimator_html_repr_pipeline():
 
 
 @pytest.mark.parametrize("final_estimator", [None, LinearSVC()])
-def test_stacking_classsifer(final_estimator):
+def test_stacking_classifier(final_estimator):
     estimators = [
         ("mlp", MLPClassifier(alpha=0.001)),
         ("tree", DecisionTreeClassifier()),
@@ -320,3 +320,14 @@ def test_invalid_parameters_in_stacking():
 
     html_output = estimator_html_repr(stacker)
     assert html.escape(str(stacker)) in html_output
+
+
+def test_estimator_get_params_return_cls():
+    """Check HTML repr works where a value in get_params is a class."""
+
+    class MyEstimator:
+        def get_params(self, deep=False):
+            return {"inner_cls": LogisticRegression}
+
+    est = MyEstimator()
+    assert "MyEstimator" in estimator_html_repr(est)

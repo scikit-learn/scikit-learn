@@ -37,7 +37,7 @@ class KMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
             init=init,
             n_init=1,
             max_iter=max_iter,
-            tol=-1,
+            tol=0,
             random_state=0,
         )
 

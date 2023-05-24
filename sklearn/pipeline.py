@@ -14,7 +14,6 @@ from itertools import islice
 
 import numpy as np
 from scipy import sparse
-from joblib import Parallel
 
 from .base import clone, TransformerMixin
 from .preprocessing import FunctionTransformer
@@ -24,11 +23,13 @@ from .utils import (
     Bunch,
     _print_elapsed_time,
 )
-from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import check_is_fitted
-from .utils.fixes import delayed
+from .utils import check_pandas_support
+from .utils._param_validation import HasMethods, Hidden
+from .utils._set_output import _safe_set_output, _get_output_config
+from .utils.parallel import delayed, Parallel
 from .exceptions import NotFittedError
 
 from .utils.metaestimators import _BaseComposition
@@ -39,7 +40,7 @@ __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
 def _final_estimator_has(attr):
     """Check that final_estimator has `attr`.
 
-    Used together with `avaliable_if` in `Pipeline`."""
+    Used together with `available_if` in `Pipeline`."""
 
     def check(self):
         # raise original `AttributeError` if `attr` does not exist
@@ -79,13 +80,13 @@ class Pipeline(_BaseComposition):
         estimator.
 
     memory : str or object with the joblib.Memory interface, default=None
-        Used to cache the fitted transformers of the pipeline. By default,
-        no caching is performed. If a string is given, it is the path to
-        the caching directory. Enabling caching triggers a clone of
-        the transformers before fitting. Therefore, the transformer
-        instance given to the pipeline cannot be inspected
-        directly. Use the attribute ``named_steps`` or ``steps`` to
-        inspect estimators within the pipeline. Caching the
+        Used to cache the fitted transformers of the pipeline. The last step
+        will never be cached, even if it is a transformer. By default, no
+        caching is performed. If a string is given, it is the path to the
+        caching directory. Enabling caching triggers a clone of the transformers
+        before fitting. Therefore, the transformer instance given to the
+        pipeline cannot be inspected directly. Use the attribute ``named_steps``
+        or ``steps`` to inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
     verbose : bool, default=False
@@ -142,10 +143,39 @@ class Pipeline(_BaseComposition):
     # BaseEstimator interface
     _required_parameters = ["steps"]
 
+    _parameter_constraints: dict = {
+        "steps": [list, Hidden(tuple)],
+        "memory": [None, str, HasMethods(["cache"])],
+        "verbose": ["boolean"],
+    }
+
     def __init__(self, steps, *, memory=None, verbose=False):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
+
+    def set_output(self, *, transform=None):
+        """Set the output container when `"transform"` and `"fit_transform"` are called.
+
+        Calling `set_output` will set the output of all estimators in `steps`.
+
+        Parameters
+        ----------
+        transform : {"default", "pandas"}, default=None
+            Configure output of `transform` and `fit_transform`.
+
+            - `"default"`: Default output format of a transformer
+            - `"pandas"`: DataFrame output
+            - `None`: Transform configuration is unchanged
+
+        Returns
+        -------
+        self : estimator instance
+            Estimator instance.
+        """
+        for _, _, step in self._iter():
+            _safe_set_output(step, transform=transform)
+        return self
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -283,8 +313,15 @@ class Pipeline(_BaseComposition):
 
     @property
     def _final_estimator(self):
-        estimator = self.steps[-1][1]
-        return "passthrough" if estimator is None else estimator
+        try:
+            estimator = self.steps[-1][1]
+            return "passthrough" if estimator is None else estimator
+        except (ValueError, AttributeError, TypeError):
+            # This condition happens when a call to a method is first calling
+            # `_available_if` and `fit` did not validate `steps` yet. We
+            # return `None` and an `InvalidParameterError` will be raised
+            # right after.
+            return None
 
     def _log_message(self, step_idx):
         if not self.verbose:
@@ -374,6 +411,7 @@ class Pipeline(_BaseComposition):
         self : object
             Pipeline with fitted steps.
         """
+        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
@@ -383,6 +421,14 @@ class Pipeline(_BaseComposition):
 
         return self
 
+    def _can_fit_transform(self):
+        return (
+            self._final_estimator == "passthrough"
+            or hasattr(self._final_estimator, "transform")
+            or hasattr(self._final_estimator, "fit_transform")
+        )
+
+    @available_if(_can_fit_transform)
     def fit_transform(self, X, y=None, **fit_params):
         """Fit the model and transform with the final estimator.
 
@@ -410,6 +456,7 @@ class Pipeline(_BaseComposition):
         Xt : ndarray of shape (n_samples, n_transformed_features)
             Transformed samples.
         """
+        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
 
@@ -486,6 +533,7 @@ class Pipeline(_BaseComposition):
         y_pred : ndarray
             Result of calling `fit_predict` on the final estimator.
         """
+        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
 
@@ -704,8 +752,34 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][1].classes_
 
     def _more_tags(self):
-        # check if first estimator expects pairwise input
-        return {"pairwise": _safe_tags(self.steps[0][1], "pairwise")}
+        tags = {
+            "_xfail_checks": {
+                "check_dont_overwrite_parameters": (
+                    "Pipeline changes the `steps` parameter, which it shouldn't."
+                    "Therefore this test is x-fail until we fix this."
+                ),
+                "check_estimators_overwrite_params": (
+                    "Pipeline changes the `steps` parameter, which it shouldn't."
+                    "Therefore this test is x-fail until we fix this."
+                ),
+            }
+        }
+
+        try:
+            tags["pairwise"] = _safe_tags(self.steps[0][1], "pairwise")
+        except (ValueError, AttributeError, TypeError):
+            # This happens when the `steps` is not a list of (name, estimator)
+            # tuples and `fit` is not called yet to validate the steps.
+            pass
+
+        try:
+            tags["multioutput"] = _safe_tags(self.steps[-1][1], "multioutput")
+        except (ValueError, AttributeError, TypeError):
+            # This happens when the `steps` is not a list of (name, estimator)
+            # tuples and `fit` is not called yet to validate the steps.
+            pass
+
+        return tags
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -814,13 +888,13 @@ def make_pipeline(*steps, memory=None, verbose=False):
         List of the scikit-learn estimators that are chained together.
 
     memory : str or object with the joblib.Memory interface, default=None
-        Used to cache the fitted transformers of the pipeline. By default,
-        no caching is performed. If a string is given, it is the path to
-        the caching directory. Enabling caching triggers a clone of
-        the transformers before fitting. Therefore, the transformer
-        instance given to the pipeline cannot be inspected
-        directly. Use the attribute ``named_steps`` or ``steps`` to
-        inspect estimators within the pipeline. Caching the
+        Used to cache the fitted transformers of the pipeline. The last step
+        will never be cached, even if it is a transformer. By default, no
+        caching is performed. If a string is given, it is the path to the
+        caching directory. Enabling caching triggers a clone of the transformers
+        before fitting. Therefore, the transformer instance given to the
+        pipeline cannot be inspected directly. Use the attribute ``named_steps``
+        or ``steps`` to inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
     verbose : bool, default=False
@@ -935,12 +1009,26 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Attributes
     ----------
+    named_transformers : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+        Read-only attribute to access any transformer parameter by user
+        given name. Keys are transformer names and values are
+        transformer parameters.
+
+        .. versionadded:: 1.2
+
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying first transformer in `transformer_list` exposes such an
         attribute when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when
+        `X` has feature names that are all strings.
+
+        .. versionadded:: 1.3
 
     See Also
     --------
@@ -969,6 +1057,35 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self.transformer_weights = transformer_weights
         self.verbose = verbose
 
+    def set_output(self, *, transform=None):
+        """Set the output container when `"transform"` and `"fit_transform"` are called.
+
+        `set_output` will set the output of all estimators in `transformer_list`.
+
+        Parameters
+        ----------
+        transform : {"default", "pandas"}, default=None
+            Configure output of `transform` and `fit_transform`.
+
+            - `"default"`: Default output format of a transformer
+            - `"pandas"`: DataFrame output
+            - `None`: Transform configuration is unchanged
+
+        Returns
+        -------
+        self : estimator instance
+            Estimator instance.
+        """
+        super().set_output(transform=transform)
+        for _, step, _ in self._iter():
+            _safe_set_output(step, transform=transform)
+        return self
+
+    @property
+    def named_transformers(self):
+        # Use Bunch object to improve autocomplete
+        return Bunch(**dict(self.transformer_list))
+
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
@@ -994,7 +1111,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Valid parameter keys can be listed with ``get_params()``. Note that
         you can directly set the parameters of the estimators contained in
-        `tranformer_list`.
+        `transformer_list`.
 
         Parameters
         ----------
@@ -1053,30 +1170,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             if trans == "drop":
                 continue
             if trans == "passthrough":
-                trans = FunctionTransformer()
+                trans = FunctionTransformer(feature_names_out="one-to-one")
             yield (name, trans, get_weight(name))
-
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self):
-        """Get feature names from all transformers.
-
-        Returns
-        -------
-        feature_names : list of strings
-            Names of the features produced by transform.
-        """
-        feature_names = []
-        for name, trans, weight in self._iter():
-            if not hasattr(trans, "get_feature_names"):
-                raise AttributeError(
-                    "Transformer %s (type %s) does not provide get_feature_names."
-                    % (str(name), type(trans).__name__)
-                )
-            feature_names.extend([name + "__" + f for f in trans.get_feature_names()])
-        return feature_names
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -1212,6 +1307,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
+        config = _get_output_config("transform", self)
+        if config["dense"] == "pandas" and all(hasattr(X, "iloc") for X in Xs):
+            pd = check_pandas_support("transform")
+            return pd.concat(Xs, axis=1)
+
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
@@ -1232,6 +1332,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         # X is passed to all transformers so we just delegate to the first one
         return self.transformer_list[0][1].n_features_in_
 
+    @property
+    def feature_names_in_(self):
+        """Names of features seen during :term:`fit`."""
+        # X is passed to all transformers -- delegate to the first one
+        return self.transformer_list[0][1].feature_names_in_
+
     def __sklearn_is_fitted__(self):
         # Delegate whether feature union was fitted
         for _, transformer, _ in self._iter():
@@ -1241,6 +1347,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     def _sk_visual_block_(self):
         names, transformers = zip(*self.transformer_list)
         return _VisualBlock("parallel", transformers, names=names)
+
+    def __getitem__(self, name):
+        """Return transformer with name."""
+        if not isinstance(name, str):
+            raise KeyError("Only string keys are supported")
+        return self.named_transformers[name]
 
 
 def make_union(*transformers, n_jobs=None, verbose=False):

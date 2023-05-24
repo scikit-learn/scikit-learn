@@ -300,12 +300,6 @@ def test_regression_metrics_at_limits():
     with pytest.raises(ValueError, match=msg):
         d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
 
-    power = 0.5
-    with pytest.raises(ValueError, match="is only defined for power<=0 and power>=1"):
-        mean_tweedie_deviance([0.0], [0.0], power=power)
-    with pytest.raises(ValueError, match="is only defined for power<=0 and power>=1"):
-        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
-
 
 def test__check_reg_targets():
     # All of length 3
@@ -318,7 +312,6 @@ def test__check_reg_targets():
     ]
 
     for (type1, y1, n_out1), (type2, y2, n_out2) in product(EXAMPLES, repeat=2):
-
         if type1 == type2 and n_out1 == n_out2:
             y_type, y_check1, y_check2, multioutput = _check_reg_targets(y1, y2, None)
             assert type1 == y_type
@@ -350,15 +343,6 @@ def test_regression_multioutput_array():
 
     mse = mean_squared_error(y_true, y_pred, multioutput="raw_values")
     mae = mean_absolute_error(y_true, y_pred, multioutput="raw_values")
-    err_msg = (
-        "multioutput is expected to be 'raw_values' "
-        "or 'uniform_average' but we got 'variance_weighted' instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        mean_pinball_loss(y_true, y_pred, multioutput="variance_weighted")
-
-    with pytest.raises(ValueError, match=err_msg):
-        d2_pinball_score(y_true, y_pred, multioutput="variance_weighted")
 
     pbl = mean_pinball_loss(y_true, y_pred, multioutput="raw_values")
     mape = mean_absolute_percentage_error(y_true, y_pred, multioutput="raw_values")

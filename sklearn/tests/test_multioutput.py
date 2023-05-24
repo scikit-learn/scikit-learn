@@ -202,8 +202,8 @@ def test_hasattr_multi_output_predict_proba():
 
 # check predict_proba passes
 def test_multi_output_predict_proba():
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, loss="log_loss")
-    param = {"loss": ("hinge", "log", "modified_huber")}
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
+    param = {"loss": ("hinge", "log_loss", "modified_huber")}
 
     # inner function for custom scoring
     def custom_scorer(estimator, X, y):
@@ -213,7 +213,11 @@ def test_multi_output_predict_proba():
             return 0.0
 
     grid_clf = GridSearchCV(
-        sgd_linear_clf, param_grid=param, scoring=custom_scorer, cv=3
+        sgd_linear_clf,
+        param_grid=param,
+        scoring=custom_scorer,
+        cv=3,
+        error_score="raise",
     )
     multi_target_linear = MultiOutputClassifier(grid_clf)
     multi_target_linear.fit(X, y)
@@ -762,3 +766,12 @@ def test_multioutputregressor_ducktypes_fitted_estimator():
 
     # Does not raise
     reg.predict(X)
+
+
+def test_multioutput_regressor_has_partial_fit():
+    # Test that an unfitted MultiOutputRegressor handles available_if for
+    # partial_fit correctly
+    est = MultiOutputRegressor(LinearRegression())
+    msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
+    with pytest.raises(AttributeError, match=msg):
+        getattr(est, "partial_fit")

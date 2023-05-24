@@ -10,7 +10,8 @@ over the internet, all details are available on the official website:
 
 from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
-
+from ..utils._param_validation import validate_params, Interval, Hidden, StrOptions
+from numbers import Integral, Real
 import logging
 
 import numpy as np
@@ -159,7 +160,9 @@ def _load_imgs(file_paths, slice_, color, resize):
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
         pil_img = Image.open(file_path)
-        pil_img.crop((w_slice.start, h_slice.start, w_slice.stop, h_slice.stop))
+        pil_img = pil_img.crop(
+            (w_slice.start, h_slice.start, w_slice.stop, h_slice.stop)
+        )
         if resize is not None:
             pil_img = pil_img.resize((w, h))
         face = np.asarray(pil_img, dtype=np.float32)
@@ -229,6 +232,18 @@ def _fetch_lfw_people(
     return faces, target, target_names
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "funneled": ["boolean"],
+        "resize": [Interval(Real, 0, None, closed="neither"), None],
+        "min_faces_per_person": [Interval(Integral, 0, None, closed="left"), None],
+        "color": ["boolean"],
+        "slice_": [tuple, Hidden(None)],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+    }
+)
 def fetch_lfw_people(
     *,
     data_home=None,
@@ -263,8 +278,9 @@ def fetch_lfw_people(
     funneled : bool, default=True
         Download and use the funneled variant of the dataset.
 
-    resize : float, default=0.5
-        Ratio used to resize the each face picture.
+    resize : float or None, default=0.5
+        Ratio used to resize the each face picture. If `None`, no resizing is
+        performed.
 
     min_faces_per_person : int, default=None
         The extracted dataset will only retain pictures of people that have at
@@ -278,7 +294,7 @@ def fetch_lfw_people(
     slice_ : tuple of slice, default=(slice(70, 195), slice(78, 172))
         Provide a custom 2D slice (height, width) to extract the
         'interesting' part of the jpeg files and avoid use statistical
-        correlation from the background
+        correlation from the background.
 
     download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
@@ -315,6 +331,10 @@ def fetch_lfw_people(
             Description of the Labeled Faces in the Wild (LFW) dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of
+        shape (n_samples, n_features) with each row representing one
+        sample and each column representing the features. The second
+        ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
     """
@@ -407,6 +427,17 @@ def _fetch_lfw_pairs(
     return pairs, target, np.array(["Different persons", "Same person"])
 
 
+@validate_params(
+    {
+        "subset": [StrOptions({"train", "test", "10_folds"})],
+        "data_home": [str, None],
+        "funneled": ["boolean"],
+        "resize": [Interval(Real, 0, None, closed="neither"), None],
+        "color": ["boolean"],
+        "slice_": [tuple, Hidden(None)],
+        "download_if_missing": ["boolean"],
+    }
+)
 def fetch_lfw_pairs(
     *,
     subset="train",

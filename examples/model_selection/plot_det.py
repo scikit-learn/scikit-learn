@@ -3,36 +3,18 @@
 Detection error tradeoff (DET) curve
 ====================================
 
-In this example, we compare receiver operating characteristic (ROC) and
-detection error tradeoff (DET) curves for different classification algorithms
-for the same classification task.
+In this example, we compare two binary classification multi-threshold metrics:
+the Receiver Operating Characteristic (ROC) and the Detection Error Tradeoff
+(DET). For such purpose, we evaluate two different classifiers for the same
+classification task.
 
-DET curves are commonly plotted in normal deviate scale.
-To achieve this the DET display transforms the error rates as returned by the
-:func:`~sklearn.metrics.det_curve` and the axis scale using
-:func:`scipy.stats.norm`.
+ROC curves feature true positive rate (TPR) on the Y axis, and false positive
+rate (FPR) on the X axis. This means that the top left corner of the plot is the
+"ideal" point - a FPR of zero, and a TPR of one.
 
-The point of this example is to demonstrate two properties of DET curves,
-namely:
-
-1. It might be easier to visually assess the overall performance of different
-   classification algorithms using DET curves over ROC curves.
-   Due to the linear scale used for plotting ROC curves, different classifiers
-   usually only differ in the top left corner of the graph and appear similar
-   for a large part of the plot. On the other hand, because DET curves
-   represent straight lines in normal deviate scale. As such, they tend to be
-   distinguishable as a whole and the area of interest spans a large part of
-   the plot.
-2. DET curves give the user direct feedback of the detection error tradeoff to
-   aid in operating point analysis.
-   The user can deduct directly from the DET-curve plot at which rate
-   false-negative error rate will improve when willing to accept an increase in
-   false-positive error rate (or vice-versa).
-
-The plots in this example compare ROC curves on the left side to corresponding
-DET curves on the right.
-There is no particular reason why these classifiers have been chosen for the
-example plot over other classifiers available in scikit-learn.
+DET curves are a variation of ROC curves where False Negative Rate (FNR) is
+plotted on the y-axis instead of the TPR. In this case the origin (bottom left
+corner) is the "ideal" point.
 
 .. note::
 
@@ -46,29 +28,21 @@ example plot over other classifiers available in scikit-learn.
       :ref:`sphx_glr_auto_examples_classification_plot_classifier_comparison.py`
       example.
 
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py` for
+      an example estimating the variance of the ROC curves and ROC-AUC.
+
 """
 
-import matplotlib.pyplot as plt
+# %%
+# Generate synthetic data
+# -----------------------
 
 from sklearn.datasets import make_classification
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import DetCurveDisplay, RocCurveDisplay
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import LinearSVC
-
-N_SAMPLES = 1000
-
-classifiers = {
-    "Linear SVM": make_pipeline(StandardScaler(), LinearSVC(C=0.025)),
-    "Random Forest": RandomForestClassifier(
-        max_depth=5, n_estimators=10, max_features=1
-    ),
-}
 
 X, y = make_classification(
-    n_samples=N_SAMPLES,
+    n_samples=1_000,
     n_features=2,
     n_redundant=0,
     n_informative=2,
@@ -78,7 +52,38 @@ X, y = make_classification(
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=0)
 
-# prepare plots
+# %%
+# Define the classifiers
+# ----------------------
+#
+# Here we define two different classifiers. The goal is to visualy compare their
+# statistical performance across thresholds using the ROC and DET curves. There
+# is no particular reason why these classifiers are chosen other classifiers
+# available in scikit-learn.
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import make_pipeline
+from sklearn.svm import LinearSVC
+
+classifiers = {
+    "Linear SVM": make_pipeline(StandardScaler(), LinearSVC(C=0.025)),
+    "Random Forest": RandomForestClassifier(
+        max_depth=5, n_estimators=10, max_features=1
+    ),
+}
+
+# %%
+# Plot ROC and DET curves
+# -----------------------
+#
+# DET curves are commonly plotted in normal deviate scale. To achieve this the
+# DET display transforms the error rates as returned by the
+# :func:`~sklearn.metrics.det_curve` and the axis scale using
+# :func:`scipy.stats.norm`.
+
+import matplotlib.pyplot as plt
+from sklearn.metrics import DetCurveDisplay, RocCurveDisplay
+
 fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(11, 5))
 
 for name, clf in classifiers.items():
@@ -95,3 +100,16 @@ ax_det.grid(linestyle="--")
 
 plt.legend()
 plt.show()
+
+# %%
+# Notice that it is easier to visually assess the overall performance of
+# different classification algorithms using DET curves than using ROC curves. As
+# ROC curves are plot in a linear scale, different classifiers usually appear
+# similar for a large part of the plot and differ the most in the top left
+# corner of the graph. On the other hand, because DET curves represent straight
+# lines in normal deviate scale, they tend to be distinguishable as a whole and
+# the area of interest spans a large part of the plot.
+#
+# DET curves give direct feedback of the detection error tradeoff to aid in
+# operating point analysis. The user can then decide the FNR they are willing to
+# accept at the expense of the FPR (or vice-versa).

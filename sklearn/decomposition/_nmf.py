@@ -18,7 +18,7 @@ from scipy import linalg
 
 from ._cdnmf_fast import _update_cdnmf_fast
 from .._config import config_context
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array, gen_batches
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
@@ -27,7 +27,6 @@ from ..utils.validation import (
     check_non_negative,
 )
 from ..utils._param_validation import (
-    Hidden,
     Interval,
     StrOptions,
     validate_params,
@@ -141,7 +140,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     X_data = X_data[indices]
 
     # used to avoid division by zero
-    WH_data[WH_data == 0] = EPSILON
+    WH_data[WH_data < EPSILON] = EPSILON
 
     # generalized Kullback-Leibler divergence
     if beta == 1:
@@ -156,7 +155,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     # Itakura-Saito divergence
     elif beta == 0:
         div = X_data / WH_data
-        res = np.sum(div) - np.product(X.shape) - np.sum(np.log(div))
+        res = np.sum(div) - np.prod(X.shape) - np.sum(np.log(div))
 
     # beta-divergence, beta not in (0, 1, 2)
     else:
@@ -201,29 +200,6 @@ def _special_sparse_dot(W, H, X):
         return WH.tocsr()
     else:
         return np.dot(W, H)
-
-
-def _compute_regularization(alpha, alpha_W, alpha_H, l1_ratio, regularization):
-    """Compute L1 and L2 regularization coefficients for W and H."""
-    if alpha_W != 0 or alpha_H != "same" or regularization == "ignored":
-        # if alpha_W or alpha_H is not left to its default value we ignore alpha and
-        # regularization.
-        alpha_H = alpha_W if alpha_H == "same" else alpha_H
-        l1_reg_W = alpha_W * l1_ratio
-        l1_reg_H = alpha_H * l1_ratio
-        l2_reg_W = alpha_W * (1.0 - l1_ratio)
-        l2_reg_H = alpha_H * (1.0 - l1_ratio)
-    else:
-        # TODO remove in 1.2
-        l1_reg_W, l2_reg_W, l1_reg_H, l2_reg_H = 0.0, 0.0, 0.0, 0.0
-        if regularization in ("both", "transformation"):
-            l1_reg_W = alpha * l1_ratio
-            l2_reg_W = alpha * (1.0 - l1_ratio)
-        if regularization in ("both", "components"):
-            l1_reg_H = alpha * l1_ratio
-            l2_reg_H = alpha * (1.0 - l1_ratio)
-
-    return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
 
 
 def _beta_loss_to_float(beta_loss):
@@ -582,11 +558,11 @@ def _multiplicative_update_w(
             # copy used in the Denominator
             WH = WH_safe_X.copy()
             if beta_loss - 1.0 < 0:
-                WH[WH == 0] = EPSILON
+                WH[WH < EPSILON] = EPSILON
 
         # to avoid taking a negative power of zero
         if beta_loss - 2.0 < 0:
-            WH_safe_X_data[WH_safe_X_data == 0] = EPSILON
+            WH_safe_X_data[WH_safe_X_data < EPSILON] = EPSILON
 
         if beta_loss == 1:
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
@@ -620,7 +596,7 @@ def _multiplicative_update_w(
                 for i in range(X.shape[0]):
                     WHi = np.dot(W[i, :], H)
                     if beta_loss - 1 < 0:
-                        WHi[WHi == 0] = EPSILON
+                        WHi[WHi < EPSILON] = EPSILON
                     WHi **= beta_loss - 1
                     WHHt[i, :] = np.dot(WHi, H.T)
             else:
@@ -667,11 +643,11 @@ def _multiplicative_update_h(
             # copy used in the Denominator
             WH = WH_safe_X.copy()
             if beta_loss - 1.0 < 0:
-                WH[WH == 0] = EPSILON
+                WH[WH < EPSILON] = EPSILON
 
         # to avoid division by zero
         if beta_loss - 2.0 < 0:
-            WH_safe_X_data[WH_safe_X_data == 0] = EPSILON
+            WH_safe_X_data[WH_safe_X_data < EPSILON] = EPSILON
 
         if beta_loss == 1:
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
@@ -706,7 +682,7 @@ def _multiplicative_update_h(
                 for i in range(X.shape[1]):
                     WHi = np.dot(W, H[:, i])
                     if beta_loss - 1 < 0:
-                        WHi[WHi == 0] = EPSILON
+                        WHi[WHi < EPSILON] = EPSILON
                     WHi **= beta_loss - 1
                     WtWH[:, i] = np.dot(W.T, WHi)
             else:
@@ -914,34 +890,7 @@ def _fit_multiplicative_update(
         "X": ["array-like", "sparse matrix"],
         "W": ["array-like", None],
         "H": ["array-like", None],
-        "n_components": [Interval(Integral, 1, None, closed="left"), None],
-        "init": [
-            StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
-            None,
-        ],
         "update_H": ["boolean"],
-        "solver": [StrOptions({"mu", "cd"})],
-        "beta_loss": [
-            StrOptions({"frobenius", "kullback-leibler", "itakura-saito"}),
-            Real,
-        ],
-        "tol": [Interval(Real, 0, None, closed="left")],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "alpha": [
-            Interval(Real, 0, None, closed="left"),
-            Hidden(StrOptions({"deprecated"})),
-        ],
-        "alpha_W": [Interval(Real, 0, None, closed="left")],
-        "alpha_H": [Interval(Real, 0, None, closed="left"), StrOptions({"same"})],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
-        "regularization": [
-            StrOptions({"both", "components", "transformation"}),
-            Hidden(StrOptions({"deprecated"})),
-            None,
-        ],
-        "random_state": ["random_state"],
-        "verbose": ["verbose"],
-        "shuffle": ["boolean"],
     }
 )
 def non_negative_factorization(
@@ -956,11 +905,9 @@ def non_negative_factorization(
     beta_loss="frobenius",
     tol=1e-4,
     max_iter=200,
-    alpha="deprecated",
     alpha_W=0.0,
     alpha_H="same",
     l1_ratio=0.0,
-    regularization="deprecated",
     random_state=None,
     verbose=0,
     shuffle=False,
@@ -984,7 +931,6 @@ def non_negative_factorization(
             &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
 
             &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2
-
 
     Where:
 
@@ -1013,11 +959,16 @@ def non_negative_factorization(
         Constant matrix.
 
     W : array-like of shape (n_samples, n_components), default=None
-        If init='custom', it is used as initial guess for the solution.
+        If `init='custom'`, it is used as initial guess for the solution.
+        If `update_H=False`, it is initialised as an array of zeros, unless
+        `solver='mu'`, then it is filled with values calculated by
+        `np.sqrt(X.mean() / self._n_components)`.
+        If `None`, uses the initialisation method specified in `init`.
 
     H : array-like of shape (n_components, n_features), default=None
-        If init='custom', it is used as initial guess for the solution.
-        If update_H=False, it is used as a constant, to solve for W only.
+        If `init='custom'`, it is used as initial guess for the solution.
+        If `update_H=False`, it is used as a constant, to solve for W only.
+        If `None`, uses the initialisation method specified in `init`.
 
     n_components : int, default=None
         Number of components, if n_components is not set all features
@@ -1038,8 +989,8 @@ def non_negative_factorization(
         - 'nndsvdar': NNDSVD with zeros filled with small random values
           (generally faster, less accurate alternative to NNDSVDa
           for when sparsity is not desired)
-        - 'custom': use custom matrices W and H if `update_H=True`. If
-          `update_H=False`, then only custom matrix H is used.
+        - 'custom': If `update_H=True`, use custom matrices W and H which must both
+          be provided. If `update_H=False`, then only custom matrix H is used.
 
         .. versionchanged:: 0.23
             The default value of `init` changed from 'random' to None in 0.23.
@@ -1081,16 +1032,6 @@ def non_negative_factorization(
     max_iter : int, default=200
         Maximum number of iterations before timing out.
 
-    alpha : float, default=0.0
-        Constant that multiplies the regularization terms. Set it to zero to have no
-        regularization. When using `alpha` instead of `alpha_W` and `alpha_H`, the
-        regularization terms are not scaled by the `n_features` (resp. `n_samples`)
-        factors for `W` (resp. `H`).
-
-        .. deprecated:: 1.0
-            The `alpha` parameter is deprecated in 1.0 and will be removed in 1.2.
-            Use `alpha_W` and `alpha_H` instead.
-
     alpha_W : float, default=0.0
         Constant that multiplies the regularization terms of `W`. Set it to zero
         (default) to have no regularization on `W`.
@@ -1110,14 +1051,6 @@ def non_negative_factorization(
         (aka Frobenius Norm).
         For l1_ratio = 1 it is an elementwise L1 penalty.
         For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
-
-    regularization : {'both', 'components', 'transformation'}, default=None
-        Select whether the regularization affects the components (H), the
-        transformation (W), both or none of them.
-
-        .. deprecated:: 1.0
-            The `regularization` parameter is deprecated in 1.0 and will be removed in
-            1.2. Use `alpha_W` and `alpha_H` instead.
 
     random_state : int, RandomState instance or None, default=None
         Used for NMF initialisation (when ``init`` == 'nndsvdar' or
@@ -1142,14 +1075,6 @@ def non_negative_factorization(
     n_iter : int
         Actual number of iterations.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
-    >>> from sklearn.decomposition import non_negative_factorization
-    >>> W, H, n_iter = non_negative_factorization(
-    ...     X, n_components=2, init='random', random_state=0)
-
     References
     ----------
     .. [1] :doi:`"Fast local algorithms for large scale nonnegative matrix and tensor
@@ -1160,9 +1085,15 @@ def non_negative_factorization(
     .. [2] :doi:`"Algorithms for nonnegative matrix factorization with the
        beta-divergence" <10.1162/NECO_a_00168>`
        Fevotte, C., & Idier, J. (2011). Neural Computation, 23(9).
-    """
-    X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
+    >>> from sklearn.decomposition import non_negative_factorization
+    >>> W, H, n_iter = non_negative_factorization(
+    ...     X, n_components=2, init='random', random_state=0)
+    """
     est = NMF(
         n_components=n_components,
         init=init,
@@ -1171,14 +1102,15 @@ def non_negative_factorization(
         tol=tol,
         max_iter=max_iter,
         random_state=random_state,
-        alpha=alpha,
         alpha_W=alpha_W,
         alpha_H=alpha_H,
         l1_ratio=l1_ratio,
         verbose=verbose,
         shuffle=shuffle,
-        regularization=regularization,
     )
+    est._validate_params()
+
+    X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
 
     with config_context(assume_finite=True):
         W, H, n_iter = est._fit_transform(X, W=W, H=H, update_H=update_H)
@@ -1186,10 +1118,10 @@ def non_negative_factorization(
     return W, H, n_iter
 
 
-class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, ABC):
+class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, ABC):
     """Base class for NMF and MiniBatchNMF."""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "init": [
             StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
@@ -1273,23 +1205,16 @@ class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
             )
         return W, H
 
-    def _scale_regularization(self, X):
-        """Scale regularization terms."""
+    def _compute_regularization(self, X):
+        """Compute scaled regularization terms."""
         n_samples, n_features = X.shape
-        if self.alpha_W != 0 or self.alpha_H != "same":
-            # if alpha_W or alpha_H is not left to its default value we ignore alpha
-            # and regularization, and we scale the regularization terms.
-            l1_reg_W = n_features * self._l1_reg_W
-            l1_reg_H = n_samples * self._l1_reg_H
-            l2_reg_W = n_features * self._l2_reg_W
-            l2_reg_H = n_samples * self._l2_reg_H
-        else:
-            # Otherwise we keep the old behavior with no scaling
-            # TODO remove in 1.2
-            l1_reg_W = self._l1_reg_W
-            l1_reg_H = self._l1_reg_H
-            l2_reg_W = self._l2_reg_W
-            l2_reg_H = self._l2_reg_H
+        alpha_W = self.alpha_W
+        alpha_H = self.alpha_W if self.alpha_H == "same" else self.alpha_H
+
+        l1_reg_W = n_features * alpha_W * self.l1_ratio
+        l1_reg_H = n_samples * alpha_H * self.l1_ratio
+        l2_reg_W = n_features * alpha_W * (1.0 - self.l1_ratio)
+        l2_reg_H = n_samples * alpha_H * (1.0 - self.l1_ratio)
 
         return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
 
@@ -1407,7 +1332,7 @@ class NMF(_BaseNMF):
           otherwise random.
 
         - `'random'`: non-negative random matrices, scaled with:
-          sqrt(X.mean() / n_components)
+          `sqrt(X.mean() / n_components)`
 
         - `'nndsvd'`: Nonnegative Double Singular Value Decomposition (NNDSVD)
           initialization (better for sparseness)
@@ -1419,7 +1344,7 @@ class NMF(_BaseNMF):
           (generally faster, less accurate alternative to NNDSVDa
           for when sparsity is not desired)
 
-        - `'custom'`: use custom matrices W and H
+        - `'custom'`: Use custom matrices `W` and `H` which must both be provided.
 
         .. versionchanged:: 1.1
             When `init=None` and n_components is less than n_samples and n_features
@@ -1459,19 +1384,6 @@ class NMF(_BaseNMF):
         results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    alpha : float, default=0.0
-        Constant that multiplies the regularization terms. Set it to zero to
-        have no regularization. When using `alpha` instead of `alpha_W` and `alpha_H`,
-        the regularization terms are not scaled by the `n_features` (resp. `n_samples`)
-        factors for `W` (resp. `H`).
-
-        .. versionadded:: 0.17
-           *alpha* used in the Coordinate Descent solver.
-
-        .. deprecated:: 1.0
-            The `alpha` parameter is deprecated in 1.0 and will be removed in 1.2.
-            Use `alpha_W` and `alpha_H` instead.
-
     alpha_W : float, default=0.0
         Constant that multiplies the regularization terms of `W`. Set it to zero
         (default) to have no regularization on `W`.
@@ -1504,17 +1416,6 @@ class NMF(_BaseNMF):
 
         .. versionadded:: 0.17
            *shuffle* parameter used in the Coordinate Descent solver.
-
-    regularization : {'both', 'components', 'transformation', None}, \
-                     default='both'
-        Select whether the regularization affects the components (H), the
-        transformation (W), both or none of them.
-
-        .. versionadded:: 0.24
-
-        .. deprecated:: 1.0
-            The `regularization` parameter is deprecated in 1.0 and will be removed in
-            1.2. Use `alpha_W` and `alpha_H` instead.
 
     Attributes
     ----------
@@ -1576,19 +1477,10 @@ class NMF(_BaseNMF):
     >>> H = model.components_
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseNMF._parameter_constraints,
         "solver": [StrOptions({"mu", "cd"})],
-        "alpha": [
-            Interval(Real, 0, None, closed="left"),
-            Hidden(StrOptions({"deprecated"})),
-        ],
         "shuffle": ["boolean"],
-        "regularization": [
-            StrOptions({"both", "components", "transformation"}),
-            Hidden(StrOptions({"deprecated"})),
-            None,
-        ],
     }
 
     def __init__(
@@ -1601,13 +1493,11 @@ class NMF(_BaseNMF):
         tol=1e-4,
         max_iter=200,
         random_state=None,
-        alpha="deprecated",
         alpha_W=0.0,
         alpha_H="same",
         l1_ratio=0.0,
         verbose=0,
         shuffle=False,
-        regularization="deprecated",
     ):
         super().__init__(
             n_components=n_components,
@@ -1623,9 +1513,7 @@ class NMF(_BaseNMF):
         )
 
         self.solver = solver
-        self.alpha = alpha
         self.shuffle = shuffle
-        self.regularization = regularization
 
     def _check_params(self, X):
         super()._check_params(X)
@@ -1639,43 +1527,14 @@ class NMF(_BaseNMF):
             )
         if self.solver == "mu" and self.init == "nndsvd":
             warnings.warn(
-                "The multiplicative update ('mu') solver cannot update "
-                "zeros present in the initialization, and so leads to "
-                "poorer results when used jointly with init='nndsvd'. "
-                "You may try init='nndsvda' or init='nndsvdar' instead.",
+                (
+                    "The multiplicative update ('mu') solver cannot update "
+                    "zeros present in the initialization, and so leads to "
+                    "poorer results when used jointly with init='nndsvd'. "
+                    "You may try init='nndsvda' or init='nndsvdar' instead."
+                ),
                 UserWarning,
             )
-
-        # alpha and regularization are deprecated in favor of alpha_W and alpha_H
-        # TODO clean up in 1.2
-        if self.alpha != "deprecated":
-            warnings.warn(
-                "`alpha` was deprecated in version 1.0 and will be removed "
-                "in 1.2. Use `alpha_W` and `alpha_H` instead",
-                FutureWarning,
-            )
-            alpha = self.alpha
-        else:
-            alpha = 0.0
-
-        if self.regularization != "deprecated":
-            warnings.warn(
-                "`regularization` was deprecated in version 1.0 and will be "
-                "removed in 1.2. Use `alpha_W` and `alpha_H` instead",
-                FutureWarning,
-            )
-            regularization = self.regularization
-        else:
-            regularization = "both"
-
-        (
-            self._l1_reg_W,
-            self._l1_reg_H,
-            self._l2_reg_W,
-            self._l2_reg_H,
-        ) = _compute_regularization(
-            alpha, self.alpha_W, self.alpha_H, self.l1_ratio, regularization
-        )
 
         return self
 
@@ -1693,11 +1552,13 @@ class NMF(_BaseNMF):
         y : Ignored
             Not used, present for API consistency by convention.
 
-        W : array-like of shape (n_samples, n_components)
-            If init='custom', it is used as initial guess for the solution.
+        W : array-like of shape (n_samples, n_components), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `None`, uses the initialisation method specified in `init`.
 
-        H : array-like of shape (n_components, n_features)
-            If init='custom', it is used as initial guess for the solution.
+        H : array-like of shape (n_components, n_features), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `None`, uses the initialisation method specified in `init`.
 
         Returns
         -------
@@ -1733,12 +1594,17 @@ class NMF(_BaseNMF):
 
         y : Ignored
 
-        W : array-like of shape (n_samples, n_components)
-            If init='custom', it is used as initial guess for the solution.
+        W : array-like of shape (n_samples, n_components), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `update_H=False`, it is initialised as an array of zeros, unless
+            `solver='mu'`, then it is filled with values calculated by
+            `np.sqrt(X.mean() / self._n_components)`.
+            If `None`, uses the initialisation method specified in `init`.
 
-        H : array-like of shape (n_components, n_features)
-            If init='custom', it is used as initial guess for the solution.
-            If update_H=False, it is used as a constant, to solve for W only.
+        H : array-like of shape (n_components, n_features), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `update_H=False`, it is used as a constant, to solve for W only.
+            If `None`, uses the initialisation method specified in `init`.
 
         update_H : bool, default=True
             If True, both W and H will be estimated from initial guesses,
@@ -1773,7 +1639,7 @@ class NMF(_BaseNMF):
         W, H = self._check_w_h(X, W, H, update_H)
 
         # scale the regularization terms
-        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X)
+        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._compute_regularization(X)
 
         if self.solver == "cd":
             W, H, n_iter = _fit_coordinate_descent(
@@ -1913,7 +1779,7 @@ class MiniBatchNMF(_BaseNMF):
           (generally faster, less accurate alternative to NNDSVDa
           for when sparsity is not desired).
 
-        - `'custom'`: use custom matrices `W` and `H`
+        - `'custom'`: Use custom matrices `W` and `H` which must both be provided.
 
     batch_size : int, default=1024
         Number of samples in each mini-batch. Large batch sizes
@@ -2044,7 +1910,7 @@ class MiniBatchNMF(_BaseNMF):
     >>> H = model.components_
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseNMF._parameter_constraints,
         "max_no_improvement": [Interval(Integral, 1, None, closed="left"), None],
         "batch_size": [Interval(Integral, 1, None, closed="left")],
@@ -2074,7 +1940,6 @@ class MiniBatchNMF(_BaseNMF):
         random_state=None,
         verbose=0,
     ):
-
         super().__init__(
             n_components=n_components,
             init=init,
@@ -2119,15 +1984,6 @@ class MiniBatchNMF(_BaseNMF):
             else self.transform_max_iter
         )
 
-        (
-            self._l1_reg_W,
-            self._l1_reg_H,
-            self._l2_reg_W,
-            self._l2_reg_H,
-        ) = _compute_regularization(
-            "ignored", self.alpha_W, self.alpha_H, self.l1_ratio, "ignored"
-        )
-
         return self
 
     def _solve_W(self, X, H, max_iter):
@@ -2142,7 +1998,7 @@ class MiniBatchNMF(_BaseNMF):
 
         # Get scaled regularization terms. Done for each minibatch to take into account
         # variable sizes of minibatches.
-        l1_reg_W, _, l2_reg_W, _ = self._scale_regularization(X)
+        l1_reg_W, _, l2_reg_W, _ = self._compute_regularization(X)
 
         for _ in range(max_iter):
             W, *_ = _multiplicative_update_w(
@@ -2163,7 +2019,7 @@ class MiniBatchNMF(_BaseNMF):
 
         # get scaled regularization terms. Done for each minibatch to take into account
         # variable sizes of minibatches.
-        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X)
+        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._compute_regularization(X)
 
         # update W
         if self.fresh_restarts or W is None:
@@ -2281,9 +2137,11 @@ class MiniBatchNMF(_BaseNMF):
 
         W : array-like of shape (n_samples, n_components), default=None
             If `init='custom'`, it is used as initial guess for the solution.
+            If `None`, uses the initialisation method specified in `init`.
 
         H : array-like of shape (n_components, n_features), default=None
             If `init='custom'`, it is used as initial guess for the solution.
+            If `None`, uses the initialisation method specified in `init`.
 
         Returns
         -------
@@ -2319,11 +2177,16 @@ class MiniBatchNMF(_BaseNMF):
             Data matrix to be decomposed.
 
         W : array-like of shape (n_samples, n_components), default=None
-            If init='custom', it is used as initial guess for the solution.
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `update_H=False`, it is initialised as an array of zeros, unless
+            `solver='mu'`, then it is filled with values calculated by
+            `np.sqrt(X.mean() / self._n_components)`.
+            If `None`, uses the initialisation method specified in `init`.
 
         H : array-like of shape (n_components, n_features), default=None
-            If init='custom', it is used as initial guess for the solution.
-            If update_H=False, it is used as a constant, to solve for W only.
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `update_H=False`, it is used as a constant, to solve for W only.
+            If `None`, uses the initialisation method specified in `init`.
 
         update_H : bool, default=True
             If True, both W and H will be estimated from initial guesses,
@@ -2376,7 +2239,6 @@ class MiniBatchNMF(_BaseNMF):
         n_steps = self.max_iter * n_steps_per_iter
 
         for i, batch in zip(range(n_steps), batches):
-
             batch_cost = self._minibatch_step(X[batch], W[batch], H, update_H)
 
             if update_H and self._minibatch_convergence(
@@ -2394,8 +2256,10 @@ class MiniBatchNMF(_BaseNMF):
 
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
-                f"Maximum number of iterations {self.max_iter} reached. "
-                "Increase it to improve convergence.",
+                (
+                    f"Maximum number of iterations {self.max_iter} reached. "
+                    "Increase it to improve convergence."
+                ),
                 ConvergenceWarning,
             )
 

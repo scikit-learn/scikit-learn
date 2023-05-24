@@ -346,22 +346,6 @@ def test_oneclass_score_samples():
     )
 
 
-# TODO: Remove in v1.2
-def test_oneclass_fit_params_is_deprecated():
-    clf = svm.OneClassSVM()
-    params = {
-        "unused_param": "",
-        "extra_param": None,
-    }
-    msg = (
-        "Passing additional keyword parameters has no effect and is deprecated "
-        "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
-        f"keyword parameter(s) are: {params.keys()}."
-    )
-    with pytest.warns(FutureWarning, match=re.escape(msg)):
-        clf.fit(X, **params)
-
-
 def test_tweak_params():
     # Make sure some tweaking of parameters works.
     # We change clf.dual_coef_ at run time and expect .predict() to change
@@ -590,7 +574,10 @@ def test_negative_sample_weights_mask_all_samples(Estimator, err_msg, sample_wei
     [
         (
             svm.SVC,
-            "Invalid input - all samples with positive weights have the same label",
+            (
+                "Invalid input - all samples with positive weights belong to the same"
+                " class"
+            ),
         ),
         (svm.NuSVC, "specified nu is infeasible"),
     ],
@@ -776,7 +763,6 @@ def test_linearsvc_parameters(loss, penalty, dual):
         or (loss, penalty, dual) == ("hinge", "l2", False)
         or (penalty, dual) == ("l1", True)
     ):
-
         with pytest.raises(
             ValueError,
             match="Unsupported set of arguments.*penalty='%s.*loss='%s.*dual=%s"

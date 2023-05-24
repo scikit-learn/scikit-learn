@@ -8,7 +8,7 @@ Multi-dimensional Scaling (MDS).
 from numbers import Integral, Real
 
 import numpy as np
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 import warnings
 
@@ -16,8 +16,8 @@ from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.fixes import delayed
+from ..utils._param_validation import Interval, StrOptions, Hidden
+from ..utils.parallel import delayed, Parallel
 
 
 def _smacof_single(
@@ -181,7 +181,7 @@ def smacof(
     eps=1e-3,
     random_state=None,
     return_n_iter=False,
-    normalized_stress=False,
+    normalized_stress="warn",
 ):
     """Compute multidimensional scaling using the SMACOF algorithm.
 
@@ -257,7 +257,7 @@ def smacof(
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
-    normalized_stress : bool, default=False
+    normalized_stress : bool or "auto" default=False
         Whether use and return normed stress value (Stress-1) instead of raw
         stress calculated by default. Only supported in non-metric MDS.
 
@@ -293,6 +293,22 @@ def smacof(
 
     dissimilarities = check_array(dissimilarities)
     random_state = check_random_state(random_state)
+
+    # TODO(1.4): Remove
+    if normalized_stress == "warn":
+        warnings.warn(
+            (
+                "The default value of `normalized_stress` will change to `'auto'` in"
+                " version 1.4. To suppress this warning, manually set the value of"
+                " `normalized_stress`."
+            ),
+            FutureWarning,
+        )
+        normalized_stress = False
+
+    if normalized_stress == "auto":
+        normalized_stress = not metric
+
     if normalized_stress and metric:
         raise ValueError(
             "Normalized stress is not supported for metric MDS. Either set"
@@ -409,7 +425,7 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
-    normalized_stress : bool, default=False
+    normalized_stress : bool or "auto" default=False
         Whether use and return normed stress value (Stress-1) instead of raw
         stress calculated by default. Only supported in non-metric MDS.
 
@@ -478,13 +494,13 @@ class MDS(BaseEstimator):
     >>> X, _ = load_digits(return_X_y=True)
     >>> X.shape
     (1797, 64)
-    >>> embedding = MDS(n_components=2)
+    >>> embedding = MDS(n_components=2, normalized_stress='auto')
     >>> X_transformed = embedding.fit_transform(X[:100])
     >>> X_transformed.shape
     (100, 2)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "metric": ["boolean"],
         "n_init": [Interval(Integral, 1, None, closed="left")],
@@ -494,7 +510,11 @@ class MDS(BaseEstimator):
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
         "dissimilarity": [StrOptions({"euclidean", "precomputed"})],
-        "normalized_stress": ["boolean"],
+        "normalized_stress": [
+            "boolean",
+            StrOptions({"auto"}),
+            Hidden(StrOptions({"warn"})),
+        ],
     }
 
     def __init__(
@@ -509,7 +529,7 @@ class MDS(BaseEstimator):
         n_jobs=None,
         random_state=None,
         dissimilarity="euclidean",
-        normalized_stress=False,
+        normalized_stress="warn",
     ):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
@@ -539,7 +559,7 @@ class MDS(BaseEstimator):
         y : Ignored
             Not used, present for API consistency by convention.
 
-        init : ndarray of shape (n_samples,), default=None
+        init : ndarray of shape (n_samples, n_components), default=None
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.

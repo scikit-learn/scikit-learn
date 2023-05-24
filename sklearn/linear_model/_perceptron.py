@@ -136,7 +136,7 @@ class Perceptron(BaseSGDClassifier):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     See Also
     --------
@@ -166,7 +166,7 @@ class Perceptron(BaseSGDClassifier):
     0.939...
     """
 
-    _parameter_constraints = {**BaseSGDClassifier._parameter_constraints}
+    _parameter_constraints: dict = {**BaseSGDClassifier._parameter_constraints}
     _parameter_constraints.pop("loss")
     _parameter_constraints.pop("average")
     _parameter_constraints.update(

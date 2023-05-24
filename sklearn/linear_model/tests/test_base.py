@@ -143,50 +143,36 @@ def test_fit_intercept():
 
 def test_error_on_wrong_normalize():
     normalize = "wrong"
-    default = True
     error_msg = "Leave 'normalize' to its default"
     with pytest.raises(ValueError, match=error_msg):
-        _deprecate_normalize(normalize, default, "estimator")
+        _deprecate_normalize(normalize, "estimator")
 
 
+# TODO(1.4): remove
 @pytest.mark.parametrize("normalize", [True, False, "deprecated"])
-@pytest.mark.parametrize("default", [True, False])
-# FIXME update test in 1.2 for new versions
-def test_deprecate_normalize(normalize, default):
+def test_deprecate_normalize(normalize):
     # test all possible case of the normalize parameter deprecation
-    if not default:
-        if normalize == "deprecated":
-            # no warning
-            output = default
-            expected = None
-            warning_msg = []
+    if normalize == "deprecated":
+        # no warning
+        output = False
+        expected = None
+        warning_msg = []
+    else:
+        output = normalize
+        expected = FutureWarning
+        warning_msg = ["1.4"]
+        if not normalize:
+            warning_msg.append("default value")
         else:
-            output = normalize
-            expected = FutureWarning
-            warning_msg = ["1.2"]
-            if not normalize:
-                warning_msg.append("default value")
-            else:
-                warning_msg.append("StandardScaler(")
-    elif default:
-        if normalize == "deprecated":
-            # warning to pass False and use StandardScaler
-            output = default
-            expected = FutureWarning
-            warning_msg = ["False", "1.2", "StandardScaler("]
-        else:
-            # no warning
-            output = normalize
-            expected = None
-            warning_msg = []
+            warning_msg.append("StandardScaler(")
 
     if expected is None:
         with warnings.catch_warnings():
             warnings.simplefilter("error", FutureWarning)
-            _normalize = _deprecate_normalize(normalize, default, "estimator")
+            _normalize = _deprecate_normalize(normalize, "estimator")
     else:
         with pytest.warns(expected) as record:
-            _normalize = _deprecate_normalize(normalize, default, "estimator")
+            _normalize = _deprecate_normalize(normalize, "estimator")
         assert all([warning in str(record[0].message) for warning in warning_msg])
     assert _normalize == output
 
@@ -206,11 +192,8 @@ def test_linear_regression_sparse(global_random_seed):
     assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
 
 
-# FIXME: 'normalize' to be removed in 1.2 in LinearRegression
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
-@pytest.mark.parametrize("normalize", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
+def test_linear_regression_sparse_equal_dense(fit_intercept):
     # Test that linear regression agrees between sparse and dense
     rng = np.random.RandomState(0)
     n_samples = 200
@@ -219,7 +202,7 @@ def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
     X[X < 0.1] = 0.0
     Xcsr = sparse.csr_matrix(X)
     y = rng.rand(n_samples)
-    params = dict(normalize=normalize, fit_intercept=fit_intercept)
+    params = dict(fit_intercept=fit_intercept)
     clf_dense = LinearRegression(**params)
     clf_sparse = LinearRegression(**params)
     clf_dense.fit(X, y)
@@ -330,6 +313,62 @@ def test_linear_regression_positive_vs_nonpositive_when_positive(global_random_s
     regn.fit(X, y)
 
     assert np.mean((reg.coef_ - regn.coef_) ** 2) < 1e-6
+
+
+@pytest.mark.parametrize("sparse_X", [True, False])
+@pytest.mark.parametrize("use_sw", [True, False])
+def test_inplace_data_preprocessing(sparse_X, use_sw, global_random_seed):
+    # Check that the data is not modified inplace by the linear regression
+    # estimator.
+    rng = np.random.RandomState(global_random_seed)
+    original_X_data = rng.randn(10, 12)
+    original_y_data = rng.randn(10, 2)
+    orginal_sw_data = rng.rand(10)
+
+    if sparse_X:
+        X = sparse.csr_matrix(original_X_data)
+    else:
+        X = original_X_data.copy()
+    y = original_y_data.copy()
+    # XXX: Note hat y_sparse is not supported (broken?) in the current
+    # implementation of LinearRegression.
+
+    if use_sw:
+        sample_weight = orginal_sw_data.copy()
+    else:
+        sample_weight = None
+
+    # Do not allow inplace preprocessing of X and y:
+    reg = LinearRegression()
+    reg.fit(X, y, sample_weight=sample_weight)
+    if sparse_X:
+        assert_allclose(X.toarray(), original_X_data)
+    else:
+        assert_allclose(X, original_X_data)
+    assert_allclose(y, original_y_data)
+
+    if use_sw:
+        assert_allclose(sample_weight, orginal_sw_data)
+
+    # Allow inplace preprocessing of X and y
+    reg = LinearRegression(copy_X=False)
+    reg.fit(X, y, sample_weight=sample_weight)
+    if sparse_X:
+        # No optimization relying on the inplace modification of sparse input
+        # data has been implemented at this time.
+        assert_allclose(X.toarray(), original_X_data)
+    else:
+        # X has been offset (and optionally rescaled by sample weights)
+        # inplace. The 0.42 threshold is arbitrary and has been found to be
+        # robust to any random seed in the admissible range.
+        assert np.linalg.norm(X - original_X_data) > 0.42
+
+    # y should not have been modified inplace by LinearRegression.fit.
+    assert_allclose(y, original_y_data)
+
+    if use_sw:
+        # Sample weights have no reason to ever be modified inplace.
+        assert_allclose(sample_weight, orginal_sw_data)
 
 
 def test_linear_regression_pd_sparse_dataframe_warning():
@@ -613,7 +652,6 @@ def test_dtype_preprocess_data(global_random_seed):
 
     for fit_intercept in [True, False]:
         for normalize in [True, False]:
-
             Xt_32, yt_32, X_mean_32, y_mean_32, X_scale_32 = _preprocess_data(
                 X_32,
                 y_32,
@@ -679,7 +717,8 @@ def test_dtype_preprocess_data(global_random_seed):
 
 
 @pytest.mark.parametrize("n_targets", [None, 2])
-def test_rescale_data_dense(n_targets, global_random_seed):
+@pytest.mark.parametrize("sparse_data", [True, False])
+def test_rescale_data(n_targets, sparse_data, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
@@ -690,14 +729,34 @@ def test_rescale_data_dense(n_targets, global_random_seed):
         y = rng.rand(n_samples)
     else:
         y = rng.rand(n_samples, n_targets)
-    rescaled_X, rescaled_y, sqrt_sw = _rescale_data(X, y, sample_weight)
-    rescaled_X2 = X * sqrt_sw[:, np.newaxis]
+
+    expected_sqrt_sw = np.sqrt(sample_weight)
+    expected_rescaled_X = X * expected_sqrt_sw[:, np.newaxis]
+
     if n_targets is None:
-        rescaled_y2 = y * sqrt_sw
+        expected_rescaled_y = y * expected_sqrt_sw
     else:
-        rescaled_y2 = y * sqrt_sw[:, np.newaxis]
-    assert_array_almost_equal(rescaled_X, rescaled_X2)
-    assert_array_almost_equal(rescaled_y, rescaled_y2)
+        expected_rescaled_y = y * expected_sqrt_sw[:, np.newaxis]
+
+    if sparse_data:
+        X = sparse.csr_matrix(X)
+        if n_targets is None:
+            y = sparse.csr_matrix(y.reshape(-1, 1))
+        else:
+            y = sparse.csr_matrix(y)
+
+    rescaled_X, rescaled_y, sqrt_sw = _rescale_data(X, y, sample_weight)
+
+    assert_allclose(sqrt_sw, expected_sqrt_sw)
+
+    if sparse_data:
+        rescaled_X = rescaled_X.toarray()
+        rescaled_y = rescaled_y.toarray()
+        if n_targets is None:
+            rescaled_y = rescaled_y.ravel()
+
+    assert_allclose(rescaled_X, expected_rescaled_X)
+    assert_allclose(rescaled_y, expected_rescaled_y)
 
 
 def test_fused_types_make_dataset():

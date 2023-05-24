@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
-from ..base import BaseEstimator, ClusterMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, ClusterMixin, ClassNamePrefixFeaturesOutMixin
 from ..metrics.pairwise import paired_distances
 from ..metrics.pairwise import _VALID_METRICS
 from ..metrics import DistanceMetric
@@ -23,7 +23,13 @@ from ..metrics._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.graph import _fix_connected_components
-from ..utils._param_validation import Hidden, Interval, StrOptions, HasMethods
+from ..utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    HasMethods,
+    validate_params,
+)
 from ..utils.validation import check_memory
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
@@ -169,6 +175,14 @@ def _single_linkage_tree(
 # Hierarchical tree building functions
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "connectivity": ["array-like", "sparse matrix", None],
+        "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
+        "return_distance": ["boolean"],
+    }
+)
 def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     """Ward clustering based on a Feature matrix.
 
@@ -187,7 +201,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     X : array-like of shape (n_samples, n_features)
         Feature matrix representing `n_samples` samples to be clustered.
 
-    connectivity : sparse matrix, default=None
+    connectivity : {array-like, sparse matrix}, default=None
         Connectivity matrix. Defines for each sample the neighboring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
@@ -261,12 +275,14 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
 
         if n_clusters is not None:
             warnings.warn(
-                "Partial build of the tree is implemented "
-                "only for structured clustering (i.e. with "
-                "explicit connectivity). The algorithm "
-                "will build the full tree and only "
-                "retain the lower branches required "
-                "for the specified number of clusters",
+                (
+                    "Partial build of the tree is implemented "
+                    "only for structured clustering (i.e. with "
+                    "explicit connectivity). The algorithm "
+                    "will build the full tree and only "
+                    "retain the lower branches required "
+                    "for the specified number of clusters"
+                ),
                 stacklevel=2,
             )
         X = np.require(X, requirements="W")
@@ -330,7 +346,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     if return_distance:
         distances = np.empty(n_nodes - n_samples)
 
-    not_visited = np.empty(n_nodes, dtype=np.int8, order="C")
+    not_visited = np.empty(n_nodes, dtype=bool, order="C")
 
     # recursive merge loop
     for k in range(n_samples, n_nodes):
@@ -493,12 +509,14 @@ def linkage_tree(
 
         if n_clusters is not None:
             warnings.warn(
-                "Partial build of the tree is implemented "
-                "only for structured clustering (i.e. with "
-                "explicit connectivity). The algorithm "
-                "will build the full tree and only "
-                "retain the lower branches required "
-                "for the specified number of clusters",
+                (
+                    "Partial build of the tree is implemented "
+                    "only for structured clustering (i.e. with "
+                    "explicit connectivity). The algorithm "
+                    "will build the full tree and only "
+                    "retain the lower branches required "
+                    "for the specified number of clusters"
+                ),
                 stacklevel=2,
             )
 
@@ -527,7 +545,6 @@ def linkage_tree(
             and not callable(affinity)
             and affinity in METRIC_MAPPING
         ):
-
             # We need the fast cythonized metric from neighbors
             dist_metric = DistanceMetric.get_metric(affinity)
 
@@ -815,7 +832,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             Added the 'single' option
 
     distance_threshold : float, default=None
-        The linkage distance threshold above which, clusters will not be
+        The linkage distance threshold at or above which clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
         ``compute_full_tree`` must be ``True``.
 
@@ -890,7 +907,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     array([1, 1, 1, 0, 0, 0])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "affinity": [
             Hidden(StrOptions({"deprecated"})),
@@ -981,8 +998,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                     " 1.4. To avoid this error, only set the `metric` attribute."
                 )
             warnings.warn(
-                "Attribute `affinity` was deprecated in version 1.2 and will be removed"
-                " in 1.4. Use `metric` instead",
+                (
+                    "Attribute `affinity` was deprecated in version 1.2 and will be"
+                    " removed in 1.4. Use `metric` instead"
+                ),
                 FutureWarning,
             )
             self._metric = self.affinity
@@ -1100,7 +1119,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
 
 class FeatureAgglomeration(
-    _ClassNamePrefixFeaturesOutMixin, AgglomerativeClustering, AgglomerationTransform
+    ClassNamePrefixFeaturesOutMixin, AgglomerativeClustering, AgglomerationTransform
 ):
     """Agglomerate features.
 
@@ -1180,7 +1199,7 @@ class FeatureAgglomeration(
         argument `axis=1`, and reduce it to an array of size [M].
 
     distance_threshold : float, default=None
-        The linkage distance threshold above which, clusters will not be
+        The linkage distance threshold at or above which clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
         ``compute_full_tree`` must be ``True``.
 
@@ -1257,7 +1276,7 @@ class FeatureAgglomeration(
     (1797, 32)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "affinity": [
             Hidden(StrOptions({"deprecated"})),

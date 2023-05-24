@@ -71,7 +71,7 @@ dt_err = 1.0 - dt.score(X_test, y_test)
 from sklearn.ensemble import AdaBoostClassifier
 
 ada_discrete = AdaBoostClassifier(
-    base_estimator=dt_stump,
+    estimator=dt_stump,
     learning_rate=learning_rate,
     n_estimators=n_estimators,
     algorithm="SAMME",
@@ -81,7 +81,7 @@ ada_discrete.fit(X_train, y_train)
 # %%
 
 ada_real = AdaBoostClassifier(
-    base_estimator=dt_stump,
+    estimator=dt_stump,
     learning_rate=learning_rate,
     n_estimators=n_estimators,
     algorithm="SAMME.R",

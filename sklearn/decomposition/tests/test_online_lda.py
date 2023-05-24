@@ -9,7 +9,7 @@ from numpy.testing import assert_array_equal
 import pytest
 
 from sklearn.decomposition import LatentDirichletAllocation
-from sklearn.decomposition._lda import (
+from sklearn.decomposition._online_lda_fast import (
     _dirichlet_expectation_1d,
     _dirichlet_expectation_2d,
 )
@@ -150,22 +150,6 @@ def test_lda_fit_transform(method):
     X_fit = lda.fit_transform(X)
     X_trans = lda.transform(X)
     assert_array_almost_equal(X_fit, X_trans, 4)
-
-
-def test_invalid_params():
-    # test `_check_params` method
-    X = np.ones((5, 10))
-
-    invalid_models = (
-        ("n_components", LatentDirichletAllocation(n_components=0)),
-        ("learning_method", LatentDirichletAllocation(learning_method="unknown")),
-        ("total_samples", LatentDirichletAllocation(total_samples=0)),
-        ("learning_offset", LatentDirichletAllocation(learning_offset=-1)),
-    )
-    for param, model in invalid_models:
-        regex = r"^Invalid %r parameter" % param
-        with pytest.raises(ValueError, match=regex):
-            model.fit(X)
 
 
 def test_lda_negative_input():
@@ -439,3 +423,35 @@ def test_lda_feature_names_out():
     assert_array_equal(
         [f"latentdirichletallocation{i}" for i in range(n_components)], names
     )
+
+
+@pytest.mark.parametrize("learning_method", ("batch", "online"))
+def test_lda_dtype_match(learning_method, global_dtype):
+    """Check data type preservation of fitted attributes."""
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(20, 10)).astype(global_dtype, copy=False)
+
+    lda = LatentDirichletAllocation(
+        n_components=5, random_state=0, learning_method=learning_method
+    )
+    lda.fit(X)
+    assert lda.components_.dtype == global_dtype
+    assert lda.exp_dirichlet_component_.dtype == global_dtype
+
+
+@pytest.mark.parametrize("learning_method", ("batch", "online"))
+def test_lda_numerical_consistency(learning_method, global_random_seed):
+    """Check numerical consistency between np.float32 and np.float64."""
+    rng = np.random.RandomState(global_random_seed)
+    X64 = rng.uniform(size=(20, 10))
+    X32 = X64.astype(np.float32)
+
+    lda_64 = LatentDirichletAllocation(
+        n_components=5, random_state=global_random_seed, learning_method=learning_method
+    ).fit(X64)
+    lda_32 = LatentDirichletAllocation(
+        n_components=5, random_state=global_random_seed, learning_method=learning_method
+    ).fit(X32)
+
+    assert_allclose(lda_32.components_, lda_64.components_)
+    assert_allclose(lda_32.transform(X32), lda_64.transform(X64))

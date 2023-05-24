@@ -136,11 +136,12 @@ def test_ensemble_heterogeneous_estimators_behavior(X, y, estimator):
 
 @pytest.mark.parametrize(
     "Ensemble",
-    [StackingClassifier, VotingClassifier, StackingRegressor, VotingRegressor],
+    [VotingClassifier, StackingRegressor, VotingRegressor],
 )
 def test_ensemble_heterogeneous_estimators_type(Ensemble):
     # check that ensemble will fail during validation if the underlying
     # estimators are not of the same type (i.e. classifier or regressor)
+    # StackingClassifier can have an underlying regresor so it's not checked
     if issubclass(Ensemble, ClassifierMixin):
         X, y = make_classification(n_samples=10)
         estimators = [("lr", LinearRegression())]

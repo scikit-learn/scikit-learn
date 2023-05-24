@@ -2,8 +2,7 @@
 =========================================
 Advanced Plotting With Partial Dependence
 =========================================
-The :func:`~sklearn.inspection.plot_partial_dependence` function returns a
-:class:`~sklearn.inspection.PartialDependenceDisplay` object that can be used
+The :class:`~sklearn.inspection.PartialDependenceDisplay` object can be used
 for plotting without needing to recalculate the partial dependence. In this
 example, we show how to plot partial dependence plots and how to quickly
 customize the plot with the visualization API.

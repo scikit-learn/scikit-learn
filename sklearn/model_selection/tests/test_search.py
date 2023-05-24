@@ -149,7 +149,6 @@ def test_validate_parameter_input(klass, input, error_type, error_message):
 
 
 def test_parameter_grid():
-
     # Test basic properties of ParameterGrid.
     params1 = {"foo": [1, 2, 3]}
     grid1 = ParameterGrid(params1)
@@ -380,7 +379,7 @@ def test_no_refit():
             and hasattr(grid_search, "best_params_")
         )
 
-        # Make sure the functions predict/transform etc raise meaningful
+        # Make sure the functions predict/transform etc. raise meaningful
         # error messages
         for fn_name in (
             "predict",
@@ -400,7 +399,7 @@ def test_no_refit():
     error_msg = (
         "For multi-metric scoring, the parameter refit must be set to a scorer key"
     )
-    for refit in ["", 5, True, "recall", "accuracy"]:
+    for refit in [True, "recall", "accuracy"]:
         with pytest.raises(ValueError, match=error_msg):
             GridSearchCV(
                 clf, {}, refit=refit, scoring={"acc": "accuracy", "prec": "precision"}
@@ -1641,9 +1640,10 @@ def test_grid_search_classifier_all_fits_fail():
     )
 
     warning_message = re.compile(
-        "All the 15 fits failed.+"
-        "15 fits failed with the following error.+ValueError.+Failing classifier failed"
-        " as required",
+        (
+            "All the 15 fits failed.+15 fits failed with the following"
+            " error.+ValueError.+Failing classifier failed as required"
+        ),
         flags=re.DOTALL,
     )
     with pytest.raises(ValueError, match=warning_message):
@@ -1981,10 +1981,10 @@ def test_random_search_bad_cv():
 @pytest.mark.parametrize(
     "SearchCV, specialized_params",
     [
-        (GridSearchCV, {"param_grid": {"max_depth": [2, 3]}}),
+        (GridSearchCV, {"param_grid": {"max_depth": [2, 3, 5, 8]}}),
         (
             RandomizedSearchCV,
-            {"param_distributions": {"max_depth": [2, 3]}, "n_iter": 2},
+            {"param_distributions": {"max_depth": [2, 3, 5, 8]}, "n_iter": 4},
         ),
     ],
 )
@@ -2024,6 +2024,13 @@ def test_searchcv_raise_warning_with_non_finite_score(
     assert len(warn_msg) == len(set_with_warning)
     for msg, dataset in zip(warn_msg, set_with_warning):
         assert f"One or more of the {dataset} scores are non-finite" in str(msg.message)
+
+    # all non-finite scores should be equally ranked last
+    last_rank = grid.cv_results_["rank_test_score"].max()
+    non_finite_mask = np.isnan(grid.cv_results_["mean_test_score"])
+    assert_array_equal(grid.cv_results_["rank_test_score"][non_finite_mask], last_rank)
+    # all finite scores should be better ranked than the non-finite scores
+    assert np.all(grid.cv_results_["rank_test_score"][~non_finite_mask] < last_rank)
 
 
 def test_callable_multimetric_confusion_matrix():
@@ -2171,8 +2178,10 @@ def test_callable_multimetric_clf_all_fits_fail():
 
     individual_fit_error_message = "ValueError: Failing classifier failed as required"
     error_message = re.compile(
-        "All the 15 fits failed.+your model is misconfigured.+"
-        f"{individual_fit_error_message}",
+        (
+            "All the 15 fits failed.+your model is misconfigured.+"
+            f"{individual_fit_error_message}"
+        ),
         flags=re.DOTALL,
     )
 

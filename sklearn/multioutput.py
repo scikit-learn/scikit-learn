@@ -17,7 +17,6 @@ from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel
 
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
@@ -31,8 +30,8 @@ from .utils.validation import (
     has_fit_parameter,
     _check_fit_params,
 )
-from .utils.fixes import delayed
-from .utils._param_validation import HasMethods
+from .utils.parallel import delayed, Parallel
+from .utils._param_validation import HasMethods, StrOptions
 
 __all__ = [
     "MultiOutputRegressor",
@@ -71,22 +70,25 @@ def _partial_fit_estimator(
 
 
 def _available_if_estimator_has(attr):
-    """Return a function to check if `estimator` or `estimators_` has `attr`.
+    """Return a function to check if the sub-estimator(s) has(have) `attr`.
 
     Helper for Chain implementations.
     """
 
     def _check(self):
-        return hasattr(self.estimator, attr) or all(
-            hasattr(est, attr) for est in self.estimators_
-        )
+        if hasattr(self, "estimators_"):
+            return all(hasattr(est, attr) for est in self.estimators_)
+
+        if hasattr(self.estimator, attr):
+            return True
+
+        return False
 
     return available_if(_check)
 
 
 class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
-
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit", "predict"])],
         "n_jobs": [Integral, None],
     }
@@ -542,6 +544,14 @@ def _available_if_base_estimator_has(attr):
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
+    _parameter_constraints: dict = {
+        "base_estimator": [HasMethods(["fit", "predict"])],
+        "order": ["array-like", StrOptions({"random"}), None],
+        "cv": ["cv_object", StrOptions({"prefit"})],
+        "random_state": ["random_state"],
+        "verbose": ["boolean"],
+    }
+
     def __init__(
         self, base_estimator, *, order=None, cv=None, random_state=None, verbose=False
     ):
@@ -800,6 +810,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         self : object
             Class instance.
         """
+        self._validate_params()
+
         super().fit(X, Y)
         self.classes_ = [
             estimator.classes_ for chain_idx, estimator in enumerate(self.estimators_)
@@ -992,6 +1004,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         self : object
             Returns a fitted instance.
         """
+        self._validate_params()
+
         super().fit(X, Y, **fit_params)
         return self
 

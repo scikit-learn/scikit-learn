@@ -62,7 +62,6 @@ for i, perplexity in enumerate(perplexities):
         init="random",
         random_state=0,
         perplexity=perplexity,
-        learning_rate="auto",
         n_iter=300,
     )
     Y = tsne.fit_transform(X)
@@ -130,7 +129,6 @@ for i, perplexity in enumerate(perplexities):
         init="random",
         random_state=0,
         perplexity=perplexity,
-        learning_rate="auto",
         n_iter=400,
     )
     Y = tsne.fit_transform(X)

@@ -14,14 +14,14 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
-from ._base import _preprocess_data, _deprecate_normalize
+from ._base import _preprocess_data
 from ..utils import check_array, check_scalar
 from ..utils.validation import check_random_state
-from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import (
@@ -30,8 +30,7 @@ from ..utils.validation import (
     check_is_fitted,
     column_or_1d,
 )
-from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from . import _cd_fast as cd_fast  # type: ignore
@@ -92,7 +91,6 @@ def _alpha_grid(
     fit_intercept=True,
     eps=1e-3,
     n_alphas=100,
-    normalize=False,
     copy_X=True,
 ):
     """Compute the grid of alpha values for elastic net parameter search
@@ -126,18 +124,6 @@ def _alpha_grid(
     fit_intercept : bool, default=True
         Whether to fit an intercept or not
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
-
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
     """
@@ -153,21 +139,19 @@ def _alpha_grid(
     sparse_center = False
     if Xy is None:
         X_sparse = sparse.isspmatrix(X)
-        sparse_center = X_sparse and (fit_intercept or normalize)
+        sparse_center = X_sparse and fit_intercept
         X = check_array(
             X, accept_sparse="csc", copy=(copy_X and fit_intercept and not X_sparse)
         )
         if not X_sparse:
             # X can be touched inplace thanks to the above line
-            X, y, _, _, _ = _preprocess_data(X, y, fit_intercept, normalize, copy=False)
+            X, y, _, _, _ = _preprocess_data(X, y, fit_intercept, copy=False)
         Xy = safe_sparse_dot(X.T, y, dense_output=True)
 
         if sparse_center:
             # Workaround to find alpha_max for sparse matrices.
             # since we should not destroy the sparsity of such matrices.
-            _, _, X_offset, _, X_scale = _preprocess_data(
-                X, y, fit_intercept, normalize
-            )
+            _, _, X_offset, _, X_scale = _preprocess_data(X, y, fit_intercept)
             mean_dot = X_offset * np.sum(y)
 
     if Xy.ndim == 1:
@@ -176,8 +160,6 @@ def _alpha_grid(
     if sparse_center:
         if fit_intercept:
             Xy -= mean_dot[:, np.newaxis]
-        if normalize:
-            Xy /= X_scale[:, np.newaxis]
 
     alpha_max = np.sqrt(np.sum(Xy**2, axis=1)).max() / (n_samples * l1_ratio)
 
@@ -186,9 +168,7 @@ def _alpha_grid(
         alphas.fill(np.finfo(float).resolution)
         return alphas
 
-    return np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max), num=n_alphas)[
-        ::-1
-    ]
+    return np.geomspace(alpha_max, alpha_max * eps, num=n_alphas)
 
 
 def lasso_path(
@@ -557,7 +537,7 @@ def enet_path(
     # X should have been passed through _pre_fit already if function is called
     # from ElasticNet.fit
     if check_input:
-        X, y, X_offset, y_offset, X_scale, precompute, Xy = _pre_fit(
+        X, y, _, _, _, precompute, Xy = _pre_fit(
             X,
             y,
             Xy,
@@ -578,7 +558,6 @@ def enet_path(
             fit_intercept=False,
             eps=eps,
             n_alphas=n_alphas,
-            normalize=False,
             copy_X=False,
         )
     elif len(alphas) > 1:
@@ -612,9 +591,7 @@ def enet_path(
                 w=coef_,
                 alpha=l1_reg,
                 beta=l2_reg,
-                X_data=ReadonlyArrayWrapper(
-                    X.data
-                ),  # TODO: Remove after release of Cython 3 (#23147)
+                X_data=X.data,
                 X_indices=X.indices,
                 X_indptr=X.indptr,
                 y=y,
@@ -726,18 +703,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         Whether the intercept should be estimated or not. If ``False``, the
         data is assumed to be already centered.
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
-
     precompute : bool or array-like of shape (n_features, n_features),\
                  default=False
         Whether to use a precomputed Gram matrix to speed up
@@ -843,11 +808,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     [1.451...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": ["boolean"],
-        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "precompute": ["boolean", "array-like"],
         "max_iter": [Interval(Integral, 1, None, closed="left"), None],
         "copy_X": ["boolean"],
@@ -866,7 +830,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         *,
         l1_ratio=0.5,
         fit_intercept=True,
-        normalize="deprecated",
         precompute=False,
         max_iter=1000,
         copy_X=True,
@@ -879,7 +842,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.precompute = precompute
         self.max_iter = max_iter
         self.copy_X = copy_X
@@ -897,8 +859,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         X : {ndarray, sparse matrix} of (n_samples, n_features)
             Data.
 
-        y : {ndarray, sparse matrix} of shape (n_samples,) or \
-            (n_samples, n_targets)
+        y : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
@@ -927,14 +888,13 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         """
         self._validate_params()
 
-        _normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
         if self.alpha == 0:
             warnings.warn(
-                "With alpha=0, this algorithm does not converge "
-                "well. You are advised to use the LinearRegression "
-                "estimator",
+                (
+                    "With alpha=0, this algorithm does not converge "
+                    "well. You are advised to use the LinearRegression "
+                    "estimator"
+                ),
                 stacklevel=2,
             )
 
@@ -1008,8 +968,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             y,
             None,
             self.precompute,
-            _normalize,
-            self.fit_intercept,
+            normalize=False,
+            fit_intercept=self.fit_intercept,
             copy=should_copy,
             check_input=check_input,
             sample_weight=sample_weight,
@@ -1145,18 +1105,6 @@ class Lasso(ElasticNet):
         to False, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
-
     precompute : bool or array-like of shape (n_features, n_features),\
                  default=False
         Whether to use a precomputed Gram matrix to speed up
@@ -1230,7 +1178,7 @@ class Lasso(ElasticNet):
     --------
     lars_path : Regularization path using LARS.
     lasso_path : Regularization path using Lasso.
-    LassoLars : Lasso Path along the regularization parameter usingLARS algorithm.
+    LassoLars : Lasso Path along the regularization parameter using LARS algorithm.
     LassoCV : Lasso alpha parameter by cross-validation.
     LassoLarsCV : Lasso least angle parameter algorithm by cross-validation.
     sklearn.decomposition.sparse_encode : Sparse coding array estimator.
@@ -1254,7 +1202,17 @@ class Lasso(ElasticNet):
     that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
     is smaller than `tol` times the maximum absolute coefficient, :math:`\\max_j |w_j|`.
     If so, then additionally check whether the dual gap is smaller than `tol` times
-    :math:`||y||_2^2 / n_{\text{samples}}`.
+    :math:`||y||_2^2 / n_{\\text{samples}}`.
+
+    The target can be a 2-dimensional array, resulting in the optimization of the
+    following objective::
+
+        (1 / (2 * n_samples)) * ||Y - XW||^2_F + alpha * ||W||_11
+
+    where :math:`||W||_{1,1}` is the sum of the magnitude of the matrix coefficients.
+    It should not be confused with :class:`~sklearn.linear_model.MultiTaskLasso` which
+    instead penalizes the :math:`L_{2,1}` norm of the coefficients, yielding row-wise
+    sparsity in the coefficients.
 
     Examples
     --------
@@ -1268,7 +1226,7 @@ class Lasso(ElasticNet):
     0.15...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **ElasticNet._parameter_constraints,
     }
     _parameter_constraints.pop("l1_ratio")
@@ -1280,7 +1238,6 @@ class Lasso(ElasticNet):
         alpha=1.0,
         *,
         fit_intercept=True,
-        normalize="deprecated",
         precompute=False,
         copy_X=True,
         max_iter=1000,
@@ -1294,7 +1251,6 @@ class Lasso(ElasticNet):
             alpha=alpha,
             l1_ratio=1.0,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             precompute=precompute,
             copy_X=copy_X,
             max_iter=max_iter,
@@ -1316,7 +1272,6 @@ def _path_residuals(
     sample_weight,
     train,
     test,
-    normalize,
     fit_intercept,
     path,
     path_params,
@@ -1411,8 +1366,8 @@ def _path_residuals(
         y_train,
         None,
         precompute,
-        normalize,
-        fit_intercept,
+        normalize=False,
+        fit_intercept=fit_intercept,
         copy=False,
         sample_weight=sw_train,
     )
@@ -1442,10 +1397,6 @@ def _path_residuals(
         y_offset = np.atleast_1d(y_offset)
         y_test = y_test[:, np.newaxis]
 
-    if normalize:
-        nonzeros = np.flatnonzero(X_scale)
-        coefs[:, nonzeros] /= X_scale[nonzeros][:, np.newaxis]
-
     intercepts = y_offset[:, np.newaxis] - np.dot(X_offset, coefs)
     X_test_coefs = safe_sparse_dot(X_test, coefs)
     residues = X_test_coefs - y_test[:, :, np.newaxis]
@@ -1461,12 +1412,11 @@ def _path_residuals(
 class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     """Base class for iterative model fitting along a regularization path."""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "eps": [Interval(Real, 0, None, closed="neither")],
         "n_alphas": [Interval(Integral, 1, None, closed="left")],
         "alphas": ["array-like", None],
         "fit_intercept": ["boolean"],
-        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "precompute": [StrOptions({"auto"}), "array-like", "boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
@@ -1486,7 +1436,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         n_alphas=100,
         alphas=None,
         fit_intercept=True,
-        normalize="deprecated",
         precompute="auto",
         max_iter=1000,
         tol=1e-4,
@@ -1502,7 +1451,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self.n_alphas = n_alphas
         self.alphas = alphas
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.precompute = precompute
         self.max_iter = max_iter
         self.tol = tol
@@ -1556,12 +1504,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         """
 
         self._validate_params()
-
-        # Do as _deprecate_normalize but without warning as it's raised
-        # below during the refitting on the best alpha.
-        _normalize = self.normalize
-        if _normalize == "deprecated":
-            _normalize = False
 
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
@@ -1641,11 +1583,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
 
-        # FIXME: 'normalize' to be removed in 1.2
-        # path_params["normalize"] = _normalize
-        # Pop `intercept` and `normalize` that are not parameter of the path
-        # function
-        path_params.pop("normalize", None)
+        # Pop `intercept` that is not parameter of the path function
         path_params.pop("fit_intercept", None)
 
         if "l1_ratio" in path_params:
@@ -1678,7 +1616,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                     fit_intercept=self.fit_intercept,
                     eps=self.eps,
                     n_alphas=self.n_alphas,
-                    normalize=_normalize,
                     copy_X=self.copy_X,
                 )
                 for l1_ratio in l1_ratios
@@ -1716,7 +1653,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 sample_weight,
                 train,
                 test,
-                _normalize,
                 self.fit_intercept,
                 self.path,
                 path_params,
@@ -1825,18 +1761,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
 
     precompute : 'auto', bool or array-like of shape \
             (n_features, n_features), default='auto'
@@ -1956,6 +1880,14 @@ class LassoCV(RegressorMixin, LinearModelCV):
      :ref:`examples/linear_model/plot_lasso_model_selection.py
      <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
 
+    :class:`LassoCV` leads to different results than a hyperparameter
+    search using :class:`~sklearn.model_selection.GridSearchCV` with a
+    :class:`Lasso` model. In :class:`LassoCV`, a model for a given
+    penalty `alpha` is warm started using the coefficients of the
+    closest model (trained at the previous iteration) on the
+    regularization path. It tends to speed up the hyperparameter
+    search.
+
     Examples
     --------
     >>> from sklearn.linear_model import LassoCV
@@ -1977,7 +1909,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
         n_alphas=100,
         alphas=None,
         fit_intercept=True,
-        normalize="deprecated",
         precompute="auto",
         max_iter=1000,
         tol=1e-4,
@@ -1994,7 +1925,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
             n_alphas=n_alphas,
             alphas=alphas,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             precompute=precompute,
             max_iter=max_iter,
             tol=tol,
@@ -2053,18 +1983,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
 
     precompute : 'auto', bool or array-like of shape \
             (n_features, n_features), default='auto'
@@ -2216,7 +2134,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     [0.398...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **LinearModelCV._parameter_constraints,
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), "array-like"],
     }
@@ -2231,7 +2149,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         n_alphas=100,
         alphas=None,
         fit_intercept=True,
-        normalize="deprecated",
         precompute="auto",
         max_iter=1000,
         tol=1e-4,
@@ -2248,7 +2165,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         self.n_alphas = n_alphas
         self.alphas = alphas
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.precompute = precompute
         self.max_iter = max_iter
         self.tol = tol
@@ -2306,18 +2222,6 @@ class MultiTaskElasticNet(Lasso):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -2410,13 +2314,18 @@ class MultiTaskElasticNet(Lasso):
     [0.0872422 0.0872422]
     """
 
+    _parameter_constraints: dict = {
+        **ElasticNet._parameter_constraints,
+    }
+    for param in ("precompute", "positive"):
+        _parameter_constraints.pop(param)
+
     def __init__(
         self,
         alpha=1.0,
         *,
         l1_ratio=0.5,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         max_iter=1000,
         tol=1e-4,
@@ -2427,7 +2336,6 @@ class MultiTaskElasticNet(Lasso):
         self.l1_ratio = l1_ratio
         self.alpha = alpha
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.max_iter = max_iter
         self.copy_X = copy_X
         self.tol = tol
@@ -2459,9 +2367,7 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        _normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
+        self._validate_params()
 
         # Need to validate separately here.
         # We can't pass multi_output=True because that would allow y to be csr.
@@ -2488,7 +2394,7 @@ class MultiTaskElasticNet(Lasso):
         n_targets = y.shape[1]
 
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
-            X, y, self.fit_intercept, _normalize, copy=False
+            X, y, self.fit_intercept, copy=False
         )
 
         if not self.warm_start or not hasattr(self, "coef_"):
@@ -2501,8 +2407,6 @@ class MultiTaskElasticNet(Lasso):
 
         self.coef_ = np.asfortranarray(self.coef_)  # coef contiguous in memory
 
-        if self.selection not in ["random", "cyclic"]:
-            raise ValueError("selection should be either random or cyclic.")
         random = self.selection == "random"
 
         (
@@ -2558,18 +2462,6 @@ class MultiTaskLasso(MultiTaskElasticNet):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -2660,12 +2552,16 @@ class MultiTaskLasso(MultiTaskElasticNet):
     [-0.41888636 -0.87382323]
     """
 
+    _parameter_constraints: dict = {
+        **MultiTaskElasticNet._parameter_constraints,
+    }
+    _parameter_constraints.pop("l1_ratio")
+
     def __init__(
         self,
         alpha=1.0,
         *,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         max_iter=1000,
         tol=1e-4,
@@ -2675,7 +2571,6 @@ class MultiTaskLasso(MultiTaskElasticNet):
     ):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.max_iter = max_iter
         self.copy_X = copy_X
         self.tol = tol
@@ -2735,18 +2630,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
 
     max_iter : int, default=1000
         The maximum number of iterations.
@@ -2871,7 +2754,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     [0.00166409 0.00166409]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **LinearModelCV._parameter_constraints,
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), "array-like"],
     }
@@ -2888,7 +2771,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         n_alphas=100,
         alphas=None,
         fit_intercept=True,
-        normalize="deprecated",
         max_iter=1000,
         tol=1e-4,
         cv=None,
@@ -2903,7 +2785,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         self.n_alphas = n_alphas
         self.alphas = alphas
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.max_iter = max_iter
         self.tol = tol
         self.cv = cv
@@ -2980,18 +2861,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
 
     max_iter : int, default=1000
         The maximum number of iterations.
@@ -3114,7 +2983,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     array([[153.7971...,  94.9015...]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **LinearModelCV._parameter_constraints,
     }
     _parameter_constraints.pop("precompute")
@@ -3129,7 +2998,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         n_alphas=100,
         alphas=None,
         fit_intercept=True,
-        normalize="deprecated",
         max_iter=1000,
         tol=1e-4,
         copy_X=True,
@@ -3144,7 +3012,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
             n_alphas=n_alphas,
             alphas=alphas,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             max_iter=max_iter,
             tol=tol,
             copy_X=copy_X,

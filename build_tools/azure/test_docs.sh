@@ -8,8 +8,4 @@ elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "pip-nogil" ]]; then
     source $VIRTUALENV/bin/activate
 fi
 
-if [[ "$BUILD_WITH_ICC" == "true" ]]; then
-    source /opt/intel/oneapi/setvars.sh
-fi
-
 make test-doc

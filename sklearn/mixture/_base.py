@@ -48,7 +48,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
     provides basic common methods for mixture models.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0.0, None, closed="left")],
         "reg_covar": [Interval(Real, 0.0, None, closed="left")],
@@ -137,10 +137,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 random_state=random_state,
             )
             resp[indices, np.arange(self.n_components)] = 1
-        else:
-            raise ValueError(
-                "Unimplemented initialization method '%s'" % self.init_params
-            )
 
         self._initialize(X, resp)
 
