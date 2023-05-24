@@ -19,6 +19,7 @@ def test_config_context():
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
+        "skip_parameter_validation": False,
     }
 
     # Not using as a context manager affects nothing
@@ -35,6 +36,7 @@ def test_config_context():
             "pairwise_dist_chunk_size": 256,
             "enable_cython_pairwise_dist": True,
             "transform_output": "default",
+            "skip_parameter_validation": False,
         }
     assert get_config()["assume_finite"] is False
 
@@ -68,6 +70,7 @@ def test_config_context():
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
+        "skip_parameter_validation": False,
     }
 
     # No positional arguments
