@@ -36,6 +36,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.model_selection import StratifiedGroupKFold
+from sklearn.model_selection import MultilabelStratifiedKFold
 
 from sklearn.dummy import DummyClassifier
 
@@ -73,6 +74,7 @@ def test_cross_validator_with_default_params():
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     X_1d = np.array([1, 2, 3, 4])
     y = np.array([1, 1, 2, 2])
+    y_multilabel = np.array([[0, 1], [1, 1], [0, 0], [1, 0]])
     groups = np.array([1, 2, 3, 4])
     loo = LeaveOneOut()
     lpo = LeavePOut(p)
@@ -83,6 +85,7 @@ def test_cross_validator_with_default_params():
     ss = ShuffleSplit(random_state=0)
     ps = PredefinedSplit([1, 1, 2, 2])  # n_splits = np of unique folds = 2
     sgkf = StratifiedGroupKFold(n_splits)
+    mskf = MultilabelStratifiedKFold(n_splits)
 
     loo_repr = "LeaveOneOut()"
     lpo_repr = "LeavePOut(p=2)"
@@ -95,6 +98,9 @@ def test_cross_validator_with_default_params():
     )
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
     sgkf_repr = "StratifiedGroupKFold(n_splits=2, random_state=None, shuffle=False)"
+    mskf_repr = (
+        "MultilabelStratifiedKFold(n_splits=2, random_state=None, shuffle=False)"
+    )
 
     n_splits_expected = [
         n_samples,
@@ -106,11 +112,12 @@ def test_cross_validator_with_default_params():
         n_shuffle_splits,
         2,
         n_splits,
+        n_splits,
     ]
 
     for i, (cv, cv_repr) in enumerate(
         zip(
-            [loo, lpo, kf, skf, lolo, lopo, ss, ps, sgkf],
+            [loo, lpo, kf, skf, lolo, lopo, ss, ps, sgkf, mskf],
             [
                 loo_repr,
                 lpo_repr,
@@ -121,19 +128,25 @@ def test_cross_validator_with_default_params():
                 ss_repr,
                 ps_repr,
                 sgkf_repr,
+                mskf_repr,
             ],
         )
     ):
+        if isinstance(cv, MultilabelStratifiedKFold):
+            y_test = y_multilabel
+        else:
+            y_test = y
+
         # Test if get_n_splits works correctly
-        assert n_splits_expected[i] == cv.get_n_splits(X, y, groups)
+        assert n_splits_expected[i] == cv.get_n_splits(X, y_test, groups)
 
         # Test if the cross-validator works as expected even if
         # the data is 1d
         np.testing.assert_equal(
-            list(cv.split(X, y, groups)), list(cv.split(X_1d, y, groups))
+            list(cv.split(X, y_test, groups)), list(cv.split(X_1d, y_test, groups))
         )
         # Test that train, test indices returned are integers
-        for train, test in cv.split(X, y, groups):
+        for train, test in cv.split(X, y_test, groups):
             assert np.asarray(train).dtype.kind == "i"
             assert np.asarray(test).dtype.kind == "i"
 
@@ -157,7 +170,8 @@ def test_2d_y():
     y_2d = y.reshape(-1, 1)
     y_multilabel = rng.randint(0, 2, size=(n_samples, 3))
     groups = rng.randint(0, 3, size=(n_samples,))
-    splitters = [
+
+    splitters_no_multilabel = [
         LeaveOneOut(),
         LeavePOut(p=2),
         KFold(),
@@ -174,17 +188,30 @@ def test_2d_y():
         TimeSeriesSplit(),
         PredefinedSplit(test_fold=groups),
     ]
-    for splitter in splitters:
+    splitters_multilabel = [MultilabelStratifiedKFold()]
+
+    for splitter in splitters_no_multilabel:
         list(splitter.split(X, y, groups))
         list(splitter.split(X, y_2d, groups))
         try:
             list(splitter.split(X, y_multilabel, groups))
         except ValueError as e:
             allowed_target_types = ("binary", "multiclass")
-            msg = "Supported target types are: {}. Got 'multilabel".format(
-                allowed_target_types
+            msg = (
+                f"Supported target types are: {allowed_target_types}. "
+                "Got 'multilabel-indicator' instead."
             )
-            assert msg in str(e)
+            assert msg == str(e)
+
+    for splitter in splitters_multilabel:
+        list(splitter.split(X, y_multilabel, groups))
+        for y_non_multilabel in (y, y_2d):
+            msg = (
+                "Supported target type is: 'multilabel-indicator'. "
+                "Got 'multiclass' instead."
+            )
+            with pytest.raises(ValueError, match=msg):
+                list(splitter.split(X, y_non_multilabel, groups))
 
 
 def check_valid_split(train, test, n_samples=None):

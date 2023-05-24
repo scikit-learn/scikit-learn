@@ -47,6 +47,7 @@ __all__ = [
     "StratifiedGroupKFold",
     "StratifiedShuffleSplit",
     "PredefinedSplit",
+    "MultilabelStratifiedKFold",
     "train_test_split",
     "check_cv",
 ]
@@ -988,7 +989,7 @@ class MultilabelStratifiedKFold(_BaseKFold):
     return stratified folds for multilabel data. The folds are made by preserving
     the percentage of samples for each label.
 
-    Read more in TODO
+    Read more in the :ref:`User Guide <TODO>`.
 
     Parameters
     ----------
@@ -1010,9 +1011,8 @@ class MultilabelStratifiedKFold(_BaseKFold):
     --------
     >>> import numpy as np
     >>> from sklearn.model_selection import MultilabelStratifiedKFold
-    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
-    >>> y = np.array([[0, 0], [0, 0], [0, 1], [0, 1], [1, 1], [1, 1], [1, 0], [1, 0]])
-    >>> groups = np.array([1, 1, 2, 2, 3, 3, 3, 4, 5, 5, 5, 5, 6, 6, 7, 8, 8])
+    >>> X = np.ones((8, 2))
+    >>> y = np.array([[0, 0]] * 2 + [[0, 1]] * 2 + [[1, 1]] * 2 + [[1, 0]] * 2)
     >>> mskf = MultilabelStratifiedKFold(n_splits=2)
     >>> mskf.get_n_splits(X, y)
     2
@@ -1031,16 +1031,10 @@ class MultilabelStratifiedKFold(_BaseKFold):
 
     Notes
     -----
-    The implementation is designed to:
-
-    * TODO
-    * Produce the smallest number of folds and fold-label pairs with zero
-      positive examples, and maintain the ratio of positive to negative
-      examples on each label in each subset. [1]
-
-    See also
-    --------
-    TODO
+    The implementation is designed to produce the smallest number of folds and
+    fold-label pairs with zero positive examples, and maintain the ratio of
+    positive to negative examples on each label in each subset. [1]_ Note that
+    the train and test sizes may be slightly different in each fold.
 
     Reference
     ---------
@@ -1053,7 +1047,7 @@ class MultilabelStratifiedKFold(_BaseKFold):
     def __init__(self, n_splits=5, shuffle=False, random_state=None):
         super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
 
-    def _iter_test_indices(self, X, y, groups):
+    def _make_test_folds(self, X, y):
         # Implementation is based on this project:
         # https://github.com/trent-b/iterative-stratification
         # and is subject to BSD 3 clause License.
@@ -1062,9 +1056,8 @@ class MultilabelStratifiedKFold(_BaseKFold):
         type_of_target_y = type_of_target(y)
         if type_of_target_y != "multilabel-indicator":
             raise ValueError(
-                "Supported target type is: {}. Got {!r} instead".format(
-                    "multilabel-indicator", type_of_target_y
-                )
+                "Supported target type is: 'multilabel-indicator'. "
+                "Got {!r} instead.".format(type_of_target_y)
             )
 
         n_samples = _num_samples(X)
@@ -1119,8 +1112,12 @@ class MultilabelStratifiedKFold(_BaseKFold):
                 c_folds[max_fold] -= 1
 
         if self.shuffle:
-            test_folds = test_folds[np.argsort(indices)]
+            return test_folds[np.argsort(indices)]
+        else:
+            return test_folds
 
+    def _iter_test_masks(self, X=None, y=None, groups=None):
+        test_folds = self._make_test_folds(X, y)
         for i in range(self.n_splits):
             yield test_folds == i
 
