@@ -1,6 +1,7 @@
 import numpy as np
 import scipy as sp
 from numpy.testing import assert_array_equal
+from scipy.sparse.linalg import LinearOperator
 
 import pytest
 import warnings
@@ -14,7 +15,10 @@ from sklearn.decomposition._pca import _assess_dimension
 from sklearn.decomposition._pca import _infer_dimension
 
 iris = datasets.load_iris()
-PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
+PCA_SOLVERS = ["full", "arpack", "randomized", "auto", "lobpcg"]
+
+SPARSE_M, SPARSE_N = 1000, 300  # arbitrary
+SPARSE_MAX_COMPONENTS = min(SPARSE_M, SPARSE_N)
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
@@ -37,6 +41,61 @@ def test_pca(svd_solver, n_components):
     cov = pca.get_covariance()
     precision = pca.get_precision()
     assert_allclose(np.dot(cov, precision), np.eye(X.shape[1]), atol=1e-12)
+
+
+def linear_operator_from_matrix(A):
+    return LinearOperator(
+        shape=A.shape,
+        dtype=A.dtype,
+        matvec=lambda x: A @ x,
+        rmatvec=lambda x: A.T @ x,
+        matmat=lambda X: A @ X,
+        rmatmat=lambda X: A.T @ X,
+    )
+
+
+def test_linear_operator_matmul():
+    A = np.array([[1, 2, 3], [4, 5, 6]])
+    B = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+    B = linear_operator_from_matrix(B)
+    expected_error = "Input operand 1 does not have enough dimensions"
+    with pytest.raises(ValueError, match=expected_error):
+        A @ B
+
+
+def test_linear_operator_reversed_matmul():
+    A = np.array([[1, 2, 3], [4, 5, 6]])
+    B = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+    B = linear_operator_from_matrix(B)
+    result = (B.T @ A.T).T
+    assert np.allclose(result, [[38, 44, 50, 56], [83, 98, 113, 128]])
+
+
+@pytest.mark.parametrize("density", [0.01, 0.05, 0.10, 0.30])
+@pytest.mark.parametrize("n_components", [1, 2, 3, 10, SPARSE_MAX_COMPONENTS])
+@pytest.mark.parametrize("format", ["csr", "csc"])
+@pytest.mark.parametrize("svd_solver", ["arpack"])
+@pytest.mark.parametrize(
+    "rtol", [1e-07]
+)  # , 1e-06, 1e-05, 1e-04, 1e-03, 1e-02, 1e-01, 1e-00])
+def test_pca_sparse(
+    global_random_seed, rtol, svd_solver, format, n_components, density
+):
+    if svd_solver in ["lobpcg", "arpack"] and n_components == SPARSE_MAX_COMPONENTS:
+        pytest.skip("lobpcg and arpack don't support full solves")
+    random_state = np.random.RandomState(global_random_seed)
+    X = sp.sparse.random(
+        SPARSE_M, SPARSE_N, format=format, random_state=random_state, density=density
+    )
+    pca = PCA(n_components=n_components, svd_solver=svd_solver)
+    pca.fit(X)
+
+    Xd = np.asarray(X.todense())
+    pcad = PCA(n_components=n_components, svd_solver=svd_solver)
+    pcad.fit(Xd)
+
+    assert_allclose(pca.components_, pcad.components_, rtol=rtol)
+    assert_allclose(pca.singular_values_, pcad.singular_values_, rtol=rtol)
 
 
 def test_no_empty_slice_warning():
@@ -490,17 +549,6 @@ def test_pca_svd_solver_auto(data, n_components, expected_solver):
     pca_auto.fit(data)
     pca_test.fit(data)
     assert_allclose(pca_auto.components_, pca_test.components_)
-
-
-@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_sparse_input(svd_solver):
-    X = np.random.RandomState(0).rand(5, 4)
-    X = sp.sparse.csr_matrix(X)
-    assert sp.sparse.issparse(X)
-
-    pca = PCA(n_components=3, svd_solver=svd_solver)
-    with pytest.raises(TypeError):
-        pca.fit(X)
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)

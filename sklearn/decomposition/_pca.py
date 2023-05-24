@@ -643,14 +643,18 @@ class PCA(_BasePCA):
         # Get variance explained by singular values
         self.explained_variance_ = (S**2) / (n_samples - 1)
 
-        # Workaround in-place variance calculation since at the time numpy
-        # did not have a way to calculate variance in-place.
-        N = X.shape[0] - 1
-        np.square(X, out=X)
-        np.sum(X, axis=0, out=X[0])
-        total_var = (X[0] / N).sum()
+        # Workaround in-place variance calculation for dense arrays since at
+        # the time numpy did not have a way to calculate variance in-place.
 
-        self.explained_variance_ratio_ = self.explained_variance_ / total_var
+        # if total_var is None:
+        #     N = X.shape[0] - 1
+        #     np.square(X, out=X)
+        #     np.sum(X, axis=0, out=X[0])
+        #     total_var = (X[0] / N).sum()
+
+        self.explained_variance_ratio_ = (
+            self.explained_variance_ / total_var[:n_components]
+        )
         self.singular_values_ = S.copy()  # Store the singular values.
         if self.n_components_ < min(n_features, n_samples):
             self.noise_variance_ = total_var - self.explained_variance_.sum()
