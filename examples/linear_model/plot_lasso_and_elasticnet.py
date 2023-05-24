@@ -28,9 +28,11 @@ compared with the ground-truth.
 # --------------------------
 #
 # We generate a dataset where the number of samples is lower than the total
-# number of features. This leads to a singular matrix that cannot be dealt with
-# an :ref:`ordinary_least_squares`. Introducing some regularization is a
-# technique to make the matrix non-singular and therefore, invertible.
+# number of features. This leads to an underdetermined system, i.e. the solution
+# is not unique, and thus we cannot apply an :ref:`ordinary_least_squares` by
+# itself. Regularization introduces a penalty term to the objective function,
+# which modifies the optimization problem and can help alleviate the
+# underdetermined nature of the system.
 #
 # The target `y` is a linear combination with alternating signs of sinusoidal
 # signals. Only the 10 lowest out of the 100 frequencies in `X` are used to
