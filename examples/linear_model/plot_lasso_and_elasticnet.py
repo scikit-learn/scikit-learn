@@ -96,7 +96,7 @@ from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, shuffle=False)
 
 # %%
-# In the following we compute the performance of three l1-based models in terms
+# In the following, we compute the performance of three l1-based models in terms
 # of the goodness of fit :math:`R^2` score and the fitting time. Then we make a
 # plot to compare the sparsity of the estimated coefficients with respect to the
 # ground-truth coefficients and finally we analyze the previous results.
@@ -104,7 +104,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, shuffle
 # Lasso
 # -----
 #
-# In this example we demo a :class:`~sklearn.linear_model.Lasso` with a fixed
+# In this example, we demo a :class:`~sklearn.linear_model.Lasso` with a fixed
 # value of the regularization parameter `alpha`. In practice, the optimal
 # parameter `alpha` should be selected by passing a
 # :class:`~sklearn.model_selection.TimeSeriesSplit` cross-validation strategy to a
@@ -131,7 +131,7 @@ print(f"Lasso r^2 on test data : {r2_score_lasso:.3f}")
 # required. It is a suitable option when the signals have gaussian noise. See
 # the example :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py` for a
 # comparison of :class:`~sklearn.linear_model.ARDRegression` and
-# :class:`~sklearn.linear_model.BayesianRidge`regressors.
+# :class:`~sklearn.linear_model.BayesianRidge` regressors.
 
 from sklearn.linear_model import ARDRegression
 
@@ -149,10 +149,10 @@ print(f"ARD r^2 on test data : {r2_score_ard:.3f}")
 #
 # :class:`~sklearn.linear_model.ElasticNet` is a middle ground between
 # :class:`~sklearn.linear_model.Lasso` and :class:`~sklearn.linear_model.Ridge`,
-# as it combines a l1 and a l2-penalty. The amount of regularization is
+# as it combines a L1 and a L2-penalty. The amount of regularization is
 # controlled by the two hyperparameters `l1_ratio` and `alpha`. For `l1_ratio =
-# 0` the penalty is pure l2 and the model is equivalent to a
-# :class:`~sklearn.linear_model.Ridge`. Similarly, `l1_ratio = 1` is a pure l1
+# 0` the penalty is pure L2 and the model is equivalent to a
+# :class:`~sklearn.linear_model.Ridge`. Similarly, `l1_ratio = 1` is a pure L1
 # penalty and the model is equivalent to a :class:`~sklearn.linear_model.Lasso`.
 # For `0 < l1_ratio < 1`, the penalty is a combination of l1 and l2.
 #
@@ -175,7 +175,7 @@ print(f"ElasticNet r^2 on test data : {r2_score_enet:.3f}")
 # Plot and analysis of the results
 # --------------------------------
 #
-# In this section we use a heatmap to visualize the sparsity of the true
+# In this section, we use a heatmap to visualize the sparsity of the true
 # and estimated coefficients of the respective linear models.
 
 import matplotlib.pyplot as plt
