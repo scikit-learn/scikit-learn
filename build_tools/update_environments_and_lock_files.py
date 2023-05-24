@@ -574,7 +574,11 @@ def remove_unnecessary_package_from_lock_file(build_metadata_list, build_name, p
             build_metadata = metadata
             break
     if build_metadata is None:
-        raise ValueError(f"Could not find build metadata for {build_name}")
+        logger.warning(
+            f"Could not find {build_name} in build_metadata_list. This may be expected"
+            " if --select-build is used"
+        )
+        return
     folder_path = Path(build_metadata["folder"])
     platform = build_metadata["platform"]
     lock_file_basename = build_name
