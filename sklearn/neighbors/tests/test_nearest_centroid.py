@@ -54,7 +54,7 @@ def test_classification_toy():
 
 
 # TODO(1.5): Remove filterwarnings when support for some metrics is removed
-@pytest.mark.filterwarnings("ignore:Support for metrics:FutureWarning:sklearn")
+@pytest.mark.filterwarnings("ignore:Support for distance metrics:FutureWarning:sklearn")
 def test_iris():
     # Check consistency on dataset iris.
     for metric in ("euclidean", "cosine"):
@@ -64,7 +64,7 @@ def test_iris():
 
 
 # TODO(1.5): Remove filterwarnings when support for some metrics is removed
-@pytest.mark.filterwarnings("ignore:Support for metrics:FutureWarning:sklearn")
+@pytest.mark.filterwarnings("ignore:Support for distance metrics:FutureWarning:sklearn")
 def test_iris_shrinkage():
     # Check consistency on dataset iris, when using shrinkage.
     for metric in ("euclidean", "cosine"):
