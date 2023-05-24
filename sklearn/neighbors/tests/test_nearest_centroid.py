@@ -148,10 +148,10 @@ def test_manhattan_metric():
 
 # TODO(1.5): remove this test
 @pytest.mark.parametrize(
-    "metric", list(NearestCentroid._valid_metrics - {"manhattan", "euclidean"})
+    "metric", sorted(list(NearestCentroid._valid_metrics - {"manhattan", "euclidean"}))
 )
-def test_deprecated_metrics(metric):
-    # Check that a warning is raised for all deprecated metrics
+def test_deprecated_distance_metric_supports(metric):
+    # Check that a warning is raised for all deprecated distance metric supports
     clf = NearestCentroid(metric=metric)
     with pytest.warns(
         FutureWarning,
