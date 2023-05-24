@@ -11,7 +11,7 @@ import warnings
 from . import OneHotEncoder
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils._param_validation import Hidden, Interval, StrOptions, Options
+from ..utils._param_validation import Interval, StrOptions, Options
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_random_state
@@ -60,7 +60,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    subsample : int or None (default='warn')
+    subsample : int or None, default=200_000
         Maximum number of samples, used to fit the model, for computational
         efficiency. Used when `strategy="quantile"`.
         `subsample=None` means that all the training samples are used when
@@ -70,8 +70,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         it is recommended to use subsampling on datasets with a
         very large number of samples.
 
-        .. deprecated:: 1.1
-           In version 1.3 and onwards, `subsample=2e5` will be the default.
+        .. versionchanged:: 1.3
+           In version 1.3 and onwards, `subsample=200_000` will be the default.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for subsampling.
@@ -159,11 +159,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
         "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
         "dtype": [Options(type, {np.float64, np.float32}), None],
-        "subsample": [
-            Interval(Integral, 1, None, closed="left"),
-            None,
-            Hidden(StrOptions({"warn"})),
-        ],
+        "subsample": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
     }
 
@@ -174,7 +170,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         encode="onehot",
         strategy="quantile",
         dtype=None,
-        subsample="warn",
+        subsample=200000,
         random_state=None,
     ):
         self.n_bins = n_bins
@@ -218,37 +214,20 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         n_samples, n_features = X.shape
 
-        if self.strategy == "quantile" and self.subsample is not None:
-            if self.subsample == "warn":
-                if n_samples > 2e5:
-                    warnings.warn(
-                        (
-                            "In version 1.3 onwards, subsample=2e5 "
-                            "will be used by default. Set subsample explicitly to "
-                            "silence this warning in the mean time. Set "
-                            "subsample=None to disable subsampling explicitly."
-                        ),
-                        FutureWarning,
-                    )
-            else:
-                rng = check_random_state(self.random_state)
-                if n_samples > self.subsample:
-                    subsample_idx = rng.choice(
-                        n_samples, size=self.subsample, replace=False
-                    )
-                    X = _safe_indexing(X, subsample_idx)
-        elif self.strategy != "quantile" and isinstance(self.subsample, Integral):
-            raise ValueError(
-                f"Invalid parameter for `strategy`: {self.strategy}. "
-                '`subsample` must be used with `strategy="quantile"`.'
-            )
-
-        elif sample_weight is not None and self.strategy == "uniform":
+        if sample_weight is not None and self.strategy == "uniform":
             raise ValueError(
                 "`sample_weight` was provided but it cannot be "
                 "used with strategy='uniform'. Got strategy="
                 f"{self.strategy!r} instead."
             )
+
+        if self.subsample is not None:
+            rng = check_random_state(self.random_state)
+            if n_samples > self.subsample:
+                subsample_idx = rng.choice(
+                    n_samples, size=self.subsample, replace=False
+                )
+                X = _safe_indexing(X, subsample_idx)
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)

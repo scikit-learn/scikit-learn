@@ -531,6 +531,10 @@ Changelog
   is enabled by specifying how to select infrequent categories with
   `min_frequency` or `max_categories`. :pr:`25677` by `Thomas Fan`_.
 
+- |Enhancement| Subsampling through the `subsample` parameter can now be used in
+  :class:`preprocessing.KBinsDiscretizer` regardless of the strategy used.
+  :pr:`` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 - |Fix| :class:`AdditiveChi2Sampler` is now stateless.
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
