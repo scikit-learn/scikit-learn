@@ -214,12 +214,19 @@ Changelog
   consistent with :func:`covariance.graphical_lasso`.
   :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
 
+- |Fix| :func:`covariance.empirical_covariance` now gives an informative
+  error message when input is not appropriate.
+  :pr:`26108` by :user:`Quentin Barthélemy <qbarthelemy>`.
+
 :mod:`sklearn.datasets`
 .......................
 
 - |API| The `data_transposed` argument of :func:`datasets.make_sparse_coded_signal`
   is deprecated and will be removed in v1.5.
   :pr:`25784` by :user:`Jérémie du Boisberranger`.
+
+- |Fix| :func:`datasets.fetch_openml` returns improved data types when
+  `as_frame=True` and `parser="liac-arff"`. :pr:`26386` by `Thomas Fan`_.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -410,6 +417,12 @@ Changelog
   `plot_chance_level` and `chance_level_kw` to plot the baseline chance
   level. This line is exposed in the `chance_level_` attribute.
   :pr:`25987` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |Enhancement| :meth:`metrics.PrecisionRecallDisplay.from_estimator` and
+  :meth:`metrics.PrecisionRecallDisplay.from_predictions` now accept two new
+  keywords, `plot_chance_level` and `chance_level_kw` to plot the baseline
+  chance level. This line is exposed in the `chance_level_` attribute.
+  :pr:`26019` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 - |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
   not normalized, instead of actually normalizing them in the metric. Starting from

@@ -925,7 +925,7 @@ def datasets_missing_values():
         # with casting it will be transformed to either float or Int64
         (40966, "pandas", 1, 77, 0),
         # titanic
-        (40945, "liac-arff", 3, 5, 0),
+        (40945, "liac-arff", 3, 6, 0),
         (40945, "pandas", 3, 3, 3),
     ],
 )
