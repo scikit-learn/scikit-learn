@@ -456,7 +456,7 @@ Changelog
 - |Feature| Added k-folds iterator :class:`model_selection.MultilabelStratifiedKFold`
   which implement iterative stratification, and can be used in multilabel
   classification.
-  :pr:`` by :user:`Yao Xiao <Charlie-XIAO>`
+  :pr:`26423` by :user:`Yao Xiao <Charlie-XIAO>`
 
 :mod:`sklearn.multioutput`
 ..........................
