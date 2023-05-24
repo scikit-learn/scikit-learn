@@ -26,6 +26,7 @@ from ._data import PowerTransformer
 
 from ._encoders import OneHotEncoder
 from ._encoders import OrdinalEncoder
+from ._target_encoder import TargetEncoder
 
 from ._label import label_binarize
 from ._label import LabelBinarizer
@@ -56,6 +57,7 @@ __all__ = [
     "RobustScaler",
     "SplineTransformer",
     "StandardScaler",
+    "TargetEncoder",
     "add_dummy_feature",
     "PolynomialFeatures",
     "binarize",

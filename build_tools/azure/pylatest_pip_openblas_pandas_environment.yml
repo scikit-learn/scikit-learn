@@ -15,12 +15,11 @@ dependencies:
     - joblib
     - threadpoolctl
     - matplotlib
-    - pandas
+    - pandas==1.5.3
     - pyamg
     - pytest
     - pytest-xdist==2.5.0
     - pillow
-    - codecov
     - pytest-cov
     - coverage
     - numpydoc

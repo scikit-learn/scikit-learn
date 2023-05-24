@@ -168,10 +168,12 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         if self._strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
             warnings.warn(
-                "A local copy of the target data has been converted "
-                "to a numpy array. Predicting on sparse target data "
-                "with the uniform strategy would not save memory "
-                "and would be slower.",
+                (
+                    "A local copy of the target data has been converted "
+                    "to a numpy array. Predicting on sparse target data "
+                    "with the uniform strategy would not save memory "
+                    "and would be slower."
+                ),
                 UserWarning,
             )
 
@@ -435,7 +437,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         score : float
-            Mean accuracy of self.predict(X) wrt. y.
+            Mean accuracy of self.predict(X) w.r.t. y.
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
@@ -667,7 +669,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Returns
         -------
         score : float
-            R^2 of `self.predict(X)` wrt. y.
+            R^2 of `self.predict(X)` w.r.t. y.
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))

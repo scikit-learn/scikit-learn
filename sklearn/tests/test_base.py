@@ -719,6 +719,47 @@ def test_feature_names_in():
         trans.transform(df_mixed)
 
 
+def test_validate_data_cast_to_ndarray():
+    """Check cast_to_ndarray option of _validate_data."""
+
+    pd = pytest.importorskip("pandas")
+    iris = datasets.load_iris()
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
+    y = pd.Series(iris.target)
+
+    class NoOpTransformer(TransformerMixin, BaseEstimator):
+        pass
+
+    no_op = NoOpTransformer()
+    X_np_out = no_op._validate_data(df, cast_to_ndarray=True)
+    assert isinstance(X_np_out, np.ndarray)
+    assert_allclose(X_np_out, df.to_numpy())
+
+    X_df_out = no_op._validate_data(df, cast_to_ndarray=False)
+    assert X_df_out is df
+
+    y_np_out = no_op._validate_data(y=y, cast_to_ndarray=True)
+    assert isinstance(y_np_out, np.ndarray)
+    assert_allclose(y_np_out, y.to_numpy())
+
+    y_series_out = no_op._validate_data(y=y, cast_to_ndarray=False)
+    assert y_series_out is y
+
+    X_np_out, y_np_out = no_op._validate_data(df, y, cast_to_ndarray=True)
+    assert isinstance(X_np_out, np.ndarray)
+    assert_allclose(X_np_out, df.to_numpy())
+    assert isinstance(y_np_out, np.ndarray)
+    assert_allclose(y_np_out, y.to_numpy())
+
+    X_df_out, y_series_out = no_op._validate_data(df, y, cast_to_ndarray=False)
+    assert X_df_out is df
+    assert y_series_out is y
+
+    msg = "Validation should be done on X, y or both."
+    with pytest.raises(ValueError, match=msg):
+        no_op._validate_data()
+
+
 def test_clone_keeps_output_config():
     """Check that clone keeps the set_output config."""
 

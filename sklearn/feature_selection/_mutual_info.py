@@ -2,6 +2,7 @@
 # License: 3-clause BSD
 
 import numpy as np
+from numbers import Integral
 from scipy.sparse import issparse
 from scipy.special import digamma
 
@@ -11,6 +12,7 @@ from ..preprocessing import scale
 from ..utils import check_random_state
 from ..utils.validation import check_array, check_X_y
 from ..utils.multiclass import check_classification_targets
+from ..utils._param_validation import Interval, StrOptions, validate_params
 
 
 def _compute_mi_cc(x, y, n_neighbors):
@@ -309,6 +311,16 @@ def _estimate_mi(
     return np.array(mi)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+        "discrete_features": [StrOptions({"auto"}), "boolean", "array-like"],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "copy": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def mutual_info_regression(
     X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
 ):
@@ -388,6 +400,16 @@ def mutual_info_regression(
     return _estimate_mi(X, y, discrete_features, False, n_neighbors, copy, random_state)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+        "discrete_features": [StrOptions({"auto"}), "boolean", "array-like"],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "copy": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def mutual_info_classif(
     X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
 ):
@@ -407,13 +429,13 @@ def mutual_info_classif(
 
     Parameters
     ----------
-    X : array-like or sparse matrix, shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Feature matrix.
 
     y : array-like of shape (n_samples,)
         Target vector.
 
-    discrete_features : {'auto', bool, array-like}, default='auto'
+    discrete_features : 'auto', bool or array-like, default='auto'
         If bool, then determines whether to consider all features discrete
         or continuous. If array, then it should be either a boolean mask
         with shape (n_features,) or array with indices of discrete features.

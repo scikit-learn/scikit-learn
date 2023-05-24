@@ -395,6 +395,15 @@ a.sk-footer-funding-link:hover {
   width: 100%;
 }
 
+/* Enables section links to be visible when anchor-linked */
+section[id]::before {
+  display: block;
+  height: 52px;
+  margin-top: -52px;
+  visibility: hidden;
+  content: "";
+}
+
 div.sk-page-content {
   background-color: white;
   position: relative;
@@ -534,10 +543,6 @@ a.sk-documentation-index-anchor:hover {
 
 /* toc  */
 
-div.sk-sidebar-toc-logo {
-  height: 52px;
-}
-
 .sk-toc-active {
   font-weight: bold;
 }
@@ -549,6 +554,7 @@ div.sk-sidebar-toc-wrapper {
   overflow-y: scroll;
   height: 100vh;
   padding-right: 1.75rem;
+  padding-top: 52px;
 
   /* Hide scrollbar for IE and Edge */
   -ms-overflow-style: none;
