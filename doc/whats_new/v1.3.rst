@@ -159,6 +159,16 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn`
+..............
+
+- |Feature| Added a new option `skip_parameter_validation`, to the function
+  :func:`sklearn.set_config` and context manager :func:`sklearn.config_context`, that
+  allows to skip the validation of the parameters passed to the estimators and public
+  functions. This can be useful to speed up the code but should be used with care
+  because it can lead to unexpected behaviors or raise obscure error messages when
+  setting invalid parameters.
+  :pr:`25815` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.base`
 ...................

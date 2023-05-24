@@ -4,6 +4,7 @@
 # License: BSD 3 clause
 
 import copy
+import functools
 import warnings
 from collections import defaultdict
 import platform
@@ -13,7 +14,7 @@ import re
 import numpy as np
 
 from . import __version__
-from ._config import get_config
+from ._config import get_config, config_context
 from .utils import _IS_32BIT
 from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
@@ -1093,3 +1094,46 @@ def is_outlier_detector(estimator):
         True if estimator is an outlier detector and False otherwise.
     """
     return getattr(estimator, "_estimator_type", None) == "outlier_detector"
+
+
+def _fit_context(*, prefer_skip_nested_validation):
+    """Decorator to run the fit methods of estimators within context managers.
+
+    Parameters
+    ----------
+    prefer_skip_nested_validation : bool
+        If True, the validation of parameters of inner estimators or functions
+        called during fit will be skipped.
+
+        This is useful to avoid validating many times the parameters passed by the
+        user from the public facing API. It's also useful to avoid validating
+        parameters that we pass internally to inner functions that are guaranteed to
+        be valid by the test suite.
+
+        It should be set to True for most estimators, except for those that receive
+        non-validated objects as parameters, such as meta-estimators that are given
+        estimator objects.
+
+    Returns
+    -------
+    decorated_fit : method
+        The decorated fit method.
+    """
+
+    def decorator(fit_method):
+        @functools.wraps(fit_method)
+        def wrapper(estimator, *args, **kwargs):
+            global_skip_validation = get_config()["skip_parameter_validation"]
+            if not global_skip_validation:
+                estimator._validate_params()
+
+            with config_context(
+                skip_parameter_validation=(
+                    prefer_skip_nested_validation or global_skip_validation
+                )
+            ):
+                return fit_method(estimator, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
