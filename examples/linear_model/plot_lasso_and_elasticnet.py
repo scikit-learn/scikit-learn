@@ -156,7 +156,7 @@ print(f"ARD r^2 on test data : {r2_score_ard:.3f}")
 # 0` the penalty is pure L2 and the model is equivalent to a
 # :class:`~sklearn.linear_model.Ridge`. Similarly, `l1_ratio = 1` is a pure L1
 # penalty and the model is equivalent to a :class:`~sklearn.linear_model.Lasso`.
-# For `0 < l1_ratio < 1`, the penalty is a combination of l1 and l2.
+# For `0 < l1_ratio < 1`, the penalty is a combination of L1 and L2.
 #
 # As done before, we train the model with fix values for `alpha` and `l1_ratio`.
 # To select their optimal value we used an
