@@ -483,7 +483,7 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     # for the downstream regressor, even with shrinkage. This kind of features
     # typically represents near unique idenfiers of samples. In general they
     # should be removed from a machine learning datasets but here we want to
-    # study the ability of the default behavor of TargetEncoder to mitigate
+    # study the ability of the default behavior of TargetEncoder to mitigate
     # them automatically.
     X_near_unique_categories = rng.choice(
         int(0.9 * n_samples), size=n_samples, replace=True

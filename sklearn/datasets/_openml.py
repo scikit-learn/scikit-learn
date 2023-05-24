@@ -45,7 +45,7 @@ def _retry_with_clean_cache(
     """If the first call to the decorated function fails, the local cached
     file is removed, and the function is called again. If ``data_home`` is
     ``None``, then the function is called once. We can provide a specific
-    exception to not retry on usign `no_retry_exception` parameter.
+    exception to not retry on using `no_retry_exception` parameter.
     """
 
     def decorator(f):

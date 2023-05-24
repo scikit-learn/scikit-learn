@@ -768,7 +768,7 @@ Changelog
   :class:`manifold.MDS` and :func:`manifold.smacof`. Note that
   `normalized_stress` is only valid for non-metric MDS, therefore the `"auto"`
   option enables `normalized_stress` when `metric=False` and disables it when
-  `metric=True`. `"auto"` will become the default value foor `normalized_stress`
+  `metric=True`. `"auto"` will become the default value for `normalized_stress`
   in version 1.4.
   :pr:`23834` by :user:`Meekail Zain <micky774>`
 

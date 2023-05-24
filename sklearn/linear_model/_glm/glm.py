@@ -124,8 +124,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         HalfSquaredError         identity  y any real number
         HalfPoissonLoss          log       0 <= y
         HalfGammaLoss            log       0 < y
-        HalfTweedieLoss          log       dependend on tweedie power
-        HalfTweedieLossIdentity  identity  dependend on tweedie power
+        HalfTweedieLoss          log       dependent on tweedie power
+        HalfTweedieLossIdentity  identity  dependent on tweedie power
         =======================  ========  ==========================
 
         The link function of the GLM, i.e. mapping from linear predictor
