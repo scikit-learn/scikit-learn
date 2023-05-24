@@ -55,7 +55,7 @@ print(f"The dataset consists of {n_samples} samples and {n_features} features")
 # The implementation of :class:`~sklearn.ensemble.RandomForestRegressor` and
 # :class:`~sklearn.ensemble.RandomForestClassifier` can also be run on multiple
 # cores by using the `n_jobs` parameter, here set to 2 due to limitations on the
-# documentation builder.
+# documentation builder. See :ref:`parallelism` for more information.
 
 import joblib
 
@@ -66,6 +66,7 @@ print(f"Number of physical cores: {N_CORES}")
 # The other parameters of both models were tuned but the procedure is not shown
 # here to keep the example simple.
 
+import pandas as pd
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV, KFold
@@ -75,16 +76,16 @@ models = {
         min_samples_leaf=5, random_state=0, n_jobs=2
     ),
     "HistGradientBoosting": HistGradientBoostingRegressor(
-        max_leaf_nodes=15, random_state=0
+        max_leaf_nodes=15, random_state=0, early_stopping=False
     ),
 }
 param_grids = {
-    "Random Forest": {"n_estimators": [5, 10, 20, 50, 100]},
-    "HistGradientBoosting": {"max_iter": [5, 10, 20, 50, 100, 200, 300]},
+    "Random Forest": {"n_estimators": [10, 20, 50, 100]},
+    "HistGradientBoosting": {"max_iter": [10, 20, 50, 100, 300, 500]},
 }
 cv = KFold(n_splits=3, shuffle=True, random_state=0)
-results = []
 
+results = []
 for name, model in models.items():
     grid_search = GridSearchCV(
         estimator=model,
@@ -92,7 +93,7 @@ for name, model in models.items():
         return_train_score=True,
         cv=cv,
     ).fit(X, y)
-    result = {"model": name, "cv_results": grid_search.cv_results_}
+    result = {"model": name, "cv_results": pd.DataFrame(grid_search.cv_results_)}
     results.append(result)
 
 # %%
@@ -104,48 +105,78 @@ for name, model in models.items():
 #
 # Plot results
 # ------------
+import plotly.express as px
+import plotly.colors as colors
+from plotly.subplots import make_subplots
 
-import matplotlib.pyplot as plt
+fig = make_subplots(
+    rows=1,
+    cols=2,
+    shared_yaxes=True,
+    subplot_titles=["Train time vs score", "Predict time vs score"],
+)
+model_names = [result["model"] for result in results]
+colors_list = colors.qualitative.Plotly * (
+    len(model_names) // len(colors.qualitative.Plotly) + 1
+)
 
-fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
 for idx, result in enumerate(results):
-    cv_results = result["cv_results"]
+    cv_results = result["cv_results"].round(3)
+    model_name = result["model"]
+    param_name = list(param_grids[model_name].keys())[0]
+    cv_results[param_name] = cv_results["param_" + param_name]
+    cv_results["model"] = model_name
 
-    param_name = list(param_grids[result["model"]].keys())[0]
-    param_values = cv_results["param_" + param_name].compressed()
-    train_scores = cv_results["mean_train_score"]
-    train_score_err = cv_results["std_train_score"]
-    test_scores = cv_results["mean_test_score"]
-    test_score_err = cv_results["std_test_score"]
-    train_times = cv_results["mean_fit_time"]
-    train_time_err = cv_results["std_fit_time"]
-    test_times = cv_results["mean_score_time"]
-    test_time_err = cv_results["std_score_time"]
+    scatter_fig = px.scatter(
+        cv_results,
+        x="mean_fit_time",
+        y="mean_test_score",
+        error_x="std_fit_time",
+        error_y="std_test_score",
+        hover_data=param_name,
+        color="model",
+    )
+    line_fig = px.line(
+        cv_results,
+        x="mean_fit_time",
+        y="mean_test_score",
+    )
 
-    axs[0, idx].errorbar(
-        param_values, train_scores, yerr=train_score_err, label="Train score"
+    scatter_trace = scatter_fig["data"][0]
+    line_trace = line_fig["data"][0]
+    scatter_trace.update(marker=dict(color=colors_list[idx]))
+    line_trace.update(line=dict(color=colors_list[idx]))
+    fig.add_trace(scatter_trace, row=1, col=1)
+    fig.add_trace(line_trace, row=1, col=1)
+
+    scatter_fig = px.scatter(
+        cv_results,
+        x="mean_score_time",
+        y="mean_test_score",
+        error_x="std_score_time",
+        error_y="std_test_score",
+        hover_data=param_name,
     )
-    axs[0, idx].errorbar(
-        param_values, test_scores, yerr=test_score_err, label="Test score"
+    line_fig = px.line(
+        cv_results,
+        x="mean_score_time",
+        y="mean_test_score",
     )
-    axs[0, idx].set_xlabel(param_name)
-    axs[0, idx].set_ylabel("Score")
-    axs[0, idx].set_ylim(0.45, 0.95)
-    axs[0, idx].set_title(result["model"])
-    axs[0, idx].legend(loc="lower right")
-    axs[1, idx].errorbar(
-        param_values, train_times, yerr=train_time_err, label="Train time"
-    )
-    axs[1, idx].errorbar(
-        param_values, test_times, yerr=test_time_err, label="Test time"
-    )
-    axs[1, idx].set_xlabel(param_name)
-    axs[1, idx].set_ylabel("time (s)")
-    axs[1, idx].set_yscale("log")
-    axs[1, idx].set_ylim(0.001, 5)
-    axs[1, idx].legend(loc="lower right")
-plt.subplots_adjust(wspace=0.25)
-plt.show()
+
+    scatter_trace = scatter_fig["data"][0]
+    line_trace = line_fig["data"][0]
+    scatter_trace.update(marker=dict(color=colors_list[idx]))
+    line_trace.update(line=dict(color=colors_list[idx]))
+    fig.add_trace(scatter_trace, row=1, col=2)
+    fig.add_trace(line_trace, row=1, col=2)
+
+fig.update_layout(
+    xaxis=dict(title="Train time (s) - lower is better"),
+    yaxis=dict(title="Test R2 score - higher is better"),
+    xaxis2=dict(title="Predict time (s) - lower is better"),
+    legend=dict(traceorder="normal", bordercolor="Black", borderwidth=1),
+    title_text="Speed-accuracy trade-off of tree-based ensembles",
+)
 
 # %%
 # Both HGBT and RF models improve when increasing the number of trees in the
