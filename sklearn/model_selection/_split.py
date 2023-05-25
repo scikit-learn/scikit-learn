@@ -1062,6 +1062,26 @@ class MultilabelStratifiedKFold(_BaseKFold):
                 "Got {!r} instead.".format(type_of_target_y)
             )
 
+        do_raise, min_groups = True, np.inf
+        for col in y.T:
+            _, y_counts_per_label = np.unique(col, return_counts=True)
+            min_group_per_label = np.min(y_counts_per_label)
+            do_raise = do_raise and np.all(y_counts_per_label < self.n_splits)
+            min_groups = min(min_groups, min_group_per_label)
+
+        if do_raise:
+            raise ValueError(
+                "n_splits=%d cannot be greater than the number of members in "
+                "each class for each label." % (self.n_splits)
+            )
+        if self.n_splits > min_groups:
+            warnings.warn(
+                "The least populated class in y among all labels has only %d "
+                "members, which is less than n_splits=%d."
+                % (min_groups, self.n_splits),
+                UserWarning,
+            )
+
         n_samples = _num_samples(X)
         indices = np.arange(n_samples)
 

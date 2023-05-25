@@ -9,6 +9,7 @@ from scipy.special import comb
 from itertools import combinations
 from itertools import combinations_with_replacement
 from itertools import permutations
+from itertools import product
 
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
@@ -253,15 +254,20 @@ def test_kfold_valueerrors():
     # Check that a warning is raised if the least populated class has too few
     # members.
     y = np.array([3, 3, -1, -1, 3])
+    y_multilabel = np.array([[0, 1], [0, 1], [1, 1], [1, 1], [0, 1]])
 
     skf_3 = StratifiedKFold(3)
-    with pytest.warns(Warning, match="The least populated class"):
+    with pytest.warns(UserWarning, match="The least populated class"):
         next(skf_3.split(X2, y))
 
     sgkf_3 = StratifiedGroupKFold(3)
     naive_groups = np.arange(len(y))
-    with pytest.warns(Warning, match="The least populated class"):
+    with pytest.warns(UserWarning, match="The least populated class"):
         next(sgkf_3.split(X2, y, naive_groups))
+
+    mskf_3 = MultilabelStratifiedKFold(3)
+    with pytest.warns(UserWarning, match="The least populated class"):
+        next(mskf_3.split(X2, y_multilabel))
 
     # Check that despite the warning the folds are still computed even
     # though all the classes are not necessarily represented at on each
@@ -274,45 +280,43 @@ def test_kfold_valueerrors():
         warnings.simplefilter("ignore")
         check_cv_coverage(sgkf_3, X2, y, groups=naive_groups, expected_n_splits=3)
 
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        check_cv_coverage(mskf_3, X2, y_multilabel, groups=None, expected_n_splits=3)
+
     # Check that errors are raised if all n_groups for individual
     # classes are less than n_splits.
     y = np.array([3, 3, -1, -1, 2])
+    y_multilabel = np.array([[0, 1], [0, 1], [1, 0], [1, 0], [0, 1]])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="cannot be greater than"):
         next(skf_3.split(X2, y))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="cannot be greater than"):
         next(sgkf_3.split(X2, y))
 
+    mskf_4 = MultilabelStratifiedKFold(4)
+    with pytest.raises(ValueError, match="cannot be greater than"):
+        next(mskf_4.split(X2, y_multilabel))
+
     # Error when number of folds is <= 1
-    with pytest.raises(ValueError):
-        KFold(0)
-    with pytest.raises(ValueError):
-        KFold(1)
-    error_string = "k-fold cross-validation requires at least one train/test split"
-    with pytest.raises(ValueError, match=error_string):
-        StratifiedKFold(0)
-    with pytest.raises(ValueError, match=error_string):
-        StratifiedKFold(1)
-    with pytest.raises(ValueError, match=error_string):
-        StratifiedGroupKFold(0)
-    with pytest.raises(ValueError, match=error_string):
-        StratifiedGroupKFold(1)
+    msg = "k-fold cross-validation requires at least one train/test split"
+    for validator, n_splits in product(
+        [KFold, StratifiedKFold, StratifiedGroupKFold, MultilabelStratifiedKFold],
+        [0, 1],
+    ):
+        with pytest.raises(ValueError, match=msg):
+            validator(n_splits=n_splits)
 
-    # When n_splits is not integer:
-    with pytest.raises(ValueError):
-        KFold(1.5)
-    with pytest.raises(ValueError):
-        KFold(2.0)
-    with pytest.raises(ValueError):
-        StratifiedKFold(1.5)
-    with pytest.raises(ValueError):
-        StratifiedKFold(2.0)
-    with pytest.raises(ValueError):
-        StratifiedGroupKFold(1.5)
-    with pytest.raises(ValueError):
-        StratifiedGroupKFold(2.0)
+    # When n_splits is not integer
+    msg = "The number of folds must be of Integral type"
+    for validator, n_splits in product(
+        [KFold, StratifiedKFold, StratifiedGroupKFold, MultilabelStratifiedKFold],
+        [1.5, 2.0],
+    ):
+        with pytest.raises(ValueError):
+            validator(n_splits=n_splits)
 
-    # When shuffle is not  a bool:
+    # When shuffle is not a bool
     with pytest.raises(TypeError):
         KFold(n_splits=4, shuffle=None)
 

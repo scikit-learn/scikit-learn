@@ -914,7 +914,7 @@ in each class per label and compare with :class:`KFold`.
        .1:         -  8 / 30            -  2 / 10
 
   >>> kf = KFold(n_splits=4)
-  >>> for train, test in mskf.split(X, y):
+  >>> for train, test in kf.split(X, y):
   ...     train_cnt, test_cnt = np.sum(y[train], axis=0), np.sum(y[test], axis=0)
   ...     print("label.0:   train -  {} / {}\t test -  {} / {}".format(
   ...         len(train) - train_cnt[0], train_cnt[0],
