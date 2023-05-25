@@ -36,7 +36,6 @@ METRICS = {
     "minkowski": dict(p=3),
     "chebyshev": {},
     "seuclidean": dict(V=rng.random_sample(DIMENSION)),
-    "wminkowski": dict(p=3, w=rng.random_sample(DIMENSION)),
     "mahalanobis": dict(V=V_mahalanobis),
 }
 
@@ -231,8 +230,6 @@ def test_gaussian_kde(Cls, n_samples=1000):
         assert_array_almost_equal(dens_tree, dens_gkde, decimal=3)
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "Cls, metric",
     itertools.chain(
