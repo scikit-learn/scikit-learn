@@ -465,7 +465,7 @@ Changelog
 
 - |Enhancement| Speeds up :func:`datasets.make_spd_matrix` and allows to generate
   several matrices adding parameter n_samples.
-  :pr:`xxxxx` by :user:`Quentin Barthélemy <qbarthelemy>`.
+  :pr:`26437` by :user:`Quentin Barthélemy <qbarthelemy>`.
 
 :mod:`sklearn.datasets`
 .......................
