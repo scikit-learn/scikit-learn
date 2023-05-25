@@ -1,5 +1,4 @@
 import numbers
-import warnings
 from itertools import chain
 from math import ceil
 
@@ -62,18 +61,6 @@ class PartialDependenceDisplay:
 
     deciles : dict
         Deciles for feature indices in ``features``.
-
-    pdp_lim : dict or None
-        Global min and max average predictions, such that all plots will have
-        the same scale and y limits. `pdp_lim[1]` is the global min and max for
-        single partial dependence curves. `pdp_lim[2]` is the global min and
-        max for two-way partial dependence curves. If `None`, the limit will be
-        inferred from the global minimum and maximum of all predictions.
-
-        .. deprecated:: 1.1
-           Pass the parameter `pdp_lim` to
-           :meth:`~sklearn.inspection.PartialDependenceDisplay.plot` instead.
-           It will be removed in 1.3.
 
     kind : {'average', 'individual', 'both'} or list of such str, \
             default='average'
@@ -236,7 +223,6 @@ class PartialDependenceDisplay:
         feature_names,
         target_idx,
         deciles,
-        pdp_lim="deprecated",
         kind="average",
         subsample=1000,
         random_state=None,
@@ -246,7 +232,6 @@ class PartialDependenceDisplay:
         self.features = features
         self.feature_names = feature_names
         self.target_idx = target_idx
-        self.pdp_lim = pdp_lim
         self.deciles = deciles
         self.kind = kind
         self.subsample = subsample
@@ -1232,27 +1217,6 @@ class PartialDependenceDisplay:
                 f"Values provided to `kind` must be one of: {valid_kinds!r} or a list"
                 f" of such values. Currently, kind={self.kind!r}"
             )
-
-        # FIXME: remove in 1.3
-        if self.pdp_lim != "deprecated":
-            warnings.warn(
-                (
-                    "The `pdp_lim` parameter is deprecated in version 1.1 and will be "
-                    "removed in version 1.3. Provide `pdp_lim` to the `plot` method."
-                    "instead."
-                ),
-                FutureWarning,
-            )
-            if pdp_lim is not None and self.pdp_lim != pdp_lim:
-                warnings.warn(
-                    (
-                        "`pdp_lim` has been passed in both the constructor and the"
-                        " `plot` method. For backward compatibility, the parameter from"
-                        " the constructor will be used."
-                    ),
-                    UserWarning,
-                )
-            pdp_lim = self.pdp_lim
 
         # Center results before plotting
         if not centered:
