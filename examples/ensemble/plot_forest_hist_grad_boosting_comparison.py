@@ -62,11 +62,6 @@ N_CORES = joblib.cpu_count(only_physical_cores=True)
 print(f"Number of physical cores: {N_CORES}")
 
 # %%
-import threadpoolctl
-
-threadpoolctl.threadpool_info()
-
-# %%
 # The other parameters of both models were tuned but the procedure is not shown
 # here to keep the example simple.
 
