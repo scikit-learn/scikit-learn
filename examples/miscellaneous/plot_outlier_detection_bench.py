@@ -188,6 +188,11 @@ X, y = fetch_openml(
     name="ames_housing", version=1, return_X_y=True, as_frame=True, parser="pandas"
 )
 y = y.div(X["Lot_Area"])
+
+# None values in pandas 1.5.1 were mapped to np.nan in pandas 2.0.1
+X["Misc_Feature"] = X["Misc_Feature"].cat.add_categories("NoInfo").fillna("NoInfo")
+X["Mas_Vnr_Type"] = X["Mas_Vnr_Type"].cat.add_categories("NoInfo").fillna("NoInfo")
+
 X.drop(columns="Lot_Area", inplace=True)
 mask = (y < 40) | (y > 70)
 X = X.loc[mask]
