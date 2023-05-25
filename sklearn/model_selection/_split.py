@@ -48,6 +48,7 @@ __all__ = [
     "StratifiedShuffleSplit",
     "PredefinedSplit",
     "MultilabelStratifiedKFold",
+    "RepeatedMultilabelStratifiedKFold",
     "train_test_split",
     "check_cv",
 ]
@@ -1038,6 +1039,12 @@ class MultilabelStratifiedKFold(_BaseKFold):
     positive to negative examples on each label in each subset. [1]_ Note that
     the train and test sizes may be slightly different in each fold.
 
+    See also
+    --------
+    StratifiedKFold: Takes class information into account to build folds which
+        retain class distributions (for binary or multiclass classification
+        tasks).
+
     Reference
     ---------
     .. [1] Sechidis, Konstantinos; Tsoumakas, Grigorios; Vlahavas, Ioannis.
@@ -1748,7 +1755,6 @@ class RepeatedKFold(_RepeatedSplits):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
     ...     print(f"  Test:  index={test_index}")
-    ...
     Fold 0:
       Train: index=[0 1]
       Test:  index=[2 3]
@@ -1816,7 +1822,6 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
     ...     print(f"  Test:  index={test_index}")
-    ...
     Fold 0:
       Train: index=[1 2]
       Test:  index=[0 3]
@@ -1844,6 +1849,76 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
         super().__init__(
             StratifiedKFold,
+            n_repeats=n_repeats,
+            random_state=random_state,
+            n_splits=n_splits,
+        )
+
+
+class RepeatedMultilabelStratifiedKFold(_RepeatedSplits):
+    """Repeated Multilabel Stratified K-Fold cross validator.
+
+    Repeats Multilabel Stratified K-Fold n times with different randomization
+    in each repetition.
+
+    Read more in the :ref:`User Guide <repeated_k_fold>`.
+
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of folds. Must be at least 2.
+
+    n_repeats : int, default=10
+        Number of times cross-validator needs to be repeated.
+
+    random_state : int, RandomState instance or None, default=None
+        Controls the generation of the random states for each repetition.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import RepeatedMultilabelStratifiedKFold
+    >>> X = np.ones((8, 2))
+    >>> y = np.array([[0, 0]] * 2 + [[0, 1]] * 2 + [[1, 1]] * 2 + [[1, 0]] * 2)
+    >>> rmskf = RepeatedMultilabelStratifiedKFold(n_splits=2, n_repeats=2,
+    ...     random_state=0)
+    >>> rmskf.get_n_splits(X, y)
+    4
+    >>> print(rmskf)
+    RepeatedMultilabelStratifiedKFold(n_repeats=2, n_splits=2, random_state=0)
+    >>> for i, (train_index, test_index) in enumerate(rmskf.split(X, y)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[0 3 4 7]
+      Test:  index=[1 2 5 6]
+    Fold 1:
+      Train: index=[1 2 5 6]
+      Test:  index=[0 3 4 7]
+    Fold 2:
+      Train: index=[0 2 5 7]
+      Test:  index=[1 3 4 6]
+    Fold 3:
+      Train: index=[1 3 4 6]
+      Test:  index=[0 2 5 7]
+
+    Notes
+    -----
+    Randomized CV splitters may return different results for each call of
+    split. You can make the results identical by setting `random_state`
+    to an integer.
+
+    See Also
+    --------
+    RepeatedKFold : Repeats K-Fold n times.
+    """
+
+    def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
+        super().__init__(
+            MultilabelStratifiedKFold,
             n_repeats=n_repeats,
             random_state=random_state,
             n_splits=n_splits,

@@ -38,6 +38,7 @@ from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.model_selection import MultilabelStratifiedKFold
+from sklearn.model_selection import RepeatedMultilabelStratifiedKFold
 
 from sklearn.dummy import DummyClassifier
 
@@ -172,7 +173,7 @@ def test_2d_y():
     y_multilabel = rng.randint(0, 2, size=(n_samples, 3))
     groups = rng.randint(0, 3, size=(n_samples,))
 
-    splitters_no_multilabel = [
+    splitters_non_multilabel = [
         LeaveOneOut(),
         LeavePOut(p=2),
         KFold(),
@@ -189,9 +190,12 @@ def test_2d_y():
         TimeSeriesSplit(),
         PredefinedSplit(test_fold=groups),
     ]
-    splitters_multilabel = [MultilabelStratifiedKFold()]
+    splitters_multilabel = [
+        MultilabelStratifiedKFold(),
+        RepeatedMultilabelStratifiedKFold(),
+    ]
 
-    for splitter in splitters_no_multilabel:
+    for splitter in splitters_non_multilabel:
         list(splitter.split(X, y, groups))
         list(splitter.split(X, y_2d, groups))
         try:
@@ -1209,14 +1213,21 @@ def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
 @ignore_warnings
 def test_repeated_cv_value_errors():
     # n_repeats is not integer or <= 0
-    for cv in (RepeatedKFold, RepeatedStratifiedKFold):
+    for cv in (
+        RepeatedKFold,
+        RepeatedStratifiedKFold,
+        RepeatedMultilabelStratifiedKFold,
+    ):
         with pytest.raises(ValueError):
             cv(n_repeats=0)
         with pytest.raises(ValueError):
             cv(n_repeats=1.5)
 
 
-@pytest.mark.parametrize("RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold])
+@pytest.mark.parametrize(
+    "RepeatedCV",
+    [RepeatedKFold, RepeatedStratifiedKFold, RepeatedMultilabelStratifiedKFold],
+)
 def test_repeated_cv_repr(RepeatedCV):
     n_splits, n_repeats = 2, 6
     repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
@@ -1224,6 +1235,18 @@ def test_repeated_cv_repr(RepeatedCV):
         repeated_cv.__class__.__name__
     )
     assert repeated_cv_repr == repr(repeated_cv)
+
+
+@pytest.mark.parametrize(
+    "RepeatedCV",
+    [RepeatedKFold, RepeatedStratifiedKFold, RepeatedMultilabelStratifiedKFold],
+)
+def test_get_n_splits_for_repeated_kfold(RepeatedCV):
+    n_splits = 3
+    n_repeats = 4
+    repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
+    expected_n_splits = n_splits * n_repeats
+    assert expected_n_splits == repeated_cv.get_n_splits()
 
 
 def test_repeated_kfold_determinstic_split():
@@ -1255,22 +1278,6 @@ def test_repeated_kfold_determinstic_split():
             next(splits)
 
 
-def test_get_n_splits_for_repeated_kfold():
-    n_splits = 3
-    n_repeats = 4
-    rkf = RepeatedKFold(n_splits=n_splits, n_repeats=n_repeats)
-    expected_n_splits = n_splits * n_repeats
-    assert expected_n_splits == rkf.get_n_splits()
-
-
-def test_get_n_splits_for_repeated_stratified_kfold():
-    n_splits = 3
-    n_repeats = 4
-    rskf = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats)
-    expected_n_splits = n_splits * n_repeats
-    assert expected_n_splits == rskf.get_n_splits()
-
-
 def test_repeated_stratified_kfold_determinstic_split():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     y = [1, 1, 1, 0, 0]
@@ -1296,6 +1303,37 @@ def test_repeated_stratified_kfold_determinstic_split():
         train, test = next(splits)
         assert_array_equal(train, [0, 1, 4])
         assert_array_equal(test, [2, 3])
+
+        with pytest.raises(StopIteration):
+            next(splits)
+
+
+def test_repeated_multilabel_stratified_kfold_deterministic_split():
+    X = np.ones(7)
+    y = np.array([[0, 0], [1, 0], [1, 1], [1, 1], [0, 1], [0, 1], [0, 0]])
+    random_state = 20230525
+    rmskf = RepeatedMultilabelStratifiedKFold(
+        n_splits=2, n_repeats=2, random_state=random_state
+    )
+
+    # Split should produce the same and deterministic splits on each call
+    for _ in range(3):
+        splits = rmskf.split(X, y)
+        train, test = next(splits)
+        assert_array_equal(train, [2, 5, 6])
+        assert_array_equal(test, [0, 1, 3, 4])
+
+        train, test = next(splits)
+        assert_array_equal(train, [0, 1, 3, 4])
+        assert_array_equal(test, [2, 5, 6])
+
+        train, test = next(splits)
+        assert_array_equal(train, [0, 1, 4])
+        assert_array_equal(test, [2, 3, 5, 6])
+
+        train, test = next(splits)
+        assert_array_equal(train, [2, 3, 5, 6])
+        assert_array_equal(test, [0, 1, 4])
 
         with pytest.raises(StopIteration):
             next(splits)
@@ -1975,6 +2013,8 @@ def test_random_state_shuffle_false(Klass):
         (StratifiedKFold(shuffle=True, random_state=123), True),
         (StratifiedGroupKFold(shuffle=True, random_state=123), True),
         (StratifiedGroupKFold(), True),
+        (MultilabelStratifiedKFold(shuffle=True, random_state=123), True),
+        (MultilabelStratifiedKFold(), True),
         (RepeatedKFold(random_state=123), True),
         (RepeatedStratifiedKFold(random_state=123), True),
         (ShuffleSplit(random_state=123), True),
@@ -1990,10 +2030,27 @@ def test_random_state_shuffle_false(Klass):
         (KFold(shuffle=True, random_state=None), False),
         (StratifiedKFold(shuffle=True, random_state=np.random.RandomState(0)), False),
         (StratifiedKFold(shuffle=True, random_state=np.random.RandomState(0)), False),
+        (
+            MultilabelStratifiedKFold(
+                shuffle=True, random_state=np.random.RandomState(0)
+            ),
+            False,
+        ),
+        (
+            MultilabelStratifiedKFold(
+                shuffle=True, random_state=np.random.RandomState(0)
+            ),
+            False,
+        ),
         (RepeatedKFold(random_state=None), False),
         (RepeatedKFold(random_state=np.random.RandomState(0)), False),
         (RepeatedStratifiedKFold(random_state=None), False),
         (RepeatedStratifiedKFold(random_state=np.random.RandomState(0)), False),
+        (RepeatedMultilabelStratifiedKFold(random_state=None), False),
+        (
+            RepeatedMultilabelStratifiedKFold(random_state=np.random.RandomState(0)),
+            False,
+        ),
         (ShuffleSplit(random_state=None), False),
         (ShuffleSplit(random_state=np.random.RandomState(0)), False),
         (GroupShuffleSplit(random_state=None), False),
