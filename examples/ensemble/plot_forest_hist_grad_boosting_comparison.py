@@ -36,10 +36,10 @@ n_samples, n_features = X.shape
 
 # %%
 # HGBT uses an histogram-based algorithm on binned feature values that can
-# efficiently handle large datasets (tens
-# of thousands samples or more) with a high number of features (see
-# :ref:`Why_it's_faster`). The scikit-learn implementation of RF does not use
-# binning and relies on exact splitting, which can be computationally expensive.
+# efficiently handle large datasets (tens of thousands samples or more) with a
+# high number of features (see :ref:`Why_it's_faster`). The scikit-learn
+# implementation of RF does not use binning and relies on exact splitting, which
+# can be computationally expensive.
 
 print(f"The dataset consists of {n_samples} samples and {n_features} features")
 
@@ -54,9 +54,9 @@ print(f"The dataset consists of {n_samples} samples and {n_features} features")
 #
 # The implementation of :class:`~sklearn.ensemble.RandomForestRegressor` and
 # :class:`~sklearn.ensemble.RandomForestClassifier` can also be run on multiple
-# cores by using the `n_jobs` parameter, here set to 2 due to limitations on the
-# host machine which runs the examples of the gallery when building the
-# documentation. See :ref:`parallelism` for more information.
+# cores by using the `n_jobs` parameter, here set to match the number of
+# physical cores on the host machine. See :ref:`parallelism` for more
+# information.
 
 import joblib
 
@@ -64,6 +64,13 @@ N_CORES = joblib.cpu_count(only_physical_cores=True)
 print(f"Number of physical cores: {N_CORES}")
 
 # %%
+# Unlike RF, HGBT models offer an early-stopping option (see
+# :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`)
+# to avoid adding new unnecessary trees. Internally, the algorithm uses an
+# out-of-sample set to compute the generalization performance of the model at
+# each addition of a tree. Thus, if the generalization performance is not
+# improving for more than `n_iter_no_change` iterations, it stops adding trees.
+#
 # The other parameters of both models were tuned but the procedure is not shown
 # here to keep the example simple.
 
@@ -76,13 +83,13 @@ models = {
     "Random Forest": RandomForestRegressor(
         min_samples_leaf=5, random_state=0, n_jobs=N_CORES
     ),
-    "Histogram-based Gradient Boosting": HistGradientBoostingRegressor(
+    "Hist Gradient Boosting": HistGradientBoostingRegressor(
         max_leaf_nodes=15, random_state=0, early_stopping=False
     ),
 }
 param_grids = {
     "Random Forest": {"n_estimators": [10, 20, 50, 100]},
-    "HistGradientBoosting": {"max_iter": [10, 20, 50, 100, 300, 500]},
+    "Hist Gradient Boosting": {"max_iter": [10, 20, 50, 100, 300, 500]},
 }
 cv = KFold(n_splits=3, shuffle=True, random_state=0)
 
@@ -188,35 +195,27 @@ fig.update_layout(
 
 # %%
 # Both HGBT and RF models improve when increasing the number of trees in the
-# ensemble. However, the scores reach a plateau earlier: adding new trees
-# just makes fitting and scoring slower and the RF model can never reach
-# the test score of the largest HGBDT model.
+# ensemble. However, the scores reach a plateau where adding new trees just
+# makes fitting and scoring slower. The RF model reaches such plateau earlier
+# and can never reach the test score of the largest HGBDT model.
 #
-# Unlike RF, HGBT models offer an early-stopping option (See
-# :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`)
-# to avoid adding new unnecessary trees. Internally, the algorithm uses an
-# out-of-sample set to compute the generalization performance of the model at
-# each addition of a tree. Thus, if the generalization performance is not
-# improving for more than `n_iter_no_change` iterations, it stops adding trees.
-#
-# Note that the results shown on the above plot can change sightly across
-# runs and even more significantly when running on other machines: try to
-# run this example on your own local machine.
+# Note that the results shown on the above plot can change sightly across runs
+# and even more significantly when running on other machines: try to run this
+# example on your own local machine.
 #
 # Overall, one should often observe that the Histogram-based gradient boosting
 # models uniformly dominate the Random Forest models in the "test score vs
-# training speed trade-off" (the HGBDT curve should be on the top left of the
-# RF curve, without ever crossing). The "test score vs prediction speed"
-# trade-off can also be more disputed but it's most often favorable to HGBDT.
-# It's always a good idea to check both kinds of model (with hyper-parameter 
-# tuning) and compare their performance on your specific problem to determine
-# which model is the best fit but **HGBT almost always offer a more favorable
-# speed-accuracy trade-off than RF**, either with the default hyper-parameters
-# or including the hyper-parameter tuning cost.
+# training speed trade-off" (the HGBDT curve should be on the top left of the RF
+# curve, without ever crossing). The "test score vs prediction speed" trade-off
+# can also be more disputed but it's most often favorable to HGBDT. It's always
+# a good idea to check both kinds of model (with hyper-parameter tuning) and
+# compare their performance on your specific problem to determine which model is
+# the best fit but **HGBT almost always offer a more favorable speed-accuracy
+# trade-off than RF**, either with the default hyper-parameters or including the
+# hyper-parameter tuning cost.
 #
 # There is one exception to this rule of thumb though: when training a
-# multiclass classification model with a large number of possible
-# classes, HGBDT fits internally one-tree per class at each boosting
-# iteration while the trees used by the RF models are naturally multiclass
-# which should improve the speed accuracy trade-off of the RF models in
-# this case.
+# multiclass classification model with a large number of possible classes, HGBDT
+# fits internally one-tree per class at each boosting iteration while the trees
+# used by the RF models are naturally multiclass which should improve the speed
+# accuracy trade-off of the RF models in this case.
