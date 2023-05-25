@@ -79,7 +79,7 @@ models = {
     "Random Forest": RandomForestRegressor(
         min_samples_leaf=5, random_state=0, n_jobs=N_CORES
     ),
-    "HistGradientBoosting": HistGradientBoostingRegressor(
+    "Histogram-based Gradient Boosting": HistGradientBoostingRegressor(
         max_leaf_nodes=15, random_state=0, early_stopping=False
     ),
 }
@@ -191,8 +191,9 @@ fig.update_layout(
 
 # %%
 # Both HGBT and RF models improve when increasing the number of trees in the
-# ensemble. However, the scores reach a plateau where adding new trees just
-# makes fitting and scoring slower.
+# ensemble. However, the scores reach a plateau earlier: adding new trees
+# just makes fitting and scoring slower and the RF model can never reach
+# the test score of the largest HGBDT model.
 #
 # Unlike RF, HGBT models offer an early-stopping option (See
 # :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`)
@@ -201,10 +202,17 @@ fig.update_layout(
 # each addition of a tree. Thus, if the generalization performance is not
 # improving for more than `n_iter_no_change` iterations, it stops adding trees.
 #
-# In this example HGBT performs uniformly better than RF in terms of test score
-# and computing time (train and predict). Nevertheless, the training and
-# predicting time of RF can be reduced using the `n_jobs` parameter, as
-# mentioned above. Overall, the performance of HGBT versus parallelized RF
-# depends on the specific characteristics of the dataset and the modeling task.
-# It's always a good idea to try both models and compare their performance on
-# your specific problem to determine which model is the best fit.
+# Note that the results shown on the above plot can change sightly across
+# runs and even more significantly when running on other machines: try to
+# run this example on your own local machine.
+#
+# Overall, one should often observe that the Histogram-based gradient boosting
+# model to uniformly dominate the Random Forest model in the "test score vs
+# training speed trade-off" (the HGBDT curve should be on the top left of the
+# RF curve, without ever crossing). The "test score vs prediction speed"
+# trade-off can also be more disputed but it's most often favorable to HGBDT.
+# It's always a good idea to check both kinds of model (with hyper-parameter 
+# tuning) and compare their performance on your specific problem to determine
+# which model is the best fit but **HGBT almost always offer a more favorable
+# speed-accuracy trade-off than RF**, either with the default hyper-parameters
+# or including the hyper-parameter tuning cost.
