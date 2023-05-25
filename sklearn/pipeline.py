@@ -14,6 +14,7 @@ from itertools import islice
 
 import numpy as np
 from scipy import sparse
+import pandas as pd
 
 from .base import clone, TransformerMixin
 from .preprocessing import FunctionTransformer
@@ -413,6 +414,18 @@ class Pipeline(_BaseComposition):
         """
         self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
+        if ~(isinstance(X, pd.DataFrame) | isinstance(X, pd.Series) | isinstance(X, (np.ndarray, np.generic))):
+            try:
+                import polars as pl
+                X = X.to_pandas()
+            except:
+                raise ValueError('X DataFrame not pandas, polars or nparray')
+        if ~(isinstance(y, pd.DataFrame) | isinstance(y, pd.Series) | isinstance(y, (np.ndarray, np.generic))) & (y!=None):
+            try:
+                import polars as pl
+                y = y.to_pandas()
+            except:
+                raise ValueError('X DataFrame not pandas, polars or nparray')
         Xt = self._fit(X, y, **fit_params_steps)
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             if self._final_estimator != "passthrough":
