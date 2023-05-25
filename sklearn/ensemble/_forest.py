@@ -368,6 +368,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         )
         # _compute_feature_has_missing checks if X has missing values and will raise
         # an error if the underlying tree base estimator can't handle missing values.
+        # Only the criterion is required to determine if the tree supports missing
+        # values.
         estimator = type(self.estimator)(criterion=self.criterion)
         feature_has_missing = estimator._compute_feature_has_missing(X)
 
@@ -671,6 +673,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
     def _more_tags(self):
         if isinstance(self.estimator, BaseDecisionTree):
+            # Only the criterion is required to determine if the tree supports
+            # missing values
             estimator = type(self.estimator)(criterion=self.criterion)
             return {"allow_nan": _safe_tags(estimator, key="allow_nan")}
         else:
