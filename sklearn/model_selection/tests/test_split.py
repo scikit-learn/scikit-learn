@@ -1467,7 +1467,10 @@ def test_check_cv():
         [[0, 0, 0, 0], [0, 1, 1, 0], [0, 0, 0, 1], [1, 1, 0, 1], [0, 0, 1, 0]]
     )
     cv = check_cv(3, y_multilabel, classifier=True)
-    np.testing.assert_equal(list(KFold(3).split(X)), list(cv.split(X)))
+    np.testing.assert_equal(
+        list(MultilabelStratifiedKFold(3).split(X, y_multilabel)),
+        list(cv.split(X, y_multilabel)),
+    )
 
     y_multioutput = np.array([[1, 2], [0, 3], [0, 0], [3, 1], [2, 0]])
     cv = check_cv(3, y_multioutput, classifier=True)

@@ -2646,12 +2646,14 @@ def check_cv(cv=5, y=None, *, classifier=False):
     """
     cv = 5 if cv is None else cv
     if isinstance(cv, numbers.Integral):
-        if (
-            classifier
-            and (y is not None)
-            and (type_of_target(y, input_name="y") in ("binary", "multiclass"))
-        ):
-            return StratifiedKFold(cv)
+        if classifier and y is not None:
+            type_of_target_y = type_of_target(y)
+            if type_of_target_y in ("binary", "multiclass"):
+                return StratifiedKFold(cv)
+            elif type_of_target_y == "multilabel-indicator":
+                return MultilabelStratifiedKFold(cv)
+            else:
+                return KFold(cv)
         else:
             return KFold(cv)
 
