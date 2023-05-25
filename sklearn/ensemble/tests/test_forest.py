@@ -1800,7 +1800,7 @@ def test_round_samples_to_one_when_samples_too_low(class_weight):
         (datasets.make_classification, RandomForestClassifier),
     ],
 )
-def test_missing_values_is_resilience(make_data, Forest):
+def test_missing_values_is_resilient(make_data, Forest):
     """Check that forest can deal with missing values and have decent performance."""
 
     rng = np.random.RandomState(0)
