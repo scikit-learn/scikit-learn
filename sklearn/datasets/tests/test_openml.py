@@ -1361,6 +1361,7 @@ def test_dataset_with_openml_warning(monkeypatch, gzip_response):
         fetch_openml(data_id=data_id, cache=False, as_frame=False, parser="liac-arff")
 
 
+@pytest.mark.filterwarnings("ignore:The values to be considered as NA/NaN")
 def test_fetch_openml_overwrite_default_params_read_csv(monkeypatch):
     """Check that we can overwrite the default parameters of `read_csv`."""
     pytest.importorskip("pandas")
@@ -1557,7 +1558,11 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, pars
     # validate failed checksum
     with pytest.raises(ValueError) as exc:
         sklearn.datasets.fetch_openml(
-            data_id=data_id, cache=False, as_frame=as_frame, parser=parser
+            data_id=data_id,
+            cache=False,
+            as_frame=as_frame,
+            parser=parser,
+            read_csv_kwargs={"na_values": FUTURE_NA_VALUES - {"None"}},
         )
     # exception message should have file-path
     assert exc.match("1666876")
@@ -1602,7 +1607,11 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response, parser):
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
 
     dataset = sklearn.datasets.fetch_openml(
-        data_id=data_id, cache=False, as_frame=False, parser=parser
+        data_id=data_id,
+        cache=False,
+        as_frame=False,
+        parser=parser,
+        read_csv_kwargs={"na_values": FUTURE_NA_VALUES - {"None"}},
     )
     assert dataset is not None
     # The dataset has 17 features, including 1 ignored (animal),
