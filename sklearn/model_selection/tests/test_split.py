@@ -703,6 +703,85 @@ def test_stratified_group_kfold_against_group_kfold(cls_distr, n_groups):
     assert sgkf_entr <= gkf_entr
 
 
+def test_multilabel_stratified_kfold_no_shuffle():
+    # Manually check that MultilabelStratifiedKFold preserves the data ordering
+    # as much as possible on toy datasets in order to avoid hiding sample
+    # dependencies when possible
+    X = np.ones(4)
+    y = np.array([[0, 0], [0, 1], [1, 1], [1, 0]])
+    splits = MultilabelStratifiedKFold(2).split(X, y)
+    train, test = next(splits)
+    assert_array_equal(test, [1, 2])
+    assert_array_equal(train, [0, 3])
+
+    train, test = next(splits)
+    assert_array_equal(test, [0, 3])
+    assert_array_equal(train, [1, 2])
+
+    X = np.ones(7)
+    y = np.array([[0, 0], [1, 0], [1, 1], [1, 1], [0, 1], [0, 1], [0, 0]])
+    splits = MultilabelStratifiedKFold(2).split(X, y)
+    train, test = next(splits)
+    assert_array_equal(test, [1, 4, 5, 6])
+    assert_array_equal(train, [0, 2, 3])
+
+    train, test = next(splits)
+    assert_array_equal(test, [0, 2, 3])
+    assert_array_equal(train, [1, 4, 5, 6])
+
+
+def test_multilabel_stratified_kfold_balance():
+    # Check that MultilabelStratifiedKFold returns folds with balanced sizes
+    # Repeat with shuffling turned on and off
+    X = np.ones(17)
+    y = [[0, 0]] * 3 + [[0, 1]] * 3 + [[1, 0]] * 3 + [[1, 1]] * 8
+
+    for shuffle in (True, False):
+        cv = MultilabelStratifiedKFold(3, shuffle=shuffle)
+        for i in range(11, 17):
+            sizes = [len(test) for _, test in cv.split(X[:i], y[:i])]
+
+            assert (np.max(sizes) - np.min(sizes)) <= 1
+            assert np.sum(sizes) == i
+
+
+def test_shuffle_multilabel_stratified_kfold_reproducibility():
+    X = np.ones(15)  # Divisible by 3
+    y = [[0, 0]] * 3 + [[0, 1]] * 3 + [[1, 0]] * 3 + [[1, 1]] * 6
+    X2 = np.ones(16)  # Not divisible by 3
+    y2 = [[0, 0]] * 3 + [[0, 1]] * 3 + [[1, 0]] * 3 + [[1, 1]] * 7
+
+    # Check that when shuffling is enabled, multiple split calls produce
+    # the same split when random_state is int
+    mskf = MultilabelStratifiedKFold(3, shuffle=True, random_state=0)
+    np.testing.assert_equal(list(mskf.split(X, y)), list(mskf.split(X, y)))
+
+    # Check that when shuffling is enabled, multiple split calls often
+    # (not always) produce different splits when random_state is RandomState
+    # instance or None
+    rng = np.random.RandomState(0)
+    mskf = MultilabelStratifiedKFold(3, shuffle=True, random_state=rng)
+    for data in zip((X, X2), (y, y2)):
+        for (_, test_a), (_, test_b) in zip(mskf.split(*data), mskf.split(*data)):
+            # mskf.split(...) returns an array of tuples, each consisting of an
+            # array with train indices and test indices; ensure that the splits
+            # for data are not the same when random_state is not set
+            with pytest.raises(AssertionError):
+                np.testing.assert_array_equal(test_a, test_b)
+
+
+def test_shuffle_multilabel_stratified_kfold():
+    # Check that shuffling is happening when requested, and for proper sample
+    # coverage
+    X_40 = np.ones(40)
+    y = [[0, 0]] * 10 + [[0, 1]] * 10 + [[1, 0]] * 10 + [[1, 1]] * 10
+    mskf0 = MultilabelStratifiedKFold(5, shuffle=True, random_state=0)
+    mskf1 = MultilabelStratifiedKFold(5, shuffle=True, random_state=1)
+    for (_, test0), (_, test1) in zip(mskf0.split(X_40, y), mskf1.split(X_40, y)):
+        assert set(test0) != set(test1)
+    check_cv_coverage(mskf0, X_40, y, groups=None, expected_n_splits=5)
+
+
 def test_shuffle_split():
     ss1 = ShuffleSplit(test_size=0.2, random_state=0).split(X)
     ss2 = ShuffleSplit(test_size=2, random_state=0).split(X)
