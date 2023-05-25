@@ -91,7 +91,7 @@ param_grids = {
     "Random Forest": {"n_estimators": [10, 20, 50, 100]},
     "Hist Gradient Boosting": {"max_iter": [10, 20, 50, 100, 300, 500]},
 }
-cv = KFold(n_splits=3, shuffle=True, random_state=0)
+cv = KFold(n_splits=4, shuffle=True, random_state=0)
 
 results = []
 for name, model in models.items():
@@ -210,7 +210,7 @@ fig.update_layout(
 # can also be more disputed but it's most often favorable to HGBDT. It's always
 # a good idea to check both kinds of model (with hyper-parameter tuning) and
 # compare their performance on your specific problem to determine which model is
-# the best fit but **HGBT almost always offer a more favorable speed-accuracy
+# the best fit but **HGBT almost always offers a more favorable speed-accuracy
 # trade-off than RF**, either with the default hyper-parameters or including the
 # hyper-parameter tuning cost.
 #
