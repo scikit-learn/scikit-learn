@@ -478,8 +478,8 @@ def _load_arff_response(
         The delay between two consecutive downloads in seconds.
 
     read_csv_kwargs : dict, default=None
-        Keyword arguments to pass to `pandas.read_csv`. It allows to overwrite
-        the default options.
+        Keyword arguments to pass to `pandas.read_csv` when using the pandas parser.
+        It allows to overwrite the default options.
 
         .. versionadded:: 1.3
 
@@ -614,8 +614,8 @@ def _download_data_to_bunch(
         The parser used to parse the ARFF file.
 
     read_csv_kwargs : dict, default=None
-        Keyword arguments to pass to `pandas.read_csv`. It allows to overwrite
-        the default options.
+        Keyword arguments to pass to `pandas.read_csv` when using the pandas parser.
+        It allows to overwrite the default options.
 
         .. versionadded:: 1.3
 
@@ -854,7 +854,8 @@ def fetch_openml(
 
     read_csv_kwargs : dict, default=None
         Keyword arguments passed to `pandas.read_csv` when loading the data
-        from a ARFF file. It can allows to overwrite some default parameters.
+        from a ARFF file and using the pandas parser. It can allows to
+        overwrite some default parameters.
 
         .. versionadded:: 1.3
 
