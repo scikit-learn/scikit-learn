@@ -891,7 +891,8 @@ def _fit_multiplicative_update(
         "W": ["array-like", None],
         "H": ["array-like", None],
         "update_H": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def non_negative_factorization(
     X,
