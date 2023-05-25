@@ -35,7 +35,8 @@ X, y = fetch_california_housing(return_X_y=True, as_frame=True)
 n_samples, n_features = X.shape
 
 # %%
-# HGBT uses a binning algorithm that can efficiently handle large datasets (tens
+# HGBT uses an histogram-based algorithm on binned feature values that can
+# efficiently handle large datasets (tens
 # of thousands samples or more) with a high number of features (see
 # :ref:`Why_it's_faster`). The scikit-learn implementation of RF does not use
 # binning and relies on exact splitting, which can be computationally expensive.
@@ -54,7 +55,8 @@ print(f"The dataset consists of {n_samples} samples and {n_features} features")
 # The implementation of :class:`~sklearn.ensemble.RandomForestRegressor` and
 # :class:`~sklearn.ensemble.RandomForestClassifier` can also be run on multiple
 # cores by using the `n_jobs` parameter, here set to 2 due to limitations on the
-# documentation builder. See :ref:`parallelism` for more information.
+# host machine which runs the examples of the gallery when building the
+# documentation. See :ref:`parallelism` for more information.
 
 import joblib
 
@@ -202,7 +204,7 @@ fig.update_layout(
 # run this example on your own local machine.
 #
 # Overall, one should often observe that the Histogram-based gradient boosting
-# model to uniformly dominate the Random Forest model in the "test score vs
+# models uniformly dominate the Random Forest models in the "test score vs
 # training speed trade-off" (the HGBDT curve should be on the top left of the
 # RF curve, without ever crossing). The "test score vs prediction speed"
 # trade-off can also be more disputed but it's most often favorable to HGBDT.
@@ -211,3 +213,10 @@ fig.update_layout(
 # which model is the best fit but **HGBT almost always offer a more favorable
 # speed-accuracy trade-off than RF**, either with the default hyper-parameters
 # or including the hyper-parameter tuning cost.
+#
+# There is one exception to this rule of thumb though: when training a
+# multiclass classification model with a large number of possible
+# classes, HGBDT fits internally one-tree per class at each boosting
+# iteration while the trees used by the RF models are naturally multiclass
+# which should improve the speed accuracy trade-off of the RF models in
+# this case.
