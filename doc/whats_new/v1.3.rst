@@ -341,6 +341,13 @@ Changelog
 - |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
   :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
 
+:mod:`sklearn.gaussian_process`
+................................
+
+- |API| The default value for `random_state` in
+  :meth:`GuassianProcessRegressor.sample_y` will change from `0` to `None` in v1.5.
+  :pr:`25789` by :user:`Kevin Ingles <ominusliticus>`.
+
 :mod:`sklearn.inspection`
 .........................
 

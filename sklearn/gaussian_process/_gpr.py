@@ -463,7 +463,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             else:
                 return y_mean
 
-    def sample_y(self, X, n_samples=1, random_state=0):
+    def sample_y(self, X, n_samples=1, random_state="warn"):
         """Draw samples from Gaussian process and evaluate at X.
 
         Parameters
@@ -478,6 +478,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Determines random number generation to randomly draw samples.
             Pass an int for reproducible results across multiple function
             calls.
+
+            .. versionchanged:: 1.5
+
+                The default value of `random_stae` will change to `None` in v1.5
+
             See :term:`Glossary <random_state>`.
 
         Returns
@@ -487,6 +492,15 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Values of n_samples samples drawn from Gaussian process and
             evaluated at query points.
         """
+        # TODO(1.5): Default updates to `None`
+        if random_state == "warn":
+            warnings.warn(
+                "The default value of random_state will change from"
+                + " 0 to None in 1.5",
+                FutureWarning,
+            )
+            random_state = 0
+
         rng = check_random_state(random_state)
 
         y_mean, y_cov = self.predict(X, return_cov=True)
