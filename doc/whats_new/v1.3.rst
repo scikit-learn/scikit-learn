@@ -235,6 +235,13 @@ Changelog
   is deprecated and will be removed in v1.5.
   :pr:`25784` by :user:`Jérémie du Boisberranger`.
 
+- |API| Announce change of behaviour in v1.5 where the value `"None"` will be
+  considered as a NA value when using :func:`datasets.fetch_openml` together with
+  the Pandas parser. To silence this warning and use the future behaviour now,
+  one can pass `read_csv_kwargs={"na_values": sklearn.datasets.FUTURE_NA_VALUES}`
+  to :func:`datasets.fetch_openml`.
+  :pr:`26436` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Fix| :func:`datasets.fetch_openml` returns improved data types when
   `as_frame=True` and `parser="liac-arff"`. :pr:`26386` by `Thomas Fan`_.
 
