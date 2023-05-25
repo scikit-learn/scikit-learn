@@ -991,6 +991,8 @@ class MultilabelStratifiedKFold(_BaseKFold):
 
     Read more in the :ref:`User Guide <multilabel_stratified_k_fold>`.
 
+    .. versionadded:: 1.3
+
     Parameters
     ----------
     n_splits : int, default=5

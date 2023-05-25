@@ -864,7 +864,7 @@ This is nontrivial since if we perform stratification on each label independentl
 using for instance :class:`StratifiedKFold`, this may lead to different disjoint
 splits.
 One solution is to apply iterative stratification of labels, as provided by
-:class:`MultilabelStratifiedKFold` and :class:`RepeatedMultilabelStratifiedKFold`
+:class:`MultilabelStratifiedKFold`.
 
 .. topic:: References:
 
@@ -886,55 +886,55 @@ Here is an example of multilabel stratified 4-fold cross-validation on a dataset
 in each class per label and compare with :class:`KFold`.
 
   >>> import numpy as np
-  >>> import pandas as pd
   >>> from sklearn.model_selection import KFold, MultilabelStratifiedKFold
   >>> X = np.ones((50, 2))
-  >>> y = np.vstack((np.tile([0, 1], (45, 1)), np.tile([1, 0], (5, 1))))
-
-  >>> df = pd.DataFrame(columns=pd.MultiIndex.from_product(
-  ...     [("train", "test"), ("label.0", "label.1"), ("cls.0", "cls.1")]
+  >>> y = np.vstack((
+  ...     np.tile([0, 1], (35, 1)), np.tile([0, 0], (5, 1)),
+  ...     np.tile([1, 1], (5, 1)), np.tile([1, 0], (5, 1)),
   ... ))
+
   >>> mskf = MultilabelStratifiedKFold(n_splits=4)
-  >>> for i, (train, test) in enumerate(mskf.split(X, y)):
+  >>> for train, test in mskf.split(X, y):
   ...     train_cnt, test_cnt = np.sum(y[train], axis=0), np.sum(y[test], axis=0)
-  ...     df.loc[i] = [
+  ...     print("label.0:   train -  {} / {}\t test -  {} / {}".format(
   ...         len(train) - train_cnt[0], train_cnt[0],
-  ...         len(train) - train_cnt[1], train_cnt[1],
   ...         len(test) - test_cnt[0], test_cnt[0],
+  ...     ))
+  ...     print("     .1:         -  {} / {}\t      -  {} / {}".format(
+  ...         len(train) - train_cnt[1], train_cnt[1],
   ...         len(test) - test_cnt[1], test_cnt[1],
-  ...     ]
-  >>> print(df)
-      train                        test
-    label.0       label.1       label.0       label.1
-      cls.0 cls.1   cls.0 cls.1   cls.0 cls.1   cls.0 cls.1
-  0      34     3       3    34      11     2       2    11
-  1      33     4       4    33      12     1       1    12
-  2      34     4       4    34      11     1       1    11
-  3      34     4       4    34      11     1       1    11
+  ...     ))
+  label.0:   train -  30 / 7       test -  10 / 3
+       .1:         -  8 / 29            -  2 / 11
+  label.0:   train -  30 / 7       test -  10 / 3
+       .1:         -  6 / 31            -  4 / 9
+  label.0:   train -  30 / 8       test -  10 / 2
+       .1:         -  8 / 30            -  2 / 10
+  label.0:   train -  30 / 8       test -  10 / 2
+       .1:         -  8 / 30            -  2 / 10
 
-  >>> df = pd.DataFrame(columns=pd.MultiIndex.from_product(
-  ...     [("train", "test"), ("label.0", "label.1"), ("cls.0", "cls.1")]
-  ... ))
   >>> kf = KFold(n_splits=4)
-  >>> for i, (train, test) in enumerate(kf.split(X, y)):
+  >>> for train, test in mskf.split(X, y):
   ...     train_cnt, test_cnt = np.sum(y[train], axis=0), np.sum(y[test], axis=0)
-  ...     df.loc[i] = [
+  ...     print("label.0:   train -  {} / {}\t test -  {} / {}".format(
   ...         len(train) - train_cnt[0], train_cnt[0],
-  ...         len(train) - train_cnt[1], train_cnt[1],
   ...         len(test) - test_cnt[0], test_cnt[0],
+  ...     ))
+  ...     print("     .1:         -  {} / {}\t      -  {} / {}".format(
+  ...         len(train) - train_cnt[1], train_cnt[1],
   ...         len(test) - test_cnt[1], test_cnt[1],
-  ...     ]
-  >>> print(df)
-      train                        test
-    label.0       label.1       label.0       label.1
-      cls.0 cls.1   cls.0 cls.1   cls.0 cls.1   cls.0 cls.1
-  0      32     5       5    32      13     0       0    13
-  1      32     5       5    32      13     0       0    13
-  2      33     5       5    33      12     0       0    12
-  3      38     0       0    38       7     5       5     7
+  ...     ))
+  label.0:   train -  27 / 10      test -  13 / 0
+       .1:         -  10 / 27           -  0 / 13
+  label.0:   train -  27 / 10      test -  13 / 0
+       .1:         -  10 / 27           -  0 / 13
+  label.0:   train -  28 / 10      test -  12 / 0
+       .1:         -  7 / 31            -  3 / 9
+  label.0:   train -  38 / 0       test -  2 / 10
+       .1:         -  3 / 35            -  7 / 5
 
 We can see that :class:`MultilabelStratifiedKFold` preserves the class ratios per
-label (approximately 10 / 1 for the 1st label and 1 / 10 for the 2nd label) in both
+label (approximately 4 / 1 for the label 0 and 1 / 4 for the label 1) in both
 train and test dataset.
 
 .. _timeseries_cv:
