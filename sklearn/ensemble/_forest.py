@@ -62,7 +62,6 @@ from ..tree import (
     ExtraTreeRegressor,
 )
 from ..tree._tree import DTYPE, DOUBLE
-from ..base import clone
 from ..utils import check_random_state, compute_sample_weight
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
@@ -369,8 +368,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         )
         # _compute_feature_has_missing checks if X has missing values and will raise
         # an error if the underlying tree base estimator can't handle missing values.
-        estimator = clone(self.estimator)
-        estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
+        estimator = type(self.estimator)(criterion=self.criterion)
         feature_has_missing = estimator._compute_feature_has_missing(X)
 
         if sample_weight is not None:
@@ -672,12 +670,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return all_importances / np.sum(all_importances)
 
     def _more_tags(self):
-        # Ignore errors because the parameters are not validated
-        try:
-            estimator = clone(self.estimator)
-            estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
+        if isinstance(self.estimator, BaseDecisionTree):
+            estimator = type(self.estimator)(criterion=self.criterion)
             return {"allow_nan": _safe_tags(estimator, key="allow_nan")}
-        except (AttributeError, TypeError):
+        else:
             return {}
 
 
