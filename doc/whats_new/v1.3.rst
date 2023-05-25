@@ -43,6 +43,14 @@ random sampling procedures.
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`decomposition.KernelPCA` may produce different results through
+  `inverse_transform` if `gamma` is `None`. Now it will be chosen correctly as
+  `1/n_features` of the data that it is fitted on, while previously it might be
+  incorrectly chosen as `1/n_features` of the data passed to `inverse_transform`.
+  A new attribute `gamma_` is provided for revealing the actual value of `gamma`
+  used each time the kernel is called.
+  :pr:`26337` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -151,6 +159,16 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn`
+..............
+
+- |Feature| Added a new option `skip_parameter_validation`, to the function
+  :func:`sklearn.set_config` and context manager :func:`sklearn.config_context`, that
+  allows to skip the validation of the parameters passed to the estimators and public
+  functions. This can be useful to speed up the code but should be used with care
+  because it can lead to unexpected behaviors or raise obscure error messages when
+  setting invalid parameters.
+  :pr:`25815` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.base`
 ...................
@@ -206,12 +224,19 @@ Changelog
   consistent with :func:`covariance.graphical_lasso`.
   :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
 
+- |Fix| :func:`covariance.empirical_covariance` now gives an informative
+  error message when input is not appropriate.
+  :pr:`26108` by :user:`Quentin Barthélemy <qbarthelemy>`.
+
 :mod:`sklearn.datasets`
 .......................
 
 - |API| The `data_transposed` argument of :func:`datasets.make_sparse_coded_signal`
   is deprecated and will be removed in v1.5.
   :pr:`25784` by :user:`Jérémie du Boisberranger`.
+
+- |Fix| :func:`datasets.fetch_openml` returns improved data types when
+  `as_frame=True` and `parser="liac-arff"`. :pr:`26386` by `Thomas Fan`_.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -409,6 +434,12 @@ Changelog
   level. This line is exposed in the `chance_level_` attribute.
   :pr:`25987` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+- |Enhancement| :meth:`metrics.PrecisionRecallDisplay.from_estimator` and
+  :meth:`metrics.PrecisionRecallDisplay.from_predictions` now accept two new
+  keywords, `plot_chance_level` and `chance_level_kw` to plot the baseline
+  chance level. This line is exposed in the `chance_level_` attribute.
+  :pr:`26019` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 - |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
   not normalized, instead of actually normalizing them in the metric. Starting from
   1.5 this will raise an error. :pr:`25299` by :user:`Omar Salman <OmarManzoor`.
@@ -425,6 +456,11 @@ Changelog
   arbritrary `max(y_score) + 1`. This threshold is associated with the ROC curve point
   `tpr=0` and `fpr=0`.
   :pr:`26194` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| The `'matching'` metric has been removed when using SciPy>=1.9
+  to be consistent with `scipy.spatial.distance` which does not support
+  `'matching'` anymore.
+  :pr:`26264` by :user:`Barata T. Onggo <magnusbarata>`
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -459,6 +495,10 @@ Changelog
   and of :meth:`neighbors.KNeighborsClassifier.predict_proba` has been improved
   when `n_neighbors` is large and `algorithm="brute"` with non Euclidean metrics.
   :pr:`24076` by :user:`Meekail Zain <micky774>`, :user:`Julien Jerphanion <jjerphan>`.
+
+- |API| The support for metrics other than `euclidean` and `manhattan` and for
+  callables in :class:`neighbors.NearestNeighbors` is deprecated and will be removed in
+  version 1.5. :pr:`24083` by :user:`Valentin Laurent <Valentin-Laurent>`.
 
 :mod:`sklearn.neural_network`
 .............................

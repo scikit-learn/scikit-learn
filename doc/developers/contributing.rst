@@ -551,6 +551,7 @@ message, the following actions are taken.
     [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
     [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy, ...
     [pypy]                 Build & test with PyPy
+    [pyodide]              Build & test with Pyodide
     [azure parallel]       Run Azure CI jobs in parallel
     [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
     [doc skip]             Docs are not built
