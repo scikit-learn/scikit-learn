@@ -33,7 +33,7 @@ model.
 import numpy as np
 
 from sklearn.compose import ColumnTransformer
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -46,7 +46,12 @@ np.random.seed(0)
 # %%
 # Load data from https://www.openml.org/d/40945
 X, y = fetch_openml(
-    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
+    "titanic",
+    version=1,
+    as_frame=True,
+    return_X_y=True,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
 )
 
 # Alternatively X and y can be obtained directly from the frame attribute:

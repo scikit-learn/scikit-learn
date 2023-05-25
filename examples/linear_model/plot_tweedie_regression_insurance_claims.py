@@ -50,7 +50,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 from sklearn.metrics import mean_tweedie_deviance
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
@@ -66,12 +66,22 @@ def load_mtpl2(n_samples=None):
       678013 samples.
     """
     # freMTPL2freq dataset from https://www.openml.org/d/41214
-    df_freq = fetch_openml(data_id=41214, as_frame=True, parser="pandas").data
+    df_freq = fetch_openml(
+        data_id=41214,
+        as_frame=True,
+        parser="pandas",
+        read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+    ).data
     df_freq["IDpol"] = df_freq["IDpol"].astype(int)
     df_freq.set_index("IDpol", inplace=True)
 
     # freMTPL2sev dataset from https://www.openml.org/d/41215
-    df_sev = fetch_openml(data_id=41215, as_frame=True, parser="pandas").data
+    df_sev = fetch_openml(
+        data_id=41215,
+        as_frame=True,
+        parser="pandas",
+        read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+    ).data
 
     # sum ClaimAmount over identical IDs
     df_sev = df_sev.groupby("IDpol").sum()

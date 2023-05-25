@@ -22,7 +22,7 @@ from sklearn.utils._testing import (
     fails_if_pypy,
 )
 
-from sklearn.datasets import fetch_openml as fetch_openml_orig
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml as fetch_openml_orig
 from sklearn.datasets._openml import (
     _OPENML_PREFIX,
     _open_openml_url,
@@ -66,7 +66,14 @@ class _MockHTTPResponse:
 # the mock data in sklearn/datasets/tests/data/openml/ is not always consistent
 # with the version on openml.org. If one were to load the dataset outside of
 # the tests, it may result in data that does not represent openml.org.
-fetch_openml = partial(fetch_openml_orig, data_home=None)
+#
+# In addition, we add `FUTURE_NA_VALUES - set("None")` to keep the same testing
+# behaviour as in older pandas versions.
+fetch_openml = partial(
+    fetch_openml_orig,
+    data_home=None,
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES - set(["None"])},
+)
 
 
 def _monkey_patch_webbased_functions(context, data_id, gzip_response):
@@ -1667,6 +1674,38 @@ def test_fetch_openml_quotechar_escapechar(monkeypatch):
     pd.testing.assert_frame_equal(adult_pandas.frame, adult_liac_arff.frame)
 
 
+@pytest.mark.filterwarnings("ignore:The values to be considered as NA/NaN")
+def test_fetch_openml_default_na_values(monkeypatch):
+    """Check that we have a consistent way of handling NA values across pandas versions
+    (thanks to the different CI environments).
+
+    Non-regression test reported in:
+    https://github.com/scikit-learn/scikit-learn/pull/25878#issuecomment-1562632749
+    """
+    pytest.importorskip("pandas")
+    data_id = 43926
+    _monkey_patch_webbased_functions(monkeypatch, data_id=data_id, gzip_response=False)
+
+    common_params = {"as_frame": True, "cache": False, "data_id": data_id}
+    ames_housing = fetch_openml(**common_params, parser="pandas")
+
+    # for backward compatibility, the column "Misc_Feature" should contains None but
+    # not missing values
+    assert ames_housing.frame["Misc_Feature"].isna().sum() == 0
+    assert "None" in ames_housing.frame["Misc_Feature"].cat.categories
+    assert len(ames_housing.frame["Misc_Feature"].cat.categories) == 3
+
+    # Now, we force to consider "None" as a missing values as in pandas 2.X. It will
+    # be the default in scikit-learn 1.5
+    ames_housing = fetch_openml(
+        **common_params,
+        parser="pandas",
+        read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+    )
+    assert ames_housing.frame["Misc_Feature"].isna().sum() == 13
+    assert len(ames_housing.frame["Misc_Feature"].cat.categories) == 2
+
+
 ###############################################################################
 # Deprecation-changed parameters
 
@@ -1680,3 +1719,14 @@ def test_fetch_openml_deprecation_parser(monkeypatch):
 
     with pytest.warns(FutureWarning, match="The default value of `parser` will change"):
         sklearn.datasets.fetch_openml(data_id=data_id)
+
+
+# TODO(1.5): remove this test
+def test_fetch_openml_additional_na_values(monkeypatch):
+    pytest.importorskip("pandas")
+    data_id = 61
+    _monkey_patch_webbased_functions(monkeypatch, data_id=data_id, gzip_response=False)
+
+    warn_msg = "The values to be considered as NA/NaN"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        sklearn.datasets.fetch_openml(data_id=data_id, parser="pandas")

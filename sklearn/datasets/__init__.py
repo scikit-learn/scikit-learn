@@ -23,6 +23,7 @@ from ._lfw import fetch_lfw_people
 from ._twenty_newsgroups import fetch_20newsgroups
 from ._twenty_newsgroups import fetch_20newsgroups_vectorized
 from ._openml import fetch_openml
+from ._arff_parser import FUTURE_NA_VALUES
 from ._samples_generator import make_classification
 from ._samples_generator import make_multilabel_classification
 from ._samples_generator import make_hastie_10_2
@@ -53,6 +54,7 @@ from ._rcv1 import fetch_rcv1
 
 
 __all__ = [
+    "FUTURE_NA_VALUES",
     "clear_data_home",
     "dump_svmlight_file",
     "fetch_20newsgroups",

@@ -127,10 +127,15 @@ plt.tight_layout()
 # In a similar manner, the Ames housing data set is used to show the impact
 # of transforming the targets before learning a model. In this example, the
 # target to be predicted is the selling price of each house.
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 from sklearn.preprocessing import quantile_transform
 
-ames = fetch_openml(name="house_prices", as_frame=True, parser="pandas")
+ames = fetch_openml(
+    name="house_prices",
+    as_frame=True,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+)
 # Keep only numeric columns
 X = ames.data.select_dtypes(np.number)
 # Remove columns with NaN or Inf values

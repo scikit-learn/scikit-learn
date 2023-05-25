@@ -28,9 +28,15 @@ and categorical features, where the houses' sales prices is the target.
 # -------------------------
 # First, we load the Ames Housing data as a pandas dataframe. The features
 # are either categorical or numerical:
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 
-X, y = fetch_openml(data_id=42165, as_frame=True, return_X_y=True, parser="pandas")
+X, y = fetch_openml(
+    data_id=42165,
+    as_frame=True,
+    return_X_y=True,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+)
 
 # Select only a subset of features of X to make the example faster to run
 categorical_columns_subset = [

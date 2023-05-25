@@ -17,6 +17,29 @@ from ..utils import (
     get_chunk_n_rows,
 )
 
+FUTURE_NA_VALUES = {
+    "-1.#IND",
+    "1.#QNAN",
+    "1.#IND",
+    "-1.#QNAN",
+    "#N/A N/A",
+    "#N/A",
+    "N/A",
+    "n/a",
+    "NA",
+    "<NA>",
+    "#NA",
+    "NULL",
+    "null",
+    "NaN",
+    "-NaN",
+    "nan",
+    "-nan",
+    "",
+    "None",
+    "?",
+}
+
 
 def _split_sparse_columns(
     arff_data: ArffSparseDataType, include_columns: List
@@ -386,8 +409,11 @@ def _pandas_arff_parser(
     default_read_csv_kwargs = {
         "header": None,
         "index_col": False,  # always force pandas to not use the first column as index
-        "na_values": ["?"],  # missing values are represented by `?`
         "comment": "%",  # skip line starting by `%` since they are comments
+        # We handle the future change with an additional missing value `"None"`.
+        # We only want to set the `na_values` passed by the user or that we set by
+        # default. We do not want the default provided by pandas.
+        "keep_default_na": False,
         "quotechar": '"',  # delimiter to use for quoted strings
         "skipinitialspace": True,  # skip spaces after delimiter to follow ARFF specs
         "escapechar": "\\",

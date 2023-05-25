@@ -81,6 +81,7 @@ from sklearn.utils.validation import check_random_state
 from sklearn.utils.extmath import randomized_svd
 from sklearn.datasets import make_low_rank_matrix, make_sparse_uncorrelated
 from sklearn.datasets import (
+    FUTURE_NA_VALUES,
     fetch_lfw_people,
     fetch_openml,
     fetch_20newsgroups_vectorized,
@@ -191,7 +192,9 @@ def get_data(dataset_name):
         del row
         del col
     else:
-        X = fetch_openml(dataset_name, parser="auto").data
+        X = fetch_openml(
+            dataset_name, parser="auto", read_csv_kwargs={"na_values": FUTURE_NA_VALUES}
+        ).data
     return X
 
 

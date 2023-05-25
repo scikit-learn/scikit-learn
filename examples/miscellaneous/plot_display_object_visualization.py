@@ -23,13 +23,18 @@ plot functions.
 # problem where the target is whether an individual donated blood. Then the
 # data is split into a train and test dataset and a logistic regression is
 # fitted with the train dataset.
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
-X, y = fetch_openml(data_id=1464, return_X_y=True, parser="pandas")
+X, y = fetch_openml(
+    data_id=1464,
+    return_X_y=True,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+)
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
 
 clf = make_pipeline(StandardScaler(), LogisticRegression(random_state=0))

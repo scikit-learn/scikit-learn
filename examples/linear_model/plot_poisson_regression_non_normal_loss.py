@@ -53,10 +53,15 @@ import pandas as pd
 # Let's load the motor claim dataset from OpenML:
 # https://www.openml.org/d/41214
 
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 
 
-df = fetch_openml(data_id=41214, as_frame=True, parser="pandas").frame
+df = fetch_openml(
+    data_id=41214,
+    as_frame=True,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+).frame
 df
 
 # %%

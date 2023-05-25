@@ -32,7 +32,12 @@ print(__doc__)
 # The `preprocess_dataset` function returns data and target.
 
 import numpy as np
-from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_openml
+from sklearn.datasets import (
+    FUTURE_NA_VALUES,
+    fetch_kddcup99,
+    fetch_covtype,
+    fetch_openml,
+)
 from sklearn.preprocessing import LabelBinarizer
 import pandas as pd
 
@@ -79,7 +84,11 @@ def preprocess_dataset(dataset_name):
         y = (y != 2).astype(int)
     if dataset_name in ["glass", "wdbc", "cardiotocography"]:
         dataset = fetch_openml(
-            name=dataset_name, version=1, as_frame=False, parser="pandas"
+            name=dataset_name,
+            version=1,
+            as_frame=False,
+            parser="pandas",
+            read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
         )
         X = dataset.data
         y = dataset.target

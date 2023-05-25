@@ -16,7 +16,7 @@ from warnings import warn
 import numpy as np
 
 from . import get_data_home
-from ._arff_parser import load_arff_from_gzip_file
+from ._arff_parser import load_arff_from_gzip_file, FUTURE_NA_VALUES
 from ..utils import Bunch
 from ..utils import check_pandas_support  # noqa
 
@@ -1111,6 +1111,32 @@ def fetch_openml(
     else:
         shape = None
 
+    if parser_ == "pandas":
+        if read_csv_kwargs is None or read_csv_kwargs.get("na_values", None) is None:
+            warn(
+                (
+                    "The values to be considered as NA/NaN when fetching a dataset"
+                    " with fetch_openml will change in 1.5. Currently, the following"
+                    f" values are used: {FUTURE_NA_VALUES - set('None')}. From 1.5"
+                    " onwards, the value 'None' will also be considered as NA/NaN. If"
+                    " you want to use the future behaviour now, you can set"
+                    " `read_csv_kwargs={'na_values':"
+                    " sklearn.datasets.FUTURE_NA_VALUES}`. It will silence this"
+                    " warning."
+                ),
+                FutureWarning,
+            )
+            old_na_values = FUTURE_NA_VALUES - {"None"}
+            if read_csv_kwargs is None:
+                read_csv_kwargs_ = {"na_values": old_na_values}
+            else:
+                read_csv_kwargs_ = read_csv_kwargs.copy()
+                read_csv_kwargs_["na_values"] = old_na_values
+        else:
+            read_csv_kwargs_ = read_csv_kwargs.copy()
+    else:
+        read_csv_kwargs_ = None
+
     # obtain the data
     url = _DATA_FILE.format(data_description["file_id"])
     bunch = _download_data_to_bunch(
@@ -1126,7 +1152,7 @@ def fetch_openml(
         n_retries=n_retries,
         delay=delay,
         parser=parser_,
-        read_csv_kwargs=read_csv_kwargs,
+        read_csv_kwargs=read_csv_kwargs_,
     )
 
     if return_X_y:

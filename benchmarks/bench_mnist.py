@@ -36,7 +36,7 @@ import argparse
 import numpy as np
 from joblib import Memory
 
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 from sklearn.datasets import get_data_home
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -62,7 +62,12 @@ def load_data(dtype=np.float32, order="F"):
     ######################################################################
     # Load dataset
     print("Loading dataset...")
-    data = fetch_openml("mnist_784", as_frame=True, parser="pandas")
+    data = fetch_openml(
+        "mnist_784",
+        as_frame=True,
+        parser="pandas",
+        read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+    )
     X = check_array(data["data"], dtype=dtype, order=order)
     y = data["target"]
 

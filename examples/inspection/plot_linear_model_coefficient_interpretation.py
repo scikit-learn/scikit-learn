@@ -54,9 +54,14 @@ import seaborn as sns
 # Note that setting the parameter `as_frame` to True will retrieve the data
 # as a pandas dataframe.
 
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 
-survey = fetch_openml(data_id=534, as_frame=True, parser="pandas")
+survey = fetch_openml(
+    data_id=534,
+    as_frame=True,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+)
 
 # %%
 # Then, we identify features `X` and targets `y`: the column WAGE is our

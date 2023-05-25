@@ -40,9 +40,15 @@ bike sharing dataset. The example is inspired by [1]_.
 #
 # We will use the bike sharing dataset. The goal is to predict the number of bike
 # rentals using weather and season data as well as the datetime information.
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 
-bikes = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas")
+bikes = fetch_openml(
+    "Bike_Sharing_Demand",
+    version=2,
+    as_frame=True,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+)
 # Make an explicit copy to avoid "SettingWithCopyWarning" from pandas
 X, y = bikes.data.copy(), bikes.target
 

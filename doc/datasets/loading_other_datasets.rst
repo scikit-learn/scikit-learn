@@ -98,8 +98,14 @@ from the repository using the function
 
 For example, to download a dataset of gene expressions in mice brains::
 
-  >>> from sklearn.datasets import fetch_openml
-  >>> mice = fetch_openml(name='miceprotein', version=4, parser="auto")
+  >>> from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
+  >>> read_csv_kwargs = {'na_values': FUTURE_NA_VALUES}
+  >>> mice = fetch_openml(
+  ...     name='miceprotein',
+  ...     version=4,
+  ...     parser="pandas",
+  ...     read_csv_kwargs=read_csv_kwargs,
+  ... )
 
 To fully specify a dataset, you need to provide a name and a version, though
 the version is optional, see :ref:`openml_versions` below.
@@ -147,7 +153,9 @@ dataset on the openml website::
 
 The ``data_id`` also uniquely identifies a dataset from OpenML::
 
-  >>> mice = fetch_openml(data_id=40966, parser="auto")
+  >>> mice = fetch_openml(
+  ... data_id=40966, parser="pandas", read_csv_kwargs=read_csv_kwargs
+  ... )
   >>> mice.details # doctest: +SKIP
   {'id': '4550', 'name': 'MiceProtein', 'version': '1', 'format': 'ARFF',
   'creator': ...,
@@ -188,13 +196,17 @@ has multiple versions::
   >>> iris.details['id']  #doctest: +SKIP
   '61'
 
-  >>> iris_61 = fetch_openml(data_id=61, parser="auto")
+  >>> iris_61 = fetch_openml(
+  ...     data_id=61, parser="pandas", read_csv_kwargs=read_csv_kwargs
+  ... )
   >>> iris_61.details['version']
   '1'
   >>> iris_61.details['id']
   '61'
 
-  >>> iris_969 = fetch_openml(data_id=969, parser="auto")
+  >>> iris_969 = fetch_openml(
+  ...     data_id=969, parser="pandas", read_csv_kwargs=read_csv_kwargs
+  ... )
   >>> iris_969.details['version']
   '3'
   >>> iris_969.details['id']
@@ -212,7 +224,9 @@ binarized version of the data::
 You can also specify both the name and the version, which also uniquely
 identifies the dataset::
 
-  >>> iris_version_3 = fetch_openml(name="iris", version=3, parser="auto")
+  >>> iris_version_3 = fetch_openml(
+  ...     name="iris", version=3, parser="pandas", read_csv_kwargs=read_csv_kwargs
+  ... )
   >>> iris_version_3.details['version']
   '3'
   >>> iris_version_3.details['id']

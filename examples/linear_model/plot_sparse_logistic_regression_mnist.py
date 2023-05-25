@@ -24,7 +24,7 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -36,7 +36,12 @@ train_samples = 5000
 
 # Load data from https://www.openml.org/d/554
 X, y = fetch_openml(
-    "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
+    "mnist_784",
+    version=1,
+    return_X_y=True,
+    as_frame=False,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
 )
 
 random_state = check_random_state(0)

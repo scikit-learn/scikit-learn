@@ -40,12 +40,17 @@ stacking strategy. Stacking slightly improves the overall performance.
 
 import numpy as np
 
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 from sklearn.utils import shuffle
 
 
 def load_ames_housing():
-    df = fetch_openml(name="house_prices", as_frame=True, parser="pandas")
+    df = fetch_openml(
+        name="house_prices",
+        as_frame=True,
+        parser="pandas",
+        read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+    )
     X = df.data
     y = df.target
 

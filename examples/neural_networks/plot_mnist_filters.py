@@ -26,14 +26,19 @@ to build this documentation on a regular basis.
 
 import warnings
 import matplotlib.pyplot as plt
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split
 
 # Load data from https://www.openml.org/d/554
 X, y = fetch_openml(
-    "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
+    "mnist_784",
+    version=1,
+    return_X_y=True,
+    as_frame=False,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
 )
 X = X / 255.0
 

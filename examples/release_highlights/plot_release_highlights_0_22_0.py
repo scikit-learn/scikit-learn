@@ -226,9 +226,15 @@ print(
 # :func:`datasets.fetch_openml` can now return pandas dataframe and thus
 # properly handle datasets with heterogeneous data:
 
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 
-titanic = fetch_openml("titanic", version=1, as_frame=True, parser="pandas")
+titanic = fetch_openml(
+    "titanic",
+    version=1,
+    as_frame=True,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+)
 print(titanic.data.head()[["pclass", "embarked"]])
 
 # %%

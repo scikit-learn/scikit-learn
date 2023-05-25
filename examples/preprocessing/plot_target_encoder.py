@@ -21,9 +21,14 @@ for handling categorical features: :class:`TargetEncoder`,
 # ========================
 # First, we load the wine reviews dataset, where the target is the points given
 # be a reviewer:
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 
-wine_reviews = fetch_openml(data_id=42074, as_frame=True, parser="pandas")
+wine_reviews = fetch_openml(
+    data_id=42074,
+    as_frame=True,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+)
 
 df = wine_reviews.frame
 df.head()

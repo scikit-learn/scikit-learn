@@ -6,7 +6,7 @@ import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from sklearn.compose import make_column_transformer, make_column_selector
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
@@ -50,7 +50,12 @@ def predict(est, data_test, target_test):
     print(f"predicted in {toc - tic:.3f}s, ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
 
 
-data = fetch_openml(data_id=179, as_frame=True, parser="pandas")  # adult dataset
+data = fetch_openml(
+    data_id=179,
+    as_frame=True,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+)  # adult dataset
 X, y = data.data, data.target
 
 # Ordinal encode the categories to use the native support available in HGBDT

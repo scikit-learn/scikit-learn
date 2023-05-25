@@ -18,10 +18,14 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 # ---------------------------------------------------
 #
 # We start by loading the data from the OpenML repository.
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 
 bike_sharing = fetch_openml(
-    "Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas"
+    "Bike_Sharing_Demand",
+    version=2,
+    as_frame=True,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
 )
 df = bike_sharing.frame
 

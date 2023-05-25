@@ -34,9 +34,14 @@ print(__doc__)
 # samples. We are interested in estimating the concentration of CO2 and
 # extrapolate it for further year. First, we load the original dataset available
 # in OpenML.
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 
-co2 = fetch_openml(data_id=41187, as_frame=True, parser="pandas")
+co2 = fetch_openml(
+    data_id=41187,
+    as_frame=True,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+)
 co2.frame.head()
 
 # %%

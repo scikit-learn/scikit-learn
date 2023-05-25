@@ -22,7 +22,12 @@ import matplotlib.pyplot as plt
 
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import roc_curve, auc
-from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_openml
+from sklearn.datasets import (
+    FUTURE_NA_VALUES,
+    fetch_kddcup99,
+    fetch_covtype,
+    fetch_openml,
+)
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle as sh
 
@@ -63,7 +68,12 @@ for dat in datasets:
         y = dataset.target
 
     if dat == "shuttle":
-        dataset = fetch_openml("shuttle", as_frame=False, parser="pandas")
+        dataset = fetch_openml(
+            "shuttle",
+            as_frame=False,
+            parser="pandas",
+            read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+        )
         X = dataset.data
         y = dataset.target.astype(np.int64)
         X, y = sh(X, y, random_state=random_state)

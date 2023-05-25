@@ -63,11 +63,16 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.feature_selection import SelectKBest
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 from sklearn.linear_model import LogisticRegression
 
 X, y = fetch_openml(
-    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
+    "titanic",
+    version=1,
+    as_frame=True,
+    return_X_y=True,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
 )
 numeric_features = ["age", "fare"]
 numeric_transformer = make_pipeline(SimpleImputer(strategy="median"), StandardScaler())

@@ -40,11 +40,16 @@ import numpy as np
 #   values as records).
 # - ``random_cat`` is a low cardinality categorical variable (3 possible
 #   values).
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import FUTURE_NA_VALUES, fetch_openml
 from sklearn.model_selection import train_test_split
 
 X, y = fetch_openml(
-    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
+    "titanic",
+    version=1,
+    as_frame=True,
+    return_X_y=True,
+    parser="pandas",
+    read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
 )
 rng = np.random.RandomState(seed=42)
 X["random_cat"] = rng.randint(3, size=X.shape[0])

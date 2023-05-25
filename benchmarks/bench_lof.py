@@ -22,7 +22,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.metrics import roc_curve, auc
-from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_openml
+from sklearn.datasets import (
+    FUTURE_NA_VALUES,
+    fetch_kddcup99,
+    fetch_covtype,
+    fetch_openml,
+)
 from sklearn.preprocessing import LabelBinarizer
 
 print(__doc__)
@@ -44,7 +49,12 @@ for dataset_name in datasets:
         y = dataset.target
 
     if dataset_name == "shuttle":
-        dataset = fetch_openml("shuttle", as_frame=False, parser="pandas")
+        dataset = fetch_openml(
+            "shuttle",
+            as_frame=False,
+            parser="pandas",
+            read_csv_kwargs={"na_values": FUTURE_NA_VALUES},
+        )
         X = dataset.data
         y = dataset.target.astype(np.int64)
         # we remove data with label 4

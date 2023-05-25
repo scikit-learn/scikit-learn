@@ -23,7 +23,7 @@ FETCH_PYTEST_MARKERS = {
             reason="X is a list and does not have a shape argument"
         ),
         "fetch_openml": pytest.mark.xfail(
-            reason="fetch_opeml requires a dataset name or id"
+            reason="fetch_openml requires a dataset name or id"
         ),
         "fetch_lfw_people": pytest.mark.skipif(
             not is_pillow_installed(), reason="pillow is not installed"
@@ -31,7 +31,7 @@ FETCH_PYTEST_MARKERS = {
     },
     "as_frame": {
         "fetch_openml": pytest.mark.xfail(
-            reason="fetch_opeml requires a dataset name or id"
+            reason="fetch_openml requires a dataset name or id"
         ),
     },
 }
