@@ -18,7 +18,6 @@ from sklearn.metrics._pairwise_distances_reduction import (
     sqeuclidean_row_norms,
 )
 from sklearn.metrics import euclidean_distances
-from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils._testing import (
     assert_array_equal,
     assert_allclose,
@@ -49,7 +48,11 @@ def _get_metric_params_list(metric: str, n_features: int, seed: int = 1):
 
     if metric == "minkowski":
         minkowski_kwargs = [
-            dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf), dict(p=3, w=rng.rand(n_features))
+            dict(p=1.5),
+            dict(p=2),
+            dict(p=3),
+            dict(p=np.inf),
+            dict(p=3, w=rng.rand(n_features)),
         ]
 
         return minkowski_kwargs

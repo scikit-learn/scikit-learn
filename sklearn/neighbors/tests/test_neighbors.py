@@ -1,5 +1,4 @@
 from itertools import product
-from contextlib import nullcontext
 import warnings
 
 import pytest
@@ -87,7 +86,6 @@ def _generate_test_params_for(metric: str, n_features: int):
 
     # Distinguishing on cases not to compute unneeded datastructures.
     rng = np.random.RandomState(1)
-    weights = rng.random_sample(n_features)
 
     if metric == "minkowski":
         minkowski_kwargs = [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)]

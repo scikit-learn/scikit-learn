@@ -17,7 +17,6 @@ from sklearn.metrics._dist_metrics import (
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose, create_memmap_backed_data
-from sklearn.utils.fixes import sp_version, parse_version
 
 
 def dist_func(x1, x2, p):

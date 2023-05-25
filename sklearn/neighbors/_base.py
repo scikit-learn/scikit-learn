@@ -38,7 +38,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.parallel import delayed, Parallel
-from ..utils.fixes import parse_version, sp_base_version, sp_version
+from ..utils.fixes import parse_version, sp_base_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
 SCIPY_METRICS = [
@@ -621,7 +621,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self._fit_method = "brute"
 
         if (
-            self.effective_metric_== "minkowski"
+            self.effective_metric_ == "minkowski"
             and self.effective_metric_params_["p"] < 1
         ):
             # For 0 < p < 1 Minkowski distances aren't valid distance
