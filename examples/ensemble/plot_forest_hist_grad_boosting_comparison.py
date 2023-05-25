@@ -77,7 +77,7 @@ from sklearn.model_selection import GridSearchCV, KFold
 
 models = {
     "Random Forest": RandomForestRegressor(
-        min_samples_leaf=5, random_state=0, n_jobs=2
+        min_samples_leaf=5, random_state=0, n_jobs=N_CORES
     ),
     "HistGradientBoosting": HistGradientBoostingRegressor(
         max_leaf_nodes=15, random_state=0, early_stopping=False
