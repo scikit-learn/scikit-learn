@@ -149,6 +149,7 @@ def plot_cv_indices(cv, X, y, group, ax, n_splits, lw=10):
 fig, ax = plt.subplots()
 cv = KFold(n_splits)
 plot_cv_indices(cv, X, y, groups, ax, n_splits)
+plt.show()
 
 # %%
 # As you can see, by default the KFold cross-validation iterator does not
@@ -284,7 +285,7 @@ def plot_cv_indices_multilabel(cv, X, y, group, ax, n_splits, lw=10):
     # Formatting
     yticklabels = (
         list(range(n_splits))
-        + [f"class\n(label {label})" for label in range(n_labels)]
+        + [f"class (label {label})" for label in range(n_labels)]
         + ["group"]
     )
     ax.set(
@@ -305,7 +306,7 @@ def plot_cv_indices_multilabel(cv, X, y, group, ax, n_splits, lw=10):
 cvs = [KFold, MultilabelStratifiedKFold]
 
 for cv in cvs:
-    fig, ax = plt.subplots(figsize=(8, 4))
+    fig, ax = plt.subplots(figsize=(6, 3))
     plot_cv_indices_multilabel(cv(n_splits), X, y_multilabel, groups, ax, n_splits)
     ax.legend(
         [Patch(color=cmap_cv(0.8)), Patch(color=cmap_cv(0.02))],
