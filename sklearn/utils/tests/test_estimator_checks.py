@@ -11,6 +11,7 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import deprecated
@@ -746,9 +747,11 @@ def test_check_no_attributes_set_in_init():
     # also check if cloning an estimator which has non-default set requests is
     # fine. Setting a non-default value via `set_{method}_request` sets the
     # private _metadata_request instance attribute which is copied in `clone`.
-    check_no_attributes_set_in_init(
-        "estimator_name", ConformantEstimatorClassAttribute().set_fit_request(foo=True)
-    )
+    with config_context(enable_metadata_routing=True):
+        check_no_attributes_set_in_init(
+            "estimator_name",
+            ConformantEstimatorClassAttribute().set_fit_request(foo=True),
+        )
 
 
 def test_check_estimator_pairwise():

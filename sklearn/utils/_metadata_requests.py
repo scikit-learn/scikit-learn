@@ -158,6 +158,10 @@ this given alias instead of the original name.
 
         .. versionadded:: 1.3
 
+        .. note::
+            This method is only available if enable_metadata_request is True,
+            which can be set using :func:`sklearn.set_config`.
+
         Parameters
         ----------
 """
@@ -974,6 +978,13 @@ class RequestMethod:
             This docstring is overwritten below.
             See REQUESTER_DOC for expected functionality
             """
+            if not _routing_enabled():
+                raise RuntimeError(
+                    "This method is only available when metadata routing is enabled."
+                    " You can enable it using"
+                    " sklearn.set_config(enable_metadata_routing=True)."
+                )
+
             if self.validate_keys and (set(kw) - set(self.keys)):
                 raise TypeError(
                     f"Unexpected args: {set(kw) - set(self.keys)}. Accepted arguments"

@@ -9,6 +9,7 @@ import re
 import numpy as np
 import pytest
 
+from sklearn import set_config, get_config, config_context
 from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
 from sklearn.base import RegressorMixin
@@ -27,12 +28,25 @@ from sklearn.utils._metadata_requests import MethodMetadataRequest
 from sklearn.utils._metadata_requests import _MetadataRequester
 from sklearn.utils._metadata_requests import METHODS
 
+rng = np.random.RandomState(42)
 N, M = 100, 4
-X = np.random.rand(N, M)
-y = np.random.randint(0, 2, size=N)
-my_groups = np.random.randint(0, 10, size=N)
-my_weights = np.random.rand(N)
-my_other_weights = np.random.rand(N)
+X = rng.rand(N, M)
+y = rng.randint(0, 2, size=N)
+my_groups = rng.randint(0, 10, size=N)
+my_weights = rng.rand(N)
+my_other_weights = rng.rand(N)
+
+
+@pytest.fixture(autouse=True)
+def enable_slep006():
+    """Enable SLEP006 for all tests."""
+    orig_config = get_config()
+
+    new_config = orig_config.copy()
+    new_config["enable_metadata_routing"] = True
+    set_config(**new_config)
+    yield
+    set_config(**orig_config)
 
 
 def assert_request_is_empty(metadata_request, exclude=None):
@@ -912,36 +926,46 @@ def test_metadata_routing_get_param_names():
 
 
 @pytest.mark.parametrize(
-    "estimator, is_default_request",
+    (
+        "estimator, fit_request_kwargs, set_fit_request_for_sub_estimator,"
+        " is_default_request"
+    ),
     [
-        (LinearRegression(), True),
-        (LinearRegression().set_fit_request(sample_weight=True), False),  # type: ignore
-        (WeightedMetaRegressor(estimator=LinearRegression()), True),
+        (LinearRegression(), None, False, True),
+        (LinearRegression(), dict(sample_weight=True), False, False),
+        (WeightedMetaRegressor(estimator=LinearRegression()), None, False, True),
         (
-            WeightedMetaRegressor(
-                estimator=LinearRegression().set_fit_request(  # type: ignore
-                    sample_weight=True
-                )
-            ),
+            WeightedMetaRegressor(estimator=LinearRegression()),
+            dict(sample_weight=True),
+            True,
             False,
         ),
         (
-            WeightedMetaRegressor(
-                estimator=LinearRegression()
-            ).set_fit_request(  # type: ignore
-                sample_weight=True
-            ),
+            WeightedMetaRegressor(estimator=LinearRegression()),
+            dict(sample_weight=True),
+            False,
             False,
         ),
     ],
 )
-def test_is_default_request(estimator, is_default_request):
+def test_is_default_request(
+    estimator, fit_request_kwargs, set_fit_request_for_sub_estimator, is_default_request
+):
     """Test the `_is_default_request` machinery.
+
+    fit_request_kwargs: how to set the fit request
+    set_fit_request_for_sub_estimator: whether to set the fit request for the
+        sub-estimator or for the meta-estimator
 
     It should be `True` only if the user hasn't changed any default values.
 
     Applies to both `MetadataRouter` and `MetadataRequest`.
     """
+    if fit_request_kwargs is not None:
+        if set_fit_request_for_sub_estimator:
+            estimator.estimator.set_fit_request(**fit_request_kwargs)
+        else:
+            estimator.set_fit_request(**fit_request_kwargs)
     assert estimator.get_metadata_routing()._is_default_request == is_default_request
 
 
@@ -1019,3 +1043,10 @@ def test_method_generation():
 
     for method in METHODS:
         assert hasattr(SimpleEstimator(), f"set_{method}_request")
+
+
+def test_no_feature_flag_raises_error():
+    """Test that when feature flag disabled, set_{method}_requests raises."""
+    with config_context(enable_metadata_routing=False):
+        with pytest.raises(RuntimeError, match="This method is only available"):
+            ClassifierFitMetadata().set_fit_request(sample_weight=True)

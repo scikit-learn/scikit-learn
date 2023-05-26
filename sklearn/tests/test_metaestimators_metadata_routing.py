@@ -5,7 +5,7 @@ from functools import partial
 import numpy as np
 import pytest
 
-from sklearn import config_context
+from sklearn import set_config, get_config
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.exceptions import UnsetMetadataPassedError
@@ -22,12 +22,25 @@ from sklearn.tests.test_metadata_routing import (
 )
 from sklearn.utils.metadata_routing import MetadataRouter
 
+rng = np.random.RandomState(42)
 N, M = 100, 4
-X = np.random.rand(N, M)
-y = np.random.randint(0, 2, size=N)
-y_multi = np.random.randint(0, 2, size=(N, 3))
-metadata = np.random.randint(0, 10, size=N)
-sample_weight = np.random.rand(N)
+X = rng.rand(N, M)
+y = rng.randint(0, 2, size=N)
+y_multi = rng.randint(0, 2, size=(N, 3))
+metadata = rng.randint(0, 10, size=N)
+sample_weight = rng.rand(N)
+
+
+@pytest.fixture(autouse=True)
+def enable_slep006():
+    """Enable SLEP006 for all tests."""
+    orig_config = get_config()
+
+    new_config = orig_config.copy()
+    new_config["enable_metadata_routing"] = True
+    set_config(**new_config)
+    yield
+    set_config(**orig_config)
 
 
 record_metadata_not_default = partial(record_metadata, record_default=False)
@@ -243,13 +256,12 @@ def test_registry_copy():
 )
 def test_default_request(metaestimator):
     # Check that by default request is empty and the right type
-    with config_context(enable_metadata_routing=True):
-        cls = metaestimator["metaestimator"]
-        estimator = metaestimator["estimator"]()
-        estimator_name = metaestimator["estimator_name"]
-        instance = cls(**{estimator_name: estimator})
-        assert_request_is_empty(instance.get_metadata_routing())
-        assert isinstance(instance.get_metadata_routing(), MetadataRouter)
+    cls = metaestimator["metaestimator"]
+    estimator = metaestimator["estimator"]()
+    estimator_name = metaestimator["estimator_name"]
+    instance = cls(**{estimator_name: estimator})
+    assert_request_is_empty(instance.get_metadata_routing())
+    assert isinstance(instance.get_metadata_routing(), MetadataRouter)
 
 
 @pytest.mark.parametrize(
@@ -259,29 +271,28 @@ def test_default_request(metaestimator):
 )
 def test_error_on_missing_requests(metaestimator):
     # Test that a UnsetMetadataPassedError is raised when it should.
-    with config_context(enable_metadata_routing=True):
-        cls = metaestimator["metaestimator"]
-        estimator = metaestimator["estimator"]()
-        estimator_name = metaestimator["estimator_name"]
-        X = metaestimator["X"]
-        y = metaestimator["y"]
-        routing_methods = metaestimator["routing_methods"]
+    cls = metaestimator["metaestimator"]
+    estimator = metaestimator["estimator"]()
+    estimator_name = metaestimator["estimator_name"]
+    X = metaestimator["X"]
+    y = metaestimator["y"]
+    routing_methods = metaestimator["routing_methods"]
 
-        for method_name in routing_methods:
-            for key in ["sample_weight", "metadata"]:
-                val = {"sample_weight": sample_weight, "metadata": metadata}[key]
-                kwargs = {key: val}
-                msg = (
-                    f"[{key}] are passed but are not explicitly set as requested or not"
-                    f" for {estimator.__class__.__name__}.{method_name}"
-                )
+    for method_name in routing_methods:
+        for key in ["sample_weight", "metadata"]:
+            val = {"sample_weight": sample_weight, "metadata": metadata}[key]
+            kwargs = {key: val}
+            msg = (
+                f"[{key}] are passed but are not explicitly set as requested or not"
+                f" for {estimator.__class__.__name__}.{method_name}"
+            )
 
-                instance = cls(**{estimator_name: estimator})
-                if "fit" not in method_name:  # instance needs to be fitted first
-                    instance.fit(X, y)  # pragma: no cover
-                with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
-                    method = getattr(instance, method_name)
-                    method(X, y, **kwargs)
+            instance = cls(**{estimator_name: estimator})
+            if "fit" not in method_name:  # instance needs to be fitted first
+                instance.fit(X, y)  # pragma: no cover
+            with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
+                method = getattr(instance, method_name)
+                method(X, y, **kwargs)
 
 
 @pytest.mark.parametrize(
@@ -303,22 +314,21 @@ def test_setting_request_removes_error(metaestimator):
     routing_methods = metaestimator["routing_methods"]
     preserves_metadata = metaestimator.get("preserves_metadata", True)
 
-    with config_context(enable_metadata_routing=True):
-        for method_name in routing_methods:
-            for key in ["sample_weight", "metadata"]:
-                val = {"sample_weight": sample_weight, "metadata": metadata}[key]
-                kwargs = {key: val}
+    for method_name in routing_methods:
+        for key in ["sample_weight", "metadata"]:
+            val = {"sample_weight": sample_weight, "metadata": metadata}[key]
+            kwargs = {key: val}
 
-                registry = _Registry()
-                estimator = metaestimator["estimator"](registry=registry)
-                set_request(estimator, method_name)
-                instance = cls(**{estimator_name: estimator})
-                method = getattr(instance, method_name)
-                method(X, y, **kwargs)
+            registry = _Registry()
+            estimator = metaestimator["estimator"](registry=registry)
+            set_request(estimator, method_name)
+            instance = cls(**{estimator_name: estimator})
+            method = getattr(instance, method_name)
+            method(X, y, **kwargs)
 
-                if preserves_metadata:
-                    # sanity check that registry is not empty, or else the test
-                    # passes trivially
-                    assert registry
-                    for estimator in registry:
-                        check_recorded_metadata(estimator, method_name, **kwargs)
+            if preserves_metadata:
+                # sanity check that registry is not empty, or else the test
+                # passes trivially
+                assert registry
+                for estimator in registry:
+                    check_recorded_metadata(estimator, method_name, **kwargs)

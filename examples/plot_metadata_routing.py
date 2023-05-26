@@ -25,6 +25,7 @@ First a few imports and some random data for the rest of the script.
 import numpy as np
 import warnings
 from pprint import pprint
+from sklearn import set_config
 from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
 from sklearn.base import RegressorMixin
@@ -46,6 +47,10 @@ y = rng.randint(0, 2, size=n_samples)
 my_groups = rng.randint(0, 10, size=n_samples)
 my_weights = rng.rand(n_samples)
 my_other_weights = rng.rand(n_samples)
+
+# %%
+# This feature is only available if explicitly enabled:
+set_config(enable_metadata_routing=True)
 
 # %%
 # This utility function is a dummy to check if a metadata is passed.

@@ -312,7 +312,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         if estimator is None:
             # we want all classifiers that don't expose a random_state
             # to be deterministic (and we don't want to expose this one).
-            estimator = LinearSVC(random_state=0).set_fit_request(sample_weight=True)
+            estimator = LinearSVC(random_state=0)
+            if _routing_enabled():
+                estimator.set_fit_request(sample_weight=True)
 
         return estimator
 
