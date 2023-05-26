@@ -907,9 +907,9 @@ in each class per label and compare with :class:`KFold`.
   ...     ))
   ...
   label.0:   train -  30 / 7       test -  10 / 3
-       .1:         -  8 / 29            -  2 / 11
+       .1:         -  7 / 30            -  3 / 10
   label.0:   train -  30 / 7       test -  10 / 3
-       .1:         -  6 / 31            -  4 / 9
+       .1:         -  7 / 30            -  3 / 10
   label.0:   train -  30 / 8       test -  10 / 2
        .1:         -  8 / 30            -  2 / 10
   label.0:   train -  30 / 8       test -  10 / 2

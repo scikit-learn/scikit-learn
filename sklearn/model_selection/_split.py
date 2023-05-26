@@ -1063,13 +1063,20 @@ class MultilabelStratifiedKFold(_BaseKFold):
         # https://github.com/trent-b/iterative-stratification
         # and is subject to BSD 3 clause License.
         rng = check_random_state(self.random_state)
-        y = np.asarray(y)
         type_of_target_y = type_of_target(y)
         if type_of_target_y != "multilabel-indicator":
             raise ValueError(
                 "Supported target type is: 'multilabel-indicator'. "
                 "Got {!r} instead.".format(type_of_target_y)
             )
+
+        # Multilabel-indicator has at most two classes, so we convert to 0 and 1,
+        # i.e., False and True. The more prevalent class should be 0, since we
+        # take shortcut when only all-zero labels are left; when there is a
+        # relatively large number of zero labels, this reduces execution time.
+        unique, counts = np.unique(y, return_counts=True)
+        prevalent = np.argmax(counts)
+        y = np.where(y == unique[prevalent], False, True)
 
         do_raise, min_groups = True, np.inf
         for col in y.T:
@@ -1108,23 +1115,32 @@ class MultilabelStratifiedKFold(_BaseKFold):
         c_folds = n_samples * props
         c_folds_per_label = np.outer(props, y.sum(axis=0))
 
-        n_unprocessed_labels = n_samples
-        unprocessed_labels_mask = np.ones(n_unprocessed_labels, dtype=bool)
+        n_unprocessed = n_samples
+        unprocessed_mask = np.ones(n_unprocessed, dtype=bool)
 
-        while n_unprocessed_labels > 0:
+        # print(c_folds_per_label)
+        # print(c_folds)
+        # print(test_folds)
+        # print()
+        while n_unprocessed > 0:
             # Find the label with the fewest (at least one) remaining examples
-            n_remaining = y[unprocessed_labels_mask].sum(axis=0)
+            n_remaining = y[unprocessed_mask].sum(axis=0)
 
-            # When only all-zero labels are left, try to distribute evenly
+            # Shortcut when only all-zero labels are left, try to distribute
+            # evenly; may introduce some overhead
             if n_remaining.sum() == 0:
-                for i in np.where(unprocessed_labels_mask)[0]:
+                for i in np.where(unprocessed_mask)[0]:
                     max_fold = np.argmax(c_folds)
                     test_folds[i] = max_fold
                     c_folds[max_fold] -= 1
+                    # print(c_folds_per_label)
+                    # print(c_folds)
+                    # print(test_folds)
+                    # print()
                 break
 
             min_label = np.argmin(np.where(n_remaining != 0, n_remaining, np.inf))
-            for i in np.where(y[:, min_label] & unprocessed_labels_mask)[0]:
+            for i in np.where(y[:, min_label] & unprocessed_mask)[0]:
                 # Find the subset with the largest number of desired examples for
                 # this label, breaking ties by considering the largest number of
                 # desired examples
@@ -1135,12 +1151,16 @@ class MultilabelStratifiedKFold(_BaseKFold):
                     max_fold = max_fold[np.argmax(c_folds[max_fold])]
 
                 test_folds[i] = max_fold
-                unprocessed_labels_mask[i] = False
-                n_unprocessed_labels -= 1
+                unprocessed_mask[i] = False
+                n_unprocessed -= 1
 
                 # Update desired number of examples
                 c_folds_per_label[max_fold, y[i]] -= 1
                 c_folds[max_fold] -= 1
+                # print(c_folds_per_label)
+                # print(c_folds)
+                # print(test_folds)
+                # print()
 
         if self.shuffle:
             return test_folds[np.argsort(indices)]
@@ -1149,6 +1169,7 @@ class MultilabelStratifiedKFold(_BaseKFold):
 
     def _iter_test_masks(self, X=None, y=None, groups=None):
         test_folds = self._make_test_folds(X, y)
+        # print(test_folds)
         for i in range(self.n_splits):
             yield test_folds == i
 

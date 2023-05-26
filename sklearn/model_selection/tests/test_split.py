@@ -715,23 +715,49 @@ def test_multilabel_stratified_kfold_no_shuffle():
     y = np.array([[0, 0], [0, 1], [1, 1], [1, 0]])
     splits = MultilabelStratifiedKFold(2).split(X, y)
     train, test = next(splits)
-    assert_array_equal(test, [1, 2])
-    assert_array_equal(train, [0, 3])
+    assert_array_equal(test, [0, 2])
+    assert_array_equal(train, [1, 3])
 
     train, test = next(splits)
-    assert_array_equal(test, [0, 3])
-    assert_array_equal(train, [1, 2])
+    assert_array_equal(test, [1, 3])
+    assert_array_equal(train, [0, 2])
 
     X = np.ones(7)
     y = np.array([[0, 0], [1, 0], [1, 1], [1, 1], [0, 1], [0, 1], [0, 0]])
     splits = MultilabelStratifiedKFold(2).split(X, y)
     train, test = next(splits)
-    assert_array_equal(test, [1, 4, 5, 6])
-    assert_array_equal(train, [0, 2, 3])
+    assert_array_equal(test, [1, 3, 5, 6])
+    assert_array_equal(train, [0, 2, 4])
 
     train, test = next(splits)
-    assert_array_equal(test, [0, 2, 3])
-    assert_array_equal(train, [1, 4, 5, 6])
+    assert_array_equal(test, [0, 2, 4])
+    assert_array_equal(train, [1, 3, 5, 6])
+
+
+def test_multilabel_stratified_kfold_support_any_multilabel_indicator():
+    # Check that any multilabel indicator can work, not only 0/1
+    X = np.ones(17)
+    y0 = [[0, 0]] * 3 + [[0, 1]] * 3 + [[1, 0]] * 3 + [[1, 1]] * 8
+    y1 = [[-3, -3]] * 3 + [[-3, -1]] * 3 + [[-1, -3]] * 3 + [[-1, -1]] * 8
+
+    mskf = MultilabelStratifiedKFold(3)
+    for (_, test_a), (_, test_b) in zip(mskf.split(X, y0), mskf.split(X, y1)):
+        np.testing.assert_array_equal(test_a, test_b)
+
+
+def test_multilabel_stratified_kfold_balance():
+    # Check that MultilabelStratifiedKFold returns folds with balanced sizes
+    # Repeat with shuffling turned on and off
+    X = np.ones(17)
+    y = [[0, 0]] * 3 + [[0, 1]] * 3 + [[1, 0]] * 3 + [[1, 1]] * 8
+
+    for shuffle in (True, False):
+        cv = MultilabelStratifiedKFold(3, shuffle=shuffle)
+        for i in range(11, 17):
+            sizes = [len(test) for _, test in cv.split(X[:i], y[:i])]
+
+            assert (np.max(sizes) - np.min(sizes)) <= 1
+            assert np.sum(sizes) == i
 
 
 def test_shuffle_multilabel_stratified_kfold_reproducibility():
@@ -1313,12 +1339,12 @@ def test_repeated_multilabel_stratified_kfold_deterministic_split():
         assert_array_equal(test, [2, 5, 6])
 
         train, test = next(splits)
-        assert_array_equal(train, [0, 1, 4])
-        assert_array_equal(test, [2, 3, 5, 6])
+        assert_array_equal(train, [1, 4, 5])
+        assert_array_equal(test, [0, 2, 3, 6])
 
         train, test = next(splits)
-        assert_array_equal(train, [2, 3, 5, 6])
-        assert_array_equal(test, [0, 1, 4])
+        assert_array_equal(train, [0, 2, 3, 6])
+        assert_array_equal(test, [1, 4, 5])
 
         with pytest.raises(StopIteration):
             next(splits)
