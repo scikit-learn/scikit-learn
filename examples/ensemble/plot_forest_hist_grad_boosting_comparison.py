@@ -5,8 +5,11 @@ Comparing Random Forests and Histogram Gradient Boosting models
 
 In this example we compare the performance of Random Forest (RF) and Histogram
 Gradient Boosting (HGBT) models in terms of score and computation time for a
-given dataset. Here we vary the parameters that control the number of trees
-according to each estimator:
+regression dataset, though **all the concepts here presented apply to
+classification as well**.
+
+The comparison is made by varying the parameters that control the number of
+trees according to each estimator:
 
 - `n_estimators` controls the number of trees in the forest. It's a fixed numer.
 - `max_iter` is the the maximum number of iterations in a gradient boosting
