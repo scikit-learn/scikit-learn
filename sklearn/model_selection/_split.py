@@ -867,7 +867,7 @@ class StratifiedGroupKFold(_BaseKFold):
       the stratification will not be possible and the behavior will be close
       to GroupKFold.
 
-    See also
+    See Also
     --------
     StratifiedKFold: Takes class information into account to build folds which
         retain class distributions (for binary or multiclass classification
@@ -1039,14 +1039,14 @@ class MultilabelStratifiedKFold(_BaseKFold):
     positive to negative examples on each label in each subset. [1]_ Note that
     the train and test sizes may be slightly different in each fold.
 
-    See also
+    See Also
     --------
     StratifiedKFold: Takes class information into account to build folds which
         retain class distributions (for binary or multiclass classification
         tasks).
 
-    Reference
-    ---------
+    References
+    ----------
     .. [1] Sechidis, Konstantinos; Tsoumakas, Grigorios; Vlahavas, Ioannis.
         "On the stratification of multi-label data." Machine Learning and
         Knowledge Discovery in Databases (2011), 145--158.
@@ -1411,7 +1411,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
       Train: index=[0 1], group=[1 1]
       Test:  index=[2 3], group=[2 2]
 
-    See also
+    See Also
     --------
     GroupKFold: K-fold iterator variant with non-overlapping groups.
     """

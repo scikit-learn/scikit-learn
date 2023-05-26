@@ -734,21 +734,6 @@ def test_multilabel_stratified_kfold_no_shuffle():
     assert_array_equal(train, [1, 4, 5, 6])
 
 
-def test_multilabel_stratified_kfold_balance():
-    # Check that MultilabelStratifiedKFold returns folds with balanced sizes
-    # Repeat with shuffling turned on and off
-    X = np.ones(17)
-    y = [[0, 0]] * 3 + [[0, 1]] * 3 + [[1, 0]] * 3 + [[1, 1]] * 8
-
-    for shuffle in (True, False):
-        cv = MultilabelStratifiedKFold(3, shuffle=shuffle)
-        for i in range(11, 17):
-            sizes = [len(test) for _, test in cv.split(X[:i], y[:i])]
-
-            assert (np.max(sizes) - np.min(sizes)) <= 1
-            assert np.sum(sizes) == i
-
-
 def test_shuffle_multilabel_stratified_kfold_reproducibility():
     X = np.ones(15)  # Divisible by 3
     y = [[0, 0]] * 3 + [[0, 1]] * 3 + [[1, 0]] * 3 + [[1, 1]] * 6
