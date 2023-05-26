@@ -894,7 +894,6 @@ in each class per label and compare with :class:`KFold`.
   ...     np.tile([0, 1], (35, 1)), np.tile([0, 0], (5, 1)),
   ...     np.tile([1, 1], (5, 1)), np.tile([1, 0], (5, 1)),
   ... ))
-  ...
   >>> mskf = MultilabelStratifiedKFold(n_splits=4)
   >>> for train, test in mskf.split(X, y):
   ...     train_cnt, test_cnt = np.sum(y[train], axis=0), np.sum(y[test], axis=0)
@@ -906,6 +905,7 @@ in each class per label and compare with :class:`KFold`.
   ...         len(train) - train_cnt[1], train_cnt[1],
   ...         len(test) - test_cnt[1], test_cnt[1],
   ...     ))
+  ...
   label.0:   train -  30 / 7       test -  10 / 3
        .1:         -  8 / 29            -  2 / 11
   label.0:   train -  30 / 7       test -  10 / 3
@@ -914,7 +914,6 @@ in each class per label and compare with :class:`KFold`.
        .1:         -  8 / 30            -  2 / 10
   label.0:   train -  30 / 8       test -  10 / 2
        .1:         -  8 / 30            -  2 / 10
-  ...
   >>> kf = KFold(n_splits=4)
   >>> for train, test in kf.split(X, y):
   ...     train_cnt, test_cnt = np.sum(y[train], axis=0), np.sum(y[test], axis=0)
@@ -926,6 +925,7 @@ in each class per label and compare with :class:`KFold`.
   ...         len(train) - train_cnt[1], train_cnt[1],
   ...         len(test) - test_cnt[1], test_cnt[1],
   ...     ))
+  ...
   label.0:   train -  27 / 10      test -  13 / 0
        .1:         -  10 / 27           -  0 / 13
   label.0:   train -  27 / 10      test -  13 / 0
