@@ -18,8 +18,6 @@ import os
 import random
 
 
-from ._config import get_config, set_config, config_context
-
 logger = logging.getLogger(__name__)
 
 
@@ -79,10 +77,8 @@ else:
     # it and importing it first would fail if the OpenMP dll cannot be found.
     from . import _distributor_init  # noqa: F401
     from . import __check_build  # noqa: F401
-    from .base import clone
-    from .utils._show_versions import show_versions
 
-    __all__ = [
+    _submodules = [
         "calibration",
         "cluster",
         "covariance",
@@ -120,13 +116,19 @@ else:
         "discriminant_analysis",
         "impute",
         "compose",
-        # Non-modules:
-        "clone",
-        "get_config",
-        "set_config",
-        "config_context",
-        "show_versions",
     ]
+
+    from .externals import _lazy_loader
+
+    __getattr__, __dir__, __all__ = _lazy_loader.attach(
+        __name__,
+        submodules=_submodules,
+        submod_attrs={
+            "base": ["clone"],
+            "_config": ["get_config", "set_config", "config_context"],
+            "utils._show_versions": ["show_versions"],
+        },
+    )
 
 
 def setup_module(module):

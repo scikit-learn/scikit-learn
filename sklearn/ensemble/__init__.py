@@ -2,46 +2,28 @@
 The :mod:`sklearn.ensemble` module includes ensemble-based methods for
 classification, regression and anomaly detection.
 """
-from ._base import BaseEnsemble
-from ._forest import RandomForestClassifier
-from ._forest import RandomForestRegressor
-from ._forest import RandomTreesEmbedding
-from ._forest import ExtraTreesClassifier
-from ._forest import ExtraTreesRegressor
-from ._bagging import BaggingClassifier
-from ._bagging import BaggingRegressor
-from ._iforest import IsolationForest
-from ._weight_boosting import AdaBoostClassifier
-from ._weight_boosting import AdaBoostRegressor
-from ._gb import GradientBoostingClassifier
-from ._gb import GradientBoostingRegressor
-from ._voting import VotingClassifier
-from ._voting import VotingRegressor
-from ._stacking import StackingClassifier
-from ._stacking import StackingRegressor
-from ._hist_gradient_boosting.gradient_boosting import (
-    HistGradientBoostingRegressor,
-    HistGradientBoostingClassifier,
-)
+from ..externals import _lazy_loader
 
-__all__ = [
-    "BaseEnsemble",
-    "RandomForestClassifier",
-    "RandomForestRegressor",
-    "RandomTreesEmbedding",
-    "ExtraTreesClassifier",
-    "ExtraTreesRegressor",
-    "BaggingClassifier",
-    "BaggingRegressor",
-    "IsolationForest",
-    "GradientBoostingClassifier",
-    "GradientBoostingRegressor",
-    "AdaBoostClassifier",
-    "AdaBoostRegressor",
-    "VotingClassifier",
-    "VotingRegressor",
-    "StackingClassifier",
-    "StackingRegressor",
-    "HistGradientBoostingClassifier",
-    "HistGradientBoostingRegressor",
-]
+__getattr__, __dir__, __all__ = _lazy_loader.attach(
+    __name__,
+    submod_attrs={
+        "_bagging": ["BaggingClassifier", "BaggingRegressor"],
+        "_base": ["BaseEnsemble"],
+        "_forest": [
+            "RandomForestClassifier",
+            "RandomForestRegressor",
+            "RandomTreesEmbedding",
+            "ExtraTreesClassifier",
+            "ExtraTreesRegressor",
+        ],
+        "_gb": ["GradientBoostingClassifier", "GradientBoostingRegressor"],
+        "_hist_gradient_boosting.gradient_boosting": [
+            "HistGradientBoostingClassifier",
+            "HistGradientBoostingRegressor",
+        ],
+        "_iforest": ["IsolationForest"],
+        "_stacking": ["StackingClassifier", "StackingRegressor"],
+        "_voting": ["VotingClassifier", "VotingRegressor"],
+        "_weight_boosting": ["AdaBoostClassifier", "AdaBoostRegressor"],
+    },
+)

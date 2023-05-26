@@ -1,3 +1,6 @@
-from ._pls import PLSCanonical, PLSRegression, PLSSVD, CCA
+from ..externals import _lazy_loader
 
-__all__ = ["PLSCanonical", "PLSRegression", "PLSSVD", "CCA"]
+__getattr__, __dir__, __all__ = _lazy_loader.attach(
+    __name__,
+    submod_attrs={"_pls": ["PLSSVD", "CCA", "PLSCanonical", "PLSRegression"]},
+)

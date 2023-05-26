@@ -1,21 +1,15 @@
 """
 The :mod:`sklearn.manifold` module implements data embedding techniques.
 """
+from ..externals import _lazy_loader
 
-from ._locally_linear import locally_linear_embedding, LocallyLinearEmbedding
-from ._isomap import Isomap
-from ._mds import MDS, smacof
-from ._spectral_embedding import SpectralEmbedding, spectral_embedding
-from ._t_sne import TSNE, trustworthiness
-
-__all__ = [
-    "locally_linear_embedding",
-    "LocallyLinearEmbedding",
-    "Isomap",
-    "MDS",
-    "smacof",
-    "SpectralEmbedding",
-    "spectral_embedding",
-    "TSNE",
-    "trustworthiness",
-]
+__getattr__, __dir__, __all__ = _lazy_loader.attach(
+    __name__,
+    submod_attrs={
+        "_isomap": ["Isomap"],
+        "_locally_linear": ["locally_linear_embedding", "LocallyLinearEmbedding"],
+        "_mds": ["MDS", "smacof"],
+        "_spectral_embedding": ["SpectralEmbedding", "spectral_embedding"],
+        "_t_sne": ["TSNE", "trustworthiness"],
+    },
+)

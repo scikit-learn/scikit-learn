@@ -55,6 +55,12 @@ from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
 
+__all__ = ["CalibratedClassifierCV", "calibration_curve"]
+
+
+def __dir__():
+    return __all__
+
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     """Probability calibration with isotonic regression or logistic regression.

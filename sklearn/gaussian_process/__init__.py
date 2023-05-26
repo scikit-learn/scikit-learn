@@ -7,10 +7,13 @@
 The :mod:`sklearn.gaussian_process` module implements Gaussian Process
 based regression and classification.
 """
+from ..externals import _lazy_loader
 
-from ._gpr import GaussianProcessRegressor
-from ._gpc import GaussianProcessClassifier
-from . import kernels
-
-
-__all__ = ["GaussianProcessRegressor", "GaussianProcessClassifier", "kernels"]
+__getattr__, __dir__, __all__ = _lazy_loader.attach(
+    __name__,
+    ["kernels"],
+    submod_attrs={
+        "_gpc": ["GaussianProcessClassifier"],
+        "_gpr": ["GaussianProcessRegressor"],
+    },
+)

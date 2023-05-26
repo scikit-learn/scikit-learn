@@ -5,41 +5,27 @@ precision matrix defined as the inverse of the covariance is also estimated.
 Covariance estimation is closely related to the theory of Gaussian Graphical
 Models.
 """
+from ..externals import _lazy_loader
 
-from ._empirical_covariance import (
-    empirical_covariance,
-    EmpiricalCovariance,
-    log_likelihood,
+__getattr__, __dir__, __all__ = _lazy_loader.attach(
+    __name__,
+    submod_attrs={
+        "_elliptic_envelope": ["EllipticEnvelope"],
+        "_empirical_covariance": [
+            "log_likelihood",
+            "EmpiricalCovariance",
+            "empirical_covariance",
+        ],
+        "_graph_lasso": ["GraphicalLassoCV", "GraphicalLasso", "graphical_lasso"],
+        "_robust_covariance": ["MinCovDet", "fast_mcd"],
+        "_shrunk_covariance": [
+            "ShrunkCovariance",
+            "ledoit_wolf_shrinkage",
+            "OAS",
+            "ledoit_wolf",
+            "LedoitWolf",
+            "oas",
+            "shrunk_covariance",
+        ],
+    },
 )
-from ._shrunk_covariance import (
-    shrunk_covariance,
-    ShrunkCovariance,
-    ledoit_wolf,
-    ledoit_wolf_shrinkage,
-    LedoitWolf,
-    oas,
-    OAS,
-)
-from ._robust_covariance import fast_mcd, MinCovDet
-from ._graph_lasso import graphical_lasso, GraphicalLasso, GraphicalLassoCV
-from ._elliptic_envelope import EllipticEnvelope
-
-
-__all__ = [
-    "EllipticEnvelope",
-    "EmpiricalCovariance",
-    "GraphicalLasso",
-    "GraphicalLassoCV",
-    "LedoitWolf",
-    "MinCovDet",
-    "OAS",
-    "ShrunkCovariance",
-    "empirical_covariance",
-    "fast_mcd",
-    "graphical_lasso",
-    "ledoit_wolf",
-    "ledoit_wolf_shrinkage",
-    "log_likelihood",
-    "oas",
-    "shrunk_covariance",
-]
