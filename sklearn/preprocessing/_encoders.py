@@ -271,9 +271,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             unexpected_feature_names = list(
                 set(self.max_categories) - set(self.feature_names_in_)
             )
-            unexpected_feature_names.sort()  # deterministic error message
-            n_unexpeced = len(unexpected_feature_names)
             if unexpected_feature_names:
+                unexpected_feature_names.sort()  # deterministic error message
+                n_unexpeced = len(unexpected_feature_names)
                 if len(unexpected_feature_names) > 5:
                     unexpected_feature_names = unexpected_feature_names[:5]
                     unexpected_feature_names.append("...")
