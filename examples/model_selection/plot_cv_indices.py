@@ -21,6 +21,7 @@ from sklearn.model_selection import (
     GroupKFold,
     StratifiedShuffleSplit,
     StratifiedGroupKFold,
+    MultilabelStratifiedKFold,
 )
 import numpy as np
 import matplotlib.pyplot as plt
@@ -211,3 +212,113 @@ for cv in cvs:
     plt.tight_layout()
     fig.subplots_adjust(right=0.7)
 plt.show()
+
+# %%
+# Cross-validating multilabel data
+# --------------------------------
+#
+# When it comes to the multilabel context, we introduce the multilabel stratified
+# k-fold iterator for splitting. ``MultilabelStratifiedKFold`` implements the
+# iterative stratification algorithm and takes into consideration the distribution
+# of classes for each label. We start by creating some multilabel data.
+
+percentile_multilabel = [0.1, 0.2, 0.2, 0.5]
+labels_multilabel = [[0, 0], [0, 1], [1, 0], [1, 1]]
+y_multilabel = np.vstack(
+    [
+        [ii] * int(100 * perc)
+        for ii, perc in zip(labels_multilabel, percentile_multilabel)
+    ]
+)
+
+# %%
+# Next, we'll define a function that lets us visualize the behavior of each
+# cross-validation object for multilabel data, analogous to the one single-label
+# data. The only thing different is that we will plot the data classes for each
+# label separately.
+
+
+def plot_cv_indices_multilabel(cv, X, y, group, ax, n_splits, lw=10):
+    """Create a sample plot for indices of a multilabel cross-validation object."""
+    n_labels = y.shape[1]
+
+    # Generate the training/testing visualizations for each CV split
+    for ii, (tr, tt) in enumerate(cv.split(X=X, y=y, groups=group)):
+        # Fill in indices with the training/test groups
+        indices = np.array([np.nan] * len(X))
+        indices[tt] = 1
+        indices[tr] = 0
+
+        # Visualize the results
+        ax.scatter(
+            range(len(indices)),
+            [ii + 0.5] * len(indices),
+            c=indices,
+            marker="_",
+            lw=lw,
+            cmap=cmap_cv,
+            vmin=-0.2,
+            vmax=1.2,
+        )
+
+    # Plot the data classes and groups at the end
+    for label in range(n_labels):
+        ax.scatter(
+            range(len(X)),
+            [ii + 1.5 + label] * len(X),
+            c=y[:, label],
+            marker="_",
+            lw=lw,
+            cmap=cmap_data,
+        )
+
+    ax.scatter(
+        range(len(X)),
+        [ii + 1.5 + n_labels] * len(X),
+        c=group,
+        marker="_",
+        lw=lw,
+        cmap=cmap_data,
+    )
+
+    # Formatting
+    yticklabels = (
+        list(range(n_splits))
+        + [f"class\n(label {label})" for label in range(n_labels)]
+        + ["group"]
+    )
+    ax.set(
+        yticks=np.arange(n_splits + y.shape[1] + 1) + 0.5,
+        yticklabels=yticklabels,
+        xlabel="Sample index",
+        ylabel="CV iteration",
+        ylim=[n_splits + n_labels + 1.2, -0.2],
+        xlim=[0, 100],
+    )
+    ax.set_title("{}".format(type(cv).__name__), fontsize=15)
+    return ax
+
+
+# %%
+# Now we will compare ``KFold`` with ``MultilabelStratifiedKFold``:
+
+cvs = [KFold, MultilabelStratifiedKFold]
+
+for cv in cvs:
+    fig, ax = plt.subplots(figsize=(8, 4))
+    plot_cv_indices_multilabel(cv(n_splits), X, y_multilabel, groups, ax, n_splits)
+    ax.legend(
+        [Patch(color=cmap_cv(0.8)), Patch(color=cmap_cv(0.02))],
+        ["Testing set", "Training set"],
+        loc=(1.02, 0.8),
+    )
+    # Make the legend fit
+    plt.tight_layout()
+    fig.subplots_adjust(right=0.7)
+
+# %%
+# As we can see, ``KFold`` does not take into consideration the class information
+# and does not distinguish labels. In the first fold, the testing set contains even
+# no positive samples with respect to the first label. On the other hand,
+# ``MultilabelStratifiedKFold`` attempts to preserve the class ratios per label in
+# both the training and testing sets.

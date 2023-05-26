@@ -939,6 +939,13 @@ We can see that :class:`MultilabelStratifiedKFold` preserves the class ratios pe
 label (approximately 4 / 1 for the label 0 and 1 / 4 for the label 1) in both
 train and test dataset.
 
+Here is a visualization of the cross-validation behavior.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_014.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
+
 :class:`RepeatedMultilabelStratifiedKFold` can be used to repeat Multilabel
 Stratified K-Fold n times with different randomization in each repetition.
 

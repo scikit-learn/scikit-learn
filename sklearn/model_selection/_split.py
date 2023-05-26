@@ -1044,6 +1044,8 @@ class MultilabelStratifiedKFold(_BaseKFold):
     StratifiedKFold: Takes class information into account to build folds which
         retain class distributions (for binary or multiclass classification
         tasks).
+    RepeatedMultilabelStratifiedKFold: Repeats Multilabel Stratified K-Fold n
+        times.
 
     References
     ----------
