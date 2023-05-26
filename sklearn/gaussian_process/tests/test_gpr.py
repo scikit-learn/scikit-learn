@@ -811,6 +811,19 @@ def test_predict_shape_with_prior(n_targets):
     assert std_prior.shape == std_post.shape
 
 
+def test_n_targets_error():
+    """Check that an error is raised when the number of targets seen at fit is
+    inconsistent with n_targets.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 3)
+    y = rng.randn(10, 2)
+
+    model = GaussianProcessRegressor(n_targets=1)
+    with pytest.raises(ValueError, match="Number of targets seen != n_targets."):
+        model.fit(X, y)
+
+
 class CustomKernel(C):
     """
     A custom kernel that has a diag method that returns the first column of the

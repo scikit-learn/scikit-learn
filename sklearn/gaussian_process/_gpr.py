@@ -254,6 +254,13 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             dtype=dtype,
         )
 
+        n_targets_seen = y.shape[1] if y.ndim > 1 else 1
+        if self.n_targets is not None and n_targets_seen != self.n_targets:
+            raise ValueError(
+                "Number of targets seen != n_targets. "
+                f"Got {n_targets_seen} != {self.n_targets}."
+            )
+
         # Normalize target value
         if self.normalize_y:
             self._y_train_mean = np.mean(y, axis=0)
@@ -335,9 +342,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             self.L_ = cholesky(K, lower=GPR_CHOLESKY_LOWER, check_finite=False)
         except np.linalg.LinAlgError as exc:
             exc.args = (
-                f"The kernel, {self.kernel_}, is not returning a positive "
-                "definite matrix. Try gradually increasing the 'alpha' "
-                "parameter of your GaussianProcessRegressor estimator.",
+                (
+                    f"The kernel, {self.kernel_}, is not returning a positive "
+                    "definite matrix. Try gradually increasing the 'alpha' "
+                    "parameter of your GaussianProcessRegressor estimator."
+                ),
             ) + exc.args
             raise
         # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
