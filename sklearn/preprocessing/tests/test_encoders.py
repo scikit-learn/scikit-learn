@@ -2560,8 +2560,7 @@ def test_ordinal_encoder_max_categories_array_like_invalid_types():
     ordinal = OrdinalEncoder(max_categories=[3, None, 0])
 
     msg = re.escape(
-        "max_categories must be an array-like of None or integers at least 1. "
-        "Observed values: [0]."
+        "max_categories must be an array-like of None or integers at least 1."
     )
 
     with pytest.raises(ValueError, match=msg):

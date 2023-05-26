@@ -273,12 +273,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             )
             if unexpected_feature_names:
                 unexpected_feature_names.sort()  # deterministic error message
-                n_unexpeced = len(unexpected_feature_names)
+                n_unexpected = len(unexpected_feature_names)
                 if len(unexpected_feature_names) > 5:
                     unexpected_feature_names = unexpected_feature_names[:5]
                     unexpected_feature_names.append("...")
                 raise ValueError(
-                    f"max_categories contains {n_unexpeced} unexpected feature "
+                    f"max_categories contains {n_unexpected} unexpected feature "
                     f"names: {unexpected_feature_names}."
                 )
 
@@ -305,20 +305,16 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     f"input data X has {self.n_features_in_} features."
                 )
 
-            unexpected_max_counts = set(
-                max_count
+            if any(
+                max_count is not None
+                and not (isinstance(max_count, Integral) and max_count >= 1)
                 for max_count in max_categories
-                if not (
-                    max_count is None
-                    or (isinstance(max_count, Integral) and max_count >= 1)
-                )
-            )
-            if len(unexpected_max_counts):
+            ):
                 raise ValueError(
                     "max_categories must be an array-like of None or integers "
-                    "at least 1. Observed "
-                    f"values: {list(unexpected_max_counts)}."
+                    "at least 1."
                 )
+
             return max_categories if any(max_categories) else None
 
         else:
