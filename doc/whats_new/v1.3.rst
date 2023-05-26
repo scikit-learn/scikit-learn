@@ -463,9 +463,10 @@ Changelog
   `return_indices` to return the train-test indices of each cv split.
   :pr:`25659` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Feature| Added k-folds iterator :class:`model_selection.MultilabelStratifiedKFold`
-  which implement iterative stratification, and can be used in multilabel
-  classification.
+- |Feature| Implements a new k-folds iterator
+  :class:`model_selection.MultilabelStratifiedKFold` which can be used in multilabel
+  classification, and :class:`model_selection.RepeatedMultilabelStratifiedKFold`
+  that repeats it multiple times with randomization.
   :pr:`26423` by :user:`Yao Xiao <Charlie-XIAO>`
 
 :mod:`sklearn.multioutput`

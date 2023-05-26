@@ -941,7 +941,7 @@ train and test dataset.
 
 Here is a visualization of the cross-validation behavior.
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_014.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_015.png
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
