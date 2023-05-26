@@ -1671,7 +1671,7 @@ def make_spd_matrix(n_dim, *, random_state=None, n_samples=1):
     generator = check_random_state(random_state)
 
     A = generator.uniform(size=(n_samples, n_dim, n_dim))
-    U, _, Vt = linalg.svd(A.transpose((0, 2, 1)) @ A, check_finite=False)
+    U, _, Vt = np.linalg.svd(A.transpose((0, 2, 1)) @ A)
     X = U @ ((1.0 + generator.uniform(size=(n_samples, n_dim)))[..., None] * Vt)
 
     if n_samples == 1:
