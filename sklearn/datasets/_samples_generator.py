@@ -1632,7 +1632,7 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, *, random_state=None)
     },
     prefer_skip_nested_validation=True,
 )
-def make_spd_matrix(n_dim, *, random_state=None):
+def make_spd_matrix(n_dim, *, random_state=None, n_samples=1):
     """Generate a random symmetric, positive-definite matrix.
 
     Read more in the :ref:`User Guide <sample_generators>`.
