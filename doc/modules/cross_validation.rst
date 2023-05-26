@@ -391,8 +391,10 @@ Example of 2-fold K-Fold repeated 2 times::
   [1 3] [0 2]
 
 
-Similarly, :class:`RepeatedStratifiedKFold` repeats Stratified K-Fold n times
-with different randomization in each repetition.
+Similarly, :class:`RepeatedStratifiedKFold` repeats Stratified K-Fold n times and
+:class:`RepeatedMultilabelStratifiedKFold` repeats Multilabel Stratified K-Fold n
+times, with different randomization in each repetition, respectively.
+
 
 .. _leave_one_out:
 
@@ -892,7 +894,7 @@ in each class per label and compare with :class:`KFold`.
   ...     np.tile([0, 1], (35, 1)), np.tile([0, 0], (5, 1)),
   ...     np.tile([1, 1], (5, 1)), np.tile([1, 0], (5, 1)),
   ... ))
-
+  ...
   >>> mskf = MultilabelStratifiedKFold(n_splits=4)
   >>> for train, test in mskf.split(X, y):
   ...     train_cnt, test_cnt = np.sum(y[train], axis=0), np.sum(y[test], axis=0)
@@ -912,7 +914,7 @@ in each class per label and compare with :class:`KFold`.
        .1:         -  8 / 30            -  2 / 10
   label.0:   train -  30 / 8       test -  10 / 2
        .1:         -  8 / 30            -  2 / 10
-
+  ...
   >>> kf = KFold(n_splits=4)
   >>> for train, test in kf.split(X, y):
   ...     train_cnt, test_cnt = np.sum(y[train], axis=0), np.sum(y[test], axis=0)
@@ -936,6 +938,9 @@ in each class per label and compare with :class:`KFold`.
 We can see that :class:`MultilabelStratifiedKFold` preserves the class ratios per
 label (approximately 4 / 1 for the label 0 and 1 / 4 for the label 1) in both
 train and test dataset.
+
+:class:`RepeatedMultilabelStratifiedKFold` can be used to repeat Multilabel
+Stratified K-Fold n times with different randomization in each repetition.
 
 .. _timeseries_cv:
 
