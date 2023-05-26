@@ -257,7 +257,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         n_targets_seen = y.shape[1] if y.ndim > 1 else 1
         if self.n_targets is not None and n_targets_seen != self.n_targets:
             raise ValueError(
-                "Number of targets seen != n_targets. "
+                "The number of targets seen must match n_targets. "
                 f"Got {n_targets_seen} != {self.n_targets}."
             )
 

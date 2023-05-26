@@ -820,7 +820,7 @@ def test_n_targets_error():
     y = rng.randn(10, 2)
 
     model = GaussianProcessRegressor(n_targets=1)
-    with pytest.raises(ValueError, match="Number of targets seen != n_targets."):
+    with pytest.raises(ValueError, match="number of targets seen must match n_targets"):
         model.fit(X, y)
 
 
