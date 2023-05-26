@@ -133,7 +133,17 @@ def _tested_estimators(type_filter=None):
         yield estimator
 
 
-@parametrize_with_checks(list(_tested_estimators()))
+def _generate_pipeline():
+    for final_estimator in [Ridge(), LogisticRegression()]:
+        yield Pipeline(
+            steps=[
+                ("scaler", StandardScaler()),
+                ("final_estimator", final_estimator),
+            ]
+        )
+
+
+@parametrize_with_checks(list(chain(_tested_estimators(), _generate_pipeline())))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(category=(FutureWarning, ConvergenceWarning, UserWarning)):
@@ -281,16 +291,6 @@ def _generate_column_transformer_instances():
             ("trans1", StandardScaler(), [0, 1]),
         ]
     )
-
-
-def _generate_pipeline():
-    for final_estimator in [Ridge(), LogisticRegression()]:
-        yield Pipeline(
-            steps=[
-                ("scaler", StandardScaler()),
-                ("final_estimator", final_estimator),
-            ]
-        )
 
 
 def _generate_search_cv_instances():

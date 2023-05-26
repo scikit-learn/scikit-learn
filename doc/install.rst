@@ -269,26 +269,35 @@ python library for Windows, Mac OSX and Linux.
 Anaconda offers scikit-learn as part of its free distribution.
 
 
-Intel conda channel
--------------------
+Intel Extension for Scikit-learn
+--------------------------------
 
-Intel maintains a dedicated conda channel that ships scikit-learn:
+Intel maintains an optimized x86_64 package, available in PyPI (via `pip`),
+and in the `main`, `conda-forge` and `intel` conda channels:
 
 .. prompt:: bash $
 
-  conda install -c intel scikit-learn
+  conda install scikit-learn-intelex
 
-This version of scikit-learn comes with alternative solvers for some common
-estimators. Those solvers come from the DAAL C++ library and are optimized for
-multi-core Intel CPUs.
+This package has an Intel optimized version of many estimators. Whenever 
+an alternative implementation doesn't exist, scikit-learn implementation 
+is used as a fallback. Those optimized solvers come from the oneDAL 
+C++ library and are optimized for the x86_64 architecture, and are 
+optimized for multi-core Intel CPUs.
 
 Note that those solvers are not enabled by default, please refer to the
-`daal4py <https://intelpython.github.io/daal4py/sklearn.html>`_ documentation
-for more details.
+`scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/what-is-patching.html>`_ 
+documentation for more details on usage scenarios. Direct export example:
+
+.. prompt:: bash $
+
+  from sklearnex.neighbors import NearestNeighbors
 
 Compatibility with the standard scikit-learn solvers is checked by running the
 full scikit-learn test suite via automated continuous integration as reported
-on https://github.com/IntelPython/daal4py.
+on https://github.com/intel/scikit-learn-intelex. If you observe any issue
+with `scikit-learn-intelex`, please report the issue on their
+`issue tracker <https://github.com/intel/scikit-learn-intelex/issues>`__.
 
 
 WinPython for Windows
