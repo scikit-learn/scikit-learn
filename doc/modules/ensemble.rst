@@ -173,15 +173,14 @@ A competitive alternative to random forests are
    implementation of random forests does not use binning and relies on exact
    splitting, which can be computationally expensive.
 
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_forest_hist_grad_boosting_comparison_001.png
-    :target: ../auto_examples/ensemble/plot_forest_hist_grad_boosting_comparison.html
-    :align: center
-    :scale: 75%
-
 Overall, the computational cost of HGBT versus RF depends on the specific
 characteristics of the dataset and the modeling task. It's always a good idea
 to try both models and compare their performance and computational efficiency
 on your specific problem to determine which model is the best fit.
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`
 
 Extremely Randomized Trees
 --------------------------
