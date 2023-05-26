@@ -48,7 +48,6 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
-from joblib import Parallel
 
 from ..base import is_classifier
 from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin, TransformerMixin
@@ -66,7 +65,7 @@ from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, compute_sample_weight
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.validation import (
     check_is_fitted,
@@ -75,6 +74,7 @@ from ..utils.validation import (
 )
 from ..utils.validation import _num_samples
 from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import RealNotInt
 
 
 __all__ = [
@@ -118,7 +118,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return max_samples
 
     if isinstance(max_samples, Real):
-        return round(n_samples * max_samples)
+        return max(round(n_samples * max_samples), 1)
 
 
 def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
@@ -207,7 +207,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         "warm_start": ["boolean"],
         "max_samples": [
             None,
-            Interval(Real, 0.0, 1.0, closed="right"),
+            Interval(RealNotInt, 0.0, 1.0, closed="right"),
             Interval(Integral, 1, None, closed="left"),
         ],
     }
@@ -357,9 +357,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
             warn(
-                "A column-vector y was passed when a 1d array was"
-                " expected. Please change the shape of y to "
-                "(n_samples,), for example using ravel().",
+                (
+                    "A column-vector y was passed when a 1d array was"
+                    " expected. Please change the shape of y to "
+                    "(n_samples,), for example using ravel()."
+                ),
                 DataConversionWarning,
                 stacklevel=2,
             )
@@ -408,28 +410,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             n_samples_bootstrap = None
 
         self._validate_estimator()
-        if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
-            # TODO(1.3): Remove "auto"
-            if self.max_features == "auto":
-                warn(
-                    "`max_features='auto'` has been deprecated in 1.1 "
-                    "and will be removed in 1.3. To keep the past behaviour, "
-                    "explicitly set `max_features=1.0` or remove this "
-                    "parameter as it is also the default value for "
-                    "RandomForestRegressors and ExtraTreesRegressors.",
-                    FutureWarning,
-                )
-        elif isinstance(self, (RandomForestClassifier, ExtraTreesClassifier)):
-            # TODO(1.3): Remove "auto"
-            if self.max_features == "auto":
-                warn(
-                    "`max_features='auto'` has been deprecated in 1.1 "
-                    "and will be removed in 1.3. To keep the past behaviour, "
-                    "explicitly set `max_features='sqrt'` or remove this "
-                    "parameter as it is also the default value for "
-                    "RandomForestClassifiers and ExtraTreesClassifiers.",
-                    FutureWarning,
-                )
 
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available if bootstrap=True")
@@ -592,9 +572,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         for k in range(n_outputs):
             if (n_oob_pred == 0).any():
                 warn(
-                    "Some inputs do not have OOB scores. This probably means "
-                    "too few trees were used to compute any reliable OOB "
-                    "estimates.",
+                    (
+                        "Some inputs do not have OOB scores. This probably means "
+                        "too few trees were used to compute any reliable OOB "
+                        "estimates."
+                    ),
                     UserWarning,
                 )
                 n_oob_pred[n_oob_pred == 0] = 1
@@ -1172,17 +1154,12 @@ class RandomForestClassifier(ForestClassifier):
         - If float, then `max_features` is a fraction and
           `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
-        - If "auto", then `max_features=sqrt(n_features)`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
 
         .. versionchanged:: 1.1
             The default of `max_features` changed from `"auto"` to `"sqrt"`.
-
-        .. deprecated:: 1.1
-            The `"auto"` option was deprecated in 1.1 and will be removed
-            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1284,7 +1261,7 @@ class RandomForestClassifier(ForestClassifier):
 
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
+        - If float, then draw `max(round(n_samples * max_samples), 1)` samples. Thus,
           `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
@@ -1359,6 +1336,9 @@ class RandomForestClassifier(ForestClassifier):
     sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
     sklearn.ensemble.ExtraTreesClassifier : Ensemble of extremely randomized
         tree classifiers.
+    sklearn.ensemble.HistGradientBoostingClassifier : A Histogram-based Gradient
+        Boosting Classification Tree, very fast for big datasets (n_samples >=
+        10_000).
 
     Notes
     -----
@@ -1547,7 +1527,6 @@ class RandomForestRegressor(ForestRegressor):
         - If float, then `max_features` is a fraction and
           `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
-        - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None or 1.0, then `max_features=n_features`.
@@ -1558,10 +1537,6 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionchanged:: 1.1
             The default of `max_features` changed from `"auto"` to 1.0.
-
-        .. deprecated:: 1.1
-            The `"auto"` option was deprecated in 1.1 and will be removed
-            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1637,7 +1612,7 @@ class RandomForestRegressor(ForestRegressor):
 
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
+        - If float, then draw `max(round(n_samples * max_samples), 1)` samples. Thus,
           `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
@@ -1700,6 +1675,9 @@ class RandomForestRegressor(ForestRegressor):
     sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
     sklearn.ensemble.ExtraTreesRegressor : Ensemble of extremely randomized
         tree regressors.
+    sklearn.ensemble.HistGradientBoostingRegressor : A Histogram-based Gradient
+        Boosting Regression Tree, very fast for big datasets (n_samples >=
+        10_000).
 
     Notes
     -----
@@ -1716,7 +1694,7 @@ class RandomForestRegressor(ForestRegressor):
     search of the best split. To obtain a deterministic behaviour during
     fitting, ``random_state`` has to be fixed.
 
-    The default value ``max_features="auto"`` uses ``n_features``
+    The default value ``max_features=1.0`` uses ``n_features``
     rather than ``n_features / 3``. The latter was originally suggested in
     [1], whereas the former was more recently justified empirically in [2].
 
@@ -1871,17 +1849,12 @@ class ExtraTreesClassifier(ForestClassifier):
         - If float, then `max_features` is a fraction and
           `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
-        - If "auto", then `max_features=sqrt(n_features)`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
 
         .. versionchanged:: 1.1
             The default of `max_features` changed from `"auto"` to `"sqrt"`.
-
-        .. deprecated:: 1.1
-            The `"auto"` option was deprecated in 1.1 and will be removed
-            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -2237,7 +2210,6 @@ class ExtraTreesRegressor(ForestRegressor):
         - If float, then `max_features` is a fraction and
           `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
-        - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None or 1.0, then `max_features=n_features`.
@@ -2248,10 +2220,6 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionchanged:: 1.1
             The default of `max_features` changed from `"auto"` to 1.0.
-
-        .. deprecated:: 1.1
-            The `"auto"` option was deprecated in 1.1 and will be removed
-            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to

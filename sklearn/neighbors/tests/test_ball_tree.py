@@ -27,10 +27,8 @@ METRICS = {
 DISCRETE_METRICS = ["hamming", "canberra", "braycurtis"]
 
 BOOLEAN_METRICS = [
-    "matching",
     "jaccard",
     "dice",
-    "kulsinski",
     "rogerstanimoto",
     "russellrao",
     "sokalmichener",

@@ -6,6 +6,7 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 import warnings
+from numpy.testing import assert_allclose
 
 import sklearn
 from sklearn.utils._testing import assert_array_equal
@@ -17,11 +18,13 @@ from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._set_output import _get_output_config
 from sklearn.pipeline import Pipeline
+from sklearn.decomposition import PCA
 from sklearn.model_selection import GridSearchCV
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
+from sklearn.exceptions import InconsistentVersionWarning
 
 from sklearn.base import TransformerMixin
 from sklearn.utils._mocking import MockDataFrame
@@ -361,6 +364,50 @@ def test_clone_pandas_dataframe():
     assert e.scalar_param == cloned_e.scalar_param
 
 
+def test_clone_protocol():
+    """Checks that clone works with `__sklearn_clone__` protocol."""
+
+    class FrozenEstimator(BaseEstimator):
+        def __init__(self, fitted_estimator):
+            self.fitted_estimator = fitted_estimator
+
+        def __getattr__(self, name):
+            return getattr(self.fitted_estimator, name)
+
+        def __sklearn_clone__(self):
+            return self
+
+        def fit(self, *args, **kwargs):
+            return self
+
+        def fit_transform(self, *args, **kwargs):
+            return self.fitted_estimator.transform(*args, **kwargs)
+
+    X = np.array([[-1, -1], [-2, -1], [-3, -2]])
+    pca = PCA().fit(X)
+    components = pca.components_
+
+    frozen_pca = FrozenEstimator(pca)
+    assert_allclose(frozen_pca.components_, components)
+
+    # Calling PCA methods such as `get_feature_names_out` still works
+    assert_array_equal(frozen_pca.get_feature_names_out(), pca.get_feature_names_out())
+
+    # Fitting on a new data does not alter `components_`
+    X_new = np.asarray([[-1, 2], [3, 4], [1, 2]])
+    frozen_pca.fit(X_new)
+    assert_allclose(frozen_pca.components_, components)
+
+    # `fit_transform` does not alter state
+    frozen_pca.fit_transform(X_new)
+    assert_allclose(frozen_pca.components_, components)
+
+    # Cloning estimator is a no-op
+    clone_frozen_pca = clone(frozen_pca)
+    assert clone_frozen_pca is frozen_pca
+    assert_allclose(clone_frozen_pca.components_, components)
+
+
 def test_pickle_version_warning_is_not_raised_with_matching_version():
     iris = datasets.load_iris()
     tree = DecisionTreeClassifier().fit(iris.data, iris.target)
@@ -397,8 +444,14 @@ def test_pickle_version_warning_is_issued_upon_different_version():
         old_version="something",
         current_version=sklearn.__version__,
     )
-    with pytest.warns(UserWarning, match=message):
+    with pytest.warns(UserWarning, match=message) as warning_record:
         pickle.loads(tree_pickle_other)
+
+    message = warning_record.list[0].message
+    assert isinstance(message, InconsistentVersionWarning)
+    assert message.estimator_name == "TreeBadVersion"
+    assert message.original_sklearn_version == "something"
+    assert message.current_sklearn_version == sklearn.__version__
 
 
 class TreeNoVersion(DecisionTreeClassifier):
@@ -664,6 +717,47 @@ def test_feature_names_in():
     # transform on feature names that are mixed also raises:
     with pytest.raises(TypeError, match=msg):
         trans.transform(df_mixed)
+
+
+def test_validate_data_cast_to_ndarray():
+    """Check cast_to_ndarray option of _validate_data."""
+
+    pd = pytest.importorskip("pandas")
+    iris = datasets.load_iris()
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
+    y = pd.Series(iris.target)
+
+    class NoOpTransformer(TransformerMixin, BaseEstimator):
+        pass
+
+    no_op = NoOpTransformer()
+    X_np_out = no_op._validate_data(df, cast_to_ndarray=True)
+    assert isinstance(X_np_out, np.ndarray)
+    assert_allclose(X_np_out, df.to_numpy())
+
+    X_df_out = no_op._validate_data(df, cast_to_ndarray=False)
+    assert X_df_out is df
+
+    y_np_out = no_op._validate_data(y=y, cast_to_ndarray=True)
+    assert isinstance(y_np_out, np.ndarray)
+    assert_allclose(y_np_out, y.to_numpy())
+
+    y_series_out = no_op._validate_data(y=y, cast_to_ndarray=False)
+    assert y_series_out is y
+
+    X_np_out, y_np_out = no_op._validate_data(df, y, cast_to_ndarray=True)
+    assert isinstance(X_np_out, np.ndarray)
+    assert_allclose(X_np_out, df.to_numpy())
+    assert isinstance(y_np_out, np.ndarray)
+    assert_allclose(y_np_out, y.to_numpy())
+
+    X_df_out, y_series_out = no_op._validate_data(df, y, cast_to_ndarray=False)
+    assert X_df_out is df
+    assert y_series_out is y
+
+    msg = "Validation should be done on X, y or both."
+    with pytest.raises(ValueError, match=msg):
+        no_op._validate_data()
 
 
 def test_clone_keeps_output_config():

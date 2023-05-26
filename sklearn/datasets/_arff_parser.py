@@ -187,7 +187,7 @@ def _liac_arff_parser(
 
         # calculate chunksize
         first_row = next(arff_container["data"])
-        first_df = pd.DataFrame([first_row], columns=columns_names)
+        first_df = pd.DataFrame([first_row], columns=columns_names, copy=False)
 
         row_bytes = first_df.memory_usage(deep=True).sum()
         chunksize = get_chunk_n_rows(row_bytes)
@@ -196,7 +196,14 @@ def _liac_arff_parser(
         columns_to_keep = [col for col in columns_names if col in columns_to_select]
         dfs = [first_df[columns_to_keep]]
         for data in _chunk_generator(arff_container["data"], chunksize):
-            dfs.append(pd.DataFrame(data, columns=columns_names)[columns_to_keep])
+            dfs.append(
+                pd.DataFrame(data, columns=columns_names, copy=False)[columns_to_keep]
+            )
+        # dfs[0] contains only one row, which may not have enough data to infer to
+        # column's dtype. Here we use `dfs[1]` to configure the dtype in dfs[0]
+        if len(dfs) >= 2:
+            dfs[0] = dfs[0].astype(dfs[1].dtypes)
+
         frame = pd.concat(dfs, ignore_index=True)
         del dfs, first_df
 
@@ -302,6 +309,7 @@ def _pandas_arff_parser(
     openml_columns_info,
     feature_names_to_select,
     target_names_to_select,
+    read_csv_kwargs=None,
 ):
     """ARFF parser using `pandas.read_csv`.
 
@@ -330,6 +338,10 @@ def _pandas_arff_parser(
 
     target_names_to_select : list of str
         A list of the target names to be selected to build `y`.
+
+    read_csv_kwargs : dict, default=None
+        Keyword arguments to pass to `pandas.read_csv`. It allows to overwrite
+        the default options.
 
     Returns
     -------
@@ -363,17 +375,37 @@ def _pandas_arff_parser(
             dtypes[name] = "Int64"
         elif column_dtype.lower() == "nominal":
             dtypes[name] = "category"
+    # since we will not pass `names` when reading the ARFF file, we need to translate
+    # `dtypes` from column names to column indices to pass to `pandas.read_csv`
+    dtypes_positional = {
+        col_idx: dtypes[name]
+        for col_idx, name in enumerate(openml_columns_info)
+        if name in dtypes
+    }
 
-    # ARFF represents missing values with "?"
-    frame = pd.read_csv(
-        gzip_file,
-        header=None,
-        na_values=["?"],  # missing values are represented by `?`
-        comment="%",  # skip line starting by `%` since they are comments
-        quotechar='"',  # delimiter to use for quoted strings
-        names=[name for name in openml_columns_info],
-        dtype=dtypes,
-    )
+    default_read_csv_kwargs = {
+        "header": None,
+        "index_col": False,  # always force pandas to not use the first column as index
+        "na_values": ["?"],  # missing values are represented by `?`
+        "comment": "%",  # skip line starting by `%` since they are comments
+        "quotechar": '"',  # delimiter to use for quoted strings
+        "skipinitialspace": True,  # skip spaces after delimiter to follow ARFF specs
+        "escapechar": "\\",
+        "dtype": dtypes_positional,
+    }
+    read_csv_kwargs = {**default_read_csv_kwargs, **(read_csv_kwargs or {})}
+    frame = pd.read_csv(gzip_file, **read_csv_kwargs)
+    try:
+        # Setting the columns while reading the file will select the N first columns
+        # and not raise a ParserError. Instead, we set the columns after reading the
+        # file and raise a ParserError if the number of columns does not match the
+        # number of columns in the metadata given by OpenML.
+        frame.columns = [name for name in openml_columns_info]
+    except ValueError as exc:
+        raise pd.errors.ParserError(
+            "The number of columns provided by OpenML does not match the number of "
+            "columns inferred by pandas when reading the file."
+        ) from exc
 
     columns_to_select = feature_names_to_select + target_names_to_select
     columns_to_keep = [col for col in frame.columns if col in columns_to_select]
@@ -402,7 +434,7 @@ def _pandas_arff_parser(
     categorical_columns = [
         name
         for name, dtype in frame.dtypes.items()
-        if pd.api.types.is_categorical_dtype(dtype)
+        if isinstance(dtype, pd.CategoricalDtype)
     ]
     for col in categorical_columns:
         frame[col] = frame[col].cat.rename_categories(strip_single_quotes)
@@ -417,7 +449,7 @@ def _pandas_arff_parser(
     categories = {
         name: dtype.categories.tolist()
         for name, dtype in frame.dtypes.items()
-        if pd.api.types.is_categorical_dtype(dtype)
+        if isinstance(dtype, pd.CategoricalDtype)
     }
     return X, y, None, categories
 
@@ -430,6 +462,7 @@ def load_arff_from_gzip_file(
     feature_names_to_select,
     target_names_to_select,
     shape=None,
+    read_csv_kwargs=None,
 ):
     """Load a compressed ARFF file using a given parser.
 
@@ -459,6 +492,10 @@ def load_arff_from_gzip_file(
 
     target_names_to_select : list of str
         A list of the target names to be selected.
+
+    read_csv_kwargs : dict, default=None
+        Keyword arguments to pass to `pandas.read_csv`. It allows to overwrite
+        the default options.
 
     Returns
     -------
@@ -492,6 +529,7 @@ def load_arff_from_gzip_file(
             openml_columns_info,
             feature_names_to_select,
             target_names_to_select,
+            read_csv_kwargs,
         )
     else:
         raise ValueError(

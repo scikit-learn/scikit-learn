@@ -142,7 +142,7 @@ classifier.fit(X_train, y_train)
 from sklearn.metrics import PrecisionRecallDisplay
 
 display = PrecisionRecallDisplay.from_estimator(
-    classifier, X_test, y_test, name="LinearSVC"
+    classifier, X_test, y_test, name="LinearSVC", plot_chance_level=True
 )
 _ = display.ax_.set_title("2-class Precision-Recall curve")
 
@@ -152,7 +152,9 @@ _ = display.ax_.set_title("2-class Precision-Recall curve")
 # :func:`~sklearn.metrics.PrecisionRecallDisplay.from_predictions`.
 y_score = classifier.decision_function(X_test)
 
-display = PrecisionRecallDisplay.from_predictions(y_test, y_score, name="LinearSVC")
+display = PrecisionRecallDisplay.from_predictions(
+    y_test, y_score, name="LinearSVC", plot_chance_level=True
+)
 _ = display.ax_.set_title("2-class Precision-Recall curve")
 
 # %%
@@ -214,12 +216,15 @@ average_precision["micro"] = average_precision_score(Y_test, y_score, average="m
 # %%
 # Plot the micro-averaged Precision-Recall curve
 # ..............................................
+from collections import Counter
+
 display = PrecisionRecallDisplay(
     recall=recall["micro"],
     precision=precision["micro"],
     average_precision=average_precision["micro"],
+    prevalence_pos_label=Counter(Y_test.ravel())[1] / Y_test.size,
 )
-display.plot()
+display.plot(plot_chance_level=True)
 _ = display.ax_.set_title("Micro-averaged over all classes")
 
 # %%

@@ -14,7 +14,6 @@ from itertools import islice
 
 import numpy as np
 from scipy import sparse
-from joblib import Parallel
 
 from .base import clone, TransformerMixin
 from .preprocessing import FunctionTransformer
@@ -30,7 +29,7 @@ from .utils.validation import check_is_fitted
 from .utils import check_pandas_support
 from .utils._param_validation import HasMethods, Hidden
 from .utils._set_output import _safe_set_output, _get_output_config
-from .utils.fixes import delayed
+from .utils.parallel import delayed, Parallel
 from .exceptions import NotFittedError
 
 from .utils.metaestimators import _BaseComposition
@@ -81,13 +80,13 @@ class Pipeline(_BaseComposition):
         estimator.
 
     memory : str or object with the joblib.Memory interface, default=None
-        Used to cache the fitted transformers of the pipeline. By default,
-        no caching is performed. If a string is given, it is the path to
-        the caching directory. Enabling caching triggers a clone of
-        the transformers before fitting. Therefore, the transformer
-        instance given to the pipeline cannot be inspected
-        directly. Use the attribute ``named_steps`` or ``steps`` to
-        inspect estimators within the pipeline. Caching the
+        Used to cache the fitted transformers of the pipeline. The last step
+        will never be cached, even if it is a transformer. By default, no
+        caching is performed. If a string is given, it is the path to the
+        caching directory. Enabling caching triggers a clone of the transformers
+        before fitting. Therefore, the transformer instance given to the
+        pipeline cannot be inspected directly. Use the attribute ``named_steps``
+        or ``steps`` to inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
     verbose : bool, default=False
@@ -422,6 +421,14 @@ class Pipeline(_BaseComposition):
 
         return self
 
+    def _can_fit_transform(self):
+        return (
+            self._final_estimator == "passthrough"
+            or hasattr(self._final_estimator, "transform")
+            or hasattr(self._final_estimator, "fit_transform")
+        )
+
+    @available_if(_can_fit_transform)
     def fit_transform(self, X, y=None, **fit_params):
         """Fit the model and transform with the final estimator.
 
@@ -745,12 +752,34 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][1].classes_
 
     def _more_tags(self):
+        tags = {
+            "_xfail_checks": {
+                "check_dont_overwrite_parameters": (
+                    "Pipeline changes the `steps` parameter, which it shouldn't."
+                    "Therefore this test is x-fail until we fix this."
+                ),
+                "check_estimators_overwrite_params": (
+                    "Pipeline changes the `steps` parameter, which it shouldn't."
+                    "Therefore this test is x-fail until we fix this."
+                ),
+            }
+        }
+
         try:
-            return {"pairwise": _safe_tags(self.steps[0][1], "pairwise")}
+            tags["pairwise"] = _safe_tags(self.steps[0][1], "pairwise")
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
-            return {}
+            pass
+
+        try:
+            tags["multioutput"] = _safe_tags(self.steps[-1][1], "multioutput")
+        except (ValueError, AttributeError, TypeError):
+            # This happens when the `steps` is not a list of (name, estimator)
+            # tuples and `fit` is not called yet to validate the steps.
+            pass
+
+        return tags
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -859,13 +888,13 @@ def make_pipeline(*steps, memory=None, verbose=False):
         List of the scikit-learn estimators that are chained together.
 
     memory : str or object with the joblib.Memory interface, default=None
-        Used to cache the fitted transformers of the pipeline. By default,
-        no caching is performed. If a string is given, it is the path to
-        the caching directory. Enabling caching triggers a clone of
-        the transformers before fitting. Therefore, the transformer
-        instance given to the pipeline cannot be inspected
-        directly. Use the attribute ``named_steps`` or ``steps`` to
-        inspect estimators within the pipeline. Caching the
+        Used to cache the fitted transformers of the pipeline. The last step
+        will never be cached, even if it is a transformer. By default, no
+        caching is performed. If a string is given, it is the path to the
+        caching directory. Enabling caching triggers a clone of the transformers
+        before fitting. Therefore, the transformer instance given to the
+        pipeline cannot be inspected directly. Use the attribute ``named_steps``
+        or ``steps`` to inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
     verbose : bool, default=False
@@ -994,6 +1023,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         attribute when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when
+        `X` has feature names that are all strings.
+
+        .. versionadded:: 1.3
 
     See Also
     --------
@@ -1296,6 +1331,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         # X is passed to all transformers so we just delegate to the first one
         return self.transformer_list[0][1].n_features_in_
+
+    @property
+    def feature_names_in_(self):
+        """Names of features seen during :term:`fit`."""
+        # X is passed to all transformers -- delegate to the first one
+        return self.transformer_list[0][1].feature_names_in_
 
     def __sklearn_is_fitted__(self):
         # Delegate whether feature union was fitted

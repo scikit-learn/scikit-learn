@@ -34,6 +34,10 @@
     <p>Yaroslav Halchenko</p>
     </div>
     <div>
+    <a href='https://github.com/betatim'><img src='https://avatars.githubusercontent.com/u/1448859?v=4' class='avatar' /></a> <br />
+    <p>Tim Head</p>
+    </div>
+    <div>
     <a href='https://github.com/NicolasHug'><img src='https://avatars.githubusercontent.com/u/1190450?v=4' class='avatar' /></a> <br />
     <p>Nicolas Hug</p>
     </div>

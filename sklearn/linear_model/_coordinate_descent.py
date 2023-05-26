@@ -14,7 +14,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
@@ -30,8 +30,7 @@ from ..utils.validation import (
     check_is_fitted,
     column_or_1d,
 )
-from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from . import _cd_fast as cd_fast  # type: ignore
@@ -169,9 +168,7 @@ def _alpha_grid(
         alphas.fill(np.finfo(float).resolution)
         return alphas
 
-    return np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max), num=n_alphas)[
-        ::-1
-    ]
+    return np.geomspace(alpha_max, alpha_max * eps, num=n_alphas)
 
 
 def lasso_path(
@@ -594,9 +591,7 @@ def enet_path(
                 w=coef_,
                 alpha=l1_reg,
                 beta=l2_reg,
-                X_data=ReadonlyArrayWrapper(
-                    X.data
-                ),  # TODO: Remove after release of Cython 3 (#23147)
+                X_data=X.data,
                 X_indices=X.indices,
                 X_indptr=X.indptr,
                 y=y,
@@ -864,8 +859,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         X : {ndarray, sparse matrix} of (n_samples, n_features)
             Data.
 
-        y : {ndarray, sparse matrix} of shape (n_samples,) or \
-            (n_samples, n_targets)
+        y : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
@@ -896,9 +890,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if self.alpha == 0:
             warnings.warn(
-                "With alpha=0, this algorithm does not converge "
-                "well. You are advised to use the LinearRegression "
-                "estimator",
+                (
+                    "With alpha=0, this algorithm does not converge "
+                    "well. You are advised to use the LinearRegression "
+                    "estimator"
+                ),
                 stacklevel=2,
             )
 
