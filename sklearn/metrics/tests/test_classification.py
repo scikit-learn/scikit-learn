@@ -618,17 +618,6 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
     assert_almost_equal(fnr, 0.5)
 
 
-def test_average_precision_score_score_non_binary_class():
-    # Test that average_precision_score function returns an error when trying
-    # to compute average_precision_score for multiclass task.
-    rng = check_random_state(404)
-    y_pred = rng.rand(10)
-
-    # y_true contains three different class values
-    y_true = rng.randint(0, 3, size=10)
-    err_msg = "multiclass format is not supported"
-
-
 def test_average_precision_score_non_binary_class():
     """Test multiclass-multiouptut for `average_precision_score`."""
     y_true = np.array(
