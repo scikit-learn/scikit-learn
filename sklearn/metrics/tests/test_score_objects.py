@@ -43,7 +43,7 @@ from sklearn.metrics._scorer import (
     _MultimetricScorer,
     _check_multimetric_scoring,
 )
-from sklearn.metrics import make_scorer, get_scorer, SCORERS, get_scorer_names
+from sklearn.metrics import make_scorer, get_scorer, get_scorer_names
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
@@ -191,12 +191,6 @@ def teardown_module():
     shutil.rmtree(TEMP_FOLDER)
 
 
-class EstimatorWithoutFit:
-    """Dummy estimator to test scoring validators"""
-
-    pass
-
-
 class EstimatorWithFit(BaseEstimator):
     """Dummy estimator to test scoring validators"""
 
@@ -240,13 +234,6 @@ def test_all_scorers_repr():
 
 def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     # Test all branches of single metric usecases
-    estimator = EstimatorWithoutFit()
-    pattern = (
-        r"estimator should be an estimator implementing 'fit' method," r" .* was passed"
-    )
-    with pytest.raises(TypeError, match=pattern):
-        scoring_validator(estimator)
-
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
     scorer = scoring_validator(estimator)
@@ -792,13 +779,18 @@ def test_multimetric_scorer_calls_method_once(
     X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
 
     mock_est = Mock()
-    fit_func = Mock(return_value=mock_est)
-    predict_func = Mock(return_value=y)
+    mock_est._estimator_type = "classifier"
+    fit_func = Mock(return_value=mock_est, name="fit")
+    fit_func.__name__ = "fit"
+    predict_func = Mock(return_value=y, name="predict")
+    predict_func.__name__ = "predict"
 
     pos_proba = np.random.rand(X.shape[0])
     proba = np.c_[1 - pos_proba, pos_proba]
-    predict_proba_func = Mock(return_value=proba)
-    decision_function_func = Mock(return_value=pos_proba)
+    predict_proba_func = Mock(return_value=proba, name="predict_proba")
+    predict_proba_func.__name__ = "predict_proba"
+    decision_function_func = Mock(return_value=pos_proba, name="decision_function")
+    decision_function_func.__name__ = "decision_function"
 
     mock_est.fit = fit_func
     mock_est.predict = predict_func
@@ -994,7 +986,7 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
     lr = Perceptron().fit(X, y)
-    msg = "'Perceptron' object has no attribute 'predict_proba'"
+    msg = "Perceptron has none of the following attributes: predict_proba."
     with pytest.raises(AttributeError, match=msg):
         scorer(lr, X, y)
 
@@ -1200,12 +1192,6 @@ def test_scorer_select_proba_error(scorer):
 def test_get_scorer_return_copy():
     # test that get_scorer returns a copy
     assert get_scorer("roc_auc") is not get_scorer("roc_auc")
-
-
-# TODO(1.3) Remove
-def test_SCORERS_deprecated():
-    with pytest.warns(FutureWarning, match="is deprecated and will be removed in v1.3"):
-        SCORERS["roc_auc"]
 
 
 def test_scorer_no_op_multiclass_select_proba():
