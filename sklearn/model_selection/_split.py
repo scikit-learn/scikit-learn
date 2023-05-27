@@ -1015,7 +1015,7 @@ class MultilabelStratifiedKFold(_BaseKFold):
     >>> import numpy as np
     >>> from sklearn.model_selection import MultilabelStratifiedKFold
     >>> X = np.ones((8, 2))
-    >>> y = np.array([[0, 0]] * 2 + [[0, 1]] * 2 + [[1, 1]] * 2 + [[1, 0]] * 2)
+    >>> y = y = np.hstack(([[0]] * 4 + [[1]] * 4, [[1]] * 4 + [[0]] * 4))
     >>> mskf = MultilabelStratifiedKFold(n_splits=2)
     >>> mskf.get_n_splits(X, y)
     2
@@ -1904,7 +1904,7 @@ class RepeatedMultilabelStratifiedKFold(_RepeatedSplits):
     >>> import numpy as np
     >>> from sklearn.model_selection import RepeatedMultilabelStratifiedKFold
     >>> X = np.ones((8, 2))
-    >>> y = np.array([[0, 0]] * 2 + [[0, 1]] * 2 + [[1, 1]] * 2 + [[1, 0]] * 2)
+    >>> y = np.hstack(([[0]] * 4 + [[1]] * 4, [[1]] * 4 + [[0]] * 4))
     >>> rmskf = RepeatedMultilabelStratifiedKFold(n_splits=2, n_repeats=2,
     ...     random_state=0)
     >>> rmskf.get_n_splits(X, y)

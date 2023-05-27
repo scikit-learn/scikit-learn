@@ -889,51 +889,40 @@ in each class per label and compare with :class:`KFold`.
 
   >>> import numpy as np
   >>> from sklearn.model_selection import KFold, MultilabelStratifiedKFold
+  >>> def print_multilabel_split(cv, X, y):
+  ...     for train, test in cv.split(X, y):
+  ...         n_train, n_test = np.sum(y[train], axis=0), np.sum(y[test], axis=0)
+  ...         print("0:  train - {:2d} / {:2d}  test -  {:2d} / {:2d}".format(
+  ...             len(train) - n_train[0], n_train[0],
+  ...             len(test) - n_test[0], n_test[0],
+  ...         ))
+  ...         print("1:        - {:2d} / {:2d}       -  {:2d} / {:2d}".format(
+  ...             len(train) - n_train[1], n_train[1],
+  ...             len(test) - n_test[1], n_test[1],
+  ...         ))
+  ...
   >>> X = np.ones((50, 2))
-  >>> y = np.vstack((
-  ...     np.tile([0, 1], (35, 1)), np.tile([0, 0], (5, 1)),
-  ...     np.tile([1, 1], (5, 1)), np.tile([1, 0], (5, 1)),
-  ... ))
+  >>> y = np.hstack(([[0]] * 40 + [[1]] * 10, [[0]] * 10 + [[1]] * 40))
   >>> mskf = MultilabelStratifiedKFold(n_splits=4)
-  >>> for train, test in mskf.split(X, y):
-  ...     train_cnt, test_cnt = np.sum(y[train], axis=0), np.sum(y[test], axis=0)
-  ...     print("label.0:   train -  {} / {}\t test -  {} / {}".format(
-  ...         len(train) - train_cnt[0], train_cnt[0],
-  ...         len(test) - test_cnt[0], test_cnt[0],
-  ...     ))
-  ...     print("     .1:         -  {} / {}\t      -  {} / {}".format(
-  ...         len(train) - train_cnt[1], train_cnt[1],
-  ...         len(test) - test_cnt[1], test_cnt[1],
-  ...     ))
-  ...
-  label.0:   train -  30 / 7       test -  10 / 3
-       .1:         -  7 / 30            -  3 / 10
-  label.0:   train -  30 / 7       test -  10 / 3
-       .1:         -  7 / 30            -  3 / 10
-  label.0:   train -  30 / 8       test -  10 / 2
-       .1:         -  8 / 30            -  2 / 10
-  label.0:   train -  30 / 8       test -  10 / 2
-       .1:         -  8 / 30            -  2 / 10
+  >>> print_multilabel_split(mskf, X, y)
+  0:  train - 30 /  7  test -  10 /  3
+  1:        -  7 / 30       -   3 / 10
+  0:  train - 30 /  7  test -  10 /  3
+  1:        -  7 / 30       -   3 / 10
+  0:  train - 30 /  8  test -  10 /  2
+  1:        -  8 / 30       -   2 / 10
+  0:  train - 30 /  8  test -  10 /  2
+  1:        -  8 / 30       -   2 / 10
   >>> kf = KFold(n_splits=4)
-  >>> for train, test in kf.split(X, y):
-  ...     train_cnt, test_cnt = np.sum(y[train], axis=0), np.sum(y[test], axis=0)
-  ...     print("label.0:   train -  {} / {}\t test -  {} / {}".format(
-  ...         len(train) - train_cnt[0], train_cnt[0],
-  ...         len(test) - test_cnt[0], test_cnt[0],
-  ...     ))
-  ...     print("     .1:         -  {} / {}\t      -  {} / {}".format(
-  ...         len(train) - train_cnt[1], train_cnt[1],
-  ...         len(test) - test_cnt[1], test_cnt[1],
-  ...     ))
-  ...
-  label.0:   train -  27 / 10      test -  13 / 0
-       .1:         -  10 / 27           -  0 / 13
-  label.0:   train -  27 / 10      test -  13 / 0
-       .1:         -  10 / 27           -  0 / 13
-  label.0:   train -  28 / 10      test -  12 / 0
-       .1:         -  7 / 31            -  3 / 9
-  label.0:   train -  38 / 0       test -  2 / 10
-       .1:         -  3 / 35            -  7 / 5
+  >>> print_multilabel_split(kf, X, y)
+  0:  train - 27 / 10  test -  13 /  0
+  1:        -  0 / 37       -  10 /  3
+  0:  train - 27 / 10  test -  13 /  0
+  1:        - 10 / 27       -   0 / 13
+  0:  train - 28 / 10  test -  12 /  0
+  1:        - 10 / 28       -   0 / 12
+  0:  train - 38 /  0  test -   2 / 10
+  1:        - 10 / 28       -   0 / 12
 
 We can see that :class:`MultilabelStratifiedKFold` preserves the class ratios per
 label (approximately 4 / 1 for the label 0 and 1 / 4 for the label 1) in both
