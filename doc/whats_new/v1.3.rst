@@ -287,6 +287,10 @@ Changelog
   scikit-learn 1.3: retraining with scikit-learn 1.3 is required.
   :pr:`25186` by :user:`Felipe Breve Siola <fsiola>`.
 
+- |Efficiency| :class:`ensemble.BaseForest` now only recomputes out-of-bag scores
+  if `n_more_estimators > 0` in subsequent `fit` calls.
+  :pr:`26318` by :user:`Joshua Choo Yun Keat <choo8>`.
+
 - |Enhancement| :class:`ensemble.BaggingClassifier` and
   :class:`ensemble.BaggingRegressor` expose the `allow_nan` tag from the
   underlying estimator. :pr:`25506` by `Thomas Fan`_.

@@ -1457,29 +1457,41 @@ def check_warm_start_oob(name):
         bootstrap=True,
         oob_score=False,
     )
+    est_3.fit(X, y)
+    assert not hasattr(est_3, "oob_score_")
 
-    # Patch _set_oob_score_and_attributes() to track OOB computation
-    with patch.object(
-        est_3,
-        "_set_oob_score_and_attributes",
-        wraps=est_3._set_oob_score_and_attributes,
-    ) as mock_set_oob_score_and_attributes:
-        est_3.fit(X, y)
-        assert not hasattr(est_3, "oob_score_")
+    est_3.set_params(oob_score=True)
+    ignore_warnings(est_3.fit)(X, y)
 
-        est_3.set_params(oob_score=True)
-        ignore_warnings(est_3.fit)(X, y)
-
-        assert est.oob_score_ == est_3.oob_score_
-
-        # Test that oob_score is not recomputed if n_more_estimators is not
-        # changed
-        mock_set_oob_score_and_attributes.assert_called_once()
+    assert est.oob_score_ == est_3.oob_score_
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 def test_warm_start_oob(name):
     check_warm_start_oob(name)
+
+
+def check_oob_not_computed_twice(name):
+    # Check that oob_score is not computed twice when warm_start=True.
+    X, y = hastie_X, hastie_y
+    ForestEstimator = FOREST_ESTIMATORS[name]
+
+    est = ForestEstimator(n_estimators=10, warm_start=True, bootstrap=True, oob_score=True)
+
+    with patch.object(
+        est, "_set_oob_score_and_attributes", wraps=est._set_oob_score_and_attributes
+    ) as mock_set_oob_score_and_attributes:
+        est.fit(X, y)
+
+        with pytest.warns(UserWarning, match="Warm-start fitting without increasing"):
+            est.fit(X, y)
+
+        mock_set_oob_score_and_attributes.assert_called_once()
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_oob_not_computed_twice(name):
+    check_oob_not_computed_twice(name)
 
 
 def test_dtype_convert(n_classes=15):
