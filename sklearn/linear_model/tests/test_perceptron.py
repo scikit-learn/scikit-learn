@@ -19,10 +19,36 @@ X_csr.sort_indices()
 
 
 class MyPerceptron:
+    """
+    Custom implementation of the Perceptron algorithm.
+
+    Parameters:
+    - n_iter : int, default=1
+        Number of iterations to perform.
+
+    Attributes:
+    - w : ndarray of shape (n_features,)
+        The learned weights of the perceptron.
+    - b : float
+        The learned bias of the perceptron.
+    """
     def __init__(self, n_iter=1):
         self.n_iter = n_iter
 
     def fit(self, X, y):
+        """
+        Fit the perceptron model to the training data.
+
+        Parameters:
+        - X : array-like of shape (n_samples, n_features)
+            The input samples.
+        - y : array-like of shape (n_samples,)
+            The target values.
+
+        Returns:
+        - self : MyPerceptron
+            The fitted perceptron object.
+        """
         n_samples, n_features = X.shape
         self.w = np.zeros(n_features, dtype=np.float64)
         self.b = 0.0
@@ -34,14 +60,39 @@ class MyPerceptron:
                     self.b += y[i]
 
     def project(self, X):
+        """
+        Compute the projection of input samples.
+
+        Parameters:
+        - X : array-like of shape (n_samples, n_features)
+            The input samples.
+
+        Returns:
+        - projection : array-like of shape (n_samples,)
+            The projection values.
+        """
         return np.dot(X, self.w) + self.b
 
     def predict(self, X):
+        """
+        Predict the class labels for input samples.
+
+        Parameters:
+        - X : array-like of shape (n_samples, n_features)
+            The input samples.
+
+        Returns:
+        - y_pred : array-like of shape (n_samples,)
+            The predicted class labels.
+        """
         X = np.atleast_2d(X)
         return np.sign(self.project(X))
 
 
 def test_perceptron_accuracy():
+    """
+    Test the accuracy of the Perceptron classifier.
+    """
     for data in (X, X_csr):
         clf = Perceptron(max_iter=100, tol=None, shuffle=False)
         clf.fit(data, y)
@@ -50,6 +101,9 @@ def test_perceptron_accuracy():
 
 
 def test_perceptron_correctness():
+    """
+    Test the correctness of the Perceptron classifier.
+    """
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
@@ -63,6 +117,9 @@ def test_perceptron_correctness():
 
 
 def test_undefined_methods():
+    """
+    Test that undefined methods raise AttributeError in the Perceptron classifier.
+    """
     clf = Perceptron(max_iter=100)
     for meth in ("predict_proba", "predict_log_proba"):
         with pytest.raises(AttributeError):
