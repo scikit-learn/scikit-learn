@@ -24,13 +24,14 @@ from sklearn.datasets import make_regression, make_multilabel_classification
 from sklearn.exceptions import ConvergenceWarning
 from io import StringIO
 from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import LabelBinarizer, StandardScaler
 from sklearn.preprocessing import MinMaxScaler, scale
 from scipy.sparse import csr_matrix
-from sklearn.utils._testing import ignore_warnings
 
+from sklearn.utils._testing import ignore_warnings
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
@@ -966,3 +967,112 @@ def test_mlp_partial_fit_after_fit(MLPEstimator):
     msg = "partial_fit does not support early_stopping=True"
     with pytest.raises(ValueError, match=msg):
         mlp.partial_fit(X_iris, y_iris)
+
+
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_mlp_with_all_zero_sample_weight(MLPEstimator):
+    """Check that using all zero sample weight will raise an error"""
+    mlp = MLPEstimator(random_state=0)
+
+    msg = "sample_weight must not be all zeros"
+    with pytest.raises(ValueError, match=msg):
+        mlp.fit(X_iris, y_iris, sample_weight=np.zeros_like(y_iris))
+
+
+@pytest.mark.parametrize("weighted_class", [i for i in range(2)])
+@pytest.mark.parametrize("X,y", classification_datasets)
+def test_mlp_classifier_with_sample_weights(weighted_class, X, y):
+    """Test MLPClassifier with sample weights.
+
+    check that at least threshold % of samples (from chosen class)
+    have higher score than training without sample or class weights
+
+    This test uses the classification_datasets to test both multiclass
+    and binary classifications, and chooses parametrically class to
+    apply weights for (classes set to digits 0,1 though all classes
+    should pass this test with threshold=0.15)
+    """
+
+    standard_weight = 1.0
+    high_weight = 5.0
+    threshold = 0.15
+    split_size = 0.5
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=split_size, random_state=0
+    )
+
+    sample_weight = np.ones((y_train.shape[0])) * standard_weight
+    sample_weight[y_train == weighted_class] = high_weight
+
+    test_samples = X_test[y_test == weighted_class]
+
+    base_clf = MLPClassifier(random_state=0)
+    base_clf.fit(X_train, y_train)
+    score = base_clf.predict_proba(test_samples)[:, weighted_class]
+
+    # test sample weight
+    clf = MLPClassifier(random_state=1)
+    clf.fit(X_train, y_train, sample_weight=sample_weight)
+    sample_weighted_score = clf.predict_proba(test_samples)[:, weighted_class]
+
+    samples_with_greater_score = (
+        sample_weighted_score > score
+    ).sum() / sample_weighted_score.shape[0]
+    assert samples_with_greater_score > threshold
+
+    # test sample weight with early stopping
+    clf_es = MLPClassifier(random_state=1, early_stopping=True, validation_fraction=0.2)
+    clf_es.fit(X_train, y_train, sample_weight=sample_weight)
+    # Training score will be smaller with early stopping
+    assert clf_es.score(X_train, y_train) < clf.score(X_train, y_train)
+
+
+@pytest.mark.parametrize("X,y", [(X_digits_binary, y_digits_binary)])
+@pytest.mark.parametrize("weighted_y", range(2))
+def test_mlp_regressor_with_sample_weight(X, y, weighted_y):
+    """Test MLPRegressor with sample weights"""
+    standard_weight = 1.0
+    high_weight = 10.0
+    split_size = 0.5
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=split_size, random_state=0
+    )
+    normalizer = StandardScaler()
+    y_train_normalized = normalizer.fit_transform(np.expand_dims(y_train, -1))
+
+    sample_weight = np.ones((X_train.shape[0])) * standard_weight
+    weighted_mask = y_train == weighted_y
+    sample_weight[weighted_mask] = high_weight
+
+    weighted_mask_test = y_test == weighted_y
+
+    # baseline without sample weight
+    base_reg = MLPRegressor(random_state=0)
+    base_reg.fit(X_train, y_train_normalized)
+    y_pred = np.ravel(
+        normalizer.inverse_transform(
+            np.expand_dims(base_reg.predict(X_test[weighted_mask_test]), -1)
+        )
+    )
+    base_error = ((y_pred - y_test[weighted_mask_test]) ** 2).mean()
+
+    # with sample weight
+    reg = MLPRegressor(random_state=0)
+    reg.fit(X_train, y_train_normalized, sample_weight=sample_weight)
+    y_pred = np.ravel(
+        normalizer.inverse_transform(
+            np.expand_dims(reg.predict(X_test[weighted_mask_test]), -1)
+        )
+    )
+    error = ((y_pred - y_test[weighted_mask_test]) ** 2).mean()
+    assert error < base_error
+
+    # with early stopping
+    reg_es = MLPRegressor(random_state=0, early_stopping=True, validation_fraction=0.2)
+    reg_es.fit(X_train, y_train_normalized, sample_weight=sample_weight)
+    # Training score will be smaller with early stopping
+    assert reg_es.score(X_train, y_train_normalized) < reg.score(
+        X_train, y_train_normalized
+    )

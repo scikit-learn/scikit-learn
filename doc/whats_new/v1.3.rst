@@ -604,6 +604,14 @@ Changelog
   accepts sparse metrics.
   :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
 
+:mod:`sklearn.neural_network`
+.............................
+
+- |Enhancement| Add support for `sample_weight` in
+  :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPCRegressor`.
+  This allows specifying the parameter `sample_weight` for each sample to be used while fitting.
+  :pr:`25646` by :user:`Zach Shu <zshu115x>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
