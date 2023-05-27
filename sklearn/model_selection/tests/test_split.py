@@ -736,9 +736,9 @@ def test_multilabel_stratified_kfold_no_shuffle():
 
 def test_multilabel_stratified_kfold_support_any_multilabel_indicator():
     # Check that any multilabel indicator can work, not only 0/1
-    X = np.ones(17)
-    y0 = [[0, 0]] * 3 + [[0, 1]] * 3 + [[1, 0]] * 3 + [[1, 1]] * 8
-    y1 = [[-3, -3]] * 3 + [[-3, -1]] * 3 + [[-1, -3]] * 3 + [[-1, -1]] * 8
+    X = np.ones(10)
+    y0 = np.hstack(([[0]] * 3 + [[1]] * 7, [[0]] * 3 + [[1]] * 7))
+    y1 = np.hstack(([[-1]] * 7 + [[-3]] * 3, [[-1]] * 7 + [[-3]] * 3))
 
     mskf = MultilabelStratifiedKFold(3)
     for (_, test_a), (_, test_b) in zip(mskf.split(X, y0), mskf.split(X, y1)):
@@ -762,9 +762,9 @@ def test_multilabel_stratified_kfold_balance():
 
 def test_shuffle_multilabel_stratified_kfold_reproducibility():
     X = np.ones(15)  # Divisible by 3
-    y = [[0, 0]] * 3 + [[0, 1]] * 3 + [[1, 0]] * 3 + [[1, 1]] * 6
+    y = np.hstack(([[0]] * 6 + [[1]] * 9, [[0]] * 9 + [[0]] * 6))
     X2 = np.ones(16)  # Not divisible by 3
-    y2 = [[0, 0]] * 3 + [[0, 1]] * 3 + [[1, 0]] * 3 + [[1, 1]] * 7
+    y2 = np.hstack(([[0]] * 6 + [[1]] * 10, [[0]] * 10 + [[0]] * 6))
 
     # Check that when shuffling is enabled, multiple split calls produce
     # the same split when random_state is int
@@ -789,7 +789,7 @@ def test_shuffle_multilabel_stratified_kfold():
     # Check that shuffling is happening when requested, and for proper sample
     # coverage
     X_40 = np.ones(40)
-    y = [[0, 0]] * 10 + [[0, 1]] * 10 + [[1, 0]] * 10 + [[1, 1]] * 10
+    y = np.hstack(([[0]] * 10 + [[1]] * 30, [[0]] * 30 + [[0]] * 10))
     mskf0 = MultilabelStratifiedKFold(5, shuffle=True, random_state=0)
     mskf1 = MultilabelStratifiedKFold(5, shuffle=True, random_state=1)
     for (_, test0), (_, test1) in zip(mskf0.split(X_40, y), mskf1.split(X_40, y)):

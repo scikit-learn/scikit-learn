@@ -1074,9 +1074,10 @@ class MultilabelStratifiedKFold(_BaseKFold):
         # i.e., False and True. The more prevalent class should be 0, since we
         # take shortcut when only all-zero labels are left; when there is a
         # relatively large number of zero labels, this reduces execution time.
-        unique, counts = np.unique(y, return_counts=True)
-        prevalent = np.argmax(counts)
-        y = np.where(y == unique[prevalent], False, True)
+        # There are at most two unique elements so this step won't take too long.
+        unique, indices, counts = np.unique(y, return_index=True, return_counts=True)
+        prevalent = unique[np.argsort(indices)][np.argmax(counts)]
+        y = np.where(y == prevalent, False, True)
 
         do_raise, min_groups = True, np.inf
         for col in y.T:
@@ -1118,10 +1119,6 @@ class MultilabelStratifiedKFold(_BaseKFold):
         n_unprocessed = n_samples
         unprocessed_mask = np.ones(n_unprocessed, dtype=bool)
 
-        # print(c_folds_per_label)
-        # print(c_folds)
-        # print(test_folds)
-        # print()
         while n_unprocessed > 0:
             # Find the label with the fewest (at least one) remaining examples
             n_remaining = y[unprocessed_mask].sum(axis=0)
@@ -1133,10 +1130,6 @@ class MultilabelStratifiedKFold(_BaseKFold):
                     max_fold = np.argmax(c_folds)
                     test_folds[i] = max_fold
                     c_folds[max_fold] -= 1
-                    # print(c_folds_per_label)
-                    # print(c_folds)
-                    # print(test_folds)
-                    # print()
                 break
 
             min_label = np.argmin(np.where(n_remaining != 0, n_remaining, np.inf))
@@ -1157,10 +1150,6 @@ class MultilabelStratifiedKFold(_BaseKFold):
                 # Update desired number of examples
                 c_folds_per_label[max_fold, y[i]] -= 1
                 c_folds[max_fold] -= 1
-                # print(c_folds_per_label)
-                # print(c_folds)
-                # print(test_folds)
-                # print()
 
         if self.shuffle:
             return test_folds[np.argsort(indices)]
@@ -1169,7 +1158,6 @@ class MultilabelStratifiedKFold(_BaseKFold):
 
     def _iter_test_masks(self, X=None, y=None, groups=None):
         test_folds = self._make_test_folds(X, y)
-        # print(test_folds)
         for i in range(self.n_splits):
             yield test_folds == i
 
