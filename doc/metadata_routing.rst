@@ -1,6 +1,8 @@
 
 .. _metadata_routing:
 
+.. currentmodule:: sklearn
+
 .. TODO: update doc/conftest.py once document is updated and examples run.
 
 Metadata Routing
@@ -17,13 +19,14 @@ Metadata Routing
 
 This guide demonstrates how metadata such as ``sample_weight`` can be routed
 and passed along to estimators, scorers, and CV splitters through
-meta-estimators such as ``Pipeline`` and ``GridSearchCV``. In order to pass
-metadata to a method such as ``fit`` or ``score``, the object consuming the
-metadata, must *request* it. For estimators and splitters, this is done via
-``set_*_request`` methods, e.g. ``set_fit_request(...)``, and for scorers this
-is done via the ``set_score_request`` method. For grouped splitters such as
-``GroupKFold``, a ``groups`` parameter is requested by default. This is best
-demonstrated by the following examples.
+meta-estimators such as :class:`~pipeline.Pipeline` and
+:class:`~model_selection.GridSearchCV`. In order to pass metadata to a method
+such as ``fit`` or ``score``, the object consuming the metadata, must *request*
+it. For estimators and splitters, this is done via ``set_*_request`` methods,
+e.g. ``set_fit_request(...)``, and for scorers this is done via the
+``set_score_request`` method. For grouped splitters such as
+:class:`~model_selection.GroupKFold`, a ``groups`` parameter is requested by
+default. This is best demonstrated by the following examples.
 
 If you are developing a scikit-learn compatible estimator or meta-estimator,
 you can check our related developer guide:
@@ -62,7 +65,7 @@ Weighted scoring and fitting
 Here :class:`~model_selection.GroupKFold` requests ``groups`` by default. However, we
 need to explicitly request weights for our scorer and the internal cross validation of
 :class:`~linear_model.LogisticRegressionCV`. Both of these *consumers* know how to use
-metadata called ``"sample_weight"``::
+metadata called ``sample_weight``::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True
@@ -83,18 +86,19 @@ Note that in this example, ``my_weights`` is passed to both the scorer and
 :class:`~linear_model.LogisticRegressionCV`.
 
 Error handling: if ``props={"sample_weigh": my_weights, ...}`` were passed
-(note the typo), ``cross_validate`` would raise an error, since
-``sample_weigh`` was not requested by any of its underlying objects.
+(note the typo), :func:`~model_selection.cross_validate` would raise an error,
+since ``sample_weigh`` was not requested by any of its underlying objects.
 
 Weighted scoring and unweighted fitting
 ---------------------------------------
 
-When passing metadata such as ``sample_weight`` around, all scikit-learn estimators
-require weights to be either explicitly requested or not requested (i.e.
-``UNREQUESTED``) when used in another router such as a ``Pipeline`` or a
-``*GridSearchCV``. To perform an unweighted fit, we need to configure
-:class:`~linear_model.LogisticRegressionCV` to not request sample weights, so that
-:func:`~model_selection.cross_validate` does not pass the weights along::
+When passing metadata such as ``sample_weight`` around, all scikit-learn
+estimators require weights to be either explicitly requested or not requested
+(i.e. ``UNREQUESTED``) when used in another router such as a
+:class:`~pipeline.Pipeline` or a ``*GridSearchCV``. To perform an unweighted
+fit, we need to configure :class:`~linear_model.LogisticRegressionCV` to not
+request sample weights, so that :func:`~model_selection.cross_validate` does
+not pass the weights along::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True
@@ -111,12 +115,13 @@ require weights to be either explicitly requested or not requested (i.e.
   ...     scoring=weighted_acc,
   ... )
 
-Note the usage of ``RequestType`` which in this case is equivalent to
-``False``; the type is explained further at the end of this document.
+Note the usage of :class:`~utils.metadata_routing.RequestType` which in this
+case is equivalent to ``False``; the type is explained further at the end of
+this document.
 
-If :meth:`~linear_model.LogisticRegressionCV.set_fit_request` has not
+If :meth:`linear_model.LogisticRegressionCV.set_fit_request` has not
 been called, :func:`~model_selection.cross_validate` will raise an
-error because `sample_weight` is passed in but
+error because ``sample_weight`` is passed in but
 :class:`~linear_model.LogisticRegressionCV` would not be explicitly configured
 to recognize the weights.
 
@@ -149,10 +154,11 @@ instance is set and ``sample_weight`` is not routed to it::
 Advanced: Different scoring and fitting weights
 -----------------------------------------------
 
-Despite ``make_scorer`` and ``LogisticRegressionCV`` both expecting the key
+Despite :func:`~metrics.make_scorer` and
+:class:`~linear_model.LogisticRegressionCV` both expecting the key
 ``sample_weight``, we can use aliases to pass different weights to different
 consumers. In this example, we pass ``scoring_weight`` to the scorer, and
-``fitting_weight`` to ``LogisticRegressionCV``::
+``fitting_weight`` to :class:`~linear_model.LogisticRegressionCV`::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...    sample_weight="scoring_weight"
