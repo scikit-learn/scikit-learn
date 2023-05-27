@@ -672,13 +672,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return all_importances / np.sum(all_importances)
 
     def _more_tags(self):
-        if isinstance(self.estimator, BaseDecisionTree):
-            # Only the criterion is required to determine if the tree supports
-            # missing values
-            estimator = type(self.estimator)(criterion=self.criterion)
-            return {"allow_nan": _safe_tags(estimator, key="allow_nan")}
-        else:
-            return {}
+        # Only the criterion is required to determine if the tree supports
+        # missing values
+        estimator = type(self.estimator)(criterion=self.criterion)
+        return {"allow_nan": _safe_tags(estimator, key="allow_nan")}
 
 
 def _accumulate_prediction(predict, X, out, lock):
