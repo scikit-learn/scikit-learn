@@ -55,7 +55,7 @@ __all__ = [
 
 
 class BaseCrossValidator(metaclass=ABCMeta):
-    """Base class for all cross-validators
+    """Base class for all cross-validators.
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
@@ -109,14 +109,14 @@ class BaseCrossValidator(metaclass=ABCMeta):
 
     @abstractmethod
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator"""
+        """Returns the number of splitting iterations in the cross-validator."""
 
     def __repr__(self):
         return _build_repr(self)
 
 
 class LeaveOneOut(BaseCrossValidator):
-    """Leave-One-Out cross-validator
+    """Leave-One-Out cross-validator.
 
     Provides train/test indices to split data in train/test sets. Each
     sample is used once as a test set (singleton) while the remaining
@@ -158,6 +158,7 @@ class LeaveOneOut(BaseCrossValidator):
     --------
     LeaveOneGroupOut : For splitting the data according to explicit,
         domain-specific stratification of the dataset.
+
     GroupKFold : K-fold iterator variant with non-overlapping groups.
     """
 
@@ -170,7 +171,7 @@ class LeaveOneOut(BaseCrossValidator):
         return range(n_samples)
 
     def get_n_splits(self, X, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -187,7 +188,7 @@ class LeaveOneOut(BaseCrossValidator):
         Returns
         -------
         n_splits : int
-            Returns the number of splitting iterations in the cross-validator.
+            The number of splitting iterations in the cross-validator.
         """
         if X is None:
             raise ValueError("The 'X' parameter should not be None.")
@@ -195,7 +196,7 @@ class LeaveOneOut(BaseCrossValidator):
 
 
 class LeavePOut(BaseCrossValidator):
-    """Leave-P-Out cross-validator
+    """Leave-P-Out cross-validator.
 
     Provides train/test indices to split data in train/test sets. This results
     in testing on all distinct samples of size p, while the remaining n - p
@@ -267,7 +268,7 @@ class LeavePOut(BaseCrossValidator):
             yield np.array(combination)
 
     def get_n_splits(self, X, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -280,6 +281,11 @@ class LeavePOut(BaseCrossValidator):
 
         groups : object
             Always ignored, exists for compatibility.
+
+        Returns
+        -------
+        n_splits : int
+            The number of splitting iterations in the cross-validator.
         """
         if X is None:
             raise ValueError("The 'X' parameter should not be None.")
@@ -362,7 +368,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             yield train, test
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -378,13 +384,13 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
         Returns
         -------
         n_splits : int
-            Returns the number of splitting iterations in the cross-validator.
+            The number of splitting iterations in the cross-validator.
         """
         return self.n_splits
 
 
 class KFold(_BaseKFold):
-    """K-Folds cross-validator
+    """K-Fold cross-validator.
 
     Provides train/test indices to split data in train/test sets. Split
     dataset into k consecutive folds (without shuffling by default).
@@ -1200,7 +1206,7 @@ class MultilabelStratifiedKFold(_BaseKFold):
 
 
 class TimeSeriesSplit(_BaseKFold):
-    """Time Series cross-validator
+    """Time Series cross-validator.
 
     Provides train/test indices to split time series data samples
     that are observed at fixed time intervals, in train/test sets.
@@ -1379,7 +1385,7 @@ class TimeSeriesSplit(_BaseKFold):
 
 
 class LeaveOneGroupOut(BaseCrossValidator):
-    """Leave One Group Out cross-validator
+    """Leave One Group Out cross-validator.
 
     Provides train/test indices to split data such that each training set is
     comprised of all samples except ones belonging to one specific group.
@@ -1444,7 +1450,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
             yield groups == i
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -1463,7 +1469,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
         Returns
         -------
         n_splits : int
-            Returns the number of splitting iterations in the cross-validator.
+            The number of splitting iterations in the cross-validator.
         """
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
@@ -1498,7 +1504,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
 
 class LeavePGroupsOut(BaseCrossValidator):
-    """Leave P Group(s) Out cross-validator
+    """Leave P Group(s) Out cross-validator.
 
     Provides train/test indices to split data according to a third-party
     provided group. This group information can be used to encode arbitrary
@@ -1577,7 +1583,7 @@ class LeavePGroupsOut(BaseCrossValidator):
             yield test_index
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -1596,7 +1602,7 @@ class LeavePGroupsOut(BaseCrossValidator):
         Returns
         -------
         n_splits : int
-            Returns the number of splitting iterations in the cross-validator.
+            The number of splitting iterations in the cross-validator.
         """
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
@@ -1702,7 +1708,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
                 yield train_index, test_index
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -1721,7 +1727,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
         Returns
         -------
         n_splits : int
-            Returns the number of splitting iterations in the cross-validator.
+            The number of splitting iterations in the cross-validator.
         """
         rng = check_random_state(self.random_state)
         cv = self.cv(random_state=rng, shuffle=True, **self.cvargs)
@@ -1937,7 +1943,7 @@ class RepeatedMultilabelStratifiedKFold(_RepeatedSplits):
 
 
 class BaseShuffleSplit(metaclass=ABCMeta):
-    """Base class for ShuffleSplit and StratifiedShuffleSplit"""
+    """Base class for ShuffleSplit and StratifiedShuffleSplit."""
 
     def __init__(
         self, n_splits=10, *, test_size=None, train_size=None, random_state=None
@@ -1987,7 +1993,7 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         """Generate (train, test) indices"""
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -2003,7 +2009,7 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         Returns
         -------
         n_splits : int
-            Returns the number of splitting iterations in the cross-validator.
+            The number of splitting iterations in the cross-validator.
         """
         return self.n_splits
 
@@ -2012,7 +2018,7 @@ class BaseShuffleSplit(metaclass=ABCMeta):
 
 
 class ShuffleSplit(BaseShuffleSplit):
-    """Random permutation cross-validator
+    """Random permutation cross-validator.
 
     Yields indices to split data into training and test sets.
 
@@ -2129,7 +2135,7 @@ class ShuffleSplit(BaseShuffleSplit):
 
 
 class GroupShuffleSplit(ShuffleSplit):
-    """Shuffle-Group(s)-Out cross-validation iterator
+    """Shuffle-Group(s)-Out cross-validation iterator.
 
     Provides randomized train/test indices to split data according to a
     third-party provided group. This group information can be used to encode
@@ -2268,7 +2274,7 @@ class GroupShuffleSplit(ShuffleSplit):
 
 
 class StratifiedShuffleSplit(BaseShuffleSplit):
-    """Stratified ShuffleSplit cross-validator
+    """Stratified ShuffleSplit cross-validator.
 
     Provides train/test indices to split data in train/test sets.
 
@@ -2536,7 +2542,7 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
 
 
 class PredefinedSplit(BaseCrossValidator):
-    """Predefined split cross-validator
+    """Predefined split cross-validator.
 
     Provides train/test indices to split data into train/test sets using a
     predefined scheme specified by the user with the ``test_fold`` parameter.
@@ -2620,7 +2626,7 @@ class PredefinedSplit(BaseCrossValidator):
             yield test_mask
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -2636,7 +2642,7 @@ class PredefinedSplit(BaseCrossValidator):
         Returns
         -------
         n_splits : int
-            Returns the number of splitting iterations in the cross-validator.
+            The number of splitting iterations in the cross-validator.
         """
         return len(self.unique_folds)
 
@@ -2648,7 +2654,7 @@ class _CVIterableWrapper(BaseCrossValidator):
         self.cv = list(cv)
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -2664,7 +2670,7 @@ class _CVIterableWrapper(BaseCrossValidator):
         Returns
         -------
         n_splits : int
-            Returns the number of splitting iterations in the cross-validator.
+            The number of splitting iterations in the cross-validator.
         """
         return len(self.cv)
 
@@ -2906,7 +2912,7 @@ setattr(train_test_split, "__test__", False)
 
 
 def _pprint(params, offset=0, printer=repr):
-    """Pretty print the dictionary 'params'
+    """Pretty print the dictionary 'params'.
 
     Parameters
     ----------
