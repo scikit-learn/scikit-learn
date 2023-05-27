@@ -1476,7 +1476,9 @@ def check_oob_not_computed_twice(name):
     X, y = hastie_X, hastie_y
     ForestEstimator = FOREST_ESTIMATORS[name]
 
-    est = ForestEstimator(n_estimators=10, warm_start=True, bootstrap=True, oob_score=True)
+    est = ForestEstimator(
+        n_estimators=10, warm_start=True, bootstrap=True, oob_score=True
+    )
 
     with patch.object(
         est, "_set_oob_score_and_attributes", wraps=est._set_oob_score_and_attributes
