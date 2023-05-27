@@ -8,6 +8,8 @@ URL="https://github.com/scientific-python/lazy_loader/archive/$SHA.tar.gz"
 rm -rf sklearn/externals/_lazy_loader
 
 curl -s -L $URL |
-    tar xvz --strip-components=1 -C sklearn/externals lazy_loader-$SHA/lazy_loader/__init__.py
+    tar xvz --strip-components=1 -C sklearn/externals \
+        lazy_loader-$SHA/lazy_loader/__init__.py \
+        lazy_loader-$SHA/LICENSE.md
 
 mv sklearn/externals/lazy_loader sklearn/externals/_lazy_loader
