@@ -32,6 +32,7 @@ class MyPerceptron:
     - b : float
         The learned bias of the perceptron.
     """
+
     def __init__(self, n_iter=1):
         self.n_iter = n_iter
 
