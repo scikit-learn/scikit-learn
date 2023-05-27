@@ -1904,17 +1904,17 @@ class RepeatedMultilabelStratifiedKFold(_RepeatedSplits):
     ...     print(f"  Train: index={train_index}")
     ...     print(f"  Test:  index={test_index}")
     Fold 0:
-      Train: index=[0 3 4 7]
-      Test:  index=[1 2 5 6]
+      Train: index=[0 1 4 7]
+      Test:  index=[2 3 5 6]
     Fold 1:
-      Train: index=[1 2 5 6]
-      Test:  index=[0 3 4 7]
+      Train: index=[2 3 5 6]
+      Test:  index=[0 1 4 7]
     Fold 2:
-      Train: index=[0 2 5 7]
-      Test:  index=[1 3 4 6]
+      Train: index=[2 3 5 7]
+      Test:  index=[0 1 4 6]
     Fold 3:
-      Train: index=[1 3 4 6]
-      Test:  index=[0 2 5 7]
+      Train: index=[0 1 4 6]
+      Test:  index=[2 3 5 7]
 
     Notes
     -----
