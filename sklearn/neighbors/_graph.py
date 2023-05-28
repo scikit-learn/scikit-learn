@@ -8,7 +8,7 @@ from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
 from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from sklearn.metrics.pairwise import distance_metrics
+from ..metrics.pairwise import distance_metrics
 from ..utils._param_validation import (
     StrOptions,
     Interval,
