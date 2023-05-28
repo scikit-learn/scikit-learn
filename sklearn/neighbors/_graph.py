@@ -8,7 +8,13 @@ from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
 from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..utils._param_validation import StrOptions
+from sklearn.metrics.pairwise import distance_metrics
+from ..utils._param_validation import (
+    StrOptions,
+    Interval,
+    Integral,
+    validate_params,
+)
 from ..utils.validation import check_is_fitted
 
 
@@ -224,6 +230,23 @@ def radius_neighbors_graph(
     return X.radius_neighbors_graph(query, radius, mode)
 
 
+@validate_params(
+    {
+        "mode": [StrOptions({"distance", "connectivity"}), None],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
+        "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"}), None],
+        "leaf_size": [Interval(Integral, 1, None, closed="left"), None],
+        "metric": [
+            StrOptions(set(distance_metrics())),
+            StrOptions({"minkowski"}),
+            callable,
+            None,
+        ],
+        "p": [Interval(Integral, 1, None, closed="left"), None],
+        "metric_params": [dict, None],
+        "n_jobs": [Integral, None],
+    }
+)
 class KNeighborsTransformer(
     ClassNamePrefixFeaturesOutMixin, KNeighborsMixin, TransformerMixin, NeighborsBase
 ):
@@ -341,12 +364,6 @@ class KNeighborsTransformer(
     >>> X_dist_graph.shape
     (178, 178)
     """
-
-    _parameter_constraints: dict = {
-        **NeighborsBase._parameter_constraints,
-        "mode": [StrOptions({"distance", "connectivity"})],
-    }
-    _parameter_constraints.pop("radius")
 
     def __init__(
         self,
