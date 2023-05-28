@@ -1020,6 +1020,7 @@ def test_categorical_encoding_strategies():
         clf_cat = HistGradientBoostingClassifier(
             max_iter=1, max_depth=1, categorical_features=native_cat_spec
         )
+        clf_cat.fit(X, y)
 
         # Using native categorical encoding, we get perfect predictions with just
         # one split
@@ -1194,7 +1195,7 @@ def test_categorical_bad_encoding_errors(Est, use_pandas, feature_name):
     msg = (
         f"Categorical feature {feature_name} is expected to be encoded "
         "with values < 2 but the largest value for the encoded categories "
-        "is 2.0."
+        "is 2."
     )
     with pytest.raises(ValueError, match=msg):
         gb.fit(X, y)
@@ -1421,7 +1422,7 @@ def test_pandas_categorical_results_same_as_ndarray(Hist):
     hist_np = Hist(categorical_features=[True, False], **hist_kwargs)
     hist_np.fit(X_train, y_train)
 
-    hist_pd = Hist(categorical_features="pandas", **hist_kwargs)
+    hist_pd = Hist(categorical_features="by_dtype", **hist_kwargs)
     hist_pd.fit(X_train_df, y_train)
 
     assert len(hist_np._predictors) == len(hist_pd._predictors)
@@ -1441,13 +1442,8 @@ def test_pandas_categorical_errors(Hist):
     """Check error cases for pandas categorical feature."""
     pd = pytest.importorskip("pandas")
 
-    msg = "categorical_features='pandas' is only supported for pandas"
-    hist = Hist(categorical_features="pandas")
-    with pytest.raises(ValueError, match=msg):
-        hist.fit(X_classification, y_classification)
-
     msg = "Categorical feature 'f_cat' is expected to have a cardinality <= 16"
-    hist = Hist(categorical_features="pandas", max_bins=16)
+    hist = Hist(categorical_features="by_dtype", max_bins=16)
 
     rng = np.random.RandomState(42)
     f_cat = rng.randint(0, high=100, size=100)

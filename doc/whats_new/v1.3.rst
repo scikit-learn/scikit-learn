@@ -282,7 +282,7 @@ Changelog
 
 - |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` supports
-  `categorical_features="pandas"`, which treats columns with Pandas Categorical
+  `categorical_features="by_dtype"`, which treats columns with Pandas Categorical
   dtype as categories in the algorithm. :pr:`26411` by `Thomas Fan`_.
 
 - |Efficiency| :class:`ensemble.IsolationForest` predict time is now faster

@@ -4,6 +4,7 @@
 from abc import ABC, abstractmethod
 from functools import partial
 import itertools
+from contextlib import suppress
 from numbers import Real, Integral
 
 import numpy as np
@@ -30,6 +31,8 @@ from ...utils.validation import (
 from ...utils._param_validation import Interval, StrOptions
 from ...utils._param_validation import RealNotInt
 from ...utils._openmp_helpers import _openmp_effective_n_threads
+from ...utils import _safe_indexing
+from ...utils._encode import _unique
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
@@ -109,7 +112,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         ],
         "tol": [Interval(Real, 0, None, closed="left")],
         "max_bins": [Interval(Integral, 2, 255, closed="both")],
-        "categorical_features": ["array-like", StrOptions({"pandas"}), None],
+        "categorical_features": ["array-like", StrOptions({"by_dtype"}), None],
         "warm_start": ["boolean"],
         "early_stopping": [StrOptions({"auto"}), "boolean"],
         "scoring": [str, callable, None],
@@ -198,38 +201,21 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         known_categories : list of ndarray of shape (n_categories,)
             List of known categories for each categorical feature.
         """
-        use_pandas_categorical = (
-            isinstance(self.categorical_features, str)
-            and self.categorical_features == "pandas"
-        )
-        if use_pandas_categorical and not hasattr(X, "dtypes"):
-            raise ValueError(
-                "categorical_features='pandas' is only supported for pandas "
-                f"DataFrames, got: {type(X).__name__}"
-            )
-
-        # If pandas categorical feature is enabled, then _validate_data will only
-        # check feature_names_in_ and n_features_in_ and the DataFrame is preserved.
-        X = self._validate_data(
-            X,
-            dtype=[X_DTYPE],
-            force_all_finite=False,
-            reset=reset,
-            cast_to_ndarray=not use_pandas_categorical,
-        )
-
+        # If there is a preprocessor, we let the preprocessor handle the validation.
+        # Otherwise, we validate the data ourselves.
+        check_X_kwargs = dict(dtype=[X_DTYPE], force_all_finite=False)
         if not reset:
             if self._preprocessor is None:
-                return X
+                return self._validate_data(X, reset=False, **check_X_kwargs)
             return self._preprocessor.transform(X)
 
-        self.is_categorical_, known_categories = self._check_categories(
-            X, use_pandas_categorical
-        )
+        self.is_categorical_, known_categories = self._check_categories(X)
 
-        if not use_pandas_categorical:
+        if known_categories is None:
             self._preprocessor = None
             self._is_categorical_remapped = self.is_categorical_
+
+            X = self._validate_data(X, **check_X_kwargs)
             return X, known_categories
 
         n_features = X.shape[1]
@@ -245,9 +231,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             dtype=X_DTYPE,
         )
 
-        check_X = partial(check_array, dtype=[X_DTYPE], force_all_finite=False)
+        check_X = partial(check_array, **check_X_kwargs)
         numerical_preprocessor = FunctionTransformer(check_X)
-
         self._preprocessor = ColumnTransformer(
             [
                 ("encoder", ordinal_encoder, self.is_categorical_),
@@ -256,6 +241,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         )
         self._preprocessor.set_output(transform="default")
         X = self._preprocessor.fit_transform(X)
+        self.n_features_in_ = self._preprocessor.n_features_in_
+        with suppress(AttributeError):
+            self.feature_names_in_ = self._preprocessor.feature_names_in_
 
         # The ColumnTransformer's output places the categorical features at the
         # beginning
@@ -272,16 +260,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         known_categories = renamed_categories + [None] * n_numerical
         return X, known_categories
 
-    def _check_categories(self, X, use_pandas_categorical):
+    def _check_categories(self, X):
         """Check and validate categorical features in X
 
         Parameters
         ----------
         X : {array-like, pandas DataFrame} of shape (n_samples, n_features)
             Input data
-
-        use_pandas_categorical : bool
-            Use Pandas Categorical dtype to determine categorical features.
 
         Return
         ------
@@ -294,9 +279,20 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 - None if the feature is not categorical
             None if no feature is categorical.
         """
-        if self.categorical_features is None:
+        X_is_dataframe = hasattr(X, "dtypes")
+        categorical_by_dtype = (
+            isinstance(self.categorical_features, str)
+            and self.categorical_features == "by_dtype"
+        )
+
+        no_categorical_dtype = self.categorical_features is None or (
+            categorical_by_dtype and not X_is_dataframe
+        )
+
+        if no_categorical_dtype:
             return None, None
 
+        use_pandas_categorical = categorical_by_dtype and X_is_dataframe
         if use_pandas_categorical:
             categorical_features = np.asarray(X.dtypes == "category")
         else:
@@ -320,17 +316,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 )
 
         n_features = X.shape[1]
+        feature_names_in_ = getattr(X, "columns", None)
 
         if categorical_features.dtype.kind in ("U", "O"):
             # check for feature names
-            if not hasattr(self, "feature_names_in_"):
+            if feature_names_in_ is None:
                 raise ValueError(
                     "categorical_features should be passed as an array of "
                     "integers or as a boolean mask when the model is fitted "
                     "on data without feature names."
                 )
             is_categorical = np.zeros(n_features, dtype=bool)
-            feature_names = self.feature_names_in_.tolist()
+            feature_names = feature_names_in_.tolist()
             for feature_name in categorical_features:
                 try:
                     is_categorical[feature_names.index(feature_name)] = True
@@ -378,7 +375,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # OrdinalEncoder requires categories to be sorted
                     categories = np.sort(categories)
                 else:
-                    categories = np.unique(X[:, f_idx])
+                    categories = _unique(_safe_indexing(X, f_idx, axis=1))
                     missing = np.isnan(categories)
                     if missing.any():
                         categories = categories[~missing]
@@ -388,8 +385,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     if negative_categories.any():
                         categories = categories[~negative_categories]
 
-                if hasattr(self, "feature_names_in_"):
-                    feature_name = f"'{self.feature_names_in_[f_idx]}'"
+                if feature_names_in_ is not None:
+                    feature_name = f"'{feature_names_in_[f_idx]}'"
                 else:
                     feature_name = f"at index {f_idx}"
 
@@ -1140,11 +1137,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         is_binned = getattr(self, "_in_fit", False)
         if not is_binned:
             X = self._preprocess_X(X, reset=False)
-        if X.shape[1] != self._n_features:
-            raise ValueError(
-                "X has {} features but this estimator was trained with "
-                "{} features.".format(X.shape[1], self._n_features)
-            )
+
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
             shape=(n_samples, self.n_trees_per_iteration_),
@@ -1378,8 +1371,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           features.
         - str array-like: names of categorical features (assuming the training
           data has feature names).
-        - `"pandas"`: Pandas categorical dtypes are considered categorical. The
-          input must be a pandas DataFrame to use this feature.
+        - `"by_dtype"`: Pandas categorical dtypes are considered categorical.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories, and each categorical value must be less then `max_bins - 1`.
@@ -1393,7 +1385,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
            Added support for feature names.
 
         .. versionchanged:: 1.3
-           Added `"pandas"` option.
+           Added `"by_dtype"` option.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
@@ -1566,7 +1558,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         min_samples_leaf=20,
         l2_regularization=0.0,
         max_bins=255,
-        categorical_features=None,
+        categorical_features="by_dtype",
         monotonic_cst=None,
         interaction_cst=None,
         warm_start=False,
@@ -1740,7 +1732,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
           features.
         - str array-like: names of categorical features (assuming the training
           data has feature names).
-        - `"pandas"`: Pandas categorical dtypes are considered categorical. The
+        - `"by_dtype"`: Pandas categorical dtypes are considered categorical.
+
+        The
           input must be a pandas DataFrame to use this feature.
 
         For each categorical feature, there must be at most `max_bins` unique
@@ -1755,7 +1749,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
            Added support for feature names.
 
         .. versionchanged:: 1.3
-           Added `"pandas"` option.
+           Added `"by_dtype"` option.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
@@ -1928,7 +1922,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         min_samples_leaf=20,
         l2_regularization=0.0,
         max_bins=255,
-        categorical_features=None,
+        categorical_features="by_dtype",
         monotonic_cst=None,
         interaction_cst=None,
         warm_start=False,
