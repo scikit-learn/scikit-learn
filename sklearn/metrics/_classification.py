@@ -318,8 +318,8 @@ def confusion_matrix(
 
     In the binary case, we can extract true positives, etc. as follows:
 
-    >>> tn, fp, fn, tp = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel()
-    >>> (tn, fp, fn, tp)
+    >>> tp, fn, fp, tn = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel()
+    >>> (tp, fn, fp, tn)
     (0, 2, 1, 1)
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
@@ -1921,7 +1921,7 @@ def class_likelihood_ratios(
         positive_likelihood_ratio = np.nan
         negative_likelihood_ratio = np.nan
     else:
-        tn, fp, fn, tp = cm.ravel()
+        tp, fn, fp, tn = cm.ravel()
         support_pos = tp + fn
         support_neg = tn + fp
         pos_num = tp * support_neg

@@ -428,9 +428,9 @@ def adjusted_rand_score(labels_true, labels_pred):
       >>> adjusted_rand_score([0, 0, 1, 1], [0, 1, 0, 1])
       -0.5
     """
-    (tn, fp), (fn, tp) = pair_confusion_matrix(labels_true, labels_pred)
+    (tp, fn), (fp, tn) = pair_confusion_matrix(labels_true, labels_pred)
     # convert to Python integer types, to avoid overflow or underflow
-    tn, fp, fn, tp = int(tn), int(fp), int(fn), int(tp)
+    tp, fn, fp, tn = int(tp), int(fn), int(fp), int(tn)
 
     # Special cases: empty data or full agreement
     if fn == 0 and fp == 0:
