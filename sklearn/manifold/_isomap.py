@@ -235,7 +235,7 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             tol=self.tol,
             max_iter=self.max_iter,
             n_jobs=self.n_jobs,
-        )
+        ).set_output(transform="default")
 
         if self.n_neighbors is not None:
             nbg = kneighbors_graph(

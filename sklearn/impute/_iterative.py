@@ -627,7 +627,7 @@ class IterativeImputer(_BaseImputer):
                 strategy=self.initial_strategy,
                 fill_value=self.fill_value,
                 keep_empty_features=self.keep_empty_features,
-            )
+            ).set_output(transform="default")
             X_filled = self.initial_imputer_.fit_transform(X)
         else:
             X_filled = self.initial_imputer_.transform(X)

@@ -3113,6 +3113,8 @@ def check_no_attributes_set_in_init(name, estimator_orig):
 
     # Test for no setting apart from parameters during init
     invalid_attr = set(vars(estimator)) - set(init_params) - set(parents_init_params)
+    # Ignore private attributes
+    invalid_attr = set([attr for attr in invalid_attr if not attr.startswith("_")])
     assert not invalid_attr, (
         "Estimator %s should not set any attribute apart"
         " from parameters during init. Found attributes %s."
@@ -4314,7 +4316,7 @@ def _output_from_fit_transform(transformer, name, X, df, y):
     return outputs
 
 
-def _check_generated_dataframe(name, case, outputs_default, outputs_pandas):
+def _check_generated_dataframe(name, case, index, outputs_default, outputs_pandas):
     import pandas as pd
 
     X_trans, feature_names_default = outputs_default
@@ -4324,7 +4326,12 @@ def _check_generated_dataframe(name, case, outputs_default, outputs_pandas):
     # We always rely on the output of `get_feature_names_out` of the
     # transformer used to generate the dataframe as a ground-truth of the
     # columns.
-    expected_dataframe = pd.DataFrame(X_trans, columns=feature_names_pandas, copy=False)
+    # If a dataframe is passed into transform, then the output should have the same
+    # index
+    expected_index = index if case.endswith("df") else None
+    expected_dataframe = pd.DataFrame(
+        X_trans, columns=feature_names_pandas, copy=False, index=expected_index
+    )
 
     try:
         pd.testing.assert_frame_equal(df_trans, expected_dataframe)
@@ -4359,7 +4366,8 @@ def check_set_output_transform_pandas(name, transformer_orig):
     set_random_state(transformer)
 
     feature_names_in = [f"col{i}" for i in range(X.shape[1])]
-    df = pd.DataFrame(X, columns=feature_names_in, copy=False)
+    index = [f"index{i}" for i in range(X.shape[0])]
+    df = pd.DataFrame(X, columns=feature_names_in, copy=False, index=index)
 
     transformer_default = clone(transformer).set_output(transform="default")
     outputs_default = _output_from_fit_transform(transformer_default, name, X, df, y)
@@ -4373,7 +4381,7 @@ def check_set_output_transform_pandas(name, transformer_orig):
 
     for case in outputs_default:
         _check_generated_dataframe(
-            name, case, outputs_default[case], outputs_pandas[case]
+            name, case, index, outputs_default[case], outputs_pandas[case]
         )
 
 
@@ -4401,7 +4409,8 @@ def check_global_ouptut_transform_pandas(name, transformer_orig):
     set_random_state(transformer)
 
     feature_names_in = [f"col{i}" for i in range(X.shape[1])]
-    df = pd.DataFrame(X, columns=feature_names_in, copy=False)
+    index = [f"index{i}" for i in range(X.shape[0])]
+    df = pd.DataFrame(X, columns=feature_names_in, copy=False, index=index)
 
     transformer_default = clone(transformer).set_output(transform="default")
     outputs_default = _output_from_fit_transform(transformer_default, name, X, df, y)
@@ -4418,5 +4427,5 @@ def check_global_ouptut_transform_pandas(name, transformer_orig):
 
     for case in outputs_default:
         _check_generated_dataframe(
-            name, case, outputs_default[case], outputs_pandas[case]
+            name, case, index, outputs_default[case], outputs_pandas[case]
         )
