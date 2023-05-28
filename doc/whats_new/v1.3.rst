@@ -342,7 +342,7 @@ Changelog
   :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
 
 - |Fix| :class:`impute.IterativeImputer` now correctly preserves the Pandas
-  Index when the `set_config(transform_output="pandas")`. :pr:`xxxxx` by `Thomas Fan`_.
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
 
 :mod:`sklearn.inspection`
 .........................
@@ -385,7 +385,7 @@ Changelog
 .......................
 
 - |Fix| :class:`manifold.Isomap` now correctly preserves the Pandas
-  Index when the `set_config(transform_output="pandas")`. :pr:`xxxxx` by `Thomas Fan`_.
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
 ......................
@@ -559,7 +559,7 @@ Changelog
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
 - |Fix| :class:`preprocessing.PowerTransformer` now correctly preserves the Pandas
-  Index when the `set_config(transform_output="pandas")`. :pr:`xxxxx` by `Thomas Fan`_.
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................
