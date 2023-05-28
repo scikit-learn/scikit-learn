@@ -232,7 +232,7 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
         D64 = dm64.pairwise(X64)
         D32 = dm32.pairwise(X32)
 
-        # Both results are np.float64 dtype because the accumulation accross
+        # Both results are np.float64 dtype because the accumulation across
         # features is done in float64. However the input data and the element
         # wise arithmetic operations are done in float32 so we can expect a
         # small discrepancy.

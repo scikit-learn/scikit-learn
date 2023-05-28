@@ -214,7 +214,7 @@ def lobpcg(
     Notes
     -----
     The iterative loop in lobpcg runs maxit=maxiter (or 20 if maxit=None)
-    iterations at most and finishes earler if the tolerance is met.
+    iterations at most and finishes earlier if the tolerance is met.
     Breaking backward compatibility with the previous version, lobpcg
     now returns the block of iterative vectors with the best accuracy rather
     than the last one iterated, as a cure for possible divergence.
