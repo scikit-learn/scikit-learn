@@ -1467,6 +1467,11 @@ def check_warm_start_oob(name):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_warm_start_oob(name):
+    check_warm_start_oob(name)
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 def test_oob_not_computed_twice(name):
     # Check that oob_score is not computed twice when warm_start=True.
     X, y = hastie_X, hastie_y
@@ -1485,11 +1490,6 @@ def test_oob_not_computed_twice(name):
             est.fit(X, y)
 
         mock_set_oob_score_and_attributes.assert_called_once()
-
-
-@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
-def test_oob_not_computed_twice(name):
-    check_oob_not_computed_twice(name)
 
 
 def test_dtype_convert(n_classes=15):
