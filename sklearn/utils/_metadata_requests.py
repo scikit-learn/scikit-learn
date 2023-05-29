@@ -195,7 +195,6 @@ class MethodMetadataRequest:
 
     def __init__(self, router, owner, method):
         self._requests = dict()
-        self.router = router
         self.owner = owner
         self.method = method
 
@@ -236,9 +235,6 @@ class MethodMetadataRequest:
                 "alias should be either a valid identifier or one of "
                 "{None, True, False}, or a RequestType."
             )
-
-        if alias != self._requests.get(param, None):
-            self.router._is_default_request = False
 
         if alias == param:
             alias = RequestType.REQUESTED
@@ -388,8 +384,6 @@ class MetadataRequest:
     _type = "metadata_request"
 
     def __init__(self, owner):
-        # this is used to check if the user has set any request values
-        self._is_default_request = False
         for method in METHODS:
             setattr(
                 self,
@@ -611,18 +605,6 @@ class MetadataRouter:
         # stored in _route_mappings.
         self._self = None
         self.owner = owner
-
-    @property
-    def _is_default_request(self):
-        """Return ``True`` only if all sub-components have default values."""
-        if self._self and not self._self._is_default_request:
-            return False
-
-        for router_mapping in self._route_mappings.values():
-            if not router_mapping.router._is_default_request:
-                return False
-
-        return True
 
     def add_self(self, obj):
         """Add `self` (as a consumer) to the routing.
@@ -994,7 +976,6 @@ class RequestMethod:
             for prop, alias in kw.items():
                 if alias is not UNCHANGED:
                     method_metadata_request.add_request(param=prop, alias=alias)
-                    requests._is_default_request = False
             instance._metadata_request = requests
 
             return instance
@@ -1157,10 +1138,6 @@ class _MetadataRequester:
             method = attr[attr.index(substr) + len(substr) :]
             for prop, alias in value.items():
                 getattr(requests, method).add_request(param=prop, alias=alias)
-
-        # this indicates that the user has not set any request values for this
-        # object
-        requests._is_default_request = True
 
         return requests
 

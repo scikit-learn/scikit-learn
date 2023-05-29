@@ -920,50 +920,6 @@ def test_metadata_routing_get_param_names():
     ) == router._get_param_names(method="fit", return_alias=False, ignore_self=True)
 
 
-@pytest.mark.parametrize(
-    (
-        "estimator, fit_request_kwargs, set_fit_request_for_sub_estimator,"
-        " is_default_request"
-    ),
-    [
-        (LinearRegression(), None, False, True),
-        (LinearRegression(), dict(sample_weight=True), False, False),
-        (WeightedMetaRegressor(estimator=LinearRegression()), None, False, True),
-        (
-            WeightedMetaRegressor(estimator=LinearRegression()),
-            dict(sample_weight=True),
-            True,
-            False,
-        ),
-        (
-            WeightedMetaRegressor(estimator=LinearRegression()),
-            dict(sample_weight=True),
-            False,
-            False,
-        ),
-    ],
-)
-def test_is_default_request(
-    estimator, fit_request_kwargs, set_fit_request_for_sub_estimator, is_default_request
-):
-    """Test the `_is_default_request` machinery.
-
-    fit_request_kwargs: how to set the fit request
-    set_fit_request_for_sub_estimator: whether to set the fit request for the
-        sub-estimator or for the meta-estimator
-
-    It should be `True` only if the user hasn't changed any default values.
-
-    Applies to both `MetadataRouter` and `MetadataRequest`.
-    """
-    if fit_request_kwargs is not None:
-        if set_fit_request_for_sub_estimator:
-            estimator.estimator.set_fit_request(**fit_request_kwargs)
-        else:
-            estimator.set_fit_request(**fit_request_kwargs)
-    assert estimator.get_metadata_routing()._is_default_request == is_default_request
-
-
 def test_method_generation():
     # Test if all required request methods are generated.
 
