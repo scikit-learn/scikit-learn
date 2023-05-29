@@ -49,7 +49,6 @@ in this section require the following imports and data::
   >>> from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
   >>> from sklearn.model_selection import cross_validate, GridSearchCV, GroupKFold
   >>> from sklearn.feature_selection import SelectKBest
-  >>> from sklearn.utils.metadata_requests import RequestType
   >>> from sklearn.pipeline import make_pipeline
   >>> n_samples, n_features = 100, 4
   >>> rng = np.random.RandomState(42)
@@ -94,7 +93,7 @@ Weighted scoring and unweighted fitting
 
 When passing metadata such as ``sample_weight`` around, all scikit-learn
 estimators require weights to be either explicitly requested or not requested
-(i.e. ``UNREQUESTED``) when used in another router such as a
+(i.e. ``True`` or ``False``) when used in another router such as a
 :class:`~pipeline.Pipeline` or a ``*GridSearchCV``. To perform an unweighted
 fit, we need to configure :class:`~linear_model.LogisticRegressionCV` to not
 request sample weights, so that :func:`~model_selection.cross_validate` does
@@ -105,7 +104,7 @@ not pass the weights along::
   ... )
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
-  ... ).set_fit_request(sample_weight=RequestType.UNREQUESTED)
+  ... ).set_fit_request(sample_weight=False)
   >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
@@ -114,10 +113,6 @@ not pass the weights along::
   ...     props={"sample_weight": my_weights, "groups": my_groups},
   ...     scoring=weighted_acc,
   ... )
-
-Note the usage of :class:`~utils.metadata_routing.RequestType` which in this
-case is equivalent to ``False``; the type is explained further at the end of
-this document.
 
 If :meth:`linear_model.LogisticRegressionCV.set_fit_request` has not
 been called, :func:`~model_selection.cross_validate` will raise an
@@ -195,16 +190,13 @@ supports ``sample_weight`` in ``fit`` and ``score``, it exposes
 ``estimator.set_fit_request(sample_weight=value)`` and
 ``estimator.set_score_request(sample_weight=value)``. Here ``value`` can be:
 
-- ``RequestType.REQUESTED`` or ``True``: method requests a ``sample_weight``.
-  This means if the metadata is provided, it will be used, otherwise no error
-  is raised.
-- ``RequestType.UNREQUESTED`` or ``False``: method does not request a
-  ``sample_weight``.
-- ``RequestType.ERROR_IF_PASSED`` or ``None``: router will raise an error if
-  ``sample_weight`` is passed. This is in almost all cases the default value
-  when an object is instantiated and ensures the user sets the metadata
-  requests explicitly when a metadata is passed. The only exception are
-  ``Group*Fold`` splitters.
+- ``True``: method requests a ``sample_weight``. This means if the metadata is
+  provided, it will be used, otherwise no error is raised.
+- ``False``: method does not request a ``sample_weight``.
+- ``None``: router will raise an error if ``sample_weight`` is passed. This is
+  in almost all cases the default value when an object is instantiated and
+  ensures the user sets the metadata requests explicitly when a metadata is
+  passed. The only exception are ``Group*Fold`` splitters.
 - ``"param_name"``: if this estimator is used in a meta-estimator, the
   meta-estimator should forward ``"param_name"`` as ``sample_weight`` to this
   estimator. This means the mapping between the metadata required by the
