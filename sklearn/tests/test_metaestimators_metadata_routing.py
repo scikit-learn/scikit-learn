@@ -5,7 +5,7 @@ from functools import partial
 import numpy as np
 import pytest
 
-from sklearn import set_config, get_config
+from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.exceptions import UnsetMetadataPassedError
@@ -34,13 +34,8 @@ sample_weight = rng.rand(N)
 @pytest.fixture(autouse=True)
 def enable_slep006():
     """Enable SLEP006 for all tests."""
-    orig_config = get_config()
-
-    new_config = orig_config.copy()
-    new_config["enable_metadata_routing"] = True
-    set_config(**new_config)
-    yield
-    set_config(**orig_config)
+    with config_context(enable_metadata_routing=True):
+        yield
 
 
 record_metadata_not_default = partial(record_metadata, record_default=False)

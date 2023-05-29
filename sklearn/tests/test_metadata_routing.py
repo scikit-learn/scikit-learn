@@ -9,7 +9,7 @@ import re
 import numpy as np
 import pytest
 
-from sklearn import set_config, get_config, config_context
+from sklearn import config_context
 from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
 from sklearn.base import RegressorMixin
@@ -40,13 +40,8 @@ my_other_weights = rng.rand(N)
 @pytest.fixture(autouse=True)
 def enable_slep006():
     """Enable SLEP006 for all tests."""
-    orig_config = get_config()
-
-    new_config = orig_config.copy()
-    new_config["enable_metadata_routing"] = True
-    set_config(**new_config)
-    yield
-    set_config(**orig_config)
+    with config_context(enable_metadata_routing=True):
+        yield
 
 
 def assert_request_is_empty(metadata_request, exclude=None):

@@ -918,15 +918,12 @@ def get_routing_for_object(obj=None):
         A ``MetadataRequest`` or a ``MetadataRouting`` taken or created from
         the given object.
     """
-    if obj is None:
-        return MetadataRequest(owner=None)
-
     # doing this instead of a try/except since an AttributeError could be raised
     # for other reasons.
     if hasattr(obj, "get_metadata_routing"):
         return deepcopy(obj.get_metadata_routing())
 
-    if getattr(obj, "_type", None) in ["metadata_request", "metadata_router"]:
+    elif getattr(obj, "_type", None) in ["metadata_request", "metadata_router"]:
         return deepcopy(obj)
 
     return MetadataRequest(owner=None)
