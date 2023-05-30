@@ -1,12 +1,12 @@
 import warnings
 import pickle
 import re
+import sys
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
 from numbers import Real, Integral
 
-import pytest
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
@@ -868,10 +868,22 @@ def check_array_api_input(
     name, estimator_orig, *, array_namespace, device=None, dtype="float64"
 ):
     """Check that the array_api Array gives the same results as ndarrays."""
-    xp = pytest.importorskip(array_namespace)
+    try:
+        xp = __import__(array_namespace)
+        xp = sys.modules[array_namespace]
+    except ImportError:
+        raise SkipTest(
+            f"{array_namespace} is not installed: not checking array_api input"
+        )
+    try:
+        import array_api_compat  # noqa
+    except ImportError:
+        raise SkipTest(
+            "array_api_compat is not installed: not checking array_api input"
+        )
 
     if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
-        pytest.skip("test requires cuda, which is not available")
+        raise SkipTest("test requires cuda, which is not available")
 
     X, y = make_classification(random_state=42)
     X = X.astype(dtype)
@@ -903,7 +915,8 @@ def check_array_api_input(
 
         est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
         assert_allclose(
-            attribute, est_xp_param_np,
+            attribute,
+            est_xp_param_np,
             err_msg=f"{key} not the same",
             atol=np.finfo(X.dtype).eps * 100,
         )
