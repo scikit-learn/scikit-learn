@@ -203,18 +203,17 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 #
 # First, the :meth:`~utils.metadata_routing.get_routing_for_object` takes an
 # estimator (``self``) and returns a
-# :class:`~utils.metadata_requests.MetadataRouter` or a
-# :class:`~utils.metadata_requests.MetadataRequest` based on the output of the
+# :class:`~utils.metadata_routing.MetadataRouter` or a
+# :class:`~utils.metadata_routing.MetadataRequest` based on the output of the
 # estimator's ``get_metadata_routing`` method.
 #
 # Then in each method, we use the ``route_params`` method to construct a
 # dictionary of the form ``{"object_name": {"method_name": {"metadata":
 # value}}}`` to pass to the underlying estimator's method. The ``object_name``
 # (``estimator`` in the above ``routed_params.estimator.fit`` example) is the
-# same as the one ``add``ed in the ``get_metadata_routing``.
-# ``validate_metadata`` makes sure all given metadata are requested to avoid silent
-# bugs. Now, we illustrate the different behaviors and notably the type of errors
-# raised:
+# same as the one added in the ``get_metadata_routing``. ``validate_metadata``
+# makes sure all given metadata are requested to avoid silent bugs. Now, we
+# illustrate the different behaviors and notably the type of errors raised:
 
 est = MetaClassifier(estimator=ExampleClassifier().set_fit_request(sample_weight=True))
 est.fit(X, y, sample_weight=my_weights)
@@ -292,11 +291,12 @@ print_routing(est)
 # %%
 # As you can see, the only metadata requested for method ``fit`` is
 # ``"sample_weight"`` with ``"aliased_sample_weight"`` as the alias. The
-# ``MetadataRouter`` class enables us to easily create the routing object which
-# would create the output we need for our ``get_metadata_routing``. In the
-# above implementation, ``mapping="one-to-one"`` means there is a one to one
-# mapping between sub-estimator's methods and meta-estimator's ones, i.e.
-# ``fit`` used in ``fit`` and so on. In order to understand how aliases work in
+# ``~utils.metadata_routing.MetadataRouter`` class enables us to easily create
+# the routing object which would create the output we need for our
+# ``get_metadata_routing``. In the above implementation,
+# ``mapping="one-to-one"`` means there is a one to one mapping between
+# sub-estimator's methods and meta-estimator's ones, i.e. ``fit`` used in
+# ``fit`` and so on. In order to understand how aliases work in
 # meta-estimators, imagine our meta-estimator inside another one:
 
 meta_est = MetaClassifier(estimator=est).fit(X, y, aliased_sample_weight=my_weights)
