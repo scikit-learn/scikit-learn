@@ -1066,3 +1066,20 @@ class MinimalTransformer:
 
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X, y)
+
+
+class DataFrameWithoutColumns:
+    """Wrapper around DataFrame that does not have a columns attribute."""
+
+    def __init__(self, dataframe):
+        self.dataframe = dataframe
+        self.exchange_protocol_called = False
+
+    def __dataframe__(self, nan_as_null=False, allow_copy=True):
+        self.exchange_protocol_called = True
+        return self.dataframe.__dataframe__(
+            nan_as_null=nan_as_null, allow_copy=allow_copy
+        )
+
+    def __array__(self, dtype=None):
+        return self.dataframe.__array__(dtype)

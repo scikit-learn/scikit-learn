@@ -12,6 +12,7 @@ import sklearn
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import DataFrameWithoutColumns
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
@@ -814,3 +815,34 @@ def test_estimator_getstate_using_slots_error_message():
 
     with pytest.raises(TypeError, match=msg):
         pickle.dumps(Estimator())
+
+
+def test_dataframe_protocol():
+    """Uses the dataframe exchange protocol to get feature names."""
+    pd = pytest.importorskip("pandas", minversion="1.5.0")
+    columns = [f"col_{i}" for i in range(3)]
+    X_df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns)
+    X_df_wrapped = DataFrameWithoutColumns(X_df)
+
+    class NoOpTransformer(TransformerMixin, BaseEstimator):
+        def fit(self, X, y=None):
+            self._validate_data(X)
+            return self
+
+        def transform(self, X):
+            self._validate_data(X, reset=False)
+            return X
+
+    no_op = NoOpTransformer()
+    no_op.fit(X_df_wrapped)
+    assert X_df_wrapped.exchange_protocol_called
+
+    assert_array_equal(no_op.feature_names_in_, columns)
+    X_out = no_op.transform(X_df_wrapped)
+    assert_allclose(X_df, X_out)
+
+    X_df_bad_names = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
+    X_df_bad_names_wrapped = DataFrameWithoutColumns(X_df_bad_names)
+    with pytest.raises(ValueError, match="The feature names should match"):
+        no_op.transform(X_df_bad_names_wrapped)
+    assert X_df_bad_names_wrapped.exchange_protocol_called

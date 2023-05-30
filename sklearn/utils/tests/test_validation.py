@@ -21,6 +21,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import _convert_container
+from sklearn.utils._testing import DataFrameWithoutColumns
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
@@ -1680,6 +1681,17 @@ def test_get_feature_names_pandas():
     columns = [f"col_{i}" for i in range(3)]
     X = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns)
     feature_names = _get_feature_names(X)
+
+    assert_array_equal(feature_names, columns)
+
+
+def test_get_feature_names_dataframe_protocol():
+    """Uses the dataframe exchange protocol to get feature names."""
+    pd = pytest.importorskip("pandas", minversion="1.5.0")
+    columns = [f"col_{i}" for i in range(3)]
+    X_df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns)
+    X_wrapped = DataFrameWithoutColumns(X_df)
+    feature_names = _get_feature_names(X_wrapped)
 
     assert_array_equal(feature_names, columns)
 
