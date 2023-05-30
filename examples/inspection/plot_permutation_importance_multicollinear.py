@@ -79,10 +79,19 @@ fig.suptitle(
 _ = fig.tight_layout()
 
 # %%
-# The permutation importance plot shows that permuting a feature drops the
-# accuracy by at most `0.012`, which would suggest that none of the features are
-# important. This is in contradiction with the high test accuracy computed as
-# baseline: some feature must be important.
+# The plot on the left shows the gini importance of the model. As the
+# scikit-learn implementation of
+# :class:`~sklearn.ensemble.RandomForestClassifier` uses a random subsets of
+# `sqrt(n_features)` features at each split, it is able to dilute the dominance
+# of any single correlated feature. As a result, the individual feature
+# importance may be distributed more evenly among the correlated features. Since
+# the features have large cardenality and the classifier is non-overfitted, we
+# can relatively trust those values.
+#
+# The permutation importance on the right plot shows that permuting a feature
+# drops the accuracy by at most `0.012`, which would suggest that none of the
+# features are important. This is in contradiction with the high test accuracy
+# computed as baseline: some feature must be important.
 #
 # Similarly, the change in accuracy score computed on the test set appears to be
 # driven by chance:
@@ -94,6 +103,9 @@ ax.set_xlabel("Decrease in accuracy score")
 _ = ax.figure.tight_layout()
 
 # %%
+# Nevertheless, one can still compute a meaningful permutation importance in the
+# presence of correlated features, as demonstrated in the following section.
+#
 # Handling Multicollinear Features
 # --------------------------------
 # When features are collinear, permutating one feature will have little effect
@@ -160,7 +172,9 @@ print(
 
 fig, ax = plt.subplots(figsize=(6, 6))
 plot_permutation_importance(clf_sel, X_test_sel, y_test, ax)
-ax.set_title("Permutation Importances on multicollinear features\n(test set)")
+ax.set_title("Permutation Importances on selected subset of features\n(test set)")
 ax.set_xlabel("Decrease in accuracy score")
 ax.figure.tight_layout()
 plt.show()
+
+# %%
