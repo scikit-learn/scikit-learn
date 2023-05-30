@@ -8,7 +8,6 @@ Metadata Routing Utility
 import inspect
 from collections import namedtuple
 from copy import deepcopy
-from enum import Enum
 from typing import Optional, Union
 from warnings import warn
 
@@ -40,78 +39,66 @@ def _routing_enabled():
     return get_config().get("enable_metadata_routing", False)
 
 
-class RequestType(Enum):
-    """A metadata is requested either with a string alias or this enum.
+# ============================
+# Request values:
+# Each request value needs to be one of the following values, or an alias.
 
-    .. versionadded:: 1.3
-    """
+# this is used in `__metadata_request__*` attributes to indicate that a
+# metadata is not present even though it may be present in the
+# corresponding method's signature.
+UNUSED = "$UNUSED$"
 
-    # Metadata is not requested. It will not be routed to the object having the
-    # request value as UNREQUESTED.
-    UNREQUESTED = False
-    # Metadata is requested, and will be routed to the requesting object. There
-    # will be no error if the metadata is not provided.
-    REQUESTED = True
-    # Default metadata request configuration. It should not be passed, and if
-    # present, an error is raised for the user to explicitly set the request
-    # value.
-    ERROR_IF_PASSED = None
-    # this is used in `__metadata_request__*` attributes to indicate that a
-    # metadata is not present even though it may be present in the
-    # corresponding method's signature.
-    UNUSED = "$UNUSED$"
-    # this is used whenever a default value is changed, and therefore the user
-    # should explicitly set the value, otherwise a warning is shown. An example
-    # is when a meta-estimator is only a router, but then becomes also a
-    # consumer in a new release.
-    WARN = "$WARN$"
+# this is used whenever a default value is changed, and therefore the user
+# should explicitly set the value, otherwise a warning is shown. An example
+# is when a meta-estimator is only a router, but then becomes also a
+# consumer in a new release.
+WARN = "$WARN$"
 
-    @classmethod
-    def is_alias(cls, item):
-        """Check if an item is a valid alias.
-
-        Parameters
-        ----------
-        item : object
-            The given item to be checked if it can be an alias.
-
-        Returns
-        -------
-        result : bool
-            Whether the given item is a valid alias.
-        """
-        try:
-            cls(item)
-        except ValueError:
-            # item is only an alias if it's a valid identifier
-            return isinstance(item, str) and item.isidentifier()
-        else:
-            return False
-
-    @classmethod
-    def is_valid(cls, item):
-        """Check if an item is a valid RequestType (and not an alias).
-
-        Parameters
-        ----------
-        item : object
-            The given item to be checked.
-
-        Returns
-        -------
-        result : bool
-            Whether the given item is valid.
-        """
-        try:
-            cls(item)
-            return True
-        except ValueError:
-            return False
-
-
-# this is the default used in `set_{method}_request` methods to indicate no change
-# requested by the user.
+# this is the default used in `set_{method}_request` methods to indicate no
+# change requested by the user.
 UNCHANGED = "$UNCHANGED$"
+
+VALID_REQUEST_VALUES = [False, True, None, UNUSED, WARN]
+
+
+def request_is_alias(item):
+    """Check if an item is a valid alias.
+
+    Parameters
+    ----------
+    item : object
+        The given item to be checked if it can be an alias.
+
+    Returns
+    -------
+    result : bool
+        Whether the given item is a valid alias.
+    """
+    if item in VALID_REQUEST_VALUES:
+        return False
+
+    # item is only an alias if it's a valid identifier
+    return isinstance(item, str) and item.isidentifier()
+
+
+def request_is_valid(item):
+    """Check if an item is a valid request value (and not an alias).
+
+    Parameters
+    ----------
+    item : object
+        The given item to be checked.
+
+    Returns
+    -------
+    result : bool
+        Whether the given item is valid.
+    """
+    return item in VALID_REQUEST_VALUES
+
+
+# End of request values
+# ===============================
 
 # Only the following methods are supported in the routing mechanism. Adding new
 # methods at the moment involves monkeypatching this list.
@@ -153,8 +140,9 @@ will raise an error if the user provides it.
         - ``str``: metadata should be passed to the meta-estimator with \
 this given alias instead of the original name.
 
-        The default (``UNCHANGED``) retains the existing request. This allows
-        you to change the request for some parameters and not others.
+        The default (``sklearn.utils.metadata_routing.UNCHANGED``) retains the
+        existing request. This allows you to change the request for some
+        parameters and not others.
 
         .. versionadded:: 1.3
 
@@ -165,8 +153,8 @@ this given alias instead of the original name.
         Parameters
         ----------
 """
-REQUESTER_DOC_PARAM = """        {metadata} : RequestType, str, True, False, or None, \
-                    default=UNCHANGED
+REQUESTER_DOC_PARAM = """        {metadata} : str, True, False, or None, \
+                    default=sklearn.utils.metadata_routing.UNCHANGED
             Metadata routing for ``{metadata}`` parameter in ``{method}``.
 
 """
@@ -216,30 +204,28 @@ class MethodMetadataRequest:
         param : str
             The property for which a request is set.
 
-        alias : str, RequestType, or {True, False, None}
+        alias : str, or {True, False, None}
             Specifies which metadata should be routed to `param`
 
             - str: the name (or alias) of metadata given to a meta-estimator that
               should be routed to this parameter.
 
-            - True or RequestType.REQUESTED: requested
+            - True: requested
 
-            - False or RequestType.UNREQUESTED: not requested
+            - False: not requested
 
-            - None or RequestType.ERROR_IF_PASSED: error if passed
+            - None: error if passed
         """
-        if RequestType.is_valid(alias):
-            alias = RequestType(alias)
-        elif not RequestType.is_alias(alias):
+        if not request_is_alias(alias) and not request_is_valid(alias):
             raise ValueError(
                 "alias should be either a valid identifier or one of "
-                "{None, True, False}, or a RequestType."
+                "{None, True, False}."
             )
 
         if alias == param:
-            alias = RequestType.REQUESTED
+            alias = True
 
-        if alias == RequestType.UNUSED and param in self._requests:
+        if alias == UNUSED and param in self._requests:
             del self._requests[param]
         else:
             self._requests[param] = alias
@@ -249,7 +235,7 @@ class MethodMetadataRequest:
     def _get_param_names(self, return_alias):
         """Get names of all metadata that can be consumed or routed by this method.
 
-        This method returns the names of all metadata, even the UNREQUESTED
+        This method returns the names of all metadata, even the ``False``
         ones.
 
         Parameters
@@ -264,10 +250,9 @@ class MethodMetadataRequest:
             A set of strings with the names of all parameters.
         """
         return set(
-            alias if return_alias and not RequestType.is_valid(alias) else prop
+            alias if return_alias and not request_is_valid(alias) else prop
             for prop, alias in self._requests.items()
-            if not RequestType.is_valid(alias)
-            or RequestType(alias) != RequestType.UNREQUESTED
+            if not request_is_valid(alias) or alias is not False
         )
 
     def _check_warnings(self, *, params):
@@ -284,15 +269,14 @@ class MethodMetadataRequest:
         warn_params = {
             prop
             for prop, alias in self._requests.items()
-            if alias == RequestType.WARN and prop in params
+            if alias == WARN and prop in params
         }
         for param in warn_params:
             warn(
                 f"Support for {param} has recently been added to this class. "
                 "To maintain backward compatibility, it is ignored now. "
-                "You can set the request value to RequestType.UNREQUESTED "
-                "to silence this warning, or to RequestType.REQUESTED to "
-                "consume and use the metadata."
+                "You can set the request value to False to silence this "
+                "warning, or to True to consume and use the metadata."
             )
 
     def _route_params(self, params=None):
@@ -318,14 +302,11 @@ class MethodMetadataRequest:
         args = {arg: value for arg, value in params.items() if value is not None}
         res = Bunch()
         for prop, alias in self._requests.items():
-            if RequestType.is_valid(alias):
-                alias = RequestType(alias)
-
-            if alias == RequestType.UNREQUESTED or alias == RequestType.WARN:
+            if alias is False or alias == WARN:
                 continue
-            elif alias == RequestType.REQUESTED and prop in args:
+            elif alias is True and prop in args:
                 res[prop] = args[prop]
-            elif alias == RequestType.ERROR_IF_PASSED and prop in args:
+            elif alias is None and prop in args:
                 unrequested[prop] = args[prop]
             elif alias in args:
                 res[prop] = args[alias]
@@ -350,7 +331,7 @@ class MethodMetadataRequest:
             A serialized version of the instance in the form of a dictionary.
         """
         return {
-            prop: RequestType(alias) if RequestType.is_valid(alias) else alias
+            prop: alias if request_is_valid(alias) else alias
             for prop, alias in self._requests.items()
         }
 
@@ -395,7 +376,7 @@ class MetadataRequest:
         """Get names of all metadata that can be consumed or routed by specified \
             method.
 
-        This method returns the names of all metadata, even the UNREQUESTED
+        This method returns the names of all metadata, even the ``False``
         ones.
 
         Parameters
@@ -676,7 +657,7 @@ class MetadataRouter:
         """Get names of all metadata that can be consumed or routed by specified \
             method.
 
-        This method returns the names of all metadata, even the UNREQUESTED
+        This method returns the names of all metadata, even the ``False``
         ones.
 
         Parameters
@@ -996,7 +977,7 @@ class RequestMethod:
                     k,
                     inspect.Parameter.KEYWORD_ONLY,
                     default=UNCHANGED,
-                    annotation=Optional[Union[RequestType, str]],
+                    annotation=Optional[Union[bool, None, str]],
                 )
                 for k in self.keys
             ]
@@ -1030,7 +1011,7 @@ class _MetadataRequester:
         The ``__metadata_request__*`` class attributes are used when a method
         does not explicitly accept a metadata through its arguments or if the
         developer would like to specify a request value for those metadata
-        which are different from the default ``RequestType.ERROR_IF_PASSED``.
+        which are different from the default ``None``.
 
         References
         ----------
@@ -1062,8 +1043,8 @@ class _MetadataRequester:
         """Build the `MethodMetadataRequest` for a method using its signature.
 
         This method takes all arguments from the method signature and uses
-        ``RequestType.ERROR_IF_PASSED`` as their default request value, except
-        ``X``, ``y``, ``*args``, and ``**kwargs``.
+        ``None`` as their default request value, except ``X``, ``y``,
+        ``*args``, and ``**kwargs``.
 
         Parameters
         ----------
@@ -1091,7 +1072,7 @@ class _MetadataRequester:
                 continue
             mmr.add_request(
                 param=pname,
-                alias=RequestType.ERROR_IF_PASSED,
+                alias=None,
             )
         return mmr
 

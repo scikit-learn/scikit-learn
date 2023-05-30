@@ -292,8 +292,7 @@ class _BaseScorer(_MetadataRequester):
         ----------
         kwargs : dict
             Arguments should be of the form ``param_name=alias``, and `alias`
-            can be either one of ``{True, False, None, str}`` or an instance of
-            RequestType.
+            can be one of ``{True, False, None, str}``.
         """
         self._warn_overlap(
             message=(

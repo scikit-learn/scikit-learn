@@ -32,7 +32,7 @@ from sklearn.base import RegressorMixin
 from sklearn.base import MetaEstimatorMixin
 from sklearn.base import TransformerMixin
 from sklearn.base import clone
-from sklearn.utils.metadata_routing import RequestType
+from sklearn.utils import metadata_routing
 from sklearn.utils.metadata_routing import get_routing_for_object
 from sklearn.utils.metadata_routing import MetadataRouter
 from sklearn.utils.metadata_routing import MethodMapping
@@ -121,19 +121,6 @@ est = (
     .set_fit_request(sample_weight=False)
     .set_predict_request(groups=True)
     .set_score_request(sample_weight=False)
-)
-print_routing(est)
-
-# %%
-# As you can see, the metadata have now explicit request values, one is
-# requested and one is not. Instead of ``True`` and ``False``, we could also
-# use the :class:`~sklearn.utils.metadata_routing.RequestType` values.
-
-est = (
-    ExampleClassifier()
-    .set_fit_request(sample_weight=RequestType.UNREQUESTED)
-    .set_predict_request(groups=RequestType.REQUESTED)
-    .set_score_request(sample_weight=RequestType.UNREQUESTED)
 )
 print_routing(est)
 
@@ -563,7 +550,7 @@ reg.fit(X, y, sample_weight=my_weights)
 
 
 class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
-    __metadata_request__fit = {"sample_weight": RequestType.WARN}
+    __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
 
     def __init__(self, estimator):
         self.estimator = estimator
@@ -601,7 +588,7 @@ for w in record:
 
 
 class ExampleRegressor(RegressorMixin, BaseEstimator):
-    __metadata_request__fit = {"sample_weight": RequestType.WARN}
+    __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
 
     def fit(self, X, y, sample_weight=None):
         check_metadata(self, sample_weight=sample_weight)
