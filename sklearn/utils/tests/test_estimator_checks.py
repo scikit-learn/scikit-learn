@@ -46,7 +46,6 @@ from sklearn.utils.estimator_checks import (
     _NotAnArray,
     _set_checking_parameters,
     check_array_api_input,
-    check_array_api_input_torch,
     check_class_weight_balanced_linear_classifier,
     check_classifier_data_not_an_array,
     check_classifiers_multilabel_output_format_decision_function,
@@ -507,18 +506,6 @@ def test_check_array_api_input():
     with pytest.raises(AssertionError, match="Not equal to tolerance"):
         check_array_api_input(
             "BrokenArrayAPI", BrokenArrayAPI(), array_namespace="numpy.array_api"
-        )
-
-
-def test_check_array_api_input_torch():
-    xp = pytest.importorskip("torch")
-
-    with pytest.raises(AssertionError, match="Not equal to tolerance"):
-        check_array_api_input_torch(
-            "BrokenArrayAPI",
-            BrokenArrayAPI(),
-            device="cpu",
-            dtype="float32",
         )
 
 
