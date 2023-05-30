@@ -148,7 +148,7 @@ Changes impacting all modules
 - |Enhancement| All estimators now recognizes the column names from any DataFrame
   the adopts the
   `DataFrame Interchange Protocol <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`26464` by `Thomas Fan`_.
 
 Changelog
 ---------
