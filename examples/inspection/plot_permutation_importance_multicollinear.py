@@ -176,5 +176,3 @@ ax.set_title("Permutation Importances on selected subset of features\n(test set)
 ax.set_xlabel("Decrease in accuracy score")
 ax.figure.tight_layout()
 plt.show()
-
-# %%
