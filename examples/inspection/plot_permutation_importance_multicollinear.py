@@ -62,15 +62,14 @@ print(f"Baseline accuracy on test data: {clf.score(X_test, y_test):.2}")
 # importance. The permutation importance is calculated on the training set to
 # show how much the model relies on each feature during training.
 import numpy as np
+import pandas as pd
 
+mdi_importances = pd.Series(clf.feature_importances_, index=X_train.columns)
 tree_importance_sorted_idx = np.argsort(clf.feature_importances_)
 tree_indices = np.arange(0, len(clf.feature_importances_)) + 0.5
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
-ax1.barh(tree_indices, clf.feature_importances_[tree_importance_sorted_idx], height=0.7)
-ax1.set_yticks(tree_indices)
-ax1.set_yticklabels(X.columns[tree_importance_sorted_idx])
-ax1.set_ylim((0, len(clf.feature_importances_)))
+mdi_importances.sort_values().plot.barh(ax=ax1)
 ax1.set_xlabel("Gini importance")
 plot_permutation_importance(clf, X_train, y_train, ax2)
 ax2.set_xlabel("Decrease in accuracy score")
