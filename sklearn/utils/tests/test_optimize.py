@@ -6,10 +6,10 @@ from scipy.optimize import fmin_ncg
 from sklearn.utils._testing import assert_array_almost_equal
 
 
-def test_newton_cg():
+def test_newton_cg(global_random_seed):
     # Test that newton_cg gives same result as scipy's fmin_ncg
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     A = rng.normal(size=(10, 10))
     x0 = np.ones(10)
 
