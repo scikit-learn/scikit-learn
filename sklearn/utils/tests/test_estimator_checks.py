@@ -488,6 +488,7 @@ class PartialFitChecksName(BaseEstimator):
 
 class BrokenArrayAPI(BaseEstimator):
     """Make different predictions when using Numpy and the Array API"""
+
     def fit(self, X, y):
         return self
 
@@ -501,7 +502,8 @@ class BrokenArrayAPI(BaseEstimator):
 
 
 def test_check_array_api_input():
-    xp = pytest.importorskip("numpy.array_api")
+    pytest.importorskip("array_api_compat")
+    pytest.importorskip("numpy.array_api")
 
     with pytest.raises(AssertionError, match="Not equal to tolerance"):
         check_array_api_input(
