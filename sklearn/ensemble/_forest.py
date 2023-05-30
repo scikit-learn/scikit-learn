@@ -474,8 +474,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # Collect newly grown trees
             self.estimators_.extend(trees)
 
-        # Only perform OOB computation again if there are newly grown trees or
-        # if it was not previously calculated due to oob_score parameter being False
         if self.oob_score and (
             n_more_estimators > 0 or not hasattr(self, "oob_score_")
         ):
