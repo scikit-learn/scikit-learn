@@ -1990,9 +1990,7 @@ def _get_feature_names(X):
         feature_names = np.asarray(X.columns, dtype=object)
     elif hasattr(X, "__dataframe__"):
         df_protocol = X.__dataframe__()
-        feature_names = np.fromiter(
-            df_protocol.column_names(), dtype=object, count=df_protocol.num_columns()
-        )
+        feature_names = np.asarray(list(df_protocol.column_names()), dtype=object)
 
     if feature_names is None or len(feature_names) == 0:
         return
