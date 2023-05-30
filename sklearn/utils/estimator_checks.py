@@ -865,7 +865,7 @@ def _generate_sparse_matrix(X_csr):
 
 
 def check_array_api_input(
-    name, estimator_orig, *, array_namespace, device="cpu", dtype="float64"
+    name, estimator_orig, *, array_namespace, device=None, dtype="float64"
 ):
     """Check that the array_api Array gives the same results as ndarrays."""
     xp = pytest.importorskip(array_namespace)
