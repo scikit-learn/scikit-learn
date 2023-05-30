@@ -18,7 +18,7 @@ from sklearn.base import MetaEstimatorMixin
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.metadata_routing import RequestType
+from sklearn.utils import metadata_routing
 from sklearn.utils.metadata_routing import MetadataRequest
 from sklearn.utils.metadata_routing import get_routing_for_object
 from sklearn.utils.metadata_routing import MetadataRouter
@@ -27,6 +27,8 @@ from sklearn.utils.metadata_routing import process_routing
 from sklearn.utils._metadata_requests import MethodMetadataRequest
 from sklearn.utils._metadata_requests import _MetadataRequester
 from sklearn.utils._metadata_requests import METHODS
+from sklearn.utils._metadata_requests import request_is_alias
+from sklearn.utils._metadata_requests import request_is_valid
 
 rng = np.random.RandomState(42)
 N, M = 100, 4
@@ -68,8 +70,7 @@ def assert_request_is_empty(metadata_request, exclude=None):
         props = [
             prop
             for prop, alias in mmr.requests.items()
-            if isinstance(alias, str)
-            or RequestType(alias) != RequestType.ERROR_IF_PASSED
+            if isinstance(alias, str) or alias is not None
         ]
         assert not len(props)
 
@@ -290,8 +291,8 @@ def test_assert_request_is_empty():
     requests = MetadataRequest(owner="test")
     assert_request_is_empty(requests)
 
-    requests.fit.add_request(param="foo", alias=RequestType.ERROR_IF_PASSED)
-    # this should still work, since ERROR_IF_PASSED is the default value
+    requests.fit.add_request(param="foo", alias=None)
+    # this should still work, since None is the default value
     assert_request_is_empty(requests)
 
     requests.fit.add_request(param="bar", alias="value")
@@ -302,7 +303,7 @@ def test_assert_request_is_empty():
     # but one can exclude a method
     assert_request_is_empty(requests, exclude="fit")
 
-    requests.score.add_request(param="carrot", alias=RequestType.REQUESTED)
+    requests.score.add_request(param="carrot", alias=True)
     with pytest.raises(AssertionError):
         # excluding `fit` is not enough
         assert_request_is_empty(requests, exclude="fit")
@@ -331,8 +332,8 @@ def test_assert_request_is_empty():
     ],
 )
 def test_request_type_is_alias(val, res):
-    # Test RequestType.is_alias
-    assert RequestType.is_alias(val) == res
+    # Test request_is_alias
+    assert request_is_alias(val) == res
 
 
 @pytest.mark.parametrize(
@@ -348,19 +349,19 @@ def test_request_type_is_alias(val, res):
     ],
 )
 def test_request_type_is_valid(val, res):
-    # Test RequestType.is_valid
-    assert RequestType.is_valid(val) == res
+    # Test request_is_valid
+    assert request_is_valid(val) == res
 
 
 def test_default_requests():
     class OddEstimator(BaseEstimator):
         __metadata_request__fit = {
             # set a different default request
-            "sample_weight": RequestType.REQUESTED
+            "sample_weight": True
         }  # type: ignore
 
     odd_request = get_routing_for_object(OddEstimator())
-    assert odd_request.fit.requests == {"sample_weight": RequestType.REQUESTED}
+    assert odd_request.fit.requests == {"sample_weight": True}
 
     # check other test estimators
     assert not len(get_routing_for_object(ClassifierNoMetadata()).fit.requests)
@@ -368,18 +369,18 @@ def test_default_requests():
 
     trs_request = get_routing_for_object(TransformerMetadata())
     assert trs_request.fit.requests == {
-        "sample_weight": RequestType(None),
-        "brand": RequestType(None),
+        "sample_weight": None,
+        "brand": None,
     }
     assert trs_request.transform.requests == {
-        "sample_weight": RequestType(None),
+        "sample_weight": None,
     }
     assert_request_is_empty(trs_request)
 
     est_request = get_routing_for_object(ClassifierFitMetadata())
     assert est_request.fit.requests == {
-        "sample_weight": RequestType(None),
-        "brand": RequestType(None),
+        "sample_weight": None,
+        "brand": None,
     }
     assert_request_is_empty(est_request)
 
@@ -538,26 +539,26 @@ def test_invalid_metadata():
 def test_get_metadata_routing():
     class TestDefaultsBadMethodName(_MetadataRequester):
         __metadata_request__fit = {
-            "sample_weight": RequestType.ERROR_IF_PASSED,
-            "my_param": RequestType.ERROR_IF_PASSED,
+            "sample_weight": None,
+            "my_param": None,
         }
         __metadata_request__score = {
-            "sample_weight": RequestType.ERROR_IF_PASSED,
+            "sample_weight": None,
             "my_param": True,
-            "my_other_param": RequestType.ERROR_IF_PASSED,
+            "my_other_param": None,
         }
         # this will raise an error since we don't understand "other_method" as a method
         __metadata_request__other_method = {"my_param": True}
 
     class TestDefaults(_MetadataRequester):
         __metadata_request__fit = {
-            "sample_weight": RequestType.ERROR_IF_PASSED,
-            "my_other_param": RequestType.ERROR_IF_PASSED,
+            "sample_weight": None,
+            "my_other_param": None,
         }
         __metadata_request__score = {
-            "sample_weight": RequestType.ERROR_IF_PASSED,
+            "sample_weight": None,
             "my_param": True,
-            "my_other_param": RequestType.ERROR_IF_PASSED,
+            "my_other_param": None,
         }
         __metadata_request__predict = {"my_param": True}
 
@@ -568,15 +569,15 @@ def test_get_metadata_routing():
 
     expected = {
         "score": {
-            "my_param": RequestType.REQUESTED,
-            "my_other_param": RequestType.ERROR_IF_PASSED,
-            "sample_weight": RequestType.ERROR_IF_PASSED,
+            "my_param": True,
+            "my_other_param": None,
+            "sample_weight": None,
         },
         "fit": {
-            "my_other_param": RequestType.ERROR_IF_PASSED,
-            "sample_weight": RequestType.ERROR_IF_PASSED,
+            "my_other_param": None,
+            "sample_weight": None,
         },
-        "predict": {"my_param": RequestType.REQUESTED},
+        "predict": {"my_param": True},
     }
     assert_request_equal(TestDefaults().get_metadata_routing(), expected)
 
@@ -584,29 +585,29 @@ def test_get_metadata_routing():
     expected = {
         "score": {
             "my_param": "other_param",
-            "my_other_param": RequestType.ERROR_IF_PASSED,
-            "sample_weight": RequestType.ERROR_IF_PASSED,
+            "my_other_param": None,
+            "sample_weight": None,
         },
         "fit": {
-            "my_other_param": RequestType.ERROR_IF_PASSED,
-            "sample_weight": RequestType.ERROR_IF_PASSED,
+            "my_other_param": None,
+            "sample_weight": None,
         },
-        "predict": {"my_param": RequestType.REQUESTED},
+        "predict": {"my_param": True},
     }
     assert_request_equal(est.get_metadata_routing(), expected)
 
     est = TestDefaults().set_fit_request(sample_weight=True)
     expected = {
         "score": {
-            "my_param": RequestType.REQUESTED,
-            "my_other_param": RequestType.ERROR_IF_PASSED,
-            "sample_weight": RequestType.ERROR_IF_PASSED,
+            "my_param": True,
+            "my_other_param": None,
+            "sample_weight": None,
         },
         "fit": {
-            "my_other_param": RequestType.ERROR_IF_PASSED,
-            "sample_weight": RequestType.REQUESTED,
+            "my_other_param": None,
+            "sample_weight": True,
         },
-        "predict": {"my_param": RequestType.REQUESTED},
+        "predict": {"my_param": True},
     }
     assert_request_equal(est.get_metadata_routing(), expected)
 
@@ -617,34 +618,34 @@ def test_setting_default_requests():
 
     class ExplicitRequest(BaseEstimator):
         # `fit` doesn't accept `props` explicitly, but we want to request it
-        __metadata_request__fit = {"prop": RequestType.ERROR_IF_PASSED}
+        __metadata_request__fit = {"prop": None}
 
         def fit(self, X, y, **kwargs):
             return self
 
-    test_cases[ExplicitRequest] = {"prop": RequestType.ERROR_IF_PASSED}
+    test_cases[ExplicitRequest] = {"prop": None}
 
     class ExplicitRequestOverwrite(BaseEstimator):
         # `fit` explicitly accepts `props`, but we want to change the default
-        # request value from ERROR_IF_PASSEd to REQUESTED
-        __metadata_request__fit = {"prop": RequestType.REQUESTED}
+        # request value from None to True
+        __metadata_request__fit = {"prop": True}
 
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    test_cases[ExplicitRequestOverwrite] = {"prop": RequestType.REQUESTED}
+    test_cases[ExplicitRequestOverwrite] = {"prop": True}
 
     class ImplicitRequest(BaseEstimator):
-        # `fit` requests `prop` and the default ERROR_IF_PASSED should be used
+        # `fit` requests `prop` and the default None should be used
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    test_cases[ImplicitRequest] = {"prop": RequestType.ERROR_IF_PASSED}
+    test_cases[ImplicitRequest] = {"prop": None}
 
     class ImplicitRequestRemoval(BaseEstimator):
         # `fit` (in this class or a parent) requests `prop`, but we don't want
         # it requested at all.
-        __metadata_request__fit = {"prop": RequestType.UNUSED}
+        __metadata_request__fit = {"prop": metadata_routing.UNUSED}
 
         def fit(self, X, y, prop=None, **kwargs):
             return self
@@ -668,13 +669,13 @@ def test_method_metadata_request():
         mmr.add_request(param="foo", alias=1.4)
 
     mmr.add_request(param="foo", alias=None)
-    assert mmr.requests == {"foo": RequestType.ERROR_IF_PASSED}
+    assert mmr.requests == {"foo": None}
     mmr.add_request(param="foo", alias=False)
-    assert mmr.requests == {"foo": RequestType.UNREQUESTED}
+    assert mmr.requests == {"foo": False}
     mmr.add_request(param="foo", alias=True)
-    assert mmr.requests == {"foo": RequestType.REQUESTED}
+    assert mmr.requests == {"foo": True}
     mmr.add_request(param="foo", alias="foo")
-    assert mmr.requests == {"foo": RequestType.REQUESTED}
+    assert mmr.requests == {"foo": True}
     mmr.add_request(param="foo", alias="bar")
     assert mmr.requests == {"foo": "bar"}
     assert mmr._get_param_names(return_alias=False) == {"foo"}
@@ -683,7 +684,7 @@ def test_method_metadata_request():
 
 def test_get_routing_for_object():
     class Consumer(BaseEstimator):
-        __metadata_request__fit = {"prop": RequestType.ERROR_IF_PASSED}
+        __metadata_request__fit = {"prop": None}
 
     assert_request_is_empty(get_routing_for_object(None))
     assert_request_is_empty(get_routing_for_object(object()))
@@ -696,12 +697,12 @@ def test_get_routing_for_object():
 
     mr = get_routing_for_object(Consumer())
     assert_request_is_empty(mr, exclude="fit")
-    assert mr.fit.requests == {"prop": RequestType.ERROR_IF_PASSED}
+    assert mr.fit.requests == {"prop": None}
 
 
 def test_metaestimator_warnings():
     class WeightedMetaRegressorWarn(WeightedMetaRegressor):
-        __metadata_request__fit = {"sample_weight": RequestType.WARN}
+        __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
 
     with pytest.warns(
         UserWarning, match="Support for .* has recently been added to this class"
@@ -713,7 +714,7 @@ def test_metaestimator_warnings():
 
 def test_estimator_warnings():
     class RegressorMetadataWarn(RegressorMetadata):
-        __metadata_request__fit = {"sample_weight": RequestType.WARN}
+        __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
 
     with pytest.warns(
         UserWarning, match="Support for .* has recently been added to this class"
@@ -742,10 +743,9 @@ def test_estimator_warnings():
                 method_mapping="predict", estimator=RegressorMetadata()
             ),
             (
-                "{'estimator': {'mapping': [{'callee': 'predict', 'caller':"
-                " 'predict'}], 'router': {'fit': {'sample_weight':"
-                " <RequestType.ERROR_IF_PASSED: None>}, 'score': {'sample_weight':"
-                " <RequestType.ERROR_IF_PASSED: None>}}}}"
+                "{'estimator': {'mapping': [{'callee': 'predict', 'caller': "
+                "'predict'}], 'router': {'fit': {'sample_weight': None}, "
+                "'score': {'sample_weight': None}}}}"
             ),
         ),
     ],
@@ -864,9 +864,9 @@ def test_metadata_routing_add():
     )
     assert (
         str(router)
-        == "{'est': {'mapping': [{'callee': 'fit', 'caller': 'fit'}], 'router': {'fit':"
-        " {'sample_weight': 'weights'}, 'score': {'sample_weight':"
-        " <RequestType.ERROR_IF_PASSED: None>}}}}"
+        == "{'est': {'mapping': [{'callee': 'fit', 'caller': 'fit'}], "
+        "'router': {'fit': {'sample_weight': 'weights'}, 'score': "
+        "{'sample_weight': None}}}}"
     )
 
     # adding one with an instance of MethodMapping
@@ -876,9 +876,9 @@ def test_metadata_routing_add():
     )
     assert (
         str(router)
-        == "{'est': {'mapping': [{'callee': 'score', 'caller': 'fit'}], 'router':"
-        " {'fit': {'sample_weight': <RequestType.ERROR_IF_PASSED: None>}, 'score':"
-        " {'sample_weight': <RequestType.REQUESTED: True>}}}}"
+        == "{'est': {'mapping': [{'callee': 'score', 'caller': 'fit'}], "
+        "'router': {'fit': {'sample_weight': None}, 'score': "
+        "{'sample_weight': True}}}}"
     )
 
 
@@ -900,12 +900,11 @@ def test_metadata_routing_get_param_names():
 
     assert (
         str(router)
-        == "{'$self': {'fit': {'sample_weight': 'self_weights'}, 'score':"
-        " {'sample_weight': <RequestType.ERROR_IF_PASSED: None>}}, 'trs':"
-        " {'mapping': [{'callee': 'fit', 'caller': 'fit'}], 'router': {'fit':"
-        " {'brand': <RequestType.ERROR_IF_PASSED: None>, 'sample_weight':"
-        " 'transform_weights'}, 'transform': {'sample_weight':"
-        " <RequestType.ERROR_IF_PASSED: None>}}}}"
+        == "{'$self': {'fit': {'sample_weight': 'self_weights'}, 'score': "
+        "{'sample_weight': None}}, 'trs': {'mapping': [{'callee': 'fit', "
+        "'caller': 'fit'}], 'router': {'fit': {'brand': None, "
+        "'sample_weight': 'transform_weights'}, 'transform': "
+        "{'sample_weight': None}}}}"
     )
 
     assert router._get_param_names(

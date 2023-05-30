@@ -16,7 +16,7 @@ from sklearn import config_context
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.metadata_routing import MetadataRouter, RequestType
+from sklearn.utils.metadata_routing import MetadataRouter
 from sklearn.tests.test_metadata_routing import assert_request_is_empty
 
 from sklearn.base import BaseEstimator
@@ -1219,7 +1219,7 @@ def test_scorer_metadata_request(name):
         assert_request_is_empty(weighted_scorer.get_metadata_routing(), exclude="score")
         assert (
             weighted_scorer.get_metadata_routing().score.requests["sample_weight"]
-            == RequestType.REQUESTED
+            is True
         )
 
         # make sure putting the scorer in a router doesn't request anything by
