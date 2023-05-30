@@ -903,7 +903,9 @@ def check_array_api_input(
 
         est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
         assert_allclose(
-            attribute, est_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
+            attribute, est_xp_param_np,
+            err_msg=f"{key} not the same",
+            atol=np.finfo(X.dtype).eps * 100,
         )
 
     # Check estimator methods, if supported, give the same results
@@ -937,7 +939,7 @@ def check_array_api_input(
             result,
             result_xp_np,
             err_msg=f"{method} did not the return the same result",
-            atol=1e-5,
+            atol=np.finfo(X.dtype).eps * 100,
         )
 
 
