@@ -123,7 +123,9 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
 
-classifier = make_pipeline(StandardScaler(), LinearSVC(random_state=random_state))
+classifier = make_pipeline(
+    StandardScaler(), LinearSVC(random_state=random_state, dual="auto")
+)
 classifier.fit(X_train, y_train)
 
 # %%
@@ -187,7 +189,7 @@ X_train, X_test, Y_train, Y_test = train_test_split(
 from sklearn.multiclass import OneVsRestClassifier
 
 classifier = OneVsRestClassifier(
-    make_pipeline(StandardScaler(), LinearSVC(random_state=random_state))
+    make_pipeline(StandardScaler(), LinearSVC(random_state=random_state, dual="auto"))
 )
 classifier.fit(X_train, Y_train)
 y_score = classifier.decision_function(X_test)
