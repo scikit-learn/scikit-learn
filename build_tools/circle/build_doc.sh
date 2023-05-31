@@ -187,12 +187,7 @@ pip install -e . --no-build-isolation
 echo "ccache build summary:"
 ccache -s
 
-# Circle CI has nodes with 36 (logical) cores but docker's cgroup quotas are
-# limitting to 2 usable cores.
-# Scikit-learn's Cython code should be robust to this, but just in case examples
-# run other OpenMP libraries that are not cgroup aware, let's manually limit
-# OpenMP to avoid oversubscription.
-export OMP_NUM_THREADS=2
+export OMP_NUM_THREADS=1
 
 if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
 then
