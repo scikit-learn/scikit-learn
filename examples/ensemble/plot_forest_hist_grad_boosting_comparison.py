@@ -17,7 +17,7 @@ trees according to each estimator:
   regression and binary classification problems. Furthermore, the actual number
   of trees required by the model depends on the stopping criteria.
 
-HGBT use gradient boosting to iteratively improve the model's performance by
+HGBT uses gradient boosting to iteratively improve the model's performance by
 fitting each tree to the negative gradient of the loss function with respect to
 the predicted value. RFs, on the other hand, are based on bagging and use a
 majority vote to predict the outcome.
@@ -38,8 +38,8 @@ X, y = fetch_california_housing(return_X_y=True, as_frame=True)
 n_samples, n_features = X.shape
 
 # %%
-# HGBT uses an histogram-based algorithm on binned feature values that can
-# efficiently handle large datasets (tens of thousands samples or more) with a
+# HGBT uses a histogram-based algorithm on binned feature values that can
+# efficiently handle large datasets (tens of thousands of samples or more) with a
 # high number of features (see :ref:`Why_it's_faster`). The scikit-learn
 # implementation of RF does not use binning and relies on exact splitting, which
 # can be computationally expensive.
