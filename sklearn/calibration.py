@@ -333,7 +333,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         if estimator is None:
             # we want all classifiers that don't expose a random_state
             # to be deterministic (and we don't want to expose this one).
-            estimator = LinearSVC(random_state=0)
+            estimator = LinearSVC(dual="auto", random_state=0)
 
         self.calibrated_classifiers_ = []
         if self.cv == "prefit":

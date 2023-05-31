@@ -141,7 +141,7 @@ def test_roc_curve_chance_level_line(
     chance_level_kw,
     constructor_name,
 ):
-    """Check the chance leve line plotting behaviour."""
+    """Check the chance level line plotting behaviour."""
     X, y = data_binary
 
     lr = LogisticRegression()

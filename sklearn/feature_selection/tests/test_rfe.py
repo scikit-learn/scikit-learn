@@ -466,7 +466,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    estimator = LinearSVR(random_state=0)
+    estimator = LinearSVR(dual="auto", random_state=0)
 
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
@@ -488,7 +488,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
 @pytest.mark.parametrize("Selector", [RFE, RFECV])
 def test_rfe_importance_getter_validation(importance_getter, err_type, Selector):
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=42)
-    estimator = LinearSVR()
+    estimator = LinearSVR(dual="auto")
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
     )
