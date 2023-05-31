@@ -82,11 +82,11 @@ _ = fig.tight_layout()
 # The plot on the left shows the gini importance of the model. As the
 # scikit-learn implementation of
 # :class:`~sklearn.ensemble.RandomForestClassifier` uses a random subsets of
-# `sqrt(n_features)` features at each split, it is able to dilute the dominance
-# of any single correlated feature. As a result, the individual feature
-# importance may be distributed more evenly among the correlated features. Since
-# the features have large cardenality and the classifier is non-overfitted, we
-# can relatively trust those values.
+# :math:`\sqrt{n_\text{features}}` features at each split, it is able to dilute
+# the dominance of any single correlated feature. As a result, the individual
+# feature importance may be distributed more evenly among the correlated
+# features. Since the features have large cardenality and the classifier is
+# non-overfitted, we can relatively trust those values.
 #
 # The permutation importance on the right plot shows that permuting a feature
 # drops the accuracy by at most `0.012`, which would suggest that none of the
@@ -96,7 +96,7 @@ _ = fig.tight_layout()
 # Similarly, the change in accuracy score computed on the test set appears to be
 # driven by chance:
 
-fig, ax = plt.subplots(figsize=(6, 6))
+fig, ax = plt.subplots(figsize=(7, 6))
 plot_permutation_importance(clf, X_test, y_test, ax)
 ax.set_title("Permutation Importances on multicollinear features\n(test set)")
 ax.set_xlabel("Decrease in accuracy score")
@@ -170,7 +170,7 @@ print(
 # We can finally explore the permutation importance of the selected subset of
 # features:
 
-fig, ax = plt.subplots(figsize=(6, 6))
+fig, ax = plt.subplots(figsize=(7, 6))
 plot_permutation_importance(clf_sel, X_test_sel, y_test, ax)
 ax.set_title("Permutation Importances on selected subset of features\n(test set)")
 ax.set_xlabel("Decrease in accuracy score")
