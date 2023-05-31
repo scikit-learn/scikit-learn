@@ -10,7 +10,6 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 import joblib
-import pytest
 
 import sklearn
 from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
@@ -502,10 +501,16 @@ class BrokenArrayAPI(BaseEstimator):
 
 
 def test_check_array_api_input():
-    pytest.importorskip("array_api_compat")
-    pytest.importorskip("numpy.array_api")
+    try:
+        __import__("array_api_compat")
+    except ImportError:
+        raise SkipTest("array_api_compat is required to run this test")
+    try:
+        __import__("numpy.array_api")
+    except ImportError:
+        raise SkipTest("numpy.array_api is required to run this test")
 
-    with pytest.raises(AssertionError, match="Not equal to tolerance"):
+    with raises(AssertionError, match="Not equal to tolerance"):
         check_array_api_input(
             "BrokenArrayAPI", BrokenArrayAPI(), array_namespace="numpy.array_api"
         )
