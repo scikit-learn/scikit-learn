@@ -475,6 +475,13 @@ Changelog
   `'matching'` anymore.
   :pr:`26264` by :user:`Barata T. Onggo <magnusbarata>`
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| :class:`gaussian_process.GaussianProcessRegressor` has a new argument
+  `n_targets`, which is used to decide the number of outputs when sampling
+  from the prior distributions. :pr:`23099` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
