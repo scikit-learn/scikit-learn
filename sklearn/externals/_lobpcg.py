@@ -1,5 +1,5 @@
 """
-scikit-learn copy of scipy/sparse/linalg/_eigen/lobpcg/lobpcg.py v1.10
+scikit-learn copy of scipy/sparse/linalg/_eigen/lobpcg/lobpcg.py v1.10.1
 to be deleted after scipy 1.4 becomes a dependency in scikit-lean
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG).
@@ -19,7 +19,7 @@ References
 .. [3] A. V. Knyazev's C and MATLAB implementations:
        https://github.com/lobpcg/blopex
 """
-import inspect
+
 import warnings
 import numpy as np
 from scipy.linalg import (inv, eigh, cho_factor, cho_solve,
@@ -214,7 +214,7 @@ def lobpcg(
     Notes
     -----
     The iterative loop in lobpcg runs maxit=maxiter (or 20 if maxit=None)
-    iterations at most and finishes earlier if the tolerance is met.
+    iterations at most and finishes earler if the tolerance is met.
     Breaking backward compatibility with the previous version, lobpcg
     now returns the block of iterative vectors with the best accuracy rather
     than the last one iterated, as a cure for possible divergence.
@@ -466,16 +466,10 @@ def lobpcg(
                     f"{e}\n")
 
         try:
-            if "subset_by_index" in inspect.signature(eigh).parameters:
-                # scipy >= 1.5
-                additional_params = {"subset_by_index": eigvals}
-            else:
-                # deprecated in scipy == 1.10
-                additional_params = {"eigvals": eigvals}
             vals, vecs = eigh(A,
                               B,
-                              check_finite=False,
-                              **additional_params)
+                              subset_by_index=eigvals,
+                              check_finite=False)
             if largest:
                 # Reverse order to be compatible with eigs() in 'LM' mode.
                 vals = vals[::-1]
