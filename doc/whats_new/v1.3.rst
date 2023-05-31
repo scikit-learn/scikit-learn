@@ -536,7 +536,7 @@ Changelog
   :pr:`26424` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |API| The default value of the `subsample` parameter of
-  :class:`preprocessing.KBinsDiscretizer` will change from `None` to `200000` in
+  :class:`preprocessing.KBinsDiscretizer` will change from `None` to `200_000` in
   version 1.5 when `strategy="kmeans"` or `strategy="uniform"`.
   :pr:`26424` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
