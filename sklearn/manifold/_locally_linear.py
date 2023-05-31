@@ -7,7 +7,7 @@
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.linalg import eigh, svd, qr, solve
+from scipy.linalg import svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from scipy.sparse.linalg import eigsh
 
@@ -20,6 +20,7 @@ from ..base import (
 from ..utils import check_random_state, check_array
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.fixes import _eigh
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -189,8 +190,8 @@ def null_space(
     elif eigen_solver == "dense":
         if hasattr(M, "toarray"):
             M = M.toarray()
-        eigen_values, eigen_vectors = eigh(
-            M, eigvals=(k_skip, k + k_skip - 1), overwrite_a=True
+        eigen_values, eigen_vectors = _eigh(
+            M, subset_by_index=(k_skip, k + k_skip - 1), overwrite_a=True
         )
         index = np.argsort(np.abs(eigen_values))
         return eigen_vectors[:, index], np.sum(eigen_values)
@@ -380,7 +381,7 @@ def locally_linear_embedding(
                 U = svd(Gi, full_matrices=0)[0]
             else:
                 Ci = np.dot(Gi, Gi.T)
-                U = eigh(Ci)[1][:, ::-1]
+                U = _eigh(Ci)[1][:, ::-1]
 
             Yi[:, 1 : 1 + n_components] = U[:, :n_components]
 
@@ -431,7 +432,7 @@ def locally_linear_embedding(
             for i in range(N):
                 X_nbrs = X[neighbors[i]] - X[i]
                 C_nbrs = np.dot(X_nbrs, X_nbrs.T)
-                evi, vi = eigh(C_nbrs)
+                evi, vi = _eigh(C_nbrs)
                 evals[i] = evi[::-1]
                 V[i] = vi[:, ::-1]
 
@@ -527,7 +528,7 @@ def locally_linear_embedding(
                 v = svd(Xi, full_matrices=True)[0]
             else:
                 Ci = np.dot(Xi, Xi.T)
-                v = eigh(Ci)[1][:, ::-1]
+                v = _eigh(Ci)[1][:, ::-1]
 
             Gi = np.zeros((n_neighbors, n_components + 1))
             Gi[:, 1:] = v[:, :n_components]

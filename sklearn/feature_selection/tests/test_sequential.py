@@ -6,11 +6,12 @@ from numpy.testing import assert_array_equal
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SequentialFeatureSelector
-from sklearn.datasets import make_regression, make_blobs
+from sklearn.datasets import make_regression, make_blobs, make_classification
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, LeaveOneGroupOut
 from sklearn.cluster import KMeans
+from sklearn.neighbors import KNeighborsClassifier
 
 
 def test_bad_n_features_to_select():
@@ -278,3 +279,58 @@ def test_no_y_validation_model_fit(y):
 
     with pytest.raises((TypeError, ValueError)):
         sfs.fit(X, y)
+
+
+def test_forward_neg_tol_error():
+    """Check that we raise an error when tol<0 and direction='forward'"""
+    X, y = make_regression(n_features=10, random_state=0)
+    sfs = SequentialFeatureSelector(
+        LinearRegression(),
+        n_features_to_select="auto",
+        direction="forward",
+        tol=-1e-3,
+    )
+
+    with pytest.raises(ValueError, match="tol must be positive"):
+        sfs.fit(X, y)
+
+
+def test_backward_neg_tol():
+    """Check that SequentialFeatureSelector works negative tol
+
+    non-regression test for #25525
+    """
+    X, y = make_regression(n_features=10, random_state=0)
+    lr = LinearRegression()
+    initial_score = lr.fit(X, y).score(X, y)
+
+    sfs = SequentialFeatureSelector(
+        lr,
+        n_features_to_select="auto",
+        direction="backward",
+        tol=-1e-3,
+    )
+    Xr = sfs.fit_transform(X, y)
+    new_score = lr.fit(Xr, y).score(Xr, y)
+
+    assert 0 < sfs.get_support().sum() < X.shape[1]
+    assert new_score < initial_score
+
+
+def test_cv_generator_support():
+    """Check that no exception raised when cv is generator
+
+    non-regression test for #25957
+    """
+    X, y = make_classification(random_state=0)
+
+    groups = np.zeros_like(y, dtype=int)
+    groups[y.size // 2 :] = 1
+
+    cv = LeaveOneGroupOut()
+    splits = cv.split(X, y, groups=groups)
+
+    knc = KNeighborsClassifier(n_neighbors=5)
+
+    sfs = SequentialFeatureSelector(knc, n_features_to_select=5, cv=splits)
+    sfs.fit(X, y)

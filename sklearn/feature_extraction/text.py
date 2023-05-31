@@ -15,7 +15,7 @@ import array
 from collections import defaultdict
 from collections.abc import Mapping
 from functools import partial
-from numbers import Integral, Real
+from numbers import Integral
 from operator import itemgetter
 import re
 import unicodedata
@@ -32,6 +32,7 @@ from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT
 from ..exceptions import NotFittedError
 from ..utils._param_validation import StrOptions, Interval, HasMethods
+from ..utils._param_validation import RealNotInt
 
 
 __all__ = [
@@ -446,7 +447,6 @@ class _VectorizerMixin:
             )
 
         elif self.analyzer == "char_wb":
-
             return partial(
                 _analyze,
                 ngrams=self._char_wb_ngrams,
@@ -523,7 +523,6 @@ class _VectorizerMixin:
             )
 
     def _warn_for_unused_params(self):
-
         if self.tokenizer is not None and self.token_pattern is not None:
             warnings.warn(
                 "The parameter 'token_pattern' will not be used"
@@ -724,6 +723,13 @@ class HashingVectorizer(
     TfidfVectorizer : Convert a collection of raw documents to a matrix of
         TF-IDF features.
 
+    Notes
+    -----
+    This estimator is :term:`stateless` and does not need to be fitted.
+    However, we recommend to call :meth:`fit_transform` instead of
+    :meth:`transform`, as parameter validation is only performed in
+    :meth:`fit`.
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import HashingVectorizer
@@ -796,10 +802,10 @@ class HashingVectorizer(
         self.dtype = dtype
 
     def partial_fit(self, X, y=None):
-        """No-op: this transformer is stateless.
+        """Only validates estimator's parameters.
 
-        This method is just there to mark the fact that this transformer
-        can work in a streaming setup.
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
@@ -819,7 +825,10 @@ class HashingVectorizer(
         return self
 
     def fit(self, X, y=None):
-        """No-op: this transformer is stateless.
+        """Only validates estimator's parameters.
+
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
@@ -986,9 +995,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
 
-        If None, no stop words will be used. max_df can be set to a value
-        in the range [0.7, 1.0) to automatically detect and filter stop
-        words based on intra corpus document frequency of terms.
+        If None, no stop words will be used. In this case, setting `max_df`
+        to a higher value, such as in the range (0.7, 1.0), can automatically detect
+        and filter stop words based on intra corpus document frequency of terms.
 
     token_pattern : str or None, default=r"(?u)\\b\\w\\w+\\b"
         Regular expression denoting what constitutes a "token", only used
@@ -1041,7 +1050,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     max_features : int, default=None
         If not None, build a vocabulary that only consider the top
-        max_features ordered by term frequency across the corpus.
+        `max_features` ordered by term frequency across the corpus.
+        Otherwise, all features are used.
 
         This parameter is ignored if vocabulary is not None.
 
@@ -1137,11 +1147,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         "ngram_range": [tuple],
         "analyzer": [StrOptions({"word", "char", "char_wb"}), callable],
         "max_df": [
-            Interval(Real, 0, 1, closed="both"),
+            Interval(RealNotInt, 0, 1, closed="both"),
             Interval(Integral, 1, None, closed="left"),
         ],
         "min_df": [
-            Interval(Real, 0, 1, closed="both"),
+            Interval(RealNotInt, 0, 1, closed="both"),
             Interval(Integral, 1, None, closed="left"),
         ],
         "max_features": [Interval(Integral, 1, None, closed="left"), None],
@@ -1823,9 +1833,9 @@ class TfidfVectorizer(CountVectorizer):
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
 
-        If None, no stop words will be used. max_df can be set to a value
-        in the range [0.7, 1.0) to automatically detect and filter stop
-        words based on intra corpus document frequency of terms.
+        If None, no stop words will be used. In this case, setting `max_df`
+        to a higher value, such as in the range (0.7, 1.0), can automatically detect
+        and filter stop words based on intra corpus document frequency of terms.
 
     token_pattern : str, default=r"(?u)\\b\\w\\w+\\b"
         Regular expression denoting what constitutes a "token", only used
@@ -1863,7 +1873,8 @@ class TfidfVectorizer(CountVectorizer):
 
     max_features : int, default=None
         If not None, build a vocabulary that only consider the top
-        max_features ordered by term frequency across the corpus.
+        `max_features` ordered by term frequency across the corpus.
+        Otherwise, all features are used.
 
         This parameter is ignored if vocabulary is not None.
 
@@ -1989,7 +2000,6 @@ class TfidfVectorizer(CountVectorizer):
         smooth_idf=True,
         sublinear_tf=False,
     ):
-
         super().__init__(
             input=input,
             encoding=encoding,

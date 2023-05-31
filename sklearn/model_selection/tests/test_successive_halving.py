@@ -123,14 +123,16 @@ def test_nan_handling(HalvingSearch, fail_at):
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
-    "aggressive_elimination,"
-    "max_resources,"
-    "expected_n_iterations,"
-    "expected_n_required_iterations,"
-    "expected_n_possible_iterations,"
-    "expected_n_remaining_candidates,"
-    "expected_n_candidates,"
-    "expected_n_resources,",
+    (
+        "aggressive_elimination,"
+        "max_resources,"
+        "expected_n_iterations,"
+        "expected_n_required_iterations,"
+        "expected_n_possible_iterations,"
+        "expected_n_remaining_candidates,"
+        "expected_n_candidates,"
+        "expected_n_resources,"
+    ),
     [
         # notice how it loops at the beginning
         # also, the number of candidates evaluated at the last iteration is
@@ -196,11 +198,13 @@ def test_aggressive_elimination(
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
-    "min_resources,"
-    "max_resources,"
-    "expected_n_iterations,"
-    "expected_n_possible_iterations,"
-    "expected_n_resources,",
+    (
+        "min_resources,"
+        "max_resources,"
+        "expected_n_iterations,"
+        "expected_n_possible_iterations,"
+        "expected_n_resources,"
+    ),
     [
         # with enough resources
         ("smallest", "auto", 2, 4, [20, 60]),
@@ -402,7 +406,6 @@ def test_random_search_discrete_distributions(
 @pytest.mark.parametrize(
     "params, expected_error_message",
     [
-        ({"scoring": {"accuracy", "accuracy"}}, "Multimetric scoring is not supported"),
         (
             {"resource": "not_a_parameter"},
             "Cannot use resource=not_a_parameter which is not supported",
@@ -411,12 +414,6 @@ def test_random_search_discrete_distributions(
             {"resource": "a", "max_resources": 100},
             "Cannot use parameter a as the resource since it is part of",
         ),
-        ({"max_resources": "not_auto"}, "max_resources must be either"),
-        ({"max_resources": 100.5}, "max_resources must be either"),
-        ({"max_resources": -10}, "max_resources must be either"),
-        ({"min_resources": "bad str"}, "min_resources must be either"),
-        ({"min_resources": 0.5}, "min_resources must be either"),
-        ({"min_resources": -10}, "min_resources must be either"),
         (
             {"max_resources": "auto", "resource": "b"},
             "resource can only be 'n_samples' when max_resources='auto'",
@@ -427,7 +424,6 @@ def test_random_search_discrete_distributions(
         ),
         ({"cv": KFold(shuffle=True)}, "must yield consistent folds"),
         ({"cv": ShuffleSplit()}, "must yield consistent folds"),
-        ({"refit": "whatever"}, "refit is expected to be a boolean"),
     ],
 )
 def test_input_errors(Est, params, expected_error_message):
@@ -448,8 +444,6 @@ def test_input_errors(Est, params, expected_error_message):
             {"n_candidates": "exhaust", "min_resources": "exhaust"},
             "cannot be both set to 'exhaust'",
         ),
-        ({"n_candidates": "bad"}, "either 'exhaust' or a positive integer"),
-        ({"n_candidates": 0}, "either 'exhaust' or a positive integer"),
     ],
 )
 def test_input_errors_randomized(params, expected_error_message):
@@ -544,7 +538,6 @@ def test_subsample_splitter_determinism(subsample_test):
     ],
 )
 def test_top_k(k, itr, expected):
-
     results = {  # this isn't a 'real world' result dict
         "iter": [0, 0, 0, 0, 1, 1, 2, 2, 2],
         "mean_test_score": [4, 3, 5, 1, 11, 10, 5, 6, 9],
@@ -732,7 +725,7 @@ def test_groups_support(Est):
     X, y = make_classification(n_samples=50, n_classes=2, random_state=0)
     groups = rng.randint(0, 3, 50)
 
-    clf = LinearSVC(random_state=0)
+    clf = LinearSVC(dual="auto", random_state=0)
     grid = {"C": [1]}
 
     group_cvs = [

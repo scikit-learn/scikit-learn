@@ -199,7 +199,7 @@ the parameter space search.  :math:`Loss` is the loss function used
 for the network.
 
 More details can be found in the documentation of
-`SGD <http://scikit-learn.org/stable/modules/sgd.html>`_
+`SGD <https://scikit-learn.org/stable/modules/sgd.html>`_
 
 Adam is similar to SGD in a sense that it is a stochastic optimizer, but it can
 automatically adjust the amount to update parameters based on adaptive estimates

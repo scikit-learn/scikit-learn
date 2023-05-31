@@ -205,7 +205,7 @@ def test_estimator_html_repr_pipeline():
 
 
 @pytest.mark.parametrize("final_estimator", [None, LinearSVC()])
-def test_stacking_classsifer(final_estimator):
+def test_stacking_classifier(final_estimator):
     estimators = [
         ("mlp", MLPClassifier(alpha=0.001)),
         ("tree", DecisionTreeClassifier()),

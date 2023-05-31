@@ -3,7 +3,12 @@ import warnings
 import pytest
 import re
 import numpy as np
-from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
+from scipy.sparse import (
+    coo_matrix,
+    csc_matrix,
+    csr_matrix,
+    isspmatrix_csr,
+)
 from scipy import stats
 from scipy.special import comb
 from itertools import combinations
@@ -1220,33 +1225,6 @@ def test_train_test_split_errors():
 
 
 @pytest.mark.parametrize(
-    "train_size,test_size",
-    [
-        (1.2, 0.8),
-        (1.0, 0.8),
-        (0.0, 0.8),
-        (-0.2, 0.8),
-        (0.8, 1.2),
-        (0.8, 1.0),
-        (0.8, 0.0),
-        (0.8, -0.2),
-    ],
-)
-def test_train_test_split_invalid_sizes1(train_size, test_size):
-    with pytest.raises(ValueError, match=r"should be .* in the \(0, 1\) range"):
-        train_test_split(range(10), train_size=train_size, test_size=test_size)
-
-
-@pytest.mark.parametrize(
-    "train_size,test_size",
-    [(-10, 0.8), (0, 0.8), (11, 0.8), (0.8, -10), (0.8, 0), (0.8, 11)],
-)
-def test_train_test_split_invalid_sizes2(train_size, test_size):
-    with pytest.raises(ValueError, match=r"should be either positive and smaller"):
-        train_test_split(range(10), train_size=train_size, test_size=test_size)
-
-
-@pytest.mark.parametrize(
     "train_size, exp_train, exp_test", [(None, 7, 3), (8, 8, 2), (0.8, 8, 2)]
 )
 def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
@@ -1354,8 +1332,8 @@ def test_train_test_split_sparse():
     for InputFeatureType in sparse_types:
         X_s = InputFeatureType(X)
         X_train, X_test = train_test_split(X_s)
-        assert isinstance(X_train, csr_matrix)
-        assert isinstance(X_test, csr_matrix)
+        assert isspmatrix_csr(X_train)
+        assert isspmatrix_csr(X_test)
 
 
 def test_train_test_split_mock_pandas():

@@ -17,7 +17,7 @@ from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
 from numbers import Integral, Real
 from ..neighbors import NearestNeighbors
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
@@ -498,7 +498,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
            (ICANN '01). Springer-Verlag, Berlin, Heidelberg, 485-491.
 
     .. [2] Laurens van der Maaten. Learning a Parametric Embedding by Preserving
-           Local Structure. Proceedings of the Twelth International Conference on
+           Local Structure. Proceedings of the Twelfth International Conference on
            Artificial Intelligence and Statistics, PMLR 5:384-391, 2009.
     """
     n_samples = X.shape[0]
@@ -537,7 +537,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     return t
 
 
-class TSNE(BaseEstimator):
+class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """T-distributed Stochastic Neighbor Embedding.
 
     t-SNE [1] is a tool to visualize high-dimensional data. It converts
@@ -566,7 +566,7 @@ class TSNE(BaseEstimator):
         is used in other manifold learning algorithms. Larger datasets
         usually require a larger perplexity. Consider selecting a value
         between 5 and 50. Different values can result in significantly
-        different results. The perplexity must be less that the number
+        different results. The perplexity must be less than the number
         of samples.
 
     early_exaggeration : float, default=12.0
@@ -839,8 +839,10 @@ class TSNE(BaseEstimator):
             )
         if self.square_distances != "deprecated":
             warnings.warn(
-                "The parameter `square_distances` has not effect and will be "
-                "removed in version 1.3.",
+                (
+                    "The parameter `square_distances` has not effect and will be "
+                    "removed in version 1.3."
+                ),
                 FutureWarning,
             )
         if self.learning_rate == "auto":
@@ -871,8 +873,10 @@ class TSNE(BaseEstimator):
 
             check_non_negative(
                 X,
-                "TSNE.fit(). With metric='precomputed', X "
-                "should contain positive distances.",
+                (
+                    "TSNE.fit(). With metric='precomputed', X "
+                    "should contain positive distances."
+                ),
             )
 
             if self.method == "exact" and issparse(X):
@@ -990,6 +994,8 @@ class TSNE(BaseEstimator):
                 svd_solver="randomized",
                 random_state=random_state,
             )
+            # Always output a numpy array, no matter what is configured globally
+            pca.set_output(transform="default")
             X_embedded = pca.fit_transform(X).astype(np.float32, copy=False)
             # PCA is rescaled so that PC1 has standard deviation 1e-4 which is
             # the default value for random initialization. See issue #18018.
@@ -1142,6 +1148,11 @@ class TSNE(BaseEstimator):
         self._validate_params()
         self.fit_transform(X)
         return self
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.embedding_.shape[1]
 
     def _more_tags(self):
         return {"pairwise": self.metric == "precomputed"}

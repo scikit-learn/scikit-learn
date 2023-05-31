@@ -418,13 +418,13 @@ def test_roc_curve_drop_intermediate():
     y_true = [0, 0, 0, 0, 1, 1]
     y_score = [0.0, 0.2, 0.5, 0.6, 0.7, 1.0]
     tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
-    assert_array_almost_equal(thresholds, [2.0, 1.0, 0.7, 0.0])
+    assert_array_almost_equal(thresholds, [np.inf, 1.0, 0.7, 0.0])
 
     # Test dropping thresholds with repeating scores
     y_true = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
     y_score = [0.0, 0.1, 0.6, 0.6, 0.7, 0.8, 0.9, 0.6, 0.7, 0.8, 0.9, 0.9, 1.0]
     tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
-    assert_array_almost_equal(thresholds, [2.0, 1.0, 0.9, 0.7, 0.6, 0.0])
+    assert_array_almost_equal(thresholds, [np.inf, 1.0, 0.9, 0.7, 0.6, 0.0])
 
 
 def test_roc_curve_fpr_tpr_increasing():
@@ -685,8 +685,10 @@ def test_micro_averaged_ovr_roc_auc(global_random_seed):
             ["a", "a", "b"],
         ),
         (
-            "Number of classes in y_true not equal to the number of columns "
-            "in 'y_score'",
+            (
+                "Number of classes in y_true not equal to the number of columns "
+                "in 'y_score'"
+            ),
             np.array([0, 2, 0, 2]),
             None,
         ),
@@ -696,26 +698,34 @@ def test_micro_averaged_ovr_roc_auc(global_random_seed):
             ["a", "c", "b"],
         ),
         (
-            "Number of given labels, 2, not equal to the number of columns in "
-            "'y_score', 3",
+            (
+                "Number of given labels, 2, not equal to the number of columns in "
+                "'y_score', 3"
+            ),
             np.array([0, 1, 2, 2]),
             [0, 1],
         ),
         (
-            "Number of given labels, 2, not equal to the number of columns in "
-            "'y_score', 3",
+            (
+                "Number of given labels, 2, not equal to the number of columns in "
+                "'y_score', 3"
+            ),
             np.array(["a", "b", "c", "c"]),
             ["a", "b"],
         ),
         (
-            "Number of given labels, 4, not equal to the number of columns in "
-            "'y_score', 3",
+            (
+                "Number of given labels, 4, not equal to the number of columns in "
+                "'y_score', 3"
+            ),
             np.array([0, 1, 2, 2]),
             [0, 1, 2, 3],
         ),
         (
-            "Number of given labels, 4, not equal to the number of columns in "
-            "'y_score', 3",
+            (
+                "Number of given labels, 4, not equal to the number of columns in "
+                "'y_score', 3"
+            ),
             np.array(["a", "b", "c", "c"]),
             ["a", "b", "c", "d"],
         ),
@@ -777,13 +787,6 @@ def test_roc_auc_score_multiclass_labels_error(msg, y_true, labels, multi_class)
                 r"instead"
             ),
             {"multi_class": "ovo", "max_fpr": 0.5},
-        ),
-        (
-            (
-                r"multi_class='ovp' is not supported for multiclass ROC AUC, "
-                r"multi_class must be in \('ovo', 'ovr'\)"
-            ),
-            {"multi_class": "ovp"},
         ),
         (r"multi_class must be in \('ovo', 'ovr'\)", {}),
     ],
@@ -891,35 +894,41 @@ def test_binary_clf_curve_zero_sample_weight(curve_func):
         assert_allclose(arr_1, arr_2)
 
 
-def test_precision_recall_curve():
+@pytest.mark.parametrize("drop", [True, False])
+def test_precision_recall_curve(drop):
     y_true, _, y_score = make_prediction(binary=True)
-    _test_precision_recall_curve(y_true, y_score)
+    _test_precision_recall_curve(y_true, y_score, drop)
 
     # Make sure the first point of the Precision-Recall on the right is:
     # (p=1.0, r=class balance) on a non-balanced dataset [1:]
-    p, r, t = precision_recall_curve(y_true[1:], y_score[1:])
+    p, r, t = precision_recall_curve(y_true[1:], y_score[1:], drop_intermediate=drop)
     assert r[0] == 1.0
     assert p[0] == y_true[1:].mean()
 
     # Use {-1, 1} for labels; make sure original labels aren't modified
     y_true[np.where(y_true == 0)] = -1
     y_true_copy = y_true.copy()
-    _test_precision_recall_curve(y_true, y_score)
+    _test_precision_recall_curve(y_true, y_score, drop)
     assert_array_equal(y_true_copy, y_true)
 
     labels = [1, 0, 0, 1]
     predict_probas = [1, 2, 3, 4]
-    p, r, t = precision_recall_curve(labels, predict_probas)
-    assert_array_almost_equal(p, np.array([0.5, 0.33333333, 0.5, 1.0, 1.0]))
-    assert_array_almost_equal(r, np.array([1.0, 0.5, 0.5, 0.5, 0.0]))
-    assert_array_almost_equal(t, np.array([1, 2, 3, 4]))
+    p, r, t = precision_recall_curve(labels, predict_probas, drop_intermediate=drop)
+    if drop:
+        assert_allclose(p, [0.5, 0.33333333, 1.0, 1.0])
+        assert_allclose(r, [1.0, 0.5, 0.5, 0.0])
+        assert_allclose(t, [1, 2, 4])
+    else:
+        assert_allclose(p, [0.5, 0.33333333, 0.5, 1.0, 1.0])
+        assert_allclose(r, [1.0, 0.5, 0.5, 0.5, 0.0])
+        assert_allclose(t, [1, 2, 3, 4])
     assert p.size == r.size
     assert p.size == t.size + 1
 
 
-def _test_precision_recall_curve(y_true, y_score):
+def _test_precision_recall_curve(y_true, y_score, drop):
     # Test Precision-Recall and area under PR curve
-    p, r, thresholds = precision_recall_curve(y_true, y_score)
+    p, r, thresholds = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
     precision_recall_auc = _average_precision_slow(y_true, y_score)
     assert_array_almost_equal(precision_recall_auc, 0.859, 3)
     assert_array_almost_equal(
@@ -932,17 +941,20 @@ def _test_precision_recall_curve(y_true, y_score):
     assert p.size == r.size
     assert p.size == thresholds.size + 1
     # Smoke test in the case of proba having only one value
-    p, r, thresholds = precision_recall_curve(y_true, np.zeros_like(y_score))
+    p, r, thresholds = precision_recall_curve(
+        y_true, np.zeros_like(y_score), drop_intermediate=drop
+    )
     assert p.size == r.size
     assert p.size == thresholds.size + 1
 
 
-def test_precision_recall_curve_toydata():
+@pytest.mark.parametrize("drop", [True, False])
+def test_precision_recall_curve_toydata(drop):
     with np.errstate(all="raise"):
         # Binary classification
         y_true = [0, 1]
         y_score = [0, 1]
-        p, r, _ = precision_recall_curve(y_true, y_score)
+        p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 1, 1])
         assert_array_almost_equal(r, [1, 1, 0])
@@ -950,7 +962,7 @@ def test_precision_recall_curve_toydata():
 
         y_true = [0, 1]
         y_score = [1, 0]
-        p, r, _ = precision_recall_curve(y_true, y_score)
+        p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 0.0, 1.0])
         assert_array_almost_equal(r, [1.0, 0.0, 0.0])
@@ -961,7 +973,7 @@ def test_precision_recall_curve_toydata():
 
         y_true = [1, 0]
         y_score = [1, 1]
-        p, r, _ = precision_recall_curve(y_true, y_score)
+        p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 1])
         assert_array_almost_equal(r, [1.0, 0])
@@ -969,7 +981,7 @@ def test_precision_recall_curve_toydata():
 
         y_true = [1, 0]
         y_score = [1, 0]
-        p, r, _ = precision_recall_curve(y_true, y_score)
+        p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 1, 1])
         assert_array_almost_equal(r, [1, 1, 0])
@@ -977,7 +989,7 @@ def test_precision_recall_curve_toydata():
 
         y_true = [1, 0]
         y_score = [0.5, 0.5]
-        p, r, _ = precision_recall_curve(y_true, y_score)
+        p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 1])
         assert_array_almost_equal(r, [1, 0.0])
@@ -986,7 +998,7 @@ def test_precision_recall_curve_toydata():
         y_true = [0, 0]
         y_score = [0.25, 0.75]
         with pytest.warns(UserWarning, match="No positive class found in y_true"):
-            p, r, _ = precision_recall_curve(y_true, y_score)
+            p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
         with pytest.warns(UserWarning, match="No positive class found in y_true"):
             auc_prc = average_precision_score(y_true, y_score)
         assert_allclose(p, [0, 0, 1])
@@ -995,7 +1007,7 @@ def test_precision_recall_curve_toydata():
 
         y_true = [1, 1]
         y_score = [0.25, 0.75]
-        p, r, _ = precision_recall_curve(y_true, y_score)
+        p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
         assert_almost_equal(average_precision_score(y_true, y_score), 1.0)
         assert_array_almost_equal(p, [1.0, 1.0, 1.0])
         assert_array_almost_equal(r, [1, 0.5, 0.0])
@@ -1100,6 +1112,40 @@ def test_precision_recall_curve_toydata():
             )
 
 
+def test_precision_recall_curve_drop_intermediate():
+    """Check the behaviour of the `drop_intermediate` parameter."""
+    y_true = [0, 0, 0, 0, 1, 1]
+    y_score = [0.0, 0.2, 0.5, 0.6, 0.7, 1.0]
+    precision, recall, thresholds = precision_recall_curve(
+        y_true, y_score, drop_intermediate=True
+    )
+    assert_allclose(thresholds, [0.0, 0.7, 1.0])
+
+    # Test dropping thresholds with repeating scores
+    y_true = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+    y_score = [0.0, 0.1, 0.6, 0.6, 0.7, 0.8, 0.9, 0.6, 0.7, 0.8, 0.9, 0.9, 1.0]
+    precision, recall, thresholds = precision_recall_curve(
+        y_true, y_score, drop_intermediate=True
+    )
+    assert_allclose(thresholds, [0.0, 0.6, 0.7, 0.8, 0.9, 1.0])
+
+    # Test all false keeps only endpoints
+    y_true = [0, 0, 0, 0]
+    y_score = [0.0, 0.1, 0.2, 0.3]
+    precision, recall, thresholds = precision_recall_curve(
+        y_true, y_score, drop_intermediate=True
+    )
+    assert_allclose(thresholds, [0.0, 0.3])
+
+    # Test all true keeps all thresholds
+    y_true = [1, 1, 1, 1]
+    y_score = [0.0, 0.1, 0.2, 0.3]
+    precision, recall, thresholds = precision_recall_curve(
+        y_true, y_score, drop_intermediate=True
+    )
+    assert_allclose(thresholds, [0.0, 0.1, 0.2, 0.3])
+
+
 def test_average_precision_constant_values():
     # Check the average_precision_score of a constant predictor is
     # the TPR
@@ -1114,13 +1160,16 @@ def test_average_precision_constant_values():
     assert average_precision_score(y_true, y_score) == 0.25
 
 
-def test_average_precision_score_pos_label_errors():
+def test_average_precision_score_binary_pos_label_errors():
     # Raise an error when pos_label is not in binary y_true
     y_true = np.array([0, 1])
     y_pred = np.array([0, 1])
     err_msg = r"pos_label=2 is not a valid label. It should be one of \[0, 1\]"
     with pytest.raises(ValueError, match=err_msg):
         average_precision_score(y_true, y_pred, pos_label=2)
+
+
+def test_average_precision_score_multilabel_pos_label_errors():
     # Raise an error for multilabel-indicator y_true with
     # pos_label other than 1
     y_true = np.array([[1, 0], [0, 1], [0, 1], [1, 0]])
@@ -1131,6 +1180,27 @@ def test_average_precision_score_pos_label_errors():
     )
     with pytest.raises(ValueError, match=err_msg):
         average_precision_score(y_true, y_pred, pos_label=0)
+
+
+def test_average_precision_score_multiclass_pos_label_errors():
+    # Raise an error for multiclass y_true with pos_label other than 1
+    y_true = np.array([0, 1, 2, 0, 1, 2])
+    y_pred = np.array(
+        [
+            [0.5, 0.2, 0.1],
+            [0.4, 0.5, 0.3],
+            [0.1, 0.2, 0.6],
+            [0.2, 0.3, 0.5],
+            [0.2, 0.3, 0.5],
+            [0.2, 0.3, 0.5],
+        ]
+    )
+    err_msg = (
+        "Parameter pos_label is fixed to 1 for multiclass y_true. "
+        "Do not set pos_label or set pos_label to 1."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        average_precision_score(y_true, y_pred, pos_label=3)
 
 
 def test_score_scale_invariance():
@@ -1535,7 +1605,6 @@ def test_lrap_error_raised():
 @pytest.mark.parametrize("n_classes", (2, 5, 10))
 @pytest.mark.parametrize("random_state", range(1))
 def test_alternative_lrap_implementation(n_samples, n_classes, random_state):
-
     check_alternative_lrap_implementation(
         label_ranking_average_precision_score, n_classes, n_samples, random_state
     )
@@ -1835,6 +1904,17 @@ def test_ndcg_toy_examples(ignore_ties):
     assert ndcg_score(y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(1.0)
 
 
+def test_ndcg_error_single_document():
+    """Check that we raise an informative error message when trying to
+    compute NDCG with a single document."""
+    err_msg = (
+        "Computing NDCG is only meaningful when there is more than 1 document. "
+        "Got 1 instead."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        ndcg_score([[1]], [[1]])
+
+
 def test_ndcg_score():
     _, y_true = make_multilabel_classification(random_state=0, n_classes=10)
     y_score = -y_true + 1
@@ -2098,8 +2178,10 @@ def test_top_k_accuracy_score_warning(y_true, k):
             [0, 1],
             [[0.5, 0.2, 0.2], [0.3, 0.4, 0.2]],
             None,
-            "`y_true` is binary while y_score is 2d with 3 classes. If"
-            " `y_true` does not contain all the labels, `labels` must be provided",
+            (
+                "`y_true` is binary while y_score is 2d with 3 classes. If"
+                " `y_true` does not contain all the labels, `labels` must be provided"
+            ),
         ),
     ],
 )
@@ -2115,3 +2197,43 @@ def test_label_ranking_avg_precision_score_should_allow_csr_matrix_for_y_true_in
     y_score = np.array([[0.5, 0.9, 0.6], [0, 0, 1]])
     result = label_ranking_average_precision_score(y_true, y_score)
     assert result == pytest.approx(2 / 3)
+
+
+@pytest.mark.parametrize(
+    "metric", [average_precision_score, det_curve, precision_recall_curve, roc_curve]
+)
+@pytest.mark.parametrize(
+    "classes", [(False, True), (0, 1), (0.0, 1.0), ("zero", "one")]
+)
+def test_ranking_metric_pos_label_types(metric, classes):
+    """Check that the metric works with different types of `pos_label`.
+
+    We can expect `pos_label` to be a bool, an integer, a float, a string.
+    No error should be raised for those types.
+    """
+    rng = np.random.RandomState(42)
+    n_samples, pos_label = 10, classes[-1]
+    y_true = rng.choice(classes, size=n_samples, replace=True)
+    y_proba = rng.rand(n_samples)
+    result = metric(y_true, y_proba, pos_label=pos_label)
+    if isinstance(result, float):
+        assert not np.isnan(result)
+    else:
+        metric_1, metric_2, thresholds = result
+        assert not np.isnan(metric_1).any()
+        assert not np.isnan(metric_2).any()
+        assert not np.isnan(thresholds).any()
+
+
+def test_roc_curve_with_probablity_estimates(global_random_seed):
+    """Check that thresholds do not exceed 1.0 when `y_score` is a probability
+    estimate.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/26193
+    """
+    rng = np.random.RandomState(global_random_seed)
+    y_true = rng.randint(0, 2, size=10)
+    y_score = rng.rand(10)
+    _, _, thresholds = roc_curve(y_true, y_score)
+    assert np.isinf(thresholds[0])

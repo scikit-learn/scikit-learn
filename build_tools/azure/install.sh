@@ -29,7 +29,6 @@ setup_ccache() {
 
 pre_python_environment_install() {
     if [[ "$DISTRIB" == "ubuntu" ]]; then
-        sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
         sudo apt-get update
         sudo apt-get install python3-scipy python3-matplotlib \
              libatlas3-base libatlas-base-dev python3-virtualenv ccache
@@ -44,22 +43,8 @@ pre_python_environment_install() {
         # need compilers
         apt-get -yq update
         apt-get -yq install build-essential
-
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        echo "deb-src http://archive.ubuntu.com/ubuntu/ focal main" | sudo tee -a /etc/apt/sources.list
-        sudo apt-get -yq update
-        sudo apt-get install -yq ccache
-        sudo apt-get build-dep -yq python3 python3-dev
-        setup_ccache  # speed-up the build of CPython itself
-        # build Python nogil
-        PYTHON_NOGIL_CLONE_PATH=../nogil
-        git clone --depth 1 https://github.com/colesbury/nogil $PYTHON_NOGIL_CLONE_PATH
-        cd $PYTHON_NOGIL_CLONE_PATH
-        ./configure && make -j 2
-        export PYTHON_NOGIL_PATH="${PYTHON_NOGIL_CLONE_PATH}/python"
-        cd $OLDPWD
-
     fi
+
 }
 
 python_environment_install_and_activate() {
@@ -75,7 +60,7 @@ python_environment_install_and_activate() {
         pip install -r "${LOCK_FILE}"
 
     elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        ${PYTHON_NOGIL_PATH} -m venv $VIRTUALENV
+        python -m venv $VIRTUALENV
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
     fi
@@ -84,12 +69,17 @@ python_environment_install_and_activate() {
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
-        echo "Installing Cython from PyPI enabling pre-releases"
-        pip install --pre cython
-        echo "Installing joblib master"
+        echo "Installing Cython from latest sources"
+        pip install https://github.com/cython/cython/archive/master.zip
+        echo "Installing joblib from latest sources"
         pip install https://github.com/joblib/joblib/archive/master.zip
-        echo "Installing pillow master"
+        echo "Installing pillow from latest sources"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
+
+    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
+        apt-get -yq update
+        apt-get install -yq ccache
+
     fi
 }
 
@@ -105,6 +95,12 @@ scikit_learn_install() {
         # Without openmp, we use the system clang. Here we use /usr/bin/ar
         # instead because llvm-ar errors
         export AR=/usr/bin/ar
+        # Make sure omp.h is not present in the conda environment, so that
+        # using an unprotected "cimport openmp" will make this build fail. At
+        # the time of writing (2023-01-13), on OSX, blas (mkl or openblas)
+        # brings in openmp so that you end up having the omp.h include inside
+        # the conda environment.
+        find $CONDA_PREFIX -name omp.h -delete -print
     fi
 
     if [[ "$UNAMESTR" == "Linux" ]]; then

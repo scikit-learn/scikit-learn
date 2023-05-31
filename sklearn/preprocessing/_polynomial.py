@@ -17,14 +17,80 @@ from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weig
 from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.stats import _weighted_percentile
+from ..utils.fixes import sp_version, parse_version
 
-from ._csr_polynomial_expansion import _csr_polynomial_expansion
+from ._csr_polynomial_expansion import (
+    _csr_polynomial_expansion,
+    _calc_expanded_nnz,
+    _calc_total_nnz,
+)
 
 
 __all__ = [
     "PolynomialFeatures",
     "SplineTransformer",
 ]
+
+
+def _create_expansion(X, interaction_only, deg, n_features, cumulative_size=0):
+    """Helper function for creating and appending sparse expansion matrices"""
+
+    total_nnz = _calc_total_nnz(X.indptr, interaction_only, deg)
+    expanded_col = _calc_expanded_nnz(n_features, interaction_only, deg)
+
+    if expanded_col == 0:
+        return None
+    # This only checks whether each block needs 64bit integers upon
+    # expansion. We prefer to keep int32 indexing where we can,
+    # since currently SciPy's CSR construction downcasts when possible,
+    # so we prefer to avoid an unnecessary cast. The dtype may still
+    # change in the concatenation process if needed.
+    # See: https://github.com/scipy/scipy/issues/16569
+    max_indices = expanded_col - 1
+    max_indptr = total_nnz
+    max_int32 = np.iinfo(np.int32).max
+    needs_int64 = max(max_indices, max_indptr) > max_int32
+    index_dtype = np.int64 if needs_int64 else np.int32
+
+    # This is a pretty specific bug that is hard to work around by a user,
+    # hence we do not detail the entire bug and all possible avoidance
+    # mechnasisms. Instead we recommend upgrading scipy or shrinking their data.
+    cumulative_size += expanded_col
+    if (
+        sp_version < parse_version("1.8.0")
+        and cumulative_size - 1 > max_int32
+        and not needs_int64
+    ):
+        raise ValueError(
+            "In scipy versions `<1.8.0`, the function `scipy.sparse.hstack`"
+            " sometimes produces negative columns when the output shape contains"
+            " `n_cols` too large to be represented by a 32bit signed"
+            " integer. To avoid this error, either use a version"
+            " of scipy `>=1.8.0` or alter the `PolynomialFeatures`"
+            " transformer to produce fewer than 2^31 output features."
+        )
+
+    # Result of the expansion, modified in place by the
+    # `_csr_polynomial_expansion` routine.
+    expanded_data = np.empty(shape=total_nnz, dtype=X.data.dtype)
+    expanded_indices = np.empty(shape=total_nnz, dtype=index_dtype)
+    expanded_indptr = np.empty(shape=X.indptr.shape[0], dtype=index_dtype)
+    _csr_polynomial_expansion(
+        X.data,
+        X.indices,
+        X.indptr,
+        X.shape[1],
+        expanded_data,
+        expanded_indices,
+        expanded_indptr,
+        interaction_only,
+        deg,
+    )
+    return sparse.csr_matrix(
+        (expanded_data, expanded_indices, expanded_indptr),
+        shape=(X.indptr.shape[0] - 1, expanded_col),
+        dtype=X.dtype,
+    )
 
 
 class PolynomialFeatures(TransformerMixin, BaseEstimator):
@@ -221,9 +287,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             inds = np.where(row)[0]
             if len(inds):
                 name = " ".join(
-                    "%s^%d" % (input_features[ind], exp)
-                    if exp != 1
-                    else input_features[ind]
+                    (
+                        "%s^%d" % (input_features[ind], exp)
+                        if exp != 1
+                        else input_features[ind]
+                    )
                     for ind, exp in zip(inds, row[inds])
                 )
             else:
@@ -295,6 +363,27 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             interaction_only=self.interaction_only,
             include_bias=self.include_bias,
         )
+        if self.n_output_features_ > np.iinfo(np.intp).max:
+            msg = (
+                "The output that would result from the current configuration would"
+                f" have {self.n_output_features_} features which is too large to be"
+                f" indexed by {np.intp().dtype.name}. Please change some or all of the"
+                " following:\n- The number of features in the input, currently"
+                f" {n_features=}\n- The range of degrees to calculate, currently"
+                f" [{self._min_degree}, {self._max_degree}]\n- Whether to include only"
+                f" interaction terms, currently {self.interaction_only}\n- Whether to"
+                f" include a bias term, currently {self.include_bias}."
+            )
+            if (
+                np.intp == np.int32
+                and self.n_output_features_ <= np.iinfo(np.int64).max
+            ):  # pragma: nocover
+                msg += (
+                    "\nNote that the current Python runtime has a limited 32 bit "
+                    "address space and that this configuration would have been "
+                    "admissible if run on a 64 bit Python runtime."
+                )
+            raise ValueError(msg)
         # We also record the number of output features for
         # _max_degree = 0
         self._n_out_full = self._num_combinations(
@@ -343,29 +432,52 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         )
 
         n_samples, n_features = X.shape
-
+        max_int32 = np.iinfo(np.int32).max
         if sparse.isspmatrix_csr(X):
             if self._max_degree > 3:
                 return self.transform(X.tocsc()).tocsr()
             to_stack = []
             if self.include_bias:
                 to_stack.append(
-                    sparse.csc_matrix(np.ones(shape=(n_samples, 1), dtype=X.dtype))
+                    sparse.csr_matrix(np.ones(shape=(n_samples, 1), dtype=X.dtype))
                 )
             if self._min_degree <= 1 and self._max_degree > 0:
                 to_stack.append(X)
+
+            cumulative_size = sum(mat.shape[1] for mat in to_stack)
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
-                Xp_next = _csr_polynomial_expansion(
-                    X.data, X.indices, X.indptr, X.shape[1], self.interaction_only, deg
+                expanded = _create_expansion(
+                    X=X,
+                    interaction_only=self.interaction_only,
+                    deg=deg,
+                    n_features=n_features,
+                    cumulative_size=cumulative_size,
                 )
-                if Xp_next is None:
-                    break
-                to_stack.append(Xp_next)
+                if expanded is not None:
+                    to_stack.append(expanded)
+                    cumulative_size += expanded.shape[1]
             if len(to_stack) == 0:
                 # edge case: deal with empty matrix
                 XP = sparse.csr_matrix((n_samples, 0), dtype=X.dtype)
             else:
-                XP = sparse.hstack(to_stack, format="csr")
+                # `scipy.sparse.hstack` breaks in scipy<1.9.2
+                # when `n_output_features_ > max_int32`
+                all_int32 = all(mat.indices.dtype == np.int32 for mat in to_stack)
+                if (
+                    sp_version < parse_version("1.9.2")
+                    and self.n_output_features_ > max_int32
+                    and all_int32
+                ):
+                    raise ValueError(  # pragma: no cover
+                        "In scipy versions `<1.9.2`, the function `scipy.sparse.hstack`"
+                        " produces negative columns when:\n1. The output shape contains"
+                        " `n_cols` too large to be represented by a 32bit signed"
+                        " integer.\n2. All sub-matrices to be stacked have indices of"
+                        " dtype `np.int32`.\nTo avoid this error, either use a version"
+                        " of scipy `>=1.9.2` or alter the `PolynomialFeatures`"
+                        " transformer to produce fewer than 2^31 output features"
+                    )
+                XP = sparse.hstack(to_stack, dtype=X.dtype, format="csr")
         elif sparse.isspmatrix_csc(X) and self._max_degree < 4:
             return self.transform(X.tocsr()).tocsc()
         elif sparse.isspmatrix(X):
@@ -517,7 +629,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         recommended to manually set the knot values to control the period.
 
     include_bias : bool, default=True
-        If True (default), then the last spline element inside the data range
+        If False, then the last spline element inside the data range
         of a feature is dropped. As B-splines sum to one over the spline basis
         functions for each data point, they implicitly include a bias term,
         i.e. a column of ones. It acts as an intercept term in a linear models.
@@ -673,7 +785,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
-        n_splines = self.bsplines_[0].c.shape[0]
+        check_is_fitted(self, "n_features_in_")
+        n_splines = self.bsplines_[0].c.shape[1]
+
         input_features = _check_feature_names_in(self, input_features)
         feature_names = []
         for i in range(self.n_features_in_):
@@ -934,3 +1048,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # We chose the last one.
             indices = [j for j in range(XBS.shape[1]) if (j + 1) % n_splines != 0]
             return XBS[:, indices]
+
+    def _more_tags(self):
+        return {
+            "_xfail_checks": {
+                "check_estimators_pickle": (
+                    "Current Scipy implementation of _bsplines does not"
+                    "support const memory views."
+                ),
+            }
+        }

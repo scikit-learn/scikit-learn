@@ -24,7 +24,7 @@ from ..base import (
     ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils import check_array
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
@@ -120,6 +120,15 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         return scale
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "axis": [Options(Integral, {0, 1})],
+        "with_mean": ["boolean"],
+        "with_std": ["boolean"],
+        "copy": ["boolean"],
+    }
+)
 def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     """Standardize a dataset along any axis.
 
@@ -132,7 +141,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data to center and scale.
 
-    axis : int, default=0
+    axis : {0, 1}, default=0
         Axis used to compute the means and standard deviations along. If 0,
         independently standardize each feature, otherwise (if 1) standardize
         each sample.
@@ -546,6 +555,12 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True}
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "axis": [Options(Integral, {0, 1})],
+    }
+)
 def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     """Transform features by scaling each feature to a given range.
 
@@ -582,7 +597,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
-    axis : int, default=0
+    axis : {0, 1}, default=0
         Axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
 
@@ -1277,6 +1292,13 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True}
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "axis": [Options(Integral, {0, 1})],
+        "copy": ["boolean"],
+    }
+)
 def maxabs_scale(X, *, axis=0, copy=True):
     """Scale each feature to the [-1, 1] range without breaking the sparsity.
 
@@ -1291,7 +1313,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data.
 
-    axis : int, default=0
+    axis : {0, 1}, default=0
         Axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
 
@@ -1629,6 +1651,9 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True}
 
 
+@validate_params(
+    {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]}
+)
 def robust_scale(
     X,
     *,
@@ -1755,6 +1780,15 @@ def robust_scale(
     return X
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "norm": [StrOptions({"l1", "l2", "max"})],
+        "axis": [Options(Integral, {0, 1})],
+        "copy": ["boolean"],
+        "return_norm": ["boolean"],
+    }
+)
 def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     """Scale input vectors individually to unit norm (vector length).
 
@@ -1804,15 +1838,10 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
-    if norm not in ("l1", "l2", "max"):
-        raise ValueError("'%s' is not a supported norm" % norm)
-
     if axis == 0:
         sparse_format = "csc"
-    elif axis == 1:
+    else:  # axis == 1:
         sparse_format = "csr"
-    else:
-        raise ValueError("'%d' is not a supported axis" % axis)
 
     X = check_array(
         X,
@@ -1910,8 +1939,10 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     Notes
     -----
-    This estimator is stateless (besides constructor parameters), the
-    fit method does nothing but is useful when used in a pipeline.
+    This estimator is :term:`stateless` and does not need to be fitted.
+    However, we recommend to call :meth:`fit_transform` instead of
+    :meth:`transform`, as parameter validation is only performed in
+    :meth:`fit`.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
@@ -1942,10 +1973,10 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged.
+        """Only validates estimator's parameters.
 
-        This method is just there to implement the usual API and hence
-        work in pipelines.
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
@@ -1989,6 +2020,13 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"stateless": True}
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "threshold": [Interval(Real, None, None, closed="neither")],
+        "copy": ["boolean"],
+    }
+)
 def binarize(X, *, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix.
 
@@ -2086,10 +2124,12 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     Notes
     -----
     If the input is a sparse matrix, only the non-zero values are subject
-    to update by the Binarizer class.
+    to update by the :class:`Binarizer` class.
 
-    This estimator is stateless (besides constructor parameters), the
-    fit method does nothing but is useful when used in a pipeline.
+    This estimator is :term:`stateless` and does not need to be fitted.
+    However, we recommend to call :meth:`fit_transform` instead of
+    :meth:`transform`, as parameter validation is only performed in
+    :meth:`fit`.
 
     Examples
     --------
@@ -2116,10 +2156,10 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged.
+        """Only validates estimator's parameters.
 
-        This method is just there to implement the usual API and hence
-        work in pipelines.
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
@@ -2318,6 +2358,12 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         return {"pairwise": True}
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "value": [Interval(Real, None, None, closed="neither")],
+    }
+)
 def add_dummy_feature(X, value=1.0):
     """Augment dataset with an additional dummy feature.
 
@@ -2806,6 +2852,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         return {"allow_nan": True}
 
 
+@validate_params(
+    {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]}
+)
 def quantile_transform(
     X,
     *,
@@ -2940,13 +2989,10 @@ def quantile_transform(
         copy=copy,
     )
     if axis == 0:
-        return n.fit_transform(X)
-    elif axis == 1:
-        return n.fit_transform(X.T).T
-    else:
-        raise ValueError(
-            "axis should be either equal to 0 or 1. Got axis={}".format(axis)
-        )
+        X = n.fit_transform(X)
+    else:  # axis == 1
+        X = n.fit_transform(X.T).T
+    return X
 
 
 class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
@@ -3351,6 +3397,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True}
 
 
+@validate_params({"X": ["array-like"]})
 def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     """Parametric, monotonic transformation to make data more Gaussian-like.
 
