@@ -45,7 +45,7 @@ def _retry_with_clean_cache(
     """If the first call to the decorated function fails, the local cached
     file is removed, and the function is called again. If ``data_home`` is
     ``None``, then the function is called once. We can provide a specific
-    exception to not retry on usign `no_retry_exception` parameter.
+    exception to not retry on using `no_retry_exception` parameter.
     """
 
     def decorator(f):
@@ -998,14 +998,14 @@ def fetch_openml(
             if as_frame:
                 err_msg = (
                     "Returning pandas objects requires pandas to be installed. "
-                    "Alternatively, explicitely set `as_frame=False` and "
+                    "Alternatively, explicitly set `as_frame=False` and "
                     "`parser='liac-arff'`."
                 )
                 raise ImportError(err_msg) from exc
             else:
                 err_msg = (
                     f"Using `parser={parser_!r}` requires pandas to be installed. "
-                    "Alternatively, explicitely set `parser='liac-arff'`."
+                    "Alternatively, explicitly set `parser='liac-arff'`."
                 )
                 if parser == "auto":
                     # TODO(1.4): In version 1.4, we will raise an error instead of
@@ -1013,7 +1013,7 @@ def fetch_openml(
                     warn(
                         (
                             "From version 1.4, `parser='auto'` with `as_frame=False` "
-                            "will use pandas. Either install pandas or set explicitely "
+                            "will use pandas. Either install pandas or set explicitly "
                             "`parser='liac-arff'` to preserve the current behavior."
                         ),
                         FutureWarning,

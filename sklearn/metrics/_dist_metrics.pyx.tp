@@ -2456,7 +2456,7 @@ cdef class RussellRaoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             else:
                 i2 = i2 + 1
 
-        # We don't need to go through all the longuest
+        # We don't need to go through all the longest
         # vector because tf1 or tf2 will be false
         # and thus n_tt won't be increased.
 
