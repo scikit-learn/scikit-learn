@@ -39,8 +39,8 @@ n_samples, n_features = X.shape
 
 # %%
 # HGBT uses a histogram-based algorithm on binned feature values that can
-# efficiently handle large datasets (tens of thousands of samples or more) with a
-# high number of features (see :ref:`Why_it's_faster`). The scikit-learn
+# efficiently handle large datasets (tens of thousands of samples or more) with
+# a high number of features (see :ref:`Why_it's_faster`). The scikit-learn
 # implementation of RF does not use binning and relies on exact splitting, which
 # can be computationally expensive.
 
