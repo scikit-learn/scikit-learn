@@ -347,8 +347,8 @@ class OneVsRestClassifier(
 
         return self
 
-    @_fit_context(prefer_skip_nested_validation=False)
     @available_if(_estimators_has("partial_fit"))
+    @_fit_context(prefer_skip_nested_validation=False)
     def partial_fit(self, X, y, classes=None):
         """Partially fit underlying estimators.
 
@@ -704,8 +704,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         return self
 
-    @_fit_context(prefer_skip_nested_validation=False)
     @available_if(_estimators_has("partial_fit"))
+    @_fit_context(prefer_skip_nested_validation=False)
     def partial_fit(self, X, y, classes=None):
         """Partially fit underlying estimators.
 

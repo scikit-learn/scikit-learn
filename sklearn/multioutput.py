@@ -99,8 +99,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         self.estimator = estimator
         self.n_jobs = n_jobs
 
-    @_fit_context(prefer_skip_nested_validation=False)
     @_available_if_estimator_has("partial_fit")
+    @_fit_context(prefer_skip_nested_validation=False)
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incrementally fit a separate model for each class output.
 

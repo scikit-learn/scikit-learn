@@ -1169,8 +1169,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         # Input validation would remove feature names, so we disable it
         return accuracy_score(y, self._predict(X, check_input=False))
 
-    @_fit_context(prefer_skip_nested_validation=True)
     @available_if(lambda est: est._check_solver())
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, classes=None):
         """Update the model with a single iteration over the given data.
 
@@ -1621,8 +1621,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             y = column_or_1d(y, warn=True)
         return X, y
 
-    @_fit_context(prefer_skip_nested_validation=True)
     @available_if(lambda est: est._check_solver)
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y):
         """Update the model with a single iteration over the given data.
 

@@ -375,8 +375,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         )
         return _calculate_threshold(self.estimator, scores, self.threshold)
 
-    @_fit_context(prefer_skip_nested_validation=False)
     @available_if(_estimator_has("partial_fit"))
+    @_fit_context(prefer_skip_nested_validation=False)
     def partial_fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer only once.
 

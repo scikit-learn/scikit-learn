@@ -429,8 +429,8 @@ class Pipeline(_BaseComposition):
             or hasattr(self._final_estimator, "fit_transform")
         )
 
-    @_fit_context(prefer_skip_nested_validation=False)
     @available_if(_can_fit_transform)
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit_transform(self, X, y=None, **fit_params):
         """Fit the model and transform with the final estimator.
 
@@ -505,8 +505,8 @@ class Pipeline(_BaseComposition):
             Xt = transform.transform(Xt)
         return self.steps[-1][1].predict(Xt, **predict_params)
 
-    @_fit_context(prefer_skip_nested_validation=False)
     @available_if(_final_estimator_has("fit_predict"))
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit_predict(self, X, y=None, **fit_params):
         """Transform the data, and apply `fit_predict` with the final estimator.
 
