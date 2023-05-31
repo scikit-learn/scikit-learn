@@ -8,6 +8,7 @@ from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
 from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..utils._param_validation import StrOptions
 from ..utils.validation import check_is_fitted
 
@@ -372,6 +373,7 @@ class KNeighborsTransformer(
         )
         self.mode = mode
 
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y=None):
         """Fit the k-nearest neighbors transformer from the training dataset.
 
@@ -388,7 +390,6 @@ class KNeighborsTransformer(
         self : KNeighborsTransformer
             The fitted k-nearest neighbors transformer.
         """
-        self._validate_params()
         self._fit(X)
         self._n_features_out = self.n_samples_fit_
         return self
@@ -600,6 +601,7 @@ class RadiusNeighborsTransformer(
         )
         self.mode = mode
 
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y=None):
         """Fit the radius neighbors transformer from the training dataset.
 
@@ -617,7 +619,6 @@ class RadiusNeighborsTransformer(
         self : RadiusNeighborsTransformer
             The fitted radius neighbors transformer.
         """
-        self._validate_params()
         self._fit(X)
         self._n_features_out = self.n_samples_fit_
         return self

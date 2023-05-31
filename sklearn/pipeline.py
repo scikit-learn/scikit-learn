@@ -16,6 +16,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import clone, TransformerMixin
+from .base import _fit_context
 from .preprocessing import FunctionTransformer
 from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import available_if
@@ -385,6 +386,7 @@ class Pipeline(_BaseComposition):
             self.steps[step_idx] = (name, fitted_transformer)
         return X
 
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y=None, **fit_params):
         """Fit the model.
 
@@ -411,7 +413,6 @@ class Pipeline(_BaseComposition):
         self : object
             Pipeline with fitted steps.
         """
-        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
@@ -428,6 +429,7 @@ class Pipeline(_BaseComposition):
             or hasattr(self._final_estimator, "fit_transform")
         )
 
+    @_fit_context(prefer_skip_nested_validation=False)
     @available_if(_can_fit_transform)
     def fit_transform(self, X, y=None, **fit_params):
         """Fit the model and transform with the final estimator.
@@ -456,7 +458,6 @@ class Pipeline(_BaseComposition):
         Xt : ndarray of shape (n_samples, n_transformed_features)
             Transformed samples.
         """
-        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
 
@@ -504,6 +505,7 @@ class Pipeline(_BaseComposition):
             Xt = transform.transform(Xt)
         return self.steps[-1][1].predict(Xt, **predict_params)
 
+    @_fit_context(prefer_skip_nested_validation=False)
     @available_if(_final_estimator_has("fit_predict"))
     def fit_predict(self, X, y=None, **fit_params):
         """Transform the data, and apply `fit_predict` with the final estimator.
@@ -533,7 +535,6 @@ class Pipeline(_BaseComposition):
         y_pred : ndarray
             Result of calling `fit_predict` on the final estimator.
         """
-        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
 

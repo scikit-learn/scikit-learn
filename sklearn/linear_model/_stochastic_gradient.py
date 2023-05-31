@@ -13,6 +13,7 @@ from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
 from ..base import clone, is_classifier
+from ..base import _fit_context
 from ._base import LinearClassifierMixin, SparseCoefMixin
 from ._base import make_dataset
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
@@ -805,6 +806,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                 self._standard_intercept = np.atleast_1d(self.intercept_)
                 self.intercept_ = self._standard_intercept
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Perform one epoch of stochastic gradient descent on given samples.
 
@@ -839,7 +841,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             Returns an instance of self.
         """
         if not hasattr(self, "classes_"):
-            self._validate_params()
             self._more_validate_params(for_partial_fit=True)
 
             if self.class_weight == "balanced":
@@ -869,6 +870,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             intercept_init=None,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, coef_init=None, intercept_init=None, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
@@ -897,7 +899,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
         self._more_validate_params()
 
         return self._fit(
@@ -1470,6 +1471,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, sample_weight=None):
         """Perform one epoch of stochastic gradient descent on given samples.
 
@@ -1496,7 +1498,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             Returns an instance of self.
         """
         if not hasattr(self, "coef_"):
-            self._validate_params()
             self._more_validate_params(for_partial_fit=True)
 
         return self._partial_fit(
@@ -1565,6 +1566,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, coef_init=None, intercept_init=None, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
@@ -1590,7 +1592,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         self : object
             Fitted `SGDRegressor` estimator.
         """
-        self._validate_params()
         self._more_validate_params()
 
         return self._fit(
@@ -2366,6 +2367,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None, sample_weight=None):
         """Fit linear One-Class SVM with Stochastic Gradient Descent.
 
@@ -2386,7 +2388,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             Returns a fitted instance of self.
         """
         if not hasattr(self, "coef_"):
-            self._validate_params()
             self._more_validate_params(for_partial_fit=True)
 
         alpha = self.nu / 2
@@ -2453,6 +2454,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, coef_init=None, offset_init=None, sample_weight=None):
         """Fit linear One-Class SVM with Stochastic Gradient Descent.
 
@@ -2485,7 +2487,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         self : object
             Returns a fitted instance of self.
         """
-        self._validate_params()
         self._more_validate_params()
 
         alpha = self.nu / 2

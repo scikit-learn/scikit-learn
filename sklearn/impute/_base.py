@@ -11,6 +11,7 @@ import numpy.ma as ma
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
+from ..base import _fit_context
 from ..utils._param_validation import StrOptions, Hidden, MissingValues
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
@@ -359,6 +360,7 @@ class SimpleImputer(_BaseImputer):
 
         return X
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the imputer on `X`.
 
@@ -376,7 +378,6 @@ class SimpleImputer(_BaseImputer):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         if self.verbose != "deprecated":
             warnings.warn(
                 (
@@ -949,6 +950,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         return missing_features_info[0]
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the transformer on `X`.
 
@@ -966,7 +968,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         self._fit(X, y)
 
         return self
@@ -1012,6 +1013,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         return imputer_mask
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Generate missing values indicator for `X`.
 
@@ -1030,7 +1032,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             The missing indicator for input data. The data type of `Xt`
             will be boolean.
         """
-        self._validate_params()
         imputer_mask = self._fit(X, y)
 
         if self.features_.size < self._n_features:

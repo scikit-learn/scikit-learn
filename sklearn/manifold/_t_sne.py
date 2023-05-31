@@ -18,6 +18,7 @@ from scipy.sparse import csr_matrix, issparse
 from numbers import Integral, Real
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
+from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
@@ -1097,6 +1098,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         return X_embedded
 
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit_transform(self, X, y=None):
         """Fit X into an embedded space and return that transformed output.
 
@@ -1118,12 +1120,12 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        self._validate_params()
         self._check_params_vs_input(X)
         embedding = self._fit(X)
         self.embedding_ = embedding
         return self.embedding_
 
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y=None):
         """Fit X into an embedded space.
 
@@ -1145,7 +1147,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X_new : array of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        self._validate_params()
         self.fit_transform(X)
         return self
 

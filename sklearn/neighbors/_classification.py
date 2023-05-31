@@ -18,6 +18,7 @@ import warnings
 from ._base import _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
+from ..base import _fit_context
 from ..metrics._pairwise_distances_reduction import ArgKminClassMode
 from ..utils._param_validation import StrOptions
 from sklearn.neighbors._base import _check_precomputed
@@ -203,6 +204,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         )
         self.weights = weights
 
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y):
         """Fit the k-nearest neighbors classifier from the training dataset.
 
@@ -221,8 +223,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         self : KNeighborsClassifier
             The fitted k-nearest neighbors classifier.
         """
-        self._validate_params()
-
         return self._fit(X, y)
 
     def predict(self, X):
@@ -572,6 +572,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         self.weights = weights
         self.outlier_label = outlier_label
 
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y):
         """Fit the radius neighbors classifier from the training dataset.
 
@@ -590,7 +591,6 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         self : RadiusNeighborsClassifier
             The fitted radius neighbors classifier.
         """
-        self._validate_params()
         self._fit(X, y)
 
         classes_ = self.classes_

@@ -9,6 +9,7 @@ import warnings
 
 from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone, is_classifier
+from ..base import _fit_context
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..utils._param_validation import RealNotInt
 from ..utils._tags import _safe_tags
@@ -185,6 +186,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self.cv = cv
         self.n_jobs = n_jobs
 
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y=None):
         """Learn the features to select from X.
 
@@ -203,8 +205,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         # FIXME: to be removed in 1.3
         if self.n_features_to_select in ("warn", None):
             # for backwards compatibility

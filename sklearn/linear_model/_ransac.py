@@ -9,6 +9,7 @@ import numpy as np
 
 from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
 from ..base import MultiOutputMixin
+from ..base import _fit_context
 from ..utils import check_random_state, check_consistent_length
 from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -297,6 +298,7 @@ class RANSACRegressor(
         self.loss = loss
         self.base_estimator = base_estimator
 
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y, sample_weight=None):
         """Fit estimator using RANSAC algorithm.
 
@@ -327,8 +329,6 @@ class RANSACRegressor(
             `is_data_valid` and `is_model_valid` return False for all
             `max_trials` randomly chosen sub-samples.
         """
-        self._validate_params()
-
         # Need to validate separately here. We can't pass multi_output=True
         # because that would allow y to be csr. Delay expensive finiteness
         # check to the estimator's own input validation.

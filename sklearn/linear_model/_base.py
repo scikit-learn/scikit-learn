@@ -28,6 +28,7 @@ from scipy.special import expit
 from numbers import Integral
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin
+from ..base import _fit_context
 from ..preprocessing._data import _is_constant_feature
 from ..utils import check_array
 from ..utils.validation import FLOAT_DTYPES
@@ -642,6 +643,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self.n_jobs = n_jobs
         self.positive = positive
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """
         Fit linear model.
@@ -665,9 +667,6 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Fitted Estimator.
         """
-
-        self._validate_params()
-
         n_jobs_ = self.n_jobs
 
         accept_sparse = False if self.positive else ["csr", "csc", "coo"]

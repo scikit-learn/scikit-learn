@@ -22,6 +22,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
+from ..base import _fit_context
 from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
@@ -308,6 +309,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self.flatten_transform = flatten_transform
         self.verbose = verbose
 
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 
@@ -332,7 +334,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError(
@@ -572,6 +573,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 
@@ -594,7 +596,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
 

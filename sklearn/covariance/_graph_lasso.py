@@ -16,6 +16,7 @@ from scipy import linalg
 
 from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
+from ..base import _fit_context
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import (
     _is_arraylike_not_scalar,
@@ -532,6 +533,7 @@ class GraphicalLasso(BaseGraphicalLasso):
         self.alpha = alpha
         self.covariance = covariance
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the GraphicalLasso model to X.
 
@@ -548,7 +550,6 @@ class GraphicalLasso(BaseGraphicalLasso):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         # Covariance does not make sense for a single feature
         X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2)
 
@@ -925,6 +926,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         self.cv = cv
         self.n_jobs = n_jobs
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the GraphicalLasso covariance model to X.
 
@@ -941,7 +943,6 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         # Covariance does not make sense for a single feature
         X = self._validate_data(X, ensure_min_features=2)
         if self.assume_centered:

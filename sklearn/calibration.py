@@ -25,6 +25,7 @@ from .base import (
     RegressorMixin,
     clone,
     MetaEstimatorMixin,
+    _fit_context,
 )
 from .preprocessing import label_binarize, LabelEncoder
 from .utils import (
@@ -282,6 +283,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         self.ensemble = ensemble
         self.base_estimator = base_estimator
 
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the calibrated model.
 
@@ -305,8 +307,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         check_classification_targets(y)
         X, y = indexable(X, y)
         if sample_weight is not None:

@@ -22,6 +22,7 @@ from ..base import (
     TransformerMixin,
     OneToOneFeatureMixin,
     ClassNamePrefixFeaturesOutMixin,
+    _fit_context,
 )
 from ..utils import check_array
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
@@ -435,6 +436,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self._reset()
         return self.partial_fit(X, y)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None):
         """Online computation of min and max on X for later scaling.
 
@@ -456,8 +458,6 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
-        self._validate_params()
-
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
             raise ValueError(
@@ -838,6 +838,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self._reset()
         return self.partial_fit(X, y, sample_weight)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None, sample_weight=None):
         """Online computation of mean and std on X for later scaling.
 
@@ -870,8 +871,6 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
-        self._validate_params()
-
         first_call = not hasattr(self, "n_samples_seen_")
         X = self._validate_data(
             X,
@@ -1183,6 +1182,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self._reset()
         return self.partial_fit(X, y)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None):
         """Online computation of max absolute value of X for later scaling.
 
@@ -1204,8 +1204,6 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
-        self._validate_params()
-
         first_pass = not hasattr(self, "n_samples_seen_")
         X = self._validate_data(
             X,
@@ -1514,6 +1512,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.unit_variance = unit_variance
         self.copy = copy
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Compute the median and quantiles to be used for scaling.
 
@@ -1531,8 +1530,6 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
-        self._validate_params()
-
         # at fit, convert sparse matrices to csc for optimized computation of
         # the quantiles
         X = self._validate_data(
@@ -1972,6 +1969,7 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.norm = norm
         self.copy = copy
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Only validates estimator's parameters.
 
@@ -1991,7 +1989,6 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_params()
         self._validate_data(X, accept_sparse="csr")
         return self
 
@@ -2155,6 +2152,7 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.threshold = threshold
         self.copy = copy
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Only validates estimator's parameters.
 
@@ -2174,7 +2172,6 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_params()
         self._validate_data(X, accept_sparse="csr")
         return self
 
@@ -2634,6 +2631,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         # https://github.com/numpy/numpy/issues/14685
         self.quantiles_ = np.maximum.accumulate(self.quantiles_)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Compute the quantiles used for transforming.
 
@@ -2653,8 +2651,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self : object
            Fitted transformer.
         """
-        self._validate_params()
-
         if self.n_quantiles > self.subsample:
             raise ValueError(
                 "The number of quantiles cannot be greater than"
@@ -3101,6 +3097,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.standardize = standardize
         self.copy = copy
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Estimate the optimal parameter lambda for each feature.
 
@@ -3120,10 +3117,10 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_params()
         self._fit(X, y=y, force_transform=False)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Fit `PowerTransformer` to `X`, then transform `X`.
 
@@ -3141,7 +3138,6 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_features)
             Transformed data.
         """
-        self._validate_params()
         return self._fit(X, y, force_transform=True)
 
     def _fit(self, X, y=None, force_transform=False):
