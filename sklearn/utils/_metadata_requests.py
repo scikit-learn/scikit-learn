@@ -1,5 +1,71 @@
 """
 Metadata Routing Utility
+
+In order to better understand the components implemented in this file, one
+needs to understand their relationship to one another.
+
+The only relevant public API for end users are the ``set_{method}_request``,
+e.g. ``estimator.set_fit_request(sample_weight=True)``. However, third-party
+developers and users who implement custom meta-estimators, need to deal with
+the objects implemented in this file.
+
+All estimators (should) implement a ``get_metadata_routing`` method, returning
+the routing requests set for the estimator. This method is automatically
+implemented via ``BaseEstimator`` for all simple estimators, but needs a custom
+implementation for meta-estimators.
+
+In non-routing consumers, i.e. the simplest case, e.g. ``SVM``,
+``get_metadata_routing`` returns a ``MetadataRequest`` object.
+
+In routers, e.g. meta-estimators and a multi metric scorer,
+``get_metadata_routing`` returns a ``MetadataRouter`` object.
+
+A ``MetadataRequest`` instance includes one ``MethodMetadataRequest`` per
+method in ``METHODS``, which includes ``fit``, ``score``, etc.
+
+Request values are added to the routing mechanism by adding them to
+``MethodMetadataRequest`` instances, e.g.
+``metadatarequest.fit.add(param="sample_weight", alias="my_weights")``. This is
+used in ``set_{method}_request`` which are automatically generated, so users
+and developers almost never need to directly call methods on a
+``MethodMetadataRequest``.
+
+The ``alias`` above in the ``add`` method has to be either a string (an alias),
+or a {True (requested), False (unrequested), None (error if passed)}``. There
+are some other special values such as ``UNUSED`` and ``WARN`` which are used
+for purposes such as warning of removing a metadata in a child class, but not
+used by the end users.
+
+``MetadataRouter`` includes information about sub-objects' routing and how
+methods are mapped together. For instance, the information about which methods
+of a sub-estimator are called in which methods of the meta-estimator are all
+stored here. Conceptually, this information looks like:
+
+```
+{
+    "sub_estimator1": (
+        mapping=[(caller="fit", callee="transform"), ...],
+        router=MetadataRequest(...),  # or another MetadataRouter
+    ),
+    ...
+}
+```
+
+To give the above representation some structure, we use the following objects:
+
+- ``(caller, callee)`` is a namedtuple called ``MethodPair``
+
+- The list of ``MethodPair`` stored in the ``mapping`` field is a
+  ``MethodMapping`` object
+
+- ``(mapping=..., router=...)`` is a namedtuple called ``RouterMappingPair``
+
+The ``set_{method}_request`` methods are dynamically generated for estimators
+which inherit from the ``BaseEstimator``. This is done by attaching instances
+of the ``RequestMethod`` descriptor to classes, which is done in the
+``_MetadataRequester`` class, and ``BaseEstimator`` inherits from this mixin.
+This mixin also implements the ``get_metadata_routing``, which meta-estimators
+need to override, but it works for simple consumers as is.
 """
 
 # Author: Adrin Jalali <adrin.jalali@gmail.com>
@@ -15,14 +81,20 @@ from .. import get_config
 from ..exceptions import UnsetMetadataPassedError
 from ._bunch import Bunch
 
-# This namedtuple is used to store a (mapping, routing) pair. Mapping is a
-# MethodMapping object, and routing is the output of `get_metadata_routing`.
-# MetadataRouter stores a collection of these namedtuples.
-RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
-
-# A namedtuple storing a single method route. A collection of these namedtuples
-# is stored in a MetadataRouter.
-MethodPair = namedtuple("MethodPair", ["callee", "caller"])
+# Only the following methods are supported in the routing mechanism. Adding new
+# methods at the moment involves monkeypatching this list.
+METHODS = [
+    "fit",
+    "partial_fit",
+    "predict",
+    "predict_proba",
+    "predict_log_proba",
+    "decision_function",
+    "score",
+    "split",
+    "transform",
+    "inverse_transform",
+]
 
 
 def _routing_enabled():
@@ -39,8 +111,8 @@ def _routing_enabled():
     return get_config().get("enable_metadata_routing", False)
 
 
-# ============================
-# Request values:
+# Request values
+# ==============
 # Each request value needs to be one of the following values, or an alias.
 
 # this is used in `__metadata_request__*` attributes to indicate that a
@@ -97,72 +169,10 @@ def request_is_valid(item):
     return item in VALID_REQUEST_VALUES
 
 
-# End of request values
-# ===============================
-
-# Only the following methods are supported in the routing mechanism. Adding new
-# methods at the moment involves monkeypatching this list.
-METHODS = [
-    "fit",
-    "partial_fit",
-    "predict",
-    "predict_proba",
-    "predict_log_proba",
-    "decision_function",
-    "score",
-    "split",
-    "transform",
-    "inverse_transform",
-]
-
-
-# These strings are used to dynamically generate the docstrings for
-# set_{method}_request methods.
-REQUESTER_DOC = """        Request metadata passed to the ``{method}`` method.
-
-        Note that this method is only relevant if
-        ``enable_metadata_routing=True`` (see :func:`sklearn.set_config`).
-        Please see :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
-
-        The options for each parameter are:
-
-        - ``True``: metadata is requested, and \
-passed to ``{method}`` if provided. The request is ignored if \
-metadata is not provided.
-
-        - ``False``: metadata is not requested and the meta-estimator \
-will not pass it to ``{method}``.
-
-        - ``None``: metadata is not requested, and the meta-estimator \
-will raise an error if the user provides it.
-
-        - ``str``: metadata should be passed to the meta-estimator with \
-this given alias instead of the original name.
-
-        The default (``sklearn.utils.metadata_routing.UNCHANGED``) retains the
-        existing request. This allows you to change the request for some
-        parameters and not others.
-
-        .. versionadded:: 1.3
-
-        .. note::
-            This method is only available if enable_metadata_request is True,
-            which can be set using :func:`sklearn.set_config`.
-
-        Parameters
-        ----------
-"""
-REQUESTER_DOC_PARAM = """        {metadata} : str, True, False, or None, \
-                    default=sklearn.utils.metadata_routing.UNCHANGED
-            Metadata routing for ``{metadata}`` parameter in ``{method}``.
-
-"""
-REQUESTER_DOC_RETURN = """        Returns
-        -------
-        self : object
-            The updated object.
-"""
+# Metadata Request for Simple Consumers
+# =====================================
+# This section includes MethodMetadataRequest and MetadataRequest which are
+# used in simple consumers.
 
 
 class MethodMetadataRequest:
@@ -456,6 +466,21 @@ class MetadataRequest:
 
     def __str__(self):
         return str(repr(self))
+
+
+# Metadata Request for Routers
+# ============================
+# This section includes all objects required for MetadataRouter which is used
+# in routers, returned by their ``get_metadata_routing``.
+
+# This namedtuple is used to store a (mapping, routing) pair. Mapping is a
+# MethodMapping object, and routing is the output of `get_metadata_routing`.
+# MetadataRouter stores a collection of these namedtuples.
+RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
+
+# A namedtuple storing a single method route. A collection of these namedtuples
+# is stored in a MetadataRouter.
+MethodPair = namedtuple("MethodPair", ["callee", "caller"])
 
 
 class MethodMapping:
@@ -858,7 +883,7 @@ def get_routing_for_object(obj=None):
     :class:`~utils.metadata_request.MetadataRequest` from the given input.
 
     This function always returns a copy or an instance constructed from the
-    intput, such that changing the output of this function will not change the
+    input, such that changing the output of this function will not change the
     original object.
 
     .. versionadded:: 1.3
@@ -890,6 +915,60 @@ def get_routing_for_object(obj=None):
         return deepcopy(obj)
 
     return MetadataRequest(owner=None)
+
+
+# Request method
+# ==============
+# This section includes what's needed for the request method descriptor and
+# their dynamic generation in a meta class.
+
+# These strings are used to dynamically generate the docstrings for
+# set_{method}_request methods.
+REQUESTER_DOC = """        Request metadata passed to the ``{method}`` method.
+
+        Note that this method is only relevant if
+        ``enable_metadata_routing=True`` (see :func:`sklearn.set_config`).
+        Please see :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        The options for each parameter are:
+
+        - ``True``: metadata is requested, and \
+passed to ``{method}`` if provided. The request is ignored if \
+metadata is not provided.
+
+        - ``False``: metadata is not requested and the meta-estimator \
+will not pass it to ``{method}``.
+
+        - ``None``: metadata is not requested, and the meta-estimator \
+will raise an error if the user provides it.
+
+        - ``str``: metadata should be passed to the meta-estimator with \
+this given alias instead of the original name.
+
+        The default (``sklearn.utils.metadata_routing.UNCHANGED``) retains the
+        existing request. This allows you to change the request for some
+        parameters and not others.
+
+        .. versionadded:: 1.3
+
+        .. note::
+            This method is only available if enable_metadata_request is True,
+            which can be set using :func:`sklearn.set_config`.
+
+        Parameters
+        ----------
+"""
+REQUESTER_DOC_PARAM = """        {metadata} : str, True, False, or None, \
+                    default=sklearn.utils.metadata_routing.UNCHANGED
+            Metadata routing for ``{metadata}`` parameter in ``{method}``.
+
+"""
+REQUESTER_DOC_RETURN = """        Returns
+        -------
+        self : object
+            The updated object.
+"""
 
 
 class RequestMethod:
@@ -996,6 +1075,8 @@ class RequestMethod:
 
 class _MetadataRequester:
     """Mixin class for adding metadata request functionality.
+
+    ``BaseEstimator`` inherits from this Mixin.
 
     .. versionadded:: 1.3
     """
@@ -1153,6 +1234,12 @@ class _MetadataRequester:
             routing information.
         """
         return self._get_metadata_request()
+
+
+# Process Routing in Routers
+# ==========================
+# This is almost always the only method used in routers to process and route
+# given metadata. This is to minimize the boilerplate required in routers.
 
 
 def process_routing(obj, method, other_params, **kwargs):
