@@ -434,6 +434,8 @@ def test_invariance_of_encoding_under_label_permutation(smooth, global_random_se
     assert_allclose(X_test_encoded, X_test_permuted_encoded)
 
 
+# TODO(1.5) remove warning filter when kbd's subsample default is changed
+@pytest.mark.filterwarnings("ignore:In version 1.5 onwards, subsample=200_000")
 @pytest.mark.parametrize("smooth", [0.0, "auto"])
 def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     # Check some expected statistical properties when fitting a linear
