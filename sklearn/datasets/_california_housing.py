@@ -80,7 +80,7 @@ def fetch_california_housing(
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -138,7 +138,7 @@ def fetch_california_housing(
     filepath = _pkl_filepath(data_home, "cal_housing.pkz")
     if not exists(filepath):
         if not download_if_missing:
-            raise IOError("Data not found and `download_if_missing` is False")
+            raise OSError("Data not found and `download_if_missing` is False")
 
         logger.info(
             "Downloading Cal. housing from {} to {}".format(ARCHIVE.url, data_home)
