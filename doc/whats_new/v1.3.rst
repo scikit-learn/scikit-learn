@@ -616,7 +616,7 @@ Changelog
   :pr:`25733` by :user:`Brigitta Sipőcz <bsipocz>` and
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |FIX| Fixes :func:`utils.validation.check_array` to properly convert pandas
+- |Fix| Fixes :func:`utils.validation.check_array` to properly convert pandas
   extension arrays. :pr:`25813` and :pr:`26106` by `Thomas Fan`_.
 
 - |Fix| :func:`utils.validation.check_array` now suports pandas DataFrames with
@@ -629,6 +629,12 @@ Changelog
 - |Enhancement| :meth:`LabelSpreading.fit` and :meth:`LabelPropagation.fit` now
   accepts sparse metrics.
   :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
+
+Miscellaneous
+.............
+
+- |Enhancement| Remove vendored `lobpcg` that had been copied from SciPy.
+  :pr:`26469` by  :user:`Dimitri Papadopoulos Orfanos <DimitriPapadopoulos>`.
 
 Code and Documentation Contributors
 -----------------------------------
