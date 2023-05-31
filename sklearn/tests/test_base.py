@@ -830,8 +830,7 @@ def test_dataframe_protocol():
             return self
 
         def transform(self, X):
-            self._validate_data(X, reset=False)
-            return X
+            return self._validate_data(X, reset=False)
 
     no_op = NoOpTransformer()
     no_op.fit(X_df_wrapped)
