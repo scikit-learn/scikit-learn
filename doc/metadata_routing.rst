@@ -30,7 +30,7 @@ default. This is best demonstrated by the following examples.
 
 If you are developing a scikit-learn compatible estimator or meta-estimator,
 you can check our related developer guide:
-:ref:`sphx_glr_auto_examples_plot_metadata_routing.py`.
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py`.
 
 .. note::
   Note that the methods and requirements introduced in this document are only

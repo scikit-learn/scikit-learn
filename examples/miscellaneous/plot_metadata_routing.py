@@ -413,9 +413,9 @@ print_routing(est)
 # Simple Pipeline
 # ---------------
 # A slightly more complicated use-case is a meta-estimator which does something
-# similar to the ``Pipeline``. Here is a meta-estimator, which accepts a
-# transformer and a classifier, and applies the transformer before running the
-# classifier.
+# similar to the :class:`~pipeline.Pipeline`. Here is a meta-estimator, which
+# accepts a transformer and a classifier, and applies the transformer before
+# running the classifier.
 
 
 class SimplePipeline(ClassifierMixin, BaseEstimator):
