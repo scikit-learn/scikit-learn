@@ -1005,7 +1005,7 @@ class TimeSeriesSplit(_BaseKFold):
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
 
-        .. versionadded:: 1.2
+        .. versionadded:: 1.3
            Added the option `"walk_forward"` for rolling window support.
 
     max_train_size : int, default=None
