@@ -185,7 +185,7 @@ which allows you to edit the code in-place. This builds the extension in place a
 creates a link to the development directory (see `the pip docs
 <https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_).
 
-As the doc aboves explains, this is fundamentally similar to using the command
+As the doc above explains, this is fundamentally similar to using the command
 ``python setup.py develop``. (see `the setuptool docs
 <https://setuptools.pypa.io/en/latest/userguide/development_mode.html>`_).
 It is however preferred to use pip.

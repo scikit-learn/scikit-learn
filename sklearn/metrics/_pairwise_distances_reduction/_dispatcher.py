@@ -163,7 +163,7 @@ class ArgKmin(BaseDistancesReductionDispatcher):
     ArgKmin is typically used to perform
     bruteforce k-nearest neighbors queries.
 
-    This class is not meant to be instanciated, one should only use
+    This class is not meant to be instantiated, one should only use
     its :meth:`compute` classmethod which handles allocation and
     deallocation consistently.
     """
@@ -301,7 +301,7 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
     The distance function `dist` depends on the values of the `metric`
     and `metric_kwargs` parameters.
 
-    This class is not meant to be instanciated, one should only use
+    This class is not meant to be instantiated, one should only use
     its :meth:`compute` classmethod which handles allocation and
     deallocation consistently.
     """
@@ -446,7 +446,7 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
     queries when the weighted mode of the labels for the k-nearest neighbors
     are required, such as in `predict` methods.
 
-    This class is not meant to be instanciated, one should only use
+    This class is not meant to be instantiated, one should only use
     its :meth:`compute` classmethod which handles allocation and
     deallocation consistently.
     """

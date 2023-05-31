@@ -370,7 +370,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
             n_cats = len(cats)
             if feature_idx in missing_indices:
-                # Missing index was removed from ths category when computing
+                # Missing index was removed from this category when computing
                 # infrequent indices, thus we need to decrease the number of
                 # total categories when considering the infrequent mapping.
                 n_cats -= 1
@@ -1551,7 +1551,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 ]
 
                 if invalid_features:
-                    # Use feature names if they are avaliable
+                    # Use feature names if they are available
                     if hasattr(self, "feature_names_in_"):
                         invalid_features = self.feature_names_in_[invalid_features]
                     raise ValueError(

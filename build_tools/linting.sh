@@ -27,7 +27,7 @@ bad_deprecation_property_order=`git grep -A 10 "@property"  -- "*.py" | awk '/@p
 if [ ! -z "$bad_deprecation_property_order" ]
 then
     echo "property decorator should come before deprecated decorator"
-    echo "found the following occurrencies:"
+    echo "found the following occurrences:"
     echo $bad_deprecation_property_order
     exit 1
 fi

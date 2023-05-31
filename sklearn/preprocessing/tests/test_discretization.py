@@ -138,7 +138,7 @@ def test_invalid_n_bins_array():
         #       sample_weight is None.
         #       Unfortunately, the behavior of `_weighted_percentile` when
         #       `sample_weight = [1, 1, 1, 1]` are currently not equivalent.
-        #       This problem has been adressed in issue :
+        #       This problem has been addressed in issue :
         #       https://github.com/scikit-learn/scikit-learn/issues/17370
         (
             "kmeans",
