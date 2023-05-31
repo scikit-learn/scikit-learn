@@ -9,11 +9,7 @@ import scipy.sparse as sp
 from scipy.spatial.distance import cdist
 from sklearn.metrics import DistanceMetric
 
-from sklearn.metrics._dist_metrics import (
-    BOOL_METRICS,
-    # Unexposed private DistanceMetric for 32 bit
-    DistanceMetric32,
-)
+from sklearn.metrics._dist_metrics import BOOL_METRICS
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose, create_memmap_backed_data
@@ -78,9 +74,6 @@ else:
 )
 @pytest.mark.parametrize("X, Y", [(X64, Y64), (X32, Y32), (X_mmap, Y_mmap)])
 def test_cdist(metric_param_grid, X, Y):
-    DistanceMetricInterface = (
-        DistanceMetric if X.dtype == Y.dtype == np.float64 else DistanceMetric32
-    )
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
     X_csr, Y_csr = sp.csr_matrix(X), sp.csr_matrix(Y)
@@ -105,7 +98,7 @@ def test_cdist(metric_param_grid, X, Y):
         else:
             D_scipy_cdist = cdist(X, Y, metric, **kwargs)
 
-        dm = DistanceMetricInterface.get_metric(metric, **kwargs)
+        dm = DistanceMetric.get_metric(metric, X.dtype, **kwargs)
 
         # DistanceMetric.pairwise must be consistent for all
         # combinations of formats in {sparse, dense}.
@@ -165,9 +158,6 @@ def test_cdist_bool_metric(metric, X_bool, Y_bool):
 )
 @pytest.mark.parametrize("X", [X64, X32, X_mmap])
 def test_pdist(metric_param_grid, X):
-    DistanceMetricInterface = (
-        DistanceMetric if X.dtype == np.float64 else DistanceMetric32
-    )
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
     X_csr = sp.csr_matrix(X)
@@ -195,7 +185,7 @@ def test_pdist(metric_param_grid, X):
         else:
             D_scipy_pdist = cdist(X, X, metric, **kwargs)
 
-        dm = DistanceMetricInterface.get_metric(metric, **kwargs)
+        dm = DistanceMetric.get_metric(metric, X.dtype, **kwargs)
         D_sklearn = dm.pairwise(X)
         assert D_sklearn.flags.c_contiguous
         assert_allclose(D_sklearn, D_scipy_pdist, **rtol_dict)
@@ -226,8 +216,8 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
 
     for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
-        dm64 = DistanceMetric.get_metric(metric, **kwargs)
-        dm32 = DistanceMetric32.get_metric(metric, **kwargs)
+        dm64 = DistanceMetric.get_metric(metric, np.float64, **kwargs)
+        dm32 = DistanceMetric.get_metric(metric, np.float32, **kwargs)
 
         D64 = dm64.pairwise(X64)
         D32 = dm32.pairwise(X32)
@@ -269,9 +259,6 @@ def test_pdist_bool_metrics(metric, X_bool):
 )
 @pytest.mark.parametrize("X", [X64, X32])
 def test_pickle(writable_kwargs, metric_param_grid, X):
-    DistanceMetricInterface = (
-        DistanceMetric if X.dtype == np.float64 else DistanceMetric32
-    )
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
     for vals in itertools.product(*param_grid.values()):
@@ -281,7 +268,7 @@ def test_pickle(writable_kwargs, metric_param_grid, X):
                 if isinstance(val, np.ndarray):
                     val.setflags(write=writable_kwargs)
         kwargs = dict(zip(keys, vals))
-        dm = DistanceMetricInterface.get_metric(metric, **kwargs)
+        dm = DistanceMetric.get_metric(metric, X.dtype, **kwargs)
         D1 = dm.pairwise(X)
         dm2 = pickle.loads(pickle.dumps(dm))
         D2 = dm2.pairwise(X)
@@ -302,10 +289,6 @@ def test_pickle_bool_metrics(metric, X_bool):
 
 @pytest.mark.parametrize("X, Y", [(X64, Y64), (X32, Y32), (X_mmap, Y_mmap)])
 def test_haversine_metric(X, Y):
-    DistanceMetricInterface = (
-        DistanceMetric if X.dtype == np.float64 else DistanceMetric32
-    )
-
     # The Haversine DistanceMetric only works on 2 features.
     X = np.asarray(X[:, :2])
     Y = np.asarray(Y[:, :2])
@@ -327,7 +310,7 @@ def test_haversine_metric(X, Y):
         for j, yj in enumerate(Y):
             D_reference[i, j] = haversine_slow(xi, yj)
 
-    haversine = DistanceMetricInterface.get_metric("haversine")
+    haversine = DistanceMetric.get_metric("haversine", X.dtype)
 
     D_sklearn = haversine.pairwise(X, Y)
     assert_allclose(
