@@ -85,8 +85,8 @@ plot(X, labels=labels_true, ground_truth=True)
 fig, axes = plt.subplots(3, 1, figsize=(10, 12))
 dbs = DBSCAN(eps=0.3)
 for idx, scale in enumerate((1, 0.5, 3)):
-    dbs.fit(X)
-    plot(X, dbs.labels_, parameters={"scale": scale, "eps": 0.3}, ax=axes[idx])
+    dbs.fit(X * scale)
+    plot(X * scale, dbs.labels_, parameters={"scale": scale, "eps": 0.3}, ax=axes[idx])
 
 # %%
 # Indeed, in order to maintain the same results we would have to scale `eps` by
