@@ -322,10 +322,6 @@ cdef class WeightedEdge:
 
 cdef class UnionFind(object):
 
-    cdef intp_t next_label
-    cdef intp_t[:] parent
-    cdef intp_t[:] size
-
     def __init__(self, N):
         self.parent = np.full(2 * N - 1, -1., dtype=np.intp, order='C')
         self.next_label = N
@@ -337,7 +333,6 @@ cdef class UnionFind(object):
         self.parent[n] = self.next_label
         self.size[self.next_label] = self.size[m] + self.size[n]
         self.next_label += 1
-
         return
 
     @cython.wraparound(True)
