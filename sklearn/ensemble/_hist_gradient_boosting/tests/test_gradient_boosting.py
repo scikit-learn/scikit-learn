@@ -1406,9 +1406,9 @@ def test_pandas_categorical_results_same_as_ndarray(Hist):
     f_cat = rng.randint(n_cardinality, size=n_samples)
 
     # Make f_cat an informative feature
-    y = f_cat % 3 == 0
+    y = (f_cat % 3 == 0) & (f_num > 0.2)
 
-    X = np.c_[f_cat, f_num]
+    X = np.c_[f_num, f_cat]
     X_df = pd.DataFrame(
         {"f_num": f_num, "f_cat": pd.Series(f_cat, dtype="category")},
         columns=["f_num", "f_cat"],
@@ -1419,7 +1419,7 @@ def test_pandas_categorical_results_same_as_ndarray(Hist):
     )
 
     hist_kwargs = dict(max_iter=10, max_bins=max_bins, random_state=0)
-    hist_np = Hist(categorical_features=[True, False], **hist_kwargs)
+    hist_np = Hist(categorical_features=[False, True], **hist_kwargs)
     hist_np.fit(X_train, y_train)
 
     hist_pd = Hist(categorical_features="by_dtype", **hist_kwargs)

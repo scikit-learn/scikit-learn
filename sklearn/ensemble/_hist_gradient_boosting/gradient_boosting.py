@@ -1372,6 +1372,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"by_dtype"`: Pandas categorical dtypes are considered categorical.
+          The input must be a pandas DataFrame to use this feature.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories, and each categorical value must be less then `max_bins - 1`.
@@ -1733,9 +1734,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"by_dtype"`: Pandas categorical dtypes are considered categorical.
-
-        The
-          input must be a pandas DataFrame to use this feature.
+          The input must be a pandas DataFrame to use this feature.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories, and each categorical value must be less then `max_bins - 1`.
