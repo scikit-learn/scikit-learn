@@ -561,6 +561,13 @@ Changelog
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
+:mod:`sklearn.svm`
+..................
+
+- |API| `dual` parameter now accepts `auto` option for
+  :class:`svm.LinearSVC` and :class:`svm.LinearSVR`.
+  :pr:`26093` by :user:`Gleb Levitski <glevv>`.
+
 :mod:`sklearn.tree`
 ...................
 
