@@ -38,7 +38,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.parallel import delayed, Parallel
-from ..utils.fixes import parse_version, sp_base_version, sp_version
+from ..utils.fixes import parse_version, sp_base_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
 SCIPY_METRICS = [
@@ -74,12 +74,6 @@ VALID_METRICS = dict(
     # sklearn.metrics.pairwise doc string
     brute=sorted(set(PAIRWISE_DISTANCE_FUNCTIONS).union(SCIPY_METRICS)),
 )
-
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-if sp_version < parse_version("1.8.0.dev0"):
-    # Before scipy 1.8.0.dev0, wminkowski was the key to use
-    # the weighted minkowski metric.
-    VALID_METRICS["brute"].append("wminkowski")
 
 VALID_METRICS_SPARSE = dict(
     ball_tree=[],
@@ -512,7 +506,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.effective_metric_params_ = self.metric_params.copy()
 
         effective_p = self.effective_metric_params_.get("p", self.p)
-        if self.metric in ["wminkowski", "minkowski"]:
+        if self.metric == "minkowski":
             self.effective_metric_params_["p"] = effective_p
 
         self.effective_metric_ = self.metric
@@ -605,8 +599,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self._fit_method = "brute"
             else:
                 if (
-                    # TODO(1.3): remove "wminkowski"
-                    self.effective_metric_ in ("wminkowski", "minkowski")
+                    self.effective_metric_ == "minkowski"
                     and self.effective_metric_params_["p"] < 1
                 ):
                     self._fit_method = "brute"
@@ -614,15 +607,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self.effective_metric_ == "minkowski"
                     and self.effective_metric_params_.get("w") is not None
                 ):
-                    # Be consistent with scipy 1.8 conventions: in scipy 1.8,
-                    # 'wminkowski' was removed in favor of passing a
-                    # weight vector directly to 'minkowski'.
-                    #
-                    # 'wminkowski' is not part of valid metrics for KDTree but
-                    # the 'minkowski' without weights is.
-                    #
-                    # Hence, we detect this case and choose BallTree
-                    # which supports 'wminkowski'.
+                    # 'minkowski' with weights is not supported by KDTree but is
+                    # supported byBallTree.
                     self._fit_method = "ball_tree"
                 elif self.effective_metric_ in VALID_METRICS["kd_tree"]:
                     self._fit_method = "kd_tree"
@@ -635,8 +621,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self._fit_method = "brute"
 
         if (
-            # TODO(1.3): remove "wminkowski"
-            self.effective_metric_ in ("wminkowski", "minkowski")
+            self.effective_metric_ == "minkowski"
             and self.effective_metric_params_["p"] < 1
         ):
             # For 0 < p < 1 Minkowski distances aren't valid distance
