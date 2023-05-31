@@ -20,7 +20,7 @@ from cython cimport final
 
 import numpy as np
 
-from scipy.sparse import csc_matrix
+from scipy.sparse import isspmatrix_csc
 
 from ._utils cimport log
 from ._utils cimport rand_int
@@ -747,7 +747,7 @@ cdef inline int node_split_random(
 
         # Evaluate split
         # At this point, the criterion has a view into the samples that was partitioned
-        # by the partitioner. The criterion will use the parition to evaluating the split.
+        # by the partitioner. The criterion will use the partition to evaluating the split.
         criterion.reset()
         criterion.update(current_split.pos)
 
@@ -991,7 +991,7 @@ cdef class DensePartitioner:
                     # we can continue the algorithm without checking for missingness.
                     current_value = X[samples[p], best_feature]
 
-                # Parition the non-missing samples
+                # Partition the non-missing samples
                 if current_value <= best_threshold:
                     p += 1
                 else:
@@ -1041,7 +1041,7 @@ cdef class SparsePartitioner:
         DTYPE_t[::1] feature_values,
         const unsigned char[::1] feature_has_missing,
     ):
-        if not isinstance(X, csc_matrix):
+        if not isspmatrix_csc(X):
             raise ValueError("X should be in csc format")
 
         self.samples = samples
