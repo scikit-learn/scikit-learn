@@ -136,7 +136,7 @@ Changelog
 ......................
 
 - |Fix| Fixed a bug in :func:`metrics.pairwise.euclidean_distances` where a
-  part of the distance matrix was left un-instanciated for suffiently large
+  part of the distance matrix was left un-instanciated for sufficiently large
   float32 datasets (regression introduced in 0.21). :pr:`13910` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
