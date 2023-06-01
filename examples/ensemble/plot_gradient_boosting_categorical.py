@@ -141,7 +141,7 @@ hist_ordinal = make_pipeline(
 # categorical features as ordered quantities. We set
 # `categorical_features="by_dtype"` such that features with categorical dtype
 # are considered categorical features.
-
+#
 # The main difference between this estimator and the previous one is that in
 # this one, we let the :class:`~ensemble.HistGradientBoostingRegressor` know
 # which features are categorical.
