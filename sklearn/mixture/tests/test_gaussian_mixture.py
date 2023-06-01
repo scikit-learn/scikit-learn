@@ -1358,10 +1358,9 @@ def test_gaussian_mixture_precisions_init():
 
     for covariance_type in ("full", "tied", "diag", "spherical"):
         # Arrange
-        precisions_init, precisions_cholesky = _calculate_precisions(
+        precisions_init, desired_precisions_cholesky = _calculate_precisions(
             X, resp, covariance_type
         )
-        desired_precisions_cholesky = precisions_cholesky
 
         # Act
         gmm = GaussianMixture(
