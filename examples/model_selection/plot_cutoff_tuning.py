@@ -264,10 +264,11 @@ scoring["cost_gain"](model, X_test, y_test)
 # Tuning the cut-off point
 # ------------------------
 #
-# We use :class:`~sklearn.model_selection.CutOffClassifier` to tune the cut-off point. We need
-# to provide the business metric to optimize as well as the positive label. Internally,
-# the optimum cut-off point is chosen such that it maximizes the business metric
-# via cross-validation. By default a 5-fold stratified cross-validation is used.
+# We use :class:`~sklearn.model_selection.CutOffClassifier` to tune the cut-off
+# point. We need to provide the business metric to optimize as well as the
+# positive label. Internally, the optimum cut-off point is chosen such that it
+# maximizes the business metric via cross-validation. By default a 5-fold
+# stratified cross-validation is used.
 from sklearn.model_selection import CutOffClassifier
 
 model_tuned = CutOffClassifier(
