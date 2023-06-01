@@ -4,7 +4,8 @@ Non-linear SVM
 ==============
 
 Perform binary classification using non-linear SVC
-with RBF, Linear, Polynomial, and Sigmoid kernels. The target to predict is the XOR of the inputs.
+with RBF, Linear, Polynomial, and Sigmoid kernels.
+The target to predict is the XOR of the inputs.
 
 The color map illustrates the decision function learned by the SVC.
 
