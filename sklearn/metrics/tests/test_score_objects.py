@@ -278,7 +278,7 @@ def test_check_scoring_and_check_multimetric_scoring(scoring):
     # To make sure the check_scoring is correctly applied to the constituent
     # scorers
 
-    estimator = LinearSVC(random_state=0)
+    estimator = LinearSVC(dual="auto", random_state=0)
     estimator.fit([[1], [2], [3]], [1, 1, 0])
 
     scorers = _check_multimetric_scoring(estimator, scoring)
@@ -340,11 +340,11 @@ def test_check_scoring_gridsearchcv():
     # test that check_scoring works on GridSearchCV and pipeline.
     # slightly redundant non-regression test.
 
-    grid = GridSearchCV(LinearSVC(), param_grid={"C": [0.1, 1]}, cv=3)
+    grid = GridSearchCV(LinearSVC(dual="auto"), param_grid={"C": [0.1, 1]}, cv=3)
     scorer = check_scoring(grid, scoring="f1")
     assert isinstance(scorer, _PredictScorer)
 
-    pipe = make_pipeline(LinearSVC())
+    pipe = make_pipeline(LinearSVC(dual="auto"))
     scorer = check_scoring(pipe, scoring="f1")
     assert isinstance(scorer, _PredictScorer)
 
@@ -392,7 +392,7 @@ def test_classification_binary_scores(scorer_name, metric):
     # binary classification.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LinearSVC(random_state=0)
+    clf = LinearSVC(dual="auto", random_state=0)
     clf.fit(X_train, y_train)
 
     score = get_scorer(scorer_name)(clf, X_test, y_test)
@@ -442,7 +442,7 @@ def test_custom_scorer_pickling():
     # test that custom scorer can be pickled
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LinearSVC(random_state=0)
+    clf = LinearSVC(dual="auto", random_state=0)
     clf.fit(X_train, y_train)
 
     scorer = make_scorer(fbeta_score, beta=2)
@@ -553,7 +553,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
     assert_almost_equal(score1, score2)
 
     # Multilabel decision function
-    clf = OneVsRestClassifier(LinearSVC(random_state=0))
+    clf = OneVsRestClassifier(LinearSVC(dual="auto", random_state=0))
     clf.fit(X_train, y_train)
     score1 = get_scorer("roc_auc")(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, clf.decision_function(X_test))
