@@ -1,4 +1,6 @@
 import warnings
+import importlib
+import itertools
 import pickle
 import re
 import sys
@@ -137,16 +139,17 @@ def _yield_checks(estimator):
     yield check_estimator_get_tags_default_keys
 
     if tags["array_api_support"]:
-        for array_namespace in ["numpy.array_api", "cupy.array_api", "torch"]:
+        for array_namespace in ["numpy.array_api", "cupy.array_api", "cupy", "torch"]:
             if array_namespace == "torch":
-                for device in ["cpu", "cuda"]:
-                    for dtype in ("float64", "float32"):
-                        yield partial(
-                            check_array_api_input,
-                            array_namespace=array_namespace,
-                            dtype=dtype,
-                            device=device,
-                        )
+                for device, dtype in itertools.product(
+                    ("cpu", "cuda"), ("float64", "float32")
+                ):
+                    yield partial(
+                        check_array_api_input,
+                        array_namespace=array_namespace,
+                        dtype=dtype,
+                        device=device,
+                    )
             else:
                 yield partial(check_array_api_input, array_namespace=array_namespace)
 
@@ -869,9 +872,8 @@ def check_array_api_input(
 ):
     """Check that the array_api Array gives the same results as ndarrays."""
     try:
-        xp = __import__(array_namespace)
-        xp = sys.modules[array_namespace]
-    except ImportError:
+        xp = importlib.import_module(array_namespace)
+    except ModuleNotFoundError:
         raise SkipTest(
             f"{array_namespace} is not installed: not checking array_api input"
         )
@@ -887,6 +889,9 @@ def check_array_api_input(
 
     X, y = make_classification(random_state=42)
     X = X.astype(dtype)
+
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
 
     est = clone(estimator_orig)
 

@@ -2,6 +2,7 @@
 # build_tools/azure/test_pytest_soft_dependency.sh on these
 # tests to make sure estimator_checks works without pytest.
 
+import importlib
 import unittest
 import sys
 import warnings
@@ -502,12 +503,12 @@ class BrokenArrayAPI(BaseEstimator):
 
 def test_check_array_api_input():
     try:
-        __import__("array_api_compat")
-    except ImportError:
+        importlib.import_module("array_api_compat")
+    except ModuleNotFoundError:
         raise SkipTest("array_api_compat is required to run this test")
     try:
-        __import__("numpy.array_api")
-    except ImportError:
+        importlib.import_module("numpy.array_api")
+    except ModuleNotFoundError:
         raise SkipTest("numpy.array_api is required to run this test")
 
     with raises(AssertionError, match="Not equal to tolerance"):
