@@ -221,7 +221,6 @@ def test_import_all_consistency():
             or "feature_extraction._hashing_fast" in modname
         ):
             continue
-        print(f"DEBUG *** {modname=}")
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, "__all__", ()):
             assert hasattr(package, name), "Module '{0}' has no attribute '{1}'".format(
