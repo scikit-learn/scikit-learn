@@ -1452,3 +1452,16 @@ def test_pandas_categorical_errors(Hist):
 
     with pytest.raises(ValueError, match=msg):
         hist.fit(X_df, y)
+
+
+# TODO(1.5): Remove warning and change default in 1.5
+def test_categorical_features_warn():
+    """Raise warning when there are categorical features in the input DataFrame."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"a": pd.Series([1, 2, 3], dtype="category"), "b": [4, 5, 6]})
+    y = [0, 1, 0]
+    hist = HistGradientBoostingClassifier(random_state=0)
+
+    msg = "The categorical_features parameter will change to 'by_dtype' in v1.5"
+    with pytest.warns(FutureWarning, match=msg):
+        hist.fit(X, y)

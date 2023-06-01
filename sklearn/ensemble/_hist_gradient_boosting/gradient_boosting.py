@@ -6,6 +6,7 @@ from functools import partial
 import itertools
 from contextlib import suppress
 from numbers import Real, Integral
+import warnings
 
 import numpy as np
 from timeit import default_timer as time
@@ -28,7 +29,7 @@ from ...utils.validation import (
     _check_monotonic_cst,
     _check_y,
 )
-from ...utils._param_validation import Interval, StrOptions
+from ...utils._param_validation import Interval, StrOptions, Hidden
 from ...utils._param_validation import RealNotInt
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils import _safe_indexing
@@ -112,7 +113,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         ],
         "tol": [Interval(Real, 0, None, closed="left")],
         "max_bins": [Interval(Integral, 2, 255, closed="both")],
-        "categorical_features": ["array-like", StrOptions({"by_dtype"}), None],
+        "categorical_features": [
+            "array-like",
+            StrOptions({"by_dtype"}),
+            Hidden(StrOptions({"warn"})),
+            None,
+        ],
         "warm_start": ["boolean"],
         "early_stopping": [StrOptions({"auto"}), "boolean"],
         "scoring": [str, callable, None],
@@ -280,12 +286,29 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             None if no feature is categorical.
         """
         X_is_dataframe = hasattr(X, "dtypes")
-        categorical_by_dtype = (
-            isinstance(self.categorical_features, str)
-            and self.categorical_features == "by_dtype"
-        )
 
-        no_categorical_dtype = self.categorical_features is None or (
+        # TODO(1.5): Remove warning and change default to "by_dtype" in v1.5
+        if (
+            isinstance(self.categorical_features, str)
+            and self.categorical_features == "warn"
+        ):
+            if X_is_dataframe and (X.dtypes == "category").any():
+                warnings.warn(
+                    (
+                        "The categorical_features parameter will change to 'by_dtype'"
+                        " in v1.5. The 'by_dtype' option automatically treats"
+                        " categorical dtypes in a DataFrame as categorical features."
+                    ),
+                    FutureWarning,
+                )
+            categorical_features = None
+        else:
+            categorical_features = self.categorical_features
+
+        categorical_by_dtype = (
+            isinstance(categorical_features, str) and categorical_features == "by_dtype"
+        )
+        no_categorical_dtype = categorical_features is None or (
             categorical_by_dtype and not X_is_dataframe
         )
 
@@ -296,7 +319,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if use_pandas_categorical:
             categorical_features = np.asarray(X.dtypes == "category")
         else:
-            categorical_features = np.asarray(self.categorical_features)
+            categorical_features = np.asarray(categorical_features)
 
         if categorical_features.size == 0:
             return None, None
@@ -1386,7 +1409,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
            Added support for feature names.
 
         .. versionchanged:: 1.3
-           Added `"by_dtype"` option.
+           Added `"by_dtype"` option. The default will change to `"by_dtype"` in v1.5.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
@@ -1559,7 +1582,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         min_samples_leaf=20,
         l2_regularization=0.0,
         max_bins=255,
-        categorical_features="by_dtype",
+        categorical_features="warn",
         monotonic_cst=None,
         interaction_cst=None,
         warm_start=False,
@@ -1748,7 +1771,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
            Added support for feature names.
 
         .. versionchanged:: 1.3
-           Added `"by_dtype"` option.
+           Added `"by_dtype"` option. The default will change to `"by_dtype"` in v1.5.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
@@ -1921,7 +1944,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         min_samples_leaf=20,
         l2_regularization=0.0,
         max_bins=255,
-        categorical_features="by_dtype",
+        categorical_features="warn",
         monotonic_cst=None,
         interaction_cst=None,
         warm_start=False,
