@@ -1,6 +1,4 @@
 """
-.. currentmodule:: sklearn
-
 =====================================
 Multi-class AdaBoosted Decision Trees
 =====================================
