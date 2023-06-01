@@ -51,10 +51,9 @@ random sampling procedures.
   used each time the kernel is called.
   :pr:`26337` by :user:`Yao Xiao <Charlie-XIAO>`.
 
-- |Fix| Initializing :class:`mixture.GaussianMixture` from user-provided
-  `precisions_init` for `covariance_type` of `full` or `tied` was not correct, and has
-  been fixed. Changes have been made in the `_initialize` method of
-  :class:`mixture.GaussianMixture`.
+- |Fix| The initialization :class:`mixture.GaussianMixture` from user-provided
+  `precisions_init` for `covariance_type` of `full` or `tied` was not correct,
+  and has been fixed.
   :pr:`26416` by :user:`Yang Tao <mchikyt3>`.
 
 Changes impacting all modules
