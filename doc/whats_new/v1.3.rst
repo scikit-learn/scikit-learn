@@ -333,7 +333,7 @@ Changelog
 ........................
 - |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
   when a scikit-learn estimator is unpickled with a scikit-learn version that is
-  inconsistent with the sckit-learn verion the estimator was pickled with.
+  inconsistent with the sckit-learn version the estimator was pickled with.
   :pr:`25297` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
@@ -466,7 +466,7 @@ Changelog
   :pr:`24769` by :user:`Ashwin Mathur <awinml>`.
 
 - |Fix| In :func:`metrics.roc_curve`, use the threshold value `np.inf` instead of
-  arbritrary `max(y_score) + 1`. This threshold is associated with the ROC curve point
+  arbitrary `max(y_score) + 1`. This threshold is associated with the ROC curve point
   `tpr=0` and `fpr=0`.
   :pr:`26194` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -474,6 +474,13 @@ Changelog
   to be consistent with `scipy.spatial.distance` which does not support
   `'matching'` anymore.
   :pr:`26264` by :user:`Barata T. Onggo <magnusbarata>`
+
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| :class:`gaussian_process.GaussianProcessRegressor` has a new argument
+  `n_targets`, which is used to decide the number of outputs when sampling
+  from the prior distributions. :pr:`23099` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -564,6 +571,15 @@ Changelog
   is enabled by specifying how to select infrequent categories with
   `min_frequency` or `max_categories`. :pr:`25677` by `Thomas Fan`_.
 
+- |Enhancement| Subsampling through the `subsample` parameter can now be used in
+  :class:`preprocessing.KBinsDiscretizer` regardless of the strategy used.
+  :pr:`26424` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| The default value of the `subsample` parameter of
+  :class:`preprocessing.KBinsDiscretizer` will change from `None` to `200_000` in
+  version 1.5 when `strategy="kmeans"` or `strategy="uniform"`.
+  :pr:`26424` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 - |Fix| :class:`AdditiveChi2Sampler` is now stateless.
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
@@ -619,7 +635,7 @@ Changelog
 - |FIX| Fixes :func:`utils.validation.check_array` to properly convert pandas
   extension arrays. :pr:`25813` and :pr:`26106` by `Thomas Fan`_.
 
-- |Fix| :func:`utils.validation.check_array` now suports pandas DataFrames with
+- |Fix| :func:`utils.validation.check_array` now supports pandas DataFrames with
   extension arrays and object dtypes by return an ndarray with object dtype.
   :pr:`25814` by `Thomas Fan`_.
 
