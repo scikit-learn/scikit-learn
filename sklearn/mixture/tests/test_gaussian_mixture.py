@@ -1335,7 +1335,9 @@ def test_gaussian_mixture_precisions_init():
         return X, resp
 
     def _calculate_precisions(X, resp, covariance_type):
-        """Calculate precision matrix and its Cholesky decomposition"""
+        """Calculate precision matrix of X and its Cholesky decomposition
+        for the given covariance type.
+        """
         reg_covar = 1e-6
         weights, means, covariances = _estimate_gaussian_parameters(
             X, resp, reg_covar, covariance_type
