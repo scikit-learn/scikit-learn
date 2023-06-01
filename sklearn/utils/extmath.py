@@ -72,7 +72,7 @@ def row_norms(X, squared=False):
         The row-wise (squared) Euclidean norm of X.
     """
     if sparse.issparse(X):
-        if not isinstance(X, sparse.csr_matrix):
+        if not sparse.isspmatrix_csr(X):
             X = sparse.csr_matrix(X)
         norms = csr_row_norms(X)
     else:
@@ -425,7 +425,7 @@ def randomized_svd(
     >>> U.shape, s.shape, Vh.shape
     ((3, 2), (2,), (2, 4))
     """
-    if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
+    if sparse.isspmatrix_lil(M) or sparse.isspmatrix_dok(M):
         warnings.warn(
             "Calculating SVD of a {} is expensive. "
             "csr_matrix is more efficient.".format(type(M).__name__),
