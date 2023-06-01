@@ -1344,8 +1344,9 @@ def test_gaussian_mixture_precisions_init():
 
         _, n_components = resp.shape
         # Instantiate a `GaussianMixture` model in order to use its
-        # `_set_parameters` method to compute `precisions_` from
-        # `precisions_cholesky_`
+        # `_set_parameters` method to return the `precisions_` and
+        #  `precisions_cholesky_` from matching the `covariance_type`
+        # provided.
         gmm = GaussianMixture(
             n_components=n_components, covariance_type=covariance_type
         )
