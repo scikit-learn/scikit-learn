@@ -1326,6 +1326,7 @@ def test_gaussian_mixture_precisions_init_diag():
 
 
 def test_gaussian_mixture_precisions_init():
+    """Non-regression test for #26415."""
     def _generate_data(n_samples, n_features, n_components):
         """Randomly generate samples and responsibilities"""
         rs = np.random.RandomState(12345)
