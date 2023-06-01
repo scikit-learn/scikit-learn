@@ -46,12 +46,13 @@ def test_n_features_to_select(direction, n_features_to_select):
     assert sfs.transform(X).shape[1] == n_features_to_select
 
 
-@pytest.mark.parametrize("direction", ("forward", "backward"))
-def test_n_features_to_select_auto(direction):
-    """Check the behaviour of `n_features_to_select="auto"` with different
-    values for the parameter `tol`.
+@pytest.mark.parametrize(
+    "direction,max_features_to_select", (("forward", 9), ("backward", 10))
+)
+def test_n_features_to_select_auto(direction, max_features_to_select):
+    """Check the behaviour of `n_features_to_select="auto"` when selecting
+    features in a forward and backward direction.
     """
-
     n_features = 10
     tol = 1e-3
     X, y = make_regression(n_features=n_features, random_state=0)
@@ -64,7 +65,7 @@ def test_n_features_to_select_auto(direction):
     )
     sfs.fit(X, y)
 
-    max_features_to_select = n_features - 1
+    # max_features_to_select = n_features - 1
 
     assert sfs.get_support(indices=True).shape[0] <= max_features_to_select
     assert sfs.n_features_to_select_ <= max_features_to_select
@@ -334,3 +335,26 @@ def test_cv_generator_support():
 
     sfs = SequentialFeatureSelector(knc, n_features_to_select=5, cv=splits)
     sfs.fit(X, y)
+
+
+def test_backwards_doesnt_remove_feature():
+    """All features should be kept.
+
+    This is a somewhat artificial setup because the tolerance is very large, but
+    it is
+
+    Non regression test for #26369
+    """
+    expected_selected_features = 3
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.randn(n_samples, 3)
+    y = 3 * X[:, 0] - 10 * X[:, 2]
+
+    sfs = SequentialFeatureSelector(
+        LinearRegression(),
+        direction="backward",
+        cv=2,
+    )
+    sfs.fit(X, y)
+    assert_array_equal(sfs.get_support(indices=True), expected_selected_features)
