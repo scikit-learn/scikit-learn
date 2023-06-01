@@ -10,15 +10,25 @@ sparse matrices.
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
 # License: BSD 3 clause
 
+from numbers import Integral
+
 import numpy as np
 from scipy import sparse
 
 from ..metrics.pairwise import pairwise_distances
+from ..utils._param_validation import Interval, validate_params
 
 
 ###############################################################################
 # Path and connected component analysis.
 # Code adapted from networkx
+@validate_params(
+    {
+        "graph": ["array-like", "sparse matrix"],
+        "source": [Interval(Integral, 1, None, closed="left")],
+        "cutoff": [Interval(Integral, 1, None, closed="left"), None]
+    }
+)
 def single_source_shortest_path_length(graph, source, *, cutoff=None):
     """Return the length of the shortest path from source to all reachable nodes.
 
