@@ -53,9 +53,7 @@ for ix, model in enumerate(models):
     contours = axes[ix].contour(
         xx, yy, Z, levels=[0], linewidths=2, linestyles="dashed"
     )
-    axes[ix].scatter(
-        X[:, 0], X[:, 1], s=30, c=Y, cmap=plt.cm.Paired, edgecolors="k"
-    )
+    axes[ix].scatter(X[:, 0], X[:, 1], s=30, c=Y, cmap=plt.cm.Paired, edgecolors="k")
     axes[ix].set_xticks(())
     axes[ix].set_yticks(())
     axes[ix].set_title("{} kernel".format(kernel_label[ix]))
