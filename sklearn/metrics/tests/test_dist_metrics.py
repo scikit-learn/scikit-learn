@@ -17,7 +17,6 @@ from sklearn.metrics._dist_metrics import (
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose, create_memmap_backed_data
-from sklearn.utils.fixes import sp_version, parse_version
 
 
 def dist_func(x1, x2, p):
@@ -56,23 +55,10 @@ METRICS_DEFAULT_PARAMS = [
     ("hamming", {}),
     ("canberra", {}),
     ("braycurtis", {}),
+    ("minkowski", dict(p=(1, 1.5, 3), w=(rng.random_sample(d),))),
 ]
-if sp_version >= parse_version("1.8.0.dev0"):
-    # Starting from scipy 1.8.0.dev0, minkowski now accepts w, the weighting
-    # parameter directly and using it is preferred over using wminkowski.
-    METRICS_DEFAULT_PARAMS.append(
-        ("minkowski", dict(p=(1, 1.5, 3), w=(rng.random_sample(d),))),
-    )
-else:
-    # For previous versions of scipy, this was possible through a dedicated
-    # metric (deprecated in 1.6 and removed in 1.8).
-    METRICS_DEFAULT_PARAMS.append(
-        ("wminkowski", dict(p=(1, 1.5, 3), w=(rng.random_sample(d),))),
-    )
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "metric_param_grid", METRICS_DEFAULT_PARAMS, ids=lambda params: params[0]
 )
@@ -95,15 +81,7 @@ def test_cdist(metric_param_grid, X, Y):
             # with scipy
             rtol_dict = {"rtol": 1e-6}
 
-        if metric == "wminkowski":
-            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-            WarningToExpect = None
-            if sp_version >= parse_version("1.6.0"):
-                WarningToExpect = DeprecationWarning
-            with pytest.warns(WarningToExpect):
-                D_scipy_cdist = cdist(X, Y, metric, **kwargs)
-        else:
-            D_scipy_cdist = cdist(X, Y, metric, **kwargs)
+        D_scipy_cdist = cdist(X, Y, metric, **kwargs)
 
         dm = DistanceMetricInterface.get_metric(metric, **kwargs)
 
@@ -158,8 +136,6 @@ def test_cdist_bool_metric(metric, X_bool, Y_bool):
     assert_allclose(D_sklearn, D_scipy_cdist)
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "metric_param_grid", METRICS_DEFAULT_PARAMS, ids=lambda params: params[0]
 )
@@ -182,18 +158,7 @@ def test_pdist(metric_param_grid, X):
             # with scipy
             rtol_dict = {"rtol": 1e-6}
 
-        if metric == "wminkowski":
-            if sp_version >= parse_version("1.8.0"):
-                pytest.skip("wminkowski will be removed in SciPy 1.8.0")
-
-            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-            ExceptionToAssert = None
-            if sp_version >= parse_version("1.6.0"):
-                ExceptionToAssert = DeprecationWarning
-            with pytest.warns(ExceptionToAssert):
-                D_scipy_pdist = cdist(X, X, metric, **kwargs)
-        else:
-            D_scipy_pdist = cdist(X, X, metric, **kwargs)
+        D_scipy_pdist = cdist(X, X, metric, **kwargs)
 
         dm = DistanceMetricInterface.get_metric(metric, **kwargs)
         D_sklearn = dm.pairwise(X)
@@ -209,8 +174,6 @@ def test_pdist(metric_param_grid, X):
         assert_allclose(D_sklearn_csr, D_scipy_pdist, **rtol_dict)
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "metric_param_grid", METRICS_DEFAULT_PARAMS, ids=lambda params: params[0]
 )
@@ -261,8 +224,6 @@ def test_pdist_bool_metrics(metric, X_bool):
     assert_allclose(D_sklearn, D_scipy_pdist)
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("writable_kwargs", [True, False])
 @pytest.mark.parametrize(
     "metric_param_grid", METRICS_DEFAULT_PARAMS, ids=lambda params: params[0]
@@ -288,8 +249,6 @@ def test_pickle(writable_kwargs, metric_param_grid, X):
         assert_allclose(D1, D2)
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric", BOOL_METRICS)
 @pytest.mark.parametrize("X_bool", [X_bool, X_bool_mmap])
 def test_pickle_bool_metrics(metric, X_bool):
@@ -385,8 +344,6 @@ def test_input_data_size():
     assert_allclose(pyfunc.pairwise(X), eucl.pairwise(X) ** 2)
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 def test_readonly_kwargs():
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/21685
@@ -400,7 +357,6 @@ def test_readonly_kwargs():
 
     # Those distances metrics have to support readonly buffers.
     DistanceMetric.get_metric("seuclidean", V=weights)
-    DistanceMetric.get_metric("wminkowski", p=1, w=weights)
     DistanceMetric.get_metric("mahalanobis", VI=VI)
 
 
@@ -433,24 +389,3 @@ def test_minkowski_metric_validate_weights_size():
     )
     with pytest.raises(ValueError, match=msg):
         dm.pairwise(X64, Y64)
-
-
-# TODO: Remove in 1.3 when wminkowski is removed
-def test_wminkowski_deprecated():
-    w = rng.random_sample(d)
-    msg = "WMinkowskiDistance is deprecated in version 1.1"
-    with pytest.warns(FutureWarning, match=msg):
-        DistanceMetric.get_metric("wminkowski", p=3, w=w)
-
-
-# TODO: Remove in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
-@pytest.mark.parametrize("p", [1, 1.5, 3])
-def test_wminkowski_minkowski_equivalence(p):
-    w = rng.random_sample(d)
-    # Weights are rescaled for consistency w.r.t scipy 1.8 refactoring of 'minkowski'
-    dm_wmks = DistanceMetric.get_metric("wminkowski", p=p, w=(w) ** (1 / p))
-    dm_mks = DistanceMetric.get_metric("minkowski", p=p, w=w)
-    D_wmks = dm_wmks.pairwise(X64, Y64)
-    D_mks = dm_mks.pairwise(X64, Y64)
-    assert_allclose(D_wmks, D_mks)
