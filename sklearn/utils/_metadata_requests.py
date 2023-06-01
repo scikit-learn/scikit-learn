@@ -953,8 +953,9 @@ this given alias instead of the original name.
         .. versionadded:: 1.3
 
         .. note::
-            This method is only available if enable_metadata_request is True,
-            which can be set using :func:`sklearn.set_config`.
+            This method is only relevant if this estimator is used as a
+            sub-estimator of a meta-estimator, e.g. used inside a
+            :class:`pipeline.Pipeline`. Otherwise it has no effect.
 
         Parameters
         ----------
