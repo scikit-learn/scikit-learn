@@ -1121,19 +1121,6 @@ def test_check_requires_y_none():
     assert not [r.message for r in record]
 
 
-# TODO: Remove in 1.3 when Estimator is removed
-def test_deprecated_Estimator_check_estimator():
-    err_msg = "'Estimator' was deprecated in favor of"
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        with raises(FutureWarning, match=err_msg, may_pass=True):
-            check_estimator(Estimator=NuSVC())
-
-    err_msg = "Either estimator or Estimator should be passed"
-    with raises(ValueError, match=err_msg, may_pass=False):
-        check_estimator()
-
-
 def test_non_deterministic_estimator_skip_tests():
     # check estimators with non_deterministic tag set to True
     # will skip certain tests, refer to issue #22313 for details
