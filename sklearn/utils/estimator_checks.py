@@ -1,12 +1,12 @@
 import warnings
 import pickle
 import re
+import sys
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
 from numbers import Real, Integral
 
-import pytest
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
@@ -865,13 +865,25 @@ def _generate_sparse_matrix(X_csr):
 
 
 def check_array_api_input(
-    name, estimator_orig, *, array_namespace, device="cpu", dtype="float64"
+    name, estimator_orig, *, array_namespace, device=None, dtype="float64"
 ):
     """Check that the array_api Array gives the same results as ndarrays."""
-    xp = pytest.importorskip(array_namespace)
+    try:
+        xp = __import__(array_namespace)
+        xp = sys.modules[array_namespace]
+    except ImportError:
+        raise SkipTest(
+            f"{array_namespace} is not installed: not checking array_api input"
+        )
+    try:
+        import array_api_compat  # noqa
+    except ImportError:
+        raise SkipTest(
+            "array_api_compat is not installed: not checking array_api input"
+        )
 
     if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
-        pytest.skip("test requires cuda, which is not available")
+        raise SkipTest("test requires cuda, which is not available")
 
     X, y = make_classification(random_state=42)
     X = X.astype(dtype)
@@ -903,7 +915,10 @@ def check_array_api_input(
 
         est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
         assert_allclose(
-            attribute, est_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
+            attribute,
+            est_xp_param_np,
+            err_msg=f"{key} not the same",
+            atol=np.finfo(X.dtype).eps * 100,
         )
 
     # Check estimator methods, if supported, give the same results
@@ -937,76 +952,7 @@ def check_array_api_input(
             result,
             result_xp_np,
             err_msg=f"{method} did not the return the same result",
-            atol=1e-5,
-        )
-
-
-def check_array_api_input_torch(name, estimator_orig, *, device, dtype):
-    """Check that using PyTorch gives the same results as ndarrays."""
-    torch = pytest.importorskip("torch")
-
-    if device == "cuda" and not torch.has_cuda:
-        pytest.skip("test requires cuda, which is not available")
-
-    X, y = make_classification(random_state=42)
-    X = X.astype(dtype)
-    y = y.astype(dtype)
-
-    X_xp = torch.asarray(X, device=device)
-    y_xp = torch.asarray(y, device=device)
-
-    est = clone(estimator_orig)
-    est.fit(X, y)
-
-    array_attributes = {
-        key: value for key, value in vars(est).items() if isinstance(value, np.ndarray)
-    }
-
-    est_xp = clone(est)
-    with config_context(array_api_dispatch=True):
-        est_xp.fit(X_xp, y_xp)
-
-    # Fitted attributes which are arrays must have the same
-    # namespace as the one of the training data.
-    for key, attribute in array_attributes.items():
-        est_xp_param = getattr(est_xp, key)
-        assert isinstance(est_xp_param, torch.Tensor)
-        assert est_xp_param.device.type == device
-
-        est_xp_param_np = _convert_to_numpy(est_xp_param, xp=torch)
-        assert_allclose(
-            attribute, est_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
-        )
-
-    # Check estimator methods, if supported, give the same results
-    methods = (
-        "decision_function",
-        "predict",
-        "predict_log_proba",
-        "predict_proba",
-        "transform",
-        "inverse_transform",
-    )
-
-    for method_name in methods:
-        method = getattr(est, method_name, None)
-        if method is None:
-            continue
-
-        result = method(X)
-        with config_context(array_api_dispatch=True):
-            result_xp = getattr(est_xp, method_name)(X_xp)
-
-        assert isinstance(result_xp, torch.Tensor)
-        assert result_xp.device.type == device
-
-        result_xp_np = _convert_to_numpy(result_xp, xp=torch)
-
-        assert_allclose(
-            result,
-            result_xp_np,
-            err_msg=f"{method} did not the return the same result",
-            atol=1e-5,
+            atol=np.finfo(X.dtype).eps * 100,
         )
 
 

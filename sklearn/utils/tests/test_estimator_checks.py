@@ -10,7 +10,6 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 import joblib
-import pytest
 
 import sklearn
 from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
@@ -46,7 +45,6 @@ from sklearn.utils.estimator_checks import (
     _NotAnArray,
     _set_checking_parameters,
     check_array_api_input,
-    check_array_api_input_torch,
     check_class_weight_balanced_linear_classifier,
     check_classifier_data_not_an_array,
     check_classifiers_multilabel_output_format_decision_function,
@@ -489,6 +487,7 @@ class PartialFitChecksName(BaseEstimator):
 
 class BrokenArrayAPI(BaseEstimator):
     """Make different predictions when using Numpy and the Array API"""
+
     def fit(self, X, y):
         return self
 
@@ -502,23 +501,18 @@ class BrokenArrayAPI(BaseEstimator):
 
 
 def test_check_array_api_input():
-    xp = pytest.importorskip("numpy.array_api")
+    try:
+        __import__("array_api_compat")
+    except ImportError:
+        raise SkipTest("array_api_compat is required to run this test")
+    try:
+        __import__("numpy.array_api")
+    except ImportError:
+        raise SkipTest("numpy.array_api is required to run this test")
 
-    with pytest.raises(AssertionError, match="Not equal to tolerance"):
+    with raises(AssertionError, match="Not equal to tolerance"):
         check_array_api_input(
             "BrokenArrayAPI", BrokenArrayAPI(), array_namespace="numpy.array_api"
-        )
-
-
-def test_check_array_api_input_torch():
-    xp = pytest.importorskip("torch")
-
-    with pytest.raises(AssertionError, match="Not equal to tolerance"):
-        check_array_api_input_torch(
-            "BrokenArrayAPI",
-            BrokenArrayAPI(),
-            device="cpu",
-            dtype="float32",
         )
 
 
