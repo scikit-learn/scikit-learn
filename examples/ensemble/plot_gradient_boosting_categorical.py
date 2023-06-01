@@ -138,26 +138,17 @@ hist_ordinal = make_pipeline(
 # -----------------------------------------------------------
 # We now create a :class:`~ensemble.HistGradientBoostingRegressor` estimator
 # that will natively handle categorical features. This estimator will not treat
-# categorical features as ordered quantities.
-#
-# Since the :class:`~ensemble.HistGradientBoostingRegressor` requires category
-# values to be encoded in `[0, n_unique_categories - 1]`, we still rely on an
-# :class:`~preprocessing.OrdinalEncoder` to pre-process the data.
-#
-# The main difference between this pipeline and the previous one is that in
+# categorical features as ordered quantities. We set
+# `categorical_features="by_dtype"` such that features with categorical dtype
+# are considered categorical features.
+
+# The main difference between this estimator and the previous one is that in
 # this one, we let the :class:`~ensemble.HistGradientBoostingRegressor` know
 # which features are categorical.
 
-# The ordinal encoder will first output the categorical features, and then the
-# continuous (passed-through) features
-
-hist_native = make_pipeline(
-    ordinal_encoder,
-    HistGradientBoostingRegressor(
-        random_state=42,
-        categorical_features=categorical_columns,
-    ),
-).set_output(transform="pandas")
+hist_native = HistGradientBoostingRegressor(
+    random_state=42, categorical_features="by_dtype"
+)
 
 # %%
 # Model comparison
@@ -255,10 +246,15 @@ plot_results("Gradient Boosting on Ames Housing")
 # of trees and the depth of each tree.
 
 for pipe in (hist_dropped, hist_one_hot, hist_ordinal, hist_native):
-    pipe.set_params(
-        histgradientboostingregressor__max_depth=3,
-        histgradientboostingregressor__max_iter=15,
-    )
+    if pipe is hist_native:
+        # The native model does not use a pipeline so, we can set the parameters
+        # directly.
+        pipe.set_params(max_depth=3, max_iter=15)
+    else:
+        pipe.set_params(
+            histgradientboostingregressor__max_depth=3,
+            histgradientboostingregressor__max_iter=15,
+        )
 
 dropped_result = cross_validate(hist_dropped, X, y, cv=n_cv_folds, scoring=scoring)
 one_hot_result = cross_validate(hist_one_hot, X, y, cv=n_cv_folds, scoring=scoring)
