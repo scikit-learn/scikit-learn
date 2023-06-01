@@ -726,27 +726,23 @@ class GaussianMixture(BaseMixture):
                 covariances, self.covariance_type
             )
         elif self.covariance_type == "full":
-            n_features = self.precisions_init.shape[-1]
-            exchange_matrix = np.fliplr(np.eye(n_features))
             self.precisions_cholesky_ = np.array(
                 [
-                    exchange_matrix
-                    @ linalg.cholesky(
-                        exchange_matrix @ prec_init @ exchange_matrix, lower=True
+                    np.flipud(
+                        np.fliplr(
+                            linalg.cholesky(np.flipud(np.fliplr(prec_init)), lower=True)
+                        )
                     )
-                    @ exchange_matrix
                     for prec_init in self.precisions_init
                 ]
             )
         elif self.covariance_type == "tied":
-            n_features = self.precisions_init.shape[-1]
-            exchange_matrix = np.fliplr(np.eye(n_features))
-            self.precisions_cholesky_ = (
-                exchange_matrix
-                @ linalg.cholesky(
-                    exchange_matrix @ self.precisions_init @ exchange_matrix, lower=True
+            self.precisions_cholesky_ = np.flipud(
+                np.fliplr(
+                    linalg.cholesky(
+                        np.flipud(np.fliplr(self.precisions_init)), lower=True
+                    )
                 )
-                @ exchange_matrix
             )
         else:
             self.precisions_cholesky_ = np.sqrt(self.precisions_init)

@@ -1359,21 +1359,15 @@ def test_gaussian_mixture_precisions_init():
 
     X, resp = _generate_data(n_samples=100, n_features=3, n_components=4)
 
-    for covariance_type in ("full", "tied", "diag", "spherical"):
-        # Arrange
+    for covariance_type in COVARIANCE_TYPE:
         precisions_init, desired_precisions_cholesky = _calculate_precisions(
             X, resp, covariance_type
         )
-
-        # Act
         gmm = GaussianMixture(
             covariance_type=covariance_type, precisions_init=precisions_init
         )
-        # pylint: disable-next=protected-access
         gmm._initialize(X, resp)
         actual_precisions_cholesky = gmm.precisions_cholesky_
-
-        # Assert
         assert_allclose(actual_precisions_cholesky, desired_precisions_cholesky)
 
 
