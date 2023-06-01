@@ -1350,7 +1350,6 @@ def test_gaussian_mixture_precisions_init():
             n_components=n_components, covariance_type=covariance_type
         )
         params = (weights, means, covariances, precisions_cholesky)
-        # pylint: disable-next=protected-access
         gmm._set_parameters(params)
         return gmm.precisions_, gmm.precisions_cholesky_
 
