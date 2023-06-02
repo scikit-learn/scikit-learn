@@ -359,9 +359,9 @@ def _compute_precision_cholesky_from_precision(precisions, covariance_type):
     """Compute the Cholesky decomposition of the precisions using precisions.
 
     As implemented in :func:`_compute_precision_cholesky`, the `precisions_cholesky_` is
-    an upper-triangular matrix for each Gaussian components, which can expressed as the
-    $UU^T$ factorization of the precision matrix for each Gaussian component, where $U$
-    is an upper-triangular matrix.
+    an upper-triangular matrix for each Gaussian components, which can be expressed as
+    the $UU^T$ factorization of the precision matrix for each Gaussian component, where
+    $U$ is an upper-triangular matrix.
 
     In order to use the Cholesky decomposition to get $UU^T$, the precision matrix
     $\Lambda$ needs to be permutated such that its rows and columns are reversed, which
