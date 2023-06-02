@@ -2396,11 +2396,11 @@ def test_learning_curve_some_failing_fits_warning():
     svc.fit(X, y)
     warning_message = re.compile(
         (
-           "10 fits failed out of a total of 50.+The score on these train-test"
-           " partitions for these parameters will be set to nan.+If these failures"
-           " are not expected, you can try to debug them by setting"
-           " error_score='raise'.+ValueError: The number of classes has to be greater"
-           " than one; got 1 class"
+            "10 fits failed out of a total of 50.+The score on these train-test"
+            " partitions for these parameters will be set to nan.+If these failures"
+            " are not expected, you can try to debug them by setting"
+            " error_score='raise'.+ValueError: The number of classes has to be greater"
+            " than one; got 1 class"
         ),
         flags=re.DOTALL,
     )
