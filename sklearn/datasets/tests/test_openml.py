@@ -603,7 +603,7 @@ def test_fetch_openml_difference_parsers(monkeypatch):
 
 ###############################################################################
 # Test the ARFF parsing on several dataset to check if detect the correct
-# types (categories, intgers, floats).
+# types (categories, integers, floats).
 
 
 @pytest.fixture(scope="module")
@@ -1009,7 +1009,7 @@ def test_fetch_openml_requires_pandas_error(monkeypatch, params):
         check_pandas_support("test_fetch_openml_requires_pandas")
     except ImportError:
         _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-        err_msg = "requires pandas to be installed. Alternatively, explicitely"
+        err_msg = "requires pandas to be installed. Alternatively, explicitly"
         with pytest.raises(ImportError, match=err_msg):
             fetch_openml(data_id=data_id, **params)
     else:
