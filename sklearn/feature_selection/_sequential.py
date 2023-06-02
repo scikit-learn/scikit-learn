@@ -292,12 +292,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
                 cloned_estimator, X, y, cv, current_mask
             )
 
-            if is_auto_select:
-                if (new_score - old_score) < self.tol:
-                    # The score has not improved enough by adding the latest feature,
-                    # so we stop. Or, the score has decreased too much by removing the
-                    # latest feature, so we stop
-                    break
+            if is_auto_select and ((new_score - old_score) < self.tol):
+                # The score has not improved enough by adding the latest feature,
+                # so we stop. Or, the score has decreased too much by removing the
+                # latest feature, so we stop
+                break
 
             old_score = new_score
             current_mask[new_feature_idx] = True
