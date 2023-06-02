@@ -1325,41 +1325,41 @@ def test_gaussian_mixture_precisions_init_diag():
     )
 
 
+def _generate_data(seed, n_samples, n_features, n_components):
+    """Randomly generate samples and responsibilities."""
+    rs = np.random.RandomState(seed)
+    X = rs.random_sample((n_samples, n_features))
+    resp = rs.random_sample((n_samples, n_components))
+    resp /= resp.sum(axis=1)[:, np.newaxis]
+    return X, resp
+
+
+def _calculate_precisions(X, resp, covariance_type):
+    """Calculate precision matrix of X and its Cholesky decomposition
+    for the given covariance type.
+    """
+    reg_covar = 1e-6
+    weights, means, covariances = _estimate_gaussian_parameters(
+        X, resp, reg_covar, covariance_type
+    )
+    precisions_cholesky = _compute_precision_cholesky(covariances, covariance_type)
+
+    _, n_components = resp.shape
+    # Instantiate a `GaussianMixture` model in order to use its
+    # `_set_parameters` method to return the `precisions_` and
+    #  `precisions_cholesky_` from matching the `covariance_type`
+    # provided.
+    gmm = GaussianMixture(n_components=n_components, covariance_type=covariance_type)
+    params = (weights, means, covariances, precisions_cholesky)
+    gmm._set_parameters(params)
+    return gmm.precisions_, gmm.precisions_cholesky_
+
+
 @pytest.mark.parametrize("covariance_type", COVARIANCE_TYPE)
 def test_gaussian_mixture_precisions_init(covariance_type):
     """Non-regression test for #26415."""
 
-    def _generate_data(n_samples, n_features, n_components):
-        """Randomly generate samples and responsibilities"""
-        rs = np.random.RandomState(12345)
-        X = rs.random_sample((n_samples, n_features))
-        resp = rs.random_sample((n_samples, n_components))
-        resp /= resp.sum(axis=1)[:, np.newaxis]
-        return X, resp
-
-    def _calculate_precisions(X, resp, covariance_type):
-        """Calculate precision matrix of X and its Cholesky decomposition
-        for the given covariance type.
-        """
-        reg_covar = 1e-6
-        weights, means, covariances = _estimate_gaussian_parameters(
-            X, resp, reg_covar, covariance_type
-        )
-        precisions_cholesky = _compute_precision_cholesky(covariances, covariance_type)
-
-        _, n_components = resp.shape
-        # Instantiate a `GaussianMixture` model in order to use its
-        # `_set_parameters` method to return the `precisions_` and
-        #  `precisions_cholesky_` from matching the `covariance_type`
-        # provided.
-        gmm = GaussianMixture(
-            n_components=n_components, covariance_type=covariance_type
-        )
-        params = (weights, means, covariances, precisions_cholesky)
-        gmm._set_parameters(params)
-        return gmm.precisions_, gmm.precisions_cholesky_
-
-    X, resp = _generate_data(n_samples=100, n_features=3, n_components=4)
+    X, resp = _generate_data(seed=12345, n_samples=100, n_features=3, n_components=4)
 
     precisions_init, desired_precisions_cholesky = _calculate_precisions(
         X, resp, covariance_type
