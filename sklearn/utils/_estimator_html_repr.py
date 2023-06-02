@@ -191,7 +191,6 @@ def _write_estimator_html(
 _STYLE = """
 #$id {
   color: black;
-  background-color: white;
 }
 #$id pre{
   padding: 0;
