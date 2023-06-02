@@ -825,15 +825,15 @@ def test_metadatarouter_add_self_request():
     request = MetadataRequest(owner="nested")
     request.fit.add_request(param="param", alias=True)
     router = MetadataRouter(owner="test").add_self_request(request)
-    assert str(router._self) == str(request)
+    assert str(router._self_request) == str(request)
     # should be a copy, not the same object
-    assert router._self is not request
+    assert router._self_request is not request
 
     # one can add an estimator as self
     est = RegressorMetadata().set_fit_request(sample_weight="my_weights")
     router = MetadataRouter(owner="test").add_self_request(obj=est)
-    assert str(router._self) == str(est.get_metadata_routing())
-    assert router._self is not est.get_metadata_routing()
+    assert str(router._self_request) == str(est.get_metadata_routing())
+    assert router._self_request is not est.get_metadata_routing()
 
     # adding a consumer+router as self should only add the consumer part
     est = WeightedMetaRegressor(
@@ -841,12 +841,12 @@ def test_metadatarouter_add_self_request():
     )
     router = MetadataRouter(owner="test").add_self_request(obj=est)
     # _get_metadata_request() returns the consumer part of the requests
-    assert str(router._self) == str(est._get_metadata_request())
+    assert str(router._self_request) == str(est._get_metadata_request())
     # get_metadata_routing() returns the complete request set, consumer and
     # router included.
-    assert str(router._self) != str(est.get_metadata_routing())
+    assert str(router._self_request) != str(est.get_metadata_routing())
     # it should be a copy, not the same object
-    assert router._self is not est._get_metadata_request()
+    assert router._self_request is not est._get_metadata_request()
 
 
 def test_metadata_routing_add():
@@ -901,20 +901,22 @@ def test_metadata_routing_get_param_names():
     )
 
     assert router._get_param_names(
-        method="fit", return_alias=True, ignore_self=False
+        method="fit", return_alias=True, ignore_self_request=False
     ) == {"transform_weights", "brand", "self_weights"}
     # return_alias=False will return original names for "self"
     assert router._get_param_names(
-        method="fit", return_alias=False, ignore_self=False
+        method="fit", return_alias=False, ignore_self_request=False
     ) == {"sample_weight", "brand", "transform_weights"}
     # ignoring self would remove "sample_weight"
     assert router._get_param_names(
-        method="fit", return_alias=False, ignore_self=True
+        method="fit", return_alias=False, ignore_self_request=True
     ) == {"brand", "transform_weights"}
-    # return_alias is ignored when ignore_self=True
+    # return_alias is ignored when ignore_self_request=True
     assert router._get_param_names(
-        method="fit", return_alias=True, ignore_self=True
-    ) == router._get_param_names(method="fit", return_alias=False, ignore_self=True)
+        method="fit", return_alias=True, ignore_self_request=True
+    ) == router._get_param_names(
+        method="fit", return_alias=False, ignore_self_request=True
+    )
 
 
 def test_method_generation():

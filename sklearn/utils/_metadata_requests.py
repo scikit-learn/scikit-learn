@@ -384,7 +384,7 @@ class MetadataRequest:
                 MethodMetadataRequest(owner=owner, method=method),
             )
 
-    def _get_param_names(self, method, return_alias, ignore_self=None):
+    def _get_param_names(self, method, return_alias, ignore_self_request=None):
         """Get names of all metadata that can be consumed or routed by specified \
             method.
 
@@ -400,7 +400,7 @@ class MetadataRequest:
             Controls whether original or aliased names should be returned. If
             ``False``, aliases are ignored and original names are returned.
 
-        ignore_self : bool
+        ignore_self_request : bool
             Ignored. Present for API compatibility.
 
         Returns
@@ -612,7 +612,7 @@ class MetadataRouter:
         # `_self` is used if the router is also a consumer. _self, (added using
         # `add_self_request()`) is treated differently from the other objects
         # which are stored in _route_mappings.
-        self._self = None
+        self._self_request = None
         self.owner = owner
 
     def add_self_request(self, obj):
@@ -640,9 +640,9 @@ class MetadataRouter:
             Returns `self`.
         """
         if getattr(obj, "_type", None) == "metadata_request":
-            self._self = deepcopy(obj)
+            self._self_request = deepcopy(obj)
         elif hasattr(obj, "_get_metadata_request"):
-            self._self = deepcopy(obj._get_metadata_request())
+            self._self_request = deepcopy(obj._get_metadata_request())
         else:
             raise ValueError(
                 "Given `obj` is neither a `MetadataRequest` nor does it implement the"
@@ -681,7 +681,7 @@ class MetadataRouter:
             )
         return self
 
-    def _get_param_names(self, *, method, return_alias, ignore_self):
+    def _get_param_names(self, *, method, return_alias, ignore_self_request):
         """Get names of all metadata that can be consumed or routed by specified \
             method.
 
@@ -698,8 +698,8 @@ class MetadataRouter:
             which only applies to the stored `self`. If no `self` routing
             object is stored, this parameter has no effect.
 
-        ignore_self : bool
-            If `self._self` should be ignored. This is used in `_route_params`.
+        ignore_self_request : bool
+            If `self._self_request` should be ignored. This is used in `_route_params`.
             If ``True``, ``return_alias`` has no effect.
 
         Returns
@@ -708,9 +708,11 @@ class MetadataRouter:
             A set of strings with the names of all parameters.
         """
         res = set()
-        if self._self and not ignore_self:
+        if self._self_request and not ignore_self_request:
             res = res.union(
-                self._self._get_param_names(method=method, return_alias=return_alias)
+                self._self_request._get_param_names(
+                    method=method, return_alias=return_alias
+                )
             )
 
         for name, route_mapping in self._route_mappings.items():
@@ -718,7 +720,7 @@ class MetadataRouter:
                 if caller == method:
                     res = res.union(
                         route_mapping.router._get_param_names(
-                            method=callee, return_alias=True, ignore_self=False
+                            method=callee, return_alias=True, ignore_self_request=False
                         )
                     )
         return res
@@ -749,11 +751,11 @@ class MetadataRouter:
             corresponding method.
         """
         res = Bunch()
-        if self._self:
-            res.update(self._self._route_params(params=params, method=method))
+        if self._self_request:
+            res.update(self._self_request._route_params(params=params, method=method))
 
         param_names = self._get_param_names(
-            method=method, return_alias=True, ignore_self=True
+            method=method, return_alias=True, ignore_self_request=True
         )
         child_params = {
             key: value for key, value in params.items() if key in param_names
@@ -800,8 +802,8 @@ class MetadataRouter:
             used to pass the required metadata to corresponding methods or
             corresponding child objects.
         """
-        if self._self:
-            self._self._check_warnings(params=params, method=caller)
+        if self._self_request:
+            self._self_request._check_warnings(params=params, method=caller)
 
         res = Bunch()
         for name, route_mapping in self._route_mappings.items():
@@ -832,10 +834,12 @@ class MetadataRouter:
             A dictionary of provided metadata.
         """
         param_names = self._get_param_names(
-            method=method, return_alias=False, ignore_self=False
+            method=method, return_alias=False, ignore_self_request=False
         )
-        if self._self:
-            self_params = self._self._get_param_names(method=method, return_alias=False)
+        if self._self_request:
+            self_params = self._self_request._get_param_names(
+                method=method, return_alias=False
+            )
         else:
             self_params = set()
         extra_keys = set(params.keys()) - param_names - self_params
@@ -854,8 +858,8 @@ class MetadataRouter:
             A serialized version of the instance in the form of a dictionary.
         """
         res = dict()
-        if self._self:
-            res["$self_request"] = self._self._serialize()
+        if self._self_request:
+            res["$self_request"] = self._self_request._serialize()
         for name, route_mapping in self._route_mappings.items():
             res[name] = dict()
             res[name]["mapping"] = route_mapping.mapping._serialize()
@@ -864,9 +868,9 @@ class MetadataRouter:
         return res
 
     def __iter__(self):
-        if self._self:
+        if self._self_request:
             yield "$self_request", RouterMappingPair(
-                mapping=MethodMapping.from_str("one-to-one"), router=self._self
+                mapping=MethodMapping.from_str("one-to-one"), router=self._self_request
             )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)
