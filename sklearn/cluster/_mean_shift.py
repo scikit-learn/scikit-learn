@@ -36,7 +36,8 @@ from .._config import config_context
         "n_samples": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
         "n_jobs": [Integral, None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
@@ -119,7 +120,10 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
     return tuple(my_mean), len(points_within), completed_iterations
 
 
-@validate_params({"X": ["array-like"]})
+@validate_params(
+    {"X": ["array-like"]},
+    prefer_skip_nested_validation=False,
+)
 def mean_shift(
     X,
     *,

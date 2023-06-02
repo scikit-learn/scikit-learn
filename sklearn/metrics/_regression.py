@@ -144,7 +144,8 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def mean_absolute_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
@@ -223,7 +224,8 @@ def mean_absolute_error(
         "sample_weight": ["array-like", None],
         "alpha": [Interval(Real, 0, 1, closed="both")],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def mean_pinball_loss(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
@@ -311,7 +313,8 @@ def mean_pinball_loss(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def mean_absolute_percentage_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
@@ -406,7 +409,8 @@ def mean_absolute_percentage_error(
         "sample_weight": ["array-like", None],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
         "squared": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def mean_squared_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared=True
@@ -494,7 +498,8 @@ def mean_squared_error(
         "sample_weight": ["array-like", None],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
         "squared": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def mean_squared_log_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared=True
@@ -580,7 +585,8 @@ def mean_squared_log_error(
         "y_pred": ["array-like"],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def median_absolute_error(
     y_true, y_pred, *, multioutput="uniform_average", sample_weight=None
@@ -712,7 +718,8 @@ def _assemble_r2_explained_variance(
             "array-like",
         ],
         "force_finite": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def explained_variance_score(
     y_true,
@@ -850,7 +857,8 @@ def explained_variance_score(
             None,
         ],
         "force_finite": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def r2_score(
     y_true,
@@ -1013,7 +1021,8 @@ def r2_score(
     {
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def max_error(y_true, y_pred):
     """
@@ -1086,7 +1095,8 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
             Interval(Real, None, 0, closed="right"),
             Interval(Real, 1, None, closed="left"),
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     """Mean Tweedie deviance regression loss.
@@ -1177,7 +1187,8 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Poisson deviance regression loss.
@@ -1219,7 +1230,8 @@ def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Gamma deviance regression loss.
@@ -1266,7 +1278,8 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
             Interval(Real, None, 0, closed="right"),
             Interval(Real, 1, None, closed="left"),
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     """D^2 regression score function, fraction of Tweedie deviance explained.
@@ -1378,7 +1391,8 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
             StrOptions({"raw_values", "uniform_average"}),
             "array-like",
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def d2_pinball_score(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
@@ -1528,7 +1542,8 @@ def d2_pinball_score(
             StrOptions({"raw_values", "uniform_average"}),
             "array-like",
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def d2_absolute_error_score(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"

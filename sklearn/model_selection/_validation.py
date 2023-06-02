@@ -78,7 +78,8 @@ __all__ = [
         "return_estimator": ["boolean"],
         "return_indices": ["boolean"],
         "error_score": [StrOptions({"raise"}), Real],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def cross_validate(
     estimator,
@@ -1249,7 +1250,8 @@ def _check_is_permutation(indices, n_samples):
         "verbose": ["verbose"],
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
         "fit_params": [dict, None],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def permutation_test_score(
     estimator,
@@ -1450,7 +1452,8 @@ def _shuffle(y, groups, random_state):
         "error_score": [StrOptions({"raise"}), Real],
         "return_times": ["boolean"],
         "fit_params": [dict, None],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def learning_curve(
     estimator,
@@ -1855,7 +1858,8 @@ def _incremental_fit_estimator(
         "verbose": ["verbose"],
         "error_score": [StrOptions({"raise"}), Real],
         "fit_params": [dict, None],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def validation_curve(
     estimator,

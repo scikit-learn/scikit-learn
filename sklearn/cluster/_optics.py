@@ -441,7 +441,8 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
         "algorithm": [StrOptions({"auto", "brute", "ball_tree", "kd_tree"})],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def compute_optics_graph(
     X, *, min_samples, max_eps, metric, p, metric_params, algorithm, leaf_size, n_jobs
@@ -680,7 +681,8 @@ def _set_reach_dist(
         "core_distances": [np.ndarray],
         "ordering": [np.ndarray],
         "eps": [Interval(Real, 0, None, closed="both")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     """Perform DBSCAN extraction for an arbitrary epsilon.
@@ -736,7 +738,8 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
         ],
         "xi": [Interval(Real, 0, 1, closed="both")],
         "predecessor_correction": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def cluster_optics_xi(
     *,

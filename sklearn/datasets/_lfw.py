@@ -242,7 +242,8 @@ def _fetch_lfw_people(
         "slice_": [tuple, Hidden(None)],
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_lfw_people(
     *,
@@ -436,7 +437,8 @@ def _fetch_lfw_pairs(
         "color": ["boolean"],
         "slice_": [tuple, Hidden(None)],
         "download_if_missing": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_lfw_pairs(
     *,

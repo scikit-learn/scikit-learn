@@ -319,7 +319,8 @@ def _estimate_mi(
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "copy": ["boolean"],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def mutual_info_regression(
     X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
@@ -408,7 +409,8 @@ def mutual_info_regression(
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "copy": ["boolean"],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def mutual_info_classif(
     X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
