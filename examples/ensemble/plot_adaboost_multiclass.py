@@ -13,6 +13,8 @@ problem by reproducing Figure 1 of [1].
 # License: BSD 3 clause
 
 # %%
+# Creating the dataset
+# --------------------
 # The classification dataset is constructed by taking a ten-dimensional standard
 # normal distribution and defining three classes separated by nested concentric
 # ten-dimensional spheres such that roughly equal numbers of samples are in each
@@ -32,6 +34,8 @@ X_train, X_test = X[:n_split], X[n_split:]
 y_train, y_test = y[:n_split], y[n_split:]
 
 # %%
+# Training AdaBoostClassifier with two different algorithms
+# ---------------------------------------------------------
 # Next, we compare the performance of the `SAMME` and `SAMME.R` algorithms. Note
 # that in :class:`ensemble.AdaBoostClassifier` the default value for the
 # `algorithm` parameter is `SAMME.R`. `SAMME.R` uses the probability estimates
@@ -59,6 +63,9 @@ bdt_discrete = AdaBoostClassifier(
 bdt_real.fit(X_train, y_train)
 bdt_discrete.fit(X_train, y_train)
 
+print(bdt_real)
+print(bdt_discrete)
+
 # %%
 # We're calculating the accuracy score of the predicted values against the
 # actual ones. As the example will illustrate, the `SAMME.R` algorithm typically
@@ -76,6 +83,8 @@ for real_test_predict, discrete_test_predict in zip(
     discrete_test_errors.append(1.0 - accuracy_score(discrete_test_predict, y_test))
 
 # %%
+# Comparing the Results
+# ---------------------
 # We want to extract the `estimator_errors_` and the `estimator_weights_`
 # from the fitted AdaBoostClassifiers in order to plot them. Unlike `SAMME`, the
 # `SAMME.R` algorithm does not calculate the `estimator_weights_`, because the
@@ -150,7 +159,7 @@ plt.show()
 # %%
 # The left plot shows the errors (1 - accuracy) of each algorithm on the test
 # set after each boosting iteration. In the middle plot, the classification
-# errors of the individual estimators during the boosting process are shown. The
-# subplot to the right represents the weights assigned to each estimator
-# (Decision Tree) in the `SAMME` algorithm. All trees have a weight of 1 in the
-# `SAMME.R` algorithm, which is therefore not shown.
+# errors of the individual estimators are shown. The subplot to the right
+# represents the weights assigned to each estimator (Decision Tree) in the
+# `SAMME` algorithm. For the `SAMME.R` algorithm all trees have a weight of 1,
+# which is therefore not plotted.
