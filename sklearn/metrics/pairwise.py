@@ -2010,6 +2010,15 @@ def pairwise_distances_chunked(
         yield D_chunk
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "Y": ["array-like", None],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "n_jobs": [int, None],
+        "force_all_finite": ["boolean", StrOptions({"allow-nan"})],
+    }
+)
 def pairwise_distances(
     X, Y=None, metric="euclidean", *, n_jobs=None, force_all_finite=True, **kwds
 ):
@@ -2125,15 +2134,6 @@ def pairwise_distances(
     paired_distances : Computes the distances between corresponding elements
         of two arrays.
     """
-    if (
-        metric not in _VALID_METRICS
-        and not callable(metric)
-        and metric != "precomputed"
-    ):
-        raise ValueError(
-            "Unknown metric %s. Valid metrics are %s, or 'precomputed', or a callable"
-            % (metric, _VALID_METRICS)
-        )
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
