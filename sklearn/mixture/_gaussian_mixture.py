@@ -356,7 +356,7 @@ def _flipudlr(array):
 
 
 def _compute_precision_cholesky_from_precision(precisions, covariance_type):
-    """Compute the Cholesky decomposition of the precisions using precisions.
+    r"""Compute the Cholesky decomposition of the precisions using precisions.
 
     As implemented in :func:`_compute_precision_cholesky`, the `precisions_cholesky_` is
     an upper-triangular matrix for each Gaussian components, which can be expressed as
@@ -371,7 +371,7 @@ def _compute_precision_cholesky_from_precision(precisions, covariance_type):
     where $L$ is a lower-triangular matrix. Because $\Lambda=UU^T$ and $J=J^{-1}=J^T$,
     the `precisions_cholesky_` for each Gaussian components can be expressed as $JLJ$.
 
-    Refer to #26415 for more information.
+    Refer to #26415 for details.
 
     Parameters
     ----------
