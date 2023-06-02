@@ -86,10 +86,10 @@ ESTIMATORS = {
     "ExtraTrees": ExtraTreesClassifier(),
     "RandomForest": RandomForestClassifier(),
     "Nystroem-SVM": make_pipeline(
-        Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100)
+        Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100, dual="auto")
     ),
     "SampledRBF-SVM": make_pipeline(
-        RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100)
+        RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100, dual="auto")
     ),
     "LogisticRegression-SAG": LogisticRegression(solver="sag", tol=1e-1, C=1e4),
     "LogisticRegression-SAGA": LogisticRegression(solver="saga", tol=1e-1, C=1e4),

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 ======================================================
 Effect of transforming the targets in regression model

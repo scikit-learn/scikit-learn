@@ -498,7 +498,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
            (ICANN '01). Springer-Verlag, Berlin, Heidelberg, 485-491.
 
     .. [2] Laurens van der Maaten. Learning a Parametric Embedding by Preserving
-           Local Structure. Proceedings of the Twelth International Conference on
+           Local Structure. Proceedings of the Twelfth International Conference on
            Artificial Intelligence and Statistics, PMLR 5:384-391, 2009.
     """
     n_samples = X.shape[0]
