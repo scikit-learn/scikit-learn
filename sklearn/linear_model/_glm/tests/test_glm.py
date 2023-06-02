@@ -21,7 +21,6 @@ from sklearn._loss import (
     HalfTweedieLoss,
     HalfMultinomialLoss,
 )
-from sklearn._loss.glm_distribution import TweedieDistribution
 from sklearn._loss.link import IdentityLink, LogLink
 
 from sklearn.datasets import make_low_rank_matrix, make_regression, make_classification
@@ -123,7 +122,7 @@ def glm_dataset(global_random_seed, request):
         Last column of 1, i.e. intercept.
     y : ndarray
     coef_unpenalized : ndarray
-        Minimum norm solutions, i.e. min sum(loss(w)) (with mininum ||w||_2 in
+        Minimum norm solutions, i.e. min sum(loss(w)) (with minimum ||w||_2 in
         case of ambiguity)
         Last coefficient is intercept.
     coef_penalized : ndarray
@@ -956,27 +955,6 @@ def test_tags(estimator, value):
     assert estimator._get_tags()["requires_positive_y"] is value
 
 
-# TODO(1.3): remove
-@pytest.mark.parametrize(
-    "est, family",
-    [
-        (PoissonRegressor(), "poisson"),
-        (GammaRegressor(), "gamma"),
-        (TweedieRegressor(), TweedieDistribution()),
-        (TweedieRegressor(power=2), TweedieDistribution(power=2)),
-        (TweedieRegressor(power=3), TweedieDistribution(power=3)),
-    ],
-)
-def test_family_deprecation(est, family):
-    """Test backward compatibility of the family property."""
-    with pytest.warns(FutureWarning, match="`family` was deprecated"):
-        if isinstance(family, str):
-            assert est.family == family
-        else:
-            assert est.family.__class__ == family.__class__
-            assert est.family.power == family.power
-
-
 @pytest.mark.parametrize("newton_solver", ["newton-cholesky", "newton-lsmr"])
 def test_linalg_warning_with_newton_solver(newton_solver, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
@@ -1077,12 +1055,16 @@ def test_linalg_warning_with_newton_solver(newton_solver, global_random_seed):
         (
             "newton-cholesky",
             scipy.linalg.LinAlgWarning,
-            "The inner solver of .*Newton.*Solver stumbled upon a singular or very "
-            "ill-conditioned Hessian matrix",
+            (
+                "The inner solver of .*Newton.*Solver stumbled upon a singular or very "
+                "ill-conditioned Hessian matrix"
+            ),
             [scipy.linalg.LinAlgWarning, RuntimeWarning],
             [
-                "The inner solver of .*Newton.*Solver stumbled upon a singular or very "
-                "ill-conditioned Hessian matrix",
+                (
+                    "The inner solver of .*Newton.*Solver stumbled upon a singular or"
+                    " very ill-conditioned Hessian matrix"
+                ),
                 "invalid value encountered in matmul",
             ],
         ),

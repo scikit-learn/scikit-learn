@@ -12,10 +12,12 @@ from sklearn.datasets import load_iris
 from sklearn.ensemble import BaggingClassifier
 from sklearn.ensemble._base import _set_random_states
 from sklearn.linear_model import Perceptron
+from sklearn.linear_model import Ridge, LogisticRegression
 from collections import OrderedDict
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.pipeline import Pipeline
 from sklearn.feature_selection import SelectFromModel
+from sklearn import ensemble
 
 
 def test_base():
@@ -117,3 +119,25 @@ def test_validate_estimator_value_error():
     err_msg = "Both `estimator` and `base_estimator` were set. Only set `estimator`."
     with pytest.raises(ValueError, match=err_msg):
         model.fit(X, y)
+
+
+# TODO(1.4): remove
+@pytest.mark.parametrize(
+    "model",
+    [
+        ensemble.GradientBoostingClassifier(),
+        ensemble.GradientBoostingRegressor(),
+        ensemble.HistGradientBoostingClassifier(),
+        ensemble.HistGradientBoostingRegressor(),
+        ensemble.VotingClassifier(
+            [("a", LogisticRegression()), ("b", LogisticRegression())]
+        ),
+        ensemble.VotingRegressor([("a", Ridge()), ("b", Ridge())]),
+    ],
+)
+def test_estimator_attribute_error(model):
+    X = [[1], [2]]
+    y = [0, 1]
+    model.fit(X, y)
+
+    assert not hasattr(model, "estimator_")

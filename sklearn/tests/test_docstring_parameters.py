@@ -109,12 +109,11 @@ def test_docstring_parameters():
                     "Error for __init__ of %s in %s:\n%s" % (cls, name, w[0])
                 )
 
-            cls_init = getattr(cls, "__init__", None)
-
-            if _is_deprecated(cls_init):
+            # Skip checks on deprecated classes
+            if _is_deprecated(cls.__new__):
                 continue
-            elif cls_init is not None:
-                this_incorrect += check_docstring_parameters(cls.__init__, cdoc)
+
+            this_incorrect += check_docstring_parameters(cls.__init__, cdoc)
 
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
@@ -156,7 +155,6 @@ def test_docstring_parameters():
 def test_tabs():
     # Test that there are no tabs in our source files
     for importer, modname, ispkg in walk_packages(sklearn.__path__, prefix="sklearn."):
-
         if IS_PYPY and (
             "_svmlight_format_io" in modname
             or "feature_extraction._hashing_fast" in modname
@@ -258,6 +256,10 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ in ("KMeans", "MiniBatchKMeans"):
         est.set_params(n_init="auto")
 
+    # TODO(1.4): TO BE REMOVED for 1.5 (avoid FutureWarning)
+    if Estimator.__name__ in ("LinearSVC", "LinearSVR"):
+        est.set_params(dual="auto")
+
     # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
     if Estimator.__name__ in (
         "MultinomialNB",
@@ -310,6 +312,8 @@ def test_fit_docstring_attributes(name, Estimator):
         est.fit(y)
     elif "2dlabels" in est._get_tags()["X_types"]:
         est.fit(np.c_[y, y])
+    elif "3darray" in est._get_tags()["X_types"]:
+        est.fit(X[np.newaxis, ...], y)
     else:
         est.fit(X, y)
 

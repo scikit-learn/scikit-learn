@@ -29,7 +29,7 @@ cdef extern from "numpy/arrayobject.h":
 # This works by casting `dummy` to an array of Cell of length 1, which numpy
 # can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
 # for a more detailed explanation.
-cdef Cell dummy;
+cdef Cell dummy
 CELL_DTYPE = np.asarray(<Cell[:1]>(&dummy)).dtype
 
 assert CELL_DTYPE.itemsize == sizeof(Cell)
@@ -66,15 +66,15 @@ cdef class _QuadTree:
         # Free all inner structures
         free(self.cells)
 
-    property cumulative_size:
-        def __get__(self):
-            cdef Cell[:] cell_mem_view = self._get_cell_ndarray()
-            return cell_mem_view.base['cumulative_size'][:self.cell_count]
+    @property
+    def cumulative_size(self):
+        cdef Cell[:] cell_mem_view = self._get_cell_ndarray()
+        return cell_mem_view.base['cumulative_size'][:self.cell_count]
 
-    property leafs:
-        def __get__(self):
-            cdef Cell[:] cell_mem_view = self._get_cell_ndarray()
-            return cell_mem_view.base['is_leaf'][:self.cell_count]
+    @property
+    def leafs(self):
+        cdef Cell[:] cell_mem_view = self._get_cell_ndarray()
+        return cell_mem_view.base['is_leaf'][:self.cell_count]
 
     def build_tree(self, X):
         """Build a tree from an array of points X."""
@@ -114,7 +114,7 @@ cdef class _QuadTree:
         self._resize(capacity=self.cell_count)
 
     cdef int insert_point(self, DTYPE_t[3] point, SIZE_t point_index,
-                          SIZE_t cell_id=0) nogil except -1:
+                          SIZE_t cell_id=0) except -1 nogil:
         """Insert a point in the QuadTree."""
         cdef int ax
         cdef SIZE_t selected_child
@@ -177,9 +177,9 @@ cdef class _QuadTree:
         return self.insert_point(point, point_index, cell_id)
 
     # XXX: This operation is not Thread safe
-    cdef SIZE_t _insert_point_in_new_child(self, DTYPE_t[3] point, Cell* cell,
-                                          SIZE_t point_index, SIZE_t size=1
-                                          ) nogil:
+    cdef SIZE_t _insert_point_in_new_child(
+        self, DTYPE_t[3] point, Cell* cell, SIZE_t point_index, SIZE_t size=1
+    ) noexcept nogil:
         """Create a child of cell which will contain point."""
 
         # Local variable definition
@@ -204,7 +204,7 @@ cdef class _QuadTree:
         # Get an empty cell and initialize it
         cell_id = self.cell_count
         self.cell_count += 1
-        child  = &self.cells[cell_id]
+        child = &self.cells[cell_id]
 
         self._init_cell(child, cell.cell_id, cell.depth + 1)
         child.cell_id = cell_id
@@ -247,8 +247,7 @@ cdef class _QuadTree:
 
         return cell_id
 
-
-    cdef bint _is_duplicate(self, DTYPE_t[3] point1, DTYPE_t[3] point2) nogil:
+    cdef bint _is_duplicate(self, DTYPE_t[3] point1, DTYPE_t[3] point2) noexcept nogil:
         """Check if the two given points are equals."""
         cdef int i
         cdef bint res = True
@@ -257,8 +256,7 @@ cdef class _QuadTree:
             res &= fabsf(point1[i] - point2[i]) <= EPSILON
         return res
 
-
-    cdef SIZE_t _select_child(self, DTYPE_t[3] point, Cell* cell) nogil:
+    cdef SIZE_t _select_child(self, DTYPE_t[3] point, Cell* cell) noexcept nogil:
         """Select the child of cell which contains the given query point."""
         cdef:
             int i
@@ -272,7 +270,7 @@ cdef class _QuadTree:
                 selected_child += 1
         return cell.children[selected_child]
 
-    cdef void _init_cell(self, Cell* cell, SIZE_t parent, SIZE_t depth) nogil:
+    cdef void _init_cell(self, Cell* cell, SIZE_t parent, SIZE_t depth) noexcept nogil:
         """Initialize a cell structure with some constants."""
         cell.parent = parent
         cell.is_leaf = True
@@ -283,7 +281,7 @@ cdef class _QuadTree:
             cell.children[i] = SIZE_MAX
 
     cdef void _init_root(self, DTYPE_t[3] min_bounds, DTYPE_t[3] max_bounds
-                         ) nogil:
+                         ) noexcept nogil:
         """Initialize the root node with the given space boundaries"""
         cdef:
             int i
@@ -302,23 +300,23 @@ cdef class _QuadTree:
         self.cell_count += 1
 
     cdef int _check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
-                                  ) nogil except -1:
+                                  ) except -1 nogil:
         """Check that the given point is in the cell boundaries."""
 
         if self.verbose >= 50:
             if self.n_dimensions == 3:
                 printf("[QuadTree] Checking point (%f, %f, %f) in cell %li "
-                        "([%f/%f, %f/%f, %f/%f], size %li)\n",
-                        point[0], point[1], point[2], cell.cell_id,
-                        cell.min_bounds[0], cell.max_bounds[0], cell.min_bounds[1],
-                        cell.max_bounds[1], cell.min_bounds[2], cell.max_bounds[2],
-                        cell.cumulative_size)
+                       "([%f/%f, %f/%f, %f/%f], size %li)\n",
+                       point[0], point[1], point[2], cell.cell_id,
+                       cell.min_bounds[0], cell.max_bounds[0], cell.min_bounds[1],
+                       cell.max_bounds[1], cell.min_bounds[2], cell.max_bounds[2],
+                       cell.cumulative_size)
             else:
                 printf("[QuadTree] Checking point (%f, %f) in cell %li "
-                        "([%f/%f, %f/%f], size %li)\n",
-                        point[0], point[1],cell.cell_id, cell.min_bounds[0],
-                        cell.max_bounds[0], cell.min_bounds[1],
-                        cell.max_bounds[1], cell.cumulative_size)
+                       "([%f/%f, %f/%f], size %li)\n",
+                       point[0], point[1], cell.cell_id, cell.min_bounds[0],
+                       cell.max_bounds[0], cell.min_bounds[1],
+                       cell.max_bounds[1], cell.cumulative_size)
 
         for i in range(self.n_dimensions):
             if (cell.min_bounds[i] > point[i] or
@@ -370,7 +368,7 @@ cdef class _QuadTree:
 
     cdef long summarize(self, DTYPE_t[3] point, DTYPE_t* results,
                         float squared_theta=.5, SIZE_t cell_id=0, long idx=0
-                        ) nogil:
+                        ) noexcept nogil:
         """Summarize the tree compared to a query point.
 
         Input arguments
@@ -426,7 +424,7 @@ cdef class _QuadTree:
 
         # Check whether we can use this node as a summary
         # It's a summary node if the angular size as measured from the point
-        # is relatively small (w.r.t. to theta) or if it is a leaf node.
+        # is relatively small (w.r.t. theta) or if it is a leaf node.
         # If it can be summarized, we use the cell center of mass
         # Otherwise, we go a higher level of resolution and into the leaves.
         if cell.is_leaf or (
@@ -461,7 +459,7 @@ cdef class _QuadTree:
         return self._get_cell(query_pt, 0)
 
     cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=0
-                       ) nogil except -1:
+                       ) except -1 nogil:
         """guts of get_cell.
 
         Return the id of the cell containing the query point or raise ValueError
@@ -491,8 +489,7 @@ cdef class _QuadTree:
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
-        return (_QuadTree, (self.n_dimensions, self.verbose),
-                           self.__getstate__())
+        return (_QuadTree, (self.n_dimensions, self.verbose), self.__getstate__())
 
     def __getstate__(self):
         """Getstate re-implementation, for pickling."""
@@ -528,12 +525,11 @@ cdef class _QuadTree:
             raise MemoryError("resizing tree to %d" % self.capacity)
 
         cdef Cell[:] cell_mem_view = cell_ndarray
-        cells = memcpy(
+        memcpy(
             pto=self.cells,
             pfrom=&cell_mem_view[0],
             size=self.capacity * sizeof(Cell),
         )
-
 
     # Array manipulation methods, to convert it to numpy or to resize
     # self.cells array
@@ -566,7 +562,7 @@ cdef class _QuadTree:
             raise ValueError("Can't initialize array!")
         return arr
 
-    cdef int _resize(self, SIZE_t capacity) nogil except -1:
+    cdef int _resize(self, SIZE_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays.
 
@@ -578,7 +574,7 @@ cdef class _QuadTree:
             with gil:
                 raise MemoryError()
 
-    cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) nogil except -1:
+    cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) except -1 nogil:
         """Guts of _resize
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -606,10 +602,9 @@ cdef class _QuadTree:
         # Used for testing summarize
         cdef:
             DTYPE_t[:] summary
-            int n_samples, n_dimensions
+            int n_samples
 
         n_samples = X.shape[0]
-        n_dimensions = X.shape[1]
         summary = np.empty(4 * n_samples, dtype=np.float32)
 
         idx = self.summarize(&query_pt[0], &summary[0], angle * angle)

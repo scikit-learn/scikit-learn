@@ -97,7 +97,6 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
     n_featuress = [3, 2]
 
     for n_samples, n_features in zip(n_sampless, n_featuress):
-
         X = rng.randn(n_samples, n_features)
         y = rng.randn(n_samples)
 
@@ -233,7 +232,6 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_constructor):
 def test_standard_scaler_constant_features(
     scaler, add_sample_weight, sparse_constructor, dtype, constant
 ):
-
     if isinstance(scaler, RobustScaler) and add_sample_weight:
         pytest.skip(f"{scaler.__class__.__name__} does not yet support sample_weight")
 
@@ -618,7 +616,6 @@ def test_partial_fit_sparse_input(sample_weight):
 
     null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
     for X in [X_csr, X_csc]:
-
         X_null = null_transform.partial_fit(X, sample_weight=sample_weight).transform(X)
         assert_array_equal(X_null.toarray(), X.toarray())
         X_orig = null_transform.inverse_transform(X_null)
@@ -636,7 +633,6 @@ def test_standard_scaler_trasform_with_partial_fit(sample_weight):
 
     scaler_incr = StandardScaler()
     for i, batch in enumerate(gen_batches(X.shape[0], 1)):
-
         X_sofar = X[: (i + 1), :]
         chunks_copy = X_sofar.copy()
         if sample_weight is None:
@@ -766,7 +762,6 @@ def test_minmax_scale_axis1():
 def test_min_max_scaler_1d():
     # Test scaling of dataset along single axis
     for X in [X_1row, X_1col, X_list_1row, X_list_1row]:
-
         scaler = MinMaxScaler(copy=True)
         X_scaled = scaler.fit(X).transform(X)
 
@@ -1731,7 +1726,6 @@ def test_maxabs_scaler_transform_one_row_csr():
 def test_maxabs_scaler_1d():
     # Test scaling of dataset along single axis
     for X in [X_1row, X_1col, X_list_1row, X_list_1row]:
-
         scaler = MaxAbsScaler(copy=True)
         X_scaled = scaler.fit(X).transform(X)
 
@@ -1835,7 +1829,6 @@ def test_normalizer_l1():
 
     # check inputs that support the no-copy optim
     for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
-
         normalizer = Normalizer(norm="l1", copy=True)
         X_norm = normalizer.transform(X)
         assert X_norm is not X
@@ -1858,7 +1851,7 @@ def test_normalizer_l1():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert isinstance(X_norm, sparse.csr_matrix)
+        assert sparse.isspmatrix_csr(X_norm)
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1884,7 +1877,6 @@ def test_normalizer_l2():
 
     # check inputs that support the no-copy optim
     for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
-
         normalizer = Normalizer(norm="l2", copy=True)
         X_norm1 = normalizer.transform(X)
         assert X_norm1 is not X
@@ -1906,7 +1898,7 @@ def test_normalizer_l2():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert isinstance(X_norm, sparse.csr_matrix)
+        assert sparse.isspmatrix_csr(X_norm)
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1932,7 +1924,6 @@ def test_normalizer_max():
 
     # check inputs that support the no-copy optim
     for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
-
         normalizer = Normalizer(norm="max", copy=True)
         X_norm1 = normalizer.transform(X)
         assert X_norm1 is not X
@@ -1955,7 +1946,7 @@ def test_normalizer_max():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert isinstance(X_norm, sparse.csr_matrix)
+        assert sparse.isspmatrix_csr(X_norm)
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1988,10 +1979,6 @@ def test_normalize():
     # Only tests functionality not used by the tests for Normalizer.
     X = np.random.RandomState(37).randn(3, 2)
     assert_array_equal(normalize(X, copy=False), normalize(X.T, axis=0, copy=False).T)
-    with pytest.raises(ValueError):
-        normalize([[0]], axis=2)
-    with pytest.raises(ValueError):
-        normalize([[0]], norm="l3")
 
     rs = np.random.RandomState(0)
     X_dense = rs.randn(10, 5)
@@ -2036,7 +2023,6 @@ def test_binarizer():
     X_ = np.array([[1, 0, 5], [2, 3, -1]])
 
     for init in (np.array, list, sparse.csr_matrix, sparse.csc_matrix):
-
         X = init(X_.copy())
 
         binarizer = Binarizer(threshold=2.0, copy=True)
@@ -2258,15 +2244,6 @@ def test_fit_cold_start():
         # with a different shape, this may break the scaler unless the internal
         # state is reset
         scaler.fit_transform(X_2d)
-
-
-def test_quantile_transform_valid_axis():
-    X = np.array([[0, 25, 50, 75, 100], [2, 4, 6, 8, 10], [2.6, 4.1, 2.3, 9.5, 0.1]])
-
-    with pytest.raises(
-        ValueError, match="axis should be either equal to 0 or 1. Got axis=2"
-    ):
-        quantile_transform(X.T, axis=2)
 
 
 @pytest.mark.parametrize("method", ["box-cox", "yeo-johnson"])

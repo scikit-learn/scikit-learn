@@ -18,6 +18,7 @@ from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.stdint cimport INTPTR_MAX
+from libc.math cimport isnan
 from libcpp.vector cimport vector
 from libcpp.algorithm cimport pop_heap
 from libcpp.algorithm cimport push_heap
@@ -31,6 +32,7 @@ cnp.import_array()
 
 from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
+from scipy.sparse import isspmatrix_csr
 
 from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
@@ -76,7 +78,7 @@ cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 # This works by casting `dummy` to an array of Node of length 1, which numpy
 # can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
 # for a more detailed explanation.
-cdef Node dummy;
+cdef Node dummy
 NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 
 # =============================================================================
@@ -92,6 +94,7 @@ cdef class TreeBuilder:
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
+        const unsigned char[::1] feature_has_missing=None,
     ):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -124,11 +127,14 @@ cdef class TreeBuilder:
         if y.base.dtype != DOUBLE or not y.base.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
-        if (sample_weight is not None and
-            (sample_weight.base.dtype != DOUBLE or
-            not sample_weight.base.flags.contiguous)):
-                sample_weight = np.asarray(sample_weight, dtype=DOUBLE,
-                                           order="C")
+        if (
+            sample_weight is not None and
+            (
+                sample_weight.base.dtype != DOUBLE or
+                not sample_weight.base.flags.contiguous
+            )
+        ):
+            sample_weight = np.asarray(sample_weight, dtype=DOUBLE, order="C")
 
         return X, y, sample_weight
 
@@ -162,6 +168,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
+        const unsigned char[::1] feature_has_missing=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -187,7 +194,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double min_impurity_decrease = self.min_impurity_decrease
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight)
+        splitter.init(X, y, sample_weight, feature_has_missing)
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -258,7 +265,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
                                          split.threshold, impurity, n_node_samples,
-                                         weighted_n_node_samples)
+                                         weighted_n_node_samples,
+                                         split.missing_go_to_left)
 
                 if node_id == INTPTR_MAX:
                     rc = -1
@@ -326,7 +334,7 @@ cdef inline bool _compare_records(
 cdef inline void _add_to_frontier(
     FrontierRecord rec,
     vector[FrontierRecord]& frontier,
-) nogil:
+) noexcept nogil:
     """Adds record `rec` to the priority queue `frontier`."""
     frontier.push_back(rec)
     push_heap(frontier.begin(), frontier.end(), &_compare_records)
@@ -358,6 +366,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
+        const unsigned char[::1] feature_has_missing=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -369,7 +378,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t max_leaf_nodes = self.max_leaf_nodes
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight)
+        splitter.init(X, y, sample_weight, feature_has_missing)
 
         cdef vector[FrontierRecord] frontier
         cdef FrontierRecord record
@@ -459,7 +468,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     SIZE_t start, SIZE_t end, double impurity,
                                     bint is_first, bint is_left, Node* parent,
                                     SIZE_t depth,
-                                    FrontierRecord* res) nogil except -1:
+                                    FrontierRecord* res) except -1 nogil:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef SIZE_t node_id
@@ -494,7 +503,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  else _TREE_UNDEFINED,
                                  is_left, is_leaf,
                                  split.feature, split.threshold, impurity, n_node_samples,
-                                 weighted_n_node_samples)
+                                 weighted_n_node_samples,
+                                 split.missing_go_to_left)
         if node_id == INTPTR_MAX:
             return -1
 
@@ -588,47 +598,51 @@ cdef class Tree:
     # WARNING: these reference the current `nodes` and `value` buffers, which
     # must not be freed by a subsequent memory allocation.
     # (i.e. through `_resize` or `__setstate__`)
-    property n_classes:
-        def __get__(self):
-            return sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)
+    @property
+    def n_classes(self):
+        return sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)
 
-    property children_left:
-        def __get__(self):
-            return self._get_node_ndarray()['left_child'][:self.node_count]
+    @property
+    def children_left(self):
+        return self._get_node_ndarray()['left_child'][:self.node_count]
 
-    property children_right:
-        def __get__(self):
-            return self._get_node_ndarray()['right_child'][:self.node_count]
+    @property
+    def children_right(self):
+        return self._get_node_ndarray()['right_child'][:self.node_count]
 
-    property n_leaves:
-        def __get__(self):
-            return np.sum(np.logical_and(
-                self.children_left == -1,
-                self.children_right == -1))
+    @property
+    def n_leaves(self):
+        return np.sum(np.logical_and(
+            self.children_left == -1,
+            self.children_right == -1))
 
-    property feature:
-        def __get__(self):
-            return self._get_node_ndarray()['feature'][:self.node_count]
+    @property
+    def feature(self):
+        return self._get_node_ndarray()['feature'][:self.node_count]
 
-    property threshold:
-        def __get__(self):
-            return self._get_node_ndarray()['threshold'][:self.node_count]
+    @property
+    def threshold(self):
+        return self._get_node_ndarray()['threshold'][:self.node_count]
 
-    property impurity:
-        def __get__(self):
-            return self._get_node_ndarray()['impurity'][:self.node_count]
+    @property
+    def impurity(self):
+        return self._get_node_ndarray()['impurity'][:self.node_count]
 
-    property n_node_samples:
-        def __get__(self):
-            return self._get_node_ndarray()['n_node_samples'][:self.node_count]
+    @property
+    def n_node_samples(self):
+        return self._get_node_ndarray()['n_node_samples'][:self.node_count]
 
-    property weighted_n_node_samples:
-        def __get__(self):
-            return self._get_node_ndarray()['weighted_n_node_samples'][:self.node_count]
+    @property
+    def weighted_n_node_samples(self):
+        return self._get_node_ndarray()['weighted_n_node_samples'][:self.node_count]
 
-    property value:
-        def __get__(self):
-            return self._get_value_ndarray()[:self.node_count]
+    @property
+    def missing_go_to_left(self):
+        return self._get_node_ndarray()['missing_go_to_left'][:self.node_count]
+
+    @property
+    def value(self):
+        return self._get_value_ndarray()[:self.node_count]
 
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
@@ -708,12 +722,12 @@ cdef class Tree:
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
 
-        nodes = memcpy(self.nodes, cnp.PyArray_DATA(node_ndarray),
-                       self.capacity * sizeof(Node))
-        value = memcpy(self.value, cnp.PyArray_DATA(value_ndarray),
-                       self.capacity * self.value_stride * sizeof(double))
+        memcpy(self.nodes, cnp.PyArray_DATA(node_ndarray),
+               self.capacity * sizeof(Node))
+        memcpy(self.value, cnp.PyArray_DATA(value_ndarray),
+               self.capacity * self.value_stride * sizeof(double))
 
-    cdef int _resize(self, SIZE_t capacity) nogil except -1:
+    cdef int _resize(self, SIZE_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays.
 
@@ -725,7 +739,7 @@ cdef class Tree:
             with gil:
                 raise MemoryError()
 
-    cdef int _resize_c(self, SIZE_t capacity=INTPTR_MAX) nogil except -1:
+    cdef int _resize_c(self, SIZE_t capacity=INTPTR_MAX) except -1 nogil:
         """Guts of _resize
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -759,7 +773,8 @@ cdef class Tree:
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
-                          double weighted_n_node_samples) nogil except -1:
+                          double weighted_n_node_samples,
+                          unsigned char missing_go_to_left) except -1 nogil:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -793,6 +808,7 @@ cdef class Tree:
             # left_child and right_child will be set later
             node.feature = feature
             node.threshold = threshold
+            node.missing_go_to_left = missing_go_to_left
 
         self.node_count += 1
 
@@ -827,6 +843,7 @@ cdef class Tree:
         # Extract input
         cdef const DTYPE_t[:, :] X_ndarray = X
         cdef SIZE_t n_samples = X.shape[0]
+        cdef DTYPE_t X_i_node_feature
 
         # Initialize output
         cdef SIZE_t[:] out = np.zeros(n_samples, dtype=np.intp)
@@ -840,8 +857,14 @@ cdef class Tree:
                 node = self.nodes
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
+                    X_i_node_feature = X_ndarray[i, node.feature]
                     # ... and node.right_child != _TREE_LEAF:
-                    if X_ndarray[i, node.feature] <= node.threshold:
+                    if isnan(X_i_node_feature):
+                        if node.missing_go_to_left:
+                            node = &self.nodes[node.left_child]
+                        else:
+                            node = &self.nodes[node.right_child]
+                    elif X_i_node_feature <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -854,7 +877,7 @@ cdef class Tree:
         """Finds the terminal region (=leaf node) for each sample in sparse X.
         """
         # Check input
-        if not isinstance(X, csr_matrix):
+        if not isspmatrix_csr(X):
             raise ValueError("X should be in csr_matrix format, got %s"
                              % type(X))
 
@@ -863,8 +886,8 @@ cdef class Tree:
 
         # Extract input
         cdef const DTYPE_t[:] X_data = X.data
-        cdef const INT32_t[:] X_indices  = X.indices
-        cdef const INT32_t[:] X_indptr  = X.indptr
+        cdef const INT32_t[:] X_indices = X.indices
+        cdef const INT32_t[:] X_indptr = X.indptr
 
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t n_features = X.shape[1]
@@ -982,7 +1005,7 @@ cdef class Tree:
         """Finds the decision path (=node) for each sample in X."""
 
         # Check input
-        if not isinstance(X, csr_matrix):
+        if not isspmatrix_csr(X):
             raise ValueError("X should be in csr_matrix format, got %s"
                              % type(X))
 
@@ -991,8 +1014,8 @@ cdef class Tree:
 
         # Extract input
         cdef const DTYPE_t[:] X_data = X.data
-        cdef const INT32_t[:] X_indices  = X.indices
-        cdef const INT32_t[:] X_indptr  = X.indptr
+        cdef const INT32_t[:] X_indices = X.indices
+        cdef const INT32_t[:] X_indptr = X.indptr
 
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t n_features = X.shape[1]
@@ -1410,16 +1433,16 @@ cdef class _CCPPruneController:
     """Base class used by build_pruned_tree_ccp and ccp_pruning_path
     to control pruning.
     """
-    cdef bint stop_pruning(self, DOUBLE_t effective_alpha) nogil:
+    cdef bint stop_pruning(self, DOUBLE_t effective_alpha) noexcept nogil:
         """Return 1 to stop pruning and 0 to continue pruning"""
         return 0
 
     cdef void save_metrics(self, DOUBLE_t effective_alpha,
-                           DOUBLE_t subtree_impurities) nogil:
+                           DOUBLE_t subtree_impurities) noexcept nogil:
         """Save metrics when pruning"""
         pass
 
-    cdef void after_pruning(self, unsigned char[:] in_subtree) nogil:
+    cdef void after_pruning(self, unsigned char[:] in_subtree) noexcept nogil:
         """Called after pruning"""
         pass
 
@@ -1433,12 +1456,12 @@ cdef class _AlphaPruner(_CCPPruneController):
         self.ccp_alpha = ccp_alpha
         self.capacity = 0
 
-    cdef bint stop_pruning(self, DOUBLE_t effective_alpha) nogil:
+    cdef bint stop_pruning(self, DOUBLE_t effective_alpha) noexcept nogil:
         # The subtree on the previous iteration has the greatest ccp_alpha
         # less than or equal to self.ccp_alpha
         return self.ccp_alpha < effective_alpha
 
-    cdef void after_pruning(self, unsigned char[:] in_subtree) nogil:
+    cdef void after_pruning(self, unsigned char[:] in_subtree) noexcept nogil:
         """Updates the number of leaves in subtree"""
         for i in range(in_subtree.shape[0]):
             if in_subtree[i]:
@@ -1458,7 +1481,7 @@ cdef class _PathFinder(_CCPPruneController):
 
     cdef void save_metrics(self,
                            DOUBLE_t effective_alpha,
-                           DOUBLE_t subtree_impurities) nogil:
+                           DOUBLE_t subtree_impurities) noexcept nogil:
         self.ccp_alphas[self.count] = effective_alpha
         self.impurities[self.count] = subtree_impurities
         self.count += 1
@@ -1468,7 +1491,7 @@ cdef struct CostComplexityPruningRecord:
     SIZE_t node_idx
     SIZE_t parent
 
-cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
+cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree,  # OUT
                             Tree orig_tree,
                             _CCPPruneController controller):
     """Perform cost complexity pruning.
@@ -1595,7 +1618,7 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                 node_indices_stack.pop()
 
                 if not in_subtree[node_idx]:
-                    continue # branch has already been marked for pruning
+                    continue  # branch has already been marked for pruning
                 candidate_nodes[node_idx] = 0
                 leaves_in_subtree[node_idx] = 0
                 in_subtree[node_idx] = 0
@@ -1628,9 +1651,10 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
 
 
 def _build_pruned_tree_ccp(
-    Tree tree, # OUT
+    Tree tree,  # OUT
     Tree orig_tree,
-    DOUBLE_t ccp_alpha):
+    DOUBLE_t ccp_alpha
+):
     """Build a pruned tree from the original tree using cost complexity
     pruning.
 
@@ -1714,10 +1738,11 @@ cdef struct BuildPrunedRecord:
     bint is_left
 
 cdef _build_pruned_tree(
-    Tree tree, # OUT
+    Tree tree,  # OUT
     Tree orig_tree,
     const unsigned char[:] leaves_in_subtree,
-    SIZE_t capacity):
+    SIZE_t capacity
+):
     """Build a pruned tree.
 
     Build a pruned tree from the original tree by transforming the nodes in
@@ -1774,7 +1799,7 @@ cdef _build_pruned_tree(
             new_node_id = tree._add_node(
                 parent, is_left, is_leaf, node.feature, node.threshold,
                 node.impurity, node.n_node_samples,
-                node.weighted_n_node_samples)
+                node.weighted_n_node_samples, node.missing_go_to_left)
 
             if new_node_id == INTPTR_MAX:
                 rc = -1

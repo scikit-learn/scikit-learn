@@ -85,10 +85,12 @@ sklearn/utils/_seq_dataset.pxd
 sklearn/utils/_weight_vector.pyx
 sklearn/utils/_weight_vector.pxd
 sklearn/linear_model/_sag_fast.pyx
+sklearn/linear_model/_sgd_fast.pyx
 sklearn/metrics/_dist_metrics.pyx
 sklearn/metrics/_dist_metrics.pxd
 sklearn/metrics/_pairwise_distances_reduction/_argkmin.pxd
 sklearn/metrics/_pairwise_distances_reduction/_argkmin.pyx
+sklearn/metrics/_pairwise_distances_reduction/_argkmin_classmode.pyx
 sklearn/metrics/_pairwise_distances_reduction/_base.pxd
 sklearn/metrics/_pairwise_distances_reduction/_base.pyx
 sklearn/metrics/_pairwise_distances_reduction/_datasets_pair.pxd
@@ -97,3 +99,6 @@ sklearn/metrics/_pairwise_distances_reduction/_middle_term_computer.pxd
 sklearn/metrics/_pairwise_distances_reduction/_middle_term_computer.pyx
 sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pxd
 sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pyx
+
+# Default JupyterLite content
+jupyterlite_contents

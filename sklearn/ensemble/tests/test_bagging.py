@@ -212,7 +212,6 @@ def test_sparse_regression():
         X_train_sparse = sparse_format(X_train)
         X_test_sparse = sparse_format(X_test)
         for params in parameter_sets:
-
             # Trained on sparse format
             sparse_classifier = BaggingRegressor(
                 estimator=CustomSVR(), random_state=1, **params
@@ -831,7 +830,7 @@ def test_bagging_regressor_with_missing_inputs():
             [2, None, 6],
             [2, np.nan, 6],
             [2, np.inf, 6],
-            [2, np.NINF, 6],
+            [2, -np.inf, 6],
         ]
     )
     y_values = [
@@ -872,7 +871,7 @@ def test_bagging_classifier_with_missing_inputs():
             [2, None, 6],
             [2, np.nan, 6],
             [2, np.inf, 6],
-            [2, np.NINF, 6],
+            [2, -np.inf, 6],
         ]
     )
     y = np.array([3, 6, 6, 6, 6])

@@ -88,7 +88,7 @@ class NewtonSolver(ABC):
         Newton step.
 
     gradient : ndarray of shape coef.shape
-        Gradient of the loss wrt. the coefficients.
+        Gradient of the loss w.r.t. the coefficients.
 
     gradient_old : ndarray of shape coef.shape
         Gradient of previous iteration.
@@ -287,9 +287,11 @@ class NewtonSolver(ABC):
             t *= beta
         else:
             warnings.warn(
-                f"Line search of Newton solver {self.__class__.__name__} at iteration "
-                f"#{self.iteration} did no converge after 21 line search refinement "
-                "iterations. It will now resort to lbfgs instead.",
+                (
+                    f"Line search of Newton solver {self.__class__.__name__} at"
+                    f" iteration #{self.iteration} did no converge after 21 line search"
+                    " refinement iterations. It will now resort to lbfgs instead."
+                ),
                 ConvergenceWarning,
             )
             if self.verbose:
@@ -434,8 +436,10 @@ class NewtonSolver(ABC):
                 self.fallback_lbfgs_solve(X=X, y=y, sample_weight=sample_weight)
             else:
                 warnings.warn(
-                    f"Newton solver did not converge after {self.iteration - 1} "
-                    "iterations.",
+                    (
+                        f"Newton solver did not converge after {self.iteration - 1} "
+                        "iterations."
+                    ),
                     ConvergenceWarning,
                 )
 
@@ -475,9 +479,11 @@ class NewtonCholeskySolver(NewtonSolver):
     def inner_solve(self, X, y, sample_weight):
         if self.hessian_warning:
             warnings.warn(
-                f"The inner solver of {self.__class__.__name__} detected a "
-                "pointwise hessian with many negative values at iteration "
-                f"#{self.iteration}. It will now resort to lbfgs instead.",
+                (
+                    f"The inner solver of {self.__class__.__name__} detected a "
+                    "pointwise hessian with many negative values at iteration "
+                    f"#{self.iteration}. It will now resort to lbfgs instead."
+                ),
                 ConvergenceWarning,
             )
             if self.verbose:
@@ -590,7 +596,10 @@ class NewtonLSMRSolver(NewtonSolver):
             - self.A_norm
         """
         super().setup(X=X, y=y, sample_weight=sample_weight)
-        (self.g, self.h,) = self.linear_loss.base_loss.init_gradient_and_hessian(
+        (
+            self.g,
+            self.h,
+        ) = self.linear_loss.base_loss.init_gradient_and_hessian(
             n_samples=X.shape[0], dtype=X.dtype
         )
         n_features = X.shape[1]

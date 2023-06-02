@@ -93,7 +93,7 @@ _ = axs[1, 1].set_xlabel("Residuals")
 # In this asymmetric setting, the median or different quantiles give additional
 # insights. On top of that, median estimation is much more robust to outliers
 # and heavy tailed distributions. But note that extreme quantiles are estimated
-# by very view data points. 95% quantile are more or less estimated by the 5%
+# by very few data points. 95% quantile are more or less estimated by the 5%
 # largest values and thus also a bit sensitive outliers.
 #
 # In the remainder of this tutorial, we will show how
@@ -262,16 +262,14 @@ quantile_regression = QuantileRegressor(quantile=0.5, alpha=0, solver=solver)
 y_pred_lr = linear_regression.fit(X, y_pareto).predict(X)
 y_pred_qr = quantile_regression.fit(X, y_pareto).predict(X)
 
-print(
-    f"""Training error (in-sample performance)
+print(f"""Training error (in-sample performance)
     {linear_regression.__class__.__name__}:
     MAE = {mean_absolute_error(y_pareto, y_pred_lr):.3f}
     MSE = {mean_squared_error(y_pareto, y_pred_lr):.3f}
     {quantile_regression.__class__.__name__}:
     MAE = {mean_absolute_error(y_pareto, y_pred_qr):.3f}
     MSE = {mean_squared_error(y_pareto, y_pred_qr):.3f}
-    """
-)
+    """)
 
 # %%
 # On the training set, we see that MAE is lower for
@@ -283,7 +281,7 @@ print(
 # while MSE is the loss minimized
 # :class:`~sklearn.linear_model.LinearRegression`.
 #
-# We can make a similar evaluation but looking at the test error obtained by
+# We can make a similar evaluation by looking at the test error obtained by
 # cross-validation.
 from sklearn.model_selection import cross_validate
 
@@ -301,16 +299,14 @@ cv_results_qr = cross_validate(
     cv=3,
     scoring=["neg_mean_absolute_error", "neg_mean_squared_error"],
 )
-print(
-    f"""Test error (cross-validated performance)
+print(f"""Test error (cross-validated performance)
     {linear_regression.__class__.__name__}:
     MAE = {-cv_results_lr["test_neg_mean_absolute_error"].mean():.3f}
     MSE = {-cv_results_lr["test_neg_mean_squared_error"].mean():.3f}
     {quantile_regression.__class__.__name__}:
     MAE = {-cv_results_qr["test_neg_mean_absolute_error"].mean():.3f}
     MSE = {-cv_results_qr["test_neg_mean_squared_error"].mean():.3f}
-    """
-)
+    """)
 
 # %%
 # We reach similar conclusions on the out-of-sample evaluation.

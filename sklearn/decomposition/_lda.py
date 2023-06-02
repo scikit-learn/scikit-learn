@@ -107,7 +107,7 @@ def _update_doc_distribution(
         X_indptr = X.indptr
 
     # These cython functions are called in a nested loop on usually very small arrays
-    # (lenght=n_topics). In that case, finding the appropriate signature of the
+    # (length=n_topics). In that case, finding the appropriate signature of the
     # fused-typed function can be more costly than its execution, hence the dispatch
     # is done outside of the loop.
     ctype = "float" if X.dtype == np.float32 else "double"
