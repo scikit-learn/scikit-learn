@@ -94,11 +94,15 @@ cdef class DistanceMetric:
         """
         if dtype == np.float32:
             specialized_class = DistanceMetric32
-        else:
+        elif dtype == np.float64:
             specialized_class = DistanceMetric64
+        else:
+            raise ValueError(
+                f"Unexpected dtype {dtype} provided. Please select a dtype from"
+                " {np.float32, np.float64}"
+            )
 
         return specialized_class.get_metric(metric, **kwargs)
-    pass
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 

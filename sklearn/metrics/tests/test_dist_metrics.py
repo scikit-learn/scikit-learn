@@ -9,7 +9,11 @@ import scipy.sparse as sp
 from scipy.spatial.distance import cdist
 from sklearn.metrics import DistanceMetric
 
-from sklearn.metrics._dist_metrics import BOOL_METRICS
+from sklearn.metrics._dist_metrics import (
+    BOOL_METRICS,
+    DistanceMetric32,
+    DistanceMetric64,
+)
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose, create_memmap_backed_data
@@ -372,3 +376,26 @@ def test_minkowski_metric_validate_weights_size():
     )
     with pytest.raises(ValueError, match=msg):
         dm.pairwise(X64, Y64)
+
+
+@pytest.mark.parametrize("metric, metric_kwargs", METRICS_DEFAULT_PARAMS)
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+def test_get_metric_dtype(metric, metric_kwargs, dtype):
+    specialized_cls = {
+        np.float32: DistanceMetric32,
+        np.float64: DistanceMetric64,
+    }[dtype]
+
+    # We don't need the entire grid, just one for a sanity check
+    metric_kwargs = {k: v[0] for k, v in metric_kwargs.items()}
+    generic_type = type(DistanceMetric.get_metric(metric, dtype, **metric_kwargs))
+    specialized_type = type(specialized_cls.get_metric(metric, **metric_kwargs))
+
+    assert generic_type is specialized_type
+
+
+def test_get_metric_bad_dtype():
+    dtype = np.int32
+    msg = r"Unexpected dtype .* provided. Please select a dtype from"
+    with pytest.raises(ValueError, match=msg):
+        DistanceMetric.get_metric("manhattan", dtype)
