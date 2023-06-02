@@ -34,6 +34,7 @@ Base classes
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
+   base.MetaEstimatorMixin
    base.OneToOneFeatureMixin
    base.ClassNamePrefixFeaturesOutMixin
    feature_selection.SelectorMixin
@@ -1652,6 +1653,11 @@ Plotting
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
+   utils.metadata_routing.get_routing_for_object
+   utils.metadata_routing.MetadataRouter
+   utils.metadata_routing.MetadataRequest
+   utils.metadata_routing.MethodMapping
+   utils.metadata_routing.process_routing
 
 Specific utilities to list scikit-learn components:
 

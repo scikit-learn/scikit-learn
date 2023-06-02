@@ -145,6 +145,19 @@ Changes impacting all modules
   :pr:`26082` by :user:`Jérémie du Boisberranger <jeremiedbb>` and
   :user:`Olivier Grisel <ogrisel>`.
 
+Experimental / Under Development
+--------------------------------
+
+- |MajorFeature| :ref:`Metadata routing <metadata_routing>`'s related base
+  methods are included in this release. This feature is only available via the
+  `enable_metadata_routing` feature flag which can be enabled using
+  :func:`sklearn.set_config` and :func:`sklearn.config_context`. For now this
+  feature is mostly useful for third party developers to prepare their code
+  base for metadata routing, and we strongly recommend that they also hide it
+  behind the same feature flag, rather than having it enabled by default.
+  :pr:`24027` by `Adrin Jalali`_, :user:`Benjamin Bossan <BenjaminBossan>`, and
+  :user:`Omar Salman <OmarManzoor>`.
+
 Changelog
 ---------
 
