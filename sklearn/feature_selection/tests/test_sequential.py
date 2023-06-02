@@ -340,21 +340,23 @@ def test_cv_generator_support():
 def test_backwards_doesnt_remove_feature():
     """All features should be kept.
 
-    This is a somewhat artificial setup because the tolerance is very large, but
-    it is
-
     Non regression test for #26369
     """
-    expected_selected_features = 3
+    expected_selected_features = [
+        0,
+        1,
+    ]
     rng = np.random.RandomState(0)
-    n_samples = 100
-    X = rng.randn(n_samples, 3)
-    y = 3 * X[:, 0] - 10 * X[:, 2]
+    n_samples = 500
+    X = rng.randn(n_samples, 2)
+    y = 3 * X[:, 0] - 10 * X[:, 1]
 
     sfs = SequentialFeatureSelector(
         LinearRegression(),
         direction="backward",
         cv=2,
+        n_features_to_select="auto",
+        tol=-0.01,
     )
     sfs.fit(X, y)
     assert_array_equal(sfs.get_support(indices=True), expected_selected_features)

@@ -275,7 +275,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         )
 
         if self.direction == "forward":
-            old_score = 0
+            old_score = -np.inf
         else:
             old_score = cross_val_score(
                 cloned_estimator,
@@ -286,8 +286,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
                 n_jobs=self.n_jobs,
             ).mean()
 
-        print("starting score:", old_score)
-
         is_auto_select = self.tol is not None and self.n_features_to_select == "auto"
         for _ in range(n_iterations):
             new_feature_idx, new_score = self._get_best_new_feature_score(
@@ -295,22 +293,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             )
 
             if is_auto_select:
-                if self.direction == "forward" and ((new_score - old_score) < self.tol):
+                if (new_score - old_score) < self.tol:
                     # The score has not improved enough by adding the latest feature,
-                    # so we stop
-                    print("no improvement", "new score:", new_score)
-                    break
-                elif self.direction == "backward" and (
-                    (new_score - old_score) > self.tol
-                ):
-                    # The score has decreased too much by removing the latest feature,
-                    # so we stop
-                    print("no improvement", "new score:", new_score)
+                    # so we stop. Or, the score has decreased too much by removing the
+                    # latest feature, so we stop
                     break
 
             old_score = new_score
             current_mask[new_feature_idx] = True
-            print("new score:", new_score, current_mask)
 
         if self.direction == "backward":
             current_mask = ~current_mask
