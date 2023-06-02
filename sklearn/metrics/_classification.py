@@ -1274,10 +1274,12 @@ def fbeta_score(
     The F-beta score is the weighted harmonic mean of precision and recall,
     reaching its optimal value at 1 and its worst value at 0.
 
-    The `beta` parameter determines the weight of recall in the combined
-    score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
-    favors recall (``beta -> 0`` considers only precision, ``beta -> +inf``
-    only recall).
+    The `beta` parameter represents the ratio of recall importance to
+    precision importance. `beta > 1` gives more weight to recall, while
+    `beta < 1` favors precision. For example, `beta = 2` makes recall twice
+    as important as precision, while `beta = 0.5` does the opposite.
+    Asymptotically, `beta -> +inf` considers only recall, and `beta -> 0`
+    only precision.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -2973,9 +2975,9 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> from sklearn.metrics import hinge_loss
     >>> X = [[0], [1]]
     >>> y = [-1, 1]
-    >>> est = svm.LinearSVC(random_state=0)
+    >>> est = svm.LinearSVC(dual="auto", random_state=0)
     >>> est.fit(X, y)
-    LinearSVC(random_state=0)
+    LinearSVC(dual='auto', random_state=0)
     >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
     >>> pred_decision
     array([-2.18...,  2.36...,  0.09...])
@@ -2988,9 +2990,9 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> X = np.array([[0], [1], [2], [3]])
     >>> Y = np.array([0, 1, 2, 3])
     >>> labels = np.array([0, 1, 2, 3])
-    >>> est = svm.LinearSVC()
+    >>> est = svm.LinearSVC(dual="auto")
     >>> est.fit(X, Y)
-    LinearSVC()
+    LinearSVC(dual='auto')
     >>> pred_decision = est.decision_function([[-1], [2], [3]])
     >>> y_true = [0, 2, 3]
     >>> hinge_loss(y_true, pred_decision, labels=labels)

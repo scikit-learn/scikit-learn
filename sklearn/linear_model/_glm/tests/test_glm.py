@@ -109,7 +109,7 @@ def glm_dataset(global_random_seed, request):
         Last column of 1, i.e. intercept.
     y : ndarray
     coef_unpenalized : ndarray
-        Minimum norm solutions, i.e. min sum(loss(w)) (with mininum ||w||_2 in
+        Minimum norm solutions, i.e. min sum(loss(w)) (with minimum ||w||_2 in
         case of ambiguity)
         Last coefficient is intercept.
     coef_penalized : ndarray
