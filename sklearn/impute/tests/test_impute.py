@@ -98,11 +98,7 @@ def test_imputation_shape(strategy):
 def test_imputation_deletion_warning(strategy):
     X = np.ones((3, 5))
     X[:, 0] = np.nan
-    imputer = SimpleImputer(strategy=strategy, verbose=1)
-
-    # TODO: Remove in 1.3
-    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
-        imputer.fit(X)
+    imputer = SimpleImputer(strategy=strategy).fit(X)
 
     with pytest.warns(UserWarning, match="Skipping"):
         imputer.transform(X)
@@ -122,11 +118,7 @@ def test_imputation_deletion_warning_feature_names(strategy):
         columns=feature_names,
     )
 
-    imputer = SimpleImputer(strategy=strategy, verbose=1)
-
-    # TODO: Remove in 1.3
-    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
-        imputer.fit(X)
+    imputer = SimpleImputer(strategy=strategy).fit(X)
 
     # check SimpleImputer returning feature name attribute correctly
     assert_array_equal(imputer.feature_names_in_, feature_names)

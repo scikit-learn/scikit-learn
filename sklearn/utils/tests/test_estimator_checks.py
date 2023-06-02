@@ -11,6 +11,7 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import deprecated
@@ -716,6 +717,10 @@ def test_check_no_attributes_set_in_init():
         def __init__(self, you_should_set_this_=None):
             pass
 
+    class ConformantEstimatorClassAttribute(BaseEstimator):
+        # making sure our __metadata_request__* class attributes are okay!
+        __metadata_request__fit = {"foo": True}
+
     msg = (
         "Estimator estimator_name should not set any"
         " attribute apart from parameters during init."
@@ -733,6 +738,19 @@ def test_check_no_attributes_set_in_init():
     with raises(AttributeError, match=msg):
         check_no_attributes_set_in_init(
             "estimator_name", NonConformantEstimatorNoParamSet()
+        )
+
+    # a private class attribute is okay!
+    check_no_attributes_set_in_init(
+        "estimator_name", ConformantEstimatorClassAttribute()
+    )
+    # also check if cloning an estimator which has non-default set requests is
+    # fine. Setting a non-default value via `set_{method}_request` sets the
+    # private _metadata_request instance attribute which is copied in `clone`.
+    with config_context(enable_metadata_routing=True):
+        check_no_attributes_set_in_init(
+            "estimator_name",
+            ConformantEstimatorClassAttribute().set_fit_request(foo=True),
         )
 
 
@@ -1119,19 +1137,6 @@ def test_check_requires_y_none():
 
     # no warnings are raised
     assert not [r.message for r in record]
-
-
-# TODO: Remove in 1.3 when Estimator is removed
-def test_deprecated_Estimator_check_estimator():
-    err_msg = "'Estimator' was deprecated in favor of"
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        with raises(FutureWarning, match=err_msg, may_pass=True):
-            check_estimator(Estimator=NuSVC())
-
-    err_msg = "Either estimator or Estimator should be passed"
-    with raises(ValueError, match=err_msg, may_pass=False):
-        check_estimator()
 
 
 def test_non_deterministic_estimator_skip_tests():
