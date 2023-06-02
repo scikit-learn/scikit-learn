@@ -1096,6 +1096,9 @@ class RandomForestClassifier(ForestClassifier):
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
 
+    For a comparison between tree-based ensemble models see the example
+    :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
+
     Read more in the :ref:`User Guide <forest>`.
 
     Parameters
@@ -1455,6 +1458,9 @@ class RandomForestRegressor(ForestRegressor):
     The sub-sample size is controlled with the `max_samples` parameter if
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
+
+    For a comparison between tree-based ensemble models see the example
+    :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
 
     Read more in the :ref:`User Guide <forest>`.
 
