@@ -350,6 +350,60 @@ def _compute_precision_cholesky(covariances, covariance_type):
     return precisions_chol
 
 
+def _flipudlr(array):
+    """Reverse the rows and columns of an array."""
+    return np.flipud(np.fliplr(array))
+
+
+def _compute_precision_cholesky_from_precision(precisions, covariance_type):
+    """Compute the Cholesky decomposition of the precisions using precisions.
+
+    As implemented in :func:`_compute_precision_cholesky`, the `precisions_cholesky_` is
+    an upper-triangular matrix for each Gaussian components, which can expressed as the
+    $UU^T$ factorization of the precision matrix for each Gaussian component, where $U$
+    is an upper-triangular matrix.
+
+    In order to use the Cholesky decomposition to get $UU^T$, the precision matrix
+    $\Lambda$ needs to be permutated such that its rows and columns are reversed, which
+    can be done by a similarity transformation with an exchange matrix $J$, where the 1
+    elements reside on the anti-diagonal and all other elements are 0. In particular,
+    the Cholesky decomposition of the transformed precision matrix is $J\Lambda J=LL^T$,
+    where $L$ is a lower-triangular matrix. Because $\Lambda=UU^T$ and $J=J^{-1}=J^T$,
+    the `precisions_cholesky_` for each Gaussian components can be expressed as $JLJ$.
+
+    Refer to #26415 for more information.
+
+    Parameters
+    ----------
+    precisions : array-like
+        The precision matrix of the current components.
+        The shape depends of the covariance_type.
+
+    covariance_type : {'full', 'tied', 'diag', 'spherical'}
+        The type of precision matrices.
+
+    Returns
+    -------
+    precisions_cholesky : array-like
+        The cholesky decomposition of sample precisions of the current
+        components. The shape depends of the covariance_type.
+    """
+    if covariance_type == "full":
+        precisions_cholesky = np.array(
+            [
+                _flipudlr(linalg.cholesky(_flipudlr(precision), lower=True))
+                for precision in precisions
+            ]
+        )
+    elif covariance_type == "tied":
+        precisions_cholesky = _flipudlr(
+            linalg.cholesky(_flipudlr(precisions), lower=True)
+        )
+    else:
+        precisions_cholesky = np.sqrt(precisions)
+    return precisions_cholesky
+
+
 ###############################################################################
 # Gaussian mixture probability estimators
 def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
@@ -725,27 +779,10 @@ class GaussianMixture(BaseMixture):
             self.precisions_cholesky_ = _compute_precision_cholesky(
                 covariances, self.covariance_type
             )
-        elif self.covariance_type == "full":
-            self.precisions_cholesky_ = np.array(
-                [
-                    np.flipud(
-                        np.fliplr(
-                            linalg.cholesky(np.flipud(np.fliplr(prec_init)), lower=True)
-                        )
-                    )
-                    for prec_init in self.precisions_init
-                ]
-            )
-        elif self.covariance_type == "tied":
-            self.precisions_cholesky_ = np.flipud(
-                np.fliplr(
-                    linalg.cholesky(
-                        np.flipud(np.fliplr(self.precisions_init)), lower=True
-                    )
-                )
-            )
         else:
-            self.precisions_cholesky_ = np.sqrt(self.precisions_init)
+            self.precisions_cholesky_ = _compute_precision_cholesky_from_precision(
+                self.precisions_init, self.covariance_type
+            )
 
     def _m_step(self, X, log_resp):
         """M step.
