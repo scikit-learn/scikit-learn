@@ -1361,16 +1361,15 @@ def test_gaussian_mixture_precisions_init(covariance_type):
 
     X, resp = _generate_data(n_samples=100, n_features=3, n_components=4)
 
-    for covariance_type in COVARIANCE_TYPE:
-        precisions_init, desired_precisions_cholesky = _calculate_precisions(
-            X, resp, covariance_type
-        )
-        gmm = GaussianMixture(
-            covariance_type=covariance_type, precisions_init=precisions_init
-        )
-        gmm._initialize(X, resp)
-        actual_precisions_cholesky = gmm.precisions_cholesky_
-        assert_allclose(actual_precisions_cholesky, desired_precisions_cholesky)
+    precisions_init, desired_precisions_cholesky = _calculate_precisions(
+        X, resp, covariance_type
+    )
+    gmm = GaussianMixture(
+        covariance_type=covariance_type, precisions_init=precisions_init
+    )
+    gmm._initialize(X, resp)
+    actual_precisions_cholesky = gmm.precisions_cholesky_
+    assert_allclose(actual_precisions_cholesky, desired_precisions_cholesky)
 
 
 def test_gaussian_mixture_single_component_stable():
