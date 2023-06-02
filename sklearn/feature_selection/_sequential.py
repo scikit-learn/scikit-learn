@@ -5,11 +5,9 @@ from numbers import Integral, Real
 
 import numpy as np
 
-import warnings
-
 from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone, is_classifier
-from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._param_validation import RealNotInt
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
@@ -49,11 +47,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         .. versionadded:: 1.1
            The option `"auto"` was added in version 1.1.
 
-        .. deprecated:: 1.1
-           The default changed from `None` to `"warn"` in 1.1 and will become
-           `"auto"` in 1.3. `None` and `'warn'` will be removed in 1.3.
-           To keep the same behaviour as `None`, set
-           `n_features_to_select="auto"` and `tol=None`.
+        .. versionchanged:: 1.3
+           The default changed from `"warn"` to `"auto"` in 1.3.
 
     tol : float, default=None
         If the score is not incremented by at least `tol` between two
@@ -154,10 +149,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit"])],
         "n_features_to_select": [
-            StrOptions({"auto", "warn"}, deprecated={"warn"}),
+            StrOptions({"auto"}),
             Interval(RealNotInt, 0, 1, closed="right"),
             Interval(Integral, 0, None, closed="neither"),
-            Hidden(None),
         ],
         "tol": [None, Interval(Real, None, None, closed="neither")],
         "direction": [StrOptions({"forward", "backward"})],
@@ -170,7 +164,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self,
         estimator,
         *,
-        n_features_to_select="warn",
+        n_features_to_select="auto",
         tol=None,
         direction="forward",
         scoring=None,
@@ -205,22 +199,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         """
         self._validate_params()
 
-        # FIXME: to be removed in 1.3
-        if self.n_features_to_select in ("warn", None):
-            # for backwards compatibility
-            warnings.warn(
-                (
-                    "Leaving `n_features_to_select` to "
-                    "None is deprecated in 1.0 and will become 'auto' "
-                    "in 1.3. To keep the same behaviour as with None "
-                    "(i.e. select half of the features) and avoid "
-                    "this warning, you should manually set "
-                    "`n_features_to_select='auto'` and set tol=None "
-                    "when creating an instance."
-                ),
-                FutureWarning,
-            )
-
         tags = self._get_tags()
         X = self._validate_data(
             X,
@@ -230,20 +208,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         )
         n_features = X.shape[1]
 
-        # FIXME: to be fixed in 1.3
-        error_msg = (
-            "n_features_to_select must be either 'auto', 'warn', "
-            "None, an integer in [1, n_features - 1] "
-            "representing the absolute "
-            "number of features, or a float in (0, 1] "
-            "representing a percentage of features to "
-            f"select. Got {self.n_features_to_select}"
-        )
-        if self.n_features_to_select in ("warn", None):
-            if self.tol is not None:
-                raise ValueError("tol is only enabled if `n_features_to_select='auto'`")
-            self.n_features_to_select_ = n_features // 2
-        elif self.n_features_to_select == "auto":
+        if self.n_features_to_select == "auto":
             if self.tol is not None:
                 # With auto feature selection, `n_features_to_select_` will be updated
                 # to `support_.sum()` after features are selected.
@@ -251,8 +216,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             else:
                 self.n_features_to_select_ = n_features // 2
         elif isinstance(self.n_features_to_select, Integral):
-            if not 0 < self.n_features_to_select < n_features:
-                raise ValueError(error_msg)
+            if self.n_features_to_select >= n_features:
+                raise ValueError("n_features_to_select must be < n_features.")
             self.n_features_to_select_ = self.n_features_to_select
         elif isinstance(self.n_features_to_select, Real):
             self.n_features_to_select_ = int(n_features * self.n_features_to_select)

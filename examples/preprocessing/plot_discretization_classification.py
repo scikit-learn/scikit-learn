@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 ======================
 Feature discretization
@@ -70,7 +69,7 @@ classifiers = [
         {"logisticregression__C": np.logspace(-1, 1, 3)},
     ),
     (
-        make_pipeline(StandardScaler(), LinearSVC(random_state=0)),
+        make_pipeline(StandardScaler(), LinearSVC(random_state=0, dual="auto")),
         {"linearsvc__C": np.logspace(-1, 1, 3)},
     ),
     (
@@ -88,7 +87,7 @@ classifiers = [
         make_pipeline(
             StandardScaler(),
             KBinsDiscretizer(encode="onehot"),
-            LinearSVC(random_state=0),
+            LinearSVC(random_state=0, dual="auto"),
         ),
         {
             "kbinsdiscretizer__n_bins": np.arange(5, 8),
