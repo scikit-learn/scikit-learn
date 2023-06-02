@@ -17,8 +17,9 @@ plot the biclusters found by the algorithm.
 # %%
 # Generate sample data
 # --------------------
-# We generate the sample data using the `make_checkerboard` function. Each pixel
-# within `shape=(300, 300)` represents with it's color a value from a uniform
+# We generate the sample data using the
+# :func:`~sklearn.datasets.make_checkerboard` function. Each pixel within
+# `shape=(300, 300)` represents with it's color a value from a uniform
 # distribution. The noise is added from a normal distribution, where the value
 # chosen for `noise` is the standard deviation.
 #
@@ -30,7 +31,7 @@ from matplotlib import pyplot as plt
 
 n_clusters = (4, 3)
 data, rows, columns = make_checkerboard(
-    shape=(300, 300), n_clusters=n_clusters, noise=10, shuffle=False, random_state=1
+    shape=(300, 300), n_clusters=n_clusters, noise=10, shuffle=False, random_state=42
 )
 
 plt.matshow(data, cmap=plt.cm.Blues)
@@ -82,9 +83,10 @@ print("consensus score: {:.1f}".format(score))
 # Plotting results
 # ----------------
 # Now, we rearrange the data based on the row and column labels assigned by the
-# `SpectralBiclustering` model in ascending order and plot again. The
-# `row_labels_` range from 0 to 3, while the `column_labels_` range from 0 to 2,
-# representing a total of 4 clusters per row and 3 clusters per column.
+# :class:`~sklearn.cluster.SpectralBiclustering` model in ascending order and
+# plot again. The `row_labels_` range from 0 to 3, while the `column_labels_`
+# range from 0 to 2, representing a total of 4 clusters per row and 3 clusters
+# per column.
 
 fit_data = data[np.argsort(model.row_labels_)]
 fit_data = fit_data[:, np.argsort(model.column_labels_)]
