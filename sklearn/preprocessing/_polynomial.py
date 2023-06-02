@@ -1142,7 +1142,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     " `n_cols` too large to be represented by a 32bit signed"
                     " integer.\n. All sub-matrices to be stacked have indices of"
                     " dtype `np.int32`.\nTo avoid this error, either use a version"
-                    " of scipy `>=1.9.2` or alter the `PolynomialFeatures`"
+                    " of scipy `>=1.9.2` or alter the `SplineTransformer`"
                     " transformer to produce fewer than 2^31 output features"
                 )
             XBS = sparse.hstack(output_list)

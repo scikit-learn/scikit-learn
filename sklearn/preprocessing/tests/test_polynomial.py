@@ -427,7 +427,7 @@ def test_spline_transformer_sparse_output(
 
     # extrapolation regime
     X_min = np.amin(X, axis=0)
-    X_max = np.amin(X, axis=0)
+    X_max = np.amax(X, axis=0)
     X_extra = np.r_[
         np.linspace(X_min - 5, X_min, 10), np.linspace(X_max, X_max + 5, 10)
     ]
@@ -461,15 +461,20 @@ def test_spline_transformer_sparse_output_raise_error_for_old_scipy():
 @pytest.mark.parametrize(
     "extrapolation", ["error", "constant", "linear", "continue", "periodic"]
 )
+@pytest.mark.parametrize("sparse_output", [False, True])
 def test_spline_transformer_n_features_out(
-    n_knots, include_bias, degree, extrapolation
+    n_knots, include_bias, degree, extrapolation, sparse_output
 ):
     """Test that transform results in n_features_out_ features."""
+    if sparse_output and sp_version < parse_version("1.8.0"):
+        pytest.skip("The option `sparse_output` is available as of scipy 1.8.0")
+
     splt = SplineTransformer(
         n_knots=n_knots,
         degree=degree,
         include_bias=include_bias,
         extrapolation=extrapolation,
+        sparse_output=sparse_output,
     )
     X = np.linspace(0, 1, 10)[:, None]
     splt.fit(X)
