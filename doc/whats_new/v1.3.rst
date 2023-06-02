@@ -500,7 +500,6 @@ Changelog
   an `AttributeError` if done before calling `fit`. :pr:`26333` by `Adrin
   Jalali`_.
 
-
 :mod:`sklearn.naive_bayes`
 ..........................
 
