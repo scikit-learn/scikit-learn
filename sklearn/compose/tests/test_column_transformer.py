@@ -2160,7 +2160,7 @@ def test_empty_selection_pandas_output(empty_selection):
 
 
 def test_raise_error_if_index_not_aligned():
-    """Check column transformer raises error if index is not aligned.
+    """Check column transformer raises error if indeices are not aligned.
 
     Non-regression test for gh-26210.
     """
