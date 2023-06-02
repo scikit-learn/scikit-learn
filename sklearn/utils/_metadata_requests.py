@@ -20,6 +20,12 @@ In non-routing consumers, i.e. the simplest case, e.g. ``SVM``,
 In routers, e.g. meta-estimators and a multi metric scorer,
 ``get_metadata_routing`` returns a ``MetadataRouter`` object.
 
+An object which is both a router and a consumer, e.g. a meta-estimator which
+consumes ``sample_weight`` and routes ``sample_weight`` to its sub-estimators,
+routing information includes both information about the object itself (added
+via ``MetadataRouter.add_self_request``), as well as the routing information
+for its sub-estimators.
+
 A ``MetadataRequest`` instance includes one ``MethodMetadataRequest`` per
 method in ``METHODS``, which includes ``fit``, ``score``, etc.
 
@@ -191,7 +197,7 @@ class MethodMetadataRequest:
         The name of the method to which these requests belong.
     """
 
-    def __init__(self, router, owner, method):
+    def __init__(self, owner, method):
         self._requests = dict()
         self.owner = owner
         self.method = method
@@ -289,7 +295,7 @@ class MethodMetadataRequest:
                 "warning, or to True to consume and use the metadata."
             )
 
-    def _route_params(self, params=None):
+    def _route_params(self, params):
         """Prepare the given parameters to be passed to the method.
 
         The output of this method can be used directly as the input to the
@@ -308,7 +314,6 @@ class MethodMetadataRequest:
         """
         self._check_warnings(params=params)
         unrequested = dict()
-        params = {} if params is None else params
         args = {arg: value for arg, value in params.items() if value is not None}
         res = Bunch()
         for prop, alias in self._requests.items():
@@ -340,10 +345,7 @@ class MethodMetadataRequest:
         obj : dict
             A serialized version of the instance in the form of a dictionary.
         """
-        return {
-            prop: alias if request_is_valid(alias) else alias
-            for prop, alias in self._requests.items()
-        }
+        return self._requests
 
     def __repr__(self):
         return str(self._serialize())
@@ -379,7 +381,7 @@ class MetadataRequest:
             setattr(
                 self,
                 method,
-                MethodMetadataRequest(router=self, owner=owner, method=method),
+                MethodMetadataRequest(owner=owner, method=method),
             )
 
     def _get_param_names(self, method, return_alias, ignore_self=None):
@@ -555,7 +557,8 @@ class MethodMapping:
             A string representing the mapping, it can be:
 
               - `"one-to-one"`: a one to one mapping for all methods.
-              - `"method"`: the name of a single method.
+              - `"method"`: the name of a single method, such as ``fit``,
+                ``transform``, ``score``, etc.
 
         Returns
         -------
@@ -607,12 +610,12 @@ class MetadataRouter:
     def __init__(self, owner):
         self._route_mappings = dict()
         # `_self` is used if the router is also a consumer. _self, (added using
-        # `add_self()`) is treated differently from the other objects which are
-        # stored in _route_mappings.
+        # `add_self_request()`) is treated differently from the other objects
+        # which are stored in _route_mappings.
         self._self = None
         self.owner = owner
 
-    def add_self(self, obj):
+    def add_self_request(self, obj):
         """Add `self` (as a consumer) to the routing.
 
         This method is used if the router is also a consumer, and hence the
@@ -718,7 +721,7 @@ class MetadataRouter:
                             method=callee, return_alias=True, ignore_self=False
                         )
                     )
-        return set(res)
+        return res
 
     def _route_params(self, *, params, method):
         """Prepare the given parameters to be passed to the method.
@@ -852,7 +855,7 @@ class MetadataRouter:
         """
         res = dict()
         if self._self:
-            res["$self"] = self._self._serialize()
+            res["$self_request"] = self._self._serialize()
         for name, route_mapping in self._route_mappings.items():
             res[name] = dict()
             res[name]["mapping"] = route_mapping.mapping._serialize()
@@ -862,7 +865,7 @@ class MetadataRouter:
 
     def __iter__(self):
         if self._self:
-            yield "$self", RouterMappingPair(
+            yield "$self_request", RouterMappingPair(
                 mapping=MethodMapping.from_str("one-to-one"), router=self._self
             )
         for name, route_mapping in self._route_mappings.items():
@@ -1140,7 +1143,7 @@ class _MetadataRequester:
         method_request : MethodMetadataRequest
             The prepared request using the method's signature.
         """
-        mmr = MethodMetadataRequest(router=router, owner=cls.__name__, method=method)
+        mmr = MethodMetadataRequest(owner=cls.__name__, method=method)
         # Here we use `isfunction` instead of `ismethod` because calling `getattr`
         # on a class instead of an instance returns an unbound function.
         if not hasattr(cls, method) or not inspect.isfunction(getattr(cls, method)):
@@ -1298,9 +1301,6 @@ def process_routing(obj, method, other_params, **kwargs):
     #     fit_params["sample_weight"] = sample_weight
     all_params = other_params if other_params is not None else dict()
     all_params.update(kwargs)
-    all_params = {
-        param: value for param, value in all_params.items() if value is not None
-    }
 
     request_routing = get_routing_for_object(obj)
     request_routing.validate_metadata(params=all_params, method=method)

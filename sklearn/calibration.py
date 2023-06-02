@@ -536,7 +536,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         """
         router = (
             MetadataRouter(owner=self.__class__.__name__)
-            .add_self(self)
+            .add_self_request(self)
             .add(
                 estimator=self._get_estimator(),
                 method_mapping=MethodMapping().add(callee="fit", caller="fit"),

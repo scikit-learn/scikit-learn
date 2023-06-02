@@ -154,7 +154,7 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
     def get_metadata_routing(self):
         router = (
             MetadataRouter(owner=self.__class__.__name__)
-            .add_self(self)
+            .add_self_request(self)
             .add(estimator=self.estimator, method_mapping="one-to-one")
         )
         return router
@@ -196,7 +196,7 @@ class SimpleMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def get_metadata_routing(self):
         router = (
             MetadataRouter(owner=self.__class__.__name__)
-            .add_self(self)
+            .add_self_request(self)
             .add(estimator=self.estimator, method_mapping="fit")
         )
         return router
@@ -309,7 +309,7 @@ def test_assert_request_is_empty():
     # test if a router is empty
     assert_request_is_empty(
         MetadataRouter(owner="test")
-        .add_self(WeightedMetaRegressor(estimator=None))
+        .add_self_request(WeightedMetaRegressor(estimator=None))
         .add(method_mapping="fit", estimator=RegressorMetadata())
     )
 
@@ -654,9 +654,7 @@ def test_setting_default_requests():
 
 
 def test_method_metadata_request():
-    mmr = MethodMetadataRequest(
-        router=MetadataRequest(owner="test"), owner="test", method="fit"
-    )
+    mmr = MethodMetadataRequest(owner="test", method="fit")
 
     with pytest.raises(
         ValueError, match="alias should be either a valid identifier or"
@@ -723,9 +721,9 @@ def test_estimator_warnings():
     "obj, string",
     [
         (
-            MethodMetadataRequest(
-                router=MetadataRequest(owner="test"), owner="test", method="fit"
-            ).add_request(param="foo", alias="bar"),
+            MethodMetadataRequest(owner="test", method="fit").add_request(
+                param="foo", alias="bar"
+            ),
             "{'foo': 'bar'}",
         ),
         (
@@ -775,7 +773,7 @@ def test_string_representations(obj, string):
         ),
         (
             MetadataRouter(owner="test"),
-            "add_self",
+            "add_self_request",
             {"obj": MetadataRouter(owner="test")},
             ValueError,
             "Given `obj` is neither a `MetadataRequest` nor does it implement",
@@ -822,18 +820,18 @@ def test_methodmapping():
     assert repr(mm) == "[{'callee': 'score', 'caller': 'score'}]"
 
 
-def test_metadatarouter_add_self():
+def test_metadatarouter_add_self_request():
     # adding a MetadataRequest as `self` adds a copy
     request = MetadataRequest(owner="nested")
     request.fit.add_request(param="param", alias=True)
-    router = MetadataRouter(owner="test").add_self(request)
+    router = MetadataRouter(owner="test").add_self_request(request)
     assert str(router._self) == str(request)
     # should be a copy, not the same object
     assert router._self is not request
 
     # one can add an estimator as self
     est = RegressorMetadata().set_fit_request(sample_weight="my_weights")
-    router = MetadataRouter(owner="test").add_self(obj=est)
+    router = MetadataRouter(owner="test").add_self_request(obj=est)
     assert str(router._self) == str(est.get_metadata_routing())
     assert router._self is not est.get_metadata_routing()
 
@@ -841,7 +839,7 @@ def test_metadatarouter_add_self():
     est = WeightedMetaRegressor(
         estimator=RegressorMetadata().set_fit_request(sample_weight="nested_weights")
     )
-    router = MetadataRouter(owner="test").add_self(obj=est)
+    router = MetadataRouter(owner="test").add_self_request(obj=est)
     # _get_metadata_request() returns the consumer part of the requests
     assert str(router._self) == str(est._get_metadata_request())
     # get_metadata_routing() returns the complete request set, consumer and
@@ -880,7 +878,7 @@ def test_metadata_routing_add():
 def test_metadata_routing_get_param_names():
     router = (
         MetadataRouter(owner="test")
-        .add_self(
+        .add_self_request(
             WeightedMetaRegressor(estimator=RegressorMetadata()).set_fit_request(
                 sample_weight="self_weights"
             )
@@ -895,7 +893,7 @@ def test_metadata_routing_get_param_names():
 
     assert (
         str(router)
-        == "{'$self': {'fit': {'sample_weight': 'self_weights'}, 'score': "
+        == "{'$self_request': {'fit': {'sample_weight': 'self_weights'}, 'score': "
         "{'sample_weight': None}}, 'trs': {'mapping': [{'callee': 'fit', "
         "'caller': 'fit'}], 'router': {'fit': {'brand': None, "
         "'sample_weight': 'transform_weights'}, 'transform': "
@@ -1000,3 +998,8 @@ def test_no_feature_flag_raises_error():
     with config_context(enable_metadata_routing=False):
         with pytest.raises(RuntimeError, match="This method is only available"):
             ClassifierFitMetadata().set_fit_request(sample_weight=True)
+
+
+def test_none_metadata_passed():
+    """Test that passing None as metadata when not requested doesn't raise"""
+    MetaRegressor(estimator=RegressorMetadata()).fit(X, y, sample_weight=None)
