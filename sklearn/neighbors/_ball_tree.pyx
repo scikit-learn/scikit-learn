@@ -5,16 +5,26 @@ __all__ = ['BallTree']
 
 DOC_DICT = {'BinaryTree': 'BallTree', 'binary_tree': 'ball_tree'}
 
-VALID_METRICS = ['EuclideanDistance64', 'SEuclideanDistance64',
-                 'ManhattanDistance64', 'ChebyshevDistance64',
-                 'MinkowskiDistance64', 'WMinkowskiDistance64',
-                 'MahalanobisDistance64', 'HammingDistance64',
-                 'CanberraDistance64', 'BrayCurtisDistance64',
-                 'JaccardDistance64', 'DiceDistance64',
-                 'RogersTanimotoDistance64', 'RussellRaoDistance64',
-                 'SokalMichenerDistance64', 'SokalSneathDistance64',
-                 'PyFuncDistance64', 'HaversineDistance64']
-
+VALID_METRICS = [
+    'BrayCurtisDistance64',
+    'CanberraDistance64',
+    'ChebyshevDistance64',
+    'DiceDistance64',
+    'EuclideanDistance64',
+    'HammingDistance64',
+    'HaversineDistance64',
+    'JaccardDistance64',
+    'MahalanobisDistance64',
+    'ManhattanDistance64',
+    'MinkowskiDistance64',
+    'PyFuncDistance64',
+    'RogersTanimotoDistance64',
+    'RussellRaoDistance64',
+    'SEuclideanDistance64',
+    'SokalMichenerDistance64',
+    'SokalSneathDistance64',
+    'WMinkowskiDistance64',
+]
 
 include "_binary_tree.pxi"
 

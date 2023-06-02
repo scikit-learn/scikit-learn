@@ -3,10 +3,7 @@
 implementation_specific_values = [
     # Values are the following ones:
     #
-    #       name_suffix, DistanceMetric, INPUT_DTYPE_t, INPUT_DTYPE
-    #
-    # We use DistanceMetric for float64 for backward naming compatibility.
-    #
+    # name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
     ('64', 'DistanceMetric64', 'float64_t', 'np.float64'),
     ('32', 'DistanceMetric32', 'float32_t', 'np.float32')
 ]
