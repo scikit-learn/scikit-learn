@@ -2388,29 +2388,22 @@ def test_learning_curve_partial_fit_regressors():
     learning_curve(MLPRegressor(), X, y, exploit_incremental_learning=True, cv=2)
 
 
-@pytest.mark.parametrize("error_score", [np.nan])
-def test_learning_curve_some_failing_fits_warning(error_score, global_random_seed):
+def test_learning_curve_some_failing_fits_warning():
     """Checks for fit failures in `learning_curve` and raises the required warning"""
 
-    X, y = make_classification(
-        n_classes=3, n_informative=6, shuffle=False, random_state=global_random_seed
-    )
-    svc = SVC(random_state=global_random_seed)
+    X, y = make_classification(n_classes=3, n_informative=6, shuffle=False)
+    svc = SVC()
     svc.fit(X, y)
     warning_message = re.compile(
-        (
-            "10 fits failed out of a total of 50.+The score on these train-test"
-            " partitions for these parameters will be set to nan.+If these failures"
-            " are not expected, you can try to debug them by setting"
-            " error_score='raise'.+ValueError: The number of classes has to be greater"
-            " than one; got 1 class"
-        ),
+        "10 fits failed out of a total of 50.+The score on these train-test"
+        " partitions for these parameters will be set to nan.+If these failures"
+        " are not expected, you can try to debug them by setting"
+        " error_score='raise'.+ValueError: The number of classes has to be greater"
+        " than one; got 1 class",
         flags=re.DOTALL,
     )
     with pytest.warns(FitFailedWarning, match=warning_message):
-        train_sizes, train_scores, test_scores = learning_curve(
-            svc, X, y, cv=10, error_score=error_score
-        )
+        learning_curve(svc, X, y, cv=10, error_score=np.nan)
 
 
 def test_cross_validate_return_indices(global_random_seed):
