@@ -1325,7 +1325,8 @@ def test_gaussian_mixture_precisions_init_diag():
     )
 
 
-def test_gaussian_mixture_precisions_init():
+@pytest.mark.parametrize("covariance_type", COVARIANCE_TYPE)
+def test_gaussian_mixture_precisions_init(covariance_type):
     """Non-regression test for #26415."""
 
     def _generate_data(n_samples, n_features, n_components):
