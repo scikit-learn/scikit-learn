@@ -733,9 +733,10 @@ class Multinomial_LDL_Decomposition:
             eps = 2 * np.finfo(np.float32).resolution
         else:
             eps = 2 * np.finfo(np.float64).resolution
-        if np.any(q[:, -1] > eps):
+        if not np.allclose(q[:, -1], 0, atol=eps):
             warnings.warn(
-                "Probabilities proba are assumed to sum to 1, but they don't."
+                "Probabilities proba are assumed to sum to 1, but they don't.",
+                UserWarning,
             )
         if self.proba_sum_to_1:
             # If np.sum(p, axis=1) = 1 then q[:, -1] = d[:, -1] = 0.
@@ -866,11 +867,10 @@ class Multinomial_LDL_Decomposition:
             Input array x, filled with the result.
         """
         n_classes = self.p.shape[1]
-        for i in range(n_classes - 1, 0, -1):  # row i
-            if i > 0:
-                fj = self.p[:, i] * self.q_inv[:, i - 1]
-            else:
-                fj = self.p[:, i]
+        for i in range(n_classes - 1, 0, -1):  # row i, here i > 0.
+            fj = self.p[:, i] * self.q_inv[:, i - 1]
+            # for i = 0 we would set: fj = self.p[:, i]
+
             # for j in range(0, i):  # column j
             #     x[:, i] += fj * x[:, j]
             # The following is the same but faster.

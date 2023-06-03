@@ -633,3 +633,11 @@ def test_multinomial_LDL_inverse_sqrt_D_Lt_matmul(global_random_seed):
     invDL_x = LDL.inverse_L_sqrt_D_matmul(x.copy())
     LD_invDL_x = LDL.L_sqrt_D_matmul(invDL_x.copy())
     assert_allclose(LD_invDL_x, x)
+
+
+def test_multinomial_LDL_warning():
+    """Test that LDL warns if probabilities do not sum to 1."""
+    p = np.arange(4, dtype=float).reshape((2, 2))
+    msg = "Probabilities proba are assumed to sum to 1, but they don't."
+    with pytest.warns(UserWarning, match=msg):
+        Multinomial_LDL_Decomposition(proba=p, proba_sum_to_1=True)
