@@ -664,6 +664,13 @@ Changelog
   accepts sparse metrics.
   :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
 
+Miscellaneous
+.............
+
+- |Enhancement| Replace obsolete exceptions EnvironmentError, IOError and
+  WindowsError.
+  :pr:`26466` by :user:`Dimitri Papadopoulos ORfanos <DimitriPapadopoulos>`.
+
 Code and Documentation Contributors
 -----------------------------------
 

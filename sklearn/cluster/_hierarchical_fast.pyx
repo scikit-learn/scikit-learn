@@ -3,7 +3,7 @@
 import numpy as np
 cimport cython
 
-from ..metrics._dist_metrics cimport DistanceMetric
+from ..metrics._dist_metrics cimport DistanceMetric64
 from ..utils._fast_dict cimport IntFloatDict
 from ..utils._typedefs cimport float64_t, intp_t, uint8_t
 
@@ -427,7 +427,7 @@ def single_linkage_label(L):
 # Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
 def mst_linkage_core(
         const float64_t [:, ::1] raw_data,
-        DistanceMetric dist_metric):
+        DistanceMetric64 dist_metric):
     """
     Compute the necessary elements of a minimum spanning
     tree for computation of single linkage clustering. This
@@ -444,8 +444,8 @@ def mst_linkage_core(
     raw_data: array of shape (n_samples, n_features)
         The array of feature data to be clustered. Must be C-aligned
 
-    dist_metric: DistanceMetric
-        A DistanceMetric object conforming to the API from
+    dist_metric: DistanceMetric64
+        A DistanceMetric64 object conforming to the API from
         ``sklearn.metrics._dist_metrics.pxd`` that will be
         used to compute distances.
 

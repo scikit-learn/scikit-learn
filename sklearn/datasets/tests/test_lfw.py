@@ -109,7 +109,7 @@ def teardown_module():
 
 
 def test_load_empty_lfw_people():
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         fetch_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA, download_if_missing=False)
 
 
@@ -181,7 +181,7 @@ def test_load_fake_lfw_people_too_restrictive():
 
 
 def test_load_empty_lfw_pairs():
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         fetch_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA, download_if_missing=False)
 
 
