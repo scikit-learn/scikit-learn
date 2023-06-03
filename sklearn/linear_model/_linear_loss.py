@@ -788,18 +788,28 @@ class Multinomial_LDL_Decomposition:
             Input array x, filled with the result.
         """
         n_classes = self.p.shape[1]
+        # precompute
+        px = np.einsum(
+            "ij,ij->i",
+            self.p[:, 1:],
+            x[:, 1:],
+            order="A",
+        )
         for i in range(0, n_classes - 1):  # row i
             # L_ij = -p_i / q_j, we need transpose L'
             # for j in range(i + 1, n_classes):  # column j
             #     x[:, i] -= self.p[:, j] / self.q[:, i] * x[:, j]
             # The following is the same but faster.
-            px = np.einsum(
-                "ij,ij->i",
-                self.p[:, i + 1 : n_classes],
-                x[:, i + 1 : n_classes],
-                order="A",
-            )
+            # px = np.einsum(
+            #     "ij,ij->i",
+            #     self.p[:, i + 1 : n_classes],
+            #     x[:, i + 1 : n_classes],
+            #     order="A",
+            # )
+            # And using precomputed px:
             x[:, i] -= px * self.q_inv[:, i]
+            if i < n_classes - 2:
+                px -= self.p[:, i + 1] * x[:, i + 1]
         x *= self.sqrt_d
         return x
 
@@ -832,13 +842,18 @@ class Multinomial_LDL_Decomposition:
         """
         n_classes = self.p.shape[1]
         x *= self.sqrt_d
+        # precompute
+        qx = np.einsum("ij,ij->i", self.q_inv[:, :-1], x[:, :-1], order="A")
         for i in range(n_classes - 1, 0, -1):  # row i
             # L_ij = -p_i / q_j
             # for j in range(0, i):  # column j
             #     x[:, i] -= self.p[:, i] / self.q[:, j] * x[:, j]
             # The following is the same but faster.
-            qx = np.einsum("ij,ij->i", self.q_inv[:, :i], x[:, :i], order="A")
+            # qx = np.einsum("ij,ij->i", self.q_inv[:, :i], x[:, :i], order="A")
+            # And using precomputed qx:
             x[:, i] -= qx * self.p[:, i]
+            if i > 1:
+                qx -= self.q_inv[:, i - 1] * x[:, i - 1]
         return x
 
     def inverse_L_sqrt_D_matmul(self, x):
@@ -867,6 +882,7 @@ class Multinomial_LDL_Decomposition:
             Input array x, filled with the result.
         """
         n_classes = self.p.shape[1]
+        x_sum = np.sum(x[:, :-1], axis=1)  # precomputation
         for i in range(n_classes - 1, 0, -1):  # row i, here i > 0.
             fj = self.p[:, i] * self.q_inv[:, i - 1]
             # for i = 0 we would set: fj = self.p[:, i]
@@ -874,7 +890,11 @@ class Multinomial_LDL_Decomposition:
             # for j in range(0, i):  # column j
             #     x[:, i] += fj * x[:, j]
             # The following is the same but faster.
-            x[:, i] += fj * np.sum(x[:, :i], axis=1)
+            # x[:, i] += fj * np.sum(x[:, :i], axis=1)
+            # Using precomputation
+            x[:, i] += fj * x_sum
+            if i > 1:
+                x_sum -= x[:, i - 1]
         if self.proba_sum_to_1:
             # x[:, :-1] /= self.sqrt_d[:, :-1]
             mask = self.sqrt_d[:, :-1] == 0
