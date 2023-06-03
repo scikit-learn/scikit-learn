@@ -24,9 +24,10 @@ from sklearn.utils.metadata_routing import get_routing_for_object
 from sklearn.utils.metadata_routing import MetadataRouter
 from sklearn.utils.metadata_routing import MethodMapping
 from sklearn.utils.metadata_routing import process_routing
+from sklearn.utils._metadata_requests import MethodPair
 from sklearn.utils._metadata_requests import MethodMetadataRequest
 from sklearn.utils._metadata_requests import _MetadataRequester
-from sklearn.utils._metadata_requests import METHODS
+from sklearn.utils._metadata_requests import METHODS, SIMPLE_METHODS, COMPOSITE_METHODS
 from sklearn.utils._metadata_requests import request_is_alias
 from sklearn.utils._metadata_requests import request_is_valid
 
@@ -58,7 +59,7 @@ def assert_request_is_empty(metadata_request, exclude=None):
         return
 
     exclude = [] if exclude is None else exclude
-    for method in METHODS:
+    for method in SIMPLE_METHODS:
         if method in exclude:
             continue
         mmr = getattr(metadata_request, method)
@@ -75,7 +76,7 @@ def assert_request_equal(request, dictionary):
         mmr = getattr(request, method)
         assert mmr.requests == requests
 
-    empty_methods = [method for method in METHODS if method not in dictionary]
+    empty_methods = [method for method in SIMPLE_METHODS if method not in dictionary]
     for method in empty_methods:
         assert not len(getattr(request, method).requests)
 
@@ -804,17 +805,9 @@ def test_methodmapping():
     assert mm_list[1] == ("fit", "fit")
 
     mm = MethodMapping.from_str("one-to-one")
-    assert (
-        str(mm)
-        == "[{'callee': 'fit', 'caller': 'fit'}, {'callee': 'partial_fit', 'caller':"
-        " 'partial_fit'}, {'callee': 'predict', 'caller': 'predict'}, {'callee':"
-        " 'predict_proba', 'caller': 'predict_proba'}, {'callee':"
-        " 'predict_log_proba', 'caller': 'predict_log_proba'}, {'callee':"
-        " 'decision_function', 'caller': 'decision_function'}, {'callee': 'score',"
-        " 'caller': 'score'}, {'callee': 'split', 'caller': 'split'}, {'callee':"
-        " 'transform', 'caller': 'transform'}, {'callee': 'inverse_transform',"
-        " 'caller': 'inverse_transform'}]"
-    )
+    for method in METHODS:
+        assert MethodPair(method, method) in mm._routes
+    assert len(mm._routes) == len(METHODS)
 
     mm = MethodMapping.from_str("score")
     assert repr(mm) == "[{'callee': 'score', 'caller': 'score'}]"
@@ -929,6 +922,12 @@ def test_method_generation():
         def fit(self, X, y):
             pass  # pragma: no cover
 
+        def fit_transform(self, X, y):
+            pass
+
+        def fit_predict(self, X, y):
+            pass
+
         def partial_fit(self, X, y):
             pass  # pragma: no cover
 
@@ -964,6 +963,12 @@ def test_method_generation():
         def fit(self, X, y, sample_weight=None):
             pass  # pragma: no cover
 
+        def fit_transform(self, X, y, sample_weight=None):
+            pass
+
+        def fit_predict(self, X, y, sample_weight=None):
+            pass
+
         def partial_fit(self, X, y, sample_weight=None):
             pass  # pragma: no cover
 
@@ -991,8 +996,54 @@ def test_method_generation():
         def inverse_transform(self, X, sample_weight=None):
             pass  # pragma: no cover
 
-    for method in METHODS:
+    # composite methods shouldn't have a corresponding set method.
+    for method in COMPOSITE_METHODS:
+        assert not hasattr(SimpleEstimator(), f"set_{method}_request")
+
+    # simple methods should have a corresponding set method.
+    for method in SIMPLE_METHODS:
         assert hasattr(SimpleEstimator(), f"set_{method}_request")
+
+
+def test_composite_methods():
+    class SimpleEstimator(BaseEstimator):
+        # This class should have every set_{method}_request
+        def fit(self, X, y, foo=None, bar=None):
+            pass
+
+        def predict(self, X, foo=None, bar=None):
+            pass
+
+        def transform(self, X, other_param=None):
+            pass
+
+    est = SimpleEstimator()
+    est.get_metadata_routing().fit_transform._requests == {}
+    est.get_metadata_routing().fit_predict._requests == {}
+
+    # setting the request on only one of them should raise an error
+    est.set_fit_request(foo=True, bar="test")
+    with pytest.raises(ValueError, match="Conflicting metadata requests for"):
+        est.get_metadata_routing().fit_predict
+
+    # setting the request on the other one should fail if not the same as the
+    # first method
+    est.set_predict_request(bar=True)
+    with pytest.raises(ValueError, match="Conflicting metadata requests for"):
+        est.get_metadata_routing().fit_predict
+
+    # now the requests are consistent
+    est.set_predict_request(foo=True, bar="test")
+    est.get_metadata_routing().fit_predict
+
+    # setting the request for a none-overlapping parameter would merge them
+    # together.
+    est.set_transform_request(other_param=True)
+    assert est.get_metadata_routing().fit_transform._requests == {
+        "bar": "test",
+        "foo": True,
+        "other_param": True,
+    }
 
 
 def test_no_feature_flag_raises_error():
