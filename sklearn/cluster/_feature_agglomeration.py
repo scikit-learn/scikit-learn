@@ -9,6 +9,7 @@ import numpy as np
 
 from ..base import TransformerMixin
 from ..utils.validation import check_is_fitted
+from ..utils import metadata_routing
 from scipy.sparse import issparse
 
 ###############################################################################
@@ -19,6 +20,10 @@ class AgglomerationTransform(TransformerMixin):
     """
     A class for feature agglomeration via the transform interface.
     """
+
+    # This prevents ``set_split_inverse_transform`` to be generated for the
+    # non-standard ``Xred`` arg on ``inverse_transform``.
+    __metadata_request__inverse_transform = {"Xred": metadata_routing.UNUSED}
 
     def transform(self, X):
         """

@@ -31,6 +31,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from ..utils import metadata_routing
 
 
 EPSILON = np.finfo(np.float32).eps
@@ -1121,6 +1122,10 @@ def non_negative_factorization(
 
 class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, ABC):
     """Base class for NMF and MiniBatchNMF."""
+
+    # This prevents ``set_split_inverse_transform`` to be generated for the
+    # non-standard ``W`` arg on ``inverse_transform``.
+    __metadata_request__inverse_transform = {"W": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],

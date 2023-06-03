@@ -30,6 +30,7 @@ from .utils import check_pandas_support
 from .utils._param_validation import HasMethods, Hidden
 from .utils._set_output import _safe_set_output, _get_output_config
 from .utils.parallel import delayed, Parallel
+from .utils import metadata_routing
 from .exceptions import NotFittedError
 
 from .utils.metaestimators import _BaseComposition
@@ -139,6 +140,10 @@ class Pipeline(_BaseComposition):
     >>> pipe.score(X_test, y_test)
     0.88
     """
+
+    # This prevents ``set_split_inverse_transform`` to be generated for the
+    # non-standard ``Xt`` arg on ``inverse_transform``.
+    __metadata_request__inverse_transform = {"Xt": metadata_routing.UNUSED}
 
     # BaseEstimator interface
     _required_parameters = ["steps"]

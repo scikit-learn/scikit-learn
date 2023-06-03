@@ -41,6 +41,7 @@ from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.metaestimators import available_if
 from ..utils.parallel import delayed, Parallel
 from ..metrics._scorer import _check_multimetric_scoring, get_scorer_names
+from ..utils import metadata_routing
 from ..metrics import check_scoring
 
 __all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV"]
@@ -371,6 +372,10 @@ def _estimator_has(attr):
 
 class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for hyper parameter search with cross-validation."""
+
+    # This prevents ``set_split_inverse_transform`` to be generated for the
+    # non-standard ``Xt`` arg on ``inverse_transform``.
+    __metadata_request__inverse_transform = {"Xt": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit"])],

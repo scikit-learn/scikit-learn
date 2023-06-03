@@ -24,6 +24,7 @@ from ..utils.validation import _num_samples, check_array, check_is_fitted
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils._encode import _encode, _unique
+from ..utils import metadata_routing
 
 
 __all__ = [
@@ -751,6 +752,10 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     >>> mlb.classes_
     array(['comedy', 'sci-fi', 'thriller'], dtype=object)
     """
+
+    # This prevents ``set_split_inverse_transform`` to be generated for the
+    # non-standard ``yt`` arg on ``inverse_transform``.
+    __metadata_request__inverse_transform = {"yt": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "classes": ["array-like", None],
