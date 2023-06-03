@@ -54,6 +54,13 @@ from .utils.validation import (
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
+from sklearn.utils import Bunch
+from .utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    process_routing,
+    _routing_enabled,
+)
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -282,6 +289,35 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         self.ensemble = ensemble
         self.base_estimator = base_estimator
 
+    def _get_estimator(self):
+        """Resolve which estimator to return (default is LinearSVC)"""
+        # TODO(1.4): Remove when base_estimator is removed
+        if self.base_estimator != "deprecated":
+            if self.estimator is not None:
+                raise ValueError(
+                    "Both `base_estimator` and `estimator` are set. Only set "
+                    "`estimator` since `base_estimator` is deprecated."
+                )
+            warnings.warn(
+                (
+                    "`base_estimator` was renamed to `estimator` in version 1.2 and "
+                    "will be removed in 1.4."
+                ),
+                FutureWarning,
+            )
+            estimator = self.base_estimator
+        else:
+            estimator = self.estimator
+
+        if estimator is None:
+            # we want all classifiers that don't expose a random_state
+            # to be deterministic (and we don't want to expose this one).
+            estimator = LinearSVC(random_state=0, dual="auto")
+            if _routing_enabled():
+                estimator.set_fit_request(sample_weight=True)
+
+        return estimator
+
     def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the calibrated model.
 
@@ -312,28 +348,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
-        # TODO(1.4): Remove when base_estimator is removed
-        if self.base_estimator != "deprecated":
-            if self.estimator is not None:
-                raise ValueError(
-                    "Both `base_estimator` and `estimator` are set. Only set "
-                    "`estimator` since `base_estimator` is deprecated."
-                )
-            warnings.warn(
-                (
-                    "`base_estimator` was renamed to `estimator` in version 1.2 and "
-                    "will be removed in 1.4."
-                ),
-                FutureWarning,
-            )
-            estimator = self.base_estimator
-        else:
-            estimator = self.estimator
-
-        if estimator is None:
-            # we want all classifiers that don't expose a random_state
-            # to be deterministic (and we don't want to expose this one).
-            estimator = LinearSVC(dual="auto", random_state=0)
+        estimator = self._get_estimator()
 
         self.calibrated_classifiers_ = []
         if self.cv == "prefit":
@@ -360,20 +375,34 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             self.classes_ = label_encoder_.classes_
             n_classes = len(self.classes_)
 
-            # sample_weight checks
-            fit_parameters = signature(estimator.fit).parameters
-            supports_sw = "sample_weight" in fit_parameters
-            if sample_weight is not None and not supports_sw:
-                estimator_name = type(estimator).__name__
-                warnings.warn(
-                    f"Since {estimator_name} does not appear to accept sample_weight, "
-                    "sample weights will only be used for the calibration itself. This "
-                    "can be caused by a limitation of the current scikit-learn API. "
-                    "See the following issue for more details: "
-                    "https://github.com/scikit-learn/scikit-learn/issues/21134. Be "
-                    "warned that the result of the calibration is likely to be "
-                    "incorrect."
+            if _routing_enabled():
+                routed_params = process_routing(
+                    obj=self,
+                    method="fit",
+                    sample_weight=sample_weight,
+                    other_params=fit_params,
                 )
+            else:
+                # sample_weight checks
+                fit_parameters = signature(estimator.fit).parameters
+                supports_sw = "sample_weight" in fit_parameters
+                if sample_weight is not None and not supports_sw:
+                    estimator_name = type(estimator).__name__
+                    warnings.warn(
+                        f"Since {estimator_name} does not appear to accept"
+                        " sample_weight, sample weights will only be used for the"
+                        " calibration itself. This can be caused by a limitation of"
+                        " the current scikit-learn API. See the following issue for"
+                        " more details:"
+                        " https://github.com/scikit-learn/scikit-learn/issues/21134."
+                        " Be warned that the result of the calibration is likely to be"
+                        " incorrect."
+                    )
+                routed_params = Bunch()
+                routed_params.splitter = Bunch(split={})  # no routing for splitter
+                routed_params.estimator = Bunch(fit=fit_params)
+                if sample_weight is not None and supports_sw:
+                    routed_params.estimator.fit["sample_weight"] = sample_weight
 
             # Check that each cross-validation fold can have at least one
             # example per class
@@ -404,20 +433,14 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                         test=test,
                         method=self.method,
                         classes=self.classes_,
-                        supports_sw=supports_sw,
                         sample_weight=sample_weight,
-                        **fit_params,
+                        fit_params=routed_params.estimator.fit,
                     )
-                    for train, test in cv.split(X, y)
+                    for train, test in cv.split(X, y, **routed_params.splitter.split)
                 )
             else:
                 this_estimator = clone(estimator)
                 _, method_name = _get_prediction_method(this_estimator)
-                fit_params = (
-                    {"sample_weight": sample_weight}
-                    if sample_weight is not None and supports_sw
-                    else None
-                )
                 pred_method = partial(
                     cross_val_predict,
                     estimator=this_estimator,
@@ -426,16 +449,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     cv=cv,
                     method=method_name,
                     n_jobs=self.n_jobs,
-                    fit_params=fit_params,
+                    fit_params=routed_params.estimator.fit,
                 )
                 predictions = _compute_predictions(
                     pred_method, method_name, X, n_classes
                 )
 
-                if sample_weight is not None and supports_sw:
-                    this_estimator.fit(X, y, sample_weight=sample_weight)
-                else:
-                    this_estimator.fit(X, y)
+                this_estimator.fit(X, y, **routed_params.estimator.fit)
                 # Note: Here we don't pass on fit_params because the supported
                 # calibrators don't support fit_params anyway
                 calibrated_classifier = _fit_calibrator(
@@ -502,6 +522,32 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         check_is_fitted(self)
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
 
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add_self_request(self)
+            .add(
+                estimator=self._get_estimator(),
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+            .add(
+                splitter=self.cv,
+                method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            )
+        )
+        return router
+
     def _more_tags(self):
         return {
             "_xfail_checks": {
@@ -520,11 +566,10 @@ def _fit_classifier_calibrator_pair(
     y,
     train,
     test,
-    supports_sw,
     method,
     classes,
     sample_weight=None,
-    **fit_params,
+    fit_params=None,
 ):
     """Fit a classifier/calibration pair on a given train/test split.
 
@@ -549,9 +594,6 @@ def _fit_classifier_calibrator_pair(
     test : ndarray, shape (n_test_indices,)
         Indices of the testing subset.
 
-    supports_sw : bool
-        Whether or not the `estimator` supports sample weights.
-
     method : {'sigmoid', 'isotonic'}
         Method to use for calibration.
 
@@ -561,7 +603,7 @@ def _fit_classifier_calibrator_pair(
     sample_weight : array-like, default=None
         Sample weights for `X`.
 
-    **fit_params : dict
+    fit_params : dict, default=None
         Parameters to pass to the `fit` method of the underlying
         classifier.
 
@@ -573,11 +615,7 @@ def _fit_classifier_calibrator_pair(
     X_train, y_train = _safe_indexing(X, train), _safe_indexing(y, train)
     X_test, y_test = _safe_indexing(X, test), _safe_indexing(y, test)
 
-    if sample_weight is not None and supports_sw:
-        sw_train = _safe_indexing(sample_weight, train)
-        estimator.fit(X_train, y_train, sample_weight=sw_train, **fit_params_train)
-    else:
-        estimator.fit(X_train, y_train, **fit_params_train)
+    estimator.fit(X_train, y_train, **fit_params_train)
 
     n_classes = len(classes)
     pred_method, method_name = _get_prediction_method(estimator)

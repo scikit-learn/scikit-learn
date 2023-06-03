@@ -104,7 +104,7 @@ def ols_ridge_dataset(global_random_seed, request):
         Last column of 1, i.e. intercept.
     y : ndarray
     coef_ols : ndarray of shape
-        Minimum norm OLS solutions, i.e. min ||X w - y||_2_2 (with mininum ||w||_2 in
+        Minimum norm OLS solutions, i.e. min ||X w - y||_2_2 (with minimum ||w||_2 in
         case of ambiguity)
         Last coefficient is intercept.
     coef_ridge : ndarray of shape (5,)

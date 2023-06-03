@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========================================================
 Ordinary Least Squares and Ridge Regression Variance
