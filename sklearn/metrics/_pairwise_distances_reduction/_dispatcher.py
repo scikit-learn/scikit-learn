@@ -6,7 +6,7 @@ from typing import List
 
 from scipy.sparse import isspmatrix_csr, issparse
 
-from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
+from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING64
 
 from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
 from ._argkmin import (
@@ -76,7 +76,7 @@ class BaseDistancesReductionDispatcher:
             "hamming",
             *BOOL_METRICS,
         }
-        return sorted(({"sqeuclidean"} | set(METRIC_MAPPING.keys())) - excluded)
+        return sorted(({"sqeuclidean"} | set(METRIC_MAPPING64.keys())) - excluded)
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
