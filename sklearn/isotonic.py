@@ -13,13 +13,19 @@ import math
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import check_array, check_consistent_length
 from .utils.validation import _check_sample_weight, check_is_fitted
-from .utils._param_validation import Interval, StrOptions
+from .utils._param_validation import Interval, StrOptions, validate_params
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 
 
 __all__ = ["check_increasing", "isotonic_regression", "IsotonicRegression"]
 
 
+@validate_params(
+    {
+        "x": ["array-like"],
+        "y": ["array-like"],
+    }
+)
 def check_increasing(x, y):
     """Determine whether y is monotonically correlated with x.
 
