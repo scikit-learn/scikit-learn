@@ -1055,7 +1055,7 @@ def roc_curve(
     are reversed upon returning them to ensure they correspond to both ``fpr``
     and ``tpr``, which are sorted in reversed order during their calculation.
 
-    An arbritrary threshold is added for the case `tpr=0` and `fpr=0` to
+    An arbitrary threshold is added for the case `tpr=0` and `fpr=0` to
     ensure that the curve starts at `(0, 0)`. This threshold corresponds to the
     `np.inf`.
 

@@ -965,13 +965,13 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     >>> from sklearn.kernel_approximation import Nystroem
     >>> X, y = datasets.load_digits(n_class=9, return_X_y=True)
     >>> data = X / 16.
-    >>> clf = svm.LinearSVC()
+    >>> clf = svm.LinearSVC(dual="auto")
     >>> feature_map_nystroem = Nystroem(gamma=.2,
     ...                                 random_state=1,
     ...                                 n_components=300)
     >>> data_transformed = feature_map_nystroem.fit_transform(data)
     >>> clf.fit(data_transformed, y)
-    LinearSVC()
+    LinearSVC(dual='auto')
     >>> clf.score(data_transformed, y)
     0.9987...
     """
