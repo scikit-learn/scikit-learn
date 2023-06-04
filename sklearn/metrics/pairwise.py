@@ -919,8 +919,9 @@ def haversine_distances(X, Y=None):
     in radians. The dimension of the data must be 2.
 
     .. math::
-       D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x_lat - y_lat) / 2)
-                                + \\cos(x_lat)\\cos(y_lat)\\sin^2((x_lon - y_lon) / 2)}]
+       D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x_{lat} - y_{lat}) / 2)
+                                + \\cos(x_{lat})\\cos(y_{lat})\\
+                                sin^2((x_{lon} - y_{lon}) / 2)}]
 
     Parameters
     ----------
