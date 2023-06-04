@@ -14,7 +14,7 @@ import numpy as np
 from scipy import sparse
 
 from ..metrics.pairwise import pairwise_distances
-from ._param_validation import Interval, Integral, validate_params
+from ..utils._param_validation import Interval, Integral, validate_params
 
 
 ###############################################################################
