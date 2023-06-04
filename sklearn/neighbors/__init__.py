@@ -5,7 +5,6 @@ algorithm.
 
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
-from ._distance_metric import DistanceMetric
 from ._graph import kneighbors_graph, radius_neighbors_graph
 from ._graph import KNeighborsTransformer, RadiusNeighborsTransformer
 from ._unsupervised import NearestNeighbors
@@ -20,7 +19,6 @@ from ._base import VALID_METRICS, VALID_METRICS_SPARSE
 
 __all__ = [
     "BallTree",
-    "DistanceMetric",
     "KDTree",
     "KNeighborsClassifier",
     "KNeighborsRegressor",

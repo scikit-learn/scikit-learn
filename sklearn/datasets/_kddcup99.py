@@ -110,7 +110,7 @@ def fetch_kddcup99(
         Whether to load only 10 percent of the data.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -252,7 +252,7 @@ def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=Tr
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     percent10 : bool, default=True
@@ -345,7 +345,7 @@ def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=Tr
             X = joblib.load(samples_path)
             y = joblib.load(targets_path)
         except Exception as e:
-            raise IOError(
+            raise OSError(
                 "The cache for fetch_kddcup99 is invalid, please delete "
                 f"{str(kddcup_dir)} and run the fetch_kddcup99 again"
             ) from e
@@ -379,7 +379,7 @@ def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=Tr
         joblib.dump(X, samples_path, compress=0)
         joblib.dump(y, targets_path, compress=0)
     else:
-        raise IOError("Data not found and `download_if_missing` is False")
+        raise OSError("Data not found and `download_if_missing` is False")
 
     return Bunch(
         data=X,

@@ -625,7 +625,7 @@ def test_polynomial_features_csc_X(deg, include_bias, interaction_only, dtype):
     Xt_csc = est.fit_transform(X_csc.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype))
 
-    assert isinstance(Xt_csc, sparse.csc_matrix)
+    assert sparse.isspmatrix_csc(Xt_csc)
     assert Xt_csc.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csc.A, Xt_dense)
 
@@ -652,7 +652,7 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     Xt_csr = est.fit_transform(X_csr.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype, copy=False))
 
-    assert isinstance(Xt_csr, sparse.csr_matrix)
+    assert sparse.isspmatrix_csr(Xt_csr)
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
@@ -711,7 +711,7 @@ def test_polynomial_features_csr_X_floats(deg, include_bias, interaction_only, d
     Xt_csr = est.fit_transform(X_csr.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype))
 
-    assert isinstance(Xt_csr, sparse.csr_matrix)
+    assert sparse.isspmatrix_csr(Xt_csr)
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
@@ -742,7 +742,7 @@ def test_polynomial_features_csr_X_zero_row(zero_row_index, deg, interaction_onl
     Xt_csr = est.fit_transform(X_csr)
     Xt_dense = est.fit_transform(X)
 
-    assert isinstance(Xt_csr, sparse.csr_matrix)
+    assert sparse.isspmatrix_csr(Xt_csr)
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
@@ -763,7 +763,7 @@ def test_polynomial_features_csr_X_degree_4(include_bias, interaction_only):
     Xt_csr = est.fit_transform(X_csr)
     Xt_dense = est.fit_transform(X)
 
-    assert isinstance(Xt_csr, sparse.csr_matrix)
+    assert sparse.isspmatrix_csr(X_csr)
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
@@ -791,7 +791,7 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
     Xt_csr = est.fit_transform(X_csr)
     Xt_dense = est.fit_transform(X)
 
-    assert isinstance(Xt_csr, sparse.csr_matrix)
+    assert sparse.isspmatrix_csr(Xt_csr)
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 

@@ -3,20 +3,8 @@
 implementation_specific_values = [
     # Values are the following ones:
     #
-    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
-    #
-    # On the first hand, an empty string is used for `name_suffix`
-    # for the float64 case as to still be able to expose the original
-    # float64 implementation under the same API, namely `DistanceMetric`.
-    #
-    # On the other hand, '32' bit is used for `name_suffix` for the float32
-    # case to remove ambiguity and use `DistanceMetric32`, which is not
-    # publicly exposed.
-    #
-    # The metric mapping is adapted accordingly to route to the correct
-    # implementations.
-    #
-    ('', 'float64_t', 'np.float64'),
+    # name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
+    ('64', 'float64_t', 'np.float64'),
     ('32', 'float32_t', 'np.float32')
 ]
 
@@ -50,7 +38,6 @@ def newObj(obj):
 
 BOOL_METRICS = [
     "hamming",
-    "matching",
     "jaccard",
     "dice",
     "rogerstanimoto",
@@ -61,6 +48,9 @@ BOOL_METRICS = [
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     BOOL_METRICS += ["kulsinski"]
+if sp_base_version < parse_version("1.9"):
+    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
+    BOOL_METRICS += ["matching"]
 
 def get_valid_metric_ids(L):
     """Given an iterable of metric class names or class identifiers,
@@ -71,9 +61,36 @@ def get_valid_metric_ids(L):
     >>> sorted(L)
     ['cityblock', 'euclidean', 'l1', 'l2', 'manhattan']
     """
-    return [key for (key, val) in METRIC_MAPPING.items()
+    return [key for (key, val) in METRIC_MAPPING64.items()
             if (val.__name__ in L) or (val in L)]
 
+cdef class DistanceMetric:
+    @classmethod
+    def get_metric(cls, metric, dtype=np.float64, **kwargs):
+        """Get the given distance metric from the string identifier.
+
+        See the docstring of DistanceMetric for a list of available metrics.
+
+        Parameters
+        ----------
+        metric : str or class name
+            The distance metric to use
+        dtype : {np.float32, np.float64}, default=np.float64
+            The dtype of the data on which the metric will be applied
+        **kwargs
+            additional arguments will be passed to the requested metric
+        """
+        if dtype == np.float32:
+            specialized_class = DistanceMetric32
+        elif dtype == np.float64:
+            specialized_class = DistanceMetric64
+        else:
+            raise ValueError(
+                f"Unexpected dtype {dtype} provided. Please select a dtype from"
+                " {np.float32, np.float64}"
+            )
+
+        return specialized_class.get_metric(metric, **kwargs)
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
@@ -92,7 +109,6 @@ METRIC_MAPPING{{name_suffix}} = {
     'infinity': ChebyshevDistance{{name_suffix}},
     'seuclidean': SEuclideanDistance{{name_suffix}},
     'mahalanobis': MahalanobisDistance{{name_suffix}},
-    'wminkowski': WMinkowskiDistance{{name_suffix}},
     'hamming': HammingDistance{{name_suffix}},
     'canberra': CanberraDistance{{name_suffix}},
     'braycurtis': BrayCurtisDistance{{name_suffix}},
@@ -124,7 +140,7 @@ cdef {{INPUT_DTYPE_t}} INF{{name_suffix}} = np.inf
 
 ######################################################################
 # Distance Metric Classes
-cdef class DistanceMetric{{name_suffix}}:
+cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     """DistanceMetric class
 
     This class provides a uniform interface to fast distance metric
@@ -155,17 +171,9 @@ cdef class DistanceMetric{{name_suffix}}:
     "manhattan"     ManhattanDistance     -         ``sum(|x - y|)``
     "chebyshev"     ChebyshevDistance     -         ``max(|x - y|)``
     "minkowski"     MinkowskiDistance     p, w      ``sum(w * |x - y|^p)^(1/p)``
-    "wminkowski"    WMinkowskiDistance    p, w      ``sum(|w * (x - y)|^p)^(1/p)``
     "seuclidean"    SEuclideanDistance    V         ``sqrt(sum((x - y)^2 / V))``
     "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
     ==============  ====================  ========  ===============================
-
-    .. deprecated:: 1.1
-        `WMinkowskiDistance` is deprecated in version 1.1 and will be removed in version 1.3.
-        Use `MinkowskiDistance` instead. Note that in `MinkowskiDistance`, the weights are
-        applied to the absolute differences already raised to the p power. This is different from
-        `WMinkowskiDistance` where weights are applied to the absolute differences before raising
-        to the p power. The deprecation aims to remain consistent with SciPy 1.8 convention.
 
     **Metrics intended for two-dimensional vector spaces:**  Note that the haversine
     distance metric requires data in the form of [latitude, longitude] and both
@@ -1444,160 +1452,6 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         )
 
 #------------------------------------------------------------
-# TODO: Remove in 1.3 - WMinkowskiDistance class
-# W-Minkowski Distance
-cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
-    r"""Weighted Minkowski Distance
-
-    .. math::
-       D(x, y) = [\sum_i |w_i * (x_i - y_i)|^p] ^ (1/p)
-
-    Weighted Minkowski Distance requires p >= 1 and finite.
-
-    Parameters
-    ----------
-    p : int
-        The order of the norm of the difference :math:`{||u-v||}_p`.
-    w : (N,) array-like
-        The weight vector.
-
-    """
-    def __init__(self, p, w):
-        from warnings import warn
-        warn("WMinkowskiDistance is deprecated in version 1.1 and will be "
-            "removed in version 1.3. Use MinkowskiDistance instead. Note "
-            "that in MinkowskiDistance, the weights are applied to the "
-            "absolute differences raised to the p power. This is different "
-            "from WMinkowskiDistance where weights are applied to the "
-            "absolute differences before raising to the p power. "
-            "The deprecation aims to remain consistent with SciPy 1.8 "
-            "convention.", FutureWarning)
-
-        if p < 1:
-            raise ValueError("p must be greater than 1")
-        elif np.isinf(p):
-            raise ValueError("WMinkowskiDistance requires finite p. "
-                             "For p=inf, use ChebyshevDistance.")
-        self.p = p
-        self.vec = np.asarray(w, dtype=np.float64)
-        self.size = self.vec.shape[0]
-
-    def _validate_data(self, X):
-        if X.shape[1] != self.size:
-            raise ValueError('WMinkowskiDistance dist: '
-                             'size of w does not match')
-
-    cdef inline float64_t rdist(
-        self,
-        const {{INPUT_DTYPE_t}}* x1,
-        const {{INPUT_DTYPE_t}}* x2,
-        intp_t size,
-    ) except -1 nogil:
-
-        cdef float64_t d = 0
-        cdef intp_t j
-        for j in range(size):
-            d += (pow(self.vec[j] * fabs(x1[j] - x2[j]), self.p))
-        return d
-
-    cdef inline float64_t dist(
-        self,
-        const {{INPUT_DTYPE_t}}* x1,
-        const {{INPUT_DTYPE_t}}* x2,
-        intp_t size,
-    ) except -1 nogil:
-        return pow(self.rdist(x1, x2, size), 1. / self.p)
-
-    cdef inline float64_t _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil:
-        return pow(rdist, 1. / self.p)
-
-    cdef inline float64_t _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil:
-        return pow(dist, self.p)
-
-    def rdist_to_dist(self, rdist):
-        return rdist ** (1. / self.p)
-
-    def dist_to_rdist(self, dist):
-        return dist ** self.p
-
-    cdef inline float64_t rdist_csr(
-        self,
-        const {{INPUT_DTYPE_t}}* x1_data,
-        const int32_t[:] x1_indices,
-        const {{INPUT_DTYPE_t}}* x2_data,
-        const int32_t[:] x2_indices,
-        const int32_t x1_start,
-        const int32_t x1_end,
-        const int32_t x2_start,
-        const int32_t x2_end,
-        const intp_t size,
-    ) except -1 nogil:
-
-        cdef:
-            intp_t ix1, ix2
-            intp_t i1 = x1_start
-            intp_t i2 = x2_start
-
-            float64_t d = 0.0
-
-        while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
-
-            if ix1 == ix2:
-                d = d + pow(self.vec[ix1] * fabs(
-                    x1_data[i1] - x2_data[i2]
-                ), self.p)
-                i1 = i1 + 1
-                i2 = i2 + 1
-            elif ix1 < ix2:
-                d = d + pow(self.vec[ix1] * fabs(x1_data[i1]), self.p)
-                i1 = i1 + 1
-            else:
-                d = d + pow(self.vec[ix2] * fabs(x2_data[i2]), self.p)
-                i2 = i2 + 1
-
-        if i1 == x1_end:
-            while i2 < x2_end:
-                ix2 = x2_indices[i2]
-                d = d + pow(self.vec[ix2] * fabs(x2_data[i2]), self.p)
-                i2 = i2 + 1
-        else:
-            while i1 < x1_end:
-                ix1 = x1_indices[i1]
-                d = d + pow(self.vec[ix1] * fabs(x1_data[i1]), self.p)
-                i1 = i1 + 1
-
-        return d
-
-    cdef inline float64_t dist_csr(
-        self,
-        const {{INPUT_DTYPE_t}}* x1_data,
-        const int32_t[:] x1_indices,
-        const {{INPUT_DTYPE_t}}* x2_data,
-        const int32_t[:] x2_indices,
-        const int32_t x1_start,
-        const int32_t x1_end,
-        const int32_t x2_start,
-        const int32_t x2_end,
-        const intp_t size,
-    ) except -1 nogil:
-        return pow(
-            self.rdist_csr(
-                x1_data,
-                x1_indices,
-                x2_data,
-                x2_indices,
-                x1_start,
-                x1_end,
-                x2_start,
-                x2_end,
-                size,
-            ),
-            1 / self.p
-        )
-
-#------------------------------------------------------------
 # Mahalanobis Distance
 #  d = sqrt( (x - y)^T V^-1 (x - y) )
 cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
@@ -2454,7 +2308,7 @@ cdef class RussellRaoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             else:
                 i2 = i2 + 1
 
-        # We don't need to go through all the longuest
+        # We don't need to go through all the longest
         # vector because tf1 or tf2 will be false
         # and thus n_tt won't be increased.
 
