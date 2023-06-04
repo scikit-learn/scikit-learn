@@ -541,7 +541,7 @@ class NewtonCholeskySolver(NewtonSolver):
 
 
 class NewtonLSMRSolver(NewtonSolver):
-    """LSMR based Newton solver.
+    """LSMR based inexact Newton solver.
 
     The inner solver uses LSMR [1] after the Newton update is cast into the iteratively
     reweighted least squares (IRLS) formulation. This means
@@ -614,11 +614,11 @@ class NewtonLSMRSolver(NewtonSolver):
             shape=n_features, fill_value=np.sqrt(self.l2_reg_strength), dtype=X.dtype
         )
 
-        # In the inner_solve with LSMR, we set atol ~ 1 / ||A|| with the Frobenius norm
-        # ||A|| of A, see below. We track this in every iteration with self.A_norm. For
-        # the first call of inner_solve, we need an initial estimation of ||A||. We
-        # assume h = 1 and get
-        #     ||A||^2 = ||X||^2 + sqrt(l2_reg_strength) ||sqrt(P)||^2
+        # In the inner_solve with LSMR, we set atol ~ 1 / (||A|| * ||r||) with the
+        # Frobenius norm ||A||, see below. We track this in every iteration with
+        # self.A_norm and self.r_norm. For the first call of inner_solve, we need an
+        # initial estimation of ||A||. We assume h = 1 and get
+        #   ||A||^2 = ||X||^2 + sqrt(l2_reg_strength) ||sqrt(P)||^2
         # if scipy.sparse.issparse(X):
         #     A_norm = scipy.sparse.linalg.norm(X) ** 2
         # else:
@@ -748,9 +748,8 @@ class NewtonLSMRSolver(NewtonSolver):
             # diagonal in n_samples ** 2, i.e. effectively a 3-dimensional matrix.
             # To accomplish this, we need the Cholesky or LDL' decomposition of h
             #   h = diag(p) - p' p
-            # or with indices
+            # or with indices i and j for classes
             #   h_ij = p_i * delta_ij - p_i * p_j
-            # where i and j are indices of classes.
             # This holds for every single point (n_sample). To tackle this, we use the
             # class Multinomial_LDL_Decomposition, which provides further details.
             #
@@ -785,10 +784,10 @@ class NewtonLSMRSolver(NewtonSolver):
 
             # For ravelled results we use the convention that all values for the same
             # class are in sequence. For n_classes = 2, the ravelled b looks like
-            #  [            -g_over_h[:, 0]]    n_samples elements of class 0
-            #  [-self.sqrt_P * coef.T[:, 0]]    n_features elements of class 0
-            #  [            -g_over_h[:, 1]]    n_samples elements of class 1
-            #  [-self.sqrt_P * coef.T[:, 1]]    n_features elements of class 1
+            #   [            -g_over_h[:, 0]]    n_samples elements of class 0
+            #   [-self.sqrt_P * coef.T[:, 0]]    n_features elements of class 0
+            #   [            -g_over_h[:, 1]]    n_samples elements of class 1
+            #   [-self.sqrt_P * coef.T[:, 1]]    n_features elements of class 1
             # Note that this convention is different from
             # LinearModelLoss.gradient_hessian_product which expects raveled coef to
             # to have all classes in sequence.
@@ -889,9 +888,15 @@ class NewtonLSMRSolver(NewtonSolver):
     def inner_solve(self, X, y, sample_weight):
         """Compute Newton step.
 
-        Sets self.coef_newton via LSMR.
-        Also sets self.A_norm and self.r_norm for better control over tolerance in
-        LSMR.
+        Sets:
+            - self.coef_newton via LSMR
+              As LSMR is an iterative method, NewtonLSMRSolver is an inexact Newton
+              method.
+            - self.gradient_times_newton
+            - self.A_norm
+            - self.r_norm
+
+        A_norm and r_norm are used for the inner tolerance used in LSMR.
         """
         n_samples, n_features = X.shape
         if not self.linear_loss.base_loss.is_multiclass:
@@ -899,7 +904,7 @@ class NewtonLSMRSolver(NewtonSolver):
         else:
             n_classes = self.linear_loss.base_loss.n_classes
         A, b = self.compute_A_b(X, y, sample_weight)
-        # Note that the choice of atol is essential for stability and for computation
+        # The choice of atol in LSMR is essential for stability and for computation
         # time. For n_samples > n_features, we most certainly have a least squares
         # problem (no solution to the linear equation A x = b), such that the following
         # stopping criterion with residual r = b - A x applies:
