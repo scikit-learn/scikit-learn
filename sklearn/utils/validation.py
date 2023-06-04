@@ -78,11 +78,9 @@ def _deprecate_positional_args(func=None, *, version="1.3"):
             ]
             args_msg = ", ".join(args_msg)
             warnings.warn(
-                (
-                    f"Pass {args_msg} as keyword args. From version "
-                    f"{version} passing these as positional arguments "
-                    "will result in an error"
-                ),
+                f"Pass {args_msg} as keyword args. From version "
+                f"{version} passing these as positional arguments "
+                "will result in an error",
                 FutureWarning,
             )
             kwargs.update(zip(sig.parameters, args))
@@ -1237,11 +1235,9 @@ def column_or_1d(y, *, dtype=None, warn=False):
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
-                (
-                    "A column-vector y was passed when a 1d array was"
-                    " expected. Please change the shape of y to "
-                    "(n_samples, ), for example using ravel()."
-                ),
+                "A column-vector y was passed when a 1d array was"
+                " expected. Please change the shape of y to "
+                "(n_samples, ), for example using ravel().",
                 DataConversionWarning,
                 stacklevel=2,
             )
@@ -1354,10 +1350,8 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
             raise ValueError("Array must be symmetric")
         if raise_warning:
             warnings.warn(
-                (
-                    "Array is not symmetric, and will be converted "
-                    "to symmetric by average with its transpose."
-                ),
+                "Array is not symmetric, and will be converted "
+                "to symmetric by average with its transpose.",
                 stacklevel=2,
             )
         if sp.issparse(array):

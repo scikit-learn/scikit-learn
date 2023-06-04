@@ -229,11 +229,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             X_int[:, i] = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
         if columns_with_unknown:
             warnings.warn(
-                (
-                    "Found unknown categories in columns "
-                    f"{columns_with_unknown} during transform. These "
-                    "unknown categories will be encoded as all zeros"
-                ),
+                "Found unknown categories in columns "
+                f"{columns_with_unknown} during transform. These "
+                "unknown categories will be encoded as all zeros",
                 UserWarning,
             )
 
@@ -975,11 +973,9 @@ class OneHotEncoder(_BaseEncoder):
 
         if self.sparse != "deprecated":
             warnings.warn(
-                (
-                    "`sparse` was renamed to `sparse_output` in version 1.2 and "
-                    "will be removed in 1.4. `sparse_output` is ignored unless you "
-                    "leave `sparse` to its default value."
-                ),
+                "`sparse` was renamed to `sparse_output` in version 1.2 and "
+                "will be removed in 1.4. `sparse_output` is ignored unless you "
+                "leave `sparse` to its default value.",
                 FutureWarning,
             )
             self.sparse_output = self.sparse

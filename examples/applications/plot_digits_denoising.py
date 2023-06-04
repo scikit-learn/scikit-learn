@@ -135,10 +135,8 @@ plot_digits(
 )
 plot_digits(
     X_reconstructed_kernel_pca,
-    (
-        "Kernel PCA reconstruction\n"
-        f"MSE: {np.mean((X_test - X_reconstructed_kernel_pca) ** 2):.2f}"
-    ),
+    "Kernel PCA reconstruction\n"
+    f"MSE: {np.mean((X_test - X_reconstructed_kernel_pca) ** 2):.2f}",
 )
 
 # %%

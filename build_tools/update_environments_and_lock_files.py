@@ -90,7 +90,8 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
-        "conda_dependencies": common_dependencies + [
+        "conda_dependencies": common_dependencies
+        + [
             "ccache",
             "pytorch",
             "pytorch-cpu",
@@ -106,7 +107,8 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "osx-64",
         "channel": "conda-forge",
-        "conda_dependencies": common_dependencies + [
+        "conda_dependencies": common_dependencies
+        + [
             "ccache",
             "compilers",
             "llvm-openmp",
@@ -267,7 +269,8 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "win-64",
         "channel": "conda-forge",
-        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"]) + [
+        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
+        + [
             "wheel",
             "pip",
         ],
@@ -281,7 +284,8 @@ conda_build_metadata_list = [
         "folder": "build_tools/circle",
         "platform": "linux-64",
         "channel": "conda-forge",
-        "conda_dependencies": common_dependencies_without_coverage + [
+        "conda_dependencies": common_dependencies_without_coverage
+        + [
             "scikit-image",
             "seaborn",
             "memory_profiler",
@@ -315,7 +319,8 @@ conda_build_metadata_list = [
         "folder": "build_tools/circle",
         "platform": "linux-64",
         "channel": "conda-forge",
-        "conda_dependencies": common_dependencies_without_coverage + [
+        "conda_dependencies": common_dependencies_without_coverage
+        + [
             "scikit-image",
             "seaborn",
             "memory_profiler",
@@ -342,7 +347,8 @@ conda_build_metadata_list = [
         "channel": "conda-forge",
         "conda_dependencies": remove_from(
             common_dependencies_without_coverage, ["pandas", "pyamg"]
-        ) + ["pip", "ccache"],
+        )
+        + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.9",
         },
@@ -438,7 +444,8 @@ environment.filters["get_package_with_constraint"] = get_package_with_constraint
 
 
 def get_conda_environment_content(build_metadata):
-    template = environment.from_string("""
+    template = environment.from_string(
+        """
 # DO NOT EDIT: this file is generated from the specification found in the
 # following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
@@ -454,7 +461,8 @@ dependencies:
   {% for pip_dep in build_metadata.get('pip_dependencies', []) %}
     - {{ pip_dep | get_package_with_constraint(build_metadata, uses_pip=True) }}
   {% endfor %}
-  {% endif %}""".strip())
+  {% endif %}""".strip()
+    )
     return template.render(build_metadata=build_metadata)
 
 
@@ -501,13 +509,15 @@ def write_all_conda_lock_files(build_metadata_list):
 
 
 def get_pip_requirements_content(build_metadata):
-    template = environment.from_string("""
+    template = environment.from_string(
+        """
 # DO NOT EDIT: this file is generated from the specification found in the
 # following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 {% for pip_dep in build_metadata['pip_dependencies'] %}
 {{ pip_dep | get_package_with_constraint(build_metadata, uses_pip=True) }}
-{% endfor %}""".strip())
+{% endfor %}""".strip()
+    )
     return template.render(build_metadata=build_metadata)
 
 

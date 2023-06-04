@@ -271,10 +271,8 @@ display = PartialDependenceDisplay.from_estimator(
 )
 print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle(
-    (
-        "Partial dependence of the number of bike rentals\n"
-        "for the bike rental dataset with an MLPRegressor"
-    ),
+    "Partial dependence of the number of bike rentals\n"
+    "for the bike rental dataset with an MLPRegressor",
     fontsize=16,
 )
 
@@ -325,10 +323,8 @@ display = PartialDependenceDisplay.from_estimator(
 )
 print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle(
-    (
-        "Partial dependence of the number of bike rentals\n"
-        "for the bike rental dataset with a gradient boosting"
-    ),
+    "Partial dependence of the number of bike rentals\n"
+    "for the bike rental dataset with a gradient boosting",
     fontsize=16,
 )
 

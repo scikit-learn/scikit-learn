@@ -619,10 +619,8 @@ def compute_optics_graph(
             )
     if np.all(np.isinf(reachability_)):
         warnings.warn(
-            (
-                "All reachability values are inf. Set a larger"
-                " max_eps or all data will be considered outliers."
-            ),
+            "All reachability values are inf. Set a larger"
+            " max_eps or all data will be considered outliers.",
             UserWarning,
         )
     return ordering, core_distances_, reachability_, predecessor_

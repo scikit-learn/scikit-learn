@@ -168,12 +168,10 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         if self._strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
             warnings.warn(
-                (
-                    "A local copy of the target data has been converted "
-                    "to a numpy array. Predicting on sparse target data "
-                    "with the uniform strategy would not save memory "
-                    "and would be slower."
-                ),
+                "A local copy of the target data has been converted "
+                "to a numpy array. Predicting on sparse target data "
+                "with the uniform strategy would not save memory "
+                "and would be slower.",
                 UserWarning,
             )
 

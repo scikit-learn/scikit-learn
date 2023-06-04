@@ -707,11 +707,9 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
-                (
-                    "Maximum number of iteration reached before "
-                    "convergence. Consider increasing max_iter to "
-                    "improve the fit."
-                ),
+                "Maximum number of iteration reached before "
+                "convergence. Consider increasing max_iter to "
+                "improve the fit.",
                 ConvergenceWarning,
             )
         return self
@@ -1555,11 +1553,9 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
-                (
-                    "Maximum number of iteration reached before "
-                    "convergence. Consider increasing max_iter to "
-                    "improve the fit."
-                ),
+                "Maximum number of iteration reached before "
+                "convergence. Consider increasing max_iter to "
+                "improve the fit.",
                 ConvergenceWarning,
             )
 
@@ -2443,11 +2439,9 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
-                (
-                    "Maximum number of iteration reached before "
-                    "convergence. Consider increasing max_iter to "
-                    "improve the fit."
-                ),
+                "Maximum number of iteration reached before "
+                "convergence. Consider increasing max_iter to "
+                "improve the fit.",
                 ConvergenceWarning,
             )
 

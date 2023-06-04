@@ -1214,10 +1214,8 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response, dataset_params):
             40945,
             {"data_id": 40945, "as_frame": False},
             ValueError,
-            (
-                "STRING attributes are not supported for array representation. Try"
-                " as_frame=True"
-            ),
+            "STRING attributes are not supported for array representation. Try"
+            " as_frame=True",
         ),
         (
             2,

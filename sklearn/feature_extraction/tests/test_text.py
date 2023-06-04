@@ -1502,10 +1502,8 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
     "Vectorizer", [CountVectorizer, HashingVectorizer, TfidfVectorizer]
 )
 @pytest.mark.parametrize(
-    (
-        "stop_words, tokenizer, preprocessor, ngram_range, token_pattern,"
-        "analyzer, unused_name, ovrd_name, ovrd_msg"
-    ),
+    "stop_words, tokenizer, preprocessor, ngram_range, token_pattern,"
+    "analyzer, unused_name, ovrd_name, ovrd_msg",
     [
         (
             ["you've", "you'll"],

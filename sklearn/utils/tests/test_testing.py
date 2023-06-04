@@ -452,27 +452,19 @@ def test_check_docstring_parameters():
     mock_meta = MockMetaEstimator(delegate=MockEst())
     mock_meta_name = mock_meta.__class__.__name__
     assert incorrect == [
-        (
-            "sklearn.utils.tests.test_testing.f_check_param_definition There "
-            "was no space between the param name and colon ('a: int')"
-        ),
-        (
-            "sklearn.utils.tests.test_testing.f_check_param_definition There "
-            "was no space between the param name and colon ('b:')"
-        ),
-        (
-            "sklearn.utils.tests.test_testing.f_check_param_definition There "
-            "was no space between the param name and colon ('d:int')"
-        ),
+        "sklearn.utils.tests.test_testing.f_check_param_definition There "
+        "was no space between the param name and colon ('a: int')",
+        "sklearn.utils.tests.test_testing.f_check_param_definition There "
+        "was no space between the param name and colon ('b:')",
+        "sklearn.utils.tests.test_testing.f_check_param_definition There "
+        "was no space between the param name and colon ('d:int')",
     ]
 
     messages = [
         [
             "In function: sklearn.utils.tests.test_testing.f_bad_order",
-            (
-                "There's a parameter name mismatch in function docstring w.r.t."
-                " function signature, at index 0 diff: 'b' != 'a'"
-            ),
+            "There's a parameter name mismatch in function docstring w.r.t."
+            " function signature, at index 0 diff: 'b' != 'a'",
             "Full diff:",
             "- ['b', 'a']",
             "+ ['a', 'b']",
@@ -480,10 +472,8 @@ def test_check_docstring_parameters():
         [
             "In function: "
             + "sklearn.utils.tests.test_testing.f_too_many_param_docstring",
-            (
-                "Parameters in function docstring have more items w.r.t. function"
-                " signature, first extra item: c"
-            ),
+            "Parameters in function docstring have more items w.r.t. function"
+            " signature, first extra item: c",
             "Full diff:",
             "- ['a', 'b']",
             "+ ['a', 'b', 'c']",
@@ -491,20 +481,16 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: sklearn.utils.tests.test_testing.f_missing",
-            (
-                "Parameters in function docstring have less items w.r.t. function"
-                " signature, first missing item: b"
-            ),
+            "Parameters in function docstring have less items w.r.t. function"
+            " signature, first missing item: b",
             "Full diff:",
             "- ['a', 'b']",
             "+ ['a']",
         ],
         [
             "In function: sklearn.utils.tests.test_testing.Klass.f_missing",
-            (
-                "Parameters in function docstring have less items w.r.t. function"
-                " signature, first missing item: X"
-            ),
+            "Parameters in function docstring have less items w.r.t. function"
+            " signature, first missing item: X",
             "Full diff:",
             "- ['X', 'y']",
             "+ []",
@@ -512,10 +498,8 @@ def test_check_docstring_parameters():
         [
             "In function: "
             + f"sklearn.utils.tests.test_testing.{mock_meta_name}.predict",
-            (
-                "There's a parameter name mismatch in function docstring w.r.t."
-                " function signature, at index 0 diff: 'X' != 'y'"
-            ),
+            "There's a parameter name mismatch in function docstring w.r.t."
+            " function signature, at index 0 diff: 'X' != 'y'",
             "Full diff:",
             "- ['X']",
             "?   ^",
@@ -539,10 +523,8 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: " + f"sklearn.utils.tests.test_testing.{mock_meta_name}.fit",
-            (
-                "Parameters in function docstring have less items w.r.t. function"
-                " signature, first missing item: X"
-            ),
+            "Parameters in function docstring have less items w.r.t. function"
+            " signature, first missing item: X",
             "Full diff:",
             "- ['X', 'y']",
             "+ []",

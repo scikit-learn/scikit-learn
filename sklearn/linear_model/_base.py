@@ -114,14 +114,12 @@ def _deprecate_normalize(normalize, estimator_name):
         )
     elif not normalize:
         warnings.warn(
-            (
-                "'normalize' was deprecated in version 1.2 and will be "
-                "removed in 1.4. "
-                "Please leave the normalize parameter to its default value to "
-                "silence this warning. The default behavior of this estimator "
-                "is to not do any normalization. If normalization is needed "
-                "please use sklearn.preprocessing.StandardScaler instead."
-            ),
+            "'normalize' was deprecated in version 1.2 and will be "
+            "removed in 1.4. "
+            "Please leave the normalize parameter to its default value to "
+            "silence this warning. The default behavior of this estimator "
+            "is to not do any normalization. If normalization is needed "
+            "please use sklearn.preprocessing.StandardScaler instead.",
             FutureWarning,
         )
 
@@ -874,10 +872,8 @@ def _pre_fit(
             and not np.allclose(X_scale, np.ones(n_features))
         ):
             warnings.warn(
-                (
-                    "Gram matrix was provided but X was centered to fit "
-                    "intercept, or X was normalized : recomputing Gram matrix."
-                ),
+                "Gram matrix was provided but X was centered to fit "
+                "intercept, or X was normalized : recomputing Gram matrix.",
                 UserWarning,
             )
             # recompute Gram

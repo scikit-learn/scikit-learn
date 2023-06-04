@@ -42,10 +42,8 @@ def squared_norm(x):
     x = np.ravel(x, order="K")
     if np.issubdtype(x.dtype, np.integer):
         warnings.warn(
-            (
-                "Array type is integer, np.dot may overflow. "
-                "Data should be float type to avoid this issue"
-            ),
+            "Array type is integer, np.dot may overflow. "
+            "Data should be float type to avoid this issue",
             UserWarning,
         )
     return np.dot(x, x)
@@ -143,10 +141,8 @@ def density(w, **kwargs):
     """
     if kwargs:
         warnings.warn(
-            (
-                "Additional keyword arguments are deprecated in version 1.2 and will be"
-                " removed in version 1.4."
-            ),
+            "Additional keyword arguments are deprecated in version 1.2 and will be"
+            " removed in version 1.4.",
             FutureWarning,
         )
 
@@ -1147,10 +1143,8 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
         )
     ):
         warnings.warn(
-            (
-                "cumsum was found to be unstable: "
-                "its last element does not correspond to sum"
-            ),
+            "cumsum was found to be unstable: "
+            "its last element does not correspond to sum",
             RuntimeWarning,
         )
     return out

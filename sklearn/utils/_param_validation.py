@@ -592,10 +592,8 @@ class _Booleans(_Constraint):
         # TODO(1.4) remove support for Integral.
         if isinstance(val, Integral) and not isinstance(val, bool):
             warnings.warn(
-                (
-                    "Passing an int for a boolean parameter is deprecated in version"
-                    " 1.2 and won't be supported anymore in version 1.4."
-                ),
+                "Passing an int for a boolean parameter is deprecated in version"
+                " 1.2 and won't be supported anymore in version 1.4.",
                 FutureWarning,
             )
 

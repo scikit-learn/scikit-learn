@@ -824,11 +824,9 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
             else:
                 scores = error_score
                 warnings.warn(
-                    (
-                        "Scoring failed. The score on this train-test partition for "
-                        f"these parameters will be set to {error_score}. Details: \n"
-                        f"{format_exc()}"
-                    ),
+                    "Scoring failed. The score on this train-test partition for "
+                    f"these parameters will be set to {error_score}. Details: \n"
+                    f"{format_exc()}",
                     UserWarning,
                 )
 
@@ -842,11 +840,9 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
             for name, str_e in exception_messages:
                 scores[name] = error_score
                 warnings.warn(
-                    (
-                        "Scoring failed. The score on this train-test partition for "
-                        f"these parameters will be set to {error_score}. Details: \n"
-                        f"{str_e}"
-                    ),
+                    "Scoring failed. The score on this train-test partition for "
+                    f"these parameters will be set to {error_score}. Details: \n"
+                    f"{str_e}",
                     UserWarning,
                 )
 

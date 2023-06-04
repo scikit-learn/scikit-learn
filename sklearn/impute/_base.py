@@ -663,9 +663,8 @@ class SimpleImputer(_BaseImputer):
 
     def _more_tags(self):
         return {
-            "allow_nan": _is_pandas_na(self.missing_values) or is_scalar_nan(
-                self.missing_values
-            )
+            "allow_nan": _is_pandas_na(self.missing_values)
+            or is_scalar_nan(self.missing_values)
         }
 
     def get_feature_names_out(self, input_features=None):

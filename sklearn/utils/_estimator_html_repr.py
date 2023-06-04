@@ -363,7 +363,11 @@ _STYLE = """
 #$id div.sk-text-repr-fallback {
   display: none;
 }
-""".replace("  ", "").replace("\n", "")  # noqa
+""".replace(
+    "  ", ""
+).replace(
+    "\n", ""
+)  # noqa
 
 
 def estimator_html_repr(estimator):

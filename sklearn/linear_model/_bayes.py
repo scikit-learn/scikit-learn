@@ -50,10 +50,8 @@ def _deprecate_n_iter(n_iter, max_iter):
                 " 1.5. To avoid this error, only set the `max_iter` attribute."
             )
         warnings.warn(
-            (
-                "'n_iter' was renamed to 'max_iter' in version 1.3 and "
-                "will be removed in 1.5"
-            ),
+            "'n_iter' was renamed to 'max_iter' in version 1.3 and "
+            "will be removed in 1.5",
             FutureWarning,
         )
         max_iter = n_iter

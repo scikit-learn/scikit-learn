@@ -235,12 +235,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         if self.strategy in ("uniform", "kmeans") and self.subsample == "warn":
             warnings.warn(
-                (
-                    "In version 1.5 onwards, subsample=200_000 "
-                    "will be used by default. Set subsample explicitly to "
-                    "silence this warning in the mean time. Set "
-                    "subsample=None to disable subsampling explicitly."
-                ),
+                "In version 1.5 onwards, subsample=200_000 "
+                "will be used by default. Set subsample explicitly to "
+                "silence this warning in the mean time. Set "
+                "subsample=None to disable subsampling explicitly.",
                 FutureWarning,
             )
 

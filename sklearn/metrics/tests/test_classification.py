@@ -692,10 +692,8 @@ def test_likelihood_ratios_warnings(params, warn_msg):
                 "y_true": np.array([0, 1, 0, 1, 0]),
                 "y_pred": np.array([1, 1, 0, 0, 2]),
             },
-            (
-                "class_likelihood_ratios only supports binary classification "
-                "problems, got targets of type: multiclass"
-            ),
+            "class_likelihood_ratios only supports binary classification "
+            "problems, got targets of type: multiclass",
         ),
     ],
 )

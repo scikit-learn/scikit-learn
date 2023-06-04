@@ -327,10 +327,8 @@ def graphical_lasso(
 
     if cov_init is not None:
         warnings.warn(
-            (
-                "The cov_init parameter is deprecated in 1.3 and will be removed in "
-                "1.5. It does not have any effect."
-            ),
+            "The cov_init parameter is deprecated in 1.3 and will be removed in "
+            "1.5. It does not have any effect.",
             FutureWarning,
         )
 
