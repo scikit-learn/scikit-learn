@@ -277,6 +277,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.tree.plot_tree",
     "sklearn.utils.gen_batches",
     "sklearn.utils.resample",
+    "sklearn.utils.class_weight.compute_class_weight",
 ]
 
 
