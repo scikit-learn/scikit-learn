@@ -79,12 +79,6 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.model_selection import GridSearchCV
 
 
-try:
-    WindowsError  # type: ignore
-except NameError:
-    WindowsError = None
-
-
 class MockImprovingEstimator(BaseEstimator):
     """Dummy classifier to test the learning curve"""
 
@@ -2064,7 +2058,7 @@ def test_score_memmap():
             try:
                 os.unlink(tf.name)
                 break
-            except WindowsError:
+            except OSError:
                 sleep(1.0)
 
 
