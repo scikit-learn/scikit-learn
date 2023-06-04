@@ -64,6 +64,7 @@ common_dependencies_without_coverage = [
     "pytest",
     "pytest-xdist",
     "pillow",
+    "setuptools",
 ]
 
 common_dependencies = common_dependencies_without_coverage + [
@@ -123,13 +124,6 @@ conda_build_metadata_list = [
         "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
-            # 2022-06-09 currently mamba install 1.23 and scipy 1.7 which
-            # should be compatible but actually are not. This pin can be
-            # removed when scipy 1.8 is available in conda defaults channel.
-            # For more details, see
-            # https://github.com/scikit-learn/scikit-learn/pull/24363#issuecomment-1236927660
-            # and https://github.com/scipy/scipy/issues/16964
-            "numpy": "1.22",
         },
     },
     {

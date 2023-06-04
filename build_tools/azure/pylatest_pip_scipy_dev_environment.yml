@@ -11,6 +11,7 @@ dependencies:
     - threadpoolctl
     - pytest
     - pytest-xdist==2.5.0
+    - setuptools
     - pytest-cov
     - coverage
     - pooch
