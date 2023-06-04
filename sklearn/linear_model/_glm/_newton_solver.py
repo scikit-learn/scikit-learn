@@ -907,24 +907,40 @@ class NewtonLSMRSolver(NewtonSolver):
         # The choice of atol in LSMR is essential for stability and for computation
         # time. For n_samples > n_features, we most certainly have a least squares
         # problem (no solution to the linear equation A x = b), such that the following
-        # stopping criterion with residual r = b - A x applies:
-        #   ||A' r|| <= atol * ||A|| * ||r||.
-        # As we get the Frobenius norm of A and the norm of r, ||A|| and ||r||
-        # respectively, for free by LSMR, we use it to set a tighter atol by dividing
-        # by ||A|| * min(1, ||r||) which is very likely larger than 1. The effective
-        # stopping criterion becomes approximately
-        #   ||A' r|| <= self.tol * ||r||   with   x = coef_newton   and
+        # stopping criterion with residual r = b - A x and x = coef_newton applies:
+        #   ||A' r|| = ||H x + G|| <= atol * ||A|| * ||r||.
+        # For inexact Newton solvers, res = H x + G is called the residual and one
+        # usually chooses, see Eq. 7.3 Nocedal & Wright 2nd ed, a stopping criterion
+        #   ||res|| = ||A' r|| <= eta * ||G||
+        # with a forcing sequence 0 < eta < 1 (eta_k for iteration k).
+        # As for our Newton conjugate gradient solver "_newton_cg", we set
+        #   eta = min(0.5, np.sqrt(||G||))
+        # which establishes a superlinear rate of convergence.
+        # Fortunately, we get approximations of the Frobenius norm of A and the norm of
+        # r, ||A|| and ||r|| respectively, for free by LSMR such that we can set
+        #   atol = eta * ||G|| / (||A|| * ||r||)
+        # This results in our wished stopping criterion
+        #   ||res|| = ||A' r|| <= eta * ||G||
+        # at least approximately, as we have to use ||A|| and ||r|| from the last and
+        # not the current iteration.
+        #
+        # In the case of perfect interpolation, n_features >= n_samples, we might have
+        # an exact solution to A x = b. LSMR then uses the stopping criterion
+        #   ||r|| <= atol * ||A|| * ||x|| + btol * ||b||.
+        # Note that
         #   1/2 * ||r||^2 = 1/2 * x X' diag(h) X x + g X x
         #                 + 1/2 * l2_reg_strength * (x+x0) P (x+x0)
         #                 + 1/2 *||g/sqrt(h)||^2
-        # Note that coef=x+x0 is just the solution after an iteration. In particular
-        # note that this is just the Taylor series of the objective with the zero
-        # order term obj(x=0) replaced by 1/2 * ||g/sqrt(h)||^2.
+        # with the solution after an iteration coef=x+x0, is just the Taylor series of
+        # the objective with the zero order term obj(x=0) replaced by
+        # 1/2 * ||g/sqrt(h)||^2.
+        norm_G = scipy.linalg.norm(A.T @ b)
+        eta = min(0.5, np.sqrt(norm_G))
         result = scipy.sparse.linalg.lsmr(
             A,
             b,
             damp=0,
-            atol=self.tol / (max(1, self.A_norm) * max(1, self.r_norm)),
+            atol=eta * norm_G / (self.A_norm * self.r_norm),
             btol=self.tol,
             maxiter=max(n_samples, n_features) * n_classes,  # default is min(A.shape)
             show=self.verbose >= 3,
@@ -959,7 +975,7 @@ class NewtonLSMRSolver(NewtonSolver):
             ) @ self.coef_newton.ravel(order="F")
 
         # LSMR reached maxiter or did produce an excessively large newton step.
-        # Note: We could detect too large steps by comparing norms(coef_newton) = normx
+        # Note: We could detect too large steps by comparing norm(coef_newton) = normx
         # with norm(gradient). Instead of the gradient, we use the already available
         # condition number of A.
         if (istop == 7 or normx > 1e2 * conda) and not self.iteration == 1:
