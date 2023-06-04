@@ -6,7 +6,6 @@ channels:
 dependencies:
   - python
   - ccache
-  - sphinx
   - pip
   - pip:
     - threadpoolctl
@@ -15,5 +14,6 @@ dependencies:
     - pytest-cov
     - coverage
     - pooch
+    - sphinx
     - numpydoc
     - python-dateutil

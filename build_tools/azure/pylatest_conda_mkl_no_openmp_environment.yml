@@ -8,6 +8,7 @@ dependencies:
   - numpy=1.22
   - blas[build=mkl]
   - scipy
+  - cython
   - joblib
   - threadpoolctl
   - matplotlib
@@ -17,8 +18,5 @@ dependencies:
   - pytest-xdist=2.5.0
   - pillow
   - pytest-cov
-  - coverage=6.2
+  - coverage
   - ccache
-  - pip
-  - pip:
-    - cython
