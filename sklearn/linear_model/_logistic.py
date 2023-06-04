@@ -483,7 +483,11 @@ def _logistic_regression_path(
             w0 = sol.solve(X=X, y=target, sample_weight=sample_weight)
             n_iter_i = sol.iteration
         elif solver == "liblinear":
-            (coef_, intercept_, n_iter_i,) = _fit_liblinear(
+            (
+                coef_,
+                intercept_,
+                n_iter_i,
+            ) = _fit_liblinear(
                 X,
                 target,
                 C,
@@ -1172,8 +1176,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         # TODO(1.4): Remove "none" option
         if self.penalty == "none":
             warnings.warn(
-                "`penalty='none'`has been deprecated in 1.2 and will be removed in"
-                " 1.4. To keep the past behaviour, set `penalty=None`.",
+                (
+                    "`penalty='none'`has been deprecated in 1.2 and will be removed in"
+                    " 1.4. To keep the past behaviour, set `penalty=None`."
+                ),
                 FutureWarning,
             )
 

@@ -577,8 +577,10 @@ def test_negative_sample_weights_mask_all_samples(Estimator, err_msg, sample_wei
     [
         (
             svm.SVC,
-            "Invalid input - all samples with positive weights belong to the same"
-            " class",
+            (
+                "Invalid input - all samples with positive weights belong to the same"
+                " class"
+            ),
         ),
         (svm.NuSVC, "specified nu is infeasible"),
     ],

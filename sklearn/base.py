@@ -247,9 +247,11 @@ class BaseEstimator(_MetadataRequester):
                 and self.__module__.startswith("sklearn.")
             ):
                 warnings.warn(
-                    f"Parameter 'base_estimator' of {self.__class__.__name__} is"
-                    " deprecated in favor of 'estimator'. See"
-                    f" {self.__class__.__name__}'s docstring for more details.",
+                    (
+                        f"Parameter 'base_estimator' of {self.__class__.__name__} is"
+                        " deprecated in favor of 'estimator'. See"
+                        f" {self.__class__.__name__}'s docstring for more details."
+                    ),
                     FutureWarning,
                     stacklevel=2,
                 )
@@ -1047,8 +1049,9 @@ class _UnstableArchMixin:
 
     def _more_tags(self):
         return {
-            "non_deterministic": _IS_32BIT
-            or platform.machine().startswith(("ppc", "powerpc"))
+            "non_deterministic": _IS_32BIT or platform.machine().startswith(
+                ("ppc", "powerpc")
+            )
         }
 
 

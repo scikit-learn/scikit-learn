@@ -890,9 +890,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if self.alpha == 0:
             warnings.warn(
-                "With alpha=0, this algorithm does not converge "
-                "well. You are advised to use the LinearRegression "
-                "estimator",
+                (
+                    "With alpha=0, this algorithm does not converge "
+                    "well. You are advised to use the LinearRegression "
+                    "estimator"
+                ),
                 stacklevel=2,
             )
 

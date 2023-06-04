@@ -255,10 +255,12 @@ def _hdbscan_brute(
     # Warn if the MST couldn't be constructed around the missing distances
     if np.isinf(min_spanning_tree["distance"]).any():
         warn(
-            "The minimum spanning tree contains edge weights with value "
-            "infinity. Potentially, you are missing too many distances "
-            "in the initial distance matrix for the given neighborhood "
-            "size.",
+            (
+                "The minimum spanning tree contains edge weights with value "
+                "infinity. Potentially, you are missing too many distances "
+                "in the initial distance matrix for the given neighborhood "
+                "size."
+            ),
             UserWarning,
         )
     return _process_mst(min_spanning_tree)

@@ -159,8 +159,10 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             self.estimator_ = self.estimator
         elif self.base_estimator != "deprecated":
             warnings.warn(
-                "`base_estimator` was renamed to `estimator` in version 1.2 and "
-                "will be removed in 1.4.",
+                (
+                    "`base_estimator` was renamed to `estimator` in version 1.2 and "
+                    "will be removed in 1.4."
+                ),
                 FutureWarning,
             )
             if self.base_estimator is not None:

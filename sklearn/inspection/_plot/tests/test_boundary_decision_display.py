@@ -212,8 +212,10 @@ def test_decision_boundary_display(pyplot, fitted_clf, response_method, plot_met
         ),
         (
             "auto",
-            "MyClassifier has none of the following attributes: decision_function, "
-            "predict_proba, predict",
+            (
+                "MyClassifier has none of the following attributes: decision_function, "
+                "predict_proba, predict"
+            ),
         ),
         (
             "bad_method",

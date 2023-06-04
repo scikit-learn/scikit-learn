@@ -112,8 +112,10 @@ def _sample_func(x, y=1):
                 class_weight="balanced",
                 warm_start=True,
             ),
-            "LogisticRegression(class_weight='balanced',random_state=1,"
-            "solver='newton-cg',warm_start=True)",
+            (
+                "LogisticRegression(class_weight='balanced',random_state=1,"
+                "solver='newton-cg',warm_start=True)"
+            ),
         ),
     ],
 )
@@ -240,13 +242,11 @@ def test_all_tests_are_importable():
     # Ensure that for each contentful subpackage, there is a test directory
     # within it that is also a subpackage (i.e. a directory with __init__.py)
 
-    HAS_TESTS_EXCEPTIONS = re.compile(
-        r"""(?x)
+    HAS_TESTS_EXCEPTIONS = re.compile(r"""(?x)
                                       \.externals(\.|$)|
                                       \.tests(\.|$)|
                                       \._
-                                      """
-    )
+                                      """)
     resource_modules = {
         "sklearn.datasets.data",
         "sklearn.datasets.descr",

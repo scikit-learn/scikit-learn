@@ -26,7 +26,7 @@ from ..utils._param_validation import Interval, validate_params
     {
         "graph": ["array-like", "sparse matrix"],
         "source": [Interval(Integral, 0, None, closed="left")],
-        "cutoff": [Interval(Integral, 0, None, closed="left"), None],
+        "cutoff": [Interval(Integral, 0, None, closed="left"), None]
     }
 )
 def single_source_shortest_path_length(graph, source, *, cutoff=None):
