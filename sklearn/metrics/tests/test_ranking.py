@@ -19,6 +19,7 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import auc
@@ -38,7 +39,6 @@ from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import label_binarize
-
 
 ###############################################################################
 # Utilities for testing
@@ -872,6 +872,7 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
 
 
 # TODO(1.5): Update test to check for error when bytes support is removed.
+@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize("curve_func", [precision_recall_curve, roc_curve])
 @pytest.mark.parametrize("labels_type", ["list", "array"])
 def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
@@ -883,13 +884,8 @@ def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
         "specified: either make y_true take value in {0, 1} or "
         "{-1, 1} or pass pos_label explicitly."
     )
-    with warnings.catch_warnings(record=True) as record:
-        with pytest.raises(ValueError, match=msg):
-            curve_func(labels, [0.0, 1.0])
-
-        assert str(record[0].message).startswith(
-            "Support for labels represented as bytes is deprecated"
-        )
+    with pytest.raises(ValueError, match=msg):
+        curve_func(labels, [0.0, 1.0])
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)

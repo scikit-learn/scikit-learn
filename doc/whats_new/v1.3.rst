@@ -147,7 +147,7 @@ Changes impacting all modules
 
 - |API| For classifiers and classification metrics, labels encoded as bytes
   is deprecated and will raise an error in v1.5.
-  :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
+  :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
 
 Experimental / Under Development
 --------------------------------
@@ -669,7 +669,7 @@ Changelog
 - |API| Raise informative warning message in :func:`type_of_target` when
   represented as bytes. For classifiers and classification metrics, labels encoded 
   as bytes is deprecated and will raise an error in v1.5.
-  :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
+  :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
 
 Miscellaneous
 .............
