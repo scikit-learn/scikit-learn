@@ -10,8 +10,12 @@ from scipy.sparse import coo_matrix
 from scipy.sparse import dok_matrix
 from scipy.sparse import lil_matrix
 
-from sklearn.utils._testing import assert_array_equal, assert_array_less
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_equal,
+    assert_array_less,
+    assert_array_almost_equal,
+)
 
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
@@ -669,3 +673,29 @@ def test_deprecated_base_estimator_parameters_can_be_set():
 
     with pytest.warns(FutureWarning, match="Parameter 'base_estimator' of"):
         clf.set_params(base_estimator__max_depth=2)
+
+
+@pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
+def test_adaboost_decision_function(algorithm, global_random_seed):
+    """Check that the decision function respect the symmetric constraint for weak
+    learners.
+
+    To check the following, we can train a single weak learner and check that
+    the sum of the decision function is zero.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/26520
+    """
+    X, y = datasets.make_classification(
+        n_classes=3, n_clusters_per_class=1, random_state=global_random_seed
+    )
+    clf = AdaBoostClassifier(
+        n_estimators=1, random_state=global_random_seed, algorithm=algorithm
+    ).fit(X, y)
+
+    y_score = clf.decision_function(X)
+    assert_allclose(y_score.sum(axis=1), 0, atol=1e-8)
+
+    # we have a single stage so the symmetry must hold as well
+    for y_score in clf.staged_decision_function(X):
+        assert_allclose(y_score.sum(axis=1), 0, atol=1e-8)

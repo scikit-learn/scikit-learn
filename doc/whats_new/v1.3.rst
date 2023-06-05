@@ -342,6 +342,11 @@ Changelog
   and :class:`ensemble.AdaBoostRegressor` that was introduced in :pr:`23819`.
   :pr:`26242` by :user:`Marko Toplak <markotoplak>`.
 
+- |Fix| Fix a bug in :class:`ensemble.AdaBoostClassifier` with `algorithm="SAMME"`
+  where the decision function of each weak learner should be symmetric (i.e.
+  the sum of the scores should sum to zero for a sample).
+  :pr:`26521` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.exception`
 ........................
 - |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
