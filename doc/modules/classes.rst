@@ -653,6 +653,7 @@ Kernels:
 
    inspection.partial_dependence
    inspection.permutation_importance
+   inspection.metric_threshold_curve
 
 Plotting
 --------

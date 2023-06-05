@@ -174,6 +174,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_selection.mutual_info_classif",
     "sklearn.feature_selection.mutual_info_regression",
     "sklearn.feature_selection.r_regression",
+    "sklearn.inspection.metric_threshold_curve",
     "sklearn.inspection.partial_dependence",
     "sklearn.inspection.permutation_importance",
     "sklearn.linear_model.orthogonal_mp",

@@ -376,6 +376,11 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
+- |MajorFeature| :func:`inspection.metric_threshold_curve` has been added to
+  measure the relationship between the threshold used by a binary classifier
+  for a given threshold-dependent function. :pr:`25639` by
+  :user:`Carlo Lemos <vitaliset>`.
+
 - |API| :func:`inspection.partial_dependence` returns a :class:`utils.Bunch` with
   new key: `grid_values`. The `values` key is deprecated in favor of `grid_values`
   and the `values` key will be removed in 1.5.

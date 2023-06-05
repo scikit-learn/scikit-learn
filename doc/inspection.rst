@@ -29,3 +29,4 @@ to diagnose issues with model performance.
 
     modules/partial_dependence
     modules/permutation_importance
+    modules/metric_threshold_curve
