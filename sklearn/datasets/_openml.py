@@ -19,6 +19,7 @@ from . import get_data_home
 from ._arff_parser import load_arff_from_gzip_file
 from ..utils import Bunch
 from ..utils import check_pandas_support  # noqa
+from ..utils._param_validation import Integral, Interval, StrOptions, validate_params
 
 __all__ = ["fetch_openml"]
 
@@ -712,6 +713,21 @@ def _valid_data_column_names(features_list, target_columns):
     return valid_data_column_names
 
 
+@validate_params(
+    {
+        "name": [str, None],
+        "version": [Interval(Integral, 1, None, closed="left"), StrOptions({"active"})],
+        "data_id": [Interval(Integral, 1, None, closed="left"), None],
+        "data_home": [str, None],
+        "target_column": [StrOptions({"default-target"}), str, list, None],
+        "cache": [bool],
+        "return_X_y": [bool],
+        "as_frame": [bool, StrOptions({"auto"})],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [float],
+        "parser": [StrOptions({"auto", "pandas", "liac-arff", "warn"})],
+    }
+)
 def fetch_openml(
     name: Optional[str] = None,
     *,
@@ -816,7 +832,7 @@ def fetch_openml(
         - `"pandas"`: this is the most efficient parser. However, it requires
           pandas to be installed and can only open dense datasets.
         - `"liac-arff"`: this is a pure Python ARFF parser that is much less
-          memory- and CPU-efficient. It deals with sparse ARFF dataset.
+          memory- and CPU-efficient. It deals with sparse ARFF datasets.
 
         If `"auto"` (future default), the parser is chosen automatically such that
         `"liac-arff"` is selected for sparse ARFF datasets, otherwise
@@ -979,11 +995,6 @@ def fetch_openml(
             FutureWarning,
         )
 
-    if as_frame not in ("auto", True, False):
-        raise ValueError(
-            f"`as_frame` must be one of 'auto', True, or False. Got {as_frame} instead."
-        )
-
     return_sparse = data_description["format"].lower() == "sparse_arff"
     as_frame = not return_sparse if as_frame == "auto" else as_frame
     if parser == "auto":
@@ -1061,14 +1072,9 @@ def fetch_openml(
         target_columns = [target_column]
     elif target_column is None:
         target_columns = []
-    elif isinstance(target_column, list):
-        target_columns = target_column
     else:
-        raise TypeError(
-            "Did not recognize type of target_column"
-            "Should be str, list or None. Got: "
-            "{}".format(type(target_column))
-        )
+        # target_column already is of type list
+        target_columns = target_column
     data_columns = _valid_data_column_names(features_list, target_columns)
 
     shape: Optional[Tuple[int, int]]
