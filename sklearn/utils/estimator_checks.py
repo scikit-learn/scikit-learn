@@ -855,7 +855,7 @@ def check_array_api_input(
 ):
     """Check that the array_api Array gives the same results as ndarrays."""
     try:
-        xp = importlib.import_module(array_namespace)
+        array_mod = importlib.import_module(array_namespace)
     except ModuleNotFoundError:
         raise SkipTest(
             f"{array_namespace} is not installed: not checking array_api input"
@@ -866,6 +866,12 @@ def check_array_api_input(
         raise SkipTest(
             "array_api_compat is not installed: not checking array_api input"
         )
+
+    # First create an array using the chosen array module and then get the
+    # corresponding (compatibility wrapped) array namespace based on it.
+    # This is because `cupy` is not the same as the compatibility wrapped
+    # namespace of a CuPy array.
+    xp = array_api_compat.get_namespace(array_mod.asarray(1))
 
     if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
         raise SkipTest("PyTorch test requires cuda, which is not available")
