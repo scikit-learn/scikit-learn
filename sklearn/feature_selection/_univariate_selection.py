@@ -85,7 +85,7 @@ def f_oneway(*args):
     ----------
     .. [1] Lowry, Richard.  "Concepts and Applications of Inferential
            Statistics". Chapter 14.
-           http://faculty.vassar.edu/lowry/ch14pt1.html
+           http://vassarstats.net/textbook
 
     .. [2] Heiman, G.W.  Research Methods in Statistics. 2002.
     """
@@ -968,6 +968,7 @@ class SelectFwe(_BaseFilter):
 ######################################################################
 # Generic filter
 ######################################################################
+
 
 # TODO this class should fit on either p-values or scores,
 # depending on the mode.

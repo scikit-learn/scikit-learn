@@ -29,7 +29,7 @@ from scipy.stats import rankdata
 
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
@@ -39,11 +39,7 @@ from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
 
-from ._base import (
-    _average_binary_score,
-    _average_multiclass_ovo_score,
-    _check_pos_label_consistency,
-)
+from ._base import _average_binary_score, _average_multiclass_ovo_score
 
 
 @validate_params({"x": ["array-like"], "y": ["array-like"]})
@@ -382,6 +378,17 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "average": [StrOptions({"micro", "macro", "samples", "weighted"}), None],
+        "sample_weight": ["array-like", None],
+        "max_fpr": [Interval(Real, 0.0, 1, closed="right"), None],
+        "multi_class": [StrOptions({"raise", "ovr", "ovo"})],
+        "labels": ["array-like", None],
+    }
+)
 def roc_auc_score(
     y_true,
     y_score,
@@ -820,9 +827,12 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
         "probas_pred": ["array-like"],
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
+        "drop_intermediate": ["boolean"],
     }
 )
-def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight=None):
+def precision_recall_curve(
+    y_true, probas_pred, *, pos_label=None, sample_weight=None, drop_intermediate=False
+):
     """Compute precision-recall pairs for different probability thresholds.
 
     Note: this implementation is restricted to the binary classification task.
@@ -863,6 +873,13 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+    drop_intermediate : bool, default=False
+        Whether to drop some suboptimal thresholds which would not appear
+        on a plotted precision-recall curve. This is useful in order to create
+        lighter precision-recall curves.
+
+        .. versionadded:: 1.3
 
     Returns
     -------
@@ -906,6 +923,21 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     fps, tps, thresholds = _binary_clf_curve(
         y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
     )
+
+    if drop_intermediate and len(fps) > 2:
+        # Drop thresholds corresponding to points where true positives (tps)
+        # do not change from the previous or subsequent point. This will keep
+        # only the first and last point for each tps value. All points
+        # with the same tps value have the same recall and thus x coordinate.
+        # They appear as a vertical line on the plot.
+        optimal_idxs = np.where(
+            np.concatenate(
+                [[True], np.logical_or(np.diff(tps[:-1]), np.diff(tps[1:])), [True]]
+            )
+        )[0]
+        fps = fps[optimal_idxs]
+        tps = tps[optimal_idxs]
+        thresholds = thresholds[optimal_idxs]
 
     ps = tps + fps
     # Initialize the result array with zeros to make sure that precision[ps == 0]
@@ -1733,9 +1765,17 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     if y_true.min() < 0:
         # TODO(1.4): Replace warning w/ ValueError
         warnings.warn(
-            "ndcg_score should not be used on negative y_true values. ndcg_score will"
-            " raise a ValueError on negative y_true values starting from version 1.4.",
+            (
+                "ndcg_score should not be used on negative y_true values. ndcg_score"
+                " will raise a ValueError on negative y_true values starting from"
+                " version 1.4."
+            ),
             FutureWarning,
+        )
+    if y_true.ndim > 1 and y_true.shape[1] <= 1:
+        raise ValueError(
+            "Computing NDCG is only meaningful when there is more than 1 document. "
+            f"Got {y_true.shape[1]} instead."
         )
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
@@ -1887,8 +1927,10 @@ def top_k_accuracy_score(
 
     if k >= n_classes:
         warnings.warn(
-            f"'k' ({k}) greater than or equal to 'n_classes' ({n_classes}) "
-            "will result in a perfect score and is therefore meaningless.",
+            (
+                f"'k' ({k}) greater than or equal to 'n_classes' ({n_classes}) "
+                "will result in a perfect score and is therefore meaningless."
+            ),
             UndefinedMetricWarning,
         )
 

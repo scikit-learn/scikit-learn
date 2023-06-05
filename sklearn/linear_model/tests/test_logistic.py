@@ -24,6 +24,7 @@ from sklearn.utils import shuffle
 from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import scale
 from sklearn.utils._testing import skip_if_no_parallel
+from sklearn.svm import l1_min_c
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._logistic import (
@@ -225,6 +226,15 @@ def test_check_solver_option(LR):
         lr = LR(penalty="none", solver="liblinear")
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
+
+
+@pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
+def test_elasticnet_l1_ratio_err_helpful(LR):
+    # Check that an informative error message is raised when penalty="elasticnet"
+    # but l1_ratio is not specified.
+    model = LR(penalty="elasticnet", solver="saga")
+    with pytest.raises(ValueError, match=r".*l1_ratio.*"):
+        model.fit(np.array([[1, 2], [3, 4]]), np.array([0, 1]))
 
 
 @pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "sag", "saga"])
@@ -733,7 +743,6 @@ def test_logistic_regression_sample_weights():
     sample_weight = y + 1
 
     for LR in [LogisticRegression, LogisticRegressionCV]:
-
         kw = {"random_state": 42, "fit_intercept": False, "multi_class": "ovr"}
         if LR is LogisticRegressionCV:
             kw.update({"Cs": 3, "cv": 3})
@@ -1909,7 +1918,6 @@ def test_scores_attribute_layout_elasticnet():
 
     for i, C in enumerate(Cs):
         for j, l1_ratio in enumerate(l1_ratios):
-
             lr = LogisticRegression(
                 penalty="elasticnet",
                 solver="saga",
@@ -2024,3 +2032,28 @@ def test_warning_on_penalty_string_none():
     )
     with pytest.warns(FutureWarning, match=warning_message):
         lr.fit(iris.data, target)
+
+
+def test_liblinear_not_stuck():
+    # Non-regression https://github.com/scikit-learn/scikit-learn/issues/18264
+    X = iris.data.copy()
+    y = iris.target.copy()
+    X = X[y != 2]
+    y = y[y != 2]
+    X_prep = StandardScaler().fit_transform(X)
+
+    C = l1_min_c(X, y, loss="log") * 10 ** (10 / 29)
+    clf = LogisticRegression(
+        penalty="l1",
+        solver="liblinear",
+        tol=1e-6,
+        max_iter=100,
+        intercept_scaling=10000.0,
+        random_state=0,
+        C=C,
+    )
+
+    # test that the fit does not raise a ConvergenceWarning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+        clf.fit(X_prep, y)

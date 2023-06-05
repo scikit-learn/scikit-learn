@@ -5,13 +5,13 @@ import sys
 from contextlib import suppress
 from unittest import SkipTest
 
+import joblib
 import pytest
 import numpy as np
 from threadpoolctl import threadpool_limits
 from _pytest.doctest import DoctestItem
 
 from sklearn.utils import _IS_32BIT
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.utils.fixes import sp_version
 from sklearn.utils.fixes import parse_version
@@ -153,7 +153,6 @@ def pytest_collection_modifyitems(config, items):
             item.name.endswith("GradientBoostingClassifier")
             and platform.machine() == "aarch64"
         ):
-
             marker = pytest.mark.xfail(
                 reason=(
                     "know failure. See "
@@ -233,27 +232,6 @@ def pyplot():
     pyplot.close("all")
 
 
-def pytest_runtest_setup(item):
-    """Set the number of openmp threads based on the number of workers
-    xdist is using to prevent oversubscription.
-
-    Parameters
-    ----------
-    item : pytest item
-        item to be processed
-    """
-    xdist_worker_count = environ.get("PYTEST_XDIST_WORKER_COUNT")
-    if xdist_worker_count is None:
-        # returns if pytest-xdist is not installed
-        return
-    else:
-        xdist_worker_count = int(xdist_worker_count)
-
-    openmp_threads = _openmp_effective_n_threads()
-    threads_per_worker = max(openmp_threads // xdist_worker_count, 1)
-    threadpool_limits(threads_per_worker, user_api="openmp")
-
-
 def pytest_configure(config):
     # Use matplotlib agg backend during the tests including doctests
     try:
@@ -262,6 +240,14 @@ def pytest_configure(config):
         matplotlib.use("agg")
     except ImportError:
         pass
+
+    allowed_parallelism = joblib.cpu_count(only_physical_cores=True)
+    xdist_worker_count = environ.get("PYTEST_XDIST_WORKER_COUNT")
+    if xdist_worker_count is not None:
+        # Set the number of OpenMP and BLAS threads based on the number of workers
+        # xdist is using to prevent oversubscription.
+        allowed_parallelism = max(allowed_parallelism // int(xdist_worker_count), 1)
+    threadpool_limits(allowed_parallelism)
 
     # Register global_random_seed plugin if it is not already registered
     if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):

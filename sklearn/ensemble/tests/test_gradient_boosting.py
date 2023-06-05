@@ -345,9 +345,7 @@ def test_feature_importance_regression(
     assert set(sorted_features[1:4]) == {"Longitude", "AveOccup", "Latitude"}
 
 
-# TODO(1.3): Remove warning filter
-@pytest.mark.filterwarnings("ignore:`max_features='auto'` has been deprecated in 1.1")
-def test_max_feature_auto():
+def test_max_features():
     # Test if max features is set properly for floats and str.
     X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
     _, n_features = X.shape
@@ -355,11 +353,11 @@ def test_max_feature_auto():
     X_train = X[:2000]
     y_train = y[:2000]
 
-    gbrt = GradientBoostingClassifier(n_estimators=1, max_features="auto")
+    gbrt = GradientBoostingClassifier(n_estimators=1, max_features=None)
     gbrt.fit(X_train, y_train)
-    assert gbrt.max_features_ == int(np.sqrt(n_features))
+    assert gbrt.max_features_ == n_features
 
-    gbrt = GradientBoostingRegressor(n_estimators=1, max_features="auto")
+    gbrt = GradientBoostingRegressor(n_estimators=1, max_features=None)
     gbrt.fit(X_train, y_train)
     assert gbrt.max_features_ == n_features
 

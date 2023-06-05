@@ -356,8 +356,10 @@ def _solve_lbfgs(
         result = optimize.minimize(func, x0, **config)
         if not result["success"]:
             warnings.warn(
-                "The lbfgs solver did not converge. Try increasing max_iter "
-                f"or tol. Currently: max_iter={max_iter} and tol={tol}",
+                (
+                    "The lbfgs solver did not converge. Try increasing max_iter "
+                    f"or tol. Currently: max_iter={max_iter} and tol={tol}"
+                ),
                 ConvergenceWarning,
             )
         coefs[i] = result["x"]
@@ -571,7 +573,6 @@ def _ridge_regression(
     check_input=True,
     fit_intercept=False,
 ):
-
     has_sw = sample_weight is not None
 
     if solver == "auto":
@@ -781,7 +782,6 @@ def _ridge_regression(
 
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
-
     _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
         "fit_intercept": ["boolean"],
@@ -820,7 +820,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
-
         if self.solver == "lbfgs" and not self.positive:
             raise ValueError(
                 "'lbfgs' solver can be used only when positive=True. "
@@ -2101,7 +2100,6 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
-
     _parameter_constraints: dict = {
         "alphas": ["array-like", Interval(Real, 0, None, closed="neither")],
         "fit_intercept": ["boolean"],
