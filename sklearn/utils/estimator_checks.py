@@ -875,6 +875,11 @@ def check_array_api_input(
 
     if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
         raise SkipTest("PyTorch test requires cuda, which is not available")
+    elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
+        import cupy
+
+        if cupy.cuda.runtime.getDeviceCount() == 0:
+            raise SkipTest("CuPy test requires cuda, which is not available")
 
     X, y = make_classification(random_state=42)
     X = X.astype(dtype, copy=False)
