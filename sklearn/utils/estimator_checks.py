@@ -868,7 +868,7 @@ def check_array_api_input(
         )
 
     if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
-        raise SkipTest("test requires cuda, which is not available")
+        raise SkipTest("PyTorch test requires cuda, which is not available")
 
     X, y = make_classification(random_state=42)
     X = X.astype(dtype)
