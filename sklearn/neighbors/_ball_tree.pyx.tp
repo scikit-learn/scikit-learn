@@ -63,7 +63,7 @@ include "_binary_tree.pxi"
 
 # Inherit BallTree{{name_suffix}} from BinaryTree{{name_suffix}}
 cdef class BallTree{{name_suffix}}(BinaryTree{{name_suffix}}):
-    __doc__ = CLASS_DOC.format(**DOC_DICT)
+    __doc__ = CLASS_DOC.format(**DOC_DICT{{name_suffix}})
     pass
 
 {{endfor}}

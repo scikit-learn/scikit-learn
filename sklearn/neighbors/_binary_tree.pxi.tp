@@ -797,7 +797,7 @@ def newObj(obj):
 ######################################################################
 # define the reverse mapping of VALID_METRICS{{name_suffix}}
 from sklearn.metrics._dist_metrics import get_valid_metric_ids
-VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS{{name_suffix}})
+VALID_METRIC_IDS{{name_suffix}} = get_valid_metric_ids(VALID_METRICS{{name_suffix}})
 
 
 ######################################################################
@@ -825,7 +825,7 @@ cdef class BinaryTree{{name_suffix}}:
     cdef int n_splits
     cdef int n_calls
 
-    _valid_metrics = VALID_METRIC_IDS
+    _valid_metrics = VALID_METRIC_IDS{{name_suffix}}
 
     # Use cinit to initialize all arrays to empty: this will prevent memory
     # errors and seg-faults in rare cases where __init__ is not called
