@@ -947,7 +947,7 @@ The objective for the optimization becomes
 
 Where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
 if :math:`P` is false, otherwise it evaluates to :math:`1`. We currently provide four choices
-for the regularization term :math:`r(W)` via the `penalty` argument:
+for the regularization term :math:`r(W)` via the `penalty` argument  (with :math:`n` being the number of features):
 
 +----------------+----------------------------------------------------------------------------------+
 | penalty        | :math:`r(W)`                                                                     |
