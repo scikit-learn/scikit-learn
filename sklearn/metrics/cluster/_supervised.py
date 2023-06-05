@@ -30,6 +30,12 @@ from ...utils._param_validation import validate_params
 from ...utils._param_validation import Interval, StrOptions
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    }
+)
 def check_clusterings(labels_true, labels_pred):
     """Check that the labels arrays are 1D and of same dimension.
 
