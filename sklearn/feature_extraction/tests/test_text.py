@@ -934,7 +934,7 @@ def test_count_vectorizer_pipeline_grid_selection():
         data, target, test_size=0.2, random_state=0
     )
 
-    pipeline = Pipeline([("vect", CountVectorizer()), ("svc", LinearSVC())])
+    pipeline = Pipeline([("vect", CountVectorizer()), ("svc", LinearSVC(dual="auto"))])
 
     parameters = {
         "vect__ngram_range": [(1, 1), (1, 2)],
@@ -970,7 +970,7 @@ def test_vectorizer_pipeline_grid_selection():
         data, target, test_size=0.1, random_state=0
     )
 
-    pipeline = Pipeline([("vect", TfidfVectorizer()), ("svc", LinearSVC())])
+    pipeline = Pipeline([("vect", TfidfVectorizer()), ("svc", LinearSVC(dual="auto"))])
 
     parameters = {
         "vect__ngram_range": [(1, 1), (1, 2)],
@@ -1004,7 +1004,7 @@ def test_vectorizer_pipeline_cross_validation():
     # label junk food as -1, the others as +1
     target = [-1] * len(JUNK_FOOD_DOCS) + [1] * len(NOTJUNK_FOOD_DOCS)
 
-    pipeline = Pipeline([("vect", TfidfVectorizer()), ("svc", LinearSVC())])
+    pipeline = Pipeline([("vect", TfidfVectorizer()), ("svc", LinearSVC(dual="auto"))])
 
     cv_scores = cross_val_score(pipeline, data, target, cv=3)
     assert_array_equal(cv_scores, [1.0, 1.0, 1.0])

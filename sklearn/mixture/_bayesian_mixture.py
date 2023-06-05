@@ -541,7 +541,7 @@ class BayesianGaussianMixture(BaseMixture):
                 ),
             )
         else:
-            # case Variationnal Gaussian mixture with dirichlet distribution
+            # case Variational Gaussian mixture with dirichlet distribution
             self.weight_concentration_ = self.weight_concentration_prior_ + nk
 
     def _estimate_means(self, nk, xk):
@@ -749,7 +749,7 @@ class BayesianGaussianMixture(BaseMixture):
                 + np.hstack((0, np.cumsum(digamma_b - digamma_sum)[:-1]))
             )
         else:
-            # case Variationnal Gaussian mixture with dirichlet distribution
+            # case Variational Gaussian mixture with dirichlet distribution
             return digamma(self.weight_concentration_) - digamma(
                 np.sum(self.weight_concentration_)
             )

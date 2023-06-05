@@ -30,7 +30,6 @@ ADDITIONAL_METRICS = {
 DISCRETE_METRICS = ["hamming", "canberra", "braycurtis"]
 
 BOOLEAN_METRICS = [
-    "matching",
     "jaccard",
     "dice",
     "rogerstanimoto",

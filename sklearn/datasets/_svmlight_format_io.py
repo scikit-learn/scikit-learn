@@ -16,7 +16,6 @@ libsvm command line programs.
 # License: BSD 3 clause
 
 from contextlib import closing
-import io
 import os.path
 
 import numpy as np
@@ -203,7 +202,7 @@ def load_svmlight_file(
 
 def _gen_open(f):
     if isinstance(f, int):  # file descriptor
-        return io.open(f, "rb", closefd=False)
+        return open(f, "rb", closefd=False)
     elif isinstance(f, os.PathLike):
         f = os.fspath(f)
     elif not isinstance(f, str):
