@@ -877,7 +877,7 @@ def check_array_api_input(
         raise SkipTest("PyTorch test requires cuda, which is not available")
 
     X, y = make_classification(random_state=42)
-    X = X.astype(dtype)
+    X = X.astype(dtype, copy=False)
 
     X = _enforce_estimator_tags_X(estimator_orig, X)
     y = _enforce_estimator_tags_y(estimator_orig, y)
