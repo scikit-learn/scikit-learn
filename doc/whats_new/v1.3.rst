@@ -233,6 +233,13 @@ Changelog
 
   :pr:`26385` by :user:`Meekail Zain <micky774>`
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| `compose.ColumnTransformer` raises an informative error when the individual transformers of `ColumnTransformer`
+  output pandas dataframes with indexes that are not consistent with each other and the output is configured
+  to be pandas. :pr:`26286` by `Thomas Fan`_.
+
 :mod:`sklearn.covariance`
 .........................
 
@@ -570,6 +577,11 @@ Changelog
 - |MajorFeature| Introduces :class:`preprocessing.TargetEncoder` which is a
   categorical encoding based on target mean conditioned on the value of the
   category. :pr:`25334` by `Thomas Fan`_.
+
+- |Enhancement| A new parameter `sparse_output` was added to
+  :class:`SplineTransformer`, available as of SciPy 1.8. If `sparse_output=True`,
+  :class:`SplineTransformer` returns a sparse CSR matrix.
+  :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| Adds a `feature_name_combiner` parameter to
   :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
