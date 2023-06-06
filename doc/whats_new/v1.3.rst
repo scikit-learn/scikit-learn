@@ -228,6 +228,13 @@ Changelog
 
   :pr:`26385` by :user:`Meekail Zain <micky774>`
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| `compose.ColumnTransformer` raises an informative error when the individual transformers of `ColumnTransformer`
+  output pandas dataframes with indexes that are not consistent with each other and the output is configured
+  to be pandas. :pr:`26286` by `Thomas Fan`_.
+
 :mod:`sklearn.covariance`
 .........................
 

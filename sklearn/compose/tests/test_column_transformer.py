@@ -2157,3 +2157,31 @@ def test_empty_selection_pandas_output(empty_selection):
     ct.set_params(verbose_feature_names_out=False)
     X_out = ct.fit_transform(X)
     assert_array_equal(X_out.columns, ["a", "b"])
+
+
+def test_raise_error_if_index_not_aligned():
+    """Check column transformer raises error if indices are not aligned.
+
+    Non-regression test for gh-26210.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame([[1.0, 2.2], [3.0, 1.0]], columns=["a", "b"], index=[8, 3])
+    reset_index_transformer = FunctionTransformer(
+        lambda x: x.reset_index(drop=True), feature_names_out="one-to-one"
+    )
+
+    ct = ColumnTransformer(
+        [
+            ("num1", "passthrough", ["a"]),
+            ("num2", reset_index_transformer, ["b"]),
+        ],
+    )
+    ct.set_output(transform="pandas")
+    msg = (
+        "Concatenating DataFrames from the transformer's output lead to"
+        " an inconsistent number of samples. The output may have Pandas"
+        " Indexes that do not match."
+    )
+    with pytest.raises(ValueError, match=msg):
+        ct.fit_transform(X)
