@@ -189,6 +189,11 @@ Changelog
 - |Feature| A `__sklearn_clone__` protocol is now available to override the
   default behavior of :func:`base.clone`. :pr:`24568` by `Thomas Fan`_.
 
+- |Enhancement| :func:`base.ClusterMixin.fit_predict` and
+  :func:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
+  passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
+  Jalali`_.
+
 - |Fix| :class:`base.TransformerMixin` now currently keeps a namedtuple's class
   if `transform` returns a namedtuple. :pr:`26121` by `Thomas Fan`_.
 
