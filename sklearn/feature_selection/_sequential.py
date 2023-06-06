@@ -257,8 +257,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         elif isinstance(self.n_features_to_select, Real):
             self.n_features_to_select_ = int(n_features * self.n_features_to_select)
 
-        if self.tol is not None and self.tol < 0 and self.direction == "forward":
-            raise ValueError("tol must be positive when doing forward selection")
+        if self.tol is not None:
+            if self.tol < 0 and self.direction == "forward":
+                raise ValueError("tol must be positive when doing forward selection")
+            if self.tol > 0 and self.direction == "backward":
+                raise ValueError("tol must be negative when doing backward selection")
 
         cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
 

@@ -55,6 +55,9 @@ def test_n_features_to_select_auto(direction, max_features_to_select):
     """
     n_features = 10
     tol = 1e-3
+    if direction == "backward":
+        tol *= -1
+
     X, y = make_regression(n_features=n_features, random_state=0)
     sfs = SequentialFeatureSelector(
         LinearRegression(),
@@ -96,6 +99,8 @@ def test_n_features_to_select_stopping_criterion(direction):
     X, y = make_regression(n_features=50, n_informative=10, random_state=0)
 
     tol = 1e-3
+    if direction == "backward":
+        tol *= -1
 
     sfs = SequentialFeatureSelector(
         LinearRegression(),
@@ -131,7 +136,15 @@ def test_n_features_to_select_stopping_criterion(direction):
         assert (sfs_cv_score - added_cv_score) <= tol
         assert (sfs_cv_score - removed_cv_score) >= tol
     else:
-        assert (added_cv_score - sfs_cv_score) <= tol
+        assert sfs_cv_score <= added_cv_score
+        assert sfs_cv_score >= removed_cv_score
+        # The "added" score should be equal or higher than the SFS score
+        # so the difference between them should be >= tol, which is a
+        # negative number.
+        assert (sfs_cv_score - added_cv_score) >= tol
+        # Because tol is negative the delta between scores should be
+        # less than or equal to the tolerance, in absolute terms
+        # the delta is bigger than the tolerance
         assert (removed_cv_score - sfs_cv_score) <= tol
 
 
@@ -282,8 +295,8 @@ def test_no_y_validation_model_fit(y):
         sfs.fit(X, y)
 
 
-def test_forward_neg_tol_error():
-    """Check that we raise an error when tol<0 and direction='forward'"""
+def test_tol_sign_depends_on_direction():
+    """Check that we raise an error if the sign of tol and direction do not match"""
     X, y = make_regression(n_features=10, random_state=0)
     sfs = SequentialFeatureSelector(
         LinearRegression(),
@@ -291,8 +304,16 @@ def test_forward_neg_tol_error():
         direction="forward",
         tol=-1e-3,
     )
-
     with pytest.raises(ValueError, match="tol must be positive"):
+        sfs.fit(X, y)
+
+    sfs = SequentialFeatureSelector(
+        LinearRegression(),
+        n_features_to_select="auto",
+        direction="backward",
+        tol=+1e-3,
+    )
+    with pytest.raises(ValueError, match="tol must be negative"):
         sfs.fit(X, y)
 
 
