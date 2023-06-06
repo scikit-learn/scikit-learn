@@ -25,12 +25,24 @@ class NewtonSolver(ABC):
     iteration aims at finding the Newton step which is done by the inner solver. With
     Hessian H, gradient g and coefficients coef, one step solves:
 
-        H @ coef_newton = -g
+        H @ coef_newton = -G
 
-    For our GLM / LinearModelLoss, we have gradient g and Hessian H:
+    For our GLM / LinearModelLoss, we have gradient G and Hessian H:
 
-        g = X.T @ loss.gradient + l2_reg_strength * coef
-        H = X.T @ diag(loss.hessian) @ X + l2_reg_strength * identity
+        G = X.T @ g + l2_reg_strength * P @ coef_old
+        H = X.T @ diag(h) @ X + l2_reg_strength * P
+        g = loss.gradient = pointwise gradient
+        h = loss.hessian = pointwise hessian
+        P = penalty matrix in 1/2 w @ P @ w,
+            for a pure L2 penalty without intercept it equals the identity matrix.
+
+    stemming from the 2nd order Taylor series of the loss:
+
+        loss(coef_old) + g @ X @ coef_newton
+        + 1/2 * coef_newton @ X.T @ diag(h) @ X @ coef_newton
+        + 1/2 * l2_reg_strength * coef @ P @ coef
+
+    In the last line, we have coef = coef_old + coef_newton.
 
     Backtracking line search updates coef = coef_old + t * coef_newton for some t in
     (0, 1].
@@ -550,7 +562,7 @@ class NewtonLSMRSolver(NewtonSolver):
 
     with
 
-        G = X.T @ g + l2_reg_strength * coef
+        G = X.T @ g + l2_reg_strength * P @ coef
         H = X.T @ diag(h) @ X + l2_reg_strength * P
         g = loss.gradient = pointwise gradient
         h = loss.hessian = pointwise hessian
@@ -571,8 +583,11 @@ class NewtonLSMRSolver(NewtonSolver):
     Notes:
     - A is a square root of H: H = A'A
     - A and b form G: G = -A'b
-    - The normal equation of this least squares problem, A'A coef_newton = A'b, is again
-      H @ coef_newton = -G.
+    - The normal equation of this least squares problem, A'A coef_newton = A'b, is
+      again H @ coef_newton = -G.
+
+    After the Newton iteration, and neglecting line search, the new coefficient is
+    self.coef += coef_newton.
 
     Note that this solver can naturally deal with sparse X.
 
@@ -919,7 +934,7 @@ class NewtonLSMRSolver(NewtonSolver):
         # Fortunately, we get approximations of the Frobenius norm of A and the norm of
         # r, ||A|| and ||r|| respectively, for free by LSMR such that we can set
         #   atol = eta * ||G|| / (||A|| * ||r||)
-        # This results in our wished stopping criterion
+        # This results in our desired stopping criterion
         #   ||res|| = ||A' r|| <= eta * ||G||
         # at least approximately, as we have to use ||A|| and ||r|| from the last and
         # not the current iteration.
@@ -928,13 +943,16 @@ class NewtonLSMRSolver(NewtonSolver):
         # an exact solution to A x = b. LSMR then uses the stopping criterion
         #   ||r|| <= atol * ||A|| * ||x|| + btol * ||b||.
         # Note that
+        #   ||b||^2 = ||g / sqrt(h)||^2 + l2_reg_strength * x0 @ P @ x0
+        # and
         #   1/2 * ||r||^2 = 1/2 * x X' diag(h) X x + g X x
-        #                 + 1/2 * l2_reg_strength * (x+x0) P (x+x0)
+        #                 + 1/2 * l2_reg_strength * (x + x0) P (x + x0)
         #                 + 1/2 *||g/sqrt(h)||^2
-        # with the solution after an iteration coef=x+x0, is just the Taylor series of
-        # the objective with the zero order term obj(x=0) replaced by
+        # Here, x is the solution of Ax=b, i.e. x=coef_newton, and, neglecting line
+        # search, coef = x + x0. Thus, 1/2 ||r||^2 is just the Taylor series of the
+        # objective with the zero order term loss(x0) replaced by
         # 1/2 * ||g/sqrt(h)||^2.
-        norm_G = scipy.linalg.norm(A.T @ b)
+        norm_G = scipy.linalg.norm(self.gradient)
         eta = min(0.5, np.sqrt(norm_G))
         result = scipy.sparse.linalg.lsmr(
             A,
