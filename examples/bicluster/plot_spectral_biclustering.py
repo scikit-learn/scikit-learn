@@ -13,7 +13,7 @@ data. This makes spectral biclustering particularly well-suited for datasets
 where the order or arrangement of features is fixed, such as in images, time
 series, or genomes.
 
-The data is generated, then shuffled and passed to the Spectral Biclustering
+The data is generated, then shuffled and passed to the spectral biclustering
 algorithm. The rows and columns of the shuffled matrix are then rearranged to
 plot the biclusters found.
 """
