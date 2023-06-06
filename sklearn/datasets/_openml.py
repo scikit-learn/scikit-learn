@@ -740,7 +740,7 @@ def fetch_openml(
     as_frame: Union[str, bool] = "auto",
     n_retries: int = 3,
     delay: float = 1.0,
-    parser: Optional[str] = "warn",
+    parser: str = "warn",
 ):
     """Fetch dataset from openml by name or dataset id.
 
@@ -970,14 +970,6 @@ def fetch_openml(
         warn(
             "OpenML raised a warning on the dataset. It might be "
             "unusable. Warning: {}".format(data_description["warning"])
-        )
-
-    # TODO(1.4): remove "warn" from the valid parser
-    valid_parsers = ("auto", "pandas", "liac-arff", "warn")
-    if parser not in valid_parsers:
-        raise ValueError(
-            f"`parser` must be one of {', '.join(repr(p) for p in valid_parsers)}. Got"
-            f" {parser!r} instead."
         )
 
     if parser == "warn":
