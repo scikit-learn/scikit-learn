@@ -1377,7 +1377,7 @@ def _fetch_remote(remote, dirname=None):
     urlretrieve(remote.url, file_path)
     checksum = _sha256(file_path)
     if remote.checksum != checksum:
-        raise IOError(
+        raise OSError(
             "{} has an SHA256 checksum ({}) "
             "differing from expected ({}), "
             "file may be corrupted.".format(file_path, checksum, remote.checksum)

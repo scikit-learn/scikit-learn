@@ -79,12 +79,6 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.model_selection import GridSearchCV
 
 
-try:
-    WindowsError  # type: ignore
-except NameError:
-    WindowsError = None
-
-
 class MockImprovingEstimator(BaseEstimator):
     """Dummy classifier to test the learning curve"""
 
@@ -2064,7 +2058,7 @@ def test_score_memmap():
             try:
                 os.unlink(tf.name)
                 break
-            except WindowsError:
+            except OSError:
                 sleep(1.0)
 
 
@@ -2094,7 +2088,6 @@ def test_fit_and_score_failing():
     failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
     # dummy X data
     X = np.arange(1, 10)
-    y = np.ones(9)
     fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0, None, None]
     # passing error score to trigger the warning message
     fit_and_score_kwargs = {"error_score": "raise"}
@@ -2103,31 +2096,12 @@ def test_fit_and_score_failing():
         _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
 
     # check that functions upstream pass error_score param to _fit_and_score
-    error_message = re.escape(
-        "error_score must be the string 'raise' or a numeric value. (Hint: if "
-        "using 'raise', please make sure that it has been spelled correctly.)"
-    )
-
     error_message_cross_validate = (
         "The 'error_score' parameter of cross_validate must be .*. Got .* instead."
     )
 
     with pytest.raises(ValueError, match=error_message_cross_validate):
         cross_val_score(failing_clf, X, cv=3, error_score="unvalid-string")
-
-    with pytest.raises(ValueError, match=error_message):
-        learning_curve(failing_clf, X, y, cv=3, error_score="unvalid-string")
-
-    with pytest.raises(ValueError, match=error_message):
-        validation_curve(
-            failing_clf,
-            X,
-            y,
-            param_name="parameter",
-            param_range=[FailingClassifier.FAILING_PARAMETER],
-            cv=3,
-            error_score="unvalid-string",
-        )
 
     assert failing_clf.score() == 0.0  # FailingClassifier coverage
 
@@ -2388,7 +2362,7 @@ def test_callable_multimetric_confusion_matrix_cross_validate():
         return {"tn": cm[0, 0], "fp": cm[0, 1], "fn": cm[1, 0], "tp": cm[1, 1]}
 
     X, y = make_classification(n_samples=40, n_features=4, random_state=42)
-    est = LinearSVC(random_state=42)
+    est = LinearSVC(dual="auto", random_state=42)
     est.fit(X, y)
     cv_results = cross_validate(est, X, y, cv=5, scoring=custom_scorer)
 
