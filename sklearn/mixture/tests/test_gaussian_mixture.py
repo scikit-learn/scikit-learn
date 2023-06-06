@@ -84,7 +84,10 @@ class RandomData:
             "spherical": 0.5 + rng.rand(n_components),
             "diag": (0.5 + rng.rand(n_components, n_features)) ** 2,
             "tied": make_spd_matrix(n_features, random_state=rng),
-            "full": make_spd_matrix(n_features, random_state=rng, n_samples=n_components) * 0.5
+            "full": (
+                make_spd_matrix(n_features, random_state=rng, n_samples=n_components)
+                * 0.5
+            ),
         }
         self.precisions = {
             "spherical": 1.0 / self.covariances["spherical"],
