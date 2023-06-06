@@ -923,10 +923,10 @@ def test_method_generation():
             pass  # pragma: no cover
 
         def fit_transform(self, X, y):
-            pass
+            pass  # pragma: no cover
 
         def fit_predict(self, X, y):
-            pass
+            pass  # pragma: no cover
 
         def partial_fit(self, X, y):
             pass  # pragma: no cover
@@ -964,10 +964,10 @@ def test_method_generation():
             pass  # pragma: no cover
 
         def fit_transform(self, X, y, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def fit_predict(self, X, y, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
         def partial_fit(self, X, y, sample_weight=None):
             pass  # pragma: no cover
@@ -1009,13 +1009,13 @@ def test_composite_methods():
     class SimpleEstimator(BaseEstimator):
         # This class should have every set_{method}_request
         def fit(self, X, y, foo=None, bar=None):
-            pass
+            pass  # pragma: no cover
 
         def predict(self, X, foo=None, bar=None):
-            pass
+            pass  # pragma: no cover
 
         def transform(self, X, other_param=None):
-            pass
+            pass  # pragma: no cover
 
     est = SimpleEstimator()
     est.get_metadata_routing().fit_transform._requests == {}
