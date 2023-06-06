@@ -719,7 +719,7 @@ def _valid_data_column_names(features_list, target_columns):
         "version": [Interval(Integral, 1, None, closed="left"), StrOptions({"active"})],
         "data_id": [Interval(Integral, 1, None, closed="left"), None],
         "data_home": [str, None],
-        "target_column": [StrOptions({"default-target"}), str, list, None],
+        "target_column": [str, list, None],
         "cache": [bool],
         "return_X_y": [bool],
         "as_frame": [bool, StrOptions({"auto"})],
