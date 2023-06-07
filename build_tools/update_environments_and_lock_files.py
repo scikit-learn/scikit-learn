@@ -40,7 +40,9 @@ from importlib.metadata import version
 
 import click
 
+from conda_lock import __version__ as conda_lock_version
 from jinja2 import Environment
+from packaging.version import Version
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -198,6 +200,15 @@ conda_build_metadata_list = [
         ),
         "package_constraints": {
             "python": "3.9",
+            # TODO: remove the following pin when we have a solution since
+            # pinning a pandas version partially defeats the purpose of the
+            # `pylastest` CI configurations which are meant to test
+            # scikit-learn against the most recently released versions of
+            # its dependencies.
+            # pandas 2.0 depends on tzdata as well as python installed via conda
+            # We currently have a mix of conda/pip and run into the following issue:
+            # https://github.com/conda/conda-lock/issues/179
+            "pandas": "1.5.3",
         },
     },
     {
@@ -555,6 +566,39 @@ def write_all_pip_lock_files(build_metadata_list):
         write_pip_lock_file(build_metadata)
 
 
+def remove_unnecessary_package_from_lock_file(build_metadata_list, build_name, package):
+    # find the build metadata from the list
+    build_metadata = None
+    for metadata in build_metadata_list:
+        if metadata["build_name"] == build_name:
+            build_metadata = metadata
+            break
+    if build_metadata is None:
+        logger.warning(
+            f"Could not find {build_name} in build_metadata_list. This may be expected"
+            " if --select-build is used"
+        )
+        return
+    folder_path = Path(build_metadata["folder"])
+    platform = build_metadata["platform"]
+    lock_file_basename = build_name
+    if not lock_file_basename.endswith(platform):
+        lock_file_basename = f"{lock_file_basename}_{platform}"
+
+    lock_file_path = folder_path / f"{lock_file_basename}_conda.lock"
+    with open(lock_file_path, "r") as f_read_only:
+        lock_file_content = f_read_only.readlines()
+        with open(lock_file_path, "w") as f_write:
+            for line in lock_file_content:
+                if package in line:
+                    # simple heuristic to remove the package
+                    # it will not work if package that have partial string in common
+                    logger.debug(f"Removing {package} from {build_name} lock file")
+                    logger.debug(f"Removed line: {line}")
+                    continue
+                f_write.write(line)
+
+
 def check_conda_lock_version():
     # Check that the installed conda-lock version is consistent with _min_dependencies.
     expected_conda_lock_version = execute_command(
@@ -586,6 +630,15 @@ def main(select_build):
     write_all_conda_environments(filtered_conda_build_metadata_list)
     logger.info("Writing conda lock files")
     write_all_conda_lock_files(filtered_conda_build_metadata_list)
+    if Version(conda_lock_version) < Version("1.5"):
+        # In conda-lock < 1.5, `os_name` was not considered when creating the
+        # dependency trees:
+        # https://github.com/conda/conda-lock/issues/293
+        # Here, we need to manually remove the package `pywinpty` from the `doc`
+        # build which is only needed on Windows required by `jupyter-server`.
+        remove_unnecessary_package_from_lock_file(
+            filtered_conda_build_metadata_list, "doc", "pywinpty"
+        )
 
     filtered_pip_build_metadata_list = [
         each

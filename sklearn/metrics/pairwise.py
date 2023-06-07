@@ -28,14 +28,16 @@ from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils._mask import _get_mask
 from ..utils.parallel import delayed, Parallel
-from ..utils.fixes import sp_base_version, sp_version, parse_version
+from ..utils.fixes import sp_base_version, parse_version
 from ..utils._param_validation import (
     validate_params,
     Interval,
     Real,
+    Integral,
     Hidden,
     MissingValues,
     StrOptions,
+    Options,
 )
 
 from ._pairwise_distances_reduction import ArgKmin
@@ -607,6 +609,44 @@ def _argmin_reduce(dist, start):
     return dist.argmin(axis=1)
 
 
+_VALID_METRICS = [
+    "euclidean",
+    "l2",
+    "l1",
+    "manhattan",
+    "cityblock",
+    "braycurtis",
+    "canberra",
+    "chebyshev",
+    "correlation",
+    "cosine",
+    "dice",
+    "hamming",
+    "jaccard",
+    "mahalanobis",
+    "matching",
+    "minkowski",
+    "rogerstanimoto",
+    "russellrao",
+    "seuclidean",
+    "sokalmichener",
+    "sokalsneath",
+    "sqeuclidean",
+    "yule",
+    "wminkowski",
+    "nan_euclidean",
+    "haversine",
+]
+if sp_base_version < parse_version("1.11"):  # pragma: no cover
+    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
+    _VALID_METRICS += ["kulsinski"]
+if sp_base_version < parse_version("1.9"):
+    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
+    _VALID_METRICS += ["matching"]
+
+_NAN_METRICS = ["nan_euclidean"]
+
+
 def pairwise_distances_argmin_min(
     X, Y, *, axis=1, metric="euclidean", metric_kwargs=None
 ):
@@ -662,6 +702,9 @@ def pairwise_distances_argmin_min(
 
         .. note::
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
+
+        .. note::
+           `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -729,6 +772,18 @@ def pairwise_distances_argmin_min(
     return indices, values
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix"],
+        "axis": [Options(Integral, {0, 1})],
+        "metric": [
+            StrOptions(set(_VALID_METRICS).union(ArgKmin.valid_metrics())),
+            callable,
+        ],
+        "metric_kwargs": [dict, None],
+    }
+)
 def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
@@ -782,6 +837,9 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
 
         .. note::
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
+
+        .. note::
+           `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -1735,41 +1793,6 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
     return out
 
 
-_VALID_METRICS = [
-    "euclidean",
-    "l2",
-    "l1",
-    "manhattan",
-    "cityblock",
-    "braycurtis",
-    "canberra",
-    "chebyshev",
-    "correlation",
-    "cosine",
-    "dice",
-    "hamming",
-    "jaccard",
-    "mahalanobis",
-    "matching",
-    "minkowski",
-    "rogerstanimoto",
-    "russellrao",
-    "seuclidean",
-    "sokalmichener",
-    "sokalsneath",
-    "sqeuclidean",
-    "yule",
-    "wminkowski",
-    "nan_euclidean",
-    "haversine",
-]
-if sp_base_version < parse_version("1.11"):
-    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
-    _VALID_METRICS += ["kulsinski"]
-
-_NAN_METRICS = ["nan_euclidean"]
-
-
 def _check_chunk_size(reduced, chunk_size):
     """Checks chunk is a sequence of expected size or a tuple of same."""
     if reduced is None:
@@ -1794,11 +1817,8 @@ def _check_chunk_size(reduced, chunk_size):
 def _precompute_metric_params(X, Y, metric=None, **kwds):
     """Precompute data-derived metric parameters if not provided."""
     if metric == "seuclidean" and "V" not in kwds:
-        # There is a bug in scipy < 1.5 that will cause a crash if
-        # X.dtype != np.double (float64). See PR #15730
-        dtype = np.float64 if sp_version < parse_version("1.5") else None
         if X is Y:
-            V = np.var(X, axis=0, ddof=1, dtype=dtype)
+            V = np.var(X, axis=0, ddof=1)
         else:
             raise ValueError(
                 "The 'V' parameter is required for the seuclidean metric "
@@ -2023,6 +2043,9 @@ def pairwise_distances(
     .. note::
         `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
+    .. note::
+        `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
+
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
     valid scipy.spatial.distance metrics), the scikit-learn implementation
     will be used, which is faster and has support for sparse matrices (except
@@ -2158,7 +2181,6 @@ def pairwise_distances(
 PAIRWISE_BOOLEAN_FUNCTIONS = [
     "dice",
     "jaccard",
-    "matching",
     "rogerstanimoto",
     "russellrao",
     "sokalmichener",
@@ -2168,6 +2190,9 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     PAIRWISE_BOOLEAN_FUNCTIONS += ["kulsinski"]
+if sp_base_version < parse_version("1.9"):
+    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
+    PAIRWISE_BOOLEAN_FUNCTIONS += ["matching"]
 
 # Helper functions - distance
 PAIRWISE_KERNEL_FUNCTIONS = {

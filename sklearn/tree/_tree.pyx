@@ -32,6 +32,7 @@ cnp.import_array()
 
 from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
+from scipy.sparse import isspmatrix_csr
 
 from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
@@ -597,51 +598,51 @@ cdef class Tree:
     # WARNING: these reference the current `nodes` and `value` buffers, which
     # must not be freed by a subsequent memory allocation.
     # (i.e. through `_resize` or `__setstate__`)
-    property n_classes:
-        def __get__(self):
-            return sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)
+    @property
+    def n_classes(self):
+        return sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)
 
-    property children_left:
-        def __get__(self):
-            return self._get_node_ndarray()['left_child'][:self.node_count]
+    @property
+    def children_left(self):
+        return self._get_node_ndarray()['left_child'][:self.node_count]
 
-    property children_right:
-        def __get__(self):
-            return self._get_node_ndarray()['right_child'][:self.node_count]
+    @property
+    def children_right(self):
+        return self._get_node_ndarray()['right_child'][:self.node_count]
 
-    property n_leaves:
-        def __get__(self):
-            return np.sum(np.logical_and(
-                self.children_left == -1,
-                self.children_right == -1))
+    @property
+    def n_leaves(self):
+        return np.sum(np.logical_and(
+            self.children_left == -1,
+            self.children_right == -1))
 
-    property feature:
-        def __get__(self):
-            return self._get_node_ndarray()['feature'][:self.node_count]
+    @property
+    def feature(self):
+        return self._get_node_ndarray()['feature'][:self.node_count]
 
-    property threshold:
-        def __get__(self):
-            return self._get_node_ndarray()['threshold'][:self.node_count]
+    @property
+    def threshold(self):
+        return self._get_node_ndarray()['threshold'][:self.node_count]
 
-    property impurity:
-        def __get__(self):
-            return self._get_node_ndarray()['impurity'][:self.node_count]
+    @property
+    def impurity(self):
+        return self._get_node_ndarray()['impurity'][:self.node_count]
 
-    property n_node_samples:
-        def __get__(self):
-            return self._get_node_ndarray()['n_node_samples'][:self.node_count]
+    @property
+    def n_node_samples(self):
+        return self._get_node_ndarray()['n_node_samples'][:self.node_count]
 
-    property weighted_n_node_samples:
-        def __get__(self):
-            return self._get_node_ndarray()['weighted_n_node_samples'][:self.node_count]
+    @property
+    def weighted_n_node_samples(self):
+        return self._get_node_ndarray()['weighted_n_node_samples'][:self.node_count]
 
-    property missing_go_to_left:
-        def __get__(self):
-            return self._get_node_ndarray()['missing_go_to_left'][:self.node_count]
+    @property
+    def missing_go_to_left(self):
+        return self._get_node_ndarray()['missing_go_to_left'][:self.node_count]
 
-    property value:
-        def __get__(self):
-            return self._get_value_ndarray()[:self.node_count]
+    @property
+    def value(self):
+        return self._get_value_ndarray()[:self.node_count]
 
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
@@ -876,7 +877,7 @@ cdef class Tree:
         """Finds the terminal region (=leaf node) for each sample in sparse X.
         """
         # Check input
-        if not isinstance(X, csr_matrix):
+        if not isspmatrix_csr(X):
             raise ValueError("X should be in csr_matrix format, got %s"
                              % type(X))
 
@@ -1004,7 +1005,7 @@ cdef class Tree:
         """Finds the decision path (=node) for each sample in X."""
 
         # Check input
-        if not isinstance(X, csr_matrix):
+        if not isspmatrix_csr(X):
             raise ValueError("X should be in csr_matrix format, got %s"
                              % type(X))
 

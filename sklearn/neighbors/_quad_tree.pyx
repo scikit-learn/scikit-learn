@@ -66,15 +66,15 @@ cdef class _QuadTree:
         # Free all inner structures
         free(self.cells)
 
-    property cumulative_size:
-        def __get__(self):
-            cdef Cell[:] cell_mem_view = self._get_cell_ndarray()
-            return cell_mem_view.base['cumulative_size'][:self.cell_count]
+    @property
+    def cumulative_size(self):
+        cdef Cell[:] cell_mem_view = self._get_cell_ndarray()
+        return cell_mem_view.base['cumulative_size'][:self.cell_count]
 
-    property leafs:
-        def __get__(self):
-            cdef Cell[:] cell_mem_view = self._get_cell_ndarray()
-            return cell_mem_view.base['is_leaf'][:self.cell_count]
+    @property
+    def leafs(self):
+        cdef Cell[:] cell_mem_view = self._get_cell_ndarray()
+        return cell_mem_view.base['is_leaf'][:self.cell_count]
 
     def build_tree(self, X):
         """Build a tree from an array of points X."""

@@ -19,6 +19,7 @@ from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import OrthogonalMatchingPursuit
 from sklearn.linear_model import Ridge
+from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
 from sklearn.linear_model import LinearRegression
@@ -304,7 +305,7 @@ def test_multi_output_classification():
 
 def test_multiclass_multioutput_estimator():
     # test to check meta of meta estimators
-    svc = LinearSVC(random_state=0)
+    svc = LinearSVC(dual="auto", random_state=0)
     multi_class_svc = OneVsRestClassifier(svc)
     multi_target_svc = MultiOutputClassifier(multi_class_svc)
 
@@ -409,7 +410,7 @@ def test_multi_output_classification_partial_fit_sample_weights():
 def test_multi_output_exceptions():
     # NotFittedError when fit is not done but score, predict and
     # and predict_proba are called
-    moc = MultiOutputClassifier(LinearSVC(random_state=0))
+    moc = MultiOutputClassifier(LinearSVC(dual="auto", random_state=0))
     with pytest.raises(NotFittedError):
         moc.score(X, y)
 
@@ -445,7 +446,7 @@ def test_multi_output_delegate_predict_proba():
     assert hasattr(moc, "predict_proba")
 
     # A base estimator without `predict_proba` should raise an AttributeError
-    moc = MultiOutputClassifier(LinearSVC())
+    moc = MultiOutputClassifier(LinearSVC(dual="auto"))
     assert not hasattr(moc, "predict_proba")
     msg = "'LinearSVC' object has no attribute 'predict_proba'"
     with pytest.raises(AttributeError, match=msg):
@@ -471,7 +472,7 @@ def generate_multilabel_dataset_with_correlations():
 def test_classifier_chain_fit_and_predict_with_linear_svc():
     # Fit classifier chain and verify predict performance using LinearSVC
     X, Y = generate_multilabel_dataset_with_correlations()
-    classifier_chain = ClassifierChain(LinearSVC())
+    classifier_chain = ClassifierChain(LinearSVC(dual="auto"))
     classifier_chain.fit(X, Y)
 
     Y_pred = classifier_chain.predict(X)
@@ -766,3 +767,26 @@ def test_multioutputregressor_ducktypes_fitted_estimator():
 
     # Does not raise
     reg.predict(X)
+
+
+@pytest.mark.parametrize(
+    "Cls, method", [(ClassifierChain, "fit"), (MultiOutputClassifier, "partial_fit")]
+)
+def test_fit_params_no_routing(Cls, method):
+    """Check that we raise an error when passing metadata not requested by the
+    underlying classifier.
+    """
+    X, y = make_classification(n_samples=50)
+    clf = Cls(PassiveAggressiveClassifier())
+
+    with pytest.raises(ValueError, match="is only supported if"):
+        getattr(clf, method)(X, y, test=1)
+
+
+def test_multioutput_regressor_has_partial_fit():
+    # Test that an unfitted MultiOutputRegressor handles available_if for
+    # partial_fit correctly
+    est = MultiOutputRegressor(LinearRegression())
+    msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
+    with pytest.raises(AttributeError, match=msg):
+        getattr(est, "partial_fit")
