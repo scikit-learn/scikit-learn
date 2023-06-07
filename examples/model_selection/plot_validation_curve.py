@@ -37,6 +37,6 @@ disp = ValidationCurveDisplay.from_estimator(
     score_name="Accuracy",
 )
 disp.ax_.set_title("Validation Curve with SVM")
-disp.ax_.set_xlabel(r"$\gamma$")
+disp.ax_.set_xlabel(r"gamma (inverse radius of the RBF kernel)")
 disp.ax_.set_ylim(0.0, 1.1)
 plt.show()
