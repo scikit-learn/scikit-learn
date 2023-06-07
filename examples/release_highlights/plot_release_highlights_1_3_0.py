@@ -41,9 +41,9 @@ print(f"number of digits: {len(np.unique(true_labels))}")
 
 hdbscan = HDBSCAN(min_cluster_size=15).fit(X)
 non_noisy_labels = hdbscan.labels_[hdbscan.labels_ != -1]
-print(f"number of clusters: {len(np.unique(non_noisy_labels))}")
+print(f"number of clusters found: {len(np.unique(non_noisy_labels))}")
 
-v_measure_score(true_labels[hdbscan.labels_ != 1], non_noisy_labels)
+v_measure_score(true_labels[hdbscan.labels_ != -1], non_noisy_labels)
 
 # %%
 # TargetEncoder: a new category encoding strategy
