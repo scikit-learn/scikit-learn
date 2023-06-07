@@ -54,6 +54,7 @@ v_measure_score(true_labels[hdbscan.labels_ != 1], non_noisy_labels)
 # More details in the :ref:`User Guide <target_encoder>`.
 import numpy as np
 from sklearn.preprocessing import TargetEncoder
+
 X = np.array([["cat"] * 30 + ["dog"] * 20 + ["snake"] * 38], dtype=object).T
 y = [90.3] * 30 + [20.4] * 20 + [21.2] * 38
 
