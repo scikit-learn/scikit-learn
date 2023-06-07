@@ -199,8 +199,8 @@ def _partial_dependence_brute(
 ):
     """Calculate partial dependence via the brute force method.
 
-     The brute method explicitly averages the predictions of an estimator over a grid of
-     feature values.
+    The brute method explicitly averages the predictions of an estimator over a
+    grid of feature values.
 
     For each `grid` value, all the samples from `X` have their variables of
     interest replaced by that specific `grid` value. The predictions are then made
@@ -211,7 +211,8 @@ def _partial_dependence_brute(
     version for estimators with this second option. However, with the `'brute'`
     force method, the average will be done with the given `X` and not the `X`
     used during training, as it is done in the `'recursion'` version. Therefore
-    the average can always accept `sample_weight` (even when the estimator was fitted without).
+    the average can always accept `sample_weight` (even when the estimator was
+    fitted without).
 
     Parameters
     ----------
