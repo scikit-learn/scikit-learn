@@ -391,6 +391,12 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
+- |Enhancement| Added support for `sample_weight` in
+  :func:`inspection.partial_dependence`. This allows for weighted averaging when
+  aggregating for each value of the grid we are making the inspection on. The
+  option is only available when `method` is set to `brute`. :pr:`25209`
+  by :user:`Carlo Lemos <vitaliset>`.
+
 - |API| :func:`inspection.partial_dependence` returns a :class:`utils.Bunch` with
   new key: `grid_values`. The `values` key is deprecated in favor of `grid_values`
   and the `values` key will be removed in 1.5.
