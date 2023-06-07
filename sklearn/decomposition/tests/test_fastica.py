@@ -167,7 +167,7 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
     assert_allclose(sources_fun, sources)
     # Set atol to account for the different magnitudes of the elements in sources
     # (from 1e-4 to 1e1).
-    atol = np.max(np.abs(sources)) * 1e-7
+    atol = np.max(np.abs(sources)) * (1e-5 if global_dtype == np.float32 else 1e-7)
     assert_allclose(sources, ica.transform(m.T), atol=atol)
 
     assert ica.mixing_.shape == (2, 2)
