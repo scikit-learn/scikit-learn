@@ -9,6 +9,7 @@ from scipy import sparse
 
 import pytest
 
+from sklearn import config_context
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
@@ -2057,3 +2058,24 @@ def test_liblinear_not_stuck():
     with warnings.catch_warnings():
         warnings.simplefilter("error", ConvergenceWarning)
         clf.fit(X_prep, y)
+
+
+def test_lr_cv_scores_differ_when_sample_weight_is_requested():
+    rng = np.random.RandomState(10)
+    X, y = make_classification(n_samples=10, random_state=rng)
+    sample_weight = np.ones(len(y))
+    sample_weight[: len(y) // 2] = 2
+    kwargs = {"sample_weight": sample_weight}
+
+    with config_context(enable_metadata_routing=True):
+        scorer1 = get_scorer("accuracy")
+        lr_cv1 = LogisticRegressionCV(scoring=scorer1)
+        lr_cv1.fit(X, y, **kwargs)
+
+        scorer2 = get_scorer("accuracy")
+        scorer2.set_score_request(sample_weight=True)
+        lr_cv2 = LogisticRegressionCV(scoring=scorer2)
+        lr_cv2.fit(X, y, **kwargs)
+
+    with pytest.raises(AssertionError):
+        assert_almost_equal(lr_cv1.scores_[1], lr_cv2.scores_[1])
