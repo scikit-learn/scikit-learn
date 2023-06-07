@@ -9,12 +9,11 @@ implementation_specific_values = [
     #
     # An empty string is used for the `name_suffix` of the float64 case
     # and '32' bit is used for the `name_suffix` of the float32 case.
-    # This allows us to use `BinaryTree` conveniently and the default
-    # float64 case can be used without any particular modifications.
+    # This allows us to use `BinaryTree` conveniently.
     #
     # Note: we use the 64bit types as defined in `sklearn.utils._typedefs`
     #
-    ('', 'float64_t', 'np.float64'),
+    ('64', 'float64_t', 'np.float64'),
     ('32', 'float32_t', 'np.float32')
 ]
 
@@ -25,7 +24,7 @@ implementation_specific_values = [
 }}
 
 
-__all__ = ['KDTree', 'KDTree32']
+__all__ = ['KDTree64', 'KDTree32']
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 

@@ -14,7 +14,7 @@ implementation_specific_values = [
     #
     # Note: we use the 64bit types as defined in `sklearn.utils._typedefs`
     #
-    ('', 'float64_t', 'np.float64', 'cnp.NPY_DOUBLE'),
+    ('64', 'float64_t', 'np.float64', 'cnp.NPY_DOUBLE'),
     ('32', 'float32_t', 'np.float32', 'cnp.NPY_FLOAT')
 ]
 
@@ -178,9 +178,13 @@ import warnings
 from ..metrics._dist_metrics cimport (
     DistanceMetric,
     DistanceMetric64,
+    DistanceMetric32,
     euclidean_dist64,
+    euclidean_dist32,
     euclidean_rdist64,
+    euclidean_rdist32,
     euclidean_dist_to_rdist64,
+    euclidean_dist_to_rdist32,
 )
 
 from ._partition_nodes cimport partition_node_indices
@@ -860,7 +864,7 @@ cdef class BinaryTree{{name_suffix}}:
             raise ValueError("leaf_size must be greater than or equal to 1")
         self.leaf_size = leaf_size
 
-        self.dist_metric = DistanceMetric{{name_suffix}}.get_metric(metric, **kwargs)
+        self.dist_metric = DistanceMetric.get_metric(metric, dtype={{INPUT_DTYPE}}, **kwargs)
         self.euclidean = (self.dist_metric.__class__.__name__
                           == 'EuclideanDistance{{name_suffix}}')
 
@@ -2403,16 +2407,19 @@ cdef class BinaryTree{{name_suffix}}:
 ######################################################################
 # Python functions for benchmarking and testing C implementations
 
+{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE, NPY_TYPE in implementation_specific_values}}
+
 def load_heap(float64_t[:, ::1] X, intp_t k):
     """test fully loading the heap"""
     assert k <= X.shape[1]
-    cdef NeighborsHeap heap = NeighborsHeap(X.shape[0], k)
+    cdef NeighborsHeap{{name_suffix}} heap = NeighborsHeap{{name_suffix}}(X.shape[0], k)
     cdef intp_t i, j
     for i in range(X.shape[0]):
         for j in range(X.shape[1]):
             heap._push(i, X[i, j], j)
     return heap.get_arrays()
 
+{{endfor}}
 
 def simultaneous_sort(float64_t[:, ::1] distances, intp_t[:, ::1] indices):
     """In-place simultaneous sort the given row of the arrays

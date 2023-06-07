@@ -18,8 +18,8 @@ import numpy as np
 from scipy.sparse import csr_matrix, issparse
 from joblib import effective_n_jobs
 
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
+from ._ball_tree import BallTree64 as BallTree
+from ._kd_tree import KDTree64 as KDTree
 from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
