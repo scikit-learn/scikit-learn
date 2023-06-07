@@ -296,6 +296,7 @@ def test_function_param_validation(func_module):
 
 PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.cluster.affinity_propagation", "sklearn.cluster.AffinityPropagation"),
+    ("sklearn.cluster.k_means", "sklearn.cluster.KMeans"),
     ("sklearn.cluster.mean_shift", "sklearn.cluster.MeanShift"),
     ("sklearn.cluster.spectral_clustering", "sklearn.cluster.SpectralClustering"),
     ("sklearn.covariance.graphical_lasso", "sklearn.covariance.GraphicalLasso"),

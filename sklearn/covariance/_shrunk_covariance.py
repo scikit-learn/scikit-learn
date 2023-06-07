@@ -378,7 +378,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
 @validate_params(
     {"X": ["array-like"]},
-    prefer_skip_nested_validation=True,
+    prefer_skip_nested_validation=False,
 )
 def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
@@ -574,7 +574,7 @@ class LedoitWolf(EmpiricalCovariance):
 # OAS estimator
 @validate_params(
     {"X": ["array-like"]},
-    prefer_skip_nested_validation=True,
+    prefer_skip_nested_validation=False,
 )
 def oas(X, *, assume_centered=False):
     """Estimate covariance with the Oracle Approximating Shrinkage as proposed in [1]_.

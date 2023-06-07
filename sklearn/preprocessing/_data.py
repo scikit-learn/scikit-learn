@@ -561,7 +561,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         "X": ["array-like"],
         "axis": [Options(Integral, {0, 1})],
     },
-    prefer_skip_nested_validation=True,
+    prefer_skip_nested_validation=False,
 )
 def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     """Transform features by scaling each feature to a given range.
