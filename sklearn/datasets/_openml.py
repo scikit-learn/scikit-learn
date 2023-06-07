@@ -19,7 +19,13 @@ from . import get_data_home
 from ._arff_parser import load_arff_from_gzip_file
 from ..utils import Bunch
 from ..utils import check_pandas_support  # noqa
-from ..utils._param_validation import Integral, Interval, StrOptions, validate_params
+from ..utils._param_validation import (
+    Integral,
+    Interval,
+    Real,
+    StrOptions,
+    validate_params,
+)
 
 __all__ = ["fetch_openml"]
 
@@ -724,7 +730,7 @@ def _valid_data_column_names(features_list, target_columns):
         "return_X_y": [bool],
         "as_frame": [bool, StrOptions({"auto"})],
         "n_retries": [Interval(Integral, 1, None, closed="left")],
-        "delay": [float],
+        "delay": [Interval(Real, 0, None, closed="left")],
         "parser": [StrOptions({"auto", "pandas", "liac-arff", "warn"})],
     }
 )
