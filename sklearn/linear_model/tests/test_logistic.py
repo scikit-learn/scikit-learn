@@ -2079,3 +2079,24 @@ def test_lr_cv_scores_differ_when_sample_weight_is_requested():
 
     with pytest.raises(AssertionError):
         assert_almost_equal(lr_cv1.scores_[1], lr_cv2.scores_[1])
+
+
+def test_lr_cv_scores_without_enabling_metadata_routing():
+    rng = np.random.RandomState(10)
+    X, y = make_classification(n_samples=10, random_state=rng)
+    sample_weight = np.ones(len(y))
+    sample_weight[: len(y) // 2] = 2
+    kwargs = {"sample_weight": sample_weight}
+
+    with config_context(enable_metadata_routing=False):
+        scorer1 = get_scorer("accuracy")
+        lr_cv1 = LogisticRegressionCV(scoring=scorer1)
+        lr_cv1.fit(X, y, **kwargs)
+
+    with config_context(enable_metadata_routing=True):
+        scorer2 = get_scorer("accuracy")
+        scorer2.set_score_request(sample_weight=True)
+        lr_cv2 = LogisticRegressionCV(scoring=scorer2)
+        lr_cv2.fit(X, y, **kwargs)
+
+    assert_almost_equal(lr_cv1.scores_[1], lr_cv2.scores_[1])

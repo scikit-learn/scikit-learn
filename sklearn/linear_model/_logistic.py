@@ -1854,7 +1854,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             routed_params = Bunch()
             routed_params.splitter = Bunch(split={})
-            routed_params.scorer.score = Bunch(score=fit_params)
+            routed_params.scorer = Bunch(score=fit_params)
             if sample_weight is not None:
                 routed_params.scorer.score["sample_weight"] = sample_weight
 
@@ -2141,7 +2141,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 other_params=score_params,
             )
         else:
-            routed_params = Bunch(estimator=Bunch(score=score_params))
+            routed_params = {}
 
         return scoring(self, X, y, sample_weight=sample_weight, **routed_params)
 
