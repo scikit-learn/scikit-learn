@@ -171,11 +171,11 @@ class LearningCurveDisplay:
             )
 
         if score_type == "train":
-            scores = {"Training metric": train_scores}
+            scores = {"Train": train_scores}
         elif score_type == "test":
-            scores = {"Testing metric": test_scores}
+            scores = {"Test": test_scores}
         else:  # score_type == "both"
-            scores = {"Training metric": train_scores, "Testing metric": test_scores}
+            scores = {"Train": train_scores, "Test": test_scores}
 
         if std_display_style in ("fill_between", None):
             # plot the mean score
@@ -637,11 +637,11 @@ class ValidationCurveDisplay:
             )
 
         if score_type == "train":
-            scores = {"Training metric": train_scores}
+            scores = {"Train": train_scores}
         elif score_type == "test":
-            scores = {"Testing metric": test_scores}
+            scores = {"Test": test_scores}
         else:  # score_type == "both"
-            scores = {"Training metric": train_scores, "Testing metric": test_scores}
+            scores = {"Train": train_scores, "Test": test_scores}
 
         if std_display_style in ("fill_between", None):
             # plot the mean score

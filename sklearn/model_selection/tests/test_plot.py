@@ -67,7 +67,7 @@ def test_learning_curve_display_default_usage(pyplot, data):
     assert display.ax_.get_ylabel() == "Score"
 
     _, legend_labels = display.ax_.get_legend_handles_labels()
-    assert legend_labels == ["Testing metric"]
+    assert legend_labels == ["Test"]
 
     train_sizes_abs, train_scores, test_scores = learning_curve(
         estimator, X, y, train_sizes=train_sizes
@@ -106,7 +106,7 @@ def test_validation_curve_display_default_usage(pyplot, data):
     assert display.ax_.get_ylabel() == "Score"
 
     _, legend_labels = display.ax_.get_legend_handles_labels()
-    assert legend_labels == ["Testing metric"]
+    assert legend_labels == ["Test"]
 
     train_scores, test_scores = validation_curve(
         estimator, X, y, param_name=param_name, param_range=param_range
@@ -215,7 +215,7 @@ def test_learning_curve_display_score_type(pyplot, data, std_display_style):
     )
 
     _, legend_label = display.ax_.get_legend_handles_labels()
-    assert legend_label == ["Training metric"]
+    assert legend_label == ["Train"]
 
     if std_display_style is None:
         assert len(display.lines_) == 1
@@ -240,7 +240,7 @@ def test_learning_curve_display_score_type(pyplot, data, std_display_style):
     )
 
     _, legend_label = display.ax_.get_legend_handles_labels()
-    assert legend_label == ["Testing metric"]
+    assert legend_label == ["Test"]
 
     if std_display_style is None:
         assert len(display.lines_) == 1
@@ -265,7 +265,7 @@ def test_learning_curve_display_score_type(pyplot, data, std_display_style):
     )
 
     _, legend_label = display.ax_.get_legend_handles_labels()
-    assert legend_label == ["Training metric", "Testing metric"]
+    assert legend_label == ["Train", "Test"]
 
     if std_display_style is None:
         assert len(display.lines_) == 2
@@ -307,7 +307,7 @@ def test_validation_curve_display_score_type(pyplot, data, std_display_style):
     )
 
     _, legend_label = display.ax_.get_legend_handles_labels()
-    assert legend_label == ["Training metric"]
+    assert legend_label == ["Train"]
 
     if std_display_style is None:
         assert len(display.lines_) == 1
@@ -333,7 +333,7 @@ def test_validation_curve_display_score_type(pyplot, data, std_display_style):
     )
 
     _, legend_label = display.ax_.get_legend_handles_labels()
-    assert legend_label == ["Testing metric"]
+    assert legend_label == ["Test"]
 
     if std_display_style is None:
         assert len(display.lines_) == 1
@@ -359,7 +359,7 @@ def test_validation_curve_display_score_type(pyplot, data, std_display_style):
     )
 
     _, legend_label = display.ax_.get_legend_handles_labels()
-    assert legend_label == ["Training metric", "Testing metric"]
+    assert legend_label == ["Train", "Test"]
 
     if std_display_style is None:
         assert len(display.lines_) == 2
