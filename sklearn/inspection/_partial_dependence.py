@@ -198,7 +198,7 @@ def _partial_dependence_brute(
     est, grid, features, X, response_method, sample_weight=None
 ):
     """Calculate partial dependence via the brute force method.
-    
+
      The brute method explicitly averages the predictions of an estimator over a grid of
      feature values.
 
