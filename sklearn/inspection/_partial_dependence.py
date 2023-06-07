@@ -137,8 +137,9 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
 
 
 def _partial_dependence_recursion(est, grid, features):
-    """Calculates the partial dependence of an estimator by using `'recursion'`
-    method enabled for some tree-based estimators.
+    """Calculate partial dependence via the recursion method.
+    
+    The recursion method is in particular enabled for tree-based estimators.
 
     For each `grid` value, a weighted tree traversal is performed: if a split node
     involves an input feature of interest, the corresponding left or right branch
@@ -147,7 +148,7 @@ def _partial_dependence_recursion(est, grid, features):
     partial dependence is given by a weighted average of all the visited leaves
     values.
 
-    This method is more efficient in terms of speed than `'brute'` method
+    This method is more efficient in terms of speed than the `'brute'` method
     (:func:`~sklearn.inspection._partial_dependence._partial_dependence_brute`).
     However, here, the partial dependence computation is done explicitly with the
     `X` used during training of `est`.
@@ -169,9 +170,8 @@ def _partial_dependence_recursion(est, grid, features):
 
     grid : array-like of shape (n_points, n_target_features)
         The grid of feature values for which the partial dependence is calculated.
-        The shape should be `(n_points, n_target_features)`, where `n_points` is
-        the number of points in the `grid` and `n_target_features` is the number of
-        features you are doing partial dependence at.
+        Note that `n_points` is the number of points in the grid and `n_target_features`
+        is the number of features you are doing partial dependence at.
 
     features : array-like of {int, str}
         The feature (e.g. `[0]`) or pair of interacting features
@@ -180,11 +180,10 @@ def _partial_dependence_recursion(est, grid, features):
     Returns
     -------
     averaged_predictions : array-like of shape (n_targets, n_points)
-        The averaged predictions for the given `grid` of features values. The
-        shape is `(n_targets, n_points)`, where `n_targets` is the number of
-        targets (1 for non-multioutput regression and binary classification,
-        `n_tasks` for multi-output regression, and `n_classes` for multiclass
-        classification) and `n_points` is the number of points in the `grid`.
+        The averaged predictions for the given `grid` of features values.
+        Note that `n_targets` is the number of targets (e.g. 1 for binary
+        classification, `n_tasks` for multi-output regression, and `n_classes` for
+        multiclass classification) and `n_points` is the number of points in the `grid`.
     """
     averaged_predictions = est._compute_partial_dependence_recursion(grid, features)
     if averaged_predictions.ndim == 1:
@@ -198,8 +197,10 @@ def _partial_dependence_recursion(est, grid, features):
 def _partial_dependence_brute(
     est, grid, features, X, response_method, sample_weight=None
 ):
-    """Calculates the partial dependence of an estimator by averaging its
-    predictions over a grid of feature values.
+    """Calculate partial dependence via the brute force method.
+    
+     The brute method explicitly averages the predictions of an estimator over a grid of
+     feature values.
 
     For each `grid` value, all the samples from `X` have their variables of
     interest replaced by that specific `grid` value. The predictions are then made
@@ -210,7 +211,7 @@ def _partial_dependence_brute(
     version for estimators with this second option. However, with the `'brute'`
     force method, the average will be done with the given `X` and not the `X`
     used during training, as it is done in the `'recursion'` version. Therefore
-    the average can be done accepting the use of `sample_weight`.
+    the average can always accept `sample_weight` (even when the estimator was fitted without).
 
     Parameters
     ----------
@@ -221,9 +222,8 @@ def _partial_dependence_brute(
 
     grid : array-like of shape (n_points, n_target_features)
         The grid of feature values for which the partial dependence is calculated.
-        The shape should be `(n_points, n_target_features)`, where `n_points` is
-        the number of points in the `grid` and `n_target_features` is the number of
-        features you are doing partial dependence at.
+        Note that `n_points` is the number of points in the grid and `n_target_features`
+        is the number of features you are doing partial dependence at.
 
     features : array-like of {int, str}
         The feature (e.g. `[0]`) or pair of interacting features
@@ -250,11 +250,10 @@ def _partial_dependence_brute(
     Returns
     -------
     averaged_predictions : array-like of shape (n_targets, n_points)
-        The averaged predictions for the given `grid` of features values. The
-        shape is `(n_targets, n_points)`, where `n_targets` is the number of
-        targets (1 for non-multioutput regression and binary classification,
-        `n_tasks` for multi-output regression, and `n_classes` for multiclass
-        classification) and `n_points` is the number of points in the `grid`.
+        The averaged predictions for the given `grid` of features values.
+        Note that `n_targets` is the number of targets (e.g. 1 for binary
+        classification, `n_tasks` for multi-output regression, and `n_classes` for
+        multiclass classification) and `n_points` is the number of points in the `grid`.
 
     predictions : array-like
         The predictions for the given `grid` of features values over the samples
@@ -429,7 +428,7 @@ def partial_dependence(
         Sample weights are used to calculate weighted means when averaging the
         model output. If `None`, then samples are equally weighted. If
         `sample_weight` is not `None`, then `method` will be set to `'brute'`.
-        Note that `sample_weight` does not change the individual predictions.
+        Note that `sample_weight` is ignored for `kind='individual'`.
 
         .. versionadded:: 1.3
 
@@ -510,7 +509,7 @@ def partial_dependence(
         Note that the fast `method='recursion'` option is only available for
         `kind='average'` and `sample_weights=None`. Computing individual
         dependencies and doing weighted averages requires using the slower
-        `method='brute'` option.
+        `method='brute'`.
 
         .. versionadded:: 0.24
 
