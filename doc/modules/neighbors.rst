@@ -50,7 +50,7 @@ Unsupervised Nearest Neighbors
 
 :class:`NearestNeighbors` implements unsupervised nearest neighbors learning.
 It acts as a uniform interface to three different nearest neighbors
-algorithms: :class:`BallTree`, :class:`KDTree`, and a
+algorithms: :class:`BallTree64`, :class:`KDTree64`, and a
 brute-force algorithm based on routines in :mod:`sklearn.metrics.pairwise`.
 The choice of neighbors search algorithm is controlled through the keyword
 ``'algorithm'``, which must be one of
@@ -116,15 +116,15 @@ unsupervised learning: in particular, see :class:`~sklearn.manifold.Isomap`,
 
 KDTree and BallTree Classes
 ---------------------------
-Alternatively, one can use the :class:`KDTree` or :class:`BallTree` classes
+Alternatively, one can use the :class:`KDTree64` or :class:`BallTree64` classes
 directly to find nearest neighbors.  This is the functionality wrapped by
 the :class:`NearestNeighbors` class used above.  The Ball Tree and KD Tree
 have the same interface; we'll show an example of using the KD Tree here:
 
-    >>> from sklearn.neighbors import KDTree
+    >>> from sklearn.neighbors import KDTree64
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-    >>> kdt = KDTree(X, leaf_size=30, metric='euclidean')
+    >>> kdt = KDTree64(X, leaf_size=30, metric='euclidean')
     >>> kdt.query(X, k=2, return_distance=False)
     array([[0, 1],
            [1, 0],
@@ -133,15 +133,15 @@ have the same interface; we'll show an example of using the KD Tree here:
            [4, 3],
            [5, 4]]...)
 
-Refer to the :class:`KDTree` and :class:`BallTree` class documentation
+Refer to the :class:`KDTree64` and :class:`BallTree64` class documentation
 for more information on the options available for nearest neighbors searches,
 including specification of query strategies, distance metrics, etc. For a list
-of valid metrics use :meth:`KDTree.valid_metrics` and :meth:`BallTree.valid_metrics`:
+of valid metrics use :meth:`KDTree64.valid_metrics` and :meth:`BallTree64.valid_metrics`:
 
-    >>> from sklearn.neighbors import KDTree, BallTree
-    >>> KDTree.valid_metrics()
+    >>> from sklearn.neighbors import KDTree64, BallTree64
+    >>> KDTree64.valid_metrics()
     ['euclidean', 'l2', 'minkowski', 'p', 'manhattan', 'cityblock', 'l1', 'chebyshev', 'infinity']
-    >>> BallTree.valid_metrics()
+    >>> BallTree64.valid_metrics()
     ['euclidean', 'l2', 'minkowski', 'p', 'manhattan', 'cityblock', 'l1', 'chebyshev', 'infinity', 'seuclidean', 'mahalanobis', 'hamming', 'canberra', 'braycurtis', 'jaccard', 'dice', 'rogerstanimoto', 'russellrao', 'sokalmichener', 'sokalsneath', 'haversine', 'pyfunc']
 
 .. _classification:
@@ -306,7 +306,7 @@ neighbors searches, it becomes inefficient as :math:`D` grows very large:
 this is one manifestation of the so-called "curse of dimensionality".
 In scikit-learn, KD tree neighbors searches are specified using the
 keyword ``algorithm = 'kd_tree'``, and are computed using the class
-:class:`KDTree`.
+:class:`KDTree64`.
 
 
 .. topic:: References:
@@ -344,8 +344,8 @@ a *KD-tree* in high dimensions, though the actual performance is highly
 dependent on the structure of the training data.
 In scikit-learn, ball-tree-based
 neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
-and are computed using the class :class:`BallTree`.
-Alternatively, the user can work with the :class:`BallTree` class directly.
+and are computed using the class :class:`BallTree64`.
+Alternatively, the user can work with the :class:`BallTree64` class directly.
 
 .. topic:: References:
 
@@ -374,7 +374,7 @@ depends on a number of factors:
 
   For small data sets (:math:`N` less than 30 or so), :math:`\log(N)` is
   comparable to :math:`N`, and brute force algorithms can be more efficient
-  than a tree-based approach.  Both :class:`KDTree` and :class:`BallTree`
+  than a tree-based approach.  Both :class:`KDTree64` and :class:`BallTree64`
   address this through providing a *leaf size* parameter: this controls the
   number of samples at which a query switches to brute-force.  This allows both
   algorithms to approach the efficiency of a brute-force computation for small
@@ -464,7 +464,7 @@ leaf nodes.  The level of this switch can be specified with the parameter
   As ``leaf_size`` increases, the memory required to store a tree structure
   decreases.  This is especially important in the case of ball tree, which
   stores a :math:`D`-dimensional centroid for each node.  The required
-  storage space for :class:`BallTree` is approximately ``1 / leaf_size`` times
+  storage space for :class:`BallTree64` is approximately ``1 / leaf_size`` times
   the size of the training set.
 
 ``leaf_size`` is not referenced for brute force queries.
