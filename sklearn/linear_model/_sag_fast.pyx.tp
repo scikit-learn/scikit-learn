@@ -209,6 +209,7 @@ def sag{{name_suffix}}(
     double step_size,
     double alpha,
     double beta,
+    {{c_type}}[::1] penalty_factor,
     {{c_type}}[:, ::1] sum_gradient_init,
     {{c_type}}[:, ::1] gradient_memory_init,
     bint[::1] seen_init,
@@ -333,7 +334,7 @@ def sag{{name_suffix}}(
     cumulative_sums[0] = 0.0
 
     # the multipliative scale needed for JIT params
-    cdef {{c_type}}[::1] cumulative_sums_prox
+    cdef {{c_type}}[:,::1] cumulative_sums_prox
     cdef {{c_type}}* cumulative_sums_prox_ptr
 
     cdef bint prox = beta > 0 and saga
@@ -358,8 +359,8 @@ def sag{{name_suffix}}(
                          % loss_function)
 
     if prox:
-        cumulative_sums_prox = np.empty(n_samples, dtype={{np_type}}, order="c")
-        cumulative_sums_prox_ptr = &cumulative_sums_prox[0]
+        cumulative_sums_prox = np.empty((n_features,n_samples), dtype={{np_type}}, order="c")
+        cumulative_sums_prox_ptr = &cumulative_sums_prox[0,0]
     else:
         cumulative_sums_prox = None
         cumulative_sums_prox_ptr = NULL
@@ -473,15 +474,19 @@ def sag{{name_suffix}}(
                 if sample_itr == 0:
                     cumulative_sums[0] = step_size / (wscale * num_seen)
                     if prox:
-                        cumulative_sums_prox[0] = step_size * beta / wscale
+                        for j in range(n_features):
+                            feature_ind = x_ind_ptr[j]
+                            cumulative_sums_prox_ptr[feature_ind*n_samples + 0] = step_size * beta / wscale
                 else:
                     cumulative_sums[sample_itr] = \
                         (cumulative_sums[sample_itr - 1] +
                          step_size / (wscale * num_seen))
                     if prox:
-                        cumulative_sums_prox[sample_itr] = \
-                        (cumulative_sums_prox[sample_itr - 1] +
-                             step_size * beta / wscale)
+                        for j in range(n_features):
+                            feature_ind = x_ind_ptr[j]
+                            cumulative_sums_prox_ptr[feature_ind*n_samples + sample_itr] = \
+                            (cumulative_sums_prox_ptr[feature_ind*n_samples + sample_itr - 1] +
+                            step_size * beta / wscale)
                 # If wscale gets too small, we need to reset the scale.
                 # This also resets the just-in-time update system.
                 if wscale < 1e-9:
@@ -657,11 +662,11 @@ cdef int lagged_update{{name_suffix}}(
 
         cum_sum = cumulative_sums[sample_itr - 1]
         if prox:
-            cum_sum_prox = cumulative_sums_prox[sample_itr - 1]
+            cum_sum_prox = cumulative_sums_prox[feature_ind * n_samples + sample_itr - 1]
         if feature_hist[feature_ind] != 0:
             cum_sum -= cumulative_sums[feature_hist[feature_ind] - 1]
             if prox:
-                cum_sum_prox -= cumulative_sums_prox[feature_hist[feature_ind] - 1]
+                cum_sum_prox -= cumulative_sums_prox[feature_ind * n_samples +feature_hist[feature_ind] - 1]
         if not prox:
             for class_ind in range(n_classes):
                 idx = f_idx + class_ind
@@ -692,11 +697,11 @@ cdef int lagged_update{{name_suffix}}(
                         if lagged_ind > 0:
                             grad_step = (cumulative_sums[lagged_ind]
                                - cumulative_sums[lagged_ind - 1])
-                            prox_step = (cumulative_sums_prox[lagged_ind]
-                               - cumulative_sums_prox[lagged_ind - 1])
+                            prox_step = (cumulative_sums_prox[feature_ind * n_samples + lagged_ind]
+                               - cumulative_sums_prox[feature_ind * n_samples + lagged_ind - 1])
                         else:
                             grad_step = cumulative_sums[lagged_ind]
-                            prox_step = cumulative_sums_prox[lagged_ind]
+                            prox_step = cumulative_sums_prox[feature_ind * n_samples + lagged_ind]
                         weights[idx] -= sum_gradient[idx] * grad_step
                         weights[idx] = _soft_thresholding{{name_suffix}}(weights[idx],
                                                           prox_step)
@@ -714,7 +719,7 @@ cdef int lagged_update{{name_suffix}}(
     if reset:
         cumulative_sums[sample_itr - 1] = 0.0
         if prox:
-            cumulative_sums_prox[sample_itr - 1] = 0.0
+            cumulative_sums_prox[feature_ind * n_samples + sample_itr - 1] = 0.0
 
     return 0
 

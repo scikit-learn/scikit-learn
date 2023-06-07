@@ -95,6 +95,7 @@ def _logistic_regression_path(
     y,
     pos_class=None,
     Cs=10,
+    penalty_factor=None,
     fit_intercept=True,
     max_iter=100,
     tol=1e-4,
@@ -531,6 +532,7 @@ def _logistic_regression_path(
                 loss,
                 alpha,
                 beta,
+                penalty_factor,
                 max_iter,
                 tol,
                 verbose,
@@ -843,6 +845,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         Like in support vector machines, smaller values specify stronger
         regularization.
 
+    penalty_factor : ndarray of shape (n_features,), default=None
+
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the decision function.
@@ -1101,6 +1105,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         dual=False,
         tol=1e-4,
         C=1.0,
+        penalty_factor = None,
         fit_intercept=True,
         intercept_scaling=1,
         class_weight=None,
@@ -1117,6 +1122,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.dual = dual
         self.tol = tol
         self.C = C
+        self.penalty_factor = penalty_factor
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
         self.class_weight = class_weight
@@ -1159,9 +1165,16 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         The SAGA solver supports both float64 and float32 bit arrays.
         """
 
-        self._validate_params()
+        #self._validate_params()
+        if self.penalty_factor is None:
+
+            print(self.penalty_factor)
 
         solver = _check_solver(self.solver, self.penalty, self.dual)
+
+        if self.penalty_factor is None:
+
+            print(self.penalty_factor)
 
         if self.penalty != "elasticnet" and self.l1_ratio is not None:
             warnings.warn(
@@ -1295,12 +1308,17 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         else:
             n_threads = 1
 
+        if self.penalty_factor is None:
+
+            print(self.penalty_factor)
+    
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer=prefer)(
             path_func(
                 X,
                 y,
                 pos_class=class_,
                 Cs=[C_],
+                penalty_factor = self.penalty_factor,
                 l1_ratio=self.l1_ratio,
                 fit_intercept=self.fit_intercept,
                 tol=self.tol,
@@ -1764,7 +1782,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             Fitted LogisticRegressionCV estimator.
         """
 
-        self._validate_params()
+        #self._validate_params()
 
         solver = _check_solver(self.solver, self.penalty, self.dual)
 

@@ -92,6 +92,7 @@ def sag_solver(
     loss="log",
     alpha=1.0,
     beta=0.0,
+    penalty_factor=None,
     max_iter=1000,
     tol=0.001,
     verbose=0,
@@ -256,6 +257,13 @@ def sag_solver(
     alpha_scaled = float(alpha) / n_samples
     beta_scaled = float(beta) / n_samples
 
+    if penalty_factor is None:
+        penalty_factor = np.ones(n_features)
+        print()
+    else:
+        penalty_factor = penalty_factor
+    print(penalty_factor)
+    penalty_factor = beta_scaled*penalty_factor
     # if loss == 'multinomial', y should be label encoded.
     n_classes = int(y.max()) + 1 if loss == "multinomial" else 1
 
@@ -335,6 +343,7 @@ def sag_solver(
         step_size,
         alpha_scaled,
         beta_scaled,
+        penalty_factor,
         sum_gradient_init,
         gradient_memory_init,
         seen_init,
