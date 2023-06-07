@@ -138,7 +138,7 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
 
 def _partial_dependence_recursion(est, grid, features):
     """Calculate partial dependence via the recursion method.
-    
+
     The recursion method is in particular enabled for tree-based estimators.
 
     For each `grid` value, a weighted tree traversal is performed: if a split node
