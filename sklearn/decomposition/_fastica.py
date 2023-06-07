@@ -20,7 +20,7 @@ from ..base import _fit_context
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, Options, validate_params
 
 __all__ = ["fastica", "FastICA"]
 
@@ -170,7 +170,7 @@ def fastica(
     n_components=None,
     *,
     algorithm="parallel",
-    whiten="warn",
+    whiten="unit-variance",
     fun="logcosh",
     fun_args=None,
     max_iter=200,
@@ -200,20 +200,18 @@ def fastica(
     algorithm : {'parallel', 'deflation'}, default='parallel'
         Specify which algorithm to use for FastICA.
 
-    whiten : str or bool, default="warn"
+    whiten : str or bool, default='unit-variance'
         Specify the whitening strategy to use.
 
-        - If 'arbitrary-variance' (default), a whitening with variance
+        - If 'arbitrary-variance', a whitening with variance
           arbitrary is used.
         - If 'unit-variance', the whitening matrix is rescaled to ensure that
           each recovered source has unit variance.
         - If False, the data is already considered to be whitened, and no
           whitening is performed.
 
-        .. deprecated:: 1.1
-            Starting in v1.3, `whiten='unit-variance'` will be used by default.
-            `whiten=True` is deprecated from 1.1 and will raise ValueError in 1.3.
-            Use `whiten=arbitrary-variance` instead.
+        .. versionchanged:: 1.3
+            The default value of `whiten` changed to 'unit-variance' in 1.3.
 
     fun : {'logcosh', 'exp', 'cube'} or callable, default='logcosh'
         The functional form of the G function used in the
@@ -333,7 +331,7 @@ def fastica(
     est._validate_params()
     S = est._fit_transform(X, compute_sources=compute_sources)
 
-    if est._whiten in ["unit-variance", "arbitrary-variance"]:
+    if est.whiten in ["unit-variance", "arbitrary-variance"]:
         K = est.whitening_
         X_mean = est.mean_
     else:
@@ -364,20 +362,18 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     algorithm : {'parallel', 'deflation'}, default='parallel'
         Specify which algorithm to use for FastICA.
 
-    whiten : str or bool, default="warn"
+    whiten : str or bool, default='unit-variance'
         Specify the whitening strategy to use.
 
-        - If 'arbitrary-variance' (default), a whitening with variance
+        - If 'arbitrary-variance', a whitening with variance
           arbitrary is used.
         - If 'unit-variance', the whitening matrix is rescaled to ensure that
           each recovered source has unit variance.
         - If False, the data is already considered to be whitened, and no
           whitening is performed.
 
-        .. deprecated:: 1.1
-            Starting in v1.3, `whiten='unit-variance'` will be used by default.
-            `whiten=True` is deprecated from 1.1 and will raise ValueError in 1.3.
-            Use `whiten=arbitrary-variance` instead.
+        .. versionchanged:: 1.3
+            The default value of `whiten` changed to 'unit-variance' in 1.3.
 
     fun : {'logcosh', 'exp', 'cube'} or callable, default='logcosh'
         The functional form of the G function used in the
@@ -491,9 +487,8 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "algorithm": [StrOptions({"parallel", "deflation"})],
         "whiten": [
-            Hidden(StrOptions({"warn"})),
             StrOptions({"arbitrary-variance", "unit-variance"}),
-            "boolean",
+            Options(bool, {False}),
         ],
         "fun": [StrOptions({"logcosh", "exp", "cube"}), callable],
         "fun_args": [dict, None],
@@ -509,7 +504,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         n_components=None,
         *,
         algorithm="parallel",
-        whiten="warn",
+        whiten="unit-variance",
         fun="logcosh",
         fun_args=None,
         max_iter=200,
@@ -548,29 +543,8 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         S : ndarray of shape (n_samples, n_components) or None
             Sources matrix. `None` if `compute_sources` is `False`.
         """
-        self._whiten = self.whiten
-
-        if self._whiten == "warn":
-            warnings.warn(
-                "Starting in v1.3, whiten='unit-variance' will be used by default.",
-                FutureWarning,
-            )
-            self._whiten = "arbitrary-variance"
-
-        if self._whiten is True:
-            warnings.warn(
-                (
-                    "Starting in v1.3, whiten=True should be specified as "
-                    "whiten='arbitrary-variance' (its current behaviour). This "
-                    "behavior is deprecated in 1.1 and will raise ValueError in 1.3."
-                ),
-                FutureWarning,
-                stacklevel=2,
-            )
-            self._whiten = "arbitrary-variance"
-
         XT = self._validate_data(
-            X, copy=self._whiten, dtype=[np.float64, np.float32], ensure_min_samples=2
+            X, copy=self.whiten, dtype=[np.float64, np.float32], ensure_min_samples=2
         ).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
@@ -592,7 +566,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         n_features, n_samples = XT.shape
         n_components = self.n_components
-        if not self._whiten and n_components is not None:
+        if not self.whiten and n_components is not None:
             n_components = None
             warnings.warn("Ignoring n_components with whiten=False.")
 
@@ -604,7 +578,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 "n_components is too large: it will be set to %s" % n_components
             )
 
-        if self._whiten:
+        if self.whiten:
             # Centering the features of X
             X_mean = XT.mean(axis=-1)
             XT -= X_mean[:, np.newaxis]
@@ -673,15 +647,15 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.n_iter_ = n_iter
 
         if compute_sources:
-            if self._whiten:
+            if self.whiten:
                 S = np.linalg.multi_dot([W, K, XT]).T
             else:
                 S = np.dot(W, XT).T
         else:
             S = None
 
-        if self._whiten:
-            if self._whiten == "unit-variance":
+        if self.whiten:
+            if self.whiten == "unit-variance":
                 if not compute_sources:
                     S = np.linalg.multi_dot([W, K, XT]).T
                 S_std = np.std(S, axis=0, keepdims=True)
@@ -762,9 +736,9 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         X = self._validate_data(
-            X, copy=(copy and self._whiten), dtype=[np.float64, np.float32], reset=False
+            X, copy=(copy and self.whiten), dtype=[np.float64, np.float32], reset=False
         )
-        if self._whiten:
+        if self.whiten:
             X -= self.mean_
 
         return np.dot(X, self.components_.T)
@@ -787,9 +761,9 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X, copy=(copy and self._whiten), dtype=[np.float64, np.float32])
+        X = check_array(X, copy=(copy and self.whiten), dtype=[np.float64, np.float32])
         X = np.dot(X, self.mixing_.T)
-        if self._whiten:
+        if self.whiten:
             X += self.mean_
 
         return X

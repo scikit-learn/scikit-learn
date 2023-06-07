@@ -126,7 +126,7 @@ def fetch_rcv1(
         This follows the official LYRL2004 chronological split.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     random_state : int, RandomState instance or None, default=None
