@@ -853,7 +853,7 @@ def fetch_openml(
            the dataset is dense and pandas is not installed.
 
     read_csv_kwargs : dict, default=None
-        Keyword arguments passed to `pandas.read_csv` when loading the data
+        Keyword arguments passed to :func:`pandas.read_csv` when loading the data
         from a ARFF file and using the pandas parser. It can allows to
         overwrite some default parameters.
 
