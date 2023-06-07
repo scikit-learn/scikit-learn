@@ -15,7 +15,6 @@ from sklearn import datasets
 from sklearn.neighbors import NearestCentroid
 from sklearn.inspection import DecisionBoundaryDisplay
 
-n_neighbors = 15
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -29,7 +28,7 @@ cmap_light = ListedColormap(["orange", "cyan", "cornflowerblue"])
 cmap_bold = ListedColormap(["darkorange", "c", "darkblue"])
 
 for shrinkage in [None, 0.2]:
-    # we create an instance of Neighbours Classifier and fit the data.
+    # we create an instance of Nearest Centroid Classifier and fit the data.
     clf = NearestCentroid(shrink_threshold=shrinkage)
     clf.fit(X, y)
     y_pred = clf.predict(X)

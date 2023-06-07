@@ -156,7 +156,6 @@ x_labels.append("Full data")
 
 
 def get_impute_zero_score(X_missing, y_missing):
-
     imputer = SimpleImputer(
         missing_values=np.nan, add_indicator=True, strategy="constant", fill_value=0
     )

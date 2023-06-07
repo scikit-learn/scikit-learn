@@ -212,8 +212,10 @@ def test_decision_boundary_display(pyplot, fitted_clf, response_method, plot_met
         ),
         (
             "auto",
-            "MyClassifier has none of the following attributes: decision_function, "
-            "predict_proba, predict",
+            (
+                "MyClassifier has none of the following attributes: decision_function, "
+                "predict_proba, predict"
+            ),
         ),
         (
             "bad_method",
@@ -306,7 +308,7 @@ def test_dataframe_labels_used(pyplot, fitted_clf):
     assert ax.get_xlabel() == "hello"
     assert ax.get_ylabel() == "world"
 
-    # labels get overriden only if provided to the `plot` method
+    # labels get overridden only if provided to the `plot` method
     disp.plot(ax=ax, xlabel="overwritten_x", ylabel="overwritten_y")
     assert ax.get_xlabel() == "overwritten_x"
     assert ax.get_ylabel() == "overwritten_y"

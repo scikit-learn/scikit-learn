@@ -2,14 +2,10 @@
 
 set -e
 
-# defines the show_installed_libraries function
+# Defines the show_installed_libraries and activate_environment functions.
 source build_tools/shared.sh
 
-if [[ "$DISTRIB" =~ ^conda.* ]]; then
-    source activate $VIRTUALENV
-elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pip-nogil" ]]; then
-    source $VIRTUALENV/bin/activate
-fi
+activate_environment
 
 if [[ "$BUILD_REASON" == "Schedule" ]]; then
     # Enable global random seed randomization to discover seed-sensitive tests
@@ -61,6 +57,10 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
 
     # Ignore distutils deprecation warning, used by joblib internally
     TEST_CMD="$TEST_CMD -Wignore:distutils\ Version\ classes\ are\ deprecated:DeprecationWarning"
+
+    # Ignore pkg_resources deprecation warnings triggered by pyamg
+    TEST_CMD="$TEST_CMD -W 'ignore:pkg_resources is deprecated as an API:DeprecationWarning'"
+    TEST_CMD="$TEST_CMD -W 'ignore:Deprecated call to \`pkg_resources:DeprecationWarning'"
 
     # In some case, exceptions are raised (by bug) in tests, and captured by pytest,
     # but not raised again. This is for instance the case when Cython directives are

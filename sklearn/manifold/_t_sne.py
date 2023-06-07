@@ -498,7 +498,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
            (ICANN '01). Springer-Verlag, Berlin, Heidelberg, 485-491.
 
     .. [2] Laurens van der Maaten. Learning a Parametric Embedding by Preserving
-           Local Structure. Proceedings of the Twelth International Conference on
+           Local Structure. Proceedings of the Twelfth International Conference on
            Artificial Intelligence and Statistics, PMLR 5:384-391, 2009.
     """
     n_samples = X.shape[0]
@@ -839,8 +839,10 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             )
         if self.square_distances != "deprecated":
             warnings.warn(
-                "The parameter `square_distances` has not effect and will be "
-                "removed in version 1.3.",
+                (
+                    "The parameter `square_distances` has not effect and will be "
+                    "removed in version 1.3."
+                ),
                 FutureWarning,
             )
         if self.learning_rate == "auto":
@@ -871,8 +873,10 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
             check_non_negative(
                 X,
-                "TSNE.fit(). With metric='precomputed', X "
-                "should contain positive distances.",
+                (
+                    "TSNE.fit(). With metric='precomputed', X "
+                    "should contain positive distances."
+                ),
             )
 
             if self.method == "exact" and issparse(X):

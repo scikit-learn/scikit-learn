@@ -11,7 +11,6 @@ import numpy as np
 from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
-from ..cross_decomposition._pls import _PLS
 from ..utils import (
     check_array,
     safe_sqr,
@@ -101,8 +100,10 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         mask = self.get_support()
         if not mask.any():
             warnings.warn(
-                "No features were selected: either the data is"
-                " too noisy or the selection test too strict.",
+                (
+                    "No features were selected: either the data is"
+                    " too noisy or the selection test too strict."
+                ),
                 UserWarning,
             )
             if hasattr(X, "iloc"):
@@ -205,10 +206,7 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
     """
     if isinstance(getter, str):
         if getter == "auto":
-            if isinstance(estimator, _PLS):
-                # TODO(1.3): remove this branch
-                getter = attrgetter("_coef_")
-            elif hasattr(estimator, "coef_"):
+            if hasattr(estimator, "coef_"):
                 getter = attrgetter("coef_")
             elif hasattr(estimator, "feature_importances_"):
                 getter = attrgetter("feature_importances_")

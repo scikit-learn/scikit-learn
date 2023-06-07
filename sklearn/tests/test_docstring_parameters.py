@@ -155,7 +155,6 @@ def test_docstring_parameters():
 def test_tabs():
     # Test that there are no tabs in our source files
     for importer, modname, ispkg in walk_packages(sklearn.__path__, prefix="sklearn."):
-
         if IS_PYPY and (
             "_svmlight_format_io" in modname
             or "feature_extraction._hashing_fast" in modname
@@ -256,6 +255,10 @@ def test_fit_docstring_attributes(name, Estimator):
     # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
     if Estimator.__name__ in ("KMeans", "MiniBatchKMeans"):
         est.set_params(n_init="auto")
+
+    # TODO(1.4): TO BE REMOVED for 1.5 (avoid FutureWarning)
+    if Estimator.__name__ in ("LinearSVC", "LinearSVR"):
+        est.set_params(dual="auto")
 
     # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
     if Estimator.__name__ in (

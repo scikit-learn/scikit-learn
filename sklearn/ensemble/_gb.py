@@ -174,7 +174,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         n_iter_no_change=None,
         tol=1e-4,
     ):
-
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.loss = loss
@@ -598,7 +597,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # perform boosting iterations
         i = begin_at_stage
         for i in range(begin_at_stage, self.n_estimators):
-
             # subsampling
             if do_oob:
                 sample_mask = _random_sample_mask(n_samples, n_inbag, random_state)
@@ -622,7 +620,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 X_csr,
             )
 
-            # track deviance (= loss)
+            # track loss
             if do_oob:
                 self.train_score_[i] = loss_(
                     y[sample_mask],
@@ -951,7 +949,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
-        ``init`` has to provide :meth:`fit` and :meth:`predict_proba`. If
+        ``init`` has to provide :term:`fit` and :term:`predict_proba`. If
         'zero', the initial raw predictions are set to zero. By default, a
         ``DummyEstimator`` predicting the classes priors is used.
 
@@ -1056,28 +1054,28 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     oob_improvement_ : ndarray of shape (n_estimators,)
-        The improvement in loss (= deviance) on the out-of-bag samples
+        The improvement in loss on the out-of-bag samples
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
         Only available if ``subsample < 1.0``.
 
     oob_scores_ : ndarray of shape (n_estimators,)
-        The full history of the loss (= deviance) values on the out-of-bag
+        The full history of the loss values on the out-of-bag
         samples. Only available if `subsample < 1.0`.
 
         .. versionadded:: 1.3
 
     oob_score_ : float
-        The last value of the loss (= deviance) on the out-of-bag samples. It is
+        The last value of the loss on the out-of-bag samples. It is
         the same as `oob_scores_[-1]`. Only available if `subsample < 1.0`.
 
         .. versionadded:: 1.3
 
     train_score_ : ndarray of shape (n_estimators,)
-        The i-th score ``train_score_[i]`` is the deviance (= loss) of the
+        The i-th score ``train_score_[i]`` is the loss of the
         model at iteration ``i`` on the in-bag sample.
-        If ``subsample == 1`` this is the deviance on the training data.
+        If ``subsample == 1`` this is the loss on the training data.
 
     init_ : estimator
         The estimator that provides the initial predictions.
@@ -1189,7 +1187,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         tol=1e-4,
         ccp_alpha=0.0,
     ):
-
         super().__init__(
             loss=loss,
             learning_rate=learning_rate,
@@ -1619,28 +1616,28 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     oob_improvement_ : ndarray of shape (n_estimators,)
-        The improvement in loss (= deviance) on the out-of-bag samples
+        The improvement in loss on the out-of-bag samples
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
         Only available if ``subsample < 1.0``.
 
     oob_scores_ : ndarray of shape (n_estimators,)
-        The full history of the loss (= deviance) values on the out-of-bag
+        The full history of the loss values on the out-of-bag
         samples. Only available if `subsample < 1.0`.
 
         .. versionadded:: 1.3
 
     oob_score_ : float
-        The last value of the loss (= deviance) on the out-of-bag samples. It is
+        The last value of the loss on the out-of-bag samples. It is
         the same as `oob_scores_[-1]`. Only available if `subsample < 1.0`.
 
         .. versionadded:: 1.3
 
     train_score_ : ndarray of shape (n_estimators,)
-        The i-th score ``train_score_[i]`` is the deviance (= loss) of the
+        The i-th score ``train_score_[i]`` is the loss of the
         model at iteration ``i`` on the in-bag sample.
-        If ``subsample == 1`` this is the deviance on the training data.
+        If ``subsample == 1`` this is the loss on the training data.
 
     init_ : estimator
         The estimator that provides the initial predictions.
@@ -1743,7 +1740,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         tol=1e-4,
         ccp_alpha=0.0,
     ):
-
         super().__init__(
             loss=loss,
             learning_rate=learning_rate,

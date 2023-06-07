@@ -13,6 +13,9 @@ echo -e "No problem detected by flake8\n"
 mypy sklearn/
 echo -e "No problem detected by mypy\n"
 
+cython-lint sklearn/
+echo -e "No problem detected by cython-lint\n"
+
 # For docstrings and warnings of deprecated attributes to be rendered
 # properly, the property decorator must come before the deprecated decorator
 # (else they are treated as functions)
@@ -24,7 +27,7 @@ bad_deprecation_property_order=`git grep -A 10 "@property"  -- "*.py" | awk '/@p
 if [ ! -z "$bad_deprecation_property_order" ]
 then
     echo "property decorator should come before deprecated decorator"
-    echo "found the following occurrencies:"
+    echo "found the following occurrences:"
     echo $bad_deprecation_property_order
     exit 1
 fi

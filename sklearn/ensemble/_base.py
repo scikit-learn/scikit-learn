@@ -157,13 +157,18 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         if self.estimator is not None:
             self.estimator_ = self.estimator
-        elif self.base_estimator not in [None, "deprecated"]:
+        elif self.base_estimator != "deprecated":
             warnings.warn(
-                "`base_estimator` was renamed to `estimator` in version 1.2 and "
-                "will be removed in 1.4.",
+                (
+                    "`base_estimator` was renamed to `estimator` in version 1.2 and "
+                    "will be removed in 1.4."
+                ),
                 FutureWarning,
             )
-            self.estimator_ = self.base_estimator
+            if self.base_estimator is not None:
+                self.estimator_ = self.base_estimator
+            else:
+                self.estimator_ = default
         else:
             self.estimator_ = default
 

@@ -274,7 +274,7 @@ def test_compute_sample_weight_more_than_32():
     assert_array_almost_equal(weight, np.ones(y.shape[0]))
 
 
-def test_class_weight_does_not_contains_more_classses():
+def test_class_weight_does_not_contains_more_classes():
     """Check that class_weight can contain more labels than in y.
 
     Non-regression test for #22413

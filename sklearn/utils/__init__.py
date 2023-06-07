@@ -16,6 +16,8 @@ import warnings
 import numpy as np
 from scipy.sparse import issparse
 
+from . import metadata_routing
+
 from .murmurhash import murmurhash3_32
 from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
@@ -75,6 +77,7 @@ __all__ = [
     "DataConversionWarning",
     "estimator_html_repr",
     "Bunch",
+    "metadata_routing",
 ]
 
 IS_PYPY = platform.python_implementation() == "PyPy"
@@ -465,6 +468,14 @@ def _get_column_indices(X, key):
         )
 
 
+@validate_params(
+    {
+        "replace": ["boolean"],
+        "n_samples": [Interval(numbers.Integral, 1, None, closed="left"), None],
+        "random_state": ["random_state"],
+        "stratify": ["array-like", None],
+    }
+)
 def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=None):
     """Resample arrays or sparse matrices in a consistent way.
 

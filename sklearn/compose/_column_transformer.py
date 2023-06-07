@@ -25,6 +25,7 @@ from ..utils._set_output import _get_output_config, _safe_set_output
 from ..utils import check_pandas_support
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted, _check_feature_names_in
+from ..utils.validation import _num_samples
 from ..utils.parallel import delayed, Parallel
 
 
@@ -854,6 +855,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 pd = check_pandas_support("transform")
                 output = pd.concat(Xs, axis=1)
 
+                output_samples = output.shape[0]
+                if any(_num_samples(X) != output_samples for X in Xs):
+                    raise ValueError(
+                        "Concatenating DataFrames from the transformer's output lead to"
+                        " an inconsistent number of samples. The output may have Pandas"
+                        " Indexes that do not match."
+                    )
+
                 # If all transformers define `get_feature_names_out`, then transform
                 # will adjust the column names to be consistent with
                 # verbose_feature_names_out. Here we prefix the feature names if
@@ -936,6 +945,8 @@ def _get_transformer_list(estimators):
     return transformer_list
 
 
+# This function is not validated using validate_params because
+# it's just a factory for ColumnTransformer.
 def make_column_transformer(
     *transformers,
     remainder="drop",
