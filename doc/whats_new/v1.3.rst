@@ -235,6 +235,9 @@ Changelog
   output pandas dataframes with indexes that are not consistent with each other and the output is configured
   to be pandas. :pr:`26286` by `Thomas Fan`_.
 
+- |Fix| :class:`compose.ColumnTransformer` correctly sets the output of the
+  remainder when `set_output` is called. :pr:`26323` by `Thomas Fan`_.
+
 :mod:`sklearn.covariance`
 .........................
 
