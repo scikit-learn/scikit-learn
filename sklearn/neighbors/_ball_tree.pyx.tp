@@ -33,25 +33,24 @@ DOC_DICT{{name_suffix}} = {
 }
 
 VALID_METRICS{{name_suffix}} = [
-    'EuclideanDistance{{name_suffix}}',
-    'SEuclideanDistance{{name_suffix}}',
-    'ManhattanDistance{{name_suffix}}',
-    'ChebyshevDistance{{name_suffix}}',
-    'MinkowskiDistance{{name_suffix}}',
-    'WMinkowskiDistance{{name_suffix}}',
-    'MahalanobisDistance{{name_suffix}}',
-    'HammingDistance{{name_suffix}}',
-    'CanberraDistance{{name_suffix}}',
     'BrayCurtisDistance{{name_suffix}}',
-    'JaccardDistance{{name_suffix}}',
-    'MatchingDistance{{name_suffix}}',
+    'CanberraDistance{{name_suffix}}',
+    'ChebyshevDistance{{name_suffix}}',
     'DiceDistance{{name_suffix}}',
+    'EuclideanDistance{{name_suffix}}',
+    'HammingDistance{{name_suffix}}',
+    'HaversineDistance{{name_suffix}}',
+    'JaccardDistance{{name_suffix}}',
+    'MahalanobisDistance{{name_suffix}}',
+    'ManhattanDistance{{name_suffix}}',
+    'MinkowskiDistance{{name_suffix}}',
+    'PyFuncDistance{{name_suffix}}',
     'RogersTanimotoDistance{{name_suffix}}',
     'RussellRaoDistance{{name_suffix}}',
+    'SEuclideanDistance{{name_suffix}}',
     'SokalMichenerDistance{{name_suffix}}',
     'SokalSneathDistance{{name_suffix}}',
-    'PyFuncDistance{{name_suffix}}',
-    'HaversineDistance{{name_suffix}}',
+    'WMinkowskiDistance{{name_suffix}}',
 ]
 
 {{endfor}}
