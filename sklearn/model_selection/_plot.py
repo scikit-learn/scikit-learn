@@ -753,16 +753,16 @@ class ValidationCurveDisplay:
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        groups : array-like of shape (n_samples,), default=None
-            Group labels for the samples used while splitting the dataset into
-            train/test set. Only used in conjunction with a "Group" :term:`cv`
-            instance (e.g., :class:`GroupKFold`).
-
         param_name : str
             Name of the parameter that will be varied.
 
         param_range : array-like of shape (n_values,)
             The values of the parameter that will be evaluated.
+
+        groups : array-like of shape (n_samples,), default=None
+            Group labels for the samples used while splitting the dataset into
+            train/test set. Only used in conjunction with a "Group" :term:`cv`
+            instance (e.g., :class:`GroupKFold`).
 
         cv : int, cross-validation generator or an iterable, default=None
             Determines the cross-validation splitting strategy.
