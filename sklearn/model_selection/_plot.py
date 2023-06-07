@@ -817,7 +817,7 @@ class ValidationCurveDisplay:
 
         negate_score : bool, default=False
             Whether or not to negate the scores obtained through
-            :func:`~sklearn.model_selection.learning_curve`. This is
+            :func:`~sklearn.model_selection.validation_curve`. This is
             particularly useful when using the error denoted by `neg_*` in
             `scikit-learn`.
 
