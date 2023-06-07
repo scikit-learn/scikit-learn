@@ -391,15 +391,13 @@ def test_curve_display_log_scale(pyplot, data, CurveDisplay, specific_params):
     estimator = DecisionTreeClassifier(random_state=0)
 
     display = CurveDisplay.from_estimator(
-        estimator, X, y, **specific_params, log_scale=True
+        estimator, X, y, **specific_params, xscale="log", yscale="log"
     )
 
     assert display.ax_.get_xscale() == "log"
-    assert display.ax_.get_yscale() == "linear"
+    assert display.ax_.get_yscale() == "log"
 
-    display = CurveDisplay.from_estimator(
-        estimator, X, y, **specific_params, log_scale=False
-    )
+    display = CurveDisplay.from_estimator(estimator, X, y, **specific_params)
 
     assert display.ax_.get_xscale() == "linear"
     assert display.ax_.get_yscale() == "linear"
@@ -513,3 +511,39 @@ def test_curve_display_plot_kwargs(pyplot, data, CurveDisplay, specific_params):
     )
 
     assert display.errorbar_[0].lines[0].get_color() == "red"
+
+
+# TODO(1.5): to be removed
+def test_learning_curve_display_deprecate_log_scale(data):
+    """Check that we warn for the deprecated parameter `log_scale`."""
+    X, y = data
+    estimator = DecisionTreeClassifier(random_state=0)
+
+    with pytest.warns(FutureWarning, match="`log_scale` parameter is deprecated"):
+        display = LearningCurveDisplay.from_estimator(
+            estimator, X, y, train_sizes=[0.3, 0.6, 0.9], log_scale=True
+        )
+
+    assert display.ax_.get_xscale() == "log"
+    assert display.ax_.get_yscale() == "linear"
+
+    with pytest.warns(FutureWarning, match="`log_scale` parameter is deprecated"):
+        display = LearningCurveDisplay.from_estimator(
+            estimator, X, y, train_sizes=[0.3, 0.6, 0.9], log_scale=False
+        )
+
+    assert display.ax_.get_xscale() == "linear"
+    assert display.ax_.get_yscale() == "linear"
+
+    for log_scale, xscale in zip([True, False], ["linear", "log"]):
+        with pytest.raises(
+            ValueError, match="Cannot set both `log_scale` and `xscale`."
+        ):
+            LearningCurveDisplay.from_estimator(
+                estimator,
+                X,
+                y,
+                train_sizes=[0.3, 0.6, 0.9],
+                log_scale=log_scale,
+                xscale=xscale,
+            )

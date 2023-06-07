@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 
 from . import learning_curve, validation_curve
@@ -93,7 +94,9 @@ class LearningCurveDisplay:
         negate_score=False,
         score_name=None,
         score_type="test",
-        log_scale=False,
+        log_scale="deprecated",
+        xscale=None,
+        yscale="linear",
         std_display_style="fill_between",
         line_kw=None,
         fill_between_kw=None,
@@ -121,8 +124,25 @@ class LearningCurveDisplay:
             The type of score to plot. Can be one of `"test"`, `"train"`, or
             `"both"`.
 
-        log_scale : bool, default=False
+        log_scale : bool, default="deprecated"
             Whether or not to use a logarithmic scale for the x-axis.
+
+            .. deprecated:: 1.3
+               `log_scale` is deprecated in 1.3 and will be removed in 1.5.
+               Use `xscale` and `yscale` instead.
+
+        xscale : {"linear", "log"}, default=None
+            The x-axis scale of the plot. `None` is equivalent to `"linear"` during
+            the deprecation period of `log_scale`.
+
+            .. versionadded:: 1.3
+            .. versionchanged:: 1.5
+               The default of `xscale` will change from `None` to `"linear"`.
+
+        yscale : {"linear", "log"}, default="linear"
+            The y-axis scale of the plot.
+
+            .. versionadded:: 1.3
 
         std_display_style : {"errorbar", "fill_between"} or None, default="fill_between"
             The style used to display the score standard deviation around the
@@ -231,8 +251,25 @@ class LearningCurveDisplay:
         score_name = self.score_name if score_name is None else score_name
 
         ax.legend()
-        if log_scale:
-            ax.set_xscale("log")
+
+        # TODO(1.5): to be removed
+        if log_scale != "deprecated":
+            if xscale is not None:
+                raise ValueError("Cannot set both `log_scale` and `xscale`.")
+            warnings.warn(
+                (
+                    "The `log_scale` parameter is deprecated as of version 1.3 "
+                    "and will be removed in 1.5. Use `xscale` and `yscale` "
+                    "instead."
+                ),
+                FutureWarning,
+            )
+            xscale = "log" if log_scale else "linear"
+        else:
+            xscale = "linear" if xscale is None else xscale
+
+        ax.set_xscale(xscale)
+        ax.set_yscale(yscale)
         ax.set_xlabel("Number of samples in the training set")
         ax.set_ylabel(f"{score_name}")
 
@@ -263,7 +300,9 @@ class LearningCurveDisplay:
         negate_score=False,
         score_name=None,
         score_type="test",
-        log_scale=False,
+        log_scale="deprecated",
+        xscale=None,
+        yscale="linear",
         std_display_style="fill_between",
         line_kw=None,
         fill_between_kw=None,
@@ -383,8 +422,25 @@ class LearningCurveDisplay:
             The type of score to plot. Can be one of `"test"`, `"train"`, or
             `"both"`.
 
-        log_scale : bool, default=False
+        log_scale : bool, default="deprecated"
             Whether or not to use a logarithmic scale for the x-axis.
+
+            .. deprecated:: 1.3
+               `log_scale` is deprecated in 1.3 and will be removed in 1.5.
+               Use `xscale` and `yscale` instead.
+
+        xscale : {"linear", "log"}, default=None
+            The x-axis scale of the plot. `None` is equivalent to `"linear"` during
+            the deprecation period of `log_scale`.
+
+            .. versionadded:: 1.3
+            .. versionchanged:: 1.5
+               The default of `xscale` will change from `None` to `"linear"`.
+
+        yscale : {"linear", "log"}, default="linear"
+            The y-axis scale of the plot.
+
+            .. versionadded:: 1.3
 
         std_display_style : {"errorbar", "fill_between"} or None, default="fill_between"
             The style used to display the score standard deviation around the
@@ -454,6 +510,8 @@ class LearningCurveDisplay:
             negate_score=negate_score,
             score_type=score_type,
             log_scale=log_scale,
+            xscale=xscale,
+            yscale=yscale,
             std_display_style=std_display_style,
             line_kw=line_kw,
             fill_between_kw=fill_between_kw,
@@ -559,7 +617,8 @@ class ValidationCurveDisplay:
         negate_score=False,
         score_name=None,
         score_type="test",
-        log_scale=False,
+        xscale="linear",
+        yscale="linear",
         std_display_style="fill_between",
         line_kw=None,
         fill_between_kw=None,
@@ -587,8 +646,11 @@ class ValidationCurveDisplay:
             The type of score to plot. Can be one of `"test"`, `"train"`, or
             `"both"`.
 
-        log_scale : bool, default=False
-            Whether or not to use a logarithmic scale for the x-axis.
+        xscale : {"linear", "log"}, default="linear"
+            The x-axis scale of the plot.
+
+        yscale : {"linear", "log"}, default="linear"
+            The y-axis scale of the plot.
 
         std_display_style : {"errorbar", "fill_between"} or None, default="fill_between"
             The style used to display the score standard deviation around the
@@ -697,8 +759,8 @@ class ValidationCurveDisplay:
         score_name = self.score_name if score_name is None else score_name
 
         ax.legend()
-        if log_scale:
-            ax.set_xscale("log")
+        ax.set_xscale(xscale)
+        ax.set_yscale(yscale)
         ax.set_xlabel(f"{self.param_name}")
         ax.set_ylabel(f"{score_name}")
 
@@ -727,7 +789,8 @@ class ValidationCurveDisplay:
         negate_score=False,
         score_name=None,
         score_type="test",
-        log_scale=False,
+        xscale="linear",
+        yscale="linear",
         std_display_style="fill_between",
         line_kw=None,
         fill_between_kw=None,
@@ -829,8 +892,11 @@ class ValidationCurveDisplay:
             The type of score to plot. Can be one of `"test"`, `"train"`, or
             `"both"`.
 
-        log_scale : bool, default=False
-            Whether or not to use a logarithmic scale for the x-axis.
+        xscale : {"linear", "log"}, default="linear"
+            The x-axis scale of the plot.
+
+        yscale : {"linear", "log"}, default="linear"
+            The y-axis scale of the plot.
 
         std_display_style : {"errorbar", "fill_between"} or None, default="fill_between"
             The style used to display the score standard deviation around the
@@ -902,7 +968,8 @@ class ValidationCurveDisplay:
             ax=ax,
             negate_score=negate_score,
             score_type=score_type,
-            log_scale=log_scale,
+            xscale=xscale,
+            yscale=yscale,
             std_display_style=std_display_style,
             line_kw=line_kw,
             fill_between_kw=fill_between_kw,

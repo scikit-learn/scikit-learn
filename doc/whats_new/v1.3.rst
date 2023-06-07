@@ -510,6 +510,11 @@ Changelog
   :func:`model_selection.validation_curve`.
   :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |API| The parameter `log_scale` in the class
+  :class:`model_selection.LearningCurveDisplay` has been deprecated 1.3 and
+  will be removed in 1.5.
+  :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Enhancement| :func:`model_selection.cross_validate` accepts a new parameter
   `return_indices` to return the train-test indices of each cv split.
   :pr:`25659` by :user:`Guillaume Lemaitre <glemaitre>`.
