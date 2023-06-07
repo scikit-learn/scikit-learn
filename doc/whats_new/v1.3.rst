@@ -271,6 +271,11 @@ Changelog
 - |Fix| :func:`datasets.fetch_openml` returns improved data types when
   `as_frame=True` and `parser="liac-arff"`. :pr:`26386` by `Thomas Fan`_.
 
+- |Enhancement| Allows to overwrite the parameters used to open the ARFF file using
+  the parameter `read_csv_kwargs` in :func:`datasets.fetch_openml` when using the
+  pandas parser.
+  :pr:`26433` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
