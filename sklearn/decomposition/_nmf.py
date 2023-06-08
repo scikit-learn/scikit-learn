@@ -1250,23 +1250,41 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
         self.fit_transform(X, **params)
         return self
 
-    def inverse_transform(self, W):
+    def inverse_transform(self, Xt=None, W=None):
         """Transform data back to its original space.
 
         .. versionadded:: 0.18
 
         Parameters
         ----------
-        W : {ndarray, sparse matrix} of shape (n_samples, n_components)
+        Xt : {ndarray, sparse matrix} of shape (n_samples, n_components)
             Transformed data matrix.
+
+        W : deprecated
+            Use `Xt` instead.
+
+            .. deprecated:: 1.3
 
         Returns
         -------
         X : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Returns a data matrix of the original shape.
         """
+        if Xt is None and W is None:
+            raise TypeError("Missing required positional argument: Xt")
+
+        if W is not None and Xt is not None:
+            raise ValueError("Please provide only `Xt`, and not `W`.")
+
+        if W is not None:
+            warnings.warn(
+                "Input argument `W` renamed to `Xt` and will be removed in v1.5.",
+                FutureWarning,
+            )
+            Xt = W
+
         check_is_fitted(self)
-        return W @ self.components_
+        return Xt @ self.components_
 
     @property
     def _n_features_out(self):
