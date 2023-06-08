@@ -28,7 +28,6 @@ from ..metrics.pairwise import pairwise_distances
         "precision": [np.ndarray],
     }
 )
-
 def log_likelihood(emp_cov, precision):
     """Compute the sample mean of the log_likelihood under a covariance model.
 
