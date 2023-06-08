@@ -22,6 +22,13 @@ from ..utils.extmath import fast_logdet
 from ..metrics.pairwise import pairwise_distances
 
 
+@validate_params(
+    {
+        "emp_cov": [np.ndarray],
+        "precision": [np.ndarray],
+    }
+)
+
 def log_likelihood(emp_cov, precision):
     """Compute the sample mean of the log_likelihood under a covariance model.
 
