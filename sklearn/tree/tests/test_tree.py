@@ -300,7 +300,7 @@ def test_xor():
         clf.fit(X, y)
         assert clf.score(X, y) == 1.0, "Failed with {0}".format(name)
 
-        clf = Tree(random_state=0, max_features=X.shape[1])
+        clf = Tree(random_state=0, max_features=1)
         clf.fit(X, y)
         assert clf.score(X, y) == 1.0, "Failed with {0}".format(name)
 
@@ -440,7 +440,7 @@ def test_importances():
     X, y = datasets.make_classification(
         n_samples=5000,
         n_features=10,
-        n_informative=4,
+        n_informative=3,
         n_redundant=0,
         n_repeated=0,
         shuffle=False,
@@ -455,7 +455,7 @@ def test_importances():
         n_important = np.sum(importances > 0.1)
 
         assert importances.shape[0] == 10, "Failed with {0}".format(name)
-        assert n_important == 4, "Failed with {0}".format(name)
+        assert n_important == 3, "Failed with {0}".format(name)
 
     # Check on iris that importances are the same for all builders
     clf = DecisionTreeClassifier(random_state=0)
@@ -466,9 +466,9 @@ def test_importances():
     assert_array_equal(clf.feature_importances_, clf2.feature_importances_)
 
 
-@pytest.mark.parametrize("clf", [DecisionTreeClassifier()])
-def test_importances_raises(clf):
+def test_importances_raises():
     # Check if variable importance before fit raises ValueError.
+    clf = DecisionTreeClassifier()
     with pytest.raises(ValueError):
         getattr(clf, "feature_importances_")
 
@@ -653,7 +653,6 @@ def test_min_samples_leaf():
         est.fit(X, y)
         out = est.tree_.apply(X)
         node_counts = np.bincount(out)
-
         # drop inner nodes
         leaf_count = node_counts[node_counts != 0]
         assert np.min(leaf_count) > 4, "Failed with {0}".format(name)
@@ -678,7 +677,7 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
     else:
         X = DATASETS[datasets]["X"].astype(np.float32)
     y = DATASETS[datasets]["y"]
-    rng = np.random.RandomState(42)
+
     weights = rng.rand(X.shape[0])
     total_weight = np.sum(weights)
 
@@ -829,7 +828,7 @@ def test_min_impurity_decrease():
         )
         # Check with a much lower value of 0.0001
         est3 = TreeEstimator(
-            max_leaf_nodes=max_leaf_nodes, min_impurity_decrease=0.0001, random_state=1
+            max_leaf_nodes=max_leaf_nodes, min_impurity_decrease=0.0001, random_state=0
         )
         # Check with a much lower value of 0.1
         est4 = TreeEstimator(
@@ -919,7 +918,6 @@ def test_pickle():
         est2 = pickle.loads(serialized_object)
         assert type(est2) == est.__class__
 
-        # score should match before/after pickling
         score2 = est2.score(X, y)
         assert (
             score == score2
@@ -1033,6 +1031,7 @@ def test_memory_layout():
         ALL_TREES.items(), [np.float64, np.float32]
     ):
         est = TreeEstimator(random_state=0)
+
         # Nothing
         X = np.asarray(iris.data, dtype=dtype)
         y = iris.target
@@ -1053,11 +1052,6 @@ def test_memory_layout():
         y = iris.target
         assert_array_equal(est.fit(X, y).predict(X), y)
 
-        # Strided
-        X = np.asarray(iris.data[::3], dtype=dtype)
-        y = iris.target[::3]
-        assert_array_equal(est.fit(X, y).predict(X), y)
-
         # csr matrix
         X = csr_matrix(iris.data, dtype=dtype)
         y = iris.target
@@ -1066,6 +1060,11 @@ def test_memory_layout():
         # csc_matrix
         X = csc_matrix(iris.data, dtype=dtype)
         y = iris.target
+        assert_array_equal(est.fit(X, y).predict(X), y)
+
+        # Strided
+        X = np.asarray(iris.data[::3], dtype=dtype)
+        y = iris.target[::3]
         assert_array_equal(est.fit(X, y).predict(X), y)
 
 
@@ -1261,7 +1260,7 @@ def test_behaviour_constant_feature_after_splits():
     y = [0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 3]
     for name, TreeEstimator in ALL_TREES.items():
         # do not check extra random trees
-        if all(_name not in name for _name in ["ExtraTree"]):
+        if "ExtraTree" not in name:
             est = TreeEstimator(random_state=0, max_features=1)
             est.fit(X, y)
             assert est.tree_.max_depth == 2
@@ -1587,7 +1586,6 @@ def check_min_weight_leaf_split_level(name):
     sample_weight = [0.2, 0.2, 0.2, 0.2, 0.2]
     _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight)
 
-    # skip for sparse inputs
     _check_min_weight_leaf_split_level(TreeEstimator, csc_matrix(X), y, sample_weight)
 
 
@@ -1646,7 +1644,6 @@ def check_decision_path(name):
     # Assert that leaves index are correct
     leaves = est.apply(X)
     leave_indicator = [node_indicator[i, j] for i, j in enumerate(leaves)]
-
     assert_array_almost_equal(leave_indicator, np.ones(shape=n_samples))
 
     # Ensure only one leave node per sample
@@ -1933,7 +1930,6 @@ def assert_is_subtree(tree, subtree):
 def test_apply_path_readonly_all_trees(name, splitter, X_format):
     dataset = DATASETS["clf_small"]
     X_small = dataset["X"].astype(tree._tree.DTYPE, copy=False)
-
     if X_format == "dense":
         X_readonly = create_memmap_backed_data(X_small)
     else:
