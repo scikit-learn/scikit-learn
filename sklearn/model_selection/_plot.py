@@ -124,7 +124,18 @@ class _BaseCurveDisplay:
             )
             xscale = "log" if log_scale else "linear"
         else:
-            xscale = "auto" if xscale is None else xscale
+            if xscale is None:
+                warnings.warn(
+                    (
+                        "The default value of `xscale` will change from None to 'auto'"
+                        " inversion 1.5. To avoid this warning, set `xscale` explicitly"
+                        " to'auto'."
+                    ),
+                    FutureWarning,
+                )
+                xscale = "auto"
+            else:
+                xscale = xscale
 
         if xscale == "auto":
             # Heuristically, we can define a ratio of 5 to differentiate log scale

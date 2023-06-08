@@ -40,6 +40,8 @@ def test_curve_display_parameters_validation(
         CurveDisplay.from_estimator(estimator, X, y, **specific_params, **params)
 
 
+# TODO(1.5): remove filterwarnings
+@pytest.mark.filterwarnings("ignore: The default value of `xscale` will change")
 def test_learning_curve_display_default_usage(pyplot, data):
     """Check the default usage of the LearningCurveDisplay class."""
     X, y = data
@@ -79,6 +81,8 @@ def test_learning_curve_display_default_usage(pyplot, data):
     assert_allclose(display.test_scores, test_scores)
 
 
+# TODO(1.5): remove filterwarnings
+@pytest.mark.filterwarnings("ignore: The default value of `xscale` will change")
 def test_validation_curve_display_default_usage(pyplot, data):
     """Check the default usage of the ValidationCurveDisplay class."""
     X, y = data
@@ -119,6 +123,8 @@ def test_validation_curve_display_default_usage(pyplot, data):
     assert_allclose(display.test_scores, test_scores)
 
 
+# TODO(1.5): remove filterwarnings
+@pytest.mark.filterwarnings("ignore: The default value of `xscale` will change")
 @pytest.mark.parametrize(
     "CurveDisplay, specific_params",
     [
@@ -162,6 +168,8 @@ def test_curve_display_negate_score(pyplot, data, CurveDisplay, specific_params)
     assert (display.lines_[0].get_data()[1] < 0).all()
 
 
+# TODO(1.5): remove filterwarnings
+@pytest.mark.filterwarnings("ignore: The default value of `xscale` will change")
 @pytest.mark.parametrize(
     "score_name, ylabel", [(None, "Score"), ("Accuracy", "Accuracy")]
 )
@@ -194,6 +202,8 @@ def test_curve_display_score_name(
     assert display.score_name == ylabel
 
 
+# TODO(1.5): remove filterwarnings
+@pytest.mark.filterwarnings("ignore: The default value of `xscale` will change")
 @pytest.mark.parametrize("std_display_style", (None, "errorbar"))
 def test_learning_curve_display_score_type(pyplot, data, std_display_style):
     """Check the behaviour of setting the `score_type` parameter."""
@@ -285,6 +295,8 @@ def test_learning_curve_display_score_type(pyplot, data, std_display_style):
     assert_allclose(y_data_test, test_scores.mean(axis=1))
 
 
+# TODO(1.5): remove filterwarnings
+@pytest.mark.filterwarnings("ignore: The default value of `xscale` will change")
 @pytest.mark.parametrize("std_display_style", (None, "errorbar"))
 def test_validation_curve_display_score_type(pyplot, data, std_display_style):
     """Check the behaviour of setting the `score_type` parameter."""
@@ -379,6 +391,8 @@ def test_validation_curve_display_score_type(pyplot, data, std_display_style):
     assert_allclose(y_data_test, test_scores.mean(axis=1))
 
 
+# TODO(1.5): remove filterwarnings
+@pytest.mark.filterwarnings("ignore: The default value of `xscale` will change")
 @pytest.mark.parametrize(
     "CurveDisplay, specific_params",
     [
@@ -437,6 +451,8 @@ def test_curve_display_x_scale_auto(
     assert display.ax_.get_xscale() == expected_xscale
 
 
+# TODO(1.5): remove filterwarnings
+@pytest.mark.filterwarnings("ignore: The default value of `xscale` will change")
 @pytest.mark.parametrize(
     "CurveDisplay, specific_params",
     [
@@ -501,6 +517,8 @@ def test_curve_display_std_display_style(pyplot, data, CurveDisplay, specific_pa
     assert len(legend_label) == 1
 
 
+# TODO(1.5): remove filterwarnings
+@pytest.mark.filterwarnings("ignore: The default value of `xscale` will change")
 @pytest.mark.parametrize(
     "CurveDisplay, specific_params",
     [
@@ -581,3 +599,20 @@ def test_learning_curve_display_deprecate_log_scale(data):
                 log_scale=log_scale,
                 xscale=xscale,
             )
+
+
+# TODO(1.5): to be removed
+def test_learning_curve_display_future_x_scale(data):
+    """Check that we warn for the change of default of xscale."""
+    X, y = data
+    estimator = DecisionTreeClassifier(random_state=0)
+
+    with pytest.warns(FutureWarning, match="The default value of `xscale`"):
+        display = LearningCurveDisplay.from_estimator(
+            estimator,
+            X,
+            y,
+            train_sizes=[0.3, 0.6, 0.9],
+        )
+
+    assert display.ax_.get_xscale() == "linear"
