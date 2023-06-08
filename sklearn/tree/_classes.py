@@ -25,22 +25,22 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.sparse import issparse
 
-from ..base import BaseEstimator
-from ..base import ClassifierMixin
-from ..base import clone
-from ..base import RegressorMixin
-from ..base import is_classifier
-from ..base import MultiOutputMixin
-from ..utils import Bunch
-from ..utils import check_random_state
-from ..utils.validation import _check_sample_weight
-from ..utils.validation import assert_all_finite
-from ..utils.validation import _assert_all_finite_element_wise
-from ..utils import compute_sample_weight
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils._param_validation import RealNotInt
+from sklearn.base import BaseEstimator
+from sklearn.base import ClassifierMixin
+from sklearn.base import clone
+from sklearn.base import RegressorMixin
+from sklearn.base import is_classifier
+from sklearn.base import MultiOutputMixin
+from sklearn.utils import Bunch
+from sklearn.utils import check_random_state
+from sklearn.utils.validation import _check_sample_weight
+from sklearn.utils.validation import assert_all_finite
+from sklearn.utils.validation import _assert_all_finite_element_wise
+from sklearn.utils import compute_sample_weight
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import check_is_fitted
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils._param_validation import RealNotInt
 
 from ._criterion import BaseCriterion
 from ._splitter import BaseSplitter

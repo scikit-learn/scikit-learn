@@ -10,7 +10,7 @@
 
 cimport numpy as cnp
 from ._tree cimport Node
-from ..neighbors._quad_tree cimport Cell
+from sklearn.neighbors._quad_tree cimport Cell
 
 ctypedef cnp.npy_float32 DTYPE_t          # Type of X
 ctypedef cnp.npy_float64 DOUBLE_t         # Type of y, sample_weight
