@@ -82,5 +82,5 @@ def test_corrupted_file_error_message(fetch_kddcup99_fxt, tmp_path):
         f"delete {str(kddcup99_dir)} and run the fetch_kddcup99 again"
     )
 
-    with pytest.raises(IOError, match=msg):
+    with pytest.raises(OSError, match=msg):
         fetch_kddcup99_fxt(data_home=str(tmp_path))
