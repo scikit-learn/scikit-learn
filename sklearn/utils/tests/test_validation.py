@@ -188,9 +188,20 @@ def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
             np.nan,
             "",
             "allow-inf",
-            'force_all_finite should be a bool or "allow-nan"',
+            (
+                "The 'force_all_finite' parameter of check_array must be an instance of"
+                " 'bool'"
+            ),
         ),
-        (np.nan, "", 1, "Input contains NaN"),
+        (
+            np.nan,
+            "",
+            1,
+            (
+                "The 'force_all_finite' parameter of check_array must be an instance of"
+                " 'bool'"
+            ),
+        ),
     ],
 )
 @pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
@@ -304,11 +315,13 @@ def test_check_array():
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert X_array.ndim == 1
     # ensure_2d=True with 1d array
-    with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
+    with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead:"):
         check_array([0, 1, 2], ensure_2d=True)
 
     # ensure_2d=True with scalar array
-    with pytest.raises(ValueError, match="Expected 2D array, got scalar array instead"):
+    with pytest.raises(
+        ValueError, match="The 'array' parameter of check_array must be an array-like."
+    ):
         check_array(10, ensure_2d=True)
 
     # don't allow ndim > 3
@@ -586,10 +599,7 @@ def test_check_array_accept_sparse_type_exception():
     with pytest.raises(TypeError, match=msg):
         check_array(X_csr, accept_sparse=False)
 
-    msg = (
-        "Parameter 'accept_sparse' should be a string, "
-        "boolean or list of strings. You provided 'accept_sparse=.*'."
-    )
+    msg = "The 'accept_sparse' parameter of check_array must be an instance of"
     with pytest.raises(ValueError, match=msg):
         check_array(X_csr, accept_sparse=invalid_type)
 
@@ -652,7 +662,7 @@ def test_check_array_min_samples_and_features_messages():
         check_array([], ensure_2d=False)
 
     # Invalid edge case when checking the default minimum sample of a scalar
-    msg = r"Singleton array array\(42\) cannot be considered a valid" " collection."
+    msg = r"The 'array' parameter of check_array must be an array-like. Got 42 instead."
     with pytest.raises(TypeError, match=msg):
         check_array(42, ensure_2d=False)
 

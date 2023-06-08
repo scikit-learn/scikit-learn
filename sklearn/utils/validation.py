@@ -32,6 +32,7 @@ from ..exceptions import DataConversionWarning
 from ..utils._array_api import get_namespace
 from ..utils._array_api import _asarray_with_order
 from ..utils._array_api import _is_numpy_namespace
+from ..utils._param_validation import Integral, Interval, StrOptions, validate_params
 from ._isfinite import cy_isfinite, FiniteStatus
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
@@ -648,6 +649,32 @@ def _is_extension_array_dtype(array):
     return hasattr(array, "dtype") and hasattr(array.dtype, "na_value")
 
 
+@validate_params(
+    {
+        "array": ["array-like"],
+        "accept_sparse": [
+            bool,
+            StrOptions({"csc", "csr", "coo", "dok", "bsr", "lil", "dia"}),
+            list,
+            tuple,
+        ],  # list or tuple should be specified to list or tuple with any
+        # combination of 'csc', 'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'
+        "accept_large_sparse": [bool],
+        "dtype": [StrOptions({"numeric"}), np.dtype, type, set, list, tuple, None],
+        # list shold be modified to list of type
+        "order": [StrOptions({"F", "C"}), None],
+        "copy": [bool],
+        "force_all_finite": [bool, StrOptions({"allow-nan"})],
+        "ensure_2d": [bool],
+        "allow_nd": [bool],
+        "ensure_min_samples": [Interval(Integral, 0, None, closed="left")],
+        "ensure_min_features": [Interval(Integral, 0, None, closed="left")],
+        "estimator": [str, object, None],  # object should be specified to be of
+        # type estimator
+        "input_name": [str],
+    },
+    prefer_skip_nested_validation=True,
+)
 def check_array(
     array,
     accept_sparse=False,

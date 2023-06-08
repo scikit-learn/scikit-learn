@@ -15,7 +15,6 @@ from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
 
 from .._config import get_config, config_context
-from .validation import _is_arraylike_not_scalar
 
 
 class InvalidParameterError(ValueError, TypeError):
@@ -522,6 +521,9 @@ class _ArrayLikes(_Constraint):
     """Constraint representing array-likes"""
 
     def is_satisfied_by(self, val):
+        # having the import here to avoid a circular import issue
+        from .validation import _is_arraylike_not_scalar
+
         return _is_arraylike_not_scalar(val)
 
     def __str__(self):
