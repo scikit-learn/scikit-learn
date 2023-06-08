@@ -50,11 +50,16 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 
-from ..base import is_classifier
-from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin, TransformerMixin
+from sklearn.base import is_classifier
+from sklearn.base import (
+    ClassifierMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    TransformerMixin,
+)
 
-from ..metrics import accuracy_score, r2_score
-from ..preprocessing import OneHotEncoder
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.preprocessing import OneHotEncoder
 from ..tree import (
     BaseDecisionTree,
     DecisionTreeClassifier,
@@ -63,21 +68,21 @@ from ..tree import (
     ExtraTreeRegressor,
 )
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import check_random_state, compute_sample_weight
-from ..exceptions import DataConversionWarning
-from ._base import BaseEnsemble, _partition_estimators
-from ..utils.parallel import delayed, Parallel
-from ..utils.multiclass import check_classification_targets, type_of_target
-from ..utils.validation import (
+from sklearn.utils import check_random_state, compute_sample_weight
+from sklearn.exceptions import DataConversionWarning
+from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
+from sklearn.utils.parallel import delayed, Parallel
+from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils.validation import (
     check_is_fitted,
     _check_sample_weight,
     _check_feature_names_in,
 )
-from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils.validation import _num_samples
-from ..utils._param_validation import Interval, StrOptions
-from ..utils._param_validation import RealNotInt
-from ._hist_gradient_boosting.binning import _BinMapper
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils.validation import _num_samples
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils._param_validation import RealNotInt
+from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 
 __all__ = [
     "RandomForestClassifier",
