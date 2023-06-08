@@ -1022,6 +1022,7 @@ cdef class BaseTree:
         cdef Node* end_node = node + self.node_count
 
         cdef double normalizer = 0.
+        cdef int i = 0
 
         cdef cnp.float64_t[:] importances = np.zeros(self.n_features)
 
