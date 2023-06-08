@@ -1220,6 +1220,13 @@ PAIRED_DISTANCES = {
 }
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "Y": ["array-like"],
+        "metric": [StrOptions(set(PAIRED_DISTANCES)), callable],
+    }
+)
 def paired_distances(X, Y, *, metric="euclidean", **kwds):
     """
     Compute the paired distances between X and Y.
@@ -1278,8 +1285,6 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
         for i in range(len(X)):
             distances[i] = metric(X[i], Y[i])
         return distances
-    else:
-        raise ValueError("Unknown distance %s" % metric)
 
 
 # Kernels
