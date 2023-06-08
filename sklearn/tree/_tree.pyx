@@ -764,7 +764,7 @@ cdef class BaseTree:
 
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
-                    X_i_node_features = self._compute_feature(X_ndarray, i, node)
+                    X_i_node_feature = self._compute_feature(X_ndarray, i, node)
                     # ... and node.right_child != _TREE_LEAF:
                     if isnan(X_i_node_feature):
                         if node.missing_go_to_left:

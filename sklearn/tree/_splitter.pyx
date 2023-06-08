@@ -505,7 +505,7 @@ cdef inline int node_split_best(
                 current_split.pos = p
                 
                 # Reject if min_samples_leaf is not guaranteed
-                if splitter.check_presplit_conditions(current_split) == 1:
+                if splitter.check_presplit_conditions(current_split, n_missing, missing_go_to_left) == 1:
                     continue
 
                 criterion.update(current_split.pos)
@@ -834,7 +834,7 @@ cdef inline int node_split_random(
         current_split.pos = partitioner.partition_samples(current_split.threshold)
 
         # Reject if min_samples_leaf is not guaranteed
-        if splitter.check_presplit_conditions(current_split) == 1:
+        if splitter.check_presplit_conditions(current_split, 0, 0) == 1:
             continue
 
         # Evaluate split
