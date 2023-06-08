@@ -266,7 +266,8 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ == "MDS":
         est.set_params(normalized_stress="auto")
 
-    # Low max iter to speed up tests
+    # Low max iter to speed up tests: we are only interested in checking the existence
+    # of fitted attributes. This should be invariant to whether it has converged or not.
     if "max_iter" in est.get_params():
         est.set_params(max_iter=2)
 
