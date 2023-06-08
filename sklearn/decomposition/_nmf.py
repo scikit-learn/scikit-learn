@@ -1125,6 +1125,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
     # This prevents ``set_split_inverse_transform`` to be generated for the
     # non-standard ``W`` arg on ``inverse_transform``.
+    # TODO: remove when W is removed in v1.5 for inverse_transform
     __metadata_request__inverse_transform = {"W": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {

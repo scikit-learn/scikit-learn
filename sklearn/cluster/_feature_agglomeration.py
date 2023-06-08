@@ -24,6 +24,7 @@ class AgglomerationTransform(TransformerMixin):
 
     # This prevents ``set_split_inverse_transform`` to be generated for the
     # non-standard ``Xred`` arg on ``inverse_transform``.
+    # TODO: remove when Xred is removed in v1.5 for inverse_transform.
     __metadata_request__inverse_transform = {"Xred": metadata_routing.UNUSED}
 
     def transform(self, X):

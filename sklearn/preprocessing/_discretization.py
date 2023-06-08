@@ -19,7 +19,6 @@ from ..utils.validation import _check_feature_names_in
 from ..utils.validation import _check_sample_weight
 from ..utils.stats import _weighted_percentile
 from ..utils import _safe_indexing
-from ..utils import metadata_routing
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -162,10 +161,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
     """
-
-    # This prevents ``set_split_inverse_transform`` to be generated for the
-    # non-standard ``Xt`` arg on ``inverse_transform``.
-    __metadata_request__inverse_transform = {"Xt": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "n_bins": [Interval(Integral, 2, None, closed="left"), "array-like"],
