@@ -120,8 +120,7 @@ to :func:`validation_curve` to generate and plot the validation curve:
       X, y = load_iris(return_X_y=True)
       X, y = shuffle(X, y, random_state=0)
       ValidationCurveDisplay.from_estimator(
-         SVC(kernel="linear"), X, y, param_name="C", param_range=np.logspace(-7, 3, 10),
-         xscale="log")
+         SVC(kernel="linear"), X, y, param_name="C", param_range=np.logspace(-7, 3, 10))
 
 .. _learning_curve:
 

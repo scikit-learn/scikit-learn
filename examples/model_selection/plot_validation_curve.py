@@ -32,7 +32,6 @@ disp = ValidationCurveDisplay.from_estimator(
     param_name=param_name,
     param_range=param_range,
     score_type="both",
-    xscale="log",
     n_jobs=2,
     score_name="Accuracy",
 )

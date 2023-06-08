@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from sklearn.datasets import load_iris
@@ -385,8 +386,8 @@ def test_validation_curve_display_score_type(pyplot, data, std_display_style):
         (LearningCurveDisplay, {"train_sizes": [0.3, 0.6, 0.9]}),
     ],
 )
-def test_curve_display_log_scale(pyplot, data, CurveDisplay, specific_params):
-    """Check the behaviour of the parameter `log_scale`."""
+def test_curve_display_x_y_scale(pyplot, data, CurveDisplay, specific_params):
+    """Check the behaviour of the parameter `xscale`, `yscale`."""
     X, y = data
     estimator = DecisionTreeClassifier(random_state=0)
 
@@ -401,6 +402,39 @@ def test_curve_display_log_scale(pyplot, data, CurveDisplay, specific_params):
 
     assert display.ax_.get_xscale() == "linear"
     assert display.ax_.get_yscale() == "linear"
+
+
+@pytest.mark.parametrize(
+    "CurveDisplay, specific_params, expected_xscale",
+    [
+        (
+            ValidationCurveDisplay,
+            {"param_name": "max_depth", "param_range": np.arange(1, 5)},
+            "linear",
+        ),
+        (LearningCurveDisplay, {"train_sizes": np.linspace(0.1, 0.9, num=5)}, "linear"),
+        (
+            ValidationCurveDisplay,
+            {
+                "param_name": "max_depth",
+                "param_range": np.round(np.logspace(0, 2, num=5)).astype(np.int64),
+            },
+            "log",
+        ),
+        (LearningCurveDisplay, {"train_sizes": np.logspace(-1, 0, num=5)}, "log"),
+    ],
+)
+def test_curve_display_x_scale_auto(
+    pyplot, data, CurveDisplay, specific_params, expected_xscale
+):
+    """Check the behaviour of the parameter `xscale` in `"auto"` mode."""
+    X, y = data
+    estimator = DecisionTreeClassifier(random_state=0)
+
+    display = CurveDisplay.from_estimator(
+        estimator, X, y, **specific_params, xscale="auto"
+    )
+    assert display.ax_.get_xscale() == expected_xscale
 
 
 @pytest.mark.parametrize(

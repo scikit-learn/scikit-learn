@@ -131,13 +131,15 @@ class LearningCurveDisplay:
                `log_scale` is deprecated in 1.3 and will be removed in 1.5.
                Use `xscale` and `yscale` instead.
 
-        xscale : {"linear", "log"}, default=None
-            The x-axis scale of the plot. `None` is equivalent to `"linear"` during
-            the deprecation period of `log_scale`.
+        xscale : {"auto", "linear", "log"}, default=None
+            The x-axis scale of the plot. `None` is equivalent to `"auto"` during
+            the deprecation period of `log_scale`. The `"auto"` option will switch
+            from linear to log scale when the `train_sizes` seems to be
+            spaced evenly in log space.
 
             .. versionadded:: 1.3
             .. versionchanged:: 1.5
-               The default of `xscale` will change from `None` to `"linear"`.
+               The default of `xscale` will change from `None` to `"auto"`.
 
         yscale : {"linear", "log"}, default="linear"
             The y-axis scale of the plot.
@@ -266,7 +268,12 @@ class LearningCurveDisplay:
             )
             xscale = "log" if log_scale else "linear"
         else:
-            xscale = "linear" if xscale is None else xscale
+            xscale = "auto" if xscale is None else xscale
+
+        if xscale == "auto":
+            train_sizes_diff = np.diff(self.train_sizes)
+            ratio_min_max = train_sizes_diff[-1] / train_sizes_diff[0]
+            xscale = "log" if ratio_min_max > 5 else "linear"
 
         ax.set_xscale(xscale)
         ax.set_yscale(yscale)
@@ -429,13 +436,15 @@ class LearningCurveDisplay:
                `log_scale` is deprecated in 1.3 and will be removed in 1.5.
                Use `xscale` and `yscale` instead.
 
-        xscale : {"linear", "log"}, default=None
-            The x-axis scale of the plot. `None` is equivalent to `"linear"` during
-            the deprecation period of `log_scale`.
+        xscale : {"auto", "linear", "log"}, default=None
+            The x-axis scale of the plot. `None` is equivalent to `"auto"` during
+            the deprecation period of `log_scale`. The `"auto"` option will switch
+            from linear to log scale when the `train_sizes` seems to be
+            spaced evenly in log space.
 
             .. versionadded:: 1.3
             .. versionchanged:: 1.5
-               The default of `xscale` will change from `None` to `"linear"`.
+               The default of `xscale` will change from `None` to `"auto"`.
 
         yscale : {"linear", "log"}, default="linear"
             The y-axis scale of the plot.
@@ -617,7 +626,7 @@ class ValidationCurveDisplay:
         negate_score=False,
         score_name=None,
         score_type="test",
-        xscale="linear",
+        xscale="auto",
         yscale="linear",
         std_display_style="fill_between",
         line_kw=None,
@@ -646,8 +655,10 @@ class ValidationCurveDisplay:
             The type of score to plot. Can be one of `"test"`, `"train"`, or
             `"both"`.
 
-        xscale : {"linear", "log"}, default="linear"
-            The x-axis scale of the plot.
+        xscale : {"auto", "linear", "log"}, default="auto"
+            The x-axis scale of the plot. The `"auto"` option will switch
+            from linear to log scale when the `train_sizes` seems to be
+            spaced evenly in log space.
 
         yscale : {"linear", "log"}, default="linear"
             The y-axis scale of the plot.
@@ -759,6 +770,12 @@ class ValidationCurveDisplay:
         score_name = self.score_name if score_name is None else score_name
 
         ax.legend()
+
+        if xscale == "auto":
+            param_range_diff = np.diff(self.param_range)
+            ratio_min_max = param_range_diff[-1] / param_range_diff[0]
+            xscale = "log" if ratio_min_max > 5 else "linear"
+
         ax.set_xscale(xscale)
         ax.set_yscale(yscale)
         ax.set_xlabel(f"{self.param_name}")
@@ -789,7 +806,7 @@ class ValidationCurveDisplay:
         negate_score=False,
         score_name=None,
         score_type="test",
-        xscale="linear",
+        xscale="auto",
         yscale="linear",
         std_display_style="fill_between",
         line_kw=None,
@@ -892,8 +909,10 @@ class ValidationCurveDisplay:
             The type of score to plot. Can be one of `"test"`, `"train"`, or
             `"both"`.
 
-        xscale : {"linear", "log"}, default="linear"
-            The x-axis scale of the plot.
+        xscale : {"auto", "linear", "log"}, default="auto"
+            The x-axis scale of the plot. The `"auto"` option will switch
+            from linear to log scale when the `train_sizes` seems to be
+            spaced evenly in log space.
 
         yscale : {"linear", "log"}, default="linear"
             The y-axis scale of the plot.
@@ -932,7 +951,7 @@ class ValidationCurveDisplay:
         >>> param_name, param_range = "C", np.logspace(-8, 3, 10)
         >>> ValidationCurveDisplay.from_estimator(
         ...     logistic_regression, X, y, param_name=param_name,
-        ...     param_range=param_range, xscale="log"
+        ...     param_range=param_range,
         ... )
         <...>
         >>> plt.show()
