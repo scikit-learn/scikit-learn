@@ -229,6 +229,8 @@ cpdef cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] _condense_tree(
                     )
                 ignore[sub_node] = True
 
+    print(len(result_list))
+    print(type(np.array(result_list, dtype=CONDENSED_dtype)))
     return np.array(result_list, dtype=CONDENSED_dtype)
 
 
