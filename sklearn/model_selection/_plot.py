@@ -10,17 +10,13 @@ def _validate_score_name(score_name, scoring, negate_score):
     """Validate the `score_name` parameter."""
     if score_name is not None:
         return score_name
-    elif isinstance(scoring, str):
-        if scoring.startswith("neg_") and negate_score:
-            return scoring[4:]
-        elif not scoring.startswith("neg_") and negate_score:
-            return "neg_" + scoring
-        else:
-            return scoring
-    elif callable(scoring):
-        return scoring.__name__
-    else:  # scoring is None
+    elif scoring is None:
         return "Negative score" if negate_score else "Score"
+    else:
+        score_name = scoring.__name__ if callable(scoring) else scoring
+        if negate_score and score_name.startswith("neg_"):
+            score_name = score_name[4:]
+        return score_name.replace("_", " ").capitalize()
 
 
 def _validate_xscale(xscale, x_data):
