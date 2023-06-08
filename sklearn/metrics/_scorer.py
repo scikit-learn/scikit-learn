@@ -18,6 +18,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
+import warnings
 from collections import Counter
 from inspect import signature
 from functools import partial
@@ -62,8 +63,15 @@ from .cluster import adjusted_mutual_info_score
 from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 
+from ..utils import Bunch
 from ..utils.multiclass import type_of_target
 from ..base import is_regressor
+from ..utils.metadata_routing import _MetadataRequester
+from ..utils.metadata_routing import MetadataRequest
+from ..utils.metadata_routing import MetadataRouter
+from ..utils.metadata_routing import process_routing
+from ..utils.metadata_routing import get_routing_for_object
+from ..utils.metadata_routing import _routing_enabled
 from ..utils._response import _get_response_values
 from ..utils._param_validation import HasMethods, StrOptions, validate_params
 
@@ -112,19 +120,28 @@ class _MultimetricScorer:
         cache = {} if self._use_cache(estimator) else None
         cached_call = partial(_cached_call, cache)
 
+        if _routing_enabled():
+            routed_params = process_routing(self, "score", kwargs)
+        else:
+            # they all get the same args, and they all get them all
+            routed_params = Bunch(
+                **{name: Bunch(score=kwargs) for name in self._scorers}
+            )
+
         for name, scorer in self._scorers.items():
             try:
                 if isinstance(scorer, _BaseScorer):
-                    score = scorer._score(cached_call, estimator, *args, **kwargs)
+                    score = scorer._score(
+                        cached_call, estimator, *args, **routed_params.get(name).score
+                    )
                 else:
-                    score = scorer(estimator, *args, **kwargs)
+                    score = scorer(estimator, *args, **routed_params.get(name).score)
                 scores[name] = score
             except Exception as e:
                 if self._raise_exc:
                     raise e
                 else:
                     scores[name] = format_exc()
-
         return scores
 
     def _use_cache(self, estimator):
@@ -158,8 +175,26 @@ class _MultimetricScorer:
                 return True
         return False
 
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
 
-class _BaseScorer:
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.3
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        return MetadataRouter(owner=self.__class__.__name__).add(
+            **self._scorers, method_mapping="score"
+        )
+
+
+class _BaseScorer(_MetadataRequester):
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
@@ -184,7 +219,7 @@ class _BaseScorer:
             kwargs_string,
         )
 
-    def __call__(self, estimator, X, y_true, sample_weight=None):
+    def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -202,26 +237,80 @@ class _BaseScorer:
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
+        **kwargs : dict
+            Other parameters passed to the scorer. Refer to
+            :func:`set_score_request` for more details.
+
+            Only available if `enable_metadata_routing=True`. See the
+            :ref:`User Guide <metadata_routing>`.
+
+            .. versionadded:: 1.3
+
         Returns
         -------
         score : float
             Score function applied to prediction of estimator on X.
         """
-        return self._score(
-            partial(_cached_call, None),
-            estimator,
-            X,
-            y_true,
-            sample_weight=sample_weight,
-        )
+        if kwargs and not _routing_enabled():
+            raise ValueError(
+                "kwargs is only supported if enable_metadata_routing=True. See"
+                " the User Guide for more information."
+            )
+
+        _kwargs = copy.deepcopy(kwargs)
+        if sample_weight is not None:
+            _kwargs["sample_weight"] = sample_weight
+
+        return self._score(partial(_cached_call, None), estimator, X, y_true, **_kwargs)
 
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
         return ""
 
+    def _warn_overlap(self, message, kwargs):
+        """Warn if there is any overlap between ``self._kwargs`` and ``kwargs``.
+
+        This method is intended to be used to check for overlap between
+        ``self._kwargs`` and ``kwargs`` passed as metadata.
+        """
+        _kwargs = set() if self._kwargs is None else set(self._kwargs.keys())
+        overlap = _kwargs.intersection(kwargs.keys())
+        if overlap:
+            warnings.warn(
+                f"{message} Overlapping parameters are: {overlap}", UserWarning
+            )
+
+    def set_score_request(self, **kwargs):
+        """Set requested parameters by the scorer.
+
+        Please see :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.3
+
+        Parameters
+        ----------
+        kwargs : dict
+            Arguments should be of the form ``param_name=alias``, and `alias`
+            can be one of ``{True, False, None, str}``.
+        """
+        self._warn_overlap(
+            message=(
+                "You are setting metadata request for parameters which are "
+                "already set as kwargs for this metric. These set values will be "
+                "overridden by passed metadata if provided. Please pass them either "
+                "as metadata or kwargs to `make_scorer`."
+            ),
+            kwargs=kwargs,
+        )
+        self._metadata_request = MetadataRequest(owner=self.__class__.__name__)
+        for param, alias in kwargs.items():
+            self._metadata_request.score.add_request(param=param, alias=alias)
+        return self
+
 
 class _PredictScorer(_BaseScorer):
-    def _score(self, method_caller, estimator, X, y_true, sample_weight=None):
+    def _score(self, method_caller, estimator, X, y_true, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -240,26 +329,32 @@ class _PredictScorer(_BaseScorer):
         y_true : array-like
             Gold standard target values for X.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer. Refer to
+            :func:`set_score_request` for more details.
+
+            .. versionadded:: 1.3
 
         Returns
         -------
         score : float
             Score function applied to prediction of estimator on X.
         """
-
+        self._warn_overlap(
+            message=(
+                "There is an overlap between set kwargs of this scorer instance and"
+                " passed metadata. Please pass them either as kwargs to `make_scorer`"
+                " or metadata, but not both."
+            ),
+            kwargs=kwargs,
+        )
         y_pred = method_caller(estimator, "predict", X)
-        if sample_weight is not None:
-            return self._sign * self._score_func(
-                y_true, y_pred, sample_weight=sample_weight, **self._kwargs
-            )
-        else:
-            return self._sign * self._score_func(y_true, y_pred, **self._kwargs)
+        scoring_kwargs = {**self._kwargs, **kwargs}
+        return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
 
 
 class _ProbaScorer(_BaseScorer):
-    def _score(self, method_caller, clf, X, y, sample_weight=None):
+    def _score(self, method_caller, clf, X, y, **kwargs):
         """Evaluate predicted probabilities for X relative to y_true.
 
         Parameters
@@ -279,28 +374,36 @@ class _ProbaScorer(_BaseScorer):
             Gold standard target values for X. These must be class labels,
             not probabilities.
 
-        sample_weight : array-like, default=None
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer. Refer to
+            :func:`set_score_request` for more details.
+
+            .. versionadded:: 1.3
 
         Returns
         -------
         score : float
             Score function applied to prediction of estimator on X.
         """
+        self._warn_overlap(
+            message=(
+                "There is an overlap between set kwargs of this scorer instance and"
+                " passed metadata. Please pass them either as kwargs to `make_scorer`"
+                " or metadata, but not both."
+            ),
+            kwargs=kwargs,
+        )
+
         y_pred = method_caller(clf, "predict_proba", X, pos_label=self._get_pos_label())
-        if sample_weight is not None:
-            return self._sign * self._score_func(
-                y, y_pred, sample_weight=sample_weight, **self._kwargs
-            )
-        else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+        scoring_kwargs = {**self._kwargs, **kwargs}
+        return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
     def _factory_args(self):
         return ", needs_proba=True"
 
 
 class _ThresholdScorer(_BaseScorer):
-    def _score(self, method_caller, clf, X, y, sample_weight=None):
+    def _score(self, method_caller, clf, X, y, **kwargs):
         """Evaluate decision function output for X relative to y_true.
 
         Parameters
@@ -322,14 +425,25 @@ class _ThresholdScorer(_BaseScorer):
             Gold standard target values for X. These must be class labels,
             not decision function values.
 
-        sample_weight : array-like, default=None
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer. Refer to
+            :func:`set_score_request` for more details.
+
+            .. versionadded:: 1.3
 
         Returns
         -------
         score : float
             Score function applied to prediction of estimator on X.
         """
+        self._warn_overlap(
+            message=(
+                "There is an overlap between set kwargs of this scorer instance and"
+                " passed metadata. Please pass them either as kwargs to `make_scorer`"
+                " or metadata, but not both."
+            ),
+            kwargs=kwargs,
+        )
 
         y_type = type_of_target(y)
         if y_type not in ("binary", "multilabel-indicator"):
@@ -351,12 +465,8 @@ class _ThresholdScorer(_BaseScorer):
                 if isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
-        if sample_weight is not None:
-            return self._sign * self._score_func(
-                y, y_pred, sample_weight=sample_weight, **self._kwargs
-            )
-        else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+        scoring_kwargs = {**self._kwargs, **kwargs}
+        return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
     def _factory_args(self):
         return ", needs_threshold=True"
@@ -405,9 +515,34 @@ def get_scorer(scoring):
     return scorer
 
 
-def _passthrough_scorer(estimator, *args, **kwargs):
-    """Function that wraps estimator.score"""
-    return estimator.score(*args, **kwargs)
+class _PassthroughScorer:
+    def __init__(self, estimator):
+        self._estimator = estimator
+
+    def __call__(self, estimator, *args, **kwargs):
+        """Method that wraps estimator.score"""
+        return estimator.score(*args, **kwargs)
+
+    def get_metadata_routing(self):
+        """Get requested data properties.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.3
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        # This scorer doesn't do any validation or routing, it only exposes the
+        # score requests to the parent object. This object behaves as a
+        # consumer rather than a router.
+        res = MetadataRequest(owner=self._estimator.__class__.__name__)
+        res.score = get_routing_for_object(self._estimator).score
+        return res
 
 
 def _check_multimetric_scoring(estimator, scoring):
@@ -530,7 +665,7 @@ def make_scorer(
     ----------
     score_func : callable
         Score function (or loss function) with signature
-        `score_func(y, y_pred, **kwargs)`.
+        ``score_func(y, y_pred, **kwargs)``.
 
     greater_is_better : bool, default=True
         Whether `score_func` is a score function (default), meaning high is
@@ -806,7 +941,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         return get_scorer(scoring)
     if scoring is None:
         if hasattr(estimator, "score"):
-            return _passthrough_scorer
+            return _PassthroughScorer(estimator)
         elif allow_none:
             return None
         else:
