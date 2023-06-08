@@ -1,7 +1,6 @@
 import re
 import sys
 from io import StringIO
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -907,37 +906,3 @@ def test_minibatch_nmf_verbose():
         nmf.fit(A)
     finally:
         sys.stdout = old_stdout
-
-
-def test_NMF_inverse_transform_W_deprecation():
-    rng = np.random.mtrand.RandomState(42)
-    A = np.abs(rng.randn(6, 5))
-    est = NMF(
-        n_components=3,
-        init="random",
-        random_state=0,
-        tol=1e-6,
-    )
-    Xt = est.fit_transform(A)
-
-    with pytest.raises(TypeError, match="Missing required positional argument"):
-        est.inverse_transform()
-
-    with pytest.raises(ValueError, match="Please provide only"):
-        est.inverse_transform(Xt=Xt, W=Xt)
-
-    with warnings.catch_warnings(record=True) as w:
-        est.inverse_transform(Xt)
-
-        assert len(w) == 0
-
-    # This try / catch is to make sure passing -Werror::FutureWarning doesn't
-    # make this test to raise / fail.
-    try:
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("ignore")
-            est.inverse_transform(W=Xt)
-
-            assert len(w) == 1
-    except Exception:
-        pass
