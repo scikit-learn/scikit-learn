@@ -7,6 +7,7 @@ from ..utils import check_matplotlib_support
 
 
 def _validate_score_name(score_name, scoring, negate_score):
+    """Validate the `score_name` parameter."""
     if score_name is not None:
         return score_name
     elif isinstance(scoring, str):
@@ -23,6 +24,12 @@ def _validate_score_name(score_name, scoring, negate_score):
 
 
 def _validate_xscale(xscale, x_data):
+    """Validate the `xscale` parameter.
+
+    When `"auto"`, we check that the ratio between the maximum interval and the
+    smaller interval is larger than 5. This value seems to be a good heuristic
+    for which the scale used could be either linear or log.
+    """
     if xscale == "auto":
         x_data_diff = np.diff(np.abs(x_data))
         ratio_max_min = x_data_diff.max() / x_data_diff.min()
