@@ -36,8 +36,13 @@ cdef class BaseCriterion:
     cdef double weighted_n_node_samples   # Weighted number of samples in the node
     cdef double weighted_n_left           # Weighted number of samples in the left node
     cdef double weighted_n_right          # Weighted number of samples in the right node
+    cdef double weighted_n_missing       # Weighted number of samples that are missing
 
     # Core methods that criterion class _must_ implement.
+    # The criterion object is maintained such that left and right collected
+    # statistics correspond to samples[start:pos] and samples[pos:end].
+
+    # Methods
     cdef int reset(self) except -1 nogil
     cdef int reverse_reset(self) except -1 nogil
     cdef int update(self, SIZE_t new_pos) except -1 nogil
@@ -69,7 +74,9 @@ cdef class Criterion(BaseCriterion):
     """Abstract interface for supervised impurity criteria."""
 
     cdef const DOUBLE_t[:, ::1] y         # Values of y
-
+    cdef SIZE_t n_missing                # Number of missing values for the feature being evaluated
+    cdef bint missing_go_to_left         # Whether missing values go to the left node
+    
     cdef int init(
         self,
         const DOUBLE_t[:, ::1] y,
@@ -77,6 +84,8 @@ cdef class Criterion(BaseCriterion):
         double weighted_n_samples,
         const SIZE_t[:] sample_indices
     ) except -1 nogil
+    cdef void init_sum_missing(self)
+    cdef void init_missing(self, SIZE_t n_missing) noexcept nogil
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
@@ -84,15 +93,17 @@ cdef class ClassificationCriterion(Criterion):
     cdef SIZE_t[::1] n_classes
     cdef SIZE_t max_n_classes
 
-    cdef double[:, ::1] sum_total   # The sum of the weighted count of each label.
-    cdef double[:, ::1] sum_left    # Same as above, but for the left side of the split
-    cdef double[:, ::1] sum_right   # Same as above, but for the right side of the split
+    cdef double[:, ::1] sum_total    # The sum of the weighted count of each label.
+    cdef double[:, ::1] sum_left     # Same as above, but for the left side of the split
+    cdef double[:, ::1] sum_right    # Same as above, but for the right side of the split
+    cdef double[:, ::1] sum_missing  # Same as above, but for missing values in X
 
 cdef class RegressionCriterion(Criterion):
     """Abstract regression criterion."""
 
     cdef double sq_sum_total
 
-    cdef double[::1] sum_total   # The sum of w*y.
-    cdef double[::1] sum_left    # Same as above, but for the left side of the split
-    cdef double[::1] sum_right   # Same as above, but for the right side of the split
+    cdef double[::1] sum_total    # The sum of w*y.
+    cdef double[::1] sum_left     # Same as above, but for the left side of the split
+    cdef double[::1] sum_right    # Same as above, but for the right side of the split
+    cdef double[::1] sum_missing  # Same as above, but for missing values in X

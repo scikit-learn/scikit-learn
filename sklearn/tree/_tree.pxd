@@ -34,6 +34,7 @@ cdef struct Node:
     DOUBLE_t impurity                    # Impurity of the node (i.e., the value of the criterion)
     SIZE_t n_node_samples                # Number of samples at the node
     DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
+    unsigned char missing_go_to_left     # Whether features have missing values
 
 cdef class BaseTree:
     # Inner structures: values are stored separately from node structure,
@@ -57,9 +58,10 @@ cdef class BaseTree:
         SplitRecord* split_node,
         double impurity,
         SIZE_t n_node_samples,
-        double weighted_n_node_samples
+        double weighted_n_node_samples,
+        unsigned char missing_go_to_left
     ) except -1 nogil
-
+    
     # Python API methods: These are methods exposed to Python
     cpdef cnp.ndarray apply(self, object X)
     cdef cnp.ndarray _apply_dense(self, object X)
@@ -141,6 +143,7 @@ cdef class TreeBuilder:
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=*,
+        const unsigned char[::1] feature_has_missing=*,
     )
 
     cdef _check_input(

@@ -41,8 +41,8 @@
 .. |Scikit-ImageMinVersion| replace:: 0.16.2
 .. |PandasMinVersion| replace:: 1.0.5
 .. |SeabornMinVersion| replace:: 0.9.0
-.. |PytestMinVersion| replace:: 5.3.1
-.. |PlotlyMinVersion| replace:: 5.10.0
+.. |PytestMinVersion| replace:: 7.1.2
+.. |PlotlyMinVersion| replace:: 5.14.0
 
 =================
 Scikit-learn-tree
@@ -159,8 +159,6 @@ The scikit-learn community goals are to be helpful, welcoming, and effective. Th
 `Development Guide <https://scikit-learn.org/stable/developers/index.html>`_
 has detailed information about contributing code, documentation, tests, and
 more. We've included some basic information in this README.
-
-=========================
 
 .. _fork_changelog:
 

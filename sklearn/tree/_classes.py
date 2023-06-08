@@ -34,6 +34,8 @@ from ..base import MultiOutputMixin
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils.validation import _check_sample_weight
+from ..utils.validation import assert_all_finite
+from ..utils.validation import _assert_all_finite_element_wise
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
@@ -48,6 +50,7 @@ from ._tree import Tree
 from ._tree import _build_pruned_tree_ccp
 from ._tree import ccp_pruning_path
 from . import _tree, _splitter, _criterion
+from ._utils import _any_isnan_axis0
 
 __all__ = [
     "DecisionTreeClassifier",
@@ -174,7 +177,48 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.tree_.n_leaves
 
-    def fit(self, X, y=None, sample_weight=None, check_input=True):
+    def _support_missing_values(self, X):
+        return not issparse(X) and self._get_tags()["allow_nan"]
+
+    def _compute_feature_has_missing(self, X):
+        """Return boolean mask denoting if there are missing values for each feature.
+
+        This method also ensures that X is finite.
+
+        Parameter
+        ---------
+        X : array-like of shape (n_samples, n_features), dtype=DOUBLE
+            Input data.
+
+        Returns
+        -------
+        feature_has_missing : ndarray of shape (n_features,), or None
+            Missing value mask. If missing values are not supported or there
+            are no missing values, return None.
+        """
+        common_kwargs = dict(estimator_name=self.__class__.__name__, input_name="X")
+
+        if not self._support_missing_values(X):
+            assert_all_finite(X, **common_kwargs)
+            return None
+
+        with np.errstate(over="ignore"):
+            overall_sum = np.sum(X)
+
+        if not np.isfinite(overall_sum):
+            # Raise a ValueError in case of the presence of an infinite element.
+            _assert_all_finite_element_wise(X, xp=np, allow_nan=True, **common_kwargs)
+
+        # If the sum is not nan, then there are no missing values
+        if not np.isnan(overall_sum):
+            return None
+
+        feature_has_missing = _any_isnan_axis0(X)
+        return feature_has_missing
+
+    def _fit(
+        self, X, y, sample_weight=None, check_input=True, feature_has_missing=None
+    ):
         self._validate_params()
         random_state = check_random_state(self.random_state)
 
@@ -182,7 +226,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # Need to validate separately here.
             # We can't pass multi_output=True because that would allow y to be
             # csr.
-            check_X_params = dict(dtype=DTYPE, accept_sparse="csc")
+
+            # _compute_feature_has_missing will check for finite values and
+            # compute the missing mask if the tree supports missing values
+            check_X_params = dict(
+                dtype=DTYPE, accept_sparse="csc", force_all_finite=False
+            )
             check_y_params = dict(ensure_2d=False, dtype=None)
             if y is not None or self._get_tags()["requires_y"]:
                 X, y = self._validate_data(
@@ -190,6 +239,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             else:
                 X = self._validate_data(X, **check_X_params)
+
+            feature_has_missing = self._compute_feature_has_missing(X)
             if issparse(X):
                 X.sort_indices()
 
@@ -442,7 +493,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.min_impurity_decrease,
             )
 
-        builder.build(self.tree_, X, y, sample_weight)
+        builder.build(self.tree_, X, y, sample_weight, feature_has_missing)
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
@@ -453,7 +504,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _validate_X_predict(self, X, check_input):
         """Validate the training data on predict (probabilities)."""
         if check_input:
-            X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr", reset=False)
+            if self._support_missing_values(X):
+                force_all_finite = "allow-nan"
+            else:
+                force_all_finite = True
+            X = self._validate_data(
+                X,
+                dtype=DTYPE,
+                accept_sparse="csr",
+                reset=False,
+                force_all_finite=force_all_finite,
+            )
             if issparse(X) and (
                 X.indices.dtype != np.intc or X.indptr.dtype != np.intc
             ):
@@ -948,7 +1009,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super().fit(
+        super()._fit(
             X,
             y,
             sample_weight=sample_weight,
@@ -1033,7 +1094,14 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             return proba
 
     def _more_tags(self):
-        return {"multilabel": True}
+        # XXX: nan is only support for dense arrays, but we set this for common test to
+        # pass, specifically: check_estimators_nan_inf
+        allow_nan = self.splitter == "best" and self.criterion in {
+            "gini",
+            "log_loss",
+            "entropy",
+        }
+        return {"multilabel": True, "allow_nan": allow_nan}
 
 
 class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
@@ -1301,7 +1369,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super().fit(
+        super()._fit(
             X,
             y,
             sample_weight=sample_weight,
@@ -1335,6 +1403,16 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             grid, target_features, averaged_predictions
         )
         return averaged_predictions
+
+    def _more_tags(self):
+        # XXX: nan is only support for dense arrays, but we set this for common test to
+        # pass, specifically: check_estimators_nan_inf
+        allow_nan = self.splitter == "best" and self.criterion in {
+            "squared_error",
+            "friedman_mse",
+            "poisson",
+        }
+        return {"allow_nan": allow_nan}
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):

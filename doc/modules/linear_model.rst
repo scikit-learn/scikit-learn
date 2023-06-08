@@ -1194,7 +1194,7 @@ Examples of use cases include:
 * Risk modeling / insurance policy pricing:  number of claim events /
   policyholder per year (Poisson), cost per event (Gamma), total cost per
   policyholder per year (Tweedie / Compound Poisson Gamma).
-* Credit Default: probability that a loan can't be payed back (Bernouli).
+* Credit Default: probability that a loan can't be paid back (Bernouli).
 * Fraud Detection: probability that a financial transaction like a cash transfer
   is a fraudulent transaction (Bernoulli).
 * Predictive maintenance: number of production interruption events per year

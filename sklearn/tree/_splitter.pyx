@@ -18,11 +18,12 @@ from ._criterion cimport Criterion
 
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
+from libc.math cimport isnan
 from cython cimport final
 
 import numpy as np
 
-from scipy.sparse import csc_matrix
+from scipy.sparse import isspmatrix_csc
 
 from ._utils cimport log
 from ._utils cimport rand_int
@@ -45,6 +46,8 @@ cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) noexcept nogil
     self.feature = 0
     self.threshold = 0.
     self.improvement = -INFINITY
+    self.missing_go_to_left = False
+    self.n_missing = 0
 
 cdef class BaseSplitter:
     """This is an abstract interface for splitters. 
@@ -162,7 +165,8 @@ cdef class Splitter(BaseSplitter):
         self,
         object X,
         const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight
+        const DOUBLE_t[:] sample_weight,
+        const unsigned char[::1] feature_has_missing,
     ) except -1:
         """Initialize the splitter.
 
@@ -185,6 +189,9 @@ cdef class Splitter(BaseSplitter):
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight. This is represented
             as a Cython memoryview.
+
+        has_missing : bool
+            At least one missing values is in X.
         """
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
         cdef SIZE_t n_samples = X.shape[0]
@@ -236,6 +243,9 @@ cdef class Splitter(BaseSplitter):
             self.end
         )
 
+        if feature_has_missing is not None:
+            self.criterion.init_sum_missing()
+
         return 0
 
     cdef int node_reset(self, SIZE_t start, SIZE_t end,
@@ -276,6 +286,8 @@ cdef class Splitter(BaseSplitter):
     cdef bint check_presplit_conditions(
         self,
         SplitRecord current_split,
+        SIZE_t n_missing,
+        bint missing_go_to_left,
     ) noexcept nogil:
         """Check stopping conditions pre-split.
         
@@ -284,9 +296,18 @@ cdef class Splitter(BaseSplitter):
         argument.
         """
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef SIZE_t end_non_missing = self.end - n_missing
+        cdef SIZE_t n_left, n_right
+        
+        if missing_go_to_left:
+            n_left = current_split.pos - self.start + n_missing
+            n_right = end_non_missing - current_split.pos
+        else:
+            n_left = current_split.pos - self.start
+            n_right = end_non_missing - current_split.pos + n_missing
 
-        if (((current_split.pos - self.start) < min_samples_leaf) or
-                ((self.end - current_split.pos) < min_samples_leaf)):
+        # Reject if min_samples_leaf is not guaranteed
+        if n_left < min_samples_leaf or n_right < min_samples_leaf:
             return 1
         
         return 0
@@ -307,6 +328,26 @@ cdef class Splitter(BaseSplitter):
             return 1
         
         return 0
+
+      
+cdef inline void shift_missing_values_to_left_if_required(
+    SplitRecord* best,
+    SIZE_t[::1] samples,
+    SIZE_t end,
+) nogil:
+    cdef SIZE_t i, p, current_end
+    # The partitioner partitions the data such that the missing values are in
+    # samples[-n_missing:] for the criterion to consume. If the missing values
+    # are going to the right node, then the missing values are already in the
+    # correct position. If the missing values go left, then we move the missing
+    # values to samples[best.pos:best.pos+n_missing] and update `best.pos`.
+    if best.n_missing > 0 and best.missing_go_to_left:
+        for p in range(best.n_missing):
+            i = best.pos + p
+            current_end = end - 1 - p
+            samples[i], samples[current_end] = samples[current_end], samples[i]
+        best.pos += best.n_missing
+
 
 # Introduce a fused-class to make it possible to share the split implementation
 # between the dense and sparse cases in the node_split_best and node_split_random
@@ -333,7 +374,14 @@ cdef inline int node_split_best(
     # Find the best split
     cdef SIZE_t start = splitter.start
     cdef SIZE_t end = splitter.end
+    cdef SIZE_t end_non_missing
+    cdef SIZE_t n_missing = 0
+    cdef bint has_missing = 0
+    cdef SIZE_t n_searches
+    cdef SIZE_t n_left, n_right
+    cdef bint missing_go_to_left
 
+    cdef SIZE_t[::1] samples = splitter.samples
     cdef SIZE_t[::1] features = splitter.features
     cdef SIZE_t[::1] constant_features = splitter.constant_features
     cdef SIZE_t n_features = splitter.n_features
@@ -410,8 +458,18 @@ cdef inline int node_split_best(
         # f_j in the interval [n_total_constants, f_i[
         current_split.feature = features[f_j]
         partitioner.sort_samples_and_feature_values(current_split.feature)
+        n_missing = partitioner.n_missing
+        end_non_missing = end - n_missing
 
-        if feature_values[end - 1] <= feature_values[start] + FEATURE_THRESHOLD:
+        if (
+            # All values for this feature are missing, or
+            end_non_missing == start or
+            # This feature is considered constant (max - min <= FEATURE_THRESHOLD)
+            feature_values[end_non_missing - 1] <= feature_values[start] + FEATURE_THRESHOLD
+        ):
+            # We consider this feature constant in this case.
+            # Since finding a split among constant feature is not valuable,
+            # we do not consider this feature for splitting.
             features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
 
             n_found_constants += 1
@@ -420,57 +478,101 @@ cdef inline int node_split_best(
 
         f_i -= 1
         features[f_i], features[f_j] = features[f_j], features[f_i]
-
+        has_missing = n_missing != 0
+        if has_missing:
+            criterion.init_missing(n_missing)
         # Evaluate all splits
-        # At this point, the criterion has a view into the samples that was sorted
-        # by the partitioner. The criterion will use that ordering when evaluating the splits.
-        criterion.reset()
-        p = start
+        # If there are missing values, then we search twice for the most optimal split.
+        # The first search will have all the missing values going to the right node.
+        # The second search will have all the missing values going to the left node.
+        # If there are no missing values, then we search only once for the most
+        # optimal split.
+        n_searches = 2 if has_missing else 1
 
-        while p < end:
-            partitioner.next_p(&p_prev, &p)
+        for i in range(n_searches):
+            missing_go_to_left = i == 1
+            criterion.missing_go_to_left = missing_go_to_left
+            criterion.reset()
 
-            if p >= end:
-                continue
+            p = start
 
-            current_split.pos = p
+            while p < end_non_missing:
+                partitioner.next_p(&p_prev, &p)
 
-            # Reject if min_samples_leaf is not guaranteed
-            if splitter.check_presplit_conditions(current_split) == 1:
-                continue
+                if p >= end_non_missing:
+                    continue
+                    
+                current_split.pos = p
+                
+                # Reject if min_samples_leaf is not guaranteed
+                if splitter.check_presplit_conditions(current_split) == 1:
+                    continue
 
-            criterion.update(current_split.pos)
+                criterion.update(current_split.pos)
 
-            # Reject if min_weight_leaf is not satisfied
-            if splitter.check_postsplit_conditions() == 1:
-                continue
+                # Reject if min_weight_leaf is not satisfied
+                if splitter.check_postsplit_conditions() == 1:
+                    continue
 
-            current_proxy_improvement = criterion.proxy_impurity_improvement()
+                current_proxy_improvement = criterion.proxy_impurity_improvement()
 
-            if current_proxy_improvement > best_proxy_improvement:
-                best_proxy_improvement = current_proxy_improvement
-                # sum of halves is used to avoid infinite value
-                current_split.threshold = (
-                    feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
-                )
+                if current_proxy_improvement > best_proxy_improvement:
+                    best_proxy_improvement = current_proxy_improvement
+                    # sum of halves is used to avoid infinite value
+                    current_split.threshold = (
+                        feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
+                    )
 
-                if (
-                    current_split.threshold == feature_values[p] or
-                    current_split.threshold == INFINITY or
-                    current_split.threshold == -INFINITY
-                ):
-                    current_split.threshold = feature_values[p_prev]
+                    if (
+                        current_split.threshold == feature_values[p] or
+                        current_split.threshold == INFINITY or
+                        current_split.threshold == -INFINITY
+                    ):
+                        current_split.threshold = feature_values[p_prev]
 
-                # This creates a SplitRecord copy
-                best_split = current_split
+                    current_split.n_missing = n_missing
+                    if n_missing == 0:
+                        current_split.missing_go_to_left = n_left > n_right
+                    else:
+                        current_split.missing_go_to_left = missing_go_to_left
+
+                    best_split = current_split  # copy
+
+        # Evaluate when there are missing values and all missing values goes
+        # to the right node and non-missing values goes to the left node.
+        if has_missing:
+            n_left, n_right = end - start - n_missing, n_missing
+            p = end - n_missing
+            missing_go_to_left = 0
+
+            if not (n_left < min_samples_leaf or n_right < min_samples_leaf):
+                criterion.missing_go_to_left = missing_go_to_left
+                criterion.update(p)
+
+                if not ((criterion.weighted_n_left < min_weight_leaf) or
+                        (criterion.weighted_n_right < min_weight_leaf)):
+                    current_proxy_improvement = criterion.proxy_impurity_improvement()
+
+                    if current_proxy_improvement > best_proxy_improvement:
+                        best_proxy_improvement = current_proxy_improvement
+                        current_split.threshold = INFINITY
+                        current_split.missing_go_to_left = missing_go_to_left
+                        current_split.n_missing = n_missing
+                        current_split.pos = p
+                        best_split = current_split
 
     # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
     if best_split.pos < end:
         partitioner.partition_samples_final(
             best_split.pos,
             best_split.threshold,
-            best_split.feature
+            best_split.feature,
+            best_split.n_missing
         )
+        if best_split.n_missing != 0:
+            criterion.init_missing(best_split.n_missing)
+        criterion.missing_go_to_left = best_split.missing_go_to_left
+
         criterion.reset()
         criterion.update(best_split.pos)
         criterion.children_impurity(
@@ -481,6 +583,8 @@ cdef inline int node_split_best(
             best_split.impurity_left,
             best_split.impurity_right
         )
+
+        shift_missing_values_to_left_if_required(&best_split, samples, end)
 
     # Respect invariant for constant features: the original order of
     # element in features[:n_known_constants] must be preserved for sibling
@@ -735,7 +839,7 @@ cdef inline int node_split_random(
 
         # Evaluate split
         # At this point, the criterion has a view into the samples that was partitioned
-        # by the partitioner. The criterion will use the parition to evaluating the split.
+        # by the partitioner. The criterion will use the partition to evaluating the split.
         criterion.reset()
         criterion.update(current_split.pos)
 
@@ -749,11 +853,12 @@ cdef inline int node_split_random(
             best_proxy_improvement = current_proxy_improvement
             best_split = current_split  # copy
 
-    # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
+    # Reorganize into samples[start:best.pos] + samples[best.pos:end]
     if best_split.pos < end:
         if current_split.feature != best_split.feature:
+            # TODO: Pass in best.n_missing when random splitter supports missing values.
             partitioner.partition_samples_final(
-                best_split.pos, best_split.threshold, best_split.feature
+                best_split.pos, best_split.threshold, best_split.feature, 0
             )
 
         criterion.reset()
@@ -793,39 +898,75 @@ cdef class DensePartitioner:
         cdef DTYPE_t[::1] feature_values
         cdef SIZE_t start
         cdef SIZE_t end
+        cdef SIZE_t n_missing
+        cdef const unsigned char[::1] feature_has_missing
 
     def __init__(
         self,
         const DTYPE_t[:, :] X,
         SIZE_t[::1] samples,
         DTYPE_t[::1] feature_values,
+        const unsigned char[::1] feature_has_missing,
     ):
         self.X = X
         self.samples = samples
         self.feature_values = feature_values
+        self.feature_has_missing = feature_has_missing
 
     cdef inline void init_node_split(self, SIZE_t start, SIZE_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
         self.start = start
         self.end = end
+        self.n_missing = 0
 
     cdef inline void sort_samples_and_feature_values(
         self, SIZE_t current_feature
     ) noexcept nogil:
-        """Simultaneously sort based on the feature_values."""
+        """Simultaneously sort based on the feature_values.
+
+        Missing values are stored at the end of feature_values.
+        The number of missing values observed in feature_values is stored
+        in self.n_missing.
+        """
         cdef:
-            SIZE_t i
+            SIZE_t i, current_end
             DTYPE_t[::1] feature_values = self.feature_values
             const DTYPE_t[:, :] X = self.X
             SIZE_t[::1] samples = self.samples
+            SIZE_t n_missing = 0
+            const unsigned char[::1] feature_has_missing = self.feature_has_missing
 
         # Sort samples along that feature; by
         # copying the values into an array and
         # sorting the array in a manner which utilizes the cache more
         # effectively.
-        for i in range(self.start, self.end):
-            feature_values[i] = X[samples[i], current_feature]
-        sort(&feature_values[self.start], &samples[self.start], self.end - self.start)
+        if feature_has_missing is not None and feature_has_missing[current_feature]:
+            i, current_end = self.start, self.end - 1
+            # Missing values are placed at the end and do not participate in the sorting.
+            while i <= current_end:
+                # Finds the right-most value that is not missing so that
+                # it can be swapped with missing values at its left.
+                if isnan(X[samples[current_end], current_feature]):
+                    n_missing += 1
+                    current_end -= 1
+                    continue
+
+                # X[samples[current_end], current_feature] is a non-missing value
+                if isnan(X[samples[i], current_feature]):
+                    samples[i], samples[current_end] = samples[current_end], samples[i]
+                    n_missing += 1
+                    current_end -= 1
+
+                feature_values[i] = X[samples[i], current_feature]
+                i += 1
+        else:
+            # When there are no missing values, we only need to copy the data into
+            # feature_values
+            for i in range(self.start, self.end):
+                feature_values[i] = X[samples[i], current_feature]
+
+        sort(&feature_values[self.start], &samples[self.start], self.end - self.start - n_missing)
+        self.n_missing = n_missing
 
     cdef inline void find_min_max(
         self,
@@ -858,11 +999,16 @@ cdef class DensePartitioner:
         max_feature_value_out[0] = max_feature_value
 
     cdef inline void next_p(self, SIZE_t* p_prev, SIZE_t* p) noexcept nogil:
-        """Compute the next p_prev and p for iteratiing over feature values."""
-        cdef DTYPE_t[::1] feature_values = self.feature_values
+        """Compute the next p_prev and p for iteratiing over feature values.
+
+        The missing values are not included when iterating through the feature values.
+        """
+        cdef:
+            DTYPE_t[::1] feature_values = self.feature_values
+            SIZE_t end_non_missing = self.end - self.n_missing
 
         while (
-            p[0] + 1 < self.end and
+            p[0] + 1 < end_non_missing and
             feature_values[p[0] + 1] <= feature_values[p[0]] + FEATURE_THRESHOLD
         ):
             p[0] += 1
@@ -899,20 +1045,57 @@ cdef class DensePartitioner:
         SIZE_t best_pos,
         double best_threshold,
         SIZE_t best_feature,
+        SIZE_t best_n_missing,
     ) noexcept nogil:
-        """Partition samples for X at the best_threshold and best_feature."""
+        """Partition samples for X at the best_threshold and best_feature.
+
+        If missing values are present, this method partitions `samples`
+        so that the `best_n_missing` missing values' indices are in the
+        right-most end of `samples`, that is `samples[end_non_missing:end]`.
+        """
         cdef:
-            SIZE_t p = self.start
-            SIZE_t partition_end = self.end
+            # Local invariance: start <= p <= partition_end <= end
+            SIZE_t start = self.start
+            SIZE_t p = start
+            SIZE_t end = self.end - 1
+            SIZE_t partition_end = end - best_n_missing
             SIZE_t[::1] samples = self.samples
             const DTYPE_t[:, :] X = self.X
+            DTYPE_t current_value
 
-        while p < partition_end:
-            if X[samples[p], best_feature] <= best_threshold:
-                p += 1
-            else:
-                partition_end -= 1
-                samples[p], samples[partition_end] = samples[partition_end], samples[p]
+        if best_n_missing != 0:
+            # Move samples with missing values to the end while partitioning the
+            # non-missing samples
+            while p < partition_end:
+                # Keep samples with missing values at the end
+                if isnan(X[samples[end], best_feature]):
+                    end -= 1
+                    continue
+
+                # Swap sample with missing values with the sample at the end
+                current_value = X[samples[p], best_feature]
+                if isnan(current_value):
+                    samples[p], samples[end] = samples[end], samples[p]
+                    end -= 1
+
+                    # The swapped sample at the end is always a non-missing value, so
+                    # we can continue the algorithm without checking for missingness.
+                    current_value = X[samples[p], best_feature]
+
+                # Partition the non-missing samples
+                if current_value <= best_threshold:
+                    p += 1
+                else:
+                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
+                    partition_end -= 1
+        else:
+            # Partitioning routine when there are no missing values
+            while p < partition_end:
+                if X[samples[p], best_feature] <= best_threshold:
+                    p += 1
+                else:
+                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
+                    partition_end -= 1
 
 
 @final
@@ -925,6 +1108,8 @@ cdef class SparsePartitioner:
     cdef DTYPE_t[::1] feature_values
     cdef SIZE_t start
     cdef SIZE_t end
+    cdef SIZE_t n_missing
+    cdef const unsigned char[::1] feature_has_missing
 
     cdef const DTYPE_t[::1] X_data
     cdef const INT32_t[::1] X_indices
@@ -945,8 +1130,9 @@ cdef class SparsePartitioner:
         SIZE_t[::1] samples,
         SIZE_t n_samples,
         DTYPE_t[::1] feature_values,
+        const unsigned char[::1] feature_has_missing,
     ):
-        if not isinstance(X, csc_matrix):
+        if not isspmatrix_csc(X):
             raise ValueError("X should be in csc format")
 
         self.samples = samples
@@ -968,11 +1154,14 @@ cdef class SparsePartitioner:
         for p in range(n_samples):
             self.index_to_samples[samples[p]] = p
 
+        self.feature_has_missing = feature_has_missing
+
     cdef inline void init_node_split(self, SIZE_t start, SIZE_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
         self.start = start
         self.end = end
         self.is_samples_sorted = 0
+        self.n_missing = 0
 
     cdef inline void sort_samples_and_feature_values(
         self, SIZE_t current_feature
@@ -1007,6 +1196,10 @@ cdef class SparsePartitioner:
             if self.end_negative != self.start_positive:
                 feature_values[self.end_negative] = 0.
                 self.end_negative += 1
+
+        # XXX: When sparse supports missing values, this should be set to the
+        # number of missing values for current_feature
+        self.n_missing = 0
 
     cdef inline void find_min_max(
         self,
@@ -1082,6 +1275,7 @@ cdef class SparsePartitioner:
         SIZE_t best_pos,
         double best_threshold,
         SIZE_t best_feature,
+        SIZE_t n_missing,
     ) noexcept nogil:
         """Partition samples for X at the best_threshold and best_feature."""
         self.extract_nnz(best_feature)
@@ -1330,10 +1524,13 @@ cdef class BestSplitter(Splitter):
         self,
         object X,
         const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight
+        const DOUBLE_t[:] sample_weight,
+        const unsigned char[::1] feature_has_missing,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight)
-        self.partitioner = DensePartitioner(X, self.samples, self.feature_values)
+        Splitter.init(self, X, y, sample_weight, feature_has_missing)
+        self.partitioner = DensePartitioner(
+            X, self.samples, self.feature_values, feature_has_missing
+        )
 
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) except -1 nogil:
@@ -1353,11 +1550,12 @@ cdef class BestSparseSplitter(Splitter):
         self,
         object X,
         const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight
+        const DOUBLE_t[:] sample_weight,
+        const unsigned char[::1] feature_has_missing,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight)
+        Splitter.init(self, X, y, sample_weight, feature_has_missing)
         self.partitioner = SparsePartitioner(
-            X, self.samples, self.n_samples, self.feature_values
+            X, self.samples, self.n_samples, self.feature_values, feature_has_missing
         )
 
     cdef int node_split(self, double impurity, SplitRecord* split,
@@ -1378,10 +1576,13 @@ cdef class RandomSplitter(Splitter):
         self,
         object X,
         const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight
+        const DOUBLE_t[:] sample_weight,
+        const unsigned char[::1] feature_has_missing,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight)
-        self.partitioner = DensePartitioner(X, self.samples, self.feature_values)
+        Splitter.init(self, X, y, sample_weight, feature_has_missing)
+        self.partitioner = DensePartitioner(
+            X, self.samples, self.feature_values, feature_has_missing
+        )
 
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) except -1 nogil:
@@ -1401,11 +1602,12 @@ cdef class RandomSparseSplitter(Splitter):
         self,
         object X,
         const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight
+        const DOUBLE_t[:] sample_weight,
+        const unsigned char[::1] feature_has_missing,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight)
+        Splitter.init(self, X, y, sample_weight, feature_has_missing)
         self.partitioner = SparsePartitioner(
-            X, self.samples, self.n_samples, self.feature_values
+            X, self.samples, self.n_samples, self.feature_values, feature_has_missing
         )
 
     cdef int node_split(self, double impurity, SplitRecord* split,
