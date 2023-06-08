@@ -4,39 +4,7 @@ import numpy as np
 
 from . import learning_curve, validation_curve
 from ..utils import check_matplotlib_support
-
-
-def _validate_score_name(score_name, scoring, negate_score):
-    """Validate the `score_name` parameter."""
-    if score_name is not None:
-        return score_name
-    elif scoring is None:
-        return "Negative score" if negate_score else "Score"
-    else:
-        score_name = scoring.__name__ if callable(scoring) else scoring
-        if negate_score and score_name.startswith("neg_"):
-            score_name = score_name[4:]
-        return score_name.replace("_", " ").capitalize()
-
-
-def _validate_xscale(xscale, x_data):
-    """Validate the `xscale` parameter.
-
-    When `"auto"`, we check that the ratio between the maximum interval and the
-    smaller interval is larger than 5. This value seems to be a good heuristic
-    for which the scale used could be either linear or log.
-    """
-    if xscale == "auto":
-        x_data_diff = np.diff(np.abs(x_data))
-        ratio_max_min = x_data_diff.max() / x_data_diff.min()
-        if ratio_max_min > 5:
-            if not (np.sign(x_data_diff[0]) + np.sign(x_data_diff[-1])):
-                xscale = "symlog"
-            else:
-                xscale = "log"
-        else:
-            xscale = "linear"
-    return xscale
+from ..utils._plotting import _validate_score_name, _compute_scale_type_ratio
 
 
 class _BaseCurveDisplay:
@@ -157,7 +125,15 @@ class _BaseCurveDisplay:
             xscale = "log" if log_scale else "linear"
         else:
             xscale = "auto" if xscale is None else xscale
-        xscale = _validate_xscale(xscale, x_data)
+
+        if xscale == "auto":
+            # Heuristically, we can define a ratio of 5 to differentiate log scale
+            # from linear scale.
+            if _compute_scale_type_ratio(x_data) > 5:
+                xscale = "symlog" if x_data.min() <= 0 else "log"
+            else:
+                xscale = "linear"
+
         ax.set_xscale(xscale)
         ax.set_yscale(yscale)
         ax.set_ylabel(f"{score_name}")
@@ -195,8 +171,10 @@ class LearningCurveDisplay(_BaseCurveDisplay):
 
     score_name : str, default=None
         The name of the score used in `learning_curve`. It will be used to
-        decorate the y-axis. If `None`, the generic name `"Score"` will be
-        used.
+        decorate the y-axis. If `None` and `scoring` is provided, the same will
+        be inferred from it by removing `"neg_"` and replacing underscore by
+        spaces. If `scoring is None`, we return the default value `"Negative
+        score"` if `negate_score` is `True` and `"Score"` otherwise.
 
     Attributes
     ----------
@@ -278,8 +256,11 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             `scikit-learn`.
 
         score_name : str, default=None
-            The name of the score used to decorate the y-axis of the plot. If
-            `None`, the generic name "Score" will be used.
+            The name of the score used to decorate the y-axis of the plot.If
+            `None` and `scoring` is provided, the same will be inferred from it
+            by removing `"neg_"` and replacing underscore by spaces. If
+            `scoring is None`, we return the default value `"Negative score"`
+            if `negate_score` is `True` and `"Score"` otherwise.
 
         score_type : {"test", "train", "both"}, default="test"
             The type of score to plot. Can be one of `"test"`, `"train"`, or
@@ -484,8 +465,11 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             `scikit-learn`.
 
         score_name : str, default=None
-            The name of the score used to decorate the y-axis of the plot.
-            If `None`, the generic `"Score"` name will be used.
+            The name of the score used to decorate the y-axis of the plot. If
+            `None` and `scoring` is provided, the same will be inferred from it
+            by removing `"neg_"` and replacing underscore by spaces. If
+            `scoring is None`, we return the default value `"Negative score"`
+            if `negate_score` is `True` and `"Score"` otherwise.
 
         score_type : {"test", "train", "both"}, default="test"
             The type of score to plot. Can be one of `"test"`, `"train"`, or
@@ -620,8 +604,10 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
 
     score_name : str, default=None
         The name of the score used in `validation_curve`. It will be used to
-        decorate the y-axis. If `None`, the generic name `"Score"` will be
-        used.
+        decorate the y-axis. If `None` and `scoring` is provided, the same will
+        be inferred from it by removing `"neg_"` and replacing underscore by
+        spaces. If `scoring is None`, we return the default value `"Negative
+        score"` if `negate_score` is `True` and `"Score"` otherwise.
 
     Attributes
     ----------
@@ -711,7 +697,10 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
 
         score_name : str, default=None
             The name of the score used to decorate the y-axis of the plot. If
-            `None`, the generic name "Score" will be used.
+            `None` and `scoring` is provided, the same will be inferred from it
+            by removing `"neg_"` and replacing underscore by spaces. If
+            `scoring is None`, we return the default value `"Negative score"`
+            if `negate_score` is `True` and `"Score"` otherwise.
 
         score_type : {"test", "train", "both"}, default="test"
             The type of score to plot. Can be one of `"test"`, `"train"`, or
@@ -881,8 +870,11 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             `scikit-learn`.
 
         score_name : str, default=None
-            The name of the score used to decorate the y-axis of the plot.
-            If `None`, the generic `"Score"` name will be used.
+            The name of the score used to decorate the y-axis of the plot. If
+            `None` and `scoring` is provided, the same will be inferred from it
+            by removing `"neg_"` and replacing underscore by spaces. If
+            `scoring is None`, we return the default value `"Negative score"`
+            if `negate_score` is `True` and `"Score"` otherwise.
 
         score_type : {"test", "train", "both"}, default="test"
             The type of score to plot. Can be one of `"test"`, `"train"`, or

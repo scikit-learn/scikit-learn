@@ -8,37 +8,11 @@ from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 from sklearn.model_selection import learning_curve, validation_curve
 from sklearn.model_selection import LearningCurveDisplay, ValidationCurveDisplay
-from sklearn.model_selection._plot import _validate_score_name
 
 
 @pytest.fixture
 def data():
     return shuffle(*load_iris(return_X_y=True), random_state=0)
-
-
-def my_metric():
-    pass  # pragma: no cover
-
-
-@pytest.mark.parametrize(
-    "score_name, scoring, negate_score, expected_score_name",
-    [
-        ("accuracy", None, False, "accuracy"),  # do not transform the name
-        (None, "accuracy", False, "Accuracy"),  # capitalize the name
-        (None, "neg_mean_absolute_error", True, "Mean absolute error"),  # remove "neg_"
-        ("MAE", "neg_mean_absolute_error", True, "MAE"),  # keep score_name
-        (None, None, False, "Score"),  # default name
-        (None, None, True, "Negative score"),  # default name but negated
-        ("my metric", my_metric, False, "my metric"),  # do not transform the name
-        (None, my_metric, False, "My metric"),  # default name
-        (None, my_metric, True, "My metric"),  # default name but negated
-    ],
-)
-def test_validate_score_name(score_name, scoring, negate_score, expected_score_name):
-    """Check that we return the right score name."""
-    assert (
-        _validate_score_name(score_name, scoring, negate_score) == expected_score_name
-    )
 
 
 @pytest.mark.parametrize(

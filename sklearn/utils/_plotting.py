@@ -1,3 +1,5 @@
+import numpy as np
+
 from . import check_consistent_length, check_matplotlib_support
 from .multiclass import type_of_target
 from .validation import _check_pos_label_consistency
@@ -56,3 +58,33 @@ class _BinaryClassifierCurveDisplayMixin:
         name = name if name is not None else "Classifier"
 
         return pos_label, name
+
+
+def _validate_score_name(score_name, scoring, negate_score):
+    """Validate the `score_name` parameter.
+
+    If `score_name` is provided, we just return it as-is.
+    Otherwise, we infer it from `scoring` by removing `"neg_"` if present and
+    and make it English-readable. If `scoring` is `None`, then we return
+    the default value `"Negative score"` if `negate_score` is `True` and
+    `"Score"` otherwise.
+    """
+    if score_name is not None:
+        return score_name
+    elif scoring is None:
+        return "Negative score" if negate_score else "Score"
+    else:
+        score_name = scoring.__name__ if callable(scoring) else scoring
+        if negate_score and score_name.startswith("neg_"):
+            score_name = score_name[4:]
+        return score_name.replace("_", " ").capitalize()
+
+
+def _compute_scale_type_ratio(data):
+    """Compute the ratio between the largest and smallest inter-point distances.
+
+    A value higher than 5 would indicate that the data was sampled from a
+    log-uniform distribution.
+    """
+    diff = np.diff(np.sort(data))
+    return diff.max() / diff.min()
