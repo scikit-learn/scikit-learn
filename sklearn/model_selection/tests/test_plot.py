@@ -150,7 +150,7 @@ def test_curve_display_negate_score(pyplot, data, CurveDisplay, specific_params)
     negative_scores = display.lines_[0].get_data()[1]
     assert (negative_scores <= 0).all()
     assert_allclose(negative_scores, -positive_scores)
-    assert display.ax_.get_ylabel() == "Score"
+    assert display.ax_.get_ylabel() == "Negative score"
 
     negate_score = False
     display = CurveDisplay.from_estimator(

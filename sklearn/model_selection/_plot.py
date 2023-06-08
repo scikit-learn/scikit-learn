@@ -1,8 +1,39 @@
 import warnings
+
 import numpy as np
 
 from . import learning_curve, validation_curve
 from ..utils import check_matplotlib_support
+
+
+def _validate_score_name(score_name, scoring, negate_score):
+    if score_name is not None:
+        return score_name
+    elif isinstance(scoring, str):
+        if scoring.startswith("neg_") and negate_score:
+            return scoring[4:]
+        elif not scoring.startswith("neg_") and negate_score:
+            return "neg_" + scoring
+        else:
+            return scoring
+    elif callable(scoring):
+        return scoring.__name__
+    else:  # scoring is None
+        return "Negative score" if negate_score else "Score"
+
+
+def _validate_xscale(xscale, x_data):
+    if xscale == "auto":
+        x_data_diff = np.diff(np.abs(x_data))
+        ratio_max_min = x_data_diff.max() / x_data_diff.min()
+        if ratio_max_min > 5:
+            if not (np.sign(x_data_diff[0]) + np.sign(x_data_diff[-1])):
+                xscale = "symlog"
+            else:
+                xscale = "log"
+        else:
+            xscale = "linear"
+    return xscale
 
 
 class _BaseCurveDisplay:
@@ -123,18 +154,7 @@ class _BaseCurveDisplay:
             xscale = "log" if log_scale else "linear"
         else:
             xscale = "auto" if xscale is None else xscale
-
-        if xscale == "auto":
-            x_data_diff = np.diff(np.abs(x_data))
-            ratio_max_min = x_data_diff.max() / x_data_diff.min()
-            if ratio_max_min > 5:
-                if not (np.sign(x_data_diff[0]) + np.sign(x_data_diff[-1])):
-                    xscale = "symlog"
-                else:
-                    xscale = "log"
-            else:
-                xscale = "linear"
-
+        xscale = _validate_xscale(xscale, x_data)
         ax.set_xscale(xscale)
         ax.set_yscale(yscale)
         ax.set_ylabel(f"{score_name}")
@@ -526,7 +546,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
 
-        score_name = "Score" if score_name is None else score_name
+        score_name = _validate_score_name(score_name, scoring, negate_score)
 
         train_sizes, train_scores, test_scores = learning_curve(
             estimator,
@@ -914,7 +934,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
 
-        score_name = "Score" if score_name is None else score_name
+        score_name = _validate_score_name(score_name, scoring, negate_score)
 
         train_scores, test_scores = validation_curve(
             estimator,
