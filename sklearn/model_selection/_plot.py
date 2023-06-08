@@ -5,7 +5,145 @@ from . import learning_curve, validation_curve
 from ..utils import check_matplotlib_support
 
 
-class LearningCurveDisplay:
+class _BaseCurveDisplay:
+    def _plot_curve(
+        self,
+        x_data,
+        *,
+        ax=None,
+        negate_score=False,
+        score_name=None,
+        score_type="test",
+        log_scale="deprecated",
+        xscale=None,
+        yscale="linear",
+        std_display_style="fill_between",
+        line_kw=None,
+        fill_between_kw=None,
+        errorbar_kw=None,
+    ):
+        check_matplotlib_support(f"{self.__class__.__name__}.plot")
+
+        import matplotlib.pyplot as plt
+
+        if ax is None:
+            _, ax = plt.subplots()
+
+        if negate_score:
+            train_scores, test_scores = -self.train_scores, -self.test_scores
+        else:
+            train_scores, test_scores = self.train_scores, self.test_scores
+
+        if std_display_style not in ("errorbar", "fill_between", None):
+            raise ValueError(
+                f"Unknown std_display_style: {std_display_style}. Should be one of"
+                " 'errorbar', 'fill_between', or None."
+            )
+
+        if score_type not in ("test", "train", "both"):
+            raise ValueError(
+                f"Unknown score_type: {score_type}. Should be one of 'test', "
+                "'train', or 'both'."
+            )
+
+        if score_type == "train":
+            scores = {"Train": train_scores}
+        elif score_type == "test":
+            scores = {"Test": test_scores}
+        else:  # score_type == "both"
+            scores = {"Train": train_scores, "Test": test_scores}
+
+        if std_display_style in ("fill_between", None):
+            # plot the mean score
+            if line_kw is None:
+                line_kw = {}
+
+            self.lines_ = []
+            for line_label, score in scores.items():
+                self.lines_.append(
+                    *ax.plot(
+                        x_data,
+                        score.mean(axis=1),
+                        label=line_label,
+                        **line_kw,
+                    )
+                )
+            self.errorbar_ = None
+            self.fill_between_ = None  # overwritten below by fill_between
+
+        if std_display_style == "errorbar":
+            if errorbar_kw is None:
+                errorbar_kw = {}
+
+            self.errorbar_ = []
+            for line_label, score in scores.items():
+                self.errorbar_.append(
+                    ax.errorbar(
+                        x_data,
+                        score.mean(axis=1),
+                        score.std(axis=1),
+                        label=line_label,
+                        **errorbar_kw,
+                    )
+                )
+            self.lines_, self.fill_between_ = None, None
+        elif std_display_style == "fill_between":
+            if fill_between_kw is None:
+                fill_between_kw = {}
+            default_fill_between_kw = {"alpha": 0.5}
+            fill_between_kw = {**default_fill_between_kw, **fill_between_kw}
+
+            self.fill_between_ = []
+            for line_label, score in scores.items():
+                self.fill_between_.append(
+                    ax.fill_between(
+                        x_data,
+                        score.mean(axis=1) - score.std(axis=1),
+                        score.mean(axis=1) + score.std(axis=1),
+                        **fill_between_kw,
+                    )
+                )
+
+        score_name = self.score_name if score_name is None else score_name
+
+        ax.legend()
+
+        # TODO(1.5): to be removed
+        if log_scale != "deprecated":
+            if xscale is not None:
+                raise ValueError("Cannot set both `log_scale` and `xscale`.")
+            warnings.warn(
+                (
+                    "The `log_scale` parameter is deprecated as of version 1.3 "
+                    "and will be removed in 1.5. Use `xscale` and `yscale` "
+                    "instead."
+                ),
+                FutureWarning,
+            )
+            xscale = "log" if log_scale else "linear"
+        else:
+            xscale = "auto" if xscale is None else xscale
+
+        if xscale == "auto":
+            x_data_diff = np.diff(np.abs(x_data))
+            ratio_max_min = x_data_diff.max() / x_data_diff.min()
+            if ratio_max_min > 5:
+                if not (np.sign(x_data_diff[0]) + np.sign(x_data_diff[-1])):
+                    xscale = "symlog"
+                else:
+                    xscale = "log"
+            else:
+                xscale = "linear"
+
+        ax.set_xscale(xscale)
+        ax.set_yscale(yscale)
+        ax.set_ylabel(f"{score_name}")
+
+        self.ax_ = ax
+        self.figure_ = ax.figure
+
+
+class LearningCurveDisplay(_BaseCurveDisplay):
     """Learning Curve visualization.
 
     It is recommended to use
@@ -131,7 +269,7 @@ class LearningCurveDisplay:
                `log_scale` is deprecated in 1.3 and will be removed in 1.5.
                Use `xscale` and `yscale` instead.
 
-        xscale : {"auto", "linear", "log"}, default=None
+        xscale : {"auto", "linear", "log", "symlog"}, default=None
             The x-axis scale of the plot. `None` is equivalent to `"auto"` during
             the deprecation period of `log_scale`. The `"auto"` option will switch
             from linear to log scale when the `train_sizes` seems to be
@@ -141,7 +279,7 @@ class LearningCurveDisplay:
             .. versionchanged:: 1.5
                The default of `xscale` will change from `None` to `"auto"`.
 
-        yscale : {"linear", "log"}, default="linear"
+        yscale : {"linear", "log", "symlog"}, default="linear"
             The y-axis scale of the plot.
 
             .. versionadded:: 1.3
@@ -168,120 +306,21 @@ class LearningCurveDisplay:
         display : :class:`~sklearn.model_selection.LearningCurveDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support(f"{self.__class__.__name__}.plot")
-
-        import matplotlib.pyplot as plt
-
-        if ax is None:
-            _, ax = plt.subplots()
-
-        if negate_score:
-            train_scores, test_scores = -self.train_scores, -self.test_scores
-        else:
-            train_scores, test_scores = self.train_scores, self.test_scores
-
-        if std_display_style not in ("errorbar", "fill_between", None):
-            raise ValueError(
-                f"Unknown std_display_style: {std_display_style}. Should be one of"
-                " 'errorbar', 'fill_between', or None."
-            )
-
-        if score_type not in ("test", "train", "both"):
-            raise ValueError(
-                f"Unknown score_type: {score_type}. Should be one of 'test', "
-                "'train', or 'both'."
-            )
-
-        if score_type == "train":
-            scores = {"Train": train_scores}
-        elif score_type == "test":
-            scores = {"Test": test_scores}
-        else:  # score_type == "both"
-            scores = {"Train": train_scores, "Test": test_scores}
-
-        if std_display_style in ("fill_between", None):
-            # plot the mean score
-            if line_kw is None:
-                line_kw = {}
-
-            self.lines_ = []
-            for line_label, score in scores.items():
-                self.lines_.append(
-                    *ax.plot(
-                        self.train_sizes,
-                        score.mean(axis=1),
-                        label=line_label,
-                        **line_kw,
-                    )
-                )
-            self.errorbar_ = None
-            self.fill_between_ = None  # overwritten below by fill_between
-
-        if std_display_style == "errorbar":
-            if errorbar_kw is None:
-                errorbar_kw = {}
-
-            self.errorbar_ = []
-            for line_label, score in scores.items():
-                self.errorbar_.append(
-                    ax.errorbar(
-                        self.train_sizes,
-                        score.mean(axis=1),
-                        score.std(axis=1),
-                        label=line_label,
-                        **errorbar_kw,
-                    )
-                )
-            self.lines_, self.fill_between_ = None, None
-        elif std_display_style == "fill_between":
-            if fill_between_kw is None:
-                fill_between_kw = {}
-            default_fill_between_kw = {"alpha": 0.5}
-            fill_between_kw = {**default_fill_between_kw, **fill_between_kw}
-
-            self.fill_between_ = []
-            for line_label, score in scores.items():
-                self.fill_between_.append(
-                    ax.fill_between(
-                        self.train_sizes,
-                        score.mean(axis=1) - score.std(axis=1),
-                        score.mean(axis=1) + score.std(axis=1),
-                        **fill_between_kw,
-                    )
-                )
-
-        score_name = self.score_name if score_name is None else score_name
-
-        ax.legend()
-
-        # TODO(1.5): to be removed
-        if log_scale != "deprecated":
-            if xscale is not None:
-                raise ValueError("Cannot set both `log_scale` and `xscale`.")
-            warnings.warn(
-                (
-                    "The `log_scale` parameter is deprecated as of version 1.3 "
-                    "and will be removed in 1.5. Use `xscale` and `yscale` "
-                    "instead."
-                ),
-                FutureWarning,
-            )
-            xscale = "log" if log_scale else "linear"
-        else:
-            xscale = "auto" if xscale is None else xscale
-
-        if xscale == "auto":
-            train_sizes_diff = np.diff(self.train_sizes)
-            ratio_min_max = train_sizes_diff[-1] / train_sizes_diff[0]
-            xscale = "log" if ratio_min_max > 5 else "linear"
-
-        ax.set_xscale(xscale)
-        ax.set_yscale(yscale)
-        ax.set_xlabel("Number of samples in the training set")
-        ax.set_ylabel(f"{score_name}")
-
-        self.ax_ = ax
-        self.figure_ = ax.figure
+        self._plot_curve(
+            self.train_sizes,
+            ax=ax,
+            negate_score=negate_score,
+            score_name=score_name,
+            score_type=score_type,
+            log_scale=log_scale,
+            xscale=xscale,
+            yscale=yscale,
+            std_display_style=std_display_style,
+            line_kw=line_kw,
+            fill_between_kw=fill_between_kw,
+            errorbar_kw=errorbar_kw,
+        )
+        self.ax_.set_xlabel("Number of samples in the training set")
         return self
 
     @classmethod
@@ -436,7 +475,7 @@ class LearningCurveDisplay:
                `log_scale` is deprecated in 1.3 and will be removed in 1.5.
                Use `xscale` and `yscale` instead.
 
-        xscale : {"auto", "linear", "log"}, default=None
+        xscale : {"auto", "linear", "log", "symlog"}, default=None
             The x-axis scale of the plot. `None` is equivalent to `"auto"` during
             the deprecation period of `log_scale`. The `"auto"` option will switch
             from linear to log scale when the `train_sizes` seems to be
@@ -446,7 +485,7 @@ class LearningCurveDisplay:
             .. versionchanged:: 1.5
                The default of `xscale` will change from `None` to `"auto"`.
 
-        yscale : {"linear", "log"}, default="linear"
+        yscale : {"linear", "log", "symlog"}, default="linear"
             The y-axis scale of the plot.
 
             .. versionadded:: 1.3
@@ -528,7 +567,7 @@ class LearningCurveDisplay:
         )
 
 
-class ValidationCurveDisplay:
+class ValidationCurveDisplay(_BaseCurveDisplay):
     """Validation Curve visualization.
 
     It is recommended to use
@@ -655,12 +694,12 @@ class ValidationCurveDisplay:
             The type of score to plot. Can be one of `"test"`, `"train"`, or
             `"both"`.
 
-        xscale : {"auto", "linear", "log"}, default="auto"
+        xscale : {"auto", "linear", "log", "symlog"}, default="auto"
             The x-axis scale of the plot. The `"auto"` option will switch
             from linear to log scale when the `train_sizes` seems to be
             spaced evenly in log space.
 
-        yscale : {"linear", "log"}, default="linear"
+        yscale : {"linear", "log", "symlog"}, default="linear"
             The y-axis scale of the plot.
 
         std_display_style : {"errorbar", "fill_between"} or None, default="fill_between"
@@ -685,104 +724,21 @@ class ValidationCurveDisplay:
         display : :class:`~sklearn.model_selection.ValidationCurveDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support(f"{self.__class__.__name__}.plot")
-
-        import matplotlib.pyplot as plt
-
-        if ax is None:
-            _, ax = plt.subplots()
-
-        if negate_score:
-            train_scores, test_scores = -self.train_scores, -self.test_scores
-        else:
-            train_scores, test_scores = self.train_scores, self.test_scores
-
-        if std_display_style not in ("errorbar", "fill_between", None):
-            raise ValueError(
-                f"Unknown std_display_style: {std_display_style}. Should be one of"
-                " 'errorbar', 'fill_between', or None."
-            )
-
-        if score_type not in ("test", "train", "both"):
-            raise ValueError(
-                f"Unknown score_type: {score_type}. Should be one of 'test', "
-                "'train', or 'both'."
-            )
-
-        if score_type == "train":
-            scores = {"Train": train_scores}
-        elif score_type == "test":
-            scores = {"Test": test_scores}
-        else:  # score_type == "both"
-            scores = {"Train": train_scores, "Test": test_scores}
-
-        if std_display_style in ("fill_between", None):
-            # plot the mean score
-            if line_kw is None:
-                line_kw = {}
-
-            self.lines_ = []
-            for line_label, score in scores.items():
-                self.lines_.append(
-                    *ax.plot(
-                        self.param_range,
-                        score.mean(axis=1),
-                        label=line_label,
-                        **line_kw,
-                    )
-                )
-            self.errorbar_ = None
-            self.fill_between_ = None  # overwritten below by fill_between
-
-        if std_display_style == "errorbar":
-            if errorbar_kw is None:
-                errorbar_kw = {}
-
-            self.errorbar_ = []
-            for line_label, score in scores.items():
-                self.errorbar_.append(
-                    ax.errorbar(
-                        self.param_range,
-                        score.mean(axis=1),
-                        score.std(axis=1),
-                        label=line_label,
-                        **errorbar_kw,
-                    )
-                )
-            self.lines_, self.fill_between_ = None, None
-        elif std_display_style == "fill_between":
-            if fill_between_kw is None:
-                fill_between_kw = {}
-            default_fill_between_kw = {"alpha": 0.5}
-            fill_between_kw = {**default_fill_between_kw, **fill_between_kw}
-
-            self.fill_between_ = []
-            for line_label, score in scores.items():
-                self.fill_between_.append(
-                    ax.fill_between(
-                        self.param_range,
-                        score.mean(axis=1) - score.std(axis=1),
-                        score.mean(axis=1) + score.std(axis=1),
-                        **fill_between_kw,
-                    )
-                )
-
-        score_name = self.score_name if score_name is None else score_name
-
-        ax.legend()
-
-        if xscale == "auto":
-            param_range_diff = np.diff(self.param_range)
-            ratio_min_max = param_range_diff[-1] / param_range_diff[0]
-            xscale = "log" if ratio_min_max > 5 else "linear"
-
-        ax.set_xscale(xscale)
-        ax.set_yscale(yscale)
-        ax.set_xlabel(f"{self.param_name}")
-        ax.set_ylabel(f"{score_name}")
-
-        self.ax_ = ax
-        self.figure_ = ax.figure
+        self._plot_curve(
+            self.param_range,
+            ax=ax,
+            negate_score=negate_score,
+            score_name=score_name,
+            score_type=score_type,
+            log_scale="deprecated",
+            xscale=xscale,
+            yscale=yscale,
+            std_display_style=std_display_style,
+            line_kw=line_kw,
+            fill_between_kw=fill_between_kw,
+            errorbar_kw=errorbar_kw,
+        )
+        self.ax_.set_xlabel(f"{self.param_name}")
         return self
 
     @classmethod
@@ -909,12 +865,12 @@ class ValidationCurveDisplay:
             The type of score to plot. Can be one of `"test"`, `"train"`, or
             `"both"`.
 
-        xscale : {"auto", "linear", "log"}, default="auto"
+        xscale : {"auto", "linear", "log", "symlog"}, default="auto"
             The x-axis scale of the plot. The `"auto"` option will switch
-            from linear to log scale when the `train_sizes` seems to be
+            from linear to log scale when the `param_range` seems to be
             spaced evenly in log space.
 
-        yscale : {"linear", "log"}, default="linear"
+        yscale : {"linear", "log", "symlog"}, default="linear"
             The y-axis scale of the plot.
 
         std_display_style : {"errorbar", "fill_between"} or None, default="fill_between"
