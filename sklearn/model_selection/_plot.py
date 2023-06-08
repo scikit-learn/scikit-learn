@@ -932,7 +932,7 @@ class ValidationCurveDisplay:
         >>> param_name, param_range = "C", np.logspace(-8, 3, 10)
         >>> ValidationCurveDisplay.from_estimator(
         ...     logistic_regression, X, y, param_name=param_name,
-        ...     param_range=param_range, xscale="log
+        ...     param_range=param_range, xscale="log"
         ... )
         <...>
         >>> plt.show()
