@@ -79,3 +79,21 @@ y = [0, 0, 1, 1]
 
 tree = DecisionTreeClassifier(random_state=0).fit(X, y)
 tree.predict(X)
+
+# %%
+# Metadata Routing
+# ----------------
+# We are in the process of introducing a new way to route metadata such as
+# ``sample_weight`` throughout the codebase, which would affect how
+# meta-estimators such as :class:`pipeline.Pipeline` and
+# :class:`model_selection.GridSearchCV` route metadata. While the
+# infrastructure for this feature is already included in this release, the work
+# is ongoing and not all meta-estimators support this new feature. You can read
+# more about this feature in the :ref:`Metadata Routing User Guide
+# <metadata_routing>`. Note that this feature is still under development and
+# not implemented for most meta-estimators.
+#
+# Third party developers can already start incorporating this into their
+# meta-estimators. For more details, see
+# :ref:`metadata routing developer guide
+# <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
