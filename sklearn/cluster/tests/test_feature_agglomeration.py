@@ -2,9 +2,11 @@
 Tests for sklearn.cluster._feature_agglomeration
 """
 # Authors: Sergul Aydore 2017
+import warnings
 import numpy as np
 
 from numpy.testing import assert_array_equal
+import pytest
 from sklearn.cluster import FeatureAgglomeration
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.datasets import make_blobs
@@ -53,3 +55,33 @@ def test_feature_agglomeration_feature_names_out():
     assert_array_equal(
         [f"featureagglomeration{i}" for i in range(n_clusters)], names_out
     )
+
+
+def test_inverse_transform_Xred_deprecation():
+    X = np.array([0, 0, 1]).reshape(1, 3)  # (n_samples, n_features)
+
+    est = FeatureAgglomeration(n_clusters=1, pooling_func=np.mean)
+    est.fit(X)
+    Xt = est.transform(X)
+
+    with pytest.raises(TypeError, match="Missing required positional argument"):
+        est.inverse_transform()
+
+    with pytest.raises(ValueError, match="Please provide only"):
+        est.inverse_transform(Xt=Xt, Xred=Xt)
+
+    with warnings.catch_warnings(record=True) as w:
+        est.inverse_transform(Xt)
+
+        assert len(w) == 0
+
+    # This try / catch is to make sure passing -Werror::FutureWarning doesn't
+    # make this test to raise / fail.
+    try:
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("ignore")
+            est.inverse_transform(Xred=Xt)
+
+            assert len(w) == 1
+    except Exception:
+        pass
