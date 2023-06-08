@@ -1199,7 +1199,7 @@ class _MetadataRequester:
         # ignore the first parameter of the method, which is usually "self"
         params = list(inspect.signature(getattr(cls, method)).parameters.items())[1:]
         for pname, param in params:
-            if pname in {"X", "y", "Y", "Xt", "yt"}:
+            if pname in {"X", "y", "Y"}:
                 continue
             if param.kind in {param.VAR_POSITIONAL, param.VAR_KEYWORD}:
                 continue
