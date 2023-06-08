@@ -2412,7 +2412,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             self.n_steps_ = i + 1
             self.n_iter_ = np.ceil(self.n_steps_ / n_steps_per_iter)
         else:
-            # TODO remove this branch in 1.3
+            # TODO remove this branch in 1.4
             n_iter = 1000 if self.n_iter == "deprecated" else self.n_iter
 
             batches = gen_batches(n_samples, self._batch_size)
