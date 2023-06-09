@@ -538,7 +538,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
         >>> from sklearn.tree import DecisionTreeClassifier
         >>> X, y = load_iris(return_X_y=True)
         >>> tree = DecisionTreeClassifier(random_state=0)
-        >>> LearningCurveDisplay.from_estimator(tree, X, y)
+        >>> LearningCurveDisplay.from_estimator(tree, X, y, xscale="auto")
         <...>
         >>> plt.show()
         """
