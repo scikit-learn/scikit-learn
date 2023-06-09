@@ -57,6 +57,7 @@ def test_feature_agglomeration_feature_names_out():
     )
 
 
+# TODO(1.5): remove this test
 def test_inverse_transform_Xred_deprecation():
     X = np.array([0, 0, 1]).reshape(1, 3)  # (n_samples, n_features)
 
@@ -70,18 +71,9 @@ def test_inverse_transform_Xred_deprecation():
     with pytest.raises(ValueError, match="Please provide only"):
         est.inverse_transform(Xt=Xt, Xred=Xt)
 
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("error")
         est.inverse_transform(Xt)
 
-        assert len(w) == 0
-
-    # This try / catch is to make sure passing -Werror::FutureWarning doesn't
-    # make this test to raise / fail.
-    try:
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("ignore")
-            est.inverse_transform(Xred=Xt)
-
-            assert len(w) == 1
-    except Exception:
-        pass
+    with pytest.warns(FutureWarning, match="Input argument `Xred` was renamed to `Xt`"):
+        est.inverse_transform(Xred=Xt)

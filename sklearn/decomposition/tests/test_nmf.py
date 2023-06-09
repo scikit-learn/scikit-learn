@@ -909,6 +909,7 @@ def test_minibatch_nmf_verbose():
         sys.stdout = old_stdout
 
 
+# TODO(1.5): remove this test
 def test_NMF_inverse_transform_W_deprecation():
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
@@ -926,18 +927,9 @@ def test_NMF_inverse_transform_W_deprecation():
     with pytest.raises(ValueError, match="Please provide only"):
         est.inverse_transform(Xt=Xt, W=Xt)
 
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("error")
         est.inverse_transform(Xt)
 
-        assert len(w) == 0
-
-    # This try / catch is to make sure passing -Werror::FutureWarning doesn't
-    # make this test to raise / fail.
-    try:
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("ignore")
-            est.inverse_transform(W=Xt)
-
-            assert len(w) == 1
-    except Exception:
-        pass
+    with pytest.warns(FutureWarning, match="Input argument `W` was renamed to `Xt`"):
+        est.inverse_transform(W=Xt)

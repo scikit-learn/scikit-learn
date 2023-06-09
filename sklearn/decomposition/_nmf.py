@@ -1279,7 +1279,10 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
         if W is not None:
             warnings.warn(
-                "Input argument `W` renamed to `Xt` and will be removed in v1.5.",
+                (
+                    "Input argument `W` was renamed to `Xt` in v1.3 and will be removed"
+                    " in v1.5."
+                ),
                 FutureWarning,
             )
             Xt = W
