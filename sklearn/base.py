@@ -922,6 +922,7 @@ class OneToOneFeatureMixin:
     and output features, such as :class:`~preprocessing.StandardScaler`.
     """
 
+
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
