@@ -246,10 +246,10 @@ cdef dict _compute_stability(
         cnp.intp_t parent, cluster_size, result_index, idx
         cnp.float64_t lambda_val
         CONDENSED_t condensed_node
-        cnp.float64_t[:, :] result_pre_dict
         cnp.intp_t largest_child = condensed_tree['child'].max()
         cnp.intp_t smallest_cluster = np.min(parents)
         cnp.intp_t num_clusters = np.max(parents) - smallest_cluster + 1
+        dict stability_dict = {}
 
     largest_child = max(largest_child, smallest_cluster)
     births = np.full(largest_child + 1, np.nan, dtype=np.float64)
@@ -270,14 +270,10 @@ cdef dict _compute_stability(
         result_index = parent - smallest_cluster
         result[result_index] += (lambda_val - births[parent]) * cluster_size
 
-    result_pre_dict = np.vstack(
-        (
-            np.arange(smallest_cluster, np.max(parents) + 1),
-            result
-        )
-    ).T
+    for idx in range(num_clusters):
+        stability_dict[idx + smallest_cluster] = result[idx]
 
-    return dict(result_pre_dict)
+    return stability_dict
 
 
 cdef list bfs_from_cluster_tree(
