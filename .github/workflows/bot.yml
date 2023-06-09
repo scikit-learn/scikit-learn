@@ -33,13 +33,8 @@ jobs:
       - name: Comment on pull request
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const { data: pullRequest } = await github.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.workflow_run.head_pull_request.number,
-            });
             const failedJobs = '${{ needs.lint.outputs }}';
             let message = `Linter is failing on your pull request. Please enable pre-commit hooks (info under this link: ...) \n\n`;
             if (failedJobs.includes('isort')) {
@@ -48,9 +43,9 @@ jobs:
             if (failedJobs.includes('black')) {
               message += `For the issue with black, you can run:\n\n\`black .\`\n\nAnd then commit the changes:\n\n\`git commit -am "ran black"\`\n\`git push\`\n`;
             }
-            await github.issues.createComment({
+            github.issues.createComment({
+              issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: pullRequest.number,
               body: message,
-            });
+            })
