@@ -8,9 +8,31 @@ on:
       - completed
 
 jobs:
-  comment:
+  lint:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.head_branch == github.head_ref }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          source build_tools/shared.sh
+          # Include pytest compatibility with mypy
+          pip install pytest flake8 $(get_dep mypy min) $(get_dep black min) cython-lint
+
+      - name: Run linting
+        run: ./build_tools/linting.sh
+
+  comment:
+    needs: [lint]
+    if: ${{ needs.lint.result == 'failure' }}
+    runs-on: ubuntu-latest
     steps:
       - name: Get workflow run status
         id: status
