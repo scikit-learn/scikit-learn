@@ -1,11 +1,7 @@
 name: linter-bot-comment
 
 on:
-  workflow_run:
-    workflows:
-      - Linter
-    types:
-      - completed
+  - pull_request
 
 jobs:
   lint:
