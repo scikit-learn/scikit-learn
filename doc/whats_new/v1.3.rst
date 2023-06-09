@@ -277,7 +277,7 @@ Changelog
 - |Fix| Following the ARFF specs, only the marker `"?"` is now considered as a missing
   values when opening ARFF files fetched using :func:`datasets.fetch_openml` when using
   the pandas parser. The parameter `read_csv_kwargs` allows to overwrite this behaviour.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`26551` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| Allows to overwrite the parameters used to open the ARFF file using
   the parameter `read_csv_kwargs` in :func:`datasets.fetch_openml` when using the
