@@ -205,7 +205,6 @@ common_params = {
     "score_name": "Mean Squared Error",
     "std_display_style": None,
     "ax": ax,
-    "xscale": "auto",
 }
 
 LearningCurveDisplay.from_estimator(svr, **common_params)

@@ -52,7 +52,6 @@ common_params = {
     "line_kw": {"marker": "o"},
     "std_display_style": "fill_between",
     "score_name": "Accuracy",
-    "xscale": "auto",
 }
 
 for ax_idx, estimator in enumerate([naive_bayes, svc]):
