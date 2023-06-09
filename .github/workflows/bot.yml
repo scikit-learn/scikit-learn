@@ -30,30 +30,8 @@ jobs:
     if: ${{ always() && needs.lint.result == 'failure' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Get workflow run status
-        id: status
-        uses: actions/github-script@v5
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const { data: runs } = await github.actions.listWorkflowRunsForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: ${{ github.event.workflow.id }},
-              branch: ${{ github.head_ref }},
-              event: 'pull_request'
-            });
-            const latestRun = runs.workflow_runs[0];
-            const { data: jobs } = await github.actions.listJobsForWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: latestRun.id,
-            });
-            const failedJobs = jobs.jobs.filter(job => job.status === 'completed' && job.conclusion === 'failure');
-            return failedJobs.map(job => job.name);
-
       - name: Comment on pull request
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -62,7 +40,7 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.payload.workflow_run.head_pull_request.number,
             });
-            const failedJobs = '${{ steps.status.outputs }}';
+            const failedJobs = '${{ needs.lint.outputs }}';
             let message = `Linter is failing on your pull request. Please enable pre-commit hooks (info under this link: ...) \n\n`;
             if (failedJobs.includes('isort')) {
               message += `For the issue with isort, you can run:\n\n\`isort .\`\n\nAnd then commit the changes:\n\n\`git commit -am "ran isort"\`\n\`git push\`\n`;
