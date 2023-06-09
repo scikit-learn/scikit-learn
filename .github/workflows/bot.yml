@@ -43,7 +43,7 @@ jobs:
             if (failedJobs.includes('black')) {
               message += `For the issue with black, you can run:\n\n\`black .\`\n\nAnd then commit the changes:\n\n\`git commit -am "ran black"\`\n\`git push\`\n`;
             }
-            github.issues.createComment({
+            github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
