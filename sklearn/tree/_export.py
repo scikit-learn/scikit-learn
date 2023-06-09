@@ -253,12 +253,6 @@ class _BaseTreeExporter:
                 alpha = (sorted_values[0] - sorted_values[1]) / (1 - sorted_values[1])
         else:
             # Regression tree or multi-output
-            if isinstance(value, Iterable):
-                # regression tree
-                # When `value` was extracted, it could correspond to a classification
-                # tree with a single class or a regression tree. Here, there is no
-                # ambuiguity anymore and we can extract the value to be a single scalar.
-                value = value[0]
             color = list(self.colors["rgb"][0])
             alpha = (value - self.colors["bounds"][0]) / (
                 self.colors["bounds"][1] - self.colors["bounds"][0]
@@ -282,8 +276,12 @@ class _BaseTreeExporter:
         if tree.n_outputs == 1:
             node_val = tree.value[node_id][0, :] / tree.weighted_n_node_samples[node_id]
             if tree.n_classes[0] == 1:
-                # Regression
+                # Regression or degraded classification with single class
                 node_val = tree.value[node_id][0, :]
+                if isinstance(node_val, Iterable) and self.colors["bounds"] is not None:
+                    # Only unpack the float only for the regression tree case.
+                    # Classification tree requires an Iterable in `get_color`.
+                    node_val = node_val.item()
         else:
             # If multi-output color node by impurity
             node_val = -tree.impurity[node_id]
