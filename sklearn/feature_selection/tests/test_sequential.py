@@ -18,11 +18,10 @@ def test_bad_n_features_to_select():
     n_features = 5
     X, y = make_regression(n_features=n_features)
     sfs = SequentialFeatureSelector(LinearRegression(), n_features_to_select=n_features)
-    with pytest.raises(ValueError, match="n_features_to_select must be either"):
+    with pytest.raises(ValueError, match="n_features_to_select must be < n_features"):
         sfs.fit(X, y)
 
 
-@pytest.mark.filterwarnings("ignore:Leaving `n_features_to_select` to ")
 @pytest.mark.parametrize("direction", ("forward", "backward"))
 @pytest.mark.parametrize("n_features_to_select", (1, 5, 9, "auto"))
 def test_n_features_to_select(direction, n_features_to_select):
@@ -38,7 +37,7 @@ def test_n_features_to_select(direction, n_features_to_select):
     )
     sfs.fit(X, y)
 
-    if n_features_to_select in ("auto", None):
+    if n_features_to_select == "auto":
         n_features_to_select = n_features // 2
 
     assert sfs.get_support(indices=True).shape[0] == n_features_to_select
@@ -134,7 +133,6 @@ def test_n_features_to_select_stopping_criterion(direction):
         assert (removed_cv_score - sfs_cv_score) <= tol
 
 
-@pytest.mark.filterwarnings("ignore:Leaving `n_features_to_select` to ")
 @pytest.mark.parametrize("direction", ("forward", "backward"))
 @pytest.mark.parametrize(
     "n_features_to_select, expected",
@@ -186,7 +184,6 @@ def test_sanity(seed, direction, n_features_to_select, expected_selected_feature
     assert_array_equal(sfs.get_support(indices=True), expected_selected_features)
 
 
-@pytest.mark.filterwarnings("ignore:Leaving `n_features_to_select` to ")
 def test_sparse_support():
     # Make sure sparse data is supported
 
@@ -240,17 +237,6 @@ def test_pipeline_support():
     pipe = make_pipeline(StandardScaler(), sfs)
     pipe.fit(X, y)
     pipe.transform(X)
-
-
-# FIXME : to be removed in 1.3
-def test_raise_deprecation_warning():
-    """Check that we raise a FutureWarning with `n_features_to_select`."""
-    n_samples, n_features = 50, 3
-    X, y = make_regression(n_samples, n_features, random_state=0)
-
-    warn_msg = "Leaving `n_features_to_select` to None is deprecated"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        SequentialFeatureSelector(LinearRegression()).fit(X, y)
 
 
 @pytest.mark.parametrize("n_features_to_select", (2, 3))

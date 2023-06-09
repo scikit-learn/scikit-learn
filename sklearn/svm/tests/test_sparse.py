@@ -230,8 +230,8 @@ def test_error():
 
 def test_linearsvc():
     # Similar to test_SVC
-    clf = svm.LinearSVC(random_state=0).fit(X, Y)
-    sp_clf = svm.LinearSVC(random_state=0).fit(X_sp, Y)
+    clf = svm.LinearSVC(dual="auto", random_state=0).fit(X, Y)
+    sp_clf = svm.LinearSVC(dual="auto", random_state=0).fit(X_sp, Y)
 
     assert sp_clf.fit_intercept
 
@@ -250,8 +250,10 @@ def test_linearsvc():
 def test_linearsvc_iris():
     # Test the sparse LinearSVC with the iris dataset
 
-    sp_clf = svm.LinearSVC(random_state=0).fit(iris.data, iris.target)
-    clf = svm.LinearSVC(random_state=0).fit(iris.data.toarray(), iris.target)
+    sp_clf = svm.LinearSVC(dual="auto", random_state=0).fit(iris.data, iris.target)
+    clf = svm.LinearSVC(dual="auto", random_state=0).fit(
+        iris.data.toarray(), iris.target
+    )
 
     assert clf.fit_intercept == sp_clf.fit_intercept
 
@@ -282,7 +284,7 @@ def test_weight():
     X_ = sparse.csr_matrix(X_)
     for clf in (
         linear_model.LogisticRegression(),
-        svm.LinearSVC(random_state=0),
+        svm.LinearSVC(dual="auto", random_state=0),
         svm.SVC(),
     ):
         clf.set_params(class_weight={0: 5})

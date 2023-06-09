@@ -293,13 +293,6 @@ def test_graphviz_errors():
     with pytest.raises(IndexError):
         export_graphviz(clf, out, class_names=[])
 
-    # Check precision error
-    out = StringIO()
-    with pytest.raises(ValueError, match="should be greater or equal"):
-        export_graphviz(clf, out, precision=-1)
-    with pytest.raises(ValueError, match="should be an integer"):
-        export_graphviz(clf, out, precision="1")
-
 
 def test_friedman_mse_in_graphviz():
     clf = DecisionTreeRegressor(criterion="friedman_mse", random_state=0)

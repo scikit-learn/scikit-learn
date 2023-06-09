@@ -302,8 +302,6 @@ def callable_rbf_kernel(x, y, **kwds):
     return K[0, 0]
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "func, metric, kwds",
     [

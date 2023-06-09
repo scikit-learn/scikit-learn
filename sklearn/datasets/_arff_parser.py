@@ -199,6 +199,11 @@ def _liac_arff_parser(
             dfs.append(
                 pd.DataFrame(data, columns=columns_names, copy=False)[columns_to_keep]
             )
+        # dfs[0] contains only one row, which may not have enough data to infer to
+        # column's dtype. Here we use `dfs[1]` to configure the dtype in dfs[0]
+        if len(dfs) >= 2:
+            dfs[0] = dfs[0].astype(dfs[1].dtypes)
+
         frame = pd.concat(dfs, ignore_index=True)
         del dfs, first_df
 
