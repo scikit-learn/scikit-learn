@@ -206,8 +206,8 @@ Changelog
   is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 
-= |API| ``Xred`` argument in :func:`cluster.FeatureAgglomeration.inverse_transform`is
-  renamed to ``Xt`` and will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
+- |API| The `Xred` argument in :func:`cluster.FeatureAgglomeration.inverse_transform`
+  is renamed to `Xt` and will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
 
 - |Enhancement| The `sample_weight` parameter now will be used in centroids
   initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
@@ -295,8 +295,8 @@ Changelog
   avoiding duplicate validations.
   :pr:`25490` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-= |API| ``W`` argument in :func:`decomposition.NMF.inverse_transform` and
-  :class:`decomposition.MiniBatchNMF.inverse_transform` is renamed to ``Xt`` and
+- |API| The `W` argument in :func:`decomposition.NMF.inverse_transform` and
+  :class:`decomposition.MiniBatchNMF.inverse_transform` is renamed to `Xt` and
   will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
 
 - |Fix| Treat more consistently small values in the `W` and `H` matrices during the
