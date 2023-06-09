@@ -27,7 +27,7 @@ jobs:
 
   comment:
     needs: [lint]
-    if: ${{ needs.lint.result == 'failure' }}
+    if: ${{ always() && needs.lint.result == 'failure' }}
     runs-on: ubuntu-latest
     steps:
       - name: Get workflow run status
