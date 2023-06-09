@@ -225,7 +225,6 @@ class LearningCurveDisplay(_BaseCurveDisplay):
         score_name=None,
         score_type="test",
         log_scale="deprecated",
-        yscale="linear",
         std_display_style="fill_between",
         line_kw=None,
         fill_between_kw=None,
