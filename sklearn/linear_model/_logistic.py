@@ -508,7 +508,7 @@ def _logistic_regression_path(
                 w0 = coef_.ravel()
             # n_iter_i is an array for each class. However, `target` is always encoded
             # in {-1, 1}, so we only take the first element of n_iter_i.
-            n_iter_i = n_iter_i[0]
+            n_iter_i = n_iter_i.item()
 
         elif solver in ["sag", "saga"]:
             if multi_class == "multinomial":

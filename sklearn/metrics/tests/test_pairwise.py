@@ -299,7 +299,7 @@ def callable_rbf_kernel(x, y, **kwds):
     # Callable version of pairwise.rbf_kernel.
     K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
     # unpack the output since this is a scalar packed in a 0-dim array
-    return K[0, 0]
+    return K.item()
 
 
 @pytest.mark.parametrize(
