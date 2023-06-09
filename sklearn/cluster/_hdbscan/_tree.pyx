@@ -36,6 +36,9 @@ import cython
 
 import numpy as np
 
+cdef extern from "numpy/arrayobject.h":
+    intp_t * PyArray_SHAPE(cnp.PyArrayObject *)
+
 cdef cnp.float64_t INFTY = np.inf
 cdef cnp.intp_t NOISE = -1
 
@@ -240,7 +243,7 @@ cdef dict _compute_stability(
         cnp.float64_t[::1] result, births
         cnp.intp_t[:] parents = condensed_tree['parent']
 
-        cnp.intp_t parent, cluster_size, result_index
+        cnp.intp_t parent, cluster_size, result_index, idx
         cnp.float64_t lambda_val
         CONDENSED_t condensed_node
         cnp.float64_t[:, :] result_pre_dict
@@ -251,14 +254,15 @@ cdef dict _compute_stability(
     largest_child = max(largest_child, smallest_cluster)
     births = np.full(largest_child + 1, np.nan, dtype=np.float64)
 
-    births = np.full(largest_child + 1, np.nan, dtype=np.float64)
-    for condensed_node in condensed_tree:
+    for idx in range(PyArray_SHAPE(<cnp.PyArrayObject*> condensed_tree)[0]):
+        condensed_node = condensed_tree[idx]
         births[condensed_node.child] = condensed_node.value
 
     births[smallest_cluster] = 0.0
 
     result = np.zeros(num_clusters, dtype=np.float64)
-    for condensed_node in condensed_tree:
+    for idx in range(PyArray_SHAPE(<cnp.PyArrayObject*> condensed_tree)[0]):
+        condensed_node = condensed_tree[idx]
         parent = condensed_node.parent
         lambda_val = condensed_node.value
         cluster_size = condensed_node.cluster_size
