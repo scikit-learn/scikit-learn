@@ -145,6 +145,19 @@ Changes impacting all modules
   :pr:`26082` by :user:`Jérémie du Boisberranger <jeremiedbb>` and
   :user:`Olivier Grisel <ogrisel>`.
 
+Experimental / Under Development
+--------------------------------
+
+- |MajorFeature| :ref:`Metadata routing <metadata_routing>`'s related base
+  methods are included in this release. This feature is only available via the
+  `enable_metadata_routing` feature flag which can be enabled using
+  :func:`sklearn.set_config` and :func:`sklearn.config_context`. For now this
+  feature is mostly useful for third party developers to prepare their code
+  base for metadata routing, and we strongly recommend that they also hide it
+  behind the same feature flag, rather than having it enabled by default.
+  :pr:`24027` by `Adrin Jalali`_, :user:`Benjamin Bossan <BenjaminBossan>`, and
+  :user:`Omar Salman <OmarManzoor>`.
+
 Changelog
 ---------
 
@@ -215,6 +228,16 @@ Changelog
 
   :pr:`26385` by :user:`Meekail Zain <micky774>`
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| `compose.ColumnTransformer` raises an informative error when the individual transformers of `ColumnTransformer`
+  output pandas dataframes with indexes that are not consistent with each other and the output is configured
+  to be pandas. :pr:`26286` by `Thomas Fan`_.
+
+- |Fix| :class:`compose.ColumnTransformer` correctly sets the output of the
+  remainder when `set_output` is called. :pr:`26323` by `Thomas Fan`_.
+
 :mod:`sklearn.covariance`
 .........................
 
@@ -250,6 +273,16 @@ Changelog
 
 - |Fix| :func:`datasets.fetch_openml` returns improved data types when
   `as_frame=True` and `parser="liac-arff"`. :pr:`26386` by `Thomas Fan`_.
+
+- |Fix| Following the ARFF specs, only the marker `"?"` is now considered as a missing
+  values when opening ARFF files fetched using :func:`datasets.fetch_openml` when using
+  the pandas parser. The parameter `read_csv_kwargs` allows to overwrite this behaviour.
+  :pr:`26551` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| Allows to overwrite the parameters used to open the ARFF file using
+  the parameter `read_csv_kwargs` in :func:`datasets.fetch_openml` when using the
+  pandas parser.
+  :pr:`26433` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -362,6 +395,12 @@ Changelog
 
 :mod:`sklearn.inspection`
 .........................
+
+- |Enhancement| Added support for `sample_weight` in
+  :func:`inspection.partial_dependence`. This allows for weighted averaging when
+  aggregating for each value of the grid we are making the inspection on. The
+  option is only available when `method` is set to `brute`. :pr:`25209`
+  by :user:`Carlo Lemos <vitaliset>`.
 
 - |API| :func:`inspection.partial_dependence` returns a :class:`utils.Bunch` with
   new key: `grid_values`. The `values` key is deprecated in favor of `grid_values`
@@ -553,6 +592,11 @@ Changelog
   categorical encoding based on target mean conditioned on the value of the
   category. :pr:`25334` by `Thomas Fan`_.
 
+- |Enhancement| A new parameter `sparse_output` was added to
+  :class:`SplineTransformer`, available as of SciPy 1.8. If `sparse_output=True`,
+  :class:`SplineTransformer` returns a sparse CSR matrix.
+  :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Enhancement| Adds a `feature_name_combiner` parameter to
   :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
   feature names to be returned by :meth:`get_feature_names_out`.
@@ -645,6 +689,13 @@ Changelog
 - |Enhancement| :meth:`LabelSpreading.fit` and :meth:`LabelPropagation.fit` now
   accepts sparse metrics.
   :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
+
+Miscellaneous
+.............
+
+- |Enhancement| Replace obsolete exceptions EnvironmentError, IOError and
+  WindowsError.
+  :pr:`26466` by :user:`Dimitri Papadopoulos ORfanos <DimitriPapadopoulos>`.
 
 Code and Documentation Contributors
 -----------------------------------

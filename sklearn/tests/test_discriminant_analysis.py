@@ -187,7 +187,7 @@ def test_lda_predict_proba(solver, n_classes):
     sample = np.array([[-22, 22]])
 
     def discriminant_func(sample, coef, intercept, clazz):
-        return np.exp(intercept[clazz] + np.dot(sample, coef[clazz]))
+        return np.exp(intercept[clazz] + np.dot(sample, coef[clazz])).item()
 
     prob = np.array(
         [
