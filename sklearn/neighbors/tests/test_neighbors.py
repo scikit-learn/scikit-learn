@@ -2120,8 +2120,6 @@ def test_auto_algorithm(X, metric, metric_params, expected_algo):
     assert model._fit_method == expected_algo
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
