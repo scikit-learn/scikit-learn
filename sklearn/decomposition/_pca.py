@@ -17,10 +17,10 @@ import numpy as np
 from scipy import linalg
 from scipy.special import gammaln
 from scipy.sparse import issparse
-from scipy.sparse.linalg import svds
+from scipy.sparse.linalg import svds, LinearOperator
 
 from ._base import _BasePCA
-from ..utils import check_random_state
+from ..utils import check_random_state, sparsefuncs
 from ..utils._arpack import _init_arpack_v0
 from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
@@ -114,6 +114,36 @@ def _infer_dimension(spectrum, n_samples):
     for rank in range(1, spectrum.shape[0]):
         ll[rank] = _assess_dimension(spectrum, rank, n_samples)
     return ll.argmax()
+
+
+def _center_implicitly(X, row_mean):
+    """Create an implicitly centered LinearOperator out of a matrix."""
+
+    assert X.ndim == 2
+    m, n = X.shape
+    r = row_mean.reshape(1, -1)
+    ones = np.ones((m, 1), dtype=X.dtype)
+
+    def matvec(y):
+        return X @ y - r @ y
+
+    def rmatvec(y):
+        return X.T @ y - r.T @ ones.T @ y
+
+    def matmat(Y):
+        return X @ Y - r @ Y
+
+    def rmatmat(Y):
+        return X.T @ Y - r.T @ ones.T @ Y
+
+    return LinearOperator(
+        shape=X.shape,
+        dtype=X.dtype,
+        matvec=matvec,
+        rmatvec=rmatvec,
+        matmat=matmat,
+        rmatmat=rmatmat,
+    )
 
 
 class PCA(_BasePCA):
@@ -370,7 +400,7 @@ class PCA(_BasePCA):
         ],
         "copy": ["boolean"],
         "whiten": ["boolean"],
-        "svd_solver": [StrOptions({"auto", "full", "arpack", "randomized"})],
+        "svd_solver": [StrOptions({"auto", "full", "arpack", "randomized", "lobpcg"})],
         "tol": [Interval(Real, 0, None, closed="left")],
         "iterated_power": [
             StrOptions({"auto"}),
@@ -475,16 +505,12 @@ class PCA(_BasePCA):
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
 
-        # Raise an error for sparse input.
-        # This is more informative than the generic one raised by check_array.
-        if issparse(X):
-            raise TypeError(
-                "PCA does not support sparse input. See "
-                "TruncatedSVD for a possible alternative."
-            )
-
         X = self._validate_data(
-            X, dtype=[np.float64, np.float32], ensure_2d=True, copy=self.copy
+            X,
+            dtype=[np.float64, np.float32],
+            ensure_2d=True,
+            copy=self.copy,
+            accept_sparse=["csr", "csc"],
         )
 
         # Handle n_components==None
@@ -511,7 +537,7 @@ class PCA(_BasePCA):
         # Call different fits for either full or truncated SVD
         if self._fit_svd_solver == "full":
             return self._fit_full(X, n_components)
-        elif self._fit_svd_solver in ["arpack", "randomized"]:
+        elif self._fit_svd_solver in ["arpack", "randomized", "lobpcg"]:
             return self._fit_truncated(X, n_components, self._fit_svd_solver)
 
     def _fit_full(self, X, n_components):
@@ -602,18 +628,33 @@ class PCA(_BasePCA):
         random_state = check_random_state(self.random_state)
 
         # Center data
-        self.mean_ = np.mean(X, axis=0)
-        X -= self.mean_
+        have_total_var = False
+        if issparse(X):
+            # emulate behavior of a centered X without constructing it explicitly
+            row_mean, row_variance = sparsefuncs.mean_variance_axis(X, axis=0)
+            self.mean_ = row_mean
+            total_var = row_variance.sum() * n_samples / (n_samples - 1)  # ddof=1
+            have_total_var = True
+            X = _center_implicitly(X, row_mean)
+        else:
+            self.mean_ = np.mean(X, axis=0)
+            X -= self.mean_
 
         if svd_solver == "arpack":
             v0 = _init_arpack_v0(min(X.shape), random_state)
-            U, S, Vt = svds(X, k=n_components, tol=self.tol, v0=v0)
+            U, S, Vt = svds(X, k=n_components, tol=self.tol, v0=v0, solver=svd_solver)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             S = S[::-1]
             # flip eigenvectors' sign to enforce deterministic output
             U, Vt = svd_flip(U[:, ::-1], Vt[::-1])
-
+        elif svd_solver == "lobpcg":
+            U, S, Vt = svds(X, k=n_components, tol=self.tol, solver=svd_solver)
+            # svds doesn't abide by scipy.linalg.svd/randomized_svd
+            # conventions, so reverse its outputs.
+            S = S[::-1]
+            # flip eigenvectors' sign to enforce deterministic output
+            U, Vt = svd_flip(U[:, ::-1], Vt[::-1])
         elif svd_solver == "randomized":
             # sign flipping is done inside
             U, S, Vt = randomized_svd(
@@ -633,12 +674,12 @@ class PCA(_BasePCA):
         # Get variance explained by singular values
         self.explained_variance_ = (S**2) / (n_samples - 1)
 
-        # Workaround in-place variance calculation since at the time numpy
-        # did not have a way to calculate variance in-place.
-        N = X.shape[0] - 1
-        np.square(X, out=X)
-        np.sum(X, axis=0, out=X[0])
-        total_var = (X[0] / N).sum()
+        if not have_total_var:
+            # Workaround in-place variance calculation since at the time numpy
+            # did not have a way to calculate variance in-place.
+            np.square(X, out=X)
+            np.sum(X, axis=0, out=X[0])
+            total_var = (X[0] / (n_samples - 1)).sum()
 
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = S.copy()  # Store the singular values.
