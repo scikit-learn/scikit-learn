@@ -153,9 +153,10 @@ import warnings
 
 from ..metrics._dist_metrics cimport (
     DistanceMetric,
-    euclidean_dist,
-    euclidean_rdist,
-    euclidean_dist_to_rdist,
+    DistanceMetric64,
+    euclidean_dist64,
+    euclidean_rdist64,
+    euclidean_dist_to_rdist64,
 )
 
 from ._partition_nodes cimport partition_node_indices
@@ -231,7 +232,7 @@ leaf_size : positive int, default=40
     satisfy ``leaf_size <= n_points <= 2 * leaf_size``, except in
     the case that ``n_samples < leaf_size``.
 
-metric : str or DistanceMetric object, default='minkowski'
+metric : str or DistanceMetric64 object, default='minkowski'
     Metric to use for distance computation. Default is "minkowski", which
     results in the standard Euclidean distance when p = 2.
     A list of valid metrics for {BinaryTree} is given by
@@ -782,7 +783,7 @@ cdef class BinaryTree:
     cdef intp_t n_levels
     cdef intp_t n_nodes
 
-    cdef DistanceMetric dist_metric
+    cdef DistanceMetric64 dist_metric
     cdef int euclidean
 
     # variables to keep track of building & querying stats
@@ -832,7 +833,7 @@ cdef class BinaryTree:
 
         self.dist_metric = DistanceMetric.get_metric(metric, **kwargs)
         self.euclidean = (self.dist_metric.__class__.__name__
-                          == 'EuclideanDistance')
+                          == 'EuclideanDistance64')
 
         metric = self.dist_metric.__class__.__name__
         if metric not in VALID_METRICS:
@@ -922,7 +923,7 @@ cdef class BinaryTree:
         sample_weight = state[12]
 
         self.euclidean = (self.dist_metric.__class__.__name__
-                          == 'EuclideanDistance')
+                          == 'EuclideanDistance64')
         n_samples = self.data.shape[0]
         self._update_sample_weight(n_samples, sample_weight)
 
@@ -996,7 +997,7 @@ cdef class BinaryTree:
         """Compute the distance between arrays x1 and x2"""
         self.n_calls += 1
         if self.euclidean:
-            return euclidean_dist(x1, x2, size)
+            return euclidean_dist64(x1, x2, size)
         else:
             return self.dist_metric.dist(x1, x2, size)
 
@@ -1011,7 +1012,7 @@ cdef class BinaryTree:
         """
         self.n_calls += 1
         if self.euclidean:
-            return euclidean_rdist(x1, x2, size)
+            return euclidean_rdist64(x1, x2, size)
         else:
             return self.dist_metric.rdist(x1, x2, size)
 
