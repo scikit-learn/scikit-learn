@@ -61,6 +61,7 @@ from ..utils.validation import check_is_fitted
 from ..utils._param_validation import make_constraint
 from ..utils._param_validation import generate_invalid_param_val
 from ..utils._param_validation import InvalidParameterError
+from ..utils._param_validation import validate_params, HasMethods
 
 from . import shuffle
 from ._tags import (
@@ -546,6 +547,17 @@ def parametrize_with_checks(estimators):
     )
 
 
+@validate_params(
+    {
+        "estimator": [
+            HasMethods(["fit", "predict"]),
+            HasMethods(["fit", "predict_proba"]),
+            HasMethods(["fit", "decision_function"]),
+            None,
+        ],
+        "generate_only": ["boolean"],
+    }
+)
 def check_estimator(estimator=None, generate_only=False):
     """Check if estimator adheres to scikit-learn conventions.
 

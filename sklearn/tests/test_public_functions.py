@@ -275,6 +275,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.tree.export_graphviz",
     "sklearn.tree.export_text",
     "sklearn.tree.plot_tree",
+    "sklearn.utils.estimator_checks.check_estimator",
     "sklearn.utils.gen_batches",
     "sklearn.utils.resample",
 ]
