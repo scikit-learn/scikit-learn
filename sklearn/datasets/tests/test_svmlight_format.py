@@ -249,7 +249,7 @@ def test_not_a_filename():
 
 
 def test_invalid_filename():
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         load_svmlight_file("trou pic nic douille")
 
 

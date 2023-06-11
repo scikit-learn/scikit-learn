@@ -224,7 +224,7 @@ for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
     disp.ax_.legend(*scatter.legend_elements())
 
 # %%
-# We define a function for bootstraping.
+# We define a function for bootstrapping.
 
 
 def scoring_on_bootstrap(estimator, X, y, rng, n_bootstrap=100):
@@ -241,7 +241,7 @@ def scoring_on_bootstrap(estimator, X, y, rng, n_bootstrap=100):
 
 
 # %%
-# We score the base model for each prevalence using bootstraping.
+# We score the base model for each prevalence using bootstrapping.
 
 results = defaultdict(list)
 n_bootstrap = 100
