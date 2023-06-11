@@ -88,8 +88,18 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             .. versionadded:: 1.2
 
         'newton-lsmr'
-            Uses Newton-Raphson steps, but formulated as iterated least squares (IRLS)
-            problem, which is solve by LSMR.
+            Uses Newton-Raphson steps formulated as iteratively reweighted least
+            squares (IRLS), which is solved by LSMR. Contrary to `newton-cholesky`,
+            this solver does not explicitly materialize the Hessian matrix but instead
+            leverages knowledge about its structure to incrementally solve the least
+            squares problems via a series of matrix vector operations where the
+            matrices have block structure with block sizes scaling as
+            `(n_samples, n_features)` and `(n_samples, n_classes)` therefore limiting
+            the memory requirements.
+            Additionaly, this is numerically more stable for ill-conditioned X compared
+            to `newton-cholesky`.
+
+            .. versionadded:: 1.3
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -508,8 +518,16 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
             .. versionadded:: 1.2
 
         'newton-lsmr'
-            Uses Newton-Raphson steps, but formulated as iterated least squares (IRLS)
-            problem, which is solve by LSMR.
+            Uses Newton-Raphson steps formulated as iteratively reweighted least
+            squares (IRLS), which is solved by LSMR. Contrary to `newton-cholesky`,
+            this solver does not explicitly materialize the Hessian matrix but instead
+            leverages knowledge about its structure to incrementally solve the least
+            squares problems via a series of matrix vector operations where the
+            matrices have size `(n_samples, n_features)`.
+            Additionaly, this is numerically more stable for ill-conditioned X compared
+            to `newton-cholesky`.
+
+            .. versionadded:: 1.3
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -643,8 +661,16 @@ class GammaRegressor(_GeneralizedLinearRegressor):
             .. versionadded:: 1.2
 
         'newton-lsmr'
-            Uses Newton-Raphson steps, but formulated as iterated least squares (IRLS)
-            problem, which is solve by LSMR.
+            Uses Newton-Raphson steps formulated as iteratively reweighted least
+            squares (IRLS), which is solved by LSMR. Contrary to `newton-cholesky`,
+            this solver does not explicitly materialize the Hessian matrix but instead
+            leverages knowledge about its structure to incrementally solve the least
+            squares problems via a series of matrix vector operations where the
+            matrices have size `(n_samples, n_features)`.
+            Additionaly, this is numerically more stable for ill-conditioned X compared
+            to `newton-cholesky`.
+
+            .. versionadded:: 1.3
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -809,8 +835,16 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
             .. versionadded:: 1.2
 
         'newton-lsmr'
-            Uses Newton-Raphson steps, but formulated as iterated least squares (IRLS)
-            problem, which is solve by LSMR.
+            Uses Newton-Raphson steps formulated as iteratively reweighted least
+            squares (IRLS), which is solved by LSMR. Contrary to `newton-cholesky`,
+            this solver does not explicitly materialize the Hessian matrix but instead
+            leverages knowledge about its structure to incrementally solve the least
+            squares problems via a series of matrix vector operations where the
+            matrices have size `(n_samples, n_features)`.
+            Additionaly, this is numerically more stable for ill-conditioned X compared
+            to `newton-cholesky`.
+
+            .. versionadded:: 1.3
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.

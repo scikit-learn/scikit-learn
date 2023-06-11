@@ -206,6 +206,8 @@ class NewtonSolver(ABC):
         self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
         self.coef = opt_res.x
         if self.linear_loss.base_loss.is_multiclass:
+            # No test case was found (yet) where NewtonLSMRSolver ends up in this code
+            # path. Note that NewtonCholeskySolver does not support muliclass problems.
             n_classes = self.linear_loss.base_loss.n_classes
             self.coef = self.coef.reshape((n_classes, -1), order="F")
         self.converged = opt_res.status == 0
