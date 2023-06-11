@@ -617,7 +617,7 @@ class NewtonLSMRSolver(NewtonSolver):
         ) = self.linear_loss.base_loss.init_gradient_and_hessian(
             n_samples=X.shape[0], dtype=X.dtype
         )
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         # For a general (symmetric) penalty matrix P, we can use any square root of it,
         # e.g. the Cholesky decomposition. For the simple L2-penalty, we can use the
         # identity matrix and handle the intercept separately.
@@ -635,19 +635,25 @@ class NewtonLSMRSolver(NewtonSolver):
         # initial estimation of ||A||. We assume h = 1 and get
         #   ||A||^2 = ||X||^2 + sqrt(l2_reg_strength) ||sqrt(P)||^2
         # if scipy.sparse.issparse(X):
-        #     A_norm = scipy.sparse.linalg.norm(X) ** 2
+        #     self.A_norm = scipy.sparse.linalg.norm(X) ** 2
         # else:
-        #     A_norm = scipy.linalg.norm(X) ** 2
-        # A_norm += scipy.linalg.norm(self.sqrt_P) ** 2
-        # self.A_norm = np.sqrt(A_norm)
+        #     self.A_norm = scipy.linalg.norm(X) ** 2
+        # self.A_norm += scipy.linalg.norm(self.sqrt_P) ** 2
+        # self.A_norm = np.sqrt(self.A_norm)
         #
-        # As this all is a bit costly, we make life easier and start with ||A|| = 1.
-        # This is a reasonable choice as it likely understimates ||A|| and therefore
-        # overestimates atol ~ 1 / ||A||, which means we start with a looser criterion
-        # in the first iteration => good!
-        # The underestimation of a ||A|| is given if ||X|| > 1. This is very likely the
-        # case for typical (e.g. standardized) X.
-        self.A_norm = 1
+        # Another, even simpler choice is ||A|| = 1 which likely understimates
+        # ||A|| because ||X|| > 1 is very likely for typical (e.g. standardized) X.
+        # Underestimating ||A|| means overestimating atol ~ 1 / ||A||, which means the
+        # first iteration stops earlier. This is usually a good thing!
+        # Note: For n_featues > n_samples and no regularization, it seems that a higher
+        # starting A_norm is better which forces more initial LSMR iterations. We could
+        # even condider to make it dependent on log(l2_reg_strength).
+        self.A_norm = max(1, n_features / n_samples)
+        if n_features > n_samples and self.l2_reg_strength < 1e-7:
+            # We are in or close to an unpenalized underparametrized setting, where a
+            # large first LSMR iteration is beneficial.
+            # The multiplicative term is 1 <= term <= 50, log(1e-22) ~ -50
+            self.A_norm *= 1 - np.log((self.l2_reg_strength + 1e-22) * 1e7)
         self.r_norm = 1
 
     def update_gradient_hessian(self, X, y, sample_weight):
@@ -954,12 +960,14 @@ class NewtonLSMRSolver(NewtonSolver):
         # 1/2 * ||g/sqrt(h)||^2.
         norm_G = scipy.linalg.norm(self.gradient)
         eta = min(0.5, np.sqrt(norm_G))
+        if self.verbose >= 3:
+            print(f"    norm(gradient) = {norm_G}")
         result = scipy.sparse.linalg.lsmr(
             A,
             b,
             damp=0,
             atol=eta * norm_G / (self.A_norm * self.r_norm),
-            btol=self.tol,
+            btol=eta * norm_G,
             maxiter=max(n_samples, n_features) * n_classes,  # default is min(A.shape)
             show=self.verbose >= 3,
         )
@@ -992,26 +1000,30 @@ class NewtonLSMRSolver(NewtonSolver):
                 order="F"
             ) @ self.coef_newton.ravel(order="F")
 
-        # LSMR reached maxiter or did produce an excessively large newton step.
+        # In the first Newton iteraton, we tolerate istop == 7 and other things. We
+        # just got started and are therefore forgiving.
+        if self.iteration == 1:
+            return
         # Note: We could detect too large steps by comparing norm(coef_newton) = normx
-        # with norm(gradient). Instead of the gradient, we use the already available
-        # condition number of A.
-        if (istop == 7 or normx > 1e2 * conda) and not self.iteration == 1:
-            # Do we need this condition on conda? It is hard to trigger this case.
-            # We do not raise a warning in the first iteration as me might be far off
-            # the true optimum.
-            if istop == 7:
-                msg = (
-                    f"The inner solver of {self.__class__.__name__} reached "
-                    f"maxiter={itn} before the other stopping conditions were "
-                    f"satisfied at iteration #{self.iteration}. "
-                )
-            else:
-                msg = (
-                    f"The inner solver of {self.__class__.__name__} produced an"
-                    " excessively large newton step at iteration"
-                    f" #{self.iteration}. "
-                )
+        # with norm(gradient) o with the already available condition number of A, e.g.
+        # conda.
+        if istop == 7:
+            self.use_fallback_lbfgs_solve = True
+            msg = (
+                f"The inner solver of {self.__class__.__name__} reached "
+                f"maxiter={itn} before the other stopping conditions were "
+                f"satisfied at iteration #{self.iteration}. "
+            )
+        elif istop in (3, 6):
+            self.use_fallback_lbfgs_solve = True
+            msg = (
+                f"The inner solver of {self.__class__.__name__} complained that the "
+                f"condition number of A (A'A = Hessian), conda={conda}, seems to be "
+                "greater than the given limit conlim=1e8 at iteration "
+                f"#{self.iteration}."
+            )
+
+        if self.use_fallback_lbfgs_solve:
             warnings.warn(
                 msg
                 + "It will now resort to lbfgs instead.\n"
