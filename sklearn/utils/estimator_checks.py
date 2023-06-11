@@ -41,6 +41,7 @@ from ..base import (
     is_regressor,
     is_outlier_detector,
     RegressorMixin,
+    BaseEstimator,
 )
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
@@ -61,7 +62,7 @@ from ..utils.validation import check_is_fitted
 from ..utils._param_validation import make_constraint
 from ..utils._param_validation import generate_invalid_param_val
 from ..utils._param_validation import InvalidParameterError
-from ..utils._param_validation import validate_params, HasMethods
+from ..utils._param_validation import validate_params
 
 from . import shuffle
 from ._tags import (
@@ -549,12 +550,7 @@ def parametrize_with_checks(estimators):
 
 @validate_params(
     {
-        "estimator": [
-            HasMethods(["fit", "predict"]),
-            HasMethods(["fit", "predict_proba"]),
-            HasMethods(["fit", "decision_function"]),
-            None,
-        ],
+        "estimator": [BaseEstimator, None],
         "generate_only": ["boolean"],
     }
 )
@@ -605,14 +601,6 @@ def check_estimator(estimator=None, generate_only=False):
     parametrize_with_checks : Pytest specific decorator for parametrizing estimator
         checks.
     """
-    if isinstance(estimator, type):
-        msg = (
-            "Passing a class was deprecated in version 0.23 "
-            "and isn't supported anymore from 0.24."
-            "Please pass an instance instead."
-        )
-        raise TypeError(msg)
-
     name = type(estimator).__name__
 
     def checks_generator():
