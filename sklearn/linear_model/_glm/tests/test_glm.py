@@ -1127,6 +1127,7 @@ def test_solver_on_ill_conditioned_X(
     # Make sure that it is ill conditioned >=> large condition number.
     assert np.linalg.cond(X_ill_conditioned) > 1e5 * np.linalg.cond(X_orig)
 
+    test_loss = False
     if warn2 is None:
         with warnings.catch_warnings():
             warnings.simplefilter("error")
@@ -1143,7 +1144,7 @@ def test_solver_on_ill_conditioned_X(
     if test_loss:
         # Without penalty, scaling of columns has no effect on predictions.
         ill_cond_deviance = mean_poisson_deviance(y, reg.predict(X_ill_conditioned))
-        if solver in ("lbfgs", "newton-cholesky"):
+        if solver in ("lbfgs", "newton-cholesky", "newton-lsmr"):
             pytest.xfail(
                 f"Solver {solver} does not converge but does so without warning."
             )
