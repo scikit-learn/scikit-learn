@@ -21,6 +21,7 @@ from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 from ._array_api import get_namespace, _is_numpy_namespace
+from ._param_validation import validate_params
 
 
 def squared_norm(x):
@@ -122,6 +123,11 @@ def fast_logdet(A):
     return ld
 
 
+@validate_params(
+    {
+        "w": ["array-like"],
+    }
+)
 def density(w, **kwargs):
     """Compute density of a sparse vector.
 
