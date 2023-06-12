@@ -83,6 +83,7 @@ from sklearn.utils.estimator_checks import (
     check_global_ouptut_transform_pandas,
     check_get_feature_names_out_error,
 )
+from sklearn.utils._param_validation import InvalidParameterError
 
 
 def test_all_estimator_no_base_class():
@@ -277,10 +278,10 @@ def test_class_support_removed():
     # Make sure passing classes to check_estimator or parametrize_with_checks
     # raises an error
 
-    msg = "Passing a class was deprecated.* isn't supported anymore"
-    with pytest.raises(TypeError, match=msg):
+    with pytest.raises(InvalidParameterError):
         check_estimator(LogisticRegression)
 
+    msg = "Passing a class was deprecated.* isn't supported anymore"
     with pytest.raises(TypeError, match=msg):
         parametrize_with_checks([LogisticRegression])
 
