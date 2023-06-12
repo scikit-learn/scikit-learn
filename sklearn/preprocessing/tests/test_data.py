@@ -2656,18 +2656,20 @@ def test_kernel_centerer_feature_names_out():
     assert_array_equal(names_out, [f"kernelcenterer{i}" for i in range(samples_out2)])
 
 
-@pytest.mark.parametrize("method", ["yeo-johnson", "box-cox"])
 @pytest.mark.parametrize("standardize", [True, False])
-def test_power_transformer_constant_feature(method, standardize):
+def test_power_transformer_constant_feature(standardize):
     """Check that PowerTransfomer leaves constant features unchanged."""
-    X = [[2], [2], [2]]
+    X = [[-2, 0, 2], [-2, 0, 2], [-2, 0, 2]]
 
-    pt = PowerTransformer(method=method, standardize=standardize)
-    Xt = pt.fit(X).transform(X)
+    pt = PowerTransformer(method="yeo-johnson", standardize=standardize).fit(X)
 
-    assert_allclose(pt.lambdas_, 1)
-    
-    if standardize:
-        assert_allclose(Xt, np.zeros_like(X))
-    else:
-        assert_allclose(Xt, X)
+    assert_allclose(pt.lambdas_, [1, 1, 1])
+
+    Xft = pt.fit_transform(X)
+    Xt = pt.transform(X)
+
+    for Xt_ in [Xft, Xt]:
+        if standardize:
+            assert_allclose(Xt_, np.zeros_like(X))
+        else:
+            assert_allclose(Xt_, X)

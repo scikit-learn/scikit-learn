@@ -3150,21 +3150,6 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if not self.copy and not force_transform:  # if call from fit()
             X = X.copy()  # force copy so that fit does not change X inplace
 
-        # optim_function = {
-        #     "box-cox": self._box_cox_optimize,
-        #     "yeo-johnson": self._yeo_johnson_optimize,
-        # }[self.method]
-        # with np.errstate(invalid="ignore"):  # hide NaN warnings
-        #     self.lambdas_ = np.array([optim_function(col) for col in X.T])
-
-        # if self.standardize or force_transform:
-        #     transform_function = {
-        #         "box-cox": boxcox,
-        #         "yeo-johnson": self._yeo_johnson_transform,
-        #     }[self.method]
-        #     for i, lmbda in enumerate(self.lambdas_):
-        #         with np.errstate(invalid="ignore"):  # hide NaN warnings
-        #             X[:, i] = transform_function(X[:, i], lmbda)
         n_samples = X.shape[0]
         mean = np.mean(X, axis=0, dtype=np.float64)
         var = np.var(X, axis=0, dtype=np.float64)
@@ -3172,9 +3157,10 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         with np.errstate(invalid="ignore"):  # hide NaN warnings
             self.lambdas_ = np.empty(X.shape[1], dtype=X.dtype)
             for i, col in enumerate(X.T):
-            
-                # if the feature is constant, leave it as is
-                if _is_constant_feature(var[i], mean[i], n_samples):
+                # For yeo-johnson, leave constant features unchanged
+                # in the yeo-johnson transformation, lambda = 1 corresponds to the identity
+                is_constant_feature = _is_constant_feature(var[i], mean[i], n_samples)
+                if self.method == "yeo-johnson" and is_constant_feature:
                     self.lambdas_[i] = 1.0
                     continue
 

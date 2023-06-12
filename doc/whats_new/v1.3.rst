@@ -628,6 +628,10 @@ Changelog
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
+- |Fix| :class:`preprocessing.PowerTransformer` with `method="yeo-johnson"` now leaves
+  constant features unchanged.
+  :pr:`` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.svm`
 ..................
 
