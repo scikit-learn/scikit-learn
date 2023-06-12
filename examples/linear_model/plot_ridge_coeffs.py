@@ -48,7 +48,7 @@ is promoting model simplicity or feature selection to prevent overfitting.
 # exact coefficients.
 from sklearn.datasets import make_regression
 
-X, y, w = make_regression(n_samples=10, n_features=10, coef=True, random_state=1)
+X, y, w = make_regression(n_samples=100, n_features=10, coef=True, random_state=1)
 
 # Obtain the true coefficients
 w
@@ -66,7 +66,7 @@ from sklearn.metrics import mean_squared_error
 clf = Ridge()
 
 # Generate values for `alpha` that are evenly distributed on a logarithmic scale
-alphas = np.logspace(-3, 3, 200)
+alphas = np.logspace(-3, 4, 200)
 coefs = []
 errors = []
 
