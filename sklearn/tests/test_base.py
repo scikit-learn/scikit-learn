@@ -188,8 +188,9 @@ def test_clone_nan():
 
 def test_clone_sparse_matrices():
     sparse_matrix_classes = [
-        cls for name in dir(sp) if name.endswith("_matrix")
-        and type(cls := getattr(sp, name)) == type
+        cls
+        for name in dir(sp)
+        if name.endswith("_matrix") and type(cls := getattr(sp, name)) == type
     ]
 
     for cls in sparse_matrix_classes:
