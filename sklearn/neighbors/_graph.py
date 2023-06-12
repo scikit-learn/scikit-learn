@@ -4,11 +4,18 @@
 #         Tom Dupre la Tour
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
+from ._ball_tree import BallTree
 from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
 from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import (
+    Integral,
+    Interval,
+    Real,
+    StrOptions,
+    validate_params,
+)
 from ..utils.validation import check_is_fitted
 
 
@@ -36,6 +43,20 @@ def _query_include_self(X, include_self, mode):
     return X
 
 
+@validate_params(
+    {
+        "X": ["array-like", BallTree, KNeighborsMixin],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "mode": [StrOptions({"connectivity", "distance"})],
+        "metric": "no_validation",  # metric is passed without param validation
+        # here, because VALID_METRICS are extracted and defined in
+        # :class:`~sklearn.neighbors._base.NeighborsBase`
+        "p": [Interval(Real, 1, None, closed="left")],
+        "metric_params": [dict, None],
+        "include_self": [bool, StrOptions({"auto"})],
+        "n_jobs": [Interval(Integral, -1, None, closed="left"), None],
+    }
+)
 def kneighbors_graph(
     X,
     n_neighbors,
