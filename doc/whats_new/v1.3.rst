@@ -630,7 +630,7 @@ Changelog
 
 - |Fix| :class:`preprocessing.PowerTransformer` with `method="yeo-johnson"` now leaves
   constant features unchanged.
-  :pr:`` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+  :pr:`26566` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.svm`
 ..................
