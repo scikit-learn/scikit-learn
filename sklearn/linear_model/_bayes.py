@@ -5,6 +5,7 @@ Various bayesian regression
 # Authors: V. Michel, F. Pedregosa, A. Gramfort
 # License: BSD 3 clause
 
+import warnings
 from math import log
 from numbers import Integral, Real
 import numpy as np
@@ -12,12 +13,54 @@ from scipy import linalg
 
 from ._base import LinearModel, _preprocess_data, _rescale_data
 from ..base import RegressorMixin
-from ._base import _deprecate_normalize
 from ..utils.extmath import fast_logdet
 from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
-from ..utils._param_validation import StrOptions, Hidden
-from ..utils._param_validation import Interval
+from ..utils._param_validation import Interval, Hidden, StrOptions
+
+
+# TODO(1.5) Remove
+def _deprecate_n_iter(n_iter, max_iter):
+    """Deprecates n_iter in favour of max_iter. Checks if the n_iter has been
+    used instead of max_iter and generates a deprecation warning if True.
+
+    Parameters
+    ----------
+    n_iter : int,
+        Value of n_iter attribute passed by the estimator.
+
+    max_iter : int, default=None
+        Value of max_iter attribute passed by the estimator.
+        If `None`, it corresponds to `max_iter=300`.
+
+    Returns
+    -------
+    max_iter : int,
+        Value of max_iter which shall further be used by the estimator.
+
+    Notes
+    -----
+    This function should be completely removed in 1.5.
+    """
+    if n_iter != "deprecated":
+        if max_iter is not None:
+            raise ValueError(
+                "Both `n_iter` and `max_iter` attributes were set. Attribute"
+                " `n_iter` was deprecated in version 1.3 and will be removed in"
+                " 1.5. To avoid this error, only set the `max_iter` attribute."
+            )
+        warnings.warn(
+            (
+                "'n_iter' was renamed to 'max_iter' in version 1.3 and "
+                "will be removed in 1.5"
+            ),
+            FutureWarning,
+        )
+        max_iter = n_iter
+    elif max_iter is None:
+        max_iter = 300
+    return max_iter
+
 
 ###############################################################################
 # BayesianRidge regression
@@ -34,8 +77,12 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    n_iter : int, default=300
-        Maximum number of iterations. Should be greater than or equal to 1.
+    max_iter : int, default=None
+        Maximum number of iterations over the complete dataset before
+        stopping independently of any early stopping criterion. If `None`, it
+        corresponds to `max_iter=300`.
+
+        .. versionchanged:: 1.3
 
     tol : float, default=1e-3
         Stop the algorithm if w has converged.
@@ -79,23 +126,18 @@ class BayesianRidge(RegressorMixin, LinearModel):
         to False, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
-
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
     verbose : bool, default=False
         Verbose mode when fitting the model.
+
+    n_iter : int
+        Maximum number of iterations. Should be greater than or equal to 1.
+
+        .. deprecated:: 1.3
+           `n_iter` is deprecated in 1.3 and will be removed in 1.5. Use
+           `max_iter` instead.
 
     Attributes
     ----------
@@ -104,7 +146,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     intercept_ : float
         Independent term in decision function. Set to 0.0 if
-        ``fit_intercept = False``.
+        `fit_intercept = False`.
 
     alpha_ : float
        Estimated precision of the noise.
@@ -125,13 +167,12 @@ class BayesianRidge(RegressorMixin, LinearModel):
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
 
-    X_offset_ : float
-        If `normalize=True`, offset subtracted for centering data to a
-        zero mean.
+    X_offset_ : ndarray of shape (n_features,)
+        If `fit_intercept=True`, offset subtracted for centering data to a
+        zero mean. Set to np.zeros(n_features) otherwise.
 
-    X_scale_ : float
-        If `normalize=True`, parameter used to scale data to a unit
-        standard deviation.
+    X_scale_ : ndarray of shape (n_features,)
+        Set to np.ones(n_features).
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -177,7 +218,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
     """
 
     _parameter_constraints: dict = {
-        "n_iter": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="neither")],
         "alpha_1": [Interval(Real, 0, None, closed="left")],
         "alpha_2": [Interval(Real, 0, None, closed="left")],
@@ -187,15 +228,18 @@ class BayesianRidge(RegressorMixin, LinearModel):
         "lambda_init": [None, Interval(Real, 0, None, closed="left")],
         "compute_score": ["boolean"],
         "fit_intercept": ["boolean"],
-        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "copy_X": ["boolean"],
         "verbose": ["verbose"],
+        "n_iter": [
+            Interval(Integral, 1, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
     }
 
     def __init__(
         self,
         *,
-        n_iter=300,
+        max_iter=None,  # TODO(1.5): Set to 300
         tol=1.0e-3,
         alpha_1=1.0e-6,
         alpha_2=1.0e-6,
@@ -205,11 +249,11 @@ class BayesianRidge(RegressorMixin, LinearModel):
         lambda_init=None,
         compute_score=False,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         verbose=False,
+        n_iter="deprecated",  # TODO(1.5): Remove
     ):
-        self.n_iter = n_iter
+        self.max_iter = max_iter
         self.tol = tol
         self.alpha_1 = alpha_1
         self.alpha_2 = alpha_2
@@ -219,9 +263,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self.lambda_init = lambda_init
         self.compute_score = compute_score
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.copy_X = copy_X
         self.verbose = verbose
+        self.n_iter = n_iter
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model.
@@ -246,9 +290,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         """
         self._validate_params()
 
-        self._normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
+        max_iter = _deprecate_n_iter(self.n_iter, self.max_iter)
 
         X, y = self._validate_data(X, y, dtype=[np.float64, np.float32], y_numeric=True)
 
@@ -259,8 +301,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
             X,
             y,
             self.fit_intercept,
-            self._normalize,
-            self.copy_X,
+            copy=self.copy_X,
             sample_weight=sample_weight,
         )
 
@@ -297,8 +338,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         eigen_vals_ = S**2
 
         # Convergence loop of the bayesian ridge regression
-        for iter_ in range(self.n_iter):
-
+        for iter_ in range(max_iter):
             # update posterior mean coef_ based on alpha_ and lambda_ and
             # compute corresponding rmse
             coef_, rmse_ = self._update_coef_(
@@ -373,11 +413,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
             Standard deviation of predictive distribution of query points.
         """
         y_mean = self._decision_function(X)
-        if return_std is False:
+        if not return_std:
             return y_mean
         else:
-            if self._normalize:
-                X = (X - self.X_offset_) / self.X_scale_
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
             return y_mean, y_std
@@ -455,8 +493,10 @@ class ARDRegression(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    n_iter : int, default=300
-        Maximum number of iterations.
+    max_iter : int, default=None
+        Maximum number of iterations. If `None`, it corresponds to `max_iter=300`.
+
+        .. versionchanged:: 1.3
 
     tol : float, default=1e-3
         Stop the algorithm if w has converged.
@@ -489,23 +529,18 @@ class ARDRegression(RegressorMixin, LinearModel):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
-
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
     verbose : bool, default=False
         Verbose mode when fitting the model.
+
+    n_iter : int
+        Maximum number of iterations.
+
+        .. deprecated:: 1.3
+           `n_iter` is deprecated in 1.3 and will be removed in 1.5. Use
+           `max_iter` instead.
 
     Attributes
     ----------
@@ -524,17 +559,21 @@ class ARDRegression(RegressorMixin, LinearModel):
     scores_ : float
         if computed, value of the objective function (to be maximized)
 
+    n_iter_ : int
+        The actual number of iterations to reach the stopping criterion.
+
+        .. versionadded:: 1.3
+
     intercept_ : float
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
     X_offset_ : float
-        If `normalize=True`, offset subtracted for centering data to a
-        zero mean.
+        If `fit_intercept=True`, offset subtracted for centering data to a
+        zero mean. Set to np.zeros(n_features) otherwise.
 
     X_scale_ : float
-        If `normalize=True`, parameter used to scale data to a unit
-        standard deviation.
+        Set to np.ones(n_features).
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -580,7 +619,7 @@ class ARDRegression(RegressorMixin, LinearModel):
     """
 
     _parameter_constraints: dict = {
-        "n_iter": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left")],
         "alpha_1": [Interval(Real, 0, None, closed="left")],
         "alpha_2": [Interval(Real, 0, None, closed="left")],
@@ -589,15 +628,18 @@ class ARDRegression(RegressorMixin, LinearModel):
         "compute_score": ["boolean"],
         "threshold_lambda": [Interval(Real, 0, None, closed="left")],
         "fit_intercept": ["boolean"],
-        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "copy_X": ["boolean"],
         "verbose": ["verbose"],
+        "n_iter": [
+            Interval(Integral, 1, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
     }
 
     def __init__(
         self,
         *,
-        n_iter=300,
+        max_iter=None,  # TODO(1.5): Set to 300
         tol=1.0e-3,
         alpha_1=1.0e-6,
         alpha_2=1.0e-6,
@@ -606,14 +648,13 @@ class ARDRegression(RegressorMixin, LinearModel):
         compute_score=False,
         threshold_lambda=1.0e4,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         verbose=False,
+        n_iter="deprecated",  # TODO(1.5): Remove
     ):
-        self.n_iter = n_iter
+        self.max_iter = max_iter
         self.tol = tol
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.alpha_1 = alpha_1
         self.alpha_2 = alpha_2
         self.lambda_1 = lambda_1
@@ -622,6 +663,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         self.threshold_lambda = threshold_lambda
         self.copy_X = copy_X
         self.verbose = verbose
+        self.n_iter = n_iter
 
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
@@ -644,9 +686,7 @@ class ARDRegression(RegressorMixin, LinearModel):
 
         self._validate_params()
 
-        self._normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
+        max_iter = _deprecate_n_iter(self.n_iter, self.max_iter)
 
         X, y = self._validate_data(
             X, y, dtype=[np.float64, np.float32], y_numeric=True, ensure_min_samples=2
@@ -656,7 +696,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         coef_ = np.zeros(n_features, dtype=X.dtype)
 
         X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
-            X, y, self.fit_intercept, self._normalize, self.copy_X
+            X, y, self.fit_intercept, copy=self.copy_X
         )
 
         self.X_offset_ = X_offset_
@@ -693,7 +733,7 @@ class ARDRegression(RegressorMixin, LinearModel):
             else self._update_sigma_woodbury
         )
         # Iterative procedure of ARDRegression
-        for iter_ in range(self.n_iter):
+        for iter_ in range(max_iter):
             sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda)
             coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
 
@@ -732,6 +772,8 @@ class ARDRegression(RegressorMixin, LinearModel):
 
             if not keep_lambda.any():
                 break
+
+        self.n_iter_ = iter_ + 1
 
         if keep_lambda.any():
             # update sigma and mu using updated params from the last iteration
@@ -802,8 +844,6 @@ class ARDRegression(RegressorMixin, LinearModel):
         if return_std is False:
             return y_mean
         else:
-            if self._normalize:
-                X = (X - self.X_offset_) / self.X_scale_
             X = X[:, self.lambda_ < self.threshold_lambda]
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))

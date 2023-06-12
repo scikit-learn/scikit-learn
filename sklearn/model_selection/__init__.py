@@ -32,6 +32,8 @@ from ._search import RandomizedSearchCV
 from ._search import ParameterGrid
 from ._search import ParameterSampler
 
+from ._plot import LearningCurveDisplay
+
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
     # TODO: remove this check once the estimator is no longer experimental.
@@ -68,6 +70,7 @@ __all__ = [
     "cross_val_score",
     "cross_validate",
     "learning_curve",
+    "LearningCurveDisplay",
     "permutation_test_score",
     "train_test_split",
     "validation_curve",

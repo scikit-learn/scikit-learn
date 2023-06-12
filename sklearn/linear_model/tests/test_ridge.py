@@ -12,7 +12,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.estimator_checks import check_sample_weights_invariance
 
 from sklearn.exceptions import ConvergenceWarning
 
@@ -49,7 +48,7 @@ from sklearn.preprocessing import minmax_scale
 from sklearn.utils import check_random_state
 
 
-SOLVERS = ("svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga")
+SOLVERS = ["svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga"]
 SPARSE_SOLVERS_WITH_INTERCEPT = ("sparse_cg", "sag")
 SPARSE_SOLVERS_WITHOUT_INTERCEPT = ("sparse_cg", "cholesky", "lsqr", "sag", "saga")
 
@@ -105,7 +104,7 @@ def ols_ridge_dataset(global_random_seed, request):
         Last column of 1, i.e. intercept.
     y : ndarray
     coef_ols : ndarray of shape
-        Minimum norm OLS solutions, i.e. min ||X w - y||_2_2 (with mininum ||w||_2 in
+        Minimum norm OLS solutions, i.e. min ||X w - y||_2_2 (with minimum ||w||_2 in
         case of ambiguity)
         Last coefficient is intercept.
     coef_ridge : ndarray of shape (5,)
@@ -714,8 +713,6 @@ def _make_sparse_offset_regression(
     return X, y
 
 
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "solver, sparse_X",
     (
@@ -731,10 +728,9 @@ def _make_sparse_offset_regression(
     "n_samples,dtype,proportion_nonzero",
     [(20, "float32", 0.1), (40, "float32", 1.0), (20, "float64", 0.2)],
 )
-@pytest.mark.parametrize("normalize", [True, False])
 @pytest.mark.parametrize("seed", np.arange(3))
 def test_solver_consistency(
-    solver, proportion_nonzero, n_samples, dtype, sparse_X, seed, normalize
+    solver, proportion_nonzero, n_samples, dtype, sparse_X, seed
 ):
     alpha = 1.0
     noise = 50.0 if proportion_nonzero > 0.9 else 500.0
@@ -746,41 +742,40 @@ def test_solver_consistency(
         random_state=seed,
         n_samples=n_samples,
     )
-    if not normalize:
-        # Manually scale the data to avoid pathological cases. We use
-        # minmax_scale to deal with the sparse case without breaking
-        # the sparsity pattern.
-        X = minmax_scale(X)
-    svd_ridge = Ridge(solver="svd", normalize=normalize, alpha=alpha).fit(X, y)
+
+    # Manually scale the data to avoid pathological cases. We use
+    # minmax_scale to deal with the sparse case without breaking
+    # the sparsity pattern.
+    X = minmax_scale(X)
+
+    svd_ridge = Ridge(solver="svd", alpha=alpha).fit(X, y)
     X = X.astype(dtype, copy=False)
     y = y.astype(dtype, copy=False)
     if sparse_X:
         X = sp.csr_matrix(X)
     if solver == "ridgecv":
-        ridge = RidgeCV(alphas=[alpha], normalize=normalize)
+        ridge = RidgeCV(alphas=[alpha])
     else:
-        ridge = Ridge(solver=solver, tol=1e-10, normalize=normalize, alpha=alpha)
+        ridge = Ridge(solver=solver, tol=1e-10, alpha=alpha)
     ridge.fit(X, y)
     assert_allclose(ridge.coef_, svd_ridge.coef_, atol=1e-3, rtol=1e-3)
     assert_allclose(ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
 
 
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("X_constructor", [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize("X_shape", [(11, 8), (11, 20)])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize(
-    "y_shape, normalize, noise",
+    "y_shape, noise",
     [
-        ((11,), True, 1.0),
-        ((11, 1), False, 30.0),
-        ((11, 3), False, 150.0),
+        ((11,), 1.0),
+        ((11, 1), 30.0),
+        ((11, 3), 150.0),
     ],
 )
 def test_ridge_gcv_vs_ridge_loo_cv(
-    gcv_mode, X_constructor, X_shape, y_shape, fit_intercept, normalize, noise
+    gcv_mode, X_constructor, X_shape, y_shape, fit_intercept, noise
 ):
     n_samples, n_features = X_shape
     n_targets = y_shape[-1] if len(y_shape) == 2 else 1
@@ -801,13 +796,11 @@ def test_ridge_gcv_vs_ridge_loo_cv(
         fit_intercept=fit_intercept,
         alphas=alphas,
         scoring="neg_mean_squared_error",
-        normalize=normalize,
     )
     gcv_ridge = RidgeCV(
         gcv_mode=gcv_mode,
         fit_intercept=fit_intercept,
         alphas=alphas,
-        normalize=normalize,
     )
 
     loo_ridge.fit(X, y)
@@ -994,20 +987,6 @@ def _test_ridge_loo(filter_):
     assert_allclose(np.vstack((y_pred, y_pred)).T, Y_pred, rtol=1e-5)
 
     return ret
-
-
-# FIXME: 'normalize' to be removed in 1.2
-def _test_ridge_cv_normalize(filter_):
-    ridge_cv = RidgeCV(normalize=True, cv=3)
-    ridge_cv.fit(filter_(10.0 * X_diabetes), y_diabetes)
-
-    gs = GridSearchCV(
-        Ridge(normalize=True, solver="sparse_cg"),
-        cv=3,
-        param_grid={"alpha": ridge_cv.alphas},
-    )
-    gs.fit(filter_(10.0 * X_diabetes), y_diabetes)
-    assert gs.best_estimator_.alpha == ridge_cv.alpha_
 
 
 def _test_ridge_cv(filter_):
@@ -1214,14 +1193,11 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "test_func",
     (
         _test_ridge_loo,
         _test_ridge_cv,
-        _test_ridge_cv_normalize,
         _test_ridge_diabetes,
         _test_multi_ridge_diabetes,
         _test_ridge_classifiers,
@@ -1998,69 +1974,94 @@ def test_lbfgs_solver_error():
         model.fit(X, y)
 
 
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
-@pytest.mark.parametrize("normalize", [True, False])
-@pytest.mark.parametrize(
-    "solver", ["cholesky", "lsqr", "sparse_cg", "svd", "sag", "saga", "lbfgs"]
-)
-def test_ridge_sample_weight_invariance(normalize, solver):
-    """Test that Ridge fulfils sample weight invariance.
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("sparseX", [False, True])
+@pytest.mark.parametrize("data", ["tall", "wide"])
+@pytest.mark.parametrize("solver", SOLVERS + ["lbfgs"])
+def test_ridge_sample_weight_consistency(fit_intercept, sparseX, data, solver):
+    """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
     check_sample_weights_invariance alone.
     """
-    params = dict(
-        alpha=1.0,
-        normalize=normalize,
-        solver=solver,
-        tol=1e-12,
-        positive=(solver == "lbfgs"),
-    )
-    reg = Ridge(**params)
-    name = reg.__class__.__name__
-    check_sample_weights_invariance(name, reg, kind="ones")
-    check_sample_weights_invariance(name, reg, kind="zeros")
-
-    # Check that duplicating the training dataset is equivalent to multiplying
-    # the weights by 2:
-    if solver.startswith("sag") and normalize:
-        pytest.xfail("sag/saga diverge on the second part of this test")
+    # filter out solver that do not support sparse input
+    if sparseX:
+        if solver == "svd" or (solver in ("cholesky", "saga") and fit_intercept):
+            pytest.skip("unsupported configuration")
 
     rng = np.random.RandomState(42)
-    X, y = make_regression(
-        n_samples=100,
-        n_features=300,
-        effective_rank=10,
-        n_informative=50,
-        random_state=rng,
+    n_samples = 12
+    if data == "tall":
+        n_features = n_samples // 2
+    else:
+        n_features = n_samples * 2
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+    if sparseX:
+        X = sp.csr_matrix(X)
+    params = dict(
+        fit_intercept=fit_intercept,
+        alpha=1.0,
+        solver=solver,
+        positive=(solver == "lbfgs"),
+        tol=1e-12,
     )
-    sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
-    X_dup = np.concatenate([X, X], axis=0)
-    y_dup = np.concatenate([y, y], axis=0)
-    sw_dup = np.concatenate([sw, sw], axis=0)
 
-    ridge_2sw = Ridge(**params).fit(X, y, sample_weight=2 * sw)
-    ridge_dup = Ridge(**params).fit(X_dup, y_dup, sample_weight=sw_dup)
+    # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None
+    # same check as check_sample_weights_invariance(name, reg, kind="ones"), but we also
+    # test with sparse input.
+    reg = Ridge(**params).fit(X, y, sample_weight=None)
+    coef = reg.coef_.copy()
+    if fit_intercept:
+        intercept = reg.intercept_
+    sample_weight = np.ones_like(y)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
 
-    assert_allclose(ridge_2sw.coef_, ridge_dup.coef_)
-    assert_allclose(ridge_2sw.intercept_, ridge_dup.intercept_)
+    # 2) setting elements of sample_weight to 0 is equivalent to removing these samples
+    # same check as check_sample_weights_invariance(name, reg, kind="zeros"), but we
+    # also test with sparse input
+    sample_weight = rng.uniform(low=0.01, high=2, size=X.shape[0])
+    sample_weight[-5:] = 0
+    y[-5:] *= 1000  # to make excluding those samples important
+    reg.fit(X, y, sample_weight=sample_weight)
+    coef = reg.coef_.copy()
+    if fit_intercept:
+        intercept = reg.intercept_
+    reg.fit(X[:-5, :], y[:-5], sample_weight=sample_weight[:-5])
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
 
+    # 3) scaling of sample_weight should have no effect
+    # Note: For models with penalty, scaling the penalty term might work.
+    reg2 = Ridge(**params).set_params(alpha=np.pi * params["alpha"])
+    reg2.fit(X, y, sample_weight=np.pi * sample_weight)
+    if solver in ("sag", "saga") and not fit_intercept:
+        pytest.xfail(f"Solver {solver} does fail test for scaling of sample_weight.")
+    assert_allclose(reg2.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg2.intercept_, intercept)
 
-@pytest.mark.parametrize(
-    "Estimator", [RidgeCV, RidgeClassifierCV], ids=["RidgeCV", "RidgeClassifierCV"]
-)
-def test_ridgecv_normalize_deprecated(Estimator):
-    """Check that the normalize deprecation warning mentions the rescaling of alphas
-
-    Non-regression test for issue #22540
-    """
-    X = np.array([[1, -1], [1, 1]])
-    y = np.array([0, 1])
-
-    estimator = Estimator(normalize=True)
-
-    with pytest.warns(
-        FutureWarning, match=r"Set parameter alphas to: original_alphas \* n_samples"
-    ):
-        estimator.fit(X, y)
+    # 4) check that multiplying sample_weight by 2 is equivalent
+    # to repeating corresponding samples twice
+    if sparseX:
+        X = X.toarray()
+    X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
+    y2 = np.concatenate([y, y[: n_samples // 2]])
+    sample_weight_1 = sample_weight.copy()
+    sample_weight_1[: n_samples // 2] *= 2
+    sample_weight_2 = np.concatenate(
+        [sample_weight, sample_weight[: n_samples // 2]], axis=0
+    )
+    if sparseX:
+        X = sp.csr_matrix(X)
+        X2 = sp.csr_matrix(X2)
+    reg1 = Ridge(**params).fit(X, y, sample_weight=sample_weight_1)
+    reg2 = Ridge(**params).fit(X2, y2, sample_weight=sample_weight_2)
+    assert_allclose(reg1.coef_, reg2.coef_)
+    if fit_intercept:
+        assert_allclose(reg1.intercept_, reg2.intercept_)

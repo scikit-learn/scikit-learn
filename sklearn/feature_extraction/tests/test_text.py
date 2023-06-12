@@ -934,7 +934,7 @@ def test_count_vectorizer_pipeline_grid_selection():
         data, target, test_size=0.2, random_state=0
     )
 
-    pipeline = Pipeline([("vect", CountVectorizer()), ("svc", LinearSVC())])
+    pipeline = Pipeline([("vect", CountVectorizer()), ("svc", LinearSVC(dual="auto"))])
 
     parameters = {
         "vect__ngram_range": [(1, 1), (1, 2)],
@@ -970,7 +970,7 @@ def test_vectorizer_pipeline_grid_selection():
         data, target, test_size=0.1, random_state=0
     )
 
-    pipeline = Pipeline([("vect", TfidfVectorizer()), ("svc", LinearSVC())])
+    pipeline = Pipeline([("vect", TfidfVectorizer()), ("svc", LinearSVC(dual="auto"))])
 
     parameters = {
         "vect__ngram_range": [(1, 1), (1, 2)],
@@ -1004,7 +1004,7 @@ def test_vectorizer_pipeline_cross_validation():
     # label junk food as -1, the others as +1
     target = [-1] * len(JUNK_FOOD_DOCS) + [1] * len(NOTJUNK_FOOD_DOCS)
 
-    pipeline = Pipeline([("vect", TfidfVectorizer()), ("svc", LinearSVC())])
+    pipeline = Pipeline([("vect", TfidfVectorizer()), ("svc", LinearSVC(dual="auto"))])
 
     cv_scores = cross_val_score(pipeline, data, target, cv=3)
     assert_array_equal(cv_scores, [1.0, 1.0, 1.0])
@@ -1502,8 +1502,10 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
     "Vectorizer", [CountVectorizer, HashingVectorizer, TfidfVectorizer]
 )
 @pytest.mark.parametrize(
-    "stop_words, tokenizer, preprocessor, ngram_range, token_pattern,"
-    "analyzer, unused_name, ovrd_name, ovrd_msg",
+    (
+        "stop_words, tokenizer, preprocessor, ngram_range, token_pattern,"
+        "analyzer, unused_name, ovrd_name, ovrd_msg"
+    ),
     [
         (
             ["you've", "you'll"],
@@ -1585,7 +1587,6 @@ def test_unused_parameters_warn(
     ovrd_name,
     ovrd_msg,
 ):
-
     train_data = JUNK_FOOD_DOCS
     # setting parameter and checking for corresponding warning messages
     vect = Vectorizer()
@@ -1636,3 +1637,12 @@ def test_nonnegative_hashing_vectorizer_result_indices():
     hashing = HashingVectorizer(n_features=1000000, ngram_range=(2, 3))
     indices = hashing.transform(["22pcs efuture"]).indices
     assert indices[0] >= 0
+
+
+@pytest.mark.parametrize(
+    "Estimator", [CountVectorizer, TfidfVectorizer, TfidfTransformer, HashingVectorizer]
+)
+def test_vectorizers_do_not_have_set_output(Estimator):
+    """Check that vectorizers do not define set_output."""
+    est = Estimator()
+    assert not hasattr(est, "set_output")

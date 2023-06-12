@@ -50,9 +50,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
 
             gc.collect()
             print("- benchmarking LassoLars")
-            clf = LassoLars(
-                alpha=alpha, fit_intercept=False, normalize=False, precompute=precompute
-            )
+            clf = LassoLars(alpha=alpha, fit_intercept=False, precompute=precompute)
             tstart = time()
             clf.fit(X, Y)
             lars_lasso_results.append(time() - tstart)

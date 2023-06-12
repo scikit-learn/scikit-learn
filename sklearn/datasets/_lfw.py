@@ -10,7 +10,8 @@ over the internet, all details are available on the official website:
 
 from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
-
+from ..utils._param_validation import validate_params, Interval, Hidden, StrOptions
+from numbers import Integral, Real
 import logging
 
 import numpy as np
@@ -87,7 +88,7 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
                 logger.info("Downloading LFW metadata: %s", target.url)
                 _fetch_remote(target, dirname=lfw_home)
             else:
-                raise IOError("%s is missing" % target_filepath)
+                raise OSError("%s is missing" % target_filepath)
 
     if funneled:
         data_folder_path = join(lfw_home, "lfw_funneled")
@@ -103,7 +104,7 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
                 logger.info("Downloading LFW data (~200MB): %s", archive.url)
                 _fetch_remote(archive, dirname=lfw_home)
             else:
-                raise IOError("%s is missing" % archive_path)
+                raise OSError("%s is missing" % archive_path)
 
         import tarfile
 
@@ -159,7 +160,9 @@ def _load_imgs(file_paths, slice_, color, resize):
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
         pil_img = Image.open(file_path)
-        pil_img.crop((w_slice.start, h_slice.start, w_slice.stop, h_slice.stop))
+        pil_img = pil_img.crop(
+            (w_slice.start, h_slice.start, w_slice.stop, h_slice.stop)
+        )
         if resize is not None:
             pil_img = pil_img.resize((w, h))
         face = np.asarray(pil_img, dtype=np.float32)
@@ -229,6 +232,18 @@ def _fetch_lfw_people(
     return faces, target, target_names
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "funneled": ["boolean"],
+        "resize": [Interval(Real, 0, None, closed="neither"), None],
+        "min_faces_per_person": [Interval(Integral, 0, None, closed="left"), None],
+        "color": ["boolean"],
+        "slice_": [tuple, Hidden(None)],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+    }
+)
 def fetch_lfw_people(
     *,
     data_home=None,
@@ -263,8 +278,9 @@ def fetch_lfw_people(
     funneled : bool, default=True
         Download and use the funneled variant of the dataset.
 
-    resize : float, default=0.5
-        Ratio used to resize the each face picture.
+    resize : float or None, default=0.5
+        Ratio used to resize the each face picture. If `None`, no resizing is
+        performed.
 
     min_faces_per_person : int, default=None
         The extracted dataset will only retain pictures of people that have at
@@ -281,7 +297,7 @@ def fetch_lfw_people(
         correlation from the background.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -411,6 +427,17 @@ def _fetch_lfw_pairs(
     return pairs, target, np.array(["Different persons", "Same person"])
 
 
+@validate_params(
+    {
+        "subset": [StrOptions({"train", "test", "10_folds"})],
+        "data_home": [str, None],
+        "funneled": ["boolean"],
+        "resize": [Interval(Real, 0, None, closed="neither"), None],
+        "color": ["boolean"],
+        "slice_": [tuple, Hidden(None)],
+        "download_if_missing": ["boolean"],
+    }
+)
 def fetch_lfw_pairs(
     *,
     subset="train",
@@ -473,7 +500,7 @@ def fetch_lfw_pairs(
         correlation from the background.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     Returns

@@ -27,6 +27,7 @@ from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._param_validation import InvalidParameterError
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -344,9 +345,7 @@ def test_feature_importance_regression(
     assert set(sorted_features[1:4]) == {"Longitude", "AveOccup", "Latitude"}
 
 
-# TODO(1.3): Remove warning filter
-@pytest.mark.filterwarnings("ignore:`max_features='auto'` has been deprecated in 1.1")
-def test_max_feature_auto():
+def test_max_features():
     # Test if max features is set properly for floats and str.
     X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
     _, n_features = X.shape
@@ -354,11 +353,11 @@ def test_max_feature_auto():
     X_train = X[:2000]
     y_train = y[:2000]
 
-    gbrt = GradientBoostingClassifier(n_estimators=1, max_features="auto")
+    gbrt = GradientBoostingClassifier(n_estimators=1, max_features=None)
     gbrt.fit(X_train, y_train)
-    assert gbrt.max_features_ == int(np.sqrt(n_features))
+    assert gbrt.max_features_ == n_features
 
-    gbrt = GradientBoostingRegressor(n_estimators=1, max_features="auto")
+    gbrt = GradientBoostingRegressor(n_estimators=1, max_features=None)
     gbrt.fit(X_train, y_train)
     assert gbrt.max_features_ == n_features
 
@@ -577,37 +576,98 @@ def test_mem_layout():
     assert 100 == len(clf.estimators_)
 
 
-def test_oob_improvement():
+@pytest.mark.parametrize("GradientBoostingEstimator", GRADIENT_BOOSTING_ESTIMATORS)
+def test_oob_improvement(GradientBoostingEstimator):
     # Test if oob improvement has correct shape and regression test.
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1, subsample=0.5)
-    clf.fit(X, y)
-    assert clf.oob_improvement_.shape[0] == 100
+    estimator = GradientBoostingEstimator(
+        n_estimators=100, random_state=1, subsample=0.5
+    )
+    estimator.fit(X, y)
+    assert estimator.oob_improvement_.shape[0] == 100
     # hard-coded regression test - change if modification in OOB computation
     assert_array_almost_equal(
-        clf.oob_improvement_[:5], np.array([0.19, 0.15, 0.12, -0.12, -0.11]), decimal=2
+        estimator.oob_improvement_[:5],
+        np.array([0.19, 0.15, 0.12, -0.11, 0.11]),
+        decimal=2,
     )
 
 
-def test_oob_improvement_raise():
-    # Test if oob improvement has correct shape.
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1, subsample=1.0)
-    clf.fit(X, y)
+@pytest.mark.parametrize("GradientBoostingEstimator", GRADIENT_BOOSTING_ESTIMATORS)
+def test_oob_scores(GradientBoostingEstimator):
+    # Test if oob scores has correct shape and regression test.
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    estimator = GradientBoostingEstimator(
+        n_estimators=100, random_state=1, subsample=0.5
+    )
+    estimator.fit(X, y)
+    assert estimator.oob_scores_.shape[0] == 100
+    assert estimator.oob_scores_[-1] == pytest.approx(estimator.oob_score_)
+
+    estimator = GradientBoostingEstimator(
+        n_estimators=100,
+        random_state=1,
+        subsample=0.5,
+        n_iter_no_change=5,
+    )
+    estimator.fit(X, y)
+    assert estimator.oob_scores_.shape[0] < 100
+    assert estimator.oob_scores_[-1] == pytest.approx(estimator.oob_score_)
+
+
+@pytest.mark.parametrize(
+    "GradientBoostingEstimator, oob_attribute",
+    [
+        (GradientBoostingClassifier, "oob_improvement_"),
+        (GradientBoostingClassifier, "oob_scores_"),
+        (GradientBoostingClassifier, "oob_score_"),
+        (GradientBoostingRegressor, "oob_improvement_"),
+        (GradientBoostingRegressor, "oob_scores_"),
+        (GradientBoostingRegressor, "oob_score_"),
+    ],
+)
+def test_oob_attributes_error(GradientBoostingEstimator, oob_attribute):
+    """
+    Check that we raise an AttributeError when the OOB statistics were not computed.
+    """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    estimator = GradientBoostingEstimator(
+        n_estimators=100,
+        random_state=1,
+        subsample=1.0,
+    )
+    estimator.fit(X, y)
     with pytest.raises(AttributeError):
-        clf.oob_improvement_
+        estimator.oob_attribute
 
 
 def test_oob_multilcass_iris():
     # Check OOB improvement on multi-class dataset.
-    clf = GradientBoostingClassifier(
+    estimator = GradientBoostingClassifier(
         n_estimators=100, loss="log_loss", random_state=1, subsample=0.5
     )
-    clf.fit(iris.data, iris.target)
-    score = clf.score(iris.data, iris.target)
+    estimator.fit(iris.data, iris.target)
+    score = estimator.score(iris.data, iris.target)
     assert score > 0.9
-    assert clf.oob_improvement_.shape[0] == clf.n_estimators
+    assert estimator.oob_improvement_.shape[0] == estimator.n_estimators
+    assert estimator.oob_scores_.shape[0] == estimator.n_estimators
+    assert estimator.oob_scores_[-1] == pytest.approx(estimator.oob_score_)
+
+    estimator = GradientBoostingClassifier(
+        n_estimators=100,
+        loss="log_loss",
+        random_state=1,
+        subsample=0.5,
+        n_iter_no_change=5,
+    )
+    estimator.fit(iris.data, iris.target)
+    score = estimator.score(iris.data, iris.target)
+    assert estimator.oob_improvement_.shape[0] < estimator.n_estimators
+    assert estimator.oob_scores_.shape[0] < estimator.n_estimators
+    assert estimator.oob_scores_[-1] == pytest.approx(estimator.oob_score_)
+
     # hard-coded regression test - change if modification in OOB computation
     # FIXME: the following snippet does not yield the same results on 32 bits
-    # assert_array_almost_equal(clf.oob_improvement_[:5],
+    # assert_array_almost_equal(estimator.oob_improvement_[:5],
     #                           np.array([12.68, 10.45, 8.18, 6.43, 5.13]),
     #                           decimal=2)
 
@@ -742,6 +802,38 @@ def test_warm_start_clear(Cls):
     assert_array_almost_equal(est_2.predict(X), est.predict(X))
 
 
+@pytest.mark.parametrize("GradientBoosting", GRADIENT_BOOSTING_ESTIMATORS)
+def test_warm_start_state_oob_scores(GradientBoosting):
+    """
+    Check that the states of the OOB scores are cleared when used with `warm_start`.
+    """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    n_estimators = 100
+    estimator = GradientBoosting(
+        n_estimators=n_estimators,
+        max_depth=1,
+        subsample=0.5,
+        warm_start=True,
+        random_state=1,
+    )
+    estimator.fit(X, y)
+    oob_scores, oob_score = estimator.oob_scores_, estimator.oob_score_
+    assert len(oob_scores) == n_estimators
+    assert oob_scores[-1] == pytest.approx(oob_score)
+
+    n_more_estimators = 200
+    estimator.set_params(n_estimators=n_more_estimators).fit(X, y)
+    assert len(estimator.oob_scores_) == n_more_estimators
+    assert_allclose(estimator.oob_scores_[:n_estimators], oob_scores)
+
+    estimator.set_params(n_estimators=n_estimators, warm_start=False).fit(X, y)
+    assert estimator.oob_scores_ is not oob_scores
+    assert estimator.oob_score_ is not oob_score
+    assert_allclose(estimator.oob_scores_, oob_scores)
+    assert estimator.oob_score_ == pytest.approx(oob_score)
+    assert oob_scores[-1] == pytest.approx(oob_score)
+
+
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
 def test_warm_start_smaller_n_estimators(Cls):
     # Test if warm start with smaller n_estimators raises error
@@ -777,8 +869,13 @@ def test_warm_start_oob_switch(Cls):
     est.fit(X, y)
 
     assert_array_equal(est.oob_improvement_[:100], np.zeros(100))
+    assert_array_equal(est.oob_scores_[:100], np.zeros(100))
+
     # the last 10 are not zeros
-    assert_array_equal(est.oob_improvement_[-10:] == 0.0, np.zeros(10, dtype=bool))
+    assert (est.oob_improvement_[-10:] != 0.0).all()
+    assert (est.oob_scores_[-10:] != 0.0).all()
+
+    assert est.oob_scores_[-1] == pytest.approx(est.oob_score_)
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
@@ -796,6 +893,9 @@ def test_warm_start_oob(Cls):
     est_ws.fit(X, y)
 
     assert_array_almost_equal(est_ws.oob_improvement_[:100], est.oob_improvement_[:100])
+    assert_array_almost_equal(est_ws.oob_scores_[:100], est.oob_scores_[:100])
+    assert est.oob_scores_[-1] == pytest.approx(est.oob_score_)
+    assert est_ws.oob_scores_[-1] == pytest.approx(est_ws.oob_score_)
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
@@ -831,6 +931,11 @@ def test_warm_start_sparse(Cls):
         assert_array_almost_equal(
             est_dense.oob_improvement_[:100], est_sparse.oob_improvement_[:100]
         )
+        assert est_dense.oob_scores_[-1] == pytest.approx(est_dense.oob_score_)
+        assert_array_almost_equal(
+            est_dense.oob_scores_[:100], est_sparse.oob_scores_[:100]
+        )
+        assert est_sparse.oob_scores_[-1] == pytest.approx(est_sparse.oob_score_)
         assert_array_almost_equal(y_pred_dense, y_pred_sparse)
 
 
@@ -873,6 +978,8 @@ def test_monitor_early_stopping(Cls):
     assert est.estimators_.shape[0] == 10
     assert est.train_score_.shape[0] == 10
     assert est.oob_improvement_.shape[0] == 10
+    assert est.oob_scores_.shape[0] == 10
+    assert est.oob_scores_[-1] == pytest.approx(est.oob_score_)
 
     # try refit
     est.set_params(n_estimators=30)
@@ -880,6 +987,9 @@ def test_monitor_early_stopping(Cls):
     assert est.n_estimators == 30
     assert est.estimators_.shape[0] == 30
     assert est.train_score_.shape[0] == 30
+    assert est.oob_improvement_.shape[0] == 30
+    assert est.oob_scores_.shape[0] == 30
+    assert est.oob_scores_[-1] == pytest.approx(est.oob_score_)
 
     est = Cls(
         n_estimators=20, max_depth=1, random_state=1, subsample=0.5, warm_start=True
@@ -889,6 +999,8 @@ def test_monitor_early_stopping(Cls):
     assert est.estimators_.shape[0] == 10
     assert est.train_score_.shape[0] == 10
     assert est.oob_improvement_.shape[0] == 10
+    assert est.oob_scores_.shape[0] == 10
+    assert est.oob_scores_[-1] == pytest.approx(est.oob_score_)
 
     # try refit
     est.set_params(n_estimators=30, warm_start=False)
@@ -897,6 +1009,8 @@ def test_monitor_early_stopping(Cls):
     assert est.train_score_.shape[0] == 30
     assert est.estimators_.shape[0] == 30
     assert est.oob_improvement_.shape[0] == 30
+    assert est.oob_scores_.shape[0] == 30
+    assert est.oob_scores_[-1] == pytest.approx(est.oob_score_)
 
 
 def test_complete_classification():
@@ -1265,14 +1379,14 @@ def test_gradient_boosting_with_init_pipeline():
 
     # Passing sample_weight to a pipeline raises a ValueError. This test makes
     # sure we make the distinction between ValueError raised by a pipeline that
-    # was passed sample_weight, and a ValueError raised by a regular estimator
-    # whose input checking failed.
+    # was passed sample_weight, and a InvalidParameterError raised by a regular
+    # estimator whose input checking failed.
     invalid_nu = 1.5
     err_msg = (
         "The 'nu' parameter of NuSVR must be a float in the"
         f" range (0.0, 1.0]. Got {invalid_nu} instead."
     )
-    with pytest.raises(ValueError, match=re.escape(err_msg)):
+    with pytest.raises(InvalidParameterError, match=re.escape(err_msg)):
         # Note that NuSVR properly supports sample_weight
         init = NuSVR(gamma="auto", nu=invalid_nu)
         gb = GradientBoostingRegressor(init=init)
@@ -1307,30 +1421,3 @@ def test_gbr_degenerate_feature_importances():
     y = np.ones((10,))
     gbr = GradientBoostingRegressor().fit(X, y)
     assert_array_equal(gbr.feature_importances_, np.zeros(10, dtype=np.float64))
-
-
-# TODO(1.3): Remove
-def test_loss_deprecated():
-    est1 = GradientBoostingClassifier(loss="deviance", random_state=0)
-
-    with pytest.warns(FutureWarning, match=r"The loss.* 'deviance' was deprecated"):
-        est1.fit(X, y)
-
-    est2 = GradientBoostingClassifier(loss="log_loss", random_state=0)
-    est2.fit(X, y)
-    assert_allclose(est1.predict(X), est2.predict(X))
-
-
-# TODO(1.3): remove
-@pytest.mark.parametrize(
-    "Estimator", [GradientBoostingClassifier, GradientBoostingRegressor]
-)
-def test_loss_attribute_deprecation(Estimator):
-    # Check that we raise the proper deprecation warning if accessing
-    # `loss_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator().fit(X, y)
-
-    with pytest.warns(FutureWarning, match="`loss_` was deprecated"):
-        est.loss_

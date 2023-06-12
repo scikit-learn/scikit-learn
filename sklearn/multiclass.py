@@ -44,7 +44,7 @@ from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
-from .metrics.pairwise import euclidean_distances
+from .metrics.pairwise import pairwise_distances_argmin
 from .utils import check_random_state
 from .utils._param_validation import HasMethods, Interval
 from .utils._tags import _safe_tags
@@ -56,9 +56,7 @@ from .utils.multiclass import (
     _ovr_decision_function,
 )
 from .utils.metaestimators import _safe_split, available_if
-from .utils.fixes import delayed
-
-from joblib import Parallel
+from .utils.parallel import delayed, Parallel
 
 __all__ = [
     "OneVsRestClassifier",
@@ -205,7 +203,7 @@ class OneVsRestClassifier(
     estimator : estimator object
         A regressor or a classifier that implements :term:`fit`.
         When a classifier is passed, :term:`decision_function` will be used
-        in priority and it will fallback to :term`predict_proba` if it is not
+        in priority and it will fallback to :term:`predict_proba` if it is not
         available.
         When a regressor is passed, :term:`predict` is used.
 
@@ -261,8 +259,10 @@ class OneVsRestClassifier(
 
     See Also
     --------
-    MultiOutputClassifier : Alternate way of extending an estimator for
-        multilabel classification.
+    OneVsOneClassifier : One-vs-one multiclass strategy.
+    OutputCodeClassifier : (Error-Correcting) Output-Code multiclass strategy.
+    sklearn.multioutput.MultiOutputClassifier : Alternate way of extending an
+        estimator for multilabel classification.
     sklearn.preprocessing.MultiLabelBinarizer : Transform iterable of iterables
         to binary indicator matrix.
 
@@ -301,10 +301,10 @@ class OneVsRestClassifier(
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
+        y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_classes)
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
@@ -356,10 +356,10 @@ class OneVsRestClassifier(
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
+        y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_classes)
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
@@ -419,12 +419,12 @@ class OneVsRestClassifier(
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         Returns
         -------
-        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
+        y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_classes)
             Predicted multi-class targets.
         """
         check_is_fitted(self)
@@ -468,12 +468,12 @@ class OneVsRestClassifier(
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        T : (sparse) array-like of shape (n_samples, n_classes)
+        T : array-like of shape (n_samples, n_classes)
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
         """
@@ -588,7 +588,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     estimator : estimator object
         A regressor or a classifier that implements :term:`fit`.
         When a classifier is passed, :term:`decision_function` will be used
-        in priority and it will fallback to :term`predict_proba` if it is not
+        in priority and it will fallback to :term:`predict_proba` if it is not
         available.
         When a regressor is passed, :term:`predict` is used.
 
@@ -629,6 +629,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     See Also
     --------
     OneVsRestClassifier : One-vs-all multiclass strategy.
+    OutputCodeClassifier : (Error-Correcting) Output-Code multiclass strategy.
 
     Examples
     --------
@@ -640,7 +641,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, test_size=0.33, shuffle=True, random_state=0)
     >>> clf = OneVsOneClassifier(
-    ...     LinearSVC(random_state=0)).fit(X_train, y_train)
+    ...     LinearSVC(dual="auto", random_state=0)).fit(X_train, y_train)
     >>> clf.predict(X_test[:10])
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
@@ -659,7 +660,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         y : array-like of shape (n_samples,)
@@ -714,7 +715,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix) of shape (n_samples, n_features)
             Data.
 
         y : array-like of shape (n_samples,)
@@ -780,7 +781,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         Returns
@@ -860,8 +861,8 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     classifiers are used to project new points in the class space and the class
     closest to the points is chosen. The main advantage of these strategies is
     that the number of classifiers used can be controlled by the user, either
-    for compressing the model (0 < code_size < 1) or for making the model more
-    robust to errors (code_size > 1). See the documentation for more details.
+    for compressing the model (0 < `code_size` < 1) or for making the model more
+    robust to errors (`code_size` > 1). See the documentation for more details.
 
     Read more in the :ref:`User Guide <ecoc>`.
 
@@ -972,7 +973,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         y : array-like of shape (n_samples,)
@@ -1000,12 +1001,12 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         # FIXME: there are more elaborate methods than generating the codebook
         # randomly.
         self.code_book_ = random_state.uniform(size=(n_classes, code_size_))
-        self.code_book_[self.code_book_ > 0.5] = 1
+        self.code_book_[self.code_book_ > 0.5] = 1.0
 
         if hasattr(self.estimator, "decision_function"):
-            self.code_book_[self.code_book_ != 1] = -1
+            self.code_book_[self.code_book_ != 1] = -1.0
         else:
-            self.code_book_[self.code_book_ != 1] = 0
+            self.code_book_[self.code_book_ != 1] = 0.0
 
         classes_index = {c: i for i, c in enumerate(self.classes_)}
 
@@ -1030,7 +1031,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         Returns
@@ -1039,6 +1040,13 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             Predicted multi-class targets.
         """
         check_is_fitted(self)
-        Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
-        pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)
+        # ArgKmin only accepts C-contiguous array. The aggregated predictions need to be
+        # transposed. We therefore create a F-contiguous array to avoid a copy and have
+        # a C-contiguous array after the transpose operation.
+        Y = np.array(
+            [_predict_binary(e, X) for e in self.estimators_],
+            order="F",
+            dtype=np.float64,
+        ).T
+        pred = pairwise_distances_argmin(Y, self.code_book_, metric="euclidean")
         return self.classes_[pred]

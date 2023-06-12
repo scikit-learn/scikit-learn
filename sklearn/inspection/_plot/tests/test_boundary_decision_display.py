@@ -38,6 +38,16 @@ def fitted_clf():
     return LogisticRegression().fit(X, y)
 
 
+def test_input_data_dimension(pyplot):
+    """Check that we raise an error when `X` does not have exactly 2 features."""
+    X, y = make_classification(n_samples=10, n_features=4, random_state=0)
+
+    clf = LogisticRegression().fit(X, y)
+    msg = "n_features must be equal to 2. Got 4 instead."
+    with pytest.raises(ValueError, match=msg):
+        DecisionBoundaryDisplay.from_estimator(estimator=clf, X=X)
+
+
 def test_check_boundary_response_method_auto():
     """Check _check_boundary_response_method behavior with 'auto'."""
 
@@ -202,8 +212,10 @@ def test_decision_boundary_display(pyplot, fitted_clf, response_method, plot_met
         ),
         (
             "auto",
-            "MyClassifier has none of the following attributes: decision_function, "
-            "predict_proba, predict",
+            (
+                "MyClassifier has none of the following attributes: decision_function, "
+                "predict_proba, predict"
+            ),
         ),
         (
             "bad_method",
@@ -296,7 +308,7 @@ def test_dataframe_labels_used(pyplot, fitted_clf):
     assert ax.get_xlabel() == "hello"
     assert ax.get_ylabel() == "world"
 
-    # labels get overriden only if provided to the `plot` method
+    # labels get overridden only if provided to the `plot` method
     disp.plot(ax=ax, xlabel="overwritten_x", ylabel="overwritten_y")
     assert ax.get_xlabel() == "overwritten_x"
     assert ax.get_ylabel() == "overwritten_y"

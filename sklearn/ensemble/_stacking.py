@@ -8,7 +8,6 @@ from copy import deepcopy
 from numbers import Integral
 
 import numpy as np
-from joblib import Parallel
 import scipy.sparse as sparse
 
 from ..base import clone
@@ -31,11 +30,14 @@ from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted
-from ..utils.validation import column_or_1d
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import HasMethods, StrOptions
-from ..utils.validation import _check_feature_names_in
+from ..utils.validation import (
+    _check_feature_names_in,
+    _check_response_method,
+    check_is_fitted,
+    column_or_1d,
+)
 
 
 def _estimator_has(attr):
@@ -147,20 +149,15 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         if estimator == "drop":
             return None
         if method == "auto":
-            if getattr(estimator, "predict_proba", None):
-                return "predict_proba"
-            elif getattr(estimator, "decision_function", None):
-                return "decision_function"
-            else:
-                return "predict"
-        else:
-            if not hasattr(estimator, method):
-                raise ValueError(
-                    "Underlying estimator {} does not implement the method {}.".format(
-                        name, method
-                    )
-                )
-            return method
+            method = ["predict_proba", "decision_function", "predict"]
+        try:
+            method_name = _check_response_method(estimator, method).__name__
+        except AttributeError as e:
+            raise ValueError(
+                f"Underlying estimator {name} does not implement the method {method}."
+            ) from e
+
+        return method_name
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
@@ -324,6 +321,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(
             self, input_features, generate_names=self.passthrough
         )
@@ -405,6 +403,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Base estimators which will be stacked together. Each element of the
         list is defined as a tuple of string (i.e. name) and an estimator
         instance. An estimator can be set to 'drop' using `set_params`.
+
+        The type of estimator is generally expected to be a classifier.
+        However, one can pass a regressor for some use case (e.g. ordinal
+        regression).
 
     final_estimator : estimator, default=None
         A classifier which will be used to combine the base estimators.
@@ -497,6 +499,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
@@ -517,6 +520,12 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     of a binary classification problem. Indeed, both feature will be perfectly
     collinear.
 
+    In some cases (e.g. ordinal regression), one can pass regressors as the
+    first layer of the :class:`StackingClassifier`. However, note that `y` will
+    be internally encoded in a numerically increasing order or lexicographic
+    order. If this ordering is not adequate, one should manually numerically
+    encode the classes in the desired order.
+
     References
     ----------
     .. [1] Wolpert, David H. "Stacked generalization." Neural networks 5.2
@@ -535,7 +544,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     >>> estimators = [
     ...     ('rf', RandomForestClassifier(n_estimators=10, random_state=42)),
     ...     ('svr', make_pipeline(StandardScaler(),
-    ...                           LinearSVC(random_state=42)))
+    ...                           LinearSVC(dual="auto", random_state=42)))
     ... ]
     >>> clf = StackingClassifier(
     ...     estimators=estimators, final_estimator=LogisticRegression()
@@ -585,6 +594,29 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
                 )
             )
 
+    def _validate_estimators(self):
+        """Overload the method of `_BaseHeterogeneousEnsemble` to be more
+        lenient towards the type of `estimators`.
+
+        Regressors can be accepted for some cases such as ordinal regression.
+        """
+        if len(self.estimators) == 0:
+            raise ValueError(
+                "Invalid 'estimators' attribute, 'estimators' should be a "
+                "non-empty list of (string, estimator) tuples."
+            )
+        names, estimators = zip(*self.estimators)
+        self._validate_names(names)
+
+        has_estimator = any(est != "drop" for est in estimators)
+        if not has_estimator:
+            raise ValueError(
+                "All estimators are dropped. At least one is required "
+                "to be an estimator."
+            )
+
+        return names, estimators
+
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 
@@ -595,7 +627,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
-            Target values.
+            Target values. Note that `y` will be internally encoded in
+            numerically increasing order or lexicographic order. If the order
+            matter (e.g. for ordinal regression), one should numerically encode
+            the target `y` before calling :term:`fit`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
@@ -824,6 +859,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
@@ -851,7 +887,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     >>> X, y = load_diabetes(return_X_y=True)
     >>> estimators = [
     ...     ('lr', RidgeCV()),
-    ...     ('svr', LinearSVR(random_state=42))
+    ...     ('svr', LinearSVR(dual="auto", random_state=42))
     ... ]
     >>> reg = StackingRegressor(
     ...     estimators=estimators,
@@ -935,6 +971,30 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             Prediction outputs for each estimator.
         """
         return self._transform(X)
+
+    def fit_transform(self, X, y, sample_weight=None):
+        """Fit the estimators and return the predictions for X for each estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if all underlying estimators
+            support sample weights.
+
+        Returns
+        -------
+        y_preds : ndarray of shape (n_samples, n_estimators)
+            Prediction outputs for each estimator.
+        """
+        return super().fit_transform(X, y, sample_weight=sample_weight)
 
     def _sk_visual_block_(self):
         # If final_estimator's default changes then this should be
