@@ -5,8 +5,16 @@
 import numpy as np
 
 from scipy import sparse
+from ._param_validation import validate_params, StrOptions
 
 
+@validate_params(
+    {
+        "class_weight": [dict, StrOptions({"balanced"}), None],
+        "classes": [np.ndarray],
+        "y": ["array-like"],
+    }
+)
 def compute_class_weight(class_weight, *, classes, y):
     """Estimate class weights for unbalanced datasets.
 
