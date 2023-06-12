@@ -613,7 +613,7 @@ Changelog
 - |Enhancement| A new parameter `sparse_output` was added to
   :class:`preprocessing.SplineTransformer`, available as of SciPy 1.8. If
   `sparse_output=True`, :class:`preprocessing.SplineTransformer` returns a sparse
-   CSR matrix. :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
+  CSR matrix. :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| Adds a `feature_name_combiner` parameter to
   :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
