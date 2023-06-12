@@ -1145,7 +1145,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     " of scipy `>=1.9.2` or alter the `SplineTransformer`"
                     " transformer to produce fewer than 2^31 output features"
                 )
-            XBS = sparse.hstack(output_list)
+            XBS = sparse.hstack(output_list, format="csr")
         elif self.sparse_output:
             # TODO: Remove ones scipy 1.10 is the minimum version. See comments above.
             XBS = sparse.csr_matrix(XBS)

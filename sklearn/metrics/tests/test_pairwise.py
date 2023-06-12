@@ -298,7 +298,8 @@ _wminkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
 def callable_rbf_kernel(x, y, **kwds):
     # Callable version of pairwise.rbf_kernel.
     K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
-    return K
+    # unpack the output since this is a scalar packed in a 0-dim array
+    return K.item()
 
 
 @pytest.mark.parametrize(
