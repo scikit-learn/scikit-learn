@@ -896,6 +896,15 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
               one-versus-rest reduction for multiclass classification. Be aware that
               the memory usage of this solver has a quadratic dependency on
               `n_features` because it explicitly computes the Hessian matrix.
+            - 'newton-lsmr' is a good choice for multiclass classification.
+               Uses Newton-Raphson steps formulated as iteratively reweighted least
+               squares (IRLS), which is solved by LSMR. Contrary to `newton-cholesky`,
+               this solver does not explicitly materialize the Hessian matrix but
+               instead leverages knowledge about its structure to incrementally solve
+               the least squares problems via a series of matrix vector operations
+               where the matrices have size `(n_samples, n_features)`.
+               Additionaly, this is numerically more stable for ill-conditioned X
+               compared to `newton-cholesky`.
 
         .. warning::
            The choice of the algorithm depends on the penalty chosen.
