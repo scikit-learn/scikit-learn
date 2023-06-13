@@ -294,7 +294,7 @@ cdef class BallTree:
     and then calling any required public methods through this variable.
     """
 
-    cdef object __ball_tree
+    cdef object _ball_tree
 
     def __init__(
         self,
@@ -304,18 +304,17 @@ cdef class BallTree:
         sample_weight=None,
         **kwargs,
     ):
-        dtype = data.dtype
-        if dtype == np.float64:
+        if isinstance(data, list) or data.dtype == np.float64:
             specialized_class = BallTree64
-        elif dtype == np.float32:
+        elif data.dtype == np.float32:
             specialized_class = BallTree32
         else:
             raise ValueError(
-                f"Unexpected dtype {dtype} provided. Please select a dtype from"
-                " {np.float32, np.float64}"
+                f"Unexpected dtype {data.dtype} provided. Please select a"
+                 " dtype from {np.float32, np.float64}"
             )
 
-        self.__ball_tree = specialized_class(
+        self._ball_tree = specialized_class(
             data=data,
             leaf_size=leaf_size,
             metric=metric,
@@ -338,7 +337,7 @@ cdef class BallTree:
         breadth_first=False,
         sort_results=True,
     ):
-        return self.__ball_tree.query(
+        return self._ball_tree.query(
             X=X,
             k=k,
             return_distance=return_distance,
@@ -355,7 +354,7 @@ cdef class BallTree:
         count_only=False,
         sort_results=False,
     ):
-        return self.__ball_tree.query_radius(
+        return self._ball_tree.query_radius(
             X=X,
             r=r,
             return_distance=return_distance,
@@ -373,7 +372,7 @@ cdef class BallTree:
         breadth_first=True,
         return_log=False,
     ):
-        return self.__ball_tree.kernel_density(
+        return self._ball_tree.kernel_density(
             X=X,
             h=h,
             kernel=kernel,
@@ -384,7 +383,7 @@ cdef class BallTree:
         )
 
     def two_point_correlation(self, X, r, dualtree=False):
-        return self.__ball_tree.two_point_correlation(
+        return self._ball_tree.two_point_correlation(
             X=X,
             r=r,
             dualtree=dualtree,

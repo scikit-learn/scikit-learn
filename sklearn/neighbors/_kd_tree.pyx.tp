@@ -346,7 +346,7 @@ cdef class KDTree:
     and then calling any required public methods through this variable.
     """
 
-    cdef object __kd_tree
+    cdef object _kd_tree
 
     def __init__(
         self,
@@ -357,9 +357,9 @@ cdef class KDTree:
         **kwargs,
     ):
         dtype = data.dtype
-        if dtype == np.float64:
+        if data.dtype == np.float64:
             specialized_class = KDTree64
-        elif dtype == np.float32:
+        elif data.dtype == np.float32:
             specialized_class = KDTree32
         else:
             raise ValueError(
@@ -367,7 +367,7 @@ cdef class KDTree:
                 " {np.float32, np.float64}"
             )
 
-        self.__kd_tree = specialized_class(
+        self._kd_tree = specialized_class(
             data=data,
             leaf_size=leaf_size,
             metric=metric,
@@ -390,7 +390,7 @@ cdef class KDTree:
         breadth_first=False,
         sort_results=True,
     ):
-        return self.__kd_tree.query(
+        return self._kd_tree.query(
             X=X,
             k=k,
             return_distance=return_distance,
@@ -407,7 +407,7 @@ cdef class KDTree:
         count_only=False,
         sort_results=False,
     ):
-        return self.__kd_tree.query_radius(
+        return self._kd_tree.query_radius(
             X=X,
             r=r,
             return_distance=return_distance,
@@ -425,7 +425,7 @@ cdef class KDTree:
         breadth_first=True,
         return_log=False,
     ):
-        return self.__kd_tree.kernel_density(
+        return self._kd_tree.kernel_density(
             X=X,
             h=h,
             kernel=kernel,
@@ -436,7 +436,7 @@ cdef class KDTree:
         )
 
     def two_point_correlation(self, X, r, dualtree=False):
-        return self.__kd_tree.two_point_correlation(
+        return self._kd_tree.two_point_correlation(
             X=X,
             r=r,
             dualtree=dualtree,
