@@ -145,11 +145,11 @@ Changes impacting all modules
   :pr:`26082` by :user:`Jérémie du Boisberranger <jeremiedbb>` and
   :user:`Olivier Grisel <ogrisel>`.
 
-- |Enhancement| All estimators now recognizes the column names from any DataFrame
-  the adopts the
+- |Enhancement| All estimators now recognizes the column names from any dataframe
+  that adopts the
   `DataFrame Interchange Protocol <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__.
-  DataFrames that return a correct representation through `np.asarray(df)` will
-  work with non-meta estimators.
+  Dataframes that return a correct representation through `np.asarray(df)` is expected
+  to work with our estimators and functions.
   :pr:`26464` by `Thomas Fan`_.
 
 Changelog
