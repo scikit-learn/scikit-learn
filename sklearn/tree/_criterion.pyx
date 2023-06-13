@@ -34,7 +34,9 @@ from ._utils cimport WeightedMedianCalculator
 cdef double EPSILON = 10 * np.finfo('double').eps
 
 cdef class BaseCriterion:
-    """This is an abstract interface for criterion. For example, a tree model could
+    """This is an abstract interface for criterion.
+
+    For example, a tree model could
     be either supervisedly, or unsupervisedly computing impurity on samples of
     covariates, or labels, or both. Although scikit-learn currently only contains
     supervised tree methods, this class enables 3rd party packages to leverage

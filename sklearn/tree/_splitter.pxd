@@ -97,7 +97,7 @@ cdef class BaseSplitter:
 cdef class Splitter(BaseSplitter):
     cdef public Criterion criterion      # Impurity criterion
     cdef const DOUBLE_t[:, ::1] y
-    
+
     cdef int init(
         self,
         object X,

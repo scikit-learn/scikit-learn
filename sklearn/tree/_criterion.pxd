@@ -11,7 +11,7 @@
 
 # See _criterion.pyx for implementation details.
 
-# from libcpp.vector cimport vector
+from libcpp.vector cimport vector
 
 from ._tree cimport DTYPE_t          # Type of X
 from ._tree cimport DOUBLE_t         # Type of y, sample_weight
