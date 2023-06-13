@@ -113,9 +113,9 @@ y = [0, 1]
 
 # %%
 # Create an instance of the CustomEstimator
-
 estimator = CustomEstimator()
 
+# %%
 # try to predict before data was fitted
 estimator.predict(X)
 
@@ -125,18 +125,17 @@ estimator.__sklearn_is_fitted__()
 
 # %%
 # Now fit the estimator to the training data
-
 estimator.fit(X, y)
 
 # %%
 # Perform predictions on the same dataset
-
 predictions = estimator.predict(X)
 
 # %%
 # Calculate the score of the estimator on the training data
-
 score = estimator.score(X, y)
+
+# %%
 # this time `__sklearn_is_fitted__` return True
 estimator.__sklearn_is_fitted__()
 
