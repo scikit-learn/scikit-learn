@@ -11,6 +11,8 @@
 
 # See _criterion.pyx for implementation details.
 
+# from libcpp.vector cimport vector
+
 from ._tree cimport DTYPE_t          # Type of X
 from ._tree cimport DOUBLE_t         # Type of y, sample_weight
 from ._tree cimport SIZE_t           # Type for indices and counters
@@ -19,7 +21,7 @@ from ._tree cimport UINT32_t         # Unsigned 32 bit integer
 
 
 cdef class BaseCriterion:
-    """Abstract interface for criterion."""    
+    """Abstract interface for criterion."""
 
     # Internal structures
     cdef const DOUBLE_t[:] sample_weight  # Sample weights
@@ -70,13 +72,18 @@ cdef class BaseCriterion:
         SIZE_t end
     ) noexcept nogil
 
+    # cdef void node_samples(
+    #     self,
+    #     vector[vector[DOUBLE_t]]* dest
+    # ) noexcept nogil
+
 cdef class Criterion(BaseCriterion):
     """Abstract interface for supervised impurity criteria."""
 
     cdef const DOUBLE_t[:, ::1] y         # Values of y
     cdef SIZE_t n_missing                # Number of missing values for the feature being evaluated
     cdef bint missing_go_to_left         # Whether missing values go to the left node
-    
+
     cdef int init(
         self,
         const DOUBLE_t[:, ::1] y,
