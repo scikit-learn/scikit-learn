@@ -14,6 +14,7 @@ import numpy as np
 cimport numpy as cnp
 
 from libcpp.vector cimport vector
+from libcpp.unordered_map cimport unordered_map
 
 ctypedef cnp.npy_float32 DTYPE_t          # Type of X
 ctypedef cnp.npy_float64 DOUBLE_t         # Type of y, sample_weight
@@ -36,6 +37,7 @@ cdef struct Node:
     DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
     unsigned char missing_go_to_left     # Whether features have missing values
 
+
 cdef class BaseTree:
     # Inner structures: values are stored separately from node structure,
     # since size is determined at runtime.
@@ -45,7 +47,14 @@ cdef class BaseTree:
     cdef Node* nodes                     # Array of nodes
 
     cdef SIZE_t value_stride             # The dimensionality of a vectorized output per sample
-    cdef double* value                   # Array of values prediction values for each node        
+    cdef double* value                   # Array of values prediction values for each node
+
+    # Enables the use of tree to store distributions of the output to allow
+    # arbitrary usage of the the leaves. This is used in the quantile
+    # estimators for example.
+    # for storing samples at each leaf node with leaf's node ID as the key and
+    # the sample values as the value
+    cdef unordered_map[SIZE_t, vector[vector[DOUBLE_t]]] value_samples
 
     # Generic Methods: These are generic methods used by any tree.
     cdef int _resize(self, SIZE_t capacity) except -1 nogil
@@ -61,7 +70,7 @@ cdef class BaseTree:
         double weighted_n_node_samples,
         unsigned char missing_go_to_left
     ) except -1 nogil
-    
+
     # Python API methods: These are methods exposed to Python
     cpdef cnp.ndarray apply(self, object X)
     cdef cnp.ndarray _apply_dense(self, object X)
@@ -101,10 +110,10 @@ cdef class Tree(BaseTree):
     # The Supervised Tree object is a binary tree structure constructed by the
     # TreeBuilder. The tree structure is used for predictions and
     # feature importances.
-    # 
+    #
     # Value of upstream properties:
     # - value_stride = n_outputs * max_n_classes
-    # - value = (capacity, n_outputs, max_n_classes) array of values          
+    # - value = (capacity, n_outputs, max_n_classes) array of values
 
     # Input/Output layout for supervised tree
     cdef public SIZE_t n_features        # Number of features in X
@@ -136,6 +145,8 @@ cdef class TreeBuilder:
     cdef double min_weight_leaf         # Minimum weight in a leaf
     cdef SIZE_t max_depth               # Maximal tree depth
     cdef double min_impurity_decrease   # Impurity threshold for early stopping
+
+    cdef unsigned char store_leaf_values # Whether to store leaf values
 
     cpdef build(
         self,

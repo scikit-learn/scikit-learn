@@ -158,15 +158,23 @@ cdef struct StackRecord:
 cdef class DepthFirstTreeBuilder(TreeBuilder):
     """Build a decision tree in depth-first fashion."""
 
-    def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
-                  SIZE_t min_samples_leaf, double min_weight_leaf,
-                  SIZE_t max_depth, double min_impurity_decrease):
+    def __cinit__(
+        self,
+        Splitter splitter,
+        SIZE_t min_samples_split,
+        SIZE_t min_samples_leaf,
+        double min_weight_leaf,
+        SIZE_t max_depth,
+        double min_impurity_decrease,
+        unsigned char store_leaf_values=False
+    ):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
+        self.store_leaf_values = store_leaf_values
 
     cpdef build(
         self,
@@ -220,6 +228,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef bint first = 1
         cdef SIZE_t max_depth_seen = -1
         cdef int rc = 0
+
+        cdef int node_idx
 
         cdef stack[StackRecord] builder_stack
         cdef StackRecord stack_record
@@ -308,6 +318,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "is_left": 1,
                         "impurity": split.impurity_left,
                         "n_constant_features": n_constant_features})
+                elif self.store_leaf_values and is_leaf:
+                    with gil:
+                        print('Storing leaf values...')
+
+                    # copy leaf values to leaf_values array
+                    splitter.node_samples(&tree.value_samples[node_id])
 
                 if depth > max_depth_seen:
                     max_depth_seen = depth
@@ -317,7 +333,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
             if rc >= 0:
                 tree.max_depth = max_depth_seen
-        
+
         # free the memory created for the SplitRecord pointer
         free(split_ptr)
 
@@ -364,10 +380,17 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     """
     cdef SIZE_t max_leaf_nodes
 
-    def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
-                  SIZE_t min_samples_leaf,  min_weight_leaf,
-                  SIZE_t max_depth, SIZE_t max_leaf_nodes,
-                  double min_impurity_decrease):
+    def __cinit__(
+        self,
+        Splitter splitter,
+        SIZE_t min_samples_split,
+        SIZE_t min_samples_leaf,
+        double min_weight_leaf,
+        SIZE_t max_depth,
+        SIZE_t max_leaf_nodes,
+        double min_impurity_decrease,
+        unsigned char store_leaf_values=False,
+    ):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -375,6 +398,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
+        self.store_leaf_values = store_leaf_values
 
     cpdef build(
         self,
@@ -488,7 +512,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef SplitRecord* split_ptr = <SplitRecord *>malloc(splitter.pointer_size())
-        
+
         cdef SIZE_t node_id
         cdef SIZE_t n_node_samples
         cdef SIZE_t n_constant_features = 0
@@ -553,7 +577,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             res.improvement = 0.0
             res.impurity_left = impurity
             res.impurity_right = impurity
-        
+
         free(split_ptr)
         return 0
 
@@ -564,7 +588,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
 cdef class BaseTree:
     """Base class for Cython tree models.
-    
+
     Downstream classes must implement
     """
     cdef int _resize(
@@ -622,7 +646,7 @@ cdef class BaseTree:
         Node* node
     ) except -1 nogil:
         """Set split node data.
-        
+
         Parameters
         ----------
         split_node : SplitRecord*
@@ -641,7 +665,7 @@ cdef class BaseTree:
         Node* node
     ) except -1 nogil:
         """Set leaf node data.
-        
+
         Parameters
         ----------
         split_node : SplitRecord*
@@ -655,9 +679,12 @@ cdef class BaseTree:
         node.threshold = _TREE_UNDEFINED
         return 1
 
-    cdef DTYPE_t _compute_feature(self, const DTYPE_t[:, :] X_ndarray,
-            SIZE_t sample_index,
-            Node *node) noexcept nogil:
+    cdef DTYPE_t _compute_feature(
+        self,
+        const DTYPE_t[:, :] X_ndarray,
+        SIZE_t sample_index,
+        Node *node
+    ) noexcept nogil:
         """Compute feature from a given data matrix, X.
 
         In axis-aligned trees, this is simply the value in the column of X
@@ -668,7 +695,7 @@ cdef class BaseTree:
         return feature
 
     cdef SIZE_t _add_node(
-        self, 
+        self,
         SIZE_t parent,
         bint is_left,
         bint is_leaf,
@@ -679,7 +706,9 @@ cdef class BaseTree:
         unsigned char missing_go_to_left
     ) except -1 nogil:
         """Add a node to the tree.
+
         The new node registers itself as the child of its parent.
+
         Parameters
         ----------
         parent : SIZE_t
@@ -697,7 +726,7 @@ cdef class BaseTree:
             The number of samples in the node.
         weighted_n_node_samples : double
             The weight of the samples in the node.
-            
+
         Returns (size_t)(-1) on error.
         """
         cdef SIZE_t node_id = self.node_count
@@ -719,12 +748,12 @@ cdef class BaseTree:
 
         if is_leaf:
             if self._set_leaf_node(split_node, node) != 1:
-                 with gil:
-                     raise RuntimeError
+                with gil:
+                    raise RuntimeError
         else:
             if self._set_split_node(split_node, node) != 1:
-                 with gil:
-                     raise RuntimeError
+                with gil:
+                    raise RuntimeError
             node.missing_go_to_left = missing_go_to_left
 
         self.node_count += 1
@@ -796,8 +825,8 @@ cdef class BaseTree:
 
         # Extract input
         cdef const DTYPE_t[:] X_data = X.data
-        cdef const INT32_t[:] X_indices  = X.indices
-        cdef const INT32_t[:] X_indptr  = X.indptr
+        cdef const INT32_t[:] X_indices = X.indices
+        cdef const INT32_t[:] X_indptr = X.indptr
 
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t n_features = X.shape[1]
@@ -928,8 +957,8 @@ cdef class BaseTree:
 
         # Extract input
         cdef const DTYPE_t[:] X_data = X.data
-        cdef const INT32_t[:] X_indices  = X.indices
-        cdef const INT32_t[:] X_indptr  = X.indptr
+        cdef const INT32_t[:] X_indices = X.indices
+        cdef const INT32_t[:] X_indptr = X.indptr
 
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t n_features = X.shape[1]
@@ -1043,7 +1072,7 @@ cdef class BaseTree:
                     # ... and node.right_child != _TREE_LEAF:
                     self._compute_feature_importances(
                         importances, node)
-                        
+
                 node += 1
 
         for i in range(self.n_features):
@@ -1065,7 +1094,7 @@ cdef class BaseTree:
         Node* node
     ) noexcept nogil:
         """Compute feature importances from a Node in the Tree.
-        
+
         Wrapped in a private function to allow subclassing that
         computes feature importances.
         """
@@ -1320,6 +1349,9 @@ cdef class Tree(BaseTree):
         self.capacity = 0
         self.value = NULL
         self.nodes = NULL
+
+        # initialize the hash map for the value samples
+        self.value_samples = unordered_map[SIZE_t, vector[vector[DOUBLE_t]]]()
 
     def __dealloc__(self):
         """Destructor."""

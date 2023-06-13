@@ -46,7 +46,7 @@ cdef class BaseCriterion:
     in current node and in children nodes.
 
     This object stores methods on how to calculate how good a split is using
-    a set API. 
+    a set API.
 
     Samples in the "current" node are stored in `samples[start:end]` which is
     partitioned around `pos` (an index in `start:end`) so that:
@@ -186,9 +186,9 @@ cdef class BaseCriterion:
     ) noexcept nogil:
         """Abstract method which will set sample pointers in the criterion.
 
-        The dataset array that we compute criteria on is assumed to consist of 'N' 
-        ordered samples or rows (i.e. sorted). Since we pass this by reference, we 
-        use sample pointers to move the start and end around to consider only a subset of data. 
+        The dataset array that we compute criteria on is assumed to consist of 'N'
+        ordered samples or rows (i.e. sorted). Since we pass this by reference, we
+        use sample pointers to move the start and end around to consider only a subset of data.
         This function should also update relevant statistics that the class uses to compute the final criterion.
 
         Parameters
@@ -252,9 +252,27 @@ cdef class Criterion(BaseCriterion):
             Number of missing values for specific feature.
         """
         pass
-      
+
     cdef void init_sum_missing(self):
         """Init sum_missing to hold sums for missing values."""
+
+    cdef void node_samples(
+        self,
+        vector[vector[DOUBLE_t]]* dest
+    ) noexcept nogil:
+        cdef SIZE_t i, j
+
+        # Resize the destination vector of vectors
+        dest.resize(self.n_node_samples)
+
+        # Loop over the samples
+        for i in range(self.n_node_samples):
+            # Get the index of the current sample
+            j = self.sample_indices[self.start + i]
+
+            # Get the sample values for each output
+            for k in range(self.n_outputs):
+                dest[i][k].push_back(self.y[j, k])
 
 cdef inline void _move_sums_classification(
     ClassificationCriterion criterion,

@@ -72,10 +72,6 @@ cdef class BaseCriterion:
         SIZE_t end
     ) noexcept nogil
 
-    # cdef void node_samples(
-    #     self,
-    #     vector[vector[DOUBLE_t]]* dest
-    # ) noexcept nogil
 
 cdef class Criterion(BaseCriterion):
     """Abstract interface for supervised impurity criteria."""
@@ -93,6 +89,11 @@ cdef class Criterion(BaseCriterion):
     ) except -1 nogil
     cdef void init_sum_missing(self)
     cdef void init_missing(self, SIZE_t n_missing) noexcept nogil
+
+    cdef void node_samples(
+        self,
+        vector[vector[DOUBLE_t]]* dest
+    ) noexcept nogil
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""

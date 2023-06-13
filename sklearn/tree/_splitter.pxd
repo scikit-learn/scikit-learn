@@ -10,6 +10,7 @@
 # License: BSD 3 clause
 
 # See _splitter.pyx for details.
+from libcpp.vector cimport vector
 
 from ._criterion cimport BaseCriterion, Criterion
 
@@ -105,6 +106,8 @@ cdef class Splitter(BaseSplitter):
         const DOUBLE_t[:] sample_weight,
         const unsigned char[::1] feature_has_missing,
     ) except -1
+
+    cdef void node_samples(self, vector[vector[DOUBLE_t]]* dest) noexcept nogil
 
     # Methods that allow modifications to stopping conditions
     cdef bint check_presplit_conditions(
