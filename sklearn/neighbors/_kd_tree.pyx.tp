@@ -356,16 +356,10 @@ cdef class KDTree:
         sample_weight=None,
         **kwargs,
     ):
-        dtype = data.dtype
-        if data.dtype == np.float64:
-            specialized_class = KDTree64
-        elif data.dtype == np.float32:
+        if isinstance(data, np.ndarray) and data.dtype == np.float32:
             specialized_class = KDTree32
         else:
-            raise ValueError(
-                f"Unexpected dtype {dtype} provided. Please select a dtype from"
-                " {np.float32, np.float64}"
-            )
+            specialized_class = KDTree64
 
         self._kd_tree = specialized_class(
             data=data,
@@ -374,6 +368,18 @@ cdef class KDTree:
             sample_weight=sample_weight,
             **kwargs,
         )
+
+    @property
+    def data(self):
+        return self._kd_tree.data
+
+    @property
+    def sample_weight(self):
+        return self._kd_tree.sample_weight
+
+    @property
+    def sum_weight(self):
+        return self._kd_tree.sum_weight
 
     @classmethod
     def valid_metrics(cls):

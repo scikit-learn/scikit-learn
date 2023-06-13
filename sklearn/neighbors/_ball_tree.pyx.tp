@@ -304,15 +304,10 @@ cdef class BallTree:
         sample_weight=None,
         **kwargs,
     ):
-        if isinstance(data, list) or data.dtype == np.float64:
-            specialized_class = BallTree64
-        elif data.dtype == np.float32:
+        if isinstance(data, np.ndarray) and data.dtype == np.float32:
             specialized_class = BallTree32
         else:
-            raise ValueError(
-                f"Unexpected dtype {data.dtype} provided. Please select a"
-                 " dtype from {np.float32, np.float64}"
-            )
+            specialized_class = BallTree64
 
         self._ball_tree = specialized_class(
             data=data,
@@ -321,6 +316,18 @@ cdef class BallTree:
             sample_weight=sample_weight,
             **kwargs,
         )
+
+    @property
+    def data(self):
+        return self._ball_tree.data
+
+    @property
+    def sample_weight(self):
+        return self._ball_tree.sample_weight
+
+    @property
+    def sum_weight(self):
+        return self._ball_tree.sum_weight
 
     @classmethod
     def valid_metrics(cls):
