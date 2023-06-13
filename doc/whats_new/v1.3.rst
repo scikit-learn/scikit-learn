@@ -536,7 +536,7 @@ Changelog
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
 - |Fix| :class:`preprocessing.PowerTransformer` now correcly raises error when
-  using "box-cox" on data with constant column.
+  using `method="box-cox"` on data with a constant `np.nan` column.
   :pr:`26400` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.tree`

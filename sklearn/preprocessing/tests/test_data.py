@@ -2537,7 +2537,7 @@ def test_power_transformer_box_cox_raise_all_nans_col():
 
     err_msg = "Column must not be all nan."
 
-    pt = PowerTransformer("box-cox")
+    pt = PowerTransformer(method="box-cox")
     with pytest.raises(ValueError, match=err_msg):
         pt.fit_transform(X)
 
