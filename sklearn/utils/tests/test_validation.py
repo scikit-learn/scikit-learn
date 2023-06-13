@@ -1696,6 +1696,30 @@ def test_get_feature_names_dataframe_protocol():
     assert_array_equal(feature_names, columns)
 
 
+def test_check_feature_names_arrow():
+    """Check that pyarrow table gives the correct names."""
+    pa = pytest.importorskip("pyarrow")
+
+    n_legs = pa.array([2, 4, 5, 100])
+    animals = pa.array(["Flamingo", "Horse", "Brittle stars", "Centipede"])
+    names = ["n_legs", "animals"]
+    table = pa.Table.from_arrays([n_legs, animals], names=names)
+
+    feature_names = _get_feature_names(table)
+    assert_array_equal(feature_names, names)
+
+
+def test_check_feature_names_polars():
+    """Check that polars dataframe gives the correct names."""
+
+    pl = pytest.importorskip("polars")
+    columns = [f"col_{i}" for i in range(3)]
+    df = pl.DataFrame([[1, 2, 3], [4, 5, 6]], schema=columns)
+
+    feature_names = _get_feature_names(df)
+    assert_array_equal(feature_names, columns)
+
+
 def test_get_feature_names_numpy():
     """Get feature names return None for numpy arrays."""
     X = np.array([[1, 2, 3], [4, 5, 6]])

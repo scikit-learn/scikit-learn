@@ -197,6 +197,7 @@ conda_build_metadata_list = [
                     "pillow",
                 ],
             )
+            + ["pyarrow", "polars"]
             + ["pooch"]
             + docstring_test_dependencies
             # python-dateutil is a dependency of pandas and pandas is removed from

@@ -41,6 +41,8 @@ dependent_packages = {
     "black": ("23.3.0", "tests"),
     "mypy": ("0.961", "tests"),
     "pyamg": ("4.0.0", "tests"),
+    "polars": ("0.18.2", "tests"),
+    "pyarrow": ("12.0.1", "tests"),
     "sphinx": ("4.0.1", "docs"),
     "sphinx-gallery": ("0.7.0", "docs"),
     "numpydoc": ("1.2.0", "docs, tests"),
