@@ -117,7 +117,7 @@ estimator = CustomEstimator()
 
 # %%
 # try to predict before data was fitted
-estimator.predict(X)
+# `estimator.predict(X)` Output: NotFittedError
 
 # %%
 # check if the estimater is fitted or not
