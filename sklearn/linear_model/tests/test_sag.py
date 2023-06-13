@@ -95,7 +95,7 @@ def sag(
 
     for epoch in range(n_iter):
         for k in range(n_samples):
-            idx = int(rng.rand(1) * n_samples)
+            idx = int(rng.rand() * n_samples)
             # idx = k
             entry = X[idx]
             seen.add(idx)
@@ -167,7 +167,7 @@ def sag_sparse(
     for epoch in range(n_iter):
         for k in range(n_samples):
             # idx = k
-            idx = int(rng.rand(1) * n_samples)
+            idx = int(rng.rand() * n_samples)
             entry = X[idx]
             seen.add(idx)
 

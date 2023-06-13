@@ -71,7 +71,7 @@ jobs:
   #
   # The nogil build relies on a dedicated PyPI-style index to install patched
   # versions of NumPy, SciPy and Cython maintained by @colesbury and that
-  # include specifc fixes to make them run correctly without relying on the GIL.
+  # include specific fixes to make them run correctly without relying on the GIL.
   #
   # The goal of this CI entry is to make sure that we do not introduce any
   # dependency on the GIL in scikit-learn itself. An auxiliary goal is to early

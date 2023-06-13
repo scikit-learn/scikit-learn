@@ -226,7 +226,7 @@ def fetch_20newsgroups(
         correct.
 
     download_if_missing : bool, default=True
-        If False, raise an IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -283,7 +283,7 @@ def fetch_20newsgroups(
                 target_dir=twenty_home, cache_path=cache_path
             )
         else:
-            raise IOError("20Newsgroups dataset not found")
+            raise OSError("20Newsgroups dataset not found")
 
     if subset in ("train", "test"):
         data = cache[subset]
@@ -413,7 +413,7 @@ def fetch_20newsgroups_vectorized(
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True
-        If False, raise an IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False

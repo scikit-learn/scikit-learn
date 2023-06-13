@@ -6,7 +6,7 @@ from typing import List
 
 from scipy.sparse import isspmatrix_csr, issparse
 
-from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
+from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING64
 
 from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
 from ._argkmin import (
@@ -76,7 +76,7 @@ class BaseDistancesReductionDispatcher:
             "hamming",
             *BOOL_METRICS,
         }
-        return sorted(({"sqeuclidean"} | set(METRIC_MAPPING.keys())) - excluded)
+        return sorted(({"sqeuclidean"} | set(METRIC_MAPPING64.keys())) - excluded)
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
@@ -163,7 +163,7 @@ class ArgKmin(BaseDistancesReductionDispatcher):
     ArgKmin is typically used to perform
     bruteforce k-nearest neighbors queries.
 
-    This class is not meant to be instanciated, one should only use
+    This class is not meant to be instantiated, one should only use
     its :meth:`compute` classmethod which handles allocation and
     deallocation consistently.
     """
@@ -301,7 +301,7 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
     The distance function `dist` depends on the values of the `metric`
     and `metric_kwargs` parameters.
 
-    This class is not meant to be instanciated, one should only use
+    This class is not meant to be instantiated, one should only use
     its :meth:`compute` classmethod which handles allocation and
     deallocation consistently.
     """
@@ -446,7 +446,7 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
     queries when the weighted mode of the labels for the k-nearest neighbors
     are required, such as in `predict` methods.
 
-    This class is not meant to be instanciated, one should only use
+    This class is not meant to be instantiated, one should only use
     its :meth:`compute` classmethod which handles allocation and
     deallocation consistently.
     """

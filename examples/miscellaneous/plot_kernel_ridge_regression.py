@@ -122,7 +122,7 @@ _ = plt.legend()
 # The previous figure compares the learned model of KRR and SVR when both
 # complexity/regularization and bandwidth of the RBF kernel are optimized using
 # grid-search. The learned functions are very similar; however, fitting KRR is
-# approximatively 3-4 times faster than fitting SVR (both with grid-search).
+# approximately 3-4 times faster than fitting SVR (both with grid-search).
 #
 # Prediction of 100000 target values could be in theory approximately three
 # times faster with SVR since it has learned a sparse model using only
