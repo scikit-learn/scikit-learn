@@ -19,7 +19,7 @@ from ..base import BaseEstimator, ClusterMixin, ClassNamePrefixFeaturesOutMixin
 from ..metrics.pairwise import paired_distances
 from ..metrics.pairwise import _VALID_METRICS
 from ..metrics import DistanceMetric
-from ..metrics._dist_metrics import METRIC_MAPPING
+from ..metrics._dist_metrics import METRIC_MAPPING64
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.graph import _fix_connected_components
@@ -543,7 +543,7 @@ def linkage_tree(
             linkage == "single"
             and affinity != "precomputed"
             and not callable(affinity)
-            and affinity in METRIC_MAPPING
+            and affinity in METRIC_MAPPING64
         ):
             # We need the fast cythonized metric from neighbors
             dist_metric = DistanceMetric.get_metric(affinity)

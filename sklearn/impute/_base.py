@@ -11,7 +11,7 @@ import numpy.ma as ma
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils._param_validation import StrOptions, Hidden, MissingValues
+from ..utils._param_validation import StrOptions, MissingValues
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
@@ -182,14 +182,6 @@ class SimpleImputer(_BaseImputer):
         If `None`, `fill_value` will be 0 when imputing numerical
         data and "missing_value" for strings or object data types.
 
-    verbose : int, default=0
-        Controls the verbosity of the imputer.
-
-        .. deprecated:: 1.1
-           The 'verbose' parameter was deprecated in version 1.1 and will be
-           removed in 1.3. A warning will always be raised upon the removal of
-           empty columns in the future version.
-
     copy : bool, default=True
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, in the following cases,
@@ -273,7 +265,6 @@ class SimpleImputer(_BaseImputer):
         **_BaseImputer._parameter_constraints,
         "strategy": [StrOptions({"mean", "median", "most_frequent", "constant"})],
         "fill_value": "no_validation",  # any object is valid
-        "verbose": ["verbose", Hidden(StrOptions({"deprecated"}))],
         "copy": ["boolean"],
     }
 
@@ -283,7 +274,6 @@ class SimpleImputer(_BaseImputer):
         missing_values=np.nan,
         strategy="mean",
         fill_value=None,
-        verbose="deprecated",
         copy=True,
         add_indicator=False,
         keep_empty_features=False,
@@ -295,7 +285,6 @@ class SimpleImputer(_BaseImputer):
         )
         self.strategy = strategy
         self.fill_value = fill_value
-        self.verbose = verbose
         self.copy = copy
 
     def _validate_input(self, X, in_fit):
@@ -377,16 +366,6 @@ class SimpleImputer(_BaseImputer):
             Fitted estimator.
         """
         self._validate_params()
-        if self.verbose != "deprecated":
-            warnings.warn(
-                (
-                    "The 'verbose' parameter was deprecated in version "
-                    "1.1 and will be removed in 1.3. A warning will "
-                    "always be raised upon the removal of empty columns "
-                    "in the future version."
-                ),
-                FutureWarning,
-            )
 
         X = self._validate_input(X, in_fit=True)
 
@@ -574,15 +553,14 @@ class SimpleImputer(_BaseImputer):
 
             if invalid_mask.any():
                 invalid_features = np.arange(X.shape[1])[invalid_mask]
-                if self.verbose != "deprecated" and self.verbose:
-                    # use feature names warning if features are provided
-                    if hasattr(self, "feature_names_in_"):
-                        invalid_features = self.feature_names_in_[invalid_features]
-                    warnings.warn(
-                        "Skipping features without any observed values:"
-                        f" {invalid_features}. At least one non-missing value is needed"
-                        f" for imputation with strategy='{self.strategy}'."
-                    )
+                # use feature names warning if features are provided
+                if hasattr(self, "feature_names_in_"):
+                    invalid_features = self.feature_names_in_[invalid_features]
+                warnings.warn(
+                    "Skipping features without any observed values:"
+                    f" {invalid_features}. At least one non-missing value is needed"
+                    f" for imputation with strategy='{self.strategy}'."
+                )
                 X = X[:, valid_statistics_indexes]
 
         # Do actual imputation

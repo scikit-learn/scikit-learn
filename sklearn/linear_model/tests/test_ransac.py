@@ -569,18 +569,3 @@ def test_perfect_horizontal_line():
 
     assert_allclose(ransac_estimator.estimator_.coef_, 0.0)
     assert_allclose(ransac_estimator.estimator_.intercept_, 0.0)
-
-
-def test_base_estimator_deprecated():
-    ransac_estimator = RANSACRegressor(
-        base_estimator=LinearRegression(),
-        min_samples=2,
-        residual_threshold=5,
-        random_state=0,
-    )
-    err_msg = (
-        "`base_estimator` was renamed to `estimator` in version 1.1 and "
-        "will be removed in 1.3."
-    )
-    with pytest.warns(FutureWarning, match=err_msg):
-        ransac_estimator.fit(X, y)

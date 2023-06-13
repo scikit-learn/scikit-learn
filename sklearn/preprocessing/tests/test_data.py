@@ -1851,7 +1851,7 @@ def test_normalizer_l1():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert isinstance(X_norm, sparse.csr_matrix)
+        assert sparse.isspmatrix_csr(X_norm)
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1898,7 +1898,7 @@ def test_normalizer_l2():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert isinstance(X_norm, sparse.csr_matrix)
+        assert sparse.isspmatrix_csr(X_norm)
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1946,7 +1946,7 @@ def test_normalizer_max():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert isinstance(X_norm, sparse.csr_matrix)
+        assert sparse.isspmatrix_csr(X_norm)
 
         X_norm = toarray(X_norm)
         for i in range(3):

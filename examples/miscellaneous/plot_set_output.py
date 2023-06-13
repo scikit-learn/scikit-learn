@@ -65,7 +65,7 @@ clf[-1].feature_names_in_
 
 # %%
 # Next we load the titanic dataset to demonstrate `set_output` with
-# :class:`compose.ColumnTransformer` and heterogenous data.
+# :class:`compose.ColumnTransformer` and heterogeneous data.
 from sklearn.datasets import fetch_openml
 
 X, y = fetch_openml(
