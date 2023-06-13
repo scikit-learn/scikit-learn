@@ -2409,7 +2409,7 @@ cdef class BinaryTree{{name_suffix}}:
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE, NPY_TYPE in implementation_specific_values}}
 
-def load_heap(float64_t[:, ::1] X, intp_t k):
+def load_heap{{name_suffix}}({{INPUT_DTYPE_t}}[:, ::1] X, intp_t k):
     """test fully loading the heap"""
     assert k <= X.shape[1]
     cdef NeighborsHeap{{name_suffix}} heap = NeighborsHeap{{name_suffix}}(X.shape[0], k)

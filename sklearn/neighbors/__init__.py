@@ -3,8 +3,8 @@ The :mod:`sklearn.neighbors` module implements the k-nearest neighbors
 algorithm.
 """
 
-from ._ball_tree import BallTree64 as BallTree
-from ._kd_tree import KDTree64 as KDTree
+from ._ball_tree import BallTree
+from ._kd_tree import KDTree
 from ._graph import kneighbors_graph, radius_neighbors_graph
 from ._graph import KNeighborsTransformer, RadiusNeighborsTransformer
 from ._unsupervised import NearestNeighbors

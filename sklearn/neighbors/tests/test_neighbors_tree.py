@@ -8,14 +8,14 @@ import pytest
 
 from sklearn.metrics import DistanceMetric
 from sklearn.neighbors._ball_tree import (
-    BallTree64 as BallTree,
+    BallTree,
     kernel_norm,
     NeighborsHeap64 as NeighborsHeapBT,
     simultaneous_sort as simultaneous_sort_bt,
     nodeheap_sort as nodeheap_sort_bt,
 )
 from sklearn.neighbors._kd_tree import (
-    KDTree64 as KDTree,
+    KDTree,
     NeighborsHeap64 as NeighborsHeapKDT,
     simultaneous_sort as simultaneous_sort_kdt,
     nodeheap_sort as nodeheap_sort_kdt,
