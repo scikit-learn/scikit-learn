@@ -115,7 +115,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "max_bins": [Interval(Integral, 2, 255, closed="both")],
         "categorical_features": [
             "array-like",
-            StrOptions({"by_dtype"}),
+            StrOptions({"from_dtype"}),
             Hidden(StrOptions({"warn"})),
             None,
         ],
@@ -287,7 +287,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         X_is_dataframe = hasattr(X, "dtypes")
 
-        # TODO(1.5): Remove warning and change default to "by_dtype" in v1.5
+        # TODO(1.5): Remove warning and change default to "from_dtype" in v1.5
         if (
             isinstance(self.categorical_features, str)
             and self.categorical_features == "warn"
@@ -306,7 +306,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             categorical_features = self.categorical_features
 
         categorical_by_dtype = (
-            isinstance(categorical_features, str) and categorical_features == "by_dtype"
+            isinstance(categorical_features, str)
+            and categorical_features == "from_dtype"
         )
         no_categorical_dtype = categorical_features is None or (
             categorical_by_dtype and not X_is_dataframe
@@ -1394,7 +1395,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           features.
         - str array-like: names of categorical features (assuming the training
           data has feature names).
-        - `"by_dtype"`: Pandas categorical dtypes are considered categorical.
+        - `"from_dtype"`: Pandas categorical dtypes are considered categorical.
           The input must be a pandas DataFrame to use this feature.
 
         For each categorical feature, there must be at most `max_bins` unique
@@ -1409,7 +1410,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
            Added support for feature names.
 
         .. versionchanged:: 1.3
-           Added `"by_dtype"` option. The default will change to `"by_dtype"` in v1.5.
+           Added `"from_dtype"` option. The default will change to `"from_dtype"` in
+           v1.5.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
@@ -1756,7 +1758,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
           features.
         - str array-like: names of categorical features (assuming the training
           data has feature names).
-        - `"by_dtype"`: Pandas categorical dtypes are considered categorical.
+        - `"from_dtype"`: Pandas categorical dtypes are considered categorical.
           The input must be a pandas DataFrame to use this feature.
 
         For each categorical feature, there must be at most `max_bins` unique
@@ -1771,7 +1773,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
            Added support for feature names.
 
         .. versionchanged:: 1.3
-           Added `"by_dtype"` option. The default will change to `"by_dtype"` in v1.5.
+           Added `"from_dtype"` option. The default will change to `"from_dtype"` in
+           v1.5.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the

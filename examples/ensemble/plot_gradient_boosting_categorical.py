@@ -139,7 +139,7 @@ hist_ordinal = make_pipeline(
 # We now create a :class:`~ensemble.HistGradientBoostingRegressor` estimator
 # that will natively handle categorical features. This estimator will not treat
 # categorical features as ordered quantities. We set
-# `categorical_features="by_dtype"` such that features with categorical dtype
+# `categorical_features="from_dtype"` such that features with categorical dtype
 # are considered categorical features.
 #
 # The main difference between this estimator and the previous one is that in
@@ -147,7 +147,7 @@ hist_ordinal = make_pipeline(
 # which features are categorical.
 
 hist_native = HistGradientBoostingRegressor(
-    random_state=42, categorical_features="by_dtype"
+    random_state=42, categorical_features="from_dtype"
 )
 
 # %%

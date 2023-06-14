@@ -170,14 +170,14 @@ X.iloc[train_4]
 # Gradient Boosting Regression with decision trees is often flexible enough to
 # efficiently handle heteorogenous tabular data with a mix of categorical and
 # numerical features as long as the number of samples is large enough. We set
-# `categorical_features="by_dtype"` such that features with categorical dtype
+# `categorical_features="from_dtype"` such that features with categorical dtype
 # are considered categorical features.
 from sklearn.pipeline import make_pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import cross_validate
 
-gbrt = HistGradientBoostingRegressor(categorical_features="by_dtype", random_state=42)
+gbrt = HistGradientBoostingRegressor(categorical_features="from_dtype", random_state=42)
 
 # %%
 #

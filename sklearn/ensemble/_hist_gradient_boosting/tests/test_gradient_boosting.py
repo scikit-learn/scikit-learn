@@ -1422,7 +1422,7 @@ def test_pandas_categorical_results_same_as_ndarray(Hist):
     hist_np = Hist(categorical_features=[False, True], **hist_kwargs)
     hist_np.fit(X_train, y_train)
 
-    hist_pd = Hist(categorical_features="by_dtype", **hist_kwargs)
+    hist_pd = Hist(categorical_features="from_dtype", **hist_kwargs)
     hist_pd.fit(X_train_df, y_train)
 
     assert len(hist_np._predictors) == len(hist_pd._predictors)
@@ -1443,7 +1443,7 @@ def test_pandas_categorical_errors(Hist):
     pd = pytest.importorskip("pandas")
 
     msg = "Categorical feature 'f_cat' is expected to have a cardinality <= 16"
-    hist = Hist(categorical_features="by_dtype", max_bins=16)
+    hist = Hist(categorical_features="from_dtype", max_bins=16)
 
     rng = np.random.RandomState(42)
     f_cat = rng.randint(0, high=100, size=100)
@@ -1475,10 +1475,10 @@ def test_categorical_different_order_same_model():
     df_b_a = pd.DataFrame({"f_cat": f_cat_b_a})
 
     hist_a_b = HistGradientBoostingClassifier(
-        categorical_features="by_dtype", random_state=0
+        categorical_features="from_dtype", random_state=0
     )
     hist_b_a = HistGradientBoostingClassifier(
-        categorical_features="by_dtype", random_state=0
+        categorical_features="from_dtype", random_state=0
     )
 
     hist_a_b.fit(df_a_b, y)
