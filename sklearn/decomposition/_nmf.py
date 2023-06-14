@@ -31,6 +31,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from ..utils import metadata_routing
 
 
 EPSILON = np.finfo(np.float32).eps
@@ -1122,6 +1123,11 @@ def non_negative_factorization(
 class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, ABC):
     """Base class for NMF and MiniBatchNMF."""
 
+    # This prevents ``set_split_inverse_transform`` to be generated for the
+    # non-standard ``W`` arg on ``inverse_transform``.
+    # TODO: remove when W is removed in v1.5 for inverse_transform
+    __metadata_request__inverse_transform = {"W": metadata_routing.UNUSED}
+
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "init": [
@@ -1245,23 +1251,44 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
         self.fit_transform(X, **params)
         return self
 
-    def inverse_transform(self, W):
+    def inverse_transform(self, Xt=None, W=None):
         """Transform data back to its original space.
 
         .. versionadded:: 0.18
 
         Parameters
         ----------
-        W : {ndarray, sparse matrix} of shape (n_samples, n_components)
+        Xt : {ndarray, sparse matrix} of shape (n_samples, n_components)
             Transformed data matrix.
+
+        W : deprecated
+            Use `Xt` instead.
+
+            .. deprecated:: 1.3
 
         Returns
         -------
         X : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Returns a data matrix of the original shape.
         """
+        if Xt is None and W is None:
+            raise TypeError("Missing required positional argument: Xt")
+
+        if W is not None and Xt is not None:
+            raise ValueError("Please provide only `Xt`, and not `W`.")
+
+        if W is not None:
+            warnings.warn(
+                (
+                    "Input argument `W` was renamed to `Xt` in v1.3 and will be removed"
+                    " in v1.5."
+                ),
+                FutureWarning,
+            )
+            Xt = W
+
         check_is_fitted(self)
-        return W @ self.components_
+        return Xt @ self.components_
 
     @property
     def _n_features_out(self):

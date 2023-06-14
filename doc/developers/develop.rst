@@ -535,6 +535,9 @@ The current set of estimator tags are:
 allow_nan (default=False)
     whether the estimator supports data with missing values encoded as np.nan
 
+array_api_support (default=False)
+    whether the estimator supports Array API compatible inputs.
+
 binary_only (default=False)
     whether estimator supports binary classification but lacks multi-class
     classification support.
