@@ -285,7 +285,7 @@ Changelog
 
 - |Fix| :func:`dataasets.fetch_openml` will consistenly use `np.nan` as missing marker
   with both parsers `"pandas"` and `"liac-arff"`.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`26579` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| Allows to overwrite the parameters used to open the ARFF file using
   the parameter `read_csv_kwargs` in :func:`datasets.fetch_openml` when using the
