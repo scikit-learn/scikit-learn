@@ -19,6 +19,7 @@ from joblib import effective_n_jobs
 
 from ._base import LinearModel
 from ..base import RegressorMixin
+from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils._param_validation import Interval
 from ..utils.parallel import delayed, Parallel
@@ -395,6 +396,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
         return n_subsamples, n_subpopulation
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit linear model.
 
@@ -410,7 +412,6 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         self : returns an instance of self.
             Fitted `TheilSenRegressor` estimator.
         """
-        self._validate_params()
         random_state = check_random_state(self.random_state)
         X, y = self._validate_data(X, y, y_numeric=True)
         n_samples, n_features = X.shape

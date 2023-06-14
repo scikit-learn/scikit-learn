@@ -18,6 +18,7 @@ from scipy.special import gammaln, logsumexp
 from joblib import effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
@@ -568,6 +569,7 @@ class LatentDirichletAllocation(
 
         return X
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None):
         """Online VB with Mini-Batch update.
 
@@ -585,9 +587,6 @@ class LatentDirichletAllocation(
             Partially fitted estimator.
         """
         first_time = not hasattr(self, "components_")
-
-        if first_time:
-            self._validate_params()
 
         X = self._check_non_neg_array(
             X, reset_n_features=first_time, whom="LatentDirichletAllocation.partial_fit"
@@ -618,6 +617,7 @@ class LatentDirichletAllocation(
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Learn model for the data X with variational Bayes method.
 
@@ -637,7 +637,6 @@ class LatentDirichletAllocation(
         self
             Fitted estimator.
         """
-        self._validate_params()
         X = self._check_non_neg_array(
             X, reset_n_features=True, whom="LatentDirichletAllocation.fit"
         )

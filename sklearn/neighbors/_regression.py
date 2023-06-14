@@ -17,6 +17,7 @@ import numpy as np
 from ._base import _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
+from ..base import _fit_context
 from ..utils._param_validation import StrOptions
 
 
@@ -194,6 +195,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         # For cross-validation routines to split data correctly
         return {"pairwise": self.metric == "precomputed"}
 
+    @_fit_context(
+        # KNeighborsRegressor.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit the k-nearest neighbors regressor from the training dataset.
 
@@ -212,8 +217,6 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         self : KNeighborsRegressor
             The fitted k-nearest neighbors regressor.
         """
-        self._validate_params()
-
         return self._fit(X, y)
 
     def predict(self, X):
@@ -422,6 +425,10 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         )
         self.weights = weights
 
+    @_fit_context(
+        # RadiusNeighborsRegressor.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit the radius neighbors regressor from the training dataset.
 
@@ -440,7 +447,6 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         self : RadiusNeighborsRegressor
             The fitted radius neighbors regressor.
         """
-        self._validate_params()
         return self._fit(X, y)
 
     def predict(self, X):

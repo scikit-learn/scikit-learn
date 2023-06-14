@@ -20,6 +20,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from ._base import LinearModel, LinearRegression
 from ._base import _deprecate_normalize, _preprocess_data
 from ..base import RegressorMixin, MultiOutputMixin
+from ..base import _fit_context
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
 from ..utils import arrayfuncs, as_float_array  # type: ignore
@@ -1097,6 +1098,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, Xy=None):
         """Fit the model using X, y as training data.
 
@@ -1118,8 +1120,6 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
 
         _normalize = _deprecate_normalize(
@@ -1691,6 +1691,7 @@ class LarsCV(Lars):
     def _more_tags(self):
         return {"multioutput": False}
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
@@ -1707,8 +1708,6 @@ class LarsCV(Lars):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         _normalize = _deprecate_normalize(
             self.normalize, estimator_name=self.__class__.__name__
         )
@@ -2216,6 +2215,7 @@ class LassoLarsIC(LassoLars):
     def _more_tags(self):
         return {"multioutput": False}
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, copy_X=None):
         """Fit the model using X, y as training data.
 
@@ -2237,8 +2237,6 @@ class LassoLarsIC(LassoLars):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         _normalize = _deprecate_normalize(
             self.normalize, estimator_name=self.__class__.__name__
         )

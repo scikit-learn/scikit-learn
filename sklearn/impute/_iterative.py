@@ -7,6 +7,7 @@ from scipy import stats
 import numpy as np
 
 from ..base import clone
+from ..base import _fit_context
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
 from ..utils import (
@@ -681,6 +682,10 @@ class IterativeImputer(_BaseImputer):
             )
         return limit
 
+    @_fit_context(
+        # IterativeImputer.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit the imputer on `X` and return the transformed `X`.
 
@@ -698,7 +703,6 @@ class IterativeImputer(_BaseImputer):
         Xt : array-like, shape (n_samples, n_features)
             The imputed input data.
         """
-        self._validate_params()
         self.random_state_ = getattr(
             self, "random_state_", check_random_state(self.random_state)
         )

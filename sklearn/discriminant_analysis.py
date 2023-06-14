@@ -17,6 +17,7 @@ from numbers import Real, Integral
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .base import ClassNamePrefixFeaturesOutMixin
+from .base import _fit_context
 from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
@@ -546,6 +547,10 @@ class LinearDiscriminantAnalysis(
         self.coef_ = coef @ self.scalings_.T
         self.intercept_ -= self.xbar_ @ self.coef_.T
 
+    @_fit_context(
+        # LinearDiscriminantAnalysis.covariance_estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit the Linear Discriminant Analysis model.
 
@@ -568,8 +573,6 @@ class LinearDiscriminantAnalysis(
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         xp, _ = get_namespace(X)
 
         X, y = self._validate_data(
@@ -865,6 +868,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self.store_covariance = store_covariance
         self.tol = tol
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
 
@@ -889,7 +893,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         X, y = self._validate_data(X, y)
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)

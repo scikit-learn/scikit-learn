@@ -12,6 +12,7 @@ from scipy.sparse.csgraph import shortest_path
 from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..neighbors import radius_neighbors_graph
 from ..utils.validation import check_is_fitted
@@ -332,6 +333,10 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         evals = self.kernel_pca_.eigenvalues_
         return np.sqrt(np.sum(G_center**2) - np.sum(evals**2)) / G.shape[0]
 
+    @_fit_context(
+        # Isomap.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X.
 
@@ -350,10 +355,13 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
-        self._validate_params()
         self._fit_transform(X)
         return self
 
+    @_fit_context(
+        # Isomap.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit the model from data in X and transform X.
 
@@ -371,7 +379,6 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X_new : array-like, shape (n_samples, n_components)
             X transformed in the new space.
         """
-        self._validate_params()
         self._fit_transform(X)
         return self.embedding_
 
