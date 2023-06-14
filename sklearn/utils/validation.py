@@ -13,6 +13,7 @@ from functools import reduce, wraps
 import warnings
 import numbers
 import operator
+import sys
 
 import numpy as np
 import scipy.sparse as sp
@@ -1963,6 +1964,18 @@ def _check_fit_params(X, fit_params, indices=None):
     return fit_params_validated
 
 
+def _is_pandas_df(X):
+    """Return True if the X is a DataFrame"""
+    if hasattr(X, "columns") and hasattr(X, "iloc"):
+        # Likely a pandas DataFrame, we explicitly check the type to confirm.
+        try:
+            pd = sys.modules["pandas"]
+        except KeyError:
+            return False
+        return isinstance(X, pd.DataFrame)
+    return False
+
+
 def _get_feature_names(X):
     """Get feature names from X.
 
@@ -1986,7 +1999,7 @@ def _get_feature_names(X):
     feature_names = None
 
     # extract feature names for support array containers
-    if hasattr(X, "columns") and hasattr(X, "iloc"):
+    if _is_pandas_df(X):
         feature_names = np.asarray(X.columns, dtype=object)
     elif hasattr(X, "__dataframe__"):
         df_protocol = X.__dataframe__()
