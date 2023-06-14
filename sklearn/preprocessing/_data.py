@@ -3154,27 +3154,29 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         mean = np.mean(X, axis=0, dtype=np.float64)
         var = np.var(X, axis=0, dtype=np.float64)
 
+        optim_function = {
+            "box-cox": self._box_cox_optimize,
+            "yeo-johnson": self._yeo_johnson_optimize,
+        }[self.method]
+
+        transform_function = {
+            "box-cox": boxcox,
+            "yeo-johnson": self._yeo_johnson_transform,
+        }[self.method]
+
         with np.errstate(invalid="ignore"):  # hide NaN warnings
             self.lambdas_ = np.empty(X.shape[1], dtype=X.dtype)
             for i, col in enumerate(X.T):
                 # For yeo-johnson, leave constant features unchanged
-                # the yeo-johnson transformation, lambda=1 corresponds to the identity
+                # lambda=1 corresponds to the identity transformation
                 is_constant_feature = _is_constant_feature(var[i], mean[i], n_samples)
                 if self.method == "yeo-johnson" and is_constant_feature:
                     self.lambdas_[i] = 1.0
                     continue
 
-                optim_function = {
-                    "box-cox": self._box_cox_optimize,
-                    "yeo-johnson": self._yeo_johnson_optimize,
-                }[self.method]
                 self.lambdas_[i] = optim_function(col)
 
                 if self.standardize or force_transform:
-                    transform_function = {
-                        "box-cox": boxcox,
-                        "yeo-johnson": self._yeo_johnson_transform,
-                    }[self.method]
                     X[:, i] = transform_function(X[:, i], self.lambdas_[i])
 
         if self.standardize:
