@@ -144,6 +144,13 @@ def pytest_runtest_setup(item):
         setup_preprocessing()
     elif fname.endswith("statistical_inference/unsupervised_learning.rst"):
         setup_unsupervised_learning()
+    elif fname.endswith("metadata_routing.rst"):
+        # TODO: remove this once implemented
+        # Skip metarouting because is it is not fully implemented yet
+        raise SkipTest(
+            "Skipping doctest for metadata_routing.rst because it "
+            "is not fully implemented yet"
+        )
 
     rst_files_requiring_matplotlib = [
         "modules/partial_dependence.rst",

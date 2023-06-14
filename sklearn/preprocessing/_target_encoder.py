@@ -14,7 +14,7 @@ from ..utils._param_validation import Interval, StrOptions
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """Target Encoder for regression and classification targets.
 
-    Each category is encoded based on a shrinked estimate of the average target
+    Each category is encoded based on a shrunk estimate of the average target
     values for observations belonging to the category. The encoding scheme mixes
     the global target mean with the target mean conditioned on the value of the
     category. [MIC]_

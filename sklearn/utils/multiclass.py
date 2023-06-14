@@ -11,8 +11,8 @@ from itertools import chain
 import warnings
 
 from scipy.sparse import issparse
-from scipy.sparse import dok_matrix
-from scipy.sparse import lil_matrix
+from scipy.sparse import isspmatrix_dok
+from scipy.sparse import isspmatrix_lil
 
 import numpy as np
 
@@ -179,7 +179,7 @@ def is_multilabel(y):
         return False
 
     if issparse(y):
-        if isinstance(y, (dok_matrix, lil_matrix)):
+        if isspmatrix_dok(y) or isspmatrix_lil(y):
             y = y.tocsr()
         labels = xp.unique_values(y.data)
         return (
@@ -215,7 +215,11 @@ def check_classification_targets(y):
         "multilabel-indicator",
         "multilabel-sequences",
     ]:
-        raise ValueError("Unknown label type: %r" % y_type)
+        raise ValueError(
+            f"Unknown label type: {y_type}. Maybe you are trying to fit a "
+            "classifier, which expects discrete classes on a "
+            "regression target with continuous values."
+        )
 
 
 def type_of_target(y, input_name=""):

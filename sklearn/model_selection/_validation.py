@@ -329,7 +329,7 @@ def cross_validate(
 
     _warn_or_raise_about_fit_failures(results, error_score)
 
-    # For callabe scoring, the return type is only know after calling. If the
+    # For callable scoring, the return type is only know after calling. If the
     # return type is a dictionary, the error scores can now be inserted with
     # the correct key.
     if callable(scoring):
@@ -1432,6 +1432,26 @@ def _shuffle(y, groups, random_state):
     return _safe_indexing(y, indices)
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods(["fit"])],
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", None],
+        "groups": ["array-like", None],
+        "train_sizes": ["array-like"],
+        "cv": ["cv_object"],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "exploit_incremental_learning": ["boolean"],
+        "n_jobs": [Integral, None],
+        "pre_dispatch": [Integral, str],
+        "verbose": ["verbose"],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "error_score": [StrOptions({"raise"}), Real],
+        "return_times": ["boolean"],
+        "fit_params": [dict, None],
+    }
+)
 def learning_curve(
     estimator,
     X,
@@ -1466,18 +1486,20 @@ def learning_curve(
 
     Parameters
     ----------
-    estimator : object type that implements the "fit" and "predict" methods
-        An object of that type which is cloned for each validation.
+    estimator : object type that implements the "fit" method
+        An object of that type which is cloned for each validation. It must
+        also implement "predict" unless `scoring` is a callable that doesn't
+        rely on "predict" to compute a score.
 
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Training vector, where `n_samples` is the number of samples and
         `n_features` is the number of features.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
-    groups : array-like of  shape (n_samples,), default=None
+    groups : array-like of shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
@@ -1818,6 +1840,23 @@ def _incremental_fit_estimator(
     return np.array(ret).T
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods(["fit"])],
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", None],
+        "param_name": [str],
+        "param_range": ["array-like"],
+        "groups": ["array-like", None],
+        "cv": ["cv_object"],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "n_jobs": [Integral, None],
+        "pre_dispatch": [Integral, str],
+        "verbose": ["verbose"],
+        "error_score": [StrOptions({"raise"}), Real],
+        "fit_params": [dict, None],
+    }
+)
 def validation_curve(
     estimator,
     X,
@@ -1847,10 +1886,12 @@ def validation_curve(
 
     Parameters
     ----------
-    estimator : object type that implements the "fit" and "predict" methods
-        An object of that type which is cloned for each validation.
+    estimator : object type that implements the "fit" method
+        An object of that type which is cloned for each validation. It must
+        also implement "predict" unless `scoring` is a callable that doesn't
+        rely on "predict" to compute a score.
 
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Training vector, where `n_samples` is the number of samples and
         `n_features` is the number of features.
 
