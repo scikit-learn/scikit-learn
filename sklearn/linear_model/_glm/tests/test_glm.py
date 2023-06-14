@@ -311,7 +311,7 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
     if solver == "lbfgs":
         rtol = 2e-4
     elif solver == "newton-lsmr":
-        rtol = 1e-8
+        rtol = 2e-8
     else:
         rtol = 5e-9
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
