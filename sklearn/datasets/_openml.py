@@ -428,6 +428,7 @@ def _load_arff_response(
     md5_checksum: str,
     n_retries: int = 3,
     delay: float = 1.0,
+    read_csv_kwargs: Optional[Dict] = None,
 ):
     """Load the ARFF data associated with the OpenML URL.
 
@@ -470,6 +471,18 @@ def _load_arff_response(
     md5_checksum : str
         The MD5 checksum provided by OpenML to check the data integrity.
 
+    n_retries : int, default=3
+        The number of times to retry downloading the data if it fails.
+
+    delay : float, default=1.0
+        The delay between two consecutive downloads in seconds.
+
+    read_csv_kwargs : dict, default=None
+        Keyword arguments to pass to `pandas.read_csv` when using the pandas parser.
+        It allows to overwrite the default options.
+
+        .. versionadded:: 1.3
+
     Returns
     -------
     X : {ndarray, sparse matrix, dataframe}
@@ -506,13 +519,14 @@ def _load_arff_response(
         with closing(gzip_file):
             return load_arff_from_gzip_file(gzip_file, **arff_params)
 
-    arff_params = dict(
+    arff_params: Dict = dict(
         parser=parser,
         output_type=output_type,
         openml_columns_info=openml_columns_info,
         feature_names_to_select=feature_names_to_select,
         target_names_to_select=target_names_to_select,
         shape=shape,
+        read_csv_kwargs=read_csv_kwargs or {},
     )
     try:
         X, y, frame, categories = _open_url_and_load_gzip_file(
@@ -530,7 +544,7 @@ def _load_arff_response(
         # A parsing error could come from providing the wrong quotechar
         # to pandas. By default, we use a double quote. Thus, we retry
         # with a single quote before to raise the error.
-        arff_params["read_csv_kwargs"] = {"quotechar": "'"}
+        arff_params["read_csv_kwargs"].update(quotechar="'")
         X, y, frame, categories = _open_url_and_load_gzip_file(
             url, data_home, n_retries, delay, arff_params
         )
@@ -552,6 +566,7 @@ def _download_data_to_bunch(
     n_retries: int = 3,
     delay: float = 1.0,
     parser: str,
+    read_csv_kwargs: Optional[Dict] = None,
 ):
     """Download ARFF data, load it to a specific container and create to Bunch.
 
@@ -597,6 +612,12 @@ def _download_data_to_bunch(
 
     parser : {"liac-arff", "pandas"}
         The parser used to parse the ARFF file.
+
+    read_csv_kwargs : dict, default=None
+        Keyword arguments to pass to `pandas.read_csv` when using the pandas parser.
+        It allows to overwrite the default options.
+
+        .. versionadded:: 1.3
 
     Returns
     -------
@@ -657,6 +678,7 @@ def _download_data_to_bunch(
         md5_checksum=md5_checksum,
         n_retries=n_retries,
         delay=delay,
+        read_csv_kwargs=read_csv_kwargs,
     )
 
     return Bunch(
@@ -725,6 +747,7 @@ def fetch_openml(
     n_retries: int = 3,
     delay: float = 1.0,
     parser: Optional[str] = "warn",
+    read_csv_kwargs: Optional[Dict] = None,
 ):
     """Fetch dataset from openml by name or dataset id.
 
@@ -828,6 +851,13 @@ def fetch_openml(
            `"auto"` in 1.4. You can set `parser="auto"` to silence this
            warning. Therefore, an `ImportError` will be raised from 1.4 if
            the dataset is dense and pandas is not installed.
+
+    read_csv_kwargs : dict, default=None
+        Keyword arguments passed to :func:`pandas.read_csv` when loading the data
+        from a ARFF file and using the pandas parser. It can allows to
+        overwrite some default parameters.
+
+        .. versionadded:: 1.3
 
     Returns
     -------
@@ -1096,6 +1126,7 @@ def fetch_openml(
         n_retries=n_retries,
         delay=delay,
         parser=parser_,
+        read_csv_kwargs=read_csv_kwargs,
     )
 
     if return_X_y:

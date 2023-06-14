@@ -15,6 +15,7 @@ _global_config = {
     "enable_cython_pairwise_dist": True,
     "array_api_dispatch": False,
     "transform_output": "default",
+    "enable_metadata_routing": False,
     "skip_parameter_validation": False,
 }
 _threadlocal = threading.local()
@@ -55,6 +56,7 @@ def set_config(
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
     transform_output=None,
+    enable_metadata_routing=None,
     skip_parameter_validation=None,
 ):
     """Set global scikit-learn configuration
@@ -136,6 +138,18 @@ def set_config(
 
         .. versionadded:: 1.2
 
+    enable_metadata_routing : bool, default=None
+        Enable metadata routing. By default this feature is disabled.
+
+        Refer to :ref:`metadata routing user guide <metadata_routing>` for more
+        details.
+
+        - `True`: Metadata routing is enabled
+        - `False`: Metadata routing is disabled, use the old syntax.
+        - `None`: Configuration is unchanged
+
+        .. versionadded:: 1.3
+
     skip_parameter_validation : bool, default=None
         If `True`, disable the validation of the hyper-parameters' types and values in
         the fit method of estimators and for arguments passed to public helper
@@ -173,6 +187,8 @@ def set_config(
         local_config["array_api_dispatch"] = array_api_dispatch
     if transform_output is not None:
         local_config["transform_output"] = transform_output
+    if enable_metadata_routing is not None:
+        local_config["enable_metadata_routing"] = enable_metadata_routing
     if skip_parameter_validation is not None:
         local_config["skip_parameter_validation"] = skip_parameter_validation
 
@@ -188,6 +204,7 @@ def config_context(
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
     transform_output=None,
+    enable_metadata_routing=None,
     skip_parameter_validation=None,
 ):
     """Context manager for global scikit-learn configuration.
@@ -268,6 +285,18 @@ def config_context(
 
         .. versionadded:: 1.2
 
+    enable_metadata_routing : bool, default=None
+        Enable metadata routing. By default this feature is disabled.
+
+        Refer to :ref:`metadata routing user guide <metadata_routing>` for more
+        details.
+
+        - `True`: Metadata routing is enabled
+        - `False`: Metadata routing is disabled, use the old syntax.
+        - `None`: Configuration is unchanged
+
+        .. versionadded:: 1.3
+
     skip_parameter_validation : bool, default=None
         If `True`, disable the validation of the hyper-parameters' types and values in
         the fit method of estimators and for arguments passed to public helper
@@ -316,6 +345,7 @@ def config_context(
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
         array_api_dispatch=array_api_dispatch,
         transform_output=transform_output,
+        enable_metadata_routing=enable_metadata_routing,
         skip_parameter_validation=skip_parameter_validation,
     )
 

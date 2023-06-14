@@ -22,7 +22,7 @@ from ..utils._param_validation import (
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
     if sample_weight is not None:
-        return scorer(estimator, X, y, sample_weight)
+        return scorer(estimator, X, y, sample_weight=sample_weight)
     return scorer(estimator, X, y)
 
 

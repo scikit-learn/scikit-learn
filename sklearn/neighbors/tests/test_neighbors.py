@@ -2120,18 +2120,6 @@ def test_auto_algorithm(X, metric, metric_params, expected_algo):
     assert model._fit_method == expected_algo
 
 
-# TODO: Remove in 1.3
-def test_neighbors_distance_metric_deprecation():
-    from sklearn.neighbors import DistanceMetric
-    from sklearn.metrics import DistanceMetric as ActualDistanceMetric
-
-    msg = r"This import path will be removed in 1\.3"
-    with pytest.warns(FutureWarning, match=msg):
-        dist_metric = DistanceMetric.get_metric("euclidean")
-
-    assert isinstance(dist_metric, ActualDistanceMetric)
-
-
 @pytest.mark.parametrize(
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
