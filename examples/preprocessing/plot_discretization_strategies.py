@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 ==========================================================
 Demonstrating the different strategies of KBinsDiscretizer
