@@ -91,17 +91,17 @@ The function :func:`validation_curve` can help in this case::
          [0.9..., 0.83..., 0.96..., 0.96..., 0.93...],
          [1.... , 0.93..., 1....  , 1....  , 0.9... ]])
 
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_validation_curve_001.png
+   :target: ../auto_examples/model_selection/plot_validation_curve.html
+   :align: center
+   :scale: 50%
+
 If the training score and the validation score are both low, the estimator will
 be underfitting. If the training score is high and the validation score is low,
 the estimator is overfitting and otherwise it is working very well. A low
 training score and a high validation score is usually not possible. Underfitting,
 overfitting, and a working model are shown in the in the plot below where we vary
 the parameter :math:`\gamma` of an SVM on the digits dataset.
-
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_validation_curve_001.png
-   :target: ../auto_examples/model_selection/plot_validation_curve.html
-   :align: center
-   :scale: 50%
 
 If you intend to plot the validation curves only, the class
 :class:`~sklearn.model_selection.ValidationCurveDisplay` is more direct than
