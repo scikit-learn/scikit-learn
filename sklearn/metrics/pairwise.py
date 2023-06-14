@@ -34,7 +34,6 @@ from ..utils._param_validation import (
     Interval,
     Integral,
     Real,
-    Integral,
     Hidden,
     MissingValues,
     StrOptions,
