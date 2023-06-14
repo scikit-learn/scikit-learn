@@ -16,6 +16,7 @@ from scipy import linalg
 from joblib import effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils._param_validation import validate_params
@@ -2318,6 +2319,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         return False
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -2335,8 +2337,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X, dtype=[np.float64, np.float32], order="C", copy=False
         )
@@ -2412,7 +2412,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             self.n_steps_ = i + 1
             self.n_iter_ = np.ceil(self.n_steps_ / n_steps_per_iter)
         else:
-            # TODO remove this branch in 1.3
+            # TODO remove this branch in 1.4
             n_iter = 1000 if self.n_iter == "deprecated" else self.n_iter
 
             batches = gen_batches(n_samples, self._batch_size)

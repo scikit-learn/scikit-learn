@@ -75,7 +75,7 @@ cdef class Criterion:
         pass
 
     cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
-        """Initalize sum_missing if there are missing values.
+        """Initialize sum_missing if there are missing values.
 
         This method assumes that caller placed the missing samples in
         self.sample_indices[-n_missing:]
@@ -382,7 +382,7 @@ cdef class ClassificationCriterion(Criterion):
         self.sum_missing = np.zeros((self.n_outputs, self.max_n_classes), dtype=np.float64)
 
     cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
-        """Initalize sum_missing if there are missing values.
+        """Initialize sum_missing if there are missing values.
 
         This method assumes that caller placed the missing samples in
         self.sample_indices[-n_missing:]
@@ -832,7 +832,7 @@ cdef class RegressionCriterion(Criterion):
         self.sum_missing = np.zeros(self.n_outputs, dtype=np.float64)
 
     cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
-        """Initalize sum_missing if there are missing values.
+        """Initialize sum_missing if there are missing values.
 
         This method assumes that caller placed the missing samples in
         self.sample_indices[-n_missing:]

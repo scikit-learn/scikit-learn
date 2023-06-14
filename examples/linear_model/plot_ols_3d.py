@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========================================================
 Sparsity Example: Fitting only features 1  and 2
