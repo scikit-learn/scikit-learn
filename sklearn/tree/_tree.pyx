@@ -211,10 +211,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double impurity = INFINITY
         cdef double lower_bound
         cdef double upper_bound
-        cdef double lower_bound_left
-        cdef double upper_bound_left
-        cdef double lower_bound_right
-        cdef double upper_bound_right
         cdef double middle_value
         cdef SIZE_t n_constant_features
         cdef bint is_leaf
@@ -609,7 +605,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef double min_impurity_decrease = self.min_impurity_decrease
         cdef double weighted_n_node_samples
         cdef bint is_leaf
-        cdef double node_value
 
         splitter.node_reset(start, end, &weighted_n_node_samples)
 
@@ -1348,9 +1343,9 @@ cdef class Tree:
         # self.value conceptually has shape:
         #
         #            [node_count, n_outputs, max_n_classes]
-        # 
-        # but is here handled via a pointer and strides. 
-        # 
+        #
+        # but is here handled via a pointer and strides.
+        #
         # Monotonicity constraints are only supported for single-output
         # trees we can safely assume n_outputs == 1.
 

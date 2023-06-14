@@ -240,7 +240,7 @@ cdef class Criterion:
             )
             bint check_monotonic_cst
 
-        if monotonic_cst == 0: # No constraint
+        if monotonic_cst == 0:  # No constraint
             return check_lower_bound & check_upper_bound
         else:
             check_monotonic_cst = (
