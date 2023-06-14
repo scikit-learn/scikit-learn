@@ -29,18 +29,22 @@ def test_validate_score_name(score_name, scoring, negate_score, expected_score_n
     )
 
 
+# In the following test, we check the value of the max to min ratio
+# for parameter value intervals to check that using a decision threshold
+# of 5. is a good heuristic to decide between linear and log scales on
+# common ranges of parameter values.
 @pytest.mark.parametrize(
     "data, lower_bound, upper_bound",
     [
-        # Such data generation could either used with log scale or uniform scale.
-        (np.logspace(-1, 0, 5), 5, 6),
-        # A uniform generation will be close to 1.
+        # Such a range could be clearly displayed with either log scale or linear
+        # scale.
+        (np.geomspace(0.1, 1, 5), 5, 6),
+        # Evenly spaced parameter values lead to a ratio of 1.
         (np.linspace(0, 1, 5), 0.9, 1.1),
-        # This is not strictly log generated data but we will benefit from using a
-        # log scale.
+        # This is not exactly spaced on a log scale but we will benefit from treating
+        # it as such for visualization.
         ([1, 2, 5, 10, 20, 50], 20, 40),
     ],
 )
 def test_compute_scale_type_ratio(data, lower_bound, upper_bound):
-    print(_compute_scale_type_ratio(data))
     assert lower_bound < _compute_scale_type_ratio(data) < upper_bound
