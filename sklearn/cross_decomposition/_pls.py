@@ -16,6 +16,7 @@ from scipy.linalg import svd
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..base import MultiOutputMixin
 from ..base import ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..utils import check_array, check_consistent_length
 from ..utils.fixes import sp_version
 from ..utils.fixes import parse_version
@@ -208,6 +209,7 @@ class _PLS(
         self.tol = tol
         self.copy = copy
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, Y):
         """Fit model to data.
 
@@ -226,8 +228,6 @@ class _PLS(
         self : object
             Fitted model.
         """
-        self._validate_params()
-
         check_consistent_length(X, Y)
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
@@ -958,6 +958,7 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.scale = scale
         self.copy = copy
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, Y):
         """Fit model to data.
 
@@ -974,8 +975,6 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         check_consistent_length(X, Y)
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2

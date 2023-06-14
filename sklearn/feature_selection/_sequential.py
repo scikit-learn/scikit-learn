@@ -7,6 +7,7 @@ import numpy as np
 
 from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone, is_classifier
+from ..base import _fit_context
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._param_validation import RealNotInt
 from ..utils._tags import _safe_tags
@@ -179,6 +180,10 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self.cv = cv
         self.n_jobs = n_jobs
 
+    @_fit_context(
+        # SequentialFeatureSelector.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Learn the features to select from X.
 
@@ -197,8 +202,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         tags = self._get_tags()
         X = self._validate_data(
             X,
