@@ -1454,6 +1454,41 @@ def test_pandas_categorical_errors(Hist):
         hist.fit(X_df, y)
 
 
+def test_categorical_different_order_same_model():
+    """Check that the order of the categorical gives same model."""
+    pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(42)
+    n_samples = 1_000
+    f_ints = rng.randint(low=0, high=2, size=n_samples)
+
+    # Construct a target with some noise
+    y = f_ints.copy()
+    flipped = rng.choice([True, False], size=n_samples, p=[0.1, 0.9])
+    y[flipped] = 1 - y[flipped]
+
+    # Construct categorical where 0 -> A and 1 -> B and 1 -> A and 0 -> B
+    f_cat = pd.Categorical(f_ints)
+    f_cat_a_b = f_cat.rename_categories({0: "A", 1: "B"})
+    f_cat_b_a = f_cat.rename_categories({0: "B", 1: "A"})
+
+    df_a_b = pd.DataFrame({"f_cat": f_cat_a_b})
+    df_b_a = pd.DataFrame({"f_cat": f_cat_b_a})
+
+    hist_a_b = HistGradientBoostingClassifier(
+        categorical_features="by_dtype", random_state=0
+    )
+    hist_b_a = HistGradientBoostingClassifier(
+        categorical_features="by_dtype", random_state=0
+    )
+
+    hist_a_b.fit(df_a_b, y)
+    hist_b_a.fit(df_b_a, y)
+
+    assert len(hist_a_b._predictors) == len(hist_b_a._predictors)
+    for predictor_1, predictor_2 in zip(hist_a_b._predictors, hist_b_a._predictors):
+        assert len(predictor_1[0].nodes) == len(predictor_2[0].nodes)
+
+
 # TODO(1.5): Remove warning and change default in 1.5
 def test_categorical_features_warn():
     """Raise warning when there are categorical features in the input DataFrame."""
