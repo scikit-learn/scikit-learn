@@ -1440,7 +1440,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
         raise NotFittedError(msg % {"name": type(estimator).__name__})
 
 
-def check_non_negative(X, whom):
+def check_non_negative(X, whom, accept_nan=False):
     """
     Check if there is any negative value in an array.
 
@@ -1451,6 +1451,9 @@ def check_non_negative(X, whom):
 
     whom : str
         Who passed X to this function.
+
+    accept_nan : bool, default=False
+        If True, NaN values are accepted in X.
     """
     xp, _ = get_namespace(X)
     # avoid X.min() on sparse matrix since it also sorts the indices
@@ -1458,11 +1461,16 @@ def check_non_negative(X, whom):
         if X.format in ["lil", "dok"]:
             X = X.tocsr()
         if X.data.size == 0:
-            X_min = 0
+            X = xp.arange(1)
         else:
-            X_min = X.data.min()
+            X = X.data
+
+    if accept_nan:
+        X_min = xp.nanmin(X)
     else:
         X_min = xp.min(X)
+        if xp.isnan(X_min):
+            raise ValueError("NaN values in data passed to %s" % whom)
 
     if X_min < 0:
         raise ValueError("Negative values in data passed to %s" % whom)

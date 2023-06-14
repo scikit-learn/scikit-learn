@@ -287,6 +287,11 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
+- |Feature| :class:`decomposition.NMF`(with `solver="mu"`) and
+  :class:`decomposition.MiniBatchNMF` now accept NaNs in the input data. The
+  loss function is then summing over the non-NaN elements of the input data.
+  :pr:`8474` by `Tom Dupre la Tour`_.
+
 - |Enhancement| :class:`decomposition.DictionaryLearning` now accepts the parameter
   `callback` for consistency with the function :func:`decomposition.dict_learning`.
   :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.

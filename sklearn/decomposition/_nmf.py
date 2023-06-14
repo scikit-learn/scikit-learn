@@ -59,7 +59,7 @@ def trace_dot(X, Y):
     Y : array-like
         Second matrix.
     """
-    return np.dot(X.ravel(), Y.ravel())
+    return np.dot(_safe_ravel(X), _safe_ravel(Y))
 
 
 def _check_init(A, shape, whom):
@@ -74,12 +74,38 @@ def _check_init(A, shape, whom):
         raise ValueError("Array passed to %s is full of zeros." % whom)
 
 
+def _safe_squared_norm(X):
+    """Squared Euclidean or Frobenius norm of X, safe for numpy masked arrays."""
+    X = _safe_ravel(X)
+    if isinstance(X, np.ma.masked_array):
+        return float(np.ma.dot(X, X))
+    else:
+        return np.dot(X, X)
+
+
+def _safe_ravel(X):
+    """Guarantee that we preserve masked array in ravel."""
+    if isinstance(X, np.ma.masked_array):
+        return np.ma.ravel(X)
+    else:
+        return np.ravel(X)
+
+
+def _safe_mean(X):
+    """Compute the arithmetic mean of an array, safe for sparse and NaN values"""
+    if sp.issparse(X):
+        return X.mean()
+    else:
+        return np.nanmean(X)
+
+
 def _beta_divergence(X, W, H, beta, square_root=False):
     """Compute the beta-divergence of X and dot(W, H).
 
     Parameters
     ----------
     X : float or array-like of shape (n_samples, n_features)
+        Numpy masked arrays or arrays containing NaN are accepted.
 
     W : float or array-like of shape (n_samples, n_components)
 
@@ -109,6 +135,23 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     W = np.atleast_2d(W)
     H = np.atleast_2d(H)
 
+    # compute the mask of missing data
+    if sp.issparse(X) and np.any(np.isnan(X.data)):
+        raise ValueError(
+            "X contains np.nan values, and NMF with missing "
+            "values is not implemented for sparse matrices."
+        )
+    elif isinstance(X, np.ma.masked_array):
+        X_mask = X.mask
+    elif not sp.issparse(X):
+        X_mask = np.isnan(X)
+        if np.any(X_mask):
+            X = np.ma.masked_array(X, mask=X_mask)
+        else:
+            X_mask = False
+    else:
+        X_mask = False
+
     # Frobenius norm
     if beta == 2:
         # Avoid the creation of the dense np.dot(W, H) if X is sparse.
@@ -118,8 +161,10 @@ def _beta_divergence(X, W, H, beta, square_root=False):
             cross_prod = trace_dot((X * H.T), W)
             res = (norm_X + norm_WH - 2.0 * cross_prod) / 2.0
         else:
-            res = squared_norm(X - np.dot(W, H)) / 2.0
+            res = _safe_squared_norm(X - np.dot(W, H)) / 2.0
 
+        assert not np.isnan(res)
+        assert res >= 0
         if square_root:
             return np.sqrt(res * 2)
         else:
@@ -127,35 +172,49 @@ def _beta_divergence(X, W, H, beta, square_root=False):
 
     if sp.issparse(X):
         # compute np.dot(W, H) only where X is nonzero
-        WH_data = _special_sparse_dot(W, H, X).data
+        WH_data = _special_dot_X(W, H, X).data
         X_data = X.data
     else:
         WH = np.dot(W, H)
-        WH_data = WH.ravel()
-        X_data = X.ravel()
+        if X_mask is not False:
+            WH = np.ma.masked_array(WH, mask=X_mask)
+
+        WH_data = _safe_ravel(WH)
+        X_data = _safe_ravel(X)
 
     # do not affect the zeros: here 0 ** (-1) = 0 and not infinity
-    indices = X_data > EPSILON
-    WH_data = WH_data[indices]
-    X_data = X_data[indices]
+    # Also, it only selects non-masked data
+    indices = (X_data > EPSILON).nonzero()
+    WH_data = np.asarray(WH_data[indices])
+    X_data = np.asarray(X_data[indices])
 
     # used to avoid division by zero
     WH_data[WH_data < EPSILON] = EPSILON
 
     # generalized Kullback-Leibler divergence
     if beta == 1:
-        # fast and memory efficient computation of np.sum(np.dot(W, H))
-        sum_WH = np.dot(np.sum(W, axis=0), np.sum(H, axis=1))
+        if X_mask is False:
+            # fast and memory efficient computation of np.sum(np.dot(W, H))
+            sum_WH = np.dot(np.sum(W, axis=0), np.sum(H, axis=1))
+        else:
+            sum_WH = WH.sum()
         # computes np.sum(X * log(X / WH)) only where X is nonzero
         div = X_data / WH_data
-        res = np.dot(X_data, np.log(div))
+        if X_mask is False:
+            res = np.dot(X_data, np.log(div))
+        else:
+            res = float(np.ma.dot(X_data, np.log(div)))
         # add full np.sum(np.dot(W, H)) - np.sum(X)
         res += sum_WH - X_data.sum()
 
     # Itakura-Saito divergence
     elif beta == 0:
         div = X_data / WH_data
-        res = np.sum(div) - np.prod(X.shape) - np.sum(np.log(div))
+        if X_mask is False:
+            n_valid_elements = np.prod(X.shape)
+        else:
+            n_valid_elements = np.sum(~X_mask)
+        res = np.sum(div) - n_valid_elements - np.sum(np.log(div))
 
     # beta-divergence, beta not in (0, 1, 2)
     else:
@@ -167,13 +226,14 @@ def _beta_divergence(X, W, H, beta, square_root=False):
                 sum_WH_beta += np.sum(np.dot(W, H[:, i]) ** beta)
 
         else:
-            sum_WH_beta = np.sum(WH**beta)
+            sum_WH_beta = (WH**beta).sum()
 
         sum_X_WH = np.dot(X_data, WH_data ** (beta - 1))
         res = (X_data**beta).sum() - beta * sum_X_WH
         res += sum_WH_beta * (beta - 1)
         res /= beta * (beta - 1)
 
+    assert not np.isnan(res)
     if square_root:
         res = max(res, 0)  # avoid negative number due to rounding errors
         return np.sqrt(2 * res)
@@ -181,8 +241,15 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         return res
 
 
-def _special_sparse_dot(W, H, X):
-    """Computes np.dot(W, H), only where X is non zero."""
+def _special_dot_X(W, H, X, out=None):
+    """Computes np.dot(W, H) in a special way:
+    - If X is sparse, np.dot(W, H) is computed only where X is non zero,
+    and a sparse matrix is returned, with the same sparsity as X.
+    - If X is masked, np.dot(W, H) is computed entirely, and a masked array is
+    returned, with the same mask as X.
+    - If X is dense, np.dot(W, H) is computed entirely, and returned as a dense
+    array.
+    """
     if sp.issparse(X):
         ii, jj = X.nonzero()
         n_vals = ii.shape[0]
@@ -198,8 +265,23 @@ def _special_sparse_dot(W, H, X):
 
         WH = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
         return WH.tocsr()
+    elif isinstance(X, np.ma.masked_array):
+        WH = np.ma.masked_array(np.dot(W, H, out=out), mask=X.mask)
+        WH._sharedmask = False
+        return WH
     else:
-        return np.dot(W, H)
+        return np.dot(W, H, out=out)
+
+
+def _safe_dot(X, Ht):
+    """Computes np.dot(X, Ht) such that the sparse and the masked cases are
+    handled correctly.
+    Note that the masked case do not return a masked array.
+    """
+    if isinstance(X, np.ma.masked_array) or isinstance(Ht, np.ma.masked_array):
+        return np.asarray(np.ma.dot(X, Ht))
+    else:
+        return safe_sparse_dot(X, Ht)
 
 
 def _beta_loss_to_float(beta_loss):
@@ -272,7 +354,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
     nonnegative matrix factorization - Pattern Recognition, 2008
     http://tinyurl.com/nndsvd
     """
-    check_non_negative(X, "NMF initialization")
+    check_non_negative(X, "NMF initialization", accept_nan=True)
     n_samples, n_features = X.shape
 
     if (
@@ -293,7 +375,8 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
 
     # Random initialization
     if init == "random":
-        avg = np.sqrt(X.mean() / n_components)
+        X_mean = _safe_mean(X)
+        avg = np.sqrt(X_mean / n_components)
         rng = check_random_state(random_state)
         H = avg * rng.standard_normal(size=(n_components, n_features)).astype(
             X.dtype, copy=False
@@ -304,6 +387,12 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
         np.abs(H, out=H)
         np.abs(W, out=W)
         return W, H
+
+    if not sp.issparse(X) and np.any(np.isnan(X)):
+        raise ValueError(
+            "NMF initializations with NNDSVD are not available "
+            "with missing values (NaN)."
+        )
 
     # NNDSVD initialization
     U, S, V = randomized_svd(X, n_components, random_state=random_state)
@@ -523,16 +612,19 @@ def _multiplicative_update_w(
     l1_reg_W,
     l2_reg_W,
     gamma,
+    WH=None,
     H_sum=None,
     HHt=None,
     XHt=None,
     update_H=True,
 ):
     """Update W in Multiplicative Update NMF."""
+    X_mask = X.mask if isinstance(X, np.ma.masked_array) else False
+
     if beta_loss == 2:
         # Numerator
         if XHt is None:
-            XHt = safe_sparse_dot(X, H.T)
+            XHt = _safe_dot(X, H.T)
         if update_H:
             # avoid a copy of XHt, which will be re-computed (update_H=True)
             numerator = XHt
@@ -541,14 +633,18 @@ def _multiplicative_update_w(
             numerator = XHt.copy()
 
         # Denominator
-        if HHt is None:
-            HHt = np.dot(H, H.T)
-        denominator = np.dot(W, HHt)
+        if X_mask is False:
+            if HHt is None:
+                HHt = np.dot(H, H.T)
+            denominator = np.dot(W, HHt)
+        else:
+            WH = _special_dot_X(W, H, X, out=WH)
+            denominator = _safe_dot(WH, H.T)
 
     else:
         # Numerator
         # if X is sparse, compute WH only where X is non zero
-        WH_safe_X = _special_sparse_dot(W, H, X)
+        WH_safe_X = _special_dot_X(W, H, X, out=WH)
         if sp.issparse(X):
             WH_safe_X_data = WH_safe_X.data
             X_data = X.data
@@ -558,14 +654,16 @@ def _multiplicative_update_w(
             # copy used in the Denominator
             WH = WH_safe_X.copy()
             if beta_loss - 1.0 < 0:
-                WH[WH < EPSILON] = EPSILON
+                WH[np.logical_and(WH < EPSILON, ~X_mask)] = EPSILON
 
         # to avoid taking a negative power of zero
         if beta_loss - 2.0 < 0:
-            WH_safe_X_data[WH_safe_X_data < EPSILON] = EPSILON
+            WH_safe_X_data[np.logical_and(WH_safe_X_data < EPSILON, ~X_mask)] = EPSILON
 
         if beta_loss == 1:
-            np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
+            # to work around spurious warnings coming out of masked arrays
+            with np.errstate(invalid="ignore"):
+                np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
         elif beta_loss == 0:
             # speeds up computation time
             # refer to /numpy/numpy/issues/9363
@@ -579,13 +677,20 @@ def _multiplicative_update_w(
             WH_safe_X_data *= X_data
 
         # here numerator = dot(X * (dot(W, H) ** (beta_loss - 2)), H.T)
-        numerator = safe_sparse_dot(WH_safe_X, H.T)
+        numerator = _safe_dot(WH_safe_X, H.T)
 
         # Denominator
         if beta_loss == 1:
             if H_sum is None:
-                H_sum = np.sum(H, axis=1)  # shape(n_components, )
-            denominator = H_sum[np.newaxis, :]
+                if X_mask is False:
+                    H_sum = np.sum(H, axis=1)  # shape(n_components, )
+                    H_sum = H_sum[np.newaxis, :]
+                else:
+                    H_sum = np.dot(~X_mask, H.T)
+                H_sum[H_sum == 0] = 1.0
+                denominator = H_sum
+            else:
+                denominator = H_sum.copy()
 
         else:
             # computation of WHHt = dot(dot(W, H) ** beta_loss - 1, H.T)
@@ -601,7 +706,7 @@ def _multiplicative_update_w(
                     WHHt[i, :] = np.dot(WHi, H.T)
             else:
                 WH **= beta_loss - 1
-                WHHt = np.dot(WH, H.T)
+                WHHt = _safe_dot(WH, H.T)
             denominator = WHHt
 
     # Add L1 and L2 regularization
@@ -624,16 +729,23 @@ def _multiplicative_update_w(
 
 
 def _multiplicative_update_h(
-    X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma, A=None, B=None, rho=None
+    X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma, WH=None, A=None, B=None, rho=None
 ):
     """update H in Multiplicative Update NMF."""
+    X_mask = X.mask if isinstance(X, np.ma.masked_array) else False
+
     if beta_loss == 2:
-        numerator = safe_sparse_dot(W.T, X)
-        denominator = np.linalg.multi_dot([W.T, W, H])
+        if X_mask is False:
+            numerator = safe_sparse_dot(W.T, X)
+            denominator = np.dot(np.dot(W.T, W), H)
+        else:
+            numerator = _safe_dot(W.T, X)
+            WH = _special_dot_X(W, H, X, out=WH)
+            denominator = _safe_dot(W.T, WH)
 
     else:
         # Numerator
-        WH_safe_X = _special_sparse_dot(W, H, X)
+        WH_safe_X = _special_dot_X(W, H, X, out=WH)
         if sp.issparse(X):
             WH_safe_X_data = WH_safe_X.data
             X_data = X.data
@@ -643,14 +755,16 @@ def _multiplicative_update_h(
             # copy used in the Denominator
             WH = WH_safe_X.copy()
             if beta_loss - 1.0 < 0:
-                WH[WH < EPSILON] = EPSILON
+                WH[np.logical_and(WH < EPSILON, ~X_mask)] = EPSILON
 
         # to avoid division by zero
         if beta_loss - 2.0 < 0:
-            WH_safe_X_data[WH_safe_X_data < EPSILON] = EPSILON
+            WH_safe_X_data[np.logical_and(WH_safe_X_data < EPSILON, ~X_mask)] = EPSILON
 
         if beta_loss == 1:
-            np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
+            # to work around spurious warnings coming out of masked arrays
+            with np.errstate(invalid="ignore"):
+                np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
         elif beta_loss == 0:
             # speeds up computation time
             # refer to /numpy/numpy/issues/9363
@@ -664,13 +778,17 @@ def _multiplicative_update_h(
             WH_safe_X_data *= X_data
 
         # here numerator = dot(W.T, (dot(W, H) ** (beta_loss - 2)) * X)
-        numerator = safe_sparse_dot(W.T, WH_safe_X)
+        numerator = _safe_dot(W.T, WH_safe_X)
 
         # Denominator
         if beta_loss == 1:
-            W_sum = np.sum(W, axis=0)  # shape(n_components, )
+            if X_mask is False:
+                W_sum = np.sum(W, axis=0)  # shape(n_components, )
+                W_sum = W_sum[:, np.newaxis]
+            else:
+                W_sum = np.dot(W.T, ~X_mask)
             W_sum[W_sum == 0] = 1.0
-            denominator = W_sum[:, np.newaxis]
+            denominator = W_sum
 
         # beta_loss not in (1, 2)
         else:
@@ -687,7 +805,7 @@ def _multiplicative_update_h(
                     WtWH[:, i] = np.dot(W.T, WHi)
             else:
                 WH **= beta_loss - 1
-                WtWH = np.dot(W.T, WH)
+                WtWH = _safe_dot(W.T, WH)
             denominator = WtWH
 
     # Add L1 and L2 regularization
@@ -815,6 +933,15 @@ def _fit_multiplicative_update(
     else:
         gamma = 1.0
 
+    # allocate memory for the product np.dot(W, H)
+    WH = np.empty(X.shape) if not sp.issparse(X) else None
+
+    # transform in a numpy masked array if X contains missing (NaN) values
+    if not sp.issparse(X):
+        X_mask = np.isnan(X)
+        if np.any(X_mask):
+            X = np.ma.masked_array(X, mask=X_mask)
+
     # used for the convergence criterion
     error_at_init = _beta_divergence(X, W, H, beta_loss, square_root=True)
     previous_error = error_at_init
@@ -831,6 +958,7 @@ def _fit_multiplicative_update(
             l1_reg_W=l1_reg_W,
             l2_reg_W=l2_reg_W,
             gamma=gamma,
+            WH=WH,
             H_sum=H_sum,
             HHt=HHt,
             XHt=XHt,
@@ -851,6 +979,7 @@ def _fit_multiplicative_update(
                 l1_reg_H=l1_reg_H,
                 l2_reg_H=l2_reg_H,
                 gamma=gamma,
+                WH=WH,
             )
 
             # These values will be recomputed since H changed
@@ -942,6 +1071,7 @@ def non_negative_factorization(
     The generic norm :math:`||X - WH||_{loss}^2` may represent
     the Frobenius norm or another supported beta-divergence loss.
     The choice between options is controlled by the `beta_loss` parameter.
+    If `X` contains NaN values, the loss is summed over the non-NaN elements.
 
     The regularization terms are scaled by `n_features` for `W` and by `n_samples` for
     `H` to keep their impact balanced with respect to one another and to the data fit
@@ -1007,9 +1137,12 @@ def non_negative_factorization(
     solver : {'cd', 'mu'}, default='cd'
         Numerical solver to use:
 
-        - 'cd' is a Coordinate Descent solver that uses Fast Hierarchical
-          Alternating Least Squares (Fast HALS).
-        - 'mu' is a Multiplicative Update solver.
+        - 'cd' is a Coordinate Descent solver. It is often faster than the 'mu'
+            solver, but it only supports the 'frobenius' beta loss function, and
+            it does not support data with NaN values.
+        - 'mu' is a Multiplicative Update solver. It supports all beta loss
+            functions and data with NaN values, but it can be slower than the
+            'cd' solver.
 
         .. versionadded:: 0.17
            Coordinate Descent solver.
@@ -1111,7 +1244,12 @@ def non_negative_factorization(
     )
     est._validate_params()
 
-    X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
+    X = check_array(
+        X,
+        accept_sparse=("csr", "csc"),
+        dtype=[np.float64, np.float32],
+        force_all_finite=False,
+    )
 
     with config_context(assume_finite=True):
         W, H, n_iter = est._fit_transform(X, W=W, H=H, update_H=update_H)
@@ -1196,7 +1334,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
                 )
             # 'mu' solver should not be initialized by zeros
             if self.solver == "mu":
-                avg = np.sqrt(X.mean() / self._n_components)
+                avg = np.sqrt(_safe_mean(X) / self._n_components)
                 W = np.full((n_samples, self._n_components), avg, dtype=X.dtype)
             else:
                 W = np.zeros((n_samples, self._n_components), dtype=X.dtype)
@@ -1305,6 +1443,7 @@ class NMF(_BaseNMF):
     The generic norm :math:`||X - WH||_{loss}` may represent
     the Frobenius norm or another supported beta-divergence loss.
     The choice between options is controlled by the `beta_loss` parameter.
+    If `X` contains NaN values, the loss is summed over the non-NaN elements.
 
     The regularization terms are scaled by `n_features` for `W` and by `n_samples` for
     `H` to keep their impact balanced with respect to one another and to the data fit
@@ -1354,8 +1493,12 @@ class NMF(_BaseNMF):
     solver : {'cd', 'mu'}, default='cd'
         Numerical solver to use:
 
-        - 'cd' is a Coordinate Descent solver.
-        - 'mu' is a Multiplicative Update solver.
+        - 'cd' is a Coordinate Descent solver. It is often faster than the 'mu'
+            solver, but it only supports the 'frobenius' beta loss function, and
+            it does not support data with NaN values.
+        - 'mu' is a Multiplicative Update solver. It supports all beta loss
+            functions and data with NaN values, but it can be slower than the
+            'cd' solver.
 
         .. versionadded:: 0.17
            Coordinate Descent solver.
@@ -1537,6 +1680,19 @@ class NMF(_BaseNMF):
                 UserWarning,
             )
 
+        if sp.issparse(X) and np.any(np.isnan(X.data)):
+            raise ValueError(
+                "X contains NaN values, and NMF with missing "
+                "values is not implemented for sparse matrices."
+            )
+
+        if not sp.issparse(X) and np.any(np.isnan(X)) and self.solver != "mu":
+            raise ValueError(
+                "NMF solver '%s' cannot handle missing values. "
+                "Use 'mu' solver or remove NaN from the input X."
+                % self.solver
+            )
+
         return self
 
     def fit_transform(self, X, y=None, W=None, H=None):
@@ -1569,7 +1725,10 @@ class NMF(_BaseNMF):
         self._validate_params()
 
         X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            force_all_finite=False,
         )
 
         with config_context(assume_finite=True):
@@ -1624,7 +1783,7 @@ class NMF(_BaseNMF):
         n_iter_ : int
             Actual number of iterations.
         """
-        check_non_negative(X, "NMF (input X)")
+        check_non_negative(X, "NMF (input X)", accept_nan=True)
 
         # check parameters
         self._check_params(X)
@@ -1702,13 +1861,27 @@ class NMF(_BaseNMF):
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32], reset=False
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            reset=False,
+            force_all_finite=not self._more_tags()["allow_nan"],
         )
 
         with config_context(assume_finite=True):
             W, *_ = self._fit_transform(X, H=self.components_, update_H=False)
 
         return W
+
+    def _more_tags(self):
+        return {
+            "allow_nan": self.solver == "mu" and self.init not in [
+                None,
+                "nndsvd",
+                "nndsvda",
+                "nndsvdar",
+            ]
+        }
 
 
 class MiniBatchNMF(_BaseNMF):
@@ -1744,6 +1917,7 @@ class MiniBatchNMF(_BaseNMF):
     The generic norm :math:`||X - WH||_{loss}^2` may represent
     the Frobenius norm or another supported beta-divergence loss.
     The choice between options is controlled by the `beta_loss` parameter.
+    If `X` contains NaN values, the loss is summed over the non-NaN elements.
 
     The objective function is minimized with an alternating minimization of `W`
     and `H`.
@@ -2152,7 +2326,10 @@ class MiniBatchNMF(_BaseNMF):
         self._validate_params()
 
         X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            force_all_finite=False,
         )
 
         with config_context(assume_finite=True):
@@ -2209,7 +2386,7 @@ class MiniBatchNMF(_BaseNMF):
         n_steps : int
             Number of mini-batches processed.
         """
-        check_non_negative(X, "MiniBatchNMF (input X)")
+        check_non_negative(X, "MiniBatchNMF (input X)", accept_nan=True)
         self._check_params(X)
 
         if X.min() == 0 and self._beta_loss <= 0:
@@ -2233,6 +2410,12 @@ class MiniBatchNMF(_BaseNMF):
         self._ewa_cost = None
         self._ewa_cost_min = None
         self._no_improvement = 0
+
+        # transform in a numpy masked array if X contains missing (NaN) values
+        if not sp.issparse(X):
+            X_mask = np.isnan(X)
+            if np.any(X_mask):
+                X = np.ma.masked_array(X, mask=X_mask)
 
         batches = gen_batches(n_samples, self._batch_size)
         batches = itertools.cycle(batches)
@@ -2281,8 +2464,18 @@ class MiniBatchNMF(_BaseNMF):
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32], reset=False
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            reset=False,
+            force_all_finite=not self._more_tags()["allow_nan"],
         )
+
+        # transform in a numpy masked array if X contains missing (NaN) values
+        if not sp.issparse(X):
+            X_mask = np.isnan(X)
+            if np.any(X_mask):
+                X = np.ma.masked_array(X, mask=X_mask)
 
         W = self._solve_W(X, self.components_, self._transform_max_iter)
 
@@ -2349,3 +2542,6 @@ class MiniBatchNMF(_BaseNMF):
         self.n_steps_ += 1
 
         return self
+
+    def _more_tags(self):
+        return {"allow_nan": self.init not in [None, "nndsvd", "nndsvda", "nndsvdar"]}
