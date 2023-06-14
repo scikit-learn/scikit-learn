@@ -66,11 +66,9 @@ def _validate_score_name(score_name, scoring, negate_score):
     If `score_name` is provided, we just return it as-is.
     If `score_name` is `None`, we use `Score` if `negate_score` is `False` and
     `Negative score` otherwise.
-    If `score_name` is a string or a callable, we infer the name:
-
-    - we replace `_` by spaces and capitalize the first letter;
-    - we remove `neg_` and replace it by `"Negative"` if `negate_score` is
-      `True` or just remove it otherwise.
+    If `score_name` is a string or a callable, we infer the name. We replace `_` by
+    spaces and capitalize the first letter. We remove `neg_` and replace it by
+    `"Negative"` if `negate_score` is `False` or just remove it otherwise.
     """
     if score_name is not None:
         return score_name
