@@ -481,7 +481,7 @@ def test_decorate_validated_function():
     with pytest.warns(FutureWarning, match="Function _func is deprecated"):
         decorated_function(1, 2, c=3)
 
-    # outer decorator does not interfer with validation
+    # outer decorator does not interfere with validation
     with pytest.warns(FutureWarning, match="Function _func is deprecated"):
         with pytest.raises(
             InvalidParameterError, match=r"The 'c' parameter of _func must be"

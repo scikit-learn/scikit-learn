@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 ==================================
 Color Quantization using K-Means

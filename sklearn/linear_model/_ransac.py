@@ -14,7 +14,7 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ._base import LinearRegression
 from ..utils.validation import has_fit_parameter
-from ..utils._param_validation import Interval, Options, StrOptions, HasMethods, Hidden
+from ..utils._param_validation import Interval, Options, StrOptions, HasMethods
 from ..utils._param_validation import RealNotInt
 from ..exceptions import ConvergenceWarning
 
@@ -161,13 +161,6 @@ class RANSACRegressor(
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    base_estimator : object, default="deprecated"
-        Use `estimator` instead.
-
-        .. deprecated:: 1.1
-            `base_estimator` is deprecated and will be removed in 1.3.
-            Use `estimator` instead.
-
     Attributes
     ----------
     estimator_ : object
@@ -259,11 +252,6 @@ class RANSACRegressor(
         "stop_probability": [Interval(Real, 0, 1, closed="both")],
         "loss": [StrOptions({"absolute_error", "squared_error"}), callable],
         "random_state": ["random_state"],
-        "base_estimator": [
-            HasMethods(["fit", "score", "predict"]),
-            Hidden(StrOptions({"deprecated"})),
-            None,
-        ],
     }
 
     def __init__(
@@ -281,7 +269,6 @@ class RANSACRegressor(
         stop_probability=0.99,
         loss="absolute_error",
         random_state=None,
-        base_estimator="deprecated",
     ):
         self.estimator = estimator
         self.min_samples = min_samples
@@ -295,7 +282,6 @@ class RANSACRegressor(
         self.stop_probability = stop_probability
         self.random_state = random_state
         self.loss = loss
-        self.base_estimator = base_estimator
 
     def fit(self, X, y, sample_weight=None):
         """Fit estimator using RANSAC algorithm.
@@ -338,16 +324,6 @@ class RANSACRegressor(
             X, y, validate_separately=(check_X_params, check_y_params)
         )
         check_consistent_length(X, y)
-
-        if self.base_estimator != "deprecated":
-            warnings.warn(
-                (
-                    "`base_estimator` was renamed to `estimator` in version 1.1 and "
-                    "will be removed in 1.3."
-                ),
-                FutureWarning,
-            )
-            self.estimator = self.base_estimator
 
         if self.estimator is not None:
             estimator = clone(self.estimator)

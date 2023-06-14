@@ -28,14 +28,6 @@ sp_version = parse_version(scipy.__version__)
 sp_base_version = parse_version(sp_version.base_version)
 
 
-if sp_version >= parse_version("1.4"):
-    from scipy.sparse.linalg import lobpcg
-else:
-    # Backport of lobpcg functionality from scipy 1.4.0, can be removed
-    # once support for sp_version < parse_version('1.4') is dropped
-    # mypy error: Name 'lobpcg' already defined (possibly by an import)
-    from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
-
 try:
     from scipy.optimize._linesearch import line_search_wolfe2, line_search_wolfe1
 except ImportError:  # SciPy < 1.8
@@ -44,17 +36,6 @@ except ImportError:  # SciPy < 1.8
 
 def _object_dtype_isnan(X):
     return X != X
-
-
-# TODO: remove when the minimum scipy version is >= 1.5
-if sp_version >= parse_version("1.5"):
-    from scipy.linalg import eigh as _eigh  # noqa
-else:
-
-    def _eigh(*args, **kwargs):
-        """Wrapper for `scipy.linalg.eigh` that handles the deprecation of `eigvals`."""
-        eigvals = kwargs.pop("subset_by_index", None)
-        return scipy.linalg.eigh(*args, eigvals=eigvals, **kwargs)
 
 
 # Rename the `method` kwarg to `interpolation` for NumPy < 1.22, because
