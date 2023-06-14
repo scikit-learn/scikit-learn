@@ -784,7 +784,7 @@ def pairwise_distances_argmin_min(
         ],
         "metric_kwargs": [dict, None],
     },
-    prefer_skip_nested_validation=False,
+    prefer_skip_nested_validation=False,  # metric is not validated yet
 )
 def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.

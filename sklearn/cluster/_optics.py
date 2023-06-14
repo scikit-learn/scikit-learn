@@ -442,7 +442,7 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],
     },
-    prefer_skip_nested_validation=False,
+    prefer_skip_nested_validation=False,  # metric is not validated yet
 )
 def compute_optics_graph(
     X, *, min_samples, max_eps, metric, p, metric_params, algorithm, leaf_size, n_jobs
