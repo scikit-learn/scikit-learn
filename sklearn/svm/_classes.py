@@ -5,6 +5,7 @@ import numpy as np
 
 from ._base import _fit_liblinear, _get_liblinear_solver_type, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
+from ..base import _fit_context
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearModel
 from ..utils import deprecated
 from ..utils.validation import _num_samples
@@ -272,6 +273,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.penalty = penalty
         self.loss = loss
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -296,8 +298,6 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self : object
             An instance of the estimator.
         """
-        self._validate_params()
-
         X, y = self._validate_data(
             X,
             y,
@@ -529,6 +529,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         self.dual = dual
         self.loss = loss
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -553,8 +554,6 @@ class LinearSVR(RegressorMixin, LinearModel):
         self : object
             An instance of the estimator.
         """
-        self._validate_params()
-
         X, y = self._validate_data(
             X,
             y,

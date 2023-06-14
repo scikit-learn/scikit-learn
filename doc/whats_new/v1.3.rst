@@ -228,6 +228,9 @@ Changelog
   is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 
+- |API| The `Xred` argument in :func:`cluster.FeatureAgglomeration.inverse_transform`
+  is renamed to `Xt` and will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -281,6 +284,10 @@ Changelog
   the pandas parser. The parameter `read_csv_kwargs` allows to overwrite this behaviour.
   :pr:`26551` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :func:`dataasets.fetch_openml` will consistenly use `np.nan` as missing marker
+  with both parsers `"pandas"` and `"liac-arff"`.
+  :pr:`26579` by :user:`Guillaume Lemaitre <glemaitre>`.
+  
 - |API| The `data_transposed` argument of :func:`datasets.make_sparse_coded_signal`
   is deprecated and will be removed in v1.5.
   :pr:`25784` by :user:`Jérémie du Boisberranger`.
@@ -301,6 +308,10 @@ Changelog
   `fit` and `transform` steps of :class:`decomposition.NMF` and
   :class:`decomposition.MiniBatchNMF` which can produce different results than previous
   versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
+
+- |API| The `W` argument in :func:`decomposition.NMF.inverse_transform` and
+  :class:`decomposition.MiniBatchNMF.inverse_transform` is renamed to `Xt` and
+  will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
@@ -395,6 +406,9 @@ Changelog
 - |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
   :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
 
+- |Fix| :class:`impute.IterativeImputer` now correctly preserves the Pandas
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -437,6 +451,12 @@ Changelog
   `n_iter` will be removed in scikit-learn 1.5. This change makes those
   estimators consistent with the rest of estimators.
   :pr:`25697` by :user:`John Pangas <jpangas>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| :class:`manifold.Isomap` now correctly preserves the Pandas
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
 ......................
@@ -645,9 +665,17 @@ Changelog
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
+- |Fix| :class:`preprocessing.PowerTransformer` now correctly preserves the Pandas
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
+
 - |Fix| :class:`preprocessing.PowerTransformer` now correcly raises error when
   using `method="box-cox"` on data with a constant `np.nan` column.
   :pr:`26400` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |Fix| :class:`preprocessing.PowerTransformer` with `method="yeo-johnson"` now leaves
+  constant features unchanged instead of transforming with an arbitrary value for
+  the `lambdas_` fitted parameter.
+  :pr:`26566` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.svm`
 ..................
