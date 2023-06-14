@@ -206,6 +206,9 @@ Changelog
   is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 
+- |API| The `Xred` argument in :func:`cluster.FeatureAgglomeration.inverse_transform`
+  is renamed to `Xt` and will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
+
 - |Enhancement| The `sample_weight` parameter now will be used in centroids
   initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
   and :class:`cluster.MiniBatchKMeans`.
@@ -231,8 +234,9 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |Fix| `compose.ColumnTransformer` raises an informative error when the individual transformers of `ColumnTransformer`
-  output pandas dataframes with indexes that are not consistent with each other and the output is configured
+- |Fix| `compose.ColumnTransformer` raises an informative error when the
+  individual transformers of `ColumnTransformer` output pandas dataframes with
+  indexes that are not consistent with each other and the output is configured
   to be pandas. :pr:`26286` by `Thomas Fan`_.
 
 - |Fix| :class:`compose.ColumnTransformer` correctly sets the output of the
@@ -295,6 +299,10 @@ Changelog
   :class:`decomposition.MiniBatchSparsePCA` are now faster for small batch sizes by
   avoiding duplicate validations.
   :pr:`25490` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| The `W` argument in :func:`decomposition.NMF.inverse_transform` and
+  :class:`decomposition.MiniBatchNMF.inverse_transform` is renamed to `Xt` and
+  will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
 
 - |Fix| Treat more consistently small values in the `W` and `H` matrices during the
   `fit` and `transform` steps of :class:`decomposition.NMF` and
