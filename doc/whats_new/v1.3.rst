@@ -640,6 +640,11 @@ Changelog
   using `method="box-cox"` on data with a constant `np.nan` column.
   :pr:`26400` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+- |Fix| :class:`preprocessing.PowerTransformer` with `method="yeo-johnson"` now leaves
+  constant features unchanged instead of transforming with an arbitrary value for
+  the `lambdas_` fitted parameter.
+  :pr:`26566` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.svm`
 ..................
 
