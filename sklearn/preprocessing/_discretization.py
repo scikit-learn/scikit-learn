@@ -60,9 +60,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    subsample : int or None (default='warn')
+    subsample : int or None, default='warn'
         Maximum number of samples, used to fit the model, for computational
-        efficiency. Used when `strategy="quantile"`.
+        efficiency. Defaults to 200_000 when `strategy='quantile'` and to `None`
+        when `strategy='uniform'` or `strategy='kmeans'`.
         `subsample=None` means that all the training samples are used when
         computing the quantiles that determine the binning thresholds.
         Since quantile computation relies on sorting each column of `X` and
@@ -70,8 +71,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         it is recommended to use subsampling on datasets with a
         very large number of samples.
 
-        .. deprecated:: 1.1
-           In version 1.3 and onwards, `subsample=2e5` will be the default.
+        .. versionchanged:: 1.3
+            The default value of `subsample` changed from `None` to `200_000` when
+            `strategy="quantile"`.
+
+        .. versionchanged:: 1.5
+            The default value of `subsample` changed from `None` to `200_000` when
+            `strategy="uniform"` or `strategy="kmeans"`.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for subsampling.
@@ -130,7 +136,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     ...      [-1, 2, -3, -0.5],
     ...      [ 0, 3, -2,  0.5],
     ...      [ 1, 4, -1,    2]]
-    >>> est = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform')
+    >>> est = KBinsDiscretizer(
+    ...     n_bins=3, encode='ordinal', strategy='uniform', subsample=None
+    ... )
     >>> est.fit(X)
     KBinsDiscretizer(...)
     >>> Xt = est.transform(X)
@@ -218,37 +226,31 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         n_samples, n_features = X.shape
 
-        if self.strategy == "quantile" and self.subsample is not None:
-            if self.subsample == "warn":
-                if n_samples > 2e5:
-                    warnings.warn(
-                        (
-                            "In version 1.3 onwards, subsample=2e5 "
-                            "will be used by default. Set subsample explicitly to "
-                            "silence this warning in the mean time. Set "
-                            "subsample=None to disable subsampling explicitly."
-                        ),
-                        FutureWarning,
-                    )
-            else:
-                rng = check_random_state(self.random_state)
-                if n_samples > self.subsample:
-                    subsample_idx = rng.choice(
-                        n_samples, size=self.subsample, replace=False
-                    )
-                    X = _safe_indexing(X, subsample_idx)
-        elif self.strategy != "quantile" and isinstance(self.subsample, Integral):
-            raise ValueError(
-                f"Invalid parameter for `strategy`: {self.strategy}. "
-                '`subsample` must be used with `strategy="quantile"`.'
-            )
-
-        elif sample_weight is not None and self.strategy == "uniform":
+        if sample_weight is not None and self.strategy == "uniform":
             raise ValueError(
                 "`sample_weight` was provided but it cannot be "
                 "used with strategy='uniform'. Got strategy="
                 f"{self.strategy!r} instead."
             )
+
+        if self.strategy in ("uniform", "kmeans") and self.subsample == "warn":
+            warnings.warn(
+                (
+                    "In version 1.5 onwards, subsample=200_000 "
+                    "will be used by default. Set subsample explicitly to "
+                    "silence this warning in the mean time. Set "
+                    "subsample=None to disable subsampling explicitly."
+                ),
+                FutureWarning,
+            )
+
+        subsample = self.subsample
+        if subsample == "warn":
+            subsample = 200000 if self.strategy == "quantile" else None
+        if subsample is not None and n_samples > subsample:
+            rng = check_random_state(self.random_state)
+            subsample_idx = rng.choice(n_samples, size=subsample, replace=False)
+            X = _safe_indexing(X, subsample_idx)
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)

@@ -11,6 +11,7 @@ This module defines export functions for decision trees.
 #          Li Li <aiki.nogard@gmail.com>
 #          Giuseppe Vettigli <vettigli@gmail.com>
 # License: BSD 3 clause
+from collections.abc import Iterable
 from io import StringIO
 from numbers import Integral
 
@@ -247,7 +248,7 @@ class _BaseTreeExporter:
             color = list(self.colors["rgb"][np.argmax(value)])
             sorted_values = sorted(value, reverse=True)
             if len(sorted_values) == 1:
-                alpha = 0
+                alpha = 0.0
             else:
                 alpha = (sorted_values[0] - sorted_values[1]) / (1 - sorted_values[1])
         else:
@@ -256,8 +257,6 @@ class _BaseTreeExporter:
             alpha = (value - self.colors["bounds"][0]) / (
                 self.colors["bounds"][1] - self.colors["bounds"][0]
             )
-        # unpack numpy scalars
-        alpha = float(alpha)
         # compute the color as alpha against white
         color = [int(round(alpha * c + (1 - alpha) * 255, 0)) for c in color]
         # Return html color code in #RRGGBB format
@@ -277,8 +276,12 @@ class _BaseTreeExporter:
         if tree.n_outputs == 1:
             node_val = tree.value[node_id][0, :] / tree.weighted_n_node_samples[node_id]
             if tree.n_classes[0] == 1:
-                # Regression
+                # Regression or degraded classification with single class
                 node_val = tree.value[node_id][0, :]
+                if isinstance(node_val, Iterable) and self.colors["bounds"] is not None:
+                    # Only unpack the float only for the regression tree case.
+                    # Classification tree requires an Iterable in `get_color`.
+                    node_val = node_val.item()
         else:
             # If multi-output color node by impurity
             node_val = -tree.impurity[node_id]
