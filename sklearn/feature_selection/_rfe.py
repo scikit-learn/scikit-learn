@@ -229,7 +229,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         """
         return self.estimator_.classes_
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # RFE.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, **fit_params):
         """Fit the RFE model and then the underlying estimator on the selected features.
 
@@ -650,7 +653,10 @@ class RFECV(RFE):
         self.n_jobs = n_jobs
         self.min_features_to_select = min_features_to_select
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # RFECV.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, groups=None):
         """Fit the RFE model and automatically tune the number of selected features.
 

@@ -204,7 +204,10 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         )
         self.weights = weights
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # KNeighborsClassifier.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit the k-nearest neighbors classifier from the training dataset.
 
@@ -572,7 +575,10 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         self.weights = weights
         self.outlier_label = outlier_label
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # RadiusNeighborsClassifier.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit the radius neighbors classifier from the training dataset.
 

@@ -105,7 +105,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         self.n_jobs = n_jobs
 
     @_available_if_estimator_has("partial_fit")
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # MultiOutput*.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def partial_fit(self, X, y, classes=None, sample_weight=None, **partial_fit_params):
         """Incrementally fit a separate model for each class output.
 
@@ -202,7 +205,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         return self
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # MultiOutput*.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the model to data, separately for each output variable.
 
@@ -885,7 +891,10 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
            [0.0321..., 0.9935..., 0.0625...]])
     """
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # ClassifierChain.base_estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, Y, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
@@ -1106,7 +1115,10 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
            [2., 0.]])
     """
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # RegressorChain.base_estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, Y, **fit_params):
         """Fit the model to data matrix X and targets Y.
 

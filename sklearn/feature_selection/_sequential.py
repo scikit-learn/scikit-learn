@@ -180,7 +180,10 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self.cv = cv
         self.n_jobs = n_jobs
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # SequentialFeatureSelector.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Learn the features to select from X.
 

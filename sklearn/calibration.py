@@ -319,7 +319,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         return estimator
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # CalibratedClassifierCV.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the calibrated model.
 

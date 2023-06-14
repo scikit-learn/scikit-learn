@@ -172,7 +172,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self.max_iter = max_iter
         self.verbose = verbose
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # SelfTrainingClassifier.base_estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """
         Fit self-training classifier using `X`, `y` as training data.

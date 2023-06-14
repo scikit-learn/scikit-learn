@@ -103,7 +103,10 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             reset=False,
         )
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # AdaBoost*.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
 

@@ -198,7 +198,10 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
                     UserWarning,
                 )
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # TransformedTargetRegressor.regressor/transformer are not validated yet.
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, **fit_params):
         """Fit the model according to the given training data.
 

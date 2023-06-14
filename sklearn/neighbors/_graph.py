@@ -373,7 +373,10 @@ class KNeighborsTransformer(
         )
         self.mode = mode
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # KNeighborsTransformer.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit the k-nearest neighbors transformer from the training dataset.
 
@@ -601,7 +604,10 @@ class RadiusNeighborsTransformer(
         )
         self.mode = mode
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # RadiusNeighborsTransformer.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit the radius neighbors transformer from the training dataset.
 

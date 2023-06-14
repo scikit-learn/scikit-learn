@@ -682,7 +682,10 @@ class IterativeImputer(_BaseImputer):
             )
         return limit
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # IterativeImputer.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit the imputer on `X` and return the transformed `X`.
 

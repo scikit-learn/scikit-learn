@@ -309,7 +309,10 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self.flatten_transform = flatten_transform
         self.verbose = verbose
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # estimators in VotingClassifier.estimators are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 
@@ -573,7 +576,10 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # estimators in VotingRegressor.estimators are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 

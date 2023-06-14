@@ -333,7 +333,10 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         evals = self.kernel_pca_.eigenvalues_
         return np.sqrt(np.sum(G_center**2) - np.sum(evals**2)) / G.shape[0]
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # Isomap.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X.
 
@@ -355,7 +358,10 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self._fit_transform(X)
         return self
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # Isomap.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit the model from data in X and transform X.
 

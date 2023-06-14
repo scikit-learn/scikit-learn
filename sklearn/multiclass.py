@@ -297,7 +297,10 @@ class OneVsRestClassifier(
         self.n_jobs = n_jobs
         self.verbose = verbose
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # OneVsRestClassifier.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit underlying estimators.
 
@@ -348,7 +351,10 @@ class OneVsRestClassifier(
         return self
 
     @available_if(_estimators_has("partial_fit"))
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # OneVsRestClassifier.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def partial_fit(self, X, y, classes=None):
         """Partially fit underlying estimators.
 
@@ -654,7 +660,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # OneVsOneClassifier.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit underlying estimators.
 
@@ -705,7 +714,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         return self
 
     @available_if(_estimators_has("partial_fit"))
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # OneVsOneClassifier.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def partial_fit(self, X, y, classes=None):
         """Partially fit underlying estimators.
 
@@ -966,7 +978,10 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self.random_state = random_state
         self.n_jobs = n_jobs
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # OutputCodeClassifier.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit underlying estimators.
 

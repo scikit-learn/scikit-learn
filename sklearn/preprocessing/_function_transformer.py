@@ -198,7 +198,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 UserWarning,
             )
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit transformer by checking X.
 

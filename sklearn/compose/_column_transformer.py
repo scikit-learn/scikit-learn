@@ -703,7 +703,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self.fit_transform(X, y=y)
         return self
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # estimators in ColumnTransformer.transformers are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit all transformers, transform the data and concatenate results.
 

@@ -160,7 +160,10 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
 
         return method_name
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # estimators in Stacking*.estimators are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 

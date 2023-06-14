@@ -1098,7 +1098,10 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         return X_embedded
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # TSNE.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit X into an embedded space and return that transformed output.
 
@@ -1125,7 +1128,10 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.embedding_ = embedding
         return self.embedding_
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # TSNE.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit X into an embedded space.
 

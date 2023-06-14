@@ -321,7 +321,10 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             )
             self.max_features_ = max_features
 
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # SelectFromModel.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer.
 
@@ -376,7 +379,10 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         return _calculate_threshold(self.estimator, scores, self.threshold)
 
     @available_if(_estimator_has("partial_fit"))
-    @_fit_context(prefer_skip_nested_validation=False)
+    @_fit_context(
+        # SelectFromModel.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def partial_fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer only once.
 
