@@ -88,7 +88,7 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
                 logger.info("Downloading LFW metadata: %s", target.url)
                 _fetch_remote(target, dirname=lfw_home)
             else:
-                raise IOError("%s is missing" % target_filepath)
+                raise OSError("%s is missing" % target_filepath)
 
     if funneled:
         data_folder_path = join(lfw_home, "lfw_funneled")
@@ -104,7 +104,7 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
                 logger.info("Downloading LFW data (~200MB): %s", archive.url)
                 _fetch_remote(archive, dirname=lfw_home)
             else:
-                raise IOError("%s is missing" % archive_path)
+                raise OSError("%s is missing" % archive_path)
 
         import tarfile
 
@@ -297,7 +297,7 @@ def fetch_lfw_people(
         correlation from the background.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -500,7 +500,7 @@ def fetch_lfw_pairs(
         correlation from the background.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     Returns

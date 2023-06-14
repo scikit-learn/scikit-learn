@@ -615,7 +615,7 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
     from pandas import SparseDtype
 
     if is_bool_dtype(pd_dtype):
-        # bool and extension booleans need early converstion because __array__
+        # bool and extension booleans need early conversion because __array__
         # converts mixed dtype dataframes into object dtypes
         return True
 

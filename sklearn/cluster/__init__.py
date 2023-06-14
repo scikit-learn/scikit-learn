@@ -18,6 +18,7 @@ __getattr__, __dir__, __all__ = _lazy_loader.attach(
         "_birch": ["Birch"],
         "_bisect_k_means": ["BisectingKMeans"],
         "_dbscan": ["dbscan", "DBSCAN"],
+        "_hdbscan.hdbscan": ["HDBSCAN"],
         "_kmeans": ["KMeans", "MiniBatchKMeans", "k_means", "kmeans_plusplus"],
         "_mean_shift": [
             "estimate_bandwidth",
