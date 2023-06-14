@@ -285,7 +285,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 - None if the feature is not categorical
             None if no feature is categorical.
         """
-        X_is_dataframe = hasattr(X, "dtypes")
+        X_is_dataframe = hasattr(X, "dtypes")  # sufficient here
 
         # TODO(1.5): Remove warning and change default to "from_dtype" in v1.5
         if (

@@ -171,13 +171,16 @@ X.iloc[train_4]
 # efficiently handle heteorogenous tabular data with a mix of categorical and
 # numerical features as long as the number of samples is large enough. We set
 # `categorical_features="from_dtype"` such that features with categorical dtype
-# are considered categorical features.
+# are considered categorical features. For reference, we extract the categorical
+# features from the dataframe based on the dtype.
 from sklearn.pipeline import make_pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import cross_validate
 
 gbrt = HistGradientBoostingRegressor(categorical_features="from_dtype", random_state=42)
+categorical_columns = X.columns[X.dtypes == "category"]
+print("Categorical features:", categorical_columns.tolist())
 
 # %%
 #
@@ -225,13 +228,6 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import RidgeCV
 import numpy as np
-
-categorical_columns = [
-    "weather",
-    "season",
-    "holiday",
-    "workingday",
-]
 
 one_hot_encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
 alphas = np.logspace(-6, 6, 25)
