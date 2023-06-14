@@ -5,13 +5,13 @@ import numpy as np
 import scipy.sparse as sp
 import os
 import shutil
-from importlib import resources
 from tempfile import NamedTemporaryFile
 
 import pytest
 
+from sklearn.utils.fixes import _open_binary, _path
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal, assert_allclose
 from sklearn.utils._testing import fails_if_pypy
 
 import sklearn
@@ -31,7 +31,7 @@ def _load_svmlight_local_test_file(filename, **kwargs):
     """
     Helper to load resource `filename` with `importlib.resources`
     """
-    with resources.open_binary(TEST_DATA_MODULE, filename) as f:
+    with _open_binary(TEST_DATA_MODULE, filename) as f:
         return load_svmlight_file(f, **kwargs)
 
 
@@ -53,7 +53,6 @@ def test_load_svmlight_file():
         (1, 12, -3),
         (2, 20, 27),
     ):
-
         assert X[i, j] == val
 
     # tests X's zero values
@@ -76,7 +75,7 @@ def test_load_svmlight_file_fd():
 
     # GH20081: testing equality between path-based and
     # fd-based load_svmlight_file
-    with resources.path(TEST_DATA_MODULE, datafile) as data_path:
+    with _path(TEST_DATA_MODULE, datafile) as data_path:
         data_path = str(data_path)
         X1, y1 = load_svmlight_file(data_path)
 
@@ -89,13 +88,23 @@ def test_load_svmlight_file_fd():
             os.close(fd)
 
 
+def test_load_svmlight_pathlib():
+    # test loading from file descriptor
+    with _path(TEST_DATA_MODULE, datafile) as data_path:
+        X1, y1 = load_svmlight_file(str(data_path))
+        X2, y2 = load_svmlight_file(data_path)
+
+    assert_allclose(X1.data, X2.data)
+    assert_allclose(y1, y2)
+
+
 def test_load_svmlight_file_multilabel():
     X, y = _load_svmlight_local_test_file(multifile, multilabel=True)
     assert y == [(0, 1), (2,), (), (1, 2)]
 
 
 def test_load_svmlight_files():
-    with resources.path(TEST_DATA_MODULE, datafile) as data_path:
+    with _path(TEST_DATA_MODULE, datafile) as data_path:
         X_train, y_train, X_test, y_test = load_svmlight_files(
             [str(data_path)] * 2, dtype=np.float32
         )
@@ -104,7 +113,7 @@ def test_load_svmlight_files():
     assert X_train.dtype == np.float32
     assert X_test.dtype == np.float32
 
-    with resources.path(TEST_DATA_MODULE, datafile) as data_path:
+    with _path(TEST_DATA_MODULE, datafile) as data_path:
         X1, y1, X2, y2, X3, y3 = load_svmlight_files(
             [str(data_path)] * 3, dtype=np.float64
         )
@@ -123,7 +132,6 @@ def test_load_svmlight_file_n_features():
 
     # test X's non-zero values
     for i, j, val in ((0, 2, 2.5), (0, 10, -5.2), (1, 5, 1.0), (1, 12, -3)):
-
         assert X[i, j] == val
 
     # 21 features in file
@@ -136,7 +144,7 @@ def test_load_compressed():
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".gz") as tmp:
         tmp.close()  # necessary under windows
-        with resources.open_binary(TEST_DATA_MODULE, datafile) as f:
+        with _open_binary(TEST_DATA_MODULE, datafile) as f:
             with gzip.open(tmp.name, "wb") as fh_out:
                 shutil.copyfileobj(f, fh_out)
         Xgz, ygz = load_svmlight_file(tmp.name)
@@ -148,7 +156,7 @@ def test_load_compressed():
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".bz2") as tmp:
         tmp.close()  # necessary under windows
-        with resources.open_binary(TEST_DATA_MODULE, datafile) as f:
+        with _open_binary(TEST_DATA_MODULE, datafile) as f:
             with BZ2File(tmp.name, "wb") as fh_out:
                 shutil.copyfileobj(f, fh_out)
         Xbz, ybz = load_svmlight_file(tmp.name)
@@ -227,7 +235,7 @@ def test_load_large_qid():
 
 def test_load_invalid_file2():
     with pytest.raises(ValueError):
-        with resources.path(TEST_DATA_MODULE, datafile) as data_path, resources.path(
+        with _path(TEST_DATA_MODULE, datafile) as data_path, _path(
             TEST_DATA_MODULE, invalidfile
         ) as invalid_path:
             load_svmlight_files([str(data_path), str(invalid_path), str(data_path)])
@@ -241,7 +249,7 @@ def test_not_a_filename():
 
 
 def test_invalid_filename():
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         load_svmlight_file("trou pic nic douille")
 
 

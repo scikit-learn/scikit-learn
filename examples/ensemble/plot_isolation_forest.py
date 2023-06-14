@@ -1,67 +1,121 @@
 """
-==========================================
+=======================
 IsolationForest example
-==========================================
+=======================
 
 An example using :class:`~sklearn.ensemble.IsolationForest` for anomaly
 detection.
 
-The IsolationForest 'isolates' observations by randomly selecting a feature
-and then randomly selecting a split value between the maximum and minimum
-values of the selected feature.
+The :ref:`isolation_forest` is an ensemble of "Isolation Trees" that "isolate"
+observations by recursive random partitioning, which can be represented by a
+tree structure. The number of splittings required to isolate a sample is lower
+for outliers and higher for inliers.
 
-Since recursive partitioning can be represented by a tree structure, the
-number of splittings required to isolate a sample is equivalent to the path
-length from the root node to the terminating node.
-
-This path length, averaged over a forest of such random trees, is a measure
-of normality and our decision function.
-
-Random partitioning produces noticeable shorter paths for anomalies.
-Hence, when a forest of random trees collectively produce shorter path lengths
-for particular samples, they are highly likely to be anomalies.
+In the present example we demo two ways to visualize the decision boundary of an
+Isolation Forest trained on a toy dataset.
 
 """
 
+# %%
+# Data generation
+# ---------------
+#
+# We generate two clusters (each one containing `n_samples`) by randomly
+# sampling the standard normal distribution as returned by
+# :func:`numpy.random.randn`. One of them is spherical and the other one is
+# slightly deformed.
+#
+# For consistency with the :class:`~sklearn.ensemble.IsolationForest` notation,
+# the inliers (i.e. the gaussian clusters) are assigned a ground truth label `1`
+# whereas the outliers (created with :func:`numpy.random.uniform`) are assigned
+# the label `-1`.
+
 import numpy as np
+from sklearn.model_selection import train_test_split
+
+n_samples, n_outliers = 120, 40
+rng = np.random.RandomState(0)
+covariance = np.array([[0.5, -0.1], [0.7, 0.4]])
+cluster_1 = 0.4 * rng.randn(n_samples, 2) @ covariance + np.array([2, 2])  # general
+cluster_2 = 0.3 * rng.randn(n_samples, 2) + np.array([-2, -2])  # spherical
+outliers = rng.uniform(low=-4, high=4, size=(n_outliers, 2))
+
+X = np.concatenate([cluster_1, cluster_2, outliers])
+y = np.concatenate(
+    [np.ones((2 * n_samples), dtype=int), -np.ones((n_outliers), dtype=int)]
+)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
+
+# %%
+# We can visualize the resulting clusters:
+
 import matplotlib.pyplot as plt
+
+scatter = plt.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor="k")
+handles, labels = scatter.legend_elements()
+plt.axis("square")
+plt.legend(handles=handles, labels=["outliers", "inliers"], title="true class")
+plt.title("Gaussian inliers with \nuniformly distributed outliers")
+plt.show()
+
+# %%
+# Training of the model
+# ---------------------
+
 from sklearn.ensemble import IsolationForest
 
-rng = np.random.RandomState(42)
-
-# Generate train data
-X = 0.3 * rng.randn(100, 2)
-X_train = np.r_[X + 2, X - 2]
-# Generate some regular novel observations
-X = 0.3 * rng.randn(20, 2)
-X_test = np.r_[X + 2, X - 2]
-# Generate some abnormal novel observations
-X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
-
-# fit the model
-clf = IsolationForest(max_samples=100, random_state=rng)
+clf = IsolationForest(max_samples=100, random_state=0)
 clf.fit(X_train)
-y_pred_train = clf.predict(X_train)
-y_pred_test = clf.predict(X_test)
-y_pred_outliers = clf.predict(X_outliers)
 
-# plot the line, the samples, and the nearest vectors to the plane
-xx, yy = np.meshgrid(np.linspace(-5, 5, 50), np.linspace(-5, 5, 50))
-Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
-Z = Z.reshape(xx.shape)
+# %%
+# Plot discrete decision boundary
+# -------------------------------
+#
+# We use the class :class:`~sklearn.inspection.DecisionBoundaryDisplay` to
+# visualize a discrete decision boundary. The background color represents
+# whether a sample in that given area is predicted to be an outlier
+# or not. The scatter plot displays the true labels.
 
-plt.title("IsolationForest")
-plt.contourf(xx, yy, Z, cmap=plt.cm.Blues_r)
+import matplotlib.pyplot as plt
+from sklearn.inspection import DecisionBoundaryDisplay
 
-b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c="white", s=20, edgecolor="k")
-b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c="green", s=20, edgecolor="k")
-c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c="red", s=20, edgecolor="k")
-plt.axis("tight")
-plt.xlim((-5, 5))
-plt.ylim((-5, 5))
-plt.legend(
-    [b1, b2, c],
-    ["training observations", "new regular observations", "new abnormal observations"],
-    loc="upper left",
+disp = DecisionBoundaryDisplay.from_estimator(
+    clf,
+    X,
+    response_method="predict",
+    alpha=0.5,
 )
+disp.ax_.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor="k")
+disp.ax_.set_title("Binary decision boundary \nof IsolationForest")
+plt.axis("square")
+plt.legend(handles=handles, labels=["outliers", "inliers"], title="true class")
+plt.show()
+
+# %%
+# Plot path length decision boundary
+# ----------------------------------
+#
+# By setting the `response_method="decision_function"`, the background of the
+# :class:`~sklearn.inspection.DecisionBoundaryDisplay` represents the measure of
+# normality of an observation. Such score is given by the path length averaged
+# over a forest of random trees, which itself is given by the depth of the leaf
+# (or equivalently the number of splits) required to isolate a given sample.
+#
+# When a forest of random trees collectively produce short path lengths for
+# isolating some particular samples, they are highly likely to be anomalies and
+# the measure of normality is close to `0`. Similarly, large paths correspond to
+# values close to `1` and are more likely to be inliers.
+
+disp = DecisionBoundaryDisplay.from_estimator(
+    clf,
+    X,
+    response_method="decision_function",
+    alpha=0.5,
+)
+disp.ax_.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor="k")
+disp.ax_.set_title("Path length decision boundary \nof IsolationForest")
+plt.axis("square")
+plt.legend(handles=handles, labels=["outliers", "inliers"], title="true class")
+plt.colorbar(disp.ax_.collections[1])
 plt.show()

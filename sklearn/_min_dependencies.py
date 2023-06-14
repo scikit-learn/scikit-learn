@@ -14,11 +14,11 @@ if platform.python_implementation() == "PyPy":
 else:
     NUMPY_MIN_VERSION = "1.17.3"
 
-SCIPY_MIN_VERSION = "1.3.2"
+SCIPY_MIN_VERSION = "1.5.0"
 JOBLIB_MIN_VERSION = "1.1.1"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
-PYTEST_MIN_VERSION = "5.3.1"
-CYTHON_MIN_VERSION = "0.29.24"
+PYTEST_MIN_VERSION = "7.1.2"
+CYTHON_MIN_VERSION = "0.29.33"
 
 
 # 'build' and 'install' is included to have structured metadata for CI.
@@ -38,7 +38,7 @@ dependent_packages = {
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
     "flake8": ("3.8.2", "tests"),
-    "black": ("22.3.0", "tests"),
+    "black": ("23.3.0", "tests"),
     "mypy": ("0.961", "tests"),
     "pyamg": ("4.0.0", "tests"),
     "sphinx": ("4.0.1", "docs"),
@@ -48,10 +48,10 @@ dependent_packages = {
     "pooch": ("1.6.0", "docs, examples, tests"),
     "sphinx-prompt": ("1.3.0", "docs"),
     "sphinxext-opengraph": ("0.4.2", "docs"),
-    "plotly": ("5.10.0", "docs, examples"),
+    "plotly": ("5.14.0", "docs, examples"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("1.1.3", "maintenance"),
+    "conda-lock": ("2.0.0", "maintenance"),
 }
 
 

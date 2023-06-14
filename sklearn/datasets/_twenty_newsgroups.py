@@ -46,6 +46,7 @@ from ._base import load_descr
 from ..feature_extraction.text import CountVectorizer
 from .. import preprocessing
 from ..utils import check_random_state, Bunch
+from ..utils._param_validation import StrOptions, validate_params
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +150,18 @@ def strip_newsgroup_footer(text):
         return text
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "subset": [StrOptions({"train", "test", "all"})],
+        "categories": ["array-like", None],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "remove": [tuple],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+    }
+)
 def fetch_20newsgroups(
     *,
     data_home=None,
@@ -213,7 +226,7 @@ def fetch_20newsgroups(
         correct.
 
     download_if_missing : bool, default=True
-        If False, raise an IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -270,7 +283,7 @@ def fetch_20newsgroups(
                 target_dir=twenty_home, cache_path=cache_path
             )
         else:
-            raise IOError("20Newsgroups dataset not found")
+            raise OSError("20Newsgroups dataset not found")
 
     if subset in ("train", "test"):
         data = cache[subset]
@@ -287,10 +300,6 @@ def fetch_20newsgroups(
         data.data = data_lst
         data.target = np.array(target)
         data.filenames = np.array(filenames)
-    else:
-        raise ValueError(
-            "subset can only be 'train', 'test' or 'all', got '%s'" % subset
-        )
 
     fdescr = load_descr("twenty_newsgroups.rst")
 
@@ -336,6 +345,17 @@ def fetch_20newsgroups(
     return data
 
 
+@validate_params(
+    {
+        "subset": [StrOptions({"train", "test", "all"})],
+        "remove": [tuple],
+        "data_home": [str, None],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+        "normalize": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def fetch_20newsgroups_vectorized(
     *,
     subset="train",
@@ -393,7 +413,7 @@ def fetch_20newsgroups_vectorized(
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True
-        If False, raise an IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -507,11 +527,6 @@ def fetch_20newsgroups_vectorized(
     elif subset == "all":
         data = sp.vstack((X_train, X_test)).tocsr()
         target = np.concatenate((data_train.target, data_test.target))
-    else:
-        raise ValueError(
-            "%r is not a valid subset: should be one of ['train', 'test', 'all']"
-            % subset
-        )
 
     fdescr = load_descr("twenty_newsgroups.rst")
 

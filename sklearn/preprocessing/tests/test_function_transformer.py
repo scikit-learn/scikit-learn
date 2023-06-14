@@ -217,6 +217,36 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
         transformer.fit(data)
 
 
+def test_function_transformer_support_all_nummerical_dataframes_check_inverse_True():
+    """Check support for dataframes with only numerical values."""
+    pd = pytest.importorskip("pandas")
+
+    df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    transformer = FunctionTransformer(
+        func=lambda x: x + 2, inverse_func=lambda x: x - 2, check_inverse=True
+    )
+
+    # Does not raise an error
+    df_out = transformer.fit_transform(df)
+    assert_allclose_dense_sparse(df_out, df + 2)
+
+
+def test_function_transformer_with_dataframe_and_check_inverse_True():
+    """Check error is raised when check_inverse=True.
+
+    Non-regresion test for gh-25261.
+    """
+    pd = pytest.importorskip("pandas")
+    transformer = FunctionTransformer(
+        func=lambda x: x, inverse_func=lambda x: x, check_inverse=True
+    )
+
+    df_mixed = pd.DataFrame({"a": [1, 2, 3], "b": ["a", "b", "c"]})
+    msg = "'check_inverse' is only supported when all the elements in `X` is numerical."
+    with pytest.raises(ValueError, match=msg):
+        transformer.fit(df_mixed)
+
+
 @pytest.mark.parametrize(
     "X, feature_names_out, input_features, expected",
     [

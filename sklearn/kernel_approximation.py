@@ -24,6 +24,7 @@ from .base import BaseEstimator
 from .base import TransformerMixin
 from .base import ClassNamePrefixFeaturesOutMixin
 from .utils import check_random_state
+from .utils import deprecated
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .utils.validation import _check_feature_names_in
@@ -600,6 +601,9 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         Stored sampling interval. Specified as a parameter if `sample_steps`
         not in {1,2,3}.
 
+        .. deprecated:: 1.3
+           `sample_interval_` serves internal purposes only and will be removed in 1.5.
+
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -625,6 +629,10 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     -----
     This estimator approximates a slightly different version of the additive
     chi squared kernel then ``metric.additive_chi2`` computes.
+
+    This estimator is stateless and does not need to be fitted. However, we
+    recommend to call :meth:`fit_transform` instead of :meth:`transform`, as
+    parameter validation is only performed in :meth:`fit`.
 
     References
     ----------
@@ -658,7 +666,10 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self.sample_interval = sample_interval
 
     def fit(self, X, y=None):
-        """Set the parameters.
+        """Only validates estimator's parameters.
+
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
@@ -676,26 +687,39 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
             Returns the transformer.
         """
         self._validate_params()
-
         X = self._validate_data(X, accept_sparse="csr")
         check_non_negative(X, "X in AdditiveChi2Sampler.fit")
 
+        # TODO(1.5): remove the setting of _sample_interval from fit
         if self.sample_interval is None:
-            # See reference, figure 2 c)
+            # See figure 2 c) of "Efficient additive kernels via explicit feature maps"
+            # <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>
+            # A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
+            # 2011
             if self.sample_steps == 1:
-                self.sample_interval_ = 0.8
+                self._sample_interval = 0.8
             elif self.sample_steps == 2:
-                self.sample_interval_ = 0.5
+                self._sample_interval = 0.5
             elif self.sample_steps == 3:
-                self.sample_interval_ = 0.4
+                self._sample_interval = 0.4
             else:
                 raise ValueError(
                     "If sample_steps is not in [1, 2, 3],"
                     " you need to provide sample_interval"
                 )
         else:
-            self.sample_interval_ = self.sample_interval
+            self._sample_interval = self.sample_interval
+
         return self
+
+    # TODO(1.5): remove
+    @deprecated(  # type: ignore
+        "The ``sample_interval_`` attribute was deprecated in version 1.3 and "
+        "will be removed 1.5."
+    )
+    @property
+    def sample_interval_(self):
+        return self._sample_interval
 
     def transform(self, X):
         """Apply approximate feature map to X.
@@ -713,22 +737,39 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
             Whether the return value is an array or sparse matrix depends on
             the type of the input X.
         """
-        msg = (
-            "%(name)s is not fitted. Call fit to set the parameters before"
-            " calling transform"
-        )
-        check_is_fitted(self, msg=msg)
-
         X = self._validate_data(X, accept_sparse="csr", reset=False)
         check_non_negative(X, "X in AdditiveChi2Sampler.transform")
         sparse = sp.issparse(X)
 
+        if hasattr(self, "_sample_interval"):
+            # TODO(1.5): remove this branch
+            sample_interval = self._sample_interval
+
+        else:
+            if self.sample_interval is None:
+                # See figure 2 c) of "Efficient additive kernels via explicit feature maps" # noqa
+                # <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>
+                # A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence, # noqa
+                # 2011
+                if self.sample_steps == 1:
+                    sample_interval = 0.8
+                elif self.sample_steps == 2:
+                    sample_interval = 0.5
+                elif self.sample_steps == 3:
+                    sample_interval = 0.4
+                else:
+                    raise ValueError(
+                        "If sample_steps is not in [1, 2, 3],"
+                        " you need to provide sample_interval"
+                    )
+            else:
+                sample_interval = self.sample_interval
+
         # zeroth component
         # 1/cosh = sech
         # cosh(0) = 1.0
-
         transf = self._transform_sparse if sparse else self._transform_dense
-        return transf(X)
+        return transf(X, self.sample_steps, sample_interval)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -743,6 +784,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(
             self, input_features, generate_names=True
         )
@@ -757,20 +799,21 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         return np.asarray(names_list, dtype=object)
 
-    def _transform_dense(self, X):
+    @staticmethod
+    def _transform_dense(X, sample_steps, sample_interval):
         non_zero = X != 0.0
         X_nz = X[non_zero]
 
         X_step = np.zeros_like(X)
-        X_step[non_zero] = np.sqrt(X_nz * self.sample_interval_)
+        X_step[non_zero] = np.sqrt(X_nz * sample_interval)
 
         X_new = [X_step]
 
-        log_step_nz = self.sample_interval_ * np.log(X_nz)
-        step_nz = 2 * X_nz * self.sample_interval_
+        log_step_nz = sample_interval * np.log(X_nz)
+        step_nz = 2 * X_nz * sample_interval
 
-        for j in range(1, self.sample_steps):
-            factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * self.sample_interval_))
+        for j in range(1, sample_steps):
+            factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * sample_interval))
 
             X_step = np.zeros_like(X)
             X_step[non_zero] = factor_nz * np.cos(j * log_step_nz)
@@ -782,21 +825,22 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         return np.hstack(X_new)
 
-    def _transform_sparse(self, X):
+    @staticmethod
+    def _transform_sparse(X, sample_steps, sample_interval):
         indices = X.indices.copy()
         indptr = X.indptr.copy()
 
-        data_step = np.sqrt(X.data * self.sample_interval_)
+        data_step = np.sqrt(X.data * sample_interval)
         X_step = sp.csr_matrix(
             (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
         )
         X_new = [X_step]
 
-        log_step_nz = self.sample_interval_ * np.log(X.data)
-        step_nz = 2 * X.data * self.sample_interval_
+        log_step_nz = sample_interval * np.log(X.data)
+        step_nz = 2 * X.data * sample_interval
 
-        for j in range(1, self.sample_steps):
-            factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * self.sample_interval_))
+        for j in range(1, sample_steps):
+            factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * sample_interval))
 
             data_step = factor_nz * np.cos(j * log_step_nz)
             X_step = sp.csr_matrix(
@@ -921,13 +965,13 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     >>> from sklearn.kernel_approximation import Nystroem
     >>> X, y = datasets.load_digits(n_class=9, return_X_y=True)
     >>> data = X / 16.
-    >>> clf = svm.LinearSVC()
+    >>> clf = svm.LinearSVC(dual="auto")
     >>> feature_map_nystroem = Nystroem(gamma=.2,
     ...                                 random_state=1,
     ...                                 n_components=300)
     >>> data_transformed = feature_map_nystroem.fit_transform(data)
     >>> clf.fit(data_transformed, y)
-    LinearSVC()
+    LinearSVC(dual='auto')
     >>> clf.score(data_transformed, y)
     0.9987...
     """
@@ -958,7 +1002,6 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         random_state=None,
         n_jobs=None,
     ):
-
         self.kernel = kernel
         self.gamma = gamma
         self.coef0 = coef0

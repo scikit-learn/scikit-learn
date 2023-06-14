@@ -37,6 +37,7 @@ from ._base import _pkl_filepath
 from ._base import RemoteFileMetadata
 from ._base import load_descr
 from ..utils import Bunch
+from ..utils._param_validation import validate_params
 
 
 # The original data can be found at:
@@ -50,6 +51,14 @@ ARCHIVE = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def fetch_california_housing(
     *, data_home=None, download_if_missing=True, return_X_y=False, as_frame=False
 ):
@@ -71,7 +80,7 @@ def fetch_california_housing(
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -129,7 +138,7 @@ def fetch_california_housing(
     filepath = _pkl_filepath(data_home, "cal_housing.pkz")
     if not exists(filepath):
         if not download_if_missing:
-            raise IOError("Data not found and `download_if_missing` is False")
+            raise OSError("Data not found and `download_if_missing` is False")
 
         logger.info(
             "Downloading Cal. housing from {} to {}".format(ARCHIVE.url, data_home)

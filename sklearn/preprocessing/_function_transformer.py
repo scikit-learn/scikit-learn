@@ -174,7 +174,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         idx_selected = slice(None, None, max(1, X.shape[0] // 100))
         X_round_trip = self.inverse_transform(self.transform(X[idx_selected]))
 
-        if not np.issubdtype(X.dtype, np.number):
+        if hasattr(X, "dtype"):
+            dtypes = [X.dtype]
+        elif hasattr(X, "dtypes"):
+            # Dataframes can have multiple dtypes
+            dtypes = X.dtypes
+
+        if not all(np.issubdtype(d, np.number) for d in dtypes):
             raise ValueError(
                 "'check_inverse' is only supported when all the elements in `X` is"
                 " numerical."
@@ -182,10 +188,12 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         if not _allclose_dense_sparse(X[idx_selected], X_round_trip):
             warnings.warn(
-                "The provided functions are not strictly"
-                " inverse of each other. If you are sure you"
-                " want to proceed regardless, set"
-                " 'check_inverse=False'.",
+                (
+                    "The provided functions are not strictly"
+                    " inverse of each other. If you are sure you"
+                    " want to proceed regardless, set"
+                    " 'check_inverse=False'."
+                ),
                 UserWarning,
             )
 
@@ -196,7 +204,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse-matrix} of shape (n_samples, n_features) \
+                if `validate=True` else any object that `func` can handle
             Input array.
 
         y : Ignored
@@ -218,7 +227,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse-matrix} of shape (n_samples, n_features) \
+                if `validate=True` else any object that `func` can handle
             Input array.
 
         Returns
@@ -234,7 +244,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse-matrix} of shape (n_samples, n_features) \
+                if `validate=True` else any object that `inverse_func` can handle
             Input array.
 
         Returns

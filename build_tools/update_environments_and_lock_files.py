@@ -36,6 +36,7 @@ from pathlib import Path
 import shlex
 import json
 import logging
+from importlib.metadata import version
 
 import click
 
@@ -61,17 +62,21 @@ common_dependencies_without_coverage = [
     "pytest",
     "pytest-xdist",
     "pillow",
+    "setuptools",
 ]
 
 common_dependencies = common_dependencies_without_coverage + [
-    "codecov",
     "pytest-cov",
     "coverage",
 ]
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {}
+default_package_constraints = {
+    # XXX: pin pytest-xdist to workaround:
+    # https://github.com/pytest-dev/pytest-xdist/issues/840
+    "pytest-xdist": "2.5.0",
+}
 
 
 def remove_from(alist, to_remove):
@@ -84,9 +89,15 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
-        "conda_dependencies": common_dependencies + ["ccache"],
+        "conda_dependencies": common_dependencies + [
+            "ccache",
+            "pytorch",
+            "pytorch-cpu",
+            "array-api-compat",
+        ],
         "package_constraints": {
             "blas": "[build=mkl]",
+            "pytorch": "1.13",
         },
     },
     {
@@ -94,8 +105,11 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "osx-64",
         "channel": "conda-forge",
-        "conda_dependencies": common_dependencies
-        + ["ccache", "compilers", "llvm-openmp"],
+        "conda_dependencies": common_dependencies + [
+            "ccache",
+            "compilers",
+            "llvm-openmp",
+        ],
         "package_constraints": {
             "blas": "[build=mkl]",
         },
@@ -108,18 +122,6 @@ conda_build_metadata_list = [
         "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
-            # 2022-06-09 currently mamba install 1.23 and scipy 1.7 which
-            # should be compatible but actually are not. This pin can be
-            # removed when scipy 1.8 is available in conda defaults channel.
-            # For more details, see
-            # https://github.com/scikit-learn/scikit-learn/pull/24363#issuecomment-1236927660
-            # and https://github.com/scipy/scipy/issues/16964
-            "numpy": "1.22",
-            # XXX: coverage is temporary pinned to 6.2 because 6.3 is not
-            # fork-safe and 6.4 is not available yet (July 2022) in conda
-            # defaults channel. For more details, see:
-            # https://github.com/nedbat/coveragepy/issues/1310
-            "coverage": "6.2",
         },
     },
     {
@@ -145,11 +147,6 @@ conda_build_metadata_list = [
             "scipy": "min",
             "matplotlib": "min",
             "threadpoolctl": "2.2.0",
-            # XXX: coverage is temporary pinned to 6.2 because 6.3 is not
-            # fork-safe and 6.4 is not available yet (July 2022) in conda
-            # defaults channel. For more details, see:
-            # https://github.com/nedbat/coveragepy/issues/1310
-            "coverage": "6.2",
         },
     },
     {
@@ -166,10 +163,14 @@ conda_build_metadata_list = [
         "platform": "linux-64",
         "channel": "defaults",
         "conda_dependencies": ["python", "ccache"],
-        "pip_dependencies": remove_from(common_dependencies, ["python", "blas"])
-        + docstring_test_dependencies
-        + ["lightgbm", "scikit-image"],
-        "package_constraints": {"python": "3.9"},
+        "pip_dependencies": (
+            remove_from(common_dependencies, ["python", "blas"])
+            + docstring_test_dependencies
+            + ["lightgbm", "scikit-image"]
+        ),
+        "package_constraints": {
+            "python": "3.9",
+        },
     },
     {
         "build_name": "pylatest_pip_scipy_dev",
@@ -177,40 +178,44 @@ conda_build_metadata_list = [
         "platform": "linux-64",
         "channel": "defaults",
         "conda_dependencies": ["python", "ccache"],
-        "pip_dependencies": remove_from(
-            common_dependencies,
-            [
-                "python",
-                "blas",
-                "matplotlib",
-                "pyamg",
-                # all the dependencies below have a development version
-                # installed in the CI, so they can be removed from the
-                # environment.yml
-                "numpy",
-                "scipy",
-                "pandas",
-                "cython",
-                "joblib",
-                "pillow",
-            ],
-        )
-        + ["pooch"]
-        + docstring_test_dependencies
-        # python-dateutil is a dependency of pandas and pandas is removed from
-        # the environment.yml. Adding python-dateutil so it is pinned
-        + ["python-dateutil"],
+        "pip_dependencies": (
+            remove_from(
+                common_dependencies,
+                [
+                    "python",
+                    "blas",
+                    "matplotlib",
+                    "pyamg",
+                    # all the dependencies below have a development version
+                    # installed in the CI, so they can be removed from the
+                    # environment.yml
+                    "numpy",
+                    "scipy",
+                    "pandas",
+                    "cython",
+                    "joblib",
+                    "pillow",
+                ],
+            )
+            + ["pooch"]
+            + docstring_test_dependencies
+            # python-dateutil is a dependency of pandas and pandas is removed from
+            # the environment.yml. Adding python-dateutil so it is pinned
+            + ["python-dateutil"]
+        ),
     },
     {
         "build_name": "pypy3",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
-        "conda_dependencies": ["pypy", "python"]
-        + remove_from(
-            common_dependencies_without_coverage, ["python", "pandas", "pillow"]
-        )
-        + ["ccache"],
+        "conda_dependencies": (
+            ["pypy", "python"]
+            + remove_from(
+                common_dependencies_without_coverage, ["python", "pandas", "pillow"]
+            )
+            + ["ccache"]
+        ),
         "package_constraints": {
             "blas": "[build=openblas]",
             "python": "3.9",
@@ -221,17 +226,21 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "win-64",
         "channel": "conda-forge",
-        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
-        + ["wheel", "pip"],
-        "package_constraints": {"python": "3.8", "blas": "[build=mkl]"},
+        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"]) + [
+            "wheel",
+            "pip",
+        ],
+        "package_constraints": {
+            "python": "3.8",
+            "blas": "[build=mkl]",
+        },
     },
     {
         "build_name": "doc_min_dependencies",
-        "folder": "build_tools/github",
+        "folder": "build_tools/circle",
         "platform": "linux-64",
         "channel": "conda-forge",
-        "conda_dependencies": common_dependencies_without_coverage
-        + [
+        "conda_dependencies": common_dependencies_without_coverage + [
             "scikit-image",
             "seaborn",
             "memory_profiler",
@@ -262,11 +271,10 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "doc",
-        "folder": "build_tools/github",
+        "folder": "build_tools/circle",
         "platform": "linux-64",
         "channel": "conda-forge",
-        "conda_dependencies": common_dependencies_without_coverage
-        + [
+        "conda_dependencies": common_dependencies_without_coverage + [
             "scikit-image",
             "seaborn",
             "memory_profiler",
@@ -277,21 +285,23 @@ conda_build_metadata_list = [
             "sphinx-prompt",
             "plotly",
             "pooch",
+            "sphinxext-opengraph",
         ],
-        "pip_dependencies": ["sphinxext-opengraph"],
+        "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel"],
         "package_constraints": {
             "python": "3.9",
+            # XXX: sphinx > 6.0 does not correctly generate searchindex.js
+            "sphinx": "6.0.0",
         },
     },
     {
         "build_name": "py39_conda_forge",
-        "folder": "build_tools/circle",
+        "folder": "build_tools/cirrus",
         "platform": "linux-aarch64",
         "channel": "conda-forge",
         "conda_dependencies": remove_from(
             common_dependencies_without_coverage, ["pandas", "pyamg"]
-        )
-        + ["pip", "ccache"],
+        ) + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.9",
         },
@@ -303,11 +313,18 @@ pip_build_metadata_list = [
     {
         "build_name": "debian_atlas_32bit",
         "folder": "build_tools/azure",
-        "pip_dependencies": ["cython", "joblib", "threadpoolctl", "pytest"],
+        "pip_dependencies": [
+            "cython",
+            "joblib",
+            "threadpoolctl",
+            "pytest",
+            "pytest-cov",
+        ],
         "package_constraints": {
             "joblib": "min",
             "threadpoolctl": "2.2.0",
             "pytest": "min",
+            "pytest-cov": "min",
             # no pytest-xdist because it causes issue on 32bit
         },
         # same Python version as in debian-32 build
@@ -324,11 +341,7 @@ pip_build_metadata_list = [
             "pytest-xdist",
         ],
         "package_constraints": {"joblib": "min", "threadpoolctl": "min"},
-        # Ubuntu 20.04 has 3.8.2 but only 3.8.5 is available for osx-arm64 on
-        # conda-forge. Chosing 3.8.5 so that this script can be run locally on
-        # osx-arm64 machines. This should not matter for pining versions with
-        # pip-compile
-        "python_version": "3.8.5",
+        "python_version": "3.10.4",
     },
 ]
 
@@ -384,8 +397,7 @@ environment.filters["get_package_with_constraint"] = get_package_with_constraint
 
 
 def get_conda_environment_content(build_metadata):
-    template = environment.from_string(
-        """
+    template = environment.from_string("""
 # DO NOT EDIT: this file is generated from the specification found in the
 # following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
@@ -401,8 +413,7 @@ dependencies:
   {% for pip_dep in build_metadata.get('pip_dependencies', []) %}
     - {{ pip_dep | get_package_with_constraint(build_metadata, uses_pip=True) }}
   {% endfor %}
-  {% endif %}""".strip()
-    )
+  {% endif %}""".strip())
     return template.render(build_metadata=build_metadata)
 
 
@@ -449,15 +460,13 @@ def write_all_conda_lock_files(build_metadata_list):
 
 
 def get_pip_requirements_content(build_metadata):
-    template = environment.from_string(
-        """
+    template = environment.from_string("""
 # DO NOT EDIT: this file is generated from the specification found in the
 # following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 {% for pip_dep in build_metadata['pip_dependencies'] %}
 {{ pip_dep | get_package_with_constraint(build_metadata, uses_pip=True) }}
-{% endfor %}""".strip()
-    )
+{% endfor %}""".strip())
     return template.render(build_metadata=build_metadata)
 
 
@@ -516,6 +525,20 @@ def write_all_pip_lock_files(build_metadata_list):
         write_pip_lock_file(build_metadata)
 
 
+def check_conda_lock_version():
+    # Check that the installed conda-lock version is consistent with _min_dependencies.
+    expected_conda_lock_version = execute_command(
+        [sys.executable, "sklearn/_min_dependencies.py", "conda-lock"]
+    ).strip()
+
+    installed_conda_lock_version = version("conda-lock")
+    if installed_conda_lock_version != expected_conda_lock_version:
+        raise RuntimeError(
+            f"Expected conda-lock version: {expected_conda_lock_version}, got:"
+            f" {installed_conda_lock_version}"
+        )
+
+
 @click.command()
 @click.option(
     "--select-build",
@@ -523,6 +546,7 @@ def write_all_pip_lock_files(build_metadata_list):
     help="Regex to restrict the builds we want to update environment and lock files",
 )
 def main(select_build):
+    check_conda_lock_version()
     filtered_conda_build_metadata_list = [
         each
         for each in conda_build_metadata_list

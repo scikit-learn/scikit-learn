@@ -22,6 +22,7 @@ from sklearn.compose import (
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
+from sklearn.feature_selection import VarianceThreshold
 
 
 class Trans(TransformerMixin, BaseEstimator):
@@ -135,6 +136,23 @@ def test_column_transformer():
     assert_array_equal(both.fit_transform(X_array), 0.1 * X_res_both)
     assert_array_equal(both.fit(X_array).transform(X_array), 0.1 * X_res_both)
     assert len(both.transformers_) == 1
+
+
+def test_column_transformer_tuple_transformers_parameter():
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+
+    transformers = [("trans1", Trans(), [0]), ("trans2", Trans(), [1])]
+
+    ct_with_list = ColumnTransformer(transformers)
+    ct_with_tuple = ColumnTransformer(tuple(transformers))
+
+    assert_array_equal(
+        ct_with_list.fit_transform(X_array), ct_with_tuple.fit_transform(X_array)
+    )
+    assert_array_equal(
+        ct_with_list.fit(X_array).transform(X_array),
+        ct_with_tuple.fit(X_array).transform(X_array),
+    )
 
 
 def test_column_transformer_dataframe():
@@ -786,7 +804,6 @@ def test_column_transformer_get_feature_names():
 
 
 def test_column_transformer_special_strings():
-
     # one 'drop' -> ignore
     X_array = np.array([[0.0, 1.0, 2.0], [2.0, 4.0, 6.0]]).T
     ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", "drop", [1])])
@@ -811,15 +828,6 @@ def test_column_transformer_special_strings():
     assert_array_equal(ct.fit(X_array).transform(X_array), exp)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] != "remainder"
-
-    # None itself / other string is not valid
-    for val in [None, "other"]:
-        ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", None, [1])])
-        msg = "All estimators should implement"
-        with pytest.raises(TypeError, match=msg):
-            ct.fit_transform(X_array)
-        with pytest.raises(TypeError, match=msg):
-            ct.fit(X_array)
 
 
 def test_column_transformer_remainder():
@@ -864,15 +872,6 @@ def test_column_transformer_remainder():
     assert ct.transformers_[-1][0] == "remainder"
     assert ct.transformers_[-1][1] == "passthrough"
     assert_array_equal(ct.transformers_[-1][2], [1])
-
-    # error on invalid arg
-    ct = ColumnTransformer([("trans1", Trans(), [0])], remainder=1)
-    msg = "remainder keyword needs to be one of 'drop', 'passthrough', or estimator."
-    with pytest.raises(ValueError, match=msg):
-        ct.fit(X_array)
-
-    with pytest.raises(ValueError, match=msg):
-        ct.fit_transform(X_array)
 
     # check default for make_column_transformer
     ct = make_column_transformer((Trans(), [0]))
@@ -2053,3 +2052,161 @@ def test_column_transform_set_output_after_fitting(remainder):
     }
     for col, dtype in X_trans_df.dtypes.items():
         assert dtype == expected_dtypes[col]
+
+
+# PandasOutTransformer that does not define get_feature_names_out and always expects
+# the input to be a DataFrame.
+class PandasOutTransformer(BaseEstimator):
+    def __init__(self, offset=1.0):
+        self.offset = offset
+
+    def fit(self, X, y=None):
+        pd = pytest.importorskip("pandas")
+        assert isinstance(X, pd.DataFrame)
+        return self
+
+    def transform(self, X, y=None):
+        pd = pytest.importorskip("pandas")
+        assert isinstance(X, pd.DataFrame)
+        return X - self.offset
+
+    def set_output(self, transform=None):
+        # This transformer will always output a DataFrame regardless of the
+        # configuration.
+        return self
+
+
+@pytest.mark.parametrize(
+    "trans_1, expected_verbose_names, expected_non_verbose_names",
+    [
+        (
+            PandasOutTransformer(offset=2.0),
+            ["trans_0__feat1", "trans_1__feat0"],
+            ["feat1", "feat0"],
+        ),
+        (
+            "drop",
+            ["trans_0__feat1"],
+            ["feat1"],
+        ),
+        (
+            "passthrough",
+            ["trans_0__feat1", "trans_1__feat0"],
+            ["feat1", "feat0"],
+        ),
+    ],
+)
+def test_transformers_with_pandas_out_but_not_feature_names_out(
+    trans_1, expected_verbose_names, expected_non_verbose_names
+):
+    """Check that set_config(transform="pandas") is compatible with more transformers.
+
+    Specifically, if transformers returns a DataFrame, but does not define
+    `get_feature_names_out`.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X_df = pd.DataFrame({"feat0": [1.0, 2.0, 3.0], "feat1": [2.0, 3.0, 4.0]})
+    ct = ColumnTransformer(
+        [
+            ("trans_0", PandasOutTransformer(offset=3.0), ["feat1"]),
+            ("trans_1", trans_1, ["feat0"]),
+        ]
+    )
+    X_trans_np = ct.fit_transform(X_df)
+    assert isinstance(X_trans_np, np.ndarray)
+
+    # `ct` does not have `get_feature_names_out` because `PandasOutTransformer` does
+    # not define the method.
+    with pytest.raises(AttributeError, match="not provide get_feature_names_out"):
+        ct.get_feature_names_out()
+
+    # The feature names are prefixed because verbose_feature_names_out=True is default
+    ct.set_output(transform="pandas")
+    X_trans_df0 = ct.fit_transform(X_df)
+    assert_array_equal(X_trans_df0.columns, expected_verbose_names)
+
+    ct.set_params(verbose_feature_names_out=False)
+    X_trans_df1 = ct.fit_transform(X_df)
+    assert_array_equal(X_trans_df1.columns, expected_non_verbose_names)
+
+
+@pytest.mark.parametrize(
+    "empty_selection",
+    [[], np.array([False, False]), [False, False]],
+    ids=["list", "bool", "bool_int"],
+)
+def test_empty_selection_pandas_output(empty_selection):
+    """Check that pandas output works when there is an empty selection.
+
+    Non-regression test for gh-25487
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame([[1.0, 2.2], [3.0, 1.0]], columns=["a", "b"])
+    ct = ColumnTransformer(
+        [
+            ("categorical", "passthrough", empty_selection),
+            ("numerical", StandardScaler(), ["a", "b"]),
+        ],
+        verbose_feature_names_out=True,
+    )
+    ct.set_output(transform="pandas")
+    X_out = ct.fit_transform(X)
+    assert_array_equal(X_out.columns, ["numerical__a", "numerical__b"])
+
+    ct.set_params(verbose_feature_names_out=False)
+    X_out = ct.fit_transform(X)
+    assert_array_equal(X_out.columns, ["a", "b"])
+
+
+def test_raise_error_if_index_not_aligned():
+    """Check column transformer raises error if indices are not aligned.
+
+    Non-regression test for gh-26210.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame([[1.0, 2.2], [3.0, 1.0]], columns=["a", "b"], index=[8, 3])
+    reset_index_transformer = FunctionTransformer(
+        lambda x: x.reset_index(drop=True), feature_names_out="one-to-one"
+    )
+
+    ct = ColumnTransformer(
+        [
+            ("num1", "passthrough", ["a"]),
+            ("num2", reset_index_transformer, ["b"]),
+        ],
+    )
+    ct.set_output(transform="pandas")
+    msg = (
+        "Concatenating DataFrames from the transformer's output lead to"
+        " an inconsistent number of samples. The output may have Pandas"
+        " Indexes that do not match."
+    )
+    with pytest.raises(ValueError, match=msg):
+        ct.fit_transform(X)
+
+
+def test_remainder_set_output():
+    """Check that the output is set for the remainder.
+
+    Non-regression test for #26306.
+    """
+
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"a": [True, False, True], "b": [1, 2, 3]})
+
+    ct = make_column_transformer(
+        (VarianceThreshold(), make_column_selector(dtype_include=bool)),
+        remainder=VarianceThreshold(),
+        verbose_feature_names_out=False,
+    )
+    ct.set_output(transform="pandas")
+
+    out = ct.fit_transform(df)
+    pd.testing.assert_frame_equal(out, df)
+
+    ct.set_output(transform="default")
+    out = ct.fit_transform(df)
+    assert isinstance(out, np.ndarray)

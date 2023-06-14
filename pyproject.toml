@@ -1,9 +1,9 @@
 [build-system]
 # Minimum requirements for the build system to execute.
 requires = [
-    "setuptools<60.0",
+    "setuptools",
     "wheel",
-    "Cython>=0.29.24",
+    "Cython>=0.29.33",
 
     # use oldest-supported-numpy which provides the oldest numpy version with
     # wheels on PyPI
@@ -16,7 +16,7 @@ requires = [
     # https://github.com/scipy/scipy/blob/c58b608c83d30800aceee6a4dab5c3464cb1de7d/pyproject.toml#L38-L41
     "numpy==1.22.3; python_version=='3.10' and platform_system=='Windows' and platform_python_implementation != 'PyPy'",
 
-    "scipy>=1.3.2",
+    "scipy>=1.5.0",
 ]
 
 [tool.black]
@@ -37,4 +37,51 @@ exclude = '''
   | sklearn/externals
   | asv_benchmarks/env
 )/
+'''
+
+[tool.cython-lint]
+# Ignore the same error codes as flake8
+# + E501 (line too long) because keeping it < 88 in cython
+# often makes code less readable.
+ignore = [
+    # check ignored by default in flake8. Meaning unclear.
+    'E24',
+    # space before : (needed for how black formats slicing)
+    'E203',
+    # line too long
+    'E501',
+    # do not assign a lambda expression, use a def
+    'E731',
+    # do not use variables named 'l', 'O', or 'I'
+    'E741',
+    # line break before binary operator
+    'W503',
+    # line break after binary operator
+    'W504',
+]
+# Exclude files are generated from tempita templates
+exclude= '''
+(
+    asv_benchmarks/
+  | sklearn/_loss/_loss.pyx
+  | sklearn/linear_model/_sag_fast.pyx
+  | sklearn/linear_model/_sgd_fast.pyx
+  | sklearn/utils/_seq_dataset.pyx
+  | sklearn/utils/_seq_dataset.pxd
+  | sklearn/utils/_weight_vector.pyx
+  | sklearn/utils/_weight_vector.pxd
+  | sklearn/metrics/_dist_metrics.pyx
+  | sklearn/metrics/_dist_metrics.pxd
+  | sklearn/metrics/_pairwise_distances_reduction/_argkmin.pxd
+  | sklearn/metrics/_pairwise_distances_reduction/_argkmin.pyx
+  | sklearn/metrics/_pairwise_distances_reduction/_argkmin_classmode.pyx
+  | sklearn/metrics/_pairwise_distances_reduction/_base.pxd
+  | sklearn/metrics/_pairwise_distances_reduction/_base.pyx
+  | sklearn/metrics/_pairwise_distances_reduction/_datasets_pair.pxd
+  | sklearn/metrics/_pairwise_distances_reduction/_datasets_pair.pyx
+  | sklearn/metrics/_pairwise_distances_reduction/_middle_term_computer.pxd
+  | sklearn/metrics/_pairwise_distances_reduction/_middle_term_computer.pyx
+  | sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pxd
+  | sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pyx
+)
 '''

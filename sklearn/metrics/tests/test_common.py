@@ -285,10 +285,6 @@ METRIC_UNDEFINED_MULTICLASS = {
     "partial_roc_auc",
     "roc_auc_score",
     "weighted_roc_auc",
-    "average_precision_score",
-    "weighted_average_precision_score",
-    "micro_average_precision_score",
-    "samples_average_precision_score",
     "jaccard_score",
     # with default average='binary', multiclass is prohibited
     "precision_score",
@@ -513,7 +509,6 @@ NOT_SYMMETRIC_METRICS = {
     "macro_f2_score",
     "macro_precision_score",
     "macro_recall_score",
-    "log_loss",
     "hinge_loss",
     "mean_gamma_deviance",
     "mean_poisson_deviance",
@@ -550,7 +545,6 @@ def _require_positive_targets(y1, y2):
 
 
 def test_symmetry_consistency():
-
     # We shouldn't forget any metrics
     assert (
         SYMMETRIC_METRICS

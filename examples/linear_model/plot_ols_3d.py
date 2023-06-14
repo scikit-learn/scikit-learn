@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========================================================
 Sparsity Example: Fitting only features 1  and 2
@@ -42,6 +41,9 @@ _ = ols.fit(X_train, y_train)
 
 import matplotlib.pyplot as plt
 
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+
 
 def plot_figs(fig_num, elev, azim, X_train, clf):
     fig = plt.figure(fig_num, figsize=(4, 3))
@@ -60,9 +62,9 @@ def plot_figs(fig_num, elev, azim, X_train, clf):
     ax.set_xlabel("X_1")
     ax.set_ylabel("X_2")
     ax.set_zlabel("Y")
-    ax.w_xaxis.set_ticklabels([])
-    ax.w_yaxis.set_ticklabels([])
-    ax.w_zaxis.set_ticklabels([])
+    ax.xaxis.set_ticklabels([])
+    ax.yaxis.set_ticklabels([])
+    ax.zaxis.set_ticklabels([])
 
 
 # Generate the three different figures from different views

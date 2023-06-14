@@ -14,23 +14,11 @@ V_mahalanobis = np.dot(V_mahalanobis, V_mahalanobis.T)
 
 DIMENSION = 3
 
-METRICS = {
-    "euclidean": {},
-    "manhattan": {},
-    "minkowski": dict(p=3),
-    "chebyshev": {},
-    "seuclidean": dict(V=rng.random_sample(DIMENSION)),
-    "wminkowski": dict(p=3, w=rng.random_sample(DIMENSION)),
-    "mahalanobis": dict(V=V_mahalanobis),
-}
-
 DISCRETE_METRICS = ["hamming", "canberra", "braycurtis"]
 
 BOOLEAN_METRICS = [
-    "matching",
     "jaccard",
     "dice",
-    "kulsinski",
     "rogerstanimoto",
     "russellrao",
     "sokalmichener",

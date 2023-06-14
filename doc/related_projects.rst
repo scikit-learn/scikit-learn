@@ -94,6 +94,11 @@ enhance the functionality of scikit-learn's estimators.
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes model visualization
   utilities.
 
+- `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_ 
+  Machine learning model evaluation made easy: plots, tables, HTML reports,
+  experiment tracking and Jupyter notebook analysis. Visual analysis, model
+  selection, evaluation and diagnostics.
+
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
   custom matplotlib visualizers for scikit-learn estimators to support visual feature
   analysis, model selection, evaluation, and diagnostics.
@@ -115,6 +120,10 @@ enhance the functionality of scikit-learn's estimators.
   Scikit-learn pipelines to `ONNX <https://onnx.ai/>`_ for interchange and
   prediction.
 
+- `skops.io <https://skops.readthedocs.io/en/stable/persistence.html>`__ A
+  persistence model more secure than pickle, which can be used instead of
+  pickle in most common cases.
+
 - `sklearn2pmml <https://github.com/jpmml/sklearn2pmml>`_
   Serialization of a wide variety of scikit-learn estimators and transformers
   into PMML with the help of `JPMML-SkLearn <https://github.com/jpmml/jpmml-sklearn>`_
@@ -131,6 +140,17 @@ enhance the functionality of scikit-learn's estimators.
 - `treelite <https://treelite.readthedocs.io>`_
   Compiles tree-based ensemble models into C code for minimizing prediction
   latency.
+  
+**Model throughput**
+
+- `Intel(R) Extension for scikit-learn <https://github.com/intel/scikit-learn-intelex>`_
+  Mostly on high end Intel(R) hardware, accelerates some scikit-learn models
+  for both training and inference under certain circumstances. This project is
+  maintained by Intel(R) and scikit-learn's maintainers are not involved in the
+  development of this project. Also note that in some cases using the tools and
+  estimators under ``scikit-learn-intelex`` would give different results than
+  ``scikit-learn`` itself. If you encounter issues while using this project,
+  make sure you report potential issues in their respective repositories.
 
 
 Other estimators and tasks
@@ -161,6 +181,10 @@ and tasks.
   Linear-chain conditional random fields
   (`CRFsuite <http://www.chokkan.org/software/crfsuite/>`_ wrapper with
   sklearn-like API).
+
+- `skforecast <https://github.com/JoaquinAmatRodrigo/skforecast>`_ A python library
+  that eases using scikit-learn regressors as multi-step forecasters. It also works
+  with any regressor compatible with the scikit-learn API.
 
 **Deep neural networks etc.**
 
@@ -285,7 +309,7 @@ Other packages useful for data analysis and machine learning.
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 
-- `PyMC <https://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
+- `PyMC <https://www.pymc.io/>`_ Bayesian statistical models and
   fitting algorithms.
 
 - `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
@@ -310,7 +334,7 @@ Recommendation Engine packages
 - `Spotlight <https://github.com/maciejkula/spotlight>`_ Pytorch-based
   implementation of deep recommender models.
 
-- `Surprise Lib <http://surpriselib.com/>`_ Library for explicit feedback
+- `Surprise Lib <https://surpriselib.com/>`_ Library for explicit feedback
   datasets.
 
 Domain specific packages
@@ -356,10 +380,11 @@ and promote community efforts.
   (`source <https://github.com/mehrdad-dev/scikit-learn>`__)
 - `Spanish translation <https://qu4nt.github.io/sklearn-doc-es/>`_
   (`source <https://github.com/qu4nt/sklearn-doc-es>`__)
+- `Korean translation <https://panda5176.github.io/scikit-learn-korean/>`_
+  (`source <https://github.com/panda5176/scikit-learn-korean>`__)
 
 
 .. rubric:: Footnotes
 
 .. [#f1] following `linux documentation Disclaimer
    <https://www.kernel.org/doc/html/latest/translations/index.html#disclaimer>`__
-

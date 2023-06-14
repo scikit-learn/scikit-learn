@@ -17,12 +17,12 @@ from sklearn.utils._testing import (
 from sklearn.utils import check_random_state
 from sklearn.utils import _determine_key_type
 from sklearn.utils import deprecated
-from sklearn.utils import gen_batches
 from sklearn.utils import _get_column_indices
 from sklearn.utils import resample
 from sklearn.utils import safe_mask
 from sklearn.utils import column_or_1d
 from sklearn.utils import _safe_indexing
+from sklearn.utils import _safe_assign
 from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
 from sklearn.utils import _message_with_time, _print_elapsed_time
@@ -53,19 +53,6 @@ def test_make_rng():
 
     with pytest.raises(ValueError):
         check_random_state("some invalid seed")
-
-
-def test_gen_batches():
-    # Make sure gen_batches errors on invalid batch_size
-
-    assert_array_equal(list(gen_batches(4, 2)), [slice(0, 2, None), slice(2, 4, None)])
-    msg_zero = "gen_batches got batch_size=0, must be positive"
-    with pytest.raises(ValueError, match=msg_zero):
-        next(gen_batches(4, 0))
-
-    msg_float = "gen_batches got batch_size=0.5, must be an integer"
-    with pytest.raises(TypeError, match=msg_float):
-        next(gen_batches(4, 0.5))
 
 
 def test_deprecated():
@@ -723,7 +710,6 @@ def dummy_func():
 
 
 def test_deprecation_joblib_api(tmpdir):
-
     # Only parallel_backend and register_parallel_backend are not deprecated in
     # sklearn.utils
     from sklearn.utils import parallel_backend, register_parallel_backend
@@ -742,3 +728,37 @@ def test_to_object_array(sequence):
     assert isinstance(out, np.ndarray)
     assert out.dtype.kind == "O"
     assert out.ndim == 1
+
+
+@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
+def test_safe_assign(array_type):
+    """Check that `_safe_assign` works as expected."""
+    rng = np.random.RandomState(0)
+    X_array = rng.randn(10, 5)
+
+    row_indexer = [1, 2]
+    values = rng.randn(len(row_indexer), X_array.shape[1])
+    X = _convert_container(X_array, array_type)
+    _safe_assign(X, values, row_indexer=row_indexer)
+
+    assigned_portion = _safe_indexing(X, row_indexer, axis=0)
+    assert_allclose_dense_sparse(
+        assigned_portion, _convert_container(values, array_type)
+    )
+
+    column_indexer = [1, 2]
+    values = rng.randn(X_array.shape[0], len(column_indexer))
+    X = _convert_container(X_array, array_type)
+    _safe_assign(X, values, column_indexer=column_indexer)
+
+    assigned_portion = _safe_indexing(X, column_indexer, axis=1)
+    assert_allclose_dense_sparse(
+        assigned_portion, _convert_container(values, array_type)
+    )
+
+    row_indexer, column_indexer = None, None
+    values = rng.randn(*X.shape)
+    X = _convert_container(X_array, array_type)
+    _safe_assign(X, values, column_indexer=column_indexer)
+
+    assert_allclose_dense_sparse(X, _convert_container(values, array_type))

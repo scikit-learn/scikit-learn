@@ -274,10 +274,12 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                     "of passing a sparse neighbors graph."
                 )
             warnings.warn(
-                "The number of connected components of the neighbors graph "
-                f"is {n_connected_components} > 1. Completing the graph to fit"
-                " Isomap might be slow. Increase the number of neighbors to "
-                "avoid this issue.",
+                (
+                    "The number of connected components of the neighbors graph "
+                    f"is {n_connected_components} > 1. Completing the graph to fit"
+                    " Isomap might be slow. Increase the number of neighbors to "
+                    "avoid this issue."
+                ),
                 stacklevel=2,
             )
 
@@ -409,7 +411,13 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         n_samples_fit = self.nbrs_.n_samples_fit_
         n_queries = distances.shape[0]
-        G_X = np.zeros((n_queries, n_samples_fit))
+
+        if hasattr(X, "dtype") and X.dtype == np.float32:
+            dtype = np.float32
+        else:
+            dtype = np.float64
+
+        G_X = np.zeros((n_queries, n_samples_fit), dtype)
         for i in range(n_queries):
             G_X[i] = np.min(self.dist_matrix_[indices[i]] + distances[i][:, None], 0)
 
