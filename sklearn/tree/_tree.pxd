@@ -107,7 +107,7 @@ cdef class TreeBuilder:
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=*,
-        const unsigned char[::1] feature_has_missing=*,
+        const unsigned char[::1] missing_mask_per_feature=*,
     )
 
     cdef _check_input(
