@@ -3180,7 +3180,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                     X[:, i] = transform_function(X[:, i], self.lambdas_[i])
 
         if self.standardize:
-            self._scaler = StandardScaler(copy=False)
+            self._scaler = StandardScaler(copy=False).set_output(transform="default")
             if force_transform:
                 X = self._scaler.fit_transform(X)
             else:

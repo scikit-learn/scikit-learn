@@ -401,6 +401,9 @@ Changelog
 - |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
   :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
 
+- |Fix| :class:`impute.IterativeImputer` now correctly preserves the Pandas
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -443,6 +446,12 @@ Changelog
   :class:`linear_model.LogisticRegression(penalty="l1", solver="liblinear")`
   on linearly separable problems.
   :pr:`25214` by `Tom Dupre la Tour`_.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| :class:`manifold.Isomap` now correctly preserves the Pandas
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
 ......................
@@ -635,6 +644,9 @@ Changelog
 - |Fix| :class:`AdditiveChi2Sampler` is now stateless.
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
+
+- |Fix| :class:`preprocessing.PowerTransformer` now correctly preserves the Pandas
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
 
 - |Fix| :class:`preprocessing.PowerTransformer` now correcly raises error when
   using `method="box-cox"` on data with a constant `np.nan` column.
