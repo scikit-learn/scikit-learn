@@ -17,7 +17,6 @@ the presence of the `_is_fitted` attribute. It can be used internally
  within the estimator's methods to ensure that the estimator is fitted
  before performing predictions or scoring.
 
-
 @author: Kushan
 """
 
@@ -28,7 +27,28 @@ the presence of the `_is_fitted` attribute. It can be used internally
 # that extends the `BaseEstimator` and `ClassifierMixin` classes from 
 # scikit-learn. It showcases the usage of the `__sklearn_is_fitted__` method 
 # and the `check_is_fitted` utility function as internal developer APIs.
-
+#
+# Example usage
+#
+# The provided code demonstrates the usage of the `CustomEstimator` 
+# class by fitting the estimator to a sample dataset, making predictions, 
+# and calculating the score.
+#
+# X = ...features
+# y = ...labels
+# Create an instance of the CustomEstimator
+# `estimator = CustomEstimator()`
+# try to predict before data was fitted
+# `estimator.predict(X)` Output: NotFittedError
+# check if the estimater is fitted or not
+# `estimator.__sklearn_is_fitted__()`
+# Now fit the estimator to the training data
+# `estimator.fit(X, y)`
+# Perform predictions on the same dataset
+# `predictions = estimator.predict(X)`
+# Calculate the score of the estimator on the training data
+# `score = estimator.score(X, y)`
+# `estimator.__sklearn_is_fitted__()` Output: True
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
@@ -99,45 +119,3 @@ class CustomEstimator(BaseEstimator, ClassifierMixin):
         """Internal developer API. Returns True if the estimator is fitted, 
         False otherwise."""
         return hasattr(self, '_is_fitted')
-    
-
-# %%
-# Example usage
-################################################################
-# The provided code demonstrates the usage of the `CustomEstimator` 
-# class by fitting the estimator to a sample dataset, making predictions, 
-# and calculating the score.
-
-X = [[1, 2, 3], [4, 5, 6]]
-y = [0, 1]
-
-# %%
-# Create an instance of the CustomEstimator
-estimator = CustomEstimator()
-
-# %%
-# try to predict before data was fitted
-# `estimator.predict(X)` Output: NotFittedError
-# check if the estimater is fitted or not
-estimator.__sklearn_is_fitted__()
-
-# %%
-# Now fit the estimator to the training data
-estimator.fit(X, y)
-
-# %%
-# Perform predictions on the same dataset
-predictions = estimator.predict(X)
-
-# %%
-# Calculate the score of the estimator on the training data
-score = estimator.score(X, y)
-
-# %%
-# this time `__sklearn_is_fitted__` return True
-estimator.__sklearn_is_fitted__()
-
-# %%
-# Get the sample results
-print("Predictions:", predictions)
-print("Score:", score)
