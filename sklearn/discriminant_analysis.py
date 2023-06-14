@@ -745,6 +745,9 @@ class LinearDiscriminantAnalysis(
         # Only override for the doc
         return super().decision_function(X)
 
+    def _more_tags(self):
+        return {"array_api_support": True}
+
 
 class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     """Quadratic Discriminant Analysis.

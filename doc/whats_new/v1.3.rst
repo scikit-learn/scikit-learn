@@ -641,6 +641,14 @@ Changelog
   version 1.5 when `strategy="kmeans"` or `strategy="uniform"`.
   :pr:`26424` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :class:`AdditiveChi2Sampler` is now stateless.
+  The `sample_interval_` attribute is deprecated and will be removed in 1.5.
+  :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
+
+- |Fix| :class:`preprocessing.PowerTransformer` now correcly raises error when
+  using `method="box-cox"` on data with a constant `np.nan` column.
+  :pr:`26400` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.svm`
 ..................
 
