@@ -118,8 +118,6 @@ estimator = CustomEstimator()
 # %%
 # try to predict before data was fitted
 # `estimator.predict(X)` Output: NotFittedError
-
-# %%
 # check if the estimater is fitted or not
 estimator.__sklearn_is_fitted__()
 
