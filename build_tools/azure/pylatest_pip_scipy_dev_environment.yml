@@ -14,8 +14,6 @@ dependencies:
     - setuptools
     - pytest-cov
     - coverage
-    - pyarrow
-    - polars
     - pooch
     - sphinx
     - numpydoc
