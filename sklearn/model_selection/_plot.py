@@ -120,8 +120,8 @@ class _BaseCurveDisplay:
             )
             xscale = "log" if log_scale else "linear"
         else:
-            # Heuristically, we can define a ratio of 5 to differentiate log scale
-            # from linear scale.
+            # We found that a ratio, smaller or bigger than 5, between the largest and smallest gap
+            # of the x values is a good indicator to choose between linear and log scale.
             if _compute_scale_type_ratio(x_data) > 5:
                 xscale = "symlog" if x_data.min() <= 0 else "log"
             else:
