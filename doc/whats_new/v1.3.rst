@@ -629,7 +629,8 @@ Changelog
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
 - |Fix| :class:`preprocessing.PowerTransformer` with `method="yeo-johnson"` now leaves
-  constant features unchanged.
+  constant features unchanged instead of transforming with an arbitrary value for
+  the `lambdas_` fitted parameter.
   :pr:`26566` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.svm`
