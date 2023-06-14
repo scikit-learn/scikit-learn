@@ -68,7 +68,7 @@ def test_learning_curve_display_default_usage(pyplot, data):
     assert display.ax_.get_ylabel() == "Score"
 
     _, legend_labels = display.ax_.get_legend_handles_labels()
-    assert legend_labels == ["Test"]
+    assert legend_labels == ["Train", "Test"]
 
     train_sizes_abs, train_scores, test_scores = learning_curve(
         estimator, X, y, train_sizes=train_sizes
@@ -107,7 +107,7 @@ def test_validation_curve_display_default_usage(pyplot, data):
     assert display.ax_.get_ylabel() == "Score"
 
     _, legend_labels = display.ax_.get_legend_handles_labels()
-    assert legend_labels == ["Test"]
+    assert legend_labels == ["Train", "Test"]
 
     train_scores, test_scores = validation_curve(
         estimator, X, y, param_name=param_name, param_range=param_range
@@ -433,12 +433,13 @@ def test_curve_display_std_display_style(pyplot, data, CurveDisplay, specific_pa
         std_display_style=std_display_style,
     )
 
-    assert len(display.lines_) == 1
-    assert isinstance(display.lines_[0], mpl.lines.Line2D)
+    assert len(display.lines_) == 2
+    for line in display.lines_:
+        assert isinstance(line, mpl.lines.Line2D)
     assert display.errorbar_ is None
     assert display.fill_between_ is None
     _, legend_label = display.ax_.get_legend_handles_labels()
-    assert len(legend_label) == 1
+    assert len(legend_label) == 2
 
     std_display_style = "fill_between"
     display = CurveDisplay.from_estimator(
@@ -449,13 +450,15 @@ def test_curve_display_std_display_style(pyplot, data, CurveDisplay, specific_pa
         std_display_style=std_display_style,
     )
 
-    assert len(display.lines_) == 1
-    assert isinstance(display.lines_[0], mpl.lines.Line2D)
+    assert len(display.lines_) == 2
+    for line in display.lines_:
+        assert isinstance(line, mpl.lines.Line2D)
     assert display.errorbar_ is None
-    assert len(display.fill_between_) == 1
-    assert isinstance(display.fill_between_[0], mpl.collections.PolyCollection)
+    assert len(display.fill_between_) == 2
+    for fill_between in display.fill_between_:
+        assert isinstance(fill_between, mpl.collections.PolyCollection)
     _, legend_label = display.ax_.get_legend_handles_labels()
-    assert len(legend_label) == 1
+    assert len(legend_label) == 2
 
     std_display_style = "errorbar"
     display = CurveDisplay.from_estimator(
@@ -467,11 +470,12 @@ def test_curve_display_std_display_style(pyplot, data, CurveDisplay, specific_pa
     )
 
     assert display.lines_ is None
-    assert len(display.errorbar_) == 1
-    assert isinstance(display.errorbar_[0], mpl.container.ErrorbarContainer)
+    assert len(display.errorbar_) == 2
+    for errorbar in display.errorbar_:
+        assert isinstance(errorbar, mpl.container.ErrorbarContainer)
     assert display.fill_between_ is None
     _, legend_label = display.ax_.get_legend_handles_labels()
-    assert len(legend_label) == 1
+    assert len(legend_label) == 2
 
 
 @pytest.mark.parametrize(

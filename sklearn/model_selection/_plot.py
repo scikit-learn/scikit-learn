@@ -225,7 +225,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
         *,
         negate_score=False,
         score_name=None,
-        score_type="test",
+        score_type="both",
         log_scale="deprecated",
         std_display_style="fill_between",
         line_kw=None,
@@ -255,7 +255,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             replace it by `"Negative"` if `negate_score` is
             `False` or just remove it otherwise.
 
-        score_type : {"test", "train", "both"}, default="test"
+        score_type : {"test", "train", "both"}, default="both"
             The type of score to plot. Can be one of `"test"`, `"train"`, or
             `"both"`.
 
@@ -325,7 +325,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
         ax=None,
         negate_score=False,
         score_name=None,
-        score_type="test",
+        score_type="both",
         log_scale="deprecated",
         std_display_style="fill_between",
         line_kw=None,
@@ -447,7 +447,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             replace it by `"Negative"` if `negate_score` is
             `False` or just remove it otherwise.
 
-        score_type : {"test", "train", "both"}, default="test"
+        score_type : {"test", "train", "both"}, default="both"
             The type of score to plot. Can be one of `"test"`, `"train"`, or
             `"both"`.
 
@@ -633,7 +633,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
         *,
         negate_score=False,
         score_name=None,
-        score_type="test",
+        score_type="both",
         std_display_style="fill_between",
         line_kw=None,
         fill_between_kw=None,
@@ -662,7 +662,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             replace it by `"Negative"` if `negate_score` is
             `False` or just remove it otherwise.
 
-        score_type : {"test", "train", "both"}, default="test"
+        score_type : {"test", "train", "both"}, default="both"
             The type of score to plot. Can be one of `"test"`, `"train"`, or
             `"both"`.
 
@@ -723,7 +723,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
         ax=None,
         negate_score=False,
         score_name=None,
-        score_type="test",
+        score_type="both",
         std_display_style="fill_between",
         line_kw=None,
         fill_between_kw=None,
@@ -826,7 +826,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             replace it by `"Negative"` if `negate_score` is
             `False` or just remove it otherwise.
 
-        score_type : {"test", "train", "both"}, default="test"
+        score_type : {"test", "train", "both"}, default="both"
             The type of score to plot. Can be one of `"test"`, `"train"`, or
             `"both"`.
 

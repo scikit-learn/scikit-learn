@@ -51,6 +51,15 @@ random sampling procedures.
   used each time the kernel is called.
   :pr:`26337` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+Changed displays
+----------------
+
+- |Enhancement| :class:`model_selection.LearningCurveDisplay` displays both the
+  train and test curves to be consistent with
+  :class:`model_selection.ValidationCurveDisplay`. You can set `score_type="test"` to
+  keep the past behaviour.
+  :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changes impacting all modules
 -----------------------------
 
