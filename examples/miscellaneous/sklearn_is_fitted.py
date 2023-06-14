@@ -3,15 +3,15 @@
 Internal Developer API
 =================================================================
 
-The `__sklearn_is_fitted__` method is like a internal developer API used
+The `_sklearn_is_fitted` method is like a internal developer API used
 internally by scikit-learn to check if an estimator object has been
 fitted or not. Users are encouraged to use the `check_is_fitted` function 
-provided by scikit-learn, which internally relies on `__sklearn_is_fitted__`,
+provided by scikit-learn, which internally relies on `_sklearn_is_fitted`,
 to check the fitted status of an estimator in their code.
 
 In this example the custom estimator showcases the usage of the 
-`__sklearn_is_fitted__` method and `check_is_fitted` utility 
-function as internal developer APIs. The `__sklearn_is_fitted__` 
+`_sklearn_is_fitted` method and `check_is_fitted` utility 
+function as internal developer APIs. The `_sklearn_is_fitted` 
 method checks whether the estimator has been fitted by verifying 
 the presence of the `_is_fitted` attribute. It can be used internally
  within the estimator's methods to ensure that the estimator is fitted
@@ -87,7 +87,7 @@ class CustomEstimator(BaseEstimator, ClassifierMixin):
         # Perform scoring logic
         return 0.5
 
-    def __sklearn_is_fitted__(self):
+    def _sklearn_is_fitted(self):
         """
         Internal developer API. Returns True if the estimator is fitted, False otherwise.
         """
