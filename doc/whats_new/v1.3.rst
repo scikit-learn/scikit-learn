@@ -287,7 +287,7 @@ Changelog
 - |Fix| :func:`dataasets.fetch_openml` will consistenly use `np.nan` as missing marker
   with both parsers `"pandas"` and `"liac-arff"`.
   :pr:`26579` by :user:`Guillaume Lemaitre <glemaitre>`.
-  
+
 - |API| The `data_transposed` argument of :func:`datasets.make_sparse_coded_signal`
   is deprecated and will be removed in v1.5.
   :pr:`25784` by :user:`Jérémie du Boisberranger`.
