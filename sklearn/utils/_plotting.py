@@ -80,11 +80,12 @@ def _validate_score_name(score_name, scoring, negate_score):
         return score_name.replace("_", " ").capitalize()
 
 
-def _compute_scale_type_ratio(data):
+def _interval_max_min_ratio(data):
     """Compute the ratio between the largest and smallest inter-point distances.
 
-    A value higher than 5 would indicate that the data was sampled from a
-    log-uniform distribution.
+    A value larger than 5 typically indicates that the parameter range would
+    better be displayed with a log scale while a linear scale would be more
+    suitable otherwise.
     """
     diff = np.diff(np.sort(data))
     return diff.max() / diff.min()
