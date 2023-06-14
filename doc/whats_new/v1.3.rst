@@ -206,6 +206,9 @@ Changelog
   is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 
+- |API| The `Xred` argument in :func:`cluster.FeatureAgglomeration.inverse_transform`
+  is renamed to `Xt` and will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
+
 - |Enhancement| The `sample_weight` parameter now will be used in centroids
   initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
   and :class:`cluster.MiniBatchKMeans`.
@@ -227,6 +230,17 @@ Changelog
   by :user:`Leland McInnes <lmcinnes>` et al.
 
   :pr:`26385` by :user:`Meekail Zain <micky774>`
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| `compose.ColumnTransformer` raises an informative error when the
+  individual transformers of `ColumnTransformer` output pandas dataframes with
+  indexes that are not consistent with each other and the output is configured
+  to be pandas. :pr:`26286` by `Thomas Fan`_.
+
+- |Fix| :class:`compose.ColumnTransformer` correctly sets the output of the
+  remainder when `set_output` is called. :pr:`26323` by `Thomas Fan`_.
 
 :mod:`sklearn.covariance`
 .........................
@@ -264,6 +278,16 @@ Changelog
 - |Fix| :func:`datasets.fetch_openml` returns improved data types when
   `as_frame=True` and `parser="liac-arff"`. :pr:`26386` by `Thomas Fan`_.
 
+- |Fix| Following the ARFF specs, only the marker `"?"` is now considered as a missing
+  values when opening ARFF files fetched using :func:`datasets.fetch_openml` when using
+  the pandas parser. The parameter `read_csv_kwargs` allows to overwrite this behaviour.
+  :pr:`26551` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| Allows to overwrite the parameters used to open the ARFF file using
+  the parameter `read_csv_kwargs` in :func:`datasets.fetch_openml` when using the
+  pandas parser.
+  :pr:`26433` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -275,6 +299,10 @@ Changelog
   :class:`decomposition.MiniBatchSparsePCA` are now faster for small batch sizes by
   avoiding duplicate validations.
   :pr:`25490` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| The `W` argument in :func:`decomposition.NMF.inverse_transform` and
+  :class:`decomposition.MiniBatchNMF.inverse_transform` is renamed to `Xt` and
+  will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
 
 - |Fix| Treat more consistently small values in the `W` and `H` matrices during the
   `fit` and `transform` steps of :class:`decomposition.NMF` and
@@ -378,6 +406,12 @@ Changelog
 
 :mod:`sklearn.inspection`
 .........................
+
+- |Enhancement| Added support for `sample_weight` in
+  :func:`inspection.partial_dependence`. This allows for weighted averaging when
+  aggregating for each value of the grid we are making the inspection on. The
+  option is only available when `method` is set to `brute`. :pr:`25209`
+  by :user:`Carlo Lemos <vitaliset>`.
 
 - |API| :func:`inspection.partial_dependence` returns a :class:`utils.Bunch` with
   new key: `grid_values`. The `values` key is deprecated in favor of `grid_values`
@@ -575,6 +609,11 @@ Changelog
   categorical encoding based on target mean conditioned on the value of the
   category. :pr:`25334` by `Thomas Fan`_.
 
+- |Enhancement| A new parameter `sparse_output` was added to
+  :class:`SplineTransformer`, available as of SciPy 1.8. If `sparse_output=True`,
+  :class:`SplineTransformer` returns a sparse CSR matrix.
+  :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Enhancement| Adds a `feature_name_combiner` parameter to
   :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
   feature names to be returned by :meth:`get_feature_names_out`.
@@ -608,6 +647,15 @@ Changelog
 
 - |Fix| :class:`preprocessing.PowerTransformer` now correctly preserves the Pandas
   Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
+
+- |Fix| :class:`preprocessing.PowerTransformer` now correcly raises error when
+  using `method="box-cox"` on data with a constant `np.nan` column.
+  :pr:`26400` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |Fix| :class:`preprocessing.PowerTransformer` with `method="yeo-johnson"` now leaves
+  constant features unchanged instead of transforming with an arbitrary value for
+  the `lambdas_` fitted parameter.
+  :pr:`26566` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.svm`
 ..................
@@ -670,6 +718,13 @@ Changelog
 - |Enhancement| :meth:`LabelSpreading.fit` and :meth:`LabelPropagation.fit` now
   accepts sparse metrics.
   :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
+
+Miscellaneous
+.............
+
+- |Enhancement| Replace obsolete exceptions EnvironmentError, IOError and
+  WindowsError.
+  :pr:`26466` by :user:`Dimitri Papadopoulos ORfanos <DimitriPapadopoulos>`.
 
 Code and Documentation Contributors
 -----------------------------------
