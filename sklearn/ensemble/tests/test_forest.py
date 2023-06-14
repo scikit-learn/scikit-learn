@@ -1833,9 +1833,9 @@ def test_missing_values_is_resilient(make_data, Forest):
 def test_missing_value_is_predictive(Forest):
     """Check the forest learns when only the missing value is predictive."""
     rng = np.random.RandomState(0)
-    n_samples = 1000
+    n_samples = 300
 
-    X = rng.standard_normal(size=(n_samples, 10))
+    X_non_predictive = rng.standard_normal(size=(n_samples, 10))
     y = rng.randint(0, high=2, size=n_samples)
 
     # Create a predictive feature using `y` and with some noise
@@ -1843,13 +1843,38 @@ def test_missing_value_is_predictive(Forest):
     y_mask = y.astype(bool)
     y_mask[X_random_mask] = ~y_mask[X_random_mask]
 
-    X_predictive = rng.standard_normal(size=n_samples)
-    X_predictive[y_mask] = np.nan
+    predictive_feature = rng.standard_normal(size=n_samples)
+    predictive_feature[y_mask] = np.nan
 
-    X[:, 5] = X_predictive
+    X_predictive = X_non_predictive.copy()
+    X_predictive[:, 5] = predictive_feature
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    forest = Forest(random_state=0).fit(X_train, y_train)
+    (
+        X_predictive_train,
+        X_predictive_test,
+        X_non_predictive_train,
+        X_non_predictive_test,
+        y_train,
+        y_test,
+    ) = train_test_split(X_predictive, X_non_predictive, y, random_state=0)
+    forest_predictive = Forest(random_state=0).fit(X_predictive_train, y_train)
+    forest_non_predictive = Forest(random_state=0).fit(X_non_predictive_train, y_train)
 
-    assert forest.score(X_train, y_train) >= 0.80
-    assert forest.score(X_test, y_test) >= 0.75
+    predictive_test_score = forest_predictive.score(X_predictive_test, y_test)
+
+    assert predictive_test_score >= 0.75
+    assert predictive_test_score >= forest_non_predictive.score(
+        X_non_predictive_test, y_test
+    )
+
+
+def test_non_supported_criterion_raises_error_with_missing_values():
+    """Raise error for unsupported criterion when there are missing values."""
+    X = np.array([[0, 1, 2], [np.nan, 0, 2.0]])
+    y = [0.5, 1.0]
+
+    forest = RandomForestRegressor(criterion="absolute_error")
+
+    msg = "RandomForestRegressor does not accept missing values"
+    with pytest.raises(ValueError, match=msg):
+        forest.fit(X, y)

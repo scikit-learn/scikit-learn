@@ -371,7 +371,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # Only the criterion is required to determine if the tree supports missing
         # values.
         estimator = type(self.estimator)(criterion=self.criterion)
-        feature_has_missing = estimator._compute_feature_has_missing(X)
+        feature_has_missing = estimator._compute_feature_has_missing(
+            X, estimator_name=self.__class__.__name__
+        )
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)

@@ -180,7 +180,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _support_missing_values(self, X):
         return not issparse(X) and self._get_tags()["allow_nan"]
 
-    def _compute_feature_has_missing(self, X):
+    def _compute_feature_has_missing(self, X, estimator_name=None):
         """Return boolean mask denoting if there are missing values for each feature.
 
         This method also ensures that X is finite.
@@ -190,13 +190,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like of shape (n_samples, n_features), dtype=DOUBLE
             Input data.
 
+        estimator_name : str or None, default=None
+            Name to use when raising an error. Defaults to the class name.
+
         Returns
         -------
         feature_has_missing : ndarray of shape (n_features,), or None
             Missing value mask. If missing values are not supported or there
             are no missing values, return None.
         """
-        common_kwargs = dict(estimator_name=self.__class__.__name__, input_name="X")
+        estimator_name = estimator_name or self.__class__.__name__
+        common_kwargs = dict(estimator_name=estimator_name, input_name="X")
 
         if not self._support_missing_values(X):
             assert_all_finite(X, **common_kwargs)
