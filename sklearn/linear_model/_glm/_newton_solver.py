@@ -960,6 +960,9 @@ class NewtonLSMRSolver(NewtonSolver):
         # search, coef = x + x0. Thus, 1/2 ||r||^2 is just the Taylor series of the
         # objective with the zero order term loss(x0) replaced by
         # 1/2 * ||g/sqrt(h)||^2.
+        #
+        # We set btol to the strict self.tol to help cases of collinearity in X when
+        # there is (almost) no L2 penalty.
         norm_G = scipy.linalg.norm(self.gradient)
         eta = min(0.5, np.sqrt(norm_G))
         if self.verbose >= 3:
@@ -969,7 +972,7 @@ class NewtonLSMRSolver(NewtonSolver):
             b,
             damp=0,
             atol=eta * norm_G / (self.A_norm * self.r_norm),
-            btol=eta * norm_G,
+            btol=self.tol,
             maxiter=max(n_samples, n_features) * n_classes,  # default is min(A.shape)
             show=self.verbose >= 3,
         )
