@@ -656,11 +656,6 @@ Changelog
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
-- |API| The default value of the `subsample` parameter of
-  :class:`preprocessing.KBinsDiscretizer` will change from `None` to `200_000` in
-  version 1.5 when `strategy="kmeans"` or `strategy="uniform"`.
-  :pr:`26424` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
 - |Fix| :class:`AdditiveChi2Sampler` is now stateless.
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
@@ -676,6 +671,11 @@ Changelog
   constant features unchanged instead of transforming with an arbitrary value for
   the `lambdas_` fitted parameter.
   :pr:`26566` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| The default value of the `subsample` parameter of
+  :class:`preprocessing.KBinsDiscretizer` will change from `None` to `200_000` in
+  version 1.5 when `strategy="kmeans"` or `strategy="uniform"`.
+  :pr:`26424` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.svm`
 ..................
