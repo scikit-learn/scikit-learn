@@ -6,6 +6,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
+from ..base import _fit_context
 from ._kmeans import _BaseKMeans
 from ._kmeans import _kmeans_single_elkan
 from ._kmeans import _kmeans_single_lloyd
@@ -347,6 +348,7 @@ class BisectingKMeans(_BaseKMeans):
 
         cluster_to_bisect.split(best_labels, best_centers, scores)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """Compute bisecting k-means clustering.
 
@@ -373,8 +375,6 @@ class BisectingKMeans(_BaseKMeans):
         self
             Fitted estimator.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X,
             accept_sparse="csr",

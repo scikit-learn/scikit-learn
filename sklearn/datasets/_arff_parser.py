@@ -204,7 +204,10 @@ def _liac_arff_parser(
         if len(dfs) >= 2:
             dfs[0] = dfs[0].astype(dfs[1].dtypes)
 
-        frame = pd.concat(dfs, ignore_index=True)
+        # liac-arff parser does not depend on NumPy and uses None to represent
+        # missing values. To be consistent with the pandas parser, we replace
+        # None with np.nan.
+        frame = pd.concat(dfs, ignore_index=True).fillna(value=np.nan)
         del dfs, first_df
 
         # cast the columns frame

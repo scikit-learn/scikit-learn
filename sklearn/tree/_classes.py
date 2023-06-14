@@ -31,6 +31,7 @@ from ..base import clone
 from ..base import RegressorMixin
 from ..base import is_classifier
 from ..base import MultiOutputMixin
+from ..base import _fit_context
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils.validation import _check_sample_weight
@@ -222,7 +223,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _fit(
         self, X, y, sample_weight=None, check_input=True, feature_has_missing=None
     ):
-        self._validate_params()
         random_state = check_random_state(self.random_state)
 
         if check_input:
@@ -970,6 +970,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree classifier from the training set (X, y).
 
@@ -1346,6 +1347,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             monotonic_cst=monotonic_cst,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree regressor from the training set (X, y).
 
