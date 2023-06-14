@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.utils._plotting import _validate_score_name, _compute_scale_type_ratio
+from sklearn.utils._plotting import _validate_score_name, _interval_max_min_ratio
 
 
 def my_metric():
@@ -39,6 +39,8 @@ def test_validate_score_name(score_name, scoring, negate_score, expected_score_n
         # Such a range could be clearly displayed with either log scale or linear
         # scale.
         (np.geomspace(0.1, 1, 5), 5, 6),
+        # Checking that the ratio is still positive on a negative log scale.
+        (-np.geomspace(0.1, 1, 10), 7, 8),
         # Evenly spaced parameter values lead to a ratio of 1.
         (np.linspace(0, 1, 5), 0.9, 1.1),
         # This is not exactly spaced on a log scale but we will benefit from treating
@@ -46,5 +48,5 @@ def test_validate_score_name(score_name, scoring, negate_score, expected_score_n
         ([1, 2, 5, 10, 20, 50], 20, 40),
     ],
 )
-def test_compute_scale_type_ratio(data, lower_bound, upper_bound):
-    assert lower_bound < _compute_scale_type_ratio(data) < upper_bound
+def test_inverval_max_min_ratio(data, lower_bound, upper_bound):
+    assert lower_bound < _interval_max_min_ratio(data) < upper_bound

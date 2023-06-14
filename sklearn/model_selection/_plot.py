@@ -4,7 +4,7 @@ import numpy as np
 
 from . import learning_curve, validation_curve
 from ..utils import check_matplotlib_support
-from ..utils._plotting import _validate_score_name, _compute_scale_type_ratio
+from ..utils._plotting import _validate_score_name, _interval_max_min_ratio
 
 
 class _BaseCurveDisplay:
@@ -122,7 +122,7 @@ class _BaseCurveDisplay:
         else:
             # We found that a ratio, smaller or bigger than 5, between the largest and smallest gap
             # of the x values is a good indicator to choose between linear and log scale.
-            if _compute_scale_type_ratio(x_data) > 5:
+            if _interval_max_min_ratio(x_data) > 5:
                 xscale = "symlog" if x_data.min() <= 0 else "log"
             else:
                 xscale = "linear"
