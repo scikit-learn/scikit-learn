@@ -505,7 +505,7 @@ Changelog
 :mod:`sklearn.model_selection`
 ..............................
 
-- |Feature| Added the class :class:`model_selection.ValidationCurveDisplay`
+- |MajorFeature| Added the class :class:`model_selection.ValidationCurveDisplay`
   that allows easy plotting of validation curves obtained by the function
   :func:`model_selection.validation_curve`.
   :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.

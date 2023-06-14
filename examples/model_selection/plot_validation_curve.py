@@ -24,13 +24,12 @@ X, y = load_digits(return_X_y=True)
 subset_mask = np.isin(y, [1, 2])  # binary classification: 1 vs 2
 X, y = X[subset_mask], y[subset_mask]
 
-param_name, param_range = "gamma", np.logspace(-6, -1, 5)
 disp = ValidationCurveDisplay.from_estimator(
     SVC(),
     X,
     y,
-    param_name=param_name,
-    param_range=param_range,
+    param_name="gamma",
+    param_range=np.logspace(-6, -1, 5),
     score_type="both",
     n_jobs=2,
     score_name="Accuracy",
