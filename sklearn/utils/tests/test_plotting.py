@@ -4,7 +4,11 @@ import pytest
 from sklearn.utils._plotting import _validate_score_name, _interval_max_min_ratio
 
 
-def my_metric():
+def metric():
+    pass  # pragma: no cover
+
+
+def neg_metric():
     pass  # pragma: no cover
 
 
@@ -13,13 +17,20 @@ def my_metric():
     [
         ("accuracy", None, False, "accuracy"),  # do not transform the name
         (None, "accuracy", False, "Accuracy"),  # capitalize the name
+        (None, "accuracy", True, "Negative accuracy"),  # add "Negative"
+        (None, "neg_mean_absolute_error", False, "Negative mean absolute error"),
         (None, "neg_mean_absolute_error", True, "Mean absolute error"),  # remove "neg_"
         ("MAE", "neg_mean_absolute_error", True, "MAE"),  # keep score_name
         (None, None, False, "Score"),  # default name
         (None, None, True, "Negative score"),  # default name but negated
-        ("my metric", my_metric, False, "my metric"),  # do not transform the name
-        (None, my_metric, False, "My metric"),  # default name
-        (None, my_metric, True, "My metric"),  # default name but negated
+        ("Some metric", metric, False, "Some metric"),  # do not transform the name
+        ("Some metric", metric, True, "Some metric"),  # do not transform the name
+        (None, metric, False, "Metric"),  # default name
+        (None, metric, True, "Negative metric"),  # default name but negated
+        ("Some metric", neg_metric, False, "Some metric"),  # do not transform the name
+        ("Some metric", neg_metric, True, "Some metric"),  # do not transform the name
+        (None, neg_metric, False, "Negative metric"),  # default name
+        (None, neg_metric, True, "Metric"),  # default name but negated
     ],
 )
 def test_validate_score_name(score_name, scoring, negate_score, expected_score_name):

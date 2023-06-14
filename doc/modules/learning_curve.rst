@@ -96,13 +96,6 @@ The function :func:`validation_curve` can help in this case::
    :align: center
    :scale: 50%
 
-If the training score and the validation score are both low, the estimator will
-be underfitting. If the training score is high and the validation score is low,
-the estimator is overfitting and otherwise it is working very well. A low
-training score and a high validation score is usually not possible. Underfitting,
-overfitting, and a working model are shown in the in the plot below where we vary
-the parameter :math:`\gamma` of an SVM on the digits dataset.
-
 If you intend to plot the validation curves only, the class
 :class:`~sklearn.model_selection.ValidationCurveDisplay` is more direct than
 using matplotlib manually on the results of a call to :func:`validation_curve`.
@@ -122,7 +115,14 @@ to :func:`validation_curve` to generate and plot the validation curve:
       X, y = shuffle(X, y, random_state=0)
       ValidationCurveDisplay.from_estimator(
          SVC(kernel="linear"), X, y, param_name="C", param_range=np.logspace(-7, 3, 10)
-     )
+      )
+
+If the training score and the validation score are both low, the estimator will
+be underfitting. If the training score is high and the validation score is low,
+the estimator is overfitting and otherwise it is working very well. A low
+training score and a high validation score is usually not possible. Underfitting,
+overfitting, and a working model are shown in the in the plot below where we vary
+the parameter :math:`\gamma` of an SVM on the digits dataset.
 
 .. _learning_curve:
 

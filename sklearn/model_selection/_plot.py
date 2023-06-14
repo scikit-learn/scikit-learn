@@ -162,11 +162,15 @@ class LearningCurveDisplay(_BaseCurveDisplay):
         Scores on test set.
 
     score_name : str, default=None
-        The name of the score used in `learning_curve`. It will be used to
-        decorate the y-axis. If `None` and `scoring` is provided, the same will
-        be inferred from it by removing `"neg_"` and replacing underscore by
-        spaces. If `scoring is None`, we return the default value `"Negative
-        score"` if `negate_score` is `True` and `"Score"` otherwise.
+        The name of the score used in `learning_curve`. It will override the name
+        inferred from the `scoring` parameter.
+        If `score` is `None`, we use `"Score"` if `negate_score` is `False` and
+        `"Negative score"` otherwise.
+        If `scoring` is a string or a callable, we infer the name:
+
+        - we replace `_` by spaces and capitalize the first letter;
+        - we remove `neg_` and replace it by `"Negative"` if `negate_score` is
+        `True` or just remove it otherwise.
 
     Attributes
     ----------
@@ -246,11 +250,15 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             `scikit-learn`.
 
         score_name : str, default=None
-            The name of the score used to decorate the y-axis of the plot.If
-            `None` and `scoring` is provided, the same will be inferred from it
-            by removing `"neg_"` and replacing underscore by spaces. If
-            `scoring is None`, we return the default value `"Negative score"`
-            if `negate_score` is `True` and `"Score"` otherwise.
+            The name of the score used to decorate the y-axis of the plot.
+            It will override the name inferred from the `scoring` parameter.
+            If `score` is `None`, we use `"Score"` if `negate_score` is `False` and
+            `"Negative score"` otherwise.
+            If `scoring` is a string or a callable, we infer the name:
+
+            - we replace `_` by spaces and capitalize the first letter;
+            - we remove `neg_` and replace it by `"Negative"` if `negate_score` is
+            `True` or just remove it otherwise.
 
         score_type : {"test", "train", "both"}, default="test"
             The type of score to plot. Can be one of `"test"`, `"train"`, or
@@ -436,11 +444,15 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             `scikit-learn`.
 
         score_name : str, default=None
-            The name of the score used to decorate the y-axis of the plot. If
-            `None` and `scoring` is provided, the same will be inferred from it
-            by removing `"neg_"` and replacing underscore by spaces. If
-            `scoring is None`, we return the default value `"Negative score"`
-            if `negate_score` is `True` and `"Score"` otherwise.
+            The name of the score used to decorate the y-axis of the plot.
+            It will override the name inferred from the `scoring` parameter.
+            If `score` is `None`, we use `"Score"` if `negate_score` is `False` and
+            `"Negative score"` otherwise.
+            If `scoring` is a string or a callable, we infer the name:
+
+            - we replace `_` by spaces and capitalize the first letter;
+            - we remove `neg_` and replace it by `"Negative"` if `negate_score` is
+            `True` or just remove it otherwise.
 
         score_type : {"test", "train", "both"}, default="test"
             The type of score to plot. Can be one of `"test"`, `"train"`, or
@@ -557,11 +569,15 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
         Scores on test set.
 
     score_name : str, default=None
-        The name of the score used in `validation_curve`. It will be used to
-        decorate the y-axis. If `None` and `scoring` is provided, the same will
-        be inferred from it by removing `"neg_"` and replacing underscore by
-        spaces. If `scoring is None`, we return the default value `"Negative
-        score"` if `negate_score` is `True` and `"Score"` otherwise.
+        The name of the score used in `validation_curve`. It will override the name
+        inferred from the `scoring` parameter.
+        If `score` is `None`, we use `"Score"` if `negate_score` is `False` and
+        `"Negative score"` otherwise.
+        If `scoring` is a string or a callable, we infer the name:
+
+        - we replace `_` by spaces and capitalize the first letter;
+        - we remove `neg_` and replace it by `"Negative"` if `negate_score` is
+        `True` or just remove it otherwise.
 
     Attributes
     ----------
@@ -648,11 +664,15 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             `scikit-learn`.
 
         score_name : str, default=None
-            The name of the score used to decorate the y-axis of the plot. If
-            `None` and `scoring` is provided, the same will be inferred from it
-            by removing `"neg_"` and replacing underscore by spaces. If
-            `scoring is None`, we return the default value `"Negative score"`
-            if `negate_score` is `True` and `"Score"` otherwise.
+            The name of the score used to decorate the y-axis of the plot.
+            It will override the name inferred from the `scoring` parameter.
+            If `score` is `None`, we use `"Score"` if `negate_score` is `False` and
+            `"Negative score"` otherwise.
+            If `scoring` is a string or a callable, we infer the name:
+
+            - we replace `_` by spaces and capitalize the first letter;
+            - we remove `neg_` and replace it by `"Negative"` if `negate_score` is
+            `True` or just remove it otherwise.
 
         score_type : {"test", "train", "both"}, default="test"
             The type of score to plot. Can be one of `"test"`, `"train"`, or
@@ -810,11 +830,15 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             `scikit-learn`.
 
         score_name : str, default=None
-            The name of the score used to decorate the y-axis of the plot. If
-            `None` and `scoring` is provided, the same will be inferred from it
-            by removing `"neg_"` and replacing underscore by spaces. If
-            `scoring is None`, we return the default value `"Negative score"`
-            if `negate_score` is `True` and `"Score"` otherwise.
+            The name of the score used to decorate the y-axis of the plot.
+            It will override the name inferred from the `scoring` parameter.
+            If `score` is `None`, we use `"Score"` if `negate_score` is `False` and
+            `"Negative score"` otherwise.
+            If `scoring` is a string or a callable, we infer the name:
+
+            - we replace `_` by spaces and capitalize the first letter;
+            - we remove `neg_` and replace it by `"Negative"` if `negate_score` is
+            `True` or just remove it otherwise.
 
         score_type : {"test", "train", "both"}, default="test"
             The type of score to plot. Can be one of `"test"`, `"train"`, or

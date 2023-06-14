@@ -64,10 +64,13 @@ def _validate_score_name(score_name, scoring, negate_score):
     """Validate the `score_name` parameter.
 
     If `score_name` is provided, we just return it as-is.
-    Otherwise, we infer it from `scoring` by removing `"neg_"` if present and
-    and make it English-readable. If `scoring` is `None`, then we return
-    the default value `"Negative score"` if `negate_score` is `True` and
-    `"Score"` otherwise.
+    If `score_name` is `None`, we use `Score` if `negate_score` is `False` and
+    `Negative score` otherwise.
+    If `score_name` is a string or a callable, we infer the name:
+
+    - we replace `_` by spaces and capitalize the first letter;
+    - we remove `neg_` and replace it by `"Negative"` if `negate_score` is
+      `True` or just remove it otherwise.
     """
     if score_name is not None:
         return score_name
@@ -75,9 +78,15 @@ def _validate_score_name(score_name, scoring, negate_score):
         return "Negative score" if negate_score else "Score"
     else:
         score_name = scoring.__name__ if callable(scoring) else scoring
-        if negate_score and score_name.startswith("neg_"):
-            score_name = score_name[4:]
-        return score_name.replace("_", " ").capitalize()
+        if negate_score:
+            if score_name.startswith("neg_"):
+                score_name = score_name[4:]
+            else:
+                score_name = f"Negative {score_name}"
+        elif score_name.startswith("neg_"):
+            score_name = f"Negative {score_name[4:]}"
+        score_name = score_name.replace("_", " ")
+        return score_name.capitalize()
 
 
 def _interval_max_min_ratio(data):
