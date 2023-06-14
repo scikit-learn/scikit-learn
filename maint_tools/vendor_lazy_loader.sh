@@ -15,3 +15,5 @@ curl -s -L $URL |
 
 mv $ROOT_DIR/lazy_loader/__init__.py $ROOT_DIR/__init__.py
 rmdir $ROOT_DIR/lazy_loader
+
+echo "Update this directory using $SCRIPT_NAME\n" >$ROOT_DIR/README.md
