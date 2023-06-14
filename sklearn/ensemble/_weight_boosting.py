@@ -775,7 +775,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         else:  # self.algorithm == "SAMME"
             pred = sum(
                 np.where(
-                    (estimator.predict(X) == classes).T == 1,
+                    (estimator.predict(X) == classes).T,
                     (n_classes - 1) / n_classes * w,
                     -1 / n_classes * w,
                 )
@@ -826,7 +826,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
                 current_pred = _samme_proba(estimator, n_classes, X)
             else:  # elif self.algorithm == "SAMME":
                 current_pred = np.where(
-                    (estimator.predict(X) == classes).T == 1,
+                    (estimator.predict(X) == classes).T,
                     (n_classes - 1) / n_classes * weight,
                     -1 / n_classes * weight,
                 )

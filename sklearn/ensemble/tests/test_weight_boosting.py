@@ -677,7 +677,7 @@ def test_deprecated_base_estimator_parameters_can_be_set():
 
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_adaboost_decision_function(algorithm, global_random_seed):
-    """Check that the decision function respect the symmetric constraint for weak
+    """Check that the decision function respects the symmetric constraint for weak
     learners.
 
     To check the following, we can train a single weak learner and check that
