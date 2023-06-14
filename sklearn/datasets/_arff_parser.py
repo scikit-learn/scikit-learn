@@ -387,6 +387,7 @@ def _pandas_arff_parser(
         "header": None,
         "index_col": False,  # always force pandas to not use the first column as index
         "na_values": ["?"],  # missing values are represented by `?`
+        "keep_default_na": False,  # only `?` is a missing value given the ARFF specs
         "comment": "%",  # skip line starting by `%` since they are comments
         "quotechar": '"',  # delimiter to use for quoted strings
         "skipinitialspace": True,  # skip spaces after delimiter to follow ARFF specs

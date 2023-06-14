@@ -1,6 +1,7 @@
 import re
 import sys
 from io import StringIO
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -906,3 +907,29 @@ def test_minibatch_nmf_verbose():
         nmf.fit(A)
     finally:
         sys.stdout = old_stdout
+
+
+# TODO(1.5): remove this test
+def test_NMF_inverse_transform_W_deprecation():
+    rng = np.random.mtrand.RandomState(42)
+    A = np.abs(rng.randn(6, 5))
+    est = NMF(
+        n_components=3,
+        init="random",
+        random_state=0,
+        tol=1e-6,
+    )
+    Xt = est.fit_transform(A)
+
+    with pytest.raises(TypeError, match="Missing required positional argument"):
+        est.inverse_transform()
+
+    with pytest.raises(ValueError, match="Please provide only"):
+        est.inverse_transform(Xt=Xt, W=Xt)
+
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("error")
+        est.inverse_transform(Xt)
+
+    with pytest.warns(FutureWarning, match="Input argument `W` was renamed to `Xt`"):
+        est.inverse_transform(W=Xt)

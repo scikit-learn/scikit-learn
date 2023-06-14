@@ -1138,45 +1138,6 @@ def test_tsne_with_mahalanobis_distance():
     assert_allclose(X_trans, X_trans_expected)
 
 
-# FIXME: remove in 1.3 after deprecation of `square_distances`
-def test_tsne_deprecation_square_distances():
-    """Check that we raise a warning regarding the removal of
-    `square_distances`.
-
-    Also check the parameters do not have any effect.
-    """
-    random_state = check_random_state(0)
-    X = random_state.randn(30, 10)
-    tsne = TSNE(
-        n_components=2,
-        init="pca",
-        learning_rate="auto",
-        perplexity=25.0,
-        angle=0,
-        n_jobs=1,
-        random_state=0,
-        square_distances=True,
-    )
-    warn_msg = (
-        "The parameter `square_distances` has not effect and will be removed in"
-        " version 1.3"
-    )
-    with pytest.warns(FutureWarning, match=warn_msg):
-        X_trans_1 = tsne.fit_transform(X)
-
-    tsne = TSNE(
-        n_components=2,
-        init="pca",
-        learning_rate="auto",
-        perplexity=25.0,
-        angle=0,
-        n_jobs=1,
-        random_state=0,
-    )
-    X_trans_2 = tsne.fit_transform(X)
-    assert_allclose(X_trans_1, X_trans_2)
-
-
 @pytest.mark.parametrize("perplexity", (20, 30))
 def test_tsne_perplexity_validation(perplexity):
     """Make sure that perplexity > n_samples results in a ValueError"""

@@ -161,7 +161,7 @@ def load_files(
     load the files in memory.
 
     To use text files in a scikit-learn classification or clustering algorithm,
-    you will need to use the :mod`~sklearn.feature_extraction.text` module to
+    you will need to use the :mod:`~sklearn.feature_extraction.text` module to
     build a feature extraction transformer that suits your problem.
 
     If you set load_content=True, you should also specify the encoding of the
@@ -1391,7 +1391,7 @@ def _fetch_remote(remote, dirname=None):
     urlretrieve(remote.url, file_path)
     checksum = _sha256(file_path)
     if remote.checksum != checksum:
-        raise IOError(
+        raise OSError(
             "{} has an SHA256 checksum ({}) "
             "differing from expected ({}), "
             "file may be corrupted.".format(file_path, checksum, remote.checksum)

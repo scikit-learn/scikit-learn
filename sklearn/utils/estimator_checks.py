@@ -1,4 +1,6 @@
 import warnings
+import importlib
+import itertools
 import pickle
 import re
 from copy import deepcopy
@@ -58,6 +60,7 @@ from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
 from ..utils.fixes import sp_version
 from ..utils.fixes import parse_version
 from ..utils.validation import check_is_fitted
+from ..utils._array_api import _convert_to_numpy, get_namespace, device as array_device
 from ..utils._param_validation import make_constraint
 from ..utils._param_validation import generate_invalid_param_val
 from ..utils._param_validation import InvalidParameterError
@@ -73,6 +76,7 @@ from ..preprocessing import scale
 from ..datasets import (
     load_iris,
     make_blobs,
+    make_classification,
     make_multilabel_classification,
     make_regression,
 )
@@ -132,6 +136,21 @@ def _yield_checks(estimator):
     yield partial(check_estimators_pickle, readonly_memmap=True)
 
     yield check_estimator_get_tags_default_keys
+
+    if tags["array_api_support"]:
+        for array_namespace in ["numpy.array_api", "cupy.array_api", "cupy", "torch"]:
+            if array_namespace == "torch":
+                for device, dtype in itertools.product(
+                    ("cpu", "cuda"), ("float64", "float32")
+                ):
+                    yield partial(
+                        check_array_api_input,
+                        array_namespace=array_namespace,
+                        dtype=dtype,
+                        device=device,
+                    )
+            else:
+                yield partial(check_array_api_input, array_namespace=array_namespace)
 
 
 def _yield_classifier_checks(classifier):
@@ -546,7 +565,7 @@ def parametrize_with_checks(estimators):
     )
 
 
-def check_estimator(estimator=None, generate_only=False, Estimator="deprecated"):
+def check_estimator(estimator=None, generate_only=False):
     """Check if estimator adheres to scikit-learn conventions.
 
     This function will run an extensive test-suite for input validation,
@@ -582,13 +601,6 @@ def check_estimator(estimator=None, generate_only=False, Estimator="deprecated")
 
         .. versionadded:: 0.22
 
-    Estimator : estimator object
-        Estimator instance to check.
-
-        .. deprecated:: 1.1
-            ``Estimator`` was deprecated in favor of ``estimator`` in version 1.1
-            and will be removed in version 1.3.
-
     Returns
     -------
     checks_generator : generator
@@ -600,18 +612,6 @@ def check_estimator(estimator=None, generate_only=False, Estimator="deprecated")
     parametrize_with_checks : Pytest specific decorator for parametrizing estimator
         checks.
     """
-
-    if estimator is None and Estimator == "deprecated":
-        msg = "Either estimator or Estimator should be passed to check_estimator."
-        raise ValueError(msg)
-
-    if Estimator != "deprecated":
-        msg = (
-            "'Estimator' was deprecated in favor of 'estimator' in version 1.1 "
-            "and will be removed in version 1.3."
-        )
-        warnings.warn(msg, FutureWarning)
-        estimator = Estimator
     if isinstance(estimator, type):
         msg = (
             "Passing a class was deprecated in version 0.23 "
@@ -848,6 +848,111 @@ def _generate_sparse_matrix(X_csr):
         X.indices = X.indices.astype("int64")
         X.indptr = X.indptr.astype("int64")
         yield sparse_format + "_64", X
+
+
+def check_array_api_input(
+    name, estimator_orig, *, array_namespace, device=None, dtype="float64"
+):
+    """Check that the array_api Array gives the same results as ndarrays."""
+    try:
+        array_mod = importlib.import_module(array_namespace)
+    except ModuleNotFoundError:
+        raise SkipTest(
+            f"{array_namespace} is not installed: not checking array_api input"
+        )
+    try:
+        import array_api_compat  # noqa
+    except ImportError:
+        raise SkipTest(
+            "array_api_compat is not installed: not checking array_api input"
+        )
+
+    # First create an array using the chosen array module and then get the
+    # corresponding (compatibility wrapped) array namespace based on it.
+    # This is because `cupy` is not the same as the compatibility wrapped
+    # namespace of a CuPy array.
+    xp = array_api_compat.get_namespace(array_mod.asarray(1))
+
+    if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
+        raise SkipTest("PyTorch test requires cuda, which is not available")
+    elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
+        import cupy
+
+        if cupy.cuda.runtime.getDeviceCount() == 0:
+            raise SkipTest("CuPy test requires cuda, which is not available")
+
+    X, y = make_classification(random_state=42)
+    X = X.astype(dtype, copy=False)
+
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    est = clone(estimator_orig)
+
+    X_xp = xp.asarray(X, device=device)
+    y_xp = xp.asarray(y, device=device)
+
+    est.fit(X, y)
+
+    array_attributes = {
+        key: value for key, value in vars(est).items() if isinstance(value, np.ndarray)
+    }
+
+    est_xp = clone(est)
+    with config_context(array_api_dispatch=True):
+        est_xp.fit(X_xp, y_xp)
+
+    # Fitted attributes which are arrays must have the same
+    # namespace as the one of the training data.
+    for key, attribute in array_attributes.items():
+        est_xp_param = getattr(est_xp, key)
+        assert (
+            get_namespace(est_xp_param)[0] == get_namespace(X_xp)[0]
+        ), f"'{key}' attribute is in wrong namespace"
+
+        assert array_device(est_xp_param) == array_device(X_xp)
+
+        est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
+        assert_allclose(
+            attribute,
+            est_xp_param_np,
+            err_msg=f"{key} not the same",
+            atol=np.finfo(X.dtype).eps * 100,
+        )
+
+    # Check estimator methods, if supported, give the same results
+    methods = (
+        "decision_function",
+        "predict",
+        "predict_log_proba",
+        "predict_proba",
+        "transform",
+        "inverse_transform",
+    )
+
+    for method_name in methods:
+        method = getattr(est, method_name, None)
+        if method is None:
+            continue
+
+        result = method(X)
+        with config_context(array_api_dispatch=True):
+            result_xp = getattr(est_xp, method_name)(X_xp)
+
+        assert (
+            get_namespace(result_xp)[0] == get_namespace(X_xp)[0]
+        ), f"'{method}' output is in wrong namespace"
+
+        assert array_device(result_xp) == array_device(X_xp)
+
+        result_xp_np = _convert_to_numpy(result_xp, xp=xp)
+
+        assert_allclose(
+            result,
+            result_xp_np,
+            err_msg=f"{method} did not the return the same result",
+            atol=np.finfo(X.dtype).eps * 100,
+        )
 
 
 def check_estimator_sparse_data(name, estimator_orig):
@@ -3116,6 +3221,8 @@ def check_no_attributes_set_in_init(name, estimator_orig):
 
     # Test for no setting apart from parameters during init
     invalid_attr = set(vars(estimator)) - set(init_params) - set(parents_init_params)
+    # Ignore private attributes
+    invalid_attr = set([attr for attr in invalid_attr if not attr.startswith("_")])
     assert not invalid_attr, (
         "Estimator %s should not set any attribute apart"
         " from parameters during init. Found attributes %s."
