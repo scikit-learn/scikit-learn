@@ -1298,9 +1298,8 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     {
         "X": ["array-like", "sparse matrix"],
         "axis": [Options(Integral, {0, 1})],
-        "copy": ["boolean"],
     },
-    prefer_skip_nested_validation=True,
+    prefer_skip_nested_validation=False,
 )
 def maxabs_scale(X, *, axis=0, copy=True):
     """Scale each feature to the [-1, 1] range without breaking the sparsity.
@@ -1656,7 +1655,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
 @validate_params(
     {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]},
-    prefer_skip_nested_validation=True,
+    prefer_skip_nested_validation=False,
 )
 def robust_scale(
     X,
