@@ -13,6 +13,7 @@ from scipy import linalg
 
 from ._base import LinearModel, _preprocess_data, _rescale_data
 from ..base import RegressorMixin
+from ..base import _fit_context
 from ..utils.extmath import fast_logdet
 from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
@@ -267,6 +268,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self.verbose = verbose
         self.n_iter = n_iter
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model.
 
@@ -288,8 +290,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         max_iter = _deprecate_n_iter(self.n_iter, self.max_iter)
 
         X, y = self._validate_data(X, y, dtype=[np.float64, np.float32], y_numeric=True)
@@ -665,6 +665,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         self.verbose = verbose
         self.n_iter = n_iter
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
 
@@ -683,9 +684,6 @@ class ARDRegression(RegressorMixin, LinearModel):
         self : object
             Fitted estimator.
         """
-
-        self._validate_params()
-
         max_iter = _deprecate_n_iter(self.n_iter, self.max_iter)
 
         X, y = self._validate_data(

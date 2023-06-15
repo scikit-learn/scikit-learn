@@ -23,6 +23,7 @@ except ImportError:  # scipy < 1.4
 from .base import BaseEstimator
 from .base import TransformerMixin
 from .base import ClassNamePrefixFeaturesOutMixin
+from .base import _fit_context
 from .utils import check_random_state
 from .utils import deprecated
 from .utils.extmath import safe_sparse_dot
@@ -139,6 +140,7 @@ class PolynomialCountSketch(
         self.n_components = n_components
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model with X.
 
@@ -160,8 +162,6 @@ class PolynomialCountSketch(
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         X = self._validate_data(X, accept_sparse="csc")
         random_state = check_random_state(self.random_state)
 
@@ -338,6 +338,7 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         self.n_components = n_components
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model with X.
 
@@ -358,8 +359,6 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         X = self._validate_data(X, accept_sparse="csr")
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
@@ -498,6 +497,7 @@ class SkewedChi2Sampler(
         self.n_components = n_components
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model with X.
 
@@ -518,7 +518,6 @@ class SkewedChi2Sampler(
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         X = self._validate_data(X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
@@ -665,6 +664,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Only validates estimator's parameters.
 
@@ -686,7 +686,6 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the transformer.
         """
-        self._validate_params()
         X = self._validate_data(X, accept_sparse="csr")
         check_non_negative(X, "X in AdditiveChi2Sampler.fit")
 
@@ -1011,6 +1010,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self.random_state = random_state
         self.n_jobs = n_jobs
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit estimator to data.
 
@@ -1032,7 +1032,6 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         X = self._validate_data(X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]

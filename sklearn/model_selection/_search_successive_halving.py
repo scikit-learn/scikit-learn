@@ -7,6 +7,7 @@ import numpy as np
 from ._search import BaseSearchCV
 from . import ParameterGrid, ParameterSampler
 from ..base import is_classifier
+from ..base import _fit_context
 from ._split import check_cv, _yields_constant_splits
 from ..metrics._scorer import get_scorer_names
 from ..utils import resample
@@ -211,6 +212,10 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         return last_iter_indices[best_idx]
 
+    @_fit_context(
+        # Halving*SearchCV.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
@@ -238,7 +243,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self : object
             Instance of fitted estimator.
         """
-        self._validate_params()
         self._checked_cv_orig = check_cv(
             self.cv, y, classifier=is_classifier(self.estimator)
         )

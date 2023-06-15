@@ -23,6 +23,7 @@ from ..base import (
     ClusterMixin,
     TransformerMixin,
     ClassNamePrefixFeaturesOutMixin,
+    _fit_context,
 )
 from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import _euclidean_distances
@@ -1448,6 +1449,7 @@ class KMeans(_BaseKMeans):
             f" variable OMP_NUM_THREADS={n_active_threads}."
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """Compute k-means clustering.
 
@@ -1475,8 +1477,6 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -2057,6 +2057,7 @@ class MiniBatchKMeans(_BaseKMeans):
             return True
         return False
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """Compute the centroids on X by chunking it into mini-batches.
 
@@ -2084,8 +2085,6 @@ class MiniBatchKMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -2214,6 +2213,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None, sample_weight=None):
         """Update k means estimate on a single mini-batch X.
 
@@ -2240,9 +2240,6 @@ class MiniBatchKMeans(_BaseKMeans):
             Return updated estimator.
         """
         has_centers = hasattr(self, "cluster_centers_")
-
-        if not has_centers:
-            self._validate_params()
 
         X = self._validate_data(
             X,

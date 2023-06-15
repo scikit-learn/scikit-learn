@@ -36,7 +36,7 @@ import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
 from .base import ClassNamePrefixFeaturesOutMixin
-
+from .base import _fit_context
 from .utils import check_random_state
 from .utils._param_validation import Interval, StrOptions, validate_params
 from .utils.extmath import safe_sparse_dot
@@ -356,6 +356,7 @@ class BaseRandomProjection(
             components = components.toarray()
         return linalg.pinv(components, check_finite=False)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Generate a sparse random projection matrix.
 
@@ -374,7 +375,6 @@ class BaseRandomProjection(
         self : object
             BaseRandomProjection class instance.
         """
-        self._validate_params()
         X = self._validate_data(
             X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
         )
