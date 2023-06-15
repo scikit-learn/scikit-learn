@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin
+from ..base import _fit_context
 from ..utils.metaestimators import available_if
 from ..utils.validation import (
     _allclose_dense_sparse,
@@ -197,6 +198,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 UserWarning,
             )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit transformer by checking X.
 
@@ -216,7 +218,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self : object
             FunctionTransformer class instance.
         """
-        self._validate_params()
         X = self._check_input(X, reset=True)
         if self.check_inverse and not (self.func is None or self.inverse_func is None):
             self._check_inverse_transform(X)

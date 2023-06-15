@@ -14,6 +14,7 @@ from functools import partial
 
 from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
+from ..base import _fit_context
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, column_or_1d
@@ -301,6 +302,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self.random_state = random_state
         self.verbose = verbose
 
+    @_fit_context(
+        # BaseBagging.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Build a Bagging ensemble of estimators from the training set (X, y).
 
@@ -324,9 +329,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-
-        self._validate_params()
-
         # Convert data (X is required to be 2d and indexable)
         X, y = self._validate_data(
             X,

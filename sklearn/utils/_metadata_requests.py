@@ -241,8 +241,14 @@ class MethodMetadataRequest:
         if alias == param:
             alias = True
 
-        if alias == UNUSED and param in self._requests:
-            del self._requests[param]
+        if alias == UNUSED:
+            if param in self._requests:
+                del self._requests[param]
+            else:
+                raise ValueError(
+                    f"Trying to remove parameter {param} with UNUSED which doesn't"
+                    " exist."
+                )
         else:
             self._requests[param] = alias
 
@@ -1155,7 +1161,7 @@ class _MetadataRequester:
         # ignore the first parameter of the method, which is usually "self"
         params = list(inspect.signature(getattr(cls, method)).parameters.items())[1:]
         for pname, param in params:
-            if pname in {"X", "y", "Y"}:
+            if pname in {"X", "y", "Y", "Xt", "yt"}:
                 continue
             if param.kind in {param.VAR_POSITIONAL, param.VAR_KEYWORD}:
                 continue

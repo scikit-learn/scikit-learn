@@ -6,6 +6,7 @@ import pytest
 
 from sklearn._config import config_context, get_config
 from sklearn.base import BaseEstimator
+from sklearn.base import _fit_context
 from sklearn.model_selection import LeaveOneOut
 from sklearn.utils import deprecated
 from sklearn.utils._param_validation import Hidden
@@ -60,8 +61,9 @@ class _Estimator(BaseEstimator):
     def __init__(self, a):
         self.a = a
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X=None, y=None):
-        self._validate_params()
+        pass
 
 
 @pytest.mark.parametrize("interval_type", [Integral, Real])
