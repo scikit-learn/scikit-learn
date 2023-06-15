@@ -515,9 +515,10 @@ Changelog
   chance level. This line is exposed in the `chance_level_` attribute.
   :pr:`26019` by :user:`Yao Xiao <Charlie-XIAO>`.
 
-- |Enhancement| By default, the aspect ratio of the x- and y-axis is set to 1 for the
-  plots obtained with the :class:`metrics.PrecisionRecallDisplay` and
-  :class:`metrics.RocCurveDisplay` classes.
+- |Enhancement| Improve the rendering of the plot obtain with the
+  :class:`metrics.PrecisionRecallDisplay` and :class:`metrics.RocCurveDisplay`
+  classes. the x- and y-axis limits are set to [0, 1] and the aspect ratio between
+  both axis is set to be 1 to get a square plot.
   :pr:`26366` by :user:`Mojdeh Rastgoo <mrastgoo>`.
 
 - |Fix| :func:`metrics.manhattan_distances` now supports readonly sparse datasets.
