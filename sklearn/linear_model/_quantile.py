@@ -9,6 +9,7 @@ from scipy import sparse
 from scipy.optimize import linprog
 
 from ..base import BaseEstimator, RegressorMixin
+from ..base import _fit_context
 from ._base import LinearModel
 from ..exceptions import ConvergenceWarning
 from ..utils import _safe_indexing
@@ -141,6 +142,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self.solver = solver
         self.solver_options = solver_options
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -160,7 +162,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Returns self.
         """
-        self._validate_params()
         X, y = self._validate_data(
             X,
             y,
@@ -184,9 +185,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         if self.solver == "warn":
             warnings.warn(
-                "The default solver will change from 'interior-point' to 'highs' in "
-                "version 1.4. Set `solver='highs'` or to the desired solver to silence "
-                "this warning.",
+                (
+                    "The default solver will change from 'interior-point' to 'highs' in"
+                    " version 1.4. Set `solver='highs'` or to the desired solver to"
+                    " silence this warning."
+                ),
                 FutureWarning,
             )
             solver = "interior-point"

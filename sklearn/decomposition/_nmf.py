@@ -19,6 +19,7 @@ from scipy import linalg
 from ._cdnmf_fast import _update_cdnmf_fast
 from .._config import config_context
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array, gen_batches
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
@@ -31,6 +32,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from ..utils import metadata_routing
 
 
 EPSILON = np.finfo(np.float32).eps
@@ -140,7 +142,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     X_data = X_data[indices]
 
     # used to avoid division by zero
-    WH_data[WH_data == 0] = EPSILON
+    WH_data[WH_data < EPSILON] = EPSILON
 
     # generalized Kullback-Leibler divergence
     if beta == 1:
@@ -155,7 +157,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     # Itakura-Saito divergence
     elif beta == 0:
         div = X_data / WH_data
-        res = np.sum(div) - np.product(X.shape) - np.sum(np.log(div))
+        res = np.sum(div) - np.prod(X.shape) - np.sum(np.log(div))
 
     # beta-divergence, beta not in (0, 1, 2)
     else:
@@ -558,11 +560,11 @@ def _multiplicative_update_w(
             # copy used in the Denominator
             WH = WH_safe_X.copy()
             if beta_loss - 1.0 < 0:
-                WH[WH == 0] = EPSILON
+                WH[WH < EPSILON] = EPSILON
 
         # to avoid taking a negative power of zero
         if beta_loss - 2.0 < 0:
-            WH_safe_X_data[WH_safe_X_data == 0] = EPSILON
+            WH_safe_X_data[WH_safe_X_data < EPSILON] = EPSILON
 
         if beta_loss == 1:
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
@@ -596,7 +598,7 @@ def _multiplicative_update_w(
                 for i in range(X.shape[0]):
                     WHi = np.dot(W[i, :], H)
                     if beta_loss - 1 < 0:
-                        WHi[WHi == 0] = EPSILON
+                        WHi[WHi < EPSILON] = EPSILON
                     WHi **= beta_loss - 1
                     WHHt[i, :] = np.dot(WHi, H.T)
             else:
@@ -643,11 +645,11 @@ def _multiplicative_update_h(
             # copy used in the Denominator
             WH = WH_safe_X.copy()
             if beta_loss - 1.0 < 0:
-                WH[WH == 0] = EPSILON
+                WH[WH < EPSILON] = EPSILON
 
         # to avoid division by zero
         if beta_loss - 2.0 < 0:
-            WH_safe_X_data[WH_safe_X_data == 0] = EPSILON
+            WH_safe_X_data[WH_safe_X_data < EPSILON] = EPSILON
 
         if beta_loss == 1:
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
@@ -682,7 +684,7 @@ def _multiplicative_update_h(
                 for i in range(X.shape[1]):
                     WHi = np.dot(W, H[:, i])
                     if beta_loss - 1 < 0:
-                        WHi[WHi == 0] = EPSILON
+                        WHi[WHi < EPSILON] = EPSILON
                     WHi **= beta_loss - 1
                     WtWH[:, i] = np.dot(W.T, WHi)
             else:
@@ -891,7 +893,8 @@ def _fit_multiplicative_update(
         "W": ["array-like", None],
         "H": ["array-like", None],
         "update_H": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def non_negative_factorization(
     X,
@@ -959,11 +962,16 @@ def non_negative_factorization(
         Constant matrix.
 
     W : array-like of shape (n_samples, n_components), default=None
-        If init='custom', it is used as initial guess for the solution.
+        If `init='custom'`, it is used as initial guess for the solution.
+        If `update_H=False`, it is initialised as an array of zeros, unless
+        `solver='mu'`, then it is filled with values calculated by
+        `np.sqrt(X.mean() / self._n_components)`.
+        If `None`, uses the initialisation method specified in `init`.
 
     H : array-like of shape (n_components, n_features), default=None
-        If init='custom', it is used as initial guess for the solution.
-        If update_H=False, it is used as a constant, to solve for W only.
+        If `init='custom'`, it is used as initial guess for the solution.
+        If `update_H=False`, it is used as a constant, to solve for W only.
+        If `None`, uses the initialisation method specified in `init`.
 
     n_components : int, default=None
         Number of components, if n_components is not set all features
@@ -984,8 +992,8 @@ def non_negative_factorization(
         - 'nndsvdar': NNDSVD with zeros filled with small random values
           (generally faster, less accurate alternative to NNDSVDa
           for when sparsity is not desired)
-        - 'custom': use custom matrices W and H if `update_H=True`. If
-          `update_H=False`, then only custom matrix H is used.
+        - 'custom': If `update_H=True`, use custom matrices W and H which must both
+          be provided. If `update_H=False`, then only custom matrix H is used.
 
         .. versionchanged:: 0.23
             The default value of `init` changed from 'random' to None in 0.23.
@@ -1116,6 +1124,11 @@ def non_negative_factorization(
 class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, ABC):
     """Base class for NMF and MiniBatchNMF."""
 
+    # This prevents ``set_split_inverse_transform`` to be generated for the
+    # non-standard ``W`` arg on ``inverse_transform``.
+    # TODO: remove when W is removed in v1.5 for inverse_transform
+    __metadata_request__inverse_transform = {"W": metadata_routing.UNUSED}
+
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "init": [
@@ -1239,23 +1252,44 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
         self.fit_transform(X, **params)
         return self
 
-    def inverse_transform(self, W):
+    def inverse_transform(self, Xt=None, W=None):
         """Transform data back to its original space.
 
         .. versionadded:: 0.18
 
         Parameters
         ----------
-        W : {ndarray, sparse matrix} of shape (n_samples, n_components)
+        Xt : {ndarray, sparse matrix} of shape (n_samples, n_components)
             Transformed data matrix.
+
+        W : deprecated
+            Use `Xt` instead.
+
+            .. deprecated:: 1.3
 
         Returns
         -------
         X : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Returns a data matrix of the original shape.
         """
+        if Xt is None and W is None:
+            raise TypeError("Missing required positional argument: Xt")
+
+        if W is not None and Xt is not None:
+            raise ValueError("Please provide only `Xt`, and not `W`.")
+
+        if W is not None:
+            warnings.warn(
+                (
+                    "Input argument `W` was renamed to `Xt` in v1.3 and will be removed"
+                    " in v1.5."
+                ),
+                FutureWarning,
+            )
+            Xt = W
+
         check_is_fitted(self)
-        return W @ self.components_
+        return Xt @ self.components_
 
     @property
     def _n_features_out(self):
@@ -1327,7 +1361,7 @@ class NMF(_BaseNMF):
           otherwise random.
 
         - `'random'`: non-negative random matrices, scaled with:
-          sqrt(X.mean() / n_components)
+          `sqrt(X.mean() / n_components)`
 
         - `'nndsvd'`: Nonnegative Double Singular Value Decomposition (NNDSVD)
           initialization (better for sparseness)
@@ -1339,7 +1373,7 @@ class NMF(_BaseNMF):
           (generally faster, less accurate alternative to NNDSVDa
           for when sparsity is not desired)
 
-        - `'custom'`: use custom matrices W and H
+        - `'custom'`: Use custom matrices `W` and `H` which must both be provided.
 
         .. versionchanged:: 1.1
             When `init=None` and n_components is less than n_samples and n_features
@@ -1522,15 +1556,18 @@ class NMF(_BaseNMF):
             )
         if self.solver == "mu" and self.init == "nndsvd":
             warnings.warn(
-                "The multiplicative update ('mu') solver cannot update "
-                "zeros present in the initialization, and so leads to "
-                "poorer results when used jointly with init='nndsvd'. "
-                "You may try init='nndsvda' or init='nndsvdar' instead.",
+                (
+                    "The multiplicative update ('mu') solver cannot update "
+                    "zeros present in the initialization, and so leads to "
+                    "poorer results when used jointly with init='nndsvd'. "
+                    "You may try init='nndsvda' or init='nndsvdar' instead."
+                ),
                 UserWarning,
             )
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
@@ -1545,19 +1582,19 @@ class NMF(_BaseNMF):
         y : Ignored
             Not used, present for API consistency by convention.
 
-        W : array-like of shape (n_samples, n_components)
-            If init='custom', it is used as initial guess for the solution.
+        W : array-like of shape (n_samples, n_components), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `None`, uses the initialisation method specified in `init`.
 
-        H : array-like of shape (n_components, n_features)
-            If init='custom', it is used as initial guess for the solution.
+        H : array-like of shape (n_components, n_features), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `None`, uses the initialisation method specified in `init`.
 
         Returns
         -------
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
@@ -1585,12 +1622,17 @@ class NMF(_BaseNMF):
 
         y : Ignored
 
-        W : array-like of shape (n_samples, n_components)
-            If init='custom', it is used as initial guess for the solution.
+        W : array-like of shape (n_samples, n_components), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `update_H=False`, it is initialised as an array of zeros, unless
+            `solver='mu'`, then it is filled with values calculated by
+            `np.sqrt(X.mean() / self._n_components)`.
+            If `None`, uses the initialisation method specified in `init`.
 
-        H : array-like of shape (n_components, n_features)
-            If init='custom', it is used as initial guess for the solution.
-            If update_H=False, it is used as a constant, to solve for W only.
+        H : array-like of shape (n_components, n_features), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `update_H=False`, it is used as a constant, to solve for W only.
+            If `None`, uses the initialisation method specified in `init`.
 
         update_H : bool, default=True
             If True, both W and H will be estimated from initial guesses,
@@ -1765,7 +1807,7 @@ class MiniBatchNMF(_BaseNMF):
           (generally faster, less accurate alternative to NNDSVDa
           for when sparsity is not desired).
 
-        - `'custom'`: use custom matrices `W` and `H`
+        - `'custom'`: Use custom matrices `W` and `H` which must both be provided.
 
     batch_size : int, default=1024
         Number of samples in each mini-batch. Large batch sizes
@@ -1926,7 +1968,6 @@ class MiniBatchNMF(_BaseNMF):
         random_state=None,
         verbose=0,
     ):
-
         super().__init__(
             n_components=n_components,
             init=init,
@@ -2109,6 +2150,7 @@ class MiniBatchNMF(_BaseNMF):
 
         return False
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
@@ -2124,17 +2166,17 @@ class MiniBatchNMF(_BaseNMF):
 
         W : array-like of shape (n_samples, n_components), default=None
             If `init='custom'`, it is used as initial guess for the solution.
+            If `None`, uses the initialisation method specified in `init`.
 
         H : array-like of shape (n_components, n_features), default=None
             If `init='custom'`, it is used as initial guess for the solution.
+            If `None`, uses the initialisation method specified in `init`.
 
         Returns
         -------
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
@@ -2162,11 +2204,16 @@ class MiniBatchNMF(_BaseNMF):
             Data matrix to be decomposed.
 
         W : array-like of shape (n_samples, n_components), default=None
-            If init='custom', it is used as initial guess for the solution.
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `update_H=False`, it is initialised as an array of zeros, unless
+            `solver='mu'`, then it is filled with values calculated by
+            `np.sqrt(X.mean() / self._n_components)`.
+            If `None`, uses the initialisation method specified in `init`.
 
         H : array-like of shape (n_components, n_features), default=None
-            If init='custom', it is used as initial guess for the solution.
-            If update_H=False, it is used as a constant, to solve for W only.
+            If `init='custom'`, it is used as initial guess for the solution.
+            If `update_H=False`, it is used as a constant, to solve for W only.
+            If `None`, uses the initialisation method specified in `init`.
 
         update_H : bool, default=True
             If True, both W and H will be estimated from initial guesses,
@@ -2219,7 +2266,6 @@ class MiniBatchNMF(_BaseNMF):
         n_steps = self.max_iter * n_steps_per_iter
 
         for i, batch in zip(range(n_steps), batches):
-
             batch_cost = self._minibatch_step(X[batch], W[batch], H, update_H)
 
             if update_H and self._minibatch_convergence(
@@ -2237,8 +2283,10 @@ class MiniBatchNMF(_BaseNMF):
 
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
-                f"Maximum number of iterations {self.max_iter} reached. "
-                "Increase it to improve convergence.",
+                (
+                    f"Maximum number of iterations {self.max_iter} reached. "
+                    "Increase it to improve convergence."
+                ),
                 ConvergenceWarning,
             )
 
@@ -2266,6 +2314,7 @@ class MiniBatchNMF(_BaseNMF):
 
         return W
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None, W=None, H=None):
         """Update the model using the data in `X` as a mini-batch.
 
@@ -2298,9 +2347,6 @@ class MiniBatchNMF(_BaseNMF):
             Returns the instance itself.
         """
         has_components = hasattr(self, "components_")
-
-        if not has_components:
-            self._validate_params()
 
         X = self._validate_data(
             X,

@@ -132,8 +132,8 @@ ax = fig.add_subplot(1, 3, 3)
 for k in range(n_clusters):
     different += (k_means_labels == k) != (mbk_means_labels == k)
 
-identic = np.logical_not(different)
-ax.plot(X[identic, 0], X[identic, 1], "w", markerfacecolor="#bbbbbb", marker=".")
+identical = np.logical_not(different)
+ax.plot(X[identical, 0], X[identical, 1], "w", markerfacecolor="#bbbbbb", marker=".")
 ax.plot(X[different, 0], X[different, 1], "w", markerfacecolor="m", marker=".")
 ax.set_title("Difference")
 ax.set_xticks(())

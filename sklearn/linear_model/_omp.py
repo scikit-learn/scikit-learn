@@ -15,9 +15,11 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from ._base import LinearModel, _pre_fit, _deprecate_normalize
 from ..base import RegressorMixin, MultiOutputMixin
+from ..base import _fit_context
 from ..utils import as_float_array, check_array
 from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import validate_params
 from ..model_selection import check_cv
 
 premature = (
@@ -281,6 +283,18 @@ def _gram_omp(
         return gamma, indices[:n_active], n_active
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "y": [np.ndarray],
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "precompute": ["boolean", StrOptions({"auto"})],
+        "copy_X": ["boolean"],
+        "return_path": ["boolean"],
+        "return_n_iter": ["boolean"],
+    }
+)
 def orthogonal_mp(
     X,
     y,
@@ -308,7 +322,7 @@ def orthogonal_mp(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Input data. Columns are assumed to have unit norm.
 
     y : ndarray of shape (n_samples,) or (n_samples, n_targets)
@@ -380,10 +394,6 @@ def orthogonal_mp(
         # default for n_nonzero_coefs is 0.1 * n_features
         # but at least one.
         n_nonzero_coefs = max(int(0.1 * X.shape[1]), 1)
-    if tol is not None and tol < 0:
-        raise ValueError("Epsilon cannot be negative")
-    if tol is None and n_nonzero_coefs <= 0:
-        raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > X.shape[1]:
         raise ValueError(
             "The number of atoms cannot be more than the number of features"
@@ -716,6 +726,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self.normalize = normalize
         self.precompute = precompute
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
@@ -732,8 +743,6 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         _normalize = _deprecate_normalize(
             self.normalize, estimator_name=self.__class__.__name__
         )
@@ -1033,6 +1042,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
@@ -1049,8 +1059,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         _normalize = _deprecate_normalize(
             self.normalize, estimator_name=self.__class__.__name__
         )

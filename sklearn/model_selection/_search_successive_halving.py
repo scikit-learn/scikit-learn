@@ -7,6 +7,7 @@ import numpy as np
 from ._search import BaseSearchCV
 from . import ParameterGrid, ParameterSampler
 from ..base import is_classifier
+from ..base import _fit_context
 from ._split import check_cv, _yields_constant_splits
 from ..metrics._scorer import get_scorer_names
 from ..utils import resample
@@ -124,7 +125,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.aggressive_elimination = aggressive_elimination
 
     def _check_input_parameters(self, X, y, groups):
-
         # We need to enforce that successive calls to cv.split() yield the same
         # splits: see https://github.com/scikit-learn/scikit-learn/issues/15149
         if not _yields_constant_splits(self._checked_cv_orig):
@@ -212,6 +212,10 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         return last_iter_indices[best_idx]
 
+    @_fit_context(
+        # Halving*SearchCV.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
@@ -239,7 +243,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self : object
             Instance of fitted estimator.
         """
-        self._validate_params()
         self._checked_cv_orig = check_cv(
             self.cv, y, classifier=is_classifier(self.estimator)
         )
@@ -312,7 +315,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.n_candidates_ = []
 
         for itr in range(n_iterations):
-
             power = itr  # default
             if self.aggressive_elimination:
                 # this will set n_resources to the initial value (i.e. the

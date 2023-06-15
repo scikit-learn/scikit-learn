@@ -8,6 +8,7 @@ import warnings
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ..base import OutlierMixin
+from ..base import _fit_context
 from numbers import Real
 
 from ..utils._param_validation import Interval, StrOptions
@@ -240,7 +241,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features), default=None
             The query sample or samples to compute the Local Outlier Factor
-            w.r.t. to the training samples.
+            w.r.t. the training samples.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -256,6 +257,10 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         return self.fit(X)._predict()
 
+    @_fit_context(
+        # LocalOutlierFactor.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit the local outlier factor detector from the training dataset.
 
@@ -273,8 +278,6 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         self : LocalOutlierFactor
             The fitted local outlier factor detector.
         """
-        self._validate_params()
-
         self._fit(X)
 
         n_samples = self.n_samples_fit_
@@ -343,7 +346,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
-            w.r.t. to the training samples.
+            w.r.t. the training samples.
 
         Returns
         -------
@@ -361,7 +364,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features), default=None
             The query sample or samples to compute the Local Outlier Factor
-            w.r.t. to the training samples. If None, makes prediction on the
+            w.r.t. the training samples. If None, makes prediction on the
             training data without considering them as their own neighbors.
 
         Returns

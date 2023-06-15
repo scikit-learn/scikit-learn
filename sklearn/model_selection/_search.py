@@ -26,6 +26,7 @@ from scipy.stats import rankdata
 
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
+from ..base import _fit_context
 from ._split import check_cv
 from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
@@ -151,7 +152,7 @@ class ParameterGrid:
 
     def __len__(self):
         """Number of points on the grid."""
-        # Product function that can handle iterables (np.product can't).
+        # Product function that can handle iterables (np.prod can't).
         product = partial(reduce, operator.mul)
         return sum(
             product(len(v) for v in p.values()) if p else 1 for p in self.param_grid
@@ -184,7 +185,7 @@ class ParameterGrid:
             # Reverse so most frequent cycling parameter comes first
             keys, values_lists = zip(*sorted(sub_grid.items())[::-1])
             sizes = [len(v_list) for v_list in values_lists]
-            total = np.product(sizes)
+            total = np.prod(sizes)
 
             if ind >= total:
                 # Try the next grid
@@ -405,7 +406,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         error_score=np.nan,
         return_train_score=True,
     ):
-
         self.scoring = scoring
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -754,6 +754,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             best_index = results[f"rank_test_{refit_metric}"].argmin()
         return best_index
 
+    @_fit_context(
+        # *SearchCV.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, *, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
@@ -787,7 +791,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             Instance of fitted estimator.
         """
-        self._validate_params()
         estimator = self.estimator
         refit_metric = "score"
 
@@ -971,8 +974,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 ~np.isfinite(array_means)
             ):
                 warnings.warn(
-                    f"One or more of the {key_name.split('_')[0]} scores "
-                    f"are non-finite: {array_means}",
+                    (
+                        f"One or more of the {key_name.split('_')[0]} scores "
+                        f"are non-finite: {array_means}"
+                    ),
                     category=UserWarning,
                 )
 

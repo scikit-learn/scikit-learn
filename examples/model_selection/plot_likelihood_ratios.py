@@ -197,7 +197,6 @@ neg_lr_base, neg_lr_base_std = lr_base["negative"].values
 fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(15, 12))
 
 for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
-
     X, y = make_classification(
         **common_params,
         weights=[weight, 1 - weight],
@@ -225,7 +224,7 @@ for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
     disp.ax_.legend(*scatter.legend_elements())
 
 # %%
-# We define a function for bootstraping.
+# We define a function for bootstrapping.
 
 
 def scoring_on_bootstrap(estimator, X, y, rng, n_bootstrap=100):
@@ -242,7 +241,7 @@ def scoring_on_bootstrap(estimator, X, y, rng, n_bootstrap=100):
 
 
 # %%
-# We score the base model for each prevalence using bootstraping.
+# We score the base model for each prevalence using bootstrapping.
 
 results = defaultdict(list)
 n_bootstrap = 100
@@ -251,7 +250,6 @@ rng = np.random.default_rng(seed=0)
 for prevalence, X, y in zip(
     populations["prevalence"], populations["X"], populations["y"]
 ):
-
     results_for_prevalence = scoring_on_bootstrap(
         estimator, X, y, rng, n_bootstrap=n_bootstrap
     )

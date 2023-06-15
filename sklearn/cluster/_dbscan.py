@@ -16,6 +16,7 @@ from scipy import sparse
 
 from ..metrics.pairwise import _VALID_METRICS
 from ..base import BaseEstimator, ClusterMixin
+from ..base import _fit_context
 from ..utils.validation import _check_sample_weight
 from ..utils._param_validation import Interval, StrOptions
 from ..neighbors import NearestNeighbors
@@ -141,7 +142,7 @@ def dbscan(
     ----------
     Ester, M., H. P. Kriegel, J. Sander, and X. Xu, `"A Density-Based
     Algorithm for Discovering Clusters in Large Spatial Databases with Noise"
-    <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_.
+    <https://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf>`_.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
 
@@ -281,7 +282,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     ----------
     Ester, M., H. P. Kriegel, J. Sander, and X. Xu, `"A Density-Based
     Algorithm for Discovering Clusters in Large Spatial Databases with Noise"
-    <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_.
+    <https://www.dbs.ifi.lmu.de/Publikationen/Papers/KDD-96.final.frame.pdf>`_.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
 
@@ -338,6 +339,10 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         self.p = p
         self.n_jobs = n_jobs
 
+    @_fit_context(
+        # DBSCAN.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, sample_weight=None):
         """Perform DBSCAN clustering from features, or distance matrix.
 
@@ -363,8 +368,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
-        self._validate_params()
-
         X = self._validate_data(X, accept_sparse="csr")
 
         if sample_weight is not None:
