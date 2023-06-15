@@ -2011,6 +2011,10 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         self._update_class_prior()
         return self
 
+    @_fit_context(
+        # estimators in ColumnwiseNB.nb_estimators are not validated yet
+        prefer_skip_nested_validation=False
+    )    
     def fit(self, X, y, sample_weight=None):
         """Fit the naive Bayes meta-estimator.
 
