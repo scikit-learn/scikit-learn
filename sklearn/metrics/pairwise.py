@@ -919,8 +919,9 @@ def haversine_distances(X, Y=None):
     in radians. The dimension of the data must be 2.
 
     .. math::
-       D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
-                                + \\cos(x1)\\cos(y1)\\sin^2((x2 - y2) / 2)}]
+       D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x_{lat} - y_{lat}) / 2)
+                                + \\cos(x_{lat})\\cos(y_{lat})\\
+                                sin^2((x_{lon} - y_{lon}) / 2)}]
 
     Parameters
     ----------
@@ -1220,6 +1221,13 @@ PAIRED_DISTANCES = {
 }
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "Y": ["array-like"],
+        "metric": [StrOptions(set(PAIRED_DISTANCES)), callable],
+    }
+)
 def paired_distances(X, Y, *, metric="euclidean", **kwds):
     """
     Compute the paired distances between X and Y.
@@ -1278,8 +1286,6 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
         for i in range(len(X)):
             distances[i] = metric(X[i], Y[i])
         return distances
-    else:
-        raise ValueError("Unknown distance %s" % metric)
 
 
 # Kernels
