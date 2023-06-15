@@ -16,6 +16,7 @@ from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..metrics.pairwise import paired_distances
 from ..metrics.pairwise import _VALID_METRICS
 from ..metrics import DistanceMetric
@@ -950,6 +951,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self.metric = metric
         self.compute_distances = compute_distances
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the hierarchical clustering from features, or distance matrix.
 
@@ -968,7 +970,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self : object
             Returns the fitted instance.
         """
-        self._validate_params()
         X = self._validate_data(X, ensure_min_samples=2)
         return self._fit(X)
 
@@ -1324,6 +1325,7 @@ class FeatureAgglomeration(
         )
         self.pooling_func = pooling_func
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the hierarchical clustering on the data.
 
@@ -1340,7 +1342,6 @@ class FeatureAgglomeration(
         self : object
             Returns the transformer.
         """
-        self._validate_params()
         X = self._validate_data(X, ensure_min_features=2)
         super()._fit(X.T)
         self._n_features_out = self.n_clusters_

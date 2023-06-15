@@ -13,6 +13,7 @@ from scipy.sparse.linalg import eigsh, svds
 
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
+from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils import check_scalar
 
@@ -118,6 +119,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
     def _check_parameters(self, n_samples):
         """Validate parameters depending on the input data."""
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Create a biclustering for X.
 
@@ -134,8 +136,6 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             SpectralBiclustering instance.
         """
-        self._validate_params()
-
         X = self._validate_data(X, accept_sparse="csr", dtype=np.float64)
         self._check_parameters(X.shape[0])
         self._fit(X)

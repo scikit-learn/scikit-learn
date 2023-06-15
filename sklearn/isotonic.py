@@ -11,6 +11,7 @@ import warnings
 import math
 
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
+from .base import _fit_context
 from .utils import check_array, check_consistent_length
 from .utils.validation import _check_sample_weight, check_is_fitted
 from .utils._param_validation import Interval, StrOptions
@@ -310,6 +311,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             # prediction speed).
             return X, y
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
 
@@ -338,7 +340,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         X is stored for future use, as :meth:`transform` needs X to interpolate
         new input data.
         """
-        self._validate_params()
         check_params = dict(accept_sparse=False, ensure_2d=False)
         X = check_array(
             X, input_name="X", dtype=[np.float64, np.float32], **check_params

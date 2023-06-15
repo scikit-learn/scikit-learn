@@ -13,6 +13,7 @@ from joblib import effective_n_jobs
 import warnings
 
 from ..base import BaseEstimator
+from ..base import _fit_context
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
@@ -569,10 +570,10 @@ class MDS(BaseEstimator):
         self : object
             Fitted estimator.
         """
-        # parameter will be validated in `fit_transform` call
         self.fit_transform(X, init=init)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, init=None):
         """
         Fit the data from `X`, and returns the embedded coordinates.
@@ -597,7 +598,6 @@ class MDS(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             X transformed in the new space.
         """
-        self._validate_params()
         X = self._validate_data(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn(

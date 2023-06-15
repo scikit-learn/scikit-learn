@@ -16,6 +16,7 @@ from .. import cluster
 from ..cluster import kmeans_plusplus
 from ..base import BaseEstimator
 from ..base import DensityMixin
+from ..base import _fit_context
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
@@ -182,6 +183,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         self.fit_predict(X, y)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_predict(self, X, y=None):
         """Estimate model parameters using X and predict the labels for X.
 
@@ -209,8 +211,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         labels : array, shape (n_samples,)
             Component labels.
         """
-        self._validate_params()
-
         X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=2)
         if X.shape[0] < self.n_components:
             raise ValueError(
