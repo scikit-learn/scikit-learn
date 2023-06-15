@@ -272,6 +272,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         lower_bound,
                         upper_bound
                     )
+                    middle_value = splitter.criterion.middle_value()
                     # If EPSILON=0 in the below comparison, float precision
                     # issues stop splitting, producing trees that are
                     # dissimilar to v0.18
@@ -310,7 +311,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                         # Lower bound for right child and upper bound for left child
                         # are set to the same value.
-                        middle_value = tree._get_middle_value(node_id)
                         right_child_min = middle_value
                         left_child_max = middle_value
                     else:  # i.e. splitter.monotonic_cst[split.feature] == -1
@@ -320,7 +320,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                         # Lower bound for left child and upper bound for right child
                         # are set to the same value.
-                        middle_value = tree._get_middle_value(node_id)
                         left_child_min = middle_value
                         right_child_max = middle_value
 
@@ -379,6 +378,7 @@ cdef struct FrontierRecord:
     double improvement
     double lower_bound
     double upper_bound
+    double middle_value
 
 cdef inline bool _compare_records(
     const FrontierRecord& left,
@@ -439,7 +439,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef FrontierRecord record
         cdef FrontierRecord split_node_left
         cdef FrontierRecord split_node_right
-        cdef double middle_value
         cdef double left_child_min
         cdef double left_child_max
         cdef double right_child_min
@@ -510,9 +509,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
                         # Lower bound for right child and upper bound for left child
                         # are set to the same value.
-                        middle_value = tree._get_middle_value(record.node_id)
-                        right_child_min = middle_value
-                        left_child_max = middle_value
+                        right_child_min = record.middle_value
+                        left_child_max = record.middle_value
                     else:  # i.e. splitter.monotonic_cst[split.feature] == -1
                         # Split on a feature with monotonic decrease constraint
                         right_child_min = record.lower_bound
@@ -520,9 +518,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
                         # Lower bound for left child and upper bound for right child
                         # are set to the same value.
-                        middle_value = tree._get_middle_value(record.node_id)
-                        left_child_min = middle_value
-                        right_child_max = middle_value
+                        left_child_min = record.middle_value
+                        right_child_max = record.middle_value
 
                     # Decrement number of split nodes available
                     max_split_nodes -= 1
@@ -650,6 +647,9 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         res.end = end
         res.depth = depth
         res.impurity = impurity
+        res.lower_bound = lower_bound
+        res.upper_bound = upper_bound
+        res.middle_value = splitter.criterion.middle_value()
 
         if not is_leaf:
             # is split node
@@ -658,8 +658,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             res.improvement = split.improvement
             res.impurity_left = split.impurity_left
             res.impurity_right = split.impurity_right
-            res.lower_bound = lower_bound
-            res.upper_bound = upper_bound
 
         else:
             # is leaf => 0 improvement
@@ -668,8 +666,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             res.improvement = 0.0
             res.impurity_left = impurity
             res.impurity_right = impurity
-            res.lower_bound = lower_bound
-            res.upper_bound = upper_bound
 
         return 0
 
@@ -1326,48 +1322,6 @@ cdef class Tree:
         if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
             raise ValueError("Can't initialize array.")
         return arr
-
-    cdef inline double _get_middle_value(self, int node_id) nogil:
-        """Returns the new bound when a monotonicity constraint is active
-
-        For regression, this is the average target value of the samples in
-        the parent node.
-
-        For binary classification, this is the proportion of the negative
-        class of samples in the parent node.
-        """
-        cdef:
-            int i
-            double middle_value = 0
-
-        # self.value conceptually has shape:
-        #
-        #            [node_count, n_outputs, max_n_classes]
-        #
-        # but is here handled via a pointer and strides.
-        #
-        # Monotonicity constraints are only supported for single-output
-        # trees we can safely assume n_outputs == 1.
-
-        # Furthermore, we assume that for
-        # classification trees, max_n_classes == 2 as we only support binary
-        # classification (and so self.value_stride == 2).
-
-        if self.max_n_classes == 1:
-            # Regression: self.max_n_classes == 1, so self.value_stride == 1
-            middle_value = self.value[node_id]
-        else:
-            # Binary classification: self.max_n_classes == 2
-
-            # This performs some raw pointers arithmetic. Ideally a memory view
-            # could wrap self.value so that indexing on several axis can be
-            # used.
-            for i in range(self.max_n_classes):
-                middle_value += self.value[node_id * self.value_stride + i]
-
-            middle_value = self.value[node_id * self.value_stride] / middle_value
-
-        return middle_value
 
     def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
                                    int[::1] target_features,

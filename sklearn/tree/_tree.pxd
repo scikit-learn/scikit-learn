@@ -66,7 +66,6 @@ cdef class Tree:
 
     cdef cnp.ndarray _get_value_ndarray(self)
     cdef cnp.ndarray _get_node_ndarray(self)
-    cdef inline double _get_middle_value(self, int node_id) nogil
 
     cpdef cnp.ndarray predict(self, object X)
 

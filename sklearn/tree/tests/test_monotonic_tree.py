@@ -179,7 +179,7 @@ def assert_1d_reg_tree_children_monotonic_bounded(tree_, monotonic_sign):
             i_left = tree_.children_left[i]
             i_right = tree_.children_right[i]
             assert values[i_left] <= values[i_right]
-            val_middle = values[i]
+            val_middle = (values[i_left] + values[i_right]) / 2
             # Check bounds on grand-children, filtering out leaf nodes
             if tree_.feature[i_left] >= 0:
                 i_left_right = tree_.children_right[i_left]
@@ -261,6 +261,8 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
         # Split node: check and update bounds for the children.
         i_left = tree_.children_left[i]
         i_right = tree_.children_right[i]
+        # unpack value from nx1x1 array
+        middle_value = (tree_.value[i_left][0][0] + tree_.value[i_right][0][0]) / 2
 
         if monotonic_cst[feature] == 0:
             # Feature without monotonicity constraint: propagate bounds
@@ -289,8 +291,8 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
 
             # Propagate bounds down the tree to both children.
             lower_bound[i_left] = lower_bound[i]
-            upper_bound[i_left] = node_value
-            lower_bound[i_right] = node_value
+            upper_bound[i_left] = middle_value
+            lower_bound[i_right] = middle_value
             upper_bound[i_right] = upper_bound[i]
 
         elif monotonic_cst[feature] == -1:
@@ -298,10 +300,10 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
             assert tree_.value[i_left] >= tree_.value[i_right]
 
             # Update and propagate bounds down the tree to both children.
-            lower_bound[i_left] = node_value
+            lower_bound[i_left] = middle_value
             upper_bound[i_left] = upper_bound[i]
             lower_bound[i_right] = lower_bound[i]
-            upper_bound[i_right] = node_value
+            upper_bound[i_right] = middle_value
 
         else:  # pragma: no cover
             raise ValueError(f"monotonic_cst[{feature}]={monotonic_cst[feature]}")
@@ -369,8 +371,8 @@ def test_nd_tree_nodes_values(
     #   c        d  e       f
     #
     # i)   a <= root <= b
-    # ii)  c <= a <= d <= root
-    # iii) root <= min(e,f)
+    # ii)  c <= a <= d <= (a+b)/2
+    # iii) (a+b)/2 <= min(e,f)
     # For iii) we check that each node value is within the proper lower and
     # upper bounds.
 

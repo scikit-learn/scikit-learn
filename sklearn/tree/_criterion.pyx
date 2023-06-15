@@ -157,6 +157,13 @@ cdef class Criterion:
         """
         pass
 
+    cdef double middle_value(self) noexcept nogil:
+        """Compute the middle value of a split for monotonicity constraints
+
+        This method is implemented in ClassificationCriterion and RegressionCriterion.
+        """
+        pass
+
     cdef double proxy_impurity_improvement(self) noexcept nogil:
         """Compute a proxy of the impurity reduction.
 
@@ -571,6 +578,16 @@ cdef class ClassificationCriterion(Criterion):
         for k in range(self.n_outputs):
             memcpy(dest, &self.sum_total[k, 0], self.n_classes[k] * sizeof(double))
             dest += self.max_n_classes
+
+    cdef double middle_value(self) noexcept nogil:
+        """Compute the middle value of a split for monotonicity constraints as the simple average
+        of the left and right children values.
+
+        Note that monotonicity constraints are only supported for:
+        - single-output trees and
+        - binary classifications.
+        """
+        return ((self.sum_left[0, 0] / self.weighted_n_left) + (self.sum_right[0, 0] / self.weighted_n_right)) / 2
 
     cdef inline bint check_monotonicity(
         self,
@@ -1009,6 +1026,15 @@ cdef class RegressionCriterion(Criterion):
 
         for k in range(self.n_outputs):
             dest[k] = self.sum_total[k] / self.weighted_n_node_samples
+
+    cdef double middle_value(self) noexcept nogil:
+        """Compute the middle value of a split for monotonicity constraints as the simple average
+        of the left and right children values.
+
+        Monotonicity constraints are only supported for single-output trees we can safely assume
+        n_outputs == 1.
+        """
+        return ((self.sum_left[0] / self.weighted_n_left) + (self.sum_right[0] / self.weighted_n_right)) / 2
 
     cdef inline bint check_monotonicity(
         self,

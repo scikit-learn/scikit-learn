@@ -69,6 +69,7 @@ cdef class Criterion:
         self,
         double* dest
     ) noexcept nogil
+    cdef double middle_value(self) noexcept nogil
     cdef double impurity_improvement(
         self,
         double impurity_parent,
