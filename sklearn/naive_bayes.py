@@ -1805,7 +1805,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         )
         n_estimators = len(all_jlls)
         log_prior = np.log(self.class_prior_)
-        return np.sum(all_jlls, axis=0) - (n_estimators - 1) * log_prior
+        return np.where(np.isinf(log_prior), -np.inf, np.sum(all_jlls, axis=0) - (n_estimators - 1) * log_prior)
 
     def _validate_estimators(self, check_partial=False):
         try:
