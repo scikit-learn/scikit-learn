@@ -2104,3 +2104,128 @@ def make_checkerboard(
     )
 
     return result, rows, cols
+
+
+def make_erdos_reyni_graph(n, m, directed=False):
+    """Generates an Erdos-Reyni (ER) graph.
+
+    Erdos Renyi (n, m) graph is a simple graph with n vertices and exactly m
+    number of total edges.
+
+    Parameters
+    ----------
+    n: int
+        Number of vertices
+    m: int
+        Number of edges, a value between 1 and :math:`n^2`.
+    directed: boolean, optional (default=False)
+        If False, output adjacency matrix will represent undirected edges,
+        and hence will be symmetric.
+        Otherwise, output adjacency matrix will be asymmetric.
+
+    Returns
+    -------
+    A: ndarray, shape (n, n)
+        Sampled adjacency matrix
+
+    Notes
+    -----
+    Code annotated from microsoft/graspologic, simulations.er_nm
+    """
+    A = np.zeros((n, n))
+    if directed:
+        idx = np.where(~np.eye(n, dtype=bool))
+    else:
+        idx = np.triu_indices(n, k=1)
+    # get idx in 1d coordinates by ravelling
+    triu = np.ravel_multi_index(idx, A.shape)
+    # choose M of them
+    triu = np.random.choice(triu, size=m, replace=False)
+    # unravel back
+    triu = np.unravel_index(triu, A.shape)
+    A[triu] = 1
+
+    if not directed:
+        A = np.triu(A)
+        A = A + A.T - np.diag(np.diag(A))
+    return A
+
+
+def make_sbm_graph(n, p, directed=False):
+    """Generates Stochastic Block Model (SBM) graph
+
+    SBM produces a graph with specified communities, in which each community can
+    have different sizes and edge probabilities.
+
+    Parameters
+    ----------
+    n: list of int, shape (n_communities)
+        Number of vertices in each community. Communities are assigned n[0], n[1], ...
+    p: array-like, shape (n_communities, n_communities)
+        Probability of an edge between each of the communities, where ``p[i, j]``
+        indicates the probability of a connection between edges in communities
+        ``[i, j]``. ``0 < p[i, j] < 1`` for all ``i, j``.
+    directed: boolean, optional (default=False)
+        If False, output adjacency matrix will represent undirected edges,
+        and hence will be symmetric.
+        Otherwise, output adjacency matrix will be asymmetric.
+
+    Returns
+    -------
+    A: ndarray, shape (sum(n), sum(n))
+        Sampled adjacency matrix
+
+     Notes
+    -----
+    Code annotated from microsoft/graspologic, simulations.sbm
+
+    References
+    ----------
+
+    .. [1] Chung J., Pedigo BD, et al (2019).GraSPy: Graph Statistics in Python.
+        Journal of Machine Learning Research. 20: 1-7
+
+    .. [2] Pedigo BD., Chung J. (2019). graspologic.simulations.sbm [source code]
+        https://graspologic.readthedocs.io/en/latest/reference/simulations.html#graspologic.simulations.sbm
+    """
+    A = np.zeros((sum(n), sum(n)))
+    K = len(n)
+    counter = 0
+    # get a list of community indices
+    cmties = []
+    for i in range(0, K):
+        cmties.append(range(counter, counter + n[i]))
+        counter += n[i]
+
+    def cartesian_product(*arrays):
+        """
+        Compute the cartesian product of multiple arrays
+        """
+        N = len(arrays)
+        return np.transpose(
+            np.meshgrid(*arrays, indexing="ij"), np.roll(np.arange(N + 1), -1)
+        ).reshape(-1, N)
+
+    for i in range(0, K):
+        if directed:
+            jrange = range(0, K)
+        else:
+            jrange = range(i, K)
+        for j in jrange:
+            block_p = p[i, j]
+            # identify submatrix for community i, j
+            # cartesian product to identify edges for community i,j pair
+            cprod = cartesian_product(cmties[i], cmties[j])
+            # get idx in 1d coordinates by ravelling
+            triu = np.ravel_multi_index((cprod[:, 0], cprod[:, 1]), A.shape)
+            pchoice = np.random.uniform(size=len(triu))
+            # connected with probability p
+            triu = triu[pchoice < block_p]
+            triu = np.unravel_index(triu, A.shape)
+            A[triu] = 1
+
+    if not directed:
+        A = np.triu(A, 1)
+        A = A + A.T - np.diag(np.diag(A))
+
+    return A
