@@ -525,7 +525,7 @@ def test_curve_display_plot_kwargs(pyplot, data, CurveDisplay, specific_params):
 
 
 # TODO(1.5): to be removed
-def test_learning_curve_display_deprecate_log_scale(data):
+def test_learning_curve_display_deprecate_log_scale(data, pyplot):
     """Check that we warn for the deprecated parameter `log_scale`."""
     X, y = data
     estimator = DecisionTreeClassifier(random_state=0)
