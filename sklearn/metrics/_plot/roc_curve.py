@@ -153,7 +153,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         xlabel = "False Positive Rate" + info_pos_label
         ylabel = "True Positive Rate" + info_pos_label
-        self.ax_.set(xlabel=xlabel, ylabel=ylabel, aspect=1 / self.ax_.get_data_ratio())
+        self.ax_.set(xlabel=xlabel, ylabel=ylabel, aspect="equal")
 
         if plot_chance_level:
             (self.chance_level_,) = self.ax_.plot(

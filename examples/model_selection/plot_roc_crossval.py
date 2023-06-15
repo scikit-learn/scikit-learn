@@ -128,6 +128,8 @@ ax.set(
     ylabel="True Positive Rate",
     title=f"Mean ROC curve with variability\n(Positive label '{target_names[1]}')",
 )
-ax.axis("square")
+# ax.axis("square")
 ax.legend(loc="lower right")
 plt.show()
+
+# %%
