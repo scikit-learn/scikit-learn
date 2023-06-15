@@ -27,7 +27,6 @@ from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
 from sklearn import datasets
 
-import warnings
 
 sparse_multilable_explicit_zero = csc_matrix(np.array([[0, 1], [1, 0]]))
 sparse_multilable_explicit_zero[:, 0] = 0
