@@ -26,6 +26,7 @@ from scipy.stats import rankdata
 
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
+from ..base import _fit_context
 from ._split import check_cv
 from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
@@ -753,6 +754,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             best_index = results[f"rank_test_{refit_metric}"].argmin()
         return best_index
 
+    @_fit_context(
+        # *SearchCV.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, *, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
@@ -786,7 +791,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             Instance of fitted estimator.
         """
-        self._validate_params()
         estimator = self.estimator
         refit_metric = "score"
 

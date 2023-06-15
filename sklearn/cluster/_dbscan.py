@@ -16,6 +16,7 @@ from scipy import sparse
 
 from ..metrics.pairwise import _VALID_METRICS
 from ..base import BaseEstimator, ClusterMixin
+from ..base import _fit_context
 from ..utils.validation import _check_sample_weight
 from ..utils._param_validation import Interval, StrOptions
 from ..neighbors import NearestNeighbors
@@ -338,6 +339,10 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         self.p = p
         self.n_jobs = n_jobs
 
+    @_fit_context(
+        # DBSCAN.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, sample_weight=None):
         """Perform DBSCAN clustering from features, or distance matrix.
 
@@ -363,8 +368,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
-        self._validate_params()
-
         X = self._validate_data(X, accept_sparse="csr")
 
         if sample_weight is not None:

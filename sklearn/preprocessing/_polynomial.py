@@ -12,6 +12,7 @@ from scipy.interpolate import BSpline
 from scipy.special import comb
 
 from ..base import BaseEstimator, TransformerMixin
+from ..base import _fit_context
 from ..utils import check_array
 from ..utils.fixes import sp_version, parse_version
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
@@ -299,6 +300,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             feature_names.append(name)
         return np.asarray(feature_names, dtype=object)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """
         Compute number of output features.
@@ -316,7 +318,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_params()
         _, n_features = self._validate_data(X, accept_sparse=True).shape
 
         if isinstance(self.degree, Integral):
@@ -802,6 +803,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 feature_names.append(f"{input_features[i]}_sp_{j}")
         return np.asarray(feature_names, dtype=object)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """Compute knot positions of splines.
 
@@ -823,8 +825,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X,
             reset=True,

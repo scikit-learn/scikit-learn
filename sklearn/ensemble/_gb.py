@@ -28,6 +28,7 @@ import warnings
 from ._base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
 from ..base import is_classifier
+from ..base import _fit_context
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -376,6 +377,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Check that the estimator is initialized, raising an error if not."""
         check_is_fitted(self)
 
+    @_fit_context(
+        # GradientBoosting*.init is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -412,8 +417,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         if not self.warm_start:
             self._clear_state()
 

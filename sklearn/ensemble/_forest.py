@@ -51,6 +51,7 @@ from scipy.sparse import hstack as sparse_hstack
 
 from ..base import is_classifier
 from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin, TransformerMixin
+from ..base import _fit_context
 
 from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
@@ -311,6 +312,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         return sparse_hstack(indicators).tocsr(), n_nodes_ptr
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """
         Build a forest of trees from the training set (X, y).
@@ -338,8 +340,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         # Validate or convert input data
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
@@ -2737,6 +2737,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         self.fit_transform(X, y, sample_weight=sample_weight)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, sample_weight=None):
         """
         Fit estimator and transform dataset.
@@ -2762,8 +2763,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
-        self._validate_params()
-
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=_num_samples(X))
         super().fit(X, y, sample_weight=sample_weight)
