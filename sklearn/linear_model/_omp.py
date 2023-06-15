@@ -15,6 +15,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from ._base import LinearModel, _pre_fit, _deprecate_normalize
 from ..base import RegressorMixin, MultiOutputMixin
+from ..base import _fit_context
 from ..utils import as_float_array, check_array
 from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import Hidden, Interval, StrOptions
@@ -725,6 +726,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self.normalize = normalize
         self.precompute = precompute
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
@@ -741,8 +743,6 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         _normalize = _deprecate_normalize(
             self.normalize, estimator_name=self.__class__.__name__
         )
@@ -1042,6 +1042,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
@@ -1058,8 +1059,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         _normalize = _deprecate_normalize(
             self.normalize, estimator_name=self.__class__.__name__
         )

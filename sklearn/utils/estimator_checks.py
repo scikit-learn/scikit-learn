@@ -1,4 +1,6 @@
 import warnings
+import importlib
+import itertools
 import pickle
 import re
 from copy import deepcopy
@@ -59,6 +61,7 @@ from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
 from ..utils.fixes import sp_version
 from ..utils.fixes import parse_version
 from ..utils.validation import check_is_fitted
+from ..utils._array_api import _convert_to_numpy, get_namespace, device as array_device
 from ..utils._param_validation import make_constraint
 from ..utils._param_validation import generate_invalid_param_val
 from ..utils._param_validation import InvalidParameterError
@@ -74,6 +77,7 @@ from ..preprocessing import scale
 from ..datasets import (
     load_iris,
     make_blobs,
+    make_classification,
     make_multilabel_classification,
     make_regression,
 )
@@ -133,6 +137,21 @@ def _yield_checks(estimator):
     yield partial(check_estimators_pickle, readonly_memmap=True)
 
     yield check_estimator_get_tags_default_keys
+
+    if tags["array_api_support"]:
+        for array_namespace in ["numpy.array_api", "cupy.array_api", "cupy", "torch"]:
+            if array_namespace == "torch":
+                for device, dtype in itertools.product(
+                    ("cpu", "cuda"), ("float64", "float32")
+                ):
+                    yield partial(
+                        check_array_api_input,
+                        array_namespace=array_namespace,
+                        dtype=dtype,
+                        device=device,
+                    )
+            else:
+                yield partial(check_array_api_input, array_namespace=array_namespace)
 
 
 def _yield_classifier_checks(classifier):
@@ -838,6 +857,111 @@ def _generate_sparse_matrix(X_csr):
         X.indices = X.indices.astype("int64")
         X.indptr = X.indptr.astype("int64")
         yield sparse_format + "_64", X
+
+
+def check_array_api_input(
+    name, estimator_orig, *, array_namespace, device=None, dtype="float64"
+):
+    """Check that the array_api Array gives the same results as ndarrays."""
+    try:
+        array_mod = importlib.import_module(array_namespace)
+    except ModuleNotFoundError:
+        raise SkipTest(
+            f"{array_namespace} is not installed: not checking array_api input"
+        )
+    try:
+        import array_api_compat  # noqa
+    except ImportError:
+        raise SkipTest(
+            "array_api_compat is not installed: not checking array_api input"
+        )
+
+    # First create an array using the chosen array module and then get the
+    # corresponding (compatibility wrapped) array namespace based on it.
+    # This is because `cupy` is not the same as the compatibility wrapped
+    # namespace of a CuPy array.
+    xp = array_api_compat.get_namespace(array_mod.asarray(1))
+
+    if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
+        raise SkipTest("PyTorch test requires cuda, which is not available")
+    elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
+        import cupy
+
+        if cupy.cuda.runtime.getDeviceCount() == 0:
+            raise SkipTest("CuPy test requires cuda, which is not available")
+
+    X, y = make_classification(random_state=42)
+    X = X.astype(dtype, copy=False)
+
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    est = clone(estimator_orig)
+
+    X_xp = xp.asarray(X, device=device)
+    y_xp = xp.asarray(y, device=device)
+
+    est.fit(X, y)
+
+    array_attributes = {
+        key: value for key, value in vars(est).items() if isinstance(value, np.ndarray)
+    }
+
+    est_xp = clone(est)
+    with config_context(array_api_dispatch=True):
+        est_xp.fit(X_xp, y_xp)
+
+    # Fitted attributes which are arrays must have the same
+    # namespace as the one of the training data.
+    for key, attribute in array_attributes.items():
+        est_xp_param = getattr(est_xp, key)
+        assert (
+            get_namespace(est_xp_param)[0] == get_namespace(X_xp)[0]
+        ), f"'{key}' attribute is in wrong namespace"
+
+        assert array_device(est_xp_param) == array_device(X_xp)
+
+        est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
+        assert_allclose(
+            attribute,
+            est_xp_param_np,
+            err_msg=f"{key} not the same",
+            atol=np.finfo(X.dtype).eps * 100,
+        )
+
+    # Check estimator methods, if supported, give the same results
+    methods = (
+        "decision_function",
+        "predict",
+        "predict_log_proba",
+        "predict_proba",
+        "transform",
+        "inverse_transform",
+    )
+
+    for method_name in methods:
+        method = getattr(est, method_name, None)
+        if method is None:
+            continue
+
+        result = method(X)
+        with config_context(array_api_dispatch=True):
+            result_xp = getattr(est_xp, method_name)(X_xp)
+
+        assert (
+            get_namespace(result_xp)[0] == get_namespace(X_xp)[0]
+        ), f"'{method}' output is in wrong namespace"
+
+        assert array_device(result_xp) == array_device(X_xp)
+
+        result_xp_np = _convert_to_numpy(result_xp, xp=xp)
+
+        assert_allclose(
+            result,
+            result_xp_np,
+            err_msg=f"{method} did not the return the same result",
+            atol=np.finfo(X.dtype).eps * 100,
+        )
 
 
 def check_estimator_sparse_data(name, estimator_orig):
@@ -4309,7 +4433,7 @@ def _output_from_fit_transform(transformer, name, X, df, y):
     return outputs
 
 
-def _check_generated_dataframe(name, case, outputs_default, outputs_pandas):
+def _check_generated_dataframe(name, case, index, outputs_default, outputs_pandas):
     import pandas as pd
 
     X_trans, feature_names_default = outputs_default
@@ -4319,7 +4443,12 @@ def _check_generated_dataframe(name, case, outputs_default, outputs_pandas):
     # We always rely on the output of `get_feature_names_out` of the
     # transformer used to generate the dataframe as a ground-truth of the
     # columns.
-    expected_dataframe = pd.DataFrame(X_trans, columns=feature_names_pandas, copy=False)
+    # If a dataframe is passed into transform, then the output should have the same
+    # index
+    expected_index = index if case.endswith("df") else None
+    expected_dataframe = pd.DataFrame(
+        X_trans, columns=feature_names_pandas, copy=False, index=expected_index
+    )
 
     try:
         pd.testing.assert_frame_equal(df_trans, expected_dataframe)
@@ -4354,7 +4483,8 @@ def check_set_output_transform_pandas(name, transformer_orig):
     set_random_state(transformer)
 
     feature_names_in = [f"col{i}" for i in range(X.shape[1])]
-    df = pd.DataFrame(X, columns=feature_names_in, copy=False)
+    index = [f"index{i}" for i in range(X.shape[0])]
+    df = pd.DataFrame(X, columns=feature_names_in, copy=False, index=index)
 
     transformer_default = clone(transformer).set_output(transform="default")
     outputs_default = _output_from_fit_transform(transformer_default, name, X, df, y)
@@ -4368,7 +4498,7 @@ def check_set_output_transform_pandas(name, transformer_orig):
 
     for case in outputs_default:
         _check_generated_dataframe(
-            name, case, outputs_default[case], outputs_pandas[case]
+            name, case, index, outputs_default[case], outputs_pandas[case]
         )
 
 
@@ -4396,7 +4526,8 @@ def check_global_ouptut_transform_pandas(name, transformer_orig):
     set_random_state(transformer)
 
     feature_names_in = [f"col{i}" for i in range(X.shape[1])]
-    df = pd.DataFrame(X, columns=feature_names_in, copy=False)
+    index = [f"index{i}" for i in range(X.shape[0])]
+    df = pd.DataFrame(X, columns=feature_names_in, copy=False, index=index)
 
     transformer_default = clone(transformer).set_output(transform="default")
     outputs_default = _output_from_fit_transform(transformer_default, name, X, df, y)
@@ -4413,5 +4544,5 @@ def check_global_ouptut_transform_pandas(name, transformer_orig):
 
     for case in outputs_default:
         _check_generated_dataframe(
-            name, case, outputs_default[case], outputs_pandas[case]
+            name, case, index, outputs_default[case], outputs_pandas[case]
         )

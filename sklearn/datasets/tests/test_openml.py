@@ -920,9 +920,7 @@ def datasets_missing_values():
         (1119, "liac-arff", 9, 6, 0),
         (1119, "pandas", 9, 0, 6),
         # miceprotein
-        # 1 column has only missing values with object dtype
-        (40966, "liac-arff", 1, 76, 0),
-        # with casting it will be transformed to either float or Int64
+        (40966, "liac-arff", 1, 77, 0),
         (40966, "pandas", 1, 77, 0),
         # titanic
         (40945, "liac-arff", 3, 6, 0),

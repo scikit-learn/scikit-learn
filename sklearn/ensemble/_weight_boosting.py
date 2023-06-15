@@ -34,7 +34,7 @@ from scipy.special import xlogy
 
 from ._base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
-
+from ..base import _fit_context
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, _safe_indexing
 from ..utils.extmath import softmax
@@ -103,6 +103,10 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             reset=False,
         )
 
+    @_fit_context(
+        # AdaBoost*.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
 
@@ -124,8 +128,6 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         X, y = self._validate_data(
             X,
             y,
