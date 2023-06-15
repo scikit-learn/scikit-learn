@@ -27,7 +27,8 @@ from .utils.validation import _check_y
 from .utils.validation import _num_features
 from .utils.validation import _check_feature_names_in
 from .utils.validation import _generate_get_feature_names_out
-from .utils.validation import check_is_fitted
+from .utils.validation import _is_fitted, check_is_fitted
+from .utils._metadata_requests import _MetadataRequester
 from .utils.validation import _get_feature_names
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils._param_validation import validate_parameter_constraints
@@ -101,7 +102,13 @@ def _clone_parametrized(estimator, *, safe=True):
     new_object_params = estimator.get_params(deep=False)
     for name, param in new_object_params.items():
         new_object_params[name] = clone(param, safe=False)
+
     new_object = klass(**new_object_params)
+    try:
+        new_object._metadata_request = copy.deepcopy(estimator._metadata_request)
+    except AttributeError:
+        pass
+
     params_set = new_object.get_params(deep=False)
 
     # quick sanity check of the parameters of the clone
@@ -123,7 +130,7 @@ def _clone_parametrized(estimator, *, safe=True):
     return new_object
 
 
-class BaseEstimator:
+class BaseEstimator(_MetadataRequester):
     """Base class for all estimators in scikit-learn.
 
     Notes
@@ -1124,7 +1131,13 @@ def _fit_context(*, prefer_skip_nested_validation):
         @functools.wraps(fit_method)
         def wrapper(estimator, *args, **kwargs):
             global_skip_validation = get_config()["skip_parameter_validation"]
-            if not global_skip_validation:
+
+            # we don't want to validate again for each call to partial_fit
+            partial_fit_and_fitted = (
+                fit_method.__name__ == "partial_fit" and _is_fitted(estimator)
+            )
+
+            if not global_skip_validation and not partial_fit_and_fitted:
                 estimator._validate_params()
 
             with config_context(

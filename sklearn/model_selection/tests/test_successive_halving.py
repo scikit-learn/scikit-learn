@@ -725,7 +725,7 @@ def test_groups_support(Est):
     X, y = make_classification(n_samples=50, n_classes=2, random_state=0)
     groups = rng.randint(0, 3, 50)
 
-    clf = LinearSVC(random_state=0)
+    clf = LinearSVC(dual="auto", random_state=0)
     grid = {"C": [1]}
 
     group_cvs = [

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =============================================
 Manifold Learning methods on a severed sphere
