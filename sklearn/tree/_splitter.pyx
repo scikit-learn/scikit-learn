@@ -114,7 +114,8 @@ cdef class Splitter:
                              self.max_features,
                              self.min_samples_leaf,
                              self.min_weight_leaf,
-                             self.random_state), self.__getstate__())
+                             self.random_state,
+                             self.monotonic_cst), self.__getstate__())
 
     cdef int init(
         self,
