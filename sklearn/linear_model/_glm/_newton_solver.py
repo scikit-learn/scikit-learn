@@ -974,6 +974,9 @@ class NewtonLSMRSolver(NewtonSolver):
             atol=eta * norm_G / (self.A_norm * self.r_norm),
             btol=self.tol,
             maxiter=max(n_samples, n_features) * n_classes,  # default is min(A.shape)
+            # default conlim = 1e8, for compatible systems 1e12 is still reasonable,
+            # see LSMR documentation
+            conlim=1e12,
             show=self.verbose >= 3,
         )
         # We store the estimated Frobenius norm of A and norm of residual r in
@@ -988,6 +991,8 @@ class NewtonLSMRSolver(NewtonSolver):
             conda,
             normx,
         ) = result
+        if self.verbose >= 2:
+            print(f"  Inner iterations in LSMR = {itn}")
         if self.coef.dtype == np.float32:
             self.coef_newton = self.coef_newton.astype(np.float32)
         if not self.linear_loss.base_loss.is_multiclass:
@@ -1010,7 +1015,7 @@ class NewtonLSMRSolver(NewtonSolver):
         if self.iteration == 1:
             return
         # Note: We could detect too large steps by comparing norm(coef_newton) = normx
-        # with norm(gradient) o with the already available condition number of A, e.g.
+        # with norm(gradient) or with the already available condition number of A, e.g.
         # conda.
         if istop == 7:
             self.use_fallback_lbfgs_solve = True
@@ -1033,7 +1038,7 @@ class NewtonLSMRSolver(NewtonSolver):
                 msg
                 + "It will now resort to lbfgs instead.\n"
                 "This may be caused by singular or very ill-conditioned Hessian "
-                " matrix. "
+                "matrix. "
                 "Further options are to use another solver or to avoid such situation "
                 "in the first place. Possible remedies are removing collinear features"
                 "of X or increasing the penalization strengths.",

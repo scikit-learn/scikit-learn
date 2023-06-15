@@ -1093,8 +1093,8 @@ def test_solver_on_ill_conditioned_X(
         np.exp(X_orig @ np.ones(X_orig.shape[1])), size=X_orig.shape[0]
     ).astype(np.float64)
 
-    tol = 1e-7
-    model = PoissonRegressor(solver=solver, alpha=0.0, tol=tol)
+    tol = 1e-8
+    model = PoissonRegressor(solver=solver, alpha=0.0, tol=tol, max_iter=200)
 
     # No warning raised on well-conditioned design, even without regularization.
     with warnings.catch_warnings():
@@ -1122,8 +1122,8 @@ def test_solver_on_ill_conditioned_X(
 
     # Construct another ill-conditioned problem by scaling of features.
     X_ill_conditioned = X_orig.copy()
-    X_ill_conditioned[:, 0] *= 1e-4
-    X_ill_conditioned[:, 1] *= 1e4
+    X_ill_conditioned[:, 0] *= 1e-6
+    X_ill_conditioned[:, 1] *= 1e2  # too large X may overflow in link function
     # Make sure that it is ill conditioned >=> large condition number.
     assert np.linalg.cond(X_ill_conditioned) > 1e5 * np.linalg.cond(X_orig)
 
@@ -1144,7 +1144,7 @@ def test_solver_on_ill_conditioned_X(
     if test_loss:
         # Without penalty, scaling of columns has no effect on predictions.
         ill_cond_deviance = mean_poisson_deviance(y, reg.predict(X_ill_conditioned))
-        if solver in ("lbfgs", "newton-cholesky", "newton-lsmr"):
+        if solver in ("lbfgs", "newton-cholesky"):
             pytest.xfail(
                 f"Solver {solver} does not converge but does so without warning."
             )
