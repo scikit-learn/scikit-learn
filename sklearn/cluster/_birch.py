@@ -16,6 +16,7 @@ from ..base import (
     ClusterMixin,
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
+    _fit_context,
 )
 from ..utils.extmath import row_norms
 from ..utils._param_validation import Interval
@@ -501,6 +502,7 @@ class Birch(
         self.compute_labels = compute_labels
         self.copy = copy
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """
         Build a CF Tree for the input data.
@@ -518,9 +520,6 @@ class Birch(
         self
             Fitted estimator.
         """
-
-        self._validate_params()
-
         return self._fit(X, partial=False)
 
     def _fit(self, X, partial):
@@ -610,6 +609,7 @@ class Birch(
             leaf_ptr = leaf_ptr.next_leaf_
         return leaves
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X=None, y=None):
         """
         Online learning. Prevents rebuilding of CFTree from scratch.
@@ -629,8 +629,6 @@ class Birch(
         self
             Fitted estimator.
         """
-        self._validate_params()
-
         if X is None:
             # Perform just the final global clustering step.
             self._global_clustering()

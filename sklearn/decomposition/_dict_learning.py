@@ -16,6 +16,7 @@ from scipy import linalg
 from joblib import effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils._param_validation import validate_params
@@ -1795,6 +1796,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.fit_transform(X)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Fit the model from data in X and return the transformed data.
 
@@ -1812,8 +1814,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         V : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        self._validate_params()
-
         _check_positive_coding(method=self.fit_algorithm, positive=self.positive_code)
 
         method = "lasso_" + self.fit_algorithm
@@ -2318,6 +2318,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         return False
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -2335,8 +2336,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X, dtype=[np.float64, np.float32], order="C", copy=False
         )
@@ -2412,7 +2411,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             self.n_steps_ = i + 1
             self.n_iter_ = np.ceil(self.n_steps_ / n_steps_per_iter)
         else:
-            # TODO remove this branch in 1.3
+            # TODO remove this branch in 1.4
             n_iter = 1000 if self.n_iter == "deprecated" else self.n_iter
 
             batches = gen_batches(n_samples, self._batch_size)
@@ -2435,6 +2434,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None):
         """Update the model using the data in X as a mini-batch.
 
@@ -2453,9 +2453,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             Return the instance itself.
         """
         has_components = hasattr(self, "components_")
-
-        if not has_components:
-            self._validate_params()
 
         X = self._validate_data(
             X, dtype=[np.float64, np.float32], order="C", reset=not has_components

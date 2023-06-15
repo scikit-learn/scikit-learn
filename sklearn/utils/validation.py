@@ -125,6 +125,20 @@ def _assert_all_finite(
         first_pass_isfinite = xp.isfinite(xp.sum(X))
     if first_pass_isfinite:
         return
+
+    _assert_all_finite_element_wise(
+        X,
+        xp=xp,
+        allow_nan=allow_nan,
+        msg_dtype=msg_dtype,
+        estimator_name=estimator_name,
+        input_name=input_name,
+    )
+
+
+def _assert_all_finite_element_wise(
+    X, *, xp, allow_nan, msg_dtype=None, estimator_name=None, input_name=""
+):
     # Cython implementation doesn't support FP16 or complex numbers
     use_cython = (
         xp is np and X.data.contiguous and X.dtype.type in {np.float32, np.float64}
@@ -595,17 +609,17 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
     # Check these early for pandas versions without extension dtypes
     from pandas.api.types import (
         is_bool_dtype,
-        is_sparse,
         is_float_dtype,
         is_integer_dtype,
     )
+    from pandas import SparseDtype
 
     if is_bool_dtype(pd_dtype):
-        # bool and extension booleans need early converstion because __array__
+        # bool and extension booleans need early conversion because __array__
         # converts mixed dtype dataframes into object dtypes
         return True
 
-    if is_sparse(pd_dtype):
+    if isinstance(pd_dtype, SparseDtype):
         # Sparse arrays will be converted later in `check_array`
         return False
 
@@ -614,7 +628,7 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
     except ImportError:
         return False
 
-    if is_sparse(pd_dtype) or not is_extension_array_dtype(pd_dtype):
+    if isinstance(pd_dtype, SparseDtype) or not is_extension_array_dtype(pd_dtype):
         # Sparse arrays will be converted later in `check_array`
         # Only handle extension arrays for integer and floats
         return False
@@ -769,7 +783,10 @@ def check_array(
         # throw warning if columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be preserved (later).
         with suppress(ImportError):
-            from pandas.api.types import is_sparse
+            from pandas import SparseDtype
+
+            def is_sparse(dtype):
+                return isinstance(dtype, SparseDtype)
 
             if not hasattr(array, "sparse") and array.dtypes.apply(is_sparse).any():
                 warnings.warn(
@@ -847,7 +864,10 @@ def check_array(
     # When all dataframe columns are sparse, convert to a sparse array
     if hasattr(array, "sparse") and array.ndim > 1:
         with suppress(ImportError):
-            from pandas.api.types import is_sparse
+            from pandas import SparseDtype  # noqa: F811
+
+            def is_sparse(dtype):
+                return isinstance(dtype, SparseDtype)
 
             if array.dtypes.apply(is_sparse).all():
                 # DataFrame.sparse only supports `to_coo`
@@ -1349,6 +1369,44 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
     return array
 
 
+def _is_fitted(estimator, attributes=None, all_or_any=all):
+    """Determine if an estimator is fitted
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        Estimator instance for which the check is performed.
+
+    attributes : str, list or tuple of str, default=None
+        Attribute name(s) given as string or a list/tuple of strings
+        Eg.: ``["coef_", "estimator_", ...], "coef_"``
+
+        If `None`, `estimator` is considered fitted if there exist an
+        attribute that ends with a underscore and does not start with double
+        underscore.
+
+    all_or_any : callable, {all, any}, default=all
+        Specify whether all or any of the given attributes must exist.
+
+    Returns
+    -------
+    fitted : bool
+        Whether the estimator is fitted.
+    """
+    if attributes is not None:
+        if not isinstance(attributes, (list, tuple)):
+            attributes = [attributes]
+        return all_or_any([hasattr(estimator, attr) for attr in attributes])
+
+    if hasattr(estimator, "__sklearn_is_fitted__"):
+        return estimator.__sklearn_is_fitted__()
+
+    fitted_attrs = [
+        v for v in vars(estimator) if v.endswith("_") and not v.startswith("__")
+    ]
+    return len(fitted_attrs) > 0
+
+
 def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     """Perform is_fitted validation for estimator.
 
@@ -1405,18 +1463,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     if not hasattr(estimator, "fit"):
         raise TypeError("%s is not an estimator instance." % (estimator))
 
-    if attributes is not None:
-        if not isinstance(attributes, (list, tuple)):
-            attributes = [attributes]
-        fitted = all_or_any([hasattr(estimator, attr) for attr in attributes])
-    elif hasattr(estimator, "__sklearn_is_fitted__"):
-        fitted = estimator.__sklearn_is_fitted__()
-    else:
-        fitted = [
-            v for v in vars(estimator) if v.endswith("_") and not v.startswith("__")
-        ]
-
-    if not fitted:
+    if not _is_fitted(estimator, attributes, all_or_any):
         raise NotFittedError(msg % {"name": type(estimator).__name__})
 
 
@@ -2169,14 +2216,14 @@ def _check_pos_label_consistency(pos_label, y_true):
 
     Parameters
     ----------
-    pos_label : int, str or None
+    pos_label : int, float, bool, str or None
         The positive label.
     y_true : ndarray of shape (n_samples,)
         The target vector.
 
     Returns
     -------
-    pos_label : int
+    pos_label : int, float, bool or str
         If `pos_label` can be inferred, it will be returned.
 
     Raises

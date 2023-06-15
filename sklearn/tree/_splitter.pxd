@@ -27,6 +27,8 @@ cdef struct SplitRecord:
     double improvement     # Impurity improvement given parent node.
     double impurity_left   # Impurity of the left split.
     double impurity_right  # Impurity of the right split.
+    unsigned char missing_go_to_left  # Controls if missing values go to the left node.
+    SIZE_t n_missing       # Number of missing values for the feature being split on
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
@@ -78,7 +80,8 @@ cdef class Splitter:
         self,
         object X,
         const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight
+        const DOUBLE_t[:] sample_weight,
+        const unsigned char[::1] missing_values_in_feature_mask,
     ) except -1
 
     cdef int node_reset(

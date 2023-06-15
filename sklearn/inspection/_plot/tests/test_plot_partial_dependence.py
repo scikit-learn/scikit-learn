@@ -3,7 +3,6 @@ from scipy.stats.mstats import mquantiles
 
 import pytest
 from numpy.testing import assert_allclose
-import warnings
 
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_iris
@@ -611,16 +610,6 @@ dummy_classification_data = make_classification(random_state=0)
             {"features": [1], "categorical_features": [1], "kind": "individual"},
             "It is not possible to display individual effects",
         ),
-        (
-            dummy_classification_data,
-            {"features": [1], "kind": "foo"},
-            "Values provided to `kind` must be one of",
-        ),
-        (
-            dummy_classification_data,
-            {"features": [0, 1], "kind": ["foo", "individual"]},
-            "Values provided to `kind` must be one of",
-        ),
     ],
 )
 def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
@@ -865,35 +854,6 @@ def test_grid_resolution_with_categorical(pyplot, categorical_features, array_ty
             categorical_features=categorical_features,
             grid_resolution=2,
         )
-
-
-# TODO(1.3): remove
-def test_partial_dependence_display_deprecation(pyplot, clf_diabetes, diabetes):
-    """Check that we raise the proper warning in the display."""
-    disp = PartialDependenceDisplay.from_estimator(
-        clf_diabetes,
-        diabetes.data,
-        [0, 2],
-        grid_resolution=25,
-        feature_names=diabetes.feature_names,
-    )
-
-    deprecation_msg = "The `pdp_lim` parameter is deprecated"
-    overwritting_msg = (
-        "`pdp_lim` has been passed in both the constructor and the `plot` method"
-    )
-
-    disp.pdp_lim = None
-    # case when constructor and method parameters are the same
-    with pytest.warns(FutureWarning, match=deprecation_msg):
-        disp.plot(pdp_lim=None)
-    # case when constructor and method parameters are different
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always", FutureWarning)
-        disp.plot(pdp_lim=(0, 1))
-    assert len(record) == 2
-    for warning in record:
-        assert warning.message.args[0].startswith((deprecation_msg, overwritting_msg))
 
 
 @pytest.mark.parametrize("kind", ["individual", "average", "both"])

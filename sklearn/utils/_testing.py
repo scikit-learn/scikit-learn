@@ -33,12 +33,6 @@ import atexit
 import unittest
 from unittest import TestCase
 
-# WindowsError only exist on Windows
-try:
-    WindowsError  # type: ignore
-except NameError:
-    WindowsError = None
-
 from numpy.testing import assert_allclose as np_assert_allclose
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_approx_equal
@@ -453,7 +447,7 @@ def _delete_folder(folder_path, warn=False):
             # This can fail under windows,
             #  but will succeed when called by atexit
             shutil.rmtree(folder_path)
-    except WindowsError:
+    except OSError:
         if warn:
             warnings.warn("Could not delete temporary folder %s" % folder_path)
 
@@ -843,7 +837,7 @@ def _convert_container(container, constructor_name, columns_name=None, dtype=Non
         return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == "dataframe":
         pd = pytest.importorskip("pandas")
-        return pd.DataFrame(container, columns=columns_name, dtype=dtype)
+        return pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas")
         return pd.Series(container, dtype=dtype)

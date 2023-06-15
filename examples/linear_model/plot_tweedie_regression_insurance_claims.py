@@ -452,7 +452,7 @@ print(scores)
 #
 # We conclude that the claim amount is very challenging to predict. Still, the
 # :class:`~sklearn.linear.GammaRegressor` is able to leverage some information
-# from the input features to slighly improve upon the mean baseline in terms
+# from the input features to slightly improve upon the mean baseline in terms
 # of D².
 #
 # Note that the resulting model is the average claim amount per claim. As such,
