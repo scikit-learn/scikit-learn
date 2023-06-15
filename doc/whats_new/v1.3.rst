@@ -408,6 +408,12 @@ Changelog
 - |Fix| :class:`feature_selection.SequentialFeatureSelector`'s `cv` parameter
   now supports generators. :pr:`25973` by `Yao Xiao <Charlie-XIAO>`.
 
+- |Enhancement| the initialization parameter `importance_getter` of
+  :class:`feature_selection.RFE` and :class:`feature_selection.RFECV` can now
+  be a callable that receives as parameters the training instances `X` and the
+  training labels `y` together with the estimator.
+  :pr:`21935` by :user:`Claudio Salvatore Arcidiacono <ClaudioSalvatoreArcidiacono>`.
+
 :mod:`sklearn.impute`
 .....................
 

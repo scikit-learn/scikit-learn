@@ -2,8 +2,6 @@
 Testing Recursive feature elimination
 """
 
-from operator import attrgetter
-
 import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
@@ -459,7 +457,12 @@ def test_rfe_cv_groups():
 
 
 @pytest.mark.parametrize(
-    "importance_getter", [attrgetter("regressor_.coef_"), "regressor_.coef_"]
+    "importance_getter",
+    [
+        lambda estimator: estimator.regressor_.coef_,
+        "regressor_.coef_",
+        lambda estimator, X, y: estimator.regressor_.coef_,
+    ],
 )
 @pytest.mark.parametrize("selector, expected_n_features", [(RFE, 5), (RFECV, 4)])
 def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features):
@@ -477,12 +480,31 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
     assert sel.support_.sum() == expected_n_features
 
 
+def test_rfe_importance_getter_with_train_instances():
+    clf = LogisticRegression()
+
+    data, y = load_iris(return_X_y=True)
+
+    def custom_importance_getter(estimator, X, y):
+        return estimator.coef_ + np.sum(X, axis=0)
+
+    sfm = RFE(
+        clf,
+        n_features_to_select=2,
+        importance_getter=custom_importance_getter,
+    )
+
+    sfm.fit(data, y)
+    assert sfm.transform(data).shape[1] == 2
+
+
 @pytest.mark.parametrize(
     "importance_getter, err_type",
     [
         ("auto", ValueError),
         ("random", AttributeError),
         (lambda x: x.importance, AttributeError),
+        (42, ValueError),
     ],
 )
 @pytest.mark.parametrize("Selector", [RFE, RFECV])

@@ -110,10 +110,15 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
 
         If `callable`, overrides the default feature importance getter.
-        The callable is passed with the fitted estimator and it should
-        return importance for each feature.
+        The callable is passed with the fitted estimator and optionally the
+        training input samples `X` and the target labels `y`. The callable
+        should return importance for each feature.
 
         .. versionadded:: 0.24
+
+        .. versionchanged:: 1.2
+           Added support for a callable `importance_getter` which accepts estimator,
+           training input samples `X` and the target labels `y` as arguments.
 
     Attributes
     ----------
@@ -301,13 +306,16 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             if self.verbose > 0:
                 print("Fitting estimator with %d features." % np.sum(support_))
 
-            estimator.fit(X[:, features], y, **fit_params)
+            X_remaining_features = X[:, features]
+            estimator.fit(X_remaining_features, y, **fit_params)
 
             # Get importance and rank them
             importances = _get_feature_importances(
                 estimator,
                 self.importance_getter,
                 transform_func="square",
+                X=X_remaining_features,
+                y=y,
             )
             ranks = np.argsort(importances)
 
@@ -533,10 +541,15 @@ class RFECV(RFE):
         :class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
 
         If `callable`, overrides the default feature importance getter.
-        The callable is passed with the fitted estimator and it should
-        return importance for each feature.
+        The callable is passed with the fitted estimator and optionally the
+        training input samples `X` and the target labels `y`. The callable
+        should return importance for each feature.
 
         .. versionadded:: 0.24
+
+        .. versionchanged:: 1.2
+           Added support for a callable `importance_getter` which accepts estimator,
+           training input samples `X` and the target labels `y` as arguments.
 
     Attributes
     ----------
