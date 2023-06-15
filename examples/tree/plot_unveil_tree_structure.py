@@ -44,7 +44,9 @@ clf.fit(X_train, y_train)
 #
 # The decision classifier has an attribute called ``tree_`` which allows access
 # to low level attributes such as ``node_count``, the total number of nodes,
-# and ``max_depth``, the maximal depth of the tree. It also stores the
+# and ``max_depth``, the maximal depth of the tree. To compute the depth of each
+# node in the tree, one can use ``compute_node_depths()``, which returns
+# the depth of each node in the tree. It also stores the
 # entire binary tree structure, represented as a number of parallel arrays. The
 # i-th element of each array holds information about the node ``i``. Node 0 is
 # the tree's root. Some of the arrays only apply to either leaves or split
@@ -63,6 +65,20 @@ clf.fit(X_train, y_train)
 #   - ``n_node_samples[i]``: the number of training samples reaching node
 #     ``i``
 #   - ``impurity[i]``: the impurity at node ``i``
+#   - ``weighted_n_node_samples[i]``: the weighted number of training samples
+#     reaching node ``i``
+#
+# Another important array is ``value``, which is a 3D array of shape
+# [``n_nodes``, ``n_classes``, ``n_outputs``] and holds the summary of the trainin
+# samples that reached each node. For each node, ``value[i]`` is the counts of
+# each class among the training samples reaching the node. For example, say the
+# training data has ``y = [[0, 1], [1, 2], [0, -1]]`` with two output dimensions
+# and two classes for the first dimension and three classes for the second dimension.
+# If ``value[i]`` held the array ``[[1, 0, 0], [0, 2, 1]]``, it indicates that:
+#
+# - there was 1 training sample that reached node ``i`` and with label ``y = (0, 0)``
+# - there were 2 training samples that reached node ``i`` and with label ``y = (1, 1)``
+# - there was 1 training sample that reached node ``i`` and with label ``y = (1, -1)``
 #
 # Using the arrays, we can traverse the tree structure to compute various
 # properties. Below, we will compute the depth of each node and whether or not

@@ -559,9 +559,6 @@ cdef class Tree:
         The current capacity (i.e., size) of the arrays, which is at least as
         great as `node_count`.
 
-    max_depth : int
-        The depth of the tree, i.e. the maximum depth of its leaves.
-
     children_left : array of int, shape [node_count]
         children_left[i] holds the node id of the left child of node i.
         For leaves, children_left[i] == TREE_LEAF. Otherwise,
@@ -574,14 +571,14 @@ cdef class Tree:
         children_right[i] > i. This child handles the case where
         X[:, feature[i]] > threshold[i].
 
+    n_leaves : int
+        Number of leaves in the tree.
+
     feature : array of int, shape [node_count]
         feature[i] holds the feature to split on, for the internal node i.
 
     threshold : array of double, shape [node_count]
         threshold[i] holds the threshold for the internal node i.
-
-    value : array of double, shape [node_count, n_outputs, max_n_classes]
-        Contains the constant prediction value of each node.
 
     impurity : array of double, shape [node_count]
         impurity[i] holds the impurity (i.e., the value of the splitting
@@ -593,6 +590,13 @@ cdef class Tree:
     weighted_n_node_samples : array of double, shape [node_count]
         weighted_n_node_samples[i] holds the weighted number of training samples
         reaching node i.
+
+    missing_go_to_left : array of bool, shape [node_count]
+        missing_go_to_left[i] holds a bool indicating whether or not there were
+        missing values at node i.
+    
+    value : array of double, shape [node_count, n_outputs, max_n_classes]
+        Contains the constant prediction value of each node.
     """
     # Wrap for outside world.
     # WARNING: these reference the current `nodes` and `value` buffers, which
