@@ -550,6 +550,24 @@ def test_svm_equivalence_sample_weight_C():
     assert_allclose(dual_coef_no_weight, clf.dual_coef_)
 
 
+def test_svm_multiclass_zero_sample_weights():
+    # test that class with zero sample weight has no effect
+    # on the model trained params with and without the class
+    X = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
+    y = [0, 1, 2]
+    w = [0.0, 1.0, 1.0]
+    clf = svm.SVC().fit(X, y, w)
+    n_support_zero = clf.n_support_
+    support_vectors_zero = clf.support_vectors_
+    X = np.array([[1.0, 0.0], [0.0, 1.0]])
+    y = [1, 2]
+    w = [1.0, 1.0]
+    clf = svm.SVC().fit(X, y, w)
+
+    assert_allclose(n_support_zero, clf.n_support_)
+    assert_allclose(support_vectors_zero, clf.support_vectors_)
+
+
 @pytest.mark.parametrize(
     "Estimator, err_msg",
     [
