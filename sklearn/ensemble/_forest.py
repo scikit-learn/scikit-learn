@@ -366,12 +366,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             dtype=DTYPE,
             force_all_finite=False,
         )
-        # _compute_feature_has_missing checks if X has missing values and will raise
-        # an error if the underlying tree base estimator can't handle missing values.
-        # Only the criterion is required to determine if the tree supports missing
-        # values.
+        # _compute_missing_values_in_feature_mask checks if X has missing values and
+        # will raise an error if the underlying tree base estimator can't handle missing
+        # values. Only the criterion is required to determine if the tree supports
+        # missing values.
         estimator = type(self.estimator)(criterion=self.criterion)
-        feature_has_missing = estimator._compute_feature_has_missing(
+        feature_has_missing = estimator._compute_missing_values_in_feature_mask(
             X, estimator_name=self.__class__.__name__
         )
 
