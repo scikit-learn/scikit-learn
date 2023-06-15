@@ -14,6 +14,7 @@ import numpy as np
 from scipy import sparse
 
 from ..base import clone, TransformerMixin
+from ..base import _fit_context
 from ..utils._estimator_html_repr import _VisualBlock
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
@@ -25,6 +26,7 @@ from ..utils._set_output import _get_output_config, _safe_set_output
 from ..utils import check_pandas_support
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted, _check_feature_names_in
+from ..utils.validation import _num_samples
 from ..utils.parallel import delayed, Parallel
 
 
@@ -292,6 +294,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             Estimator instance.
         """
         super().set_output(transform=transform)
+
         transformers = (
             trans
             for _, trans, _ in chain(
@@ -301,6 +304,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         )
         for trans in transformers:
             _safe_set_output(trans, transform=transform)
+
+        if self.remainder not in {"passthrough", "drop"}:
+            _safe_set_output(self.remainder, transform=transform)
 
         return self
 
@@ -696,12 +702,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self : ColumnTransformer
             This estimator.
         """
-        self._validate_params()
         # we use fit_transform to make sure to set sparse_output_ (for which we
         # need the transformed data) to have consistent output type in predict
         self.fit_transform(X, y=y)
         return self
 
+    @_fit_context(
+        # estimators in ColumnTransformer.transformers are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit all transformers, transform the data and concatenate results.
 
@@ -723,7 +732,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             any result is a sparse matrix, everything will be converted to
             sparse matrices.
         """
-        self._validate_params()
         self._check_feature_names(X, reset=True)
 
         X = _check_X(X)
@@ -853,6 +861,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             if config["dense"] == "pandas" and all(hasattr(X, "iloc") for X in Xs):
                 pd = check_pandas_support("transform")
                 output = pd.concat(Xs, axis=1)
+
+                output_samples = output.shape[0]
+                if any(_num_samples(X) != output_samples for X in Xs):
+                    raise ValueError(
+                        "Concatenating DataFrames from the transformer's output lead to"
+                        " an inconsistent number of samples. The output may have Pandas"
+                        " Indexes that do not match."
+                    )
 
                 # If all transformers define `get_feature_names_out`, then transform
                 # will adjust the column names to be consistent with

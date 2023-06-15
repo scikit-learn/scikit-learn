@@ -24,6 +24,7 @@ from ..utils._param_validation import RealNotInt
 from ..utils.validation import check_memory
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
+from ..base import _fit_context
 from ..metrics import pairwise_distances
 from scipy.sparse import issparse, SparseEfficiencyWarning
 
@@ -288,6 +289,10 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self.memory = memory
         self.n_jobs = n_jobs
 
+    @_fit_context(
+        # Optics.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Perform OPTICS clustering.
 
@@ -311,8 +316,6 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
-        self._validate_params()
-
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
         if dtype == bool and X.dtype != bool:
             msg = (

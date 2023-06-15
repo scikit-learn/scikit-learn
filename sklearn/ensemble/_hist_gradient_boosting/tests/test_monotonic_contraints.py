@@ -14,6 +14,7 @@ from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._testing import _convert_container
 
 n_threads = _openmp_effective_n_threads()
 
@@ -212,9 +213,9 @@ def test_predictions(global_random_seed, use_feature_names):
     f_0 = rng.rand(n_samples)  # positive correlation with y
     f_1 = rng.rand(n_samples)  # negative correslation with y
     X = np.c_[f_0, f_1]
-    if use_feature_names:
-        pd = pytest.importorskip("pandas")
-        X = pd.DataFrame(X, columns=["f_0", "f_1"])
+    columns_name = ["f_0", "f_1"]
+    constructor_name = "dataframe" if use_feature_names else "array"
+    X = _convert_container(X, constructor_name, columns_name=columns_name)
 
     noise = rng.normal(loc=0.0, scale=0.01, size=n_samples)
     y = 5 * f_0 + np.sin(10 * np.pi * f_0) - 5 * f_1 - np.cos(10 * np.pi * f_1) + noise
@@ -244,20 +245,24 @@ def test_predictions(global_random_seed, use_feature_names):
     # First feature (POS)
     # assert pred is all increasing when f_0 is all increasing
     X = np.c_[linspace, constant]
+    X = _convert_container(X, constructor_name, columns_name=columns_name)
     pred = gbdt.predict(X)
     assert is_increasing(pred)
     # assert pred actually follows the variations of f_0
     X = np.c_[sin, constant]
+    X = _convert_container(X, constructor_name, columns_name=columns_name)
     pred = gbdt.predict(X)
     assert np.all((np.diff(pred) >= 0) == (np.diff(sin) >= 0))
 
     # Second feature (NEG)
     # assert pred is all decreasing when f_1 is all increasing
     X = np.c_[constant, linspace]
+    X = _convert_container(X, constructor_name, columns_name=columns_name)
     pred = gbdt.predict(X)
     assert is_decreasing(pred)
     # assert pred actually follows the inverse variations of f_1
     X = np.c_[constant, sin]
+    X = _convert_container(X, constructor_name, columns_name=columns_name)
     pred = gbdt.predict(X)
     assert ((np.diff(pred) <= 0) == (np.diff(sin) >= 0)).all()
 
