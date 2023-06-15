@@ -594,7 +594,7 @@ cdef class Tree:
     missing_go_to_left : array of bool, shape [node_count]
         missing_go_to_left[i] holds a bool indicating whether or not there were
         missing values at node i.
-    
+
     value : array of double, shape [node_count, n_outputs, max_n_classes]
         Contains the constant prediction value of each node.
     """
