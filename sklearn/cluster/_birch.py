@@ -305,7 +305,8 @@ class _CFSubcluster:
             self.centroid_ = self.linear_sum_ = 0
         else:
             self.n_samples_ = 1
-            self.centroid_ = self.linear_sum_ = linear_sum
+            # defensive copy and ensure FP64 precision because of numerical issues
+            self.centroid_ = self.linear_sum_ = np.array(linear_sum, dtype=np.float64)
             self.squared_sum_ = self.sq_norm_ = np.dot(
                 self.linear_sum_, self.linear_sum_
             )

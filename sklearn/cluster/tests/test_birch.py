@@ -8,6 +8,7 @@ import pytest
 
 from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.cluster import Birch
+from sklearn.cluster._birch import _CFSubcluster
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
@@ -125,6 +126,38 @@ def test_partial_fit_second_call_error_checks():
     with pytest.raises(ValueError, match=msg):
         brc.partial_fit(X[:, [0]], y)
 
+def test_radius():
+    # Test that the radius is as defined, simple case
+    c = _CFSubcluster()
+    c.update(_CFSubcluster(linear_sum=np.array([0])))
+    c.update(_CFSubcluster(linear_sum=np.array([1])))
+    assert c.radius == pytest.approx(0.5, abs=1e-15), c.radius
+    c.update(_CFSubcluster(linear_sum=np.array([2])))
+    assert c.radius == pytest.approx(np.sqrt(2/3), abs=1e-15), c.radius
+
+def test_radius_numerical_fp16():
+    # Numerical issues in BIRCH.
+    # With FP16 cluster features, this caused a math domain error
+    # because it would take the sqrt of a negative value
+    c = _CFSubcluster()
+    c.update(_CFSubcluster(linear_sum=np.array([100], np.float16)))
+    c.update(_CFSubcluster(linear_sum=np.array([101], np.float16)))
+    assert c.radius == pytest.approx(0.5, abs=1e-15), c.radius
+
+def test_radius_numerical_fp32():
+    # Numerical issues in BIRCH
+    c = _CFSubcluster()
+    c.update(_CFSubcluster(linear_sum=np.array([10000], np.float32)))
+    c.update(_CFSubcluster(linear_sum=np.array([10001], np.float32)))
+    assert c.radius == pytest.approx(0.5, abs=1e-15), c.radius
+
+@pytest.mark.skip(reason="FP64 is not precise enough for this with BIRCH.")
+def test_radius_numerical_fp64():
+    # Numerical issues in BIRCH
+    c = _CFSubcluster()
+    c.update(_CFSubcluster(linear_sum=np.array([100000000], np.float64)))
+    c.update(_CFSubcluster(linear_sum=np.array([100000001], np.float64)))
+    assert c.radius == pytest.approx(0.5, abs=1e-15), c.radius
 
 def check_branching_factor(node, branching_factor):
     subclusters = node.subclusters_
