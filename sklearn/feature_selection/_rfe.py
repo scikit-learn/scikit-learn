@@ -22,6 +22,7 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
+from ..base import _fit_context
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..metrics import check_scoring
@@ -228,6 +229,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         """
         return self.estimator_.classes_
 
+    @_fit_context(
+        # RFE.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, **fit_params):
         """Fit the RFE model and then the underlying estimator on the selected features.
 
@@ -248,7 +253,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         return self._fit(X, y, **fit_params)
 
     def _fit(self, X, y, step_score=None, **fit_params):
@@ -649,6 +653,10 @@ class RFECV(RFE):
         self.n_jobs = n_jobs
         self.min_features_to_select = min_features_to_select
 
+    @_fit_context(
+        # RFECV.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, groups=None):
         """Fit the RFE model and automatically tune the number of selected features.
 
@@ -674,7 +682,6 @@ class RFECV(RFE):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         tags = self._get_tags()
         X, y = self._validate_data(
             X,

@@ -17,6 +17,7 @@ from ..base import (
     TransformerMixin,
     _UnstableArchMixin,
     ClassNamePrefixFeaturesOutMixin,
+    _fit_context,
 )
 from ..utils import check_random_state, check_array
 from ..utils._arpack import _init_arpack_v0
@@ -759,6 +760,7 @@ class LocallyLinearEmbedding(
         )
         self._n_features_out = self.embedding_.shape[1]
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X.
 
@@ -775,10 +777,10 @@ class LocallyLinearEmbedding(
         self : object
             Fitted `LocallyLinearEmbedding` class instance.
         """
-        self._validate_params()
         self._fit_transform(X)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Compute the embedding vectors for data X and transform X.
 
@@ -795,7 +797,6 @@ class LocallyLinearEmbedding(
         X_new : array-like, shape (n_samples, n_components)
             Returns the instance itself.
         """
-        self._validate_params()
         self._fit_transform(X)
         return self.embedding_
 

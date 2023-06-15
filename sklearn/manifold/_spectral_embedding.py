@@ -17,6 +17,7 @@ from scipy.sparse.csgraph import connected_components
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
 from ..base import BaseEstimator
+from ..base import _fit_context
 from ..utils import (
     check_array,
     check_random_state,
@@ -652,6 +653,7 @@ class SpectralEmbedding(BaseEstimator):
         self.affinity_matrix_ = self.affinity(X)
         return self.affinity_matrix_
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -674,8 +676,6 @@ class SpectralEmbedding(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         X = self._validate_data(X, accept_sparse="csr", ensure_min_samples=2)
 
         random_state = check_random_state(self.random_state)

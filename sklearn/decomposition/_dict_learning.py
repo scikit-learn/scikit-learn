@@ -1796,6 +1796,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.fit_transform(X)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Fit the model from data in X and return the transformed data.
 
@@ -1813,8 +1814,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         V : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        self._validate_params()
-
         _check_positive_coding(method=self.fit_algorithm, positive=self.positive_code)
 
         method = "lasso_" + self.fit_algorithm
@@ -2435,6 +2434,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None):
         """Update the model using the data in X as a mini-batch.
 
@@ -2453,9 +2453,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             Return the instance itself.
         """
         has_components = hasattr(self, "components_")
-
-        if not has_components:
-            self._validate_params()
 
         X = self._validate_data(
             X, dtype=[np.float64, np.float32], order="C", reset=not has_components
