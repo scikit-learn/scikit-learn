@@ -638,11 +638,9 @@ class _BaseDiscreteNB(_BaseNB):
         if _force_alpha == "warn" and alpha_min < alpha_lower_bound:
             _force_alpha = False
             warnings.warn(
-                (
-                    "The default value for `force_alpha` will change to `True` in 1.4."
-                    " To suppress this warning, manually set the value of"
-                    " `force_alpha`."
-                ),
+                "The default value for `force_alpha` will change to `True` in 1.4."
+                " To suppress this warning, manually set the value of"
+                " `force_alpha`.",
                 FutureWarning,
             )
         if alpha_min < alpha_lower_bound and not _force_alpha:
@@ -1805,7 +1803,11 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         )
         n_estimators = len(all_jlls)
         log_prior = np.log(self.class_prior_)
-        return np.where(np.isinf(log_prior), -np.inf, np.sum(all_jlls, axis=0) - (n_estimators - 1) * log_prior)
+        return np.where(
+            np.isinf(log_prior),
+            -np.inf,
+            np.sum(all_jlls, axis=0) - (n_estimators - 1) * log_prior,
+        )
 
     def _validate_estimators(self, check_partial=False):
         try:
