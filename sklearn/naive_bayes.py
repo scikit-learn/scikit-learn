@@ -1906,7 +1906,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
 
     def _update_class_prior(self):
         """Update class prior after most of the fitting as done."""
-        if self.priors is None:  # calculcate empirical prior from counts
+        if self.priors is None:  # calculate empirical prior from counts
             priors = self.class_count_ / self.class_count_.sum()
         elif isinstance(self.priors, str):  # extract prior from estimator
             name = self.priors
