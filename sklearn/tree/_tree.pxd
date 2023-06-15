@@ -49,13 +49,6 @@ cdef class BaseTree:
     cdef SIZE_t value_stride             # The dimensionality of a vectorized output per sample
     cdef double* value                   # Array of values prediction values for each node
 
-    # Enables the use of tree to store distributions of the output to allow
-    # arbitrary usage of the the leaves. This is used in the quantile
-    # estimators for example.
-    # for storing samples at each leaf node with leaf's node ID as the key and
-    # the sample values as the value
-    cdef unordered_map[SIZE_t, vector[vector[DOUBLE_t]]] value_samples
-
     # Generic Methods: These are generic methods used by any tree.
     cdef int _resize(self, SIZE_t capacity) except -1 nogil
     cdef int _resize_c(self, SIZE_t capacity=*) except -1 nogil
@@ -121,9 +114,18 @@ cdef class Tree(BaseTree):
     cdef public SIZE_t n_outputs         # Number of outputs in y
     cdef public SIZE_t max_n_classes     # max(n_classes)
 
+    # Enables the use of tree to store distributions of the output to allow
+    # arbitrary usage of the the leaves. This is used in the quantile
+    # estimators for example.
+    # for storing samples at each leaf node with leaf's node ID as the key and
+    # the sample values as the value
+    cdef unordered_map[SIZE_t, vector[vector[DOUBLE_t]]] value_samples
+
     # Methods
     cdef cnp.ndarray _get_value_ndarray(self)
     cdef cnp.ndarray _get_node_ndarray(self)
+    cdef cnp.ndarray _get_value_samples_ndarray(self, SIZE_t node_id)
+    cdef cnp.ndarray _get_value_samples_keys(self)
 
     cpdef cnp.ndarray predict(self, object X)
 
@@ -146,7 +148,7 @@ cdef class TreeBuilder:
     cdef SIZE_t max_depth               # Maximal tree depth
     cdef double min_impurity_decrease   # Impurity threshold for early stopping
 
-    cdef unsigned char store_leaf_values # Whether to store leaf values
+    cdef unsigned char store_leaf_values    # Whether to store leaf values
 
     cpdef build(
         self,
@@ -154,7 +156,7 @@ cdef class TreeBuilder:
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=*,
-        const unsigned char[::1] feature_has_missing=*,
+        const unsigned char[::1] missing_values_in_feature_mask=*,
     )
 
     cdef _check_input(

@@ -104,10 +104,10 @@ cdef class Splitter(BaseSplitter):
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
-        const unsigned char[::1] feature_has_missing,
+        const unsigned char[::1] missing_values_in_feature_mask,
     ) except -1
 
-    cdef void node_samples(self, vector[vector[DOUBLE_t]]* dest) noexcept nogil
+    cdef void node_samples(self, vector[vector[DOUBLE_t]]& dest) noexcept nogil
 
     # Methods that allow modifications to stopping conditions
     cdef bint check_presplit_conditions(

@@ -27,7 +27,7 @@ from .utils.validation import _check_y
 from .utils.validation import _num_features
 from .utils.validation import _check_feature_names_in
 from .utils.validation import _generate_get_feature_names_out
-from .utils.validation import check_is_fitted
+from .utils.validation import _is_fitted, check_is_fitted
 from .utils._metadata_requests import _MetadataRequester
 from .utils.validation import _get_feature_names
 from .utils._estimator_html_repr import estimator_html_repr
@@ -1131,7 +1131,13 @@ def _fit_context(*, prefer_skip_nested_validation):
         @functools.wraps(fit_method)
         def wrapper(estimator, *args, **kwargs):
             global_skip_validation = get_config()["skip_parameter_validation"]
-            if not global_skip_validation:
+
+            # we don't want to validate again for each call to partial_fit
+            partial_fit_and_fitted = (
+                fit_method.__name__ == "partial_fit" and _is_fitted(estimator)
+            )
+
+            if not global_skip_validation and not partial_fit_and_fitted:
                 estimator._validate_params()
 
             with config_context(

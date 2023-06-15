@@ -50,7 +50,7 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 
-from sklearn.base import is_classifier
+from sklearn.base import is_classifier, _fit_context
 from sklearn.base import (
     ClassifierMixin,
     MultiOutputMixin,
@@ -221,6 +221,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             None,
             Interval(Integral, 1, None, closed="left"),
         ],
+        "store_leaf_values": [bool],
     }
 
     @abstractmethod
@@ -240,6 +241,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         max_samples=None,
         base_estimator="deprecated",
         max_bins=None,
+        store_leaf_values=False,
     ):
         super().__init__(
             estimator=estimator,
@@ -257,6 +259,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self.class_weight = class_weight
         self.max_samples = max_samples
         self.max_bins = max_bins
+        self.store_leaf_values = store_leaf_values
 
     def apply(self, X):
         """
@@ -333,6 +336,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         return sparse_hstack(indicators).tocsr(), n_nodes_ptr
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """
         Build a forest of trees from the training set (X, y).
@@ -360,8 +364,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         # Validate or convert input data
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
@@ -717,6 +719,139 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         return X_binned
 
+    def predict_quantiles(self, X, quantiles=0.5, method="nearest"):
+        """Predict class or regression value for X at given quantiles.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input data.
+        quantiles : float, optional
+            The quantiles at which to evaluate, by default 0.5 (median).
+        method : str, optional
+            The method to interpolate, by default 'linear'. Can be any keyword
+            argument accepted by :func:`np.quantile`.
+        check_input : bool, optional
+            Whether or not to check input, by default True.
+
+        Returns
+        -------
+        y : ndarray of shape (n_samples, n_quantiles) or
+                (n_samples, n_quantiles, n_outputs)
+            The predicted values.
+        """
+        if not self.store_leaf_values:
+            raise RuntimeError(
+                "Quantile prediction is not available when store_leaf_values=False"
+            )
+        check_is_fitted(self)
+        # Check data
+        X = self._validate_X_predict(X)
+
+        if not isinstance(quantiles, (np.ndarray, list)):
+            quantiles = np.array([quantiles])
+
+        # if we trained a binning tree, then we should re-bin the data
+        # XXX: this is inefficient and should be improved to be in line with what
+        # the Histogram Gradient Boosting Tree does, where the binning thresholds
+        # are passed into the tree itself, thus allowing us to set the node feature
+        # value thresholds within the tree itself.
+        if self.max_bins is not None:
+            X = self._bin_data(X, is_training_data=False).astype(DTYPE)
+
+        # Assign chunk of trees to jobs
+        # n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
+
+        # avoid storing the output of every estimator by summing them here
+        if self.n_outputs_ > 1:
+            y_hat = np.zeros(
+                (X.shape[0], len(quantiles), self.n_outputs_), dtype=np.float64
+            )
+        else:
+            y_hat = np.zeros((X.shape[0], len(quantiles)), dtype=np.float64)
+
+        # get (n_samples, n_estimators) indicator of leaf nodes
+        X_leaves = self.apply(X)
+
+        # we now want to aggregate all leaf samples across all trees for each sample
+        for idx in range(X.shape[0]):
+            # get leaf nodes for this sample
+            leaf_nodes = X_leaves[idx, :]
+
+            # (n_total_leaf_samples, n_outputs)
+            leaf_node_samples = np.vstack(
+                (
+                    est.leaf_nodes_samples_[leaf_nodes[jdx]]
+                    for jdx, est in enumerate(self.estimators_)
+                )
+            )
+
+            # get quantiles across all leaf node samples
+            y_hat[idx, ...] = np.quantile(
+                leaf_node_samples, quantiles, axis=0, interpolation=method
+            )
+
+            if is_classifier(self):
+                if self.n_outputs_ == 1:
+                    for i in range(len(quantiles)):
+                        class_pred_per_sample = y_hat[idx, i, :].squeeze().astype(int)
+                        y_hat[idx, ...] = self.classes_.take(
+                            class_pred_per_sample, axis=0
+                        )
+                else:
+                    for k in range(self.n_outputs_):
+                        for i in range(len(quantiles)):
+                            class_pred_per_sample = (
+                                y_hat[idx, i, k].squeeze().astype(int)
+                            )
+                            y_hat[idx, i, k] = self.classes_[k].take(
+                                class_pred_per_sample, axis=0
+                            )
+        return y_hat
+
+    def get_leaf_node_samples(self, X):
+        """For each datapoint x in X, get the training samples in the leaf node.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Dataset to apply the forest to.
+
+        Returns
+        -------
+        leaf_node_samples : a list of array-like of shape
+                (n_leaf_node_samples, n_outputs)
+            Each sample is represented by the indices of the training samples that
+            reached the leaf node. The ``n_leaf_node_samples`` may vary between
+            samples, since the number of samples that fall in a leaf node is
+            variable.
+        """
+        check_is_fitted(self)
+        # Check data
+        X = self._validate_X_predict(X)
+
+        # if we trained a binning tree, then we should re-bin the data
+        # XXX: this is inefficient and should be improved to be in line with what
+        # the Histogram Gradient Boosting Tree does, where the binning thresholds
+        # are passed into the tree itself, thus allowing us to set the node feature
+        # value thresholds within the tree itself.
+        if self.max_bins is not None:
+            X = self._bin_data(X, is_training_data=False).astype(DTYPE)
+
+        # Assign chunk of trees to jobs
+        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
+
+        # avoid storing the output of every estimator by summing them here
+        result = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+            delayed(_accumulate_leaf_nodes_samples)(e.get_leaf_node_samples, X)
+            for e in self.estimators_
+        )
+        leaf_nodes_samples = result[0]
+        for result_ in result[1:]:
+            for i, node_samples in enumerate(result_):
+                leaf_nodes_samples[i] = np.vstack((leaf_nodes_samples[i], node_samples))
+        return leaf_nodes_samples
+
 
 def _accumulate_prediction(predict, X, out, lock):
     """
@@ -732,6 +867,17 @@ def _accumulate_prediction(predict, X, out, lock):
         else:
             for i in range(len(out)):
                 out[i] += prediction[i]
+
+
+def _accumulate_leaf_nodes_samples(func, X):
+    """
+    This is a utility function for joblib's Parallel.
+
+    It can't go locally in ForestClassifier or ForestRegressor, because joblib
+    complains that it cannot pickle it when placed there.
+    """
+    leaf_nodes_samples = func(X, check_input=False)
+    return leaf_nodes_samples
 
 
 class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
@@ -759,6 +905,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         max_samples=None,
         base_estimator="deprecated",
         max_bins=None,
+        store_leaf_values=False,
     ):
         super().__init__(
             estimator=estimator,
@@ -774,6 +921,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             max_samples=max_samples,
             base_estimator=base_estimator,
             max_bins=max_bins,
+            store_leaf_values=store_leaf_values,
         )
 
     @staticmethod
@@ -1037,6 +1185,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         max_samples=None,
         base_estimator="deprecated",
         max_bins=None,
+        store_leaf_values=False,
     ):
         super().__init__(
             estimator,
@@ -1051,6 +1200,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             max_samples=max_samples,
             base_estimator=base_estimator,
             max_bins=max_bins,
+            store_leaf_values=store_leaf_values,
         )
 
     def predict(self, X):
@@ -1515,6 +1665,7 @@ class RandomForestClassifier(ForestClassifier):
         ccp_alpha=0.0,
         max_samples=None,
         max_bins=None,
+        store_leaf_values=False,
     ):
         super().__init__(
             estimator=DecisionTreeClassifier(),
@@ -1530,6 +1681,7 @@ class RandomForestClassifier(ForestClassifier):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "store_leaf_values",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1540,6 +1692,7 @@ class RandomForestClassifier(ForestClassifier):
             class_weight=class_weight,
             max_samples=max_samples,
             max_bins=max_bins,
+            store_leaf_values=store_leaf_values,
         )
 
         self.criterion = criterion
@@ -1858,6 +2011,7 @@ class RandomForestRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         max_bins=None,
+        store_leaf_values=False,
     ):
         super().__init__(
             estimator=DecisionTreeRegressor(),
@@ -1873,6 +2027,7 @@ class RandomForestRegressor(ForestRegressor):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "store_leaf_values",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1882,6 +2037,7 @@ class RandomForestRegressor(ForestRegressor):
             warm_start=warm_start,
             max_samples=max_samples,
             max_bins=max_bins,
+            store_leaf_values=store_leaf_values,
         )
 
         self.criterion = criterion
@@ -2210,6 +2366,7 @@ class ExtraTreesClassifier(ForestClassifier):
         ccp_alpha=0.0,
         max_samples=None,
         max_bins=None,
+        store_leaf_values=False,
     ):
         super().__init__(
             estimator=ExtraTreeClassifier(),
@@ -2225,6 +2382,7 @@ class ExtraTreesClassifier(ForestClassifier):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "store_leaf_values",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -2235,6 +2393,7 @@ class ExtraTreesClassifier(ForestClassifier):
             class_weight=class_weight,
             max_samples=max_samples,
             max_bins=max_bins,
+            store_leaf_values=store_leaf_values,
         )
 
         self.criterion = criterion
@@ -2534,6 +2693,7 @@ class ExtraTreesRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         max_bins=None,
+        store_leaf_values=False,
     ):
         super().__init__(
             estimator=ExtraTreeRegressor(),
@@ -2549,6 +2709,7 @@ class ExtraTreesRegressor(ForestRegressor):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "store_leaf_values",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -2558,6 +2719,7 @@ class ExtraTreesRegressor(ForestRegressor):
             warm_start=warm_start,
             max_samples=max_samples,
             max_bins=max_bins,
+            store_leaf_values=store_leaf_values,
         )
 
         self.criterion = criterion
@@ -2783,6 +2945,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         random_state=None,
         verbose=0,
         warm_start=False,
+        store_leaf_values=False,
     ):
         super().__init__(
             estimator=ExtraTreeRegressor(),
@@ -2797,6 +2960,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
                 "max_leaf_nodes",
                 "min_impurity_decrease",
                 "random_state",
+                "store_leaf_values",
             ),
             bootstrap=False,
             oob_score=False,
@@ -2805,6 +2969,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
             verbose=verbose,
             warm_start=warm_start,
             max_samples=None,
+            store_leaf_values=store_leaf_values,
         )
 
         self.max_depth = max_depth
@@ -2848,6 +3013,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         self.fit_transform(X, y, sample_weight=sample_weight)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, sample_weight=None):
         """
         Fit estimator and transform dataset.
@@ -2873,8 +3039,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
-        self._validate_params()
-
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=_num_samples(X))
         super().fit(X, y, sample_weight=sample_weight)

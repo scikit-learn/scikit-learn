@@ -258,9 +258,17 @@ cdef class Criterion(BaseCriterion):
 
     cdef void node_samples(
         self,
-        vector[vector[DOUBLE_t]]* dest
+        vector[vector[DOUBLE_t]]& dest
     ) noexcept nogil:
-        cdef SIZE_t i, j
+        """Copy the samples of the current node into dest.
+
+        Parameters
+        ----------
+        dest : reference vector[vector[DOUBLE_t]]
+            The vector of vectors where the samples should be copied.
+            This is passed by reference and modified in place.
+        """
+        cdef SIZE_t i, j, k
 
         # Resize the destination vector of vectors
         dest.resize(self.n_node_samples)
@@ -272,7 +280,8 @@ cdef class Criterion(BaseCriterion):
 
             # Get the sample values for each output
             for k in range(self.n_outputs):
-                dest[i][k].push_back(self.y[j, k])
+                dest[i].push_back(self.y[j, k])
+
 
 cdef inline void _move_sums_classification(
     ClassificationCriterion criterion,

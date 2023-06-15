@@ -29,11 +29,6 @@ random sampling procedures.
   `transform_algorithm` is not the same as `fit_algorithm` and the number of iterations
   is small. :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
 
-- |Fix| Treat more consistently small values in the `W` and `H` matrices during the
-  `fit` and `transform` steps of :class:`decomposition.NMF` and
-  :class:`decomposition.MiniBatchNMF` which can produce different results than previous
-  versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
-
 - |Enhancement| The `sample_weight` parameter now will be used in centroids
   initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
   and :class:`cluster.MiniBatchKMeans`.
@@ -43,6 +38,11 @@ random sampling procedures.
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Treat more consistently small values in the `W` and `H` matrices during the
+  `fit` and `transform` steps of :class:`decomposition.NMF` and
+  :class:`decomposition.MiniBatchNMF` which can produce different results than previous
+  versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
+
 - |Fix| :class:`decomposition.KernelPCA` may produce different results through
   `inverse_transform` if `gamma` is `None`. Now it will be chosen correctly as
   `1/n_features` of the data that it is fitted on, while previously it might be
@@ -50,6 +50,14 @@ random sampling procedures.
   A new attribute `gamma_` is provided for revealing the actual value of `gamma`
   used each time the kernel is called.
   :pr:`26337` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+Changed displays
+----------------
+
+- |Enhancement| :class:`model_selection.LearningCurveDisplay` displays both the
+  train and test curves by default. You can set `score_type="test"` to keep the
+  past behaviour.
+  :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changes impacting all modules
 -----------------------------
@@ -201,23 +209,9 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |API| The `sample_weight` parameter in `predict` for
-  :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
-  is now deprecated and will be removed in v1.5.
-  :pr:`25251` by :user:`Gleb Levitski <glevv>`.
-
-- |Enhancement| The `sample_weight` parameter now will be used in centroids
-  initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
-  and :class:`cluster.MiniBatchKMeans`.
-  This change will break backward compatibility, since numbers generated
-  from same random seeds will be different.
-  :pr:`25752` by :user:`Gleb Levitski <glevv>`,
-  :user:`Jérémie du Boisberranger <jeremiedbb>`,
-  :user:`Guillaume Lemaitre <glemaitre>`.
-
 - |MajorFeature| Added :class:`cluster.HDBSCAN`, a modern hierarchical density-based
   clustering algorithm. Similarly to :class:`cluster.OPTICS`, it can be seen as a
-  generalization of :class:`DBSCAN` by allowing for hierarchical instead of flat
+  generalization of :class:`cluster.DBSCAN` by allowing for hierarchical instead of flat
   clustering, however it varies in its approach from :class:`cluster.OPTICS`. This
   algorithm is very robust with respect to its hyperparameters' values and can
   be used on a wide variety of data without much, if any, tuning.
@@ -228,18 +222,44 @@ Changelog
 
   :pr:`26385` by :user:`Meekail Zain <micky774>`
 
+- |Enhancement| The `sample_weight` parameter now will be used in centroids
+  initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
+  and :class:`cluster.MiniBatchKMeans`.
+  This change will break backward compatibility, since numbers generated
+  from same random seeds will be different.
+  :pr:`25752` by :user:`Gleb Levitski <glevv>`,
+  :user:`Jérémie du Boisberranger <jeremiedbb>`,
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| The `sample_weight` parameter in `predict` for
+  :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
+  is now deprecated and will be removed in v1.5.
+  :pr:`25251` by :user:`Gleb Levitski <glevv>`.
+
+- |API| The `Xred` argument in :func:`cluster.FeatureAgglomeration.inverse_transform`
+  is renamed to `Xt` and will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
+
 :mod:`sklearn.compose`
 ......................
 
-- |Fix| `compose.ColumnTransformer` raises an informative error when the individual transformers of `ColumnTransformer`
-  output pandas dataframes with indexes that are not consistent with each other and the output is configured
-  to be pandas. :pr:`26286` by `Thomas Fan`_.
+- |Fix| `compose.ColumnTransformer` raises an informative error when the individual
+  transformers of `ColumnTransformer` output pandas dataframes with indexes that are
+  not consistent with each other and the output is configured to be pandas.
+  :pr:`26286` by `Thomas Fan`_.
 
 - |Fix| :class:`compose.ColumnTransformer` correctly sets the output of the
   remainder when `set_output` is called. :pr:`26323` by `Thomas Fan`_.
 
 :mod:`sklearn.covariance`
 .........................
+
+- |Fix| Allows `alpha=0` in :class:`covariance.GraphicalLasso` to be
+  consistent with :func:`covariance.graphical_lasso`.
+  :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
+
+- |Fix| :func:`covariance.empirical_covariance` now gives an informative
+  error message when input is not appropriate.
+  :pr:`26108` by :user:`Quentin Barthélemy <qbarthelemy>`.
 
 - |API| Deprecates `cov_init` in :func:`covariance.graphical_lasso` in 1.3 since
   the parameter has no effect. It will be removed in 1.5.
@@ -256,20 +276,13 @@ Changelog
   :func:`covariance.graphical_lasso_path`, and :class:`covariance.GraphicalLassoCV`.
   :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
 
-- |Fix| Allows `alpha=0` in :class:`covariance.GraphicalLasso` to be
-  consistent with :func:`covariance.graphical_lasso`.
-  :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
-
-- |Fix| :func:`covariance.empirical_covariance` now gives an informative
-  error message when input is not appropriate.
-  :pr:`26108` by :user:`Quentin Barthélemy <qbarthelemy>`.
-
 :mod:`sklearn.datasets`
 .......................
 
-- |API| The `data_transposed` argument of :func:`datasets.make_sparse_coded_signal`
-  is deprecated and will be removed in v1.5.
-  :pr:`25784` by :user:`Jérémie du Boisberranger`.
+- |Enhancement| Allows to overwrite the parameters used to open the ARFF file using
+  the parameter `read_csv_kwargs` in :func:`datasets.fetch_openml` when using the
+  pandas parser.
+  :pr:`26433` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :func:`datasets.fetch_openml` returns improved data types when
   `as_frame=True` and `parser="liac-arff"`. :pr:`26386` by `Thomas Fan`_.
@@ -279,27 +292,34 @@ Changelog
   the pandas parser. The parameter `read_csv_kwargs` allows to overwrite this behaviour.
   :pr:`26551` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Enhancement| Allows to overwrite the parameters used to open the ARFF file using
-  the parameter `read_csv_kwargs` in :func:`datasets.fetch_openml` when using the
-  pandas parser.
-  :pr:`26433` by :user:`Guillaume Lemaitre <glemaitre>`.
+- |Fix| :func:`dataasets.fetch_openml` will consistenly use `np.nan` as missing marker
+  with both parsers `"pandas"` and `"liac-arff"`.
+  :pr:`26579` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| The `data_transposed` argument of :func:`datasets.make_sparse_coded_signal`
+  is deprecated and will be removed in v1.5.
+  :pr:`25784` by :user:`Jérémie du Boisberranger`.
 
 :mod:`sklearn.decomposition`
 ............................
-
-- |Enhancement| :class:`decomposition.DictionaryLearning` now accepts the parameter
-  `callback` for consistency with the function :func:`decomposition.dict_learning`.
-  :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
 
 - |Efficiency| :class:`decomposition.MiniBatchDictionaryLearning` and
   :class:`decomposition.MiniBatchSparsePCA` are now faster for small batch sizes by
   avoiding duplicate validations.
   :pr:`25490` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Enhancement| :class:`decomposition.DictionaryLearning` now accepts the parameter
+  `callback` for consistency with the function :func:`decomposition.dict_learning`.
+  :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
+
 - |Fix| Treat more consistently small values in the `W` and `H` matrices during the
   `fit` and `transform` steps of :class:`decomposition.NMF` and
   :class:`decomposition.MiniBatchNMF` which can produce different results than previous
   versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
+
+- |API| The `W` argument in :func:`decomposition.NMF.inverse_transform` and
+  :class:`decomposition.MiniBatchNMF.inverse_transform` is renamed to `Xt` and
+  will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
@@ -364,6 +384,7 @@ Changelog
 
 :mod:`sklearn.exception`
 ........................
+
 - |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
   when a scikit-learn estimator is unpickled with a scikit-learn version that is
   inconsistent with the sckit-learn version the estimator was pickled with.
@@ -393,6 +414,9 @@ Changelog
 - |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
   :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
 
+- |Fix| :class:`impute.IterativeImputer` now correctly preserves the Pandas
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -420,12 +444,6 @@ Changelog
   now preserve dtype for `numpy.float32`.
   :pr:`25587` by :user:`Omar Salman <OmarManzoor>`.
 
-- |API| Deprecates `n_iter` in favor of `max_iter` in
-  :class:`linear_model.BayesianRidge` and :class:`linear_model.ARDRegression`.
-  `n_iter` will be removed in scikit-learn 1.5. This change makes those
-  estimators consistent with the rest of estimators.
-  :pr:`25697` by :user:`John Pangas <jpangas>`.
-
 - |Enhancement| The `n_iter_` attribute has been included in
   :class:`linear_model.ARDRegression` to expose the actual number of iterations
   required to reach the stopping criterion.
@@ -436,8 +454,34 @@ Changelog
   on linearly separable problems.
   :pr:`25214` by `Tom Dupre la Tour`_.
 
+- |API| Deprecates `n_iter` in favor of `max_iter` in
+  :class:`linear_model.BayesianRidge` and :class:`linear_model.ARDRegression`.
+  `n_iter` will be removed in scikit-learn 1.5. This change makes those
+  estimators consistent with the rest of estimators.
+  :pr:`25697` by :user:`John Pangas <jpangas>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| :class:`manifold.Isomap` now correctly preserves the Pandas
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
+
 :mod:`sklearn.metrics`
 ......................
+
+- |Feature| Adds `zero_division=np.nan` to multiple classification metrics:
+  :func:`metrics.precision_score`, :func:`metrics.recall_score`,
+  :func:`metrics.f1_score`, :func:`metrics.fbeta_score`,
+  :func:`metrics.precision_recall_fscore_support`,
+  :func:`metrics.classification_report`. When `zero_division=np.nan` and there is a
+  zero division, the metric is undefined and is excluded from averaging. When not used
+  for averages, the value returned is `np.nan`.
+  :pr:`25531` by :user:`Marc Torrellas Socastro <marctorsoc>`.
+
+- |Feature| :func:`metrics.average_precision_score` now supports the
+  multiclass case.
+  :pr:`17388` by :user:`Geoffrey Bolmier <gbolmier>` and
+  :pr:`24769` by :user:`Ashwin Mathur <awinml>`.
 
 - |Efficiency| The computation of the expected mutual information in
   :func:`metrics.adjusted_mutual_info_score` is now faster when the number of
@@ -445,27 +489,6 @@ Changelog
   :pr:`25713` by :user:`Kshitij Mathur <Kshitij68>`,
   :user:`Guillaume Lemaitre <glemaitre>`, :user:`Omar Salman <OmarManzoor>` and
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-- |Feature| Adds `zero_division=np.nan` to multiple classification metrics:
-  :func:`precision_score`, :func:`recall_score`, :func:`f1_score`,
-  :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
-  :func:`classification_report`. When `zero_division=np.nan` and there is a
-  zero division, the metric is undefined and is excluded from averaging. When not used
-  for averages, the value returned is `np.nan`.
-  :pr:`25531` by :user:`Marc Torrellas Socastro <marctorsoc>`.
-
-- |Fix| :func:`metric.manhattan_distances` now supports readonly sparse datasets.
-  :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
-
-- |Fix| Fixed :func:`classification_report` so that empty input will return
-  `np.nan`. Previously, "macro avg" and `weighted avg` would return
-  e.g. `f1-score=np.nan` and `f1-score=0.0`, being inconsistent. Now, they
-  both return `np.nan`.
-  :pr:`25531` by :user:`Marc Torrellas Socastro <marctorsoc>`.
-
-- |Fix| :func:`metric.ndcg_score` now gives a meaningful error message for input of
-  length 1.
-  :pr:`25672` by :user:`Lene Preuss <lene>` and :user:`Wei-Chun Chu <wcchu>`.
 
 - |Enhancement| :class:`metrics.silhouette_samples` nows accepts a sparse
   matrix of pairwise distances between samples, or a feature array.
@@ -492,17 +515,23 @@ Changelog
   chance level. This line is exposed in the `chance_level_` attribute.
   :pr:`26019` by :user:`Yao Xiao <Charlie-XIAO>`.
 
-- |Fix| :func:`log_loss` raises a warning if the values of the parameter `y_pred` are
-  not normalized, instead of actually normalizing them in the metric. Starting from
-  1.5 this will raise an error. :pr:`25299` by :user:`Omar Salman <OmarManzoor`.
+- |Fix| :func:`metrics.manhattan_distances` now supports readonly sparse datasets.
+  :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
 
-- |API| The `eps` parameter of the :func:`log_loss` has been deprecated and will be
-  removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
+- |Fix| Fixed :func:`metrics.classification_report` so that empty input will return
+  `np.nan`. Previously, "macro avg" and `weighted avg` would return
+  e.g. `f1-score=np.nan` and `f1-score=0.0`, being inconsistent. Now, they
+  both return `np.nan`.
+  :pr:`25531` by :user:`Marc Torrellas Socastro <marctorsoc>`.
 
-- |Feature| :func:`metrics.average_precision_score` now supports the
-  multiclass case.
-  :pr:`17388` by :user:`Geoffrey Bolmier <gbolmier>` and
-  :pr:`24769` by :user:`Ashwin Mathur <awinml>`.
+- |Fix| :func:`metrics.ndcg_score` now gives a meaningful error message for input of
+  length 1.
+  :pr:`25672` by :user:`Lene Preuss <lene>` and :user:`Wei-Chun Chu <wcchu>`.
+
+- |Fix| :func:`metrics.log_loss` raises a warning if the values of the parameter
+  `y_pred` are not normalized, instead of actually normalizing them in the metric.
+  Starting from 1.5 this will raise an error.
+  :pr:`25299` by :user:`Omar Salman <OmarManzoor`.
 
 - |Fix| In :func:`metrics.roc_curve`, use the threshold value `np.inf` instead of
   arbitrary `max(y_score) + 1`. This threshold is associated with the ROC curve point
@@ -514,6 +543,9 @@ Changelog
   `'matching'` anymore.
   :pr:`26264` by :user:`Barata T. Onggo <magnusbarata>`
 
+- |API| The `eps` parameter of the :func:`metrics.log_loss` has been deprecated and
+  will be removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.gaussian_process`
 ...............................
 
@@ -523,6 +555,18 @@ Changelog
 
 :mod:`sklearn.model_selection`
 ..............................
+
+- |MajorFeature| Added the class :class:`model_selection.ValidationCurveDisplay`
+  that allows easy plotting of validation curves obtained by the function
+  :func:`model_selection.validation_curve`.
+  :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| The parameter `log_scale` in the class
+  :class:`model_selection.LearningCurveDisplay` has been deprecated in 1.3 and
+  will be removed in 1.5. The default scale can be overriden by setting it
+  directly on the `ax` object and will be set automatically from the spacing
+  of the data points otherwise.
+  :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| :func:`model_selection.cross_validate` accepts a new parameter
   `return_indices` to return the train-test indices of each cv split.
@@ -546,14 +590,14 @@ Changelog
 :mod:`sklearn.neighbors`
 ........................
 
-- |Fix| Remove support for `KulsinskiDistance` in :class:`neighbors.BallTree`. This
-  dissimilarity is not a metric and cannot be supported by the BallTree.
-  :pr:`25417` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 - |Enhancement| The performance of :meth:`neighbors.KNeighborsClassifier.predict`
   and of :meth:`neighbors.KNeighborsClassifier.predict_proba` has been improved
   when `n_neighbors` is large and `algorithm="brute"` with non Euclidean metrics.
   :pr:`24076` by :user:`Meekail Zain <micky774>`, :user:`Julien Jerphanion <jjerphan>`.
+
+- |Fix| Remove support for `KulsinskiDistance` in :class:`neighbors.BallTree`. This
+  dissimilarity is not a metric and cannot be supported by the BallTree.
+  :pr:`25417` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |API| The support for metrics other than `euclidean` and `manhattan` and for
   callables in :class:`neighbors.NearestNeighbors` is deprecated and will be removed in
@@ -592,10 +636,24 @@ Changelog
   categorical encoding based on target mean conditioned on the value of the
   category. :pr:`25334` by `Thomas Fan`_.
 
+- |Feature| :class:`preprocessing.OrdinalEncoder` now supports grouping
+  infrequent categories into a single feature. Grouping infrequent categories
+  is enabled by specifying how to select infrequent categories with
+  `min_frequency` or `max_categories`. :pr:`25677` by `Thomas Fan`_.
+
+- |Enhancement| :class:`preprocessing.PolynomialFeatures` now calculates the
+  number of expanded terms a-priori when dealing with sparse `csr` matrices
+  in order to optimize the choice of `dtype` for `indices` and `indptr`. It
+  can now output `csr` matrices with `np.int32` `indices/indptr` components
+  when there are few enough elements, and will automatically use `np.int64`
+  for sufficiently large matrices.
+  :pr:`20524` by :user:`niuk-a <niuk-a>` and
+  :pr:`23731` by :user:`Meekail Zain <micky774>`
+
 - |Enhancement| A new parameter `sparse_output` was added to
-  :class:`SplineTransformer`, available as of SciPy 1.8. If `sparse_output=True`,
-  :class:`SplineTransformer` returns a sparse CSR matrix.
-  :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
+  :class:`preprocessing.SplineTransformer`, available as of SciPy 1.8. If
+  `sparse_output=True`, :class:`preprocessing.SplineTransformer` returns a sparse
+  CSR matrix. :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| Adds a `feature_name_combiner` parameter to
   :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
@@ -610,27 +668,34 @@ Changelog
   :pr:`24935` by :user:`Seladus <seladus>`, :user:`Guillaume Lemaitre <glemaitre>`, and
   :user:`Dea María Léon <deamarialeon>`, :pr:`25257` by :user:`Gleb Levitski <glevv>`.
 
-- |Feature| :class:`preprocessing.OrdinalEncoder` now supports grouping
-  infrequent categories into a single feature. Grouping infrequent categories
-  is enabled by specifying how to select infrequent categories with
-  `min_frequency` or `max_categories`. :pr:`25677` by `Thomas Fan`_.
-
 - |Enhancement| Subsampling through the `subsample` parameter can now be used in
   :class:`preprocessing.KBinsDiscretizer` regardless of the strategy used.
   :pr:`26424` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |API| The default value of the `subsample` parameter of
-  :class:`preprocessing.KBinsDiscretizer` will change from `None` to `200_000` in
-  version 1.5 when `strategy="kmeans"` or `strategy="uniform"`.
-  :pr:`26424` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+- |Fix| :class:`preprocessing.AdditiveChi2Sampler` is now stateless.
+  The `sample_interval_` attribute is deprecated and will be removed in 1.5.
+  :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
 - |Fix| :class:`AdditiveChi2Sampler` is now stateless.
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
+- |Fix| :class:`preprocessing.PowerTransformer` now correctly preserves the Pandas
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
+
 - |Fix| :class:`preprocessing.PowerTransformer` now correcly raises error when
   using `method="box-cox"` on data with a constant `np.nan` column.
   :pr:`26400` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |Fix| :class:`preprocessing.PowerTransformer` with `method="yeo-johnson"` now leaves
+  constant features unchanged instead of transforming with an arbitrary value for
+  the `lambdas_` fitted parameter.
+  :pr:`26566` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| The default value of the `subsample` parameter of
+  :class:`preprocessing.KBinsDiscretizer` will change from `None` to `200_000` in
+  version 1.5 when `strategy="kmeans"` or `strategy="uniform"`.
+  :pr:`26424` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.svm`
 ..................
@@ -660,26 +725,6 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |API| :func:`estimator_checks.check_transformers_unfitted_stateless` has been
-  introduced to ensure stateless transformers don't raise `NotFittedError`
-  during `transform` with no prior call to `fit` or `fit_transform`.
-  :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
-
-- |Enhancement| :class:`preprocessing.PolynomialFeatures` now calculates the
-  number of expanded terms a-priori when dealing with sparse `csr` matrices
-  in order to optimize the choice of `dtype` for `indices` and `indptr`. It
-  can now output `csr` matrices with `np.int32` `indices/indptr` components
-  when there are few enough elements, and will automatically use `np.int64`
-  for sufficiently large matrices.
-  :pr:`20524` by :user:`niuk-a <niuk-a>` and
-  :pr:`23731` by :user:`Meekail Zain <micky774>`
-
-- |API| A `FutureWarning` is now raised when instantiating a class which inherits from
-  a deprecated base class (i.e. decorated by :class:`utils.deprecated`) and which
-  overrides the `__init__` method.
-  :pr:`25733` by :user:`Brigitta Sipőcz <bsipocz>` and
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
 - |FIX| Fixes :func:`utils.validation.check_array` to properly convert pandas
   extension arrays. :pr:`25813` and :pr:`26106` by `Thomas Fan`_.
 
@@ -687,18 +732,29 @@ Changelog
   extension arrays and object dtypes by return an ndarray with object dtype.
   :pr:`25814` by `Thomas Fan`_.
 
+- |API| :func:`utils.estimator_checks.check_transformers_unfitted_stateless` has been
+  introduced to ensure stateless transformers don't raise `NotFittedError`
+  during `transform` with no prior call to `fit` or `fit_transform`.
+  :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
+
+- |API| A `FutureWarning` is now raised when instantiating a class which inherits from
+  a deprecated base class (i.e. decorated by :class:`utils.deprecated`) and which
+  overrides the `__init__` method.
+  :pr:`25733` by :user:`Brigitta Sipőcz <bsipocz>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.semi_supervised`
 ..............................
 
-- |Enhancement| :meth:`LabelSpreading.fit` and :meth:`LabelPropagation.fit` now
-  accepts sparse metrics.
+- |Enhancement| :meth:`semi_supervised.LabelSpreading.fit` and
+  :meth:`semi_supervised.LabelPropagation.fit` now accepts sparse metrics.
   :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
 
 Miscellaneous
 .............
 
-- |Enhancement| Replace obsolete exceptions EnvironmentError, IOError and
-  WindowsError.
+- |Enhancement| Replace obsolete exceptions `EnvironmentError`, `IOError` and
+  `WindowsError`.
   :pr:`26466` by :user:`Dimitri Papadopoulos ORfanos <DimitriPapadopoulos>`.
 
 Code and Documentation Contributors

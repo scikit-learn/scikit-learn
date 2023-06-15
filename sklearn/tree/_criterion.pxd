@@ -92,7 +92,7 @@ cdef class Criterion(BaseCriterion):
 
     cdef void node_samples(
         self,
-        vector[vector[DOUBLE_t]]* dest
+        vector[vector[DOUBLE_t]]& dest
     ) noexcept nogil
 
 cdef class ClassificationCriterion(Criterion):

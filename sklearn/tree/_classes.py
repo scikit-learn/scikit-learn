@@ -31,6 +31,7 @@ from sklearn.base import clone
 from sklearn.base import RegressorMixin
 from sklearn.base import is_classifier
 from sklearn.base import MultiOutputMixin
+from sklearn.base import _fit_context
 from sklearn.utils import Bunch
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import _check_sample_weight
@@ -120,6 +121,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "max_leaf_nodes": [Interval(Integral, 2, None, closed="left"), None],
         "min_impurity_decrease": [Interval(Real, 0.0, None, closed="left")],
         "ccp_alpha": [Interval(Real, 0.0, None, closed="left")],
+        "store_leaf_values": [bool],
     }
 
     @abstractmethod
@@ -138,6 +140,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         min_impurity_decrease,
         class_weight=None,
         ccp_alpha=0.0,
+        store_leaf_values=False,
     ):
         self.criterion = criterion
         self.splitter = splitter
@@ -151,6 +154,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.min_impurity_decrease = min_impurity_decrease
         self.class_weight = class_weight
         self.ccp_alpha = ccp_alpha
+        self.store_leaf_values = store_leaf_values
 
     def get_depth(self):
         """Return the depth of the decision tree.
@@ -180,7 +184,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _support_missing_values(self, X):
         return not issparse(X) and self._get_tags()["allow_nan"]
 
-    def _compute_feature_has_missing(self, X):
+    def _compute_missing_values_in_feature_mask(self, X):
         """Return boolean mask denoting if there are missing values for each feature.
 
         This method also ensures that X is finite.
@@ -192,7 +196,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        feature_has_missing : ndarray of shape (n_features,), or None
+        missing_values_in_feature_mask : ndarray of shape (n_features,), or None
             Missing value mask. If missing values are not supported or there
             are no missing values, return None.
         """
@@ -213,13 +217,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if not np.isnan(overall_sum):
             return None
 
-        feature_has_missing = _any_isnan_axis0(X)
-        return feature_has_missing
+        missing_values_in_feature_mask = _any_isnan_axis0(X)
+        return missing_values_in_feature_mask
 
     def _fit(
-        self, X, y, sample_weight=None, check_input=True, feature_has_missing=None
+        self,
+        X,
+        y,
+        sample_weight=None,
+        check_input=True,
+        missing_values_in_feature_mask=None,
     ):
-        self._validate_params()
         random_state = check_random_state(self.random_state)
 
         if check_input:
@@ -227,7 +235,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # We can't pass multi_output=True because that would allow y to be
             # csr.
 
-            # _compute_feature_has_missing will check for finite values and
+            # _compute_missing_values_in_feature_mask will check for finite values and
             # compute the missing mask if the tree supports missing values
             check_X_params = dict(
                 dtype=DTYPE, accept_sparse="csc", force_all_finite=False
@@ -240,7 +248,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             else:
                 X = self._validate_data(X, **check_X_params)
 
-            feature_has_missing = self._compute_feature_has_missing(X)
+            missing_values_in_feature_mask = (
+                self._compute_missing_values_in_feature_mask(X)
+            )
             if issparse(X):
                 X.sort_indices()
 
@@ -388,7 +398,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             X,
             y,
             sample_weight,
-            feature_has_missing,
+            missing_values_in_feature_mask,
             min_samples_leaf,
             min_weight_leaf,
             max_leaf_nodes,
@@ -397,6 +407,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             random_state,
         )
 
+        if self.store_leaf_values:
+            self.leaf_nodes_samples_ = self.tree_.leaf_nodes_samples
+
         return self
 
     def _build_tree(
@@ -404,7 +417,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         X,
         y,
         sample_weight,
-        feature_has_missing,
+        missing_values_in_feature_mask,
         min_samples_leaf,
         min_weight_leaf,
         max_leaf_nodes,
@@ -483,6 +496,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_weight_leaf,
                 max_depth,
                 self.min_impurity_decrease,
+                self.store_leaf_values,
             )
         else:
             builder = BestFirstTreeBuilder(
@@ -493,9 +507,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 max_depth,
                 max_leaf_nodes,
                 self.min_impurity_decrease,
+                self.store_leaf_values,
             )
 
-        builder.build(self.tree_, X, y, sample_weight, feature_has_missing)
+        builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask)
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
@@ -551,6 +566,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
+
+        # proba is a count matrix of leaves that fall into
+        # (n_samples, n_outputs, max_n_classes) array
         proba = self.tree_.predict(X)
         n_samples = X.shape[0]
 
@@ -576,6 +594,128 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
             else:
                 return proba[:, :, 0]
+
+    def get_leaf_node_samples(self, X, check_input=True):
+        """For each datapoint x in X, get the training samples in the leaf node.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Dataset to apply the forest to.
+
+        Returns
+        -------
+        leaf_nodes_samples : a list of array-like of shape
+                (n_leaf_node_samples, n_outputs)
+            Each sample is represented by the indices of the training samples that
+            reached the leaf node. The ``n_leaf_node_samples`` may vary between
+            samples, since the number of samples that fall in a leaf node is
+            variable.
+        """
+        if not self.store_leaf_values:
+            raise RuntimeError(
+                "leaf node samples are not stored when store_leaf_values=False"
+            )
+
+        # get indices of leaves per sample (n_samples,)
+        X_leaves = self.apply(X, check_input=check_input)
+        n_samples = X_leaves.shape[0]
+
+        # get array of samples per leaf (n_node_samples, n_outputs)
+        leaf_samples = self.tree_.leaf_nodes_samples
+
+        leaf_nodes_samples = []
+        for idx in range(n_samples):
+            leaf_id = X_leaves[idx]
+            leaf_nodes_samples.append(leaf_samples[leaf_id])
+        return leaf_nodes_samples
+
+    def predict_quantiles(self, X, quantiles=0.5, method="nearest", check_input=True):
+        """Predict class or regression value for X at given quantiles.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input data.
+        quantiles : float, optional
+            The quantiles at which to evaluate, by default 0.5 (median).
+        method : str, optional
+            The method to interpolate, by default 'linear'. Can be any keyword
+            argument accepted by :func:`np.quantile`.
+        check_input : bool, optional
+            Whether or not to check input, by default True.
+
+        Returns
+        -------
+        predictions : array-like of shape (n_samples, n_outputs, len(quantiles))
+            The predicted quantiles.
+        """
+        if not self.store_leaf_values:
+            raise RuntimeError(
+                "Predicting quantiles requires that the tree stores leaf node samples."
+            )
+
+        check_is_fitted(self)
+
+        # Check data
+        X = self._validate_X_predict(X, check_input)
+
+        if not isinstance(quantiles, (np.ndarray, list)):
+            quantiles = np.array([quantiles])
+
+        # get indices of leaves per sample
+        X_leaves = self.apply(X)
+
+        # get array of samples per leaf (n_node_samples, n_outputs)
+        leaf_samples = self.tree_.leaf_nodes_samples
+
+        # compute quantiles (n_samples, n_quantiles, n_outputs)
+        n_samples = X.shape[0]
+        n_quantiles = len(quantiles)
+        proba = np.zeros((n_samples, n_quantiles, self.n_outputs_))
+        for idx, leaf_id in enumerate(X_leaves):
+            # predict by taking the quantile across the samples in the leaf for
+            # each output
+            proba[idx, ...] = np.quantile(
+                leaf_samples[leaf_id], quantiles, axis=0, interpolation=method
+            )
+
+        # Classification
+        if is_classifier(self):
+            if self.n_outputs_ == 1:
+                # return the class with the highest probability for each quantile
+                # (n_samples, n_quantiles)
+                class_preds = np.zeros(
+                    (n_samples, n_quantiles), dtype=self.classes_.dtype
+                )
+                for i in range(n_quantiles):
+                    class_pred_per_sample = (
+                        proba[:, i, :].squeeze().astype(self.classes_.dtype)
+                    )
+                    class_preds[:, i] = self.classes_.take(
+                        class_pred_per_sample, axis=0
+                    )
+                return class_preds
+            else:
+                class_type = self.classes_[0].dtype
+                predictions = np.zeros(
+                    (n_samples, n_quantiles, self.n_outputs_), dtype=class_type
+                )
+                for k in range(self.n_outputs_):
+                    for i in range(n_quantiles):
+                        class_pred_per_sample = proba[:, i, k].squeeze().astype(int)
+                        predictions[:, i, k] = self.classes_[k].take(
+                            class_pred_per_sample, axis=0
+                        )
+
+                return predictions
+        # Regression
+        else:
+            if self.n_outputs_ == 1:
+                return proba[:, :, 0]
+
+            else:
+                return proba
 
     def apply(self, X, check_input=True):
         """Return the index of the leaf that each sample is predicted as.
@@ -851,6 +991,16 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         .. versionadded:: 0.22
 
+    store_leaf_values : bool, default=False
+        Whether to store the samples that fall into leaves in the ``tree_`` attribute.
+        Each leaf will store a 2D array corresponding to the samples that fall into it
+        keyed by node_id.
+
+        XXX: This is currently experimental and may change without notice.
+        Moreover, it can be improved upon since storing the samples twice is not ideal.
+        One could instead store the indices in ``y_train`` that fall into each leaf,
+        which would lower RAM/diskspace usage.
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray
@@ -895,6 +1045,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
+
+    leaf_nodes_samples_ : dict
+        A dictionary of leaf node index and the y_train samples in that leaf.
 
     See Also
     --------
@@ -965,6 +1118,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         min_impurity_decrease=0.0,
         class_weight=None,
         ccp_alpha=0.0,
+        store_leaf_values=False,
     ):
         super().__init__(
             criterion=criterion,
@@ -979,8 +1133,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             ccp_alpha=ccp_alpha,
+            store_leaf_values=store_leaf_values,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree classifier from the training set (X, y).
 
@@ -1327,6 +1483,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
         ccp_alpha=0.0,
+        store_leaf_values=False,
     ):
         super().__init__(
             criterion=criterion,
@@ -1340,8 +1497,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             ccp_alpha=ccp_alpha,
+            store_leaf_values=store_leaf_values,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree regressor from the training set (X, y).
 
@@ -1653,6 +1812,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         min_impurity_decrease=0.0,
         class_weight=None,
         ccp_alpha=0.0,
+        store_leaf_values=False,
     ):
         super().__init__(
             criterion=criterion,
@@ -1667,6 +1827,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             min_impurity_decrease=min_impurity_decrease,
             random_state=random_state,
             ccp_alpha=ccp_alpha,
+            store_leaf_values=store_leaf_values,
         )
 
 
@@ -1880,6 +2041,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         min_impurity_decrease=0.0,
         max_leaf_nodes=None,
         ccp_alpha=0.0,
+        store_leaf_values=False,
     ):
         super().__init__(
             criterion=criterion,
@@ -1893,4 +2055,5 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             min_impurity_decrease=min_impurity_decrease,
             random_state=random_state,
             ccp_alpha=ccp_alpha,
+            store_leaf_values=store_leaf_values,
         )

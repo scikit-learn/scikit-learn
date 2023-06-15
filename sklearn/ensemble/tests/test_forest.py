@@ -1984,3 +1984,54 @@ def test_regression_criterion_withbins(name, criterion):
         criterion,
         score,
     )
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_multioutput_quantiles(name):
+    # Check estimators on multi-output problems.
+    X_train = [
+        [-2, -1],
+        [-1, -1],
+        [-1, -2],
+        [1, 1],
+        [1, 2],
+        [2, 1],
+        [-2, 1],
+        [-1, 1],
+        [-1, 2],
+        [2, -1],
+        [1, -1],
+        [1, -2],
+    ]
+    y_train = [
+        [-1, 0],
+        [-1, 0],
+        [-1, 0],
+        [1, 1],
+        [1, 1],
+        [1, 1],
+        [-1, 2],
+        [-1, 2],
+        [-1, 2],
+        [1, 3],
+        [1, 3],
+        [1, 3],
+    ]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+    est = FOREST_ESTIMATORS[name](
+        random_state=0, bootstrap=False, store_leaf_values=True
+    )
+    est.fit(X_train, y_train)
+
+    y_pred = est.predict_quantiles(X_test, quantiles=[0.25, 0.5, 0.75])
+    assert_array_almost_equal(y_pred[:, 1, :], y_test)
+    assert_array_almost_equal(y_pred[:, 0, :], y_test)
+    assert_array_almost_equal(y_pred[:, 2, :], y_test)
+
+    # test the leaf nodes samples
+    leaf_nodes_samples = est.get_leaf_node_samples(X_test)
+    assert len(leaf_nodes_samples) == len(X_test)
+    for node_samples in leaf_nodes_samples:
+        assert node_samples.shape[1] == est.n_outputs_

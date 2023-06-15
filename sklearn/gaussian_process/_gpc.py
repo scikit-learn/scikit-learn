@@ -13,6 +13,7 @@ import scipy.optimize
 from scipy.special import erf, expit
 
 from ..base import BaseEstimator, ClassifierMixin, clone
+from ..base import _fit_context
 from .kernels import Kernel, RBF, CompoundKernel, ConstantKernel as C
 from ..utils.validation import check_is_fitted
 from ..utils import check_random_state
@@ -679,6 +680,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self.multi_class = multi_class
         self.n_jobs = n_jobs
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit Gaussian process classification model.
 
@@ -695,8 +697,6 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         if isinstance(self.kernel, CompoundKernel):
             raise ValueError("kernel cannot be a CompoundKernel")
 

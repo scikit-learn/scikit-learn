@@ -100,7 +100,7 @@ cdef class TreeBuilder:
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
-        const unsigned char[::1] feature_has_missing=None,
+        const unsigned char[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -182,7 +182,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
-        const unsigned char[::1] feature_has_missing=None,
+        const unsigned char[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -208,7 +208,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double min_impurity_decrease = self.min_impurity_decrease
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight, feature_has_missing)
+        splitter.init(X, y, sample_weight, missing_values_in_feature_mask)
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -228,8 +228,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef bint first = 1
         cdef SIZE_t max_depth_seen = -1
         cdef int rc = 0
-
-        cdef int node_idx
 
         cdef stack[StackRecord] builder_stack
         cdef StackRecord stack_record
@@ -319,11 +317,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "impurity": split.impurity_left,
                         "n_constant_features": n_constant_features})
                 elif self.store_leaf_values and is_leaf:
-                    with gil:
-                        print('Storing leaf values...')
-
                     # copy leaf values to leaf_values array
-                    splitter.node_samples(&tree.value_samples[node_id])
+                    splitter.node_samples(tree.value_samples[node_id])
 
                 if depth > max_depth_seen:
                     max_depth_seen = depth
@@ -406,7 +401,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
-        const unsigned char[::1] feature_has_missing=None,
+        const unsigned char[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -418,7 +413,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t max_leaf_nodes = self.max_leaf_nodes
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight, feature_has_missing)
+        splitter.init(X, y, sample_weight, missing_values_in_feature_mask)
 
         cdef vector[FrontierRecord] frontier
         cdef FrontierRecord record
@@ -459,6 +454,9 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     node.feature = _TREE_UNDEFINED
                     node.threshold = _TREE_UNDEFINED
 
+                    if self.store_leaf_values:
+                        # copy leaf values to leaf_values array
+                        splitter.node_samples(tree.value_samples[record.node_id])
                 else:
                     # Node is expandable
 
@@ -1321,6 +1319,14 @@ cdef class Tree(BaseTree):
     def value(self):
         return self._get_value_ndarray()[:self.node_count]
 
+    @property
+    def leaf_nodes_samples(self):
+        leaf_node_samples = dict()
+        keys = self._get_value_samples_keys()
+        for node_id in keys:
+            leaf_node_samples[node_id] = self._get_value_samples_ndarray(node_id)
+        return leaf_node_samples
+
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
     def __cinit__(self, int n_features, cnp.ndarray n_classes, int n_outputs):
@@ -1374,6 +1380,7 @@ cdef class Tree(BaseTree):
         d["node_count"] = self.node_count
         d["nodes"] = self._get_node_ndarray()
         d["values"] = self._get_value_ndarray()
+        d['value_samples'] = self.leaf_nodes_samples
         return d
 
     def __setstate__(self, d):
@@ -1406,6 +1413,35 @@ cdef class Tree(BaseTree):
                self.capacity * sizeof(Node))
         memcpy(self.value, cnp.PyArray_DATA(value_ndarray),
                self.capacity * self.value_stride * sizeof(double))
+
+        # store the leaf node samples if they exist
+        value_samples_dict = d['value_samples']
+        for node_id, leaf_samples in value_samples_dict.items():
+            self.value_samples[node_id].resize(leaf_samples.shape[0])
+            for idx in range(leaf_samples.shape[0]):
+                for jdx in range(leaf_samples.shape[1]):
+                    self.value_samples[node_id][idx].push_back(leaf_samples[idx, jdx])
+
+    cdef cnp.ndarray _get_value_samples_ndarray(self, SIZE_t node_id):
+        """Wraps value_samples as a 2-d NumPy array per node_id."""
+        cdef int i, j
+        cdef int n_samples = self.value_samples[node_id].size()
+        cdef cnp.ndarray[DOUBLE_t, ndim=2, mode='c'] leaf_node_samples = np.empty(shape=(n_samples, self.n_outputs), dtype=np.float64)
+
+        for i in range(n_samples):
+            for j in range(self.n_outputs):
+                leaf_node_samples[i, j] = self.value_samples[node_id][i][j]
+        return leaf_node_samples
+
+    cdef cnp.ndarray _get_value_samples_keys(self):
+        """Wraps value_samples keys as a 1-d NumPy array of keys."""
+        cdef cnp.ndarray[SIZE_t, ndim=1, mode='c'] keys = np.empty(len(self.value_samples), dtype=np.intp)
+        cdef unsigned int i = 0
+
+        for key in self.value_samples:
+            keys[i] = key.first
+            i += 1
+        return keys
 
     cdef cnp.ndarray _get_value_ndarray(self):
         """Wraps value as a 3-d NumPy array.
