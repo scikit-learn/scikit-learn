@@ -20,6 +20,7 @@ from ..._loss.loss import (
     HalfTweedieLossIdentity,
 )
 from ...base import BaseEstimator, RegressorMixin
+from ...base import _fit_context
 from ...utils import check_array
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, StrOptions
@@ -124,8 +125,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         HalfSquaredError         identity  y any real number
         HalfPoissonLoss          log       0 <= y
         HalfGammaLoss            log       0 < y
-        HalfTweedieLoss          log       dependend on tweedie power
-        HalfTweedieLossIdentity  identity  dependend on tweedie power
+        HalfTweedieLoss          log       dependent on tweedie power
+        HalfTweedieLossIdentity  identity  dependent on tweedie power
         =======================  ========  ==========================
 
         The link function of the GLM, i.e. mapping from linear predictor
@@ -168,6 +169,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self.warm_start = warm_start
         self.verbose = verbose
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit a Generalized Linear Model.
 
@@ -187,8 +189,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
-        self._validate_params()
-
         X, y = self._validate_data(
             X,
             y,

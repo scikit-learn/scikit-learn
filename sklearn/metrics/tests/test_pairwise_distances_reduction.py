@@ -18,7 +18,6 @@ from sklearn.metrics._pairwise_distances_reduction import (
     sqeuclidean_row_norms,
 )
 from sklearn.metrics import euclidean_distances
-from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils._testing import (
     assert_array_equal,
     assert_allclose,
@@ -48,25 +47,15 @@ def _get_metric_params_list(metric: str, n_features: int, seed: int = 1):
     rng = np.random.RandomState(seed)
 
     if metric == "minkowski":
-        minkowski_kwargs = [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)]
-        if sp_version >= parse_version("1.8.0.dev0"):
-            # TODO: remove the test once we no longer support scipy < 1.8.0.
-            # Recent scipy versions accept weights in the Minkowski metric directly:
-            # type: ignore
-            minkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
+        minkowski_kwargs = [
+            dict(p=1.5),
+            dict(p=2),
+            dict(p=3),
+            dict(p=np.inf),
+            dict(p=3, w=rng.rand(n_features)),
+        ]
 
         return minkowski_kwargs
-
-    # TODO: remove this case for "wminkowski" once we no longer support scipy < 1.8.0.
-    if metric == "wminkowski":
-        weights = rng.random_sample(n_features)
-        weights /= weights.sum()
-        wminkowski_kwargs = [dict(p=1.5, w=weights)]
-        if sp_version < parse_version("1.8.0.dev0"):
-            # wminkowski was removed in scipy 1.8.0 but should work for previous
-            # versions.
-            wminkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
-        return wminkowski_kwargs
 
     if metric == "seuclidean":
         return [dict(V=rng.rand(n_features))]
@@ -1116,8 +1105,6 @@ def test_strategies_consistency(
 # "Concrete Dispatchers"-specific tests
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("n_features", [50, 500])
 @pytest.mark.parametrize("translation", [0, 1e6])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
@@ -1192,8 +1179,6 @@ def test_pairwise_distances_argkmin(
         )
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("n_features", [50, 500])
 @pytest.mark.parametrize("translation", [0, 1e6])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)

@@ -16,7 +16,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-
+from ..base import _fit_context
 from ..utils.sparsefuncs import min_max_axis
 from ..utils._param_validation import Interval, validate_params
 from ..utils import column_or_1d
@@ -268,6 +268,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         self.pos_label = pos_label
         self.sparse_output = sparse_output
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, y):
         """Fit label binarizer.
 
@@ -282,9 +283,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-
-        self._validate_params()
-
         if self.neg_label >= self.pos_label:
             raise ValueError(
                 f"neg_label={self.neg_label} must be strictly less than "
@@ -761,6 +759,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self.classes = classes
         self.sparse_output = sparse_output
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, y):
         """Fit the label sets binarizer, storing :term:`classes_`.
 
@@ -776,7 +775,6 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         self._cached_dict = None
 
         if self.classes is None:
@@ -794,6 +792,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self.classes_[:] = classes
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, y):
         """Fit the label sets binarizer and transform the given label sets.
 
@@ -814,7 +813,6 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         if self.classes is not None:
             return self.fit(y).transform(y)
 
-        self._validate_params()
         self._cached_dict = None
 
         # Automatically increment on new class

@@ -8,6 +8,7 @@ from numbers import Integral, Real
 import numpy as np
 
 from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
+from .base import _fit_context
 from .utils._param_validation import Interval, StrOptions
 from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
 from .linear_model._ridge import _solve_cholesky_kernel
@@ -170,6 +171,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     def _more_tags(self):
         return {"pairwise": self.kernel == "precomputed"}
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Kernel Ridge regression model.
 
@@ -190,8 +192,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         # Convert data
         X, y = self._validate_data(
             X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
