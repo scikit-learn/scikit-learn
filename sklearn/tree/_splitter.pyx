@@ -244,7 +244,6 @@ cdef class Splitter(BaseSplitter):
             self.start,
             self.end
         )
-
         if missing_values_in_feature_mask is not None:
             self.criterion.init_sum_missing()
 
