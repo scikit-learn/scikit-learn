@@ -587,7 +587,10 @@ cdef class ClassificationCriterion(Criterion):
         - single-output trees and
         - binary classifications.
         """
-        return ((self.sum_left[0, 0] / self.weighted_n_left) + (self.sum_right[0, 0] / self.weighted_n_right)) / 2
+        return (
+            (self.sum_left[0, 0] / self.weighted_n_left) + 
+            (self.sum_right[0, 0] / self.weighted_n_right)
+        ) / 2
 
     cdef inline bint check_monotonicity(
         self,
@@ -1034,7 +1037,10 @@ cdef class RegressionCriterion(Criterion):
         Monotonicity constraints are only supported for single-output trees we can safely assume
         n_outputs == 1.
         """
-        return ((self.sum_left[0] / self.weighted_n_left) + (self.sum_right[0] / self.weighted_n_right)) / 2
+        return (
+            (self.sum_left[0] / self.weighted_n_left) +
+            (self.sum_right[0] / self.weighted_n_right)
+        ) / 2
 
     cdef inline bint check_monotonicity(
         self,

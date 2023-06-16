@@ -70,7 +70,7 @@ def test_montonic_constraints_regressions(
 ):
     n_samples = 1000
     n_samples_train = 900
-    # Build a classification task using 3 informative features
+    # Build a regression task using 5 informative features
     X, y = make_regression(
         n_samples=n_samples,
         n_features=5,

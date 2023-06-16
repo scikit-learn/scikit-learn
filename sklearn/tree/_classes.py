@@ -411,6 +411,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             # Check to correct monotonicity constraint' specification,
             # by applying element-wise logical conjunction
+            # Note: we do not cast `np.asarray(self.monotonic_cst, dtype=np.int8)`
+            # straight away here so as  to generate error messages for invalid
+            # values using the original values prior to any dtype related conversion.
             monotonic_cst = np.asarray(self.monotonic_cst)
             if monotonic_cst.shape[0] != X.shape[1]:
                 raise ValueError(
@@ -846,7 +849,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
 
-        .. versionadded:: 1.2
+        .. versionadded:: 1.4
 
     Attributes
     ----------
@@ -1237,7 +1240,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         Monotonicity constraints are not supported for multioutput regression
         (i.e. when `n_outputs_ > 1`).
 
-        .. versionadded:: 1.2
+        .. versionadded:: 1.4
 
     Attributes
     ----------
@@ -1577,7 +1580,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
 
-        .. versionadded:: 1.2
+        .. versionadded:: 1.4
 
     Attributes
     ----------
@@ -1836,7 +1839,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Monotonicity constraints are not supported for multioutput regression
         (i.e. when `n_outputs_ > 1`).
 
-        .. versionadded:: 1.2
+        .. versionadded:: 1.4
 
     Attributes
     ----------

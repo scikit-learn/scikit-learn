@@ -1282,7 +1282,7 @@ class RandomForestClassifier(ForestClassifier):
         The constraints are only valid for binary classification and hold
         over the probability of the positive class.
 
-        .. versionadded:: 1.2
+        .. versionadded:: 1.4
 
     Attributes
     ----------
@@ -1652,7 +1652,7 @@ class RandomForestRegressor(ForestRegressor):
         Monotonicity constraints are not supported for multioutput regression
         (i.e. when `n_outputs_ > 1`).
 
-        .. versionadded:: 1.2
+        .. versionadded:: 1.4
 
     Attributes
     ----------
@@ -2016,7 +2016,7 @@ class ExtraTreesClassifier(ForestClassifier):
         The constraints are only valid for binary classification and hold
         over the probability of the positive class.
 
-        .. versionadded:: 1.2
+        .. versionadded:: 1.4
 
     Attributes
     ----------
@@ -2371,7 +2371,7 @@ class ExtraTreesRegressor(ForestRegressor):
         Monotonicity constraints are not supported for multioutput regression
         (i.e. when `n_outputs_ > 1`).
 
-        .. versionadded:: 1.2
+        .. versionadded:: 1.4
 
     Attributes
     ----------
