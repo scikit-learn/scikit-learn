@@ -1992,7 +1992,7 @@ def test_ridge_sample_weight_consistency(
             pytest.skip("unsupported configuration")
 
     # XXX: this test is quite sensitive to the seed used to generate the data:
-    # ideally we would like to pass for any global_random_seed but this is not
+    # ideally we would like the test to pass for any global_random_seed but this is not
     # the case at the moment.
     rng = np.random.RandomState(42)
     n_samples = 12
