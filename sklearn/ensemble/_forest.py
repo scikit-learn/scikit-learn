@@ -731,8 +731,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         method : str, optional
             The method to interpolate, by default 'linear'. Can be any keyword
             argument accepted by :func:`~np.quantile`.
-        check_input : bool, optional
-            Whether or not to check input, by default True.
 
         Returns
         -------

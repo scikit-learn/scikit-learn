@@ -602,6 +602,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         ----------
         X : array-like of shape (n_samples, n_features)
             Dataset to apply the forest to.
+        check_input : bool, default=True
+            Allow to bypass several input checking.
 
         Returns
         -------
