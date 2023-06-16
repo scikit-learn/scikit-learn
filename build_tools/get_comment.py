@@ -2,6 +2,10 @@
 # detected. It is used by the `Comment on failed linting` GitHub Action.
 # This script fails if there are not comments to be posted.
 
+import os
+
+import requests
+
 
 def get_step_message(log, start, end, title, message):
     """Get the message for a specific test.
@@ -40,9 +44,7 @@ def get_step_message(log, start, end, title, message):
     )
 
 
-def main():
-    # This file is downloaded as an artifact of the GH workflow which runs
-    # linting.sh
+def get_message():
     with open("linting_output.txt", "r") as f:
         log = f.read()
 
@@ -135,9 +137,11 @@ def main():
     )
 
     if not len(message):
-        # no issues detected, so this script "fails" so that the next step,
-        # which posts the comment, is skipped.
-        exit(1)
+        # no issues detected, so this script "fails"
+        return (
+            "## Linting Passed\n"
+            "All linting checks passed. Your pull request is in excellent shape!"
+        )
 
     message = (
         "## Linting issues\n\n"
@@ -149,8 +153,66 @@ def main():
         + message
     )
 
-    print(message)
+    return message
+
+
+def get_headers(token):
+    """Get the headers for the GitHub API."""
+    return {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+
+
+def get_lint_bot_comments(repo, token, pr_number):
+    """Get the comments from the linting bot."""
+    # repo is in the form of "org/repo"
+    comments = requests.get(
+        f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments",
+        headers=get_headers(token),
+    ).json()
+
+    failed_comment = "This PR is introducing linting issues. Here's a summary of the"
+    success_comment = (
+        "All linting checks passed. Your pull request is in excellent shape"
+    )
+
+    return [
+        comment
+        for comment in comments
+        if comment["user"]["login"] == "github-actions[bot]"
+        and (failed_comment in comment["body"] or success_comment in comment["body"])
+    ]
+
+
+def delete_existing_messages(comments, repo, token):
+    """Delete the existing messages from the linting bot."""
+    # repo is in the form of "org/repo"
+    print("deleting comments")
+    for comment in comments:
+        requests.delete(
+            f"https://api.github.com/repos/{repo}/issues/comments/{comment['id']}",
+            headers=get_headers(token),
+        )
+
+
+def create_comment(comment, repo, pr_number, token):
+    """Create a new comment."""
+    # repo is in the form of "org/repo"
+    print("creating new comment")
+    requests.post(
+        f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments",
+        json={"body": comment},
+        headers=get_headers(token),
+    )
 
 
 if __name__ == "__main__":
-    main()
+    repo = os.environ["GITHUB_REPOSITORY"]
+    token = os.environ["GITHUB_TOKEN"]
+    pr_number = os.environ["PR_NUMBER"]
+
+    delete_existing_messages(get_lint_bot_comments(repo, token, pr_number), repo, token)
+    create_comment(message := get_message(), repo, pr_number, token)
+    print(message)

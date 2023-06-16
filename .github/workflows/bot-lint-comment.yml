@@ -13,7 +13,7 @@ on:
 
 jobs:
   comment:
-    if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'failure' }}
+    if: ${{ github.event.workflow_run.event == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -23,6 +23,9 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: 3.11
+
+      - name: Install dependencies
+        run: python -m pip install requests
 
       # This step is needed to get the pull request number used the last step.
       - name: "Get information about the origin 'CI' run"
@@ -43,22 +46,11 @@ jobs:
         id: show-logs
         run: cat linting_output.txt
 
-      - name: Get comments
-        id: get-comments
+      - name: Process Comments
+        id: process-comments
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.source-run-info.outputs.pullRequestNumber }}
         # This step "fails" with exit code 1 if no comments are to be posted.
         # Therefore the next step wouldn't run.
-        run: python ./build_tools/get_comment.py > comments.txt
-
-      - name: Comment on pull request
-        uses: actions/github-script@v6
-        with:
-            github-token: ${{secrets.GITHUB_TOKEN}}
-            script: |
-              const fs = require('fs');
-              const message = fs.readFileSync('comments.txt', 'utf8');
-              github.rest.issues.createComment({
-                  issue_number: '${{ steps.source-run-info.outputs.pullRequestNumber }}',
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: message,
-              })
+        run: python ./build_tools/get_comment.py
