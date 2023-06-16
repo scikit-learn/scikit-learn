@@ -1978,7 +1978,9 @@ def test_lbfgs_solver_error():
 @pytest.mark.parametrize("sparseX", [False, True])
 @pytest.mark.parametrize("data", ["tall", "wide"])
 @pytest.mark.parametrize("solver", SOLVERS + ["lbfgs"])
-def test_ridge_sample_weight_consistency(fit_intercept, sparseX, data, solver):
+def test_ridge_sample_weight_consistency(
+    fit_intercept, sparseX, data, solver, global_random_seed
+):
     """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
@@ -1989,6 +1991,9 @@ def test_ridge_sample_weight_consistency(fit_intercept, sparseX, data, solver):
         if solver == "svd" or (solver in ("cholesky", "saga") and fit_intercept):
             pytest.skip("unsupported configuration")
 
+    # XXX: this test is quite sensitive to the seed used to generate the data:
+    # ideally we would like the test to pass for any global_random_seed but this is not
+    # the case at the moment.
     rng = np.random.RandomState(42)
     n_samples = 12
     if data == "tall":
@@ -2005,6 +2010,7 @@ def test_ridge_sample_weight_consistency(fit_intercept, sparseX, data, solver):
         alpha=1.0,
         solver=solver,
         positive=(solver == "lbfgs"),
+        random_state=global_random_seed,  # for sag/saga
         tol=1e-12,
     )
 
