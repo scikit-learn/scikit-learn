@@ -1167,7 +1167,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         self : DecisionTreeClassifier
             Fitted estimator.
         """
-
         super()._fit(
             X,
             y,
