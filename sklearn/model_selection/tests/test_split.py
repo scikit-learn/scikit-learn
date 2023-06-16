@@ -3,7 +3,12 @@ import warnings
 import pytest
 import re
 import numpy as np
-from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
+from scipy.sparse import (
+    coo_matrix,
+    csc_matrix,
+    csr_matrix,
+    isspmatrix_csr,
+)
 from scipy import stats
 from scipy.special import comb
 from itertools import combinations
@@ -47,6 +52,31 @@ from sklearn.datasets import load_digits
 from sklearn.datasets import make_classification
 
 from sklearn.svm import SVC
+
+from sklearn.tests.test_metadata_routing import assert_request_is_empty
+
+NO_GROUP_SPLITTERS = [
+    KFold(),
+    StratifiedKFold(),
+    TimeSeriesSplit(),
+    LeaveOneOut(),
+    LeavePOut(p=2),
+    ShuffleSplit(),
+    StratifiedShuffleSplit(test_size=0.5),
+    PredefinedSplit([1, 1, 2, 2]),
+    RepeatedKFold(),
+    RepeatedStratifiedKFold(),
+]
+
+GROUP_SPLITTERS = [
+    GroupKFold(),
+    LeavePGroupsOut(n_groups=1),
+    StratifiedGroupKFold(),
+    LeaveOneGroupOut(),
+    GroupShuffleSplit(),
+]
+
+ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore
 
 X = np.ones(10)
 y = np.arange(10) // 2
@@ -1327,8 +1357,8 @@ def test_train_test_split_sparse():
     for InputFeatureType in sparse_types:
         X_s = InputFeatureType(X)
         X_train, X_test = train_test_split(X_s)
-        assert isinstance(X_train, csr_matrix)
-        assert isinstance(X_test, csr_matrix)
+        assert isspmatrix_csr(X_train)
+        assert isspmatrix_csr(X_test)
 
 
 def test_train_test_split_mock_pandas():
@@ -1765,7 +1795,11 @@ def test_nested_cv():
     cvs = [
         LeaveOneGroupOut(),
         StratifiedKFold(n_splits=2),
+        LeaveOneOut(),
         GroupKFold(n_splits=3),
+        StratifiedKFold(),
+        StratifiedGroupKFold(),
+        StratifiedShuffleSplit(n_splits=3, random_state=0),
     ]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
@@ -1894,3 +1928,25 @@ def test_random_state_shuffle_false(Klass):
 )
 def test_yields_constant_splits(cv, expected):
     assert _yields_constant_splits(cv) == expected
+
+
+@pytest.mark.parametrize("cv", ALL_SPLITTERS, ids=[str(cv) for cv in ALL_SPLITTERS])
+def test_splitter_get_metadata_routing(cv):
+    """Check get_metadata_routing returns the correct MetadataRouter."""
+    assert hasattr(cv, "get_metadata_routing")
+    metadata = cv.get_metadata_routing()
+    if cv in GROUP_SPLITTERS:
+        assert metadata.split.requests["groups"] is True
+    elif cv in NO_GROUP_SPLITTERS:
+        assert not metadata.split.requests
+
+    assert_request_is_empty(metadata, exclude=["split"])
+
+
+@pytest.mark.parametrize("cv", ALL_SPLITTERS, ids=[str(cv) for cv in ALL_SPLITTERS])
+def test_splitter_set_split_request(cv):
+    """Check set_split_request is defined for group splitters and not for others."""
+    if cv in GROUP_SPLITTERS:
+        assert hasattr(cv, "set_split_request")
+    elif cv in NO_GROUP_SPLITTERS:
+        assert not hasattr(cv, "set_split_request")

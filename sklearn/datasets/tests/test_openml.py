@@ -603,7 +603,7 @@ def test_fetch_openml_difference_parsers(monkeypatch):
 
 ###############################################################################
 # Test the ARFF parsing on several dataset to check if detect the correct
-# types (categories, intgers, floats).
+# types (categories, integers, floats).
 
 
 @pytest.fixture(scope="module")
@@ -920,12 +920,10 @@ def datasets_missing_values():
         (1119, "liac-arff", 9, 6, 0),
         (1119, "pandas", 9, 0, 6),
         # miceprotein
-        # 1 column has only missing values with object dtype
-        (40966, "liac-arff", 1, 76, 0),
-        # with casting it will be transformed to either float or Int64
+        (40966, "liac-arff", 1, 77, 0),
         (40966, "pandas", 1, 77, 0),
         # titanic
-        (40945, "liac-arff", 3, 5, 0),
+        (40945, "liac-arff", 3, 6, 0),
         (40945, "pandas", 3, 3, 3),
     ],
 )
@@ -1009,7 +1007,7 @@ def test_fetch_openml_requires_pandas_error(monkeypatch, params):
         check_pandas_support("test_fetch_openml_requires_pandas")
     except ImportError:
         _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-        err_msg = "requires pandas to be installed. Alternatively, explicitely"
+        err_msg = "requires pandas to be installed. Alternatively, explicitly"
         with pytest.raises(ImportError, match=err_msg):
             fetch_openml(data_id=data_id, **params)
     else:
@@ -1352,6 +1350,34 @@ def test_dataset_with_openml_warning(monkeypatch, gzip_response):
     msg = "OpenML raised a warning on the dataset. It might be unusable. Warning:"
     with pytest.warns(UserWarning, match=msg):
         fetch_openml(data_id=data_id, cache=False, as_frame=False, parser="liac-arff")
+
+
+def test_fetch_openml_overwrite_default_params_read_csv(monkeypatch):
+    """Check that we can overwrite the default parameters of `read_csv`."""
+    pytest.importorskip("pandas")
+    data_id = 1590
+    _monkey_patch_webbased_functions(monkeypatch, data_id=data_id, gzip_response=False)
+
+    common_params = {
+        "data_id": data_id,
+        "as_frame": True,
+        "cache": False,
+        "parser": "pandas",
+    }
+
+    # By default, the initial spaces are skipped. We checked that setting the parameter
+    # `skipinitialspace` to False will have an effect.
+    adult_without_spaces = fetch_openml(**common_params)
+    adult_with_spaces = fetch_openml(
+        **common_params, read_csv_kwargs={"skipinitialspace": False}
+    )
+    assert all(
+        cat.startswith(" ") for cat in adult_with_spaces.frame["class"].cat.categories
+    )
+    assert not any(
+        cat.startswith(" ")
+        for cat in adult_without_spaces.frame["class"].cat.categories
+    )
 
 
 ###############################################################################

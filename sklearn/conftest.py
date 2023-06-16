@@ -27,8 +27,8 @@ from sklearn.tests import random_seed
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
-        "Your version of pytest is too old, you should have "
-        "at least pytest >= {} installed.".format(PYTEST_MIN_VERSION)
+        f"Your version of pytest is too old. Got version {pytest.__version__}, you"
+        f" should have pytest >= {PYTEST_MIN_VERSION} installed."
     )
 
 scipy_datasets_require_network = sp_version >= parse_version("1.10")
@@ -87,7 +87,7 @@ def _fetch_fixture(f):
         kwargs["download_if_missing"] = download_if_missing
         try:
             return f(*args, **kwargs)
-        except IOError as e:
+        except OSError as e:
             if str(e) != "Data not found and `download_if_missing` is False":
                 raise
             pytest.skip("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")

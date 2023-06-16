@@ -18,6 +18,7 @@ from ..._loss.loss import (
     PinballLoss,
 )
 from ...base import BaseEstimator, RegressorMixin, ClassifierMixin, is_classifier
+from ...base import _fit_context
 from ...utils import check_random_state, resample, compute_sample_weight
 from ...utils.validation import (
     check_is_fitted,
@@ -336,6 +337,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return constraints
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the gradient boosting model.
 
@@ -357,8 +359,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         fit_start_time = time()
         acc_find_split_time = 0.0  # time spent finding the best splits
         acc_apply_split_time = 0.0  # time spent splitting nodes
