@@ -4,9 +4,9 @@
 #         Tom Dupre la Tour
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
+import itertools
 from ._ball_tree import BallTree
-from ._base import KNeighborsMixin, RadiusNeighborsMixin
-from ._base import NeighborsBase
+from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, VALID_METRICS
 from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils._param_validation import (
@@ -48,13 +48,11 @@ def _query_include_self(X, include_self, mode):
         "X": ["array-like", BallTree, KNeighborsMixin],
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "mode": [StrOptions({"connectivity", "distance"})],
-        "metric": "no_validation",  # metric is passed without param validation
-        # here, because VALID_METRICS are extracted and defined in
-        # :class:`~sklearn.neighbors._base.NeighborsBase`
+        "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
         "p": [Interval(Real, 1, None, closed="left")],
         "metric_params": [dict, None],
-        "include_self": [bool, StrOptions({"auto"})],
-        "n_jobs": [Interval(Integral, -1, None, closed="left"), None],
+        "include_self": ["boolean", StrOptions({"auto"})],
+        "n_jobs": [Integral, None],
     }
 )
 def kneighbors_graph(
