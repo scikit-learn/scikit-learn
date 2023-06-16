@@ -549,7 +549,7 @@ class PCA(_BasePCA):
 
         # Get variance explained by singular values
         explained_variance_ = (S**2) / (n_samples - 1)
-        total_var = explained_variance_.sum()
+        total_var = xp.sum(explained_variance_)
         explained_variance_ratio_ = explained_variance_ / total_var
         singular_values_ = xp.asarray(S, copy=True)  # Store the singular values.
 
@@ -572,7 +572,7 @@ class PCA(_BasePCA):
             self.noise_variance_ = 0.0
 
         self.n_samples_ = n_samples
-        self.components_ = components_[:n_components]
+        self.components_ = components_[:n_components, :]
         self.n_components_ = n_components
         self.explained_variance_ = explained_variance_[:n_components]
         self.explained_variance_ratio_ = explained_variance_ratio_[:n_components]

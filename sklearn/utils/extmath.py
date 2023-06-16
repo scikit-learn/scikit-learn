@@ -805,13 +805,15 @@ def svd_flip(u, v, u_based_decision=True):
     if u_based_decision:
         # columns of u, rows of v
         max_abs_cols = xp.argmax(xp.abs(u), axis=0)
-        signs = xp.sign(u[max_abs_cols, xp.arange(u.shape[1])])
+        indices = xp.arange(u.shape[1]) * u.shape[0] + max_abs_cols
+        signs = xp.sign(xp.take(xp.reshape(u, (-1,)), indices))
         u *= signs
         v *= signs[:, np.newaxis]
     else:
         # rows of v, columns of u
         max_abs_rows = xp.argmax(xp.abs(v), axis=1)
-        signs = xp.sign(v[xp.arange(v.shape[0]), max_abs_rows])
+        indices = xp.arange(v.shape[0]) * v.shape[1] + max_abs_rows
+        signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices))
         u *= signs
         v *= signs[:, np.newaxis]
     return u, v
