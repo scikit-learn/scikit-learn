@@ -19,6 +19,7 @@ from ..utils.validation import (
 from ..utils._param_validation import Interval, StrOptions
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 
@@ -404,6 +405,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         self.dual_coef_ = linalg.solve(K, X, assume_a="pos", overwrite_a=True)
         self.X_transformed_fit_ = X_transformed
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -421,8 +423,6 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         if self.fit_inverse_transform and self.kernel == "precomputed":
             raise ValueError("Cannot fit_inverse_transform with a precomputed kernel.")
         X = self._validate_data(X, accept_sparse="csr", copy=self.copy_X)

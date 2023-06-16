@@ -6,6 +6,7 @@ from numbers import Integral
 import numpy as np
 
 from ._base import _BaseImputer
+from ..base import _fit_context
 from ..utils.validation import FLOAT_DTYPES
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
@@ -199,6 +200,7 @@ class KNNImputer(_BaseImputer):
 
         return np.ma.average(donors, axis=1, weights=weight_matrix).data
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the imputer on X.
 
@@ -216,7 +218,6 @@ class KNNImputer(_BaseImputer):
         self : object
             The fitted `KNNImputer` class instance.
         """
-        self._validate_params()
         # Check data integrity and calling arguments
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True

@@ -10,6 +10,7 @@ import numpy as np
 from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
+from ..base import _fit_context
 from ..utils import check_array, is_scalar_nan, _safe_indexing
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
@@ -953,6 +954,7 @@ class OneHotEncoder(_BaseEncoder):
 
         return output
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """
         Fit OneHotEncoder to X.
@@ -971,8 +973,6 @@ class OneHotEncoder(_BaseEncoder):
         self
             Fitted encoder.
         """
-        self._validate_params()
-
         if self.sparse != "deprecated":
             warnings.warn(
                 (
@@ -1446,6 +1446,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.min_frequency = min_frequency
         self.max_categories = max_categories
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """
         Fit the OrdinalEncoder to X.
@@ -1464,8 +1465,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self : object
             Fitted encoder.
         """
-        self._validate_params()
-
         if self.handle_unknown == "use_encoded_value":
             if is_scalar_nan(self.unknown_value):
                 if np.dtype(self.dtype).kind != "f":

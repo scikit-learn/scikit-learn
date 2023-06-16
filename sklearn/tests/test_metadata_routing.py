@@ -653,6 +653,21 @@ def test_setting_default_requests():
         Klass().fit(None, None)  # for coverage
 
 
+def test_removing_non_existing_param_raises():
+    """Test that removing a metadata using UNUSED which doesn't exist raises."""
+
+    class InvalidRequestRemoval(BaseEstimator):
+        # `fit` (in this class or a parent) requests `prop`, but we don't want
+        # it requested at all.
+        __metadata_request__fit = {"prop": metadata_routing.UNUSED}
+
+        def fit(self, X, y, **kwargs):
+            return self
+
+    with pytest.raises(ValueError, match="Trying to remove parameter"):
+        InvalidRequestRemoval().get_metadata_routing()
+
+
 def test_method_metadata_request():
     mmr = MethodMetadataRequest(owner="test", method="fit")
 

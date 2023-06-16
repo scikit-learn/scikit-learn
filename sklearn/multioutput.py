@@ -28,6 +28,7 @@ from .base import (
     RegressorMixin,
     clone,
     is_classifier,
+    _fit_context,
 )
 from .model_selection import cross_val_predict
 from .utils import _print_elapsed_time, check_random_state, Bunch
@@ -104,6 +105,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         self.n_jobs = n_jobs
 
     @_available_if_estimator_has("partial_fit")
+    @_fit_context(
+        # MultiOutput*.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def partial_fit(self, X, y, classes=None, sample_weight=None, **partial_fit_params):
         """Incrementally fit a separate model for each class output.
 
@@ -150,9 +155,6 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             )
 
         first_time = not hasattr(self, "estimators_")
-
-        if first_time:
-            self._validate_params()
 
         y = self._validate_data(X="no_validation", y=y, multi_output=True)
 
@@ -203,6 +205,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         return self
 
+    @_fit_context(
+        # MultiOutput*.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the model to data, separately for each output variable.
 
@@ -230,8 +236,6 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         self : object
             Returns a fitted instance.
         """
-        self._validate_params()
-
         if not hasattr(self.estimator, "fit"):
             raise ValueError("The base estimator should implement a fit method")
 
@@ -887,6 +891,10 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
            [0.0321..., 0.9935..., 0.0625...]])
     """
 
+    @_fit_context(
+        # ClassifierChain.base_estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, Y, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
@@ -916,8 +924,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
                 "fit_params is only supported if enable_metadata_routing=True. "
                 "See the User Guide for more information."
             )
-
-        self._validate_params()
 
         super().fit(X, Y, **fit_params)
         self.classes_ = [
@@ -1109,6 +1115,10 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
            [2., 0.]])
     """
 
+    @_fit_context(
+        # RegressorChain.base_estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, Y, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
@@ -1131,8 +1141,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         self : object
             Returns a fitted instance.
         """
-        self._validate_params()
-
         super().fit(X, Y, **fit_params)
         return self
 

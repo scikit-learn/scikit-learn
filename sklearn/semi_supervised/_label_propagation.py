@@ -64,6 +64,7 @@ from scipy import sparse
 from scipy.sparse import csgraph
 
 from ..base import BaseEstimator, ClassifierMixin
+from ..base import _fit_context
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
@@ -230,6 +231,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         probabilities /= normalizer
         return probabilities
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit a semi-supervised label propagation model to X.
 
@@ -254,7 +256,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         X, y = self._validate_data(
             X,
             y,

@@ -18,6 +18,7 @@ from joblib import effective_n_jobs
 
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
+from ..base import _fit_context
 from ._base import _preprocess_data
 from ..utils import check_array, check_scalar
 from ..utils.validation import check_random_state
@@ -851,6 +852,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         self.random_state = random_state
         self.selection = selection
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, check_input=True):
         """Fit model with coordinate descent.
 
@@ -886,8 +888,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        self._validate_params()
-
         if self.alpha == 0:
             warnings.warn(
                 (
@@ -1475,6 +1475,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     def path(X, y, **kwargs):
         """Compute path with coordinate descent."""
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit linear model with coordinate descent.
 
@@ -1502,9 +1503,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self : object
             Returns an instance of fitted model.
         """
-
-        self._validate_params()
-
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
         # Multiple functions touch X and subsamples of X and can induce a
@@ -2343,6 +2341,7 @@ class MultiTaskElasticNet(Lasso):
         self.random_state = random_state
         self.selection = selection
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit MultiTaskElasticNet model with coordinate descent.
 
@@ -2367,8 +2366,6 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        self._validate_params()
-
         # Need to validate separately here.
         # We can't pass multi_output=True because that would allow y to be csr.
         check_X_params = dict(
