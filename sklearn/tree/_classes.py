@@ -607,12 +607,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        leaf_nodes_samples : a list of array-like of shape
-                (n_leaf_node_samples, n_outputs)
+        leaf_nodes_samples : a list of array-like
             Each sample is represented by the indices of the training samples that
             reached the leaf node. The ``n_leaf_node_samples`` may vary between
             samples, since the number of samples that fall in a leaf node is
-            variable.
+            variable. Each array has shape (n_leaf_node_samples, n_outputs).
         """
         if not self.store_leaf_values:
             raise RuntimeError(
