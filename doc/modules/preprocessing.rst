@@ -883,11 +883,11 @@ cardinality categories are location based such as zip code or region. For the
 binary classification target, the target encoding is given by:
 
 .. math::
-    S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_y}{n}
+    S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_Y}{n}
 
 where :math:`S_i` is the encoding for category :math:`i`, :math:`n_{iY}` is the
 number of observations with :math:`Y=1` with category :math:`i`, :math:`n_i` is
-the number of observations with category :math:`i`, :math:`n_y` is the number of
+the number of observations with category :math:`i`, :math:`n_Y` is the number of
 observations with :math:`Y=1`, :math:`n` is the number of observations, and
 :math:`\lambda_i` is a shrinkage factor. The shrinkage factor is given by:
 
@@ -897,14 +897,14 @@ observations with :math:`Y=1`, :math:`n` is the number of observations, and
 where :math:`m` is a smoothing factor, which is controlled with the `smooth`
 parameter in :class:`TargetEncoder`. Large smoothing factors will put more
 weight on the global mean. When `smooth="auto"`, the smoothing factor is
-computed as an empirical Bayes estimate: :math:`m=\sigma_c^2/\tau^2`, where
+computed as an empirical Bayes estimate: :math:`m=\sigma_i^2/\tau^2`, where
 :math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
 :math:`\tau^2` is the global variance of `y`.
 
 For continuous targets, the formulation is similar to binary classification:
 
 .. math::
-    S_i = \lambda_i\frac{\sum_{k\in L_i}y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}y_k}{n}
+    S_i = \lambda_i\frac{\sum_{k\in L_i}Y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}Y_k}{n}
 
 where :math:`L_i` is the set of observations for which :math:`X=X_i` and
 :math:`n_i` is the cardinality of :math:`L_i`.

@@ -13,6 +13,7 @@ from numbers import Real
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, ClassifierMixin
+from ..base import _fit_context
 from ..metrics.pairwise import pairwise_distances_argmin
 from ..preprocessing import LabelEncoder
 from ..utils.validation import check_is_fitted
@@ -122,6 +123,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         self.metric = metric
         self.shrink_threshold = shrink_threshold
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """
         Fit the NearestCentroid model according to the given training data.
@@ -140,8 +142,6 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         if isinstance(self.metric, str) and self.metric not in (
             "manhattan",
             "euclidean",

@@ -20,6 +20,7 @@ from ..._loss.loss import (
     HalfTweedieLossIdentity,
 )
 from ...base import BaseEstimator, RegressorMixin
+from ...base import _fit_context
 from ...utils import check_array
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, StrOptions
@@ -188,6 +189,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self.warm_start = warm_start
         self.verbose = verbose
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit a Generalized Linear Model.
 
@@ -207,8 +209,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
-        self._validate_params()
-
         X, y = self._validate_data(
             X,
             y,

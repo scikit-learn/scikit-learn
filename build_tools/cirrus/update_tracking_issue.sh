@@ -18,4 +18,5 @@ python maint_tools/update_tracking_issue.py \
     $CIRRUS_TASK_NAME \
     $CIRRUS_REPO_FULL_NAME \
     $LINK_TO_RUN \
-    --tests-passed $TEST_PASSED
+    --tests-passed $TEST_PASSED \
+    --auto-close false

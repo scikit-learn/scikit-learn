@@ -83,7 +83,7 @@ def fetch_olivetti_faces(
         See :term:`Glossary <random_state>`.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -121,7 +121,7 @@ def fetch_olivetti_faces(
     filepath = _pkl_filepath(data_home, "olivetti.pkz")
     if not exists(filepath):
         if not download_if_missing:
-            raise IOError("Data not found and `download_if_missing` is False")
+            raise OSError("Data not found and `download_if_missing` is False")
 
         print("downloading Olivetti faces from %s to %s" % (FACES.url, data_home))
         mat_path = _fetch_remote(FACES, dirname=data_home)

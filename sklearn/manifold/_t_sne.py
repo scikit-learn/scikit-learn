@@ -8,7 +8,6 @@
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
-import warnings
 from time import time
 import numpy as np
 from scipy import linalg
@@ -18,10 +17,11 @@ from scipy.sparse import csr_matrix, issparse
 from numbers import Integral, Real
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
+from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
-from ..utils._param_validation import Interval, StrOptions, Hidden
+from ..utils._param_validation import Interval, StrOptions
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances, _VALID_METRICS
 
@@ -678,14 +678,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.22
 
-    square_distances : True, default='deprecated'
-        This parameter has no effect since distance values are always squared
-        since 1.1.
-
-        .. deprecated:: 1.1
-             `square_distances` has no effect from 1.1 and will be removed in
-             1.3.
-
     Attributes
     ----------
     embedding_ : array-like of shape (n_samples, n_components)
@@ -778,7 +770,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         "method": [StrOptions({"barnes_hut", "exact"})],
         "angle": [Interval(Real, 0, 1, closed="both")],
         "n_jobs": [None, Integral],
-        "square_distances": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 
     # Control the number of exploration iterations with early_exaggeration on
@@ -805,7 +796,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         method="barnes_hut",
         angle=0.5,
         n_jobs=None,
-        square_distances="deprecated",
     ):
         self.n_components = n_components
         self.perplexity = perplexity
@@ -822,7 +812,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.method = method
         self.angle = angle
         self.n_jobs = n_jobs
-        self.square_distances = square_distances
 
     def _check_params_vs_input(self, X):
         if self.perplexity >= X.shape[0]:
@@ -837,14 +826,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 "with the sparse input matrix. Use "
                 'init="random" instead.'
             )
-        if self.square_distances != "deprecated":
-            warnings.warn(
-                (
-                    "The parameter `square_distances` has not effect and will be "
-                    "removed in version 1.3."
-                ),
-                FutureWarning,
-            )
+
         if self.learning_rate == "auto":
             # See issue #18018
             self.learning_rate_ = X.shape[0] / self.early_exaggeration / 4
@@ -1097,6 +1079,10 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         return X_embedded
 
+    @_fit_context(
+        # TSNE.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit X into an embedded space and return that transformed output.
 
@@ -1118,12 +1104,15 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        self._validate_params()
         self._check_params_vs_input(X)
         embedding = self._fit(X)
         self.embedding_ = embedding
         return self.embedding_
 
+    @_fit_context(
+        # TSNE.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit X into an embedded space.
 
@@ -1145,7 +1134,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X_new : array of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        self._validate_params()
         self.fit_transform(X)
         return self
 
