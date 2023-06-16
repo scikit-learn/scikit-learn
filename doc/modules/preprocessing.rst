@@ -898,7 +898,7 @@ where :math:`m` is a smoothing factor, which is controlled with the `smooth`
 parameter in :class:`TargetEncoder`. Large smoothing factors will put more
 weight on the global mean. When `smooth="auto"`, the smoothing factor is
 computed as an empirical Bayes estimate: :math:`m=\sigma_i^2/\tau^2`, where
-:math:`\sigma_i^2` is the variance of `y  ` with category :math:`i` and
+:math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
 :math:`\tau^2` is the global variance of `y`.
 
 For continuous targets, the formulation is similar to binary classification:
