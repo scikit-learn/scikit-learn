@@ -224,7 +224,7 @@ def randomized_range_finder(
         (the fastest but numerically unstable when `n_iter` is large, e.g.
         typically 5 or larger), or 'LU' factorization (numerically stable
         but can lose slightly in accuracy). The 'auto' mode applies no
-        normalization if `n_iter` <= 2 and switches to LU otherwise.
+        normalization if `n_iter` <= 2 and switches to QR otherwise.
 
         .. versionadded:: 0.18
 
@@ -266,7 +266,7 @@ def randomized_range_finder(
         if n_iter <= 2:
             power_iteration_normalizer = "none"
         else:
-            power_iteration_normalizer = "LU"
+            power_iteration_normalizer = "QR"
 
     # Perform power iterations with Q to further 'imprint' the top
     # singular vectors of A in Q
@@ -805,13 +805,13 @@ def svd_flip(u, v, u_based_decision=True):
     if u_based_decision:
         # columns of u, rows of v
         max_abs_cols = xp.argmax(xp.abs(u), axis=0)
-        signs = xp.sign(u[max_abs_cols, range(u.shape[1])])
+        signs = xp.sign(u[max_abs_cols, xp.arange(u.shape[1])])
         u *= signs
         v *= signs[:, np.newaxis]
     else:
         # rows of v, columns of u
         max_abs_rows = xp.argmax(xp.abs(v), axis=1)
-        signs = xp.sign(v[range(v.shape[0]), max_abs_rows])
+        signs = xp.sign(v[xp.arange(v.shape[0]), max_abs_rows])
         u *= signs
         v *= signs[:, np.newaxis]
     return u, v

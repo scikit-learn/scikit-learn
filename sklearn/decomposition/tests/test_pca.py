@@ -5,14 +5,9 @@ from numpy.testing import assert_array_equal
 import pytest
 import warnings
 
-from sklearn.utils._testing import (
-    assert_allclose,
-    skip_if_array_api_compat_not_configured,
-)
+from sklearn.utils._testing import assert_allclose
 
 from sklearn import datasets
-from sklearn._config import config_context
-from sklearn.base import clone
 from sklearn.decomposition import PCA
 from sklearn.datasets import load_iris
 from sklearn.decomposition._pca import _assess_dimension
@@ -20,52 +15,6 @@ from sklearn.decomposition._pca import _infer_dimension
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
-
-
-@skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize("device", ["cuda", "cpu"])
-@pytest.mark.parametrize("dtype", ["float32", "float64"])
-@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-@pytest.mark.parametrize("n_components", range(1, iris.data.shape[1]))
-def test_pca_array_torch(device, dtype, svd_solver, n_components):
-    """Check that running on PyTorch Tensors gives the same results as NumPy"""
-    torch = pytest.importorskip("torch")
-    if device == "cuda" and not torch.has_cuda:
-        pytest.skip("test requires cuda")
-
-    iris_data = iris.data.astype(dtype)
-    X_np = iris_data
-    X_torch = torch.asarray(iris_data, device=device)
-
-    pca_np = PCA(n_components=n_components, svd_solver=svd_solver)
-    pca_torch = clone(pca_np)
-
-    with config_context(array_api_dispatch=True):
-        if svd_solver in ["arpack", "randomized"]:
-            with pytest.raises(
-                TypeError, match=PCA._pca_torch_arpack_solver_error_message
-            ):
-                pca_torch.fit_transform(X_torch)
-        else:
-            X_transformed_torch = pca_torch.fit_transform(X_torch)
-            X_transformed_np = pca_np.fit_transform(X_np)
-
-            cov_np = pca_np.get_covariance()
-            cov_torch = pca_torch.get_covariance()
-
-            precision_np = pca_np.get_precision()
-            precision_torch = pca_torch.get_precision()
-
-            for name, arr_np, arr_torch in zip(
-                ["X", "cov", "prec"],
-                [X_transformed_np, cov_np, precision_np],
-                [X_transformed_torch, cov_torch, precision_torch],
-            ):
-                assert type(arr_np) == np.ndarray, f"Invalid type for {name}"
-                assert type(arr_torch) == torch.Tensor, f"Invalid type for {name}"
-                assert_allclose(
-                    arr_np, arr_torch, atol=1e-3, err_msg=f"Divergent values for {name}"
-                )
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)

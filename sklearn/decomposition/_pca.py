@@ -28,7 +28,7 @@ from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
 from ..utils._param_validation import RealNotInt
-from ..utils._array_api import get_namespace, _is_torch_namespace
+from ..utils._array_api import get_namespace, _is_numpy_namespace
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -383,9 +383,6 @@ class PCA(_BasePCA):
         "power_iteration_normalizer": [StrOptions({"auto", "QR", "LU", "none"})],
         "random_state": ["random_state"],
     }
-    _pca_torch_arpack_solver_error_message: str = (
-        "PCA with arpack solver does not support PyTorch tensors."
-    )
 
     def __init__(
         self,
@@ -487,9 +484,9 @@ class PCA(_BasePCA):
                 "PCA does not support sparse input. See "
                 "TruncatedSVD for a possible alternative."
             )
-        # Raise an error for torch input and arpack or randomized solver.
-        if self.svd_solver in ["arpack", "randomized"] and _is_torch_namespace(xp):
-            raise TypeError(self._pca_torch_arpack_solver_error_message)
+        # Raise an error for non-Numpy input and arpack solver.
+        if self.svd_solver == "arpack" and not _is_numpy_namespace(xp):
+            raise ValueError("PCA with arpack solver only supports Numpy inputs.")
 
         X = self._validate_data(
             X, dtype=[xp.float64, xp.float32], ensure_2d=True, copy=self.copy
@@ -653,7 +650,7 @@ class PCA(_BasePCA):
         total_var = (X[0] / N).sum()
 
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
-        self.singular_values_ = xp.asarray(S)  # Store the singular values.
+        self.singular_values_ = xp.asarray(S, copy=True)  # Store the singular values.
 
         if self.n_components_ < min(n_features, n_samples):
             self.noise_variance_ = total_var - self.explained_variance_.sum()
@@ -713,4 +710,4 @@ class PCA(_BasePCA):
         return np.mean(self.score_samples(X))
 
     def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+        return {"preserves_dtype": [np.float64, np.float32], "array_api_support": True}
