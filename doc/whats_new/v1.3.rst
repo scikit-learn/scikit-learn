@@ -743,14 +743,6 @@ Changelog
   :pr:`25733` by :user:`Brigitta Sipőcz <bsipocz>` and
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-
-- |FIX| Fixes :func:`utils.validation.check_array` to properly convert pandas
-  extension arrays. :pr:`25813` and :pr:`26106` by `Thomas Fan`_.
-
-- |Fix| :func:`utils.validation.check_array` now suports pandas DataFrames with
-  extension arrays and object dtypes by return an ndarray with object dtype.
-  :pr:`25814` by `Thomas Fan`_.
-
 - |Enhancement| :func:`utils.multiclass.type_of_target` raises
   a warning when the number of unique classes is greater than 50% of
   `n_samples`. :pr:`26335` by :user:`Rahil Parikh <rprkh>`.
