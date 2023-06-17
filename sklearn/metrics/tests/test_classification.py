@@ -216,10 +216,7 @@ def test_classification_report_zero_division_warning(zero_division):
                         r"The number of unique classes is greater than 50% of the"
                         r" samples."
                     )
-                    if msg in str(item.message):
-                        pass
-                    else:
-                        raise
+                    assert msg in str(item.message)
         else:
             try:
                 assert not record
@@ -229,10 +226,7 @@ def test_classification_report_zero_division_warning(zero_division):
                         r"The number of unique classes is greater than 50% of the"
                         r" samples."
                     )
-                    if msg in str(item.message):
-                        pass
-                    else:
-                        raise
+                    assert msg in str(item.message)
 
 
 def test_multilabel_accuracy_score_subset_accuracy():
@@ -2136,10 +2130,7 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
         except AssertionError as error:
             error_message = str(error)
             msg = r"The number of unique classes is greater than 50% of the samples."
-            if msg in error_message:
-                pass
-            else:
-                raise
+            assert msg in error_message
 
     # average of per-sample scores
     assert_no_warnings(
