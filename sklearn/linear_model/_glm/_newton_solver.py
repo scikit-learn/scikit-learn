@@ -611,6 +611,8 @@ class NewtonLSMRSolver(NewtonSolver):
             - self.gradient
             - self.sqrt_P = sqrt(l2_reg_strength) * sqrt(P)
             - self.A_norm
+            - self.r_norm
+            - self.lsmr_iter
         """
         super().setup(X=X, y=y, sample_weight=sample_weight)
         (
@@ -657,6 +659,7 @@ class NewtonLSMRSolver(NewtonSolver):
             # The multiplicative term is 1 <= term <= 50, log(1e-22) ~ -50
             self.A_norm *= 1 - np.log((self.l2_reg_strength + 1e-22) * 1e7)
         self.r_norm = 1
+        self.lsmr_iter = 0  # number of total LSMR iterations
 
     def update_gradient_hessian(self, X, y, sample_weight):
         """Update gradient and hessian.
@@ -991,8 +994,9 @@ class NewtonLSMRSolver(NewtonSolver):
             conda,
             normx,
         ) = result
+        self.lsmr_iter += itn
         if self.verbose >= 2:
-            print(f"  Inner iterations in LSMR = {itn}")
+            print(f"  Inner iterations in LSMR = {itn}, total = {self.lsmr_iter}")
         if self.coef.dtype == np.float32:
             self.coef_newton = self.coef_newton.astype(np.float32)
         if not self.linear_loss.base_loss.is_multiclass:
