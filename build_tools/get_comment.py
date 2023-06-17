@@ -3,7 +3,6 @@
 # This script fails if there are not comments to be posted.
 
 import os
-
 import requests
 
 
@@ -168,10 +167,12 @@ def get_headers(token):
 def get_lint_bot_comments(repo, token, pr_number):
     """Get the comments from the linting bot."""
     # repo is in the form of "org/repo"
-    comments = requests.get(
+    response = requests.get(
         f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments",
         headers=get_headers(token),
-    ).json()
+    )
+    response.raise_for_status()
+    comments = response.json()
 
     failed_comment = "This PR is introducing linting issues. Here's a summary of the"
     success_comment = (
@@ -191,27 +192,35 @@ def delete_existing_messages(comments, repo, token):
     # repo is in the form of "org/repo"
     print("deleting comments")
     for comment in comments:
-        requests.delete(
+        response = requests.delete(
             f"https://api.github.com/repos/{repo}/issues/comments/{comment['id']}",
             headers=get_headers(token),
         )
+        response.raise_for_status()
 
 
 def create_comment(comment, repo, pr_number, token):
     """Create a new comment."""
     # repo is in the form of "org/repo"
     print("creating new comment")
-    requests.post(
+    response = requests.post(
         f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments",
         json={"body": comment},
         headers=get_headers(token),
     )
+    response.raise_for_status()
 
 
 if __name__ == "__main__":
     repo = os.environ["GITHUB_REPOSITORY"]
     token = os.environ["GITHUB_TOKEN"]
     pr_number = os.environ["PR_NUMBER"]
+
+    if not repo or not token or not pr_number:
+        raise ValueError(
+            "One of the following environment variables is not set: "
+            "GITHUB_REPOSITORY, GITHUB_TOKEN, PR_NUMBER"
+        )
 
     delete_existing_messages(get_lint_bot_comments(repo, token, pr_number), repo, token)
     create_comment(message := get_message(), repo, pr_number, token)

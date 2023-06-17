@@ -12,9 +12,34 @@ on:
       - completed
 
 jobs:
-  comment:
+  get-pr-number:
+    # using a separate job for this action to limit the permissions of the
+    # GITHUB_TOKEN to only read pull requests.
     if: ${{ github.event.workflow_run.event == 'pull_request' }}
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      pullRequestNumber: ${{ steps.source-run-info.outputs.pullRequestNumber }}
+    steps:
+      # This step is needed to get the pull request number used the last step
+      # under the name: `needs.get-pr-number.outputs.pullRequestNumber`.
+      - name: "Get information about the origin 'CI' run"
+        uses: potiuk/get-workflow-origin@v1_5
+        id: source-run-info
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sourceRunId: ${{ github.event.workflow_run.id }}
+
+  comment:
+    needs: get-pr-number
+    runs-on: ubuntu-latest
+    permissions:
+      # Setting permissions for GITHUB_TOKEN to write comments on PRs.
+      # The process-comments step needs to delete and add comments to the PR
+      # which is exposed under the issues endpoint.
+      issues: write
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -26,14 +51,6 @@ jobs:
 
       - name: Install dependencies
         run: python -m pip install requests
-
-      # This step is needed to get the pull request number used the last step.
-      - name: "Get information about the origin 'CI' run"
-        uses: potiuk/get-workflow-origin@v1_5
-        id: source-run-info
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          sourceRunId: ${{ github.event.workflow_run.id }}
 
       - name: Download artifact
         id: download-artifact
@@ -50,7 +67,5 @@ jobs:
         id: process-comments
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ steps.source-run-info.outputs.pullRequestNumber }}
-        # This step "fails" with exit code 1 if no comments are to be posted.
-        # Therefore the next step wouldn't run.
+          PR_NUMBER: ${{ needs.get-pr-number.outputs.pullRequestNumber }}
         run: python ./build_tools/get_comment.py
