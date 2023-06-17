@@ -242,7 +242,7 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |Fix| `compose.ColumnTransformer` raises an informative error when the individual
+- |Fix| :class:`compose.ColumnTransformer` raises an informative error when the individual
   transformers of `ColumnTransformer` output pandas dataframes with indexes that are
   not consistent with each other and the output is configured to be pandas.
   :pr:`26286` by `Thomas Fan`_.
@@ -382,10 +382,10 @@ Changelog
   and :class:`ensemble.AdaBoostRegressor` that was introduced in :pr:`23819`.
   :pr:`26242` by :user:`Marko Toplak <markotoplak>`.
 
-:mod:`sklearn.exception`
-........................
+:mod:`sklearn.exceptions`
+.........................
 
-- |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
+- |Feature| Added :class:`exceptions.InconsistentVersionWarning` which is raised
   when a scikit-learn estimator is unpickled with a scikit-learn version that is
   inconsistent with the sckit-learn version the estimator was pickled with.
   :pr:`25297` by `Thomas Fan`_.
