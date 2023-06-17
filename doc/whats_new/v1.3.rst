@@ -747,7 +747,6 @@ Changelog
   a warning when the number of unique classes is greater than 50% of
   `n_samples`. :pr:`26335` by :user:`Rahil Parikh <rprkh>`.
 
-
 :mod:`sklearn.semi_supervised`
 ..............................
 
