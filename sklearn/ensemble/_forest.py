@@ -696,7 +696,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         If is_training_data, then fit the _bin_mapper attribute.
         Else, the binned data is converted to a C-contiguous array.
         """
-
         description = "training" if is_training_data else "validation"
         if self.verbose:
             print(
