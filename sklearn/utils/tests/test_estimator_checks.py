@@ -2,6 +2,7 @@
 # build_tools/azure/test_pytest_soft_dependency.sh on these
 # tests to make sure estimator_checks works without pytest.
 
+import importlib
 import unittest
 import sys
 import warnings
@@ -11,7 +12,7 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from sklearn import config_context
+from sklearn import config_context, get_config
 from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import deprecated
@@ -36,6 +37,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
+from sklearn.utils import _array_api
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.estimator_checks import check_decision_proba_consistency
 from sklearn.utils._param_validation import Interval, StrOptions
@@ -43,6 +45,7 @@ from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
     _set_checking_parameters,
+    check_array_api_input,
     check_class_weight_balanced_linear_classifier,
     check_classifier_data_not_an_array,
     check_classifiers_multilabel_output_format_decision_function,
@@ -481,6 +484,37 @@ class PartialFitChecksName(BaseEstimator):
         self._validate_data(X, y, reset=reset)
         self._fitted = True
         return self
+
+
+class BrokenArrayAPI(BaseEstimator):
+    """Make different predictions when using Numpy and the Array API"""
+
+    def fit(self, X, y):
+        return self
+
+    def predict(self, X):
+        enabled = get_config()["array_api_dispatch"]
+        xp, _ = _array_api.get_namespace(X)
+        if enabled:
+            return xp.asarray([1, 2, 3])
+        else:
+            return np.array([3, 2, 1])
+
+
+def test_check_array_api_input():
+    try:
+        importlib.import_module("array_api_compat")
+    except ModuleNotFoundError:
+        raise SkipTest("array_api_compat is required to run this test")
+    try:
+        importlib.import_module("numpy.array_api")
+    except ModuleNotFoundError:  # pragma: nocover
+        raise SkipTest("numpy.array_api is required to run this test")
+
+    with raises(AssertionError, match="Not equal to tolerance"):
+        check_array_api_input(
+            "BrokenArrayAPI", BrokenArrayAPI(), array_namespace="numpy.array_api"
+        )
 
 
 def test_not_an_array_array_function():

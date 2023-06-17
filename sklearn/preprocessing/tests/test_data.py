@@ -2527,6 +2527,21 @@ def test_power_transformer_copy_False(method, standardize):
     assert X_trans is X_inv_trans
 
 
+def test_power_transformer_box_cox_raise_all_nans_col():
+    """Check that box-cox raises informative when a column contains all nans.
+
+    Non-regression test for gh-26303
+    """
+    X = rng.random_sample((4, 5))
+    X[:, 0] = np.nan
+
+    err_msg = "Column must not be all nan."
+
+    pt = PowerTransformer(method="box-cox")
+    with pytest.raises(ValueError, match=err_msg):
+        pt.fit_transform(X)
+
+
 @pytest.mark.parametrize(
     "X_2",
     [
@@ -2654,3 +2669,22 @@ def test_kernel_centerer_feature_names_out():
     names_out = centerer.get_feature_names_out()
     samples_out2 = X_pairwise.shape[1]
     assert_array_equal(names_out, [f"kernelcenterer{i}" for i in range(samples_out2)])
+
+
+@pytest.mark.parametrize("standardize", [True, False])
+def test_power_transformer_constant_feature(standardize):
+    """Check that PowerTransfomer leaves constant features unchanged."""
+    X = [[-2, 0, 2], [-2, 0, 2], [-2, 0, 2]]
+
+    pt = PowerTransformer(method="yeo-johnson", standardize=standardize).fit(X)
+
+    assert_allclose(pt.lambdas_, [1, 1, 1])
+
+    Xft = pt.fit_transform(X)
+    Xt = pt.transform(X)
+
+    for Xt_ in [Xft, Xt]:
+        if standardize:
+            assert_allclose(Xt_, np.zeros_like(X))
+        else:
+            assert_allclose(Xt_, X)

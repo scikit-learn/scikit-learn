@@ -204,7 +204,10 @@ def _liac_arff_parser(
         if len(dfs) >= 2:
             dfs[0] = dfs[0].astype(dfs[1].dtypes)
 
-        frame = pd.concat(dfs, ignore_index=True)
+        # liac-arff parser does not depend on NumPy and uses None to represent
+        # missing values. To be consistent with the pandas parser, we replace
+        # None with np.nan.
+        frame = pd.concat(dfs, ignore_index=True).fillna(value=np.nan)
         del dfs, first_df
 
         # cast the columns frame
@@ -387,6 +390,7 @@ def _pandas_arff_parser(
         "header": None,
         "index_col": False,  # always force pandas to not use the first column as index
         "na_values": ["?"],  # missing values are represented by `?`
+        "keep_default_na": False,  # only `?` is a missing value given the ARFF specs
         "comment": "%",  # skip line starting by `%` since they are comments
         "quotechar": '"',  # delimiter to use for quoted strings
         "skipinitialspace": True,  # skip spaces after delimiter to follow ARFF specs

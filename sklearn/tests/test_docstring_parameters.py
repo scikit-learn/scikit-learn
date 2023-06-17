@@ -197,6 +197,7 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
+@ignore_warnings(category=sklearn.exceptions.ConvergenceWarning)
 @pytest.mark.parametrize("name, Estimator", all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
     pytest.importorskip("numpydoc")
@@ -240,18 +241,6 @@ def test_fit_docstring_attributes(name, Estimator):
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
 
-    # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
-    if Estimator.__name__ == "SequentialFeatureSelector":
-        est.set_params(n_features_to_select="auto")
-
-    # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
-    if Estimator.__name__ == "FastICA":
-        est.set_params(whiten="unit-variance")
-
-    # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
-    if Estimator.__name__ == "MiniBatchDictionaryLearning":
-        est.set_params(batch_size=5)
-
     # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
     if Estimator.__name__ in ("KMeans", "MiniBatchKMeans"):
         est.set_params(n_init="auto")
@@ -276,6 +265,14 @@ def test_fit_docstring_attributes(name, Estimator):
     # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
     if Estimator.__name__ == "MDS":
         est.set_params(normalized_stress="auto")
+
+    # Low max iter to speed up tests: we are only interested in checking the existence
+    # of fitted attributes. This should be invariant to whether it has converged or not.
+    if "max_iter" in est.get_params():
+        est.set_params(max_iter=2)
+
+    if "random_state" in est.get_params():
+        est.set_params(random_state=0)
 
     # In case we want to deprecate some attributes in the future
     skipped_attributes = {}
