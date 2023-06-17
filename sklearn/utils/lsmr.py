@@ -15,8 +15,9 @@ Systems Optimization Laboratory
 Dept of MS&E, Stanford University.
 
 """
-
-__all__ = ["lsmr"]
+# SCIKIT-LEARN NOTE
+# This is a copy from scipy.sparse.linalg and only the stopping criteria are
+# extended, i.e. artol.
 
 from numpy import zeros, infty, atleast_1d, result_type
 from numpy.linalg import norm
@@ -27,7 +28,16 @@ from scipy.sparse.linalg._isolve.lsqr import _sym_ortho
 
 
 def lsmr(
-    A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8, maxiter=None, show=False, x0=None
+    A,
+    b,
+    damp=0.0,
+    atol=1e-6,
+    btol=1e-6,
+    conlim=1e8,
+    maxiter=None,
+    show=False,
+    x0=None,
+    artol=0,
 ):
     """Iterative solver for least-squares problems.
 
@@ -93,6 +103,11 @@ def lsmr(
 
         .. versionadded:: 1.0.0
 
+    artol: float, optional
+        Stops when ``norm(A^H r) <= artol``
+
+        .. versionadded:: scikit-learn modification
+
     Returns
     -------
     x : ndarray of float
@@ -113,6 +128,7 @@ def lsmr(
                   = 6 is the same as 3 with CONLIM = 1/eps.
                   = 7 means ITN reached maxiter before the other stopping
                       conditions were satisfied.
+                  = 8 same as 2 but with artol.
 
     itn : int
         Number of iterations used.
@@ -209,6 +225,7 @@ def lsmr(
         "The least-squares solution is good enough for this machine",
         "Cond(Abar) seems to be too large for this machine         ",
         "The iteration limit has been reached                      ",
+        "The least-squares solution is good enough, given artol     ",
     )
 
     hdg1 = "   itn      x(1)       norm r    norm Ar"
@@ -236,6 +253,7 @@ def lsmr(
         print("damp = %20.14e\n" % (damp))
         print(f"atol = {atol:8.2e}                 conlim = {conlim:8.2e}\n")
         print(f"btol = {btol:8.2e}             maxiter = {maxiter:8g}\n")
+        print(f"artol = {artol:8.2e}\n")
 
     u = b
     normb = norm(b)
@@ -446,6 +464,8 @@ def lsmr(
 
         if test3 <= ctol:
             istop = 3
+        if normar <= artol:
+            istop = 8
         if test2 <= atol:
             istop = 2
         if test1 <= rtol:
