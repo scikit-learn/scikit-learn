@@ -572,19 +572,16 @@ def test_knn_imputation_adds_missing_indicator_column_if_add_indicator_is_true(
             # Expected output: Imputed X_test with an additional column indicating
             # the missing values
             X_expected = np.array([[0, 2, 1], [1, 2, 0]])
-        elif missing_value_test == 1:
+        else:
             # Expected output: original X_test with an additional column
             X_expected = np.array([[0, 1, 0], [1, 2, 0]])
-        else:
-            raise ValueError("Unknown missing_value_test {}".format(missing_value_test))
+
     # If add_indicator is False, we check if the missing indicator column is not added
     else:
         if missing_value_test is np.NaN:
             # Expected output: imputed X_test with no additional column
             X_expected = np.array([[0, 2], [1, 2]])
-        elif missing_value_test == 1:
+        else:
             # Expected output: original X_test with no additional column
             X_expected = X_test
-        else:
-            raise ValueError("Unknown missing_value_test {}".format(missing_value_test))
     assert_allclose(X_test_imputed, X_expected)
