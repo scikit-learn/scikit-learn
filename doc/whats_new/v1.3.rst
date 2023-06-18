@@ -281,6 +281,7 @@ Changelog
 
 - |Enhancement| :class:`cross_decomposition.PLSRegression` now automatically ravels
   the output of `predict` if fitted with one dimensional `y`.
+  :pr:`26602` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.datasets`
 .......................
