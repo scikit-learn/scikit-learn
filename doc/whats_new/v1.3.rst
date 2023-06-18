@@ -276,6 +276,12 @@ Changelog
   :func:`covariance.graphical_lasso_path`, and :class:`covariance.GraphicalLassoCV`.
   :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Enhancement| :class:`cross_decomposition.PLSRegression` now automatically ravels
+  the output of `predict` if fitted with one dimensional `y`.
+
 :mod:`sklearn.datasets`
 .......................
 
