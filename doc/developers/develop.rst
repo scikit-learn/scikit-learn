@@ -706,6 +706,19 @@ only wrap the first array and not alter the other arrays.
 See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
 for an example on how to use the API.
 
+.. _developer_api_check_is_fitted:
+
+Developer API for `check_is_fitted`
+===================================
+
+`check_is_fitted` utilizes the `__sklearn_is_fitted__` method of estimator,
+if it exist, to check the fitted status. But by relying on `__sklearn_is_fitted__`
+when available, `check_is_fitted` allows custom estimator to define their own
+convention for indicating fitted status.
+
+See :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
+for an example on how to use the API.
+
 .. _coding-guidelines:
 
 Coding guidelines
