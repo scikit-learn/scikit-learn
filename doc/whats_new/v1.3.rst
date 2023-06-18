@@ -417,6 +417,13 @@ Changelog
 - |Fix| :class:`impute.IterativeImputer` now correctly preserves the Pandas
   Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
 
+- |Fix| :class:`impute.IterativeImputer` now correctly preserves the Pandas
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
+
+- |Fix| :class:`impute.KNNImputer` now correctly adds a missing indicator column in
+  `transform` when `add_indicator` is set to `True` and missing values are observed
+  during `fit`. :pr:`26454` by `SHREESHA KUMAR BHAT <Shreesha3112>`.
+
 :mod:`sklearn.inspection`
 .........................
 
