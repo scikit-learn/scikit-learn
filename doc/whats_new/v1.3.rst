@@ -419,7 +419,7 @@ Changelog
 
 - |Fix| :class:`impute.KNNImputer` now correctly adds a missing indicator column in
   `transform` when `add_indicator` is set to `True` and missing values are observed
-  during `fit`. :pr:`26454` by `SHREESHA KUMAR BHAT <Shreesha3112>`.
+  during `fit`. :pr:`26600` by `SHREESHA KUMAR BHAT <Shreesha3112>`.
 
 :mod:`sklearn.inspection`
 .........................
