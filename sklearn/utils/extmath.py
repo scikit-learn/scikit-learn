@@ -806,18 +806,18 @@ def svd_flip(u, v, u_based_decision=True):
     xp, _ = get_namespace(u)
 
     if u_based_decision:
-        # columns of u, rows of v
-        max_abs_cols = xp.argmax(xp.abs(u), axis=0)
-        indices = xp.arange(u.shape[1]) * u.shape[0] + max_abs_cols
-        signs = xp.sign(xp.take(xp.reshape(u, (-1,)), indices))
-        u *= signs
+        # columns of u, rows of v, or equivalently rows of u.T and v
+        max_abs_u_cols = xp.argmax(xp.abs(u.T), axis=1)
+        indices = max_abs_u_cols + xp.arange(u.T.shape[0]) * u.T.shape[1]
+        signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices))
+        u *= signs[np.newaxis, :]
         v *= signs[:, np.newaxis]
     else:
         # rows of v, columns of u
-        max_abs_rows = xp.argmax(xp.abs(v), axis=1)
-        indices = xp.arange(v.shape[0]) * v.shape[1] + max_abs_rows
+        max_abs_v_rows = xp.argmax(xp.abs(v), axis=1)
+        indices = max_abs_v_rows + xp.arange(v.shape[0]) * v.shape[1]
         signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices))
-        u *= signs
+        u *= signs[np.newaxis, :]
         v *= signs[:, np.newaxis]
     return u, v
 
