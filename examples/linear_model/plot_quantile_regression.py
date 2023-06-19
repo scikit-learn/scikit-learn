@@ -93,7 +93,7 @@ _ = axs[1, 1].set_xlabel("Residuals")
 # In this asymmetric setting, the median or different quantiles give additional
 # insights. On top of that, median estimation is much more robust to outliers
 # and heavy tailed distributions. But note that extreme quantiles are estimated
-# by very view data points. 95% quantile are more or less estimated by the 5%
+# by very few data points. 95% quantile are more or less estimated by the 5%
 # largest values and thus also a bit sensitive outliers.
 #
 # In the remainder of this tutorial, we will show how
@@ -281,7 +281,7 @@ print(f"""Training error (in-sample performance)
 # while MSE is the loss minimized
 # :class:`~sklearn.linear_model.LinearRegression`.
 #
-# We can make a similar evaluation but looking at the test error obtained by
+# We can make a similar evaluation by looking at the test error obtained by
 # cross-validation.
 from sklearn.model_selection import cross_validate
 

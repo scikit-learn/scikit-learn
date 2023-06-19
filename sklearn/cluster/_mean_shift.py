@@ -24,6 +24,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.parallel import delayed, Parallel
 from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
+from ..base import _fit_context
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
 from .._config import config_context
@@ -435,6 +436,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.max_iter = max_iter
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Perform clustering.
 
@@ -451,7 +453,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
         self : object
                Fitted instance.
         """
-        self._validate_params()
         X = self._validate_data(X)
         bandwidth = self.bandwidth
         if bandwidth is None:

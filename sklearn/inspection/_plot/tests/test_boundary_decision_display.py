@@ -308,7 +308,7 @@ def test_dataframe_labels_used(pyplot, fitted_clf):
     assert ax.get_xlabel() == "hello"
     assert ax.get_ylabel() == "world"
 
-    # labels get overriden only if provided to the `plot` method
+    # labels get overridden only if provided to the `plot` method
     disp.plot(ax=ax, xlabel="overwritten_x", ylabel="overwritten_y")
     assert ax.get_xlabel() == "overwritten_x"
     assert ax.get_ylabel() == "overwritten_y"

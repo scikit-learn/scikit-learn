@@ -101,7 +101,7 @@ def fetch_covtype(
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     random_state : int, RandomState instance or None, default=None
@@ -184,7 +184,7 @@ def fetch_covtype(
             os.rename(targets_tmp_path, targets_path)
 
     elif not available and not download_if_missing:
-        raise IOError("Data not found and `download_if_missing` is False")
+        raise OSError("Data not found and `download_if_missing` is False")
     try:
         X, y
     except NameError:

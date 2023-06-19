@@ -7,6 +7,7 @@ import numpy as np
 from scipy import optimize
 
 from ..base import BaseEstimator, RegressorMixin
+from ..base import _fit_context
 from ._base import LinearModel
 from ..utils import axis0_safe_slice
 from ..utils._param_validation import Interval
@@ -273,6 +274,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self.fit_intercept = fit_intercept
         self.tol = tol
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -293,7 +295,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Fitted `HuberRegressor` estimator.
         """
-        self._validate_params()
         X, y = self._validate_data(
             X,
             y,

@@ -16,6 +16,7 @@ from scipy import linalg
 
 from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
+from ..base import _fit_context
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import (
     _is_arraylike_not_scalar,
@@ -24,6 +25,7 @@ from ..utils.validation import (
 )
 from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import validate_params
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
@@ -211,6 +213,14 @@ def alpha_max(emp_cov):
     return np.max(np.abs(A))
 
 
+@validate_params(
+    {
+        "emp_cov": ["array-like"],
+        "cov_init": ["array-like", None],
+        "return_costs": ["boolean"],
+        "return_n_iter": ["boolean"],
+    }
+)
 def graphical_lasso(
     emp_cov,
     alpha,
@@ -234,7 +244,7 @@ def graphical_lasso(
 
     Parameters
     ----------
-    emp_cov : ndarray of shape (n_features, n_features)
+    emp_cov : array-like of shape (n_features, n_features)
         Empirical covariance from which to compute the covariance estimate.
 
     alpha : float
@@ -523,6 +533,7 @@ class GraphicalLasso(BaseGraphicalLasso):
         self.alpha = alpha
         self.covariance = covariance
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the GraphicalLasso model to X.
 
@@ -539,7 +550,6 @@ class GraphicalLasso(BaseGraphicalLasso):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         # Covariance does not make sense for a single feature
         X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2)
 
@@ -916,6 +926,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         self.cv = cv
         self.n_jobs = n_jobs
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the GraphicalLasso covariance model to X.
 
@@ -932,7 +943,6 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         # Covariance does not make sense for a single feature
         X = self._validate_data(X, ensure_min_features=2)
         if self.assume_centered:

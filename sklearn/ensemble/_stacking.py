@@ -13,6 +13,7 @@ import scipy.sparse as sparse
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
+from ..base import _fit_context
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
 
@@ -159,6 +160,10 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
 
         return method_name
 
+    @_fit_context(
+        # estimators in Stacking*.estimators are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 
@@ -184,9 +189,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         -------
         self : object
         """
-
-        self._validate_params()
-
         # all_estimators contains all estimators, the one to be fitted and the
         # 'drop' string.
         names, all_estimators = self._validate_estimators()
@@ -544,7 +546,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     >>> estimators = [
     ...     ('rf', RandomForestClassifier(n_estimators=10, random_state=42)),
     ...     ('svr', make_pipeline(StandardScaler(),
-    ...                           LinearSVC(random_state=42)))
+    ...                           LinearSVC(dual="auto", random_state=42)))
     ... ]
     >>> clf = StackingClassifier(
     ...     estimators=estimators, final_estimator=LogisticRegression()
@@ -887,7 +889,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     >>> X, y = load_diabetes(return_X_y=True)
     >>> estimators = [
     ...     ('lr', RidgeCV()),
-    ...     ('svr', LinearSVR(random_state=42))
+    ...     ('svr', LinearSVR(dual="auto", random_state=42))
     ... ]
     >>> reg = StackingRegressor(
     ...     estimators=estimators,

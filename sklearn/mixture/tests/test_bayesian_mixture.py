@@ -58,7 +58,7 @@ def test_log_wishart_norm():
                 ),
                 0,
             )
-        )
+        ).item()
     predected_norm = _log_wishart_norm(
         degrees_of_freedom, log_det_precisions_chol, n_features
     )

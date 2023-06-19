@@ -4,6 +4,7 @@ from numbers import Real, Integral
 
 from ._encoders import _BaseEncoder
 from ..base import OneToOneFeatureMixin
+from ..base import _fit_context
 from ._target_encoder_fast import _fit_encoding_fast
 from ._target_encoder_fast import _fit_encoding_fast_auto_smooth
 from ..utils.validation import _check_y, check_consistent_length
@@ -14,7 +15,7 @@ from ..utils._param_validation import Interval, StrOptions
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """Target Encoder for regression and classification targets.
 
-    Each category is encoded based on a shrinked estimate of the average target
+    Each category is encoded based on a shrunk estimate of the average target
     values for observations belonging to the category. The encoding scheme mixes
     the global target mean with the target mean conditioned on the value of the
     category. [MIC]_
@@ -176,6 +177,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.shuffle = shuffle
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the :class:`TargetEncoder` to X and y.
 
@@ -192,10 +194,10 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self : object
             Fitted encoder.
         """
-        self._validate_params()
         self._fit_encodings_all(X, y)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y):
         """Fit :class:`TargetEncoder` and transform X with the target encoding.
 
@@ -219,7 +221,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """
         from ..model_selection import KFold, StratifiedKFold  # avoid circular import
 
-        self._validate_params()
         X_ordinal, X_known_mask, y, n_categories = self._fit_encodings_all(X, y)
 
         # The cv splitter is voluntarily restricted to *KFold to enforce non

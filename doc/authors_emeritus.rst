@@ -20,6 +20,7 @@
 - Wei Li
 - Paolo Losi
 - Gilles Louppe
+- Chiara Marmo
 - Vincent Michel
 - Jarrod Millman
 - Alexandre Passos

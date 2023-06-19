@@ -20,6 +20,7 @@ from ..utils._param_validation import Interval, StrOptions
 from ..utils._param_validation import RealNotInt
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
+from ..base import _fit_context
 
 from ._bagging import BaseBagging
 
@@ -85,7 +86,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             - If float, then draw `max(1, int(max_features * n_features_in_))` features.
 
         Note: using a float number less than 1.0 or integer less than number of
-        features will enable feature subsampling and leads to a longerr runtime.
+        features will enable feature subsampling and leads to a longer runtime.
 
     bootstrap : bool, default=False
         If True, individual trees are fit on random subsets of the training
@@ -265,6 +266,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # copies.
         return {"prefer": "threads"}
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """
         Fit estimator.
@@ -287,7 +289,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         X = self._validate_data(X, accept_sparse=["csc"], dtype=tree_dtype)
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
