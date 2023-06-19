@@ -8,12 +8,19 @@ from sklearn.tree import (
     ExtraTreeRegressor,
     ExtraTreeClassifier,
 )
+from sklearn.ensemble import (
+    RandomForestRegressor,
+    RandomForestClassifier,
+    ExtraTreesRegressor,
+    ExtraTreesClassifier,
+)
 
 TREE_CLASSIFIER_CLASSES = [DecisionTreeClassifier, ExtraTreeClassifier]
 TREE_REGRESSOR_CLASSES = [DecisionTreeRegressor, ExtraTreeRegressor]
+TREE_BASED_CLASSIFIER_CLASSES = TREE_CLASSIFIER_CLASSES + [RandomForestClassifier, ExtraTreesClassifier]
+TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [RandomForestRegressor, ExtraTreesRegressor]
 
-
-@pytest.mark.parametrize("TreeClassifier", TREE_CLASSIFIER_CLASSES)
+@pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
 @pytest.mark.parametrize("depth_first", (True, False))
 def test_montonic_constraints_classifications(
     TreeClassifier, depth_first, global_random_seed
@@ -51,6 +58,8 @@ def test_montonic_constraints_classifications(
         )
     if hasattr(est, "random_state"):
         est.set_params(**{"random_state": global_random_seed})
+    if hasattr(est, "n_estimators"):
+        est.set_params(**{"n_estimators": 5})
     est.fit(X_train, y_train)
     y = est.predict_proba(X_test)[:, 1]
 
@@ -63,7 +72,7 @@ def test_montonic_constraints_classifications(
     assert np.all(est.predict_proba(X_test_1decr)[:, 1] >= y)
 
 
-@pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
+@pytest.mark.parametrize("TreeRegressor", TREE_BASED_REGRESSOR_CLASSES)
 @pytest.mark.parametrize("depth_first", (True, False))
 def test_montonic_constraints_regressions(
     TreeRegressor, depth_first, global_random_seed
@@ -115,7 +124,7 @@ def test_montonic_constraints_regressions(
     assert np.all(y_decr <= y)
 
 
-@pytest.mark.parametrize("TreeClassifier", TREE_CLASSIFIER_CLASSES)
+@pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
 def test_multiclass_raises(TreeClassifier):
     X, y = make_classification(
         n_samples=100, n_features=5, n_classes=3, n_informative=3, random_state=0
@@ -131,7 +140,7 @@ def test_multiclass_raises(TreeClassifier):
         est.fit(X, y)
 
 
-@pytest.mark.parametrize("TreeClassifier", TREE_CLASSIFIER_CLASSES)
+@pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
 def test_multiple_output_raises(TreeClassifier):
     X = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]
     y = [[1, 0, 1, 0, 1], [1, 0, 1, 0, 1]]
@@ -144,7 +153,7 @@ def test_multiple_output_raises(TreeClassifier):
         est.fit(X, y)
 
 
-@pytest.mark.parametrize("TreeClassifier", TREE_CLASSIFIER_CLASSES)
+@pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
 def test_bad_monotonic_cst_raises(TreeClassifier):
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     y = [1, 0, 1, 0, 1]
