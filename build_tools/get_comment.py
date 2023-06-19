@@ -151,7 +151,7 @@ def get_message(log_file, repo, run_id, details):
         details=details,
     )
 
-    if not len(message):
+    if not message:
         # no issues detected, so this script "fails"
         return (
             "## Linting Passed\n"
