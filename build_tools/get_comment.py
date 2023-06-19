@@ -27,6 +27,9 @@ def get_step_message(log, start, end, title, message, details):
     message : str
         The message to be added at the beginning of the section.
 
+    details : bool
+        Whether to add the details of each step.
+
     Returns
     -------
     message : str
