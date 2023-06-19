@@ -229,14 +229,22 @@ def estimator_html_repr(estimator):
             " HTML representation is unable to render, please try loading this page"
             " with nbviewer.org."
         )
-        out.write(
-            f"<style>{style_with_id}</style>"
-            f'<div id="{container_id}" class="sk-top-container">'
-            '<div class="sk-text-repr-fallback">'
-            f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
-            "</div>"
-            '<div class="sk-container" hidden>'
-        )
+
+        with open(Path(Path(__file__).parent, "base_template.html")) as fp:
+            base_template = fp.read()
+            html_template = base_template.format(
+                **{
+                    "container_id": container_id,
+                    "style_with_id": style_with_id,
+                    "estimator_str": html.escape(estimator_str),
+                    "fallback_msg": fallback_msg,
+                }
+            )
+
+        print(html_template)
+
+        out.write(html_template)
+
         _write_estimator_html(
             out,
             estimator,
