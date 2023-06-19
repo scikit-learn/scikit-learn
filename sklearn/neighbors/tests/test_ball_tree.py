@@ -3,7 +3,7 @@ import itertools
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal, assert_allclose, assert_equal
-from sklearn.neighbors._ball_tree import BallTree
+from sklearn.neighbors._ball_tree import BallTree64, BallTree32
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_array
 from sklearn.utils._testing import _convert_container
@@ -64,7 +64,7 @@ def test_ball_tree_query_metrics(metric, array_type):
 
     k = 5
 
-    bt = BallTree(X, leaf_size=1, metric=metric)
+    bt = BallTree64(X, leaf_size=1, metric=metric)
     dist1, ind1 = bt.query(Y, k)
     dist2, ind2 = brute_force_neighbors(X, Y, k, metric)
     assert_array_almost_equal(dist1, dist2)
@@ -73,7 +73,7 @@ def test_ball_tree_query_metrics(metric, array_type):
 def test_query_haversine():
     rng = check_random_state(0)
     X = 2 * np.pi * rng.random_sample((40, 2))
-    bt = BallTree(X, leaf_size=1, metric="haversine")
+    bt = BallTree64(X, leaf_size=1, metric="haversine")
     dist1, ind1 = bt.query(X, k=5)
     dist2, ind2 = brute_force_neighbors(X, X, k=5, metric="haversine")
 
@@ -85,7 +85,7 @@ def test_array_object_type():
     """Check that we do not accept object dtype array."""
     X = np.array([(1, 2, 3), (2, 5), (5, 5, 1, 2)], dtype=object)
     with pytest.raises(ValueError, match="setting an array element with a sequence"):
-        BallTree(X)
+        BallTree64(X)
 
 
 def test_bad_pyfunc_metric():
@@ -98,11 +98,11 @@ def test_bad_pyfunc_metric():
     X = np.ones((5, 2))
     msg = "Custom distance function must accept two vectors and return a float."
     with pytest.raises(TypeError, match=msg):
-        BallTree(X, metric=wrong_returned_value)
+        BallTree64(X, metric=wrong_returned_value)
 
     msg = "takes 1 positional argument but 2 were given"
     with pytest.raises(TypeError, match=msg):
-        BallTree(X, metric=one_arg_func)
+        BallTree64(X, metric=one_arg_func)
 
 
 @pytest.mark.parametrize("metric", itertools.chain(METRICS, BOOLEAN_METRICS))
@@ -112,8 +112,8 @@ def test_ball_tree_numerical_consistency(global_random_seed, metric):
     )
 
     metric_params = METRICS.get(metric, {})
-    bt_64 = BallTree(X_64, leaf_size=1, metric=metric, **metric_params)
-    bt_32 = BallTree(X_32, leaf_size=1, metric=metric, **metric_params)
+    bt_64 = BallTree64(X_64, leaf_size=1, metric=metric, **metric_params)
+    bt_32 = BallTree32(X_32, leaf_size=1, metric=metric, **metric_params)
 
     # Test consistency with respect to the `query` method
     k = 5
@@ -152,8 +152,8 @@ def test_kernel_density_numerical_consistency(global_random_seed, metric):
     )
 
     metric_params = METRICS.get(metric, {})
-    bt_64 = BallTree(X_64, leaf_size=1, metric=metric, **metric_params)
-    bt_32 = BallTree(X_32, leaf_size=1, metric=metric, **metric_params)
+    bt_64 = BallTree64(X_64, leaf_size=1, metric=metric, **metric_params)
+    bt_32 = BallTree32(X_32, leaf_size=1, metric=metric, **metric_params)
 
     kernel = "gaussian"
     h = 0.1
@@ -176,8 +176,8 @@ def test_two_point_correlation_numerical_consistency(global_random_seed):
     X_32 = _X.astype(dtype=np.float32, copy=False)
     Y_32 = _Y.astype(dtype=np.float32, copy=False)
 
-    bt_64 = BallTree(X_64, leaf_size=10)
-    bt_32 = BallTree(X_32, leaf_size=10)
+    bt_64 = BallTree64(X_64, leaf_size=10)
+    bt_32 = BallTree32(X_32, leaf_size=10)
 
     r = np.linspace(0, 1, 10)
 

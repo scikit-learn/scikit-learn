@@ -8,7 +8,7 @@ from sklearn.neighbors.tests.test_ball_tree import (
 )
 from sklearn.utils.parallel import delayed, Parallel
 
-from sklearn.neighbors._kd_tree import KDTree
+from sklearn.neighbors._kd_tree import KDTree64, KDTree32
 
 DIMENSION = 3
 
@@ -19,7 +19,7 @@ def test_array_object_type():
     """Check that we do not accept object dtype array."""
     X = np.array([(1, 2, 3), (2, 5), (5, 5, 1, 2)], dtype=object)
     with pytest.raises(ValueError, match="setting an array element with a sequence"):
-        KDTree(X)
+        KDTree64(X)
 
 
 def test_kdtree_picklable_with_joblib():
@@ -28,7 +28,7 @@ def test_kdtree_picklable_with_joblib():
     Non-regression test for #21685 and #21228."""
     rng = np.random.RandomState(0)
     X = rng.random_sample((10, 3))
-    tree = KDTree(X, leaf_size=2)
+    tree = KDTree64(X, leaf_size=2)
 
     # Call Parallel with max_nbytes=1 to trigger readonly memory mapping that
     # use to raise "ValueError: buffer source array is read-only" in a previous
@@ -43,8 +43,8 @@ def test_kd_tree_numerical_consistency(global_random_seed, metric):
     )
 
     metric_params = METRICS.get(metric, {})
-    kd_64 = KDTree(X_64, leaf_size=2, metric=metric, **metric_params)
-    kd_32 = KDTree(X_32, leaf_size=2, metric=metric, **metric_params)
+    kd_64 = KDTree64(X_64, leaf_size=2, metric=metric, **metric_params)
+    kd_32 = KDTree32(X_32, leaf_size=2, metric=metric, **metric_params)
 
     # Test consistency with respect to the `query` method
     k = 4
@@ -83,8 +83,8 @@ def test_kernel_density_numerical_consistency(global_random_seed, metric):
     )
 
     metric_params = METRICS.get(metric, {})
-    kd_64 = KDTree(X_64, leaf_size=2, metric=metric, **metric_params)
-    kd_32 = KDTree(X_32, leaf_size=2, metric=metric, **metric_params)
+    kd_64 = KDTree64(X_64, leaf_size=2, metric=metric, **metric_params)
+    kd_32 = KDTree32(X_32, leaf_size=2, metric=metric, **metric_params)
 
     kernel = "gaussian"
     h = 0.1

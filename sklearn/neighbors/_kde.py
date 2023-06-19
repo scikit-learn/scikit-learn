@@ -15,8 +15,8 @@ from ..utils import check_random_state
 from ..utils.validation import _check_sample_weight, check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import row_norms
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
+from ._ball_tree import BallTree64 as BallTree
+from ._kd_tree import KDTree64 as KDTree
 
 
 VALID_KERNELS = [
