@@ -138,19 +138,8 @@ def _yield_checks(estimator):
     yield check_estimator_get_tags_default_keys
 
     if tags["array_api_support"]:
-        for array_namespace in ["numpy.array_api", "cupy.array_api", "cupy", "torch"]:
-            if array_namespace == "torch":
-                for device, dtype in itertools.product(
-                    ("cpu", "cuda"), ("float64", "float32")
-                ):
-                    yield partial(
-                        check_array_api_input,
-                        array_namespace=array_namespace,
-                        dtype=dtype,
-                        device=device,
-                    )
-            else:
-                yield partial(check_array_api_input, array_namespace=array_namespace)
+        for check in _yield_array_api_checks():
+            yield check
 
 
 def _yield_classifier_checks(classifier):
@@ -312,6 +301,22 @@ def _yield_outliers_checks(estimator):
         if _safe_tags(estimator, key="requires_fit"):
             yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
+
+
+def _yield_array_api_checks():
+    for array_namespace in ["numpy.array_api", "cupy.array_api", "cupy", "torch"]:
+        if array_namespace == "torch":
+            for device, dtype in itertools.product(
+                ("cpu", "cuda"), ("float64", "float32")
+            ):
+                yield partial(
+                    check_array_api_input,
+                    array_namespace=array_namespace,
+                    dtype=dtype,
+                    device=device,
+                )
+        else:
+            yield partial(check_array_api_input, array_namespace=array_namespace)
 
 
 def _yield_all_checks(estimator):
@@ -927,9 +932,9 @@ def check_array_api_input(
         "predict_log_proba",
         "predict_proba",
         "transform",
-        "inverse_transform",
     )
 
+    input_ns = get_namespace(X_xp)[0]
     for method_name in methods:
         method = getattr(est, method_name, None)
         if method is None:
@@ -939,9 +944,11 @@ def check_array_api_input(
         with config_context(array_api_dispatch=True):
             result_xp = getattr(est_xp, method_name)(X_xp)
 
-        assert (
-            get_namespace(result_xp)[0] == get_namespace(X_xp)[0]
-        ), f"'{method}' output is in wrong namespace"
+        result_ns = get_namespace(result_xp)[0]
+        assert result_ns == input_ns, (
+            f"'{method}' output is in wrong namespace, expected {input_ns}, "
+            f"got {result_ns}."
+        )
 
         assert array_device(result_xp) == array_device(X_xp)
 
@@ -953,6 +960,28 @@ def check_array_api_input(
             err_msg=f"{method} did not the return the same result",
             atol=np.finfo(X.dtype).eps * 100,
         )
+
+        if method_name == "transform" and hasattr(est, "inverse_transform"):
+            inverse_result = est.inverse_transform(result)
+            with config_context(array_api_dispatch=True):
+                invese_result_xp = est.inverse_transform(result_xp)
+
+            result_ns = get_namespace(invese_result_xp)[0]
+            assert result_ns == input_ns, (
+                "'inverse_transform' output is in wrong namespace, expected"
+                f" {input_ns}, got {result_ns}."
+            )
+
+            assert array_device(invese_result_xp) == array_device(X_xp)
+
+            invese_result_xp_np = _convert_to_numpy(invese_result_xp, xp=xp)
+
+            assert_allclose(
+                inverse_result,
+                invese_result_xp_np,
+                err_msg="inverse_result did not the return the same result",
+                atol=np.finfo(X.dtype).eps * 100,
+            )
 
 
 def check_estimator_sparse_data(name, estimator_orig):
