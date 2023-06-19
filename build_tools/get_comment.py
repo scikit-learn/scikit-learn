@@ -155,7 +155,7 @@ def get_message(log_file, repo, run_id, details):
         # no issues detected, so this script "fails"
         return (
             "## Linting Passed\n"
-            "All linting checks passed. Your pull request is in excellent shape!"
+            "All linting checks passed. Your pull request is in excellent shape! ☀️"
         )
 
     message = (
@@ -190,7 +190,7 @@ def find_lint_bot_comments(repo, token, pr_number):
         headers=get_headers(token),
     )
     response.raise_for_status()
-    comments = response.json()
+    all_comments = response.json()
 
     failed_comment = "This PR is introducing linting issues. Here's a summary of the"
     success_comment = (
@@ -202,10 +202,16 @@ def find_lint_bot_comments(repo, token, pr_number):
     # just created.
     comments = [
         comment
-        for comment in comments
+        for comment in all_comments
         if comment["user"]["login"] == "github-actions[bot]"
         and (failed_comment in comment["body"] or success_comment in comment["body"])
     ]
+
+    if len(all_comments) > 25 and not comments:
+        # By default the API returns the first 30 comments. If we can't find the
+        # comment created by the bot in those, then we raise and we skip creating
+        # a comment in the first place.
+        raise RuntimeError("Comment not found in the first 30 comments.")
 
     return comments[0] if comments else None
 
@@ -244,7 +250,12 @@ if __name__ == "__main__":
             "GITHUB_REPOSITORY, GITHUB_TOKEN, PR_NUMBER, LOG_FILE, RUN_ID"
         )
 
-    comment = find_lint_bot_comments(repo, token, pr_number)
+    try:
+        comment = find_lint_bot_comments(repo, token, pr_number)
+    except RuntimeError:
+        print("Comment not found in the first 30 comments. Skipping!")
+        exit(0)
+
     try:
         message = get_message(log_file, repo=repo, run_id=run_id, details=True)
         create_or_update_comment(
