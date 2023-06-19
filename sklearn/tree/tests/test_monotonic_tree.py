@@ -228,7 +228,28 @@ def test_assert_1d_reg_tree_children_monotonic_bounded():
 def assert_1d_reg_monotonic(clf, monotonic_sign, min_x, max_x, n_steps):
     X_grid = np.linspace(min_x, max_x, n_steps).reshape(-1, 1)
     y_pred_grid = clf.predict(X_grid)
-    assert (monotonic_sign * np.diff(y_pred_grid) >= 0.0).all()
+    if monotonic_sign == 1:
+        assert (np.diff(y_pred_grid) >= 0.0).all()
+    elif monotonic_sign == -1:
+        assert (np.diff(y_pred_grid) <= 0.0).all()
+
+
+@pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
+def test_1d_opposite_monotonicity_cst_data(TreeRegressor):
+    # Check that positive monotonic data with negative monotonic constraint
+    # yield constant predictions equal to the average target
+    X = np.linspace(-2, 2, 10).reshape(-1, 1)
+    y = X.ravel()
+    clf = TreeRegressor(monotonic_cst=[-1])
+    clf.fit(X, y)
+    assert clf.tree_.node_count == 1
+    assert clf.tree_.value[0] == 0.
+
+    # Swap monotonicity
+    clf = TreeRegressor(monotonic_cst=[1])
+    clf.fit(X, -y)
+    assert clf.tree_.node_count == 1
+    assert clf.tree_.value[0] == 0.
 
 
 @pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
