@@ -81,7 +81,7 @@ def _write_label_html(
     outer_class="sk-label-container",
     inner_class="sk-label",
     checked=False,
-    url_link = ""
+    url_link="",
 ):
     """Write labeled html with or without a dropdown with named details"""
     out.write(f'<div class="{outer_class}"><div class="{inner_class} sk-toggleable">')
@@ -93,13 +93,18 @@ def _write_label_html(
 
         checked_str = "checked" if checked else ""
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
-        out.write(
-            f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}"'
-            f' type="checkbox" {checked_str}><label for="{est_id}"'
-            f' class="{label_class}">{name}<a class="estimator_doc_link"'
-            f' href="{url_link}">?</a></label><div'
-            f' class="sk-toggleable__content"><pre>{name_details}</pre></div>'
-        )
+
+        if True:  # check if estimator is sklearn or not
+            doc_link = f'<a class="estimator_doc_link" href="{url_link}">?</a>'
+        else:  # not sklearn, do not add link to doc
+            doc_link = ""
+
+        fmt_str = f"""<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}"
+             type="checkbox" {checked_str}><label for="{est_id}"
+             class="{label_class}">{name}{doc_link}</label><div
+             class="sk-toggleable__content"><pre>{name_details}</pre></div>
+            """
+        out.write(fmt_str)
     else:
         out.write(f"<label>{name}</label>")
     out.write("</div></div>")  # outer_class inner_class
@@ -147,15 +152,19 @@ def _get_visual_block(estimator):
         name_details=str(estimator),
     )
 
+
 def _get_estimator_doc_url(estimator):
     """Generating a link to the API documentation for given estimator."""
-    major=  parse_version(sklearn.__version__).major
+    major = parse_version(sklearn.__version__).major
     minor = parse_version(sklearn.__version__).minor
     estimator_name = estimator.__class__.__name__
-    estimator_module = ".".join([_ for _ in estimator.__class__.__module__.split(".") if not _.startswith("_")])
+    estimator_module = ".".join(
+        [_ for _ in estimator.__class__.__module__.split(".") if not _.startswith("_")]
+    )
     base_url = f"https://scikit-learn.org/{major}.{minor}/modules/generated/"
     full_url = f"{base_url}{estimator_module}.{estimator_name}.html"
     return full_url
+
 
 def _write_estimator_html(
     out, estimator, estimator_label, estimator_label_details, first_call=False
@@ -173,10 +182,9 @@ def _write_estimator_html(
         out.write(f'<div class="sk-item{dash_cls}">')
 
         if estimator_label:
-            _write_label_html(out, 
-                              estimator_label, 
-                              estimator_label_details, 
-                              url_link=url_link)
+            _write_label_html(
+                out, estimator_label, estimator_label_details, url_link=url_link
+            )
 
         kind = est_block.kind
         out.write(f'<div class="sk-{kind}">')
@@ -201,8 +209,9 @@ def _write_estimator_html(
             outer_class="sk-item",
             inner_class="sk-estimator",
             checked=first_call,
-            url_link=url_link
+            url_link=url_link,
         )
+
 
 with open(Path(__file__).with_suffix(".css"), "r") as style_file:
     _STYLE = style_file.read()
