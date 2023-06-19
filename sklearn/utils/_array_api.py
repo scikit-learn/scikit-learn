@@ -10,8 +10,8 @@ from .._config import get_config
 from .fixes import parse_version
 
 
-def supported_namespaces_and_parameters():
-    """Yield supported namespace, device, dtype tuples.
+def yield_namespace_device_dtype_combinations():
+    """Yield supported namespace, device, dtype tuples for testing.
 
     Use this to test that an estimator works with all combinations.
 

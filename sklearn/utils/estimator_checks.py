@@ -64,7 +64,7 @@ from ..utils._array_api import (
     _convert_to_numpy,
     get_namespace,
     device as array_device,
-    supported_namespaces_and_parameters,
+    yield_namespace_device_dtype_combinations,
 )
 from ..utils._param_validation import make_constraint
 from ..utils._param_validation import generate_invalid_param_val
@@ -309,7 +309,7 @@ def _yield_outliers_checks(estimator):
 
 
 def _yield_array_api_checks():
-    for array_namespace, device, dtype in supported_namespaces_and_parameters():
+    for array_namespace, device, dtype in yield_namespace_device_dtype_combinations():
         yield partial(
             check_array_api_input,
             array_namespace=array_namespace,
