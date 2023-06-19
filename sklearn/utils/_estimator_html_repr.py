@@ -4,8 +4,6 @@ from inspect import isclass
 from string import Template
 import html
 from pathlib import Path
-from sklearn.utils.fixes import parse_version
-import sklearn
 
 from .. import config_context
 
@@ -94,12 +92,15 @@ def _write_label_html(
         checked_str = "checked" if checked else ""
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
 
-        if True:  # check if estimator is sklearn or not
-            doc_label = '<span>Online documentation</span>'
+        if url_link:  # if the url_link is valid, use it
+            doc_label = "<span>Online documentation</span>"
             if name is not None:
-                doc_label = f'<span>Documentation for {name}</span>'
-            doc_link = f'<a class="sk-estimator-doc-link" href="{url_link}">?{doc_label}</a>'
-        else:  # not sklearn, do not add link to doc
+                doc_label = f"<span>Documentation for {name}</span>"
+            doc_link = (
+                '<a class="sk-estimator-doc-link" target="_blank"'
+                f' href="{url_link}">?{doc_label}</a>'
+            )
+        else:  # no url_link, add no link to the documentation
             doc_link = ""
 
         fmt_str = f"""<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}"
@@ -156,19 +157,6 @@ def _get_visual_block(estimator):
     )
 
 
-def _get_estimator_doc_url(estimator):
-    """Generating a link to the API documentation for given estimator."""
-    major = parse_version(sklearn.__version__).major
-    minor = parse_version(sklearn.__version__).minor
-    estimator_name = estimator.__class__.__name__
-    estimator_module = ".".join(
-        [_ for _ in estimator.__class__.__module__.split(".") if not _.startswith("_")]
-    )
-    base_url = f"https://scikit-learn.org/{major}.{minor}/modules/generated/"
-    full_url = f"{base_url}{estimator_module}.{estimator_name}.html"
-    return full_url
-
-
 def _write_estimator_html(
     out, estimator, estimator_label, estimator_label_details, first_call=False
 ):
@@ -178,7 +166,7 @@ def _write_estimator_html(
     else:
         with config_context(print_changed_only=True):
             est_block = _get_visual_block(estimator)
-    url_link = _get_estimator_doc_url(estimator)
+    url_link = estimator.get_url_link()
     if est_block.kind in ("serial", "parallel"):
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
