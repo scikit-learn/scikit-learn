@@ -185,6 +185,7 @@ def get_headers(token):
 def find_lint_bot_comments(repo, token, pr_number):
     """Get the comment from the linting bot."""
     # repo is in the form of "org/repo"
+    # API doc: https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#list-issue-comments  # noqa
     response = requests.get(
         f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments",
         headers=get_headers(token),
@@ -221,6 +222,7 @@ def create_or_update_comment(comment, message, repo, pr_number, token):
     # repo is in the form of "org/repo"
     if comment is not None:
         print("updating existing comment")
+        # API doc: https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#update-an-issue-comment  # noqa
         response = requests.patch(
             f"https://api.github.com/repos/{repo}/issues/comments/{comment['id']}",
             headers=get_headers(token),
@@ -228,6 +230,7 @@ def create_or_update_comment(comment, message, repo, pr_number, token):
         )
     else:
         print("creating new comment")
+        # API doc: https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment  # noqa
         response = requests.post(
             f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments",
             headers=get_headers(token),
