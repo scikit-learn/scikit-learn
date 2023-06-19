@@ -1099,22 +1099,22 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 
 .. topic:: References:
 
-    .. [5] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 4.3.4
+  .. [5] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 4.3.4
 
-    .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/document>`_
+  .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/document>`_
 
-    .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien:
-        :arxiv:`SAGA: A Fast Incremental Gradient Method With Support for
-        Non-Strongly Convex Composite Objectives. <1407.0202>`
+  .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien:
+      :arxiv:`SAGA: A Fast Incremental Gradient Method With Support for
+      Non-Strongly Convex Composite Objectives. <1407.0202>`
 
-    .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
+  .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
 
-    .. [9] Thomas P. Minka `"A comparison of numerical optimizers for logistic regression"
-           <https://tminka.github.io/papers/logreg/minka-logreg.pdf>`_
+  .. [9] Thomas P. Minka `"A comparison of numerical optimizers for logistic regression"
+          <https://tminka.github.io/papers/logreg/minka-logreg.pdf>`_
 
-    .. [16] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
-        "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
-        Multinomial Regression." <1311.6529>`
+  .. [16] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
+      "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
+      Multinomial Regression." <1311.6529>`
 
 .. _Generalized_linear_regression:
 
