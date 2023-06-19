@@ -246,7 +246,8 @@ def test_1d_tree_nodes_values(
     #    / \    / \
     #   c   d  e   f
     #
-    # c <= d <= root <= e <= f
+    #        a <=  root  <= b
+    # c <= d <= (a + b) / 2 <= e <= f
 
     rng = np.random.RandomState(global_random_seed)
     n_samples = 1000
