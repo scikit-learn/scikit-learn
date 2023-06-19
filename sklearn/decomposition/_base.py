@@ -70,9 +70,7 @@ class _BasePCA(
         if self.n_components_ == 0:
             return xp.eye(n_features) / self.noise_variance_
 
-        if xp.isclose(
-            self.noise_variance_, xp.zeros_like(self.noise_variance_), atol=0.0
-        ):
+        if self.noise_variance_ == 0.0:
             return xp.linalg.inv(self.get_covariance())
 
         # Get precision using matrix inversion lemma
@@ -80,15 +78,20 @@ class _BasePCA(
         exp_var = self.explained_variance_
         if self.whiten:
             components_ = components_ * xp.sqrt(exp_var[:, np.newaxis])
-        exp_var_diff = xp.maximum(
-            exp_var - self.noise_variance_, xp.zeros_like(exp_var)
+        exp_var_diff = exp_var - self.noise_variance_
+        exp_var_diff = xp.where(
+            exp_var > self.noise_variance_, exp_var_diff, xp.zeros_like(exp_var)
         )
         precision = components_ @ components_.T / self.noise_variance_
         # TODO use views instead?
-        precision.reshape(-1)[:: len(precision) + 1] += 1.0 / exp_var_diff
+        xp.reshape(precision, shape=(-1,), copy=False)[:: len(precision) + 1] += (
+            1.0 / exp_var_diff
+        )
         precision = components_.T @ xp.linalg.inv(precision) @ components_
         precision /= -(self.noise_variance_**2)
-        precision.reshape(-1)[:: len(precision) + 1] += 1.0 / self.noise_variance_
+        xp.reshape(precision, shape=(-1,), copy=False)[:: len(precision) + 1] += (
+            1.0 / self.noise_variance_
+        )
         return precision
 
     @abstractmethod

@@ -1,6 +1,5 @@
 import warnings
 import importlib
-import itertools
 import pickle
 import re
 from copy import deepcopy
@@ -946,6 +945,8 @@ def check_array_api_input(
 
     # Check estimator methods, if supported, give the same results
     methods = (
+        "score",
+        "score_samples",
         "decision_function",
         "predict",
         "predict_log_proba",
