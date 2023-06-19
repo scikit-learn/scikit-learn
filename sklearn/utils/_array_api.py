@@ -1,4 +1,5 @@
 """Tools to support array_api."""
+import itertools
 from functools import wraps
 import math
 
@@ -7,6 +8,34 @@ import scipy.special as special
 
 from .._config import get_config
 from .fixes import parse_version
+
+
+def supported_namespaces_and_parameters():
+    """Yield supported namespace, device, dtype tuples.
+
+    Use this to test that an estimator works with all combinations.
+
+    Returns
+    -------
+    array_namespace : str
+        The name of the Array API namespace.
+
+    device : str
+        The name of the device on which to allocate the arrays. Can be None to
+        indicate that the default value should be used.
+
+    dtype : str
+        The name of the data type to use for arrays. Can be None to indicate
+        that the default value should be used.
+    """
+    for array_namespace in ["numpy.array_api", "cupy.array_api", "cupy", "torch"]:
+        if array_namespace == "torch":
+            for device, dtype in itertools.product(
+                ("cpu", "cuda"), ("float64", "float32")
+            ):
+                yield array_namespace, device, dtype
+        else:
+            yield array_namespace, None, None
 
 
 def _check_array_api_dispatch(array_api_dispatch):

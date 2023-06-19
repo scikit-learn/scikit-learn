@@ -60,7 +60,12 @@ from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
 from ..utils.fixes import sp_version
 from ..utils.fixes import parse_version
 from ..utils.validation import check_is_fitted
-from ..utils._array_api import _convert_to_numpy, get_namespace, device as array_device
+from ..utils._array_api import (
+    _convert_to_numpy,
+    get_namespace,
+    device as array_device,
+    supported_namespaces_and_parameters,
+)
 from ..utils._param_validation import make_constraint
 from ..utils._param_validation import generate_invalid_param_val
 from ..utils._param_validation import InvalidParameterError
@@ -304,19 +309,13 @@ def _yield_outliers_checks(estimator):
 
 
 def _yield_array_api_checks():
-    for array_namespace in ["numpy.array_api", "cupy.array_api", "cupy", "torch"]:
-        if array_namespace == "torch":
-            for device, dtype in itertools.product(
-                ("cpu", "cuda"), ("float64", "float32")
-            ):
-                yield partial(
-                    check_array_api_input,
-                    array_namespace=array_namespace,
-                    dtype=dtype,
-                    device=device,
-                )
-        else:
-            yield partial(check_array_api_input, array_namespace=array_namespace)
+    for array_namespace, device, dtype in supported_namespaces_and_parameters():
+        yield partial(
+            check_array_api_input,
+            array_namespace=array_namespace,
+            dtype=dtype,
+            device=device,
+        )
 
 
 def _yield_all_checks(estimator):
