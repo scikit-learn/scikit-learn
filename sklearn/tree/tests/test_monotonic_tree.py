@@ -171,22 +171,43 @@ def test_bad_monotonic_cst_raises(TreeClassifier):
 
 
 def assert_1d_reg_tree_children_monotonic_bounded(tree_, monotonic_sign):
-    # Flip values to always check for monotonic increase constraint
-    values = monotonic_sign * tree_.value
+    values = tree_.value
     for i in range(tree_.node_count):
         if tree_.children_left[i] > i and tree_.children_right[i] > i:
             # Check monotonicity on children
             i_left = tree_.children_left[i]
             i_right = tree_.children_right[i]
-            assert values[i_left] <= values[i_right]
+            if monotonic_sign == 1:
+                assert values[i_left] <= values[i_right]
+            elif monotonic_sign == -1:
+                assert values[i_left] >= values[i_right]
             val_middle = (values[i_left] + values[i_right]) / 2
             # Check bounds on grand-children, filtering out leaf nodes
             if tree_.feature[i_left] >= 0:
                 i_left_right = tree_.children_right[i_left]
-                assert values[i_left_right] <= val_middle
+                if monotonic_sign == 1:
+                    assert values[i_left_right] <= val_middle
+                elif monotonic_sign == -1:
+                    assert values[i_left_right] >= val_middle
             if tree_.feature[i_right] >= 0:
                 i_right_left = tree_.children_left[i_right]
-                assert val_middle <= values[i_right_left]
+                if monotonic_sign == 1:
+                    assert val_middle <= values[i_right_left]
+                elif monotonic_sign == -1:
+                    assert val_middle >= values[i_right_left]
+
+
+def test_assert_1d_reg_tree_children_monotonic_bounded():
+    X = np.linspace(-1, 1, 7).reshape(-1, 1)
+    y = np.sin(2 * np.pi * X.ravel())
+
+    reg = DecisionTreeRegressor(max_depth=None, random_state=0).fit(X, y)
+
+    with pytest.raises(AssertionError):
+        assert_1d_reg_tree_children_monotonic_bounded(reg.tree_, 1)
+
+    with pytest.raises(AssertionError):
+        assert_1d_reg_tree_children_monotonic_bounded(reg.tree_, -1)
 
 
 def assert_1d_reg_monotonic(clf, monotonic_sign, min_x, max_x, n_steps):
