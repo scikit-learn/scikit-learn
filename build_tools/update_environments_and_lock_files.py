@@ -285,6 +285,7 @@ conda_build_metadata_list = [
             "sphinx-gallery",
             "numpydoc",
             "sphinx-prompt",
+            "sphinx-design",
             "plotly",
             "pooch",
             "sphinxext-opengraph",
