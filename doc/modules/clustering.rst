@@ -355,12 +355,12 @@ appropriate for small to medium sized datasets.
 
   The messages sent between points belong to one of two categories. The first is
   the responsibility :math:`r(i, k)`, which is the accumulated evidence that
-  sample :math:`k` should be the exemplar for sample :math:`i`. The second is the
-  availability :math:`a(i, k)` which is the accumulated evidence that sample
+  sample :math:`k` should be the exemplar for sample :math:`i`. The second is
+  the availability :math:`a(i, k)` which is the accumulated evidence that sample
   :math:`i` should choose sample :math:`k` to be its exemplar, and considers the
-  values for all other samples that :math:`k` should be an exemplar. In this way,
-  exemplars are chosen by samples if they are (1) similar enough to many samples
-  and (2) chosen by many samples to be representative of themselves.
+  values for all other samples that :math:`k` should be an exemplar. In this
+  way, exemplars are chosen by samples if they are (1) similar enough to many
+  samples and (2) chosen by many samples to be representative of themselves.
 
   More formally, the responsibility of a sample :math:`k` to be the exemplar of
   sample :math:`i` is given by:
@@ -460,8 +460,8 @@ given sample.
 .. dropdown:: References
 
  * :doi:`"Mean shift: A robust approach toward feature space analysis"
-   <10.1109/34.1000236>`
-   D. Comaniciu and P. Meer, *IEEE Transactions on Pattern Analysis and Machine Intelligence* (2002)
+   <10.1109/34.1000236>` D. Comaniciu and P. Meer, *IEEE Transactions on Pattern
+   Analysis and Machine Intelligence* (2002)
 
 
 .. _spectral_clustering:
@@ -916,31 +916,30 @@ by black points below.
 .. dropdown:: Implementation
 
     The DBSCAN algorithm is deterministic, always generating the same clusters
-    when given the same data in the same order.  However, the results can differ when
-    data is provided in a different order. First, even though the core samples
-    will always be assigned to the same clusters, the labels of those clusters
-    will depend on the order in which those samples are encountered in the data.
-    Second and more importantly, the clusters to which non-core samples are assigned
-    can differ depending on the data order.  This would happen when a non-core sample
-    has a distance lower than ``eps`` to two core samples in different clusters. By the
-    triangular inequality, those two core samples must be more distant than
-    ``eps`` from each other, or they would be in the same cluster. The non-core
-    sample is assigned to whichever cluster is generated first in a pass
-    through the data, and so the results will depend on the data ordering.
+    when given the same data in the same order.  However, the results can differ
+    when data is provided in a different order. First, even though the core
+    samples will always be assigned to the same clusters, the labels of those
+    clusters will depend on the order in which those samples are encountered in
+    the data. Second and more importantly, the clusters to which non-core
+    samples are assigned can differ depending on the data order.  This would
+    happen when a non-core sample has a distance lower than ``eps`` to two core
+    samples in different clusters. By the triangular inequality, those two core
+    samples must be more distant than ``eps`` from each other, or they would be
+    in the same cluster. The non-core sample is assigned to whichever cluster is
+    generated first in a pass through the data, and so the results will depend
+    on the data ordering.
 
-    The current implementation uses ball trees and kd-trees
-    to determine the neighborhood of points,
-    which avoids calculating the full distance matrix
-    (as was done in scikit-learn versions before 0.14).
-    The possibility to use custom metrics is retained;
-    for details, see :class:`NearestNeighbors`.
+    The current implementation uses ball trees and kd-trees to determine the
+    neighborhood of points, which avoids calculating the full distance matrix
+    (as was done in scikit-learn versions before 0.14). The possibility to use
+    custom metrics is retained; for details, see :class:`NearestNeighbors`.
 
 .. dropdown:: Memory consumption for large sample sizes
 
     This implementation is by default not memory efficient because it constructs
-    a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
-    be used (e.g., with sparse matrices). This matrix will consume :math:`n^2` floats.
-    A couple of mechanisms for getting around this are:
+    a full pairwise similarity matrix in the case where kd-trees or ball-trees
+    cannot be used (e.g., with sparse matrices). This matrix will consume
+    :math:`n^2` floats. A couple of mechanisms for getting around this are:
 
     - Use :ref:`OPTICS <optics>` clustering in conjunction with the
       `extract_dbscan` method. OPTICS clustering also calculates the full
@@ -948,8 +947,8 @@ by black points below.
       complexity n).
 
     - A sparse radius neighborhood graph (where missing entries are presumed to
-      be out of eps) can be precomputed in a memory-efficient way and dbscan
-      can be run over this with ``metric='precomputed'``.  See
+      be out of eps) can be precomputed in a memory-efficient way and dbscan can
+      be run over this with ``metric='precomputed'``.  See
       :meth:`sklearn.neighbors.NearestNeighbors.radius_neighbors_graph`.
 
     - The dataset can be compressed, either by removing exact duplicates if
@@ -1127,13 +1126,13 @@ represented as children of a larger parent cluster.
 
 .. dropdown:: Comparison with DBSCAN
 
-    The results from OPTICS ``cluster_optics_dbscan`` method and DBSCAN are
-    very similar, but not always identical; specifically, labeling of periphery
-    and noise points. This is in part because the first samples of each dense
-    area processed by OPTICS have a large reachability value while being close
-    to other points in their area, and will thus sometimes be marked as noise
-    rather than periphery. This affects adjacent points when they are
-    considered as candidates for being marked as either periphery or noise.
+    The results from OPTICS ``cluster_optics_dbscan`` method and DBSCAN are very
+    similar, but not always identical; specifically, labeling of periphery and
+    noise points. This is in part because the first samples of each dense area
+    processed by OPTICS have a large reachability value while being close to
+    other points in their area, and will thus sometimes be marked as noise
+    rather than periphery. This affects adjacent points when they are considered
+    as candidates for being marked as either periphery or noise.
 
     Note that for any single value of ``eps``, DBSCAN will tend to have a
     shorter run time than OPTICS; however, for repeated runs at varying ``eps``
@@ -1148,13 +1147,12 @@ represented as children of a larger parent cluster.
     Different distance metrics can be supplied via the ``metric`` keyword.
 
     For large datasets, similar (but not identical) results can be obtained via
-    :class:`HDBSCAN`. The HDBSCAN implementation is
-    multithreaded, and has better algorithmic runtime complexity than OPTICS,
-    at the cost of worse memory scaling. For extremely large datasets that
-    exhaust system memory using HDBSCAN, OPTICS will maintain :math:`n` (as opposed
-    to :math:`n^2`) memory scaling; however, tuning of the ``max_eps`` parameter
-    will likely need to be used to give a solution in a reasonable amount of
-    wall time.
+    :class:`HDBSCAN`. The HDBSCAN implementation is multithreaded, and has
+    better algorithmic runtime complexity than OPTICS, at the cost of worse
+    memory scaling. For extremely large datasets that exhaust system memory
+    using HDBSCAN, OPTICS will maintain :math:`n` (as opposed to :math:`n^2`)
+    memory scaling; however, tuning of the ``max_eps`` parameter will likely
+    need to be used to give a solution in a reasonable amount of wall time.
 
 .. dropdown:: References
 
@@ -1928,8 +1926,9 @@ cluster analysis.
 .. dropdown:: References
 
  * Peter J. Rousseeuw (1987). :doi:`"Silhouettes: a Graphical Aid to the
-   Interpretation and Validation of Cluster Analysis"<10.1016/0377-0427(87)90125-7>`
-   . Computational and Applied Mathematics 20: 53–65.
+   Interpretation and Validation of Cluster
+   Analysis"<10.1016/0377-0427(87)90125-7>` . Computational and Applied
+   Mathematics 20: 53–65.
 
 .. _calinski_harabasz_index:
 
