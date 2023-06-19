@@ -680,26 +680,27 @@ Example::
   [ 0  1  4  5  6  7  8  9 11 12 13 14] [ 2  3 10 15 16 17]
   [ 1  2  3  8  9 10 12 13 14 15 16 17] [ 0  4  5  6  7 11]
 
-Implementation notes:
 
-- With the current implementation full shuffle is not possible in most
-  scenarios. When shuffle=True, the following happens:
+.. dropdown:: Implementation notes
 
-  1. All groups are shuffled.
-  2. Groups are sorted by standard deviation of classes using stable sort.
-  3. Sorted groups are iterated over and assigned to folds.
+  - With the current implementation full shuffle is not possible in most
+    scenarios. When `shuffle=True`, the following happens:
 
-  That means that only groups with the same standard deviation of class
-  distribution will be shuffled, which might be useful when each group has only
-  a single class.
-- The algorithm greedily assigns each group to one of n_splits test sets,
-  choosing the test set that minimises the variance in class distribution
-  across test sets. Group assignment proceeds from groups with highest to
-  lowest variance in class frequency, i.e. large groups peaked on one or few
-  classes are assigned first.
-- This split is suboptimal in a sense that it might produce imbalanced splits
-  even if perfect stratification is possible. If you have relatively close
-  distribution of classes in each group, using :class:`GroupKFold` is better.
+    1. All groups are shuffled.
+    2. Groups are sorted by standard deviation of classes using stable sort.
+    3. Sorted groups are iterated over and assigned to folds.
+
+    That means that only groups with the same standard deviation of class
+    distribution will be shuffled, which might be useful when each group has only
+    a single class.
+  - The algorithm greedily assigns each group to one of n_splits test sets,
+    choosing the test set that minimises the variance in class distribution
+    across test sets. Group assignment proceeds from groups with highest to
+    lowest variance in class frequency, i.e. large groups peaked on one or few
+    classes are assigned first.
+  - This split is suboptimal in a sense that it might produce imbalanced splits
+    even if perfect stratification is possible. If you have relatively close
+    distribution of classes in each group, using :class:`GroupKFold` is better.
 
 Here is a visualization of cross-validation behavior for uneven groups:
 
