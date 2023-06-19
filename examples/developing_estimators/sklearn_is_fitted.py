@@ -105,7 +105,7 @@ class CustomEstimator(BaseEstimator, ClassifierMixin):
     def __sklearn_is_fitted__(self):
         """Internal developer API. Returns True if the estimator is fitted,
         False otherwise."""
-        return hasattr(self, '_is_fitted') and self._is_fitted
+        return hasattr(self, "_is_fitted") and self._is_fitted
 
 
 # %%
