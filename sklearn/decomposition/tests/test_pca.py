@@ -701,6 +701,6 @@ def test_array_api_compliance():
     for estimator in estimators:
         for check in _yield_array_api_checks():
             try:
-                check(estimator.__class__.__name__, estimator)
+                check(estimator.__class__.__name__, estimator, check_values=True)
             except SkipTest:
                 pass

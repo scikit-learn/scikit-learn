@@ -856,9 +856,22 @@ def _generate_sparse_matrix(X_csr):
 
 
 def check_array_api_input(
-    name, estimator_orig, *, array_namespace, device=None, dtype="float64"
+    name,
+    estimator_orig,
+    *,
+    array_namespace,
+    device=None,
+    dtype="float64",
+    check_values=False,
 ):
-    """Check that the array_api Array gives the same results as ndarrays."""
+    """Check that the estimator can work consistently with Array API
+
+    By default, this just checks that the types and shapes of the arrays are
+    consistent with calling the same estimator with numpy arrays.
+
+    When check_values is True, it also checks that calling the estimator on the
+    array_api Array gives the same results as ndarrays.
+    """
     try:
         array_mod = importlib.import_module(array_namespace)
     except ModuleNotFoundError:
@@ -907,23 +920,30 @@ def check_array_api_input(
     with config_context(array_api_dispatch=True):
         est_xp.fit(X_xp, y_xp)
 
+    input_ns = get_namespace(X_xp)[0]
     # Fitted attributes which are arrays must have the same
     # namespace as the one of the training data.
     for key, attribute in array_attributes.items():
         est_xp_param = getattr(est_xp, key)
-        assert (
-            get_namespace(est_xp_param)[0] == get_namespace(X_xp)[0]
-        ), f"'{key}' attribute is in wrong namespace"
+        attribute_ns = get_namespace(est_xp_param)[0]
+        assert attribute_ns == input_ns, (
+            f"'{key}' attribute is in wrong namespace, expected {input_ns} "
+            f"got {attribute_ns}"
+        )
 
         assert array_device(est_xp_param) == array_device(X_xp)
 
         est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
-        assert_allclose(
-            attribute,
-            est_xp_param_np,
-            err_msg=f"{key} not the same",
-            atol=np.finfo(X.dtype).eps * 100,
-        )
+        if check_values:
+            assert_allclose(
+                attribute,
+                est_xp_param_np,
+                err_msg=f"{key} not the same",
+                atol=np.finfo(X.dtype).eps * 100,
+            )
+        else:
+            assert attribute.shape == est_xp_param_np.shape
+            assert attribute.dtype == est_xp_param_np.dtype
 
     # Check estimator methods, if supported, give the same results
     methods = (
@@ -934,7 +954,6 @@ def check_array_api_input(
         "transform",
     )
 
-    input_ns = get_namespace(X_xp)[0]
     for method_name in methods:
         method = getattr(est, method_name, None)
         if method is None:
@@ -954,34 +973,41 @@ def check_array_api_input(
 
         result_xp_np = _convert_to_numpy(result_xp, xp=xp)
 
-        assert_allclose(
-            result,
-            result_xp_np,
-            err_msg=f"{method} did not the return the same result",
-            atol=np.finfo(X.dtype).eps * 100,
-        )
+        if check_values:
+            assert_allclose(
+                result,
+                result_xp_np,
+                err_msg=f"{method} did not the return the same result",
+                atol=np.finfo(X.dtype).eps * 100,
+            )
+        else:
+            assert result.shape == result_xp_np.shape
+            assert result.dtype == result_xp_np.dtype
 
         if method_name == "transform" and hasattr(est, "inverse_transform"):
             inverse_result = est.inverse_transform(result)
             with config_context(array_api_dispatch=True):
                 invese_result_xp = est.inverse_transform(result_xp)
 
-            result_ns = get_namespace(invese_result_xp)[0]
-            assert result_ns == input_ns, (
+            inverse_result_ns = get_namespace(invese_result_xp)[0]
+            assert inverse_result_ns == input_ns, (
                 "'inverse_transform' output is in wrong namespace, expected"
-                f" {input_ns}, got {result_ns}."
+                f" {input_ns}, got {inverse_result_ns}."
             )
 
             assert array_device(invese_result_xp) == array_device(X_xp)
 
             invese_result_xp_np = _convert_to_numpy(invese_result_xp, xp=xp)
-
-            assert_allclose(
-                inverse_result,
-                invese_result_xp_np,
-                err_msg="inverse_result did not the return the same result",
-                atol=np.finfo(X.dtype).eps * 100,
-            )
+            if check_values:
+                assert_allclose(
+                    inverse_result,
+                    invese_result_xp_np,
+                    err_msg="inverse_transform did not the return the same result",
+                    atol=np.finfo(X.dtype).eps * 100,
+                )
+            else:
+                assert inverse_result.shape == invese_result_xp_np.shape
+                assert inverse_result.dtype == invese_result_xp_np.dtype
 
 
 def check_estimator_sparse_data(name, estimator_orig):

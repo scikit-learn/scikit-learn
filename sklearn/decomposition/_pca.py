@@ -710,12 +710,4 @@ class PCA(_BasePCA):
         return np.mean(self.score_samples(X))
 
     def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-            # XXX: Array API compatibility tests in test_common.py typically
-            # fail with the default n_components=None due to unstable
-            # components_ for components with the lowest explained variance.
-            # The tests are therefore run manually for specific constructor
-            # parameters in test_pca.py.
-            # "array_api_support": True
-        }
+        return {"preserves_dtype": [np.float64, np.float32], "array_api_support": True}
