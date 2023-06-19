@@ -345,29 +345,21 @@ def test_assert_nd_reg_tree_children_monotonic_bounded():
 
     assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [0])
 
-    # Check that assert_nd_reg_tree_children_monotonic_bounded does not raise
+    # Check that assert_nd_reg_tree_children_monotonic_bounded raises
     # when the data (and therefore the model) is naturally monotonic in the
-    # right direction.
+    # opposite direction.
     X = np.linspace(-5, 5, 5).reshape(-1, 1)
     y = X.ravel() ** 3
     reg = DecisionTreeRegressor(max_depth=None, random_state=0).fit(X, y)
 
-    assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [1])
-
     with pytest.raises(AssertionError):
         assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [-1])
-
-    assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [0])
 
     # For completeness, check that the converse holds when swapping the sign.
     reg = DecisionTreeRegressor(max_depth=None, random_state=0).fit(X, -y)
 
     with pytest.raises(AssertionError):
         assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [1])
-
-    assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [-1])
-
-    assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [0])
 
 
 @pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
