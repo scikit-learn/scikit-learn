@@ -691,8 +691,8 @@ Example::
     3. Sorted groups are iterated over and assigned to folds.
 
     That means that only groups with the same standard deviation of class
-    distribution will be shuffled, which might be useful when each group has only
-    a single class.
+    distribution will be shuffled, which might be useful when each group has
+    only a single class.
   - The algorithm greedily assigns each group to one of n_splits test sets,
     choosing the test set that minimises the variance in class distribution
     across test sets. Group assignment proceeds from groups with highest to
