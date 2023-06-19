@@ -14,21 +14,28 @@ DIMENSION = 3
 
 METRICS = {"euclidean": {}, "manhattan": {}, "chebyshev": {}, "minkowski": dict(p=3)}
 
+KD_TREE_CLASSES = [
+    KDTree64,
+    KDTree64,
+]
 
-def test_array_object_type():
+
+@pytest.mark.parametrize("kd_tree_class", KD_TREE_CLASSES)
+def test_array_object_type(kd_tree_class):
     """Check that we do not accept object dtype array."""
     X = np.array([(1, 2, 3), (2, 5), (5, 5, 1, 2)], dtype=object)
     with pytest.raises(ValueError, match="setting an array element with a sequence"):
-        KDTree64(X)
+        kd_tree_class(X)
 
 
-def test_kdtree_picklable_with_joblib():
+@pytest.mark.parametrize("kd_tree_class", KD_TREE_CLASSES)
+def test_kdtree_picklable_with_joblib(kd_tree_class):
     """Make sure that KDTree queries work when joblib memmaps.
 
     Non-regression test for #21685 and #21228."""
     rng = np.random.RandomState(0)
     X = rng.random_sample((10, 3))
-    tree = KDTree64(X, leaf_size=2)
+    tree = kd_tree_class(X, leaf_size=2)
 
     # Call Parallel with max_nbytes=1 to trigger readonly memory mapping that
     # use to raise "ValueError: buffer source array is read-only" in a previous
