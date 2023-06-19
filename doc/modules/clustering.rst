@@ -352,6 +352,7 @@ appropriate for small to medium sized datasets.
 
 
 .. dropdown:: **Algorithm description**
+
   The messages sent between points belong to one of two categories. The first is
   the responsibility :math:`r(i, k)`, which is the accumulated evidence that
   sample :math:`k` should be the exemplar for sample :math:`i`. The second is the
