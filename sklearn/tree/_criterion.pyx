@@ -223,7 +223,7 @@ cdef class Criterion:
         cnp.int8_t monotonic_cst,
         double lower_bound,
         double upper_bound,
-    ) nogil:
+    ) noexcept nogil:
         pass
 
     cdef inline bint _check_monotonicity(
@@ -579,7 +579,7 @@ cdef class ClassificationCriterion(Criterion):
             memcpy(dest, &self.sum_total[k, 0], self.n_classes[k] * sizeof(double))
             dest += self.max_n_classes
 
-    cdef double middle_value(self) noexcept nogil:
+    cdef inline double middle_value(self) noexcept nogil:
         """Compute the middle value of a split for monotonicity constraints as the simple average
         of the left and right children values.
 
@@ -588,16 +588,16 @@ cdef class ClassificationCriterion(Criterion):
         - binary classifications.
         """
         return (
-            (self.sum_left[0, 0] / self.weighted_n_left) +
-            (self.sum_right[0, 0] / self.weighted_n_right)
-        ) / 2
+            (self.sum_left[0, 0] / (2 * self.weighted_n_left)) +
+            (self.sum_right[0, 0] / (2 * self.weighted_n_right))
+        )
 
     cdef inline bint check_monotonicity(
         self,
         cnp.int8_t monotonic_cst,
         double lower_bound,
         double upper_bound,
-    ) nogil:
+    ) noexcept nogil:
         """Check monotonicity constraint is satisfied at the current classification split"""
         cdef:
             double sum_left = self.sum_left[0][0]
@@ -1030,7 +1030,7 @@ cdef class RegressionCriterion(Criterion):
         for k in range(self.n_outputs):
             dest[k] = self.sum_total[k] / self.weighted_n_node_samples
 
-    cdef double middle_value(self) noexcept nogil:
+    cdef inline double middle_value(self) noexcept nogil:
         """Compute the middle value of a split for monotonicity constraints as the simple average
         of the left and right children values.
 
@@ -1038,16 +1038,16 @@ cdef class RegressionCriterion(Criterion):
         n_outputs == 1.
         """
         return (
-            (self.sum_left[0] / self.weighted_n_left) +
-            (self.sum_right[0] / self.weighted_n_right)
-        ) / 2
+            (self.sum_left[0] / (2 * self.weighted_n_left)) +
+            (self.sum_right[0] / (2 * self.weighted_n_right))
+        )
 
     cdef inline bint check_monotonicity(
         self,
         cnp.int8_t monotonic_cst,
         double lower_bound,
         double upper_bound,
-    ) nogil:
+    ) noexcept nogil:
         """Check monotonicity constraint is satisfied at the current regression split"""
         cdef:
             double sum_left = self.sum_left[0]

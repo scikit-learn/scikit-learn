@@ -82,7 +82,7 @@ cdef class Criterion:
             cnp.int8_t monotonic_cst,
             double lower_bound,
             double upper_bound,
-    ) nogil
+    ) noexcept nogil
     cdef inline bint _check_monotonicity(
             self,
             cnp.int8_t monotonic_cst,
@@ -90,7 +90,7 @@ cdef class Criterion:
             double upper_bound,
             double sum_left,
             double sum_right,
-    ) nogil
+    ) noexcept nogil
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
