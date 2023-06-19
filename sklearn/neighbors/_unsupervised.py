@@ -1,4 +1,5 @@
 """Unsupervised nearest neighbors learner"""
+from ..base import _fit_context
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ._base import RadiusNeighborsMixin
@@ -155,6 +156,10 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
             n_jobs=n_jobs,
         )
 
+    @_fit_context(
+        # NearestNeighbors.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit the nearest neighbors estimator from the training dataset.
 
@@ -172,5 +177,4 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         self : NearestNeighbors
             The fitted nearest neighbors estimator.
         """
-        self._validate_params()
         return self._fit(X)

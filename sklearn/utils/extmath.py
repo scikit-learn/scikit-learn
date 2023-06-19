@@ -20,7 +20,7 @@ from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from ._array_api import get_namespace
+from ._array_api import get_namespace, _is_numpy_namespace
 
 
 def squared_norm(x):
@@ -42,8 +42,10 @@ def squared_norm(x):
     x = np.ravel(x, order="K")
     if np.issubdtype(x.dtype, np.integer):
         warnings.warn(
-            "Array type is integer, np.dot may overflow. "
-            "Data should be float type to avoid this issue",
+            (
+                "Array type is integer, np.dot may overflow. "
+                "Data should be float type to avoid this issue"
+            ),
             UserWarning,
         )
     return np.dot(x, x)
@@ -70,7 +72,7 @@ def row_norms(X, squared=False):
         The row-wise (squared) Euclidean norm of X.
     """
     if sparse.issparse(X):
-        if not isinstance(X, sparse.csr_matrix):
+        if not sparse.isspmatrix_csr(X):
             X = sparse.csr_matrix(X)
         norms = csr_row_norms(X)
     else:
@@ -82,15 +84,37 @@ def row_norms(X, squared=False):
 
 
 def fast_logdet(A):
-    """Compute log(det(A)) for A symmetric.
+    """Compute logarithm of determinant of a square matrix.
 
-    Equivalent to : np.log(nl.det(A)) but more robust.
-    It returns -Inf if det(A) is non positive or is not defined.
+    The (natural) logarithm of the determinant of a square matrix
+    is returned if det(A) is non-negative and well defined.
+    If the determinant is zero or negative returns -Inf.
+
+    Equivalent to : np.log(np.det(A)) but more robust.
 
     Parameters
     ----------
-    A : array-like
-        The matrix.
+    A : array_like of shape (n, n)
+        The square matrix.
+
+    Returns
+    -------
+    logdet : float
+        When det(A) is strictly positive, log(det(A)) is returned.
+        When det(A) is non-positive or not defined, then -inf is returned.
+
+    See Also
+    --------
+    numpy.linalg.slogdet : Compute the sign and (natural) logarithm of the determinant
+        of an array.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.extmath import fast_logdet
+    >>> a = np.array([[5, 1], [2, 8]])
+    >>> fast_logdet(a)
+    3.6375861597263857
     """
     sign, ld = np.linalg.slogdet(A)
     if not sign > 0:
@@ -119,8 +143,10 @@ def density(w, **kwargs):
     """
     if kwargs:
         warnings.warn(
-            "Additional keyword arguments are deprecated in version 1.2 and will be"
-            " removed in version 1.4.",
+            (
+                "Additional keyword arguments are deprecated in version 1.2 and will be"
+                " removed in version 1.4."
+            ),
             FutureWarning,
         )
 
@@ -271,10 +297,10 @@ def randomized_svd(
     power_iteration_normalizer="auto",
     transpose="auto",
     flip_sign=True,
-    random_state="warn",
+    random_state=None,
     svd_lapack_driver="gesdd",
 ):
-    """Computes a truncated randomized SVD.
+    """Compute a truncated randomized SVD.
 
     This method solves the fixed-rank approximation problem described in [1]_
     (problem (1.5), p5).
@@ -344,10 +370,7 @@ def randomized_svd(
         function calls. See :term:`Glossary <random_state>`.
 
         .. versionchanged:: 1.2
-            The previous behavior (`random_state=0`) is deprecated, and
-            from v1.2 the default value will be `random_state=None`. Set
-            the value of `random_state` explicitly to suppress the deprecation
-            warning.
+            The default value changed from 0 to None.
 
     svd_lapack_driver : {"gesdd", "gesvd"}, default="gesdd"
         Whether to use the more efficient divide-and-conquer approach
@@ -356,6 +379,15 @@ def randomized_svd(
         dimensional subspace, as described in [1]_.
 
         .. versionadded:: 1.2
+
+    Returns
+    -------
+    u : ndarray of shape (n_samples, n_components)
+        Unitary matrix having left singular vectors with signs flipped as columns.
+    s : ndarray of shape (n_components,)
+        The singular values, sorted in non-increasing order.
+    vh : ndarray of shape (n_components, n_features)
+        Unitary matrix having right singular vectors with signs flipped as rows.
 
     Notes
     -----
@@ -381,26 +413,24 @@ def randomized_svd(
 
     .. [3] An implementation of a randomized algorithm for principal component
       analysis A. Szlam et al. 2014
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.extmath import randomized_svd
+    >>> a = np.array([[1, 2, 3, 5],
+    ...               [3, 4, 5, 6],
+    ...               [7, 8, 9, 10]])
+    >>> U, s, Vh = randomized_svd(a, n_components=2, random_state=0)
+    >>> U.shape, s.shape, Vh.shape
+    ((3, 2), (2,), (2, 4))
     """
-    if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
+    if sparse.isspmatrix_lil(M) or sparse.isspmatrix_dok(M):
         warnings.warn(
             "Calculating SVD of a {} is expensive. "
             "csr_matrix is more efficient.".format(type(M).__name__),
             sparse.SparseEfficiencyWarning,
         )
-
-    if random_state == "warn":
-        warnings.warn(
-            "If 'random_state' is not supplied, the current default "
-            "is to use 0 as a fixed seed. This will change to  "
-            "None in version 1.2 leading to non-deterministic results "
-            "that better reflect nature of the randomized_svd solver. "
-            "If you want to silence this warning, set 'random_state' "
-            "to an integer seed or to None explicitly depending "
-            "if you want your code to be deterministic or not.",
-            FutureWarning,
-        )
-        random_state = 0
 
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
@@ -537,7 +567,7 @@ def _randomized_eigsh(
 
     Strategy 'value': not implemented yet.
     Algorithms 5.3, 5.4 and 5.5 in the Halko et al paper should provide good
-    condidates for a future implementation.
+    candidates for a future implementation.
 
     Strategy 'module':
     The principle is that for diagonalizable matrices, the singular values and
@@ -692,6 +722,12 @@ def cartesian(arrays, out=None):
     -------
     out : ndarray of shape (M, len(arrays))
         Array containing the cartesian products formed of input arrays.
+        If not provided, the `dtype` of the output array is set to the most
+        permissive `dtype` of the input arrays, according to NumPy type
+        promotion.
+
+        .. versionadded:: 1.2
+           Add support for arrays of different types.
 
     Notes
     -----
@@ -717,12 +753,12 @@ def cartesian(arrays, out=None):
     """
     arrays = [np.asarray(x) for x in arrays]
     shape = (len(x) for x in arrays)
-    dtype = arrays[0].dtype
 
     ix = np.indices(shape)
     ix = ix.reshape(len(arrays), -1).T
 
     if out is None:
+        dtype = np.result_type(*arrays)  # find the most permissive dtype
         out = np.empty_like(ix, dtype=dtype)
 
     for n, arr in enumerate(arrays):
@@ -740,12 +776,12 @@ def svd_flip(u, v, u_based_decision=True):
     Parameters
     ----------
     u : ndarray
-        u and v are the output of `linalg.svd` or
+        Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
 
     v : ndarray
-        u and v are the output of `linalg.svd` or
+        Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
         The input v should really be called vt to be consistent with scipy's
@@ -756,11 +792,13 @@ def svd_flip(u, v, u_based_decision=True):
         Otherwise, use the rows of v. The choice of which variable to base the
         decision on is generally algorithm dependent.
 
-
     Returns
     -------
-    u_adjusted, v_adjusted : arrays with the same dimensions as the input.
+    u_adjusted : ndarray
+        Array u with adjusted columns and the same dimensions as u.
 
+    v_adjusted : ndarray
+        Array v with adjusted rows and the same dimensions as v.
     """
     if u_based_decision:
         # columns of u, rows of v
@@ -846,13 +884,13 @@ def softmax(X, copy=True):
     out : ndarray of shape (M, N)
         Softmax function evaluated at every point in x.
     """
-    xp, is_array_api = get_namespace(X)
+    xp, is_array_api_compliant = get_namespace(X)
     if copy:
         X = xp.asarray(X, copy=True)
     max_prob = xp.reshape(xp.max(X, axis=1), (-1, 1))
     X -= max_prob
 
-    if xp.__name__ in {"numpy", "numpy.array_api"}:
+    if _is_numpy_namespace(xp):
         # optimization for NumPy arrays
         np.exp(X, out=np.asarray(X))
     else:
@@ -1109,8 +1147,54 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
         )
     ):
         warnings.warn(
-            "cumsum was found to be unstable: "
-            "its last element does not correspond to sum",
+            (
+                "cumsum was found to be unstable: "
+                "its last element does not correspond to sum"
+            ),
             RuntimeWarning,
         )
     return out
+
+
+def _nanaverage(a, weights=None):
+    """Compute the weighted average, ignoring NaNs.
+
+    Parameters
+    ----------
+    a : ndarray
+        Array containing data to be averaged.
+    weights : array-like, default=None
+        An array of weights associated with the values in a. Each value in a
+        contributes to the average according to its associated weight. The
+        weights array can either be 1-D of the same shape as a. If `weights=None`,
+        then all data in a are assumed to have a weight equal to one.
+
+    Returns
+    -------
+    weighted_average : float
+        The weighted average.
+
+    Notes
+    -----
+    This wrapper to combine :func:`numpy.average` and :func:`numpy.nanmean`, so
+    that :func:`np.nan` values are ignored from the average and weights can
+    be passed. Note that when possible, we delegate to the prime methods.
+    """
+
+    if len(a) == 0:
+        return np.nan
+
+    mask = np.isnan(a)
+    if mask.all():
+        return np.nan
+
+    if weights is None:
+        return np.nanmean(a)
+
+    weights = np.array(weights, copy=False)
+    a, weights = a[~mask], weights[~mask]
+    try:
+        return np.average(a, weights=weights)
+    except ZeroDivisionError:
+        # this is when all weights are zero, then ignore them
+        return np.average(a)

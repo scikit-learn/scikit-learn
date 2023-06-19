@@ -405,7 +405,7 @@ def test_partial_fit():
 
 
 def test_calling_fit_reinitializes():
-    est = LinearSVC(random_state=0)
+    est = LinearSVC(dual="auto", random_state=0)
     transformer = SelectFromModel(estimator=est)
     transformer.fit(data, y)
     transformer.set_params(estimator__C=100)
@@ -487,11 +487,12 @@ def test_prefit_get_feature_names_out():
     clf.fit(data, y)
     model = SelectFromModel(clf, prefit=True, max_features=1)
 
-    # FIXME: the error message should be improved. Raising a `NotFittedError`
-    # would be better since it would force to validate all class attribute and
-    # create all the necessary fitted attribute
-    err_msg = "Unable to generate feature names without n_features_in_"
-    with pytest.raises(ValueError, match=err_msg):
+    name = type(model).__name__
+    err_msg = (
+        f"This {name} instance is not fitted yet. Call 'fit' with "
+        "appropriate arguments before using this estimator."
+    )
+    with pytest.raises(NotFittedError, match=err_msg):
         model.get_feature_names_out()
 
     model.fit(data, y)
@@ -531,8 +532,8 @@ def test_fit_accepts_nan_inf():
     model = SelectFromModel(estimator=clf)
 
     nan_data = data.copy()
-    nan_data[0] = np.NaN
-    nan_data[1] = np.Inf
+    nan_data[0] = np.nan
+    nan_data[1] = np.inf
 
     model.fit(data, y)
 
@@ -545,8 +546,8 @@ def test_transform_accepts_nan_inf():
     model = SelectFromModel(estimator=clf)
     model.fit(nan_data, y)
 
-    nan_data[0] = np.NaN
-    nan_data[1] = np.Inf
+    nan_data[0] = np.nan
+    nan_data[1] = np.inf
 
     model.transform(nan_data)
 

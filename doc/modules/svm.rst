@@ -139,9 +139,9 @@ function of shape ``(n_samples, n_classes)``.
 On the other hand, :class:`LinearSVC` implements "one-vs-the-rest"
 multi-class strategy, thus training `n_classes` models.
 
-    >>> lin_clf = svm.LinearSVC()
+    >>> lin_clf = svm.LinearSVC(dual="auto")
     >>> lin_clf.fit(X, Y)
-    LinearSVC()
+    LinearSVC(dual='auto')
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
@@ -754,7 +754,7 @@ The primal problem can be equivalently formulated as
 
 .. math::
 
-    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}\max(0, |y_i - (w^T \phi(x_i) + b)| - \varepsilon),
+    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}^{n}\max(0, |y_i - (w^T \phi(x_i) + b)| - \varepsilon),
 
 where we make use of the epsilon-insensitive loss, i.e. errors of less than
 :math:`\varepsilon` are ignored. This is the form that is directly optimized

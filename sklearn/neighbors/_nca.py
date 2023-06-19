@@ -14,7 +14,8 @@ import time
 from scipy.optimize import minimize
 from ..utils.extmath import softmax
 from ..metrics import pairwise_distances
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..preprocessing import LabelEncoder
 from ..decomposition import PCA
 from ..utils.multiclass import check_classification_targets
@@ -25,7 +26,7 @@ from ..exceptions import ConvergenceWarning
 
 
 class NeighborhoodComponentsAnalysis(
-    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 ):
     """Neighborhood Components Analysis.
 
@@ -215,6 +216,7 @@ class NeighborhoodComponentsAnalysis(
         self.verbose = verbose
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model according to the given training data.
 
@@ -231,8 +233,6 @@ class NeighborhoodComponentsAnalysis(
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         # Validate the inputs X and y, and converts y to numerical classes.
         X, y = self._validate_data(X, y, ensure_min_samples=2)
         check_classification_targets(y)

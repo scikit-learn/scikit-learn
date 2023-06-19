@@ -15,13 +15,14 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 from scipy.special import gammaln, logsumexp
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import Interval, StrOptions
 
 from ._online_lda_fast import (
@@ -107,7 +108,7 @@ def _update_doc_distribution(
         X_indptr = X.indptr
 
     # These cython functions are called in a nested loop on usually very small arrays
-    # (lenght=n_topics). In that case, finding the appropriate signature of the
+    # (length=n_topics). In that case, finding the appropriate signature of the
     # fused-typed function can be more costly than its execution, hence the dispatch
     # is done outside of the loop.
     ctype = "float" if X.dtype == np.float32 else "double"
@@ -154,7 +155,7 @@ def _update_doc_distribution(
 
 
 class LatentDirichletAllocation(
-    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 ):
     """Latent Dirichlet Allocation with online variational Bayes algorithm.
 
@@ -568,6 +569,7 @@ class LatentDirichletAllocation(
 
         return X
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None):
         """Online VB with Mini-Batch update.
 
@@ -585,9 +587,6 @@ class LatentDirichletAllocation(
             Partially fitted estimator.
         """
         first_time = not hasattr(self, "components_")
-
-        if first_time:
-            self._validate_params()
 
         X = self._check_non_neg_array(
             X, reset_n_features=first_time, whom="LatentDirichletAllocation.partial_fit"
@@ -618,6 +617,7 @@ class LatentDirichletAllocation(
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Learn model for the data X with variational Bayes method.
 
@@ -637,7 +637,6 @@ class LatentDirichletAllocation(
         self
             Fitted estimator.
         """
-        self._validate_params()
         X = self._check_non_neg_array(
             X, reset_n_features=True, whom="LatentDirichletAllocation.fit"
         )

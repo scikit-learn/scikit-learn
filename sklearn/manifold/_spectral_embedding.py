@@ -12,10 +12,12 @@ import numpy as np
 from scipy import sparse
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
+from scipy.sparse.linalg import lobpcg
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
 from ..base import BaseEstimator
+from ..base import _fit_context
 from ..utils import (
     check_array,
     check_random_state,
@@ -24,7 +26,6 @@ from ..utils import (
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
 
@@ -523,9 +524,9 @@ class SpectralEmbedding(BaseEstimator):
       Ulrike von Luxburg
       <10.1007/s11222-007-9033-z>`
 
-    - On Spectral Clustering: Analysis and an algorithm, 2001
+    - `On Spectral Clustering: Analysis and an algorithm, 2001
       Andrew Y. Ng, Michael I. Jordan, Yair Weiss
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100
+      <https://citeseerx.ist.psu.edu/doc_view/pid/796c5d6336fc52aa84db575fb821c78918b65f58>`_
 
     - :doi:`Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
@@ -588,8 +589,10 @@ class SpectralEmbedding(BaseEstimator):
 
     def _more_tags(self):
         return {
-            "pairwise": self.affinity
-            in ["precomputed", "precomputed_nearest_neighbors"]
+            "pairwise": self.affinity in [
+                "precomputed",
+                "precomputed_nearest_neighbors",
+            ]
         }
 
     def _get_affinity_matrix(self, X, Y=None):
@@ -650,6 +653,7 @@ class SpectralEmbedding(BaseEstimator):
         self.affinity_matrix_ = self.affinity(X)
         return self.affinity_matrix_
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -672,8 +676,6 @@ class SpectralEmbedding(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         X = self._validate_data(X, accept_sparse="csr", ensure_min_samples=2)
 
         random_state = check_random_state(self.random_state)

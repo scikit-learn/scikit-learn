@@ -16,12 +16,13 @@ from scipy import linalg
 from numbers import Real, Integral
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
-from .base import _ClassNamePrefixFeaturesOutMixin
+from .base import ClassNamePrefixFeaturesOutMixin
+from .base import _fit_context
 from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
 from .utils.validation import check_is_fitted
-from .utils._array_api import get_namespace, _expit
+from .utils._array_api import get_namespace, _expit, device, size
 from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
 from .utils._param_validation import StrOptions, Interval, HasMethods
@@ -107,11 +108,11 @@ def _class_means(X, y):
     means : array-like of shape (n_classes, n_features)
         Class means.
     """
-    xp, is_array_api = get_namespace(X)
+    xp, is_array_api_compliant = get_namespace(X)
     classes, y = xp.unique_inverse(y)
-    means = xp.zeros(shape=(classes.shape[0], X.shape[1]))
+    means = xp.zeros((classes.shape[0], X.shape[1]), device=device(X), dtype=X.dtype)
 
-    if is_array_api:
+    if is_array_api_compliant:
         for i in range(classes.shape[0]):
             means[i, :] = xp.mean(X[y == i], axis=0)
     else:
@@ -171,7 +172,7 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
 
 
 class LinearDiscriminantAnalysis(
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
     LinearClassifierMixin,
     TransformerMixin,
     BaseEstimator,
@@ -483,9 +484,9 @@ class LinearDiscriminantAnalysis(
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
         """
-        xp, is_array_api = get_namespace(X)
+        xp, is_array_api_compliant = get_namespace(X)
 
-        if is_array_api:
+        if is_array_api_compliant:
             svd = xp.linalg.svd
         else:
             svd = scipy.linalg.svd
@@ -546,6 +547,10 @@ class LinearDiscriminantAnalysis(
         self.coef_ = coef @ self.scalings_.T
         self.intercept_ -= self.xbar_ @ self.coef_.T
 
+    @_fit_context(
+        # LinearDiscriminantAnalysis.covariance_estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit the Linear Discriminant Analysis model.
 
@@ -568,8 +573,6 @@ class LinearDiscriminantAnalysis(
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         xp, _ = get_namespace(X)
 
         X, y = self._validate_data(
@@ -586,9 +589,9 @@ class LinearDiscriminantAnalysis(
 
         if self.priors is None:  # estimate priors from sample
             _, cnts = xp.unique_counts(y)  # non-negative ints
-            self.priors_ = xp.astype(cnts, xp.float64) / float(y.shape[0])
+            self.priors_ = xp.astype(cnts, X.dtype) / float(y.shape[0])
         else:
-            self.priors_ = xp.asarray(self.priors)
+            self.priors_ = xp.asarray(self.priors, dtype=X.dtype)
 
         if xp.any(self.priors_ < 0):
             raise ValueError("priors must be non-negative")
@@ -634,13 +637,13 @@ class LinearDiscriminantAnalysis(
                 shrinkage=self.shrinkage,
                 covariance_estimator=self.covariance_estimator,
             )
-        if self.classes_.size == 2:  # treat binary case as a special case
+        if size(self.classes_) == 2:  # treat binary case as a special case
             coef_ = xp.asarray(self.coef_[1, :] - self.coef_[0, :], dtype=X.dtype)
             self.coef_ = xp.reshape(coef_, (1, -1))
             intercept_ = xp.asarray(
                 self.intercept_[1] - self.intercept_[0], dtype=X.dtype
             )
-            self.intercept_ = xp.reshape(intercept_, 1)
+            self.intercept_ = xp.reshape(intercept_, (1,))
         self._n_features_out = self._max_components
         return self
 
@@ -688,9 +691,9 @@ class LinearDiscriminantAnalysis(
             Estimated probabilities.
         """
         check_is_fitted(self)
-        xp, is_array_api = get_namespace(X)
+        xp, is_array_api_compliant = get_namespace(X)
         decision = self.decision_function(X)
-        if self.classes_.size == 2:
+        if size(self.classes_) == 2:
             proba = _expit(decision)
             return xp.stack([1 - proba, proba], axis=1)
         else:
@@ -744,6 +747,9 @@ class LinearDiscriminantAnalysis(
         """
         # Only override for the doc
         return super().decision_function(X)
+
+    def _more_tags(self):
+        return {"array_api_support": True}
 
 
 class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
@@ -862,6 +868,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self.store_covariance = store_covariance
         self.tol = tol
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
 
@@ -886,7 +893,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         X, y = self._validate_data(X, y)
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)

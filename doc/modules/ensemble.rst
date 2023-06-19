@@ -150,6 +150,38 @@ In contrast to the original publication [B2001]_, the scikit-learn
 implementation combines classifiers by averaging their probabilistic
 prediction, instead of letting each classifier vote for a single class.
 
+A competitive alternative to random forests are
+:ref:`histogram_based_gradient_boosting` (HGBT) models:
+
+-  Building trees: Random forests typically rely on deep trees (that overfit
+   individually) which uses much computational resources, as they require
+   several splittings and evaluations of candidate splits. Boosting models
+   build shallow trees (that underfit individually) which are faster to fit
+   and predict.
+
+-  Sequential boosting: In HGBT, the decision trees are built sequentially,
+   where each tree is trained to correct the errors made by the previous ones.
+   This allows them to iteratively improve the model's performance using
+   relatively few trees. In contrast, random forests use a majority vote to
+   predict the outcome, which can require a larger number of trees to achieve
+   the same level of accuracy.
+
+-  Efficient binning: HGBT uses an efficient binning algorithm that can handle
+   large datasets with a high number of features. The binning algorithm can
+   pre-process the data to speed up the subsequent tree construction (see
+   :ref:`Why it's faster <Why_it's_faster>`). In contrast, the scikit-learn
+   implementation of random forests does not use binning and relies on exact
+   splitting, which can be computationally expensive.
+
+Overall, the computational cost of HGBT versus RF depends on the specific
+characteristics of the dataset and the modeling task. It's always a good idea
+to try both models and compare their performance and computational efficiency
+on your specific problem to determine which model is the best fit.
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`
+
 Extremely Randomized Trees
 --------------------------
 
@@ -317,9 +349,9 @@ to the prediction function.
 
 .. topic:: References
 
- .. [L2014] G. Louppe,
-         "Understanding Random Forests: From Theory to Practice",
-         PhD Thesis, U. of Liege, 2014.
+ .. [L2014] G. Louppe, :arxiv:`"Understanding Random Forests: From Theory to
+    Practice" <1407.7502>`,
+    PhD Thesis, U. of Liege, 2014.
 
 .. _random_trees_embedding:
 
@@ -711,7 +743,7 @@ space.
   accurate enough: the tree can only output integer values. As a result, the
   leaves values of the tree :math:`h_m` are modified once the tree is
   fitted, such that the leaves values minimize the loss :math:`L_m`. The
-  update is loss-dependent: for the absolute error loss, the value of 
+  update is loss-dependent: for the absolute error loss, the value of
   a leaf is updated to the median of the samples in that leaf.
 
 Classification
@@ -962,7 +994,7 @@ Available losses for regression are 'squared_error',
 'absolute_error', which is less sensitive to outliers, and
 'poisson', which is well suited to model counts and frequencies. For
 classification, 'log_loss' is the only option. For binary classification it uses the
-binary log loss, also kown as binomial deviance or binary cross-entropy. For
+binary log loss, also known as binomial deviance or binary cross-entropy. For
 `n_classes >= 3`, it uses the multi-class log loss function, with multinomial deviance
 and categorical cross-entropy as alternative names. The appropriate loss version is
 selected based on :term:`y` passed to :term:`fit`.
@@ -1174,6 +1206,44 @@ Also, monotonic constraints are not supported for multiclass classification.
 
   * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
 
+.. _interaction_cst_hgbt:
+
+Interaction constraints
+-----------------------
+
+A priori, the histogram gradient boosting trees are allowed to use any feature
+to split a node into child nodes. This creates so called interactions between
+features, i.e. usage of different features as split along a branch. Sometimes,
+one wants to restrict the possible interactions, see [Mayer2022]_. This can be
+done by the parameter ``interaction_cst``, where one can specify the indices
+of features that are allowed to interact.
+For instance, with 3 features in total, ``interaction_cst=[{0}, {1}, {2}]``
+forbids all interactions.
+The constraints ``[{0, 1}, {1, 2}]`` specifies two groups of possibly
+interacting features. Features 0 and 1 may interact with each other, as well
+as features 1 and 2. But note that features 0 and 2 are forbidden to interact.
+The following depicts a tree and the possible splits of the tree:
+
+.. code-block:: none
+
+      1      <- Both constraint groups could be applied from now on
+     / \
+    1   2    <- Left split still fulfills both constraint groups.
+   / \ / \      Right split at feature 2 has only group {1, 2} from now on.
+
+LightGBM uses the same logic for overlapping groups.
+
+Note that features not listed in ``interaction_cst`` are automatically
+assigned an interaction group for themselves. With again 3 features, this
+means that ``[{0}]`` is equivalent to ``[{0}, {1, 2}]``.
+
+.. topic:: References
+
+  .. [Mayer2022] M. Mayer, S.C. Bourassa, M. Hoesli, and D.F. Scognamiglio.
+     2022. :doi:`Machine Learning Applications to Land and Structure Valuation
+     <10.3390/jrfm15050193>`.
+     Journal of Risk and Financial Management 15, no. 5: 193
+
 Low-level parallelism
 ---------------------
 
@@ -1192,6 +1262,8 @@ The following parts are parallelized:
   parallelized over samples
 - gradient and hessians computations are parallelized over samples
 - predicting is parallelized over samples
+
+.. _Why_it's_faster:
 
 Why it's faster
 ---------------

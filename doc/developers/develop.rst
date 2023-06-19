@@ -425,6 +425,31 @@ Objects that do not provide this method will be deep-copied
 (using the Python standard function ``copy.deepcopy``)
 if ``safe=False`` is passed to ``clone``.
 
+Estimators can customize the behavior of :func:`base.clone` by defining a
+`__sklearn_clone__` method. `__sklearn_clone__` must return an instance of the
+estimator. `__sklearn_clone__` is useful when an estimator needs to hold on to
+some state when :func:`base.clone` is called on the estimator. For example, a
+frozen meta-estimator for transformers can be defined as follows::
+
+    class FrozenTransformer(BaseEstimator):
+        def __init__(self, fitted_transformer):
+            self.fitted_transformer = fitted_transformer
+
+        def __getattr__(self, name):
+            # `fitted_transformer`'s attributes are now accessible
+            return getattr(self.fitted_transformer, name)
+
+        def __sklearn_clone__(self):
+            return self
+
+        def fit(self, X, y):
+            # Fitting does not change the state of the estimator
+            return self
+
+        def fit_transform(self, X, y=None):
+            # fit_transform only transforms the data
+            return self.fitted_transformer.transform(X, y)
+
 Pipeline compatibility
 ----------------------
 For an estimator to be usable together with ``pipeline.Pipeline`` in any but the
@@ -508,7 +533,10 @@ general only be determined at runtime.
 The current set of estimator tags are:
 
 allow_nan (default=False)
-    whether the estimator supports data with missing values encoded as np.NaN
+    whether the estimator supports data with missing values encoded as np.nan
+
+array_api_support (default=False)
+    whether the estimator supports Array API compatible inputs.
 
 binary_only (default=False)
     whether estimator supports binary classification but lacks multi-class
@@ -635,6 +663,51 @@ instantiated with an instance of ``LogisticRegression`` (or
 ``RidgeRegression`` if the estimator is a regressor) in the tests. The choice
 of these two models is somewhat idiosyncratic but both should provide robust
 closed-form solutions.
+
+.. _developer_api_set_output:
+
+Developer API for `set_output`
+==============================
+
+With
+`SLEP018 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep018/proposal.html>`__,
+scikit-learn introduces the `set_output` API for configuring transformers to
+output pandas DataFrames. The `set_output` API is automatically defined if the
+transformer defines :term:`get_feature_names_out` and subclasses
+:class:`base.TransformerMixin`. :term:`get_feature_names_out` is used to get the
+column names of pandas output.
+
+:class:`base.OneToOneFeatureMixin` and
+:class:`base.ClassNamePrefixFeaturesOutMixin` are helpful mixins for defining
+:term:`get_feature_names_out`. :class:`base.OneToOneFeatureMixin` is useful when
+the transformer has a one-to-one correspondence between input features and output
+features, such as :class:`~preprocessing.StandardScaler`.
+:class:`base.ClassNamePrefixFeaturesOutMixin` is useful when the transformer
+needs to generate its own feature names out, such as :class:`~decomposition.PCA`.
+
+You can opt-out of the `set_output` API by setting `auto_wrap_output_keys=None`
+when defining a custom subclass::
+
+    class MyTransformer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
+
+        def fit(self, X, y=None):
+            return self
+        def transform(self, X, y=None):
+            return X
+        def get_feature_names_out(self, input_features=None):
+            ...
+
+The default value for `auto_wrap_output_keys` is `("transform",)`, which automatically
+wraps `fit_transform` and `transform`. The `TransformerMixin` uses the
+`__init_subclass__` mechanism to consume `auto_wrap_output_keys` and pass all other
+keyword arguments to it's super class. Super classes' `__init_subclass__` should
+**not** depend on `auto_wrap_output_keys`.
+
+For transformers that return multiple arrays in `transform`, auto wrapping will
+only wrap the first array and not alter the other arrays.
+
+See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
+for an example on how to use the API.
 
 .. _coding-guidelines:
 

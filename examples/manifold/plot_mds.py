@@ -45,6 +45,7 @@ mds = manifold.MDS(
     random_state=seed,
     dissimilarity="precomputed",
     n_jobs=1,
+    normalized_stress="auto",
 )
 pos = mds.fit(similarities).embedding_
 
@@ -57,6 +58,7 @@ nmds = manifold.MDS(
     random_state=seed,
     n_jobs=1,
     n_init=1,
+    normalized_stress="auto",
 )
 npos = nmds.fit_transform(similarities, init=pos)
 

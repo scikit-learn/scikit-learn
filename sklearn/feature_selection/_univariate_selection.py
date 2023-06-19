@@ -13,11 +13,12 @@ from scipy import special, stats
 from scipy.sparse import issparse
 
 from ..base import BaseEstimator
+from ..base import _fit_context
 from ..preprocessing import LabelBinarizer
 from ..utils import as_float_array, check_array, check_X_y, safe_sqr, safe_mask
 from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ._base import SelectorMixin
 
 
@@ -85,7 +86,7 @@ def f_oneway(*args):
     ----------
     .. [1] Lowry, Richard.  "Concepts and Applications of Inferential
            Statistics". Chapter 14.
-           http://faculty.vassar.edu/lowry/ch14pt1.html
+           http://vassarstats.net/textbook
 
     .. [2] Heiman, G.W.  Research Methods in Statistics. 2002.
     """
@@ -117,6 +118,12 @@ def f_oneway(*args):
     return f, prob
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+    }
+)
 def f_classif(X, y):
     """Compute the ANOVA F-value for the provided sample.
 
@@ -127,7 +134,7 @@ def f_classif(X, y):
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The set of regressors that will be tested sequentially.
 
-    y : ndarray of shape (n_samples,)
+    y : array-like of shape (n_samples,)
         The target vector.
 
     Returns
@@ -167,12 +174,18 @@ def _chisquare(f_obs, f_exp):
     return chisq, special.chdtrc(k - 1, chisq)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+    }
+)
 def chi2(X, y):
     """Compute chi-squared stats between each non-negative feature and class.
 
-    This score can be used to select the n_features features with the
+    This score can be used to select the `n_features` features with the
     highest values for the test chi-squared statistic from X, which must
-    contain only non-negative features such as booleans or frequencies
+    contain only **non-negative features** such as booleans or frequencies
     (e.g., term counts in document classification), relative to the classes.
 
     Recall that the chi-square test measures dependence between stochastic
@@ -239,6 +252,14 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+        "center": ["boolean"],
+        "force_finite": ["boolean"],
+    }
+)
 def r_regression(X, y, *, center=True, force_finite=True):
     """Compute Pearson's r for each features and the target.
 
@@ -322,6 +343,14 @@ def r_regression(X, y, *, center=True, force_finite=True):
     return correlation_coefficient
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+        "center": ["boolean"],
+        "force_finite": ["boolean"],
+    }
+)
 def f_regression(X, y, *, center=True, force_finite=True):
     """Univariate linear regression tests returning F-statistic and p-values.
 
@@ -445,6 +474,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
     def __init__(self, score_func):
         self.score_func = score_func
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Run score function on (X, y) and get the appropriate features.
 
@@ -462,8 +492,6 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc"], multi_output=True
         )
@@ -815,7 +843,7 @@ class SelectFdr(_BaseFilter):
     mutual_info_classif : Mutual information for a discrete target.
     chi2 : Chi-squared stats of non-negative features for classification tasks.
     f_regression : F-value between label/feature for regression tasks.
-    mutual_info_regression : Mutual information for a contnuous target.
+    mutual_info_regression : Mutual information for a continuous target.
     SelectPercentile : Select features based on percentile of the highest
         scores.
     SelectKBest : Select features based on the k highest scores.
@@ -941,6 +969,7 @@ class SelectFwe(_BaseFilter):
 # Generic filter
 ######################################################################
 
+
 # TODO this class should fit on either p-values or scores,
 # depending on the mode.
 class GenericUnivariateSelect(_BaseFilter):
@@ -958,7 +987,7 @@ class GenericUnivariateSelect(_BaseFilter):
     mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}, default='percentile'
         Feature selection mode.
 
-    param : float or int depending on the feature selection mode, default=1e-5
+    param : "all", float or int, default=1e-5
         Parameter of the corresponding mode.
 
     Attributes
@@ -1018,7 +1047,7 @@ class GenericUnivariateSelect(_BaseFilter):
     _parameter_constraints: dict = {
         **_BaseFilter._parameter_constraints,
         "mode": [StrOptions(set(_selection_modes.keys()))],
-        "param": [Interval(Real, 0, None, closed="left")],
+        "param": [Interval(Real, 0, None, closed="left"), StrOptions({"all"})],
     }
 
     def __init__(self, score_func=f_classif, *, mode="percentile", param=1e-5):

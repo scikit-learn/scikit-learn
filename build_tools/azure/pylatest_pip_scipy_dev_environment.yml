@@ -10,8 +10,8 @@ dependencies:
   - pip:
     - threadpoolctl
     - pytest
-    - pytest-xdist
-    - codecov
+    - pytest-xdist==2.5.0
+    - setuptools
     - pytest-cov
     - coverage
     - pooch

@@ -992,8 +992,6 @@ LOSS_FUNCTIONS = {
     "absolute_error": LeastAbsoluteError,
     "huber": HuberLossFunction,
     "quantile": QuantileLossFunction,
-    # TODO(1.3): Remove deviance
-    "deviance": None,  # for both, multinomial and binomial
     "log_loss": None,  # for both, multinomial and binomial
     "exponential": ExponentialLoss,
 }

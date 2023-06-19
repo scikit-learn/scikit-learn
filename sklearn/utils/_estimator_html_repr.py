@@ -191,7 +191,6 @@ def _write_estimator_html(
 _STYLE = """
 #$id {
   color: black;
-  background-color: white;
 }
 #$id pre{
   padding: 0;
@@ -364,11 +363,7 @@ _STYLE = """
 #$id div.sk-text-repr-fallback {
   display: none;
 }
-""".replace(
-    "  ", ""
-).replace(
-    "\n", ""
-)  # noqa
+""".replace("  ", "").replace("\n", "")  # noqa
 
 
 def estimator_html_repr(estimator):

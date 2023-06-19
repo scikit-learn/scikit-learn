@@ -7,15 +7,17 @@
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.linalg import eigh, svd, qr, solve
+from scipy.linalg import svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from scipy.sparse.linalg import eigsh
+from scipy.linalg import eigh
 
 from ..base import (
     BaseEstimator,
     TransformerMixin,
     _UnstableArchMixin,
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
+    _fit_context,
 )
 from ..utils import check_random_state, check_array
 from ..utils._arpack import _init_arpack_v0
@@ -190,7 +192,7 @@ def null_space(
         if hasattr(M, "toarray"):
             M = M.toarray()
         eigen_values, eigen_vectors = eigh(
-            M, eigvals=(k_skip, k + k_skip - 1), overwrite_a=True
+            M, subset_by_index=(k_skip, k + k_skip - 1), overwrite_a=True
         )
         index = np.argsort(np.abs(eigen_values))
         return eigen_vectors[:, index], np.sum(eigen_values)
@@ -301,9 +303,9 @@ def locally_linear_embedding(
     .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
         linear embedding techniques for high-dimensional data.
         Proc Natl Acad Sci U S A.  100:5591 (2003).
-    .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
         Embedding Using Multiple Weights.
-        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
+        <https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
@@ -551,7 +553,7 @@ def locally_linear_embedding(
 
 
 class LocallyLinearEmbedding(
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _UnstableArchMixin,
     BaseEstimator,
@@ -668,9 +670,9 @@ class LocallyLinearEmbedding(
     .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
         linear embedding techniques for high-dimensional data.
         Proc Natl Acad Sci U S A.  100:5591 (2003).
-    .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
         Embedding Using Multiple Weights.
-        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
+        <https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
@@ -758,6 +760,7 @@ class LocallyLinearEmbedding(
         )
         self._n_features_out = self.embedding_.shape[1]
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X.
 
@@ -774,10 +777,10 @@ class LocallyLinearEmbedding(
         self : object
             Fitted `LocallyLinearEmbedding` class instance.
         """
-        self._validate_params()
         self._fit_transform(X)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Compute the embedding vectors for data X and transform X.
 
@@ -794,7 +797,6 @@ class LocallyLinearEmbedding(
         X_new : array-like, shape (n_samples, n_components)
             Returns the instance itself.
         """
-        self._validate_params()
         self._fit_transform(X)
         return self.embedding_
 

@@ -64,6 +64,7 @@ from scipy import sparse
 from scipy.sparse import csgraph
 
 from ..base import BaseEstimator, ClassifierMixin
+from ..base import _fit_context
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
@@ -128,7 +129,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         tol=1e-3,
         n_jobs=None,
     ):
-
         self.max_iter = max_iter
         self.tol = tol
 
@@ -184,6 +184,10 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         y : ndarray of shape (n_samples,)
             Predictions for input data.
         """
+        # Note: since `predict` does not accept semi-supervised labels as input,
+        # `fit(X, y).predict(X) != fit(X, y).transduction_`.
+        # Hence, `fit_predict` is not implemented.
+        # See https://github.com/scikit-learn/scikit-learn/pull/24898
         probas = self.predict_proba(X)
         return self.classes_[np.argmax(probas, axis=1)].ravel()
 
@@ -227,6 +231,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         probabilities /= normalizer
         return probabilities
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit a semi-supervised label propagation model to X.
 
@@ -237,22 +242,26 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target class values with unlabeled points marked as -1.
             All unlabeled samples will be transductively assigned labels
-            internally.
+            internally, which are stored in `transduction_`.
 
         Returns
         -------
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-        X, y = self._validate_data(X, y)
+        X, y = self._validate_data(
+            X,
+            y,
+            accept_sparse=["csr", "csc"],
+            reset=True,
+        )
         self.X_ = X
         check_classification_targets(y)
 
@@ -361,7 +370,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     Attributes
     ----------
-    X_ : ndarray of shape (n_samples, n_features)
+    X_ : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input array.
 
     classes_ : ndarray of shape (n_classes,)
@@ -371,7 +380,7 @@ class LabelPropagation(BaseLabelPropagation):
         Categorical distribution for each item.
 
     transduction_ : ndarray of shape (n_samples)
-        Label assigned to each item via the transduction.
+        Label assigned to each item during :term:`fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -459,14 +468,14 @@ class LabelPropagation(BaseLabelPropagation):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target class values with unlabeled points marked as -1.
             All unlabeled samples will be transductively assigned labels
-            internally.
+            internally, which are stored in `transduction_`.
 
         Returns
         -------
@@ -531,7 +540,7 @@ class LabelSpreading(BaseLabelPropagation):
         Categorical distribution for each item.
 
     transduction_ : ndarray of shape (n_samples,)
-        Label assigned to each item via the transduction.
+        Label assigned to each item during :term:`fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -553,9 +562,9 @@ class LabelSpreading(BaseLabelPropagation):
 
     References
     ----------
-    Dengyong Zhou, Olivier Bousquet, Thomas Navin Lal, Jason Weston,
+    `Dengyong Zhou, Olivier Bousquet, Thomas Navin Lal, Jason Weston,
     Bernhard Schoelkopf. Learning with local and global consistency (2004)
-    http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.115.3219
+    <https://citeseerx.ist.psu.edu/doc_view/pid/d74c37aabf2d5cae663007cbd8718175466aea8c>`_
 
     Examples
     --------
@@ -588,7 +597,6 @@ class LabelSpreading(BaseLabelPropagation):
         tol=1e-3,
         n_jobs=None,
     ):
-
         # this one has different base parameters
         super().__init__(
             kernel=kernel,

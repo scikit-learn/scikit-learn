@@ -11,6 +11,7 @@ import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .base import MultiOutputMixin
+from .base import _fit_context
 from .utils import check_random_state
 from .utils._param_validation import StrOptions, Interval
 from .utils.validation import _num_samples
@@ -142,6 +143,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self.random_state = random_state
         self.constant = constant
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the baseline classifier.
 
@@ -161,17 +163,17 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         self._strategy = self.strategy
 
         if self._strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
             warnings.warn(
-                "A local copy of the target data has been converted "
-                "to a numpy array. Predicting on sparse target data "
-                "with the uniform strategy would not save memory "
-                "and would be slower.",
+                (
+                    "A local copy of the target data has been converted "
+                    "to a numpy array. Predicting on sparse target data "
+                    "with the uniform strategy would not save memory "
+                    "and would be slower."
+                ),
                 UserWarning,
             )
 
@@ -435,7 +437,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         score : float
-            Mean accuracy of self.predict(X) wrt. y.
+            Mean accuracy of self.predict(X) w.r.t. y.
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
@@ -516,6 +518,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.constant = constant
         self.quantile = quantile
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the random regressor.
 
@@ -535,8 +538,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         y = check_array(y, ensure_2d=False, input_name="y")
         if len(y) == 0:
             raise ValueError("y must not be empty.")
@@ -667,7 +668,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Returns
         -------
         score : float
-            R^2 of `self.predict(X)` wrt. y.
+            R^2 of `self.predict(X)` w.r.t. y.
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))

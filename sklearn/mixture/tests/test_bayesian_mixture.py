@@ -58,7 +58,7 @@ def test_log_wishart_norm():
                 ),
                 0,
             )
-        )
+        ).item()
     predected_norm = _log_wishart_norm(
         degrees_of_freedom, log_det_precisions_chol, n_features
     )
@@ -244,7 +244,7 @@ def test_monotonic_likelihood():
                 random_state=rng,
                 tol=1e-3,
             )
-            current_lower_bound = -np.infty
+            current_lower_bound = -np.inf
             # Do one training iteration at a time so we can make sure that the
             # training log likelihood increases after each iteration.
             for _ in range(600):

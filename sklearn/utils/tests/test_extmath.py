@@ -7,6 +7,7 @@ import numpy as np
 from scipy import sparse
 from scipy import linalg
 from scipy.sparse.linalg import eigsh
+from scipy.linalg import eigh
 from scipy.special import expit
 
 import pytest
@@ -233,8 +234,8 @@ def test_randomized_eigsh_compared_to_others(k):
     )
 
     # with LAPACK
-    eigvals_lapack, eigvecs_lapack = linalg.eigh(
-        X, eigvals=(n_features - k, n_features - 1)
+    eigvals_lapack, eigvecs_lapack = eigh(
+        X, subset_by_index=(n_features - k, n_features - 1)
     )
     indices = eigvals_lapack.argsort()[::-1]
     eigvals_lapack = eigvals_lapack[indices]
@@ -637,6 +638,30 @@ def test_cartesian():
     assert_array_equal(x[:, np.newaxis], cartesian((x,)))
 
 
+@pytest.mark.parametrize(
+    "arrays, output_dtype",
+    [
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array([4, 5], dtype=np.int64)],
+            np.dtype(np.int64),
+        ),
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array([4, 5], dtype=np.float64)],
+            np.dtype(np.float64),
+        ),
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array(["x", "y"], dtype=object)],
+            np.dtype(object),
+        ),
+    ],
+)
+def test_cartesian_mix_types(arrays, output_dtype):
+    """Check that the cartesian product works with mixed types."""
+    output = cartesian(arrays)
+
+    assert output.dtype == output_dtype
+
+
 def test_logistic_sigmoid():
     # Check correctness and robustness of logistic sigmoid implementation
     def naive_log_logistic(x):
@@ -677,7 +702,6 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
 def test_incremental_weighted_mean_and_variance(
     mean, var, weight_loc, weight_scale, rng
 ):
-
     # Testing of correctness and numerical stability
     def _assert(X, sample_weight, expected_mean, expected_var):
         n = X.shape[0]

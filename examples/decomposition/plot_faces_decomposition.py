@@ -153,7 +153,7 @@ plot_gallery(
 
 # %%
 batch_pca_estimator = decomposition.MiniBatchSparsePCA(
-    n_components=n_components, alpha=0.1, n_iter=100, batch_size=3, random_state=rng
+    n_components=n_components, alpha=0.1, max_iter=100, batch_size=3, random_state=rng
 )
 batch_pca_estimator.fit(faces_centered)
 plot_gallery(
@@ -171,7 +171,7 @@ plot_gallery(
 
 # %%
 batch_dict_estimator = decomposition.MiniBatchDictionaryLearning(
-    n_components=n_components, alpha=0.1, n_iter=50, batch_size=3, random_state=rng
+    n_components=n_components, alpha=0.1, max_iter=50, batch_size=3, random_state=rng
 )
 batch_dict_estimator.fit(faces_centered)
 plot_gallery("Dictionary learning", batch_dict_estimator.components_[:n_components])
@@ -191,6 +191,7 @@ kmeans_estimator = cluster.MiniBatchKMeans(
     batch_size=20,
     max_iter=50,
     random_state=rng,
+    n_init="auto",
 )
 kmeans_estimator.fit(faces_centered)
 plot_gallery(
@@ -272,7 +273,7 @@ plot_gallery("Faces from dataset", faces_centered[:n_components], cmap=plt.cm.Rd
 dict_pos_dict_estimator = decomposition.MiniBatchDictionaryLearning(
     n_components=n_components,
     alpha=0.1,
-    n_iter=50,
+    max_iter=50,
     batch_size=3,
     random_state=rng,
     positive_dict=True,
@@ -294,7 +295,7 @@ plot_gallery(
 dict_pos_code_estimator = decomposition.MiniBatchDictionaryLearning(
     n_components=n_components,
     alpha=0.1,
-    n_iter=50,
+    max_iter=50,
     batch_size=3,
     fit_algorithm="cd",
     random_state=rng,
@@ -318,7 +319,7 @@ plot_gallery(
 dict_pos_estimator = decomposition.MiniBatchDictionaryLearning(
     n_components=n_components,
     alpha=0.1,
-    n_iter=50,
+    max_iter=50,
     batch_size=3,
     fit_algorithm="cd",
     random_state=rng,

@@ -7,7 +7,8 @@
 from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
 from ._unsupervised import NearestNeighbors
-from ..base import TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..utils._param_validation import StrOptions
 from ..utils.validation import check_is_fitted
 
@@ -225,7 +226,7 @@ def radius_neighbors_graph(
 
 
 class KNeighborsTransformer(
-    _ClassNamePrefixFeaturesOutMixin, KNeighborsMixin, TransformerMixin, NeighborsBase
+    ClassNamePrefixFeaturesOutMixin, KNeighborsMixin, TransformerMixin, NeighborsBase
 ):
     """Transform X into a (weighted) graph of k nearest neighbors.
 
@@ -372,6 +373,10 @@ class KNeighborsTransformer(
         )
         self.mode = mode
 
+    @_fit_context(
+        # KNeighborsTransformer.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit the k-nearest neighbors transformer from the training dataset.
 
@@ -388,7 +393,6 @@ class KNeighborsTransformer(
         self : KNeighborsTransformer
             The fitted k-nearest neighbors transformer.
         """
-        self._validate_params()
         self._fit(X)
         self._n_features_out = self.n_samples_fit_
         return self
@@ -448,7 +452,7 @@ class KNeighborsTransformer(
 
 
 class RadiusNeighborsTransformer(
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
     RadiusNeighborsMixin,
     TransformerMixin,
     NeighborsBase,
@@ -600,6 +604,10 @@ class RadiusNeighborsTransformer(
         )
         self.mode = mode
 
+    @_fit_context(
+        # RadiusNeighborsTransformer.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit the radius neighbors transformer from the training dataset.
 
@@ -617,7 +625,6 @@ class RadiusNeighborsTransformer(
         self : RadiusNeighborsTransformer
             The fitted radius neighbors transformer.
         """
-        self._validate_params()
         self._fit(X)
         self._n_features_out = self.n_samples_fit_
         return self
