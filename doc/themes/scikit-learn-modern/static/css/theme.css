@@ -147,6 +147,26 @@ div.clearer {
   clear: both;
 }
 
+/* details / summary */
+div.sk-page-content summary {
+    padding: .5ex;
+    border: .5pt solid #aaa;
+    width: fit-content;
+    border-radius: 5pt 5pt 0pt 0pt;
+    background-color: #edf9ff;
+}
+
+div.sk-page-content summary:hover {
+    background-color: #f1f1f1;
+}
+
+div.sk-page-content details {
+    border: solid #ccc;
+    border-width: 0pt 0pt 0pt 5pt;
+    padding-left: 3pt;
+}
+
+
 /* Button */
 
 .sk-btn-primary {
