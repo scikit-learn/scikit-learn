@@ -3,7 +3,9 @@
 }
 #$id pre{
   padding: 0;
-}˜
+}
+
+
 #$id div.sk-toggleable {
   background-color: white;
 }
@@ -151,6 +153,29 @@
   padding-bottom: 0.4em;
   background-color: white;
 }
+
+
+#$id a.estimator_doc_link {
+    float: right;
+    font-size: smaller;
+    line-height: 1em;
+    font-family: monospace;
+    background-color: white;
+    border: cornflowerblue 1pt solid;
+    border-radius: 1em;
+    height: 1em;
+    width: 1em;
+    color: cornflowerblue;
+    text-decoration: none;
+}
+
+#$id a.estimator_doc_link:hover {
+    background-color: cornflowerblue;
+    color: white;
+    text-decoration: none;
+}
+
+
 #$id div.sk-label label {
   font-family: monospace;
   font-weight: bold;

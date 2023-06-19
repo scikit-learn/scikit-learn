@@ -91,11 +91,11 @@ def _write_label_html(
         checked_str = "checked" if checked else ""
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
         out.write(
-            '<input class="sk-toggleable__control sk-hidden--visually" '
-            f'id="{est_id}" type="checkbox" {checked_str}>'
-            f'<label for="{est_id}" class="{label_class}">{name}</label>'
-            f'<div class="sk-toggleable__content"><pre>{name_details}'
-            "</pre></div>"
+            f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}"'
+            f' type="checkbox" {checked_str}><label for="{est_id}"'
+            f' class="{label_class}">{name}<a class="estimator_doc_link"'
+            ' href="">?</a></label><div'
+            f' class="sk-toggleable__content"><pre>{name_details}</pre></div>'
         )
     else:
         out.write(f"<label>{name}</label>")
@@ -240,8 +240,6 @@ def estimator_html_repr(estimator):
                     "fallback_msg": fallback_msg,
                 }
             )
-
-        print(html_template)
 
         out.write(html_template)
 
