@@ -4,15 +4,21 @@
 name: linter
 
 on:
-  - pull_request
+  - pull_request_target
 
 jobs:
   lint:
     runs-on: ubuntu-latest
 
+    # setting any permission will set everything else to none for GITHUB_TOKEN
+    permissions:
+      pull-requests: none
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v3
@@ -28,10 +34,6 @@ jobs:
       - name: Run linting
         run: ./build_tools/linting.sh &> /tmp/linting_output.txt
 
-      - name: Print log
-        if: always()
-        run: cat /tmp/linting_output.txt
-
       - name: Upload Artifact
         if: always()
         uses: actions/upload-artifact@v3
@@ -39,3 +41,43 @@ jobs:
           name: lint-log
           path: /tmp/linting_output.txt
           retention-days: 1
+
+  comment:
+    needs: lint
+    if: always()
+    runs-on: ubuntu-latest
+
+    # We need these permissions to be able to post / update comments
+    permissions:
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: python -m pip install requests
+
+      - name: Download artifact
+        id: download-artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: lint-log
+
+      - name: Print log
+        run: cat linting_output.txt
+
+      - name: Process Comments
+        id: process-comments
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_ID: ${{ github.run_id }}
+          LOG_FILE: linting_output.txt
+        run: python ./build_tools/get_comment.py
