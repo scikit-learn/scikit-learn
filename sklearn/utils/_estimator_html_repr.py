@@ -4,6 +4,8 @@ from inspect import isclass
 from string import Template
 import html
 from pathlib import Path
+from sklearn.utils.fixes import parse_version
+import sklearn
 
 from .. import config_context
 
@@ -79,6 +81,7 @@ def _write_label_html(
     outer_class="sk-label-container",
     inner_class="sk-label",
     checked=False,
+    url_link = ""
 ):
     """Write labeled html with or without a dropdown with named details"""
     out.write(f'<div class="{outer_class}"><div class="{inner_class} sk-toggleable">')
@@ -94,7 +97,7 @@ def _write_label_html(
             f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}"'
             f' type="checkbox" {checked_str}><label for="{est_id}"'
             f' class="{label_class}">{name}<a class="estimator_doc_link"'
-            ' href="">?</a></label><div'
+            f' href="{url_link}">?</a></label><div'
             f' class="sk-toggleable__content"><pre>{name_details}</pre></div>'
         )
     else:
@@ -144,6 +147,15 @@ def _get_visual_block(estimator):
         name_details=str(estimator),
     )
 
+def _get_estimator_doc_url(estimator):
+    """Generating a link to the API documentation for given estimator."""
+    major=  parse_version(sklearn.__version__).major
+    minor = parse_version(sklearn.__version__).minor
+    estimator_name = estimator.__class__.__name__
+    estimator_module = ".".join([_ for _ in estimator.__class__.__module__.split(".") if not _.startswith("_")])
+    base_url = f"https://scikit-learn.org/{major}.{minor}/modules/generated/"
+    full_url = f"{base_url}{estimator_module}.{estimator_name}.html"
+    return full_url
 
 def _write_estimator_html(
     out, estimator, estimator_label, estimator_label_details, first_call=False
@@ -154,14 +166,17 @@ def _write_estimator_html(
     else:
         with config_context(print_changed_only=True):
             est_block = _get_visual_block(estimator)
-
+    url_link = _get_estimator_doc_url(estimator)
     if est_block.kind in ("serial", "parallel"):
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
         out.write(f'<div class="sk-item{dash_cls}">')
 
         if estimator_label:
-            _write_label_html(out, estimator_label, estimator_label_details)
+            _write_label_html(out, 
+                              estimator_label, 
+                              estimator_label_details, 
+                              url_link=url_link)
 
         kind = est_block.kind
         out.write(f'<div class="sk-{kind}">')
@@ -186,8 +201,8 @@ def _write_estimator_html(
             outer_class="sk-item",
             inner_class="sk-estimator",
             checked=first_call,
+            url_link=url_link
         )
-
 
 with open(Path(__file__).with_suffix(".css"), "r") as style_file:
     _STYLE = style_file.read()
