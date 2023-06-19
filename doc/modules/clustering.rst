@@ -552,7 +552,7 @@ below.
 |coin_kmeans|                          |coin_discretize|                  |coin_cluster_qr|
 ================================  ================================  ================================
 
-.. dropdown:: References:
+.. dropdown:: References
 
  * `"Multiclass spectral clustering"
    <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
@@ -575,7 +575,7 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
     ...                         assign_labels='discretize')
     >>> sc.fit_predict(adjacency_matrix)  # doctest: +SKIP
 
-.. dropdown:: References:
+.. dropdown:: References
 
  * :doi:`"A Tutorial on Spectral Clustering"
    <10.1007/s11222-007-9033-z>`
