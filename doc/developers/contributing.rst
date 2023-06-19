@@ -763,7 +763,7 @@ To build the PDF manual, run:
    versions of Sphinx as possible, the different versions tend to
    behave slightly differently. To get the best results, you should
    use the same version as the one we used on CircleCI. Look at this
-   `github search <https://github.com/search?utf8=%E2%9C%93&q=sphinx+repo%3Ascikit-learn%2Fscikit-learn+extension%3Ash+path%3Abuild_tools%2Fcircle&type=Code>`_
+   `GitHub search <https://github.com/search?q=repo%3Ascikit-learn%2Fscikit-learn+path%3Abuild_tools%2Fcircle%2F*.yml+sphinx&type=code>`_
    to know the exact version.
 
 Guidelines for writing documentation
