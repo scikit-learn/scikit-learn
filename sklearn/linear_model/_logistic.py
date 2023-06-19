@@ -9,10 +9,17 @@ Logistic Regression
 #         Lars Buitinck
 #         Simon Wu <s8wu@uwaterloo.ca>
 #         Arthur Mensch <arthur.mensch@m4x.org
+from __future__ import annotations
+import typing
+
+if typing.TYPE_CHECKING:
+    from typing_extensions import Literal
 
 import numbers
 from numbers import Integral, Real
 import warnings
+from typing import Union
+from typing import Optional
 
 import numpy as np
 from scipy import optimize
@@ -1100,22 +1107,22 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     def __init__(
         self,
-        penalty="l2",
+        penalty: Literal["l1", "l2", "elasticnet", "none"] = "l2",
         *,
-        dual=False,
-        tol=1e-4,
-        C=1.0,
-        fit_intercept=True,
-        intercept_scaling=1,
-        class_weight=None,
-        random_state=None,
-        solver="lbfgs",
-        max_iter=100,
-        multi_class="auto",
-        verbose=0,
-        warm_start=False,
-        n_jobs=None,
-        l1_ratio=None,
+        dual: bool = False,
+        tol: float = 1e-4,
+        C: float = 1.0,
+        fit_intercept: bool = True,
+        intercept_scaling: float = 1,
+        class_weight: Union[dict, Literal["balanced"]] = None,
+        random_state: Union[int, np.random.RandomState, None] = None,
+        solver: Literal["newton-cg", "lbfgs", "liblinear", "sag", "saga"] = "lbfgs",
+        max_iter: int = 100,
+        multi_class: Literal["auto", "ovr", "multinomial"] = "auto",
+        verbose: int = 0,
+        warm_start: bool = False,
+        n_jobs: Optional[int] = None,
+        l1_ratio: Optional[float] = None,
     ):
         self.penalty = penalty
         self.dual = dual
