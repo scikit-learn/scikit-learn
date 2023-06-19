@@ -299,6 +299,23 @@ for old_link in redirects:
 # Not showing the search summary makes the search page load faster.
 html_show_search_summary = False
 
+
+rst_prolog = """
+.. |details-start| raw:: html
+
+    <details>
+    <summary>
+
+.. |details-split| raw:: html
+
+    </summary>
+
+.. |details-end| raw:: html
+
+    </details>
+
+"""
+
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
