@@ -1033,8 +1033,8 @@ def test_composite_methods():
             pass  # pragma: no cover
 
     est = SimpleEstimator()
-    est.get_metadata_routing().fit_transform._requests == {}
-    est.get_metadata_routing().fit_predict._requests == {}
+    est.get_metadata_routing().fit_transform.requests == {}
+    est.get_metadata_routing().fit_predict.requests == {}
 
     # setting the request on only one of them should raise an error
     est.set_fit_request(foo=True, bar="test")
@@ -1054,7 +1054,7 @@ def test_composite_methods():
     # setting the request for a none-overlapping parameter would merge them
     # together.
     est.set_transform_request(other_param=True)
-    assert est.get_metadata_routing().fit_transform._requests == {
+    assert est.get_metadata_routing().fit_transform.requests == {
         "bar": "test",
         "foo": True,
         "other_param": True,

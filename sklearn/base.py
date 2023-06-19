@@ -780,7 +780,7 @@ class ClusterMixin:
         **kwargs : dict
             Arguments to be passed to ``fit``.
 
-            .. versionadded:: 1.3
+            .. versionadded:: 1.4
 
         Returns
         -------
@@ -1031,7 +1031,7 @@ class OutlierMixin:
         **kwargs : dict
             Arguments to be passed to ``fit``.
 
-            .. versionadded:: 1.3
+            .. versionadded:: 1.4
 
         Returns
         -------

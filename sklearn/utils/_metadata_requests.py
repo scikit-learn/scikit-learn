@@ -421,7 +421,7 @@ class MetadataRequest:
         for method in COMPOSITE_METHODS[name]:
             mmr = getattr(self, method)
             existing = set(requests.keys())
-            upcoming = set(mmr._requests.keys())
+            upcoming = set(mmr.requests.keys())
             common = existing & upcoming
             conflicts = [key for key in common if requests[key] != mmr._requests[key]]
             if conflicts:
