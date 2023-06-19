@@ -95,7 +95,10 @@ def _write_label_html(
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
 
         if True:  # check if estimator is sklearn or not
-            doc_link = f'<a class="estimator_doc_link" href="{url_link}">?</a>'
+            doc_label = '<span>Online documentation</span>'
+            if name is not None:
+                doc_label = f'<span>Documentation for {name}</span>'
+            doc_link = f'<a class="sk-estimator-doc-link" href="{url_link}">?{doc_label}</a>'
         else:  # not sklearn, do not add link to doc
             doc_link = ""
 
