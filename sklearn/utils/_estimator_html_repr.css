@@ -109,7 +109,6 @@
 }
 #$id div.sk-item {
   position: relative;
-  z-index: 1;
 }
 #$id div.sk-parallel {
   display: flex;
@@ -211,9 +210,10 @@ a.sk-estimator-doc-link {
     width: 1em;
     color: cornflowerblue;
     text-decoration: none;
+    margin-left: 1ex;
 }
 
-a.sk-estimator-doc-link:hover {
+#sk-container-id-1 div.sk-estimator:hover a.sk-estimator-doc-link:hover,  a.sk-estimator-doc-link:hover {
     background-color: cornflowerblue;
     color: white;
     text-decoration: none;
@@ -221,7 +221,7 @@ a.sk-estimator-doc-link:hover {
 
 a.sk-estimator-doc-link span {
     display: none;
-    z-index: 2;
+    z-index: 200;
     position: absolute;
     background: #eff5ff;
     color: black;
@@ -231,10 +231,24 @@ a.sk-estimator-doc-link span {
     border: .5pt solid cornflowerblue;
     right: .2ex;
     box-shadow: 2pt 2pt 4pt #999;
-    max-width: 17ex;
+    max-width: 30ex;
+    width: min-content;
 }
 
 a.sk-estimator-doc-link:hover span {
     display: block;
 }
+
+#sk-container-id-1 div.sk-estimator a.sk-estimator-doc-link {
+    color: #afc9e0;
+    border: 1pt solid #afc9e077;
+    background-color: #f0f8ff;
+}
+
+#sk-container-id-1 div.sk-estimator:hover a.sk-estimator-doc-link {
+    background-color: white;
+    border: cornflowerblue 1pt solid;
+    color: cornflowerblue;
+}
+
 
