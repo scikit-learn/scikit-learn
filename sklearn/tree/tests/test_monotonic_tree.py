@@ -17,8 +17,14 @@ from sklearn.ensemble import (
 
 TREE_CLASSIFIER_CLASSES = [DecisionTreeClassifier, ExtraTreeClassifier]
 TREE_REGRESSOR_CLASSES = [DecisionTreeRegressor, ExtraTreeRegressor]
-TREE_BASED_CLASSIFIER_CLASSES = TREE_CLASSIFIER_CLASSES + [RandomForestClassifier, ExtraTreesClassifier]
-TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [RandomForestRegressor, ExtraTreesRegressor]
+TREE_BASED_CLASSIFIER_CLASSES = TREE_CLASSIFIER_CLASSES + [
+    RandomForestClassifier,
+    ExtraTreesClassifier
+]
+TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [
+    RandomForestRegressor,
+    ExtraTreesRegressor
+]
 
 @pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
 @pytest.mark.parametrize("depth_first", (True, False))
@@ -175,7 +181,7 @@ def test_bad_monotonic_cst_raises(TreeClassifier):
     est = TreeClassifier(
         max_depth=None, monotonic_cst=np.array([-1, 0.8]), random_state=0
     )
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(ValueError, match=msg + "(.*)0.8]"):
         est.fit(X, y)
 
 
