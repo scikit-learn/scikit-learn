@@ -156,6 +156,7 @@ div.sk-page-content details {
 div.sk-page-content summary.btn {
     display: inline list-item;
     padding: 6px 20px;
+    border: 1pt solid #999;
 }
 
 div.sk-page-content details div.card {
