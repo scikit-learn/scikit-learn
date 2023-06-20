@@ -859,9 +859,8 @@ Ridge Regression`_, see the example below.
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py`
 
-|details-start|
-**References**
-|details-split|
+
+.. topic:: References:
 
   .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 7.2.1
 
@@ -870,8 +869,6 @@ Ridge Regression`_, see the example below.
   .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
 
   .. [4] Tristan Fletcher: `Relevance Vector Machines Explained <https://citeseerx.ist.psu.edu/doc_view/pid/3dc9d625404fdfef6eaccc3babddefe4c176abd4>`_
-
-|details-end|
 
 .. _Logistic_regression:
 
@@ -1003,57 +1000,6 @@ Solvers
 The solvers implemented in the class :class:`LogisticRegression`
 are "lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag" and "saga":
 
-|details-start|
-**Solvers' details**
-|details-split|
-
-* The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
-  on the excellent C++ `LIBLINEAR library
-  <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
-  scikit-learn. However, the CD algorithm implemented in liblinear cannot learn
-  a true multinomial (multiclass) model; instead, the optimization problem is
-  decomposed in a "one-vs-rest" fashion so separate binary classifiers are
-  trained for all classes. This happens under the hood, so
-  :class:`LogisticRegression` instances using this solver behave as multiclass
-  classifiers. For :math:`\ell_1` regularization :func:`sklearn.svm.l1_min_c` allows to
-  calculate the lower bound for C in order to get a non "null" (all feature
-  weights to zero) model.
-
-* The "lbfgs", "newton-cg" and "sag" solvers only support :math:`\ell_2`
-  regularization or no regularization, and are found to converge faster for some
-  high-dimensional data. Setting `multi_class` to "multinomial" with these solvers
-  learns a true multinomial logistic regression model [5]_, which means that its
-  probability estimates should be better calibrated than the default "one-vs-rest"
-  setting.
-
-* The "sag" solver uses Stochastic Average Gradient descent [6]_. It is faster
-  than other solvers for large datasets, when both the number of samples and the
-  number of features are large.
-
-* The "saga" solver [7]_ is a variant of "sag" that also supports the
-  non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
-  multinomial logistic regression. It is also the only solver that supports
-  `penalty="elasticnet"`.
-
-* The "lbfgs" is an optimization algorithm that approximates the
-  Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_, which belongs to
-  quasi-Newton methods. As such, it can deal with a wide range of different training
-  data and is therefore the default solver. Its performance, however, suffers on poorly
-  scaled datasets and on datasets with one-hot encoded categorical features with rare
-  categories.
-
-* The "newton-cholesky" solver is an exact Newton solver that calculates the hessian
-  matrix and solves the resulting linear system. It is a very good choice for
-  `n_samples` >> `n_features`, but has a few shortcomings: Only :math:`\ell_2`
-  regularization is supported. Furthermore, because the hessian matrix is explicitly
-  computed, the memory usage has a quadratic dependency on `n_features` as well as on
-  `n_classes`. As a consequence, only the one-vs-rest scheme is implemented for the
-  multiclass case.
-
-|details-end|
-
-For a comparison of some of these solvers, see [9]_.
-
 The following table summarizes the penalties supported by each solver:
 
 +------------------------------+-----------------+-------------+-----------------+-----------------------+-----------+------------+
@@ -1102,6 +1048,76 @@ with `loss="log_loss"`, which might be even faster but requires more tuning.
 .. _liblinear_differences:
 
 |details-start|
+**Solvers' details**
+|details-split|
+
+* The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
+  on the excellent C++ `LIBLINEAR library
+  <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
+  scikit-learn. However, the CD algorithm implemented in liblinear cannot learn
+  a true multinomial (multiclass) model; instead, the optimization problem is
+  decomposed in a "one-vs-rest" fashion so separate binary classifiers are
+  trained for all classes. This happens under the hood, so
+  :class:`LogisticRegression` instances using this solver behave as multiclass
+  classifiers. For :math:`\ell_1` regularization :func:`sklearn.svm.l1_min_c` allows to
+  calculate the lower bound for C in order to get a non "null" (all feature
+  weights to zero) model.
+
+* The "lbfgs", "newton-cg" and "sag" solvers only support :math:`\ell_2`
+  regularization or no regularization, and are found to converge faster for some
+  high-dimensional data. Setting `multi_class` to "multinomial" with these solvers
+  learns a true multinomial logistic regression model [5]_, which means that its
+  probability estimates should be better calibrated than the default "one-vs-rest"
+  setting.
+
+* The "sag" solver uses Stochastic Average Gradient descent [6]_. It is faster
+  than other solvers for large datasets, when both the number of samples and the
+  number of features are large.
+
+* The "saga" solver [7]_ is a variant of "sag" that also supports the
+  non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
+  multinomial logistic regression. It is also the only solver that supports
+  `penalty="elasticnet"`.
+
+* The "lbfgs" is an optimization algorithm that approximates the
+  Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_, which belongs to
+  quasi-Newton methods. As such, it can deal with a wide range of different training
+  data and is therefore the default solver. Its performance, however, suffers on poorly
+  scaled datasets and on datasets with one-hot encoded categorical features with rare
+  categories.
+
+* The "newton-cholesky" solver is an exact Newton solver that calculates the hessian
+  matrix and solves the resulting linear system. It is a very good choice for
+  `n_samples` >> `n_features`, but has a few shortcomings: Only :math:`\ell_2`
+  regularization is supported. Furthermore, because the hessian matrix is explicitly
+  computed, the memory usage has a quadratic dependency on `n_features` as well as on
+  `n_classes`. As a consequence, only the one-vs-rest scheme is implemented for the
+  multiclass case.
+
+For a comparison of some of these solvers, see [9]_.
+
+.. topic:: References:
+
+  .. [5] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 4.3.4
+
+  .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/document>`_
+
+  .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien:
+      :arxiv:`SAGA: A Fast Incremental Gradient Method With Support for
+      Non-Strongly Convex Composite Objectives. <1407.0202>`
+
+  .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
+
+  .. [9] Thomas P. Minka `"A comparison of numerical optimizers for logistic regression"
+          <https://tminka.github.io/papers/logreg/minka-logreg.pdf>`_
+
+  .. [16] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
+      "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
+      Multinomial Regression." <1311.6529>`
+
+|details-end|
+
+|details-start|
 **Differences from liblinear**
 |details-split|
 
@@ -1137,25 +1153,6 @@ cross-validation support, to find the optimal `C` and `l1_ratio` parameters
 according to the ``scoring`` attribute. The "newton-cg", "sag", "saga" and
 "lbfgs" solvers are found to be faster for high-dimensional dense data, due
 to warm-starting (see :term:`Glossary <warm_start>`).
-
-.. topic:: References:
-
-  .. [5] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 4.3.4
-
-  .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/document>`_
-
-  .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien:
-      :arxiv:`SAGA: A Fast Incremental Gradient Method With Support for
-      Non-Strongly Convex Composite Objectives. <1407.0202>`
-
-  .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
-
-  .. [9] Thomas P. Minka `"A comparison of numerical optimizers for logistic regression"
-          <https://tminka.github.io/papers/logreg/minka-logreg.pdf>`_
-
-  .. [16] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
-      "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
-      Multinomial Regression." <1311.6529>`
 
 .. _Generalized_linear_regression:
 
@@ -1302,8 +1299,9 @@ Usage example::
   * :ref:`sphx_glr_auto_examples_linear_model_plot_poisson_regression_non_normal_loss.py`
   * :ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`
 
-Practical considerations
-------------------------
+|details-start|
+**Practical considerations**
+|details-split|
 
 The feature matrix `X` should be standardized before fitting. This ensures
 that the penalty treats features equally.
@@ -1325,6 +1323,8 @@ When performing cross-validation for the `power` parameter of
 `TweedieRegressor`, it is advisable to specify an explicit `scoring` function,
 because the default scorer :meth:`TweedieRegressor.score` is a function of
 `power` itself.
+
+|details-end|
 
 Stochastic Gradient Descent - SGD
 =================================
@@ -1499,8 +1499,10 @@ estimated only from the determined inliers.
    :align: center
    :scale: 50%
 
-Details of the algorithm
-^^^^^^^^^^^^^^^^^^^^^^^^
+
+|details-start|
+**Details of the algorithm**
+|details-split|
 
 Each iteration performs the following steps:
 
@@ -1527,6 +1529,7 @@ needed for identifying degenerate cases, ``is_data_valid`` should be used as it
 is called prior to fitting the model and thus leading to better computational
 performance.
 
+|details-end|
 
 .. topic:: Examples
 
@@ -1559,17 +1562,9 @@ that the robustness of the estimator decreases quickly with the dimensionality
 of the problem. It loses its robustness properties and becomes no
 better than an ordinary least squares in high dimension.
 
-.. topic:: Examples:
-
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_theilsen.py`
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_robust_fit.py`
-
-.. topic:: References:
-
- * https://en.wikipedia.org/wiki/Theil%E2%80%93Sen_estimator
-
-Theoretical considerations
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+|details-start|
+**Theoretical considerations**
+|details-split|
 
 :class:`TheilSenRegressor` is comparable to the :ref:`Ordinary Least Squares
 (OLS) <ordinary_least_squares>` in terms of asymptotic efficiency and as an
@@ -1601,15 +1596,21 @@ large number of samples and features. Therefore, the magnitude of a
 subpopulation can be chosen to limit the time and space complexity by
 considering only a random subset of all possible combinations.
 
+.. topic:: References:
+
+  .. [#f1] Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang: `Theil-Sen Estimators in a Multiple Linear Regression Model. <http://home.olemiss.edu/~xdang/papers/MTSE.pdf>`_
+
+  .. [#f2] T. Kärkkäinen and S. Äyrämö: `On Computation of Spatial Median for Robust Data Mining. <http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf>`_
+
+  Also see the `Wikipedia page <https://en.wikipedia.org/wiki/Theil%E2%80%93Sen_estimator>`_
+
+|details-end|
+
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_theilsen.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_robust_fit.py`
 
-.. topic:: References:
-
-    .. [#f1] Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang: `Theil-Sen Estimators in a Multiple Linear Regression Model. <http://home.olemiss.edu/~xdang/papers/MTSE.pdf>`_
-
-    .. [#f2] T. Kärkkäinen and S. Äyrämö: `On Computation of Spatial Median for Robust Data Mining. <http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf>`_
 
 .. _huber_regression:
 
