@@ -232,7 +232,9 @@ The keys are as follows:
 """
 
 # ids used for pytest fixture
-METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATORS]
+METAESTIMATOR_IDS = [
+    str(row["metaestimator"].__name__) for row in METAESTIMATORS  # type: ignore
+]
 
 
 def test_registry_copy():
