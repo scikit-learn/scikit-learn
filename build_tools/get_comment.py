@@ -68,19 +68,20 @@ def get_message(log_file, repo, run_id, details):
             "`black` detected issues. Please run `black .` locally and push "
             "the changes. Here you can see the detected issues. Note that "
             "running black might also fix some of the issues which might be "
-            "detected by `flake8`."
+            "detected by `ruff`."
         ),
         details=details,
     )
 
-    # flake8
+    # ruff
     message += get_step_message(
         log,
-        start="### Running flake8 ###",
-        end="Problems detected by flake8",
-        title="`flake8`",
+        start="### Running ruff ###",
+        end="Problems detected by ruff",
+        title="`ruff`",
         message=(
-            "`flake8` detected issues. Please fix them locally and push the changes. "
+            "`ruff` detected issues. Please run `ruff --fix --show-source .` "
+            "locally, fix the remaining issues, and push the changes. "
             "Here you can see the detected issues."
         ),
         details=details,
