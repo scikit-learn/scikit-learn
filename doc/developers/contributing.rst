@@ -873,8 +873,33 @@ Finally, follow the formatting rules below to make it consistently good:
   `list`). This is due to specific configurations we have set. Single
   backticks should be used nowadays.
 
-* Before submitting your pull request check if your modifications have
-  introduced new sphinx warnings and try to fix them.
+* Use dropdowns to hide by default low level sections such as `References`, deep
+  mathematical details or, more generally, narrative that may interest users
+  that want to go beyond the pragmatics of the user guide. Low level sections
+  such as `Examples` should **not** use dropdowns to stay visible to all users.
+  The following syntax::
+
+    |details-start|
+    **Dropdown title**
+    |details-split|
+
+    Dropdown content.
+
+    |details-end|
+
+  will render the following dropdown:
+
+  |details-start|
+  **Dropdown title**
+  |details-split|
+
+  Dropdown content.
+
+  |details-end|
+
+Before submitting your pull request **check if your modifications have
+introduced new sphinx warnings** by :ref:`building_documentation` locally and
+try to fix them.
 
 Cross-referencing
 -----------------
