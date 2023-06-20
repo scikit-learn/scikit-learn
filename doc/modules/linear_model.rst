@@ -172,11 +172,11 @@ Machines
 <https://en.wikipedia.org/wiki/Least-squares_support-vector_machine>`_ with
 a linear kernel.
 
-.. dropdown:: Examples
+.. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
-    * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-    * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
+  * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
+  * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 Ridge Complexity
 ----------------
@@ -211,7 +211,7 @@ cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
 example `cv=10` for 10-fold cross-validation, rather than Leave-One-Out
 Cross-Validation.
 
-.. topic:: References
+.. topic:: References:
 
     * "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
       <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
@@ -257,11 +257,11 @@ for another implementation::
 The function :func:`lasso_path` is useful for lower-level tasks, as it
 computes the coefficients along the full path of possible values.
 
-.. dropdown:: Examples
+.. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
-    * :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`
-    * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
+  * :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`
+  * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 
 .. note:: **Feature selection with Lasso**
@@ -274,7 +274,9 @@ The following two references explain the iterations
 used in the coordinate descent solver of scikit-learn, as well as
 the duality gap computation used for convergence control.
 
-.. dropdown:: References
+|details-start|
+**References**
+|details-split|
 
     * "Regularization Path For Generalized linear Models by Coordinate Descent",
       Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
@@ -284,6 +286,7 @@ the duality gap computation used for convergence control.
       in IEEE Journal of Selected Topics in Signal Processing, 2007
       (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
 
+|details-end|
 
 Setting regularization parameter
 --------------------------------
@@ -342,75 +345,78 @@ the problem is badly conditioned (e.g. more features than samples).
 
 .. _aic_bic:
 
-.. dropdown:: **Mathematical details**
+|details-start|
+**Mathematical details**
+|details-split|
 
-  The definition of AIC (and thus BIC) might differ in the literature. In this
-  section, we give more information regarding the criterion computed in
-  scikit-learn. The AIC criterion is defined as:
+The definition of AIC (and thus BIC) might differ in the literature. In this
+section, we give more information regarding the criterion computed in
+scikit-learn. The AIC criterion is defined as:
 
-  .. math::
-      AIC = -2 \log(\hat{L}) + 2 d
+.. math::
+    AIC = -2 \log(\hat{L}) + 2 d
 
-  where :math:`\hat{L}` is the maximum likelihood of the model and
-  :math:`d` is the number of parameters (as well referred to as degrees of
-  freedom in the previous section).
+where :math:`\hat{L}` is the maximum likelihood of the model and
+:math:`d` is the number of parameters (as well referred to as degrees of
+freedom in the previous section).
 
-  The definition of BIC replace the constant :math:`2` by :math:`\log(N)`:
+The definition of BIC replace the constant :math:`2` by :math:`\log(N)`:
 
-  .. math::
-      BIC = -2 \log(\hat{L}) + \log(N) d
+.. math::
+    BIC = -2 \log(\hat{L}) + \log(N) d
 
-  where :math:`N` is the number of samples.
+where :math:`N` is the number of samples.
 
-  For a linear Gaussian model, the maximum log-likelihood is defined as:
+For a linear Gaussian model, the maximum log-likelihood is defined as:
 
-  .. math::
-      \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \ln(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
+.. math::
+    \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \ln(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
 
-  where :math:`\sigma^2` is an estimate of the noise variance,
-  :math:`y_i` and :math:`\hat{y}_i` are respectively the true and predicted
-  targets, and :math:`n` is the number of samples.
+where :math:`\sigma^2` is an estimate of the noise variance,
+:math:`y_i` and :math:`\hat{y}_i` are respectively the true and predicted
+targets, and :math:`n` is the number of samples.
 
-  Plugging the maximum log-likelihood in the AIC formula yields:
+Plugging the maximum log-likelihood in the AIC formula yields:
 
-  .. math::
-      AIC = n \log(2 \pi \sigma^2) + \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sigma^2} + 2 d
+.. math::
+    AIC = n \log(2 \pi \sigma^2) + \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sigma^2} + 2 d
 
-  The first term of the above expression is sometimes discarded since it is a
-  constant when :math:`\sigma^2` is provided. In addition,
-  it is sometimes stated that the AIC is equivalent to the :math:`C_p` statistic
-  [12]_. In a strict sense, however, it is equivalent only up to some constant
-  and a multiplicative factor.
+The first term of the above expression is sometimes discarded since it is a
+constant when :math:`\sigma^2` is provided. In addition,
+it is sometimes stated that the AIC is equivalent to the :math:`C_p` statistic
+[12]_. In a strict sense, however, it is equivalent only up to some constant
+and a multiplicative factor.
 
-  At last, we mentioned above that :math:`\sigma^2` is an estimate of the
-  noise variance. In :class:`LassoLarsIC` when the parameter `noise_variance` is
-  not provided (default), the noise variance is estimated via the unbiased
-  estimator [13]_ defined as:
+At last, we mentioned above that :math:`\sigma^2` is an estimate of the
+noise variance. In :class:`LassoLarsIC` when the parameter `noise_variance` is
+not provided (default), the noise variance is estimated via the unbiased
+estimator [13]_ defined as:
 
-  .. math::
-      \sigma^2 = \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{n - p}
+.. math::
+    \sigma^2 = \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{n - p}
 
-  where :math:`p` is the number of features and :math:`\hat{y}_i` is the
-  predicted target using an ordinary least squares regression. Note, that this
-  formula is valid only when `n_samples > n_features`.
+where :math:`p` is the number of features and :math:`\hat{y}_i` is the
+predicted target using an ordinary least squares regression. Note, that this
+formula is valid only when `n_samples > n_features`.
 
-  .. dropdown:: References:
-    :open:
+.. topic:: References:
 
-    .. [12] :arxiv:`Zou, Hui, Trevor Hastie, and Robert Tibshirani.
-            "On the degrees of freedom of the lasso."
-            The Annals of Statistics 35.5 (2007): 2173-2192.
-            <0712.0881.pdf>`
+  .. [12] :arxiv:`Zou, Hui, Trevor Hastie, and Robert Tibshirani.
+          "On the degrees of freedom of the lasso."
+          The Annals of Statistics 35.5 (2007): 2173-2192.
+          <0712.0881.pdf>`
 
-    .. [13] :doi:`Cherkassky, Vladimir, and Yunqian Ma.
-            "Comparison of model selection for regression."
-            Neural computation 15.7 (2003): 1691-1714.
-            <10.1162/089976603321891864>`
+  .. [13] :doi:`Cherkassky, Vladimir, and Yunqian Ma.
+          "Comparison of model selection for regression."
+          Neural computation 15.7 (2003): 1691-1714.
+          <10.1162/089976603321891864>`
 
-.. dropdown:: Examples
+|details-end|
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars_ic.py`
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars_ic.py`
 
 
 Comparison with the regularization parameter of SVM
@@ -453,24 +459,28 @@ the MultiTaskLasso are full columns.
   * :ref:`sphx_glr_auto_examples_linear_model_plot_multi_task_lasso_support.py`
 
 
-.. dropdown:: Mathematical details
+|details-start|
+**Mathematical details**
+|details-split|
 
-  Mathematically, it consists of a linear model trained with a mixed
-  :math:`\ell_1` :math:`\ell_2`-norm for regularization.
-  The objective function to minimize is:
+Mathematically, it consists of a linear model trained with a mixed
+:math:`\ell_1` :math:`\ell_2`-norm for regularization.
+The objective function to minimize is:
 
-  .. math::  \min_{W} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}} ^ 2 + \alpha ||W||_{21}}
+.. math::  \min_{W} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}} ^ 2 + \alpha ||W||_{21}}
 
-  where :math:`\text{Fro}` indicates the Frobenius norm
+where :math:`\text{Fro}` indicates the Frobenius norm
 
-  .. math:: ||A||_{\text{Fro}} = \sqrt{\sum_{ij} a_{ij}^2}
+.. math:: ||A||_{\text{Fro}} = \sqrt{\sum_{ij} a_{ij}^2}
 
-  and :math:`\ell_1` :math:`\ell_2` reads
+and :math:`\ell_1` :math:`\ell_2` reads
 
-  .. math:: ||A||_{2 1} = \sum_i \sqrt{\sum_j a_{ij}^2}.
+.. math:: ||A||_{2 1} = \sum_i \sqrt{\sum_j a_{ij}^2}.
 
-  The implementation in the class :class:`MultiTaskLasso` uses
-  coordinate descent as the algorithm to fit the coefficients.
+The implementation in the class :class:`MultiTaskLasso` uses
+coordinate descent as the algorithm to fit the coefficients.
+
+|details-end|
 
 .. _elastic_net:
 
@@ -507,24 +517,28 @@ The objective function to minimize is in this case
 The class :class:`ElasticNetCV` can be used to set the parameters
 ``alpha`` (:math:`\alpha`) and ``l1_ratio`` (:math:`\rho`) by cross-validation.
 
-.. dropdown:: Examples
+.. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`
   
 The following two references explain the iterations
 used in the coordinate descent solver of scikit-learn, as well as
 the duality gap computation used for convergence control.
 
-.. dropdown:: References
+|details-start|
+**References**
+|details-split|
 
-    * "Regularization Path For Generalized linear Models by Coordinate Descent",
-      Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
-      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`__).
-    * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
-      S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
-      in IEEE Journal of Selected Topics in Signal Processing, 2007
-      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
+  * "Regularization Path For Generalized linear Models by Coordinate Descent",
+    Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
+    <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`__).
+  * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
+    S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
+    in IEEE Journal of Selected Topics in Signal Processing, 2007
+    (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
+
+|details-end|
 
 .. _multi_task_elastic_net:
 
@@ -679,13 +693,17 @@ previously chosen dictionary elements.
 
  * :ref:`sphx_glr_auto_examples_linear_model_plot_omp.py`
 
-.. dropdown:: References
+|details-start|
+**References**
+|details-split|
 
   * https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
   * `Matching pursuits with time-frequency dictionaries
     <https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
     S. G. Mallat, Z. Zhang,
+
+|details-end|
 
 .. _bayesian_regression:
 
@@ -724,13 +742,17 @@ The disadvantages of Bayesian regression include:
 
     - Inference of the model can be time consuming.
 
-.. dropdown:: References
+|details-start|
+**References**
+|details-split|
 
   * A good introduction to Bayesian methods is given in C. Bishop: Pattern
     Recognition and Machine learning
 
   * Original Algorithm is detailed in the  book `Bayesian learning for neural
     networks` by Radford M. Neal
+
+|details-end|
 
 .. _bayesian_ridge_regression:
 
@@ -791,13 +813,17 @@ is more robust to ill-posed problems.
 
  * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge_curvefit.py`
 
-.. dropdown:: References
+|details-start|
+**References**
+|details-split|
 
-    * Section 3.3 in Christopher M. Bishop: Pattern Recognition and Machine Learning, 2006
+  * Section 3.3 in Christopher M. Bishop: Pattern Recognition and Machine Learning, 2006
 
-    * David J. C. MacKay, `Bayesian Interpolation <https://citeseerx.ist.psu.edu/doc_view/pid/b14c7cc3686e82ba40653c6dff178356a33e5e2c>`_, 1992.
+  * David J. C. MacKay, `Bayesian Interpolation <https://citeseerx.ist.psu.edu/doc_view/pid/b14c7cc3686e82ba40653c6dff178356a33e5e2c>`_, 1992.
 
-    * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
+  * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
+
+|details-end|
 
 .. _automatic_relevance_determination:
 
@@ -833,16 +859,19 @@ Ridge Regression`_, see the example below.
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py`
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
-    .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 7.2.1
+  .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 7.2.1
 
-    .. [2] David Wipf and Srikantan Nagarajan: `A New View of Automatic Relevance Determination <https://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
+  .. [2] David Wipf and Srikantan Nagarajan: `A New View of Automatic Relevance Determination <https://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
 
-    .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
+  .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
 
-    .. [4] Tristan Fletcher: `Relevance Vector Machines Explained <https://citeseerx.ist.psu.edu/doc_view/pid/3dc9d625404fdfef6eaccc3babddefe4c176abd4>`_
+  .. [4] Tristan Fletcher: `Relevance Vector Machines Explained <https://citeseerx.ist.psu.edu/doc_view/pid/3dc9d625404fdfef6eaccc3babddefe4c176abd4>`_
 
+|details-end|
 
 .. _Logistic_regression:
 
@@ -934,35 +963,39 @@ logistic regression, see also `log-linear model
    especially important when using regularization. The choice of overparameterization can be
    detrimental for unpenalized models since then the solution may not be unique, as shown in [16]_.
   
-.. dropdown:: Mathematical details
+|details-start|
+**Mathematical details**
+|details-split|
 
-  Let :math:`y_i \in {1, \ldots, K}` be the label (ordinal) encoded target variable for observation :math:`i`.
-  Instead of a single coefficient vector, we now have
-  a matrix of coefficients :math:`W` where each row vector :math:`W_k` corresponds to class
-  :math:`k`. We aim at predicting the class probabilities :math:`P(y_i=k|X_i)` via
-  :meth:`~sklearn.linear_model.LogisticRegression.predict_proba` as:
+Let :math:`y_i \in {1, \ldots, K}` be the label (ordinal) encoded target variable for observation :math:`i`.
+Instead of a single coefficient vector, we now have
+a matrix of coefficients :math:`W` where each row vector :math:`W_k` corresponds to class
+:math:`k`. We aim at predicting the class probabilities :math:`P(y_i=k|X_i)` via
+:meth:`~sklearn.linear_model.LogisticRegression.predict_proba` as:
 
-  .. math:: \hat{p}_k(X_i) = \frac{\exp(X_i W_k + W_{0, k})}{\sum_{l=0}^{K-1} \exp(X_i W_l + W_{0, l})}.
+.. math:: \hat{p}_k(X_i) = \frac{\exp(X_i W_k + W_{0, k})}{\sum_{l=0}^{K-1} \exp(X_i W_l + W_{0, l})}.
 
-  The objective for the optimization becomes
+The objective for the optimization becomes
 
-  .. math:: \min_W -C \sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log(\hat{p}_k(X_i)) + r(W).
+.. math:: \min_W -C \sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log(\hat{p}_k(X_i)) + r(W).
 
-  Where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
-  if :math:`P` is false, otherwise it evaluates to :math:`1`. We currently provide four choices
-  for the regularization term :math:`r(W)` via the `penalty` argument:
+Where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
+if :math:`P` is false, otherwise it evaluates to :math:`1`. We currently provide four choices
+for the regularization term :math:`r(W)` via the `penalty` argument:
 
-  +----------------+----------------------------------------------------------------------------------+
-  | penalty        | :math:`r(W)`                                                                     |
-  +================+==================================================================================+
-  | `None`         | :math:`0`                                                                        |
-  +----------------+----------------------------------------------------------------------------------+
-  | :math:`\ell_1` | :math:`\|W\|_{1,1} = \sum_{i=1}^n\sum_{j=1}^{K}|W_{i,j}|`                        |
-  +----------------+----------------------------------------------------------------------------------+
-  | :math:`\ell_2` | :math:`\frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^{K} W_{i,j}^2`   |
-  +----------------+----------------------------------------------------------------------------------+
-  | `ElasticNet`   | :math:`\frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_{1,1}`                           |
-  +----------------+----------------------------------------------------------------------------------+
++----------------+----------------------------------------------------------------------------------+
+| penalty        | :math:`r(W)`                                                                     |
++================+==================================================================================+
+| `None`         | :math:`0`                                                                        |
++----------------+----------------------------------------------------------------------------------+
+| :math:`\ell_1` | :math:`\|W\|_{1,1} = \sum_{i=1}^n\sum_{j=1}^{K}|W_{i,j}|`                        |
++----------------+----------------------------------------------------------------------------------+
+| :math:`\ell_2` | :math:`\frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^{K} W_{i,j}^2`   |
++----------------+----------------------------------------------------------------------------------+
+| `ElasticNet`   | :math:`\frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_{1,1}`                           |
++----------------+----------------------------------------------------------------------------------+
+
+|details-end|
 
 Solvers
 -------
@@ -970,50 +1003,54 @@ Solvers
 The solvers implemented in the class :class:`LogisticRegression`
 are "lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag" and "saga":
 
-.. dropdown:: Solvers' details
+|details-start|
+**Solvers' details**
+|details-split|
 
-  * The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
-    on the excellent C++ `LIBLINEAR library
-    <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
-    scikit-learn. However, the CD algorithm implemented in liblinear cannot learn
-    a true multinomial (multiclass) model; instead, the optimization problem is
-    decomposed in a "one-vs-rest" fashion so separate binary classifiers are
-    trained for all classes. This happens under the hood, so
-    :class:`LogisticRegression` instances using this solver behave as multiclass
-    classifiers. For :math:`\ell_1` regularization :func:`sklearn.svm.l1_min_c` allows to
-    calculate the lower bound for C in order to get a non "null" (all feature
-    weights to zero) model.
+* The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
+  on the excellent C++ `LIBLINEAR library
+  <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
+  scikit-learn. However, the CD algorithm implemented in liblinear cannot learn
+  a true multinomial (multiclass) model; instead, the optimization problem is
+  decomposed in a "one-vs-rest" fashion so separate binary classifiers are
+  trained for all classes. This happens under the hood, so
+  :class:`LogisticRegression` instances using this solver behave as multiclass
+  classifiers. For :math:`\ell_1` regularization :func:`sklearn.svm.l1_min_c` allows to
+  calculate the lower bound for C in order to get a non "null" (all feature
+  weights to zero) model.
 
-  * The "lbfgs", "newton-cg" and "sag" solvers only support :math:`\ell_2`
-    regularization or no regularization, and are found to converge faster for some
-    high-dimensional data. Setting `multi_class` to "multinomial" with these solvers
-    learns a true multinomial logistic regression model [5]_, which means that its
-    probability estimates should be better calibrated than the default "one-vs-rest"
-    setting.
+* The "lbfgs", "newton-cg" and "sag" solvers only support :math:`\ell_2`
+  regularization or no regularization, and are found to converge faster for some
+  high-dimensional data. Setting `multi_class` to "multinomial" with these solvers
+  learns a true multinomial logistic regression model [5]_, which means that its
+  probability estimates should be better calibrated than the default "one-vs-rest"
+  setting.
 
-  * The "sag" solver uses Stochastic Average Gradient descent [6]_. It is faster
-    than other solvers for large datasets, when both the number of samples and the
-    number of features are large.
+* The "sag" solver uses Stochastic Average Gradient descent [6]_. It is faster
+  than other solvers for large datasets, when both the number of samples and the
+  number of features are large.
 
-  * The "saga" solver [7]_ is a variant of "sag" that also supports the
-    non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
-    multinomial logistic regression. It is also the only solver that supports
-    `penalty="elasticnet"`.
+* The "saga" solver [7]_ is a variant of "sag" that also supports the
+  non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
+  multinomial logistic regression. It is also the only solver that supports
+  `penalty="elasticnet"`.
 
-  * The "lbfgs" is an optimization algorithm that approximates the
-    Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_, which belongs to
-    quasi-Newton methods. As such, it can deal with a wide range of different training
-    data and is therefore the default solver. Its performance, however, suffers on poorly
-    scaled datasets and on datasets with one-hot encoded categorical features with rare
-    categories.
+* The "lbfgs" is an optimization algorithm that approximates the
+  Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_, which belongs to
+  quasi-Newton methods. As such, it can deal with a wide range of different training
+  data and is therefore the default solver. Its performance, however, suffers on poorly
+  scaled datasets and on datasets with one-hot encoded categorical features with rare
+  categories.
 
-  * The "newton-cholesky" solver is an exact Newton solver that calculates the hessian
-    matrix and solves the resulting linear system. It is a very good choice for
-    `n_samples` >> `n_features`, but has a few shortcomings: Only :math:`\ell_2`
-    regularization is supported. Furthermore, because the hessian matrix is explicitly
-    computed, the memory usage has a quadratic dependency on `n_features` as well as on
-    `n_classes`. As a consequence, only the one-vs-rest scheme is implemented for the
-    multiclass case.
+* The "newton-cholesky" solver is an exact Newton solver that calculates the hessian
+  matrix and solves the resulting linear system. It is a very good choice for
+  `n_samples` >> `n_features`, but has a few shortcomings: Only :math:`\ell_2`
+  regularization is supported. Furthermore, because the hessian matrix is explicitly
+  computed, the memory usage has a quadratic dependency on `n_features` as well as on
+  `n_classes`. As a consequence, only the one-vs-rest scheme is implemented for the
+  multiclass case.
+
+|details-end|
 
 For a comparison of some of these solvers, see [9]_.
 
@@ -1050,32 +1087,36 @@ the "saga" solver is usually faster.
 For large dataset, you may also consider using :class:`SGDClassifier`
 with `loss="log_loss"`, which might be even faster but requires more tuning.
 
-.. dropdown:: Examples
+.. topic:: Examples
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_l1_l2_sparsity.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_l1_l2_sparsity.py`
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_20newsgroups.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_20newsgroups.py`
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_mnist.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_mnist.py`
 
 .. _liblinear_differences:
 
-.. dropdown:: Differences from liblinear
+|details-start|
+**Differences from liblinear**
+|details-split|
 
-    There might be a difference in the scores obtained between
-    :class:`LogisticRegression` with ``solver=liblinear``
-    or :class:`LinearSVC` and the external liblinear library directly,
-    when ``fit_intercept=False`` and the fit ``coef_`` (or) the data to
-    be predicted are zeroes. This is because for the sample(s) with
-    ``decision_function`` zero, :class:`LogisticRegression` and :class:`LinearSVC`
-    predict the negative class, while liblinear predicts the positive class.
-    Note that a model with ``fit_intercept=False`` and having many samples with
-    ``decision_function`` zero, is likely to be a underfit, bad model and you are
-    advised to set ``fit_intercept=True`` and increase the intercept_scaling.
+There might be a difference in the scores obtained between
+:class:`LogisticRegression` with ``solver=liblinear``
+or :class:`LinearSVC` and the external liblinear library directly,
+when ``fit_intercept=False`` and the fit ``coef_`` (or) the data to
+be predicted are zeroes. This is because for the sample(s) with
+``decision_function`` zero, :class:`LogisticRegression` and :class:`LinearSVC`
+predict the negative class, while liblinear predicts the positive class.
+Note that a model with ``fit_intercept=False`` and having many samples with
+``decision_function`` zero, is likely to be a underfit, bad model and you are
+advised to set ``fit_intercept=True`` and increase the intercept_scaling.
+
+|details-end|
 
 .. note:: **Feature selection with sparse logistic regression**
 
@@ -1191,34 +1232,38 @@ The choice of the distribution depends on the problem at hand:
   used for multiclass classification.
 
 
-.. dropdown:: Examples of use cases
+|details-start|
+**Examples of use cases**
+|details-split|
 
-  * Agriculture / weather modeling:  number of rain events per year (Poisson),
-    amount of rainfall per event (Gamma), total rainfall per year (Tweedie /
-    Compound Poisson Gamma).
-  * Risk modeling / insurance policy pricing:  number of claim events /
-    policyholder per year (Poisson), cost per event (Gamma), total cost per
-    policyholder per year (Tweedie / Compound Poisson Gamma).
-  * Credit Default: probability that a loan can't be paid back (Bernouli).
-  * Fraud Detection: probability that a financial transaction like a cash transfer
-    is a fraudulent transaction (Bernoulli).
-  * Predictive maintenance: number of production interruption events per year
-    (Poisson), duration of interruption (Gamma), total interruption time per year
-    (Tweedie / Compound Poisson Gamma).
-  * Medical Drug Testing: probability of curing a patient in a set of trials or
-    probability that a patient will experience side effects (Bernoulli).
-  * News Classification: classification of news articles into three categories
-    namely Business News, Politics and Entertainment news (Categorical).
+* Agriculture / weather modeling:  number of rain events per year (Poisson),
+  amount of rainfall per event (Gamma), total rainfall per year (Tweedie /
+  Compound Poisson Gamma).
+* Risk modeling / insurance policy pricing:  number of claim events /
+  policyholder per year (Poisson), cost per event (Gamma), total cost per
+  policyholder per year (Tweedie / Compound Poisson Gamma).
+* Credit Default: probability that a loan can't be paid back (Bernouli).
+* Fraud Detection: probability that a financial transaction like a cash transfer
+  is a fraudulent transaction (Bernoulli).
+* Predictive maintenance: number of production interruption events per year
+  (Poisson), duration of interruption (Gamma), total interruption time per year
+  (Tweedie / Compound Poisson Gamma).
+* Medical Drug Testing: probability of curing a patient in a set of trials or
+  probability that a patient will experience side effects (Bernoulli).
+* News Classification: classification of news articles into three categories
+  namely Business News, Politics and Entertainment news (Categorical).
+
+|details-end|
 
 .. topic:: References:
 
-    .. [10] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models,
-       Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
+  .. [10] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models,
+      Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
 
-    .. [11] Jørgensen, B. (1992). The theory of exponential dispersion models
-       and analysis of deviance. Monografias de matemática, no. 51.  See also
-       `Exponential dispersion model.
-       <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
+  .. [11] Jørgensen, B. (1992). The theory of exponential dispersion models
+      and analysis of deviance. Monografias de matemática, no. 51.  See also
+      `Exponential dispersion model.
+      <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
 
 Usage
 -----
@@ -1252,10 +1297,10 @@ Usage example::
     -0.7638...
 
 
-.. dropdown:: Examples
+.. topic:: Examples
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_poisson_regression_non_normal_loss.py`
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_poisson_regression_non_normal_loss.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`
 
 Practical considerations
 ------------------------
@@ -1399,32 +1444,36 @@ Note that in general, robust fitting in high-dimensional setting (large
 in these settings.
 
 
-.. dropdown:: Trade-offs: which estimator?
+|details-start|
+**Trade-offs: which estimator ?**
+|details-split|
 
-    Scikit-learn provides 3 robust regression estimators:
-    :ref:`RANSAC <ransac_regression>`,
-    :ref:`Theil Sen <theil_sen_regression>` and
-    :ref:`HuberRegressor <huber_regression>`.
+  Scikit-learn provides 3 robust regression estimators:
+  :ref:`RANSAC <ransac_regression>`,
+  :ref:`Theil Sen <theil_sen_regression>` and
+  :ref:`HuberRegressor <huber_regression>`.
 
-    * :ref:`HuberRegressor <huber_regression>` should be faster than
-      :ref:`RANSAC <ransac_regression>` and :ref:`Theil Sen <theil_sen_regression>`
-      unless the number of samples are very large, i.e ``n_samples`` >> ``n_features``.
-      This is because :ref:`RANSAC <ransac_regression>` and :ref:`Theil Sen <theil_sen_regression>`
-      fit on smaller subsets of the data. However, both :ref:`Theil Sen <theil_sen_regression>`
-      and :ref:`RANSAC <ransac_regression>` are unlikely to be as robust as
-      :ref:`HuberRegressor <huber_regression>` for the default parameters.
+  * :ref:`HuberRegressor <huber_regression>` should be faster than
+    :ref:`RANSAC <ransac_regression>` and :ref:`Theil Sen <theil_sen_regression>`
+    unless the number of samples are very large, i.e ``n_samples`` >> ``n_features``.
+    This is because :ref:`RANSAC <ransac_regression>` and :ref:`Theil Sen <theil_sen_regression>`
+    fit on smaller subsets of the data. However, both :ref:`Theil Sen <theil_sen_regression>`
+    and :ref:`RANSAC <ransac_regression>` are unlikely to be as robust as
+    :ref:`HuberRegressor <huber_regression>` for the default parameters.
 
-    * :ref:`RANSAC <ransac_regression>` is faster than :ref:`Theil Sen <theil_sen_regression>`
-      and scales much better with the number of samples.
+  * :ref:`RANSAC <ransac_regression>` is faster than :ref:`Theil Sen <theil_sen_regression>`
+    and scales much better with the number of samples.
 
-    * :ref:`RANSAC <ransac_regression>` will deal better with large
-      outliers in the y direction (most common situation).
+  * :ref:`RANSAC <ransac_regression>` will deal better with large
+    outliers in the y direction (most common situation).
 
-    * :ref:`Theil Sen <theil_sen_regression>` will cope better with
-      medium-size outliers in the X direction, but this property will
-      disappear in high-dimensional settings.
+  * :ref:`Theil Sen <theil_sen_regression>` will cope better with
+    medium-size outliers in the X direction, but this property will
+    disappear in high-dimensional settings.
 
-  When in doubt, use :ref:`RANSAC <ransac_regression>`.
+When in doubt, use :ref:`RANSAC <ransac_regression>`.
+
+|details-end|
 
 .. _ransac_regression:
 
@@ -1479,21 +1528,25 @@ is called prior to fitting the model and thus leading to better computational
 performance.
 
 
-.. dropdown:: Examples
+.. topic:: Examples
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_robust_fit.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_robust_fit.py`
 
-.. dropdown:: References
+|details-start|
+**References**
+|details-split|
 
-  * https://en.wikipedia.org/wiki/RANSAC
-  * `"Random Sample Consensus: A Paradigm for Model Fitting with Applications to
-    Image Analysis and Automated Cartography"
-    <https://www.cs.ait.ac.th/~mdailey/cvreadings/Fischler-RANSAC.pdf>`_
-    Martin A. Fischler and Robert C. Bolles - SRI International (1981)
-  * `"Performance Evaluation of RANSAC Family"
-    <http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
-    Sunglok Choi, Taemin Kim and Wonpil Yu - BMVC (2009)
+* https://en.wikipedia.org/wiki/RANSAC
+* `"Random Sample Consensus: A Paradigm for Model Fitting with Applications to
+  Image Analysis and Automated Cartography"
+  <https://www.cs.ait.ac.th/~mdailey/cvreadings/Fischler-RANSAC.pdf>`_
+  Martin A. Fischler and Robert C. Bolles - SRI International (1981)
+* `"Performance Evaluation of RANSAC Family"
+  <http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
+  Sunglok Choi, Taemin Kim and Wonpil Yu - BMVC (2009)
+
+|details-end|
 
 .. _theil_sen_regression:
 
@@ -1506,10 +1559,10 @@ that the robustness of the estimator decreases quickly with the dimensionality
 of the problem. It loses its robustness properties and becomes no
 better than an ordinary least squares in high dimension.
 
-.. dropdown:: Examples
+.. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_theilsen.py`
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_robust_fit.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_theilsen.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_robust_fit.py`
 
 .. topic:: References:
 
@@ -1575,24 +1628,28 @@ but gives a lesser weight to them.
    :align: center
    :scale: 50%
 
-.. dropdown:: Mathematical details
+|details-start|
+**Mathematical details**
+|details-split|
 
-  The loss function that :class:`HuberRegressor` minimizes is given by
+The loss function that :class:`HuberRegressor` minimizes is given by
 
-  .. math::
+.. math::
 
-    \min_{w, \sigma} {\sum_{i=1}^n\left(\sigma + H_{\epsilon}\left(\frac{X_{i}w - y_{i}}{\sigma}\right)\sigma\right) + \alpha {||w||_2}^2}
+  \min_{w, \sigma} {\sum_{i=1}^n\left(\sigma + H_{\epsilon}\left(\frac{X_{i}w - y_{i}}{\sigma}\right)\sigma\right) + \alpha {||w||_2}^2}
 
-  where
+where
 
-  .. math::
+.. math::
 
-    H_{\epsilon}(z) = \begin{cases}
-          z^2, & \text {if } |z| < \epsilon, \\
-          2\epsilon|z| - \epsilon^2, & \text{otherwise}
-    \end{cases}
+  H_{\epsilon}(z) = \begin{cases}
+        z^2, & \text {if } |z| < \epsilon, \\
+        2\epsilon|z| - \epsilon^2, & \text{otherwise}
+  \end{cases}
 
-  It is advised to set the parameter ``epsilon`` to 1.35 to achieve 95% statistical efficiency.
+It is advised to set the parameter ``epsilon`` to 1.35 to achieve 95% statistical efficiency.
+
+|details-end|
 
 Notes
 -----
@@ -1630,34 +1687,38 @@ Quantile regression estimates the median or other quantiles of :math:`y`
 conditional on :math:`X`, while ordinary least squares (OLS) estimates the
 conditional mean.
 
-.. dropdown:: Mathematical details
+|details-start|
+**Mathematical details**
+|details-split|
 
-  As a linear model, the :class:`QuantileRegressor` gives linear predictions
-  :math:`\hat{y}(w, X) = Xw` for the :math:`q`-th quantile, :math:`q \in (0, 1)`.
-  The weights or coefficients :math:`w` are then found by the following
-  minimization problem:
+As a linear model, the :class:`QuantileRegressor` gives linear predictions
+:math:`\hat{y}(w, X) = Xw` for the :math:`q`-th quantile, :math:`q \in (0, 1)`.
+The weights or coefficients :math:`w` are then found by the following
+minimization problem:
 
-  .. math::
-      \min_{w} {\frac{1}{n_{\text{samples}}}
-      \sum_i PB_q(y_i - X_i w) + \alpha ||w||_1}.
+.. math::
+    \min_{w} {\frac{1}{n_{\text{samples}}}
+    \sum_i PB_q(y_i - X_i w) + \alpha ||w||_1}.
 
-  This consists of the pinball loss (also known as linear loss),
-  see also :class:`~sklearn.metrics.mean_pinball_loss`,
+This consists of the pinball loss (also known as linear loss),
+see also :class:`~sklearn.metrics.mean_pinball_loss`,
 
-  .. math::
-      PB_q(t) = q \max(t, 0) + (1 - q) \max(-t, 0) =
-      \begin{cases}
-          q t, & t > 0, \\
-          0,    & t = 0, \\
-          (q-1) t, & t < 0
-      \end{cases}
+.. math::
+    PB_q(t) = q \max(t, 0) + (1 - q) \max(-t, 0) =
+    \begin{cases}
+        q t, & t > 0, \\
+        0,    & t = 0, \\
+        (q-1) t, & t < 0
+    \end{cases}
 
-  and the L1 penalty controlled by parameter ``alpha``, similar to
-  :class:`Lasso`.
+and the L1 penalty controlled by parameter ``alpha``, similar to
+:class:`Lasso`.
 
-  As the pinball loss is only linear in the residuals, quantile regression is
-  much more robust to outliers than squared error based estimation of the mean.
-  Somewhat in between is the :class:`HuberRegressor`.
+As the pinball loss is only linear in the residuals, quantile regression is
+much more robust to outliers than squared error based estimation of the mean.
+Somewhat in between is the :class:`HuberRegressor`.
+
+|details-end|
 
 Quantile regression may be useful if one is interested in predicting an
 interval instead of point prediction. Sometimes, prediction intervals are
@@ -1686,18 +1747,22 @@ problem. The current implementation is based on
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_quantile_regression.py`
 
-.. dropdown:: References
+|details-start|
+**References**
+|details-split|
 
-  * Koenker, R., & Bassett Jr, G. (1978). `Regression quantiles.
-    <https://gib.people.uic.edu/RQ.pdf>`_
-    Econometrica: journal of the Econometric Society, 33-50.
+* Koenker, R., & Bassett Jr, G. (1978). `Regression quantiles.
+  <https://gib.people.uic.edu/RQ.pdf>`_
+  Econometrica: journal of the Econometric Society, 33-50.
 
-  * Portnoy, S., & Koenker, R. (1997). :doi:`The Gaussian hare and the Laplacian
-    tortoise: computability of squared-error versus absolute-error estimators.
-    Statistical Science, 12, 279-300 <10.1214/ss/1030037960>`.
+* Portnoy, S., & Koenker, R. (1997). :doi:`The Gaussian hare and the Laplacian
+  tortoise: computability of squared-error versus absolute-error estimators.
+  Statistical Science, 12, 279-300 <10.1214/ss/1030037960>`.
 
-  * Koenker, R. (2005). :doi:`Quantile Regression <10.1017/CBO9780511754098>`.
-    Cambridge University Press.
+* Koenker, R. (2005). :doi:`Quantile Regression <10.1017/CBO9780511754098>`.
+  Cambridge University Press.
+
+|details-end|
 
 
 .. _polynomial_regression:
@@ -1712,34 +1777,38 @@ on nonlinear functions of the data.  This approach maintains the generally
 fast performance of linear methods, while allowing them to fit a much wider
 range of data.
 
-.. dropdown:: Mathematical details
+|details-start|
+**Mathematical details**
+|details-split|
 
-  For example, a simple linear regression can be extended by constructing
-  **polynomial features** from the coefficients.  In the standard linear
-  regression case, you might have a model that looks like this for
-  two-dimensional data:
+For example, a simple linear regression can be extended by constructing
+**polynomial features** from the coefficients.  In the standard linear
+regression case, you might have a model that looks like this for
+two-dimensional data:
 
-  .. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + w_2 x_2
+.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + w_2 x_2
 
-  If we want to fit a paraboloid to the data instead of a plane, we can combine
-  the features in second-order polynomials, so that the model looks like this:
+If we want to fit a paraboloid to the data instead of a plane, we can combine
+the features in second-order polynomials, so that the model looks like this:
 
-  .. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + w_2 x_2 + w_3 x_1 x_2 + w_4 x_1^2 + w_5 x_2^2
+.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + w_2 x_2 + w_3 x_1 x_2 + w_4 x_1^2 + w_5 x_2^2
 
-  The (sometimes surprising) observation is that this is *still a linear model*:
-  to see this, imagine creating a new set of features
+The (sometimes surprising) observation is that this is *still a linear model*:
+to see this, imagine creating a new set of features
 
-  .. math::  z = [x_1, x_2, x_1 x_2, x_1^2, x_2^2]
+.. math::  z = [x_1, x_2, x_1 x_2, x_1^2, x_2^2]
 
-  With this re-labeling of the data, our problem can be written
+With this re-labeling of the data, our problem can be written
 
-  .. math::    \hat{y}(w, z) = w_0 + w_1 z_1 + w_2 z_2 + w_3 z_3 + w_4 z_4 + w_5 z_5
+.. math::    \hat{y}(w, z) = w_0 + w_1 z_1 + w_2 z_2 + w_3 z_3 + w_4 z_4 + w_5 z_5
 
-  We see that the resulting *polynomial regression* is in the same class of
-  linear models we considered above (i.e. the model is linear in :math:`w`)
-  and can be solved by the same techniques.  By considering linear fits within
-  a higher-dimensional space built with these basis functions, the model has the
-  flexibility to fit a much broader range of data.
+We see that the resulting *polynomial regression* is in the same class of
+linear models we considered above (i.e. the model is linear in :math:`w`)
+and can be solved by the same techniques.  By considering linear fits within
+a higher-dimensional space built with these basis functions, the model has the
+flexibility to fit a much broader range of data.
+
+|details-end|
 
 Here is an example of applying this idea to one-dimensional data, using
 polynomial features of varying degrees:
