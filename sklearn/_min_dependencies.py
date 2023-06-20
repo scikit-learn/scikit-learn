@@ -39,7 +39,7 @@ dependent_packages = {
     "pytest-cov": ("2.9.0", "tests"),
     "ruff": ("0.0.272", "tests"),
     "black": ("23.3.0", "tests"),
-    "mypy": ("0.961", "tests"),
+    "mypy": ("1.3", "tests"),
     "pyamg": ("4.0.0", "tests"),
     "sphinx": ("4.0.1", "docs"),
     "sphinx-gallery": ("0.7.0", "docs"),
