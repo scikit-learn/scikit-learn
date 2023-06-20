@@ -959,7 +959,7 @@ def check_array_api_input(
         if method is None:
             continue
 
-        if method_name in ["score"]:
+        if method_name == "score":
             result = method(X, y)
             with config_context(array_api_dispatch=True):
                 result_xp = getattr(est_xp, method_name)(X_xp, y_xp)
