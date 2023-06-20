@@ -47,7 +47,6 @@ dependent_packages = {
     "Pillow": ("7.1.2", "docs"),
     "pooch": ("1.6.0", "docs, examples, tests"),
     "sphinx-prompt": ("1.3.0", "docs"),
-    "sphinx-design": ("0.4.1", "docs"),
     "sphinxext-opengraph": ("0.4.2", "docs"),
     "plotly": ("5.14.0", "docs, examples"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
