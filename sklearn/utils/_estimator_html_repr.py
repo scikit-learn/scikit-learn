@@ -200,12 +200,20 @@ def _write_estimator_html(
 
         out.write("</div></div>")
     elif est_block.kind == "single":
+        from sklearn.utils.validation import check_is_fitted
+        from sklearn.exceptions import NotFittedError
+
+        try:
+            check_is_fitted(estimator)
+            inner_class = "sk-estimator-trained"
+        except NotFittedError:
+            inner_class = "sk-estimator"
         _write_label_html(
             out,
             est_block.names,
             est_block.name_details,
             outer_class="sk-item",
-            inner_class="sk-estimator",
+            inner_class=inner_class,
             checked=first_call,
             url_link=url_link,
         )

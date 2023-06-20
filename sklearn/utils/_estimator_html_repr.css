@@ -57,6 +57,11 @@
 #$id div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {
   background-color: #d4ebff;
 }
+
+#$id div.sk-estimator-trained input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  background-color: #66ff66;
+}
+
 #$id input.sk-hidden--visually {
   border: 0;
   clip: rect(1px 1px 1px 1px);
@@ -79,6 +84,28 @@
 #$id div.sk-estimator:hover {
   background-color: #d4ebff;
 }
+
+#$id div.sk-estimator-trained {
+  font-family: monospace;
+  background-color: #ccffcc;
+  border: 1px dotted black;
+  border-radius: 0.25em;
+  box-sizing: border-box;
+  margin-bottom: 0.5em;
+}
+#$id div.sk-estimator-trained:hover {
+  background-color: #66ff66;
+}
+
+#$id div.sk-estimator-trained pre {
+  background-color: #ccffcc;
+}
+
+#$id div.sk-estimator-trained div {
+  background-color: #ccffcc;
+}
+
+
 #$id div.sk-parallel-item::after {
   content: "";
   width: 100%;
@@ -250,5 +277,3 @@ a.sk-estimator-doc-link:hover span {
     border: cornflowerblue 1pt solid;
     color: cornflowerblue;
 }
-
-
