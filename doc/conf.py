@@ -61,7 +61,6 @@ extensions = [
     "doi_role",
     "allow_nan_estimators",
     "matplotlib.sphinxext.plot_directive",
-    "sphinx_design",
 ]
 
 try:
