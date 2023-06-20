@@ -900,7 +900,7 @@ def non_negative_factorization(
     X,
     W=None,
     H=None,
-    n_components=None,
+    n_components="warn",
     *,
     init=None,
     update_H=True,
@@ -973,9 +973,14 @@ def non_negative_factorization(
         If `update_H=False`, it is used as a constant, to solve for W only.
         If `None`, uses the initialisation method specified in `init`.
 
-    n_components : int, default=None
+    n_components : int or {'auto'} or None, default=None
         Number of components, if n_components is not set all features
         are kept.
+        If `n_components='auto'`, the number of components is automatically infered
+        from W or H shapes.
+
+        .. versionchanged:: 1.3
+           The default value of `n_components` will change to "auto" in v1.5.
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
@@ -1097,6 +1102,15 @@ def non_negative_factorization(
     >>> W, H, n_iter = non_negative_factorization(
     ...     X, n_components=2, init='random', random_state=0)
     """
+
+    if n_components == "warn" or n_components is None:
+        warnings.warn(
+            "The default value of `n_components` will change from "
+            "`None` to `'auto'` in 1.5.",
+            FutureWarning,
+        )
+        n_components = None
+
     est = NMF(
         n_components=n_components,
         init=init,
@@ -1130,7 +1144,11 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
     __metadata_request__inverse_transform = {"W": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
-        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "n_components": [
+            Interval(Integral, 1, None, closed="left"),
+            None,
+            StrOptions({"auto"}),
+        ],
         "init": [
             StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
             None,
@@ -1183,6 +1201,19 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
         self._beta_loss = _beta_loss_to_float(self.beta_loss)
 
     def _check_w_h(self, X, W, H, update_H):
+        # n_components
+        if self._n_components == "auto":
+            if W is not None:
+                if H is not None:
+                    self._n_components = H.shape[0]
+                else:
+                    self._n_components = W.shape[1]
+            elif H is not None:
+                self._n_components = H.shape[0]
+            else:
+                # Default to n_features
+                self._n_components = X.shape[1]
+
         """Check W and H, or initialize them."""
         n_samples, n_features = X.shape
         if self.init == "custom" and update_H:
@@ -1349,7 +1380,7 @@ class NMF(_BaseNMF):
 
     Parameters
     ----------
-    n_components : int, default=None
+    n_components : int or {'auto'} or None, default=None
         Number of components, if n_components is not set all features
         are kept.
 
