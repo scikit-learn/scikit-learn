@@ -435,7 +435,7 @@ where :math:`1(x)` is the `indicator function
   >>> accuracy_score(y_true, y_pred)
   0.5
   >>> accuracy_score(y_true, y_pred, normalize=False)
-  2
+  2.0
 
 In the multilabel case with binary label indicators::
 
