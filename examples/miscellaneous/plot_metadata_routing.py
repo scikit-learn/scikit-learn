@@ -618,7 +618,7 @@ for w in record:
 #
 # - your estimator inherits from :class:`~base.BaseEstimator`
 # - the parameters consumed by your estimator's methods, e.g. ``fit``, are
-#   explicitly defined in the method's signature, as opposed to being 
+#   explicitly defined in the method's signature, as opposed to being
 #   ``*args`` or ``*kwargs``.
-# - you do not route any metadata to the underlying objects, i.e. you're not a 
+# - you do not route any metadata to the underlying objects, i.e. you're not a
 #   *router*.
