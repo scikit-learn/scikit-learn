@@ -315,7 +315,7 @@ rst_prolog = """
 
     </div>
     </details>
-    
+
 """
 
 # -- Options for LaTeX output ------------------------------------------------
