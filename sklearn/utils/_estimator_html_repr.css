@@ -161,9 +161,9 @@
     font-family: monospace;
     background-color: white;
     border: cornflowerblue 1pt solid;
-    border-radius: 1em;
-    height: 1em;
-    width: 1em;
+    border-radius: 1.3rem;
+    height: 1.3rem;
+    width: 1.3rem;
     color: cornflowerblue;
     text-decoration: none;
 }
@@ -209,14 +209,14 @@ a.sk-estimator-doc-link {
     height: 1em;
     width: 1em;
     color: cornflowerblue;
-    text-decoration: none;
+    text-decoration: none!important;
     margin-left: 1ex;
 }
 
 #sk-container-id-1 div.sk-estimator:hover a.sk-estimator-doc-link:hover,  a.sk-estimator-doc-link:hover {
     background-color: cornflowerblue;
     color: white;
-    text-decoration: none;
+    text-decoration: none!important;
 }
 
 a.sk-estimator-doc-link span {
