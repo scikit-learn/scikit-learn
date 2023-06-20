@@ -51,10 +51,6 @@ ignore=[
     "E731",
     # do not use variables named 'l', 'O', or 'I'
     "E741",
-    # line break before binary operator
-    # "W503",
-    # line break after binary operator
-    # "W504"
 ]
 
 exclude=[
