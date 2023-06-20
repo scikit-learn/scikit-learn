@@ -5,7 +5,6 @@
   padding: 0;
 }
 
-
 #$id div.sk-toggleable {
   background-color: white;
 }
@@ -35,13 +34,15 @@
   max-width: 0;
   overflow: hidden;
   text-align: left;
-  background-color: #f0f8ff;
+  background-color: #$background_color;
+  /* background-color: #f0f8ff; */
 }
 #$id div.sk-toggleable__content pre {
   margin: 0.2em;
   color: black;
   border-radius: 0.25em;
-  background-color: #f0f8ff;
+  background-color: #$background_color;
+  /* background-color: #f0f8ff; */
 }
 #$id input.sk-toggleable__control:checked~div.sk-toggleable__content {
   max-height: 200px;
@@ -52,14 +53,10 @@
   content: "▾";
 }
 #$id div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
-  background-color: #d4ebff;
+  background-color: #$background_color_hover;
 }
 #$id div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {
-  background-color: #d4ebff;
-}
-
-#$id div.sk-estimator-trained input.sk-toggleable__control:checked~label.sk-toggleable__label {
-  background-color: #66ff66;
+  background-color: #$background_color_hover;
 }
 
 #$id input.sk-hidden--visually {
@@ -75,34 +72,14 @@
 }
 #$id div.sk-estimator {
   font-family: monospace;
-  background-color: #f0f8ff;
+  background-color: #$background_color;
   border: 1px dotted black;
   border-radius: 0.25em;
   box-sizing: border-box;
   margin-bottom: 0.5em;
 }
 #$id div.sk-estimator:hover {
-  background-color: #d4ebff;
-}
-
-#$id div.sk-estimator-trained {
-  font-family: monospace;
-  background-color: #ccffcc;
-  border: 1px dotted black;
-  border-radius: 0.25em;
-  box-sizing: border-box;
-  margin-bottom: 0.5em;
-}
-#$id div.sk-estimator-trained:hover {
-  background-color: #66ff66;
-}
-
-#$id div.sk-estimator-trained pre {
-  background-color: #ccffcc;
-}
-
-#$id div.sk-estimator-trained div {
-  background-color: #ccffcc;
+  background-color: #background_color_hover;
 }
 
 
@@ -113,7 +90,7 @@
   flex-grow: 1;
 }
 #$id div.sk-label:hover label.sk-toggleable__label {
-  background-color: #d4ebff;
+  background-color: #background_color_hover;
 }
 #$id div.sk-serial::before {
   content: "";

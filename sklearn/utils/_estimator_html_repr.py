@@ -200,20 +200,12 @@ def _write_estimator_html(
 
         out.write("</div></div>")
     elif est_block.kind == "single":
-        from sklearn.utils.validation import check_is_fitted
-        from sklearn.exceptions import NotFittedError
-
-        try:
-            check_is_fitted(estimator)
-            inner_class = "sk-estimator-trained"
-        except NotFittedError:
-            inner_class = "sk-estimator"
         _write_label_html(
             out,
             est_block.names,
             est_block.name_details,
             outer_class="sk-item",
-            inner_class=inner_class,
+            inner_class="sk-estimator",
             checked=first_call,
             url_link=url_link,
         )
@@ -238,10 +230,22 @@ def estimator_html_repr(estimator):
     html: str
         HTML representation of estimator.
     """
+    from sklearn.utils.validation import check_is_fitted
+    from sklearn.exceptions import NotFittedError
+
+    try:
+        check_is_fitted(estimator)
+        bg = "f0f8ff"
+        bgh = "d4ebff"
+    except NotFittedError:
+        bg = "fff5e6"
+        bgh = "ffe0b3"
+
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
         style_template = Template(_STYLE)
-        style_with_id = style_template.substitute(id=container_id)
+
+        style_with_id = style_template.substitute(id=container_id, background_color=bg, background_color_hover=bgh)
         estimator_str = str(estimator)
 
         # The fallback message is shown by default and loading the CSS sets
