@@ -171,7 +171,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         # return np.zeros(shape=(len(X), 2))
 
 
-METAESTIMATORS = [
+METAESTIMATORS: list = [
     {
         "metaestimator": MultiOutputRegressor,
         "estimator_name": "estimator",
@@ -232,9 +232,7 @@ The keys are as follows:
 """
 
 # ids used for pytest fixture
-METAESTIMATOR_IDS = [
-    str(row["metaestimator"].__name__) for row in METAESTIMATORS  # type: ignore
-]
+METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATORS]
 
 
 def test_registry_copy():
