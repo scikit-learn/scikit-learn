@@ -410,6 +410,27 @@ inside the** ``__init__`` **method**. All and only the public attributes set by
 fit have a trailing ``_``. As a result the existence of parameters with
 trailing ``_`` is used to check if the estimator has been fitted.
 
+Linking the documentation
+-------------------------
+Estimators include a function ``_get_url_link``, which is used to get the URL
+of the documentation of the estimator. This function is used to prepare the html
+representation of the estimator, e.g., when using the ``display`` function in a
+Jupyter notebook.
+
+By default, the function returns the empty string if the estimator is not a
+scikit-learn estimator. This check is performed by evaluating whether the
+estimator module is the same as the value in ``estimator._doc_link_module``,
+which is set to ``sklearn`` by default. If a custom estimator is instantiated
+without changing the value of ``estimator._doc_link_module``, then an empty
+string is returned.
+
+It is possible to provide a custom link for the documentation of a new
+estimator by overriding the values of ``_doc_link_module`` and ``_doc_link`` so
+that ``_doc_link_module`` is the same as the name of the module under
+development, and ``_doc_link`` is a suitable template for finding the online
+documentation.
+
+
 .. _cloning:
 
 Cloning
