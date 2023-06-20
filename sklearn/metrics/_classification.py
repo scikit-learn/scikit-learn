@@ -199,7 +199,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     >>> accuracy_score(y_true, y_pred)
     0.5
     >>> accuracy_score(y_true, y_pred, normalize=False)
-    2
+    2.0
 
     In the multilabel case with binary label indicators:
 
@@ -1031,7 +1031,7 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     >>> zero_one_loss(y_true, y_pred)
     0.25
     >>> zero_one_loss(y_true, y_pred, normalize=False)
-    1
+    1.0
 
     In the multilabel case with binary label indicators:
 
