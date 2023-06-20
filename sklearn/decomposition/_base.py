@@ -12,7 +12,7 @@ import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils.validation import check_is_fitted
-from ..utils._array_api import get_namespace
+from ..utils._array_api import get_namespace, _add_to_diagonal
 from abc import ABCMeta, abstractmethod
 
 
@@ -43,12 +43,12 @@ class _BasePCA(
         exp_var = self.explained_variance_
         if self.whiten:
             components_ = components_ * xp.sqrt(exp_var[:, np.newaxis])
-        exp_var_diff = xp.maximum(
-            exp_var - self.noise_variance_, xp.zeros_like(exp_var)
+        exp_var_diff = exp_var - self.noise_variance_
+        exp_var_diff = xp.where(
+            exp_var > self.noise_variance_, exp_var_diff, xp.zeros_like(exp_var)
         )
         cov = (components_.T * exp_var_diff) @ components_
-        # TODO use views instead?
-        cov.reshape(-1)[:: len(cov) + 1] += self.noise_variance_  # modify diag inplace
+        _add_to_diagonal(cov, self.noise_variance_, xp)
         return cov
 
     def get_precision(self):
@@ -83,15 +83,10 @@ class _BasePCA(
             exp_var > self.noise_variance_, exp_var_diff, xp.zeros_like(exp_var)
         )
         precision = components_ @ components_.T / self.noise_variance_
-        # TODO use views instead?
-        xp.reshape(precision, shape=(-1,), copy=False)[:: len(precision) + 1] += (
-            1.0 / exp_var_diff
-        )
+        _add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
         precision = components_.T @ xp.linalg.inv(precision) @ components_
         precision /= -(self.noise_variance_**2)
-        xp.reshape(precision, shape=(-1,), copy=False)[:: len(precision) + 1] += (
-            1.0 / self.noise_variance_
-        )
+        _add_to_diagonal(precision, 1.0 / self.noise_variance_, xp)
         return precision
 
     @abstractmethod

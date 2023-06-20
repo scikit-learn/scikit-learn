@@ -678,12 +678,12 @@ class PCA(_BasePCA):
             Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
-
-        X = self._validate_data(X, dtype=[np.float64, np.float32], reset=False)
+        xp, _ = get_namespace(X)
+        X = self._validate_data(X, dtype=[xp.float64, xp.float32], reset=False)
         Xr = X - self.mean_
         n_features = X.shape[1]
         precision = self.get_precision()
-        log_like = -0.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
+        log_like = -0.5 * xp.sum(Xr * (Xr @ precision), axis=1)
         log_like -= 0.5 * (n_features * log(2.0 * np.pi) - fast_logdet(precision))
         return log_like
 
@@ -707,7 +707,8 @@ class PCA(_BasePCA):
         ll : float
             Average log-likelihood of the samples under the current model.
         """
-        return np.mean(self.score_samples(X))
+        xp, _ = get_namespace(X)
+        return xp.mean(self.score_samples(X))
 
     def _more_tags(self):
         return {"preserves_dtype": [np.float64, np.float32], "array_api_support": True}

@@ -116,9 +116,10 @@ def fast_logdet(A):
     >>> fast_logdet(a)
     3.6375861597263857
     """
-    sign, ld = np.linalg.slogdet(A)
+    xp, _ = get_namespace(A)
+    sign, ld = xp.linalg.slogdet(A)
     if not sign > 0:
-        return -np.inf
+        return -xp.inf
     return ld
 
 

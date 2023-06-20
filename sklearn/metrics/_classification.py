@@ -43,6 +43,7 @@ from ..utils.multiclass import type_of_target
 from ..utils.validation import _check_pos_label_consistency, _num_samples
 from ..utils.sparsefuncs import count_nonzero
 from ..utils._param_validation import StrOptions, Options, Interval, validate_params
+from ..utils._array_api import _weighted_sum
 from ..exceptions import UndefinedMetricWarning
 
 
@@ -131,15 +132,6 @@ def _check_targets(y_true, y_pred):
         y_type = "multilabel-indicator"
 
     return y_type, y_true, y_pred
-
-
-def _weighted_sum(sample_score, sample_weight, normalize=False):
-    if normalize:
-        return np.average(sample_score, weights=sample_weight)
-    elif sample_weight is not None:
-        return np.dot(sample_score, sample_weight)
-    else:
-        return sample_score.sum()
 
 
 @validate_params(

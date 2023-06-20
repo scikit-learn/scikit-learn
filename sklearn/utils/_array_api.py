@@ -386,6 +386,48 @@ def _expit(X):
     return 1.0 / (1.0 + xp.exp(-X))
 
 
+def _add_to_diagonal(array, value, xp):
+    # Workaround for the lack of support for xp.reshape(a, shape, copy=False) in
+    # numpy.array_api: https://github.com/numpy/numpy/issues/23410
+    value = xp.asarray(value, dtype=array.dtype)
+    if _is_numpy_namespace(xp):
+        array_np = numpy.asarray(array)
+        array_np.flat[:: array.shape[0] + 1] += value
+        return xp.asarray(array_np)
+    elif value.ndim == 1:
+        for i in range(array.shape[0]):
+            array[i, i] += value[i]
+    else:
+        # scalar value
+        for i in range(array.shape[0]):
+            array[i, i] += value
+
+
+def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
+    if xp is None:
+        xp, _ = get_namespace(sample_score)
+    if normalize and _is_numpy_namespace(xp):
+        sample_score_np = numpy.asarray(sample_score)
+        if sample_weight is not None:
+            sample_weight_np = numpy.asarray(sample_weight)
+        else:
+            sample_weight_np = None
+        return xp.asarray(numpy.average(sample_score_np, weights=sample_weight_np))
+
+    if normalize:
+        if sample_weight is not None:
+            scale = xp.sum(sample_weight)
+        else:
+            scale = sample_score.shape[0]
+        if scale != 0:
+            sample_score = sample_score / scale
+
+    if sample_weight is not None:
+        return sample_score @ sample_weight
+    else:
+        return xp.sum(sample_score)
+
+
 def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
     """Helper to support the order kwarg only for NumPy-backed arrays
 
