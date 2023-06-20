@@ -145,7 +145,10 @@ class BaseEstimator(_MetadataRequester):
 
     # The template pointing to the online documentation for the given class,
     # as expanded by self.get_url_link()
-    _doc_link = "{base_url}{estimator_module}.{estimator_name}.html"
+    _doc_link = (
+        "https://scikit-learn.org/{major}.{minor}/modules/generated/"
+        "{estimator_module}.{estimator_name}.html"
+    )
     # The module that is actually documented by the above string. Useful for subclasses
     # that live outside of sklearn
     _doc_link_module = "sklearn"
@@ -181,9 +184,11 @@ class BaseEstimator(_MetadataRequester):
         # Extract and sort argument names excluding 'self'
         return sorted([p.name for p in parameters])
 
-    def get_url_link(self):
+    def _get_url_link(self):
         """Generating a link to the API documentation for given estimator."""
-        if self.__class__.__module__.split(".")[0] == self._doc_link_module:
+        if self.__class__.__module__.split(".")[0] != self._doc_link_module:
+            return ""
+        else:
             version = parse_version(sklearn.__version__)
             major = version.major
             minor = version.minor
@@ -195,11 +200,8 @@ class BaseEstimator(_MetadataRequester):
                     if not _.startswith("_")
                 ]
             )
-            base_url = f"https://scikit-learn.org/{major}.{minor}/modules/generated/"
             full_url = self._doc_link.format(**locals())
             return full_url
-        else:
-            return ""
 
     def get_params(self, deep=True):
         """
