@@ -1029,7 +1029,6 @@ class OutlierMixin:
             1 for inliers, -1 for outliers.
         """
         # override for transductive outlier detectors like LocalOulierFactor
-
         return self.fit(X).predict(X)
 
 
