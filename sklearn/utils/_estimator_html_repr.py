@@ -161,12 +161,16 @@ def _write_estimator_html(
     out, estimator, estimator_label, estimator_label_details, first_call=False
 ):
     """Write estimator to html in serial, parallel, or by itself (single)."""
+    # Delayed to avoid circular import
+    from sklearn.base import BaseEstimator
+
     if first_call:
         est_block = _get_visual_block(estimator)
     else:
         with config_context(print_changed_only=True):
             est_block = _get_visual_block(estimator)
-    if not isinstance(estimator, _VisualBlock):
+    # `estimator` can also be an instance of `_VisualBlock`
+    if isinstance(estimator, BaseEstimator):
         url_link = estimator._get_url_link()
     else:
         url_link = ""
