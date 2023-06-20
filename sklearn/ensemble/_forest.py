@@ -733,9 +733,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         Returns
         -------
-        y : ndarray of shape (n_samples, n_quantiles) or
-                (n_samples, n_quantiles, n_outputs)
-            The predicted values.
+        y : ndarray of shape (n_samples, n_quantiles, [n_output])
+            The predicted values. The ``n_outputs`` dimension is present only
+            for multi-output regressors.
         """
         if not self.store_leaf_values:
             raise RuntimeError(
