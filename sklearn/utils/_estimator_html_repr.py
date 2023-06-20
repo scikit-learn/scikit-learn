@@ -166,7 +166,10 @@ def _write_estimator_html(
     else:
         with config_context(print_changed_only=True):
             est_block = _get_visual_block(estimator)
-    url_link = estimator._get_url_link()
+    if not isinstance(estimator, _VisualBlock):
+        url_link = estimator._get_url_link()
+    else:
+        url_link = ""
     if est_block.kind in ("serial", "parallel"):
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
