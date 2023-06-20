@@ -963,6 +963,12 @@ def check_array_api_input(
             result = method(X, y)
             with config_context(array_api_dispatch=True):
                 result_xp = getattr(est_xp, method_name)(X_xp, y_xp)
+            # score typically returns a Python float
+            assert isinstance(result, float)
+            assert isinstance(result_xp, float)
+            if check_values:
+                assert abs(result - result_xp) < np.finfo(X.dtype).eps * 100
+            continue
         else:
             result = method(X)
             with config_context(array_api_dispatch=True):
@@ -975,7 +981,6 @@ def check_array_api_input(
         )
 
         assert array_device(result_xp) == array_device(X_xp)
-
         result_xp_np = _convert_to_numpy(result_xp, xp=xp)
 
         if check_values:
@@ -986,8 +991,9 @@ def check_array_api_input(
                 atol=np.finfo(X.dtype).eps * 100,
             )
         else:
-            assert result.shape == result_xp_np.shape
-            assert result.dtype == result_xp_np.dtype
+            if hasattr(result, "shape"):
+                assert result.shape == result_xp_np.shape
+                assert result.dtype == result_xp_np.dtype
 
         if method_name == "transform" and hasattr(est, "inverse_transform"):
             inverse_result = est.inverse_transform(result)

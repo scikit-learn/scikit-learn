@@ -412,7 +412,7 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
             sample_weight_np = numpy.asarray(sample_weight)
         else:
             sample_weight_np = None
-        return xp.asarray(numpy.average(sample_score_np, weights=sample_weight_np))
+        return float(numpy.average(sample_score_np, weights=sample_weight_np))
 
     if normalize:
         if sample_weight is not None:
@@ -423,9 +423,9 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
             sample_score = sample_score / scale
 
     if sample_weight is not None:
-        return sample_score @ sample_weight
+        return float(sample_score @ sample_weight)
     else:
-        return xp.sum(sample_score)
+        return float(xp.sum(sample_score))
 
 
 def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
