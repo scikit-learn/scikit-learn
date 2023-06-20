@@ -304,14 +304,16 @@ rst_prolog = """
 .. |details-start| raw:: html
 
     <details>
-    <summary>
+    <summary class="btn btn-light">
 
 .. |details-split| raw:: html
 
     </summary>
+    <div class="card">
 
 .. |details-end| raw:: html
 
+    </div>
     </details>
 
 """
