@@ -43,7 +43,7 @@ print(diabetes.DESCR)
 # were already standardized.
 # For a more complete example on the interpretations of the coefficients of
 # linear models, you may refer to
-# :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`.
+# :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`.  # noqa: E501
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import RidgeCV
