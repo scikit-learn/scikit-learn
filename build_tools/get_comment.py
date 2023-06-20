@@ -52,7 +52,7 @@ def get_step_message(log, start, end, title, message, details):
     return res
 
 
-def get_message(log_file, repo, run_id, details):
+def get_message(log_file, repo, pr_number, sha, run_id, details):
     with open(log_file, "r") as f:
         log = f.read()
 
@@ -151,11 +151,17 @@ def get_message(log_file, repo, run_id, details):
         details=details,
     )
 
+    commit_link = (
+        "\n\n_Generated for commit:"
+        f" [{sha[:7]}](https://github.com/{repo}/pull/{pr_number}/commits/{sha})_"
+    )
+
     if not message:
         # no issues detected, so this script "fails"
         return (
             "## Linting Passed\n"
             "All linting checks passed. Your pull request is in excellent shape! ☀️"
+            + commit_link
         )
 
     message = (
@@ -168,6 +174,7 @@ def get_message(log_file, repo, run_id, details):
         "You can see the details of the linting issues under the `lint` job [here]"
         f"(https://github.com/{repo}/actions/runs/{run_id})\n\n"
         + message
+        + commit_link
     )
 
     return message
@@ -241,9 +248,13 @@ def create_or_update_comment(comment, message, repo, pr_number, token):
 
 
 if __name__ == "__main__":
+    for key, value in os.environ.items():
+        print(f"{key}={value}")
+
     repo = os.environ["GITHUB_REPOSITORY"]
     token = os.environ["GITHUB_TOKEN"]
     pr_number = os.environ["PR_NUMBER"]
+    sha = os.environ["BRANCH_SHA"]
     log_file = os.environ["LOG_FILE"]
     run_id = os.environ["RUN_ID"]
 
@@ -260,7 +271,14 @@ if __name__ == "__main__":
         exit(0)
 
     try:
-        message = get_message(log_file, repo=repo, run_id=run_id, details=True)
+        message = get_message(
+            log_file,
+            repo=repo,
+            pr_number=pr_number,
+            sha=sha,
+            run_id=run_id,
+            details=True,
+        )
         create_or_update_comment(
             comment=comment,
             message=message,
@@ -272,7 +290,14 @@ if __name__ == "__main__":
     except requests.HTTPError:
         # The above fails if the message is too long. In that case, we
         # try again without the details.
-        message = get_message(log_file, repo=repo, run_id=run_id, details=False)
+        message = get_message(
+            log_file,
+            repo=repo,
+            pr_number=pr_number,
+            sha=sha,
+            run_id=run_id,
+            details=False,
+        )
         create_or_update_comment(
             comment=comment,
             message=message,
