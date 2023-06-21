@@ -2442,7 +2442,6 @@ def test_ordinal_encoder_missing_feature_names():
                 "unexpected": 13,
                 "unexpected_2": 13,
                 "unexpected_3": 13,
-                "unexpected_3": 13,
                 "unexpected_4": 13,
                 "unexpected_5": 13,
                 "unexpected_6": 13,
