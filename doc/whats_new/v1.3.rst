@@ -321,9 +321,6 @@ Changelog
   :class:`decomposition.MiniBatchNMF.inverse_transform` is renamed to `Xt` and
   will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
 
-- |Enhancement| :class:`decomposition/PCA` now supports the
-  `PyTorch <https://pytorch.org/>`__ for `full` solver. See :pr:`26315`
-
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
