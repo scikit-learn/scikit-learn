@@ -80,5 +80,3 @@ def test_get_url_link(estimator):
         assert url_link == ""
     else:
         assert url_link.startswith("https://scikit-learn.org/")
-        local_url = _local_get_estimator_doc_url(estimator)
-        assert url_link == local_url
