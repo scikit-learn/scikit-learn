@@ -1,5 +1,6 @@
-from sklearn.base import BaseEstimator
 from urllib.parse import urlparse
+
+from sklearn.base import BaseEstimator
 
 
 class CustomValidEstimator(BaseEstimator):
