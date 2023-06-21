@@ -3,7 +3,7 @@
 Feature agglomeration
 =========================================================
 
-These images how similar features are merged together using
+These images show how similar features are merged together using
 feature agglomeration.
 
 """

@@ -14,6 +14,7 @@ import numpy as np
 from scipy import sparse
 
 from ..base import clone, TransformerMixin
+from ..base import _fit_context
 from ..utils._estimator_html_repr import _VisualBlock
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
@@ -701,12 +702,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self : ColumnTransformer
             This estimator.
         """
-        self._validate_params()
         # we use fit_transform to make sure to set sparse_output_ (for which we
         # need the transformed data) to have consistent output type in predict
         self.fit_transform(X, y=y)
         return self
 
+    @_fit_context(
+        # estimators in ColumnTransformer.transformers are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit all transformers, transform the data and concatenate results.
 
@@ -728,7 +732,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             any result is a sparse matrix, everything will be converted to
             sparse matrices.
         """
-        self._validate_params()
         self._check_feature_names(X, reset=True)
 
         X = _check_X(X)

@@ -717,7 +717,7 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
 
     The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
     downloaded from:
-    https://goo.gl/U2Uwz2
+    https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic
 
     Read more in the :ref:`User Guide <breast_cancer_dataset>`.
 
