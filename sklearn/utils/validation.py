@@ -1965,7 +1965,7 @@ def _check_fit_params(X, fit_params, indices=None):
 
 
 def _is_pandas_df(X):
-    """Return True if the X is a DataFrame"""
+    """Return True if the X is a pandas dataframe."""
     if hasattr(X, "columns") and hasattr(X, "iloc"):
         # Likely a pandas DataFrame, we explicitly check the type to confirm.
         try:
