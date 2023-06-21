@@ -331,3 +331,18 @@ def test_estimator_get_params_return_cls():
 
     est = MyEstimator()
     assert "MyEstimator" in estimator_html_repr(est)
+
+
+def test_different_colors_if_fitted():
+    """
+    Check the rendered element color is different if the estimator is fitted.
+
+    Currently, color is not specifically tested, we're just checking that
+    the HTML/CSS is different between a fitted and a not fitted instance.
+    THis could be fixed later on with a more robust test.
+    """
+    fitted_estimator = LogisticRegression().fit([[1, 2], [3, 4]], [0, 1])
+    not_fitted_estimator = LogisticRegression()
+    fitted_estimator_html = estimator_html_repr(fitted_estimator)
+    not_fitted_estimator_html = estimator_html_repr(not_fitted_estimator)
+    assert fitted_estimator_html != not_fitted_estimator_html
