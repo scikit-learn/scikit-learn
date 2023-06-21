@@ -51,6 +51,7 @@ class CustomEstimator_wrong(BaseEstimator):
         # ...
         return X
 
+
 def _local_get_estimator_doc_url(estimator):
     """Generating a link to the API documentation for a given estimator and scikit-learn version."""
     version = parse_version(sklearn.__version__)
