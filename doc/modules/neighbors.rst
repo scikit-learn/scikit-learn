@@ -114,8 +114,10 @@ unsupervised learning: in particular, see :class:`~sklearn.manifold.Isomap`,
 :class:`~sklearn.manifold.LocallyLinearEmbedding`, and
 :class:`~sklearn.cluster.SpectralClustering`.
 
-KDTree and BallTree Classes
----------------------------
+|details-start|
+**KDTree and BallTree Classes**
+|details-split|
+
 Alternatively, one can use the :class:`KDTree` or :class:`BallTree` classes
 directly to find nearest neighbors.  This is the functionality wrapped by
 the :class:`NearestNeighbors` class used above.  The Ball Tree and KD Tree
@@ -143,6 +145,8 @@ of valid metrics use :meth:`KDTree.valid_metrics` and :meth:`BallTree.valid_metr
     ['euclidean', 'l2', 'minkowski', 'p', 'manhattan', 'cityblock', 'l1', 'chebyshev', 'infinity']
     >>> BallTree.valid_metrics()
     ['euclidean', 'l2', 'minkowski', 'p', 'manhattan', 'cityblock', 'l1', 'chebyshev', 'infinity', 'seuclidean', 'mahalanobis', 'hamming', 'canberra', 'braycurtis', 'jaccard', 'dice', 'rogerstanimoto', 'russellrao', 'sokalmichener', 'sokalsneath', 'haversine', 'pyfunc']
+
+|details-end|
 
 .. _classification:
 
@@ -257,102 +261,8 @@ the lower half of those faces.
 Nearest Neighbor Algorithms
 ===========================
 
-.. _brute_force:
-
-Brute Force
------------
-
-Fast computation of nearest neighbors is an active area of research in
-machine learning. The most naive neighbor search implementation involves
-the brute-force computation of distances between all pairs of points in the
-dataset: for :math:`N` samples in :math:`D` dimensions, this approach scales
-as :math:`O[D N^2]`.  Efficient brute-force neighbors searches can be very
-competitive for small data samples.
-However, as the number of samples :math:`N` grows, the brute-force
-approach quickly becomes infeasible.  In the classes within
-:mod:`sklearn.neighbors`, brute-force neighbors searches are specified
-using the keyword ``algorithm = 'brute'``, and are computed using the
-routines available in :mod:`sklearn.metrics.pairwise`.
-
-.. _kd_tree:
-
-K-D Tree
---------
-
-To address the computational inefficiencies of the brute-force approach, a
-variety of tree-based data structures have been invented.  In general, these
-structures attempt to reduce the required number of distance calculations
-by efficiently encoding aggregate distance information for the sample.
-The basic idea is that if point :math:`A` is very distant from point
-:math:`B`, and point :math:`B` is very close to point :math:`C`,
-then we know that points :math:`A` and :math:`C`
-are very distant, *without having to explicitly calculate their distance*.
-In this way, the computational cost of a nearest neighbors search can be
-reduced to :math:`O[D N \log(N)]` or better. This is a significant
-improvement over brute-force for large :math:`N`.
-
-An early approach to taking advantage of this aggregate information was
-the *KD tree* data structure (short for *K-dimensional tree*), which
-generalizes two-dimensional *Quad-trees* and 3-dimensional *Oct-trees*
-to an arbitrary number of dimensions.  The KD tree is a binary tree
-structure which recursively partitions the parameter space along the data
-axes, dividing it into nested orthotropic regions into which data points
-are filed.  The construction of a KD tree is very fast: because partitioning
-is performed only along the data axes, no :math:`D`-dimensional distances
-need to be computed. Once constructed, the nearest neighbor of a query
-point can be determined with only :math:`O[\log(N)]` distance computations.
-Though the KD tree approach is very fast for low-dimensional (:math:`D < 20`)
-neighbors searches, it becomes inefficient as :math:`D` grows very large:
-this is one manifestation of the so-called "curse of dimensionality".
-In scikit-learn, KD tree neighbors searches are specified using the
-keyword ``algorithm = 'kd_tree'``, and are computed using the class
-:class:`KDTree`.
-
-
-.. topic:: References:
-
-   * `"Multidimensional binary search trees used for associative searching"
-     <https://dl.acm.org/citation.cfm?doid=361002.361007>`_,
-     Bentley, J.L., Communications of the ACM (1975)
-
-
-.. _ball_tree:
-
-Ball Tree
----------
-
-To address the inefficiencies of KD Trees in higher dimensions, the *ball tree*
-data structure was developed.  Where KD trees partition data along
-Cartesian axes, ball trees partition data in a series of nesting
-hyper-spheres.  This makes tree construction more costly than that of the
-KD tree, but results in a data structure which can be very efficient on
-highly structured data, even in very high dimensions.
-
-A ball tree recursively divides the data into
-nodes defined by a centroid :math:`C` and radius :math:`r`, such that each
-point in the node lies within the hyper-sphere defined by :math:`r` and
-:math:`C`. The number of candidate points for a neighbor search
-is reduced through use of the *triangle inequality*:
-
-.. math::   |x+y| \leq |x| + |y|
-
-With this setup, a single distance calculation between a test point and
-the centroid is sufficient to determine a lower and upper bound on the
-distance to all points within the node.
-Because of the spherical geometry of the ball tree nodes, it can out-perform
-a *KD-tree* in high dimensions, though the actual performance is highly
-dependent on the structure of the training data.
-In scikit-learn, ball-tree-based
-neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
-and are computed using the class :class:`BallTree`.
-Alternatively, the user can work with the :class:`BallTree` class directly.
-
-.. topic:: References:
-
-   * `"Five Balltree Construction Algorithms"
-     <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
-     Omohundro, S.M., International Computer Science Institute
-     Technical Report (1989)
+The Nearest Neighbor Algorithm can be chosen among the Brute-Force, KD-Tree and Ball
+Tree algorithms.
 
 Choice of Nearest Neighbors Algorithm
 -------------------------------------
@@ -483,6 +393,109 @@ A list of valid metrics for any of the above algorithms can be obtained by using
     >>> print(sorted(KDTree.valid_metrics()))
     ['chebyshev', 'cityblock', 'euclidean', 'infinity', 'l1', 'l2', 'manhattan', 'minkowski', 'p']
 
+
+|details-start|
+**Brute Force Algorithm**
+|details-split|
+
+Fast computation of nearest neighbors is an active area of research in
+machine learning. The most naive neighbor search implementation involves
+the brute-force computation of distances between all pairs of points in the
+dataset: for :math:`N` samples in :math:`D` dimensions, this approach scales
+as :math:`O[D N^2]`.  Efficient brute-force neighbors searches can be very
+competitive for small data samples.
+However, as the number of samples :math:`N` grows, the brute-force
+approach quickly becomes infeasible.  In the classes within
+:mod:`sklearn.neighbors`, brute-force neighbors searches are specified
+using the keyword ``algorithm = 'brute'``, and are computed using the
+routines available in :mod:`sklearn.metrics.pairwise`.
+
+|details-end|
+
+.. _kd_tree:
+
+|details-start|
+**KD-Tree Algorithm**
+|details-split|
+
+To address the computational inefficiencies of the brute-force approach, a
+variety of tree-based data structures have been invented.  In general, these
+structures attempt to reduce the required number of distance calculations
+by efficiently encoding aggregate distance information for the sample.
+The basic idea is that if point :math:`A` is very distant from point
+:math:`B`, and point :math:`B` is very close to point :math:`C`,
+then we know that points :math:`A` and :math:`C`
+are very distant, *without having to explicitly calculate their distance*.
+In this way, the computational cost of a nearest neighbors search can be
+reduced to :math:`O[D N \log(N)]` or better. This is a significant
+improvement over brute-force for large :math:`N`.
+
+An early approach to taking advantage of this aggregate information was
+the *KD tree* data structure (short for *K-dimensional tree*), which
+generalizes two-dimensional *Quad-trees* and 3-dimensional *Oct-trees*
+to an arbitrary number of dimensions.  The KD tree is a binary tree
+structure which recursively partitions the parameter space along the data
+axes, dividing it into nested orthotropic regions into which data points
+are filed.  The construction of a KD tree is very fast: because partitioning
+is performed only along the data axes, no :math:`D`-dimensional distances
+need to be computed. Once constructed, the nearest neighbor of a query
+point can be determined with only :math:`O[\log(N)]` distance computations.
+Though the KD tree approach is very fast for low-dimensional (:math:`D < 20`)
+neighbors searches, it becomes inefficient as :math:`D` grows very large:
+this is one manifestation of the so-called "curse of dimensionality".
+In scikit-learn, KD tree neighbors searches are specified using the
+keyword ``algorithm = 'kd_tree'``, and are computed using the class
+:class:`KDTree`.
+
+
+.. topic:: References:
+
+   * `"Multidimensional binary search trees used for associative searching"
+     <https://dl.acm.org/citation.cfm?doid=361002.361007>`_,
+     Bentley, J.L., Communications of the ACM (1975)
+
+|details-end|
+
+.. _ball_tree:
+
+|details-start|
+**Ball Tree Algorithm**
+|details-split|
+
+To address the inefficiencies of KD Trees in higher dimensions, the *ball tree*
+data structure was developed.  Where KD trees partition data along
+Cartesian axes, ball trees partition data in a series of nesting
+hyper-spheres.  This makes tree construction more costly than that of the
+KD tree, but results in a data structure which can be very efficient on
+highly structured data, even in very high dimensions.
+
+A ball tree recursively divides the data into
+nodes defined by a centroid :math:`C` and radius :math:`r`, such that each
+point in the node lies within the hyper-sphere defined by :math:`r` and
+:math:`C`. The number of candidate points for a neighbor search
+is reduced through use of the *triangle inequality*:
+
+.. math::   |x+y| \leq |x| + |y|
+
+With this setup, a single distance calculation between a test point and
+the centroid is sufficient to determine a lower and upper bound on the
+distance to all points within the node.
+Because of the spherical geometry of the ball tree nodes, it can out-perform
+a *KD-tree* in high dimensions, though the actual performance is highly
+dependent on the structure of the training data.
+In scikit-learn, ball-tree-based
+neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
+and are computed using the class :class:`BallTree`.
+Alternatively, the user can work with the :class:`BallTree` class directly.
+
+.. topic:: References:
+
+   * `"Five Balltree Construction Algorithms"
+     <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
+     Omohundro, S.M., International Computer Science Institute
+     Technical Report (1989)
+
+|details-end|
 
 .. _nearest_centroid_classifier:
 
@@ -765,8 +778,9 @@ by each method. Each data sample belongs to one of 10 classes.
 
 .. _nca_mathematical_formulation:
 
-Mathematical formulation
-------------------------
+|details-start|
+**Mathematical formulation**
+|details-split|
 
 The goal of NCA is to learn an optimal linear transformation matrix of size
 ``(n_components, n_features)``, which maximises the sum over all samples
@@ -795,21 +809,22 @@ space:
             i} {\exp{-(||L x_i - L x_k||^2)}}} , \quad p_{i i} = 0
 
 
-Mahalanobis distance
-^^^^^^^^^^^^^^^^^^^^
+.. topic:: Mahalanobis Distance
 
-NCA can be seen as learning a (squared) Mahalanobis distance metric:
+  NCA can be seen as learning a (squared) Mahalanobis distance metric:
 
-.. math::
+  .. math::
 
-    || L(x_i - x_j)||^2 = (x_i - x_j)^TM(x_i - x_j),
+      || L(x_i - x_j)||^2 = (x_i - x_j)^TM(x_i - x_j),
 
-where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size
-``(n_features, n_features)``.
+  where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size
+  ``(n_features, n_features)``.
 
+|details-end|
 
-Implementation
---------------
+|details-start|
+**Implementation**
+|details-split|
 
 This implementation follows what is explained in the original paper [1]_. For
 the optimisation method, it currently uses scipy's L-BFGS-B with a full
@@ -818,25 +833,6 @@ provide stable learning.
 
 See the examples below and the docstring of
 :meth:`NeighborhoodComponentsAnalysis.fit` for further information.
-
-Complexity
-----------
-
-Training
-^^^^^^^^
-NCA stores a matrix of pairwise distances, taking ``n_samples ** 2`` memory.
-Time complexity depends on the number of iterations done by the optimisation
-algorithm. However, one can set the maximum number of iterations with the
-argument ``max_iter``. For each iteration, time complexity is
-``O(n_components x n_samples x min(n_samples, n_features))``.
-
-
-Transform
-^^^^^^^^^
-Here the ``transform`` operation returns :math:`LX^T`, therefore its time
-complexity equals ``n_components * n_features * n_samples_test``. There is no
-added space complexity in the operation.
-
 
 .. topic:: References:
 
@@ -847,3 +843,27 @@ added space complexity in the operation.
 
     `Wikipedia entry on Neighborhood Components Analysis
     <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_
+
+|details-end|
+
+
+|details-start|
+**Complexity**
+|details-split|
+
+.. topic:: Training
+
+  NCA stores a matrix of pairwise distances, taking ``n_samples ** 2`` memory.
+  Time complexity depends on the number of iterations done by the optimisation
+  algorithm. However, one can set the maximum number of iterations with the
+  argument ``max_iter``. For each iteration, time complexity is
+  ``O(n_components x n_samples x min(n_samples, n_features))``.
+
+
+.. topic:: Transform
+
+  Here the ``transform`` operation returns :math:`LX^T`, therefore its time
+  complexity equals ``n_components * n_features * n_samples_test``. There is no
+  added space complexity in the operation.
+
+|details-end|
