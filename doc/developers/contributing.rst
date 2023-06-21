@@ -775,14 +775,14 @@ details, and give intuition to the reader on what the algorithm does.
   implications rather than its underlying mechanics.
 
 * When editing reStructuredText (``.rst``) files, try to keep line length under
-  80 characters when possible (exceptions include links and tables).
+  88 characters when possible (exceptions include links and tables).
 
 * In scikit-learn reStructuredText files both single and double backticks
   surrounding text will render as inline literal (often used for code, e.g.,
   `list`). This is due to specific configurations we have set. Single
   backticks should be used nowadays.
 
-* Too much information makes it more difficult for users to access to the
+* Too much information makes it difficult for users to access to the
   content they are interested in. Use dropdowns to hide by default:
 
   - low hierarchy sections such as `Examples`, `References`, `Properties`, etc.
@@ -862,7 +862,7 @@ details, and give intuition to the reader on what the algorithm does.
 
         :func:`~sklearn.model_selection.cross_val_score`
 
-    However, if there is a 'currentmodule' directive above you in the document,
+    However, if there is a `.. currentmodule::` directive above you in the document,
     you will only need to use the path to the function succeeding the current
     module specified. For example:
 
