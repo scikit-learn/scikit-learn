@@ -897,10 +897,9 @@ class _BaseKMeans(
             )
             self._n_init = default_n_init
         if self._n_init == "auto":
-            if self.init == "k-means++":
+            self._n_init = default_n_init
+            if (not _is_arraylike_not_scalar(self.init)) and self.init == "k-means++":
                 self._n_init = 1
-            else:
-                self._n_init = default_n_init
 
         if _is_arraylike_not_scalar(self.init) and self._n_init != 1:
             warnings.warn(
