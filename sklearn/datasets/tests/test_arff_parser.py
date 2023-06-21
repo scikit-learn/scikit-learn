@@ -11,6 +11,7 @@ from sklearn.datasets._arff_parser import (
 )
 
 
+@pytest.mark.parametrize("with_pyarrow", [True, False])
 @pytest.mark.parametrize(
     "feature_names, target_names",
     [
@@ -43,7 +44,7 @@ from sklearn.datasets._arff_parser import (
         ),
     ],
 )
-def test_post_process_frame(feature_names, target_names):
+def test_post_process_frame(with_pyarrow, feature_names, target_names):
     """Check the behaviour of the post-processing function for splitting a dataframe."""
     pd = pytest.importorskip("pandas")
 
@@ -57,6 +58,9 @@ def test_post_process_frame(feature_names, target_names):
             "col_string": ["a", "b", "c"],
         }
     )
+    if with_pyarrow:
+        pytest.importorskip("pyarrow")
+        X_original.convert_dtypes(dtype_backend="pyarrow")
 
     X, y = _post_process_frame(X_original, feature_names, target_names)
     assert isinstance(X, pd.DataFrame)

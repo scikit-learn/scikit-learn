@@ -104,9 +104,12 @@ def test_imputation_deletion_warning(strategy):
         imputer.transform(X)
 
 
+@pytest.mark.parametrize("with_pyarrow", [True, False])
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
-def test_imputation_deletion_warning_feature_names(strategy):
+def test_imputation_deletion_warning_feature_names(with_pyarrow, strategy):
     pd = pytest.importorskip("pandas")
+    if with_pyarrow:
+        pytest.importorskip("pyarrow")
 
     missing_values = np.nan
     feature_names = np.array(["a", "b", "c", "d"], dtype=object)
@@ -117,6 +120,8 @@ def test_imputation_deletion_warning_feature_names(strategy):
         ],
         columns=feature_names,
     )
+    if with_pyarrow:
+        X.convert_dtypes(dtype_backend="pyarrow")
 
     imputer = SimpleImputer(strategy=strategy).fit(X)
 
@@ -267,12 +272,16 @@ def test_imputation_mean_median_error_invalid_type(strategy, dtype):
         imputer.fit_transform(X)
 
 
+@pytest.mark.parametrize("with_pyarrow", [True, False])
 @pytest.mark.parametrize("strategy", ["mean", "median"])
 @pytest.mark.parametrize("type", ["list", "dataframe"])
-def test_imputation_mean_median_error_invalid_type_list_pandas(strategy, type):
+def test_imputation_mean_median_error_invalid_type_list_pandas(with_pyarrow, strategy, type):
     X = [["a", "b", 3], [4, "e", 6], ["g", "h", 9]]
     if type == "dataframe":
         pd = pytest.importorskip("pandas")
+        if with_pyarrow:
+            pytest.importorskip("pyarrow")
+
         X = pd.DataFrame(X)
     msg = "non-numeric data:\ncould not convert string to float: '"
     with pytest.raises(ValueError, match=msg):
@@ -357,10 +366,14 @@ def test_imputation_most_frequent_objects(marker):
     assert_array_equal(X_trans, X_true)
 
 
+@pytest.mark.parametrize("with_pyarrow", [True, False])
 @pytest.mark.parametrize("dtype", [object, "category"])
-def test_imputation_most_frequent_pandas(dtype):
+def test_imputation_most_frequent_pandas(with_pyarrow, dtype):
     # Test imputation using the most frequent strategy on pandas df
     pd = pytest.importorskip("pandas")
+    if with_pyarrow:
+        pytest.importorskip("pyarrow")
+
 
     f = io.StringIO("Cat1,Cat2,Cat3,Cat4\n,i,x,\na,,y,\na,j,,\nb,j,x,")
 
@@ -459,10 +472,13 @@ def test_imputation_constant_object(marker):
     assert_array_equal(X_trans, X_true)
 
 
+@pytest.mark.parametrize("with_pyarrow", [True, False])
 @pytest.mark.parametrize("dtype", [object, "category"])
-def test_imputation_constant_pandas(dtype):
+def test_imputation_constant_pandas(with_pyarrow, dtype):
     # Test imputation using the constant strategy on pandas df
     pd = pytest.importorskip("pandas")
+    if with_pyarrow:
+        pytest.importorskip("pyarrow")
 
     f = io.StringIO("Cat1,Cat2,Cat3,Cat4\n,i,x,\na,,y,\na,j,,\nb,j,x,")
 
@@ -1546,11 +1562,16 @@ def test_knn_imputer_keep_empty_features(keep_empty_features):
             assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)
 
 
-def test_simple_impute_pd_na():
+@pytest.mark.parametrize("with_pyarrow", [True, False])
+def test_simple_impute_pd_na(with_pyarrow):
     pd = pytest.importorskip("pandas")
+    if with_pyarrow:
+       pytest.importorskip("pyarrow")
 
     # Impute pandas array of string types.
     df = pd.DataFrame({"feature": pd.Series(["abc", None, "de"], dtype="string")})
+    if with_pyarrow:
+        df.convert_dtypes(dtype_backend="pyarrow")
     imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value="na")
     _assert_array_equal_and_same_dtype(
         imputer.fit_transform(df), np.array([["abc"], ["na"], ["de"]], dtype=object)
@@ -1558,6 +1579,8 @@ def test_simple_impute_pd_na():
 
     # Impute pandas array of string types without any missing values.
     df = pd.DataFrame({"feature": pd.Series(["abc", "de", "fgh"], dtype="string")})
+    if with_pyarrow:
+        df.convert_dtypes(dtype_backend="pyarrow")
     imputer = SimpleImputer(fill_value="ok", strategy="constant")
     _assert_array_equal_and_same_dtype(
         imputer.fit_transform(df), np.array([["abc"], ["de"], ["fgh"]], dtype=object)
@@ -1565,6 +1588,8 @@ def test_simple_impute_pd_na():
 
     # Impute pandas array of integer types.
     df = pd.DataFrame({"feature": pd.Series([1, None, 3], dtype="Int64")})
+    if with_pyarrow:
+        df.convert_dtypes(dtype_backend="pyarrow")
     imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value=-1)
     _assert_allclose_and_same_dtype(
         imputer.fit_transform(df), np.array([[1], [-1], [3]], dtype="float64")
@@ -1578,6 +1603,8 @@ def test_simple_impute_pd_na():
 
     # Impute pandas array of integer types with 'median' strategy.
     df = pd.DataFrame({"feature": pd.Series([1, None, 2, 3], dtype="Int64")})
+    if with_pyarrow:
+        df.convert_dtypes(dtype_backend="pyarrow")
     imputer = SimpleImputer(missing_values=pd.NA, strategy="median")
     _assert_allclose_and_same_dtype(
         imputer.fit_transform(df), np.array([[1], [2], [2], [3]], dtype="float64")
@@ -1585,6 +1612,8 @@ def test_simple_impute_pd_na():
 
     # Impute pandas array of integer types with 'mean' strategy.
     df = pd.DataFrame({"feature": pd.Series([1, None, 2], dtype="Int64")})
+    if with_pyarrow:
+        df.convert_dtypes(dtype_backend="pyarrow")
     imputer = SimpleImputer(missing_values=pd.NA, strategy="mean")
     _assert_allclose_and_same_dtype(
         imputer.fit_transform(df), np.array([[1], [1.5], [2]], dtype="float64")
@@ -1592,6 +1621,8 @@ def test_simple_impute_pd_na():
 
     # Impute pandas array of float types.
     df = pd.DataFrame({"feature": pd.Series([1.0, None, 3.0], dtype="float64")})
+    if with_pyarrow:
+        df.convert_dtypes(dtype_backend="pyarrow")
     imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value=-2.0)
     _assert_allclose_and_same_dtype(
         imputer.fit_transform(df), np.array([[1.0], [-2.0], [3.0]], dtype="float64")
@@ -1599,6 +1630,8 @@ def test_simple_impute_pd_na():
 
     # Impute pandas array of float types with 'median' strategy.
     df = pd.DataFrame({"feature": pd.Series([1.0, None, 2.0, 3.0], dtype="float64")})
+    if with_pyarrow:
+        df.convert_dtypes(dtype_backend="pyarrow")
     imputer = SimpleImputer(missing_values=pd.NA, strategy="median")
     _assert_allclose_and_same_dtype(
         imputer.fit_transform(df),
@@ -1606,9 +1639,12 @@ def test_simple_impute_pd_na():
     )
 
 
-def test_missing_indicator_feature_names_out():
+@pytest.mark.parametrize("with_pyarrow", [True, False])
+def test_missing_indicator_feature_names_out(with_pyarrow):
     """Check that missing indicator return the feature names with a prefix."""
     pd = pytest.importorskip("pandas")
+    if with_pyarrow:
+        pytest.importorskip("pyarrow")
 
     missing_values = np.nan
     X = pd.DataFrame(
@@ -1618,6 +1654,9 @@ def test_missing_indicator_feature_names_out():
         ],
         columns=["a", "b", "c", "d"],
     )
+
+    if with_pyarrow:
+        X.convert_dtypes(dtype_backend="pyarrow")
 
     indicator = MissingIndicator(missing_values=missing_values).fit(X)
     feature_names = indicator.get_feature_names_out()

@@ -102,11 +102,15 @@ def test_imputers_add_indicator_sparse(imputer, marker):
 
 # ConvergenceWarning will be raised by the IterativeImputer
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
+@pytest.mark.parametrize("with_pyarrow", [True, False])
 @pytest.mark.parametrize("imputer", imputers(), ids=lambda x: x.__class__.__name__)
 @pytest.mark.parametrize("add_indicator", [True, False])
-def test_imputers_pandas_na_integer_array_support(imputer, add_indicator):
+def test_imputers_pandas_na_integer_array_support(with_pyarrow, imputer, add_indicator):
     # Test pandas IntegerArray with pd.NA
     pd = pytest.importorskip("pandas")
+    if with_pyarrow:
+        pytest.importorskip("pyarrow")
+
     marker = np.nan
     imputer = imputer.set_params(add_indicator=add_indicator, missing_values=marker)
 
@@ -123,18 +127,23 @@ def test_imputers_pandas_na_integer_array_support(imputer, add_indicator):
 
     # Creates dataframe with IntegerArrays with pd.NA
     X_df = pd.DataFrame(X, dtype="Int16", columns=["a", "b", "c", "d", "e"])
+    if with_pyarrow:
+        X_df.convert_dtypes(dtype_backend="pyarrow")
 
     # fit on pandas dataframe with IntegerArrays
     X_trans = imputer.fit_transform(X_df)
 
     assert_allclose(X_trans_expected, X_trans)
 
-
+@pytest.mark.parametrize("with_pyarrow", [True, False])
 @pytest.mark.parametrize("imputer", imputers(), ids=lambda x: x.__class__.__name__)
 @pytest.mark.parametrize("add_indicator", [True, False])
-def test_imputers_feature_names_out_pandas(imputer, add_indicator):
+def test_imputers_feature_names_out_pandas(with_pyarrow, imputer, add_indicator):
     """Check feature names out for imputers."""
     pd = pytest.importorskip("pandas")
+    if with_pyarrow:
+        pytest.importorskip("pyarrow")
+
     marker = np.nan
     imputer = imputer.set_params(add_indicator=add_indicator, missing_values=marker)
 
@@ -147,6 +156,8 @@ def test_imputers_feature_names_out_pandas(imputer, add_indicator):
         ]
     )
     X_df = pd.DataFrame(X, columns=["a", "b", "c", "d", "e", "f"])
+    if with_pyarrow:
+        X_df.convert_dtypes(dtype_backend="pyarrow")
     imputer.fit(X_df)
 
     names = imputer.get_feature_names_out()

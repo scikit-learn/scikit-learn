@@ -293,10 +293,15 @@ def test_input_error():
         gbdt.fit(X, y)
 
 
-def test_input_error_related_to_feature_names():
+@pytest.mark.parametrize("with_pyarrow", [True, False])
+def test_input_error_related_to_feature_names(with_pyarrow):
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame({"a": [0, 1, 2], "b": [0, 1, 2]})
     y = np.array([0, 1, 0])
+    if with_pyarrow:
+        pytest.importorskip("pyarrow")
+        X.convert_dtypes(dtype_backend="pyarrow")
+        y.convert_dtypes(dtype_backend="pyarrow")
 
     monotonic_cst = {"d": 1, "a": 1, "c": -1}
     gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)

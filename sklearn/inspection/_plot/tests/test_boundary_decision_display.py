@@ -279,15 +279,19 @@ def test_multioutput_regressor_error(pyplot):
         DecisionBoundaryDisplay.from_estimator(tree, X)
 
 
+@pytest.mark.parametrize("with_pyarrow", [True, False])
 @pytest.mark.filterwarnings(
     # We expect to raise the following warning because the classifier is fit on a
     # NumPy array
     "ignore:X has feature names, but LogisticRegression was fitted without"
 )
-def test_dataframe_labels_used(pyplot, fitted_clf):
+def test_dataframe_labels_used(with_pyarrow, pyplot, fitted_clf):
     """Check that column names are used for pandas."""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(X, columns=["col_x", "col_y"])
+    if with_pyarrow:
+        pytest.importorskip("pyarrow")
+        X.convert_dtypes(dtype_backend="pyarrow")
 
     # pandas column names are used by default
     _, ax = pyplot.subplots()
@@ -340,7 +344,8 @@ def test_string_target(pyplot):
     )
 
 
-def test_dataframe_support(pyplot):
+@pytest.mark.parametrize("with_pyarrow", [True, False])
+def test_dataframe_support(with_pyarrow, pyplot):
     """Check that passing a dataframe at fit and to the Display does not
     raise warnings.
 
@@ -349,6 +354,9 @@ def test_dataframe_support(pyplot):
     """
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(X, columns=["col_x", "col_y"])
+    if with_pyarrow:
+        pytest.importorskip("pyarrow")
+        X.convert_dtypes(dtype_backend="pyarrow")
     estimator = LogisticRegression().fit(df, y)
 
     with warnings.catch_warnings():
