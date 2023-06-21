@@ -22,14 +22,14 @@ else
     global_status=1
 fi
 
-echo -e "### Running flake8 ###\n"
-flake8 --show-source .
+echo -e "### Running ruff ###\n"
+ruff check --show-source .
 status=$?
 if [[ $status -eq 0 ]]
 then
-    echo -e "No problem detected by flake8\n"
+    echo -e "No problem detected by ruff\n"
 else
-    echo -e "Problems detected by flake8, please fix them\n"
+    echo -e "Problems detected by ruff, please fix them\n"
     global_status=1
 fi
 
