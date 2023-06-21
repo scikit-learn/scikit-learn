@@ -204,11 +204,15 @@ def test_use_regression_target():
     assert enc.target_type_ == "continuous"
 
 
-def test_feature_names_out_set_output():
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_feature_names_out_set_output(use_pyarrow):
     """Check TargetEncoder works with set_output."""
     pd = pytest.importorskip("pandas")
 
     X_df = pd.DataFrame({"A": ["a", "b"] * 10, "B": [1, 2] * 10})
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        X_df = X_df.convert_dtypes(dtype_backend="pyarrow")
     y = [1, 2] * 10
 
     enc_default = TargetEncoder(cv=2, smooth=3.0, random_state=0)
@@ -227,7 +231,8 @@ def test_feature_names_out_set_output():
 @pytest.mark.parametrize("to_pandas", [True, False])
 @pytest.mark.parametrize("smooth", [1.0, "auto"])
 @pytest.mark.parametrize("target_type", ["binary-ints", "binary-str", "continuous"])
-def test_multiple_features_quick(to_pandas, smooth, target_type):
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_multiple_features_quick(to_pandas, smooth, target_type, use_pyarrow):
     """Check target encoder with multiple features."""
     X_ordinal = np.array(
         [[1, 1], [0, 1], [1, 1], [2, 1], [1, 0], [0, 1], [1, 0], [0, 0]], dtype=np.int64
@@ -267,6 +272,10 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
         )
         # "snake" is unknown
         X_test = pd.DataFrame({"feat0": X_test[:, 0], "feat1": ["dog", "cat", "snake"]})
+        if use_pyarrow:
+            pytest.importorskip("pyarrow")
+            X_train = X_train.convert_dtypes(dtype_backend="pyarrow")
+            X_test = X_test.convert_dtypes(dtype_backend="pyarrow")
     else:
         X_train = X_ordinal
 

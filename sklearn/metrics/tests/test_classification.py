@@ -1163,12 +1163,16 @@ def test_confusion_matrix_dtype():
 
 
 @pytest.mark.parametrize("dtype", ["Int64", "Float64", "boolean"])
-def test_confusion_matrix_pandas_nullable(dtype):
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_confusion_matrix_pandas_nullable(dtype, use_pyarrow):
     """Checks that confusion_matrix works with pandas nullable dtypes.
 
     Non-regression test for gh-25635.
     """
     pd = pytest.importorskip("pandas")
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        dtype = dtype + "[pyarrow]"
 
     y_ndarray = np.array([1, 0, 0, 1, 0, 1, 1, 0, 1])
     y_true = pd.Series(y_ndarray, dtype=dtype)

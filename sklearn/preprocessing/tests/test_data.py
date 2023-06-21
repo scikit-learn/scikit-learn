@@ -2639,11 +2639,15 @@ def test_one_to_one_features(Transformer):
         Binarizer,
     ],
 )
-def test_one_to_one_features_pandas(Transformer):
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_one_to_one_features_pandas(Transformer, use_pyarrow):
     """Check one-to-one transformers give correct feature names."""
     pd = pytest.importorskip("pandas")
 
     df = pd.DataFrame(iris.data, columns=iris.feature_names)
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        df = df.convert_dtypes(dtype_backend="pyarrow")
     tr = Transformer().fit(df)
 
     names_out_df_default = tr.get_feature_names_out()

@@ -428,7 +428,8 @@ def test_check_array_numeric_error(X):
         ("numeric", np.float64),
     ],
 )
-def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_check_array_pandas_na_support(use_pyarrow, pd_dtype, dtype, expected_dtype):
     # Test pandas numerical extension arrays with pd.NA
     pd = pytest.importorskip("pandas")
 
@@ -442,6 +443,11 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
 
     # Creates dataframe with numerical extension arrays with pd.NA
     X = pd.DataFrame(X_np, dtype=pd_dtype, columns=["a", "b", "c"])
+
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        X = X.convert_dtypes(dtype_backend="pyarrow")
+
     # column c has no nans
     X["c"] = X["c"].astype("float")
     X_checked = check_array(X, force_all_finite="allow-nan", dtype=dtype)
@@ -457,11 +463,16 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
         check_array(X, force_all_finite=True)
 
 
-def test_check_array_panadas_na_support_series():
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_check_array_panadas_na_support_series(use_pyarrow):
     """Check check_array is correct with pd.NA in a series."""
     pd = pytest.importorskip("pandas")
 
     X_int64 = pd.Series([1, 2, pd.NA], dtype="Int64")
+
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        X_int64 = X_int64.convert_dtypes(dtype_backend="pyarrow")
 
     msg = "Input contains NaN"
     with pytest.raises(ValueError, match=msg):
@@ -478,11 +489,17 @@ def test_check_array_panadas_na_support_series():
     assert X_out.dtype == np.float32
 
 
-def test_check_array_pandas_dtype_casting():
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_check_array_pandas_dtype_casting(use_pyarrow):
     # test that data-frames with homogeneous dtype are not upcast
     pd = pytest.importorskip("pandas")
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32)
     X_df = pd.DataFrame(X)
+
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        X_df = X_df.convert_dtypes(dtype_backend="pyarrow")
+
     assert check_array(X_df).dtype == np.float32
     assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
 
@@ -511,6 +528,10 @@ def test_check_array_pandas_dtype_casting():
     # this is actually tricky because we can't really know that this
     # should be integer ahead of converting it.
     cat_df = pd.DataFrame({"cat_col": pd.Categorical([1, 2, 3])})
+
+    if use_pyarrow:
+        cat_df = cat_df.convert_dtypes(dtype_backend="pyarrow")
+
     assert check_array(cat_df).dtype == np.int64
     assert check_array(cat_df, dtype=FLOAT_DTYPES).dtype == np.float64
 
@@ -940,14 +961,25 @@ def test_suppress_validation():
         assert_all_finite(X)
 
 
-def test_check_array_series():
-    # regression test that check_array works on pandas Series
-    pd = importorskip("pandas")
-    res = check_array(pd.Series([1, 2, 3]), ensure_2d=False)
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_check_array_series(use_pyarrow):
+    """Regression test that check_array works on pandas Series."""
+    pd = pytest.importorskip("pandas")
+
+    X = pd.Series([1, 2, 3])
+
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        X = X.convert_dtypes(dtype_backend="pyarrow")
+
+    res = check_array(X, ensure_2d=False)
     assert_array_equal(res, np.array([1, 2, 3]))
 
     # with categorical dtype (not a numpy dtype) (GH12699)
     s = pd.Series(["a", "b", "c"]).astype("category")
+    if use_pyarrow:
+        s = s.convert_dtypes(dtype_backend="pyarrow")
+
     res = check_array(s, dtype=None, ensure_2d=False)
     assert_array_equal(res, np.array(["a", "b", "c"], dtype=object))
 
@@ -956,18 +988,20 @@ def test_check_array_series():
     "dtype", ((np.float64, np.float32), np.float64, None, "numeric")
 )
 @pytest.mark.parametrize("bool_dtype", ("bool", "boolean"))
-def test_check_dataframe_mixed_float_dtypes(dtype, bool_dtype):
-    # pandas dataframe will coerce a boolean into a object, this is a mismatch
-    # with np.result_type which will return a float
-    # check_array needs to explicitly check for bool dtype in a dataframe for
-    # this situation
-    # https://github.com/scikit-learn/scikit-learn/issues/15787
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_check_dataframe_mixed_float_dtypes(dtype, bool_dtype, use_pyarrow):
+    """Check array type conversion with mixed float dtypes in pandas DataFrame.
 
+    Pandas dataframe will coerce a boolean into an object, this is a mismatch
+    with np.result_type which will return a float. check_array needs to
+    explicitly check for bool dtype in a dataframe for this situation.
+    https://github.com/scikit-learn/scikit-learn/issues/15787
+    """
     if bool_dtype == "boolean":
-        # boolean extension arrays was introduced in 1.0
-        pd = importorskip("pandas", minversion="1.0")
+        # boolean extension arrays were introduced in pandas 1.0
+        pd = pytest.importorskip("pandas", minversion="1.0")
     else:
-        pd = importorskip("pandas")
+        pd = pytest.importorskip("pandas")
 
     df = pd.DataFrame(
         {
@@ -978,6 +1012,10 @@ def test_check_dataframe_mixed_float_dtypes(dtype, bool_dtype):
         columns=["int", "float", "bool"],
     )
 
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        df = df.convert_dtypes(dtype_backend="pyarrow")
+
     array = check_array(df, dtype=dtype)
     assert array.dtype == np.float64
     expected_array = np.array(
@@ -986,10 +1024,15 @@ def test_check_dataframe_mixed_float_dtypes(dtype, bool_dtype):
     assert_allclose_dense_sparse(array, expected_array)
 
 
-def test_check_dataframe_with_only_bool():
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_check_dataframe_with_only_bool(use_pyarrow):
     """Check that dataframe with bool return a boolean arrays."""
     pd = importorskip("pandas")
     df = pd.DataFrame({"bool": [True, False, True]})
+
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        df = df.convert_dtypes(dtype_backend="pyarrow")
 
     array = check_array(df, dtype=None)
     assert array.dtype == np.bool_
@@ -1000,15 +1043,24 @@ def test_check_dataframe_with_only_bool():
         {"bool": [True, False, True], "int": [1, 2, 3]},
         columns=["bool", "int"],
     )
+
+    if use_pyarrow:
+        df = df.convert_dtypes(dtype_backend="pyarrow")
+
     array = check_array(df, dtype="numeric")
     assert array.dtype == np.int64
     assert_array_equal(array, [[1, 1], [0, 2], [1, 3]])
 
 
-def test_check_dataframe_with_only_boolean():
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_check_dataframe_with_only_boolean(use_pyarrow):
     """Check that dataframe with boolean return a float array with dtype=None"""
     pd = importorskip("pandas", minversion="1.0")
     df = pd.DataFrame({"bool": pd.Series([True, False, True], dtype="boolean")})
+
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        df = df.convert_dtypes(dtype_backend="pyarrow")
 
     array = check_array(df, dtype=None)
     assert array.dtype == np.float64
@@ -1524,13 +1576,19 @@ def test_check_fit_params(indices):
 
 
 @pytest.mark.parametrize("sp_format", [True, "csr", "csc", "coo", "bsr"])
-def test_check_sparse_pandas_sp_format(sp_format):
-    # check_array converts pandas dataframe with only sparse arrays into
-    # sparse matrix
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_check_sparse_pandas_sp_format(sp_format, use_pyarrow):
+    """Check conversion from sparse pandas dataframe to sparse matrix."""
     pd = pytest.importorskip("pandas")
+
     sp_mat = _sparse_random_matrix(10, 3)
 
     sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)
+
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        sdf = sdf.sparse.convert_dtypes(dtype_backend="pyarrow")
+
     result = check_array(sdf, accept_sparse=sp_format)
 
     if sp_format is True:
@@ -1556,7 +1614,8 @@ def test_check_sparse_pandas_sp_format(sp_format):
         ("uint8", "int8"),
     ],
 )
-def test_check_pandas_sparse_invalid(ntype1, ntype2):
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_check_pandas_sparse_invalid(ntype1, ntype2, use_pyarrow):
     """check that we raise an error with dataframe having
     sparse extension arrays with unsupported mixed dtype
     and pandas version below 1.1. pandas versions 1.1 and
@@ -1568,6 +1627,10 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
             "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
         }
     )
+
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        df = df.convert_dtypes(dtype_backend="pyarrow")
 
     if parse_version(pd.__version__) < parse_version("1.1"):
         err_msg = "Pandas DataFrame with mixed sparse extension arrays"
@@ -1600,7 +1663,8 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
         ("uintp", "ulonglong", np.unsignedinteger),
     ],
 )
-def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype, use_pyarrow):
     # check that we support the conversion of sparse dataframe with mixed
     # type which can be converted safely.
     pd = pytest.importorskip("pandas")
@@ -1610,6 +1674,11 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
             "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
         }
     )
+
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        df = df.convert_dtypes(dtype_backend="pyarrow")
+
     arr = check_array(df, accept_sparse=["csr", "csc"])
     assert np.issubdtype(arr.dtype, expected_subtype)
 
@@ -1821,10 +1890,17 @@ def test_check_response_method_list_str():
     assert method_name_predicting == "predict"
 
 
-def test_boolean_series_remains_boolean():
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_boolean_series_remains_boolean(use_pyarrow):
     """Regression test for gh-25145"""
     pd = importorskip("pandas")
-    res = check_array(pd.Series([True, False]), ensure_2d=False)
+    series = pd.Series([True, False])
+
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        series = series.convert_dtypes(dtype_backend="pyarrow")
+
+    res = check_array(series, ensure_2d=False)
     expected = np.array([True, False])
 
     assert res.dtype == expected.dtype
@@ -1832,13 +1908,21 @@ def test_boolean_series_remains_boolean():
 
 
 @pytest.mark.parametrize("input_values", [[0, 1, 0, 1, 0, np.nan], [0, 1, 0, 1, 0, 1]])
-def test_pandas_array_returns_ndarray(input_values):
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_pandas_array_returns_ndarray(input_values, use_pyarrow):
     """Check pandas array with extensions dtypes returns a numeric ndarray.
 
     Non-regression test for gh-25637.
     """
     pd = importorskip("pandas")
     input_series = pd.array(input_values, dtype="Int32")
+
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        input_series = (
+            pd.Series(input_series).convert_dtypes(dtype_backend="pyarrow").array
+        )
+
     result = check_array(
         input_series,
         dtype=None,
@@ -1877,8 +1961,9 @@ def test_check_array_array_api_has_non_finite(array_namespace):
     ],
 )
 @pytest.mark.parametrize("include_object", [True, False])
+@pytest.mark.parametrize("use_pyarrow", [True, False])
 def test_check_array_multiple_extensions(
-    extension_dtype, regular_dtype, include_object
+    extension_dtype, regular_dtype, include_object, use_pyarrow
 ):
     """Check pandas extension arrays give the same result as non-extension arrays."""
     pd = pytest.importorskip("pandas")
@@ -1892,6 +1977,10 @@ def test_check_array_multiple_extensions(
         X_regular["b"] = pd.Series(["a", "b", "c", "d"], dtype="object")
 
     X_extension = X_regular.assign(a=X_regular["a"].astype(extension_dtype))
+
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        X_extension = X_extension.convert_dtypes(dtype_backend="pyarrow")
 
     X_regular_checked = check_array(X_regular, dtype=None)
     X_extension_checked = check_array(X_extension, dtype=None)

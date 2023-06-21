@@ -371,17 +371,21 @@ def test_inplace_data_preprocessing(sparse_X, use_sw, global_random_seed):
         assert_allclose(sample_weight, orginal_sw_data)
 
 
-def test_linear_regression_pd_sparse_dataframe_warning():
+def test_linear_regression_pd_sparse_dataframe_warning(use_pyarrow):
     pd = pytest.importorskip("pandas")
 
     # Warning is raised only when some of the columns is sparse
-    df = pd.DataFrame({"0": np.random.randn(10)})
+    if not use_pyarrow:
+        df = pd.DataFrame({"0": np.random.randn(10)})
+    else:
+        df = pd.DataFrame({"0": np.random.randn(10)})
     for col in range(1, 4):
         arr = np.random.randn(10)
         arr[:8] = 0
         # all columns but the first column is sparse
         if col != 0:
             arr = pd.arrays.SparseArray(arr, fill_value=0)
+            arr = arr.astype(arr.dtype + "[pyarrow]")
         df[str(col)] = arr
 
     msg = "pandas.DataFrame with sparse columns found."

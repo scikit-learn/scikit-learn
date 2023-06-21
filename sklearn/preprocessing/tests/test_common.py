@@ -161,7 +161,8 @@ def test_missing_value_handling(
         (RobustScaler(with_centering=False), robust_scale),
     ],
 )
-def test_missing_value_pandas_na_support(est, func):
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_missing_value_pandas_na_support(est, func, use_pyarrow):
     # Test pandas IntegerArray with pd.NA
     pd = pytest.importorskip("pandas")
 
@@ -176,6 +177,10 @@ def test_missing_value_pandas_na_support(est, func):
     # Creates dataframe with IntegerArrays with pd.NA
     X_df = pd.DataFrame(X, dtype="Int16", columns=["a", "b", "c"])
     X_df["c"] = X_df["c"].astype("int")
+
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        X_df = X_df.convert_dtypes(dtype_backend="pyarrow")
 
     X_trans = est.fit_transform(X)
     X_df_trans = est.fit_transform(X_df)

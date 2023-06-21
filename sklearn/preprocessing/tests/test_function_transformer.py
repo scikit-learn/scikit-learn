@@ -177,9 +177,13 @@ def test_check_inverse():
         trans.fit(X_dense)
 
 
-def test_function_transformer_frame():
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_function_transformer_frame(use_pyarrow):
     pd = pytest.importorskip("pandas")
     X_df = pd.DataFrame(np.random.randn(100, 10))
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        X_df = X_df.convert_dtypes(dtype_backend="pyarrow")
     transformer = FunctionTransformer()
     X_df_trans = transformer.fit_transform(X_df)
     assert hasattr(X_df_trans, "loc")
@@ -217,11 +221,17 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
         transformer.fit(data)
 
 
-def test_function_transformer_support_all_nummerical_dataframes_check_inverse_True():
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_function_transformer_support_all_nummerical_dataframes_check_inverse_True(
+    use_pyarrow,
+):
     """Check support for dataframes with only numerical values."""
     pd = pytest.importorskip("pandas")
 
     df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        df = df.convert_dtypes(dtype_backend="pyarrow")
     transformer = FunctionTransformer(
         func=lambda x: x + 2, inverse_func=lambda x: x - 2, check_inverse=True
     )
@@ -231,7 +241,8 @@ def test_function_transformer_support_all_nummerical_dataframes_check_inverse_Tr
     assert_allclose_dense_sparse(df_out, df + 2)
 
 
-def test_function_transformer_with_dataframe_and_check_inverse_True():
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_function_transformer_with_dataframe_and_check_inverse_True(use_pyarrow):
     """Check error is raised when check_inverse=True.
 
     Non-regresion test for gh-25261.
@@ -242,6 +253,9 @@ def test_function_transformer_with_dataframe_and_check_inverse_True():
     )
 
     df_mixed = pd.DataFrame({"a": [1, 2, 3], "b": ["a", "b", "c"]})
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        df_mixed = df_mixed.convert_dtypes(dtype_backend="pyarrow")
     msg = "'check_inverse' is only supported when all the elements in `X` is numerical."
     with pytest.raises(ValueError, match=msg):
         transformer.fit(df_mixed)
@@ -323,12 +337,16 @@ def test_function_transformer_with_dataframe_and_check_inverse_True():
     ],
 )
 @pytest.mark.parametrize("validate", [True, False])
+@pytest.mark.parametrize("use_pyarrow", [True, False])
 def test_function_transformer_get_feature_names_out(
-    X, feature_names_out, input_features, expected, validate
+    X, feature_names_out, input_features, expected, validate, use_pyarrow
 ):
     if isinstance(X, dict):
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(X)
+        if use_pyarrow:
+            pytest.importorskip("pyarrow")
+            X = X.convert_dtypes(dtype_backend="pyarrow")
 
     transformer = FunctionTransformer(
         feature_names_out=feature_names_out, validate=validate
@@ -361,7 +379,8 @@ def test_function_transformer_feature_names_out_is_None():
         transformer.get_feature_names_out()
 
 
-def test_function_transformer_feature_names_out_uses_estimator():
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_function_transformer_feature_names_out_uses_estimator(use_pyarrow):
     def add_n_random_features(X, n):
         return np.concatenate([X, np.random.rand(len(X), n)], axis=1)
 
@@ -377,6 +396,9 @@ def test_function_transformer_feature_names_out_uses_estimator():
     )
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame({"a": np.random.rand(100), "b": np.random.rand(100)})
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        df = df.convert_dtypes(dtype_backend="pyarrow")
     transformer.fit_transform(df)
     names = transformer.get_feature_names_out()
 
@@ -417,12 +439,16 @@ def test_function_transformer_validate_inverse():
     ],
 )
 @pytest.mark.parametrize("in_pipeline", [True, False])
+@pytest.mark.parametrize("use_pyarrow", [True, False])
 def test_get_feature_names_out_dataframe_with_string_data(
-    feature_names_out, expected, in_pipeline
+    feature_names_out, expected, in_pipeline, use_pyarrow
 ):
     """Check that get_feature_names_out works with DataFrames with string data."""
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame({"pet": ["dog", "cat"], "color": ["red", "green"]})
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        X = X.convert_dtypes(dtype_backend="pyarrow")
 
     transformer = FunctionTransformer(feature_names_out=feature_names_out)
     if in_pipeline:
@@ -437,11 +463,15 @@ def test_get_feature_names_out_dataframe_with_string_data(
     assert_array_equal(names, expected)
 
 
-def test_set_output_func():
+@pytest.mark.parametrize("use_pyarrow", [True, False])
+def test_set_output_func(use_pyarrow):
     """Check behavior of set_output with different settings."""
     pd = pytest.importorskip("pandas")
 
     X = pd.DataFrame({"a": [1, 2, 3], "b": [10, 20, 100]})
+    if use_pyarrow:
+        pytest.importorskip("pyarrow")
+        X = X.convert_dtypes(dtype_backend="pyarrow")
 
     ft = FunctionTransformer(np.log, feature_names_out="one-to-one")
 
