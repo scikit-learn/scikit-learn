@@ -62,7 +62,7 @@ FAST_METRICS = set(KDTree.valid_metrics() + BallTree.valid_metrics())
 # Encodings are arbitrary but must be strictly negative.
 # The current encodings are chosen as extensions to the -1 noise label.
 # Avoided enums so that the end user only deals with simple labels.
-_OUTLIER_ENCODING = {
+_OUTLIER_ENCODING: dict = {
     "infinite": {
         "label": -2,
         # The probability could also be 1, since infinite points are certainly

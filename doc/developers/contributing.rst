@@ -254,7 +254,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov flake8 mypy numpydoc black==23.3.0
+        pip install pytest pytest-cov ruff mypy numpydoc black==23.3.0
 
 .. _upstream:
 
@@ -425,30 +425,15 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
 
-5. Run `black` to auto-format your code.
 
-   .. prompt:: bash $
-
-        black .
-
-   See black's
-   `editor integration documentation <https://black.readthedocs.io/en/stable/integrations/editors.html>`_
-   to configure your editor to run `black`.
-
-6. Run `flake8` to make sure you followed the project coding conventions.
-
-   .. prompt:: bash $
-
-        flake8 .
-
-7. Follow the :ref:`coding-guidelines`.
+5. Follow the :ref:`coding-guidelines`.
 
 
-8. When applicable, use the validation tools and scripts in the
+6. When applicable, use the validation tools and scripts in the
    ``sklearn.utils`` submodule.  A list of utility routines available
    for developers can be found in the :ref:`developers-utils` page.
 
-9. Often pull requests resolve one or more other issues (or pull requests).
+7. Often pull requests resolve one or more other issues (or pull requests).
    If merging your pull request means that some other issues/PRs should
    be closed, you should `use keywords to create link to them
    <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
@@ -458,7 +443,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    related to some other issues/PRs, create a link to them without using
    the keywords (e.g., ``See also #1234``).
 
-10. PRs should often substantiate the change, through benchmarks of
+8. PRs should often substantiate the change, through benchmarks of
     performance and efficiency (see :ref:`monitoring_performances`) or through
     examples of usage. Examples also illustrate the features and intricacies of
     the library to users. Have a look at other examples in the `examples/
@@ -467,14 +452,14 @@ complies with the following rules before marking a PR as ``[MRG]``. The
     functionality is useful in practice and, if possible, compare it to other
     methods available in scikit-learn.
 
-11. New features have some maintenance overhead. We expect PR authors
+9. New features have some maintenance overhead. We expect PR authors
     to take part in the maintenance for the code they submit, at least
     initially. New features need to be illustrated with narrative
     documentation in the user guide, with small code snippets.
     If relevant, please also add references in the literature, with PDF links
     when possible.
 
-12. The user guide should also include expected time and space complexity
+10. The user guide should also include expected time and space complexity
     of the algorithm and scalability, e.g. "this algorithm can scale to a
     large number of samples > 100000, but does not scale in dimensionality:
     n_features is expected to be lower than 100".
@@ -534,8 +519,10 @@ Continuous Integration (CI)
 
 * Azure pipelines are used for testing scikit-learn on Linux, Mac and Windows,
   with different dependencies and settings.
-* CircleCI is used to build the docs for viewing, for linting with flake8, and
-  for testing with ARM64 / aarch64 on Linux
+* CircleCI is used to build the docs for viewing.
+* Github Actions are used for various tasks, including building wheels and
+  source distributions.
+* Cirrus CI is used to build on ARM.
 
 Please note that if one of the following markers appear in the latest commit
 message, the following actions are taken.
