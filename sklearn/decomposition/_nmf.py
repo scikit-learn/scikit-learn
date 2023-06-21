@@ -27,7 +27,7 @@ from ..utils.validation import (
     check_is_fitted,
     check_non_negative,
     _num_features,
-    _num_samples
+    _num_samples,
 )
 from ..utils._param_validation import (
     Interval,
@@ -1202,7 +1202,9 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
                 FutureWarning,
             )
             self._n_components = None  # Keeping the old default value
-        if self._n_components is None or (self.init != 'custom' & self.n_components == 'auto'):
+        if self._n_components is None or (
+            self.init != "custom" and self.n_components == "auto"
+        ):
             self._n_components = X.shape[1]
 
         # beta_loss
@@ -1210,12 +1212,20 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
     def _check_w_h(self, X, W, H, update_H):
         """Check W and H, or initialize them."""
-        
+
         n_samples, n_features = X.shape
-        if self.init == 'custom' and self.n_components == "auto":
+        if self.init == "custom" and self.n_components == "auto":
             if W is not None:
                 if H is not None:
-                    self._n_components = _num_samples(H)
+                    n_samples_H = _num_samples(H)
+                    n_features_W = _num_features(W)
+                    if n_samples_H != n_features_W:
+                        raise ValueError(
+                            "Incompatible shapes for H and W. Expected n_features for"
+                            f" W and n_samples for H to be equal. Got {n_samples_H} and"
+                            f" {n_features_W} instead."
+                        )
+                    self._n_components = n_samples_H
                 else:
                     self._n_components = _num_features(W)
             elif H is not None:
