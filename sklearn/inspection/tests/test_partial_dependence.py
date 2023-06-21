@@ -29,13 +29,14 @@ from sklearn.inspection._partial_dependence import (
 )
 from sklearn.linear_model import LinearRegression, LogisticRegression, MultiTaskLasso
 from sklearn.metrics import r2_score
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import RobustScaler
-from sklearn.preprocessing import scale
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import make_pipeline
-
+from sklearn.preprocessing import (
+    OneHotEncoder,
+    PolynomialFeatures,
+    RobustScaler,
+    StandardScaler,
+    scale,
+)
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree.tests.test_tree import assert_is_subtree
 from sklearn.utils import _IS_32BIT
