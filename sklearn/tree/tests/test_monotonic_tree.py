@@ -86,8 +86,9 @@ def test_montonic_constraints_classifications(
 @pytest.mark.parametrize("TreeRegressor", TREE_BASED_REGRESSOR_CLASSES)
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("sparse_splitter", (True, False))
+@pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
 def test_montonic_constraints_regressions(
-    TreeRegressor, depth_first_builder, sparse_splitter, global_random_seed
+    TreeRegressor, depth_first_builder, sparse_splitter, criterion, global_random_seed
 ):
     n_samples = 1000
     n_samples_train = 900
@@ -112,11 +113,16 @@ def test_montonic_constraints_regressions(
     monotonic_cst[1] = -1
 
     if depth_first_builder:
-        est = TreeRegressor(max_depth=None, monotonic_cst=monotonic_cst)
-    else:
         est = TreeRegressor(
             max_depth=None,
             monotonic_cst=monotonic_cst,
+            criterion=criterion,
+        )
+    else:
+        est = TreeRegressor(
+            max_depth=8,
+            monotonic_cst=monotonic_cst,
+            criterion=criterion,
             max_leaf_nodes=n_samples_train,
         )
     if hasattr(est, "random_state"):
@@ -245,7 +251,7 @@ def assert_1d_reg_monotonic(clf, monotonic_sign, min_x, max_x, n_steps):
 @pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
 def test_1d_opposite_monotonicity_cst_data(TreeRegressor):
     # Check that positive monotonic data with negative monotonic constraint
-    # yield constant predictions equal to the average target
+    # yield constant predictions, equal to the average of target values
     X = np.linspace(-2, 2, 10).reshape(-1, 1)
     y = X.ravel()
     clf = TreeRegressor(monotonic_cst=[-1])
@@ -262,9 +268,10 @@ def test_1d_opposite_monotonicity_cst_data(TreeRegressor):
 
 @pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
-@pytest.mark.parametrize("depth_first", (True, False))
+@pytest.mark.parametrize("depth_first_builder", (True, False))
+@pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
 def test_1d_tree_nodes_values(
-    TreeRegressor, monotonic_sign, depth_first, global_random_seed
+    TreeRegressor, monotonic_sign, depth_first_builder, criterion, global_random_seed
 ):
     # Adaptation from test_nodes_values in test_monotonic_constraints.py
     # in sklearn.ensemble._hist_gradient_boosting
@@ -289,10 +296,11 @@ def test_1d_tree_nodes_values(
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
 
-    if depth_first:
+    if depth_first_builder:
         # No max_leaf_nodes, default depth first tree builder
         clf = TreeRegressor(
             monotonic_cst=[monotonic_sign],
+            criterion=criterion,
             random_state=global_random_seed,
         )
     else:
@@ -300,6 +308,7 @@ def test_1d_tree_nodes_values(
         clf = TreeRegressor(
             monotonic_cst=[monotonic_sign],
             max_leaf_nodes=n_samples,
+            criterion=criterion,
             random_state=global_random_seed,
         )
     clf.fit(X, y)
@@ -412,9 +421,10 @@ def test_assert_nd_reg_tree_children_monotonic_bounded():
 
 @pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
-@pytest.mark.parametrize("depth_first", (True, False))
+@pytest.mark.parametrize("depth_first_builder", (True, False))
+@pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
 def test_nd_tree_nodes_values(
-    TreeRegressor, monotonic_sign, depth_first, global_random_seed
+    TreeRegressor, monotonic_sign, depth_first_builder, criterion, global_random_seed
 ):
     # Build tree with several features, and make sure the nodes
     # values respect the monotonicity constraints.
@@ -443,10 +453,11 @@ def test_nd_tree_nodes_values(
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
 
-    if depth_first:
+    if depth_first_builder:
         # No max_leaf_nodes, default depth first tree builder
         clf = TreeRegressor(
             monotonic_cst=monotonic_cst,
+            criterion=criterion,
             random_state=global_random_seed,
         )
     else:
@@ -454,6 +465,7 @@ def test_nd_tree_nodes_values(
         clf = TreeRegressor(
             monotonic_cst=monotonic_cst,
             max_leaf_nodes=n_samples,
+            criterion=criterion,
             random_state=global_random_seed,
         )
     clf.fit(X, y)

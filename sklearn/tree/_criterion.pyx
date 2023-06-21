@@ -234,23 +234,20 @@ cdef class Criterion:
         cnp.int8_t monotonic_cst,
         double lower_bound,
         double upper_bound,
-        double sum_left,
-        double sum_right,
+        double value_left,
+        double value_right,
     ) nogil:
         cdef:
-            double weighted_n_left = self.weighted_n_left
-            double weighted_n_right = self.weighted_n_right
             bint check_lower_bound = (
-                (sum_left >= lower_bound * weighted_n_left) &
-                (sum_right >= lower_bound * weighted_n_right)
+                (value_left >= lower_bound) &
+                (value_right >= lower_bound)
             )
             bint check_upper_bound = (
-                (sum_left <= upper_bound * weighted_n_left) &
-                (sum_right <= upper_bound * weighted_n_right)
+                (value_left <= upper_bound) &
+                (value_right <= upper_bound)
             )
             bint check_monotonic_cst = (
-                (sum_left * weighted_n_right -
-                 sum_right * weighted_n_left) * monotonic_cst <= 0
+                (value_left - value_right) * monotonic_cst <= 0
             )
         return check_lower_bound & check_upper_bound & check_monotonic_cst
 
@@ -613,10 +610,10 @@ cdef class ClassificationCriterion(Criterion):
     ) noexcept nogil:
         """Check monotonicity constraint is satisfied at the current classification split"""
         cdef:
-            double sum_left = self.sum_left[0][0]
-            double sum_right = self.sum_right[0][0]
+            double value_left = self.sum_left[0][0] / self.weighted_n_left
+            double value_right = self.sum_right[0][0] / self.weighted_n_right
 
-        return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, sum_left, sum_right)
+        return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
 
 cdef class Entropy(ClassificationCriterion):
@@ -1050,7 +1047,7 @@ cdef class RegressionCriterion(Criterion):
         elif dest[0] > upper_bound:
             dest[0] = upper_bound
 
-    cdef inline double middle_value(self) noexcept nogil:
+    cdef double middle_value(self) noexcept nogil:
         """Compute the middle value of a split for monotonicity constraints as the simple average
         of the left and right children values.
 
@@ -1062,7 +1059,7 @@ cdef class RegressionCriterion(Criterion):
             (self.sum_right[0] / (2 * self.weighted_n_right))
         )
 
-    cdef inline bint check_monotonicity(
+    cdef bint check_monotonicity(
         self,
         cnp.int8_t monotonic_cst,
         double lower_bound,
@@ -1070,10 +1067,10 @@ cdef class RegressionCriterion(Criterion):
     ) noexcept nogil:
         """Check monotonicity constraint is satisfied at the current regression split"""
         cdef:
-            double sum_left = self.sum_left[0]
-            double sum_right = self.sum_right[0]
+            double value_left = self.sum_left[0] / self.weighted_n_left
+            double value_right = self.sum_right[0] / self.weighted_n_right
 
-        return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, sum_left, sum_right)
+        return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
 cdef class MSE(RegressionCriterion):
     """Mean squared error impurity criterion.
@@ -1403,6 +1400,31 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t k
         for k in range(self.n_outputs):
             dest[k] = <double> self.node_medians[k]
+
+    cdef inline double middle_value(self) noexcept nogil:
+        """Compute the middle value of a split for monotonicity constraints as the simple average
+        of the left and right children values.
+
+        Monotonicity constraints are only supported for single-output trees we can safely assume
+        n_outputs == 1.
+        """
+        return (
+                (<WeightedMedianCalculator> self.left_child_ptr[0]).get_median() +
+                (<WeightedMedianCalculator> self.right_child_ptr[0]).get_median()
+        ) / 2
+
+    cdef inline bint check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        double lower_bound,
+        double upper_bound,
+    ) noexcept nogil:
+        """Check monotonicity constraint is satisfied at the current regression split"""
+        cdef:
+            double value_left = (<WeightedMedianCalculator> self.left_child_ptr[0]).get_median()
+            double value_right = (<WeightedMedianCalculator> self.right_child_ptr[0]).get_median()
+
+        return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
     cdef double node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.

@@ -272,7 +272,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         lower_bound,
                         upper_bound
                     )
-                    middle_value = splitter.criterion.middle_value()
                     # If EPSILON=0 in the below comparison, float precision
                     # issues stop splitting, producing trees that are
                     # dissimilar to v0.18
@@ -302,8 +301,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     ):
                         # Split on a feature with no monotonicity constraint
 
-                        # Current bounds must always be propagated to both children
-                        # Splitting criterion will always check them in check_monotonicity
+                        # Current bounds must always be propagated to both children.
+                        # If a monotonic constraint is active, bounds are used in
+                        # node value clipping.
                         left_child_min = right_child_min = lower_bound
                         left_child_max = right_child_max = upper_bound
                     elif splitter.monotonic_cst[split.feature] == 1:
@@ -313,6 +313,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                         # Lower bound for right child and upper bound for left child
                         # are set to the same value.
+                        middle_value = splitter.criterion.middle_value()
                         right_child_min = middle_value
                         left_child_max = middle_value
                     else:  # i.e. splitter.monotonic_cst[split.feature] == -1
@@ -322,6 +323,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                         # Lower bound for left child and upper bound for right child
                         # are set to the same value.
+                        middle_value = splitter.criterion.middle_value()
                         left_child_min = middle_value
                         right_child_max = middle_value
 
@@ -501,7 +503,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                         # Split on a feature with no monotonicity constraint
 
                         # Current bounds must always be propagated to both children.
-                        # Splitting criterion will always check them in check_monotonicity
+                        # If a monotonic constraint is active, bounds are used in
+                        # node value clipping.
                         left_child_min = right_child_min = record.lower_bound
                         left_child_max = right_child_max = record.upper_bound
                     elif splitter.monotonic_cst[node.feature] == 1:
