@@ -1311,10 +1311,8 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
         if W is not None:
             warnings.warn(
-                (
-                    "Input argument `W` was renamed to `Xt` in v1.3 and will be removed"
-                    " in v1.5."
-                ),
+                "Input argument `W` was renamed to `Xt` in v1.3 and will be removed"
+                " in v1.5.",
                 FutureWarning,
             )
             Xt = W
@@ -1587,12 +1585,10 @@ class NMF(_BaseNMF):
             )
         if self.solver == "mu" and self.init == "nndsvd":
             warnings.warn(
-                (
-                    "The multiplicative update ('mu') solver cannot update "
-                    "zeros present in the initialization, and so leads to "
-                    "poorer results when used jointly with init='nndsvd'. "
-                    "You may try init='nndsvda' or init='nndsvdar' instead."
-                ),
+                "The multiplicative update ('mu') solver cannot update "
+                "zeros present in the initialization, and so leads to "
+                "poorer results when used jointly with init='nndsvd'. "
+                "You may try init='nndsvda' or init='nndsvdar' instead.",
                 UserWarning,
             )
 
@@ -2314,10 +2310,8 @@ class MiniBatchNMF(_BaseNMF):
 
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
-                (
-                    f"Maximum number of iterations {self.max_iter} reached. "
-                    "Increase it to improve convergence."
-                ),
+                f"Maximum number of iterations {self.max_iter} reached. "
+                "Increase it to improve convergence.",
                 ConvergenceWarning,
             )
 
