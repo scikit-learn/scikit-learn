@@ -79,7 +79,7 @@
   margin-bottom: 0.5em;
 }
 #$id div.sk-estimator:hover {
-  background-color: #background_color_hover;
+  background-color: #$background_color_hover;
 }
 
 
@@ -90,7 +90,7 @@
   flex-grow: 1;
 }
 #$id div.sk-label:hover label.sk-toggleable__label {
-  background-color: #background_color_hover;
+  background-color: #$background_color_hover;
 }
 #$id div.sk-serial::before {
   content: "";
