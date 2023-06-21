@@ -158,7 +158,7 @@
 }
 
 
-#$id a.sk-estimator-doc-link {
+/* #$id a.sk-estimator-doc-link {
     float: right;
     font-size: smaller;
     line-height: 1em;
@@ -169,7 +169,7 @@
     width: 0.9rem;
     color: #afc9e077;
     text-decoration: none;
-}
+} */
 
 div.sk-label-container div.sk-label:hover a.sk-estimator-doc-link {
     color: cornflowerblue;
@@ -209,14 +209,14 @@ div.sk-label-container div.sk-label:hover a.sk-estimator-doc-link {
 /* For the docs link */
 a.sk-estimator-doc-link {
     float: right;
-    font-size: smaller;
     line-height: 1em;
     font-family: monospace;
     background-color: white;
     border: cornflowerblue 1pt solid;
-    border-radius: 0.9rem;
-    height: 0.9rem;
-    width: 0.9rem;
+    font-size: 1rem;
+    border-radius: 1rem;
+    height: 1rem;
+    width: 1rem;
     color: cornflowerblue;
     text-decoration: none!important;
     margin-left: 1ex;
