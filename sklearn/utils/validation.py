@@ -2022,6 +2022,11 @@ def _get_feature_names(X):
 
     # extract feature names for support array containers
     if _is_pandas_df(X):
+        # Make sure we can inspect columns names from pandas, even with
+        # versions too old to expose a working implementation of
+        # __dataframe__.column_names().
+        # TODO: remove once the minimum supported version of pandas has
+        # a working implementation of __dataframe__.column_names().
         feature_names = np.asarray(X.columns, dtype=object)
     elif hasattr(X, "__dataframe__"):
         df_protocol = X.__dataframe__()
