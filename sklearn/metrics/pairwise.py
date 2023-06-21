@@ -8,41 +8,41 @@
 # License: BSD 3 clause
 
 import itertools
-from functools import partial
 import warnings
+from functools import partial
 
 import numpy as np
-from scipy.spatial import distance
-from scipy.sparse import csr_matrix
-from scipy.sparse import issparse
 from joblib import effective_n_jobs
+from scipy.sparse import csr_matrix, issparse
+from scipy.spatial import distance
 
 from .. import config_context
-from ..utils.validation import _num_samples
-from ..utils.validation import check_non_negative
-from ..utils import check_array
-from ..utils import gen_even_slices
-from ..utils import gen_batches, get_chunk_n_rows
-from ..utils import is_scalar_nan
-from ..utils.extmath import row_norms, safe_sparse_dot
+from ..exceptions import DataConversionWarning
 from ..preprocessing import normalize
-from ..utils._mask import _get_mask
-from ..utils.parallel import delayed, Parallel
-from ..utils.fixes import sp_base_version, parse_version
-from ..utils._param_validation import (
-    validate_params,
-    Interval,
-    Real,
-    Integral,
-    Hidden,
-    MissingValues,
-    StrOptions,
-    Options,
+from ..utils import (
+    check_array,
+    gen_batches,
+    gen_even_slices,
+    get_chunk_n_rows,
+    is_scalar_nan,
 )
-
+from ..utils._mask import _get_mask
+from ..utils._param_validation import (
+    Hidden,
+    Integral,
+    Interval,
+    MissingValues,
+    Options,
+    Real,
+    StrOptions,
+    validate_params,
+)
+from ..utils.extmath import row_norms, safe_sparse_dot
+from ..utils.fixes import parse_version, sp_base_version
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import _num_samples, check_non_negative
 from ._pairwise_distances_reduction import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
-from ..exceptions import DataConversionWarning
 
 
 # Utility Functions

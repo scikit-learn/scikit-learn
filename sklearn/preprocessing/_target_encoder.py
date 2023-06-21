@@ -1,15 +1,13 @@
+from numbers import Integral, Real
+
 import numpy as np
 
-from numbers import Real, Integral
-
-from ._encoders import _BaseEncoder
-from ..base import OneToOneFeatureMixin
-from ..base import _fit_context
-from ._target_encoder_fast import _fit_encoding_fast
-from ._target_encoder_fast import _fit_encoding_fast_auto_smooth
-from ..utils.validation import _check_y, check_consistent_length
-from ..utils.multiclass import type_of_target
+from ..base import OneToOneFeatureMixin, _fit_context
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.multiclass import type_of_target
+from ..utils.validation import _check_y, check_consistent_length
+from ._encoders import _BaseEncoder
+from ._target_encoder_fast import _fit_encoding_fast, _fit_encoding_fast_auto_smooth
 
 
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):

@@ -34,30 +34,36 @@ case.
 # License: BSD 3 clause
 
 import array
-from numbers import Integral, Real
-import numpy as np
-import warnings
-import scipy.sparse as sp
 import itertools
+import warnings
+from numbers import Integral, Real
 
-from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
-from .base import MultiOutputMixin
-from .base import MetaEstimatorMixin, is_regressor
-from .base import _fit_context
-from .preprocessing import LabelBinarizer
+import numpy as np
+import scipy.sparse as sp
+
+from .base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    MultiOutputMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+    is_regressor,
+)
 from .metrics.pairwise import pairwise_distances_argmin
+from .preprocessing import LabelBinarizer
 from .utils import check_random_state
 from .utils._param_validation import HasMethods, Interval
 from .utils._tags import _safe_tags
-from .utils.validation import _num_samples
-from .utils.validation import check_is_fitted
+from .utils.metaestimators import _safe_split, available_if
 from .utils.multiclass import (
     _check_partial_fit_first_call,
-    check_classification_targets,
     _ovr_decision_function,
+    check_classification_targets,
 )
-from .utils.metaestimators import _safe_split, available_if
-from .utils.parallel import delayed, Parallel
+from .utils.parallel import Parallel, delayed
+from .utils.validation import _num_samples, check_is_fitted
 
 __all__ = [
     "OneVsRestClassifier",

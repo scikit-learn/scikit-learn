@@ -1,29 +1,29 @@
-from os import environ
-from functools import wraps
 import platform
 import sys
 from contextlib import suppress
+from functools import wraps
+from os import environ
 from unittest import SkipTest
 
 import joblib
-import pytest
 import numpy as np
-from threadpoolctl import threadpool_limits
+import pytest
 from _pytest.doctest import DoctestItem
+from threadpoolctl import threadpool_limits
 
-from sklearn.utils import _IS_32BIT
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
-from sklearn.utils.fixes import sp_version
-from sklearn.utils.fixes import parse_version
-from sklearn.datasets import fetch_20newsgroups
-from sklearn.datasets import fetch_20newsgroups_vectorized
-from sklearn.datasets import fetch_california_housing
-from sklearn.datasets import fetch_covtype
-from sklearn.datasets import fetch_kddcup99
-from sklearn.datasets import fetch_olivetti_faces
-from sklearn.datasets import fetch_rcv1
+from sklearn.datasets import (
+    fetch_20newsgroups,
+    fetch_20newsgroups_vectorized,
+    fetch_california_housing,
+    fetch_covtype,
+    fetch_kddcup99,
+    fetch_olivetti_faces,
+    fetch_rcv1,
+)
 from sklearn.tests import random_seed
-
+from sklearn.utils import _IS_32BIT
+from sklearn.utils.fixes import parse_version, sp_version
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
