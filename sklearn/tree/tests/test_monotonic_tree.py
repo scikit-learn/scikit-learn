@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import scipy.sparse
 
 from sklearn.datasets import make_classification, make_regression
 from sklearn.tree import (
@@ -28,9 +29,10 @@ TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [
 
 
 @pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
-@pytest.mark.parametrize("depth_first", (True, False))
+@pytest.mark.parametrize("depth_first_builder", (True, False))
+@pytest.mark.parametrize("sparse_splitter", (True, False))
 def test_montonic_constraints_classifications(
-    TreeClassifier, depth_first, global_random_seed
+    TreeClassifier, depth_first_builder, sparse_splitter, global_random_seed
 ):
     n_samples = 1000
     n_samples_train = 900
@@ -55,7 +57,7 @@ def test_montonic_constraints_classifications(
     monotonic_cst[0] = 1
     monotonic_cst[1] = -1
 
-    if depth_first:
+    if depth_first_builder:
         est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst)
     else:
         est = TreeClassifier(
@@ -67,6 +69,8 @@ def test_montonic_constraints_classifications(
         est.set_params(**{"random_state": global_random_seed})
     if hasattr(est, "n_estimators"):
         est.set_params(**{"n_estimators": 5})
+    if sparse_splitter:
+        X_train = scipy.sparse.csc_matrix(X_train)
     est.fit(X_train, y_train)
     y = est.predict_proba(X_test)[:, 1]
 
@@ -80,9 +84,10 @@ def test_montonic_constraints_classifications(
 
 
 @pytest.mark.parametrize("TreeRegressor", TREE_BASED_REGRESSOR_CLASSES)
-@pytest.mark.parametrize("depth_first", (True, False))
+@pytest.mark.parametrize("depth_first_builder", (True, False))
+@pytest.mark.parametrize("sparse_splitter", (True, False))
 def test_montonic_constraints_regressions(
-    TreeRegressor, depth_first, global_random_seed
+    TreeRegressor, depth_first_builder, sparse_splitter, global_random_seed
 ):
     n_samples = 1000
     n_samples_train = 900
@@ -106,7 +111,7 @@ def test_montonic_constraints_regressions(
     monotonic_cst[0] = 1
     monotonic_cst[1] = -1
 
-    if depth_first:
+    if depth_first_builder:
         est = TreeRegressor(max_depth=None, monotonic_cst=monotonic_cst)
     else:
         est = TreeRegressor(
@@ -118,6 +123,8 @@ def test_montonic_constraints_regressions(
         est.set_params(random_state=global_random_seed)
     if hasattr(est, "n_estimators"):
         est.set_params(**{"n_estimators": 5})
+    if sparse_splitter:
+        X_train = scipy.sparse.csc_matrix(X_train)
     est.fit(X_train, y_train)
     y = est.predict(X_test)
     # Monotonic increase constraint
