@@ -460,6 +460,11 @@ Changelog
   estimators consistent with the rest of estimators.
   :pr:`25697` by :user:`John Pangas <jpangas>`.
 
+- |Fix| Fix a crash whell calling `.fit` on
+  :class:`linear_model.LogisticRegression(solver="newton-cholesky", max_iter=0)`
+  to inspect the state of the model prior to the first parameter update.
+  :pr:`` by :user:`Olivier Grisel <ogrisel>`.
+
 :mod:`sklearn.manifold`
 .......................
 
