@@ -28,6 +28,10 @@ def default_solver():
     return "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
 
 
+@pytest.mark.skipif(
+    sp_version < parse_version("1.11.0"),
+    reason="interior-point solver is not available in SciPy 1.11",
+)
 @pytest.mark.parametrize("solver", ["interior-point", "revised simplex"])
 def test_incompatible_solver_for_sparse_input(X_y_data, solver):
     X, y = X_y_data
@@ -237,6 +241,10 @@ def test_equivariance(quantile, default_solver):
     assert_allclose(model2.coef_, np.linalg.solve(A, model1.coef_), rtol=1e-5)
 
 
+@pytest.mark.skipif(
+    sp_version < parse_version("1.11.0"),
+    reason="interior-point solver is not available in SciPy 1.11",
+)
 @pytest.mark.filterwarnings("ignore:`method='interior-point'` is deprecated")
 def test_linprog_failure():
     """Test that linprog fails."""
@@ -280,6 +288,10 @@ def test_sparse_input(sparse_format, solver, fit_intercept, default_solver):
 
 
 # TODO (1.4): remove this test in 1.4
+@pytest.mark.skipif(
+    sp_version < parse_version("1.11.0"),
+    reason="interior-point solver is not available in SciPy 1.11",
+)
 def test_warning_new_default(X_y_data):
     """Check that we warn about the new default solver."""
     X, y = X_y_data
