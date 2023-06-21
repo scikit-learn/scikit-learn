@@ -15,23 +15,21 @@ libsvm command line programs.
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from contextlib import closing
-import io
 import os.path
+from contextlib import closing
+from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
-from numbers import Integral
 
 from .. import __version__
-
-from ..utils import check_array, IS_PYPY
-from ..utils._param_validation import validate_params, HasMethods, Interval, StrOptions
+from ..utils import IS_PYPY, check_array
+from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
 
 if not IS_PYPY:
     from ._svmlight_format_fast import (
-        _load_svmlight_file,
         _dump_svmlight_file,
+        _load_svmlight_file,
     )
 else:
 
@@ -203,7 +201,7 @@ def load_svmlight_file(
 
 def _gen_open(f):
     if isinstance(f, int):  # file descriptor
-        return io.open(f, "rb", closefd=False)
+        return open(f, "rb", closefd=False)
     elif isinstance(f, os.PathLike):
         f = os.fspath(f)
     elif not isinstance(f, str):

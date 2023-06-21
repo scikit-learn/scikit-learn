@@ -35,7 +35,7 @@ jobs:
     - bash: |
         source build_tools/shared.sh
         # Include pytest compatibility with mypy
-        pip install pytest flake8 $(get_dep mypy min) $(get_dep black min) cython-lint
+        pip install pytest ruff $(get_dep mypy min) $(get_dep black min) cython-lint
       displayName: Install linters
     - bash: |
         ./build_tools/linting.sh
@@ -71,7 +71,7 @@ jobs:
   #
   # The nogil build relies on a dedicated PyPI-style index to install patched
   # versions of NumPy, SciPy and Cython maintained by @colesbury and that
-  # include specifc fixes to make them run correctly without relying on the GIL.
+  # include specific fixes to make them run correctly without relying on the GIL.
   #
   # The goal of this CI entry is to make sure that we do not introduce any
   # dependency on the GIL in scikit-learn itself. An auxiliary goal is to early

@@ -2,37 +2,36 @@
 import re
 import sys
 import warnings
+from io import StringIO
 
 import numpy as np
+import pytest
 from scipy import sparse as sp
 
-import pytest
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils.fixes import threadpool_limits
 from sklearn.base import clone
-from sklearn.exceptions import ConvergenceWarning
-
-from sklearn.utils.extmath import row_norms
-from sklearn.metrics import pairwise_distances
-from sklearn.metrics import pairwise_distances_argmin
-from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.metrics.cluster import v_measure_score
-from sklearn.cluster import KMeans, k_means, kmeans_plusplus
-from sklearn.cluster import MiniBatchKMeans
-from sklearn.cluster._kmeans import _labels_inertia
-from sklearn.cluster._kmeans import _mini_batch_step
-from sklearn.cluster._k_means_common import _relocate_empty_clusters_dense
-from sklearn.cluster._k_means_common import _relocate_empty_clusters_sparse
-from sklearn.cluster._k_means_common import _euclidean_dense_dense_wrapper
-from sklearn.cluster._k_means_common import _euclidean_sparse_dense_wrapper
-from sklearn.cluster._k_means_common import _inertia_dense
-from sklearn.cluster._k_means_common import _inertia_sparse
-from sklearn.cluster._k_means_common import _is_same_clustering
-from sklearn.utils._testing import create_memmap_backed_data
+from sklearn.cluster import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
+from sklearn.cluster._k_means_common import (
+    _euclidean_dense_dense_wrapper,
+    _euclidean_sparse_dense_wrapper,
+    _inertia_dense,
+    _inertia_sparse,
+    _is_same_clustering,
+    _relocate_empty_clusters_dense,
+    _relocate_empty_clusters_sparse,
+)
+from sklearn.cluster._kmeans import _labels_inertia, _mini_batch_step
 from sklearn.datasets import make_blobs
-from io import StringIO
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import pairwise_distances, pairwise_distances_argmin
+from sklearn.metrics.cluster import v_measure_score
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_equal,
+    create_memmap_backed_data,
+)
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.fixes import threadpool_limits
 
 # TODO(1.4): Remove
 msg = (

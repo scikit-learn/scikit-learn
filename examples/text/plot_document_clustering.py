@@ -46,6 +46,7 @@ For document analysis via a supervised learning approach, see the example script
 # strip those features and have a more sensible clustering problem.
 
 import numpy as np
+
 from sklearn.datasets import fetch_20newsgroups
 
 categories = [
@@ -104,8 +105,9 @@ print(f"{len(dataset.data)} documents - {true_k} categories")
 # For more reference, see :ref:`clustering_evaluation`.
 
 from collections import defaultdict
-from sklearn import metrics
 from time import time
+
+from sklearn import metrics
 
 evaluations = []
 evaluations_std = []
@@ -197,7 +199,7 @@ print(f"n_samples: {X_tfidf.shape[0]}, n_features: {X_tfidf.shape[1]}")
 # `max_df=0.5`) and terms that are not present in at least 5 documents (set by
 # `min_df=5`), the resulting number of unique terms `n_features` is around
 # 8,000. We can additionally quantify the sparsity of the `X_tfidf` matrix as
-# the fraction of non-zero entries devided by the total number of elements.
+# the fraction of non-zero entries divided by the total number of elements.
 
 print(f"{X_tfidf.nnz / np.prod(X_tfidf.shape):.3f}")
 
@@ -230,7 +232,7 @@ for seed in range(5):
         random_state=seed,
     ).fit(X_tfidf)
     cluster_ids, cluster_sizes = np.unique(kmeans.labels_, return_counts=True)
-    print(f"Number of elements asigned to each cluster: {cluster_sizes}")
+    print(f"Number of elements assigned to each cluster: {cluster_sizes}")
 print()
 print(
     "True number of documents in each category according to the class labels: "
@@ -276,7 +278,6 @@ fit_and_evaluate(kmeans, X_tfidf, name="KMeans\non tf-idf vectors")
 from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
-
 
 lsa = make_pipeline(TruncatedSVD(n_components=100), Normalizer(copy=False))
 t0 = time()
@@ -353,8 +354,7 @@ for i in range(true_k):
 # case we also add LSA to the pipeline to reduce the dimension and sparcity of
 # the hashed vector space.
 
-from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import HashingVectorizer, TfidfTransformer
 
 lsa_vectorizer = make_pipeline(
     HashingVectorizer(stop_words="english", n_features=50_000),
@@ -394,8 +394,8 @@ fit_and_evaluate(
 # Clustering evaluation summary
 # ==============================
 
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 
 fig, (ax0, ax1) = plt.subplots(ncols=2, figsize=(16, 6), sharey=True)
 

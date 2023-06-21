@@ -1,20 +1,17 @@
-from abc import ABC
-from abc import abstractmethod
-from collections.abc import Iterable
 import functools
 import math
-from inspect import signature
-from numbers import Integral
-from numbers import Real
 import operator
 import re
 import warnings
+from abc import ABC, abstractmethod
+from collections.abc import Iterable
+from inspect import signature
+from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import issparse
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 
-from .._config import get_config, config_context
+from .._config import config_context, get_config
 from .validation import _is_arraylike_not_scalar
 
 
