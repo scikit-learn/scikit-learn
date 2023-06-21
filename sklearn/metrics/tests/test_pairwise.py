@@ -3,10 +3,15 @@ from types import GeneratorType
 
 import numpy as np
 from numpy import linalg
-
-from scipy.sparse import dok_matrix, csr_matrix, issparse
-from scipy.spatial.distance import cosine, cityblock, minkowski
-from scipy.spatial.distance import cdist, pdist, squareform
+from scipy.sparse import csr_matrix, dok_matrix, issparse
+from scipy.spatial.distance import (
+    cdist,
+    cityblock,
+    cosine,
+    minkowski,
+    pdist,
+    squareform,
+)
 
 try:
     from scipy.spatial.distance import wminkowski
@@ -15,48 +20,50 @@ except ImportError:
     # should be used instead.
     from scipy.spatial.distance import minkowski as wminkowski
 
-from sklearn.utils.fixes import sp_version, parse_version
-from sklearn.utils.parallel import delayed, Parallel
-
 import pytest
 
 from sklearn import config_context
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.metrics.pairwise import nan_euclidean_distances
-from sklearn.metrics.pairwise import manhattan_distances
-from sklearn.metrics.pairwise import haversine_distances
-from sklearn.metrics.pairwise import linear_kernel
-from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
-from sklearn.metrics.pairwise import polynomial_kernel
-from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.metrics.pairwise import laplacian_kernel
-from sklearn.metrics.pairwise import sigmoid_kernel
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.metrics.pairwise import cosine_distances
-from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.metrics.pairwise import pairwise_distances_chunked
-from sklearn.metrics.pairwise import pairwise_distances_argmin_min
-from sklearn.metrics.pairwise import pairwise_distances_argmin
-from sklearn.metrics.pairwise import pairwise_kernels
-from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
-from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from sklearn.metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
-from sklearn.metrics.pairwise import PAIRED_DISTANCES
-from sklearn.metrics.pairwise import check_pairwise_arrays
-from sklearn.metrics.pairwise import check_paired_arrays
-from sklearn.metrics.pairwise import paired_distances
-from sklearn.metrics.pairwise import paired_euclidean_distances
-from sklearn.metrics.pairwise import paired_manhattan_distances
-from sklearn.metrics.pairwise import paired_cosine_distances
-from sklearn.metrics.pairwise import _euclidean_distances_upcast
-from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics.pairwise import (
+    PAIRED_DISTANCES,
+    PAIRWISE_BOOLEAN_FUNCTIONS,
+    PAIRWISE_DISTANCE_FUNCTIONS,
+    PAIRWISE_KERNEL_FUNCTIONS,
+    _euclidean_distances_upcast,
+    additive_chi2_kernel,
+    check_paired_arrays,
+    check_pairwise_arrays,
+    chi2_kernel,
+    cosine_distances,
+    cosine_similarity,
+    euclidean_distances,
+    haversine_distances,
+    laplacian_kernel,
+    linear_kernel,
+    manhattan_distances,
+    nan_euclidean_distances,
+    paired_cosine_distances,
+    paired_distances,
+    paired_euclidean_distances,
+    paired_manhattan_distances,
+    pairwise_distances,
+    pairwise_distances_argmin,
+    pairwise_distances_argmin_min,
+    pairwise_distances_chunked,
+    pairwise_kernels,
+    polynomial_kernel,
+    rbf_kernel,
+    sigmoid_kernel,
+)
+from sklearn.preprocessing import normalize
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
+from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.parallel import Parallel, delayed
 
 
 def test_pairwise_distances(global_dtype):

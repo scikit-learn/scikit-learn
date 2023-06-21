@@ -87,11 +87,11 @@
 
 
 from ._dispatcher import (
-    BaseDistancesReductionDispatcher,
     ArgKmin,
     PairwiseDistances,
     RadiusNeighbors,
     ArgKminClassMode,
+    BaseDistancesReductionDispatcher,
     sqeuclidean_row_norms,
 )
 

@@ -24,29 +24,30 @@ uncompressed the train set is 52 MB and the test set is 34 MB.
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-import os
-import logging
-import tarfile
-import pickle
-import shutil
-import re
 import codecs
+import logging
+import os
+import pickle
+import re
+import shutil
+import tarfile
 
+import joblib
 import numpy as np
 import scipy.sparse as sp
-import joblib
 
-from . import get_data_home
-from . import load_files
-from ._base import _convert_data_dataframe
-from ._base import _pkl_filepath
-from ._base import _fetch_remote
-from ._base import RemoteFileMetadata
-from ._base import load_descr
-from ..feature_extraction.text import CountVectorizer
 from .. import preprocessing
-from ..utils import check_random_state, Bunch
+from ..feature_extraction.text import CountVectorizer
+from ..utils import Bunch, check_random_state
 from ..utils._param_validation import StrOptions, validate_params
+from . import get_data_home, load_files
+from ._base import (
+    RemoteFileMetadata,
+    _convert_data_dataframe,
+    _fetch_remote,
+    _pkl_filepath,
+    load_descr,
+)
 
 logger = logging.getLogger(__name__)
 

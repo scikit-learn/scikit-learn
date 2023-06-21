@@ -1,18 +1,16 @@
 from abc import abstractmethod
-
-import numpy as np
-
 from typing import List
 
-from scipy.sparse import isspmatrix_csr, issparse
+import numpy as np
+from scipy.sparse import issparse, isspmatrix_csr
 
+from ... import get_config
 from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING64
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 
-from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
 from ._argkmin import (
-    ArgKmin64,
     ArgKmin32,
+    ArgKmin64,
 )
 
 from ._pairwise_distances import (
@@ -21,16 +19,14 @@ from ._pairwise_distances import (
 )
 
 from ._argkmin_classmode import (
-    ArgKminClassMode64,
     ArgKminClassMode32,
+    ArgKminClassMode64,
 )
-
+from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
 from ._radius_neighbors import (
-    RadiusNeighbors64,
     RadiusNeighbors32,
+    RadiusNeighbors64,
 )
-
-from ... import get_config
 
 
 def sqeuclidean_row_norms(X, num_threads):
