@@ -160,13 +160,13 @@ def get_message(log_file, repo, pr_number, sha, run_id, details):
     if not message:
         # no issues detected, so this script "fails"
         return (
-            "## Linting Passed\n"
+            "## ✔️ Linting Passed\n"
             "All linting checks passed. Your pull request is in excellent shape! ☀️"
             + commit_link
         )
 
     message = (
-        "## Linting issues\n\n"
+        "## ❌ Linting issues\n\n"
         "This PR is introducing linting issues. Here's a summary of the issues. "
         "Note that you can avoid having linting issues by enabling `pre-commit` "
         "hooks. Instructions to enable them can be found [here]("
