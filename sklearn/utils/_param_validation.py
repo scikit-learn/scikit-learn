@@ -314,7 +314,9 @@ class _NanConstraint(_Constraint):
     """Constraint representing the indicator `np.nan`."""
 
     def is_satisfied_by(self, val):
-        return isinstance(val, Real) and math.isnan(val)
+        return (
+            not isinstance(val, Integral) and isinstance(val, Real) and math.isnan(val)
+        )
 
     def __str__(self):
         return "numpy.nan"
