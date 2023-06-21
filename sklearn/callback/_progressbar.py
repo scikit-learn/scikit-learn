@@ -44,7 +44,9 @@ class ProgressBar(BaseCallback):
 
     def __init__(self, backend="rich", max_depth_show=None, max_depth_keep=None):
         if backend not in ("rich", "tqdm"):
-            raise ValueError(f"backend should be 'rich' or 'tqdm', got {self.backend} instead.")
+            raise ValueError(
+                f"backend should be 'rich' or 'tqdm', got {self.backend} instead."
+            )
         _check_backend_support(backend, caller_name="Progressbar")
         self.backend = backend
 
@@ -96,10 +98,12 @@ class ProgressBar(BaseCallback):
 
 try:
     from rich.progress import Progress
+
     class _Progress(Progress):
         def get_renderables(self):
             table = self.make_tasks_table(getattr(self, "_ordered_tasks", []))
             yield table
+
 except:
     pass
 

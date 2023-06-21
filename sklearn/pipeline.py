@@ -34,7 +34,6 @@ from .utils._set_output import _safe_set_output, _get_output_config
 from .utils.parallel import delayed, Parallel
 from .exceptions import NotFittedError
 from .callback._base import _eval_callbacks_on_fit_iter_end
-from .callback._base import callback_aware
 
 
 __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
@@ -357,7 +356,7 @@ class Pipeline(_BaseComposition):
         # Setup the memory
         memory = check_memory(self.memory)
 
-        root = self._eval_callbacks_on_fit_begin(
+        root, *_ = self._eval_callbacks_on_fit_begin(
             levels=[
                 {"descr": "fit", "max_iter": len(self.steps)},
                 {"descr": "step", "max_iter": None},
@@ -405,7 +404,6 @@ class Pipeline(_BaseComposition):
 
         return X
 
-    @callback_aware
     @_fit_context(
         # estimators in Pipeline.steps are not validated yet
         prefer_skip_nested_validation=False

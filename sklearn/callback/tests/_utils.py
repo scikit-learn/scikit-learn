@@ -21,6 +21,7 @@ class TestingCallback(BaseCallback):
 class TestingAutoPropagatedCallback(TestingCallback):
     auto_propagate = True
 
+
 class NotValidCallback:
     def on_fit_begin(self, estimator, *, X=None, y=None):
         pass
@@ -37,7 +38,7 @@ class Estimator(BaseEstimator):
         self.max_iter = max_iter
 
     def fit(self, X, y):
-        root = self._eval_callbacks_on_fit_begin(
+        root, X, y, X_val, y_val = self._eval_callbacks_on_fit_begin(
             levels=[
                 {"descr": "fit", "max_iter": self.max_iter},
                 {"descr": "iter", "max_iter": None},
@@ -54,6 +55,7 @@ class Estimator(BaseEstimator):
                     self._from_reconstruction_attributes,
                     reconstruction_attributes=lambda: {"n_iter_": i + 1},
                 ),
+                data={"X": X, "y": y, "X_val": X_val, "y_val": y_val"},
             ):
                 break
 
@@ -62,6 +64,9 @@ class Estimator(BaseEstimator):
         self._eval_callbacks_on_fit_end()
 
         return self
+
+    def objective_function(self, X, y=None):
+        return 0, 0, 0
 
 
 class MetaEstimator(BaseEstimator):
@@ -75,7 +80,7 @@ class MetaEstimator(BaseEstimator):
         self.prefer = prefer
 
     def fit(self, X, y):
-        root = self._eval_callbacks_on_fit_begin(
+        root, *_ = self._eval_callbacks_on_fit_begin(
             levels=[
                 {"descr": "fit", "max_iter": self.n_outer},
                 {"descr": "outer", "max_iter": self.n_inner},
@@ -93,7 +98,7 @@ class MetaEstimator(BaseEstimator):
         self._eval_callbacks_on_fit_end()
 
         return self
-    
+
     def _func(self, estimator, X, y, parent_node, i):
         for j, node in enumerate(parent_node.children):
             est = clone(estimator)

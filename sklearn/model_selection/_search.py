@@ -831,7 +831,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             all_out = []
             all_more_results = defaultdict(list)
 
-            def evaluate_candidates(candidate_params, cv=None, more_results=None, parent_node=None):
+            def evaluate_candidates(
+                candidate_params, cv=None, more_results=None, parent_node=None
+            ):
                 cv = cv or cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
@@ -863,8 +865,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         caller=self,
                         node=node,
                     )
-                    for ((cand_idx, parameters), (split_idx, (train, test))), node in zip(product(
-                        enumerate(candidate_params), enumerate(cv.split(X, y, groups))), nodes)
+                    for (
+                        (cand_idx, parameters),
+                        (split_idx, (train, test)),
+                    ), node in zip(
+                        product(
+                            enumerate(candidate_params),
+                            enumerate(cv.split(X, y, groups)),
+                        ),
+                        nodes,
+                    )
                 )
 
                 if len(out) < 1:
@@ -1476,6 +1486,7 @@ class GridSearchCV(BaseSearchCV):
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
         evaluate_candidates(self._param_grid, parent_node=self._computation_tree.root)
+
 
 class RandomizedSearchCV(BaseSearchCV):
     """Randomized search on hyper parameters.

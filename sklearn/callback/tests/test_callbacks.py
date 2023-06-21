@@ -20,13 +20,22 @@ X = np.zeros((100, 3))
 y = np.zeros(100, dtype=int)
 
 
-@pytest.mark.parametrize("Callback", [ConvergenceMonitor, EarlyStopping, ProgressBar, Snapshot, TextVerbose,])
+@pytest.mark.parametrize(
+    "Callback",
+    [
+        ConvergenceMonitor,
+        EarlyStopping,
+        ProgressBar,
+        Snapshot,
+        TextVerbose,
+    ],
+)
 def test_callback_doesnt_hold_ref_to_estimator(Callback):
     callback = Callback()
     est = Estimator()
     callback_refcount = sys.getrefcount(callback)
     est_refcount = sys.getrefcount(est)
-    
+
     est._set_callbacks(callbacks=callback)
     est.fit(X, y)
     # estimator has a ref on the callback but the callback has no ref to the estimator

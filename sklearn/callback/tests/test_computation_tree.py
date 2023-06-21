@@ -87,7 +87,10 @@ def test_get_ancestors():
 
     ancestors = node.get_ancestors(include_ancestor_trees=False)
     assert ancestors == [
-        node, node.parent, node.parent.parent, node.parent.parent.parent
+        node,
+        node.parent,
+        node.parent.parent,
+        node.parent.parent.parent,
     ]
     assert [n.idx for n in ancestors] == expected_node_indices
     assert computation_tree.root in ancestors

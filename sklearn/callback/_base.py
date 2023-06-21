@@ -30,9 +30,9 @@ def _eval_callbacks_on_fit_iter_end(**kwargs):
 
     estimator._computation_tree._tree_status[node.tree_status_idx] = True
 
-    # stopping_criterion and reconstruction_attributes can be costly to compute. They
-    # are passed as lambdas for lazy evaluation. We only actually compute them if a
-    # callback requests it.
+    # stopping_criterion and reconstruction_attributes can be costly to compute.
+    # They are passed as lambdas for lazy evaluation. We only actually
+    # compute them if a callback requests it.
     if any(cb.request_stopping_criterion for cb in estimator._callbacks):
         kwarg = kwargs.pop("stopping_criterion", lambda: None)()
         kwargs["stopping_criterion"] = kwarg
@@ -51,7 +51,7 @@ class BaseCallback(ABC):
     def on_fit_begin(self, estimator, *, X=None, y=None):
         """Method called at the beginning of the fit method of the estimator
 
-        Only called 
+        Only called
 
         Parameters
         ----------
@@ -141,11 +141,15 @@ class BaseCallback(ABC):
     @property
     def request_from_reconstruction_attributes(self):
         return False
+    
+    @property
+    def request_validation_split(self):
+        return False
 
     def _set_context(self, context):
         if not hasattr(self, "_callback_contexts"):
             self._callback_contexts = []
-        
+
         self._callback_contexts.append(context)
 
 
@@ -154,16 +158,3 @@ class CallbackContext:
         for callback in callbacks:
             callback._set_context(self)
         weakref.finalize(self, finalizer, finalizer_args)
-
-
-def callback_aware(fit_method):
-    """Decorator ...
-    """
-    @wraps(fit_method)
-    def inner(self, *args, **kwargs):
-        try:
-            return fit_method(self, *args, **kwargs)
-        finally:
-            self._eval_callbacks_on_fit_end()
-
-    return inner

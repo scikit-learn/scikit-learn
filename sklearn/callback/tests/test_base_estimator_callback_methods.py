@@ -10,12 +10,13 @@ from sklearn.callback.tests._utils import Estimator
 from sklearn.callback.tests._utils import MetaEstimator
 
 
-@pytest.mark.parametrize("callbacks",
+@pytest.mark.parametrize(
+    "callbacks",
     [
         TestingCallback(),
         [TestingCallback()],
         [TestingCallback(), TestingAutoPropagatedCallback()],
-    ]
+    ],
 )
 def test_set_callbacks(callbacks):
     """Sanity check for the _set_callbacks method"""
@@ -49,7 +50,7 @@ def test_propagate_callbacks():
 
     assert hasattr(sub_estimator, "_parent_ct_node")
     assert not_propagated_callback not in sub_estimator._callbacks
-    assert propagated_callback in sub_estimator._callbacks 
+    assert propagated_callback in sub_estimator._callbacks
 
 
 def test_propagate_callback_no_callback():

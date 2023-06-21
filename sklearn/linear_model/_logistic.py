@@ -449,9 +449,7 @@ def _logistic_regression_path(
         node = (
             None
             if parent_node is None
-            else parent_node
-            if len(Cs) == 1
-            else parent_node.children
+            else parent_node if len(Cs) == 1 else parent_node.children
         )
 
         if solver == "lbfgs":
@@ -1324,7 +1322,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 {"descr": "class", "max_iter": self.max_iter},
                 {"descr": "iter", "max_iter": None},
             ]
-        root = self._eval_callbacks_on_fit_begin(levels=levels, X=X, y=y)
+        root, X, y, X_val, y_val = self._eval_callbacks_on_fit_begin(
+            levels=levels, X=X, y=y
+        )
 
         # distinguish between multinomial and ovr
         nodes = [root] if len(classes_) == 1 else root.children

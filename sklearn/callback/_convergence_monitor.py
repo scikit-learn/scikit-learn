@@ -33,16 +33,19 @@ class ConvergenceMonitor(BaseCallback):
 
     request_reconstruction_attributes = True
 
-    def __init__(self, *, monitor="objective_function", X_val=None, y_val=None):
+    def __init__(
+        self,
+        *,
+        monitor="objective_function",
+        on="val",
+        higher_is_better=False,
+    ):
         if monitor == "objective_function":
             self._monitor = "objective_function"
         else:
             self._monitor = getattr(metrics, monitor, None)
             if self._monitor is None:
                 raise ValueError(f"unknown metric {monitor}")
-
-        self.X_val = X_val
-        self.y_val = y_val
 
         self._data_file = Path(mkdtemp()) / "convergence_monitor.csv"
 

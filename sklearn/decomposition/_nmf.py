@@ -36,7 +36,6 @@ from ..utils._param_validation import (
 )
 from ..utils import metadata_routing
 from ..callback._base import _eval_callbacks_on_fit_iter_end
-from ..callback._base import callback_aware
 
 
 EPSILON = np.finfo(np.float32).eps
@@ -403,6 +402,7 @@ def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle, random_state):
 
 def _fit_coordinate_descent(
     X,
+    X_val,
     W,
     H,
     tol=1e-4,
@@ -428,6 +428,9 @@ def _fit_coordinate_descent(
     ----------
     X : array-like of shape (n_samples, n_features)
         Constant matrix.
+
+    X_val : array-like of shape (n_samples_val, n_features)
+        Constant validation matrix.
 
     W : array-like of shape (n_samples, n_components)
         Initial guess for the solution.
@@ -469,6 +472,12 @@ def _fit_coordinate_descent(
         results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    estimator : estimator instance, default=None
+        The estimator calling this function. Used by callbacks.
+
+    parent_node : ComputationNode instance, default=None
+        The parent node of the current node. Used by callbacks.
+
     Returns
     -------
     W : ndarray of shape (n_samples, n_components)
@@ -490,6 +499,8 @@ def _fit_coordinate_descent(
     # so W and Ht are both in C order in memory
     Ht = check_array(H.T, order="C")
     X = check_array(X, accept_sparse="csr")
+    if X_val is not None:
+        X_val = check_array(X_val, accept_sparse="csr")
 
     rng = check_random_state(random_state)
 
@@ -527,6 +538,7 @@ def _fit_coordinate_descent(
                     "reconstruction_err_": _beta_divergence(X, W, Ht.T, 2, True),
                 },
             ),
+            data={"X": X, "y": None, "X_val": X_val, "y_val": None},
         ):
             break
 
@@ -748,6 +760,7 @@ def _multiplicative_update_h(
 
 def _fit_multiplicative_update(
     X,
+    X_val,
     W,
     H,
     beta_loss="frobenius",
@@ -773,6 +786,9 @@ def _fit_multiplicative_update(
     X : array-like of shape (n_samples, n_features)
         Constant input matrix.
 
+    X_val : array-like of shape (n_samples_val, n_features)
+        Constant validation matrix.
+        
     W : array-like of shape (n_samples, n_components)
         Initial guess for the solution.
 
@@ -812,6 +828,12 @@ def _fit_multiplicative_update(
 
     verbose : int, default=0
         The verbosity level.
+
+    estimator : estimator instance, default=None
+        The estimator calling this function. Used by callbacks.
+
+    parent_node : ComputationNode instance, default=None
+        The parent node of the current node. Used by callbacks.
 
     Returns
     -------
@@ -909,6 +931,7 @@ def _fit_multiplicative_update(
                     "reconstruction_err_": _beta_divergence(X, W, H, beta_loss, True),
                 },
             ),
+            data={"X": X, "y": None, "X_val": X_val, "y_val": None},
         ):
             break
 
@@ -1340,6 +1363,28 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
         check_is_fitted(self)
         return Xt @ self.components_
+    
+    def objective_function(self, X, y=None, *, W=None, H=None, normalize=False):
+        if W is None:
+            W = self.transform(X)
+        if H is None:
+            H = self.components_
+
+        data_fit = _beta_divergence(X, W, H, self._beta_loss)
+
+        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._compute_regularization(X)
+        penalization = (
+            l1_reg_W * W.sum()
+            + l1_reg_H * H.sum()
+            + l2_reg_W * (W**2).sum()
+            + l2_reg_H * (H**2).sum()
+        )
+
+        if normalize:
+            data_fit /= X.shape[0]
+            penalization /= X.shape[0]
+
+        return data_fit + penalization, data_fit, penalization
 
     @property
     def _n_features_out(self):
@@ -1617,7 +1662,6 @@ class NMF(_BaseNMF):
 
         return self
 
-    @callback_aware
     @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
@@ -1650,7 +1694,7 @@ class NMF(_BaseNMF):
             X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
 
-        root = self._eval_callbacks_on_fit_begin(
+        root, X, _, X_val, _ = self._eval_callbacks_on_fit_begin(
             levels=[
                 {"descr": "fit", "max_iter": self.max_iter},
                 {"descr": "iter", "max_iter": None},
@@ -1658,7 +1702,7 @@ class NMF(_BaseNMF):
             X=X,
         )
 
-        W, H, n_iter = self._fit_transform(X, W=W, H=H, parent_node=root)
+        W, H, n_iter = self._fit_transform(X, X_val, W=W, H=H, parent_node=root)
 
         self.reconstruction_err_ = _beta_divergence(
             X, W, H, self._beta_loss, square_root=True
@@ -1672,7 +1716,7 @@ class NMF(_BaseNMF):
         return W
 
     def _fit_transform(
-        self, X, y=None, W=None, H=None, update_H=True, parent_node=None
+        self, X, X_val=None, W=None, H=None, update_H=True, parent_node=None
     ):
         """Learn a NMF model for the data X and returns the transformed data.
 
@@ -1733,6 +1777,7 @@ class NMF(_BaseNMF):
         if self.solver == "cd":
             W, H, n_iter = _fit_coordinate_descent(
                 X,
+                X_val,
                 W,
                 H,
                 self.tol,
@@ -1751,6 +1796,7 @@ class NMF(_BaseNMF):
         elif self.solver == "mu":
             W, H, n_iter, *_ = _fit_multiplicative_update(
                 X,
+                X_val,
                 W,
                 H,
                 self._beta_loss,
@@ -2438,28 +2484,6 @@ class MiniBatchNMF(_BaseNMF):
         self.n_steps_ += 1
 
         return self
-
-    def objective_function(self, X, y=None, *, W=None, H=None, normalize=False):
-        if W is None:
-            W = self.transform(X)
-        if H is None:
-            H = self.components_
-
-        data_fit = _beta_divergence(X, W, H, self._beta_loss)
-
-        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X)
-        penalization = (
-            l1_reg_W * W.sum()
-            + l1_reg_H * H.sum()
-            + l2_reg_W * (W ** 2).sum()
-            + l2_reg_H * (H ** 2).sum()
-        )
-
-        if normalize:
-            data_fit /= X.shape[0]
-            penalization /= X.shape[0]
-
-        return data_fit + penalization, data_fit, penalization
 
     @property
     def _n_features_out(self):

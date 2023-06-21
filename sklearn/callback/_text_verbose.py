@@ -6,7 +6,6 @@ from . import BaseCallback
 
 
 class TextVerbose(BaseCallback):
-
     auto_propagate = True
     request_stopping_criterion = True
 

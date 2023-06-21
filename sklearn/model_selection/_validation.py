@@ -723,7 +723,7 @@ def _fit_and_score(
             cloned_parameters[k] = clone(v, safe=False)
 
         estimator = estimator.set_params(**cloned_parameters)
-   
+
     if caller is not None:
         caller._propagate_callbacks(estimator, parent_node=node)
 
