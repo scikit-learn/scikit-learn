@@ -69,7 +69,6 @@ import sklearn
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 
 from sklearn.utils._testing import TempMemmap
-from sklearn.utils._testing import generate_dataframe_from_lib
 from sklearn.utils._testing import skip_if_array_api_compat_not_configured
 
 
@@ -1697,25 +1696,42 @@ def test_get_feature_names_pandas():
 
 
 @pytest.mark.parametrize(
-    "dataframe_lib_str, minversion",
-    [("pyarrow", "12.0.0"), ("pandas", "1.5.0"), ("polars", "0.18.2")],
+    "constructor_name, minversion",
+    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
 )
-def test_get_feature_names_dataframe_protocol(dataframe_lib_str, minversion):
+def test_get_feature_names_dataframe_protocol(constructor_name, minversion):
     """Uses the dataframe exchange protocol to get feature names."""
-    dataframe_lib = pytest.importorskip(dataframe_lib_str, minversion=minversion)
-    data = {"col_0": [1, 4], "col_1": [2, 3], "col_2": [3, 6]}
-    df = generate_dataframe_from_lib(dataframe_lib, data)
+    data = [[1, 4, 2], [3, 3, 6]]
+    columns = ["col_0", "col_1", "col_2"]
+    df = _convert_container(
+        data, constructor_name, columns_name=columns, minversion=minversion
+    )
     feature_names = _get_feature_names(df)
 
-    assert_array_equal(feature_names, ["col_0", "col_1", "col_2"])
+    assert_array_equal(feature_names, columns)
+
+
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+)
+def test_is_pandas_df_other_libraries(constructor_name, minversion):
+    df = _convert_container(
+        [[1, 4, 2], [3, 3, 6]],
+        constructor_name,
+        minversion=minversion,
+    )
+    if constructor_name in ("pyarrow", "polars"):
+        assert not _is_pandas_df(df)
+    else:
+        assert _is_pandas_df(df)
 
 
 def test_is_pandas_df():
-    """Check behavior of is_pandas_df."""
+    """Check behavior of is_pandas_df when pandas is installed."""
     pd = pytest.importorskip("pandas")
-    df = pd.DataFrame({"a": [1, 2, 3]})
+    df = pd.DataFrame([[1, 2, 3]])
     assert _is_pandas_df(df)
-
     assert not _is_pandas_df(np.asarray([1, 2, 3]))
     assert not _is_pandas_df(1)
 

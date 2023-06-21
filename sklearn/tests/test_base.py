@@ -12,7 +12,7 @@ import sklearn
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import generate_dataframe_from_lib
+from sklearn.utils._testing import _convert_container
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
@@ -820,19 +820,20 @@ def test_estimator_getstate_using_slots_error_message():
 
 
 @pytest.mark.parametrize(
-    "dataframe_lib_str, minversion",
+    "constructor_name, minversion",
     [
-        ("pandas", "1.5.0"),
+        ("dataframe", "1.5.0"),
         ("pyarrow", "12.0.0"),
         ("polars", "0.18.2"),
     ],
 )
-def test_dataframe_protocol(dataframe_lib_str, minversion):
+def test_dataframe_protocol(constructor_name, minversion):
     """Uses the dataframe exchange protocol to get feature names."""
-    dataframe_lib = pytest.importorskip(dataframe_lib_str, minversion=minversion)
-    data = {"col_0": [1, 4], "col_1": [2, 3], "col_2": [3, 6]}
+    data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
-    df = generate_dataframe_from_lib(dataframe_lib, data)
+    df = _convert_container(
+        data, constructor_name, columns_name=columns, minversion=minversion
+    )
 
     class NoOpTransformer(TransformerMixin, BaseEstimator):
         def fit(self, X, y=None):
@@ -847,11 +848,11 @@ def test_dataframe_protocol(dataframe_lib_str, minversion):
     assert_array_equal(no_op.feature_names_in_, columns)
     X_out = no_op.transform(df)
 
-    if dataframe_lib_str != "pyarrow":
+    if constructor_name != "pyarrow":
         # pyarrow does not work with `np.asarray`
         assert_allclose(df, X_out)
 
-    data_bad = {"a": [1, 4], "b": [2, 3], "c": [3, 6]}
-    df_bad = generate_dataframe_from_lib(dataframe_lib, data_bad)
+    bad_names = ["a", "b", "c"]
+    df_bad = _convert_container(data, constructor_name, columns_name=bad_names)
     with pytest.raises(ValueError, match="The feature names should match"):
         no_op.transform(df_bad)

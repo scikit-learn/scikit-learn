@@ -800,7 +800,9 @@ def assert_run_python_script(source_code, timeout=60):
         os.unlink(source_file)
 
 
-def _convert_container(container, constructor_name, columns_name=None, dtype=None):
+def _convert_container(
+    container, constructor_name, columns_name=None, dtype=None, minversion=None
+):
     """Convert a given container to a specific array-like with a dtype.
 
     Parameters
@@ -816,6 +818,8 @@ def _convert_container(container, constructor_name, columns_name=None, dtype=Non
     dtype : dtype, default=None
         Force the dtype of the container. Does not apply to `"slice"`
         container.
+    minversion : str, default=None
+        Minimum version for package to install.
 
     Returns
     -------
@@ -836,13 +840,23 @@ def _convert_container(container, constructor_name, columns_name=None, dtype=Non
     elif constructor_name == "sparse":
         return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == "dataframe":
-        pd = pytest.importorskip("pandas")
+        pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
+    elif constructor_name == "pyarrow":
+        pa = pytest.importorskip("pyarrow", minversion=minversion)
+        array = np.asarray(container)
+        if columns_name is None:
+            columns_name = [f"col{i}" for i in range(array.shape[1])]
+        data = {name: array[:, i] for i, name in enumerate(columns_name)}
+        return pa.Table.from_pydict(data)
+    elif constructor_name == "polars":
+        pl = pytest.importorskip("polars", minversion=minversion)
+        return pl.DataFrame(container, schema=columns_name)
     elif constructor_name == "series":
-        pd = pytest.importorskip("pandas")
+        pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
     elif constructor_name == "index":
-        pd = pytest.importorskip("pandas")
+        pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Index(container, dtype=dtype)
     elif constructor_name == "slice":
         return slice(container[0], container[1])
@@ -1060,32 +1074,3 @@ class MinimalTransformer:
 
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X, y)
-
-
-def generate_dataframe_from_lib(dataframe_lib, data):
-    """Generate dataframe from array library with data and columns.
-
-    Parameters
-    ----------
-    dataframe_lib : module
-        Array library to generate dataframe from.
-
-    data : dict
-        Array to build dataframe from.
-
-    Returns
-    -------
-    dataframe : dataframe
-        Constructed dataframe
-    """
-    supported_arrays = ("pyarrow", "pandas", "polars")
-    df_lib_name = dataframe_lib.__name__
-
-    if df_lib_name == "pyarrow":
-        return dataframe_lib.Table.from_pydict(data)
-    elif df_lib_name == "pandas":
-        return dataframe_lib.DataFrame(data)
-    elif df_lib_name == "polars":
-        return dataframe_lib.from_dict(data)
-    else:
-        raise ValueError(f"array_lib must be in {supported_arrays}")

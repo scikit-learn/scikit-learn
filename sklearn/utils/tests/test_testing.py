@@ -26,7 +26,6 @@ from sklearn.utils._testing import (
     _convert_container,
     raises,
     assert_allclose,
-    generate_dataframe_from_lib,
 )
 
 from sklearn.tree import DecisionTreeClassifier
@@ -782,10 +781,3 @@ def test_float32_aware_assert_allclose():
     with pytest.raises(AssertionError):
         assert_allclose(np.array([1e-5], dtype=np.float32), 0.0)
     assert_allclose(np.array([1e-5], dtype=np.float32), 0.0, atol=2e-5)
-
-
-def test_generate_dataframe_from_lib_errors():
-    """Check error in generate_dataframe_from_lib."""
-    X = {"a": [1, 2, 3]}
-    with pytest.raises(ValueError, match="array_lib must be in"):
-        generate_dataframe_from_lib(np, X)
