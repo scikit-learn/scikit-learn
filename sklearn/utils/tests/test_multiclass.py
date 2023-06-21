@@ -346,44 +346,44 @@ def test_type_of_target_pandas_sparse():
         type_of_target(y)
 
 
-@pytest.mark.parametrize("use_pyarrow", [True, False])
-def test_type_of_target_pandas_nullable(use_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_type_of_target_pandas_nullable(use_pyarrow_dtypes):
     """Check that type_of_target works with pandas nullable dtypes."""
     pd = pytest.importorskip("pandas")
 
-    if use_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
 
     for dtype in ["Int32", "Float32"]:
         y_true = pd.Series([1, 0, 2, 3, 4], dtype=dtype)
-        if use_pyarrow:
+        if use_pyarrow_dtypes:
             y_true = y_true.convert_dtypes(dtype_backend="pyarrow")
         assert type_of_target(y_true) == "multiclass"
 
         y_true = pd.Series([1, 0, 1, 0], dtype=dtype)
-        if use_pyarrow:
+        if use_pyarrow_dtypes:
             y_true = y_true.convert_dtypes(dtype_backend="pyarrow")
         assert type_of_target(y_true) == "binary"
 
     y_true = pd.DataFrame([[1.4, 3.1], [3.1, 1.4]], dtype="Float32")
-    if use_pyarrow:
+    if use_pyarrow_dtypes:
         y_true = y_true.convert_dtypes(dtype_backend="pyarrow")
     assert type_of_target(y_true) == "continuous-multioutput"
 
     y_true = pd.DataFrame([[0, 1], [1, 1]], dtype="Int32")
-    if use_pyarrow:
+    if use_pyarrow_dtypes:
         y_true = y_true.convert_dtypes(dtype_backend="pyarrow")
     assert type_of_target(y_true) == "multilabel-indicator"
 
     y_true = pd.DataFrame([[1, 2], [3, 1]], dtype="Int32")
-    if use_pyarrow:
+    if use_pyarrow_dtypes:
         y_true = y_true.convert_dtypes(dtype_backend="pyarrow")
     assert type_of_target(y_true) == "multiclass-multioutput"
 
 
 @pytest.mark.parametrize("dtype", ["Int64", "Float64", "boolean"])
-@pytest.mark.parametrize("use_pyarrow", [True, False])
-def test_unique_labels_pandas_nullable(dtype, use_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_unique_labels_pandas_nullable(dtype, use_pyarrow_dtypes):
     """Checks that unique_labels work with pandas nullable dtypes and pyarrow.
 
     Non-regression test for gh-25634.
@@ -393,7 +393,7 @@ def test_unique_labels_pandas_nullable(dtype, use_pyarrow):
     y_true = pd.Series([1, 0, 0, 1, 0, 1, 1, 0, 1], dtype=dtype)
     y_predicted = pd.Series([0, 0, 1, 1, 0, 1, 1, 1, 1], dtype="int64")
 
-    if use_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         y_true = y_true.convert_dtypes(dtype_backend="pyarrow")
         y_predicted = y_predicted.convert_dtypes(dtype_backend="pyarrow")

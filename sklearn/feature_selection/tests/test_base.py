@@ -118,8 +118,8 @@ def test_get_support():
     assert_array_equal(support_inds, sel.get_support(indices=True))
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
-def test_output_dataframe(with_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_output_dataframe(use_pyarrow_dtypes):
     """Check output dtypes for dataframes is consistent with the input dtypes."""
     pd = pytest.importorskip("pandas")
 
@@ -131,7 +131,7 @@ def test_output_dataframe(with_pyarrow):
             "d": pd.Series([3.0, 2.4, 1.2], dtype=np.float64),
         }
     )
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         X.convert_dtypes(dtype_backend="pyarrow")
 

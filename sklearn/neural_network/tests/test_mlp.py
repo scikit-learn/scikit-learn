@@ -895,8 +895,8 @@ def test_mlp_loading_from_joblib_partial_fit(tmp_path):
 
 
 @pytest.mark.parametrize("Estimator", [MLPClassifier, MLPRegressor])
-@pytest.mark.parametrize("use_pyarrow", [True, False])
-def test_preserve_feature_names(Estimator, use_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_preserve_feature_names(Estimator, use_pyarrow_dtypes):
     """Check that feature names are preserved when early stopping is enabled.
 
     Feature names are required for consistency checks during scoring.
@@ -909,7 +909,7 @@ def test_preserve_feature_names(Estimator, use_pyarrow):
     X = pd.DataFrame(data=rng.randn(10, 2), columns=["colname_a", "colname_b"])
     y = pd.Series(data=np.full(10, 1), name="colname_y")
 
-    if use_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         X = X.convert_dtypes(dtype_backend="pyarrow")
         y = y.convert_dtypes(dtype_backend="pyarrow")

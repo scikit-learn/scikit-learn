@@ -946,14 +946,14 @@ def test_mutual_info_regression():
     assert_array_equal(support, gtruth)
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
-def test_dataframe_output_dtypes(with_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_dataframe_output_dtypes(use_pyarrow_dtypes):
     """Check that the output dataframe dtypes are the same as the input.
 
     Non-regression test for gh-24860.
     """
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
 
     X, y = load_iris(return_X_y=True, as_frame=True)
@@ -963,7 +963,7 @@ def test_dataframe_output_dtypes(with_pyarrow):
             "petal width (cm)": np.float64,
         }
     )
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         X.convert_dtypes(dtype_backend="pyarrow")
 
     X["petal_width_binned"] = pd.cut(X["petal width (cm)"], bins=10)

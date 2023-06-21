@@ -371,11 +371,11 @@ def test_inplace_data_preprocessing(sparse_X, use_sw, global_random_seed):
         assert_allclose(sample_weight, orginal_sw_data)
 
 
-def test_linear_regression_pd_sparse_dataframe_warning(use_pyarrow):
+def test_linear_regression_pd_sparse_dataframe_warning(use_pyarrow_dtypes):
     pd = pytest.importorskip("pandas")
 
     # Warning is raised only when some of the columns is sparse
-    if not use_pyarrow:
+    if not use_pyarrow_dtypes:
         df = pd.DataFrame({"0": np.random.randn(10)})
     else:
         df = pd.DataFrame({"0": np.random.randn(10)})

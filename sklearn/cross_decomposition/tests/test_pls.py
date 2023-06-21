@@ -611,13 +611,13 @@ def test_pls_feature_names_out(Klass):
     assert_array_equal(names_out, expected_names_out)
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("Klass", [CCA, PLSSVD, PLSRegression, PLSCanonical])
-def test_pls_set_output(with_pyarrow, Klass):
+def test_pls_set_output(use_pyarrow_dtypes, Klass):
     """Check `set_output` in cross_decomposition module."""
     pd = pytest.importorskip("pandas")
     X, Y = load_linnerud(return_X_y=True, as_frame=True)
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         X.convert_dtypes(dtype_backend="pyarrow")
         Y.convert_dtypes(dtype_backend="pyarrow")

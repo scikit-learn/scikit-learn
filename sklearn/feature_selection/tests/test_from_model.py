@@ -597,18 +597,18 @@ def test_select_from_model_pls(PLSEstimator):
     assert model.score(X, y) > 0.5
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
-def test_estimator_does_not_support_feature_names(with_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_estimator_does_not_support_feature_names(use_pyarrow_dtypes):
     """SelectFromModel works with estimators that do not support feature_names_in_.
 
     Non-regression test for #21949.
     """
     pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
 
     X, y = datasets.load_iris(as_frame=True, return_X_y=True)
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         X.convert_dtypes(dtype_backend="pyarrow")
         y.convert_dtypes(dtype_backend="pyarrow")
 
@@ -653,15 +653,15 @@ def test_partial_fit_validate_max_features(error, err_msg, max_features):
             estimator=SGDClassifier(), max_features=max_features
         ).partial_fit(X, y, classes=[0, 1])
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("as_frame", [True, False])
-def test_partial_fit_validate_feature_names(with_pyarrow, as_frame):
+def test_partial_fit_validate_feature_names(use_pyarrow_dtypes, as_frame):
     """Test that partial_fit from SelectFromModel validates `feature_names_in_`."""
     pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
     X, y = datasets.load_iris(as_frame=as_frame, return_X_y=True)
-    if with_pyarrow and as_frame is True:
+    if use_pyarrow_dtypes and as_frame is True:
         X.convert_dtypes(dtype_backend="pyarrow")
         y.convert_dtypes(dtype_backend="pyarrow")
 

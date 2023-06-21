@@ -643,14 +643,14 @@ def test_n_features_in_no_validation():
     est._check_n_features("invalid X", reset=False)
 
 
-@pytest.mark.parametrize("use_pyarrow", [True, False])
-def test_feature_names_in(use_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_feature_names_in(use_pyarrow_dtypes):
     """Check that feature_name_in are recorded by `_validate_data`"""
     pd = pytest.importorskip("pandas")
     iris = datasets.load_iris()
     X_np = iris.data
     df = pd.DataFrame(X_np, columns=iris.feature_names)
-    if use_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         df = df.convert_dtypes(dtype_backend="pyarrow")
 
@@ -674,7 +674,7 @@ def test_feature_names_in(use_pyarrow):
     trans.fit(df)
     msg = "The feature names should match those that were passed"
     df_bad = pd.DataFrame(X_np, columns=iris.feature_names[::-1])
-    if use_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         df_bad = df_bad.convert_dtypes(dtype_backend="pyarrow")
     with pytest.raises(ValueError, match=msg):
@@ -696,7 +696,7 @@ def test_feature_names_in(use_pyarrow):
 
     # fit on dataframe with all integer feature names works without warning
     df_int_names = pd.DataFrame(X_np)
-    if use_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         df_int_names = df_int_names.convert_dtypes(dtype_backend="pyarrow")
     trans = NoOpTransformer()
@@ -714,7 +714,7 @@ def test_feature_names_in(use_pyarrow):
 
     # fit on dataframe with feature names that are mixed raises an error:
     df_mixed = pd.DataFrame(X_np, columns=["a", "b", 1, 2])
-    if use_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         df_mixed = df_mixed.convert_dtypes(dtype_backend="pyarrow")
     trans = NoOpTransformer()
@@ -734,15 +734,15 @@ def test_feature_names_in(use_pyarrow):
         trans.transform(df_mixed)
 
 
-@pytest.mark.parametrize("use_pyarrow", [True, False])
-def test_validate_data_cast_to_ndarray(use_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_validate_data_cast_to_ndarray(use_pyarrow_dtypes):
     """Check cast_to_ndarray option of _validate_data."""
 
     pd = pytest.importorskip("pandas")
     iris = datasets.load_iris()
     df = pd.DataFrame(iris.data, columns=iris.feature_names)
     y = pd.Series(iris.target)
-    if use_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         df = df.convert_dtypes(dtype_backend="pyarrow")
         y = y.convert_dtypes(dtype_backend="pyarrow")

@@ -155,15 +155,15 @@ def test_column_transformer_tuple_transformers_parameter():
     )
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
-def test_column_transformer_dataframe(with_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_column_transformer_dataframe(use_pyarrow_dtypes):
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = pd.DataFrame(X_array, columns=["first", "second"])
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         X_df.convert_dtypes(dtype_backend="pyarrow")
 
     X_res_first = np.array([0, 1, 2]).reshape(-1, 1)
@@ -284,7 +284,7 @@ def test_column_transformer_dataframe(with_pyarrow):
     assert_array_equal(ct.transformers_[-1][2], [1])
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("pandas", [True, False], ids=["pandas", "numpy"])
 @pytest.mark.parametrize(
     "column_selection",
@@ -292,7 +292,7 @@ def test_column_transformer_dataframe(with_pyarrow):
     ids=["list", "bool", "bool_int"],
 )
 @pytest.mark.parametrize("callable_column", [False, True])
-def test_column_transformer_empty_columns(with_pyarrow, pandas, column_selection, callable_column):
+def test_column_transformer_empty_columns(use_pyarrow_dtypes, pandas, column_selection, callable_column):
     # test case that ensures that the column transformer does also work when
     # a given transformer doesn't have any columns to work on
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -301,7 +301,7 @@ def test_column_transformer_empty_columns(with_pyarrow, pandas, column_selection
     if pandas:
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(X_array, columns=["first", "second"])
-        if with_pyarrow:
+        if use_pyarrow_dtypes:
             X.convert_dtypes(dtype_backend="pyarrow")
     else:
         X = X_array
@@ -384,15 +384,15 @@ def test_column_transformer_output_indices():
     assert_array_equal(X_trans[:, [0, 1]], X_trans[:, ct.output_indices_["remainder"]])
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
-def test_column_transformer_output_indices_df(with_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_column_transformer_output_indices_df(use_pyarrow_dtypes):
     # Checks for the output_indices_ attribute with data frames
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
 
     X_df = pd.DataFrame(np.arange(6).reshape(3, 2), columns=["first", "second"])
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         X_df.convert_dtypes(dtype_backend="pyarrow")
 
     ct = ColumnTransformer(
@@ -593,15 +593,15 @@ def test_2D_transformer_output():
         ct.fit(X_array)
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
-def test_2D_transformer_output_pandas(with_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_2D_transformer_output_pandas(use_pyarrow_dtypes):
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = pd.DataFrame(X_array, columns=["col1", "col2"])
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         X_df.convert_dtypes(dtype_backend="pyarrow")
 
     # if one transformer is dropped, test that name is still correct
@@ -675,14 +675,14 @@ def test_make_column_transformer():
     assert columns == ("first", ["second"])
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
-def test_make_column_transformer_pandas(with_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_make_column_transformer_pandas(use_pyarrow_dtypes):
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = pd.DataFrame(X_array, columns=["first", "second"])
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         X_df.convert_dtypes(dtype_backend="pyarrow")
     norm = Normalizer()
     ct1 = ColumnTransformer([("norm", Normalizer(), X_df.columns)])
@@ -918,7 +918,7 @@ def test_column_transformer_remainder_numpy(key):
     assert_array_equal(ct.transformers_[-1][2], [1])
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize(
     "key",
     [
@@ -933,10 +933,10 @@ def test_column_transformer_remainder_numpy(key):
         slice("first", "first"),
     ],
 )
-def test_column_transformer_remainder_pandas(with_pyarrow, key):
+def test_column_transformer_remainder_pandas(use_pyarrow_dtypes, key):
     # test different ways that columns are specified with passthrough
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
     if isinstance(key, str) and key == "pd-index":
         key = pd.Index(["first"])
@@ -944,7 +944,7 @@ def test_column_transformer_remainder_pandas(with_pyarrow, key):
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = pd.DataFrame(X_array, columns=["first", "second"])
     X_res_both = X_array
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         X_df.convert_dtypes(dtype_backend="pyarrow")
 
     ct = ColumnTransformer([("trans1", Trans(), key)], remainder="passthrough")
@@ -1202,17 +1202,17 @@ def test_column_transformer_callable_specifier():
     assert callable(ct.transformers[0][2])
     assert ct.transformers_[0][2] == [0]
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
-def test_column_transformer_callable_specifier_dataframe(with_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_column_transformer_callable_specifier_dataframe(use_pyarrow_dtypes):
     # assert that function gets the full dataframe
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_res_first = np.array([[0, 1, 2]]).T
 
     X_df = pd.DataFrame(X_array, columns=["first", "second"])
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         X_df.convert_dtypes(dtype_backend="pyarrow")
 
     def func(X):
@@ -1263,7 +1263,7 @@ def test_n_features_in():
     assert ct.n_features_in_ == 2
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize(
     "cols, pattern, include, exclude",
     [
@@ -1282,9 +1282,9 @@ def test_n_features_in():
         (["col_int", "col_float", "col_str"], None, [np.number, object], None),
     ],
 )
-def test_make_column_selector_with_select_dtypes(with_pyarrow, cols, pattern, include, exclude):
+def test_make_column_selector_with_select_dtypes(use_pyarrow_dtypes, cols, pattern, include, exclude):
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
 
     X_df = pd.DataFrame(
@@ -1295,7 +1295,7 @@ def test_make_column_selector_with_select_dtypes(with_pyarrow, cols, pattern, in
         },
         columns=["col_int", "col_float", "col_str"],
     )
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         X_df.convert_dtypes(dtype_backend="pyarrow")
 
     selector = make_column_selector(
@@ -1304,11 +1304,11 @@ def test_make_column_selector_with_select_dtypes(with_pyarrow, cols, pattern, in
 
     assert_array_equal(selector(X_df), cols)
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
-def test_column_transformer_with_make_column_selector(with_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_column_transformer_with_make_column_selector(use_pyarrow_dtypes):
     # Functional test for column transformer + column selector
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
     X_df = pd.DataFrame(
         {
@@ -1320,7 +1320,7 @@ def test_column_transformer_with_make_column_selector(with_pyarrow):
         columns=["col_int", "col_float", "col_cat", "col_str"],
     )
     X_df["col_str"] = X_df["col_str"].astype("category")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         X_df.convert_dtypes(dtype_backend="pyarrow")
 
     cat_selector = make_column_selector(dtype_include=["category", object])
@@ -1348,10 +1348,10 @@ def test_make_column_selector_error():
         selector(X)
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
-def test_make_column_selector_pickle(with_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_make_column_selector_pickle(use_pyarrow_dtypes):
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
 
     X_df = pd.DataFrame(
@@ -1362,7 +1362,7 @@ def test_make_column_selector_pickle(with_pyarrow):
         },
         columns=["col_int", "col_float", "col_str"],
     )
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         X_df.convert_dtypes(dtype_backend="pyarrow")
 
     selector = make_column_selector(dtype_include=[object])
@@ -1371,19 +1371,19 @@ def test_make_column_selector_pickle(with_pyarrow):
     assert_array_equal(selector(X_df), selector_picked(X_df))
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize(
     "empty_col",
     [[], np.array([], dtype=int), lambda x: []],
     ids=["list", "array", "callable"],
 )
-def test_feature_names_empty_columns(with_pyarrow, empty_col):
+def test_feature_names_empty_columns(use_pyarrow_dtypes, empty_col):
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
 
     df = pd.DataFrame({"col1": ["a", "a", "b"], "col2": ["z", "z", "z"]})
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         df.convert_dtypes(dtype_backend="pyarrow")
 
     ct = ColumnTransformer(
@@ -1399,7 +1399,7 @@ def test_feature_names_empty_columns(with_pyarrow, empty_col):
     )
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize(
     "selector",
     [
@@ -1411,13 +1411,13 @@ def test_feature_names_empty_columns(with_pyarrow, empty_col):
         lambda x: [False, True],
     ],
 )
-def test_feature_names_out_pandas(with_pyarrow, selector):
+def test_feature_names_out_pandas(use_pyarrow_dtypes, selector):
     """Checks name when selecting only the second column"""
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
     df = pd.DataFrame({"col1": ["a", "a", "b"], "col2": ["z", "z", "z"]})
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         df.convert_dtypes(dtype_backend="pyarrow")
     ct = ColumnTransformer([("ohe", OneHotEncoder(), selector)])
     ct.fit(df)
@@ -1459,12 +1459,12 @@ def test_sk_visual_block_remainder_drop():
     assert visual_block.name_details == (["col1", "col2"],)
     assert visual_block.estimators == (ohe,)
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("remainder", ["passthrough", StandardScaler()])
-def test_sk_visual_block_remainder_fitted_pandas(with_pyarrow, remainder):
+def test_sk_visual_block_remainder_fitted_pandas(use_pyarrow_dtypes, remainder):
     # Remainder shows the columns after fitting
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
     ohe = OneHotEncoder()
     ct = ColumnTransformer(
@@ -1478,7 +1478,7 @@ def test_sk_visual_block_remainder_fitted_pandas(with_pyarrow, remainder):
             "col4": [3, 4, 5],
         }
     )
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         df.convert_dtypes(dtype_backend="pyarrow")
     ct.fit(df)
     visual_block = ct._sk_visual_block_()
@@ -1502,15 +1502,15 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     assert visual_block.estimators == (scaler, remainder)
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("explicit_colname", ["first", "second", 0, 1])
 @pytest.mark.parametrize("remainder", [Trans(), "passthrough", "drop"])
 def test_column_transformer_reordered_column_names_remainder(
-    with_pyarrow, explicit_colname, remainder
+    use_pyarrow_dtypes, explicit_colname, remainder
 ):
     """Test the interaction between remainder and column transformer"""
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
 
     X_fit_array = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -1519,7 +1519,7 @@ def test_column_transformer_reordered_column_names_remainder(
     X_trans_array = np.array([[2, 4, 6], [0, 1, 2]]).T
     X_trans_df = pd.DataFrame(X_trans_array, columns=["second", "first"])
 
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         X_fit_df.convert_dtypes(dtype_backend="pyarrow")
         X_trans_df.convert_dtypes(dtype_backend="pyarrow")
 
@@ -1546,12 +1546,12 @@ def test_column_transformer_reordered_column_names_remainder(
         with pytest.raises(ValueError, match=err_msg):
             tf.transform(X_array)
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
-def test_feature_name_validation_missing_columns_drop_passthough(with_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_feature_name_validation_missing_columns_drop_passthough(use_pyarrow_dtypes):
     """Test the interaction between {'drop', 'passthrough'} and
     missing column names."""
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
 
     X = np.ones(shape=(3, 4))
@@ -1559,7 +1559,7 @@ def test_feature_name_validation_missing_columns_drop_passthough(with_pyarrow):
 
     df_dropped = df.drop("c", axis=1)
 
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         df.convert_dtypes(dtype_backend="pyarrow")
         df_dropped.convert_dtypes(dtype_backend="pyarrow")
 
@@ -1586,8 +1586,8 @@ def test_feature_name_validation_missing_columns_drop_passthough(with_pyarrow):
     df_fit_trans = tf.transform(df)
     assert_allclose(df_dropped_trans, df_fit_trans)
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
-def test_feature_names_in_(with_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_feature_names_in_(use_pyarrow_dtypes):
     """Feature names are stored in column transformer.
 
     Column transformer deliberately does not check for column name consistency.
@@ -1596,12 +1596,12 @@ def test_feature_names_in_(with_pyarrow):
     `test_feature_name_validation_missing_columns_drop_passthough`"""
 
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
 
     feature_names = ["a", "c", "d"]
     df = pd.DataFrame([[1, 2, 3]], columns=feature_names)
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         df.convert_dtypes(dtype_backend="pyarrow")
     ct = ColumnTransformer([("bycol", Trans(), ["a", "d"])], remainder="passthrough")
 
@@ -1621,7 +1621,7 @@ class TransWithNames(Trans):
         return input_features
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize(
     "transformers, remainder, expected_names",
     [
@@ -1742,13 +1742,13 @@ class TransWithNames(Trans):
         ),
     ],
 )
-def test_verbose_feature_names_out_true(with_pyarrow, transformers, remainder, expected_names):
+def test_verbose_feature_names_out_true(use_pyarrow_dtypes, transformers, remainder, expected_names):
     """Check feature_names_out for verbose_feature_names_out=True (default)"""
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
     df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         df.convert_dtypes(dtype_backend="pyarrow")
     ct = ColumnTransformer(
         transformers,
@@ -1761,7 +1761,7 @@ def test_verbose_feature_names_out_true(with_pyarrow, transformers, remainder, e
     assert names.dtype == object
     assert_array_equal(names, expected_names)
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize(
     "transformers, remainder, expected_names",
     [
@@ -1877,13 +1877,13 @@ def test_verbose_feature_names_out_true(with_pyarrow, transformers, remainder, e
         ),
     ],
 )
-def test_verbose_feature_names_out_false(with_pyarrow, transformers, remainder, expected_names):
+def test_verbose_feature_names_out_false(use_pyarrow_dtypes, transformers, remainder, expected_names):
     """Check feature_names_out for verbose_feature_names_out=False"""
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
     df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         df.convert_dtypes(dtype_backend="pyarrow")
     ct = ColumnTransformer(
         transformers,
@@ -1898,7 +1898,7 @@ def test_verbose_feature_names_out_false(with_pyarrow, transformers, remainder, 
     assert_array_equal(names, expected_names)
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize(
     "transformers, remainder, colliding_columns",
     [
@@ -2007,12 +2007,12 @@ def test_verbose_feature_names_out_false(with_pyarrow, transformers, remainder, 
     ],
 )
 def test_verbose_feature_names_out_false_errors(
-    with_pyarrow, transformers, remainder, colliding_columns
+    use_pyarrow_dtypes, transformers, remainder, colliding_columns
 ):
     """Check feature_names_out for verbose_feature_names_out=False"""
 
     pd = pytest.importorskip("pandas")
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
     df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
     ct = ColumnTransformer(
@@ -2030,14 +2030,14 @@ def test_verbose_feature_names_out_false_errors(
         ct.get_feature_names_out()
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("verbose_feature_names_out", [True, False])
 @pytest.mark.parametrize("remainder", ["drop", "passthrough"])
-def test_column_transformer_set_output(with_pyarrow, verbose_feature_names_out, remainder):
+def test_column_transformer_set_output(use_pyarrow_dtypes, verbose_feature_names_out, remainder):
     """Check column transformer behavior with set_output."""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"], index=[10])
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         df.convert_dtypes(dtype_backend="pyarrow")
     ct = ColumnTransformer(
@@ -2051,7 +2051,7 @@ def test_column_transformer_set_output(with_pyarrow, verbose_feature_names_out, 
     ct.set_output(transform="pandas")
 
     df_test = pd.DataFrame([[1, 2, 3, 4]], columns=df.columns, index=[20])
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         df_test.convert_dtypes(dtype_backend="pyarrow")
     X_trans = ct.transform(df_test)
     assert isinstance(X_trans, pd.DataFrame)
@@ -2061,10 +2061,10 @@ def test_column_transformer_set_output(with_pyarrow, verbose_feature_names_out, 
     assert_array_equal(X_trans.index, df_test.index)
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("remainder", ["drop", "passthrough"])
 @pytest.mark.parametrize("fit_transform", [True, False])
-def test_column_transform_set_output_mixed(with_pyarrow, remainder, fit_transform):
+def test_column_transform_set_output_mixed(use_pyarrow_dtypes, remainder, fit_transform):
     """Check ColumnTransformer outputs mixed types correctly."""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
@@ -2076,7 +2076,7 @@ def test_column_transform_set_output_mixed(with_pyarrow, remainder, fit_transfor
             "distance": pd.Series([20, pd.NA, 100], dtype="Int32"),
         }
     )
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         df.convert_dtypes(dtype_backend="pyarrow")
     ct = ColumnTransformer(
@@ -2112,9 +2112,9 @@ def test_column_transform_set_output_mixed(with_pyarrow, remainder, fit_transfor
         assert dtype == expected_dtypes[col]
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("remainder", ["drop", "passthrough"])
-def test_column_transform_set_output_after_fitting(with_pyarrow, remainder):
+def test_column_transform_set_output_after_fitting(use_pyarrow_dtypes, remainder):
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
@@ -2123,7 +2123,7 @@ def test_column_transform_set_output_after_fitting(with_pyarrow, remainder):
             "height": [20, 40, 10],
         }
     )
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         df.convert_dtypes(dtype_backend="pyarrow")
     ct = ColumnTransformer(
@@ -2179,7 +2179,7 @@ class PandasOutTransformer(BaseEstimator):
         return self
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize(
     "trans_1, expected_verbose_names, expected_non_verbose_names",
     [
@@ -2201,7 +2201,7 @@ class PandasOutTransformer(BaseEstimator):
     ],
 )
 def test_transformers_with_pandas_out_but_not_feature_names_out(
-    with_pyarrow, trans_1, expected_verbose_names, expected_non_verbose_names
+    use_pyarrow_dtypes, trans_1, expected_verbose_names, expected_non_verbose_names
 ):
     """Check that set_config(transform="pandas") is compatible with more transformers.
 
@@ -2210,7 +2210,7 @@ def test_transformers_with_pandas_out_but_not_feature_names_out(
     """
     pd = pytest.importorskip("pandas")
     X_df = pd.DataFrame({"feat0": [1.0, 2.0, 3.0], "feat1": [2.0, 3.0, 4.0]})
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         X_df.convert_dtypes(dtype_backend="pyarrow")
     ct = ColumnTransformer(
@@ -2237,20 +2237,20 @@ def test_transformers_with_pandas_out_but_not_feature_names_out(
     assert_array_equal(X_trans_df1.columns, expected_non_verbose_names)
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize(
     "empty_selection",
     [[], np.array([False, False]), [False, False]],
     ids=["list", "bool", "bool_int"],
 )
-def test_empty_selection_pandas_output(with_pyarrow, empty_selection):
+def test_empty_selection_pandas_output(use_pyarrow_dtypes, empty_selection):
     """Check that pandas output works when there is an empty selection.
 
     Non-regression test for gh-25487
     """
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([[1.0, 2.2], [3.0, 1.0]], columns=["a", "b"])
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         X.convert_dtypes(dtype_backend="pyarrow")
 
@@ -2270,15 +2270,15 @@ def test_empty_selection_pandas_output(with_pyarrow, empty_selection):
     assert_array_equal(X_out.columns, ["a", "b"])
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
-def test_raise_error_if_index_not_aligned(with_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_raise_error_if_index_not_aligned(use_pyarrow_dtypes):
     """Check column transformer raises error if indices are not aligned.
 
     Non-regression test for gh-26210.
     """
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([[1.0, 2.2], [3.0, 1.0]], columns=["a", "b"], index=[8, 3])
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         X.convert_dtypes(dtype_backend="pyarrow")
     reset_index_transformer = FunctionTransformer(
@@ -2301,8 +2301,8 @@ def test_raise_error_if_index_not_aligned(with_pyarrow):
         ct.fit_transform(X)
 
 
-@pytest.mark.parametrize("with_pyarrow", [True, False])
-def test_remainder_set_output(with_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_remainder_set_output(use_pyarrow_dtypes):
     """Check that the output is set for the remainder.
 
     Non-regression test for #26306.
@@ -2310,7 +2310,7 @@ def test_remainder_set_output(with_pyarrow):
 
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame({"a": [True, False, True], "b": [1, 2, 3]})
-    if with_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         df.convert_dtypes(dtype_backend="pyarrow")
 

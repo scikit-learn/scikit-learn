@@ -1589,14 +1589,14 @@ def test_pipeline_get_feature_names_out_passes_names_through():
     assert_array_equal(feature_names_out, [f"my_prefix_{name}" for name in input_names])
 
 
-@pytest.mark.parametrize("use_pyarrow", [True, False])
-def test_pipeline_set_output_integration(use_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_pipeline_set_output_integration(use_pyarrow_dtypes):
     """Test pipeline's set_output with feature names."""
     pytest.importorskip("pandas")
 
     X, y = load_iris(as_frame=True, return_X_y=True)
 
-    if use_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         X = X.convert_dtypes(dtype_backend="pyarrow")
         y = y.convert_dtypes(dtype_backend="pyarrow")
@@ -1611,15 +1611,15 @@ def test_pipeline_set_output_integration(use_pyarrow):
     assert_array_equal(feature_names_in_, log_reg_feature_names)
 
 
-@pytest.mark.parametrize("use_pyarrow", [True, False])
-def test_feature_union_set_output(use_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_feature_union_set_output(use_pyarrow_dtypes):
     """Test feature union with set_output API."""
     pd = pytest.importorskip("pandas")
 
     X, _ = load_iris(as_frame=True, return_X_y=True)
     X_train, X_test = train_test_split(X, random_state=0)
 
-    if use_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         X_train = X_train.convert_dtypes(dtype_backend="pyarrow")
         X_test = X_test.convert_dtypes(dtype_backend="pyarrow")
@@ -1663,8 +1663,8 @@ def test_feature_union_getitem_error(key):
         union[key]
 
 
-@pytest.mark.parametrize("use_pyarrow", [True, False])
-def test_feature_union_feature_names_in_(use_pyarrow):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_feature_union_feature_names_in_(use_pyarrow_dtypes):
     """Ensure feature union has `.feature_names_in_` attribute if `X` has a
     `columns` attribute.
 
@@ -1674,7 +1674,7 @@ def test_feature_union_feature_names_in_(use_pyarrow):
 
     X, _ = load_iris(as_frame=True, return_X_y=True)
 
-    if use_pyarrow:
+    if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         X = X.convert_dtypes(dtype_backend="pyarrow")
 
