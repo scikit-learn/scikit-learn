@@ -990,8 +990,8 @@ floats. A couple of mechanisms for getting around this are:
 References
 |details-split|
 
-* `"A Density-Based Algorithm for Discovering Clusters in Large Spatial
-  Databases with Noise" <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
+* `A Density-Based Algorithm for Discovering Clusters in Large Spatial
+  Databases with Noise <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
   Ester, M., H. P. Kriegel, J. Sander, and X. Xu, In Proceedings of the 2nd
   International Conference on Knowledge Discovery and Data Mining, Portland, OR,
   AAAI Press, pp. 226–231. 1996
