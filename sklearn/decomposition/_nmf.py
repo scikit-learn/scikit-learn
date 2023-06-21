@@ -1105,16 +1105,6 @@ def non_negative_factorization(
     ...     X, n_components=2, init='random', random_state=0)
     """
 
-    if n_components == "warn" or n_components is None:
-        warnings.warn(
-            (
-                "The default value of `n_components` will change from "
-                "`None` to `'auto'` in 1.5."
-            ),
-            FutureWarning,
-        )
-        n_components = None
-
     est = NMF(
         n_components=n_components,
         init=init,
@@ -1199,6 +1189,16 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
     def _check_params(self, X):
         # n_components
         self._n_components = self.n_components
+        if self.n_components == "warn":
+            warnings.warn(
+                (
+                    "The default value of `n_components` will change from `None` to"
+                    " `'auto'` in 1.6. Set the value of `n_components` to `None`"
+                    " explicitly to supress the warning"
+                ),
+                FutureWarning,
+            )
+            self._n_components = None  # Keeping the old default value
         if self._n_components is None:
             self._n_components = X.shape[1]
 
