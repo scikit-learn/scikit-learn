@@ -20,10 +20,8 @@ from sklearn.inspection import PartialDependenceDisplay
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
-    (
-        "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-        "matplotlib.*"
-    ),
+    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
+    "matplotlib.*",
 )
 
 
@@ -1115,4 +1113,6 @@ def test_partial_dependence_display_with_constant_sample_weight(
         method="brute",
     )
 
-    assert np.array_equal(disp.pd_results[0]["average"], disp_sw.pd_results[0]["average"])
+    assert np.array_equal(
+        disp.pd_results[0]["average"], disp_sw.pd_results[0]["average"]
+    )
