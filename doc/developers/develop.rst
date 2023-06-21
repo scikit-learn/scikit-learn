@@ -714,10 +714,11 @@ for an example on how to use the API.
 Developer API for `check_is_fitted`
 ===================================
 
-`check_is_fitted` utilizes the `__sklearn_is_fitted__` method of estimator,
-if it exist, to check the fitted status. But by relying on `__sklearn_is_fitted__`
-when available, `check_is_fitted` allows custom estimator to define their own
-convention for indicating fitted status.
+By default :func:`~sklearn.utils.validation.check_is_fitted` checks if there
+are any attributes in the instance with a trailing underscore, e.g. ``coef_``.
+An estimator can change the behavior by implementing a ``__sklearn_is_fitted__``
+taking no input and returning a boolean. If this method exists, 
+:func:`~sklearn.utils.validation.check_is_fitted` simply its output.
 
 See :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
 for an example on how to use the API.
