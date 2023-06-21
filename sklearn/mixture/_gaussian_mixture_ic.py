@@ -6,18 +6,31 @@
 
 
 import numpy as np
-import joblib
-from ..utils.fixes import parse_version
-from ..utils.parallel import delayed, Parallel
 from ..utils import check_scalar
-from ..utils.validation import check_is_fitted, check_random_state
+from ..utils.validation import check_is_fitted
+from ..model_selection import GridSearchCV
 
-from . import GaussianMixture
 from ..base import BaseEstimator, ClusterMixin
-from ..model_selection import ParameterGrid
+from . import GaussianMixture
 
 
-
+def _check_multi_comp_inputs(input, name, default):
+        if isinstance(input, (np.ndarray, list)):
+            input = list(np.unique(input))
+        elif isinstance(input, str):
+            if input not in default:
+                raise ValueError(f"{name} is {input} but must be one of {default}.")
+            if input != "all":
+                input = [input]
+            else:
+                input = default.copy()
+                input.remove("all")
+        else:
+            raise TypeError(
+                f"{name} is a {type(input)} but must be a numpy array, "
+                "a list, or a string."
+            )
+        return input
 
 class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     """Gaussian mixture with BIC/AIC.
@@ -26,9 +39,9 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     Bayesian Information Criterion (BIC)
     or the Akaike Information Criterion (AIC).
 
-    Different combinations of initialization, GMM,
-    and cluster numbers are used and the clustering
-    with the best selection criterion (BIC or AIC) is chosen.
+    Such criteria are useful to select the value
+    of the gaussian mixture parameters by making a trade-off
+    between the goodness of fit and the complexity of the model.
 
     Parameters
     ----------
@@ -62,22 +75,10 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         If a list/array, it must be a list/array of strings containing only
         'spherical', 'tied', 'diag', and/or 'spherical'.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        There is randomness in k-means initialization of
-        :class:`sklearn.mixture.GaussianMixture`. This parameter is passed to
-        :class:`~sklearn.mixture.GaussianMixture` to control the random state.
-        If int, ``random_state`` is used as the random number generator seed.
-        If RandomState instance, ``random_state`` is the random number
-        generator; If None, the random number generator is the
-        RandomState instance used by ``np.random``.
-
     n_init : int, optional (default = 1)
-        If ``n_init`` is larger than 1, additional
-        ``n_init``-1 runs of :class:`sklearn.mixture.GaussianMixture`
-        initialized with k-means will be performed
-        for all covariance parameters in ``covariance_type``.
+        The number of initializations to perform.
 
-    init_params : {‘kmeans’ (default), ‘k-means++’, ‘random’, ‘random_from_data’}
+    init_params : {'kmeans' (default), 'k-means++', 'random', 'random_from_data'}
         The method used to initialize the weights, the means and the precisions
         for Gaussian mixture modeling.
 
@@ -96,8 +97,10 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    best_criterion_ : float
-        The best (lowest) Bayesian or Aikake Information Criterion.
+    criterion_ : array-like
+        The value of the information criteria ('aic', 'bic') across all
+        numbers of components. The number of component which has the smallest
+        information criterion is chosen.
 
     n_components_ : int
         Number of clusters for the model with the best bic/aic.
@@ -105,29 +108,36 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     covariance_type_ : str
         Covariance type for the model with the best bic/aic.
 
-    best_model_ : :class:`sklearn.mixture.GaussianMixture`
+    best_estimator_ : :class:`sklearn.mixture.GaussianMixture`
         Object with the best bic/aic.
 
-    labels_ : array-like, shape (n_samples,)
-        Labels of each point predicted by the best model.
+    weights_ : array-like of shape (n_components,)
+        The weights of each mixture components for the model with the best bic/aic.
+
+    means_ : array-like of shape (n_components, n_features)
+        The mean of each mixture component for the model with the best bic/aic.
+
+    covariances_ : array-like
+        The covariance of each mixture component for the model with the best bic/aic.
+        The shape depends on `covariance_type_`. See
+        :class:`~sklearn.mixture.GaussianMixture` for details.
+
+    precisions_ : array-like
+        The precision matrices for each component in the mixture for the model
+        with the best bic/aic. See :class:`~sklearn.mixture.GaussianMixture` for details.
+
+    precisions_cholesky_ : array-like
+        The cholesky decomposition of the precision matrices of each mixture component
+        for the model with the best bic/aic.
+        See :class:`~sklearn.mixture.GaussianMixture` for details.
+
+    converged_: bool
+        True when convergence was reached in :term:`fit` for the model
+        with the best bic/aic, False otherwise.
 
     n_iter_ : int
         Number of step used by the best fit of EM for the best model
         to reach the convergence.
-
-    results_ : list
-        Contains exhaustive information about all the clustering runs.
-        Each item represents a class object storing the results
-        for a single run with the following attributes:
-
-        model : :class:`~sklearn.mixture.GaussianMixture` object
-            GMM clustering fit to the data.
-        criterion_score : float
-            Bayesian or Aikake Information Criterion score.
-        n_components : int
-            Number of clusters.
-        covariance_type : {'full', 'tied', 'diag', 'spherical'}
-            Covariance type used for the GMM.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -161,7 +171,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
     .. [3] `Scrucca, L., Fop, M., Murphy, T. B., & Raftery, A. E. (2016).
         mclust 5: Clustering, Classification and Density Estimation Using
-        Gaussian Finite Mixture Models. The R journal, 8(1), 289–317.
+        Gaussian Finite Mixture Models. The R journal, 8(1), 289-317.
         <https://doi.org/10.32614/RJ-2016-021>_`
 
     Examples
@@ -169,7 +179,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     >>> import numpy as np
     >>> from sklearn.mixture import GaussianMixtureIC
     >>> X = np.array([[1, 2], [1, 4], [1, 0], [10, 2], [10, 4], [10, 0]])
-    >>> gmIC = GaussianMixtureIC(max_components=4, random_state=0)
+    >>> gmIC = GaussianMixtureIC(max_components=4)
     >>> gmIC.fit_predict(X)
     array([0, 0, 0, 1, 1, 1])
     >>> print(gmIC.n_components_)
@@ -181,7 +191,6 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         min_components=2,
         max_components=10,
         covariance_type="all",
-        random_state=None,
         n_init=1,
         init_params="kmeans",
         max_iter=100,
@@ -193,31 +202,12 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         self.min_components = min_components
         self.max_components = max_components
         self.covariance_type = covariance_type
-        self.random_state = random_state
         self.n_init = n_init
         self.init_params = init_params
         self.max_iter = max_iter
         self.verbose = verbose
         self.criterion = criterion
         self.n_jobs = n_jobs
-
-    def _check_multi_comp_inputs(self, input, name, default):
-        if isinstance(input, (np.ndarray, list)):
-            input = list(np.unique(input))
-        elif isinstance(input, str):
-            if input not in default:
-                raise ValueError(f"{name} is {input} but must be one of {default}.")
-            if input != "all":
-                input = [input]
-            else:
-                input = default.copy()
-                input.remove("all")
-        else:
-            raise TypeError(
-                f"{name} is a {type(input)} but must be a numpy array, "
-                "a list, or a string."
-            )
-        return input
 
     def _check_parameters(self):
         check_scalar(
@@ -228,10 +218,13 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             target_type=int,
         )
         check_scalar(
-            self.max_components, min_val=1, name="max_components", target_type=int
+            self.max_components,
+            min_val=self.min_components,
+            name="max_components",
+            target_type=int
         )
 
-        covariance_type = self._check_multi_comp_inputs(
+        covariance_type = _check_multi_comp_inputs(
             self.covariance_type,
             "covariance_type",
             ["spherical", "diag", "tied", "full", "all"],
@@ -246,25 +239,11 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
         return covariance_type
 
-
-    def _fit_cluster(self, X, gm_params, seed):
-        gm_params["init_params"] = self.init_params
-        gm_params["max_iter"] = self.max_iter
-        gm_params["n_init"] = self.n_init
-        gm_params["random_state"] = seed
-
-        model = GaussianMixture(**gm_params)
-        model.fit(X)
-
+    def criterion_score(self, estimator, X):
         if self.criterion == "bic":
-            criterion_value = model.bic(X)
+            return -estimator.bic(X)
         else:
-            criterion_value = model.aic(X)
-
-        # change the precision of "criterion_value" based on sample size
-        criterion_value = round(criterion_value, int(np.log10(X.shape[0])))
-        results = _CollectResults(model, criterion_value, gm_params)
-        return results
+            return -estimator.aic(X)
 
     def fit(self, X, y=None):
         """Fit several Gaussian mixture models to the data.
@@ -292,8 +271,6 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         covariance_type = self._check_parameters()
         X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=1)
 
-        random_state = check_random_state(self.random_state)
-
         # check n_components against sample size
         n_comps = [self.max_components, self.min_components]
         names = ["max_components", "min_components"]
@@ -303,41 +280,34 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
                 msg += "= {}, n_samples = {}".format(n_comps[i], X.shape[0])
                 raise ValueError(msg)
 
-        param_grid = dict(
-            covariance_type=covariance_type,
-            n_components=range(self.min_components, self.max_components + 1),
+        param_grid = {
+            "covariance_type": covariance_type,
+            "n_components": range(self.min_components, self.max_components + 1),
+        }
+
+        grid_search = GridSearchCV(
+            GaussianMixture(
+                init_params=self.init_params,
+                max_iter=self.max_iter,
+                n_init=self.n_init
+            ), param_grid=param_grid, scoring=self.criterion_score
         )
-        param_grid = list(ParameterGrid(param_grid))
+        grid_search.fit(X)
 
-        seeds = random_state.randint(np.iinfo(np.int32).max, size=len(param_grid))
+        self.criterion_ = -grid_search.cv_results_['mean_test_score']
+        self.n_components_ = grid_search.best_params_['n_components']
+        self.covariance_type_ = grid_search.best_params_['covariance_type']
 
-        if parse_version(joblib.__version__) < parse_version("0.12"):
-            parallel_kwargs = {"backend": "threading"}
-        else:
-            parallel_kwargs = {"prefer": "threads"}
-
-        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, **parallel_kwargs)(
-            delayed(self._fit_cluster)(X, gm_params, seed)
-            for gm_params, seed in zip(param_grid, seeds)
-        )
-        best_criter = [result.criterion for result in results]
-
-        if sum(best_criter == np.min(best_criter)) == 1:
-            best_idx = np.argmin(best_criter)
-        else:
-            # in case there is a tie,
-            # select the model with the least number of parameters
-            ties = np.where(best_criter == np.min(best_criter))[0]
-            n_params = [results[tie].model._n_parameters() for tie in ties]
-            best_idx = ties[np.argmin(n_params)]
-
-        self.best_criterion_ = results[best_idx].criterion
-        self.n_components_ = results[best_idx].n_components
-        self.covariance_type_ = results[best_idx].covariance_type
-        self.best_model_ = results[best_idx].model
-        self.n_iter_ = results[best_idx].model.n_iter_
-        self.labels_ = results[best_idx].model.predict(X)
-        self.results_ = results
+        best_estimator = grid_search.best_estimator_
+        self.best_estimator_ = best_estimator
+        self.weights_ = best_estimator.weights_
+        self.means_ = best_estimator.means_
+        self.covariances_ = best_estimator.covariances_
+        self.precisions_ = best_estimator.precisions_
+        self.precisions_cholesky_ = best_estimator.precisions_cholesky_
+        self.converged_ = best_estimator.converged_
+        self.n_iter_ = best_estimator.n_iter_
+        self.lower_bound_ = best_estimator.lower_bound_
         self.n_features_in_ = X.shape[1]
 
         return self
@@ -356,9 +326,9 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         labels : array, shape (n_samples,)
             Component labels.
         """
-        check_is_fitted(self, ["best_model_"], all_or_any=all)
+        check_is_fitted(self, ["best_estimator_"], all_or_any=all)
         X = self._validate_data(X, reset=False)
-        labels = self.best_model_.predict(X)
+        labels = self.best_estimator_.predict(X)
 
         return labels
 
@@ -383,34 +353,3 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
         labels = self.predict(X)
         return labels
-    
-
-
-class _CollectResults:
-    """Collect intermediary results.
-
-    Represent the intermediary results for a single GMM clustering run
-    of :class:`sklearn.mixture.GaussianMixtureIC`
-
-    Attributes
-    ----------
-
-    model : GaussianMixture object
-        GMM clustering fit to the data.
-
-    criterion : float
-        Bayesian or Aikake Information Criterion.
-
-    n_components : int
-        Number of components.
-
-    covariance_type : {'full', 'tied', 'diag', 'spherical'}
-        Covariance type used for the GMM.
-
-    """
-
-    def __init__(self, model, criter, gm_params):
-        self.model = model
-        self.criterion = criter
-        self.n_components = gm_params["n_components"]
-        self.covariance_type = gm_params["covariance_type"]
