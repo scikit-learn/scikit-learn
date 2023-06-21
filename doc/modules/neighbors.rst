@@ -114,8 +114,10 @@ unsupervised learning: in particular, see :class:`~sklearn.manifold.Isomap`,
 :class:`~sklearn.manifold.LocallyLinearEmbedding`, and
 :class:`~sklearn.cluster.SpectralClustering`.
 
-KDTree and BallTree Classes
----------------------------
+|details-start|
+**KDTree and BallTree Classes**
+|details-split|
+
 Alternatively, one can use the :class:`KDTree` or :class:`BallTree` classes
 directly to find nearest neighbors.  This is the functionality wrapped by
 the :class:`NearestNeighbors` class used above.  The Ball Tree and KD Tree
@@ -144,7 +146,10 @@ of valid metrics use :meth:`KDTree.valid_metrics` and :meth:`BallTree.valid_metr
     >>> BallTree.valid_metrics()
     ['euclidean', 'l2', 'minkowski', 'p', 'manhattan', 'cityblock', 'l1', 'chebyshev', 'infinity', 'seuclidean', 'mahalanobis', 'hamming', 'canberra', 'braycurtis', 'jaccard', 'dice', 'rogerstanimoto', 'russellrao', 'sokalmichener', 'sokalsneath', 'haversine', 'pyfunc']
 
+|details-end|
+
 .. _classification:
+
 
 Nearest Neighbors Classification
 ================================
@@ -196,10 +201,14 @@ distance can be supplied to compute the weights.
 
 .. centered:: |classification_1| |classification_2|
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
   * :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`: an example of
     classification using nearest neighbors.
+
+|details-end|
 
 .. _regression:
 
@@ -245,13 +254,18 @@ the lower half of those faces.
    :align: center
 
 
-.. topic:: Examples:
+
+|details-start|
+**Examples**
+|details-split|
 
   * :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`: an example of regression
     using nearest neighbors.
 
   * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`: an example of
     multi-output regression using nearest neighbors.
+
+|details-end|
 
 
 Nearest Neighbor Algorithms
@@ -309,11 +323,15 @@ keyword ``algorithm = 'kd_tree'``, and are computed using the class
 :class:`KDTree`.
 
 
-.. topic:: References:
+|details-start|
+**References:**
+|details-split|
 
    * `"Multidimensional binary search trees used for associative searching"
      <https://dl.acm.org/citation.cfm?doid=361002.361007>`_,
      Bentley, J.L., Communications of the ACM (1975)
+
+|details-end|
 
 
 .. _ball_tree:
@@ -347,15 +365,20 @@ neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
 and are computed using the class :class:`BallTree`.
 Alternatively, the user can work with the :class:`BallTree` class directly.
 
-.. topic:: References:
+|details-start|
+**References:**
+|details-split|
 
-   * `"Five Balltree Construction Algorithms"
-     <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
-     Omohundro, S.M., International Computer Science Institute
-     Technical Report (1989)
+* `"Five Balltree Construction Algorithms"
+  <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
+  Omohundro, S.M., International Computer Science Institute
+  Technical Report (1989)
+
+|details-split|
 
 Choice of Nearest Neighbors Algorithm
 -------------------------------------
+
 The optimal algorithm for a given dataset is a complicated choice, and
 depends on a number of factors:
 
@@ -440,8 +463,11 @@ based on the following assumptions:
 * when :math:`D > 15`, the intrinsic dimensionality of the data is generally
   too high for tree-based methods
 
-Effect of ``leaf_size``
------------------------
+
+|details-start|
+**Effect of ``leaf_size``**
+|details-split|
+
 As noted above, for small sample sizes a brute force search can be more
 efficient than a tree-based query.  This fact is accounted for in the ball
 tree and KD tree by internally switching to brute force searches within
@@ -469,8 +495,10 @@ leaf nodes.  The level of this switch can be specified with the parameter
 
 ``leaf_size`` is not referenced for brute force queries.
 
+|details-end|
+
 Valid Metrics for Nearest Neighbor Algorithms
----------------------------------------------
+-------------------------------------------------
 
 For a list of available metrics, see the documentation of the :class:`DistanceMetric`
 class and the metrics listed in `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`.
@@ -483,6 +511,7 @@ A list of valid metrics for any of the above algorithms can be obtained by using
     >>> print(sorted(KDTree.valid_metrics()))
     ['chebyshev', 'cityblock', 'euclidean', 'infinity', 'l1', 'l2', 'manhattan', 'minkowski', 'p']
 
+|details-end|
 
 .. _nearest_centroid_classifier:
 
@@ -511,8 +540,9 @@ for more complex methods that do not make this assumption. Usage of the default
     [1]
 
 
+
 Nearest Shrunken Centroid
--------------------------
+===========================
 
 The :class:`NearestCentroid` classifier has a ``shrink_threshold`` parameter,
 which implements the nearest shrunken centroid classifier. In effect, the value
@@ -535,10 +565,14 @@ the model from 0.81 to 0.82.
 
 .. centered:: |nearest_centroid_1| |nearest_centroid_2|
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
   * :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.
+
+|details-end|
 
 .. _neighbors_transformer:
 
@@ -623,17 +657,22 @@ implementation with special data types. The precomputed neighbors
   include one extra neighbor in a custom nearest neighbors estimator, since
   unnecessary neighbors will be filtered by following estimators.
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
-  * :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`:
-    an example of pipelining :class:`KNeighborsTransformer` and
-    :class:`~sklearn.manifold.TSNE`. Also proposes two custom nearest neighbors
-    estimators based on external packages.
+* :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`:
+  an example of pipelining :class:`KNeighborsTransformer` and
+  :class:`~sklearn.manifold.TSNE`. Also proposes two custom nearest neighbors
+  estimators based on external packages.
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_caching_nearest_neighbors.py`:
-    an example of pipelining :class:`KNeighborsTransformer` and
-    :class:`KNeighborsClassifier` to enable caching of the neighbors graph
-    during a hyper-parameter grid-search.
+* :ref:`sphx_glr_auto_examples_neighbors_plot_caching_nearest_neighbors.py`:
+  an example of pipelining :class:`KNeighborsTransformer` and :
+  class:`KNeighborsClassifier` to enable caching of the neighbors graph
+  during a hyper-parameter grid-search.
+
+|details-end|
+
 
 .. _nca:
 
@@ -757,16 +796,21 @@ by each method. Each data sample belongs to one of 10 classes.
 .. centered:: |nca_dim_reduction_1| |nca_dim_reduction_2| |nca_dim_reduction_3|
 
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
  * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_classification.py`
  * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_dim_reduction.py`
  * :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py`
 
+|details-end|
+
 .. _nca_mathematical_formulation:
 
-Mathematical formulation
-------------------------
+|details-start|
+**Mathematical formulation**
+|details-split|
 
 The goal of NCA is to learn an optimal linear transformation matrix of size
 ``(n_components, n_features)``, which maximises the sum over all samples
@@ -807,9 +851,12 @@ NCA can be seen as learning a (squared) Mahalanobis distance metric:
 where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size
 ``(n_features, n_features)``.
 
+|details-end|
 
-Implementation
---------------
+
+|details-start|
+**Implementation**
+|details-split|
 
 This implementation follows what is explained in the original paper [1]_. For
 the optimisation method, it currently uses scipy's L-BFGS-B with a full
@@ -819,11 +866,15 @@ provide stable learning.
 See the examples below and the docstring of
 :meth:`NeighborhoodComponentsAnalysis.fit` for further information.
 
-Complexity
-----------
+|details-end|
 
-Training
-^^^^^^^^
+
+|details-start|
+**Complexity**
+|details-split|
+
+**Training**
+
 NCA stores a matrix of pairwise distances, taking ``n_samples ** 2`` memory.
 Time complexity depends on the number of iterations done by the optimisation
 algorithm. However, one can set the maximum number of iterations with the
@@ -831,14 +882,18 @@ argument ``max_iter``. For each iteration, time complexity is
 ``O(n_components x n_samples x min(n_samples, n_features))``.
 
 
-Transform
-^^^^^^^^^
+**Transform**
+
 Here the ``transform`` operation returns :math:`LX^T`, therefore its time
 complexity equals ``n_components * n_features * n_samples_test``. There is no
 added space complexity in the operation.
 
+|details-end|
 
-.. topic:: References:
+
+|details-start|
+**References:**
+|details-split|
 
     .. [1] `"Neighbourhood Components Analysis"
       <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
@@ -847,3 +902,5 @@ added space complexity in the operation.
 
     `Wikipedia entry on Neighborhood Components Analysis
     <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_
+
+|details-end|
