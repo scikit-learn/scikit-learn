@@ -847,6 +847,7 @@ def test_dataframe_protocol(constructor_name, minversion):
 
     if constructor_name != "pyarrow":
         # pyarrow does not work with `np.asarray`
+        # https://github.com/apache/arrow/issues/34886
         assert_allclose(df, X_out)
 
     bad_names = ["a", "b", "c"]
