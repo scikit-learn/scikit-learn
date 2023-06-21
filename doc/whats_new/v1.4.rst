@@ -40,3 +40,11 @@ Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.3, including:
 
 TODO: update at the time of the release.
+
+:mod:`sklearn.base`
+...................
+
+- |Enhancement| :meth:`base.ClusterMixin.fit_predict` and
+  :meth:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
+  passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
+  Jalali`_.
