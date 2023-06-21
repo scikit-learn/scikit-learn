@@ -478,7 +478,7 @@ class Interval(_Constraint):
             )
 
     def __contains__(self, val):
-        if np.isnan(val):
+        if math.isnan(val):
             return False
 
         left_cmp = operator.lt if self.closed in ("left", "both") else operator.le
