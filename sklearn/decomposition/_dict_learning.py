@@ -3,27 +3,29 @@
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
-import time
-import sys
 import itertools
-from numbers import Integral, Real
+import sys
+import time
 import warnings
-
 from math import ceil
+from numbers import Integral, Real
 
 import numpy as np
-from scipy import linalg
 from joblib import effective_n_jobs
+from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..base import _fit_context
-from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils._param_validation import validate_params
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from ..linear_model import Lars, Lasso, LassoLars, orthogonal_mp_gram
+from ..utils import check_array, check_random_state, gen_batches, gen_even_slices
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
+from ..utils.parallel import Parallel, delayed
 from ..utils.validation import check_is_fitted
-from ..utils.parallel import delayed, Parallel
-from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
 def _check_positive_coding(method, positive):

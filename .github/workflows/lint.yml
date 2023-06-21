@@ -6,6 +6,10 @@ name: linter
 on:
   - pull_request_target
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -32,7 +36,11 @@ jobs:
           pip install pytest ruff $(get_dep mypy min) $(get_dep black min) cython-lint
 
       - name: Run linting
-        run: ./build_tools/linting.sh &> /tmp/linting_output.txt
+        # We download the linting script from main, since this workflow is run
+        # from main itself.
+        run: |
+          curl https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/build_tools/linting.sh -o ./build_tools/linting.sh
+          ./build_tools/linting.sh &> /tmp/linting_output.txt
 
       - name: Upload Artifact
         if: always()
@@ -78,6 +86,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          BRANCH_SHA: ${{ github.event.pull_request.head.sha }}
           RUN_ID: ${{ github.run_id }}
           LOG_FILE: linting_output.txt
         run: python ./build_tools/get_comment.py

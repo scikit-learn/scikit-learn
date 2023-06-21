@@ -37,6 +37,7 @@ y_pred = cross_val_predict(lr, X, y, cv=10)
 # residuals (i.e. the difference between the observed values and the predicted
 # values) vs. the predicted values.
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import PredictionErrorDisplay
 
 fig, axs = plt.subplots(ncols=2, figsize=(8, 4))

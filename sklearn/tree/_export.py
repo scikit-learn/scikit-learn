@@ -17,15 +17,11 @@ from numbers import Integral
 
 import numpy as np
 
-from ..utils.validation import check_is_fitted, check_array
-from ..utils._param_validation import Interval, validate_params, StrOptions, HasMethods
-
 from ..base import is_classifier
-
-from . import _criterion
-from . import _tree
-from ._reingold_tilford import buchheim, Tree
-from . import DecisionTreeClassifier, DecisionTreeRegressor
+from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
+from ..utils.validation import check_array, check_is_fitted
+from . import DecisionTreeClassifier, DecisionTreeRegressor, _criterion, _tree
+from ._reingold_tilford import Tree, buchheim
 
 
 def _color_brew(n):

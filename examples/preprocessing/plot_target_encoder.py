@@ -55,9 +55,7 @@ _ = y.hist()
 # strategies. First, we list out the encoders we will be using to preprocess
 # the categorical features:
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OrdinalEncoder
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import TargetEncoder
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, TargetEncoder
 
 categorical_preprocessors = [
     ("drop", "drop"),
@@ -71,9 +69,9 @@ categorical_preprocessors = [
 
 # %%
 # Next, we evaluate the models using cross validation and record the results:
-from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import cross_validate
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.model_selection import cross_validate
+from sklearn.pipeline import make_pipeline
 
 n_cv_folds = 3
 max_iter = 20
