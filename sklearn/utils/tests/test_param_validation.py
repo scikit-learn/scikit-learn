@@ -92,6 +92,8 @@ def test_interval_large_integers(interval_type):
     assert 2**65 in interval and 2**128 not in interval
     assert float(2**65) in interval and float(2**128) not in interval
 
+    assert 2**1024 not in interval
+
 
 def test_interval_inf_in_bounds():
     """Check that inf is included iff a bound is closed and set to None.
