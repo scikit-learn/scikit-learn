@@ -783,11 +783,19 @@ details, and give intuition to the reader on what the algorithm does.
   backticks should be used nowadays.
 
 * Too much information makes it more difficult for users to access to the
-  content they are interested in. Use dropdowns to hide by default sections such
-  as `References`, deep mathematical details or, more generally, narrative that
-  may only interest users that want to go beyond the pragmatics of the user
-  guide. Low level sections such as `Examples` should **not** use dropdowns to
-  stay visible to all users. The following syntax::
+  content they are interested in. Use dropdowns to hide by default:
+
+  - low hierarchy sections such as `References`, `Properties`, `Applications and
+    limitations`, etc. See for instance the subsections in :ref:`det_curve`;
+  - in-depth mathematical details;
+  - narrative that is too use-case specific;
+  - narrative that may only interest users that want to go beyond the pragmatics
+    of a given tool.
+
+  Low level sections such as `Examples` should **not** use dropdowns to stay
+  visible to all users.
+
+  The following syntax::
 
     |details-start|
     **Dropdown title**
