@@ -21,7 +21,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import _convert_container
-from sklearn.utils._testing import DataFrameWithoutColumns
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
@@ -61,6 +60,7 @@ from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_fit_params,
     _check_response_method,
+    _is_pandas_df,
 )
 from sklearn.base import BaseEstimator
 import sklearn
@@ -68,6 +68,7 @@ import sklearn
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 
 from sklearn.utils._testing import TempMemmap
+from sklearn.utils._testing import generate_dataframe_from_lib
 from sklearn.utils._testing import skip_if_array_api_compat_not_configured
 
 
@@ -1685,39 +1686,35 @@ def test_get_feature_names_pandas():
     assert_array_equal(feature_names, columns)
 
 
-def test_get_feature_names_dataframe_protocol():
+@pytest.mark.parametrize(
+    "dataframe_lib_str, minversion",
+    [("pyarrow", "12.0.0"), ("pandas", "1.5.0"), ("polars", "0.18.2")],
+)
+def test_get_feature_names_dataframe_protocol(dataframe_lib_str, minversion):
     """Uses the dataframe exchange protocol to get feature names."""
-    pd = pytest.importorskip("pandas", minversion="1.5.0")
-    columns = [f"col_{i}" for i in range(3)]
-    X_df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns)
-    X_wrapped = DataFrameWithoutColumns(X_df)
-    feature_names = _get_feature_names(X_wrapped)
-
-    assert_array_equal(feature_names, columns)
-
-
-def test_check_feature_names_arrow():
-    """Check that pyarrow table gives the correct names."""
-    pa = pytest.importorskip("pyarrow")
-
-    n_legs = pa.array([2, 4, 5, 100])
-    animals = pa.array(["Flamingo", "Horse", "Brittle stars", "Centipede"])
-    names = ["n_legs", "animals"]
-    table = pa.Table.from_arrays([n_legs, animals], names=names)
-
-    feature_names = _get_feature_names(table)
-    assert_array_equal(feature_names, names)
-
-
-def test_check_feature_names_polars():
-    """Check that polars dataframe gives the correct names."""
-
-    pl = pytest.importorskip("polars")
-    columns = [f"col_{i}" for i in range(3)]
-    df = pl.DataFrame([[1, 2, 3], [4, 5, 6]], schema=columns)
-
+    dataframe_lib = pytest.importorskip(dataframe_lib_str, minversion=minversion)
+    data = {"col_0": [1, 4], "col_1": [2, 3], "col_2": [3, 6]}
+    df = generate_dataframe_from_lib(dataframe_lib, data)
     feature_names = _get_feature_names(df)
-    assert_array_equal(feature_names, columns)
+
+    assert_array_equal(feature_names, ["col_0", "col_1", "col_2"])
+
+
+def test_is_pandas_df():
+    """Check behavior of is_pandas_df."""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"a": [1, 2, 3]})
+    assert _is_pandas_df(df)
+
+    assert not _is_pandas_df(np.asarray([1, 2, 3]))
+    assert not _is_pandas_df(1)
+
+
+def test_is_pandas_df_pandas_not_installed(hide_available_pandas):
+    """Check _is_pandas_df when pandas is not installed."""
+
+    assert not _is_pandas_df(np.asarray([1, 2, 3]))
+    assert not _is_pandas_df(1)
 
 
 def test_get_feature_names_numpy():

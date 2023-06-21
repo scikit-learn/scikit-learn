@@ -1062,18 +1062,30 @@ class MinimalTransformer:
         return self.fit(X, y).transform(X, y)
 
 
-class DataFrameWithoutColumns:
-    """Wrapper around DataFrame that does not have a columns attribute."""
+def generate_dataframe_from_lib(dataframe_lib, data):
+    """Generate dataframe from array library with data and columns.
 
-    def __init__(self, dataframe):
-        self.dataframe = dataframe
-        self.exchange_protocol_called = False
+    Parameters
+    ----------
+    dataframe_lib : module
+        Array library to generate dataframe from.
 
-    def __dataframe__(self, nan_as_null=False, allow_copy=True):
-        self.exchange_protocol_called = True
-        return self.dataframe.__dataframe__(
-            nan_as_null=nan_as_null, allow_copy=allow_copy
-        )
+    data : dict
+        Array to build dataframe from.
 
-    def __array__(self, dtype=None):
-        return self.dataframe.__array__(dtype)
+    Returns
+    -------
+    dataframe : dataframe
+        Constructed dataframe
+    """
+    supported_arrays = ("pyarrow", "pandas", "polars")
+    df_lib_name = dataframe_lib.__name__
+
+    if df_lib_name == "pyarrow":
+        return dataframe_lib.Table.from_pydict(data)
+    elif df_lib_name == "pandas":
+        return dataframe_lib.DataFrame(data)
+    elif df_lib_name == "polars":
+        return dataframe_lib.from_dict(data)
+    else:
+        raise ValueError(f"array_lib must be in {supported_arrays}")

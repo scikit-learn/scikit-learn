@@ -12,7 +12,7 @@ import sklearn
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import DataFrameWithoutColumns
+from sklearn.utils._testing import generate_dataframe_from_lib
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
@@ -819,12 +819,20 @@ def test_estimator_getstate_using_slots_error_message():
         pickle.dumps(Estimator())
 
 
-def test_dataframe_protocol():
+@pytest.mark.parametrize(
+    "dataframe_lib_str, minversion",
+    [
+        ("pandas", "1.5.0"),
+        ("pyarrow", "12.0.0"),
+        ("polars", "0.18.2"),
+    ],
+)
+def test_dataframe_protocol(dataframe_lib_str, minversion):
     """Uses the dataframe exchange protocol to get feature names."""
-    pd = pytest.importorskip("pandas", minversion="1.5.0")
-    columns = [f"col_{i}" for i in range(3)]
-    X_df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns)
-    X_df_wrapped = DataFrameWithoutColumns(X_df)
+    dataframe_lib = pytest.importorskip(dataframe_lib_str, minversion=minversion)
+    data = {"col_0": [1, 4], "col_1": [2, 3], "col_2": [3, 6]}
+    columns = ["col_0", "col_1", "col_2"]
+    df = generate_dataframe_from_lib(dataframe_lib, data)
 
     class NoOpTransformer(TransformerMixin, BaseEstimator):
         def fit(self, X, y=None):
@@ -835,15 +843,15 @@ def test_dataframe_protocol():
             return self._validate_data(X, reset=False)
 
     no_op = NoOpTransformer()
-    no_op.fit(X_df_wrapped)
-    assert X_df_wrapped.exchange_protocol_called
-
+    no_op.fit(df)
     assert_array_equal(no_op.feature_names_in_, columns)
-    X_out = no_op.transform(X_df_wrapped)
-    assert_allclose(X_df, X_out)
+    X_out = no_op.transform(df)
 
-    X_df_bad_names = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
-    X_df_bad_names_wrapped = DataFrameWithoutColumns(X_df_bad_names)
+    if dataframe_lib_str != "pyarrow":
+        # pyarrow does not work with `np.asarray`
+        assert_allclose(df, X_out)
+
+    data_bad = {"a": [1, 4], "b": [2, 3], "c": [3, 6]}
+    df_bad = generate_dataframe_from_lib(dataframe_lib, data_bad)
     with pytest.raises(ValueError, match="The feature names should match"):
-        no_op.transform(X_df_bad_names_wrapped)
-    assert X_df_bad_names_wrapped.exchange_protocol_called
+        no_op.transform(df_bad)
