@@ -6,31 +6,33 @@ import numpy as np
 import pytest
 import scipy.sparse as sp
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_multilabel_classification
-from sklearn.datasets import make_hastie_10_2
-from sklearn.datasets import make_regression
-from sklearn.datasets import make_blobs
-from sklearn.datasets import make_friedman1
-from sklearn.datasets import make_friedman2
-from sklearn.datasets import make_friedman3
-from sklearn.datasets import make_low_rank_matrix
-from sklearn.datasets import make_moons
-from sklearn.datasets import make_circles
-from sklearn.datasets import make_sparse_coded_signal
-from sklearn.datasets import make_sparse_uncorrelated
-from sklearn.datasets import make_spd_matrix
-from sklearn.datasets import make_swiss_roll
-from sklearn.datasets import make_s_curve
-from sklearn.datasets import make_biclusters
-from sklearn.datasets import make_checkerboard
-
+from sklearn.datasets import (
+    make_biclusters,
+    make_blobs,
+    make_checkerboard,
+    make_circles,
+    make_classification,
+    make_friedman1,
+    make_friedman2,
+    make_friedman3,
+    make_hastie_10_2,
+    make_low_rank_matrix,
+    make_moons,
+    make_multilabel_classification,
+    make_regression,
+    make_s_curve,
+    make_sparse_coded_signal,
+    make_sparse_uncorrelated,
+    make_spd_matrix,
+    make_swiss_roll,
+)
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 from sklearn.utils.validation import assert_all_finite
 
 
@@ -281,18 +283,6 @@ def test_make_multilabel_classification_return_indicator_sparse():
         assert X.shape == (25, 20), "X shape mismatch"
         assert Y.shape == (25, 3), "Y shape mismatch"
         assert sp.issparse(Y)
-
-
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"n_classes": 0}, "'n_classes' should be an integer"),
-        ({"length": 0}, "'length' should be an integer"),
-    ],
-)
-def test_make_multilabel_classification_valid_arguments(params, err_msg):
-    with pytest.raises(ValueError, match=err_msg):
-        make_multilabel_classification(**params)
 
 
 def test_make_hastie_10_2():
@@ -647,12 +637,6 @@ def test_make_moons_unbalanced():
     ), "Number of samples in a moon is wrong"
     assert X.shape == (12, 2), "X shape mismatch"
     assert y.shape == (12,), "y shape mismatch"
-
-    with pytest.raises(
-        ValueError,
-        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
-    ):
-        make_moons(n_samples=[1, 2, 3])
 
     with pytest.raises(
         ValueError,

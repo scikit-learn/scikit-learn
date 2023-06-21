@@ -10,58 +10,50 @@
 #          Giorgio Patrini
 #          Thierry Guillemot
 # License: BSD 3 clause
+import atexit
+import contextlib
+import functools
+import inspect
 import os
 import os.path as op
-import inspect
-import warnings
-import sys
-import functools
-import tempfile
-from subprocess import check_output, STDOUT, CalledProcessError
-from subprocess import TimeoutExpired
 import re
-import contextlib
-from collections.abc import Iterable
-from collections.abc import Sequence
-
-import scipy as sp
+import shutil
+import sys
+import tempfile
+import unittest
+import warnings
+from collections.abc import Iterable, Sequence
 from functools import wraps
 from inspect import signature
-
-import shutil
-import atexit
-import unittest
+from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
 from unittest import TestCase
 
-# WindowsError only exist on Windows
-try:
-    WindowsError  # type: ignore
-except NameError:
-    WindowsError = None
-
-from numpy.testing import assert_allclose as np_assert_allclose
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_approx_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_less
-import numpy as np
 import joblib
+import numpy as np
+import scipy as sp
+from numpy.testing import assert_allclose as np_assert_allclose
+from numpy.testing import (
+    assert_almost_equal,
+    assert_approx_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_less,
+)
 
 import sklearn
 from sklearn.utils import (
-    IS_PYPY,
     _IS_32BIT,
+    IS_PYPY,
     _in_unstable_openblas_configuration,
 )
+from sklearn.utils._array_api import _check_array_api_dispatch
+from sklearn.utils.fixes import threadpool_info
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
     check_is_fitted,
     check_X_y,
 )
-from sklearn.utils.fixes import threadpool_info
-
 
 __all__ = [
     "assert_raises",
@@ -389,6 +381,12 @@ def set_random_state(estimator, random_state=0):
 
 
 try:
+    _check_array_api_dispatch(True)
+    ARRAY_API_COMPAT_FUNCTIONAL = True
+except ImportError:
+    ARRAY_API_COMPAT_FUNCTIONAL = False
+
+try:
     import pytest
 
     skip_if_32bit = pytest.mark.skipif(_IS_32BIT, reason="skipped on 32bit platforms")
@@ -399,6 +397,10 @@ try:
     )
     skip_if_no_parallel = pytest.mark.skipif(
         not joblib.parallel.mp, reason="joblib is in serial mode"
+    )
+    skip_if_array_api_compat_not_configured = pytest.mark.skipif(
+        not ARRAY_API_COMPAT_FUNCTIONAL,
+        reason="requires array_api_compat installed and a new enough version of NumPy",
     )
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
@@ -442,7 +444,7 @@ def _delete_folder(folder_path, warn=False):
             # This can fail under windows,
             #  but will succeed when called by atexit
             shutil.rmtree(folder_path)
-    except WindowsError:
+    except OSError:
         if warn:
             warnings.warn("Could not delete temporary folder %s" % folder_path)
 
@@ -832,7 +834,7 @@ def _convert_container(container, constructor_name, columns_name=None, dtype=Non
         return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == "dataframe":
         pd = pytest.importorskip("pandas")
-        return pd.DataFrame(container, columns=columns_name, dtype=dtype)
+        return pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas")
         return pd.Series(container, dtype=dtype)

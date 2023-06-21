@@ -17,7 +17,10 @@ dependencies:
   - pytest
   - pytest-xdist=2.5.0
   - pillow
-  - codecov
+  - setuptools
   - pytest-cov
   - coverage
   - ccache
+  - pytorch=1.13
+  - pytorch-cpu
+  - array-api-compat

@@ -1,26 +1,29 @@
 from math import ceil
 
+import numpy as np
 import pytest
 from scipy.stats import norm, randint
-import numpy as np
 
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
 from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.model_selection import LeavePGroupsOut
-from sklearn.model_selection import GroupKFold
-from sklearn.model_selection import GroupShuffleSplit
-from sklearn.model_selection import HalvingGridSearchCV
-from sklearn.model_selection import HalvingRandomSearchCV
-from sklearn.model_selection import KFold, ShuffleSplit
-from sklearn.svm import LinearSVC
+from sklearn.model_selection import (
+    GroupKFold,
+    GroupShuffleSplit,
+    HalvingGridSearchCV,
+    HalvingRandomSearchCV,
+    KFold,
+    LeaveOneGroupOut,
+    LeavePGroupsOut,
+    ShuffleSplit,
+    StratifiedKFold,
+    StratifiedShuffleSplit,
+)
 from sklearn.model_selection._search_successive_halving import (
     _SubsampleMetaSplitter,
     _top_k,
 )
+from sklearn.svm import LinearSVC
 
 
 class FastClassifier(DummyClassifier):
@@ -123,14 +126,16 @@ def test_nan_handling(HalvingSearch, fail_at):
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
-    "aggressive_elimination,"
-    "max_resources,"
-    "expected_n_iterations,"
-    "expected_n_required_iterations,"
-    "expected_n_possible_iterations,"
-    "expected_n_remaining_candidates,"
-    "expected_n_candidates,"
-    "expected_n_resources,",
+    (
+        "aggressive_elimination,"
+        "max_resources,"
+        "expected_n_iterations,"
+        "expected_n_required_iterations,"
+        "expected_n_possible_iterations,"
+        "expected_n_remaining_candidates,"
+        "expected_n_candidates,"
+        "expected_n_resources,"
+    ),
     [
         # notice how it loops at the beginning
         # also, the number of candidates evaluated at the last iteration is
@@ -196,11 +201,13 @@ def test_aggressive_elimination(
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
-    "min_resources,"
-    "max_resources,"
-    "expected_n_iterations,"
-    "expected_n_possible_iterations,"
-    "expected_n_resources,",
+    (
+        "min_resources,"
+        "max_resources,"
+        "expected_n_iterations,"
+        "expected_n_possible_iterations,"
+        "expected_n_resources,"
+    ),
     [
         # with enough resources
         ("smallest", "auto", 2, 4, [20, 60]),
@@ -534,7 +541,6 @@ def test_subsample_splitter_determinism(subsample_test):
     ],
 )
 def test_top_k(k, itr, expected):
-
     results = {  # this isn't a 'real world' result dict
         "iter": [0, 0, 0, 0, 1, 1, 2, 2, 2],
         "mean_test_score": [4, 3, 5, 1, 11, 10, 5, 6, 9],
@@ -722,7 +728,7 @@ def test_groups_support(Est):
     X, y = make_classification(n_samples=50, n_classes=2, random_state=0)
     groups = rng.randint(0, 3, 50)
 
-    clf = LinearSVC(random_state=0)
+    clf = LinearSVC(dual="auto", random_state=0)
     grid = {"C": [1]}
 
     group_cvs = [

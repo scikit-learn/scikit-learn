@@ -14,12 +14,14 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 
 # avoid division truncation
 import warnings
-from numbers import Real, Integral
+from numbers import Integral, Real
+
 import numpy as np
 
-from . import empirical_covariance, EmpiricalCovariance
+from ..base import _fit_context
 from ..utils import check_array
 from ..utils._param_validation import Interval, validate_params
+from . import EmpiricalCovariance, empirical_covariance
 
 
 def _ledoit_wolf(X, *, assume_centered, block_size):
@@ -237,6 +239,7 @@ class ShrunkCovariance(EmpiricalCovariance):
         )
         self.shrinkage = shrinkage
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the shrunk covariance model to X.
 
@@ -254,7 +257,6 @@ class ShrunkCovariance(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         X = self._validate_data(X)
         # Not calling the parent object to fit, to avoid a potential
         # matrix inversion when setting the precision
@@ -272,6 +274,13 @@ class ShrunkCovariance(EmpiricalCovariance):
 # Ledoit-Wolf estimator
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "assume_centered": ["boolean"],
+        "block_size": [Interval(Integral, 1, None, closed="left")],
+    }
+)
 def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
@@ -526,6 +535,7 @@ class LedoitWolf(EmpiricalCovariance):
         )
         self.block_size = block_size
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the Ledoit-Wolf shrunk covariance model to X.
 
@@ -542,7 +552,6 @@ class LedoitWolf(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
         X = self._validate_data(X)
@@ -715,6 +724,7 @@ class OAS(EmpiricalCovariance):
     0.0195...
     """
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the Oracle Approximating Shrinkage covariance model to X.
 
@@ -731,8 +741,6 @@ class OAS(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         X = self._validate_data(X)
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)

@@ -10,22 +10,26 @@ Authors: Shane Grigsby <refuge@rocktalus.com>
 License: BSD 3 clause
 """
 
+import warnings
 from numbers import Integral, Real
 
-import warnings
 import numpy as np
+from scipy.sparse import SparseEfficiencyWarning, issparse
 
+from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..exceptions import DataConversionWarning
-from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
-from ..metrics.pairwise import _VALID_METRICS
-from ..utils import gen_batches, get_chunk_n_rows
-from ..utils._param_validation import Interval, HasMethods, StrOptions, validate_params
-from ..utils._param_validation import RealNotInt
-from ..utils.validation import check_memory
-from ..neighbors import NearestNeighbors
-from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
-from scipy.sparse import issparse, SparseEfficiencyWarning
+from ..metrics.pairwise import _VALID_METRICS, PAIRWISE_BOOLEAN_FUNCTIONS
+from ..neighbors import NearestNeighbors
+from ..utils import gen_batches, get_chunk_n_rows
+from ..utils._param_validation import (
+    HasMethods,
+    Interval,
+    RealNotInt,
+    StrOptions,
+    validate_params,
+)
+from ..utils.validation import check_memory
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
@@ -288,6 +292,10 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self.memory = memory
         self.n_jobs = n_jobs
 
+    @_fit_context(
+        # Optics.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Perform OPTICS clustering.
 
@@ -311,8 +319,6 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
-        self._validate_params()
-
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
         if dtype == bool and X.dtype != bool:
             msg = (
@@ -619,8 +625,10 @@ def compute_optics_graph(
             )
     if np.all(np.isinf(reachability_)):
         warnings.warn(
-            "All reachability values are inf. Set a larger"
-            " max_eps or all data will be considered outliers.",
+            (
+                "All reachability values are inf. Set a larger"
+                " max_eps or all data will be considered outliers."
+            ),
             UserWarning,
         )
     return ordering, core_distances_, reachability_, predecessor_

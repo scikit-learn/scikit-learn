@@ -9,39 +9,34 @@ Ridge regression
 # License: BSD 3 clause
 
 
+import numbers
+import warnings
 from abc import ABCMeta, abstractmethod
 from functools import partial
 from numbers import Integral, Real
-import warnings
 
 import numpy as np
-import numbers
-from scipy import linalg
-from scipy import sparse
-from scipy import optimize
+from scipy import linalg, optimize, sparse
 from scipy.sparse import linalg as sp_linalg
 
-from ._base import LinearClassifierMixin, LinearModel
-from ._base import _preprocess_data, _rescale_data
-from ._sag import sag_solver
-from ..base import MultiOutputMixin, RegressorMixin, is_classifier
-from ..utils.extmath import safe_sparse_dot
-from ..utils.extmath import row_norms
-from ..utils import check_array
-from ..utils import check_consistent_length
-from ..utils import check_scalar
-from ..utils import compute_sample_weight
-from ..utils import column_or_1d
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_sample_weight
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
-from ..preprocessing import LabelBinarizer
-from ..model_selection import GridSearchCV
-from ..metrics import check_scoring
-from ..metrics import get_scorer_names
+from ..base import MultiOutputMixin, RegressorMixin, _fit_context, is_classifier
 from ..exceptions import ConvergenceWarning
+from ..metrics import check_scoring, get_scorer_names
+from ..model_selection import GridSearchCV
+from ..preprocessing import LabelBinarizer
+from ..utils import (
+    check_array,
+    check_consistent_length,
+    check_scalar,
+    column_or_1d,
+    compute_sample_weight,
+)
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.validation import _check_sample_weight, check_is_fitted
+from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
+from ._sag import sag_solver
 
 
 def _get_rescaled_operator(X, X_offset, sample_weight_sqrt):
@@ -356,8 +351,10 @@ def _solve_lbfgs(
         result = optimize.minimize(func, x0, **config)
         if not result["success"]:
             warnings.warn(
-                "The lbfgs solver did not converge. Try increasing max_iter "
-                f"or tol. Currently: max_iter={max_iter} and tol={tol}",
+                (
+                    "The lbfgs solver did not converge. Try increasing max_iter "
+                    f"or tol. Currently: max_iter={max_iter} and tol={tol}"
+                ),
                 ConvergenceWarning,
             )
         coefs[i] = result["x"]
@@ -571,7 +568,6 @@ def _ridge_regression(
     check_input=True,
     fit_intercept=False,
 ):
-
     has_sw = sample_weight is not None
 
     if solver == "auto":
@@ -781,7 +777,6 @@ def _ridge_regression(
 
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
-
     _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
         "fit_intercept": ["boolean"],
@@ -820,7 +815,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
-
         if self.solver == "lbfgs" and not self.positive:
             raise ValueError(
                 "'lbfgs' solver can be used only when positive=True. "
@@ -1115,6 +1109,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             random_state=random_state,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model.
 
@@ -1135,8 +1130,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
         X, y = self._validate_data(
             X,
@@ -1424,6 +1417,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         )
         self.class_weight = class_weight
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge classifier model.
 
@@ -1447,8 +1441,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         self : object
             Instance of the estimator.
         """
-        self._validate_params()
-
         X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight, self.solver)
 
         super().fit(X, Y, sample_weight=sample_weight)
@@ -2101,7 +2093,6 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
-
     _parameter_constraints: dict = {
         "alphas": ["array-like", Interval(Real, 0, None, closed="neither")],
         "fit_intercept": ["boolean"],
@@ -2356,6 +2347,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     0.5166...
     """
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model with cv.
 
@@ -2385,8 +2377,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
-        self._validate_params()
-
         super().fit(X, y, sample_weight=sample_weight)
         return self
 
@@ -2535,6 +2525,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         )
         self.class_weight = class_weight
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge classifier with cv.
 
@@ -2557,8 +2548,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         # `RidgeClassifier` does not accept "sag" or "saga" solver and thus support
         # csr, csc, and coo sparse matrices. By using solver="eigen" we force to accept
         # all sparse format.

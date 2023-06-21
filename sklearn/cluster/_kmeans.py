@@ -11,49 +11,48 @@
 #          Robert Layton <robertlayton@gmail.com>
 # License: BSD 3 clause
 
+import warnings
 from abc import ABC, abstractmethod
 from numbers import Integral, Real
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import (
     BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
     ClusterMixin,
     TransformerMixin,
-    ClassNamePrefixFeaturesOutMixin,
+    _fit_context,
 )
-from ..metrics.pairwise import euclidean_distances
-from ..metrics.pairwise import _euclidean_distances
-from ..utils.extmath import row_norms, stable_cumsum
-from ..utils.fixes import threadpool_limits
-from ..utils.fixes import threadpool_info
-from ..utils.sparsefuncs_fast import assign_rows_csr
-from ..utils.sparsefuncs import mean_variance_axis
-from ..utils import check_array
-from ..utils import check_random_state
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import _is_arraylike_not_scalar
-from ..utils._param_validation import Hidden
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
-from ..utils._param_validation import validate_params
-from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..exceptions import ConvergenceWarning
-from ._k_means_common import CHUNK_SIZE
-from ._k_means_common import _inertia_dense
-from ._k_means_common import _inertia_sparse
-from ._k_means_common import _is_same_clustering
-from ._k_means_minibatch import _minibatch_update_dense
-from ._k_means_minibatch import _minibatch_update_sparse
-from ._k_means_lloyd import lloyd_iter_chunked_dense
-from ._k_means_lloyd import lloyd_iter_chunked_sparse
-from ._k_means_elkan import init_bounds_dense
-from ._k_means_elkan import init_bounds_sparse
-from ._k_means_elkan import elkan_iter_chunked_dense
-from ._k_means_elkan import elkan_iter_chunked_sparse
-
+from ..metrics.pairwise import _euclidean_distances, euclidean_distances
+from ..utils import check_array, check_random_state
+from ..utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils.extmath import row_norms, stable_cumsum
+from ..utils.fixes import threadpool_info, threadpool_limits
+from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.sparsefuncs_fast import assign_rows_csr
+from ..utils.validation import (
+    _check_sample_weight,
+    _is_arraylike_not_scalar,
+    check_is_fitted,
+)
+from ._k_means_common import (
+    CHUNK_SIZE,
+    _inertia_dense,
+    _inertia_sparse,
+    _is_same_clustering,
+)
+from ._k_means_elkan import (
+    elkan_iter_chunked_dense,
+    elkan_iter_chunked_sparse,
+    init_bounds_dense,
+    init_bounds_sparse,
+)
+from ._k_means_lloyd import lloyd_iter_chunked_dense, lloyd_iter_chunked_sparse
+from ._k_means_minibatch import _minibatch_update_dense, _minibatch_update_sparse
 
 ###############################################################################
 # Initialization heuristic
@@ -888,10 +887,13 @@ class _BaseKMeans(
         self._n_init = self.n_init
         if self._n_init == "warn":
             warnings.warn(
-                "The default value of `n_init` will change from "
-                f"{default_n_init} to 'auto' in 1.4. Set the value of `n_init`"
-                " explicitly to suppress the warning",
+                (
+                    "The default value of `n_init` will change from "
+                    f"{default_n_init} to 'auto' in 1.4. Set the value of `n_init`"
+                    " explicitly to suppress the warning"
+                ),
                 FutureWarning,
+                stacklevel=2,
             )
             self._n_init = default_n_init
         if self._n_init == "auto":
@@ -902,9 +904,11 @@ class _BaseKMeans(
 
         if _is_arraylike_not_scalar(self.init) and self._n_init != 1:
             warnings.warn(
-                "Explicit initial center position passed: performing only"
-                f" one init in {self.__class__.__name__} instead of "
-                f"n_init={self._n_init}.",
+                (
+                    "Explicit initial center position passed: performing only"
+                    f" one init in {self.__class__.__name__} instead of "
+                    f"n_init={self._n_init}."
+                ),
                 RuntimeWarning,
                 stacklevel=2,
             )
@@ -1101,8 +1105,10 @@ class _BaseKMeans(
         X = self._check_test_data(X)
         if not (isinstance(sample_weight, str) and sample_weight == "deprecated"):
             warnings.warn(
-                "'sample_weight' was deprecated in version 1.3 and "
-                "will be removed in 1.5.",
+                (
+                    "'sample_weight' was deprecated in version 1.3 and "
+                    "will be removed in 1.5."
+                ),
                 FutureWarning,
             )
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -1415,15 +1421,19 @@ class KMeans(_BaseKMeans):
         self._algorithm = self.algorithm
         if self._algorithm in ("auto", "full"):
             warnings.warn(
-                f"algorithm='{self._algorithm}' is deprecated, it will be "
-                "removed in 1.3. Using 'lloyd' instead.",
+                (
+                    f"algorithm='{self._algorithm}' is deprecated, it will be "
+                    "removed in 1.3. Using 'lloyd' instead."
+                ),
                 FutureWarning,
             )
             self._algorithm = "lloyd"
         if self._algorithm == "elkan" and self.n_clusters == 1:
             warnings.warn(
-                "algorithm='elkan' doesn't make sense for a single "
-                "cluster. Using 'lloyd' instead.",
+                (
+                    "algorithm='elkan' doesn't make sense for a single "
+                    "cluster. Using 'lloyd' instead."
+                ),
                 RuntimeWarning,
             )
             self._algorithm = "lloyd"
@@ -1437,6 +1447,7 @@ class KMeans(_BaseKMeans):
             f" variable OMP_NUM_THREADS={n_active_threads}."
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """Compute k-means clustering.
 
@@ -1464,8 +1475,6 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -1907,7 +1916,6 @@ class MiniBatchKMeans(_BaseKMeans):
         n_init="warn",
         reassignment_ratio=0.01,
     ):
-
         super().__init__(
             n_clusters=n_clusters,
             init=init,
@@ -1937,9 +1945,11 @@ class MiniBatchKMeans(_BaseKMeans):
                 self._init_size = 3 * self.n_clusters
         elif self._init_size < self.n_clusters:
             warnings.warn(
-                f"init_size={self._init_size} should be larger than "
-                f"n_clusters={self.n_clusters}. Setting it to "
-                "min(3*n_clusters, n_samples)",
+                (
+                    f"init_size={self._init_size} should be larger than "
+                    f"n_clusters={self.n_clusters}. Setting it to "
+                    "min(3*n_clusters, n_samples)"
+                ),
                 RuntimeWarning,
                 stacklevel=2,
             )
@@ -2045,6 +2055,7 @@ class MiniBatchKMeans(_BaseKMeans):
             return True
         return False
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """Compute the centroids on X by chunking it into mini-batches.
 
@@ -2072,8 +2083,6 @@ class MiniBatchKMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -2202,6 +2211,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None, sample_weight=None):
         """Update k means estimate on a single mini-batch X.
 
@@ -2228,9 +2238,6 @@ class MiniBatchKMeans(_BaseKMeans):
             Return updated estimator.
         """
         has_centers = hasattr(self, "cluster_centers_")
-
-        if not has_centers:
-            self._validate_params()
 
         X = self._validate_data(
             X,

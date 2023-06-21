@@ -2,36 +2,42 @@ import itertools
 import os
 import warnings
 from functools import partial
-import numpy as np
-from numpy.testing import assert_allclose, assert_almost_equal
-from numpy.testing import assert_array_almost_equal, assert_array_equal
-from scipy import sparse
 
+import numpy as np
 import pytest
+from numpy.testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from scipy import sparse
 
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification
-from sklearn.metrics import log_loss
-from sklearn.metrics import get_scorer
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.utils import compute_class_weight, _IS_32BIT
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils import shuffle
-from sklearn.linear_model import SGDClassifier
-from sklearn.preprocessing import scale
-from sklearn.utils._testing import skip_if_no_parallel
-
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model._logistic import (
+    LogisticRegression as LogisticRegressionDefault,
+)
+from sklearn.linear_model._logistic import (
+    LogisticRegressionCV as LogisticRegressionCVDefault,
+)
 from sklearn.linear_model._logistic import (
     _log_reg_scoring_path,
     _logistic_regression_path,
-    LogisticRegression as LogisticRegressionDefault,
-    LogisticRegressionCV as LogisticRegressionCVDefault,
 )
+from sklearn.metrics import get_scorer, log_loss
+from sklearn.model_selection import (
+    GridSearchCV,
+    StratifiedKFold,
+    cross_val_score,
+    train_test_split,
+)
+from sklearn.preprocessing import LabelEncoder, StandardScaler, scale
+from sklearn.svm import l1_min_c
+from sklearn.utils import _IS_32BIT, compute_class_weight, shuffle
+from sklearn.utils._testing import ignore_warnings, skip_if_no_parallel
 
 pytestmark = pytest.mark.filterwarnings(
     "error::sklearn.exceptions.ConvergenceWarning:sklearn.*"
@@ -225,6 +231,15 @@ def test_check_solver_option(LR):
         lr = LR(penalty="none", solver="liblinear")
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
+
+
+@pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
+def test_elasticnet_l1_ratio_err_helpful(LR):
+    # Check that an informative error message is raised when penalty="elasticnet"
+    # but l1_ratio is not specified.
+    model = LR(penalty="elasticnet", solver="saga")
+    with pytest.raises(ValueError, match=r".*l1_ratio.*"):
+        model.fit(np.array([[1, 2], [3, 4]]), np.array([0, 1]))
 
 
 @pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "sag", "saga"])
@@ -733,7 +748,6 @@ def test_logistic_regression_sample_weights():
     sample_weight = y + 1
 
     for LR in [LogisticRegression, LogisticRegressionCV]:
-
         kw = {"random_state": 42, "fit_intercept": False, "multi_class": "ovr"}
         if LR is LogisticRegressionCV:
             kw.update({"Cs": 3, "cv": 3})
@@ -1909,7 +1923,6 @@ def test_scores_attribute_layout_elasticnet():
 
     for i, C in enumerate(Cs):
         for j, l1_ratio in enumerate(l1_ratios):
-
             lr = LogisticRegression(
                 penalty="elasticnet",
                 solver="saga",
@@ -2024,3 +2037,28 @@ def test_warning_on_penalty_string_none():
     )
     with pytest.warns(FutureWarning, match=warning_message):
         lr.fit(iris.data, target)
+
+
+def test_liblinear_not_stuck():
+    # Non-regression https://github.com/scikit-learn/scikit-learn/issues/18264
+    X = iris.data.copy()
+    y = iris.target.copy()
+    X = X[y != 2]
+    y = y[y != 2]
+    X_prep = StandardScaler().fit_transform(X)
+
+    C = l1_min_c(X, y, loss="log") * 10 ** (10 / 29)
+    clf = LogisticRegression(
+        penalty="l1",
+        solver="liblinear",
+        tol=1e-6,
+        max_iter=100,
+        intercept_scaling=10000.0,
+        random_state=0,
+        C=C,
+    )
+
+    # test that the fit does not raise a ConvergenceWarning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+        clf.fit(X_prep, y)

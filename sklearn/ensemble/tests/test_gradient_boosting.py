@@ -3,38 +3,34 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 import re
 import warnings
+
 import numpy as np
-from numpy.testing import assert_allclose
-
-from scipy.sparse import csr_matrix
-from scipy.sparse import csc_matrix
-from scipy.sparse import coo_matrix
-from scipy.special import expit
-
 import pytest
+from numpy.testing import assert_allclose
+from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
+from scipy.special import expit
 
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.datasets import make_classification, make_regression
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
 from sklearn.ensemble._gradient_boosting import predict_stages
-from sklearn.preprocessing import scale
+from sklearn.exceptions import DataConversionWarning, NotFittedError
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import scale
+from sklearn.svm import NuSVR
 from sklearn.utils import check_random_state, tosequence
 from sklearn.utils._mocking import NoSampleWeightWrapper
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import skip_if_32bit
 from sklearn.utils._param_validation import InvalidParameterError
-from sklearn.exceptions import DataConversionWarning
-from sklearn.exceptions import NotFittedError
-from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.pipeline import make_pipeline
-from sklearn.linear_model import LinearRegression
-from sklearn.svm import NuSVR
-
+from sklearn.utils._testing import (
+    assert_array_almost_equal,
+    assert_array_equal,
+    skip_if_32bit,
+)
 
 GRADIENT_BOOSTING_ESTIMATORS = [GradientBoostingClassifier, GradientBoostingRegressor]
 
@@ -345,9 +341,7 @@ def test_feature_importance_regression(
     assert set(sorted_features[1:4]) == {"Longitude", "AveOccup", "Latitude"}
 
 
-# TODO(1.3): Remove warning filter
-@pytest.mark.filterwarnings("ignore:`max_features='auto'` has been deprecated in 1.1")
-def test_max_feature_auto():
+def test_max_features():
     # Test if max features is set properly for floats and str.
     X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
     _, n_features = X.shape
@@ -355,11 +349,11 @@ def test_max_feature_auto():
     X_train = X[:2000]
     y_train = y[:2000]
 
-    gbrt = GradientBoostingClassifier(n_estimators=1, max_features="auto")
+    gbrt = GradientBoostingClassifier(n_estimators=1, max_features=None)
     gbrt.fit(X_train, y_train)
-    assert gbrt.max_features_ == int(np.sqrt(n_features))
+    assert gbrt.max_features_ == n_features
 
-    gbrt = GradientBoostingRegressor(n_estimators=1, max_features="auto")
+    gbrt = GradientBoostingRegressor(n_estimators=1, max_features=None)
     gbrt.fit(X_train, y_train)
     assert gbrt.max_features_ == n_features
 
@@ -676,9 +670,8 @@ def test_oob_multilcass_iris():
 
 def test_verbose_output():
     # Check verbose=1 does not cause error.
-    from io import StringIO
-
     import sys
+    from io import StringIO
 
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -708,8 +701,8 @@ def test_verbose_output():
 
 def test_more_verbose_output():
     # Check verbose=2 does not cause error.
-    from io import StringIO
     import sys
+    from io import StringIO
 
     old_stdout = sys.stdout
     sys.stdout = StringIO()

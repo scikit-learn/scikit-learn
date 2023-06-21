@@ -6,24 +6,22 @@
 #          Hamzeh Alsalhi <ha258@cornell.edu>
 # License: BSD 3 clause
 
+import array
+import itertools
+import warnings
 from collections import defaultdict
 from numbers import Integral
-import itertools
-import array
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-
-from ..utils.sparsefuncs import min_max_axis
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import column_or_1d
-from ..utils.validation import _num_samples, check_array, check_is_fitted
-from ..utils.multiclass import unique_labels
-from ..utils.multiclass import type_of_target
 from ..utils._encode import _encode, _unique
-
+from ..utils._param_validation import Interval, validate_params
+from ..utils.multiclass import type_of_target, unique_labels
+from ..utils.sparsefuncs import min_max_axis
+from ..utils.validation import _num_samples, check_array, check_is_fitted
 
 __all__ = [
     "label_binarize",
@@ -263,11 +261,11 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     }
 
     def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
-
         self.neg_label = neg_label
         self.pos_label = pos_label
         self.sparse_output = sparse_output
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, y):
         """Fit label binarizer.
 
@@ -282,9 +280,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-
-        self._validate_params()
-
         if self.neg_label >= self.pos_label:
             raise ValueError(
                 f"neg_label={self.neg_label} must be strictly less than "
@@ -422,6 +417,15 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         return {"X_types": ["1dlabels"]}
 
 
+@validate_params(
+    {
+        "y": ["array-like"],
+        "classes": ["array-like"],
+        "neg_label": [Interval(Integral, None, None, closed="neither")],
+        "pos_label": [Interval(Integral, None, None, closed="neither")],
+        "sparse_output": ["boolean"],
+    }
+)
 def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False):
     """Binarize labels in a one-vs-all fashion.
 
@@ -752,6 +756,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self.classes = classes
         self.sparse_output = sparse_output
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, y):
         """Fit the label sets binarizer, storing :term:`classes_`.
 
@@ -767,7 +772,6 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         self._cached_dict = None
 
         if self.classes is None:
@@ -785,6 +789,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self.classes_[:] = classes
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, y):
         """Fit the label sets binarizer and transform the given label sets.
 
@@ -805,7 +810,6 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         if self.classes is not None:
             return self.fit(y).transform(y)
 
-        self._validate_params()
         self._cached_dict = None
 
         # Automatically increment on new class

@@ -1,50 +1,51 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 from scipy import sparse
 
 from sklearn.base import BaseEstimator, clone
-from sklearn.dummy import DummyClassifier
-from sklearn.model_selection import LeaveOneOut, train_test_split
-
-from sklearn.utils._testing import (
-    assert_array_almost_equal,
-    assert_almost_equal,
-    assert_array_equal,
+from sklearn.calibration import (
+    CalibratedClassifierCV,
+    CalibrationDisplay,
+    _CalibratedClassifier,
+    _sigmoid_calibration,
+    _SigmoidCalibration,
+    calibration_curve,
 )
-from sklearn.utils.extmath import softmax
-from sklearn.exceptions import NotFittedError
-from sklearn.datasets import make_classification, make_blobs, load_iris
-from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import KFold, cross_val_predict
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.datasets import load_iris, make_blobs, make_classification
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import (
     RandomForestClassifier,
     VotingClassifier,
 )
-from sklearn.linear_model import LogisticRegression, LinearRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import LinearSVC
-from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.isotonic import IsotonicRegression
+from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.impute import SimpleImputer
+from sklearn.isotonic import IsotonicRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import brier_score_loss
-from sklearn.calibration import (
-    _CalibratedClassifier,
-    _SigmoidCalibration,
-    _sigmoid_calibration,
-    CalibratedClassifierCV,
-    CalibrationDisplay,
-    calibration_curve,
+from sklearn.model_selection import (
+    KFold,
+    LeaveOneOut,
+    cross_val_predict,
+    train_test_split,
 )
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.svm import LinearSVC
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._mocking import CheckingClassifier
-from sklearn.utils._testing import _convert_container
-
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.extmath import softmax
 
 N_SAMPLES = 200
 
@@ -152,7 +153,7 @@ def test_sample_weight(data, method, ensemble):
     X_train, y_train, sw_train = X[:n_samples], y[:n_samples], sample_weight[:n_samples]
     X_test = X[n_samples:]
 
-    estimator = LinearSVC(random_state=42)
+    estimator = LinearSVC(dual="auto", random_state=42)
     calibrated_clf = CalibratedClassifierCV(estimator, method=method, ensemble=ensemble)
     calibrated_clf.fit(X_train, y_train, sample_weight=sw_train)
     probs_with_sw = calibrated_clf.predict_proba(X_test)
@@ -173,7 +174,7 @@ def test_parallel_execution(data, method, ensemble):
     X, y = data
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-    estimator = LinearSVC(random_state=42)
+    estimator = make_pipeline(StandardScaler(), LinearSVC(dual="auto", random_state=42))
 
     cal_clf_parallel = CalibratedClassifierCV(
         estimator, method=method, n_jobs=2, ensemble=ensemble
@@ -202,7 +203,7 @@ def test_calibration_multiclass(method, ensemble, seed):
 
     # Test calibration for multiclass with classifier that implements
     # only decision function.
-    clf = LinearSVC(random_state=7)
+    clf = LinearSVC(dual="auto", random_state=7)
     X, y = make_blobs(
         n_samples=500, n_features=100, random_state=seed, centers=10, cluster_std=15.0
     )
@@ -333,7 +334,7 @@ def test_calibration_ensemble_false(data, method):
     # Test that `ensemble=False` is the same as using predictions from
     # `cross_val_predict` to train calibrator.
     X, y = data
-    clf = LinearSVC(random_state=7)
+    clf = LinearSVC(dual="auto", random_state=7)
 
     cal_clf = CalibratedClassifierCV(clf, method=method, cv=3, ensemble=False)
     cal_clf.fit(X, y)
@@ -422,7 +423,7 @@ def test_calibration_prob_sum(ensemble):
     # issue #7796
     num_classes = 2
     X, y = make_classification(n_samples=10, n_features=5, n_classes=num_classes)
-    clf = LinearSVC(C=1.0, random_state=7)
+    clf = LinearSVC(dual="auto", C=1.0, random_state=7)
     clf_prob = CalibratedClassifierCV(
         clf, method="sigmoid", cv=LeaveOneOut(), ensemble=ensemble
     )
@@ -440,7 +441,7 @@ def test_calibration_less_classes(ensemble):
     # class label
     X = np.random.randn(10, 5)
     y = np.arange(10)
-    clf = LinearSVC(C=1.0, random_state=7)
+    clf = LinearSVC(dual="auto", C=1.0, random_state=7)
     cal_clf = CalibratedClassifierCV(
         clf, method="sigmoid", cv=LeaveOneOut(), ensemble=ensemble
     )
@@ -535,8 +536,8 @@ def test_calibration_dict_pipeline(dict_data, dict_data_pipeline):
 @pytest.mark.parametrize(
     "clf, cv",
     [
-        pytest.param(LinearSVC(C=1), 2),
-        pytest.param(LinearSVC(C=1), "prefit"),
+        pytest.param(LinearSVC(dual="auto", C=1), 2),
+        pytest.param(LinearSVC(dual="auto", C=1), "prefit"),
     ],
 )
 def test_calibration_attributes(clf, cv):
@@ -560,7 +561,7 @@ def test_calibration_inconsistent_prefit_n_features_in():
     # Check that `n_features_in_` from prefit base estimator
     # is consistent with training set
     X, y = make_classification(n_samples=10, n_features=5, n_classes=2, random_state=7)
-    clf = LinearSVC(C=1).fit(X, y)
+    clf = LinearSVC(dual="auto", C=1).fit(X, y)
     calib_clf = CalibratedClassifierCV(clf, cv="prefit")
 
     msg = "X has 3 features, but LinearSVC is expecting 5 features as input."
@@ -593,42 +594,6 @@ def iris_data():
 def iris_data_binary(iris_data):
     X, y = iris_data
     return X[y < 2], y[y < 2]
-
-
-def test_calibration_display_validation(pyplot, iris_data, iris_data_binary):
-    X, y = iris_data
-    X_binary, y_binary = iris_data_binary
-
-    reg = LinearRegression().fit(X, y)
-    msg = "'estimator' should be a fitted classifier"
-    with pytest.raises(ValueError, match=msg):
-        CalibrationDisplay.from_estimator(reg, X, y)
-
-    clf = LinearSVC().fit(X, y)
-    msg = "response method predict_proba is not defined in"
-    with pytest.raises(ValueError, match=msg):
-        CalibrationDisplay.from_estimator(clf, X, y)
-
-    clf = LogisticRegression()
-    with pytest.raises(NotFittedError):
-        CalibrationDisplay.from_estimator(clf, X, y)
-
-
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
-def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
-    X, y = iris_data
-    clf = DecisionTreeClassifier()
-    clf.fit(X, y)
-    y_prob = clf.predict_proba(X)
-
-    if constructor_name == "from_estimator":
-        msg = "to be a binary classifier, but got"
-        with pytest.raises(ValueError, match=msg):
-            CalibrationDisplay.from_estimator(clf, X, y)
-    else:
-        msg = "y should be a 1d array, got an array of shape"
-        with pytest.raises(ValueError, match=msg):
-            CalibrationDisplay.from_predictions(y, y_prob)
 
 
 @pytest.mark.parametrize("n_bins", [5, 10])

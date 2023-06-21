@@ -1,3 +1,5 @@
+from collections import Counter
+
 import numpy as np
 import pytest
 
@@ -5,14 +7,15 @@ from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, make_classification
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import average_precision_score, precision_recall_curve
+from sklearn.metrics import (
+    PrecisionRecallDisplay,
+    average_precision_score,
+    precision_recall_curve,
+)
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC, SVR
 from sklearn.utils import shuffle
-
-from sklearn.metrics import PrecisionRecallDisplay
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
@@ -21,51 +24,12 @@ pytestmark = pytest.mark.filterwarnings(
 )
 
 
-def test_precision_recall_display_validation(pyplot):
-    """Check that we raise the proper error when validating parameters."""
-    X, y = make_classification(
-        n_samples=100, n_informative=5, n_classes=5, random_state=0
-    )
-
-    with pytest.raises(NotFittedError):
-        PrecisionRecallDisplay.from_estimator(SVC(), X, y)
-
-    regressor = SVR().fit(X, y)
-    y_pred_regressor = regressor.predict(X)
-    classifier = SVC(probability=True).fit(X, y)
-    y_pred_classifier = classifier.predict_proba(X)[:, -1]
-
-    err_msg = "PrecisionRecallDisplay.from_estimator only supports classifiers"
-    with pytest.raises(ValueError, match=err_msg):
-        PrecisionRecallDisplay.from_estimator(regressor, X, y)
-
-    err_msg = "Expected 'estimator' to be a binary classifier, but got SVC"
-    with pytest.raises(ValueError, match=err_msg):
-        PrecisionRecallDisplay.from_estimator(classifier, X, y)
-
-    err_msg = "{} format is not supported"
-    with pytest.raises(ValueError, match=err_msg.format("continuous")):
-        # Force `y_true` to be seen as a regression problem
-        PrecisionRecallDisplay.from_predictions(y + 0.5, y_pred_classifier, pos_label=1)
-    with pytest.raises(ValueError, match=err_msg.format("multiclass")):
-        PrecisionRecallDisplay.from_predictions(y, y_pred_regressor, pos_label=1)
-
-    err_msg = "Found input variables with inconsistent numbers of samples"
-    with pytest.raises(ValueError, match=err_msg):
-        PrecisionRecallDisplay.from_predictions(y, y_pred_classifier[::2])
-
-    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
-    y += 10
-    classifier.fit(X, y)
-    y_pred_classifier = classifier.predict_proba(X)[:, -1]
-    err_msg = r"y_true takes value in {10, 11} and pos_label is not specified"
-    with pytest.raises(ValueError, match=err_msg):
-        PrecisionRecallDisplay.from_predictions(y, y_pred_classifier)
-
-
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
-def test_precision_recall_display_plotting(pyplot, constructor_name, response_method):
+@pytest.mark.parametrize("drop_intermediate", [True, False])
+def test_precision_recall_display_plotting(
+    pyplot, constructor_name, response_method, drop_intermediate
+):
     """Check the overall plotting rendering."""
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_label = 1
@@ -81,14 +45,20 @@ def test_precision_recall_display_plotting(pyplot, constructor_name, response_me
 
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(
-            classifier, X, y, response_method=response_method
+            classifier,
+            X,
+            y,
+            response_method=response_method,
+            drop_intermediate=drop_intermediate,
         )
     else:
         display = PrecisionRecallDisplay.from_predictions(
-            y, y_pred, pos_label=pos_label
+            y, y_pred, pos_label=pos_label, drop_intermediate=drop_intermediate
         )
 
-    precision, recall, _ = precision_recall_curve(y, y_pred, pos_label=pos_label)
+    precision, recall, _ = precision_recall_curve(
+        y, y_pred, pos_label=pos_label, drop_intermediate=drop_intermediate
+    )
     average_precision = average_precision_score(y, y_pred, pos_label=pos_label)
 
     np.testing.assert_allclose(display.precision, precision)
@@ -109,6 +79,52 @@ def test_precision_recall_display_plotting(pyplot, constructor_name, response_me
     expected_label = f"MySpecialEstimator (AP = {average_precision:0.2f})"
     assert display.line_.get_label() == expected_label
     assert display.line_.get_alpha() == pytest.approx(0.8)
+
+    # Check that the chance level line is not plotted by default
+    assert display.chance_level_ is None
+
+
+@pytest.mark.parametrize("chance_level_kw", [None, {"color": "r"}])
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+def test_precision_recall_chance_level_line(
+    pyplot,
+    chance_level_kw,
+    constructor_name,
+):
+    """Check the chance level line plotting behavior."""
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+    pos_prevalence = Counter(y)[1] / len(y)
+
+    lr = LogisticRegression()
+    y_pred = lr.fit(X, y).predict_proba(X)[:, 1]
+
+    if constructor_name == "from_estimator":
+        display = PrecisionRecallDisplay.from_estimator(
+            lr,
+            X,
+            y,
+            plot_chance_level=True,
+            chance_level_kw=chance_level_kw,
+        )
+    else:
+        display = PrecisionRecallDisplay.from_predictions(
+            y,
+            y_pred,
+            plot_chance_level=True,
+            chance_level_kw=chance_level_kw,
+        )
+
+    import matplotlib as mpl  # noqa
+
+    assert isinstance(display.chance_level_, mpl.lines.Line2D)
+    assert tuple(display.chance_level_.get_xdata()) == (0, 1)
+    assert tuple(display.chance_level_.get_ydata()) == (pos_prevalence, pos_prevalence)
+
+    # Checking for chance level line styles
+    if chance_level_kw is None:
+        assert display.chance_level_.get_color() == "k"
+    else:
+        assert display.chance_level_.get_color() == "r"
 
 
 @pytest.mark.parametrize(
@@ -290,3 +306,52 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
     avg_prec_limit = 0.95
     assert display.average_precision > avg_prec_limit
     assert -np.trapz(display.precision, display.recall) > avg_prec_limit
+
+
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name):
+    # Check that even if one passes plot_chance_level=False the first time
+    # one can still call disp.plot with plot_chance_level=True and get the
+    # chance level line
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+
+    lr = LogisticRegression()
+    y_pred = lr.fit(X, y).predict_proba(X)[:, 1]
+
+    if constructor_name == "from_estimator":
+        display = PrecisionRecallDisplay.from_estimator(
+            lr, X, y, plot_chance_level=False
+        )
+    else:
+        display = PrecisionRecallDisplay.from_predictions(
+            y, y_pred, plot_chance_level=False
+        )
+    assert display.chance_level_ is None
+
+    import matplotlib as mpl  # noqa
+
+    # When calling from_estimator or from_predictions,
+    # prevalence_pos_label should have been set, so that directly
+    # calling plot_chance_level=True should plot the chance level line
+    display.plot(plot_chance_level=True)
+    assert isinstance(display.chance_level_, mpl.lines.Line2D)
+
+
+def test_precision_recall_raise_no_prevalence(pyplot):
+    # Check that raises correctly when plotting chance level with
+    # no prvelance_pos_label is provided
+    precision = np.array([1, 0.5, 0])
+    recall = np.array([0, 0.5, 1])
+    display = PrecisionRecallDisplay(precision, recall)
+
+    msg = (
+        "You must provide prevalence_pos_label when constructing the "
+        "PrecisionRecallDisplay object in order to plot the chance "
+        "level line. Alternatively, you may use "
+        "PrecisionRecallDisplay.from_estimator or "
+        "PrecisionRecallDisplay.from_predictions "
+        "to automatically set prevalence_pos_label"
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        display.plot(plot_chance_level=True)

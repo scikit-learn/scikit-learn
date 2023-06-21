@@ -7,9 +7,9 @@ from numbers import Real
 import numpy as np
 
 from ..preprocessing import LabelBinarizer
-from ..utils.validation import check_consistent_length, check_array
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import safe_sparse_dot
-from ..utils._param_validation import StrOptions, Interval, validate_params
+from ..utils.validation import check_array, check_consistent_length
 
 
 @validate_params(
