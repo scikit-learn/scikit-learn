@@ -77,6 +77,7 @@ exclude=[
 "examples/*"=["E402"]
 "doc/conf.py"=["E402"]
 
+
 [tool.cython-lint]
 # Ignore the same error codes as ruff
 # + E501 (line too long) because keeping it < 88 in cython
