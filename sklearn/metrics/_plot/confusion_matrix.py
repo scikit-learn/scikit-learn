@@ -2,10 +2,10 @@ from itertools import product
 
 import numpy as np
 
-from .. import confusion_matrix
+from ...base import is_classifier
 from ...utils import check_matplotlib_support
 from ...utils.multiclass import unique_labels
-from ...base import is_classifier
+from .. import confusion_matrix
 
 
 class ConfusionMatrixDisplay:

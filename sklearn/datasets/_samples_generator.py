@@ -6,20 +6,20 @@ Generate samples of synthetic data sets.
 #          G. Louppe, J. Nothman
 # License: BSD 3 clause
 
-from numbers import Integral, Real
-import numbers
 import array
+import numbers
 import warnings
 from collections.abc import Iterable
+from numbers import Integral, Real
 
 import numpy as np
-from scipy import linalg
 import scipy.sparse as sp
+from scipy import linalg
 
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
-from ..utils._param_validation import Interval, validate_params, Hidden, StrOptions
 from ..utils import shuffle as util_shuffle
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.random import sample_without_replacement
 
 

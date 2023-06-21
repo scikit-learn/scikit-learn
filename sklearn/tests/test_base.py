@@ -1,35 +1,32 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
+import pickle
 import re
-import numpy as np
-import scipy.sparse as sp
-import pytest
 import warnings
+
+import numpy as np
+import pytest
+import scipy.sparse as sp
 from numpy.testing import assert_allclose
 
 import sklearn
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.base import BaseEstimator, clone, is_classifier
-from sklearn.svm import SVC
-from sklearn.preprocessing import StandardScaler
-from sklearn.utils._set_output import _get_output_config
-from sklearn.pipeline import Pipeline
+from sklearn import config_context, datasets
+from sklearn.base import BaseEstimator, TransformerMixin, clone, is_classifier
 from sklearn.decomposition import PCA
-from sklearn.model_selection import GridSearchCV
-
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
-from sklearn import datasets
 from sklearn.exceptions import InconsistentVersionWarning
-
-from sklearn.base import TransformerMixin
+from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._mocking import MockDataFrame
-from sklearn import config_context
-import pickle
+from sklearn.utils._set_output import _get_output_config
+from sklearn.utils._testing import (
+    assert_array_equal,
+    assert_no_warnings,
+    ignore_warnings,
+)
 
 
 #############################################################################

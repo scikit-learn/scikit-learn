@@ -46,16 +46,15 @@ from ...metrics import pairwise_distances
 from ...metrics._dist_metrics import DistanceMetric
 from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
-from ...utils.validation import _assert_all_finite, _allclose_dense_sparse
-from ._reachability import mutual_reachability_graph
+from ...utils.validation import _allclose_dense_sparse, _assert_all_finite
 from ._linkage import (
-    make_single_linkage,
-    mst_from_mutual_reachability,
-    mst_from_data_matrix,
     MST_edge_dtype,
+    make_single_linkage,
+    mst_from_data_matrix,
+    mst_from_mutual_reachability,
 )
-from ._tree import tree_to_labels, labelling_at_cut
-from ._tree import HIERARCHY_dtype
+from ._reachability import mutual_reachability_graph
+from ._tree import HIERARCHY_dtype, labelling_at_cut, tree_to_labels
 
 FAST_METRICS = set(KDTree.valid_metrics() + BallTree.valid_metrics())
 

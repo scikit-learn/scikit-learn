@@ -7,26 +7,23 @@ Base IO code for all datasets
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 import csv
-import hashlib
 import gzip
+import hashlib
+import os
 import shutil
 from collections import namedtuple
-import os
+from numbers import Integral
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
 from pathlib import Path
-from numbers import Integral
-
-from ..preprocessing import scale
-from ..utils import Bunch
-from ..utils import check_random_state
-from ..utils import check_pandas_support
-from ..utils.fixes import _open_binary, _open_text, _read_text, _contents
-from ..utils._param_validation import validate_params, Interval, StrOptions
+from urllib.request import urlretrieve
 
 import numpy as np
 
-from urllib.request import urlretrieve
+from ..preprocessing import scale
+from ..utils import Bunch, check_pandas_support, check_random_state
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.fixes import _contents, _open_binary, _open_text, _read_text
 
 DATA_MODULE = "sklearn.datasets.data"
 DESCR_MODULE = "sklearn.datasets.descr"

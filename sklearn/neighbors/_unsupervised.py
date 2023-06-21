@@ -1,8 +1,6 @@
 """Unsupervised nearest neighbors learner"""
 from ..base import _fit_context
-from ._base import NeighborsBase
-from ._base import KNeighborsMixin
-from ._base import RadiusNeighborsMixin
+from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
 
 
 class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):

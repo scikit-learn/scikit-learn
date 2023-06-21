@@ -11,50 +11,48 @@
 #          Robert Layton <robertlayton@gmail.com>
 # License: BSD 3 clause
 
+import warnings
 from abc import ABC, abstractmethod
 from numbers import Integral, Real
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import (
     BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
     ClusterMixin,
     TransformerMixin,
-    ClassNamePrefixFeaturesOutMixin,
     _fit_context,
 )
-from ..metrics.pairwise import euclidean_distances
-from ..metrics.pairwise import _euclidean_distances
-from ..utils.extmath import row_norms, stable_cumsum
-from ..utils.fixes import threadpool_limits
-from ..utils.fixes import threadpool_info
-from ..utils.sparsefuncs_fast import assign_rows_csr
-from ..utils.sparsefuncs import mean_variance_axis
-from ..utils import check_array
-from ..utils import check_random_state
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import _is_arraylike_not_scalar
-from ..utils._param_validation import Hidden
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
-from ..utils._param_validation import validate_params
-from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..exceptions import ConvergenceWarning
-from ._k_means_common import CHUNK_SIZE
-from ._k_means_common import _inertia_dense
-from ._k_means_common import _inertia_sparse
-from ._k_means_common import _is_same_clustering
-from ._k_means_minibatch import _minibatch_update_dense
-from ._k_means_minibatch import _minibatch_update_sparse
-from ._k_means_lloyd import lloyd_iter_chunked_dense
-from ._k_means_lloyd import lloyd_iter_chunked_sparse
-from ._k_means_elkan import init_bounds_dense
-from ._k_means_elkan import init_bounds_sparse
-from ._k_means_elkan import elkan_iter_chunked_dense
-from ._k_means_elkan import elkan_iter_chunked_sparse
-
+from ..metrics.pairwise import _euclidean_distances, euclidean_distances
+from ..utils import check_array, check_random_state
+from ..utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils.extmath import row_norms, stable_cumsum
+from ..utils.fixes import threadpool_info, threadpool_limits
+from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.sparsefuncs_fast import assign_rows_csr
+from ..utils.validation import (
+    _check_sample_weight,
+    _is_arraylike_not_scalar,
+    check_is_fitted,
+)
+from ._k_means_common import (
+    CHUNK_SIZE,
+    _inertia_dense,
+    _inertia_sparse,
+    _is_same_clustering,
+)
+from ._k_means_elkan import (
+    elkan_iter_chunked_dense,
+    elkan_iter_chunked_sparse,
+    init_bounds_dense,
+    init_bounds_sparse,
+)
+from ._k_means_lloyd import lloyd_iter_chunked_dense, lloyd_iter_chunked_sparse
+from ._k_means_minibatch import _minibatch_update_dense, _minibatch_update_sparse
 
 ###############################################################################
 # Initialization heuristic
