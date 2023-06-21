@@ -1,52 +1,53 @@
-import numpy as np
-import scipy.sparse as sp
-from scipy import linalg
+import warnings
 from itertools import product
 
+import numpy as np
 import pytest
-import warnings
-
-from sklearn.utils import _IS_32BIT
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.exceptions import ConvergenceWarning
+import scipy.sparse as sp
+from scipy import linalg
 
 from sklearn import datasets
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import make_scorer
-from sklearn.metrics import get_scorer
-
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import ridge_regression
-from sklearn.linear_model import Ridge
-from sklearn.linear_model._ridge import _RidgeGCV
-from sklearn.linear_model import RidgeCV
-from sklearn.linear_model import RidgeClassifier
-from sklearn.linear_model import RidgeClassifierCV
-from sklearn.linear_model._ridge import _solve_cholesky
-from sklearn.linear_model._ridge import _solve_cholesky_kernel
-from sklearn.linear_model._ridge import _solve_svd
-from sklearn.linear_model._ridge import _solve_lbfgs
-from sklearn.linear_model._ridge import _check_gcv_mode
-from sklearn.linear_model._ridge import _X_CenterStackOp
-from sklearn.datasets import make_low_rank_matrix
-from sklearn.datasets import make_regression
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_multilabel_classification
-
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import KFold
-from sklearn.model_selection import GroupKFold
-from sklearn.model_selection import cross_val_predict
-from sklearn.model_selection import LeaveOneOut
-
+from sklearn.datasets import (
+    make_classification,
+    make_low_rank_matrix,
+    make_multilabel_classification,
+    make_regression,
+)
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import (
+    LinearRegression,
+    Ridge,
+    RidgeClassifier,
+    RidgeClassifierCV,
+    RidgeCV,
+    ridge_regression,
+)
+from sklearn.linear_model._ridge import (
+    _check_gcv_mode,
+    _RidgeGCV,
+    _solve_cholesky,
+    _solve_cholesky_kernel,
+    _solve_lbfgs,
+    _solve_svd,
+    _X_CenterStackOp,
+)
+from sklearn.metrics import get_scorer, make_scorer, mean_squared_error
+from sklearn.model_selection import (
+    GridSearchCV,
+    GroupKFold,
+    KFold,
+    LeaveOneOut,
+    cross_val_predict,
+)
 from sklearn.preprocessing import minmax_scale
-from sklearn.utils import check_random_state
-
+from sklearn.utils import _IS_32BIT, check_random_state
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 
 SOLVERS = ["svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga"]
 SPARSE_SOLVERS_WITH_INTERCEPT = ("sparse_cg", "sag")

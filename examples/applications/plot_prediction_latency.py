@@ -16,19 +16,18 @@ The plots represent the distribution of the prediction latency as a boxplot.
 # Authors: Eustache Diemert <eustache@diemert.fr>
 # License: BSD 3 clause
 
+import gc
+import time
 from collections import defaultdict
 
-import time
-import gc
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_regression
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import Ridge
-from sklearn.linear_model import SGDRegressor
+from sklearn.linear_model import Ridge, SGDRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 from sklearn.utils import shuffle
 

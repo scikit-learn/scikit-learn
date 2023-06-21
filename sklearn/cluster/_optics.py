@@ -10,23 +10,26 @@ Authors: Shane Grigsby <refuge@rocktalus.com>
 License: BSD 3 clause
 """
 
+import warnings
 from numbers import Integral, Real
 
-import warnings
 import numpy as np
+from scipy.sparse import SparseEfficiencyWarning, issparse
 
+from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..exceptions import DataConversionWarning
-from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
-from ..metrics.pairwise import _VALID_METRICS
-from ..utils import gen_batches, get_chunk_n_rows
-from ..utils._param_validation import Interval, HasMethods, StrOptions, validate_params
-from ..utils._param_validation import RealNotInt
-from ..utils.validation import check_memory
-from ..neighbors import NearestNeighbors
-from ..base import BaseEstimator, ClusterMixin
-from ..base import _fit_context
 from ..metrics import pairwise_distances
-from scipy.sparse import issparse, SparseEfficiencyWarning
+from ..metrics.pairwise import _VALID_METRICS, PAIRWISE_BOOLEAN_FUNCTIONS
+from ..neighbors import NearestNeighbors
+from ..utils import gen_batches, get_chunk_n_rows
+from ..utils._param_validation import (
+    HasMethods,
+    Interval,
+    RealNotInt,
+    StrOptions,
+    validate_params,
+)
+from ..utils.validation import check_memory
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
