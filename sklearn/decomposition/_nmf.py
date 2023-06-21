@@ -980,6 +980,9 @@ def non_negative_factorization(
         If `n_components='auto'`, the number of components is automatically infered
         from W or H shapes.
 
+        .. versionchanged:: 1.4
+            Added `'auto'` value.
+
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
@@ -1387,6 +1390,9 @@ class NMF(_BaseNMF):
         are kept.
         If `n_components='auto'`, the number of components is automatically infered
         from W or H shapes.
+
+        .. versionchanged:: 1.4
+            Added `'auto'` value.
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
@@ -1823,6 +1829,9 @@ class MiniBatchNMF(_BaseNMF):
         are kept.
         If `n_components='auto'`, the number of components is automatically infered
         from W or H shapes.
+
+        .. versionchanged:: 1.4
+            Added `'auto'` value.
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
