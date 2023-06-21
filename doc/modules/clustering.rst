@@ -241,14 +241,20 @@ chunks of data (256 samples) are processed in parallel, which in addition
 yields a low memory footprint. For more details on how to control the number of
 threads, please refer to our :ref:`parallelism` notes.
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`: Demonstrating when
-   k-means performs intuitively and when it does not
- * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`: Demonstrating
+     when k-means performs intuitively and when it does not
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`: Clustering
+     handwritten digits
+
+|details-end|
+
 
 |details-start|
-References
+**References**
 |details-split|
 
 * `"k-means++: The advantages of careful seeding"
@@ -292,19 +298,21 @@ small, as shown in the example and cited reference.
    :scale: 100
 
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
-   MiniBatchKMeans
+* :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of
+     KMeans and MiniBatchKMeans
+* :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document
+     clustering using sparse MiniBatchKMeans
+* :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
- * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering using sparse
-   MiniBatchKMeans
-
- * :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
+|details-end|
 
 
 |details-start|
-References
+**References**
 |details-split|
 
 * `"Web Scale K-Means clustering"
@@ -349,15 +357,6 @@ convergence. Further, the memory complexity is of the order
 sparse similarity matrix is used. This makes Affinity Propagation most
 appropriate for small to medium sized datasets.
 
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`: Affinity
-   Propagation on a synthetic 2D datasets with 3 classes.
-
- * :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` Affinity Propagation on
-   Financial time series to find groups of companies
-
-
 |details-start|
 **Algorithm description**
 |details-split|
@@ -399,6 +398,20 @@ where :math:`t` indicates the iteration times.
 
 |details-end|
 
+
+|details-start|
+**Examples**
+|details-split|
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`: Affinity
+  Propagation on a synthetic 2D datasets with 3 classes.
+
+* :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` Affinity
+  Propagation on Financial time series to find groups of companies
+
+|details-end|
+
+
 .. _mean_shift:
 
 Mean Shift
@@ -410,7 +423,7 @@ candidates are then filtered in a post-processing stage to eliminate
 near-duplicates to form the final set of centroids.
 
 |details-start|
-Mathematical details
+**Mathematical details**
 |details-split|
 
 The position of centroid candidates is iteratively adjusted using a technique
@@ -467,13 +480,18 @@ given sample.
    :scale: 50
 
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`: Mean Shift clustering
-   on a synthetic 2D datasets with 3 classes.
+* :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`: Mean Shift
+     clustering on a synthetic 2D datasets with 3 classes.
+
+|details-end|
+
 
 |details-start|
-References
+**References**
 |details-split|
 
 * :doi:`"Mean shift: A robust approach toward feature space analysis"
@@ -530,25 +548,29 @@ computed using a function of a gradient of the image.
 
     See the examples for such an application.
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`: Segmenting objects
-   from a noisy background using spectral clustering.
+* :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`: Segmenting
+     objects from a noisy background using spectral clustering.
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`: Spectral clustering
-   to split the image of coins in regions.
+* :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`: Spectral
+     clustering to split the image of coins in regions.
 
 .. |coin_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_001.png
-    :target: ../auto_examples/cluster/plot_coin_segmentation.html
-    :scale: 35
+  :target: ../auto_examples/cluster/plot_coin_segmentation.html
+  :scale: 35
 
 .. |coin_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_002.png
-    :target: ../auto_examples/cluster/plot_coin_segmentation.html
-    :scale: 35
+  :target: ../auto_examples/cluster/plot_coin_segmentation.html
+  :scale: 35
 
 .. |coin_cluster_qr| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_003.png
-    :target: ../auto_examples/cluster/plot_coin_segmentation.html
-    :scale: 35
+  :target: ../auto_examples/cluster/plot_coin_segmentation.html
+  :scale: 35
+
+|details-end|
 
 Different label assignment strategies
 -------------------------------------
@@ -571,7 +593,7 @@ below.
 ================================  ================================  ================================
 
 |details-start|
-References
+**References**
 |details-split|
 
 * `"Multiclass spectral clustering"
@@ -598,7 +620,7 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
     >>> sc.fit_predict(adjacency_matrix)  # doctest: +SKIP
 
 |details-start|
-References
+**References**
 |details-split|
 
 * :doi:`"A Tutorial on Spectral Clustering" <10.1007/s11222-007-9033-z>` Ulrike
@@ -679,10 +701,15 @@ while not robust to noisy data, can be computed very efficiently and can
 therefore be useful to provide hierarchical clustering of larger datasets.
 Single linkage can also perform well on non-globular data.
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of the
-   different linkage strategies in a real dataset.
+* :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of
+     the different linkage strategies in a real dataset.
+
+|details-end|
+
 
 Visualization of cluster hierarchy
 ----------------------------------
@@ -694,7 +721,6 @@ of the data, though more so in the case of small sample sizes.
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_dendrogram_001.png
     :target: ../auto_examples/cluster/plot_agglomerative_dendrogram.html
     :scale: 42
-
 
 
 Adding connectivity constraints
@@ -763,21 +789,24 @@ enable only merging of neighboring pixels on an image, as in the
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`: Ward clustering
-   to split the image of coins in regions.
+* :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`: Ward
+     clustering to split the image of coins in regions.
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example of
-   Ward algorithm on a swiss-roll, comparison of structured approaches
-   versus unstructured approaches.
+* :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example
+     of Ward algorithm on a swiss-roll, comparison of structured approaches
+     versus unstructured approaches.
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
-   Example of dimensionality reduction with feature agglomeration based on
-   Ward hierarchical clustering.
+* :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`: Example
+     of dimensionality reduction with feature agglomeration based on Ward
+     hierarchical clustering.
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
 
+|details-end|
 
 Varying the metric
 -------------------
@@ -810,9 +839,14 @@ each class.
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
+
+|details-end|
+
 
 Bisecting K-Means
 -----------------
@@ -856,7 +890,7 @@ While the regular K-Means algorithm tends to create non-related clusters,
 clusters from Bisecting K-Means are well ordered and create quite a visible hierarchy.
 
 |details-start|
-References
+**References**
 |details-split|
 
 * `"A Comparison of Document Clustering Techniques"
@@ -933,12 +967,9 @@ by black points below.
 
 .. centered:: |dbscan_results|
 
-.. topic:: Examples:
-
-    * :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
 
 |details-start|
-Implementation
+**Implementation**
 |details-split|
 
 The DBSCAN algorithm is deterministic, always generating the same clusters when
@@ -962,7 +993,7 @@ metrics is retained; for details, see :class:`NearestNeighbors`.
 |details-end|
 
 |details-start|
-Memory consumption for large sample sizes
+**Memory consumption for large sample sizes**
 |details-split|
 
 This implementation is by default not memory efficient because it constructs a
@@ -987,7 +1018,16 @@ floats. A couple of mechanisms for getting around this are:
 |details-end|
 
 |details-start|
-References
+**Examples**
+|details-split|
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
+
+|details-end|
+
+
+|details-start|
+**References**
 |details-split|
 
 * `A Density-Based Algorithm for Discovering Clusters in Large Spatial
@@ -1095,7 +1135,7 @@ can set `minimum_cluster_size = min_samples` to couple the parameters and
 simplify the hyperparameter space.
 
 |details-start|
-References
+**References**
 |details-split|
 
 .. [CM2013] Campello, R.J.G.B., Moulavi, D., Sander, J. (2013). Density-Based
@@ -1156,13 +1196,16 @@ the linear segment clusters of the reachability plot. Note that the blue and
 red clusters are adjacent in the reachability plot, and can be hierarchically
 represented as children of a larger parent cluster.
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
-     * :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`
 
+|details-end|
 
 |details-start|
-Comparison with DBSCAN
+**Comparison with DBSCAN**
 |details-split|
 
 The results from OPTICS ``cluster_optics_dbscan`` method and DBSCAN are very
@@ -1182,7 +1225,7 @@ important to note that OPTICS' output is close to DBSCAN's only if ``eps`` and
 |details-end|
 
 |details-start|
-Computational Complexity
+**Computational Complexity**
 |details-split|
 
 Spatial indexing trees are used to avoid calculating the full distance matrix,
@@ -1200,7 +1243,7 @@ solution in a reasonable amount of wall time.
 |details-end|
 
 |details-start|
-References
+**References**
 |details-split|
 
 * "OPTICS: ordering points to identify the clustering structure." Ankerst,
@@ -1280,6 +1323,9 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
   large number of subclusters either as a preprocessing step or otherwise, BIRCH
   is more useful than MiniBatchKMeans.
 
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
+    :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
+
 |details-end|
 
 |details-start|
@@ -1296,13 +1342,10 @@ the user is advised
 4. Call ``partial_fit`` finally with no arguments, i.e. ``brc.partial_fit()``
     which performs the global clustering.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
-    :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
-
 |details-end|
 
 |details-start|
-References
+**References**
 |details-split|
 
 * Tian Zhang, Raghu Ramakrishnan, Maron Livny BIRCH: An efficient data
@@ -1395,63 +1438,59 @@ will not necessarily be close to zero.::
   -0.07...
 
 
+.. topic:: Advantages:
+
+  - **Interpretability**: The unadjusted Rand index is proportional to the
+    number of sample pairs whose labels are the same in both `labels_pred` and
+    `labels_true`, or are different in both.
+
+  - **Random (uniform) label assignments have an adjusted Rand index score close
+    to 0.0** for any value of ``n_clusters`` and ``n_samples`` (which is not the
+    case for the unadjusted Rand index or the V-measure for instance).
+
+  - **Bounded range**: Lower values indicate different labelings, similar
+    clusterings have a high (adjusted or unadjusted) Rand index, 1.0 is the
+    perfect match score. The score range is [0, 1] for the unadjusted Rand index
+    and [-1, 1] for the adjusted Rand index.
+
+  - **No assumption is made on the cluster structure**: The (adjusted or
+    unadjusted) Rand index can be used to compare all kinds of clustering
+    algorithms, and can be used to compare clustering algorithms such as k-means
+    which assumes isotropic blob shapes with results of spectral clustering
+    algorithms which can find cluster with "folded" shapes.
+
+.. topic:: Drawbacks:
+
+  - Contrary to inertia, the **(adjusted or unadjusted) Rand index requires
+    knowledge of the ground truth classes** which is almost never available in
+    practice or requires manual assignment by human annotators (as in the
+    supervised learning setting).
+
+    However (adjusted or unadjusted) Rand index can also be useful in a purely
+    unsupervised setting as a building block for a Consensus Index that can be
+    used for clustering model selection (TODO).
+
+  - The **unadjusted Rand index is often close to 1.0** even if the clusterings
+    themselves differ significantly. This can be understood when interpreting
+    the Rand index as the accuracy of element pair labeling resulting from the
+    clusterings: In practice there often is a majority of element pairs that are
+    assigned the ``different`` pair label under both the predicted and the
+    ground truth clustering resulting in a high proportion of pair labels that
+    agree, which leads subsequently to a high score.
+
 |details-start|
-Advantages
+**Examples**
 |details-split|
 
-- **Interpretability**: The unadjusted Rand index is proportional to the number
-  of sample pairs whose labels are the same in both `labels_pred` and
-  `labels_true`, or are different in both.
-
-- **Random (uniform) label assignments have an adjusted Rand index score close
-  to 0.0** for any value of ``n_clusters`` and ``n_samples`` (which is not the
-  case for the unadjusted Rand index or the V-measure for instance).
-
-- **Bounded range**: Lower values indicate different labelings, similar
-  clusterings have a high (adjusted or unadjusted) Rand index, 1.0 is the
-  perfect match score. The score range is [0, 1] for the unadjusted Rand index
-  and [-1, 1] for the adjusted Rand index.
-
-- **No assumption is made on the cluster structure**: The (adjusted or
-  unadjusted) Rand index can be used to compare all kinds of clustering
-  algorithms, and can be used to compare clustering algorithms such as k-means
-  which assumes isotropic blob shapes with results of spectral clustering
-  algorithms which can find cluster with "folded" shapes.
+* :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`:
+  Analysis of the impact of the dataset size on the value of clustering measures
+  for random assignments.
 
 |details-end|
 
-|details-start|
-Drawbacks
-|details-split|
-
-- Contrary to inertia, the **(adjusted or unadjusted) Rand index requires
-  knowledge of the ground truth classes** which is almost never available in
-  practice or requires manual assignment by human annotators (as in the
-  supervised learning setting).
-
-  However (adjusted or unadjusted) Rand index can also be useful in a purely
-  unsupervised setting as a building block for a Consensus Index that can be
-  used for clustering model selection (TODO).
-
-- The **unadjusted Rand index is often close to 1.0** even if the clusterings
-  themselves differ significantly. This can be understood when interpreting the
-  Rand index as the accuracy of element pair labeling resulting from the
-  clusterings: In practice there often is a majority of element pairs that are
-  assigned the ``different`` pair label under both the predicted and the ground
-  truth clustering resulting in a high proportion of pair labels that agree,
-  which leads subsequently to a high score.
-
-|details-end|
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`:
-   Analysis of the impact of the dataset size on the value of
-   clustering measures for random assignments.
-
 
 |details-start|
-Mathematical formulation
+**Mathematical formulation**
 |details-split|
 
 If C is a ground truth class assignment and K the clustering, let us define
@@ -1483,7 +1522,7 @@ random labelings by defining the adjusted Rand index as follows:
 |details-end|
 
 |details-start|
-References
+**References**
 |details-split|
 
 * `Comparing Partitions
@@ -1558,47 +1597,42 @@ Bad (e.g. independent labelings) have non-positive scores::
   -0.10526...
 
 
+.. topic:: Advantages:
+
+  - **Random (uniform) label assignments have a AMI score close to 0.0** for any
+    value of ``n_clusters`` and ``n_samples`` (which is not the case for raw
+    Mutual Information or the V-measure for instance).
+
+  - **Upper bound  of 1**:  Values close to zero indicate two label assignments
+    that are largely independent, while values close to one indicate significant
+    agreement. Further, an AMI of exactly 1 indicates that the two label
+    assignments are equal (with or without permutation).
+
+.. topic:: Drawbacks:
+
+  - Contrary to inertia, **MI-based measures require the knowledge of the ground
+    truth classes** while almost never available in practice or requires manual
+    assignment by human annotators (as in the supervised learning setting).
+
+    However MI-based measures can also be useful in purely unsupervised setting
+    as a building block for a Consensus Index that can be used for clustering
+    model selection.
+
+  - NMI and MI are not adjusted against chance.
+
 |details-start|
-Advantages
+**Examples**
 |details-split|
 
-- **Random (uniform) label assignments have a AMI score close to 0.0** for any
-  value of ``n_clusters`` and ``n_samples`` (which is not the case for raw
-  Mutual Information or the V-measure for instance).
-
-- **Upper bound  of 1**:  Values close to zero indicate two label assignments
-  that are largely independent, while values close to one indicate significant
-  agreement. Further, an AMI of exactly 1 indicates that the two label
-  assignments are equal (with or without permutation).
+* :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis
+     of the impact of the dataset size on the value of clustering measures for
+     random assignments. This example also includes the Adjusted Rand Index.
 
 |details-end|
 
-|details-start|
-Drawbacks
-|details-split|
-
-- Contrary to inertia, **MI-based measures require the knowledge of the ground
-  truth classes** while almost never available in practice or requires manual
-  assignment by human annotators (as in the supervised learning setting).
-
-  However MI-based measures can also be useful in purely unsupervised setting as
-  a building block for a Consensus Index that can be used for clustering model
-  selection.
-
-- NMI and MI are not adjusted against chance.
-
-|details-end|
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
-   the impact of the dataset size on the value of clustering measures
-   for random assignments. This example also includes the Adjusted Rand
-   Index.
-
 
 |details-start|
-Mathematical formulation
+**Mathematical formulation**
 |details-split|
 
 Assume two label assignments (of the same N objects), :math:`U` and :math:`V`.
@@ -1770,59 +1804,55 @@ homogeneous but not complete::
     homogeneity_score(a, b) == completeness_score(b, a)
 
 
+.. topic:: Advantages:
+
+  - **Bounded scores**: 0.0 is as bad as it can be, 1.0 is a perfect score.
+
+  - Intuitive interpretation: clustering with bad V-measure can be
+    **qualitatively analyzed in terms of homogeneity and completeness** to
+    better feel what 'kind' of mistakes is done by the assignment.
+
+  - **No assumption is made on the cluster structure**: can be used to compare
+    clustering algorithms such as k-means which assumes isotropic blob shapes
+    with results of spectral clustering algorithms which can find cluster with
+    "folded" shapes.
+
+.. topic:: Drawbacks:
+
+  - The previously introduced metrics are **not normalized with regards to
+    random labeling**: this means that depending on the number of samples,
+    clusters and ground truth classes, a completely random labeling will not
+    always yield the same values for homogeneity, completeness and hence
+    v-measure. In particular **random labeling won't yield zero scores
+    especially when the number of clusters is large**.
+
+    This problem can safely be ignored when the number of samples is more than a
+    thousand and the number of clusters is less than 10. **For smaller sample
+    sizes or larger number of clusters it is safer to use an adjusted index such
+    as the Adjusted Rand Index (ARI)**.
+
+  .. figure:: ../auto_examples/cluster/images/sphx_glr_plot_adjusted_for_chance_measures_001.png
+    :target: ../auto_examples/cluster/plot_adjusted_for_chance_measures.html
+    :align: center
+    :scale: 100
+
+  - These metrics **require the knowledge of the ground truth classes** while
+    almost never available in practice or requires manual assignment by human
+    annotators (as in the supervised learning setting).
+
 |details-start|
-Advantages
+**Examples**
 |details-split|
 
-- **Bounded scores**: 0.0 is as bad as it can be, 1.0 is a perfect score.
-
-- Intuitive interpretation: clustering with bad V-measure can be
-  **qualitatively analyzed in terms of homogeneity and completeness** to
-  better feel what 'kind' of mistakes is done by the assignment.
-
-- **No assumption is made on the cluster structure**: can be used to compare
-  clustering algorithms such as k-means which assumes isotropic blob shapes
-  with results of spectral clustering algorithms which can find cluster with
-  "folded" shapes.
+* :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis
+     of the impact of the dataset size on the value of clustering measures for
+     random assignments.
 
 |details-end|
 
-|details-start|
-Drawbacks
-|details-split|
-
-- The previously introduced metrics are **not normalized with regards to
-  random labeling**: this means that depending on the number of samples,
-  clusters and ground truth classes, a completely random labeling will not
-  always yield the same values for homogeneity, completeness and hence
-  v-measure. In particular **random labeling won't yield zero scores
-  especially when the number of clusters is large**.
-
-  This problem can safely be ignored when the number of samples is more than a
-  thousand and the number of clusters is less than 10. **For smaller sample
-  sizes or larger number of clusters it is safer to use an adjusted index such
-  as the Adjusted Rand Index (ARI)**.
-
-.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_adjusted_for_chance_measures_001.png
-  :target: ../auto_examples/cluster/plot_adjusted_for_chance_measures.html
-  :align: center
-  :scale: 100
-
-- These metrics **require the knowledge of the ground truth classes** while
-  almost never available in practice or requires manual assignment by human
-  annotators (as in the supervised learning setting).
-
-|details-end|
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
-   the impact of the dataset size on the value of clustering measures
-   for random assignments.
-
 
 |details-start|
-Mathematical formulation
+**Mathematical formulation**
 |details-split|
 
 Homogeneity and completeness scores are formally given by:
@@ -1857,7 +1887,7 @@ homogeneity and completeness**:
 |details-end|
 
 |details-start|
-References
+**References**
 |details-split|
 
 * `V-Measure: A conditional entropy-based external cluster evaluation measure
@@ -1921,40 +1951,32 @@ Bad (e.g. independent labelings) have zero scores::
   >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
   0.0
 
-|details-start|
-Advantages
-|details-split|
+.. topic:: Advantages:
 
-- **Random (uniform) label assignments have a FMI score close to 0.0** for any
-  value of ``n_clusters`` and ``n_samples`` (which is not the case for raw
-  Mutual Information or the V-measure for instance).
+  - **Random (uniform) label assignments have a FMI score close to 0.0** for any
+    value of ``n_clusters`` and ``n_samples`` (which is not the case for raw
+    Mutual Information or the V-measure for instance).
 
-- **Upper-bounded at 1**:  Values close to zero indicate two label assignments
-  that are largely independent, while values close to one indicate significant
-  agreement. Further, values of exactly 0 indicate **purely** independent label
-  assignments and a FMI of exactly 1 indicates that the two label assignments
-  are equal (with or without permutation).
+  - **Upper-bounded at 1**:  Values close to zero indicate two label assignments
+    that are largely independent, while values close to one indicate significant
+    agreement. Further, values of exactly 0 indicate **purely** independent
+    label assignments and a FMI of exactly 1 indicates that the two label
+    assignments are equal (with or without permutation).
 
-- **No assumption is made on the cluster structure**: can be used to compare
-  clustering algorithms such as k-means which assumes isotropic blob shapes with
-  results of spectral clustering algorithms which can find cluster with "folded"
-  shapes.
+  - **No assumption is made on the cluster structure**: can be used to compare
+    clustering algorithms such as k-means which assumes isotropic blob shapes
+    with results of spectral clustering algorithms which can find cluster with
+    "folded" shapes.
 
-|details-end|
+.. topic:: Drawbacks:
 
-|details-start|
-Drawbacks
-|details-split|
-
-- Contrary to inertia, **FMI-based measures require the knowledge of the
-  ground truth classes** while almost never available in practice or requires
-  manual assignment by human annotators (as in the supervised learning
-  setting).
-
-|details-end|
+  - Contrary to inertia, **FMI-based measures require the knowledge of the
+    ground truth classes** while almost never available in practice or requires
+    manual assignment by human annotators (as in the supervised learning
+    setting).
 
 |details-start|
-References
+**References**
 |details-split|
 
 * E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
@@ -2010,36 +2032,33 @@ cluster analysis.
   0.55...
 
 
+.. topic:: Advantages:
+
+  - The score is bounded between -1 for incorrect clustering and +1 for highly
+    dense clustering. Scores around zero indicate overlapping clusters.
+
+  - The score is higher when clusters are dense and well separated, which
+    relates to a standard concept of a cluster.
+
+.. topic:: Drawbacks:
+
+  - The Silhouette Coefficient is generally higher for convex clusters than
+    other concepts of clusters, such as density based clusters like those
+    obtained through DBSCAN.
+
 |details-start|
-Advantages
+**Examples**
 |details-split|
 
-- The score is bounded between -1 for incorrect clustering and +1 for highly
-  dense clustering. Scores around zero indicate overlapping clusters.
-
-- The score is higher when clusters are dense and well separated, which
-  relates to a standard concept of a cluster.
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In
+     this example the silhouette analysis is used to choose an optimal value for
+     n_clusters.
 
 |details-end|
 
-|details-start|
-Drawbacks
-|details-split|
-
-- The Silhouette Coefficient is generally higher for convex clusters than other
-  concepts of clusters, such as density based clusters like those obtained
-  through DBSCAN.
-
-|details-end|
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In this example
-   the silhouette analysis is used to choose an optimal value for n_clusters.
-
 
 |details-start|
-References
+**References**
 |details-split|
 
 * Peter J. Rousseeuw (1987). :doi:`"Silhouettes: a Graphical Aid to the
@@ -2080,29 +2099,21 @@ cluster analysis:
   561.62...
 
 
-|details-start|
-Advantages
-|details-split|
+.. topic:: Advantages:
 
-- The score is higher when clusters are dense and well separated, which
-  relates to a standard concept of a cluster.
+  - The score is higher when clusters are dense and well separated, which
+    relates to a standard concept of a cluster.
 
-- The score is fast to compute.
+  - The score is fast to compute.
 
-|details-end|
+.. topic:: Drawbacks:
 
-|details-start|
-Drawbacks
-|details-split|
-
-- The Calinski-Harabasz index is generally higher for convex clusters than
-  other concepts of clusters, such as density based clusters like those
-  obtained through DBSCAN.
-
-|details-end|
+  - The Calinski-Harabasz index is generally higher for convex clusters than
+    other concepts of clusters, such as density based clusters like those
+    obtained through DBSCAN.
 
 |details-start|
-Mathematical formulation
+**Mathematical formulation**
 |details-split|
 
 For a set of data :math:`E` of size :math:`n_E` which has been clustered into
@@ -2128,7 +2139,7 @@ center of cluster :math:`q`, :math:`c_E` the center of :math:`E`, and
 |details-end|
 
 |details-start|
-References
+**References**
 |details-split|
 
 * Caliński, T., & Harabasz, J. (1974). `"A Dendrite Method for Cluster Analysis"
@@ -2169,30 +2180,23 @@ cluster analysis as follows:
   0.6619...
 
 
-|details-start|
-Advantages
-|details-split|
+.. topic:: Advantages:
 
-- The computation of Davies-Bouldin is simpler than that of Silhouette scores.
-- The index is solely based on quantities and features inherent to the dataset
-  as its computation only uses point-wise distances.
+  - The computation of Davies-Bouldin is simpler than that of Silhouette scores.
+  - The index is solely based on quantities and features inherent to the dataset
+    as its computation only uses point-wise distances.
 
-|details-end|
+.. topic:: Drawbacks:
 
-|details-start|
-Drawbacks
-|details-split|
+  - The Davies-Boulding index is generally higher for convex clusters than other
+    concepts of clusters, such as density based clusters like those obtained
+    from DBSCAN.
+  - The usage of centroid distance limits the distance metric to Euclidean
+    space.
 
-- The Davies-Boulding index is generally higher for convex clusters than other
-  concepts of clusters, such as density based clusters like those obtained
-  from DBSCAN.
-- The usage of centroid distance limits the distance metric to Euclidean
-  space.
-
-|details-end|
 
 |details-start|
-Mathematical formulation
+**Mathematical formulation**
 |details-split|
 
 The index is defined as the average similarity between each cluster :math:`C_i`
@@ -2218,7 +2222,7 @@ Then the Davies-Bouldin index is defined as:
 |details-end|
 
 |details-start|
-References
+**References**
 |details-split|
 
 * Davies, David L.; Bouldin, Donald W. (1979). :doi:`"A Cluster Separation
@@ -2265,33 +2269,26 @@ contingency matrix where the order of rows and columns correspond to a list
 of classes.
 
 
-|details-start|
-Advantages
-|details-split|
+.. topic:: Advantages:
 
-- Allows to examine the spread of each true cluster across predicted clusters
-  and vice versa.
+  - Allows to examine the spread of each true cluster across predicted clusters
+    and vice versa.
 
-- The contingency table calculated is typically utilized in the calculation of
-  a similarity statistic (like the others listed in this document) between the
-  two clusterings.
+  - The contingency table calculated is typically utilized in the calculation of
+    a similarity statistic (like the others listed in this document) between the
+    two clusterings.
 
-|details-end|
+.. topic:: Drawbacks:
 
-|details-start|
-Drawbacks
-|details-split|
+  - Contingency matrix is easy to interpret for a small number of clusters, but
+    becomes very hard to interpret for a large number of clusters.
 
-- Contingency matrix is easy to interpret for a small number of clusters, but
-  becomes very hard to interpret for a large number of clusters.
+  - It doesn't give a single metric to use as an objective for clustering
+    optimisation.
 
-- It doesn't give a single metric to use as an objective for clustering
-  optimisation.
-
-|details-end|
 
 |details-start|
-References
+**References**
 |details-split|
 
 * `Wikipedia entry for contingency matrix
@@ -2376,7 +2373,7 @@ diagonal entries::
           [12,  0]])
 
 |details-start|
-References
+**References**
 |details-split|
 
  * :doi:`"Comparing Partitions" <10.1007/BF01908075>` L. Hubert and P. Arabie,
