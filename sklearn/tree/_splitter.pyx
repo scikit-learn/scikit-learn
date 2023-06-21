@@ -247,6 +247,11 @@ cdef class Splitter:
 
         self.criterion.node_value(dest)
 
+    cdef inline void clip_node_value(self, double* dest, double lower_bound, double upper_bound) noexcept nogil:
+        """Clip the value in dest between lower_bound and upper_bound for monotonic constraints."""
+
+        self.criterion.clip_node_value(dest, lower_bound, upper_bound)
+
     cdef double node_impurity(self) noexcept nogil:
         """Return the impurity of the current node."""
 
@@ -445,6 +450,7 @@ cdef inline int node_split_best(
                 # Reject if monotonicity constraints are not satisfied
                 if (
                     with_monotonic_cst and
+                    monotonic_cst[current_split.feature] != 0 and
                     not criterion.check_monotonicity(
                         monotonic_cst[current_split.feature],
                         lower_bound,
@@ -800,6 +806,7 @@ cdef inline int node_split_random(
         # Reject if monotonicity constraints are not satisfied
         if (
                 with_monotonic_cst and
+                monotonic_cst[current_split.feature] != 0 and
                 not criterion.check_monotonicity(
                     monotonic_cst[current_split.feature],
                     lower_bound,

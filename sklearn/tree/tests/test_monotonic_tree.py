@@ -309,8 +309,14 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
     for i in range(tree_.node_count):
         feature = tree_.feature[i]
         node_value = tree_.value[i][0][0]  # unpack value from nx1x1 array
-        assert node_value <= upper_bound[i]
-        assert node_value >= lower_bound[i]
+        # While building the tree, the computed middle value is slightly
+        # different from the average of the siblings values, because
+        # sum_right / weighted_n_right
+        # is slightly different from the value of the right sibling.
+        # This can cause a discrepancy up to numerical noise when clipping,
+        # which is resolved by comparing with some loss of precision.
+        assert np.float32(node_value) <= np.float32(upper_bound[i])
+        assert np.float32(node_value) >= np.float32(lower_bound[i])
 
         if feature < 0:
             # Leaf: nothing to do

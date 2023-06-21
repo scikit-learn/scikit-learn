@@ -69,6 +69,12 @@ cdef class Criterion:
         self,
         double* dest
     ) noexcept nogil
+    cdef void clip_node_value(
+        self,
+        double* dest,
+        double lower_bound,
+        double upper_bound
+    ) noexcept nogil
     cdef double middle_value(self) noexcept nogil
     cdef double impurity_improvement(
         self,
