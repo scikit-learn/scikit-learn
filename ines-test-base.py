@@ -33,6 +33,8 @@ class CustomEstimator(BaseEstimator):
         # Implement the prediction logic of your estimator
         # ...
         return X
+
+
 class CustomEstimator_wrong(BaseEstimator):
     def __init__(self, parameter1=None, parameter2=None):
         # Initialize any required parameters
@@ -48,6 +50,7 @@ class CustomEstimator_wrong(BaseEstimator):
         # Implement the prediction logic of your estimator
         # ...
         return X
+
 
 def _local_get_estimator_doc_url(estimator):
     """Generating a link to the API documentation for a given estimator and scikit-learn version."""
