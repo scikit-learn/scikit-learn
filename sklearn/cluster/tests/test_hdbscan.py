@@ -8,6 +8,12 @@ from scipy import sparse, stats
 from scipy.spatial import distance
 
 from sklearn.cluster import HDBSCAN
+from sklearn.cluster._hdbscan._tree import (
+    CONDENSED_dtype,
+    _condense_tree,
+    _do_labelling,
+)
+from sklearn.cluster._hdbscan.hdbscan import _OUTLIER_ENCODING
 from sklearn.datasets import make_blobs
 from sklearn.metrics import fowlkes_mallows_score
 from sklearn.metrics.pairwise import _VALID_METRICS, euclidean_distances
@@ -15,12 +21,6 @@ from sklearn.neighbors import BallTree, KDTree
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
-from sklearn.cluster._hdbscan.hdbscan import _OUTLIER_ENCODING
-from sklearn.cluster._hdbscan._tree import (
-    _do_labelling,
-    _condense_tree,
-    CONDENSED_dtype,
-)
 
 n_clusters_true = 3
 X, y = make_blobs(n_samples=200, random_state=10)

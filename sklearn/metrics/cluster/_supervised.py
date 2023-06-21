@@ -23,11 +23,10 @@ from numbers import Real
 import numpy as np
 from scipy import sparse as sp
 
-from ._expected_mutual_info_fast import expected_mutual_information
+from ...utils._param_validation import Interval, StrOptions, validate_params
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
-from ...utils._param_validation import validate_params
-from ...utils._param_validation import Interval, StrOptions
+from ._expected_mutual_info_fast import expected_mutual_information
 
 
 def check_clusterings(labels_true, labels_pred):

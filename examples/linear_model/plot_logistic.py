@@ -15,6 +15,7 @@ i.e. class one or two, using the logistic curve.
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.special import expit
+
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
 # Generate a toy dataset, it's just a straight line with some Gaussian noise:

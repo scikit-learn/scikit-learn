@@ -6,21 +6,19 @@
 #         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
 # License: BSD 3 clause
 
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
-
 from scipy.linalg import LinAlgError, qr, svd
 from scipy.sparse import csc_matrix
 
-from ..base import BaseEstimator, ClusterMixin
-from ..base import _fit_context
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils import check_random_state, as_float_array
-from ..metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
-from ..neighbors import kneighbors_graph, NearestNeighbors
+from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..manifold import spectral_embedding
+from ..metrics.pairwise import KERNEL_PARAMS, pairwise_kernels
+from ..neighbors import NearestNeighbors, kneighbors_graph
+from ..utils import as_float_array, check_random_state
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ._kmeans import k_means
 
 

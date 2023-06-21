@@ -1,74 +1,77 @@
 """Tests for input validation functions"""
 
 import numbers
-import warnings
 import re
-
-from tempfile import NamedTemporaryFile
+import warnings
 from itertools import product
 from operator import itemgetter
+from tempfile import NamedTemporaryFile
 
-import pytest
-from pytest import importorskip
 import numpy as np
+import pytest
 import scipy.sparse as sp
+from pytest import importorskip
 
+import sklearn
 from sklearn._config import config_context
-from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import SkipTest
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import _convert_container
-from sklearn.utils import as_float_array, check_array, check_symmetric
-from sklearn.utils import check_X_y
-from sklearn.utils import deprecated
+from sklearn.base import BaseEstimator
+from sklearn.datasets import make_blobs
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
+from sklearn.linear_model import ARDRegression
 
 # TODO: add this estimator into the _mocking module in a further refactoring
 from sklearn.metrics.tests.test_score_objects import EstimatorWithFit
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.random_projection import _sparse_random_matrix
+from sklearn.svm import SVR
+from sklearn.utils import (
+    _safe_indexing,
+    as_float_array,
+    check_array,
+    check_symmetric,
+    check_X_y,
+    deprecated,
+)
 from sklearn.utils._mocking import (
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
 )
-from sklearn.utils.fixes import parse_version
+from sklearn.utils._testing import (
+    SkipTest,
+    TempMemmap,
+    _convert_container,
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_array_equal,
+    assert_no_warnings,
+    ignore_warnings,
+    skip_if_array_api_compat_not_configured,
+)
 from sklearn.utils.estimator_checks import _NotAnArray
-from sklearn.random_projection import _sparse_random_matrix
-from sklearn.linear_model import ARDRegression
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.svm import SVR
-from sklearn.datasets import make_blobs
-from sklearn.utils import _safe_indexing
+from sklearn.utils.fixes import parse_version
 from sklearn.utils.validation import (
-    has_fit_parameter,
-    _is_fitted,
-    check_is_fitted,
-    check_consistent_length,
-    assert_all_finite,
-    check_memory,
-    check_non_negative,
-    _num_samples,
-    check_scalar,
-    _check_psd_eigenvalues,
-    _check_y,
-    _deprecate_positional_args,
-    _check_sample_weight,
-    _allclose_dense_sparse,
-    _num_features,
     FLOAT_DTYPES,
-    _get_feature_names,
+    _allclose_dense_sparse,
     _check_feature_names_in,
     _check_fit_params,
+    _check_psd_eigenvalues,
     _check_response_method,
+    _check_sample_weight,
+    _check_y,
+    _deprecate_positional_args,
+    _get_feature_names,
+    _is_fitted,
+    _num_features,
+    _num_samples,
+    assert_all_finite,
+    check_consistent_length,
+    check_is_fitted,
+    check_memory,
+    check_non_negative,
+    check_scalar,
+    has_fit_parameter,
 )
-from sklearn.base import BaseEstimator
-import sklearn
-
-from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
-
-from sklearn.utils._testing import TempMemmap
-from sklearn.utils._testing import skip_if_array_api_compat_not_configured
 
 
 def test_as_float_array():
