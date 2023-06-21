@@ -21,6 +21,7 @@ from ..base import (
     RegressorMixin,
 )
 from ..base import is_classifier
+from ..base import _fit_context
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
 from ..metrics import accuracy_score, r2_score
@@ -360,7 +361,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return loss, coef_grads, intercept_grads
 
     def _initialize(self, y, layer_units, dtype):
-        # set all attributes, allocate weights etc for first call
+        # set all attributes, allocate weights etc. for first call
         # Initialize parameters
         self.n_iter_ = 0
         self.t_ = 0
@@ -553,7 +554,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         layer_units,
         incremental,
     ):
-
         params = self.coefs_ + self.intercepts_
         if not incremental or not hasattr(self, "_optimizer"):
             if self.solver == "sgd":
@@ -728,6 +728,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             if self.loss_curve_[-1] < self.best_loss_:
                 self.best_loss_ = self.loss_curve_[-1]
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model to data matrix X and target(s) y.
 
@@ -745,8 +746,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a trained MLP model.
         """
-        self._validate_params()
-
         return self._fit(X, y, incremental=False)
 
     def _check_solver(self):
@@ -933,7 +932,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     best_loss_ : float or None
         The minimum loss reached by the solver throughout fitting.
-        If `early_stopping=True`, this attribute is set ot `None`. Refer to
+        If `early_stopping=True`, this attribute is set to `None`. Refer to
         the `best_validation_score_` fitted attribute instead.
 
     loss_curve_ : list of shape (`n_iter_`,)
@@ -1171,6 +1170,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         return accuracy_score(y, self._predict(X, check_input=False))
 
     @available_if(lambda est: est._check_solver())
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, classes=None):
         """Update the model with a single iteration over the given data.
 
@@ -1195,9 +1195,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         self : object
             Trained MLP model.
         """
-        if not hasattr(self, "coefs_"):
-            self._validate_params()
-
         if _check_partial_fit_first_call(self, classes):
             self._label_binarizer = LabelBinarizer()
             if type_of_target(y).startswith("multilabel"):
@@ -1625,6 +1622,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         return X, y
 
     @available_if(lambda est: est._check_solver)
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y):
         """Update the model with a single iteration over the given data.
 
@@ -1641,7 +1639,4 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         self : object
             Trained MLP model.
         """
-        if not hasattr(self, "coefs_"):
-            self._validate_params()
-
         return self._fit(X, y, incremental=True)

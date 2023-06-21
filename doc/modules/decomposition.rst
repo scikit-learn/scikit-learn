@@ -879,8 +879,7 @@ defined by :
 .. math::
     d_{\beta}(X, Y) = \sum_{i,j} \frac{1}{\beta(\beta - 1)}(X_{ij}^\beta + (\beta-1)Y_{ij}^\beta - \beta X_{ij} Y_{ij}^{\beta - 1})
 
-.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_beta_divergence_001.png
-    :target: ../auto_examples/decomposition/plot_beta_divergence.html
+.. image:: ../images/beta_divergence.png
     :align: center
     :scale: 75%
 
@@ -919,7 +918,6 @@ stored components::
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
     * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_beta_divergence.py`
 
 .. _MiniBatchNMF:
 

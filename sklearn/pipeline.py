@@ -16,6 +16,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import clone, TransformerMixin
+from .base import _fit_context
 from .preprocessing import FunctionTransformer
 from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import available_if
@@ -80,13 +81,13 @@ class Pipeline(_BaseComposition):
         estimator.
 
     memory : str or object with the joblib.Memory interface, default=None
-        Used to cache the fitted transformers of the pipeline. By default,
-        no caching is performed. If a string is given, it is the path to
-        the caching directory. Enabling caching triggers a clone of
-        the transformers before fitting. Therefore, the transformer
-        instance given to the pipeline cannot be inspected
-        directly. Use the attribute ``named_steps`` or ``steps`` to
-        inspect estimators within the pipeline. Caching the
+        Used to cache the fitted transformers of the pipeline. The last step
+        will never be cached, even if it is a transformer. By default, no
+        caching is performed. If a string is given, it is the path to the
+        caching directory. Enabling caching triggers a clone of the transformers
+        before fitting. Therefore, the transformer instance given to the
+        pipeline cannot be inspected directly. Use the attribute ``named_steps``
+        or ``steps`` to inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
     verbose : bool, default=False
@@ -385,6 +386,10 @@ class Pipeline(_BaseComposition):
             self.steps[step_idx] = (name, fitted_transformer)
         return X
 
+    @_fit_context(
+        # estimators in Pipeline.steps are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, **fit_params):
         """Fit the model.
 
@@ -411,7 +416,6 @@ class Pipeline(_BaseComposition):
         self : object
             Pipeline with fitted steps.
         """
-        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
@@ -421,6 +425,18 @@ class Pipeline(_BaseComposition):
 
         return self
 
+    def _can_fit_transform(self):
+        return (
+            self._final_estimator == "passthrough"
+            or hasattr(self._final_estimator, "transform")
+            or hasattr(self._final_estimator, "fit_transform")
+        )
+
+    @available_if(_can_fit_transform)
+    @_fit_context(
+        # estimators in Pipeline.steps are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None, **fit_params):
         """Fit the model and transform with the final estimator.
 
@@ -448,7 +464,6 @@ class Pipeline(_BaseComposition):
         Xt : ndarray of shape (n_samples, n_transformed_features)
             Transformed samples.
         """
-        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
 
@@ -497,6 +512,10 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][1].predict(Xt, **predict_params)
 
     @available_if(_final_estimator_has("fit_predict"))
+    @_fit_context(
+        # estimators in Pipeline.steps are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_predict(self, X, y=None, **fit_params):
         """Transform the data, and apply `fit_predict` with the final estimator.
 
@@ -525,7 +544,6 @@ class Pipeline(_BaseComposition):
         y_pred : ndarray
             Result of calling `fit_predict` on the final estimator.
         """
-        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
 
@@ -744,12 +762,34 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][1].classes_
 
     def _more_tags(self):
+        tags = {
+            "_xfail_checks": {
+                "check_dont_overwrite_parameters": (
+                    "Pipeline changes the `steps` parameter, which it shouldn't."
+                    "Therefore this test is x-fail until we fix this."
+                ),
+                "check_estimators_overwrite_params": (
+                    "Pipeline changes the `steps` parameter, which it shouldn't."
+                    "Therefore this test is x-fail until we fix this."
+                ),
+            }
+        }
+
         try:
-            return {"pairwise": _safe_tags(self.steps[0][1], "pairwise")}
+            tags["pairwise"] = _safe_tags(self.steps[0][1], "pairwise")
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
-            return {}
+            pass
+
+        try:
+            tags["multioutput"] = _safe_tags(self.steps[-1][1], "multioutput")
+        except (ValueError, AttributeError, TypeError):
+            # This happens when the `steps` is not a list of (name, estimator)
+            # tuples and `fit` is not called yet to validate the steps.
+            pass
+
+        return tags
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -858,13 +898,13 @@ def make_pipeline(*steps, memory=None, verbose=False):
         List of the scikit-learn estimators that are chained together.
 
     memory : str or object with the joblib.Memory interface, default=None
-        Used to cache the fitted transformers of the pipeline. By default,
-        no caching is performed. If a string is given, it is the path to
-        the caching directory. Enabling caching triggers a clone of
-        the transformers before fitting. Therefore, the transformer
-        instance given to the pipeline cannot be inspected
-        directly. Use the attribute ``named_steps`` or ``steps`` to
-        inspect estimators within the pipeline. Caching the
+        Used to cache the fitted transformers of the pipeline. The last step
+        will never be cached, even if it is a transformer. By default, no
+        caching is performed. If a string is given, it is the path to the
+        caching directory. Enabling caching triggers a clone of the transformers
+        before fitting. Therefore, the transformer instance given to the
+        pipeline cannot be inspected directly. Use the attribute ``named_steps``
+        or ``steps`` to inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
     verbose : bool, default=False

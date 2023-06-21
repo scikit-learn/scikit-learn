@@ -24,6 +24,7 @@ from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ._linear_loss import LinearModelLoss
 from ._sag import sag_solver
 from ._glm.glm import NewtonCholeskySolver
+from ..base import _fit_context
 from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
 from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm._base import _fit_liblinear
@@ -48,7 +49,6 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 
 
 def _check_solver(solver, penalty, dual):
-
     # TODO(1.4): Remove "none" option
     if solver not in ["liblinear", "saga"] and penalty not in ("l2", "none", None):
         raise ValueError(
@@ -484,7 +484,11 @@ def _logistic_regression_path(
             w0 = sol.solve(X=X, y=target, sample_weight=sample_weight)
             n_iter_i = sol.iteration
         elif solver == "liblinear":
-            coef_, intercept_, n_iter_i, = _fit_liblinear(
+            (
+                coef_,
+                intercept_,
+                n_iter_i,
+            ) = _fit_liblinear(
                 X,
                 target,
                 C,
@@ -503,6 +507,9 @@ def _logistic_regression_path(
                 w0 = np.concatenate([coef_.ravel(), intercept_])
             else:
                 w0 = coef_.ravel()
+            # n_iter_i is an array for each class. However, `target` is always encoded
+            # in {-1, 1}, so we only take the first element of n_iter_i.
+            n_iter_i = n_iter_i.item()
 
         elif solver in ["sag", "saga"]:
             if multi_class == "multinomial":
@@ -1013,7 +1020,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     See Also
     --------
     SGDClassifier : Incrementally trained logistic regression (when given
-        the parameter ``loss="log"``).
+        the parameter ``loss="log_loss"``).
     LogisticRegressionCV : Logistic regression with built-in cross validation.
 
     Notes
@@ -1110,7 +1117,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         n_jobs=None,
         l1_ratio=None,
     ):
-
         self.penalty = penalty
         self.dual = dual
         self.tol = tol
@@ -1127,6 +1133,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.l1_ratio = l1_ratio
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """
         Fit the model according to the given training data.
@@ -1156,9 +1163,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         -----
         The SAGA solver supports both float64 and float32 bit arrays.
         """
-
-        self._validate_params()
-
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
         if self.penalty != "elasticnet" and self.l1_ratio is not None:
@@ -1168,11 +1172,16 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 "(penalty={})".format(self.penalty)
             )
 
+        if self.penalty == "elasticnet" and self.l1_ratio is None:
+            raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
+
         # TODO(1.4): Remove "none" option
         if self.penalty == "none":
             warnings.warn(
-                "`penalty='none'`has been deprecated in 1.2 and will be removed in 1.4."
-                " To keep the past behaviour, set `penalty=None`.",
+                (
+                    "`penalty='none'`has been deprecated in 1.2 and will be removed in"
+                    " 1.4. To keep the past behaviour, set `penalty=None`."
+                ),
                 FutureWarning,
             )
 
@@ -1735,6 +1744,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self.random_state = random_state
         self.l1_ratios = l1_ratios
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -1756,9 +1766,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self : object
             Fitted LogisticRegressionCV estimator.
         """
-
-        self._validate_params()
-
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
         if self.penalty == "elasticnet":
@@ -1941,7 +1948,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         for index, (cls, encoded_label) in enumerate(
             zip(iter_classes, iter_encoded_labels)
         ):
-
             if multi_class == "ovr":
                 scores = self.scores_[cls]
                 coefs_paths = self.coefs_paths_[cls]

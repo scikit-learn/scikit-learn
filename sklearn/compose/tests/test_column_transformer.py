@@ -22,6 +22,7 @@ from sklearn.compose import (
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
+from sklearn.feature_selection import VarianceThreshold
 
 
 class Trans(TransformerMixin, BaseEstimator):
@@ -803,7 +804,6 @@ def test_column_transformer_get_feature_names():
 
 
 def test_column_transformer_special_strings():
-
     # one 'drop' -> ignore
     X_array = np.array([[0.0, 1.0, 2.0], [2.0, 4.0, 6.0]]).T
     ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", "drop", [1])])
@@ -2158,3 +2158,55 @@ def test_empty_selection_pandas_output(empty_selection):
     ct.set_params(verbose_feature_names_out=False)
     X_out = ct.fit_transform(X)
     assert_array_equal(X_out.columns, ["a", "b"])
+
+
+def test_raise_error_if_index_not_aligned():
+    """Check column transformer raises error if indices are not aligned.
+
+    Non-regression test for gh-26210.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame([[1.0, 2.2], [3.0, 1.0]], columns=["a", "b"], index=[8, 3])
+    reset_index_transformer = FunctionTransformer(
+        lambda x: x.reset_index(drop=True), feature_names_out="one-to-one"
+    )
+
+    ct = ColumnTransformer(
+        [
+            ("num1", "passthrough", ["a"]),
+            ("num2", reset_index_transformer, ["b"]),
+        ],
+    )
+    ct.set_output(transform="pandas")
+    msg = (
+        "Concatenating DataFrames from the transformer's output lead to"
+        " an inconsistent number of samples. The output may have Pandas"
+        " Indexes that do not match."
+    )
+    with pytest.raises(ValueError, match=msg):
+        ct.fit_transform(X)
+
+
+def test_remainder_set_output():
+    """Check that the output is set for the remainder.
+
+    Non-regression test for #26306.
+    """
+
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"a": [True, False, True], "b": [1, 2, 3]})
+
+    ct = make_column_transformer(
+        (VarianceThreshold(), make_column_selector(dtype_include=bool)),
+        remainder=VarianceThreshold(),
+        verbose_feature_names_out=False,
+    )
+    ct.set_output(transform="pandas")
+
+    out = ct.fit_transform(df)
+    pd.testing.assert_frame_equal(out, df)
+
+    ct.set_output(transform="default")
+    out = ct.fit_transform(df)
+    assert isinstance(out, np.ndarray)

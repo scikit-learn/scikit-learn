@@ -20,9 +20,11 @@ from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
 from ..metrics.pairwise import _VALID_METRICS
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils._param_validation import Interval, HasMethods, StrOptions, validate_params
+from ..utils._param_validation import RealNotInt
 from ..utils.validation import check_memory
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
+from ..base import _fit_context
 from ..metrics import pairwise_distances
 from scipy.sparse import issparse, SparseEfficiencyWarning
 
@@ -233,7 +235,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
     _parameter_constraints: dict = {
         "min_samples": [
             Interval(Integral, 2, None, closed="left"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval(RealNotInt, 0, 1, closed="both"),
         ],
         "max_eps": [Interval(Real, 0, None, closed="both")],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
@@ -245,7 +247,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         "predecessor_correction": ["boolean"],
         "min_cluster_size": [
             Interval(Integral, 2, None, closed="left"),
-            Interval(Real, 0, 1, closed="right"),
+            Interval(RealNotInt, 0, 1, closed="right"),
             None,
         ],
         "algorithm": [StrOptions({"auto", "brute", "ball_tree", "kd_tree"})],
@@ -287,6 +289,10 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self.memory = memory
         self.n_jobs = n_jobs
 
+    @_fit_context(
+        # Optics.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Perform OPTICS clustering.
 
@@ -310,8 +316,6 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
-        self._validate_params()
-
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
         if dtype == bool and X.dtype != bool:
             msg = (
@@ -431,7 +435,7 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
         "X": [np.ndarray, "sparse matrix"],
         "min_samples": [
             Interval(Integral, 2, None, closed="left"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval(RealNotInt, 0, 1, closed="both"),
         ],
         "max_eps": [Interval(Real, 0, None, closed="both")],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
@@ -618,8 +622,10 @@ def compute_optics_graph(
             )
     if np.all(np.isinf(reachability_)):
         warnings.warn(
-            "All reachability values are inf. Set a larger"
-            " max_eps or all data will be considered outliers.",
+            (
+                "All reachability values are inf. Set a larger"
+                " max_eps or all data will be considered outliers."
+            ),
             UserWarning,
         )
     return ordering, core_distances_, reachability_, predecessor_
@@ -723,12 +729,12 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
         "predecessor": [np.ndarray],
         "ordering": [np.ndarray],
         "min_samples": [
-            Interval(Integral, 1, None, closed="neither"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval(Integral, 2, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="both"),
         ],
         "min_cluster_size": [
-            Interval(Integral, 1, None, closed="neither"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval(Integral, 2, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="both"),
             None,
         ],
         "xi": [Interval(Real, 0, 1, closed="both")],

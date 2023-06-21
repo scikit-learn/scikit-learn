@@ -65,7 +65,7 @@ clf[-1].feature_names_in_
 
 # %%
 # Next we load the titanic dataset to demonstrate `set_output` with
-# :class:`compose.ColumnTransformer` and heterogenous data.
+# :class:`compose.ColumnTransformer` and heterogeneous data.
 from sklearn.datasets import fetch_openml
 
 X, y = fetch_openml(
@@ -112,8 +112,8 @@ coef = pd.Series(log_reg.coef_.ravel(), index=log_reg.feature_names_in_)
 _ = coef.sort_values().plot.barh()
 
 # %%
-# This resets `transform_output` to its default value to avoid impacting other
-# examples when generating the scikit-learn documentation
+# In order to demonstrate the :func:`config_context` functionality below, let
+# us first reset `transform_output` to its default value.
 set_config(transform_output="default")
 
 # %%

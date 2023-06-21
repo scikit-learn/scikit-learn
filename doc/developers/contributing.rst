@@ -247,18 +247,18 @@ how to set up your git repository:
       git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
       cd scikit-learn
 
-3. Follow steps 2-7 in :ref:`install_bleeding_edge` to build scikit-learn in
+4. Follow steps 2-7 in :ref:`install_bleeding_edge` to build scikit-learn in
    development mode and return to this document.
 
-4. Install the development dependencies:
+5. Install the development dependencies:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov flake8 mypy numpydoc black==22.3.0
+        pip install pytest pytest-cov ruff mypy numpydoc black==23.3.0
 
 .. _upstream:
 
-5. Add the ``upstream`` remote. This saves a reference to the main
+6. Add the ``upstream`` remote. This saves a reference to the main
    scikit-learn repository, which you can use to keep your repository
    synchronized with the latest changes:
 
@@ -266,7 +266,7 @@ how to set up your git repository:
 
         git remote add upstream git@github.com:scikit-learn/scikit-learn.git
 
-6. Check that the `upstream` and `origin` remote aliases are configured correctly
+7. Check that the `upstream` and `origin` remote aliases are configured correctly
    by running `git remote -v` which should display::
 
         origin	git@github.com:YourLogin/scikit-learn.git (fetch)
@@ -278,7 +278,7 @@ You should now have a working installation of scikit-learn, and your git
 repository properly configured. The next steps now describe the process of
 modifying code and submitting a PR:
 
-7. Synchronize your ``main`` branch with the ``upstream/main`` branch,
+8. Synchronize your ``main`` branch with the ``upstream/main`` branch,
    more details on `GitHub Docs <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_:
 
    .. prompt:: bash $
@@ -287,7 +287,7 @@ modifying code and submitting a PR:
         git fetch upstream
         git merge upstream/main
 
-8. Create a feature branch to hold your development changes:
+9. Create a feature branch to hold your development changes:
 
     .. prompt:: bash $
 
@@ -296,18 +296,18 @@ modifying code and submitting a PR:
    and start making changes. Always use a feature branch. It's good
    practice to never work on the ``main`` branch!
 
-9. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
-   run code style checks before each commit:
+10. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
+    run code style checks before each commit:
 
-   .. prompt:: bash $
+    .. prompt:: bash $
 
-        pip install pre-commit
-        pre-commit install
+          pip install pre-commit
+          pre-commit install
 
-   pre-commit checks can be disabled for a particular commit with
-   `git commit -n`.
+    pre-commit checks can be disabled for a particular commit with
+    `git commit -n`.
 
-10. Develop the feature on your feature branch on your computer, using Git to
+11. Develop the feature on your feature branch on your computer, using Git to
     do the version control. When you're done editing, add changed files using
     ``git add`` and then ``git commit``:
 
@@ -323,7 +323,7 @@ modifying code and submitting a PR:
 
        git push -u origin my_feature
 
-11. Follow `these
+12. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
     instructions to create a pull request from your fork. This will send an
     email to the committers. You may want to consider sending an email to the
@@ -336,7 +336,7 @@ modifying code and submitting a PR:
 
     .. prompt:: bash $
 
-        pip install --no-build-isolation -e .
+        pip install -v --no-use-pep517 --no-build-isolation -e .
 
     Use the ``--no-build-isolation`` flag to avoid compiling the whole project
     each time, only the files you have modified.
@@ -425,30 +425,15 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
 
-5. Run `black` to auto-format your code.
 
-   .. prompt:: bash $
-
-        black .
-
-   See black's
-   `editor integration documentation <https://black.readthedocs.io/en/stable/integrations/editors.html>`_
-   to configure your editor to run `black`.
-
-6. Run `flake8` to make sure you followed the project coding conventions.
-
-   .. prompt:: bash $
-
-        flake8 .
-
-7. Follow the :ref:`coding-guidelines`.
+5. Follow the :ref:`coding-guidelines`.
 
 
-8. When applicable, use the validation tools and scripts in the
+6. When applicable, use the validation tools and scripts in the
    ``sklearn.utils`` submodule.  A list of utility routines available
    for developers can be found in the :ref:`developers-utils` page.
 
-9. Often pull requests resolve one or more other issues (or pull requests).
+7. Often pull requests resolve one or more other issues (or pull requests).
    If merging your pull request means that some other issues/PRs should
    be closed, you should `use keywords to create link to them
    <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
@@ -458,7 +443,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    related to some other issues/PRs, create a link to them without using
    the keywords (e.g., ``See also #1234``).
 
-10. PRs should often substantiate the change, through benchmarks of
+8. PRs should often substantiate the change, through benchmarks of
     performance and efficiency (see :ref:`monitoring_performances`) or through
     examples of usage. Examples also illustrate the features and intricacies of
     the library to users. Have a look at other examples in the `examples/
@@ -467,14 +452,14 @@ complies with the following rules before marking a PR as ``[MRG]``. The
     functionality is useful in practice and, if possible, compare it to other
     methods available in scikit-learn.
 
-11. New features have some maintenance overhead. We expect PR authors
+9. New features have some maintenance overhead. We expect PR authors
     to take part in the maintenance for the code they submit, at least
     initially. New features need to be illustrated with narrative
     documentation in the user guide, with small code snippets.
     If relevant, please also add references in the literature, with PDF links
     when possible.
 
-12. The user guide should also include expected time and space complexity
+10. The user guide should also include expected time and space complexity
     of the algorithm and scalability, e.g. "this algorithm can scale to a
     large number of samples > 100000, but does not scale in dimensionality:
     n_features is expected to be lower than 100".
@@ -534,8 +519,10 @@ Continuous Integration (CI)
 
 * Azure pipelines are used for testing scikit-learn on Linux, Mac and Windows,
   with different dependencies and settings.
-* CircleCI is used to build the docs for viewing, for linting with flake8, and
-  for testing with ARM64 / aarch64 on Linux
+* CircleCI is used to build the docs for viewing.
+* Github Actions are used for various tasks, including building wheels and
+  source distributions.
+* Cirrus CI is used to build on ARM.
 
 Please note that if one of the following markers appear in the latest commit
 message, the following actions are taken.
@@ -548,9 +535,10 @@ message, the following actions are taken.
     [cd build gh]          CD is run only for GitHub Actions
     [cd build cirrus]      CD is run only for Cirrus CI
     [lint skip]            Azure pipeline skips linting
-    [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
-    [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy...
+    [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
+    [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy, ...
     [pypy]                 Build & test with PyPy
+    [pyodide]              Build & test with Pyodide
     [azure parallel]       Run Azure CI jobs in parallel
     [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
     [doc skip]             Docs are not built
@@ -714,7 +702,7 @@ Building the documentation requires installing some additional packages:
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
                 scikit-image packaging seaborn sphinx-prompt \
-                sphinxext-opengraph plotly
+                sphinxext-opengraph plotly pooch
 
 To build the documentation, you need to be in the ``doc`` folder:
 
@@ -762,7 +750,7 @@ To build the PDF manual, run:
    versions of Sphinx as possible, the different versions tend to
    behave slightly differently. To get the best results, you should
    use the same version as the one we used on CircleCI. Look at this
-   `github search <https://github.com/search?utf8=%E2%9C%93&q=sphinx+repo%3Ascikit-learn%2Fscikit-learn+extension%3Ash+path%3Abuild_tools%2Fcircle&type=Code>`_
+   `GitHub search <https://github.com/search?q=repo%3Ascikit-learn%2Fscikit-learn+path%3Abuild_tools%2Fcircle%2F*.yml+sphinx&type=code>`_
    to know the exact version.
 
 Guidelines for writing documentation
@@ -1449,9 +1437,10 @@ make this task easier and faster (in no particular order).
   <https://joblib.readthedocs.io/>`_. ``out`` is then an iterable containing
   the values returned by ``some_function`` for each call.
 - We use `Cython <https://cython.org/>`_ to write fast code. Cython code is
-  located in ``.pyx`` and ``.pxd`` files. Cython code has a more C-like
-  flavor: we use pointers, perform manual memory allocation, etc. Having
-  some minimal experience in C / C++ is pretty much mandatory here.
+  located in ``.pyx`` and ``.pxd`` files. Cython code has a more C-like flavor:
+  we use pointers, perform manual memory allocation, etc. Having some minimal
+  experience in C / C++ is pretty much mandatory here. For more information see
+  :ref:`cython`.
 - Master your tools.
 
   - With such a big project, being efficient with your favorite editor or

@@ -10,12 +10,13 @@ import numpy as np
 from scipy.special import gammainc
 
 from ..base import BaseEstimator
+from ..base import _fit_context
 from ..neighbors._base import VALID_METRICS
 from ..utils import check_random_state
 from ..utils.validation import _check_sample_weight, check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import row_norms
-from ._ball_tree import BallTree, DTYPE
+from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 
 
@@ -185,6 +186,10 @@ class KernelDensity(BaseEstimator):
                 )
             return algorithm
 
+    @_fit_context(
+        # KernelDensity.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, sample_weight=None):
         """Fit the Kernel Density model on the data.
 
@@ -208,8 +213,6 @@ class KernelDensity(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
 
         if isinstance(self.bandwidth, str):
@@ -222,11 +225,11 @@ class KernelDensity(BaseEstimator):
         else:
             self.bandwidth_ = self.bandwidth
 
-        X = self._validate_data(X, order="C", dtype=DTYPE)
+        X = self._validate_data(X, order="C", dtype=np.float64)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(
-                sample_weight, X, DTYPE, only_non_negative=True
+                sample_weight, X, dtype=np.float64, only_non_negative=True
             )
 
         kwargs = self.metric_params
@@ -261,7 +264,7 @@ class KernelDensity(BaseEstimator):
         # The returned density is normalized to the number of points.
         # For it to be a probability, we must scale it.  For this reason
         # we'll also scale atol.
-        X = self._validate_data(X, order="C", dtype=DTYPE, reset=False)
+        X = self._validate_data(X, order="C", dtype=np.float64, reset=False)
         if self.tree_.sample_weight is None:
             N = self.tree_.data.shape[0]
         else:

@@ -90,6 +90,7 @@ sklearn/metrics/_dist_metrics.pyx
 sklearn/metrics/_dist_metrics.pxd
 sklearn/metrics/_pairwise_distances_reduction/_argkmin.pxd
 sklearn/metrics/_pairwise_distances_reduction/_argkmin.pyx
+sklearn/metrics/_pairwise_distances_reduction/_argkmin_classmode.pyx
 sklearn/metrics/_pairwise_distances_reduction/_base.pxd
 sklearn/metrics/_pairwise_distances_reduction/_base.pyx
 sklearn/metrics/_pairwise_distances_reduction/_datasets_pair.pxd
@@ -100,3 +101,6 @@ sklearn/metrics/_pairwise_distances_reduction/_pairwise_distances.pxd
 sklearn/metrics/_pairwise_distances_reduction/_pairwise_distances.pyx
 sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pxd
 sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pyx
+
+# Default JupyterLite content
+jupyterlite_contents

@@ -13,6 +13,7 @@ from scipy import special, stats
 from scipy.sparse import issparse
 
 from ..base import BaseEstimator
+from ..base import _fit_context
 from ..preprocessing import LabelBinarizer
 from ..utils import as_float_array, check_array, check_X_y, safe_sqr, safe_mask
 from ..utils.extmath import safe_sparse_dot, row_norms
@@ -85,7 +86,7 @@ def f_oneway(*args):
     ----------
     .. [1] Lowry, Richard.  "Concepts and Applications of Inferential
            Statistics". Chapter 14.
-           http://faculty.vassar.edu/lowry/ch14pt1.html
+           http://vassarstats.net/textbook
 
     .. [2] Heiman, G.W.  Research Methods in Statistics. 2002.
     """
@@ -473,6 +474,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
     def __init__(self, score_func):
         self.score_func = score_func
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Run score function on (X, y) and get the appropriate features.
 
@@ -490,8 +492,6 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc"], multi_output=True
         )
@@ -968,6 +968,7 @@ class SelectFwe(_BaseFilter):
 ######################################################################
 # Generic filter
 ######################################################################
+
 
 # TODO this class should fit on either p-values or scores,
 # depending on the mode.

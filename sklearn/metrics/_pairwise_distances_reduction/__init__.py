@@ -91,6 +91,7 @@ from ._dispatcher import (
     ArgKmin,
     PairwiseDistances,
     RadiusNeighbors,
+    ArgKminClassMode,
     sqeuclidean_row_norms,
 )
 
@@ -101,6 +102,7 @@ __all__ = [
     "ArgKmin",
     "PairwiseDistances",
     "RadiusNeighbors",
+    "ArgKminClassMode",
     "sqeuclidean_row_norms",
     "_precompute_metric_params",
 ]

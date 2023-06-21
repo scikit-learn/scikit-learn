@@ -16,10 +16,11 @@ from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..metrics.pairwise import paired_distances
 from ..metrics.pairwise import _VALID_METRICS
 from ..metrics import DistanceMetric
-from ..metrics._dist_metrics import METRIC_MAPPING
+from ..metrics._dist_metrics import METRIC_MAPPING64
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.graph import _fix_connected_components
@@ -275,12 +276,14 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
 
         if n_clusters is not None:
             warnings.warn(
-                "Partial build of the tree is implemented "
-                "only for structured clustering (i.e. with "
-                "explicit connectivity). The algorithm "
-                "will build the full tree and only "
-                "retain the lower branches required "
-                "for the specified number of clusters",
+                (
+                    "Partial build of the tree is implemented "
+                    "only for structured clustering (i.e. with "
+                    "explicit connectivity). The algorithm "
+                    "will build the full tree and only "
+                    "retain the lower branches required "
+                    "for the specified number of clusters"
+                ),
                 stacklevel=2,
             )
         X = np.require(X, requirements="W")
@@ -507,12 +510,14 @@ def linkage_tree(
 
         if n_clusters is not None:
             warnings.warn(
-                "Partial build of the tree is implemented "
-                "only for structured clustering (i.e. with "
-                "explicit connectivity). The algorithm "
-                "will build the full tree and only "
-                "retain the lower branches required "
-                "for the specified number of clusters",
+                (
+                    "Partial build of the tree is implemented "
+                    "only for structured clustering (i.e. with "
+                    "explicit connectivity). The algorithm "
+                    "will build the full tree and only "
+                    "retain the lower branches required "
+                    "for the specified number of clusters"
+                ),
                 stacklevel=2,
             )
 
@@ -539,9 +544,8 @@ def linkage_tree(
             linkage == "single"
             and affinity != "precomputed"
             and not callable(affinity)
-            and affinity in METRIC_MAPPING
+            and affinity in METRIC_MAPPING64
         ):
-
             # We need the fast cythonized metric from neighbors
             dist_metric = DistanceMetric.get_metric(affinity)
 
@@ -947,6 +951,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self.metric = metric
         self.compute_distances = compute_distances
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the hierarchical clustering from features, or distance matrix.
 
@@ -965,7 +970,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self : object
             Returns the fitted instance.
         """
-        self._validate_params()
         X = self._validate_data(X, ensure_min_samples=2)
         return self._fit(X)
 
@@ -995,8 +999,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                     " 1.4. To avoid this error, only set the `metric` attribute."
                 )
             warnings.warn(
-                "Attribute `affinity` was deprecated in version 1.2 and will be removed"
-                " in 1.4. Use `metric` instead",
+                (
+                    "Attribute `affinity` was deprecated in version 1.2 and will be"
+                    " removed in 1.4. Use `metric` instead"
+                ),
                 FutureWarning,
             )
             self._metric = self.affinity
@@ -1319,6 +1325,7 @@ class FeatureAgglomeration(
         )
         self.pooling_func = pooling_func
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the hierarchical clustering on the data.
 
@@ -1335,7 +1342,6 @@ class FeatureAgglomeration(
         self : object
             Returns the transformer.
         """
-        self._validate_params()
         X = self._validate_data(X, ensure_min_features=2)
         super()._fit(X.T)
         self._n_features_out = self.n_clusters_

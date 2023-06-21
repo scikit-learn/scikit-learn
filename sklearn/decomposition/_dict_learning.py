@@ -16,6 +16,7 @@ from scipy import linalg
 from joblib import effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import _fit_context
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils._param_validation import validate_params
@@ -1687,7 +1688,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> from sklearn.decomposition import DictionaryLearning
     >>> X, dictionary, code = make_sparse_coded_signal(
     ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
-    ...     random_state=42, data_transposed=False
+    ...     random_state=42,
     ... )
     >>> dict_learner = DictionaryLearning(
     ...     n_components=15, transform_algorithm='lasso_lars', transform_alpha=0.1,
@@ -1754,7 +1755,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         positive_dict=False,
         transform_max_iter=1000,
     ):
-
         super().__init__(
             transform_algorithm,
             transform_n_nonzero_coefs,
@@ -1796,6 +1796,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.fit_transform(X)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Fit the model from data in X and return the transformed data.
 
@@ -1813,8 +1814,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         V : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        self._validate_params()
-
         _check_positive_coding(method=self.fit_algorithm, positive=self.positive_code)
 
         method = "lasso_" + self.fit_algorithm
@@ -2059,7 +2058,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> from sklearn.decomposition import MiniBatchDictionaryLearning
     >>> X, dictionary, code = make_sparse_coded_signal(
     ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
-    ...     random_state=42, data_transposed=False)
+    ...     random_state=42)
     >>> dict_learner = MiniBatchDictionaryLearning(
     ...     n_components=15, batch_size=3, transform_algorithm='lasso_lars',
     ...     transform_alpha=0.1, random_state=42)
@@ -2133,7 +2132,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         tol=1e-3,
         max_no_improvement=10,
     ):
-
         super().__init__(
             transform_algorithm,
             transform_n_nonzero_coefs,
@@ -2320,6 +2318,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         return False
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -2337,8 +2336,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X, dtype=[np.float64, np.float32], order="C", copy=False
         )
@@ -2347,10 +2344,12 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         if self.n_iter != "deprecated":
             warnings.warn(
-                "'n_iter' is deprecated in version 1.1 and will be removed "
-                "in version 1.4. Use 'max_iter' and let 'n_iter' to its default "
-                "value instead. 'n_iter' is also ignored if 'max_iter' is "
-                "specified.",
+                (
+                    "'n_iter' is deprecated in version 1.1 and will be removed "
+                    "in version 1.4. Use 'max_iter' and let 'n_iter' to its default "
+                    "value instead. 'n_iter' is also ignored if 'max_iter' is "
+                    "specified."
+                ),
                 FutureWarning,
             )
             n_iter = self.n_iter
@@ -2378,7 +2377,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self._B = np.zeros((n_features, self._n_components), dtype=X_train.dtype)
 
         if self.max_iter is not None:
-
             # Attributes to monitor the convergence
             self._ewa_cost = None
             self._ewa_cost_min = None
@@ -2413,7 +2411,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             self.n_steps_ = i + 1
             self.n_iter_ = np.ceil(self.n_steps_ / n_steps_per_iter)
         else:
-            # TODO remove this branch in 1.3
+            # TODO remove this branch in 1.4
             n_iter = 1000 if self.n_iter == "deprecated" else self.n_iter
 
             batches = gen_batches(n_samples, self._batch_size)
@@ -2436,6 +2434,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None):
         """Update the model using the data in X as a mini-batch.
 
@@ -2454,9 +2453,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             Return the instance itself.
         """
         has_components = hasattr(self, "components_")
-
-        if not has_components:
-            self._validate_params()
 
         X = self._validate_data(
             X, dtype=[np.float64, np.float32], order="C", reset=not has_components
