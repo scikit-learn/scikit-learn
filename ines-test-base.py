@@ -33,6 +33,8 @@ class CustomEstimator(BaseEstimator):
         # Implement the prediction logic of your estimator
         # ...
         return X
+
+
 class CustomEstimator_wrong(BaseEstimator):
     def __init__(self, parameter1=None, parameter2=None):
         # Initialize any required parameters
