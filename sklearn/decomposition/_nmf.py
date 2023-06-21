@@ -1385,6 +1385,8 @@ class NMF(_BaseNMF):
     n_components : int or {'auto'} or None, default=None
         Number of components, if n_components is not set all features
         are kept.
+        If `n_components='auto'`, the number of components is automatically infered
+        from W or H shapes.
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
@@ -1816,9 +1818,11 @@ class MiniBatchNMF(_BaseNMF):
 
     Parameters
     ----------
-    n_components : int, default=None
+    n_components : int or {'auto'} or None, default=None
         Number of components, if `n_components` is not set all features
         are kept.
+        If `n_components='auto'`, the number of components is automatically infered
+        from W or H shapes.
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
