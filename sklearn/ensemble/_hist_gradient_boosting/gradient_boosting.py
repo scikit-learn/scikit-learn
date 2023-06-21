@@ -1,13 +1,14 @@
 """Fast Gradient Boosting decision trees for classification and regression."""
 # Author: Nicolas Hug
 
+import itertools
 from abc import ABC, abstractmethod
 from functools import partial
-import itertools
-from numbers import Real, Integral
+from numbers import Integral, Real
+from timeit import default_timer as time
 
 import numpy as np
-from timeit import default_timer as time
+
 from ..._loss.loss import (
     _LOSSES,
     BaseLoss,
@@ -17,28 +18,30 @@ from ..._loss.loss import (
     HalfPoissonLoss,
     PinballLoss,
 )
-from ...base import BaseEstimator, RegressorMixin, ClassifierMixin, is_classifier
-from ...base import _fit_context
-from ...utils import check_random_state, resample, compute_sample_weight
-from ...utils.validation import (
-    check_is_fitted,
-    check_consistent_length,
-    _check_sample_weight,
-    _check_monotonic_cst,
+from ...base import (
+    BaseEstimator,
+    ClassifierMixin,
+    RegressorMixin,
+    _fit_context,
+    is_classifier,
 )
-from ...utils._param_validation import Interval, StrOptions
-from ...utils._param_validation import RealNotInt
-from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
+from ...utils import check_random_state, compute_sample_weight, resample
+from ...utils._openmp_helpers import _openmp_effective_n_threads
+from ...utils._param_validation import Interval, RealNotInt, StrOptions
+from ...utils.multiclass import check_classification_targets
+from ...utils.validation import (
+    _check_monotonic_cst,
+    _check_sample_weight,
+    check_consistent_length,
+    check_is_fitted,
+)
 from ._gradient_boosting import _update_raw_predictions
-from .common import Y_DTYPE, X_DTYPE, G_H_DTYPE
-
 from .binning import _BinMapper
+from .common import G_H_DTYPE, X_DTYPE, Y_DTYPE
 from .grower import TreeGrower
-
 
 _LOSSES = _LOSSES.copy()
 _LOSSES.update(

@@ -4,11 +4,13 @@ from numbers import Integral, Real
 
 import pytest
 
-from sklearn.utils._param_validation import generate_invalid_param_val
-from sklearn.utils._param_validation import generate_valid_param
-from sklearn.utils._param_validation import make_constraint
-from sklearn.utils._param_validation import InvalidParameterError
-from sklearn.utils._param_validation import Interval
+from sklearn.utils._param_validation import (
+    Interval,
+    InvalidParameterError,
+    generate_invalid_param_val,
+    generate_valid_param,
+    make_constraint,
+)
 
 
 def _get_func_info(func_module):

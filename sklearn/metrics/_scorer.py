@@ -18,62 +18,64 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
+import copy
 import warnings
 from collections import Counter
-from inspect import signature
 from functools import partial
+from inspect import signature
 from traceback import format_exc
 
 import numpy as np
-import copy
 
+from ..base import is_regressor
+from ..utils import Bunch
+from ..utils._param_validation import HasMethods, StrOptions, validate_params
+from ..utils._response import _get_response_values
+from ..utils.metadata_routing import (
+    MetadataRequest,
+    MetadataRouter,
+    _MetadataRequester,
+    _routing_enabled,
+    get_routing_for_object,
+    process_routing,
+)
+from ..utils.multiclass import type_of_target
 from . import (
-    r2_score,
-    median_absolute_error,
+    accuracy_score,
+    average_precision_score,
+    balanced_accuracy_score,
+    brier_score_loss,
+    class_likelihood_ratios,
+    explained_variance_score,
+    f1_score,
+    jaccard_score,
+    log_loss,
+    matthews_corrcoef,
     max_error,
     mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_gamma_deviance,
+    mean_poisson_deviance,
     mean_squared_error,
     mean_squared_log_error,
-    mean_poisson_deviance,
-    mean_gamma_deviance,
-    accuracy_score,
-    top_k_accuracy_score,
-    f1_score,
-    roc_auc_score,
-    average_precision_score,
+    median_absolute_error,
     precision_score,
+    r2_score,
     recall_score,
-    log_loss,
-    balanced_accuracy_score,
-    explained_variance_score,
-    brier_score_loss,
-    jaccard_score,
-    mean_absolute_percentage_error,
-    matthews_corrcoef,
-    class_likelihood_ratios,
+    roc_auc_score,
+    top_k_accuracy_score,
 )
-
-from .cluster import adjusted_rand_score
-from .cluster import rand_score
-from .cluster import homogeneity_score
-from .cluster import completeness_score
-from .cluster import v_measure_score
-from .cluster import mutual_info_score
-from .cluster import adjusted_mutual_info_score
-from .cluster import normalized_mutual_info_score
-from .cluster import fowlkes_mallows_score
-
-from ..utils import Bunch
-from ..utils.multiclass import type_of_target
-from ..base import is_regressor
-from ..utils.metadata_routing import _MetadataRequester
-from ..utils.metadata_routing import MetadataRequest
-from ..utils.metadata_routing import MetadataRouter
-from ..utils.metadata_routing import process_routing
-from ..utils.metadata_routing import get_routing_for_object
-from ..utils.metadata_routing import _routing_enabled
-from ..utils._response import _get_response_values
-from ..utils._param_validation import HasMethods, StrOptions, validate_params
+from .cluster import (
+    adjusted_mutual_info_score,
+    adjusted_rand_score,
+    completeness_score,
+    fowlkes_mallows_score,
+    homogeneity_score,
+    mutual_info_score,
+    normalized_mutual_info_score,
+    rand_score,
+    v_measure_score,
+)
 
 
 def _cached_call(cache, estimator, response_method, *args, **kwargs):

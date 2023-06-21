@@ -5,32 +5,30 @@ estimator.
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 # Copyright: INRIA
-import warnings
 import operator
 import sys
 import time
-
+import warnings
 from numbers import Integral, Real
+
 import numpy as np
 from scipy import linalg
 
-from . import empirical_covariance, EmpiricalCovariance, log_likelihood
-
 from ..base import _fit_context
 from ..exceptions import ConvergenceWarning
-from ..utils.validation import (
-    _is_arraylike_not_scalar,
-    check_random_state,
-    check_scalar,
-)
-from ..utils.parallel import delayed, Parallel
-from ..utils._param_validation import Interval, StrOptions
-from ..utils._param_validation import validate_params
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import (
+    _is_arraylike_not_scalar,
+    check_random_state,
+    check_scalar,
+)
+from . import EmpiricalCovariance, empirical_covariance, log_likelihood
 
 
 # Helper functions to compute the objective and dual objective functions

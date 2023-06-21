@@ -40,6 +40,9 @@ exclude = '''
 '''
 
 [tool.ruff]
+# all rules can be found here: https://beta.ruff.rs/docs/rules/
+select = ["E", "F", "W", "I"]
+
 # max line length for black
 line-length = 88
 target-version = "py38"
@@ -73,6 +76,7 @@ exclude=[
 # folder.
 "examples/*"=["E402"]
 "doc/conf.py"=["E402"]
+
 
 [tool.cython-lint]
 # Ignore the same error codes as ruff

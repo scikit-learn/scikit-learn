@@ -1,28 +1,33 @@
 """
 Test the ColumnTransformer.
 """
-import re
 import pickle
+import re
 
 import numpy as np
-from scipy import sparse
 import pytest
-
 from numpy.testing import assert_allclose
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import assert_almost_equal
+from scipy import sparse
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import (
     ColumnTransformer,
-    make_column_transformer,
     make_column_selector,
+    make_column_transformer,
 )
 from sklearn.exceptions import NotFittedError
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_selection import VarianceThreshold
+from sklearn.preprocessing import (
+    FunctionTransformer,
+    Normalizer,
+    OneHotEncoder,
+    StandardScaler,
+)
+from sklearn.utils._testing import (
+    assert_allclose_dense_sparse,
+    assert_almost_equal,
+    assert_array_equal,
+)
 
 
 class Trans(TransformerMixin, BaseEstimator):

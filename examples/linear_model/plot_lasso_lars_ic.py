@@ -45,9 +45,9 @@ X.head()
 #
 # In the following, we are going to fit two models to compare the values
 # reported by AIC and BIC.
-from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LassoLarsIC
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 lasso_lars_ic = make_pipeline(StandardScaler(), LassoLarsIC(criterion="aic")).fit(X, y)
 
