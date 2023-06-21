@@ -47,7 +47,7 @@ class CustomEstimator(BaseEstimator, ClassifierMixin):
     def predict(self, X):
         """
         Perform Predictions
-        
+
         If estimator is not fitted, then raise NotFittedError
         """
         check_is_fitted(self)
@@ -58,7 +58,7 @@ class CustomEstimator(BaseEstimator, ClassifierMixin):
     def score(self, X, y):
         """
         Calculate Score
-        
+
         If estimator is not fitted, then raise NotFittedError
         """
         check_is_fitted(self)
