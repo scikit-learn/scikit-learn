@@ -979,8 +979,6 @@ def non_negative_factorization(
         If `n_components='auto'`, the number of components is automatically infered
         from W or H shapes.
 
-        .. versionchanged:: 1.3
-           The default value of `n_components` will change to "auto" in v1.5.
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
@@ -1150,6 +1148,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
             Interval(Integral, 1, None, closed="left"),
             None,
             StrOptions({"auto"}),
+            Hidden(StrOptions({"warn"}),
         ],
         "init": [
             StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
