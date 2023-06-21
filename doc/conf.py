@@ -308,6 +308,7 @@ rst_prolog = """
 
 .. |details-split| raw:: html
 
+    <span class="tooltiptext">Click for more details</span>
     </summary>
     <div class="card">
 
