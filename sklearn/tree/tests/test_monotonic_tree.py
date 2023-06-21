@@ -19,12 +19,13 @@ TREE_CLASSIFIER_CLASSES = [DecisionTreeClassifier, ExtraTreeClassifier]
 TREE_REGRESSOR_CLASSES = [DecisionTreeRegressor, ExtraTreeRegressor]
 TREE_BASED_CLASSIFIER_CLASSES = TREE_CLASSIFIER_CLASSES + [
     RandomForestClassifier,
-    ExtraTreesClassifier
+    ExtraTreesClassifier,
 ]
 TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [
     RandomForestRegressor,
-    ExtraTreesRegressor
+    ExtraTreesRegressor,
 ]
+
 
 @pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
 @pytest.mark.parametrize("depth_first", (True, False))
@@ -243,21 +244,20 @@ def test_1d_opposite_monotonicity_cst_data(TreeRegressor):
     clf = TreeRegressor(monotonic_cst=[-1])
     clf.fit(X, y)
     assert clf.tree_.node_count == 1
-    assert clf.tree_.value[0] == 0.
+    assert clf.tree_.value[0] == 0.0
 
     # Swap monotonicity
     clf = TreeRegressor(monotonic_cst=[1])
     clf.fit(X, -y)
     assert clf.tree_.node_count == 1
-    assert clf.tree_.value[0] == 0.
+    assert clf.tree_.value[0] == 0.0
 
 
 @pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
-@pytest.mark.parametrize("splitter", ("best", "random"))
 @pytest.mark.parametrize("depth_first", (True, False))
 def test_1d_tree_nodes_values(
-    TreeRegressor, monotonic_sign, splitter, depth_first, global_random_seed
+    TreeRegressor, monotonic_sign, depth_first, global_random_seed
 ):
     # Adaptation from test_nodes_values in test_monotonic_constraints.py
     # in sklearn.ensemble._hist_gradient_boosting
@@ -285,14 +285,12 @@ def test_1d_tree_nodes_values(
     if depth_first:
         # No max_leaf_nodes, default depth first tree builder
         clf = TreeRegressor(
-            splitter=splitter,
             monotonic_cst=[monotonic_sign],
             random_state=global_random_seed,
         )
     else:
         # max_leaf_nodes triggers best first tree builder
         clf = TreeRegressor(
-            splitter=splitter,
             monotonic_cst=[monotonic_sign],
             max_leaf_nodes=n_samples,
             random_state=global_random_seed,
@@ -407,10 +405,9 @@ def test_assert_nd_reg_tree_children_monotonic_bounded():
 
 @pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
-@pytest.mark.parametrize("splitter", ("best", "random"))
 @pytest.mark.parametrize("depth_first", (True, False))
 def test_nd_tree_nodes_values(
-    TreeRegressor, monotonic_sign, splitter, depth_first, global_random_seed
+    TreeRegressor, monotonic_sign, depth_first, global_random_seed
 ):
     # Build tree with several features, and make sure the nodes
     # values respect the monotonicity constraints.
@@ -442,14 +439,12 @@ def test_nd_tree_nodes_values(
     if depth_first:
         # No max_leaf_nodes, default depth first tree builder
         clf = TreeRegressor(
-            splitter=splitter,
             monotonic_cst=monotonic_cst,
             random_state=global_random_seed,
         )
     else:
         # max_leaf_nodes triggers best first tree builder
         clf = TreeRegressor(
-            splitter=splitter,
             monotonic_cst=monotonic_cst,
             max_leaf_nodes=n_samples,
             random_state=global_random_seed,
