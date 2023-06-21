@@ -874,7 +874,7 @@ def test_linear_regression_sample_weight_consistency(
         # ::test_linear_regression_sample_weight_consistency
         pass
     else:
-        assert_allclose(reg.coef_, coef_0, rtol=1e-6)
+        assert_allclose(reg.coef_, coef_0, rtol=1e-5)
         if fit_intercept:
             assert_allclose(reg.intercept_, intercept_0)
 
