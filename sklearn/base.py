@@ -143,8 +143,8 @@ class BaseEstimator(_MetadataRequester):
     arguments (no ``*args`` or ``**kwargs``).
     """
 
-    # The template pointing to the online documentation for the given class,
-    # as expanded by self.get_url_link()
+    # The template for pointing to the online documentation of a given class.
+    # Check out `_get_doc_link`'s docstring for the template arguments.
     _doc_link = (
         "https://scikit-learn.org/{major}.{minor}/modules/generated/"
         "{estimator_module}.{estimator_name}.html"
@@ -185,23 +185,38 @@ class BaseEstimator(_MetadataRequester):
         return sorted([p.name for p in parameters])
 
     def _get_url_link(self):
-        """Generating a link to the API documentation for given estimator."""
+        """
+        Generates a link to the API documentation for a given estimator.
+
+        This method generates the link to the estimator's documentation page
+        by using the template defined by the attribute `_doc_link`.
+
+        To override the link, redefine `_doc_link`.
+        To override the behavior, redefine this method.
+
+        Valid template arguments:
+        - `{version}` the sklearn version
+        - `{major}` major sklearn version
+        - `{minor}` minor sklearn version
+        - `{estimator_module}` the module that contains the class
+        - `{estimator_name}` the name of the class
+
+        Returns
+        -------
+        url : str
+            The URL to the API documentation for this estimator.
+            Empty if the module is not supported (`self._doc_link_module`).
+        """
         if self.__class__.__module__.split(".")[0] != self._doc_link_module:
             return ""
-        else:
-            version = parse_version(sklearn.__version__)
-            major = version.major
-            minor = version.minor
-            estimator_name = self.__class__.__name__
-            estimator_module = ".".join(
-                [
-                    _
-                    for _ in self.__class__.__module__.split(".")
-                    if not _.startswith("_")
-                ]
-            )
-            full_url = self._doc_link.format(**locals())
-            return full_url
+        version = parse_version(sklearn.__version__)
+        major = version.major
+        minor = version.minor
+        estimator_name = self.__class__.__name__
+        estimator_module = ".".join(
+            [_ for _ in self.__class__.__module__.split(".") if not _.startswith("_")]
+        )
+        return self._doc_link.format(**locals())
 
     def get_params(self, deep=True):
         """
