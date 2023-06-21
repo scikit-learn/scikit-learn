@@ -645,9 +645,8 @@ class PCA(_BasePCA):
         # Workaround in-place variance calculation since at the time numpy
         # did not have a way to calculate variance in-place.
         N = X.shape[0] - 1
-        xp.square(X, out=X)
-        xp.sum(X, axis=0, out=X[0])
-        total_var = (X[0] / N).sum()
+        X **= 2
+        total_var = xp.sum(xp.sum(X, axis=0) / N)
 
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = xp.asarray(S, copy=True)  # Store the singular values.

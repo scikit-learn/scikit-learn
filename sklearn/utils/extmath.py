@@ -189,7 +189,7 @@ def safe_sparse_dot(a, b, *, dense_output=False):
             ret = a_2d @ b
             ret = ret.reshape(*a.shape[:-1], b.shape[1])
         else:
-            ret = np.dot(a, b)
+            ret = a @ b
     else:
         ret = a @ b
 

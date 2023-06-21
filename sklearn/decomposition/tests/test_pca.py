@@ -691,12 +691,17 @@ def test_variance_correctness(copy):
     np.testing.assert_allclose(pca_var, true_var)
 
 
-def test_array_api_compliance():
+def test_array_api_compliance(global_random_seed):
     # TODO: rewrite me as a pytest parametrized test with a parametrized
     # generator instead of a for loop
     estimators = [
         PCA(n_components=2, svd_solver="full"),
-        # PCA(n_components=2, svd_solver="randomized", power_iteration_normalizer="QR"),
+        PCA(
+            n_components=2,
+            svd_solver="randomized",
+            power_iteration_normalizer="QR",
+            random_state=global_random_seed,
+        ),
     ]
     for estimator in estimators:
         for check in _yield_array_api_checks():
