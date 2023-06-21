@@ -67,6 +67,6 @@ class CustomEstimator(BaseEstimator, ClassifierMixin):
 
     def __sklearn_is_fitted__(self):
         """
-        Check fitted status
+        Check fitted status and return Boolean value.
         """
         return hasattr(self, "_is_fitted") and self._is_fitted
