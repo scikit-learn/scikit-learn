@@ -157,99 +157,114 @@
   background-color: white;
 }
 
-
-/* #$id a.sk-estimator-doc-link {
-    float: right;
-    font-size: smaller;
-    line-height: 1em;
-    font-family: monospace;
-    border: #afc9e077 1pt solid;
-    border-radius: 0.9rem;
-    height: 0.9rem;
-    width: 0.9rem;
-    color: #afc9e077;
-    text-decoration: none;
-} */
-
-div.sk-label-container div.sk-label:hover a.sk-estimator-doc-link {
-    color: cornflowerblue;
-    border-color: cornflowerblue;
-    background-color: white;
+#$id a.estimator_doc_link {
+  float: right;
+  font-size: smaller;
+  line-height: 1em;
+  font-family: monospace;
+  background-color: white;
+  border: #afc9e077 1pt solid;
+  border-radius: 1em;
+  height: 1em;
+  width: 1em;
+  color: #afc9e077;
+  text-decoration: none;
 }
 
-#$id a.sk-estimator-doc-link:hover {
-    background-color: cornflowerblue;
-    color: white;
-    text-decoration: none;
+#$id a.estimator_doc_link:hover {
+  background-color: cornflowerblue;
+  color: white;
+  text-decoration: none;
 }
 
 
 #$id div.sk-label label {
-  font-family: monospace;
-  font-weight: bold;
-  display: inline-block;
-  line-height: 1.2em;
+font-family: monospace;
+font-weight: bold;
+display: inline-block;
+line-height: 1.2em;
 }
 #$id div.sk-label-container {
-  text-align: center;
+text-align: center;
 }
 #$id div.sk-container {
-  /* jupyter's `normalize.less` sets `[hidden] { display: none; }`
-     but bootstrap.min.css set `[hidden] { display: none !important; }`
-     so we also need the `!important` here to be able to override the
-     default hidden behavior on the sphinx rendered scikit-learn.org.
-     See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
-  display: inline-block !important;
-  position: relative;
+/* jupyter's `normalize.less` sets `[hidden] { display: none; }`
+   but bootstrap.min.css set `[hidden] { display: none !important; }`
+   so we also need the `!important` here to be able to override the
+   default hidden behavior on the sphinx rendered scikit-learn.org.
+   See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
+display: inline-block !important;
+position: relative;
 }
 #$id div.sk-text-repr-fallback {
-  display: none;
+display: none;
 }
 
-/* For the docs link */
+/* For the docs link*/
+
 a.sk-estimator-doc-link {
-    float: right;
-    line-height: 1em;
-    font-family: monospace;
-    background-color: white;
-    border: cornflowerblue 1pt solid;
-    font-size: 1rem;
-    border-radius: 1rem;
-    height: 1rem;
-    width: 1rem;
-    color: cornflowerblue;
-    text-decoration: none!important;
-    margin-left: 1ex;
+  float: right;
+  font-size: smaller;
+  line-height: 1em;
+  font-family: monospace;
+  background-color: white;
+  border: #afc9e077 1pt solid;
+  border-radius: 1em;
+  height: 1em;
+  width: 1em;
+  color: #afc9e077;
+  text-decoration: none;
+  margin-left: 1ex;
 }
 
-#sk-container-id-1 div.sk-estimator:hover a.sk-estimator-doc-link:hover,  a.sk-estimator-doc-link:hover {
-    background-color: cornflowerblue;
-    color: white;
-    text-decoration: none!important;
+
+
+div.sk-estimator:hover a.sk-estimator-doc-link:hover,  a.sk-estimator-doc-link:hover {
+  background-color: cornflowerblue;
+  color: white;
+  text-decoration: none;
 }
 
 a.sk-estimator-doc-link span {
-    display: none;
-    z-index: 200;
-    position: absolute;
-    background: #eff5ff;
-    color: black;
-    font-weight: normal;
-    padding: .5ex;
-    margin: .5ex;
-    border: .5pt solid cornflowerblue;
-    right: .2ex;
-    box-shadow: 2pt 2pt 4pt #999;
-    max-width: 30ex;
-    width: min-content;
+  display: none;
+  z-index: 200;
+  position: absolute;
+  background: #eff5ff;
+  color: black;
+  font-weight: normal;
+  padding: .5ex;
+  margin: .5ex;
+  border: .5pt solid cornflowerblue;
+  right: .2ex;
+  box-shadow: 2pt 2pt 4pt #999;
+  max-width: 30ex;
+  width: min-content;
 }
 
 a.sk-estimator-doc-link:hover span {
-    display: block;
+  display: block;
 }
 
-#sk-container-id-1 div.sk-estimator:hover a.sk-estimator-doc-link {
-    background-color: white;
-    border: cornflowerblue 1pt solid;
-    color: cornflowerblue;
+div.sk-estimator a.sk-estimator-doc-link {
+  color: #afc9e0;
+  border: 1pt solid #afc9e077;
+  background-color: #f0f8ff;
+}
+
+div.sk-estimator:hover a.sk-estimator-doc-link {
+  background-color: white;
+  border: cornflowerblue 1pt solid;
+  color: cornflowerblue;
+}
+
+div.sk-label-container:hover a.sk-estimator-doc-link {
+  background-color: white;
+  border: cornflowerblue 1pt solid;
+  color: cornflowerblue;
+}
+
+div.sk-label-container:hover a.sk-estimator-doc-link:hover, a.sk-estimator-doc-link:hover {
+  background-color: cornflowerblue;
+  color: white;
+  text-decoration: none;
 }
