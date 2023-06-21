@@ -1102,17 +1102,17 @@ def test_partial_dependence_display_with_constant_sample_weight(
         diabetes.data,
         [0, 1],
         kind="average",
-        centered=True,
+        method="brute",
     )
 
-    sample_weight = np.ones_like(diabetes.data)
+    sample_weight = np.ones_like(diabetes.target)
     disp_sw = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
         [0, 1],
         sample_weight=sample_weight,
         kind="average",
-        centered=True,
+        method="brute",
     )
 
-    assert disp == disp_sw
+    assert np.array_equal(disp.pd_results[0]["average"], disp_sw.pd_results[0]["average"])
