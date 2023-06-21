@@ -98,8 +98,8 @@ def _brute_mst(mutual_reachability, min_samples):
     Returns
     -------
     mst : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
-        The MST representation of the mutual-reahability graph. The MST is
-        represented as a collecteion of edges.
+        The MST representation of the mutual-reachability graph. The MST is
+        represented as a collection of edges.
     """
     if not issparse(mutual_reachability):
         return mst_from_mutual_reachability(mutual_reachability)
@@ -139,8 +139,8 @@ def _process_mst(min_spanning_tree):
     Parameters
     ----------
     min_spanning_tree : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
-        The MST representation of the mutual-reahability graph. The MST is
-        represented as a collecteion of edges.
+        The MST representation of the mutual-reachability graph. The MST is
+        represented as a collection of edges.
 
     Returns
     -------
@@ -654,7 +654,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         alpha=1.0,
         algorithm="auto",
         leaf_size=40,
-        n_jobs=4,
+        n_jobs=None,
         cluster_selection_method="eom",
         allow_single_cluster=False,
         store_centers=None,
@@ -721,10 +721,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
                 # Samples with missing data are denoted by the presence of
                 # `np.nan`
-                missing_index = list(np.isnan(reduced_X).nonzero()[0])
+                missing_index = np.isnan(reduced_X).nonzero()[0]
 
                 # Outlier samples are denoted by the presence of `np.inf`
-                infinite_index = list(np.isinf(reduced_X).nonzero()[0])
+                infinite_index = np.isinf(reduced_X).nonzero()[0]
 
                 # Continue with only finite samples
                 finite_index = _get_finite_row_indices(X)
@@ -834,7 +834,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 self._single_linkage_tree_,
                 internal_to_raw,
                 # There may be overlap for points w/ both `np.inf` and `np.nan`
-                non_finite=set(infinite_index + missing_index),
+                non_finite=set(np.hstack([infinite_index, missing_index])),
             )
             new_labels = np.empty(self._raw_data.shape[0], dtype=np.int32)
             new_labels[finite_index] = self.labels_
