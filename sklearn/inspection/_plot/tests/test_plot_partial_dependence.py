@@ -1087,3 +1087,32 @@ def test_partial_dependence_display_kind_centered_interaction(
     )
 
     assert all([ln._y[0] == 0.0 for ln in disp.lines_.ravel() if ln is not None])
+
+
+def test_partial_dependence_display_with_constant_sample_weight(
+    pyplot,
+    clf_diabetes,
+    diabetes,
+):
+    """Check that the utilization of a constant sample weight maintains the
+    standard behavior.
+    """
+    disp = PartialDependenceDisplay.from_estimator(
+        clf_diabetes,
+        diabetes.data,
+        [0, 1],
+        kind="average",
+        centered=True,
+    )
+
+    sample_weight = np.ones_like(diabetes.data)
+    disp_sw = PartialDependenceDisplay.from_estimator(
+        clf_diabetes,
+        diabetes.data,
+        [0, 1],
+        sample_weight=sample_weight,
+        kind="average",
+        centered=True,
+    )
+
+    assert disp == disp_sw
