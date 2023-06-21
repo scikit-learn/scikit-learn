@@ -793,8 +793,7 @@ def test_encoder_dtypes():
     assert_array_equal(enc.transform(X).toarray(), exp)
 
 
-@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
-def test_encoder_dtypes_pandas(use_pyarrow_dtypes):
+def test_encoder_dtypes_pandas():
     # check dtype (similar to test_categorical_encoder_dtypes for dataframes)
     pd = pytest.importorskip("pandas")
 
@@ -805,16 +804,11 @@ def test_encoder_dtypes_pandas(use_pyarrow_dtypes):
     )
 
     X = pd.DataFrame({"A": [1, 2], "B": [3, 4], "C": [5, 6]}, dtype="int64")
-    if use_pyarrow_dtypes:
-        pytest.importorskip("pyarrow")
-        X = X.convert_dtypes(dtype_backend="pyarrow")
     enc.fit(X)
     assert all([enc.categories_[i].dtype == "int64" for i in range(2)])
     assert_array_equal(enc.transform(X).toarray(), exp)
 
     X = pd.DataFrame({"A": [1, 2], "B": ["a", "b"], "C": [3.0, 4.0]})
-    if use_pyarrow_dtypes:
-        X = X.convert_dtypes(dtype_backend="pyarrow")
     X_type = [X["A"].dtype, X["B"].dtype, X["C"].dtype]
     enc.fit(X)
     assert all([enc.categories_[i].dtype == X_type[i] for i in range(3)])

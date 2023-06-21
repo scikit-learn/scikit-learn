@@ -548,7 +548,7 @@ def test_top_k(k, itr, expected):
 
 
 @pytest.mark.parametrize("Est", (HalvingRandomSearchCV, HalvingGridSearchCV))
-def test_cv_results(Est, use_pyarrow_dtypes):
+def test_cv_results(Est):
     # test that the cv_results_ matches correctly the logic of the
     # tournament: in particular that the candidates continued in each
     # successive iteration are those that were best in the previous iteration

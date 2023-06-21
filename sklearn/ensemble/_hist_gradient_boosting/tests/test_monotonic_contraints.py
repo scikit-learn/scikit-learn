@@ -301,7 +301,6 @@ def test_input_error_related_to_feature_names(use_pyarrow_dtypes):
     if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
         X.convert_dtypes(dtype_backend="pyarrow")
-        y.convert_dtypes(dtype_backend="pyarrow")
 
     monotonic_cst = {"d": 1, "a": 1, "c": -1}
     gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
