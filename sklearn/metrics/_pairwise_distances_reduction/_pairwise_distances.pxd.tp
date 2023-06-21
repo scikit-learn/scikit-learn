@@ -13,7 +13,7 @@ implementation_specific_values = [
 }}
 cimport numpy as cnp
 
-from ...utils._typedefs cimport DTYPE_t, ITYPE_t
+from ...utils._typedefs cimport intp_t
 {{for name_suffix, INPUT_DTYPE_t in implementation_specific_values}}
 
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}
@@ -25,8 +25,8 @@ cdef class PairwiseDistances{{name_suffix}}:
     cdef:
         readonly DatasetsPair{{name_suffix}} datasets_pair
 
-        ITYPE_t n_samples_X, n_samples_Y
-        ITYPE_t effective_n_threads
+        intp_t n_samples_X, n_samples_Y
+        intp_t effective_n_threads
         bint X_is_Y
         bint execute_in_parallel_on_Y
 

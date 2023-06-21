@@ -1,7 +1,7 @@
 cimport numpy as cnp
 from cython cimport final
 from cython.parallel cimport prange
-from ...utils._typedefs cimport ITYPE_t, DTYPE_t
+from ...utils._typedefs cimport intp_t
 
 import numpy as np
 
@@ -10,7 +10,6 @@ from sklearn import get_config
 from ...utils import check_array, _in_unstable_openblas_configuration
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.fixes import threadpool_limits, sp_version, parse_version
-from ...utils._typedefs import DTYPE
 
 cnp.import_array()
 
@@ -40,7 +39,7 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
         return {"VI": VI}
     return {}
 
-{{for name_suffix, INPUT_DTYPE in (('64', 'DTYPE'),('32', 'np.float32'))}}
+{{for name_suffix, INPUT_DTYPE in (('64', 'np.float64'),('32', 'np.float32'))}}
 
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}
 
@@ -149,9 +148,9 @@ cdef class PairwiseDistances{{name_suffix}}:
     cdef void _parallel_on_X(self) nogil:
 
         cdef:
-            ITYPE_t n_X = self.n_samples_X
-            ITYPE_t n_Y = self.n_samples_Y
-            ITYPE_t i, j
+            intp_t n_X = self.n_samples_X
+            intp_t n_Y = self.n_samples_Y
+            intp_t i, j
 
         for i in prange(n_X, nogil=True, num_threads=self.effective_n_threads):
             for j in range(n_Y):
@@ -160,9 +159,9 @@ cdef class PairwiseDistances{{name_suffix}}:
     cdef void _parallel_on_Y(self) nogil:
 
         cdef:
-            ITYPE_t n_X = self.n_samples_X
-            ITYPE_t n_Y = self.n_samples_Y
-            ITYPE_t i, j
+            intp_t n_X = self.n_samples_X
+            intp_t n_Y = self.n_samples_Y
+            intp_t i, j
 
         for i in range(n_X):
             for j in prange(n_Y, nogil=True, num_threads=self.effective_n_threads):
