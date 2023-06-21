@@ -463,7 +463,7 @@ Changelog
 - |Fix| Fix a crash whell calling `.fit` on
   :class:`linear_model.LogisticRegression(solver="newton-cholesky", max_iter=0)`
   to inspect the state of the model prior to the first parameter update.
-  :pr:`` by :user:`Olivier Grisel <ogrisel>`.
+  :pr:`26653` by :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.manifold`
 .......................
