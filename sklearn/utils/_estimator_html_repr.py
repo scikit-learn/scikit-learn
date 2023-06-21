@@ -103,7 +103,8 @@ def _write_label_html(
         else:  # no url_link, add no link to the documentation
             doc_link = ""
 
-        fmt_str = f"""<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}"
+        fmt_str = f"""<input
+        class="sk-toggleable__control sk-hidden--visually" id="{est_id}"
              type="checkbox" {checked_str}><label for="{est_id}"
              class="{label_class}">{name}{doc_link}</label><div
              class="sk-toggleable__content"><pre>{name_details}</pre></div>
@@ -245,7 +246,9 @@ def estimator_html_repr(estimator):
         container_id = _CONTAINER_ID_COUNTER.get_id()
         style_template = Template(_STYLE)
 
-        style_with_id = style_template.substitute(id=container_id, background_color=bg, background_color_hover=bgh)
+        style_with_id = style_template.substitute(
+            id=container_id, background_color=bg, background_color_hover=bgh
+        )
         estimator_str = str(estimator)
 
         # The fallback message is shown by default and loading the CSS sets
