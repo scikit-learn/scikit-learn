@@ -5,33 +5,36 @@
 
 import copy
 import functools
+import inspect
+import platform
+import re
 import warnings
 from collections import defaultdict
-import platform
-import inspect
-import re
 
 import numpy as np
 
 from . import __version__
-from ._config import get_config, config_context
+from ._config import config_context, get_config
+from .exceptions import InconsistentVersionWarning
 from .utils import _IS_32BIT
+from .utils._estimator_html_repr import estimator_html_repr
+from .utils._metadata_requests import _MetadataRequester
+from .utils._param_validation import validate_parameter_constraints
 from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
     _DEFAULT_TAGS,
 )
-from .exceptions import InconsistentVersionWarning
-from .utils.validation import check_X_y
-from .utils.validation import check_array
-from .utils.validation import _check_y
-from .utils.validation import _num_features
-from .utils.validation import _check_feature_names_in
-from .utils.validation import _generate_get_feature_names_out
-from .utils.validation import _is_fitted, check_is_fitted
-from .utils._metadata_requests import _MetadataRequester
-from .utils.validation import _get_feature_names
-from .utils._estimator_html_repr import estimator_html_repr
-from .utils._param_validation import validate_parameter_constraints
+from .utils.validation import (
+    _check_feature_names_in,
+    _check_y,
+    _generate_get_feature_names_out,
+    _get_feature_names,
+    _is_fitted,
+    _num_features,
+    check_array,
+    check_is_fitted,
+    check_X_y,
+)
 
 
 def clone(estimator, *, safe=True):

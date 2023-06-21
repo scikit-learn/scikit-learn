@@ -14,13 +14,14 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 
 # avoid division truncation
 import warnings
-from numbers import Real, Integral
+from numbers import Integral, Real
+
 import numpy as np
 
-from . import empirical_covariance, EmpiricalCovariance
 from ..base import _fit_context
 from ..utils import check_array
 from ..utils._param_validation import Interval, validate_params
+from . import EmpiricalCovariance, empirical_covariance
 
 
 def _ledoit_wolf(X, *, assume_centered, block_size):
