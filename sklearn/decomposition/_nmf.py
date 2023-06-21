@@ -31,6 +31,7 @@ from ..utils._param_validation import (
     Interval,
     StrOptions,
     validate_params,
+    Hidden,
 )
 from ..utils import metadata_routing
 
@@ -1148,7 +1149,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
             Interval(Integral, 1, None, closed="left"),
             None,
             StrOptions({"auto"}),
-            Hidden(StrOptions({"warn"}),
+            Hidden(StrOptions({"warn"})),
         ],
         "init": [
             StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
