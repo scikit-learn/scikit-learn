@@ -935,27 +935,39 @@ def test_NMF_inverse_transform_W_deprecation():
         est.inverse_transform(W=Xt)
 
 
-def test_NMF_n_components_auto():
-    W_true = np.random.rand(6, 2)
-    H_true = np.random.rand(2, 5)
-    X = np.dot(W_true, H_true)
-
-    # Neither H_true nor W_true are set, n_components is set to n_features
-    W, H, _ = non_negative_factorization(X, n_components="auto")
-    assert W.shape[1] == X.shape[1] and H.shape[0] == X.shape[1]
-
-    # H_true is set, inferring n_components from it
-    W, H, _ = non_negative_factorization(X, H=H_true, n_components="auto")
-    assert H.shape[0] == H_true.shape[0]
-
-    # H_true is set, inferring n_components from it
-    W, H, _ = non_negative_factorization(X, W=W_true, n_components="auto")
-    assert W.shape[1] == W_true.shape[1]
+@pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
+def test_nmf_n_components_auto(Estimator):
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((6, 5))
+    W = rng.random_sample((6, 2))
+    H = rng.random_sample((2, 5))
+    est = Estimator(
+        n_components="auto",
+        init="custom",
+        random_state=0,
+        tol=1e-6,
+    )
+    est.fit_transform(X, W=W, H=H)
+    assert est._n_components == 2
 
 
-def test_NMF_n_components_None_deprecation():
-    X = np.random.rand(6, 5)
+def test_nmf_non_negative_factorization_n_components_auto():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((6, 5))
+    W_init = rng.random_sample((6, 2))
+    H_init = rng.random_sample((2, 5))
+    W, H, _ = non_negative_factorization(
+        X, W=W_init, H=H_init, init="custom", n_components="auto"
+    )
+    assert H.shape[0] == 2
+    assert W.shape[1] == 2
+
+
+def test_nmf_n_components_default_value_warning():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((6, 5))
+    H = rng.random_sample((2, 5))
     with pytest.warns(
         FutureWarning, match="The default value of `n_components` will change from"
     ):
-        non_negative_factorization(X)
+        non_negative_factorization(X, H=H)
