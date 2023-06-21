@@ -10,53 +10,50 @@
 #          Giorgio Patrini
 #          Thierry Guillemot
 # License: BSD 3 clause
+import atexit
+import contextlib
+import functools
+import inspect
 import os
 import os.path as op
-import inspect
-import warnings
-import sys
-import functools
-import tempfile
-from subprocess import check_output, STDOUT, CalledProcessError
-from subprocess import TimeoutExpired
 import re
-import contextlib
-from collections.abc import Iterable
-from collections.abc import Sequence
-
-import scipy as sp
+import shutil
+import sys
+import tempfile
+import unittest
+import warnings
+from collections.abc import Iterable, Sequence
 from functools import wraps
 from inspect import signature
-
-import shutil
-import atexit
-import unittest
+from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
 from unittest import TestCase
 
-from numpy.testing import assert_allclose as np_assert_allclose
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_approx_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_less
-import numpy as np
 import joblib
+import numpy as np
+import scipy as sp
+from numpy.testing import assert_allclose as np_assert_allclose
+from numpy.testing import (
+    assert_almost_equal,
+    assert_approx_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_less,
+)
 
 import sklearn
 from sklearn.utils import (
-    IS_PYPY,
     _IS_32BIT,
+    IS_PYPY,
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils._array_api import _check_array_api_dispatch
+from sklearn.utils.fixes import threadpool_info
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
     check_is_fitted,
     check_X_y,
 )
-from sklearn.utils.fixes import threadpool_info
-
 
 __all__ = [
     "assert_raises",

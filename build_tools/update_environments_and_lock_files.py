@@ -29,20 +29,18 @@ To run this script you need:
 
 """
 
-import re
-import subprocess
-import sys
-from pathlib import Path
-import shlex
 import json
 import logging
+import re
+import shlex
+import subprocess
+import sys
 from importlib.metadata import version
-
-from packaging.version import Version
+from pathlib import Path
 
 import click
-
 from jinja2 import Environment
+from packaging.version import Version
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

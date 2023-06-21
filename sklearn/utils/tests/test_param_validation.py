@@ -1,37 +1,38 @@
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import csr_matrix
 import pytest
+from scipy.sparse import csr_matrix
 
 from sklearn._config import config_context, get_config
-from sklearn.base import BaseEstimator
-from sklearn.base import _fit_context
+from sklearn.base import BaseEstimator, _fit_context
 from sklearn.model_selection import LeaveOneOut
 from sklearn.utils import deprecated
-from sklearn.utils._param_validation import Hidden
-from sklearn.utils._param_validation import Interval
-from sklearn.utils._param_validation import Options
-from sklearn.utils._param_validation import StrOptions
-from sklearn.utils._param_validation import _ArrayLikes
-from sklearn.utils._param_validation import _Booleans
-from sklearn.utils._param_validation import _Callables
-from sklearn.utils._param_validation import _CVObjects
-from sklearn.utils._param_validation import _InstancesOf
-from sklearn.utils._param_validation import MissingValues
-from sklearn.utils._param_validation import _PandasNAConstraint
-from sklearn.utils._param_validation import _IterablesNotString
-from sklearn.utils._param_validation import _NoneConstraint
-from sklearn.utils._param_validation import _RandomStates
-from sklearn.utils._param_validation import _SparseMatrices
-from sklearn.utils._param_validation import _VerboseHelper
-from sklearn.utils._param_validation import HasMethods
-from sklearn.utils._param_validation import make_constraint
-from sklearn.utils._param_validation import generate_invalid_param_val
-from sklearn.utils._param_validation import generate_valid_param
-from sklearn.utils._param_validation import validate_params
-from sklearn.utils._param_validation import InvalidParameterError
-from sklearn.utils._param_validation import RealNotInt
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Hidden,
+    Interval,
+    InvalidParameterError,
+    MissingValues,
+    Options,
+    RealNotInt,
+    StrOptions,
+    _ArrayLikes,
+    _Booleans,
+    _Callables,
+    _CVObjects,
+    _InstancesOf,
+    _IterablesNotString,
+    _NoneConstraint,
+    _PandasNAConstraint,
+    _RandomStates,
+    _SparseMatrices,
+    _VerboseHelper,
+    generate_invalid_param_val,
+    generate_valid_param,
+    make_constraint,
+    validate_params,
+)
 
 
 # Some helpers for the tests
