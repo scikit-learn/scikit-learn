@@ -19,7 +19,7 @@ from ..base import _fit_context
 from ..utils import check_array, check_random_state
 from ..utils._param_validation import Interval
 from ..utils.extmath import fast_logdet
-from . import EmpiricalCovariance, empirical_covariance
+from ._empirical_covariance import EmpiricalCovariance, empirical_covariance
 
 
 # Minimum Covariance Determinant

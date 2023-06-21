@@ -15,7 +15,7 @@ from ..utils import check_random_state, check_scalar
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
 from ..utils.validation import assert_all_finite
-from . import KMeans, MiniBatchKMeans
+from ._kmeans import KMeans, MiniBatchKMeans
 
 __all__ = ["SpectralCoclustering", "SpectralBiclustering"]
 

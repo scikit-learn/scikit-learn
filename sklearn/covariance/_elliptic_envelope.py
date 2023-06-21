@@ -10,7 +10,7 @@ from ..base import OutlierMixin, _fit_context
 from ..metrics import accuracy_score
 from ..utils._param_validation import Interval
 from ..utils.validation import check_is_fitted
-from . import MinCovDet
+from ._robust_covariance import MinCovDet
 
 
 class EllipticEnvelope(OutlierMixin, MinCovDet):

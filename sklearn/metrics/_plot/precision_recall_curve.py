@@ -1,7 +1,7 @@
 from collections import Counter
 
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
-from .. import average_precision_score, precision_recall_curve
+from .._ranking import average_precision_score, precision_recall_curve
 
 
 class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):

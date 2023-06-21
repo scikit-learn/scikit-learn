@@ -1,7 +1,7 @@
 import scipy as sp
 
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
-from .. import det_curve
+from .._ranking import det_curve
 
 
 class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):

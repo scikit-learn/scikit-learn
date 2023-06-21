@@ -4,7 +4,7 @@ import numpy as np
 
 from ..utils import check_matplotlib_support
 from ..utils._plotting import _interval_max_min_ratio, _validate_score_name
-from . import learning_curve, validation_curve
+from ._validation import learning_curve, validation_curve
 
 
 class _BaseCurveDisplay:

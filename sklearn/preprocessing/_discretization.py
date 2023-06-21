@@ -20,7 +20,7 @@ from ..utils.validation import (
     check_is_fitted,
     check_random_state,
 )
-from . import OneHotEncoder
+from ._encoders import OneHotEncoder
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
