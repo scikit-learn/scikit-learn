@@ -6,7 +6,7 @@ Target Encoder's Internal Cross Validation
 .. currentmodule:: sklearn.preprocessing
 
 The :class:`TargetEnocoder` replaces each category of a categorical feature with
-the mean of the target variable for that category. This method is useful
+the shrunk mean of the target variable for that category. This method is useful
 in cases where there is a strong relationship between the categorical feature
 and the target. To prevent overfitting, :meth:`TargetEncoder.fit_transform` uses
 interval cross validation to encode the training data to be used by a downstream
@@ -17,10 +17,13 @@ procedure to prevent overfitting.
 # %%
 # Create Synthetic Dataset
 # ========================
-# For this example, we build a dataset with three categorical features: an informative
-# feature with medium cardinality, an uninformative feature with medium cardinality,
-# and an uninformative feature with high cardinality. First, we generate the informative
-# feature:
+# For this example, we build a dataset with three categorical features:
+#
+# * an informative feature with medium cardinality ("informative")
+# * an uninformative feature with medium cardinality ("shuffled")
+# * an uninformative feature with high cardinality ("near_unique")
+#
+# First, we generate the informative feature:
 from sklearn.preprocessing import KBinsDiscretizer
 import numpy as np
 
@@ -32,7 +35,8 @@ noise = 0.5 * rng.randn(n_samples)
 n_categories = 100
 
 kbins = KBinsDiscretizer(
-    n_bins=n_categories, encode="ordinal", strategy="uniform", random_state=rng
+    n_bins=n_categories, encode="ordinal", strategy="uniform", random_state=rng,
+    subsample=None,
 )
 X_informative = kbins.fit_transform((y + noise).reshape(-1, 1))
 
@@ -47,11 +51,11 @@ X_informative = permuted_categories[X_informative.astype(np.int32)]
 X_shuffled = rng.permutation(X_informative)
 
 # %%
-# The uninformative feature with high cardinality is generated so that is independent of
+# The uninformative feature with high cardinality is generated so that it is independent of
 # the target variable. We will show that target encoding without cross validation will
 # cause catastrophic overfitting for the downstream regressor. These high cardinality
 # features are basically unique identifiers for samples which should generally be
-# removed from machine learning dataset. In this example, we generate them to show how
+# removed from machine learning datasets. In this example, we generate them to show how
 # :class:`TargetEncoder`'s default cross validation behavior mitigates the overfitting
 # issue automatically.
 X_near_unique_categories = rng.choice(
@@ -78,8 +82,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 # In this section, we train a ridge regressor on the dataset with and without
 # encoding and explore the influence of target encoder with and without the
 # interval cross validation. First, we see the Ridge model trained on the
-# raw features will have low performance, because the order of the informative
-# feature is not informative:
+# raw features will have low performance. This is because we permuted the order
+# of the informative feature meaning `X_informative` is not informative when
+# raw:
 from sklearn.linear_model import Ridge
 import sklearn
 
@@ -115,13 +120,19 @@ plt.rcParams["figure.constrained_layout.use"] = True
 coefs_cv = pd.Series(
     model_with_cv[-1].coef_, index=model_with_cv[-1].feature_names_in_
 ).sort_values()
-_ = coefs_cv.plot(kind="barh")
+ax = coefs_cv.plot(kind="barh")
+_ = ax.set(
+    title="Target encoded with cross validation",
+    xlabel="Ridge coefficient",
+    ylabel="Feature",
+)
 
 # %%
-# While :meth:`TargetEncoder.fit_transform` uses an interval cross validation,
-# :meth:`TargetEncoder.transform` itself does not perform any cross validation.
-# It uses the aggregation of the complete training set to transform the categorical
-# features. Thus, we can use :meth:`TargetEncoder.fit` followed by
+# While :meth:`TargetEncoder.fit_transform` uses an interval cross validation
+# scheme to learn encodings for the training set,
+# :meth:`TargetEncoder.transform` itself does not.
+# It uses the complete training set to learn encodings and to transform the
+# categorical features. Thus, we can use :meth:`TargetEncoder.fit` followed by
 # :meth:`TargetEncoder.transform` to disable the cross validation. This encoding
 # is then passed to the ridge model.
 target_encoder = TargetEncoder(random_state=0)
@@ -132,7 +143,8 @@ X_test_no_cv_encoding = target_encoder.transform(X_test)
 model_no_cv = ridge.fit(X_train_no_cv_encoding, y_train)
 
 # %%
-# We evaluate the model on the non-cross validated encoding and see that it overfits:
+# We evaluate the model that used the non-cross validated encoding and see that
+# it overfits:
 print(
     "Model without CV on training set: ",
     model_no_cv.score(X_train_no_cv_encoding, y_train),
@@ -142,8 +154,10 @@ print(
 )
 
 # %%
-# The ridge model overfits, because it assigns more weight to the extremely high
-# cardinality feature relative to the informative feature.
+# The ridge model overfits because it assigns much more weight to the
+# uninformative extremely high cardinality ("near_unique") and medium
+# cardinality ("shuffled") features than when the model used cross validation
+# to encode the features.
 coefs_no_cv = pd.Series(
     model_no_cv.coef_, index=model_no_cv.feature_names_in_
 ).sort_values()
@@ -152,9 +166,10 @@ _ = coefs_no_cv.plot(kind="barh")
 # %%
 # Conclusion
 # ==========
-# This example demonstrates the importance of :class:`TargetEncoder`'s interval cross
+# This example demonstrates the importance of :class:`TargetEncoder`'s cross
 # validation. It is important to use :meth:`TargetEncoder.fit_transform` to encode
 # training data before passing it to a machine learning model. When a
 # :class:`TargetEncoder` is a part of a :class:`~sklearn.pipeline.Pipeline` and the
 # pipeline is fitted, the pipeline will correctly call
-# :meth:`TargetEncoder.fit_transform` and pass the encoding along.
+# :meth:`TargetEncoder.fit_transform` and use cross validation when encoding
+# the training data.
