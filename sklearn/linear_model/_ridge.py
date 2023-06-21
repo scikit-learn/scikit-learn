@@ -9,40 +9,34 @@ Ridge regression
 # License: BSD 3 clause
 
 
+import numbers
+import warnings
 from abc import ABCMeta, abstractmethod
 from functools import partial
 from numbers import Integral, Real
-import warnings
 
 import numpy as np
-import numbers
-from scipy import linalg
-from scipy import sparse
-from scipy import optimize
+from scipy import linalg, optimize, sparse
 from scipy.sparse import linalg as sp_linalg
 
-from ._base import LinearClassifierMixin, LinearModel
-from ._base import _preprocess_data, _rescale_data
-from ._sag import sag_solver
-from ..base import MultiOutputMixin, RegressorMixin, is_classifier
-from ..base import _fit_context
-from ..utils.extmath import safe_sparse_dot
-from ..utils.extmath import row_norms
-from ..utils import check_array
-from ..utils import check_consistent_length
-from ..utils import check_scalar
-from ..utils import compute_sample_weight
-from ..utils import column_or_1d
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_sample_weight
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
-from ..preprocessing import LabelBinarizer
-from ..model_selection import GridSearchCV
-from ..metrics import check_scoring
-from ..metrics import get_scorer_names
+from ..base import MultiOutputMixin, RegressorMixin, _fit_context, is_classifier
 from ..exceptions import ConvergenceWarning
+from ..metrics import check_scoring, get_scorer_names
+from ..model_selection import GridSearchCV
+from ..preprocessing import LabelBinarizer
+from ..utils import (
+    check_array,
+    check_consistent_length,
+    check_scalar,
+    column_or_1d,
+    compute_sample_weight,
+)
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.validation import _check_sample_weight, check_is_fitted
+from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
+from ._sag import sag_solver
 
 
 def _get_rescaled_operator(X, X_offset, sample_weight_sqrt):

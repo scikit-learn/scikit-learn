@@ -1,48 +1,43 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-from collections.abc import Sequence
-from contextlib import contextmanager
-from itertools import compress
-from itertools import islice
 import math
 import numbers
 import platform
 import struct
 import timeit
-from contextlib import suppress
-
 import warnings
+from collections.abc import Sequence
+from contextlib import contextmanager, suppress
+from itertools import compress, islice
+
 import numpy as np
 from scipy.sparse import issparse
 
-from . import metadata_routing
-
-from .murmurhash import murmurhash3_32
-from .class_weight import compute_class_weight, compute_sample_weight
-from . import _joblib
+from .. import get_config
 from ..exceptions import DataConversionWarning
+from . import _joblib, metadata_routing
+from ._bunch import Bunch
+from ._estimator_html_repr import estimator_html_repr
+from ._param_validation import Interval, validate_params
+from .class_weight import compute_class_weight, compute_sample_weight
 from .deprecation import deprecated
 from .discovery import all_estimators
 from .fixes import parse_version, threadpool_info
-from ._estimator_html_repr import estimator_html_repr
+from .murmurhash import murmurhash3_32
 from .validation import (
+    _is_arraylike_not_scalar,
     as_float_array,
     assert_all_finite,
-    check_random_state,
-    column_or_1d,
     check_array,
     check_consistent_length,
-    check_X_y,
-    indexable,
-    check_symmetric,
+    check_random_state,
     check_scalar,
-    _is_arraylike_not_scalar,
+    check_symmetric,
+    check_X_y,
+    column_or_1d,
+    indexable,
 )
-from .. import get_config
-from ._bunch import Bunch
-from ._param_validation import validate_params, Interval
-
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
 # needed to tune `scikit-learn` behavior and have different effect if called

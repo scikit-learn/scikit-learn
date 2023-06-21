@@ -6,30 +6,39 @@ Metadata Routing Utility Tests
 # License: BSD 3 clause
 
 import re
+
 import numpy as np
 import pytest
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator
-from sklearn.base import ClassifierMixin
-from sklearn.base import RegressorMixin
-from sklearn.base import TransformerMixin
-from sklearn.base import MetaEstimatorMixin
-from sklearn.base import clone
+from sklearn.base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    RegressorMixin,
+    TransformerMixin,
+    clone,
+)
 from sklearn.linear_model import LinearRegression
-from sklearn.utils.validation import check_is_fitted
 from sklearn.utils import metadata_routing
-from sklearn.utils.metadata_routing import MetadataRequest
-from sklearn.utils.metadata_routing import get_routing_for_object
-from sklearn.utils.metadata_routing import MetadataRouter
-from sklearn.utils.metadata_routing import MethodMapping
-from sklearn.utils.metadata_routing import process_routing
-from sklearn.utils._metadata_requests import MethodPair
-from sklearn.utils._metadata_requests import MethodMetadataRequest
-from sklearn.utils._metadata_requests import _MetadataRequester
-from sklearn.utils._metadata_requests import METHODS, SIMPLE_METHODS, COMPOSITE_METHODS
-from sklearn.utils._metadata_requests import request_is_alias
-from sklearn.utils._metadata_requests import request_is_valid
+from sklearn.utils._metadata_requests import (
+    COMPOSITE_METHODS,
+    METHODS,
+    SIMPLE_METHODS,
+    MethodMetadataRequest,
+    MethodPair,
+    _MetadataRequester,
+    request_is_alias,
+    request_is_valid,
+)
+from sklearn.utils.metadata_routing import (
+    MetadataRequest,
+    MetadataRouter,
+    MethodMapping,
+    get_routing_for_object,
+    process_routing,
+)
+from sklearn.utils.validation import check_is_fitted
 
 rng = np.random.RandomState(42)
 N, M = 100, 4
