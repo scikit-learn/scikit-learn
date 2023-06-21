@@ -429,7 +429,9 @@ def test_check_array_numeric_error(X):
     ],
 )
 @pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
-def test_check_array_pandas_na_support(use_pyarrow_dtypes, pd_dtype, dtype, expected_dtype):
+def test_check_array_pandas_na_support(
+    use_pyarrow_dtypes, pd_dtype, dtype, expected_dtype
+):
     # Test pandas numerical extension arrays with pd.NA
     pd = pytest.importorskip("pandas")
 
@@ -1664,7 +1666,9 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2, use_pyarrow_dtypes):
     ],
 )
 @pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
-def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype, use_pyarrow_dtypes):
+def test_check_pandas_sparse_valid(
+    ntype1, ntype2, expected_subtype, use_pyarrow_dtypes
+):
     # check that we support the conversion of sparse dataframe with mixed
     # type which can be converted safely.
     pd = pytest.importorskip("pandas")

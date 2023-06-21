@@ -105,7 +105,9 @@ def test_imputers_add_indicator_sparse(imputer, marker):
 @pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("imputer", imputers(), ids=lambda x: x.__class__.__name__)
 @pytest.mark.parametrize("add_indicator", [True, False])
-def test_imputers_pandas_na_integer_array_support(use_pyarrow_dtypes, imputer, add_indicator):
+def test_imputers_pandas_na_integer_array_support(
+    use_pyarrow_dtypes, imputer, add_indicator
+):
     # Test pandas IntegerArray with pd.NA
     pd = pytest.importorskip("pandas")
     if use_pyarrow_dtypes:
@@ -134,6 +136,7 @@ def test_imputers_pandas_na_integer_array_support(use_pyarrow_dtypes, imputer, a
     X_trans = imputer.fit_transform(X_df)
 
     assert_allclose(X_trans_expected, X_trans)
+
 
 @pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("imputer", imputers(), ids=lambda x: x.__class__.__name__)

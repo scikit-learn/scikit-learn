@@ -653,6 +653,7 @@ def test_partial_fit_validate_max_features(error, err_msg, max_features):
             estimator=SGDClassifier(), max_features=max_features
         ).partial_fit(X, y, classes=[0, 1])
 
+
 @pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("as_frame", [True, False])
 def test_partial_fit_validate_feature_names(use_pyarrow_dtypes, as_frame):

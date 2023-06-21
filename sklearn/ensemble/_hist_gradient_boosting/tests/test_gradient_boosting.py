@@ -1173,7 +1173,9 @@ def test_categorical_spec_no_categories(Est, categorical_features, as_array):
 @pytest.mark.parametrize(
     "use_pandas, feature_name", [(False, "at index 0"), (True, "'f0'")]
 )
-def test_categorical_bad_encoding_errors(use_pyarrow_dtypes, Est, use_pandas, feature_name):
+def test_categorical_bad_encoding_errors(
+    use_pyarrow_dtypes, Est, use_pandas, feature_name
+):
     # Test errors when categories are encoded incorrectly
 
     gb = Est(categorical_features=[True], max_bins=2)

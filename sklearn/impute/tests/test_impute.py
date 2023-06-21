@@ -275,7 +275,9 @@ def test_imputation_mean_median_error_invalid_type(strategy, dtype):
 @pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("strategy", ["mean", "median"])
 @pytest.mark.parametrize("type", ["list", "dataframe"])
-def test_imputation_mean_median_error_invalid_type_list_pandas(use_pyarrow_dtypes, strategy, type):
+def test_imputation_mean_median_error_invalid_type_list_pandas(
+    use_pyarrow_dtypes, strategy, type
+):
     X = [["a", "b", 3], [4, "e", 6], ["g", "h", 9]]
     if type == "dataframe":
         pd = pytest.importorskip("pandas")
@@ -373,7 +375,6 @@ def test_imputation_most_frequent_pandas(use_pyarrow_dtypes, dtype):
     pd = pytest.importorskip("pandas")
     if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
-
 
     f = io.StringIO("Cat1,Cat2,Cat3,Cat4\n,i,x,\na,,y,\na,j,,\nb,j,x,")
 
@@ -1566,7 +1567,7 @@ def test_knn_imputer_keep_empty_features(keep_empty_features):
 def test_simple_impute_pd_na(use_pyarrow_dtypes):
     pd = pytest.importorskip("pandas")
     if use_pyarrow_dtypes:
-       pytest.importorskip("pyarrow")
+        pytest.importorskip("pyarrow")
 
     # Impute pandas array of string types.
     df = pd.DataFrame({"feature": pd.Series(["abc", None, "de"], dtype="string")})

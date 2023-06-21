@@ -292,7 +292,9 @@ def test_column_transformer_dataframe(use_pyarrow_dtypes):
     ids=["list", "bool", "bool_int"],
 )
 @pytest.mark.parametrize("callable_column", [False, True])
-def test_column_transformer_empty_columns(use_pyarrow_dtypes, pandas, column_selection, callable_column):
+def test_column_transformer_empty_columns(
+    use_pyarrow_dtypes, pandas, column_selection, callable_column
+):
     # test case that ensures that the column transformer does also work when
     # a given transformer doesn't have any columns to work on
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -1202,6 +1204,7 @@ def test_column_transformer_callable_specifier():
     assert callable(ct.transformers[0][2])
     assert ct.transformers_[0][2] == [0]
 
+
 @pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 def test_column_transformer_callable_specifier_dataframe(use_pyarrow_dtypes):
     # assert that function gets the full dataframe
@@ -1282,7 +1285,9 @@ def test_n_features_in():
         (["col_int", "col_float", "col_str"], None, [np.number, object], None),
     ],
 )
-def test_make_column_selector_with_select_dtypes(use_pyarrow_dtypes, cols, pattern, include, exclude):
+def test_make_column_selector_with_select_dtypes(
+    use_pyarrow_dtypes, cols, pattern, include, exclude
+):
     pd = pytest.importorskip("pandas")
     if use_pyarrow_dtypes:
         pytest.importorskip("pyarrow")
@@ -1303,6 +1308,7 @@ def test_make_column_selector_with_select_dtypes(use_pyarrow_dtypes, cols, patte
     )
 
     assert_array_equal(selector(X_df), cols)
+
 
 @pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 def test_column_transformer_with_make_column_selector(use_pyarrow_dtypes):
@@ -1459,6 +1465,7 @@ def test_sk_visual_block_remainder_drop():
     assert visual_block.name_details == (["col1", "col2"],)
     assert visual_block.estimators == (ohe,)
 
+
 @pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("remainder", ["passthrough", StandardScaler()])
 def test_sk_visual_block_remainder_fitted_pandas(use_pyarrow_dtypes, remainder):
@@ -1546,6 +1553,7 @@ def test_column_transformer_reordered_column_names_remainder(
         with pytest.raises(ValueError, match=err_msg):
             tf.transform(X_array)
 
+
 @pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 def test_feature_name_validation_missing_columns_drop_passthough(use_pyarrow_dtypes):
     """Test the interaction between {'drop', 'passthrough'} and
@@ -1585,6 +1593,7 @@ def test_feature_name_validation_missing_columns_drop_passthough(use_pyarrow_dty
     df_dropped_trans = tf.transform(df_dropped)
     df_fit_trans = tf.transform(df)
     assert_allclose(df_dropped_trans, df_fit_trans)
+
 
 @pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 def test_feature_names_in_(use_pyarrow_dtypes):
@@ -1742,7 +1751,9 @@ class TransWithNames(Trans):
         ),
     ],
 )
-def test_verbose_feature_names_out_true(use_pyarrow_dtypes, transformers, remainder, expected_names):
+def test_verbose_feature_names_out_true(
+    use_pyarrow_dtypes, transformers, remainder, expected_names
+):
     """Check feature_names_out for verbose_feature_names_out=True (default)"""
     pd = pytest.importorskip("pandas")
     if use_pyarrow_dtypes:
@@ -1760,6 +1771,7 @@ def test_verbose_feature_names_out_true(use_pyarrow_dtypes, transformers, remain
     assert isinstance(names, np.ndarray)
     assert names.dtype == object
     assert_array_equal(names, expected_names)
+
 
 @pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize(
@@ -1877,7 +1889,9 @@ def test_verbose_feature_names_out_true(use_pyarrow_dtypes, transformers, remain
         ),
     ],
 )
-def test_verbose_feature_names_out_false(use_pyarrow_dtypes, transformers, remainder, expected_names):
+def test_verbose_feature_names_out_false(
+    use_pyarrow_dtypes, transformers, remainder, expected_names
+):
     """Check feature_names_out for verbose_feature_names_out=False"""
     pd = pytest.importorskip("pandas")
     if use_pyarrow_dtypes:
@@ -2033,7 +2047,9 @@ def test_verbose_feature_names_out_false_errors(
 @pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("verbose_feature_names_out", [True, False])
 @pytest.mark.parametrize("remainder", ["drop", "passthrough"])
-def test_column_transformer_set_output(use_pyarrow_dtypes, verbose_feature_names_out, remainder):
+def test_column_transformer_set_output(
+    use_pyarrow_dtypes, verbose_feature_names_out, remainder
+):
     """Check column transformer behavior with set_output."""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"], index=[10])
@@ -2064,7 +2080,9 @@ def test_column_transformer_set_output(use_pyarrow_dtypes, verbose_feature_names
 @pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize("remainder", ["drop", "passthrough"])
 @pytest.mark.parametrize("fit_transform", [True, False])
-def test_column_transform_set_output_mixed(use_pyarrow_dtypes, remainder, fit_transform):
+def test_column_transform_set_output_mixed(
+    use_pyarrow_dtypes, remainder, fit_transform
+):
     """Check ColumnTransformer outputs mixed types correctly."""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
