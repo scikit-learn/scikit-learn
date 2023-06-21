@@ -26,10 +26,13 @@ from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import (
     check_is_fitted,
     check_non_negative,
+    _num_features,
+    _num_samples
 )
 from ..utils._param_validation import (
     Interval,
     StrOptions,
+    Hidden,
     validate_params,
     Hidden,
 )
@@ -1199,28 +1202,25 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
                 FutureWarning,
             )
             self._n_components = None  # Keeping the old default value
-        if self._n_components is None:
+        if self._n_components is None or (self.init != 'custom' & self.n_components == 'auto'):
             self._n_components = X.shape[1]
 
         # beta_loss
         self._beta_loss = _beta_loss_to_float(self.beta_loss)
 
     def _check_w_h(self, X, W, H, update_H):
-        # n_components
-        if self._n_components == "auto":
+        """Check W and H, or initialize them."""
+        
+        n_samples, n_features = X.shape
+        if self.init == 'custom' and self.n_components == "auto":
             if W is not None:
                 if H is not None:
-                    self._n_components = H.shape[0]
+                    self._n_components = _num_samples(H)
                 else:
-                    self._n_components = W.shape[1]
+                    self._n_components = _num_features(W)
             elif H is not None:
-                self._n_components = H.shape[0]
-            else:
-                # Default to n_features
-                self._n_components = X.shape[1]
+                self._n_components = _num_samples(H)
 
-        """Check W and H, or initialize them."""
-        n_samples, n_features = X.shape
         if self.init == "custom" and update_H:
             _check_init(H, (self._n_components, n_features), "NMF (input H)")
             _check_init(W, (n_samples, self._n_components), "NMF (input W)")
