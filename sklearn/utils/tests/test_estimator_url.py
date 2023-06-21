@@ -85,4 +85,4 @@ def test_method_override():
     # Perform assertions to check the expected behavior
     assert parsed_url.scheme in {"http", "https"}
     assert parsed_url.netloc == CustomEstimatorMethodOverride._domain
-    assert CustomEstimatorTemplateOverride.__name__ in parsed_url.path
+    assert CustomEstimatorMethodOverride.__name__ in parsed_url.path
