@@ -44,7 +44,7 @@ TODO: update at the time of the release.
 :mod:`sklearn.base`
 ...................
 
-- |Enhancement| :func:`base.ClusterMixin.fit_predict` and
-  :func:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
+- |Enhancement| :meth:`base.ClusterMixin.fit_predict` and
+  :meth:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
   passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
   Jalali`_.

@@ -1021,6 +1021,10 @@ def test_method_generation():
 
 
 def test_composite_methods():
+    # Test the behavior and the values of methods (composite methods) whose
+    # request values are a union of requests by other methods (simple methods).
+    # fit_transform and fit_predict are the only composite methods we have in
+    # scikit-learn.
     class SimpleEstimator(BaseEstimator):
         # This class should have every set_{method}_request
         def fit(self, X, y, foo=None, bar=None):
@@ -1033,8 +1037,14 @@ def test_composite_methods():
             pass  # pragma: no cover
 
     est = SimpleEstimator()
-    est.get_metadata_routing().fit_transform.requests == {}
-    est.get_metadata_routing().fit_predict.requests == {}
+    # Since no request is set for fit or predict or transform, the request for
+    # fit_transform and fit_predict should also be empty.
+    assert est.get_metadata_routing().fit_transform.requests == {
+        "bar": None,
+        "foo": None,
+        "other_param": None,
+    }
+    assert est.get_metadata_routing().fit_predict.requests == {"bar": None, "foo": None}
 
     # setting the request on only one of them should raise an error
     est.set_fit_request(foo=True, bar="test")
@@ -1047,7 +1057,8 @@ def test_composite_methods():
     with pytest.raises(ValueError, match="Conflicting metadata requests for"):
         est.get_metadata_routing().fit_predict
 
-    # now the requests are consistent
+    # now the requests are consistent and getting the requests for fit_predict
+    # shouldn't raise.
     est.set_predict_request(foo=True, bar="test")
     est.get_metadata_routing().fit_predict
 
