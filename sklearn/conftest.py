@@ -1,10 +1,10 @@
+import builtins
 import platform
 import sys
 from contextlib import suppress
 from functools import wraps
 from os import environ
 from unittest import SkipTest
-import builtins
 
 import joblib
 import numpy as np
