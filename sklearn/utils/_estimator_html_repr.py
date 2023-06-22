@@ -80,15 +80,24 @@ def _write_label_html(
     inner_class="sk-label",
     checked=False,
     url_link="",
-    is_fitted_icon = ""
+    is_fitted=False,
+    is_fitted_icon="",
 ):
     """Write labeled html with or without a dropdown with named details"""
-    out.write(f'<div class="{outer_class}"><div class="{inner_class} sk-toggleable">')
+    if is_fitted:
+        fitted_str = " fitted"
+    else:
+        fitted_str = ""
+
+    out.write(
+        f'<div class="{outer_class}"><div'
+        f' class="{inner_class} {fitted_str} sk-toggleable">'
+    )
     name = html.escape(name)
 
     if name_details is not None:
         name_details = html.escape(str(name_details))
-        label_class = "sk-toggleable__label sk-toggleable__label-arrow"
+        label_class = f"sk-toggleable__label {fitted_str} sk-toggleable__label-arrow"
 
         checked_str = "checked" if checked else ""
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
@@ -98,7 +107,7 @@ def _write_label_html(
             if name is not None:
                 doc_label = f"<span>Documentation for {name}</span>"
             doc_link = (
-                '<a class="sk-estimator-doc-link" target="_blank"'
+                f'<a class="sk-estimator-doc-link {fitted_str}" target="_blank"'
                 f' href="{url_link}">?{doc_label}</a>'
             )
         else:  # no url_link, add no link to the documentation
@@ -107,8 +116,10 @@ def _write_label_html(
         fmt_str = f"""<input class="sk-toggleable__control sk-hidden--visually"
              id="{est_id}"
              type="checkbox" {checked_str}><label for="{est_id}"
-             class="{label_class}">{name}{doc_link}{is_fitted_icon}</label><div
-             class="sk-toggleable__content"><pre>{name_details}</pre></div>
+             class="{label_class} {fitted_str}">{name}
+             {doc_link}{is_fitted_icon}</label><div
+             class="sk-toggleable__content {fitted_str}">
+             <pre>{name_details}</pre></div>
             """
         out.write(fmt_str)
     else:
@@ -160,7 +171,13 @@ def _get_visual_block(estimator):
 
 
 def _write_estimator_html(
-    out, estimator, estimator_label, estimator_label_details, is_fitted_icon="", first_call=False
+    out,
+    estimator,
+    estimator_label,
+    estimator_label_details,
+    is_fitted,
+    is_fitted_icon="",
+    first_call=False,
 ):
     """Write estimator to html in serial, parallel, or by itself (single)."""
     # Delayed to avoid circular import
@@ -169,7 +186,7 @@ def _write_estimator_html(
     if first_call:
         est_block = _get_visual_block(estimator)
     else:
-        is_fitted_icon=""
+        is_fitted_icon = ""
         with config_context(print_changed_only=True):
             est_block = _get_visual_block(estimator)
     # `estimator` can also be an instance of `_VisualBlock`
@@ -184,7 +201,12 @@ def _write_estimator_html(
 
         if estimator_label:
             _write_label_html(
-                out, estimator_label, estimator_label_details, url_link=url_link, is_fitted_icon=is_fitted_icon
+                out,
+                estimator_label,
+                estimator_label_details,
+                url_link=url_link,
+                is_fitted=is_fitted,
+                is_fitted_icon=is_fitted_icon,
             )
 
         kind = est_block.kind
@@ -193,12 +215,14 @@ def _write_estimator_html(
 
         for est, name, name_details in est_infos:
             if kind == "serial":
-                _write_estimator_html(out, est, name, name_details)
+                _write_estimator_html(out, est, name, name_details, is_fitted=is_fitted)
             else:  # parallel
                 out.write('<div class="sk-parallel-item">')
                 # wrap element in a serial visualblock
                 serial_block = _VisualBlock("serial", [est], dash_wrapped=False)
-                _write_estimator_html(out, serial_block, name, name_details)
+                _write_estimator_html(
+                    out, serial_block, name, name_details, is_fitted=is_fitted
+                )
                 out.write("</div>")  # sk-parallel-item
 
         out.write("</div></div>")
@@ -211,6 +235,7 @@ def _write_estimator_html(
             inner_class="sk-estimator",
             checked=first_call,
             url_link=url_link,
+            is_fitted=is_fitted,
         )
 
 
@@ -238,37 +263,29 @@ def estimator_html_repr(estimator):
 
     try:
         check_is_fitted(estimator)  # check if the estimator is fitted
+        is_fitted = True
         # use blue colors
-        background_color = "#f0f8ff"  # background color
-        background_color_hover = "#d4ebff"  # background color on hover
         status_label = "<span>Estimator is fitted</span>"
-        doc_link_text_dim = "#afc9e0"  # color of text when not focused
-        doc_link_border_dim = "#afc9e077"  # border color when not focused
-        doc_link_text_strong = "cornflowerblue"  # color of text/background when focused
-
+        fitted_str = "fitted"
     except NotFittedError:  # estimator is not fitted
+        is_fitted = False
         # use orange colors
-        background_color = "#fff5e6"  # background color
-        background_color_hover = "#ffe0b3"  # background color on hover
-        doc_link_text_dim = "#f6e4d2"
-        doc_link_border_dim = "#f6e4d277"
-        doc_link_text_strong = "chocolate"
         status_label = "<span>Estimator is not fitted</span>"
+        fitted_str = ""
     is_fitted_icon = (
-            '<span class="sk-estimator-doc-link"'
-            f'>i{status_label}</span>'
-            )
+        f'<span class="sk-estimator-doc-link {fitted_str}">i{status_label}</span>'
+    )
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
         style_template = Template(_STYLE)
 
         style_with_id = style_template.substitute(
             id=container_id,
-            background_color=background_color,
-            background_color_hover=background_color_hover,
-            doc_link_text_dim=doc_link_text_dim,
-            doc_link_border_dim=doc_link_border_dim,
-            doc_link_text_strong=doc_link_text_strong,
+            # background_color=background_color,
+            # background_color_hover=background_color_hover,
+            # doc_link_text_dim=doc_link_text_dim,
+            # doc_link_border_dim=doc_link_border_dim,
+            # doc_link_text_strong=doc_link_text_strong,
         )
         estimator_str = str(estimator)
 
@@ -310,7 +327,8 @@ def estimator_html_repr(estimator):
             estimator.__class__.__name__,
             estimator_str,
             first_call=True,
-            is_fitted_icon=is_fitted_icon
+            is_fitted=is_fitted,
+            is_fitted_icon=is_fitted_icon,
         )
         out.write("</div></div>")
 

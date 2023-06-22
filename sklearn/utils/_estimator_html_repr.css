@@ -1,4 +1,4 @@
-#$id {
+#`id {
   color: black;
 }
 #$id pre{
@@ -29,19 +29,31 @@
 #$id div.sk-estimator:hover label.sk-toggleable__label-arrow:before {
   color: black;
 }
+
+/* dim background */
 #$id div.sk-toggleable__content {
   max-height: 0;
   max-width: 0;
   overflow: hidden;
   text-align: left;
-  background-color: $background_color;
+  background-color: #fff5e6;
 }
+
+#$id div.sk-toggleable__content.fitted {
+  background-color: #f0f8ff;
+}
+/* dim background */
 #$id div.sk-toggleable__content pre {
   margin: 0.2em;
   color: black;
   border-radius: 0.25em;
-  background-color: $background_color;
+  background-color: #fff5e6;
 }
+
+#$id div.sk-toggleable__content.fitted pre {
+  background-color: #f0f8ff;
+}
+
 #$id input.sk-toggleable__control:checked~div.sk-toggleable__content {
   max-height: 200px;
   max-width: 100%;
@@ -50,12 +62,25 @@
 #$id input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {
   content: "▾";
 }
+
+/* strong background */
 #$id div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
-  background-color: $background_color_hover;
+  background-color: #ffe0b3;
 }
+
+#$id div.sk-estimator.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  background-color: #d4ebff;
+}
+
+/* strong background */
 #$id div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {
-  background-color: $background_color_hover;
+  background-color: #ffe0b3;
 }
+
+#$id div.sk-label.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  background-color: #d4ebff;
+}
+
 
 #$id input.sk-hidden--visually {
   border: 0;
@@ -68,17 +93,30 @@
   position: absolute;
   width: 1px;
 }
+
+/* dim background */
 #$id div.sk-estimator {
   font-family: monospace;
-  background-color: $background_color;
+  background-color: #fff5e6;
   border: 1px dotted black;
   border-radius: 0.25em;
   box-sizing: border-box;
   margin-bottom: 0.5em;
 }
-#$id div.sk-estimator:hover {
-  background-color: $background_color_hover;
+
+#$id div.sk-estimator.fitted {
+  background-color: #f0f8ff;
 }
+
+/* strong background */
+#$id div.sk-estimator:hover {
+  background-color: #ffe0b3;
+}
+
+#$id div.sk-estimator.fitted:hover {
+  background-color: #d4ebff;
+}
+
 
 #$id div.sk-parallel-item::after {
   content: "";
@@ -86,9 +124,16 @@
   border-bottom: 1px solid gray;
   flex-grow: 1;
 }
+
+/* strong background */
 #$id div.sk-label:hover label.sk-toggleable__label {
-  background-color: $background_color_hover;
+  background-color: #ffe0b3;
 }
+
+#$id div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
+  background-color: #d4ebff;
+}
+
 #$id div.sk-serial::before {
   content: "";
   position: absolute;
@@ -154,25 +199,39 @@
   background-color: white;
 }
 
+/* dim text  */
 #$id a.estimator_doc_link {
   float: right;
   font-size: smaller;
   line-height: 1em;
   font-family: monospace;
   background-color: white;
-  border: $doc_link_border_dim 1pt solid;
+  border: #f6e4d2 1pt solid;
   border-radius: 1em;
   height: 1em;
   width: 1em;
-  color: $doc_link_border_dim;
+  color: #f6e4d2;
   text-decoration: none;
 }
 
+#$id a.estimator_doc_link.fitted {
+  border: #afc9e0;
+  color: #afc9e0;
+}
+
+/* strong text  */
 #$id a.estimator_doc_link:hover {
-  background-color: $doc_link_text_strong;
+  background-color: chocolate;
   color: white;
   text-decoration: none;
 }
+
+#$id a.estimator_doc_link.fitted:hover {
+  background-color: cornflowerblue;
+  color: white;
+  text-decoration: none;
+}
+
 
 
 #$id div.sk-label label {
@@ -199,44 +258,73 @@ display: none;
 
 /* For the docs link*/
 
+/* dim text */
 .sk-estimator-doc-link {
   float: right;
   font-size: smaller;
   line-height: 1em;
   font-family: monospace;
   background-color: white;
-  border: $doc_link_border_dim 1pt solid;
+  border: #f6e4d2 1pt solid;
   border-radius: 1em;
   height: 1em;
   width: 1em;
-  color: $doc_link_border_dim;
+  color: #f6e4d2;
+  text-decoration: none;
+  margin-left: 1ex;
+}
+
+.sk-estimator-doc-link.fitted {
+  float: right;
+  font-size: smaller;
+  line-height: 1em;
+  font-family: monospace;
+  background-color: white;
+  border: #afc9e0 1pt solid;
+  border-radius: 1em;
+  height: 1em;
+  width: 1em;
+  color: #afc9e0;
   text-decoration: none;
   margin-left: 1ex;
 }
 
 
-div.sk-estimator:hover .sk-estimator-doc-link:hover,  .sk-estimator-doc-link:hover, div.sk-label-container:hover .sk-estimator-doc-link:hover, .sk-estimator-doc-link:hover
-  {
-  background-color: $doc_link_text_strong;
+/* strong text */
+div.sk-estimator:hover .sk-estimator-doc-link:hover, .sk-estimator-doc-link:hover, div.sk-label-container:hover .sk-estimator-doc-link:hover, .sk-estimator-doc-link:hover  {
+  background-color: chocolate;
   color: white;
   text-decoration: none;
 }
 
+/* strong text */
+div.sk-estimator.fitted:hover .sk-estimator-doc-link.fitted:hover,  .sk-estimator-doc-link.fitted:hover, div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover, .sk-estimator-doc-link.fitted:hover
+{
+  background-color: cornflowerblue;
+  color: white;
+}
+
+
+/* dim strong  */
 .sk-estimator-doc-link span {
   display: none;
   z-index: 200;
   position: absolute;
-  background: $background_color;
-  /* background: #f6e4d2 */
+  background: #fff5e6;
   color: black;
   font-weight: normal;
   padding: .5ex;
   margin: .5ex;
-  border: .5pt solid $doc_link_text_strong;
+  border: .5pt solid chocolate;
   right: .2ex;
   box-shadow: 2pt 2pt 4pt #999;
   max-width: 30ex;
   width: min-content;
+}
+
+.sk-estimator-doc-link.fitted span {
+  background: #f0f8ff;
+  border: cornflowerblue;
 }
 
 .sk-estimator-doc-link:hover span {
@@ -244,13 +332,26 @@ div.sk-estimator:hover .sk-estimator-doc-link:hover,  .sk-estimator-doc-link:hov
 }
 
 div.sk-estimator .sk-estimator-doc-link {
-  color: $doc_link_text_dim;
-  border: 1pt solid $doc_link_border_dim;
-  background-color: $background_color;
+  color: #f6e4d2;
+  border: 1pt solid #f6e4d2;
+  background-color: #fff5e6;
 }
+
+div.sk-estimator.fitted .sk-estimator-doc-link.fitted {
+  color: #afc9e0;
+  border: 1pt solid #afc9e0;
+  background-color: #f0f8ff;
+}
+
 
 div.sk-estimator:hover .sk-estimator-doc-link, div.sk-label-container:hover .sk-estimator-doc-link {
   background-color: white;
-  border: $doc_link_text_strong 1pt solid;
-  color: $doc_link_text_strong;
+  border: chocolate 1pt solid;
+  color: chocolate;
+}
+
+div.sk-estimator.fitted:hover .sk-estimator-doc-link.fitted, div.sk-label-container:hover .sk-estimator-doc-link.fitted {
+  border: cornflowerblue 1pt solid;
+  background-color: white;
+  color: cornflowerblue;
 }
