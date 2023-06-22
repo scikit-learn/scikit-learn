@@ -1488,7 +1488,7 @@ def test_categorical_different_order_same_model():
         assert len(predictor_1[0].nodes) == len(predictor_2[0].nodes)
 
 
-# TODO(1.5): Remove warning and change default in 1.5
+# TODO(1.6): Remove warning and change default in 1.6
 def test_categorical_features_warn():
     """Raise warning when there are categorical features in the input DataFrame."""
     pd = pytest.importorskip("pandas")

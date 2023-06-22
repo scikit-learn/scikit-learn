@@ -43,6 +43,15 @@ Changes impacting all modules
   to work with our estimators and functions.
   :pr:`26464` by `Thomas Fan`_.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` supports
+  `categorical_features="from_dtype"`, which treats columns with Pandas Categorical
+  dtype as categories in the algorithm. `categorical_features="from_dtype"` will become
+  the default in v1.6. :pr:`26411` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 

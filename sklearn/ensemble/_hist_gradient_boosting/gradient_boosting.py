@@ -290,7 +290,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         X_is_dataframe = hasattr(X, "dtypes")  # sufficient here
 
-        # TODO(1.5): Remove warning and change default to "from_dtype" in v1.5
+        # TODO(1.6): Remove warning and change default to "from_dtype" in v1.6
         if (
             isinstance(self.categorical_features, str)
             and self.categorical_features == "warn"
@@ -299,7 +299,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 warnings.warn(
                     (
                         "The categorical_features parameter will change to 'by_dtype'"
-                        " in v1.5. The 'by_dtype' option automatically treats"
+                        " in v1.6. The 'by_dtype' option automatically treats"
                         " categorical dtypes in a DataFrame as categorical features."
                     ),
                     FutureWarning,
@@ -1414,9 +1414,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Added support for feature names.
 
-        .. versionchanged:: 1.3
+        .. versionchanged:: 1.4
            Added `"from_dtype"` option. The default will change to `"from_dtype"` in
-           v1.5.
+           v1.6.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
@@ -1780,9 +1780,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Added support for feature names.
 
-        .. versionchanged:: 1.3
+        .. versionchanged:: 1.4
            Added `"from_dtype"` option. The default will change to `"from_dtype"` in
-           v1.5.
+           v1.6.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
