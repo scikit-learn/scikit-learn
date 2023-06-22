@@ -9,15 +9,14 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.special import gammainc
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, _fit_context
 from ..neighbors._base import VALID_METRICS
 from ..utils import check_random_state
-from ..utils.validation import _check_sample_weight, check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import row_norms
+from ..utils.validation import _check_sample_weight, check_is_fitted
 from ._ball_tree import BallTree64 as BallTree
 from ._kd_tree import KDTree64 as KDTree
-
 
 VALID_KERNELS = [
     "gaussian",
@@ -185,6 +184,10 @@ class KernelDensity(BaseEstimator):
                 )
             return algorithm
 
+    @_fit_context(
+        # KernelDensity.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, sample_weight=None):
         """Fit the Kernel Density model on the data.
 
@@ -208,8 +211,6 @@ class KernelDensity(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
 
         if isinstance(self.bandwidth, str):

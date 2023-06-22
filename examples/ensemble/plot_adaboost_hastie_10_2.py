@@ -94,6 +94,7 @@ ada_real.fit(X_train, y_train)
 # added to the ensemble.
 
 import numpy as np
+
 from sklearn.metrics import zero_one_loss
 
 ada_discrete_err = np.zeros((n_estimators,))

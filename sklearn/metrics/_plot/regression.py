@@ -2,9 +2,7 @@ import numbers
 
 import numpy as np
 
-from ...utils import check_matplotlib_support
-from ...utils import check_random_state
-from ...utils import _safe_indexing
+from ...utils import _safe_indexing, check_matplotlib_support, check_random_state
 
 
 class PredictionErrorDisplay:

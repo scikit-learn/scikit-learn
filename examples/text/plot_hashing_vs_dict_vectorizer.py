@@ -118,6 +118,7 @@ token_freqs("That is one example, but this is another one")
 # both of them receive dictionaries as input.
 
 from time import time
+
 from sklearn.feature_extraction import DictVectorizer
 
 dict_count_vectorizers = defaultdict(list)

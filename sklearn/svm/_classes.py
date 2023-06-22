@@ -1,15 +1,15 @@
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 
-from ._base import _fit_liblinear, _get_liblinear_solver_type, BaseSVC, BaseLibSVM
-from ..base import BaseEstimator, RegressorMixin, OutlierMixin
-from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearModel
+from ..base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
+from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
 from ..utils import deprecated
-from ..utils.validation import _num_samples
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils._param_validation import Interval, StrOptions, Hidden
+from ..utils.validation import _num_samples
+from ._base import BaseLibSVM, BaseSVC, _fit_liblinear, _get_liblinear_solver_type
 
 
 def _validate_dual_parameter(dual, loss, penalty, multi_class, X):
@@ -272,6 +272,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.penalty = penalty
         self.loss = loss
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -296,8 +297,6 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self : object
             An instance of the estimator.
         """
-        self._validate_params()
-
         X, y = self._validate_data(
             X,
             y,
@@ -529,6 +528,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         self.dual = dual
         self.loss = loss
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -553,8 +553,6 @@ class LinearSVR(RegressorMixin, LinearModel):
         self : object
             An instance of the estimator.
         """
-        self._validate_params()
-
         X, y = self._validate_data(
             X,
             y,
