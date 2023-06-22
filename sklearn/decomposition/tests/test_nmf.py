@@ -973,12 +973,17 @@ def test_nmf_n_components_default_value_warning():
 
 
 def test_nmf_n_components_auto_no_h_update():
+    # Tests that non_negative_factorization does not fail
+    # when setting n_components="auto"
+    # also tests that the inferred n_component value is the right one
     rng = np.random.RandomState(0)
-    H_true = rng.random_sample((2, 5))
     X = rng.random_sample((6, 5))
-    _, H, _ = non_negative_factorization(
+    H_true = rng.random_sample((2, 5))
+    W, H, _ = non_negative_factorization(
         X, H=H_true, n_components="auto", update_H=False
     )  # should not fail
+    assert_allclose(H, H_true)
+    assert W.shape == (X.shape[0], H_true.shape[0])
 
 
 def test_nmf_w_h_not_used_warning():
