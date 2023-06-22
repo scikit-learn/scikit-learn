@@ -62,6 +62,7 @@ from sklearn.utils.validation import (
     _deprecate_positional_args,
     _get_feature_names,
     _is_fitted,
+    _is_pandas_df,
     _num_features,
     _num_samples,
     assert_all_finite,
@@ -1695,6 +1696,54 @@ def test_get_feature_names_pandas():
     feature_names = _get_feature_names(X)
 
     assert_array_equal(feature_names, columns)
+
+
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+)
+def test_get_feature_names_dataframe_protocol(constructor_name, minversion):
+    """Uses the dataframe exchange protocol to get feature names."""
+    data = [[1, 4, 2], [3, 3, 6]]
+    columns = ["col_0", "col_1", "col_2"]
+    df = _convert_container(
+        data, constructor_name, columns_name=columns, minversion=minversion
+    )
+    feature_names = _get_feature_names(df)
+
+    assert_array_equal(feature_names, columns)
+
+
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+)
+def test_is_pandas_df_other_libraries(constructor_name, minversion):
+    df = _convert_container(
+        [[1, 4, 2], [3, 3, 6]],
+        constructor_name,
+        minversion=minversion,
+    )
+    if constructor_name in ("pyarrow", "polars"):
+        assert not _is_pandas_df(df)
+    else:
+        assert _is_pandas_df(df)
+
+
+def test_is_pandas_df():
+    """Check behavior of is_pandas_df when pandas is installed."""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame([[1, 2, 3]])
+    assert _is_pandas_df(df)
+    assert not _is_pandas_df(np.asarray([1, 2, 3]))
+    assert not _is_pandas_df(1)
+
+
+def test_is_pandas_df_pandas_not_installed(hide_available_pandas):
+    """Check _is_pandas_df when pandas is not installed."""
+
+    assert not _is_pandas_df(np.asarray([1, 2, 3]))
+    assert not _is_pandas_df(1)
 
 
 def test_get_feature_names_numpy():

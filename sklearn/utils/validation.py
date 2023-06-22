@@ -11,6 +11,7 @@
 
 import numbers
 import operator
+import sys
 import warnings
 from contextlib import suppress
 from functools import reduce, wraps
@@ -1985,6 +1986,18 @@ def _check_fit_params(X, fit_params, indices=None):
     return fit_params_validated
 
 
+def _is_pandas_df(X):
+    """Return True if the X is a pandas dataframe."""
+    if hasattr(X, "columns") and hasattr(X, "iloc"):
+        # Likely a pandas DataFrame, we explicitly check the type to confirm.
+        try:
+            pd = sys.modules["pandas"]
+        except KeyError:
+            return False
+        return isinstance(X, pd.DataFrame)
+    return False
+
+
 def _get_feature_names(X):
     """Get feature names from X.
 
@@ -2008,8 +2021,16 @@ def _get_feature_names(X):
     feature_names = None
 
     # extract feature names for support array containers
-    if hasattr(X, "columns"):
+    if _is_pandas_df(X):
+        # Make sure we can inspect columns names from pandas, even with
+        # versions too old to expose a working implementation of
+        # __dataframe__.column_names().
+        # TODO: remove once the minimum supported version of pandas has
+        # a working implementation of __dataframe__.column_names().
         feature_names = np.asarray(X.columns, dtype=object)
+    elif hasattr(X, "__dataframe__"):
+        df_protocol = X.__dataframe__()
+        feature_names = np.asarray(list(df_protocol.column_names()), dtype=object)
 
     if feature_names is None or len(feature_names) == 0:
         return
