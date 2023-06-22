@@ -419,8 +419,8 @@ Jupyter notebook.
 
 By default, the function returns the empty string if the estimator is not a
 scikit-learn estimator. This check is performed by evaluating whether the
-estimator module is the same as the value in ``estimator._doc_link_module``,
-which is set to ``sklearn`` by default. If a custom estimator is instantiated
+estimator module is the same as the value in the attribute
+``estimator._doc_link_module``, set to ``sklearn`` by default. If an estimator is instantiated
 without changing the value of ``estimator._doc_link_module``, then an empty
 string is returned.
 
