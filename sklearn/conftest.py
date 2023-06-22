@@ -1,3 +1,4 @@
+import builtins
 import platform
 import sys
 from contextlib import suppress
@@ -252,3 +253,16 @@ def pytest_configure(config):
     # Register global_random_seed plugin if it is not already registered
     if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
         config.pluginmanager.register(random_seed)
+
+
+@pytest.fixture
+def hide_available_pandas(monkeypatch):
+    """Pretend pandas was not installed."""
+    import_orig = builtins.__import__
+
+    def mocked_import(name, *args, **kwargs):
+        if name == "pandas":
+            raise ImportError()
+        return import_orig(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", mocked_import)
