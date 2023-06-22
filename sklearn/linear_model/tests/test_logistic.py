@@ -2080,6 +2080,6 @@ def test_zero_max_iter(solver):
         )
         assert_allclose(
             clf.predict_proba(X),
-            np.ones((X.shape[0], 2)) * np.array([0.5, 0.5]),
+            np.full(shape=(X.shape[0], 2), fill_value=0.5),
         )
     assert clf.score(X, y) < 0.7
