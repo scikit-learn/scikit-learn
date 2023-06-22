@@ -11,15 +11,14 @@ extract features from images.
 
 from itertools import product
 from numbers import Integral, Number, Real
-import numpy as np
-from scipy import sparse
-from numpy.lib.stride_tricks import as_strided
 
-from ..base import BaseEstimator, TransformerMixin
-from ..base import _fit_context
+import numpy as np
+from numpy.lib.stride_tricks import as_strided
+from scipy import sparse
+
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array, check_random_state
-from ..utils._param_validation import Hidden, Interval, validate_params
-from ..utils._param_validation import RealNotInt
+from ..utils._param_validation import Hidden, Interval, RealNotInt, validate_params
 
 __all__ = [
     "PatchExtractor",

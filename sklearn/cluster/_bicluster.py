@@ -3,25 +3,19 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-
-import numpy as np
 from numbers import Integral
 
+import numpy as np
 from scipy.linalg import norm
 from scipy.sparse import dia_matrix, issparse
 from scipy.sparse.linalg import eigsh, svds
 
-from . import KMeans, MiniBatchKMeans
-from ..base import BaseEstimator, BiclusterMixin
-from ..base import _fit_context
-from ..utils import check_random_state
-from ..utils import check_scalar
-
-from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
-
-from ..utils.validation import assert_all_finite
+from ..base import BaseEstimator, BiclusterMixin, _fit_context
+from ..utils import check_random_state, check_scalar
 from ..utils._param_validation import Interval, StrOptions
-
+from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
+from ..utils.validation import assert_all_finite
+from ._kmeans import KMeans, MiniBatchKMeans
 
 __all__ = ["SpectralCoclustering", "SpectralBiclustering"]
 

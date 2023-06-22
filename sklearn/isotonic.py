@@ -3,20 +3,19 @@
 #          Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD 3 clause
 
+import math
+import warnings
+from numbers import Real
+
 import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
-from numbers import Real
-import warnings
-import math
 
-from .base import BaseEstimator, TransformerMixin, RegressorMixin
-from .base import _fit_context
-from .utils import check_array, check_consistent_length
-from .utils.validation import _check_sample_weight, check_is_fitted
-from .utils._param_validation import Interval, StrOptions
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
-
+from .base import BaseEstimator, RegressorMixin, TransformerMixin, _fit_context
+from .utils import check_array, check_consistent_length
+from .utils._param_validation import Interval, StrOptions
+from .utils.validation import _check_sample_weight, check_is_fitted
 
 __all__ = ["check_increasing", "isotonic_regression", "IsotonicRegression"]
 

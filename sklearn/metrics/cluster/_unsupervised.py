@@ -6,24 +6,20 @@
 # License: BSD 3 clause
 
 
-from numbers import Integral
 import functools
+from numbers import Integral
 
 import numpy as np
 from scipy.sparse import issparse
 
-from ...utils import check_random_state
-from ...utils import check_X_y
-from ...utils import _safe_indexing
+from ...preprocessing import LabelEncoder
+from ...utils import _safe_indexing, check_random_state, check_X_y
 from ...utils._param_validation import (
     Interval,
     StrOptions,
     validate_params,
 )
-from ..pairwise import pairwise_distances_chunked
-from ..pairwise import pairwise_distances
-from ..pairwise import _VALID_METRICS
-from ...preprocessing import LabelEncoder
+from ..pairwise import _VALID_METRICS, pairwise_distances, pairwise_distances_chunked
 
 
 def check_number_of_labels(n_labels, n_samples):

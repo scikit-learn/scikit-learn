@@ -7,43 +7,51 @@
 #
 # License: BSD 3 clause
 
-from numbers import Integral, Real
 import warnings
-from inspect import signature
 from functools import partial
-
+from inspect import signature
 from math import log
-import numpy as np
+from numbers import Integral, Real
 
-from scipy.special import expit
-from scipy.special import xlogy
+import numpy as np
 from scipy.optimize import fmin_bfgs
+from scipy.special import expit, xlogy
+
+from sklearn.utils import Bunch
 
 from .base import (
     BaseEstimator,
     ClassifierMixin,
-    RegressorMixin,
-    clone,
     MetaEstimatorMixin,
+    RegressorMixin,
     _fit_context,
+    clone,
 )
-from .preprocessing import label_binarize, LabelEncoder
+from .isotonic import IsotonicRegression
+from .model_selection import check_cv, cross_val_predict
+from .preprocessing import LabelEncoder, label_binarize
+from .svm import LinearSVC
 from .utils import (
+    _safe_indexing,
     column_or_1d,
     indexable,
-    _safe_indexing,
 )
-
-from .utils.multiclass import check_classification_targets
-from .utils.parallel import delayed, Parallel
 from .utils._param_validation import (
-    StrOptions,
     HasMethods,
     Hidden,
-    validate_params,
     Interval,
+    StrOptions,
+    validate_params,
 )
 from .utils._plotting import _BinaryClassifierCurveDisplayMixin
+from .utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _routing_enabled,
+    process_routing,
+)
+from .utils.multiclass import check_classification_targets
+from .utils.parallel import Parallel, delayed
 from .utils.validation import (
     _check_fit_params,
     _check_pos_label_consistency,
@@ -51,16 +59,6 @@ from .utils.validation import (
     _num_samples,
     check_consistent_length,
     check_is_fitted,
-)
-from .isotonic import IsotonicRegression
-from .svm import LinearSVC
-from .model_selection import check_cv, cross_val_predict
-from sklearn.utils import Bunch
-from .utils.metadata_routing import (
-    MetadataRouter,
-    MethodMapping,
-    process_routing,
-    _routing_enabled,
 )
 
 
