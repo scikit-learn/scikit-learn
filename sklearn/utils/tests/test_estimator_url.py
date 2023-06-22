@@ -1,5 +1,6 @@
-from sklearn.base import BaseEstimator
 from urllib.parse import urlparse
+
+from sklearn.base import BaseEstimator
 
 
 class CustomValidEstimator(BaseEstimator):
@@ -16,9 +17,7 @@ class CustomEstimatorTemplateOverride(CustomValidEstimator):
     # Private values, used only for the test
     _domain = "example.com"
 
-    _doc_link = (
-        f"https://{_domain}.org/{{major}}.{{minor}}/docs/{{estimator_name}}.html"
-    )
+    _doc_link = f"https://{_domain}/{{major}}.{{minor}}/docs/{{estimator_name}}.html"
 
 
 class CustomEstimatorMethodOverride(CustomValidEstimator):
@@ -86,4 +85,4 @@ def test_method_override():
     # Perform assertions to check the expected behavior
     assert parsed_url.scheme in {"http", "https"}
     assert parsed_url.netloc == CustomEstimatorMethodOverride._domain
-    assert CustomEstimatorTemplateOverride.__name__ in parsed_url.path
+    assert CustomEstimatorMethodOverride.__name__ in parsed_url.path

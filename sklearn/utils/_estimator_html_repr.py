@@ -1,9 +1,9 @@
-from contextlib import closing
-from io import StringIO
-from inspect import isclass
-from string import Template
 import html
+from contextlib import closing
+from inspect import isclass
+from io import StringIO
 from pathlib import Path
+from string import Template
 
 from .. import config_context
 
@@ -103,12 +103,12 @@ def _write_label_html(
         else:  # no url_link, add no link to the documentation
             doc_link = ""
 
-        fmt_str = f"""<input
-        class="sk-toggleable__control sk-hidden--visually" id="{est_id}"
-             type="checkbox" {checked_str}><label for="{est_id}"
-             class="{label_class}">{name}{doc_link}</label><div
-             class="sk-toggleable__content"><pre>{name_details}</pre></div>
-            """
+        fmt_str = (
+            f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}"'
+            f'type="checkbox" {checked_str}><label for="{est_id}"'
+            f'class="{label_class}">{name}{doc_link}</label><div'
+            f'class="sk-toggleable__content"><pre>{name_details}</pre></div>'
+        )
         out.write(fmt_str)
     else:
         out.write(f"<label>{name}</label>")
@@ -231,8 +231,8 @@ def estimator_html_repr(estimator):
     html: str
         HTML representation of estimator.
     """
-    from sklearn.utils.validation import check_is_fitted
     from sklearn.exceptions import NotFittedError
+    from sklearn.utils.validation import check_is_fitted
 
     try:
         check_is_fitted(estimator)

@@ -15,22 +15,25 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
-from ..base import BaseEstimator, ClusterMixin, ClassNamePrefixFeaturesOutMixin
-from ..base import _fit_context
-from ..metrics.pairwise import paired_distances
-from ..metrics.pairwise import _VALID_METRICS
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    ClusterMixin,
+    _fit_context,
+)
 from ..metrics import DistanceMetric
 from ..metrics._dist_metrics import METRIC_MAPPING64
+from ..metrics.pairwise import _VALID_METRICS, paired_distances
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
-from ..utils.graph import _fix_connected_components
 from ..utils._param_validation import (
+    HasMethods,
     Hidden,
     Interval,
     StrOptions,
-    HasMethods,
     validate_params,
 )
+from ..utils.graph import _fix_connected_components
 from ..utils.validation import check_memory
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
