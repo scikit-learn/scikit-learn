@@ -60,10 +60,11 @@ class Pipeline(_BaseComposition):
     The purpose of the pipeline is to assemble several steps that can be
     cross-validated together while setting different parameters. For this, it
     enables setting parameters of the various steps using their names and the
-    parameter name separated by a `'__'`, as in the example below. A step's
-    estimator may be replaced entirely by setting the parameter with its name
-    to another estimator, or a transformer removed by setting it to
-    `'passthrough'` or `None`.
+    parameter name separated by a `'__'`. For instance, if one has a pipeline
+    with an `SVC()` named `"clf"`, then setting `clf__C=10` is equivalent to
+    setting `SVC(C=10)` in that pipeline. Moreover, a step's estimator may be
+    replaced entirely by setting the parameter with its name to another estimator,
+    or a transformer removed by setting it to `'passthrough'` or `None`.
 
     Read more in the :ref:`User Guide <pipeline>`.
 
@@ -120,7 +121,6 @@ class Pipeline(_BaseComposition):
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.svm import SVC
     >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.datasets import make_classification
@@ -129,14 +129,11 @@ class Pipeline(_BaseComposition):
     >>> X, y = make_classification(random_state=0)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
     ...                                                     random_state=0)
-    >>> sample_weight = np.ones(X_train.shape[0])
-    >>> pipe = Pipeline([('scaler', StandardScaler()), ('classifier', SVC())])
+    >>> pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC())])
     >>> # The pipeline can be used as any other estimator
     >>> # and avoids leaking the test set into the train set
-    >>> # Note that using 'classifier__sample_weight' sets the 'sample_weight'
-    >>> # parameter during the fitting of the SVC 'classifier'
-    >>> pipe.fit(X_train, y_train, classifier__sample_weight=sample_weight)
-    Pipeline(steps=[('scaler', StandardScaler()), ('classifier', SVC())])
+    >>> pipe.fit(X_train, y_train)
+    Pipeline(steps=[('scaler', StandardScaler()), ('svc', SVC())])
     >>> pipe.score(X_test, y_test)
     0.88
     """
