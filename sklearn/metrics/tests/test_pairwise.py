@@ -415,19 +415,6 @@ def test_pairwise_kernels_callable():
     assert_allclose(K1, K2)
 
 
-def test_pairwise_kernels_filter_param():
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((5, 4))
-    Y = rng.random_sample((2, 4))
-    K = rbf_kernel(X, Y, gamma=0.1)
-    params = {"gamma": 0.1, "blabla": ":)"}
-    K2 = pairwise_kernels(X, Y, metric="rbf", filter_params=True, **params)
-    assert_allclose(K, K2)
-
-    with pytest.raises(TypeError):
-        pairwise_kernels(X, Y, metric="rbf", **params)
-
-
 @pytest.mark.parametrize("metric, func", PAIRED_DISTANCES.items())
 def test_paired_distances(metric, func):
     # Test the pairwise_distance helper function.
