@@ -150,6 +150,7 @@ of valid metrics use :meth:`KDTree.valid_metrics` and :meth:`BallTree.valid_metr
 
 .. _classification:
 
+
 Nearest Neighbors Classification
 ================================
 
@@ -200,10 +201,14 @@ distance can be supplied to compute the weights.
 
 .. centered:: |classification_1| |classification_2|
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
   * :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`: an example of
     classification using nearest neighbors.
+
+|details-end|
 
 .. _regression:
 
@@ -249,13 +254,18 @@ the lower half of those faces.
    :align: center
 
 
-.. topic:: Examples:
+
+|details-start|
+**Examples**
+|details-split|
 
   * :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`: an example of regression
     using nearest neighbors.
 
   * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`: an example of
     multi-output regression using nearest neighbors.
+
+|details-end|
 
 
 Nearest Neighbor Algorithms
@@ -266,6 +276,7 @@ Tree algorithms.
 
 Choice of Nearest Neighbors Algorithm
 -------------------------------------
+
 The optimal algorithm for a given dataset is a complicated choice, and
 depends on a number of factors:
 
@@ -350,8 +361,11 @@ based on the following assumptions:
 * when :math:`D > 15`, the intrinsic dimensionality of the data is generally
   too high for tree-based methods
 
-Effect of ``leaf_size``
------------------------
+
+|details-start|
+**Effect of ``leaf_size``**
+|details-split|
+
 As noted above, for small sample sizes a brute force search can be more
 efficient than a tree-based query.  This fact is accounted for in the ball
 tree and KD tree by internally switching to brute force searches within
@@ -379,8 +393,10 @@ leaf nodes.  The level of this switch can be specified with the parameter
 
 ``leaf_size`` is not referenced for brute force queries.
 
+|details-end|
+
 Valid Metrics for Nearest Neighbor Algorithms
----------------------------------------------
+-------------------------------------------------
 
 For a list of available metrics, see the documentation of the :class:`DistanceMetric`
 class and the metrics listed in `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`.
@@ -393,6 +409,109 @@ A list of valid metrics for any of the above algorithms can be obtained by using
     >>> print(sorted(KDTree.valid_metrics()))
     ['chebyshev', 'cityblock', 'euclidean', 'infinity', 'l1', 'l2', 'manhattan', 'minkowski', 'p']
 
+
+|details-start|
+**Brute Force Algorithm**
+|details-split|
+
+Fast computation of nearest neighbors is an active area of research in
+machine learning. The most naive neighbor search implementation involves
+the brute-force computation of distances between all pairs of points in the
+dataset: for :math:`N` samples in :math:`D` dimensions, this approach scales
+as :math:`O[D N^2]`.  Efficient brute-force neighbors searches can be very
+competitive for small data samples.
+However, as the number of samples :math:`N` grows, the brute-force
+approach quickly becomes infeasible.  In the classes within
+:mod:`sklearn.neighbors`, brute-force neighbors searches are specified
+using the keyword ``algorithm = 'brute'``, and are computed using the
+routines available in :mod:`sklearn.metrics.pairwise`.
+
+|details-end|
+
+.. _kd_tree:
+
+|details-start|
+**KD-Tree Algorithm**
+|details-split|
+
+To address the computational inefficiencies of the brute-force approach, a
+variety of tree-based data structures have been invented.  In general, these
+structures attempt to reduce the required number of distance calculations
+by efficiently encoding aggregate distance information for the sample.
+The basic idea is that if point :math:`A` is very distant from point
+:math:`B`, and point :math:`B` is very close to point :math:`C`,
+then we know that points :math:`A` and :math:`C`
+are very distant, *without having to explicitly calculate their distance*.
+In this way, the computational cost of a nearest neighbors search can be
+reduced to :math:`O[D N \log(N)]` or better. This is a significant
+improvement over brute-force for large :math:`N`.
+
+An early approach to taking advantage of this aggregate information was
+the *KD tree* data structure (short for *K-dimensional tree*), which
+generalizes two-dimensional *Quad-trees* and 3-dimensional *Oct-trees*
+to an arbitrary number of dimensions.  The KD tree is a binary tree
+structure which recursively partitions the parameter space along the data
+axes, dividing it into nested orthotropic regions into which data points
+are filed.  The construction of a KD tree is very fast: because partitioning
+is performed only along the data axes, no :math:`D`-dimensional distances
+need to be computed. Once constructed, the nearest neighbor of a query
+point can be determined with only :math:`O[\log(N)]` distance computations.
+Though the KD tree approach is very fast for low-dimensional (:math:`D < 20`)
+neighbors searches, it becomes inefficient as :math:`D` grows very large:
+this is one manifestation of the so-called "curse of dimensionality".
+In scikit-learn, KD tree neighbors searches are specified using the
+keyword ``algorithm = 'kd_tree'``, and are computed using the class
+:class:`KDTree`.
+
+
+.. topic:: References:
+
+   * `"Multidimensional binary search trees used for associative searching"
+     <https://dl.acm.org/citation.cfm?doid=361002.361007>`_,
+     Bentley, J.L., Communications of the ACM (1975)
+
+|details-end|
+
+.. _ball_tree:
+
+|details-start|
+**Ball Tree Algorithm**
+|details-split|
+
+To address the inefficiencies of KD Trees in higher dimensions, the *ball tree*
+data structure was developed.  Where KD trees partition data along
+Cartesian axes, ball trees partition data in a series of nesting
+hyper-spheres.  This makes tree construction more costly than that of the
+KD tree, but results in a data structure which can be very efficient on
+highly structured data, even in very high dimensions.
+
+A ball tree recursively divides the data into
+nodes defined by a centroid :math:`C` and radius :math:`r`, such that each
+point in the node lies within the hyper-sphere defined by :math:`r` and
+:math:`C`. The number of candidate points for a neighbor search
+is reduced through use of the *triangle inequality*:
+
+.. math::   |x+y| \leq |x| + |y|
+
+With this setup, a single distance calculation between a test point and
+the centroid is sufficient to determine a lower and upper bound on the
+distance to all points within the node.
+Because of the spherical geometry of the ball tree nodes, it can out-perform
+a *KD-tree* in high dimensions, though the actual performance is highly
+dependent on the structure of the training data.
+In scikit-learn, ball-tree-based
+neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
+and are computed using the class :class:`BallTree`.
+Alternatively, the user can work with the :class:`BallTree` class directly.
+
+.. topic:: References:
+
+   * `"Five Balltree Construction Algorithms"
+     <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
+     Omohundro, S.M., International Computer Science Institute
+     Technical Report (1989)
+
+|details-end|
 
 |details-start|
 **Brute Force Algorithm**
@@ -524,8 +643,9 @@ for more complex methods that do not make this assumption. Usage of the default
     [1]
 
 
+
 Nearest Shrunken Centroid
--------------------------
+===========================
 
 The :class:`NearestCentroid` classifier has a ``shrink_threshold`` parameter,
 which implements the nearest shrunken centroid classifier. In effect, the value
@@ -548,10 +668,14 @@ the model from 0.81 to 0.82.
 
 .. centered:: |nearest_centroid_1| |nearest_centroid_2|
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
   * :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.
+
+|details-end|
 
 .. _neighbors_transformer:
 
@@ -636,17 +760,22 @@ implementation with special data types. The precomputed neighbors
   include one extra neighbor in a custom nearest neighbors estimator, since
   unnecessary neighbors will be filtered by following estimators.
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
-  * :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`:
-    an example of pipelining :class:`KNeighborsTransformer` and
-    :class:`~sklearn.manifold.TSNE`. Also proposes two custom nearest neighbors
-    estimators based on external packages.
+* :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`:
+  an example of pipelining :class:`KNeighborsTransformer` and
+  :class:`~sklearn.manifold.TSNE`. Also proposes two custom nearest neighbors
+  estimators based on external packages.
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_caching_nearest_neighbors.py`:
-    an example of pipelining :class:`KNeighborsTransformer` and
-    :class:`KNeighborsClassifier` to enable caching of the neighbors graph
-    during a hyper-parameter grid-search.
+* :ref:`sphx_glr_auto_examples_neighbors_plot_caching_nearest_neighbors.py`:
+  an example of pipelining :class:`KNeighborsTransformer` and :
+  class:`KNeighborsClassifier` to enable caching of the neighbors graph
+  during a hyper-parameter grid-search.
+
+|details-end|
+
 
 .. _nca:
 
@@ -770,11 +899,15 @@ by each method. Each data sample belongs to one of 10 classes.
 .. centered:: |nca_dim_reduction_1| |nca_dim_reduction_2| |nca_dim_reduction_3|
 
 
-.. topic:: Examples:
+|details-start|
+**Examples**
+|details-split|
 
  * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_classification.py`
  * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_dim_reduction.py`
  * :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py`
+
+|details-end|
 
 .. _nca_mathematical_formulation:
 
@@ -821,6 +954,7 @@ space:
   ``(n_features, n_features)``.
 
 |details-end|
+
 
 |details-start|
 **Implementation**
