@@ -41,7 +41,8 @@ FACES = RemoteFileMetadata(
         "random_state": ["random_state"],
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_olivetti_faces(
     *,
