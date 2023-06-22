@@ -1167,7 +1167,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
     def __init__(
         self,
-        n_components=None,
+        n_components="warn",
         *,
         init=None,
         beta_loss="frobenius",
@@ -1573,7 +1573,7 @@ class NMF(_BaseNMF):
 
     def __init__(
         self,
-        n_components=None,
+        n_components="warn",
         *,
         init=None,
         solver="cd",
@@ -2014,7 +2014,7 @@ class MiniBatchNMF(_BaseNMF):
 
     def __init__(
         self,
-        n_components=None,
+        n_components="warn",
         *,
         init=None,
         batch_size=1024,
