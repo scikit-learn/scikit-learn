@@ -2269,10 +2269,13 @@ KERNEL_PARAMS = {
             StrOptions(set(PAIRWISE_KERNEL_FUNCTIONS) | {"precomputed"}),
             callable,
         ],
+        "filter_params": ["boolean"],
         "n_jobs": [Integral, None],
     }
 )
-def pairwise_kernels(X, Y=None, metric="linear", *, n_jobs=None, **kwds):
+def pairwise_kernels(
+    X, Y=None, metric="linear", *, filter_params=False, n_jobs=None, **kwds
+):
     """Compute the kernel between arrays X and optional array Y.
 
     This method takes either a vector array or a kernel matrix, and returns
@@ -2316,6 +2319,9 @@ def pairwise_kernels(X, Y=None, metric="linear", *, n_jobs=None, **kwds):
         matrices, not single samples. Use the string identifying the kernel
         instead.
 
+    filter_params : bool, default=False
+        Whether to filter invalid parameters or not.
+
     n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
@@ -2349,6 +2355,8 @@ def pairwise_kernels(X, Y=None, metric="linear", *, n_jobs=None, **kwds):
     elif isinstance(metric, GPKernel):
         func = metric.__call__
     elif metric in PAIRWISE_KERNEL_FUNCTIONS:
+        if filter_params:
+            kwds = {k: kwds[k] for k in kwds if k in KERNEL_PARAMS[metric]}
         func = PAIRWISE_KERNEL_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric, **kwds)
