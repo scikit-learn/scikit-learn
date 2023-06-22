@@ -787,7 +787,14 @@ def test_nmf_dtype_match(Estimator, solver, dtype_in, dtype_out):
     X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
     np.abs(X, out=X)
 
-    nmf = Estimator(alpha_W=1.0, alpha_H=1.0, tol=1e-2, random_state=0, **solver)
+    nmf = Estimator(
+        alpha_W=1.0,
+        alpha_H=1.0,
+        tol=1e-2,
+        random_state=0,
+        n_components="auto",
+        **solver,
+    )
 
     assert nmf.fit(X).transform(X).dtype == dtype_out
     assert nmf.fit_transform(X).dtype == dtype_out
@@ -1007,8 +1014,10 @@ def test_nmf_w_h_not_used_warning():
     ):
         # init is not custom.
         # H and W will not be initialized with H_init and W_init.
-        non_negative_factorization(X, H=H_init, update_H=True)
-        non_negative_factorization(X, W=W_init, H=H_init, update_H=True)
+        non_negative_factorization(X, H=H_init, update_H=True, n_components="auto")
+        non_negative_factorization(
+            X, W=W_init, H=H_init, update_H=True, n_components="auto"
+        )
 
     with pytest.warns(
         RuntimeWarning, match="The 'W' parameter provided will not be used and will"
