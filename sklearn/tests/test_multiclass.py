@@ -19,10 +19,10 @@ from sklearn.linear_model import (
     SGDClassifier,
 )
 from sklearn.metrics import (
-  npv_score,
-  precision_score,
-  recall_score,
-  specificity_score,
+    npv_score,
+    precision_score,
+    recall_score,
+    specificity_score,
 )
 from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.multiclass import (
