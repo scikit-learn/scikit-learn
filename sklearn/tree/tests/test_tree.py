@@ -2,65 +2,57 @@
 Testing for the tree module (sklearn.tree).
 """
 import copy
-import pickle
-from itertools import product, chain
-import struct
-import io
 import copyreg
-
-import pytest
-import numpy as np
-from numpy.testing import assert_allclose
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import coo_matrix
+import io
+import pickle
+import struct
+from itertools import chain, product
 
 import joblib
+import numpy as np
+import pytest
 from joblib.numpy_pickle import NumpyPickler
+from numpy.testing import assert_allclose
+from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 
-from sklearn.random_projection import _sparse_random_matrix
-
+from sklearn import datasets, tree
 from sklearn.dummy import DummyRegressor
-
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import mean_poisson_deviance
-
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics import accuracy_score, mean_poisson_deviance, mean_squared_error
 from sklearn.model_selection import train_test_split
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import create_memmap_backed_data
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import skip_if_32bit
-
+from sklearn.random_projection import _sparse_random_matrix
+from sklearn.tree import (
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    ExtraTreeClassifier,
+    ExtraTreeRegressor,
+)
+from sklearn.tree._classes import (
+    CRITERIA_CLF,
+    CRITERIA_REG,
+    DENSE_SPLITTERS,
+    SPARSE_SPLITTERS,
+)
+from sklearn.tree._tree import (
+    NODE_DTYPE,
+    TREE_LEAF,
+    TREE_UNDEFINED,
+    _check_n_classes,
+    _check_node_ndarray,
+    _check_value_ndarray,
+)
+from sklearn.tree._tree import Tree as CythonTree
+from sklearn.utils import _IS_32BIT, compute_sample_weight
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    create_memmap_backed_data,
+    ignore_warnings,
+    skip_if_32bit,
+)
 from sklearn.utils.estimator_checks import check_sample_weights_invariance
 from sklearn.utils.validation import check_random_state
-from sklearn.utils import _IS_32BIT
-
-from sklearn.exceptions import NotFittedError
-
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree import ExtraTreeClassifier
-from sklearn.tree import ExtraTreeRegressor
-
-from sklearn import tree
-from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
-from sklearn.tree._tree import Tree as CythonTree
-from sklearn.tree._tree import _check_n_classes
-from sklearn.tree._tree import _check_value_ndarray
-from sklearn.tree._tree import _check_node_ndarray
-from sklearn.tree._tree import NODE_DTYPE
-
-from sklearn.tree._classes import CRITERIA_CLF
-from sklearn.tree._classes import CRITERIA_REG
-from sklearn import datasets
-
-from sklearn.utils import compute_sample_weight
-from sklearn.tree._classes import DENSE_SPLITTERS, SPARSE_SPLITTERS
-
 
 CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")

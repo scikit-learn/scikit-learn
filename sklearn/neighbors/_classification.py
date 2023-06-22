@@ -7,21 +7,20 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
+import warnings
 from numbers import Integral
 
 import numpy as np
-from ..utils.fixes import _mode
-from ..utils.extmath import weighted_mode
-from ..utils.validation import _is_arraylike, _num_samples, check_is_fitted
 
-import warnings
-from ._base import _get_weights
-from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
-from ..base import ClassifierMixin
-from ..base import _fit_context
+from sklearn.neighbors._base import _check_precomputed
+
+from ..base import ClassifierMixin, _fit_context
 from ..metrics._pairwise_distances_reduction import ArgKminClassMode
 from ..utils._param_validation import StrOptions
-from sklearn.neighbors._base import _check_precomputed
+from ..utils.extmath import weighted_mode
+from ..utils.fixes import _mode
+from ..utils.validation import _is_arraylike, _num_samples, check_is_fitted
+from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
 
 
 def _adjusted_metric(metric, metric_kwargs, p=None):
