@@ -9,8 +9,11 @@ from sklearn import datasets
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
-from sklearn.utils._testing import SkipTest, assert_allclose
-from sklearn.utils.estimator_checks import _yield_array_api_checks
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils.estimator_checks import (
+    _yield_array_api_checks,
+    parametrize_with_checks,
+)
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
@@ -687,21 +690,17 @@ def test_variance_correctness(copy):
     np.testing.assert_allclose(pca_var, true_var)
 
 
-def test_array_api_compliance(global_random_seed):
-    # TODO: rewrite me as a pytest parametrized test with a parametrized
-    # generator instead of a for loop
-    estimators = [
+@parametrize_with_checks(
+    [
         PCA(n_components=2, svd_solver="full"),
         PCA(
             n_components=2,
             svd_solver="randomized",
             power_iteration_normalizer="QR",
-            random_state=global_random_seed,
+            random_state=0,  # how to use global_random_seed here?
         ),
-    ]
-    for estimator in estimators:
-        for check in _yield_array_api_checks():
-            try:
-                check(estimator.__class__.__name__, estimator, check_values=True)
-            except SkipTest:
-                pass
+    ],
+    check_yielder=_yield_array_api_checks,
+)
+def test_array_api_compliance(check, estimator, request):
+    check(estimator, check_values=True)

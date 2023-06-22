@@ -502,12 +502,12 @@ def _should_be_skipped_or_marked(estimator, check):
     return False, "placeholder reason that will never be used"
 
 
-def parametrize_with_checks(estimators):
+def parametrize_with_checks(estimators, check_yielder=None):
     """Pytest specific decorator for parametrizing estimator checks.
 
-    The `id` of each check is set to be a pprint version of the estimator
-    and the name of the check with its keyword arguments.
-    This allows to use `pytest -k` to specify which tests to run::
+    The `id` of each check is set to be a pprint version of the estimator and
+    the name of the check with its keyword arguments. This allows to use
+    `pytest -k` to specify which tests to run::
 
         pytest test_check_estimators.py -k check_estimators_fit_returns_self
 
@@ -521,6 +521,12 @@ def parametrize_with_checks(estimators):
            classes was removed in 0.24. Pass an instance instead.
 
         .. versionadded:: 0.24
+
+    check_yielder : callable, default=None
+        A callable that yields custom estimator checks. If None, the default
+        checks are used.
+
+        .. versionadded:: 1.4
 
     Returns
     -------
@@ -552,10 +558,13 @@ def parametrize_with_checks(estimators):
         )
         raise TypeError(msg)
 
+    if check_yielder is None:
+        check_yielder = _yield_all_checks
+
     def checks_generator():
         for estimator in estimators:
             name = type(estimator).__name__
-            for check in _yield_all_checks(estimator):
+            for check in check_yielder():
                 check = partial(check, name)
                 yield _maybe_mark_xfail(estimator, check, pytest)
 
