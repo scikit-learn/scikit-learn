@@ -61,10 +61,11 @@ class Pipeline(_BaseComposition):
     cross-validated together while setting different parameters. For this, it
     enables setting parameters of the various steps using their names and the
     parameter name separated by a `'__'`. For instance, if one has a pipeline
-    with an `SVC()` named `"clf"`, then setting `clf__C=10` is equivalent to
+    with an `SVC()` named `'clf'`, then setting `clf__C=10` is equivalent to
     setting `SVC(C=10)` in that pipeline. Moreover, a step's estimator may be
     replaced entirely by setting the parameter with its name to another estimator,
-    or a transformer removed by setting it to `'passthrough'` or `None`.
+    or a transformer removed by setting it to `'passthrough'` or `None`. These
+    can be especially useful when performing grid searches.
 
     Read more in the :ref:`User Guide <pipeline>`.
 
@@ -973,10 +974,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     several feature extraction mechanisms into a single transformer.
 
     Parameters of the transformers may be set using its name and the parameter
-    name separated by a '__'. A transformer may be replaced entirely by
-    setting the parameter with its name to another transformer, removed by
-    setting to 'drop' or disabled by setting to 'passthrough' (features are
-    passed without transformation).
+    name separated by a '__'. For instance, if one has a feature union with a
+    `PCA()` named `'linear_pca'`, then setting `linear_pca__n_components=10` is
+    equivalent to setting `PCA(n_components=10)` in that feature union.  Moreover,
+    a transformer may be replaced entirely by setting the parameter with its name
+    to another transformer, removed by setting to 'drop' or disabled by setting to
+    'passthrough' (features are passed without transformation). These can be
+    especially useful when performing grid searches.
 
     Read more in the :ref:`User Guide <feature_union>`.
 
