@@ -289,7 +289,11 @@ conda_build_metadata_list = [
             "pooch",
             "sphinxext-opengraph",
         ],
-        "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel", "sphinx-copybutton"],
+        "pip_dependencies": [
+            "jupyterlite-sphinx",
+            "jupyterlite-pyodide-kernel",
+            "sphinx-copybutton",
+        ],
         "package_constraints": {
             "python": "3.9",
             # XXX: sphinx > 6.0 does not correctly generate searchindex.js
