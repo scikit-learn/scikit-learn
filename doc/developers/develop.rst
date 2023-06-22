@@ -412,7 +412,7 @@ trailing ``_`` is used to check if the estimator has been fitted.
 
 Linking the documentation
 -------------------------
-Estimators include a function ``_get_url_link``, which is used to get the URL
+Estimators include a method ``_get_url_link``, which is used to get the URL
 of the documentation of the estimator. This function is used to prepare the html
 representation of the estimator, e.g., when using the ``display`` function in a
 Jupyter notebook.
