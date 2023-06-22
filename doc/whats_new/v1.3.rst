@@ -244,7 +244,7 @@ Changelog
   This fails with numpy>=1.25.0 with a ValueError, asking to use `.any()` or
   `.all()` to clarify. Fixed to first explicitly check if `self.init` is a str
   and only then do a string comparison.
-  :pr:"26657" by :user:`Binesh Bannerjee <bnsh>`.
+  :pr:`26657` by :user:`Binesh Bannerjee <bnsh>`.
 
 :mod:`sklearn.compose`
 ......................
