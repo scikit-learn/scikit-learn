@@ -367,7 +367,10 @@ def k_means(
         n_init consecutive runs in terms of inertia.
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        10 if using `init='random'`, 1 if using `init='k-means++'`.
+        10 if using `init='random'`
+        1 if using `init=`k-means++'`
+        10 if init is a callable
+        1 if init is array-like.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -1266,7 +1269,7 @@ class KMeans(_BaseKMeans):
         10 if using `init='random'`
         1 if using `init=`k-means++'`
         10 if init is a callable
-        1 if init is array-like
+        1 if init is array-like.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -1805,7 +1808,7 @@ class MiniBatchKMeans(_BaseKMeans):
         3 if using `init='random'`
         1 if using `init=`k-means++'`
         3 if init is a callable
-        1 if init is array-like
+        1 if init is array-like.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
