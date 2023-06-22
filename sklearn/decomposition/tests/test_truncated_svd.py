@@ -1,13 +1,12 @@
 """Test truncated SVD transformer."""
 
 import numpy as np
+import pytest
 import scipy.sparse as sp
 
-import pytest
-
-from sklearn.decomposition import TruncatedSVD, PCA
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_array_less, assert_allclose
+from sklearn.utils._testing import assert_allclose, assert_array_less
 
 SVD_SOLVERS = ["arpack", "randomized"]
 

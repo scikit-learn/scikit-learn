@@ -8,16 +8,16 @@ Various bayesian regression
 import warnings
 from math import log
 from numbers import Integral, Real
+
 import numpy as np
 from scipy import linalg
-
-from ._base import LinearModel, _preprocess_data, _rescale_data
-from ..base import RegressorMixin
-from ..base import _fit_context
-from ..utils.extmath import fast_logdet
 from scipy.linalg import pinvh
+
+from ..base import RegressorMixin, _fit_context
+from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils.extmath import fast_logdet
 from ..utils.validation import _check_sample_weight
-from ..utils._param_validation import Interval, Hidden, StrOptions
+from ._base import LinearModel, _preprocess_data, _rescale_data
 
 
 # TODO(1.5) Remove

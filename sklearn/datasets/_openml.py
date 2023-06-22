@@ -7,18 +7,20 @@ import time
 from contextlib import closing
 from functools import wraps
 from os.path import join
-from typing import Callable, Optional, Dict, Tuple, List, Any, Union
 from tempfile import TemporaryDirectory
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from urllib.error import HTTPError, URLError
-from urllib.request import urlopen, Request
+from urllib.request import Request, urlopen
 from warnings import warn
 
 import numpy as np
 
+from ..utils import (
+    Bunch,
+    check_pandas_support,  # noqa
+)
 from . import get_data_home
 from ._arff_parser import load_arff_from_gzip_file
-from ..utils import Bunch
-from ..utils import check_pandas_support  # noqa
 
 __all__ = ["fetch_openml"]
 

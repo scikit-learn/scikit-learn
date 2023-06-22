@@ -1,17 +1,17 @@
 import re
 
 import numpy as np
-from scipy import sparse
 import pytest
+from scipy import sparse
 
 from sklearn.exceptions import NotFittedError
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import _convert_container
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
 from sklearn.utils import is_scalar_nan
-
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import OrdinalEncoder
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose,
+    assert_array_equal,
+)
 
 
 def test_one_hot_encoder_sparse_dense():
