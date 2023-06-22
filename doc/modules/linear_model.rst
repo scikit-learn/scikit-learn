@@ -640,8 +640,9 @@ the regularization parameter almost for free, thus a common operation
 is to retrieve the path with one of the functions :func:`lars_path`
 or :func:`lars_path_gram`.
 
-Mathematical formulation
-------------------------
+|details-start|
+**Mathematical formulation**
+|details-split|
 
 The algorithm is similar to forward stepwise regression, but instead
 of including features at each step, the estimated coefficients are
@@ -659,6 +660,8 @@ column is always zero.
  * Original Algorithm is detailed in the paper `Least Angle Regression
    <https://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
    by Hastie et al.
+
+|details-end|
 
 .. _omp:
 
