@@ -201,7 +201,9 @@ alpha parameter, the fewer features selected.
 
 .. _compressive_sensing:
 
-.. topic:: **L1-recovery and compressive sensing**
+|detail-start|
+**L1-recovery and compressive sensing**
+|detail-split|
 
    For a good choice of alpha, the :ref:`lasso` can fully recover the
    exact set of non-zero variables using only few observations, provided
@@ -221,10 +223,17 @@ alpha parameter, the fewer features selected.
    (:class:`LassoLarsIC`) tends, on the opposite, to set high values of
    alpha.
 
-   **Reference** Richard G. Baraniuk "Compressive Sensing", IEEE Signal
+|detail-end|
+
+|detail-start|
+**Reference**
+|detail-split|
+
+   Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
    http://users.isr.ist.utl.pt/~aguiar/CS_notes.pdf
 
+|detail-end|
 
 Tree-based feature selection
 ----------------------------
@@ -281,6 +290,10 @@ instead of starting with no features and greedily adding features, we start
 with *all* the features and greedily *remove* features from the set. The
 `direction` parameter controls whether forward or backward SFS is used.
 
+|detail-start|
+**Detail on Sequential Feature Selection**
+|detail-split|
+
 In general, forward and backward selection do not yield equivalent results.
 Also, one may be much faster than the other depending on the requested number
 of selected features: if we have 10 features and ask for 7 selected features,
@@ -297,6 +310,8 @@ cross-validation requires fitting `m * k` models, while
 :class:`~sklearn.feature_selection.RFE` would require only a single fit, and
 :class:`~sklearn.feature_selection.SelectFromModel` always just does a single
 fit and requires no iterations.
+
+|detail-end|
 
 .. topic:: Examples
 
