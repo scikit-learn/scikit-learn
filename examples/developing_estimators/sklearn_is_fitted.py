@@ -1,7 +1,7 @@
 """
-===================================================
-``__sklearn_is_fitted__`` as Internal Developer API
-===================================================
+==========================================
+``__sklearn_is_fitted__`` as Developer API
+==========================================
 
 Developers should use :func:`~sklearn.sklearn.utils.validation.check_is_fitted`
 at the beginning of all methods except ``fit``. If they need to customize or
@@ -32,8 +32,8 @@ from sklearn.utils.validation import check_is_fitted
 
 
 class CustomEstimator(BaseEstimator, ClassifierMixin):
-    def __init__(self):
-        self._is_fitted = False
+    def __init__(self, parameter=1):
+        self.parameter = parameter
 
     def fit(self, X, y):
         """
