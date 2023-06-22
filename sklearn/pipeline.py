@@ -120,6 +120,7 @@ class Pipeline(_BaseComposition):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.svm import SVC
     >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.datasets import make_classification
@@ -128,11 +129,14 @@ class Pipeline(_BaseComposition):
     >>> X, y = make_classification(random_state=0)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
     ...                                                     random_state=0)
-    >>> pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC())])
+    >>> sample_weight = np.ones(X_train.shape[0])
+    >>> pipe = Pipeline([('scaler', StandardScaler()), ('classifier', SVC())])
     >>> # The pipeline can be used as any other estimator
     >>> # and avoids leaking the test set into the train set
-    >>> pipe.fit(X_train, y_train)
-    Pipeline(steps=[('scaler', StandardScaler()), ('svc', SVC())])
+    >>> # Note that using 'classifier__sample_weight' sets the 'sample_weight'
+    >>> # parameter during the fitting of the SVC 'classifier'
+    >>> pipe.fit(X_train, y_train, classifier__sample_weight=sample_weight)
+    Pipeline(steps=[('scaler', StandardScaler()), ('classifier', SVC())])
     >>> pipe.score(X_test, y_test)
     0.88
     """
