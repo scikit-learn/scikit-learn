@@ -48,3 +48,6 @@ TODO: update at the time of the release.
   :meth:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
   passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
   Jalali`_.
+- |Enhancement| The default value in the `n_components` parameter of :func:`non_negative_factorization` in :class:`decomposition.NMF` and
+  :class:`decomposition.MiniBatchNMF` will change from `None` to `auto` in version 1.6, so that its value is automatically computed when H is provided.
+  :pr:`26634` by :user:`Alexandre Landeau <AlexL>` and :user:`Alexandre Vigny <avigny>`.
