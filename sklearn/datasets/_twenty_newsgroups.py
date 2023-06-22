@@ -161,7 +161,8 @@ def strip_newsgroup_footer(text):
         "remove": [tuple],
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_20newsgroups(
     *,
@@ -355,7 +356,8 @@ def fetch_20newsgroups(
         "return_X_y": ["boolean"],
         "normalize": ["boolean"],
         "as_frame": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_20newsgroups_vectorized(
     *,
