@@ -25,19 +25,19 @@ from ..base import (
     _fit_context,
 )
 from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state, check_array, gen_batches, metadata_routing
-from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.validation import (
-    check_is_fitted,
-    check_non_negative,
-    _num_features,
-    _num_samples,
-)
+from ..utils import check_array, check_random_state, gen_batches, metadata_routing
 from ..utils._param_validation import (
+    Hidden,
     Interval,
     StrOptions,
-    Hidden,
     validate_params,
+)
+from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
+from ..utils.validation import (
+    _num_features,
+    _num_samples,
+    check_is_fitted,
+    check_non_negative,
 )
 from ._cdnmf_fast import _update_cdnmf_fast
 
@@ -1214,24 +1214,24 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
     def _check_w_h(self, X, W, H, update_H):
         """Check W and H, or initialize them."""
-
         n_samples, n_features = X.shape
-        if self.init == "custom" and self.n_components == "auto":
-            if W is not None:
-                if H is not None:
-                    n_samples_H = _num_samples(H)
-                    n_features_W = _num_features(W)
-                    if n_samples_H != n_features_W:
-                        raise ValueError(
-                            "Incompatible shapes for H and W. Expected n_features for"
-                            f" W and n_samples for H to be equal. Got {n_samples_H} and"
-                            f" {n_features_W} instead."
-                        )
-                    self._n_components = n_samples_H
-                else:
-                    self._n_components = _num_features(W)
-            elif H is not None:
+        if self.n_components == "auto":
+            if H is not None:
                 self._n_components = _num_samples(H)
+            elif W is not None:
+                self._n_components = _num_features(W)
+            else:
+                self._n_components = X.shape[1]
+
+        if W is not None and H is not None:
+            n_samples_H = _num_samples(H)
+            n_features_W = _num_features(W)
+            if n_samples_H != n_features_W:
+                raise ValueError(
+                    "Incompatible shapes for H and W. Expected n_features for"
+                    f" W and n_samples for H to be equal. Got {n_samples_H} and"
+                    f" {n_features_W} instead."
+                )
 
         if self.init == "custom" and update_H:
             _check_init(H, (self._n_components, n_features), "NMF (input H)")
