@@ -233,8 +233,8 @@ def check_paired_arrays(X, Y):
 # Pairwise distances
 @validate_params(
     {
-        "X": ["array-like"],
-        "Y": ["array-like", None],
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
         "Y_norm_squared": ["array-like", None],
         "squared": ["boolean"],
         "X_norm_squared": ["array-like", None],
