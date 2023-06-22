@@ -135,7 +135,10 @@ def construct_grids(batch):
     return (xgrid, ygrid)
 
 
-@validate_params({"data_home": [str, None], "download_if_missing": ["boolean"]})
+@validate_params(
+    {"data_home": [str, None], "download_if_missing": ["boolean"]},
+    prefer_skip_nested_validation=True,
+)
 def fetch_species_distributions(*, data_home=None, download_if_missing=True):
     """Loader for species distribution dataset from Phillips et. al. (2006).
 

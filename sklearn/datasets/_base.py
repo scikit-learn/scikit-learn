@@ -35,7 +35,8 @@ RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "check
 @validate_params(
     {
         "data_home": [str, os.PathLike, None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def get_data_home(data_home=None) -> str:
     """Return the path of the scikit-learn data directory.
@@ -73,7 +74,8 @@ def get_data_home(data_home=None) -> str:
 @validate_params(
     {
         "data_home": [str, os.PathLike, None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def clear_data_home(data_home=None):
     """Delete all the content of the data home cache.
@@ -117,7 +119,8 @@ def _convert_data_dataframe(
         "decode_error": [StrOptions({"strict", "ignore", "replace"})],
         "random_state": ["random_state"],
         "allowed_extensions": [list, None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_files(
     container_path,
@@ -451,7 +454,8 @@ def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
     {
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_wine(*, return_X_y=False, as_frame=False):
     """Load and return the wine dataset (classification).
@@ -573,7 +577,10 @@ def load_wine(*, return_X_y=False, as_frame=False):
     )
 
 
-@validate_params({"return_X_y": ["boolean"], "as_frame": ["boolean"]})
+@validate_params(
+    {"return_X_y": ["boolean"], "as_frame": ["boolean"]},
+    prefer_skip_nested_validation=True,
+)
 def load_iris(*, return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
@@ -697,7 +704,10 @@ def load_iris(*, return_X_y=False, as_frame=False):
     )
 
 
-@validate_params({"return_X_y": ["boolean"], "as_frame": ["boolean"]})
+@validate_params(
+    {"return_X_y": ["boolean"], "as_frame": ["boolean"]},
+    prefer_skip_nested_validation=True,
+)
 def load_breast_cancer(*, return_X_y=False, as_frame=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
@@ -852,7 +862,8 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         "n_class": [Interval(Integral, 1, 10, closed="both")],
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     """Load and return the digits dataset (classification).
@@ -988,7 +999,8 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
 
 
 @validate_params(
-    {"return_X_y": ["boolean"], "as_frame": ["boolean"], "scaled": ["boolean"]}
+    {"return_X_y": ["boolean"], "as_frame": ["boolean"], "scaled": ["boolean"]},
+    prefer_skip_nested_validation=True,
 )
 def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     """Load and return the diabetes dataset (regression).
@@ -1105,7 +1117,8 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     {
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_linnerud(*, return_X_y=False, as_frame=False):
     """Load and return the physical exercise Linnerud dataset.
@@ -1275,7 +1288,8 @@ def load_sample_images():
 @validate_params(
     {
         "image_name": [StrOptions({"china.jpg", "flower.jpg"})],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image.
