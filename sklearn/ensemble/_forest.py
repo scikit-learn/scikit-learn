@@ -1281,8 +1281,12 @@ class RandomForestClassifier(ForestClassifier):
 
         If monotonic_cst is None, no constraints are applied.
 
-        The constraints are only valid for binary classification and hold
-        over the probability of the positive class.
+        Monotonicity constraints are not supported for:
+          - multiclass classifications (i.e. when `n_classes > 2`),
+          - multioutput classifications (i.e. when `n_outputs_ > 1`),
+          - classifications trained on data with missing values.
+
+        The constraints hold over the probability of the positive class.
 
         .. versionadded:: 1.4
 
@@ -1651,8 +1655,9 @@ class RandomForestRegressor(ForestRegressor):
 
         If monotonic_cst is None, no constraints are applied.
 
-        Monotonicity constraints are not supported for multioutput regression
-        (i.e. when `n_outputs_ > 1`).
+        Monotonicity constraints are not supported for:
+          - multioutput regressions (i.e. when `n_outputs_ > 1`),
+          - regressions trained on data with missing values.
 
         .. versionadded:: 1.4
 
@@ -2015,8 +2020,12 @@ class ExtraTreesClassifier(ForestClassifier):
 
         If monotonic_cst is None, no constraints are applied.
 
-        The constraints are only valid for binary classification and hold
-        over the probability of the positive class.
+        Monotonicity constraints are not supported for:
+          - multiclass classifications (i.e. when `n_classes > 2`),
+          - multioutput classifications (i.e. when `n_outputs_ > 1`),
+          - classifications trained on data with missing values.
+
+        The constraints hold over the probability of the positive class.
 
         .. versionadded:: 1.4
 
@@ -2370,8 +2379,9 @@ class ExtraTreesRegressor(ForestRegressor):
 
         If monotonic_cst is None, no constraints are applied.
 
-        Monotonicity constraints are not supported for multioutput regression
-        (i.e. when `n_outputs_ > 1`).
+        Monotonicity constraints are not supported for:
+          - multioutput regressions (i.e. when `n_outputs_ > 1`),
+          - regressions trained on data with missing values.
 
         .. versionadded:: 1.4
 
