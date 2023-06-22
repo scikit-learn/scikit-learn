@@ -1,7 +1,7 @@
 """
-===================================================
-``__sklearn_is_fitted__`` as Internal Developer API
-===================================================
+==========================================
+``__sklearn_is_fitted__`` as Developer API
+==========================================
 
 Developers should use :func:`~sklearn.sklearn.utils.validation.check_is_fitted`
 at the beginning of all methods except ``fit``. If they need to customize or
