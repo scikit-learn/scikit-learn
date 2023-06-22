@@ -211,13 +211,16 @@ cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
 example `cv=10` for 10-fold cross-validation, rather than Leave-One-Out
 Cross-Validation.
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
     * "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
       <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
       `course slides
       <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
+|details-end|
 
 .. _lasso:
 
@@ -270,21 +273,21 @@ computes the coefficients along the full path of possible values.
       thus be used to perform feature selection, as detailed in
       :ref:`l1_feature_selection`.
 
-The following two references explain the iterations
-used in the coordinate descent solver of scikit-learn, as well as
-the duality gap computation used for convergence control.
-
 |details-start|
 **References**
 |details-split|
 
-    * "Regularization Path For Generalized linear Models by Coordinate Descent",
-      Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
-      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`__).
-    * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
-      S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
-      in IEEE Journal of Selected Topics in Signal Processing, 2007
-      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
+The following two references explain the iterations
+used in the coordinate descent solver of scikit-learn, as well as
+the duality gap computation used for convergence control.
+
+* "Regularization Path For Generalized linear Models by Coordinate Descent",
+  Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
+  <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`__).
+* "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
+  S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
+  in IEEE Journal of Selected Topics in Signal Processing, 2007
+  (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
 
 |details-end|
 
@@ -342,6 +345,11 @@ the problem is badly conditioned (e.g. more features than samples).
     :target: ../auto_examples/linear_model/plot_lasso_lars_ic.html
     :align: center
     :scale: 50%
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars_ic.py`
 
 .. _aic_bic:
 
@@ -412,12 +420,6 @@ formula is valid only when `n_samples > n_features`.
           <10.1162/089976603321891864>`
 
 |details-end|
-
-.. topic:: Examples:
-
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars_ic.py`
-
 
 Comparison with the regularization parameter of SVM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -521,22 +523,22 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`
-  
-The following two references explain the iterations
-used in the coordinate descent solver of scikit-learn, as well as
-the duality gap computation used for convergence control.
 
 |details-start|
 **References**
 |details-split|
 
-  * "Regularization Path For Generalized linear Models by Coordinate Descent",
-    Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
-    <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`__).
-  * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
-    S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
-    in IEEE Journal of Selected Topics in Signal Processing, 2007
-    (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
+The following two references explain the iterations
+used in the coordinate descent solver of scikit-learn, as well as
+the duality gap computation used for convergence control.
+
+* "Regularization Path For Generalized linear Models by Coordinate Descent",
+  Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
+  <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`__).
+* "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
+  S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
+  in IEEE Journal of Selected Topics in Signal Processing, 2007
+  (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
 
 |details-end|
 
@@ -908,6 +910,18 @@ regularization.
     implemented in scikit-learn, so it expects a categorical target, making
     the Logistic Regression a classifier.
 
+.. topic:: Examples
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_l1_l2_sparsity.py`
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_20newsgroups.py`
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_mnist.py`
+
 Binary Case
 -----------
 
@@ -1035,18 +1049,6 @@ The "lbfgs" solver is used by default for its robustness. For large datasets
 the "saga" solver is usually faster.
 For large dataset, you may also consider using :class:`SGDClassifier`
 with `loss="log_loss"`, which might be even faster but requires more tuning.
-
-.. topic:: Examples
-
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_l1_l2_sparsity.py`
-
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`
-
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`
-
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_20newsgroups.py`
-
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_mnist.py`
 
 .. _liblinear_differences:
 
@@ -1344,9 +1346,7 @@ E.g., with ``loss="log"``, :class:`SGDClassifier`
 fits a logistic regression model,
 while with ``loss="hinge"`` it fits a linear support vector machine (SVM).
 
-.. topic:: References:
-
- * :ref:`sgd`
+You can refer to the dedicated :ref:`sgd` documentation section for more details.
 
 .. _perceptron:
 
@@ -1382,13 +1382,15 @@ For classification, :class:`PassiveAggressiveClassifier` can be used with
 ``loss='epsilon_insensitive'`` (PA-I) or
 ``loss='squared_epsilon_insensitive'`` (PA-II).
 
-.. topic:: References:
-
+|details-start|
+**References**
+|details-split|
 
  * `"Online Passive-Aggressive Algorithms"
    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
+|details-end|
 
 Robustness regression: outliers and modeling errors
 =====================================================
@@ -1447,9 +1449,7 @@ Note that in general, robust fitting in high-dimensional setting (large
 in these settings.
 
 
-|details-start|
-**Trade-offs: which estimator ?**
-|details-split|
+.. topic:: Trade-offs: which estimator ?
 
   Scikit-learn provides 3 robust regression estimators:
   :ref:`RANSAC <ransac_regression>`,
@@ -1474,9 +1474,7 @@ in these settings.
     medium-size outliers in the X direction, but this property will
     disappear in high-dimensional settings.
 
-When in doubt, use :ref:`RANSAC <ransac_regression>`.
-
-|details-end|
+  When in doubt, use :ref:`RANSAC <ransac_regression>`.
 
 .. _ransac_regression:
 
@@ -1502,6 +1500,10 @@ estimated only from the determined inliers.
    :align: center
    :scale: 50%
 
+.. topic:: Examples
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_robust_fit.py`
 
 |details-start|
 **Details of the algorithm**
@@ -1534,11 +1536,6 @@ performance.
 
 |details-end|
 
-.. topic:: Examples
-
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_robust_fit.py`
-
 |details-start|
 **References**
 |details-split|
@@ -1564,6 +1561,12 @@ multiple dimensions. It is thus robust to multivariate outliers. Note however
 that the robustness of the estimator decreases quickly with the dimensionality
 of the problem. It loses its robustness properties and becomes no
 better than an ordinary least squares in high dimension.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_theilsen.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_robust_fit.py`
+
 
 |details-start|
 **Theoretical considerations**
@@ -1609,11 +1612,6 @@ considering only a random subset of all possible combinations.
 
 |details-end|
 
-.. topic:: Examples:
-
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_theilsen.py`
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_robust_fit.py`
-
 
 .. _huber_regression:
 
@@ -1631,6 +1629,10 @@ but gives a lesser weight to them.
    :target: ../auto_examples/linear_model/plot_huber_vs_ridge.html
    :align: center
    :scale: 50%
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_huber_vs_ridge.py`
 
 |details-start|
 **Mathematical details**
@@ -1651,7 +1653,13 @@ where
         2\epsilon|z| - \epsilon^2, & \text{otherwise}
   \end{cases}
 
-It is advised to set the parameter ``epsilon`` to 1.35 to achieve 95% statistical efficiency.
+It is advised to set the parameter ``epsilon`` to 1.35 to achieve 95%
+statistical efficiency.
+
+.. topic:: References:
+
+  * Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale
+    estimates, pg 172
 
 |details-end|
 
@@ -1669,14 +1677,6 @@ in the following ways.
   samples while :class:`SGDRegressor` needs a number of passes on the training data to
   produce the same robustness.
 
-.. topic:: Examples:
-
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_huber_vs_ridge.py`
-
-.. topic:: References:
-
-  * Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale estimates, pg 172
-
 Note that this estimator is different from the R implementation of Robust Regression
 (https://stats.oarc.ucla.edu/r/dae/robust-regression/) because the R implementation does a weighted least
 squares implementation with weights given to each sample on the basis of how much the residual is
@@ -1690,6 +1690,33 @@ Quantile Regression
 Quantile regression estimates the median or other quantiles of :math:`y`
 conditional on :math:`X`, while ordinary least squares (OLS) estimates the
 conditional mean.
+
+Quantile regression may be useful if one is interested in predicting an
+interval instead of point prediction. Sometimes, prediction intervals are
+calculated based on the assumption that prediction error is distributed
+normally with zero mean and constant variance. Quantile regression provides
+sensible prediction intervals even for errors with non-constant (but
+predictable) variance or non-normal distribution.
+
+.. figure:: /auto_examples/linear_model/images/sphx_glr_plot_quantile_regression_002.png
+   :target: ../auto_examples/linear_model/plot_quantile_regression.html
+   :align: center
+   :scale: 50%
+
+Based on minimizing the pinball loss, conditional quantiles can also be
+estimated by models other than linear models. For example,
+:class:`~sklearn.ensemble.GradientBoostingRegressor` can predict conditional
+quantiles if its parameter ``loss`` is set to ``"quantile"`` and parameter
+``alpha`` is set to the quantile that should be predicted. See the example in
+:ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`.
+
+Most implementations of quantile regression are based on linear programming
+problem. The current implementation is based on
+:func:`scipy.optimize.linprog`.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_quantile_regression.py`
 
 |details-start|
 **Mathematical details**
@@ -1723,33 +1750,6 @@ much more robust to outliers than squared error based estimation of the mean.
 Somewhat in between is the :class:`HuberRegressor`.
 
 |details-end|
-
-Quantile regression may be useful if one is interested in predicting an
-interval instead of point prediction. Sometimes, prediction intervals are
-calculated based on the assumption that prediction error is distributed
-normally with zero mean and constant variance. Quantile regression provides
-sensible prediction intervals even for errors with non-constant (but
-predictable) variance or non-normal distribution.
-
-.. figure:: /auto_examples/linear_model/images/sphx_glr_plot_quantile_regression_002.png
-   :target: ../auto_examples/linear_model/plot_quantile_regression.html
-   :align: center
-   :scale: 50%
-
-Based on minimizing the pinball loss, conditional quantiles can also be
-estimated by models other than linear models. For example,
-:class:`~sklearn.ensemble.GradientBoostingRegressor` can predict conditional
-quantiles if its parameter ``loss`` is set to ``"quantile"`` and parameter
-``alpha`` is set to the quantile that should be predicted. See the example in
-:ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`.
-
-Most implementations of quantile regression are based on linear programming
-problem. The current implementation is based on
-:func:`scipy.optimize.linprog`.
-
-.. topic:: Examples:
-
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_quantile_regression.py`
 
 |details-start|
 **References**
