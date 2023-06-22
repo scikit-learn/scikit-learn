@@ -24,6 +24,7 @@ extends clustering by inducing a classifier from the cluster labels.
 #          Christos Aridas
 
 import matplotlib.pyplot as plt
+
 from sklearn.base import BaseEstimator, clone
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_blobs
@@ -31,7 +32,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.validation import check_is_fitted
-
 
 N_SAMPLES = 5000
 RANDOM_STATE = 42
