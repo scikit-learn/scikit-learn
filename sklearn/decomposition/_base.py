@@ -165,7 +165,7 @@ class _BasePCA(
         if self.whiten:
             return (
                 X
-                @ (np.sqrt(self.explained_variance_[:, np.newaxis]) * self.components_)
+                @ (xp.sqrt(self.explained_variance_[:, xp.newaxis]) * self.components_)
                 + self.mean_
             )
         else:
