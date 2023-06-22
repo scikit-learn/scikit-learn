@@ -18,10 +18,10 @@ import warnings
 
 import matplotlib.pyplot as plt
 
-from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import MinMaxScaler
 from sklearn import datasets
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import MinMaxScaler
 
 # different learning rate schedules and momentum parameters
 params = [

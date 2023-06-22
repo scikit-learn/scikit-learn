@@ -1,27 +1,26 @@
 import re
 import sys
-from io import StringIO
 import warnings
+from io import StringIO
 
 import numpy as np
+import pytest
 import scipy.sparse as sp
-
 from scipy import linalg
-from sklearn.decomposition import NMF, MiniBatchNMF
-from sklearn.decomposition import non_negative_factorization
-from sklearn.decomposition import _nmf as nmf  # For testing internals
 from scipy.sparse import csc_matrix
 
-import pytest
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.extmath import squared_norm
 from sklearn.base import clone
+from sklearn.decomposition import NMF, MiniBatchNMF, non_negative_factorization
+from sklearn.decomposition import _nmf as nmf  # For testing internals
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
+from sklearn.utils.extmath import squared_norm
 
 
 @pytest.mark.parametrize(

@@ -1,16 +1,16 @@
 import warnings
 
-import pytest
 import numpy as np
+import pytest
 from scipy import sparse
-from sklearn.utils import _safe_indexing
 
-from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils import _safe_indexing
 from sklearn.utils._testing import (
-    assert_array_equal,
-    assert_allclose_dense_sparse,
     _convert_container,
+    assert_allclose_dense_sparse,
+    assert_array_equal,
 )
 
 

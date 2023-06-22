@@ -8,22 +8,21 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 
 
 import warnings
-from numbers import Integral, Real
 from itertools import combinations
+from numbers import Integral, Real
 
 import numpy as np
-from scipy import linalg
-from scipy.special import binom
-from scipy.linalg.lapack import get_lapack_funcs
 from joblib import effective_n_jobs
+from scipy import linalg
+from scipy.linalg.lapack import get_lapack_funcs
+from scipy.special import binom
 
-from ._base import LinearModel
-from ..base import RegressorMixin
-from ..base import _fit_context
+from ..base import RegressorMixin, _fit_context
+from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
 from ..utils._param_validation import Interval
-from ..utils.parallel import delayed, Parallel
-from ..exceptions import ConvergenceWarning
+from ..utils.parallel import Parallel, delayed
+from ._base import LinearModel
 
 _EPSILON = np.finfo(np.double).eps
 
