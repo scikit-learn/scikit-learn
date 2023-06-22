@@ -80,6 +80,7 @@ def _write_label_html(
     inner_class="sk-label",
     checked=False,
     url_link="",
+    is_fitted_icon = ""
 ):
     """Write labeled html with or without a dropdown with named details"""
     out.write(f'<div class="{outer_class}"><div class="{inner_class} sk-toggleable">')
@@ -106,7 +107,7 @@ def _write_label_html(
         fmt_str = f"""<input class="sk-toggleable__control sk-hidden--visually"
              id="{est_id}"
              type="checkbox" {checked_str}><label for="{est_id}"
-             class="{label_class}">{name}{doc_link}</label><div
+             class="{label_class}">{name}{doc_link}{is_fitted_icon}</label><div
              class="sk-toggleable__content"><pre>{name_details}</pre></div>
             """
         out.write(fmt_str)
@@ -159,7 +160,7 @@ def _get_visual_block(estimator):
 
 
 def _write_estimator_html(
-    out, estimator, estimator_label, estimator_label_details, first_call=False
+    out, estimator, estimator_label, estimator_label_details, is_fitted_icon="", first_call=False
 ):
     """Write estimator to html in serial, parallel, or by itself (single)."""
     # Delayed to avoid circular import
@@ -168,6 +169,7 @@ def _write_estimator_html(
     if first_call:
         est_block = _get_visual_block(estimator)
     else:
+        is_fitted_icon=""
         with config_context(print_changed_only=True):
             est_block = _get_visual_block(estimator)
     # `estimator` can also be an instance of `_VisualBlock`
@@ -182,7 +184,7 @@ def _write_estimator_html(
 
         if estimator_label:
             _write_label_html(
-                out, estimator_label, estimator_label_details, url_link=url_link
+                out, estimator_label, estimator_label_details, url_link=url_link, is_fitted_icon=is_fitted_icon
             )
 
         kind = est_block.kind
@@ -238,10 +240,15 @@ def estimator_html_repr(estimator):
         check_is_fitted(estimator)
         bg = "f0f8ff"
         bgh = "d4ebff"
+        status_label = "<span>Estimator is fitted</span>"
     except NotFittedError:
         bg = "fff5e6"
         bgh = "ffe0b3"
-
+        status_label = "<span>Estimator is not fitted</span>"
+    is_fitted_icon = (
+            '<span class="sk-estimator-doc-link"'
+            f'>i{status_label}</span>'
+            )
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
         style_template = Template(_STYLE)
@@ -289,6 +296,7 @@ def estimator_html_repr(estimator):
             estimator.__class__.__name__,
             estimator_str,
             first_call=True,
+            is_fitted_icon=is_fitted_icon
         )
         out.write("</div></div>")
 

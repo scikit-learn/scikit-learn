@@ -202,7 +202,7 @@ display: none;
 
 /* For the docs link*/
 
-a.sk-estimator-doc-link {
+a.sk-estimator-doc-link, span.sk-estimator-doc-link {
   float: right;
   font-size: smaller;
   line-height: 1em;
@@ -219,13 +219,13 @@ a.sk-estimator-doc-link {
 
 
 
-div.sk-estimator:hover a.sk-estimator-doc-link:hover,  a.sk-estimator-doc-link:hover {
+div.sk-estimator:hover a.sk-estimator-doc-link:hover,  a.sk-estimator-doc-link:hover,  div.sk-estimator:hover span.sk-estimator-doc-link:hover,  span.sk-estimator-doc-link:hover {
   background-color: cornflowerblue;
   color: white;
   text-decoration: none;
 }
 
-a.sk-estimator-doc-link span {
+a.sk-estimator-doc-link span, span.sk-estimator-doc-link span {
   display: none;
   z-index: 200;
   position: absolute;
@@ -241,29 +241,29 @@ a.sk-estimator-doc-link span {
   width: min-content;
 }
 
-a.sk-estimator-doc-link:hover span {
+a.sk-estimator-doc-link:hover span, span.sk-estimator-doc-link:hover span {
   display: block;
 }
 
-div.sk-estimator a.sk-estimator-doc-link {
+div.sk-estimator a.sk-estimator-doc-link, div.sk-estimator span.sk-estimator-doc-link {
   color: #afc9e0;
   border: 1pt solid #afc9e077;
   background-color: #f0f8ff;
 }
 
-div.sk-estimator:hover a.sk-estimator-doc-link {
+div.sk-estimator:hover a.sk-estimator-doc-link, div.sk-estimator:hover span.sk-estimator-doc-link {
   background-color: white;
   border: cornflowerblue 1pt solid;
   color: cornflowerblue;
 }
 
-div.sk-label-container:hover a.sk-estimator-doc-link {
+div.sk-label-container:hover a.sk-estimator-doc-link, div.sk-label-container:hover span.sk-estimator-doc-link {
   background-color: white;
   border: cornflowerblue 1pt solid;
   color: cornflowerblue;
 }
 
-div.sk-label-container:hover a.sk-estimator-doc-link:hover, a.sk-estimator-doc-link:hover {
+div.sk-label-container:hover a.sk-estimator-doc-link:hover, a.sk-estimator-doc-link:hover, div.sk-label-container:hover span.sk-estimator-doc-link:hover, span.sk-estimator-doc-link:hover {
   background-color: cornflowerblue;
   color: white;
   text-decoration: none;
