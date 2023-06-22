@@ -36,11 +36,14 @@ jobs:
           pip install pytest ruff $(get_dep mypy min) $(get_dep black min) cython-lint
 
       - name: Run linting
+        id: lint-script
         # We download the linting script from main, since this workflow is run
         # from main itself.
         run: |
-          curl https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/build_tools/linting.sh -o ./build_tools/linting.sh
+          set +e
+          curl https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/build_tools/linting.sh --retry 5 -o ./build_tools/linting.sh
           ./build_tools/linting.sh &> /tmp/linting_output.txt
+          cat /tmp/linting_output.txt
 
       - name: Upload Artifact
         if: always()
