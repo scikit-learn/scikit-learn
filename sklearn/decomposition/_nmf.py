@@ -988,7 +988,6 @@ def non_negative_factorization(
         .. versionchanged:: 1.4
             Added `'auto'` value.
 
-
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
 
