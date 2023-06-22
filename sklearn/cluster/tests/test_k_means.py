@@ -347,14 +347,20 @@ def test_minibatch_kmeans_partial_fit_init(init):
         km.partial_fit(X)
     _check_fitted_model(km)
 
+
 @pytest.mark.parameterize(
     "init, expected_n_init",
     [
         ("k-means++", 1),
         ("random", "default"),
-        (lambda X, n_clusters, random_state: random_state.uniform(size=(n_clusters, X.shape[1])), "default"),
+        (
+            lambda X, n_clusters, random_state: random_state.uniform(
+                size=(n_clusters, X.shape[1])
+            ),
+            "default",
+        ),
         ("array-like", 1),
-    ]
+    ],
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_kmeans_init_auto_with_initial_centroids(Estimator, init, expected_n_init):
@@ -371,6 +377,7 @@ def test_kmeans_init_auto_with_initial_centroids(Estimator, init, expected_n_ini
 
     kmeans = Estimator(n_clusters=n_clusters, init=init, n_init="auto").fit(X)
     assert kmeans._n_init == expected_n_init
+
 
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_fortran_aligned_data(Estimator, global_random_seed):
