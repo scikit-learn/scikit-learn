@@ -907,7 +907,7 @@ class _BaseKMeans(
                 self._n_init = 1
             else:
                 raise ValueError(
-                    "Expect init to be one of [\"k-means++\", \"random\", callable or"
+                    'Expect init to be one of ["k-means++", "random", callable or'
                     "array-like of shape(n_clusters, n_features)]"
                 )
 
