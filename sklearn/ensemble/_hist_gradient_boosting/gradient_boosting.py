@@ -398,9 +398,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if use_pandas_categorical:
                     # pandas categories do not include missing values so there is
                     # no need to filter them out.
-                    categories = X.iloc[:, f_idx].cat.categories
-                    # OrdinalEncoder requires categories to be sorted
-                    categories = np.sort(categories)
+                    categories = X.iloc[:, f_idx].unique().dropna()
+                    # OrdinalEncoder requires categories backed by numerical values
+                    # to be sorted
+                    categories = np.asarray(categories)
+                    if categories.dtype.kind not in "OUS":
+                        categories = np.sort(categories)
                 else:
                     categories = _unique(_safe_indexing(X, f_idx, axis=1))
                     missing = np.isnan(categories)

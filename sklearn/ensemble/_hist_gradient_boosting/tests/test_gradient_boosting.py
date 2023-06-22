@@ -1496,6 +1496,6 @@ def test_categorical_features_warn():
     y = [0, 1, 0]
     hist = HistGradientBoostingClassifier(random_state=0)
 
-    msg = "The categorical_features parameter will change to 'by_dtype' in v1.5"
+    msg = "The categorical_features parameter will change to 'by_dtype' in v1.6"
     with pytest.warns(FutureWarning, match=msg):
         hist.fit(X, y)
