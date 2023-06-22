@@ -270,23 +270,13 @@ display: none;
   height: 1em;
   width: 1em;
   color: #f6e4d2;
-  text-decoration: none;
+  text-decoration: none!important;
   margin-left: 1ex;
 }
 
 .sk-estimator-doc-link.fitted {
-  float: right;
-  font-size: smaller;
-  line-height: 1em;
-  font-family: monospace;
-  background-color: white;
   border: #afc9e0 1pt solid;
-  border-radius: 1em;
-  height: 1em;
-  width: 1em;
   color: #afc9e0;
-  text-decoration: none;
-  margin-left: 1ex;
 }
 
 
