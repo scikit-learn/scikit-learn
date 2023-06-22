@@ -923,14 +923,8 @@ dt.label {
   padding-right: 0.5rem;
 }
 
-/* copy button */
-div.highlight:hover span.copybutton {
-  background-color: #3F556B;
-  color: white;
-}
-
-div.highlight:hover span.copybutton:hover {
-    background-color: #20252B;
+button.copybtn {
+  border: 0!important;
 }
 
 div.body img {
