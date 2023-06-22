@@ -964,6 +964,7 @@ def test_nmf_non_negative_factorization_n_components_auto():
     assert W.shape == W_init.shape
 
 
+# TODO(1.6): remove
 def test_nmf_n_components_default_value_warning():
     rng = np.random.RandomState(0)
     X = rng.random_sample((6, 5))
