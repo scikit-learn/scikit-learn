@@ -936,6 +936,7 @@ def test_NMF_inverse_transform_W_deprecation():
 
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
 def test_nmf_n_components_auto(Estimator):
+    # Checks n_components="auto" infers the right value for _n_components
     rng = np.random.RandomState(0)
     X = rng.random_sample((6, 5))
     W = rng.random_sample((6, 2))
@@ -947,10 +948,11 @@ def test_nmf_n_components_auto(Estimator):
         tol=1e-6,
     )
     est.fit_transform(X, W=W, H=H)
-    assert est._n_components == 2
+    assert est._n_components == H.shape[0]
 
 
 def test_nmf_non_negative_factorization_n_components_auto():
+    # Checks n_components="auto" infers the right value for _n_components
     rng = np.random.RandomState(0)
     X = rng.random_sample((6, 5))
     W_init = rng.random_sample((6, 2))
@@ -958,8 +960,8 @@ def test_nmf_non_negative_factorization_n_components_auto():
     W, H, _ = non_negative_factorization(
         X, W=W_init, H=H_init, init="custom", n_components="auto"
     )
-    assert H.shape[0] == 2
-    assert W.shape[1] == 2
+    assert H.shape == H_init.shape
+    assert W.shape == W_init.shape
 
 
 def test_nmf_n_components_default_value_warning():
