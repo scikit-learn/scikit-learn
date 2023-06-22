@@ -761,9 +761,9 @@ details, and give intuition to the reader on what the algorithm does.
 
 * Highlight the usefulness of the feature and its recommended application.
   Consider including the algorithm's complexity
-  (:math:`O\left(g\left(n\right)\right)`) if available, as machine-dependent
-  "rules of thumb" can be very machine-dependent. If those complexities are not
-  available, then rules of thumb may be provided instead.
+  (:math:`O\left(g\left(n\right)\right)`) if available, as "rules of thumb" can
+  be very machine-dependent. Only if those complexities are not available, then
+  rules of thumb may be provided instead.
 
 * Incorporate a relevant figure (generated from an example) to provide intuitions.
 
@@ -782,17 +782,9 @@ details, and give intuition to the reader on what the algorithm does.
   `list`). This is due to specific configurations we have set. Single
   backticks should be used nowadays.
 
-* Too much information makes it more difficult for users to access to the
-  content they are interested in. Use dropdowns to hide by default:
-
-  - low hierarchy sections such as `Examples`, `References`, `Properties`, etc.
-    See for instance the subsections in :ref:`det_curve`;
-  - in-depth mathematical details;
-  - narrative that is too use-case specific;
-  - narrative that may only interest users that want to go beyond the pragmatics
-    of a given tool.
-
-  The following syntax::
+* Too much information makes it more difficult for users to access the content
+  they are interested in. Use dropdowns to factorize it by using the following
+  syntax::
 
     |details-start|
     **Dropdown title**
@@ -802,7 +794,7 @@ details, and give intuition to the reader on what the algorithm does.
 
     |details-end|
 
-  will render the following dropdown:
+  The snippet above will result in the following dropdown:
 
   |details-start|
   **Dropdown title**
@@ -812,7 +804,27 @@ details, and give intuition to the reader on what the algorithm does.
 
   |details-end|
 
+* Information that can be hidden by default using dropdowns is:
+
+    * low hierarchy sections such as `References`, `Properties`, etc. (see for
+      instance the subsections in :ref:`det_curve`);
+
+    * in-depth mathematical details;
+
+    * narrative that is use-case specific;
+
+    * in general, narrative that may only interest users that want to go beyond
+      the pragmatics of a given tool.
+
+* Do not use dropdowns for the low level section `Examples`, as it should stay
+  visible to all users. Make sure that the `Examples` section comes right after
+  the main discussion with the least possible folded section in-between.
+
+* Be aware that dropdowns break cross-references. If that makes sense, hide the
+  reference along with the text mentioning it. Else, do not use dropdown.
+
 |details-end|
+
 
 |details-start|
 **Guidelines for writing references**
