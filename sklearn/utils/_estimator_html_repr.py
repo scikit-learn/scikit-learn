@@ -103,12 +103,12 @@ def _write_label_html(
         else:  # no url_link, add no link to the documentation
             doc_link = ""
 
-        fmt_str = (
-            f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}"'
-            f'type="checkbox" {checked_str}><label for="{est_id}"'
-            f'class="{label_class}">{name}{doc_link}</label><div'
-            f'class="sk-toggleable__content"><pre>{name_details}</pre></div>'
-        )
+        fmt_str = f"""<input class="sk-toggleable__control sk-hidden--visually"
+             id="{est_id}"
+             type="checkbox" {checked_str}><label for="{est_id}"
+             class="{label_class}">{name}{doc_link}</label><div
+             class="sk-toggleable__content"><pre>{name_details}</pre></div>
+            """
         out.write(fmt_str)
     else:
         out.write(f"<label>{name}</label>")

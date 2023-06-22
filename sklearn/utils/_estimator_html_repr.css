@@ -159,7 +159,7 @@
 
 #$id a.estimator_doc_link {
   float: right;
-  font-size: 1em;
+  font-size: smaller;
   line-height: 1em;
   font-family: monospace;
   background-color: white;
@@ -217,6 +217,8 @@ a.sk-estimator-doc-link {
   margin-left: 1ex;
 }
 
+
+
 div.sk-estimator:hover a.sk-estimator-doc-link:hover,  a.sk-estimator-doc-link:hover {
   background-color: cornflowerblue;
   color: white;
@@ -266,48 +268,3 @@ div.sk-label-container:hover a.sk-estimator-doc-link:hover, a.sk-estimator-doc-l
   color: white;
   text-decoration: none;
 }
-
-
-/* p.sk-label-fit-warning {
-  float: left;
-  font-size: smaller;
-  line-height: 1em;
-  font-family: monospace;
-  background-color: white;
-  border: #f1b232cc 1pt solid;
-  border-radius: 1em;
-  height: 1em;
-  width: 1em;
-  color: #f1b232cc;
-  text-decoration: none;
-  margin-left: 1ex;
-} */
-
-/* div.sk-label-container:hover sk-label-fit-warning {
-  background-color: white;
-  border: #e96d00de 1pt solid;
-  color: #e96d00de;
-}
-
-
-div.sk-label-container:hover a.sk-estimator-doc-link:hover, a.sk-estimator-doc-link:hover {
-  background-color: #e96d00de;
-  color: white;
-  text-decoration: none;
-} */
-
-/* pre.sk-label-fit-warning span {
-  display: none;
-  z-index: 200;
-  position: absolute;
-  background: #eff5ff;
-  color: black;
-  font-weight: normal;
-  padding: .5ex;
-  margin: .5ex;
-  border: .5pt solid cornflowerblue;
-  right: .2ex;
-  box-shadow: 2pt 2pt 4pt #999;
-  max-width: 30ex;
-  width: min-content;
-} */
