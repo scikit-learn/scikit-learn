@@ -897,12 +897,18 @@ class _BaseKMeans(
             )
             self._n_init = default_n_init
         if self._n_init == "auto":
-            if isinstance(self.init, str):
-                self._n_init = 1 if self.init == "k-means++" else default_n_init
+            if isinstance(self.init, str) and self.init == "k-means++":
+                self._n_init = 1
+            elif isinstance(self.init, str) and self.init == "random":
+                self._n_init = default_n_init
             elif callable(self.init):
                 self._n_init = default_n_init
-            else:
+            elif _is_arraylike_not_scalar(self.init):
                 self._n_init = 1
+            else:
+                raise ValueError(
+                    "Expect init to be one of [\"k-means++\", \"random\", callable or array-like of shape(n_clusters, n_features)]"
+                )
 
         if _is_arraylike_not_scalar(self.init) and self._n_init != 1:
             warnings.warn(
@@ -1256,7 +1262,10 @@ class KMeans(_BaseKMeans):
         high-dimensional problems (see :ref:`kmeans_sparse_high_dim`).
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        10 if using `init='random'`, 1 if using `init='k-means++'`.
+        10 if using `init='random'`
+        1 if using `init=`k-means++'`
+        10 if init is a callable
+        1 if init is array-like
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -1792,7 +1801,10 @@ class MiniBatchKMeans(_BaseKMeans):
         :ref:`kmeans_sparse_high_dim`).
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        3 if using `init='random'`, 1 if using `init='k-means++'`.
+        3 if using `init='random'`
+        1 if using `init=`k-means++'`
+        3 if init is a callable
+        1 if init is array-like
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
