@@ -2,12 +2,12 @@
 # Author: Nicolas Hug
 
 import itertools
-from abc import ABC, abstractmethod
-from functools import partial
-import itertools
-from contextlib import suppress
-from numbers import Real, Integral
 import warnings
+from abc import ABC, abstractmethod
+from contextlib import suppress
+from functools import partial
+from numbers import Integral, Real
+from time import time
 
 import numpy as np
 
@@ -20,26 +20,30 @@ from ..._loss.loss import (
     HalfPoissonLoss,
     PinballLoss,
 )
-from ...base import BaseEstimator, RegressorMixin, ClassifierMixin, is_classifier
-from ...utils import check_random_state, resample, compute_sample_weight
-from ...utils.validation import (
-    check_is_fitted,
-    check_array,
-    check_consistent_length,
-    _check_sample_weight,
-    _check_monotonic_cst,
-    _check_y,
+from ...base import (
+    BaseEstimator,
+    ClassifierMixin,
+    RegressorMixin,
+    _fit_context,
+    is_classifier,
 )
-from ...utils._param_validation import Interval, StrOptions, Hidden
-from ...utils._param_validation import RealNotInt
-from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils import _safe_indexing
-from ...utils._encode import _unique
-from ...utils.multiclass import check_classification_targets
+from ...compose import ColumnTransformer
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
-from ...preprocessing import LabelEncoder, OrdinalEncoder, FunctionTransformer
-from ...compose import ColumnTransformer
+from ...preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
+from ...utils import _safe_indexing, check_random_state, compute_sample_weight, resample
+from ...utils._encode import _unique
+from ...utils._openmp_helpers import _openmp_effective_n_threads
+from ...utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
+from ...utils.multiclass import check_classification_targets
+from ...utils.validation import (
+    _check_monotonic_cst,
+    _check_sample_weight,
+    _check_y,
+    check_array,
+    check_consistent_length,
+    check_is_fitted,
+)
 from ._gradient_boosting import _update_raw_predictions
 from .binning import _BinMapper
 from .common import G_H_DTYPE, X_DTYPE, Y_DTYPE
