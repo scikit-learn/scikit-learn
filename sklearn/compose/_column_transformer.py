@@ -620,7 +620,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             name for name, _, _, _ in self._iter(fitted=True, replace_strings=True)
         ]
         for Xs, name in zip(result, names):
-            if not getattr(Xs, "ndim", 0) == 2:
+            if not getattr(Xs, "ndim", 0) == 2 and not hasattr(Xs, "__dataframe__"):
                 raise ValueError(
                     "The output of the '{0}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name)

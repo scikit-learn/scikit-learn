@@ -16,6 +16,11 @@ from scipy.sparse import issparse
 
 from .. import get_config
 from ..exceptions import DataConversionWarning
+from ..externals._dataframe_api import (
+    get_dataframe_standard,
+    has_supported_dataframe_standards,
+)
+from ..utils.validation import _is_pandas_df
 from . import _joblib, metadata_routing
 from ._bunch import Bunch
 from ._estimator_html_repr import estimator_html_repr
@@ -199,6 +204,27 @@ def _pandas_indexing(X, key, key_dtype, axis):
         return indexer[:, key] if axis else indexer[key]
 
 
+def _dataframe_api_indexing(X, key, key_dtype, axis):
+    """Indexing for the dataframe API.
+
+    This function only supports the a subset of the functionality.
+    """
+    if axis != 1:
+        raise ValueError("dataframe API indexing only works with axis=1")
+    X_df_API = get_dataframe_standard(X)
+    columns = list(X_df_API.get_column_names())
+
+    column_indices = _get_column_indices(X, key)
+    selected_columns = [columns[i] for i in column_indices]
+
+    if np.isscalar(key):
+        # _series is not a part of a spec and depends on the implementation.
+        # https://github.com/data-apis/dataframe-api/issues/185
+        return X_df_API.get_column_by_name(selected_columns[0])._series
+    else:
+        return X_df_API.get_columns_by_name(selected_columns).dataframe
+
+
 def _list_indexing(X, key, key_dtype):
     """Index a Python list."""
     if np.isscalar(key) or isinstance(key, slice):
@@ -336,6 +362,9 @@ def _safe_indexing(X, indices, *, axis=0):
     if axis == 0 and indices_dtype == "str":
         raise ValueError("String indexing is not supported with 'axis=0'")
 
+    if not _is_pandas_df(X) and has_supported_dataframe_standards(X):
+        return _dataframe_api_indexing(X, indices, indices_dtype, axis=axis)
+
     if axis == 1 and X.ndim != 2:
         raise ValueError(
             "'X' should be a 2D NumPy array, 2D sparse matrix or pandas "
@@ -349,7 +378,7 @@ def _safe_indexing(X, indices, *, axis=0):
             "pandas DataFrames"
         )
 
-    if hasattr(X, "iloc"):
+    if _is_pandas_df(X):
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
     elif hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)
@@ -394,6 +423,74 @@ def _safe_assign(X, values, *, row_indexer=None, column_indexer=None):
         X[row_indexer, column_indexer] = values
 
 
+def _pandas_column_indices_str_key(X, key):
+    """Perform _get_column_indices when X is a pandas dataframe and key_type is str."""
+    n_columns = X.shape[1]
+
+    try:
+        all_columns = X.columns
+    except AttributeError:
+        raise ValueError(
+            "Specifying the columns using strings is only "
+            "supported for pandas DataFrames"
+        )
+    if isinstance(key, str):
+        columns = [key]
+    elif isinstance(key, slice):
+        start, stop = key.start, key.stop
+        if start is not None:
+            start = all_columns.get_loc(start)
+        if stop is not None:
+            # pandas indexing with strings is endpoint included
+            stop = all_columns.get_loc(stop) + 1
+        else:
+            stop = n_columns + 1
+        return list(islice(range(n_columns), start, stop))
+    else:
+        columns = list(key)
+
+    try:
+        column_indices = []
+        for col in columns:
+            col_idx = all_columns.get_loc(col)
+            if not isinstance(col_idx, numbers.Integral):
+                raise ValueError(
+                    f"Selected columns, {columns}, are not unique in dataframe"
+                )
+            column_indices.append(col_idx)
+
+    except KeyError as e:
+        raise ValueError("A given column is not a column of the dataframe") from e
+
+    return column_indices
+
+
+def _dataframe_protocol_indices_str_key(X, key):
+    """Perform _get_column_indices when X is a dataframe and key_type is str."""
+    X_df_api = get_dataframe_standard(X)
+    n_columns = X_df_api.shape()[1]
+
+    df_columns = list(X_df_api.get_column_names())
+
+    if isinstance(key, slice):
+        start, stop = key.start, key.stop
+        if start is not None:
+            start = df_columns.index(start)
+
+        if stop is not None:
+            stop = df_columns.index(stop) + 1
+        else:
+            stop = n_columns + 1
+        return list(islice(range(n_columns), start, stop))
+
+    selected_columns = [key] if np.isscalar(key) else key
+
+    try:
+        return [df_columns.index(col) for col in selected_columns]
+    except ValueError as e:
+        raise ValueError("A given column is not a column of the dataframe") from e
+
+
 def _get_column_indices(X, key):
     """Get feature column indices for input data X and key.
 
@@ -419,42 +516,10 @@ def _get_column_indices(X, key):
             ) from e
         return np.atleast_1d(idx).tolist()
     elif key_dtype == "str":
-        try:
-            all_columns = X.columns
-        except AttributeError:
-            raise ValueError(
-                "Specifying the columns using strings is only "
-                "supported for pandas DataFrames"
-            )
-        if isinstance(key, str):
-            columns = [key]
-        elif isinstance(key, slice):
-            start, stop = key.start, key.stop
-            if start is not None:
-                start = all_columns.get_loc(start)
-            if stop is not None:
-                # pandas indexing with strings is endpoint included
-                stop = all_columns.get_loc(stop) + 1
-            else:
-                stop = n_columns + 1
-            return list(islice(range(n_columns), start, stop))
+        if not _is_pandas_df(X) and has_supported_dataframe_standards(X):
+            return _dataframe_protocol_indices_str_key(X, key)
         else:
-            columns = list(key)
-
-        try:
-            column_indices = []
-            for col in columns:
-                col_idx = all_columns.get_loc(col)
-                if not isinstance(col_idx, numbers.Integral):
-                    raise ValueError(
-                        f"Selected columns, {columns}, are not unique in dataframe"
-                    )
-                column_indices.append(col_idx)
-
-        except KeyError as e:
-            raise ValueError("A given column is not a column of the dataframe") from e
-
-        return column_indices
+            return _pandas_column_indices_str_key(X, key)
     else:
         raise ValueError(
             "No valid specification of the columns. Only a "

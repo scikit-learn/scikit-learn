@@ -1,5 +1,6 @@
 """Tests for input validation functions"""
 
+import builtins
 import numbers
 import re
 import warnings
@@ -63,6 +64,7 @@ from sklearn.utils.validation import (
     _get_feature_names,
     _is_fitted,
     _is_pandas_df,
+    _is_polars_df,
     _num_features,
     _num_samples,
     assert_all_finite,
@@ -1744,6 +1746,38 @@ def test_is_pandas_df_pandas_not_installed(hide_available_pandas):
 
     assert not _is_pandas_df(np.asarray([1, 2, 3]))
     assert not _is_pandas_df(1)
+
+
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+)
+def test_is_polars_df_other_libraries(constructor_name, minversion):
+    df = _convert_container(
+        [[1, 4, 2], [3, 3, 6]],
+        constructor_name,
+        minversion=minversion,
+    )
+    if constructor_name in ("pyarrow", "dataframe"):
+        assert not _is_polars_df(df)
+    else:
+        assert _is_polars_df(df)
+
+
+def test_is_polars_df_pandas_not_installed(monkeypatch):
+    """Check _is_polars_df when polars is not installed."""
+
+    import_orig = builtins.__import__
+
+    def mocked_import(name, *args, **kwargs):
+        if name == "polars":
+            raise ImportError()
+        return import_orig(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", mocked_import)
+
+    assert not _is_polars_df(np.asarray([1, 2, 3]))
+    assert not _is_polars_df(1)
 
 
 def test_get_feature_names_numpy():

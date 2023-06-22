@@ -1998,6 +1998,18 @@ def _is_pandas_df(X):
     return False
 
 
+def _is_polars_df(X):
+    """Return True if the X is a polars dataframe."""
+    if hasattr(X, "columns") and hasattr(X, "schema"):
+        # Likely a polars DataFrame, we explicitly check the type to confirm.
+        try:
+            pl = sys.modules["polars"]
+        except KeyError:
+            return False
+        return isinstance(X, pl.DataFrame)
+    return False
+
+
 def _get_feature_names(X):
     """Get feature names from X.
 

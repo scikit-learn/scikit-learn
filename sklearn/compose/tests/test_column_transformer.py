@@ -24,6 +24,7 @@ from sklearn.preprocessing import (
     StandardScaler,
 )
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose_dense_sparse,
     assert_almost_equal,
     assert_array_equal,
@@ -39,7 +40,7 @@ class Trans(TransformerMixin, BaseEstimator):
         if hasattr(X, "to_frame"):
             return X.to_frame()
         # 1D array -> 2D array
-        if X.ndim == 1:
+        if hasattr(X, "ndim") and X.ndim == 1:
             return np.atleast_2d(X).T
         return X
 
@@ -160,11 +161,17 @@ def test_column_transformer_tuple_transformers_parameter():
     )
 
 
-def test_column_transformer_dataframe():
-    pd = pytest.importorskip("pandas")
+@pytest.mark.parametrize("constructor_name", ["dataframe", "polars"])
+def test_column_transformer_dataframe(constructor_name):
+    if constructor_name == "dataframe":
+        dataframe_lib = pytest.importorskip("pandas")
+    else:
+        dataframe_lib = pytest.importorskip(constructor_name)
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
-    X_df = pd.DataFrame(X_array, columns=["first", "second"])
+    X_df = _convert_container(
+        X_array, constructor_name, columns_name=["first", "second"]
+    )
 
     X_res_first = np.array([0, 1, 2]).reshape(-1, 1)
     X_res_both = X_array
@@ -190,9 +197,16 @@ def test_column_transformer_dataframe():
         (slice(0, 2), X_res_both),
         # boolean mask
         (np.array([True, False]), X_res_first),
-        (pd.Series([True, False], index=["first", "second"]), X_res_first),
         ([True, False], X_res_first),
     ]
+
+    if constructor_name == "dataframe":
+        cases.append(
+            (
+                dataframe_lib.Series([True, False], index=["first", "second"]),
+                X_res_first,
+            )
+        )
 
     for selection, res in cases:
         ct = ColumnTransformer([("trans", Trans(), selection)], remainder="drop")
@@ -261,8 +275,9 @@ def test_column_transformer_dataframe():
             return self
 
         def transform(self, X, y=None):
-            assert isinstance(X, (pd.DataFrame, pd.Series))
-            if isinstance(X, pd.Series):
+            assert isinstance(X, (dataframe_lib.DataFrame, dataframe_lib.Series))
+
+            if X.__class__.__name__ == "Series":
                 X = X.to_frame()
             return X
 
@@ -271,17 +286,18 @@ def test_column_transformer_dataframe():
     ct = ColumnTransformer([("trans", TransAssert(), ["first", "second"])])
     ct.fit_transform(X_df)
 
-    # integer column spec + integer column names -> still use positional
-    X_df2 = X_df.copy()
-    X_df2.columns = [1, 0]
-    ct = ColumnTransformer([("trans", Trans(), 0)], remainder="drop")
-    assert_array_equal(ct.fit_transform(X_df2), X_res_first)
-    assert_array_equal(ct.fit(X_df2).transform(X_df2), X_res_first)
+    if constructor_name == "dataframe":
+        # integer column spec + integer column names -> still use positional
+        X_df2 = X_df.copy()
+        X_df2.columns = [1, 0]
+        ct = ColumnTransformer([("trans", Trans(), 0)], remainder="drop")
+        assert_array_equal(ct.fit_transform(X_df2), X_res_first)
+        assert_array_equal(ct.fit(X_df2).transform(X_df2), X_res_first)
 
-    assert len(ct.transformers_) == 2
-    assert ct.transformers_[-1][0] == "remainder"
-    assert ct.transformers_[-1][1] == "drop"
-    assert_array_equal(ct.transformers_[-1][2], [1])
+        assert len(ct.transformers_) == 2
+        assert ct.transformers_[-1][0] == "remainder"
+        assert ct.transformers_[-1][1] == "drop"
+        assert_array_equal(ct.transformers_[-1][2], [1])
 
 
 @pytest.mark.parametrize("pandas", [True, False], ids=["pandas", "numpy"])
