@@ -2,8 +2,8 @@ from functools import wraps
 
 from scipy.sparse import issparse
 
-from . import check_pandas_support
 from .._config import get_config
+from . import check_pandas_support
 from ._available_if import available_if
 
 

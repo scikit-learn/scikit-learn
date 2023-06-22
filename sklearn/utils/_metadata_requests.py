@@ -89,7 +89,7 @@ from ._bunch import Bunch
 
 # Only the following methods are supported in the routing mechanism. Adding new
 # methods at the moment involves monkeypatching this list.
-METHODS = [
+SIMPLE_METHODS = [
     "fit",
     "partial_fit",
     "predict",
@@ -101,6 +101,16 @@ METHODS = [
     "transform",
     "inverse_transform",
 ]
+
+# These methods are a composite of other methods and one cannot set their
+# requests directly. Instead they should be set by setting the requests of the
+# simple methods which make the composite ones.
+COMPOSITE_METHODS = {
+    "fit_transform": ["fit", "transform"],
+    "fit_predict": ["fit", "predict"],
+}
+
+METHODS = SIMPLE_METHODS + list(COMPOSITE_METHODS.keys())
 
 
 def _routing_enabled():
@@ -195,10 +205,13 @@ class MethodMetadataRequest:
 
     method : str
         The name of the method to which these requests belong.
+
+    requests : dict of {str: bool, None or str}, default=None
+        The initial requests for this method.
     """
 
-    def __init__(self, owner, method):
-        self._requests = dict()
+    def __init__(self, owner, method, requests=None):
+        self._requests = requests or dict()
         self.owner = owner
         self.method = method
 
@@ -383,12 +396,43 @@ class MetadataRequest:
     _type = "metadata_request"
 
     def __init__(self, owner):
-        for method in METHODS:
+        self.owner = owner
+        for method in SIMPLE_METHODS:
             setattr(
                 self,
                 method,
                 MethodMetadataRequest(owner=owner, method=method),
             )
+
+    def __getattr__(self, name):
+        # Called when the default attribute access fails with an AttributeError
+        # (either __getattribute__() raises an AttributeError because name is
+        # not an instance attribute or an attribute in the class tree for self;
+        # or __get__() of a name property raises AttributeError). This method
+        # should either return the (computed) attribute value or raise an
+        # AttributeError exception.
+        # https://docs.python.org/3/reference/datamodel.html#object.__getattr__
+        if name not in COMPOSITE_METHODS:
+            raise AttributeError(
+                f"'{self.__class__.__name__}' object has no attribute '{name}'"
+            )
+
+        requests = {}
+        for method in COMPOSITE_METHODS[name]:
+            mmr = getattr(self, method)
+            existing = set(requests.keys())
+            upcoming = set(mmr.requests.keys())
+            common = existing & upcoming
+            conflicts = [key for key in common if requests[key] != mmr._requests[key]]
+            if conflicts:
+                raise ValueError(
+                    f"Conflicting metadata requests for {', '.join(conflicts)} while"
+                    f" composing the requests for {name}. Metadata with the same name"
+                    f" for methods {', '.join(COMPOSITE_METHODS[name])} should have the"
+                    " same request value."
+                )
+            requests.update(mmr._requests)
+        return MethodMetadataRequest(owner=self.owner, method=name, requests=requests)
 
     def _get_param_names(self, method, return_alias, ignore_self_request=None):
         """Get names of all metadata that can be consumed or routed by specified \
@@ -463,7 +507,7 @@ class MetadataRequest:
             A serialized version of the instance in the form of a dictionary.
         """
         output = dict()
-        for method in METHODS:
+        for method in SIMPLE_METHODS:
             mmr = getattr(self, method)
             if len(mmr.requests):
                 output[method] = mmr._serialize()
@@ -1121,7 +1165,7 @@ class _MetadataRequester:
             super().__init_subclass__(**kwargs)
             return
 
-        for method in METHODS:
+        for method in SIMPLE_METHODS:
             mmr = getattr(requests, method)
             # set ``set_{method}_request``` methods
             if not len(mmr.requests):
@@ -1181,7 +1225,7 @@ class _MetadataRequester:
         """
         requests = MetadataRequest(owner=cls.__name__)
 
-        for method in METHODS:
+        for method in SIMPLE_METHODS:
             setattr(
                 requests,
                 method,

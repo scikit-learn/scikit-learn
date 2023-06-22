@@ -3,48 +3,45 @@
 # tests to make sure estimator_checks works without pytest.
 
 import importlib
-import unittest
 import sys
+import unittest
 import warnings
 from numbers import Integral, Real
 
+import joblib
 import numpy as np
 import scipy.sparse as sp
-import joblib
 
 from sklearn import config_context, get_config
 from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
+from sklearn.cluster import MiniBatchKMeans
 from sklearn.datasets import make_multilabel_classification
-from sklearn.utils import deprecated
+from sklearn.decomposition import PCA
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.exceptions import SkipTestWarning
+from sklearn.linear_model import (
+    LinearRegression,
+    LogisticRegression,
+    MultiTaskElasticNet,
+    SGDClassifier,
+)
+from sklearn.mixture import GaussianMixture
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.svm import SVC, NuSVC
+from sklearn.utils import _array_api, all_estimators, deprecated
+from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils._testing import (
-    raises,
-    ignore_warnings,
     MinimalClassifier,
     MinimalRegressor,
     MinimalTransformer,
     SkipTest,
+    ignore_warnings,
+    raises,
 )
-
-from sklearn.utils.validation import check_is_fitted, check_X_y
-from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.linear_model import LinearRegression, SGDClassifier
-from sklearn.mixture import GaussianMixture
-from sklearn.cluster import MiniBatchKMeans
-from sklearn.decomposition import PCA
-from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
-from sklearn.svm import SVC, NuSVC
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.utils.validation import check_array
-from sklearn.utils import all_estimators
-from sklearn.exceptions import SkipTestWarning
-from sklearn.utils import _array_api
-from sklearn.utils.metaestimators import available_if
-from sklearn.utils.estimator_checks import check_decision_proba_consistency
-from sklearn.utils._param_validation import Interval, StrOptions
-
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
     _set_checking_parameters,
+    _yield_all_checks,
     check_array_api_input,
     check_class_weight_balanced_linear_classifier,
     check_classifier_data_not_an_array,
@@ -52,21 +49,23 @@ from sklearn.utils.estimator_checks import (
     check_classifiers_multilabel_output_format_predict,
     check_classifiers_multilabel_output_format_predict_proba,
     check_dataframe_column_names_consistency,
+    check_decision_proba_consistency,
     check_estimator,
     check_estimator_get_tags_default_keys,
     check_estimators_unfitted,
-    check_fit_score_takes_y,
-    check_no_attributes_set_in_init,
-    check_regressor_data_not_an_array,
-    check_requires_y_none,
-    check_outlier_corruption,
-    check_outlier_contamination,
-    set_random_state,
     check_fit_check_is_fitted,
+    check_fit_score_takes_y,
     check_methods_sample_order_invariance,
     check_methods_subset_invariance,
-    _yield_all_checks,
+    check_no_attributes_set_in_init,
+    check_outlier_contamination,
+    check_outlier_corruption,
+    check_regressor_data_not_an_array,
+    check_requires_y_none,
+    set_random_state,
 )
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 
 class CorrectNotFittedError(ValueError):

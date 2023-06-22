@@ -11,39 +11,36 @@ functions to validate the model.
 # License: BSD 3 clause
 
 
-import warnings
 import numbers
 import time
+import warnings
+from collections import Counter
+from contextlib import suppress
 from functools import partial
 from numbers import Real
 from traceback import format_exc
-from contextlib import suppress
-from collections import Counter
 
 import numpy as np
 import scipy.sparse as sp
 from joblib import logger
 
-from ..base import is_classifier, clone
-from ..utils import indexable, check_random_state, _safe_indexing
-from ..utils.validation import _check_fit_params
-from ..utils.validation import _num_samples
-from ..utils.parallel import delayed, Parallel
-from ..utils.metaestimators import _safe_split
+from ..base import clone, is_classifier
+from ..exceptions import FitFailedWarning
+from ..metrics import check_scoring, get_scorer_names
+from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
+from ..preprocessing import LabelEncoder
+from ..utils import _safe_indexing, check_random_state, indexable
 from ..utils._param_validation import (
     HasMethods,
-    Interval,
     Integral,
+    Interval,
     StrOptions,
     validate_params,
 )
-from ..metrics import check_scoring
-from ..metrics import get_scorer_names
-from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
-from ..exceptions import FitFailedWarning
+from ..utils.metaestimators import _safe_split
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import _check_fit_params, _num_samples
 from ._split import check_cv
-from ..preprocessing import LabelEncoder
-
 
 __all__ = [
     "cross_validate",

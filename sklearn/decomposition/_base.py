@@ -8,12 +8,13 @@
 #
 # License: BSD 3 clause
 
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
+from ..utils._array_api import _add_to_diagonal, get_namespace
 from ..utils.validation import check_is_fitted
-from ..utils._array_api import get_namespace, _add_to_diagonal
-from abc import ABCMeta, abstractmethod
 
 
 class _BasePCA(

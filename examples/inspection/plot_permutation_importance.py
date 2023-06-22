@@ -64,9 +64,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_sta
 #   categorical features;
 # - use :class:`~sklearn.impute.SimpleImputer` to fill missing values for
 #   numerical features using a mean strategy.
+from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
-from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OrdinalEncoder
 

@@ -24,8 +24,9 @@ At the end, the top 10 most uncertain predictions will be shown.
 # ---------------
 #
 # We use the digits dataset. We only use a subset of randomly selected samples.
-from sklearn import datasets
 import numpy as np
+
+from sklearn import datasets
 
 digits = datasets.load_digits()
 rng = np.random.RandomState(2)
@@ -59,8 +60,8 @@ y_train[unlabeled_set] = -1
 #
 # We fit a :class:`~sklearn.semi_supervised.LabelSpreading` and use it to predict
 # the unknown labels.
-from sklearn.semi_supervised import LabelSpreading
 from sklearn.metrics import classification_report
+from sklearn.semi_supervised import LabelSpreading
 
 lp_model = LabelSpreading(gamma=0.25, max_iter=20)
 lp_model.fit(X, y_train)
