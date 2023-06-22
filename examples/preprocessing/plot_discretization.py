@@ -31,8 +31,8 @@ up the data anywhere.
 #         Hanmin Qin <qinhanmin2005@sina.com>
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import KBinsDiscretizer
