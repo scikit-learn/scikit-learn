@@ -48,7 +48,7 @@ Changes impacting all modules
 
 - |Feature| Adds polars input support to :class:`compose.ColumnTransformer` through the
   `DataFrame API specification <https://data-apis.org/dataframe-api/draft/index.html>`__.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`26669` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
