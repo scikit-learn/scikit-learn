@@ -1,8 +1,8 @@
 import itertools
-from functools import partial
 import re
 import warnings
 from collections import defaultdict
+from functools import partial
 from math import floor, log10
 
 import numpy as np
@@ -16,8 +16,8 @@ from sklearn.metrics._pairwise_distances_reduction import (
     ArgKmin,
     ArgKminClassMode,
     BaseDistancesReductionDispatcher,
-    RadiusNeighbors,
     PairwiseDistances,
+    RadiusNeighbors,
     sqeuclidean_row_norms,
 )
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads

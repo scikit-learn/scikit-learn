@@ -88,13 +88,12 @@
 
 from ._dispatcher import (
     ArgKmin,
-    PairwiseDistances,
-    RadiusNeighbors,
     ArgKminClassMode,
     BaseDistancesReductionDispatcher,
+    PairwiseDistances,
+    RadiusNeighbors,
     sqeuclidean_row_norms,
 )
-
 from ._pairwise_distances import _precompute_metric_params
 
 __all__ = [

@@ -37,17 +37,15 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
-
+from ..utils.extmath import row_norms, safe_sparse_dot
+from ..utils.fixes import parse_version, sp_base_version
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import _num_samples, check_non_negative
 from ._pairwise_distances_reduction import (
     ArgKmin,
     PairwiseDistances,
     _precompute_metric_params,
 )
-from ..exceptions import DataConversionWarning
-from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.fixes import parse_version, sp_base_version
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _num_samples, check_non_negative
 from ._pairwise_fast import _chi2_kernel_fast
 
 
