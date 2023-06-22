@@ -213,7 +213,7 @@ a.sk-estimator-doc-link, span.sk-estimator-doc-link {
   height: 1em;
   width: 1em;
   color: $doc_link_border_dim;
-  text-decoration: none;
+  text-decoration: none!important;
   margin-left: 1ex;
 }
 
