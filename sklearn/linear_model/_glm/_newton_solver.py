@@ -36,13 +36,15 @@ class NewtonSolver(ABC):
         P = penalty matrix in 1/2 w @ P @ w,
             for a pure L2 penalty without intercept it equals the identity matrix.
 
-    stemming from the 2nd order Taylor series of the loss:
+    stemming from the 2nd order Taylor series of the objective:
 
         loss(coef_old) + g @ X @ coef_newton
         + 1/2 * coef_newton @ X.T @ diag(h) @ X @ coef_newton
         + 1/2 * l2_reg_strength * coef @ P @ coef
+        = loss(coef_old) + 1/2 * l2_reg_strength * coef_old @ P @ coef_old
+        + G @ coef_newton + 1/2 * coef_newton @ H @ coef_newton
 
-    In the last line, we have coef = coef_old + coef_newton.
+    where we have coef = coef_old + coef_newton.
 
     Backtracking line search updates coef = coef_old + t * coef_newton for some t in
     (0, 1].
@@ -957,9 +959,7 @@ class NewtonLSMRSolver(NewtonSolver):
         # Note that
         #   ||b||^2 = ||g / sqrt(h)||^2 + l2_reg_strength * x0 @ P @ x0
         # and
-        #   1/2 * ||r||^2 = 1/2 * x X' diag(h) X x + g X x
-        #                 + 1/2 * l2_reg_strength * (x + x0) P (x + x0)
-        #                 + 1/2 *||g/sqrt(h)||^2
+        #   1/2 * ||r||^2 = 1/2 * x @ H @ x + G @ x + 1/2 * ||b||^2
         # Here, x is the solution of Ax=b, i.e. x=coef_newton, and, neglecting line
         # search, coef = x + x0. Thus, 1/2 ||r||^2 is just the Taylor series of the
         # objective with the zero order term loss(x0) replaced by
@@ -969,6 +969,9 @@ class NewtonLSMRSolver(NewtonSolver):
         # there is (almost) no L2 penalty.
         norm_G = scipy.linalg.norm(self.gradient)
         eta = min(0.5, np.sqrt(norm_G))
+        # Note that norm_G might not be decreasing from Newton iteration to iteration.
+        # This means we are still not close to the minimum and it is good when artol
+        # is then loose enough.
         if self.verbose >= 3:
             print(f"    norm(gradient) = {norm_G}")
         result = scipy.sparse.linalg.lsmr(
