@@ -21,24 +21,26 @@ the lower the better.
 
 import warnings
 from functools import partial
-from numbers import Real, Integral
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
-from ..utils import assert_all_finite
-from ..utils import check_consistent_length
-from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
-from ..utils import column_or_1d, check_array
-from ..utils.multiclass import type_of_target
-from ..utils.extmath import stable_cumsum
-from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import validate_params, StrOptions, Interval
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
+from ..utils import (
+    assert_all_finite,
+    check_array,
+    check_consistent_length,
+    column_or_1d,
+)
 from ..utils._encode import _encode, _unique
-
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.extmath import stable_cumsum
+from ..utils.multiclass import type_of_target
+from ..utils.sparsefuncs import count_nonzero
+from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
 from ._base import _average_binary_score, _average_multiclass_ovo_score
 
 
