@@ -2060,7 +2060,7 @@ def test_liblinear_not_stuck():
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
-def test_null_max_iter(solver):
+def test_zero_max_iter(solver):
     # Make sure we can inspect the state of LogisticRegression right after
     # initialization (before the first weight update).
     X, y = load_iris(return_X_y=True)
