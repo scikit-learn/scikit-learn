@@ -93,6 +93,8 @@ conda_build_metadata_list = [
             "ccache",
             "pytorch",
             "pytorch-cpu",
+            "polars",
+            "pyarrow",
             "array-api-compat",
         ],
         "package_constraints": {
