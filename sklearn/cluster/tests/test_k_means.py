@@ -348,7 +348,7 @@ def test_minibatch_kmeans_partial_fit_init(init):
     _check_fitted_model(km)
 
 
-@pytest.mark.parameterize(
+@pytest.mark.parametrize(
     "init, expected_n_init",
     [
         ("k-means++", 1),
