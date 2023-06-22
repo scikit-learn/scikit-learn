@@ -410,8 +410,8 @@ inside the** ``__init__`` **method**. All and only the public attributes set by
 fit have a trailing ``_``. As a result the existence of parameters with
 trailing ``_`` is used to check if the estimator has been fitted.
 
-Linking the documentation
--------------------------
+Links to the documentation
+--------------------------
 Estimators include a method ``_get_url_link``, which is used to get the URL
 of the documentation of the estimator. This function is used to prepare the html
 representation of the estimator, e.g., when using the ``display`` function in a
