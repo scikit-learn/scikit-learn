@@ -1239,6 +1239,15 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
                         H.dtype
                     )
                 )
+            if W is not None:
+                warnings.warn(
+                    (
+                        "The 'W' parameter provided will not be used and will be"
+                        " initialized. To utilize the 'W' parameter, please set the"
+                        " 'init' parameter to \"custom\"."
+                    ),
+                    RuntimeWarning,
+                )
             # 'mu' solver should not be initialized by zeros
             if self.solver == "mu":
                 avg = np.sqrt(X.mean() / self._n_components)
@@ -1246,6 +1255,14 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
             else:
                 W = np.zeros((n_samples, self._n_components), dtype=X.dtype)
         else:
+            if W is not None or H is not None:
+                warnings.warn(
+                    (
+                        "Either 'W' or 'H' parameter was provided. Both 'W' and 'H'"
+                        " will be initialized using the provided 'init' function."
+                    ),
+                    RuntimeWarning,
+                )
             W, H = _initialize_nmf(
                 X, self._n_components, init=self.init, random_state=self.random_state
             )

@@ -979,3 +979,29 @@ def test_nmf_n_components_auto_no_h_update():
     _, H, _ = non_negative_factorization(
         X, H=H_true, n_components="auto", update_H=False
     )  # should not fail
+
+
+def test_nmf_w_h_not_used_warning():
+    # Check that warnings are raised if user provided W and H are not used
+    # and initialization overrides value of W or H
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((6, 5))
+    W_init = rng.random_sample((6, 2))
+    H_init = rng.random_sample((2, 5))
+    with pytest.warns(
+        RuntimeWarning,
+        match="Either 'W' or 'H' parameter was provided. Both 'W' and 'H'",
+    ):
+        # init is not custom.
+        # H and W will not be initialized with H_init and W_init.
+        non_negative_factorization(X, H=H_init, update_H=True)
+        non_negative_factorization(X, W=W_init, H=H_init, update_H=True)
+
+    with pytest.warns(
+        RuntimeWarning, match="The 'W' parameter provided will not be used and will"
+    ):
+        # update_H is False and init is not custom
+        # so W will not be initialized with W_init.
+        non_negative_factorization(
+            X, W=W_init, H=H_init, update_H=False, n_components="auto"
+        )
