@@ -33,3 +33,4 @@ dependencies:
   - pip:
     - jupyterlite-sphinx
     - jupyterlite-pyodide-kernel
+    - sphinx-copybutton
