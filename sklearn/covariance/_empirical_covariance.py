@@ -54,7 +54,8 @@ def log_likelihood(emp_cov, precision):
     {
         "X": ["array-like"],
         "assume_centered": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def empirical_covariance(X, *, assume_centered=False):
     """Compute the Maximum likelihood covariance estimator.
