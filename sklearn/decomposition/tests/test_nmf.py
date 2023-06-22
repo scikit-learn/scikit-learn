@@ -970,3 +970,12 @@ def test_nmf_n_components_default_value_warning():
         FutureWarning, match="The default value of `n_components` will change from"
     ):
         non_negative_factorization(X, H=H)
+
+
+def test_nmf_n_components_auto_no_h_update():
+    rng = np.random.RandomState(0)
+    H_true = rng.random_sample((2, 5))
+    X = rng.random_sample((6, 5))
+    _, H, _ = non_negative_factorization(
+        X, H=H_true, n_components="auto", update_H=False
+    )  # should not fail
