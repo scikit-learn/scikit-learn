@@ -1234,7 +1234,8 @@ PAIRED_DISTANCES = {
         "X": ["array-like"],
         "Y": ["array-like"],
         "metric": [StrOptions(set(PAIRED_DISTANCES)), callable],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def paired_distances(X, Y, *, metric="euclidean", **kwds):
     """
