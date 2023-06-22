@@ -241,16 +241,12 @@ chunks of data (256 samples) are processed in parallel, which in addition
 yields a low memory footprint. For more details on how to control the number of
 threads, please refer to our :ref:`parallelism` notes.
 
-|details-start|
-**Examples**
-|details-split|
+.. topic:: Examples:
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`: Demonstrating
-     when k-means performs intuitively and when it does not
-* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`: Clustering
-     handwritten digits
-
-|details-end|
+  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`: Demonstrating
+    when k-means performs intuitively and when it does not
+  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`: Clustering
+    handwritten digits
 
 
 |details-start|
@@ -298,17 +294,13 @@ small, as shown in the example and cited reference.
    :scale: 100
 
 
-|details-start|
-**Examples**
-|details-split|
+.. topic:: Examples:
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of
-     KMeans and MiniBatchKMeans
-* :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document
-     clustering using sparse MiniBatchKMeans
-* :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
-
-|details-end|
+  * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of
+    KMeans and MiniBatchKMeans
+  * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document
+    clustering using sparse MiniBatchKMeans
+  * :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
 
 |details-start|
@@ -399,17 +391,13 @@ where :math:`t` indicates the iteration times.
 |details-end|
 
 
-|details-start|
-**Examples**
-|details-split|
+.. topic:: Examples:
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`: Affinity
-  Propagation on a synthetic 2D datasets with 3 classes.
+  * :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`: Affinity
+    Propagation on a synthetic 2D datasets with 3 classes.
 
-* :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` Affinity
-  Propagation on Financial time series to find groups of companies
-
-|details-end|
+  * :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` Affinity
+    Propagation on Financial time series to find groups of companies
 
 
 .. _mean_shift:
@@ -480,14 +468,10 @@ given sample.
    :scale: 50
 
 
-|details-start|
-**Examples**
-|details-split|
+.. topic:: Examples:
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`: Mean Shift
-     clustering on a synthetic 2D datasets with 3 classes.
-
-|details-end|
+  * :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`: Mean Shift
+    clustering on a synthetic 2D datasets with 3 classes.
 
 
 |details-start|
@@ -548,29 +532,26 @@ computed using a function of a gradient of the image.
 
     See the examples for such an application.
 
-|details-start|
-**Examples**
-|details-split|
+.. topic:: Examples:
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`: Segmenting
-     objects from a noisy background using spectral clustering.
+  * :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`: Segmenting
+    objects from a noisy background using spectral clustering.
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`: Spectral
-     clustering to split the image of coins in regions.
+  * :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`: Spectral
+    clustering to split the image of coins in regions.
 
-.. |coin_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_001.png
-  :target: ../auto_examples/cluster/plot_coin_segmentation.html
-  :scale: 35
+  .. |coin_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_001.png
+    :target: ../auto_examples/cluster/plot_coin_segmentation.html
+    :scale: 35
 
-.. |coin_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_002.png
-  :target: ../auto_examples/cluster/plot_coin_segmentation.html
-  :scale: 35
+  .. |coin_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_002.png
+    :target: ../auto_examples/cluster/plot_coin_segmentation.html
+    :scale: 35
 
-.. |coin_cluster_qr| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_003.png
-  :target: ../auto_examples/cluster/plot_coin_segmentation.html
-  :scale: 35
+  .. |coin_cluster_qr| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_003.png
+    :target: ../auto_examples/cluster/plot_coin_segmentation.html
+    :scale: 35
 
-|details-end|
 
 Different label assignment strategies
 -------------------------------------
@@ -701,14 +682,10 @@ while not robust to noisy data, can be computed very efficiently and can
 therefore be useful to provide hierarchical clustering of larger datasets.
 Single linkage can also perform well on non-globular data.
 
-|details-start|
-**Examples**
-|details-split|
+.. topic:: Examples:
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of
-     the different linkage strategies in a real dataset.
-
-|details-end|
+  * :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of
+    the different linkage strategies in a real dataset.
 
 
 Visualization of cluster hierarchy
@@ -789,24 +766,21 @@ enable only merging of neighboring pixels on an image, as in the
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
 
-|details-start|
-**Examples**
-|details-split|
+.. topic:: Examples:
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`: Ward
-     clustering to split the image of coins in regions.
+  * :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`: Ward
+    clustering to split the image of coins in regions.
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example
-     of Ward algorithm on a swiss-roll, comparison of structured approaches
-     versus unstructured approaches.
+  * :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example
+    of Ward algorithm on a swiss-roll, comparison of structured approaches
+    versus unstructured approaches.
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`: Example
-     of dimensionality reduction with feature agglomeration based on Ward
-     hierarchical clustering.
+  * :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`: Example
+    of dimensionality reduction with feature agglomeration based on Ward
+    hierarchical clustering.
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
+  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
 
-|details-end|
 
 Varying the metric
 -------------------
@@ -839,13 +813,9 @@ each class.
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
-|details-start|
-**Examples**
-|details-split|
+.. topic:: Examples:
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
-
-|details-end|
+  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
 
 
 Bisecting K-Means
@@ -1017,13 +987,9 @@ floats. A couple of mechanisms for getting around this are:
 
 |details-end|
 
-|details-start|
-**Examples**
-|details-split|
+.. topic:: Examples:
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
-
-|details-end|
+  * :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
 
 
 |details-start|
@@ -1196,13 +1162,10 @@ the linear segment clusters of the reachability plot. Note that the blue and
 red clusters are adjacent in the reachability plot, and can be hierarchically
 represented as children of a larger parent cluster.
 
-|details-start|
-**Examples**
-|details-split|
+.. topic:: Examples:
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`
+  * :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`
 
-|details-end|
 
 |details-start|
 **Comparison with DBSCAN**
@@ -1478,15 +1441,11 @@ will not necessarily be close to zero.::
     ground truth clustering resulting in a high proportion of pair labels that
     agree, which leads subsequently to a high score.
 
-|details-start|
-**Examples**
-|details-split|
+.. topic:: Examples:
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`:
-  Analysis of the impact of the dataset size on the value of clustering measures
-  for random assignments.
-
-|details-end|
+  * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`:
+    Analysis of the impact of the dataset size on the value of clustering measures
+    for random assignments.
 
 
 |details-start|
@@ -1620,15 +1579,11 @@ Bad (e.g. independent labelings) have non-positive scores::
 
   - NMI and MI are not adjusted against chance.
 
-|details-start|
-**Examples**
-|details-split|
+.. topic:: Examples:
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis
-     of the impact of the dataset size on the value of clustering measures for
-     random assignments. This example also includes the Adjusted Rand Index.
-
-|details-end|
+  * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis
+    of the impact of the dataset size on the value of clustering measures for
+    random assignments. This example also includes the Adjusted Rand Index.
 
 
 |details-start|
@@ -1840,15 +1795,11 @@ homogeneous but not complete::
     almost never available in practice or requires manual assignment by human
     annotators (as in the supervised learning setting).
 
-|details-start|
-**Examples**
-|details-split|
+.. topic:: Examples:
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis
-     of the impact of the dataset size on the value of clustering measures for
-     random assignments.
-
-|details-end|
+  * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis
+    of the impact of the dataset size on the value of clustering measures for
+    random assignments.
 
 
 |details-start|
@@ -2046,15 +1997,11 @@ cluster analysis.
     other concepts of clusters, such as density based clusters like those
     obtained through DBSCAN.
 
-|details-start|
-**Examples**
-|details-split|
+.. topic:: Examples:
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In
-     this example the silhouette analysis is used to choose an optimal value for
-     n_clusters.
-
-|details-end|
+  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In
+    this example the silhouette analysis is used to choose an optimal value for
+    n_clusters.
 
 
 |details-start|
