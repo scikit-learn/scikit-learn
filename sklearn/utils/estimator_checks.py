@@ -138,7 +138,7 @@ def _yield_checks(estimator):
     yield check_estimator_get_tags_default_keys
 
     if tags["array_api_support"]:
-        for check in _yield_array_api_checks():
+        for check in _yield_array_api_checks(estimator):
             yield check
 
 
@@ -303,7 +303,7 @@ def _yield_outliers_checks(estimator):
     yield check_non_transformer_estimators_n_iter
 
 
-def _yield_array_api_checks():
+def _yield_array_api_checks(estimator):
     for array_namespace, device, dtype in yield_namespace_device_dtype_combinations():
         yield partial(
             check_array_api_input,
@@ -564,7 +564,7 @@ def parametrize_with_checks(estimators, check_yielder=None):
     def checks_generator():
         for estimator in estimators:
             name = type(estimator).__name__
-            for check in check_yielder():
+            for check in check_yielder(estimator):
                 check = partial(check, name)
                 yield _maybe_mark_xfail(estimator, check, pytest)
 
