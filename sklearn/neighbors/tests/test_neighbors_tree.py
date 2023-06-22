@@ -1,28 +1,39 @@
 # License: BSD 3 clause
 
-import pickle
 import itertools
+import pickle
 
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose, assert_array_almost_equal
 
 from sklearn.metrics import DistanceMetric
 from sklearn.neighbors._ball_tree import (
     BallTree,
     kernel_norm,
+)
+from sklearn.neighbors._ball_tree import (
     NeighborsHeap as NeighborsHeapBT,
-    simultaneous_sort as simultaneous_sort_bt,
+)
+from sklearn.neighbors._ball_tree import (
     nodeheap_sort as nodeheap_sort_bt,
+)
+from sklearn.neighbors._ball_tree import (
+    simultaneous_sort as simultaneous_sort_bt,
 )
 from sklearn.neighbors._kd_tree import (
     KDTree,
+)
+from sklearn.neighbors._kd_tree import (
     NeighborsHeap as NeighborsHeapKDT,
-    simultaneous_sort as simultaneous_sort_kdt,
+)
+from sklearn.neighbors._kd_tree import (
     nodeheap_sort as nodeheap_sort_kdt,
 )
-
+from sklearn.neighbors._kd_tree import (
+    simultaneous_sort as simultaneous_sort_kdt,
+)
 from sklearn.utils import check_random_state
-from numpy.testing import assert_array_almost_equal, assert_allclose
 
 rng = np.random.RandomState(42)
 V_mahalanobis = rng.rand(3, 3)
