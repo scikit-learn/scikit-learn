@@ -15,11 +15,16 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..exceptions import ConvergenceWarning
-from ..utils import check_array, as_float_array, check_random_state
+from ..utils import as_float_array, check_array, check_random_state
+from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, StrOptions, Options, validate_params
 
 __all__ = ["fastica", "FastICA"]
 
@@ -672,6 +677,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         return S
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Fit the model and recover the sources from X.
 
@@ -690,10 +696,9 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             Estimated sources obtained by transforming the data with the
             estimated unmixing matrix.
         """
-        self._validate_params()
-
         return self._fit_transform(X, compute_sources=True)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model to X.
 
@@ -711,8 +716,6 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         self._fit_transform(X, compute_sources=False)
         return self
 

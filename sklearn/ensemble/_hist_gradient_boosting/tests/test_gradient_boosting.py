@@ -1,35 +1,34 @@
+import re
 import warnings
 
-import re
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
+
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
     HalfSquaredError,
     PinballLoss,
 )
-from sklearn.datasets import make_classification, make_regression
-from sklearn.datasets import make_low_rank_matrix
-from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.base import clone, BaseEstimator, TransformerMixin
-from sklearn.base import is_regressor
-from sklearn.pipeline import make_pipeline
-from sklearn.metrics import mean_gamma_deviance, mean_poisson_deviance
-from sklearn.dummy import DummyRegressor
-from sklearn.exceptions import NotFittedError
+from sklearn.base import BaseEstimator, TransformerMixin, clone, is_regressor
 from sklearn.compose import make_column_transformer
-
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.datasets import make_classification, make_low_rank_matrix, make_regression
+from sklearn.dummy import DummyRegressor
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics import mean_gamma_deviance, mean_poisson_deviance
+from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
 from sklearn.utils import shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
-
 
 n_threads = _openmp_effective_n_threads()
 

@@ -11,15 +11,16 @@ Maximum likelihood covariance estimator.
 
 # avoid division truncation
 import warnings
+
 import numpy as np
 from scipy import linalg
 
 from .. import config_context
-from ..base import BaseEstimator
+from ..base import BaseEstimator, _fit_context
+from ..metrics.pairwise import pairwise_distances
 from ..utils import check_array
 from ..utils._param_validation import validate_params
 from ..utils.extmath import fast_logdet
-from ..metrics.pairwise import pairwise_distances
 
 
 def log_likelihood(emp_cov, precision):
@@ -218,6 +219,7 @@ class EmpiricalCovariance(BaseEstimator):
             precision = linalg.pinvh(self.covariance_, check_finite=False)
         return precision
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the maximum likelihood covariance estimator to X.
 
@@ -235,7 +237,6 @@ class EmpiricalCovariance(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         X = self._validate_data(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])

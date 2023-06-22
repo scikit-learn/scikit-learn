@@ -11,14 +11,14 @@ extract features from images.
 
 from itertools import product
 from numbers import Integral, Number, Real
-import numpy as np
-from scipy import sparse
-from numpy.lib.stride_tricks import as_strided
 
-from ..base import BaseEstimator, TransformerMixin
+import numpy as np
+from numpy.lib.stride_tricks import as_strided
+from scipy import sparse
+
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array, check_random_state
-from ..utils._param_validation import Hidden, Interval, validate_params
-from ..utils._param_validation import RealNotInt
+from ..utils._param_validation import Hidden, Interval, RealNotInt, validate_params
 
 __all__ = [
     "PatchExtractor",
@@ -561,6 +561,7 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         self.max_patches = max_patches
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Only validate the parameters of the estimator.
 
@@ -583,7 +584,6 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         return self
 
     def transform(self, X):
