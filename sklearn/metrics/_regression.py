@@ -26,23 +26,22 @@ the lower the better.
 #          Ohad Michel <ohadmich@gmail.com>
 # License: BSD 3 clause
 
-from numbers import Real
 import warnings
+from numbers import Real
 
 import numpy as np
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
+    _check_sample_weight,
+    _num_samples,
     check_array,
     check_consistent_length,
-    _num_samples,
     column_or_1d,
-    _check_sample_weight,
 )
-from ..utils.stats import _weighted_percentile
-from ..utils._param_validation import Interval, StrOptions, validate_params
-
 
 __ALL__ = [
     "max_error",

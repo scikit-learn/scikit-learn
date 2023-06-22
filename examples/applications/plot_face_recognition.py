@@ -13,18 +13,16 @@ The dataset used in this example is a preprocessed excerpt of the
 """
 # %%
 from time import time
-import matplotlib.pyplot as plt
 
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.datasets import fetch_lfw_people
-from sklearn.metrics import classification_report
-from sklearn.metrics import ConfusionMatrixDisplay
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.svm import SVC
+import matplotlib.pyplot as plt
 from scipy.stats import loguniform
 
+from sklearn.datasets import fetch_lfw_people
+from sklearn.decomposition import PCA
+from sklearn.metrics import ConfusionMatrixDisplay, classification_report
+from sklearn.model_selection import RandomizedSearchCV, train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 
 # %%
 # Download the data, if not already on disk and load it as numpy arrays

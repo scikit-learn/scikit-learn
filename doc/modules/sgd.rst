@@ -249,6 +249,10 @@ quadratic in the number of samples.
 with a large number of training samples (> 10,000) for which the SGD
 variant can be several orders of magnitude faster.
 
+|details-start|
+**Mathematical details**
+|details-split|
+
 Its implementation is based on the implementation of the stochastic
 gradient descent. Indeed, the original optimization problem of the One-Class
 SVM is given by
@@ -281,6 +285,8 @@ This is similar to the optimization problems studied in section
 :math:`\alpha = \nu/2`, :math:`L` being the hinge loss function and :math:`R`
 being the L2 norm. We just need to add the term :math:`b\nu` in the
 optimization loop.
+
+|details-end|
 
 As :class:`SGDClassifier` and :class:`SGDRegressor`, :class:`SGDOneClassSVM`
 supports averaged SGD. Averaging can be enabled by setting ``average=True``.
@@ -410,6 +416,10 @@ where :math:`L` is a loss function that measures model (mis)fit and
 complexity; :math:`\alpha > 0` is a non-negative hyperparameter that controls
 the regularization strength.
 
+|details-start|
+**Loss functions details**
+|details-split|
+
 Different choices for :math:`L` entail different classifiers or regressors:
 
 - Hinge (soft-margin): equivalent to Support Vector Classification.
@@ -430,6 +440,8 @@ Different choices for :math:`L` entail different classifiers or regressors:
   \varepsilon^2` otherwise.
 - Epsilon-Insensitive: (soft-margin) equivalent to Support Vector Regression.
   :math:`L(y_i, f(x_i)) = \max(0, |y_i - f(x_i)| - \varepsilon)`.
+
+|details-end|
 
 All of the above loss functions can be regarded as an upper bound on the
 misclassification error (Zero-one loss) as shown in the Figure below.

@@ -1,12 +1,11 @@
 import numpy as np
 import pytest
 
+from sklearn.cluster._hdbscan._reachability import mutual_reachability_graph
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
 )
-
-from sklearn.cluster._hdbscan._reachability import mutual_reachability_graph
 
 
 def test_mutual_reachability_graph_error_sparse_format():
