@@ -35,14 +35,12 @@
   overflow: hidden;
   text-align: left;
   background-color: $background_color;
-  /* background-color: #f0f8ff; */
 }
 #$id div.sk-toggleable__content pre {
   margin: 0.2em;
   color: black;
   border-radius: 0.25em;
   background-color: $background_color;
-  /* background-color: #f0f8ff; */
 }
 #$id input.sk-toggleable__control:checked~div.sk-toggleable__content {
   max-height: 200px;
@@ -81,7 +79,6 @@
 #$id div.sk-estimator:hover {
   background-color: $background_color_hover;
 }
-
 
 #$id div.sk-parallel-item::after {
   content: "";
@@ -202,7 +199,7 @@ display: none;
 
 /* For the docs link*/
 
-a.sk-estimator-doc-link, span.sk-estimator-doc-link {
+.sk-estimator-doc-link {
   float: right;
   font-size: smaller;
   line-height: 1em;
@@ -213,19 +210,19 @@ a.sk-estimator-doc-link, span.sk-estimator-doc-link {
   height: 1em;
   width: 1em;
   color: $doc_link_border_dim;
-  text-decoration: none!important;
+  text-decoration: none;
   margin-left: 1ex;
 }
 
 
-
-div.sk-estimator:hover a.sk-estimator-doc-link:hover,  a.sk-estimator-doc-link:hover,  div.sk-estimator:hover span.sk-estimator-doc-link:hover,  span.sk-estimator-doc-link:hover {
+div.sk-estimator:hover .sk-estimator-doc-link:hover,  .sk-estimator-doc-link:hover, div.sk-label-container:hover .sk-estimator-doc-link:hover, .sk-estimator-doc-link:hover
+  {
   background-color: $doc_link_text_strong;
   color: white;
   text-decoration: none;
 }
 
-a.sk-estimator-doc-link span, span.sk-estimator-doc-link span {
+.sk-estimator-doc-link span {
   display: none;
   z-index: 200;
   position: absolute;
@@ -242,30 +239,18 @@ a.sk-estimator-doc-link span, span.sk-estimator-doc-link span {
   width: min-content;
 }
 
-a.sk-estimator-doc-link:hover span, span.sk-estimator-doc-link:hover span {
+.sk-estimator-doc-link:hover span {
   display: block;
 }
 
-div.sk-estimator a.sk-estimator-doc-link, div.sk-estimator span.sk-estimator-doc-link {
+div.sk-estimator .sk-estimator-doc-link {
   color: $doc_link_text_dim;
   border: 1pt solid $doc_link_border_dim;
   background-color: $background_color;
 }
 
-div.sk-estimator:hover a.sk-estimator-doc-link, div.sk-estimator:hover span.sk-estimator-doc-link {
+div.sk-estimator:hover .sk-estimator-doc-link, div.sk-label-container:hover .sk-estimator-doc-link {
   background-color: white;
   border: $doc_link_text_strong 1pt solid;
   color: $doc_link_text_strong;
-}
-
-div.sk-label-container:hover a.sk-estimator-doc-link, div.sk-label-container:hover span.sk-estimator-doc-link {
-  background-color: white;
-  border: $doc_link_text_strong 1pt solid;
-  color: $doc_link_text_strong;
-}
-
-div.sk-label-container:hover a.sk-estimator-doc-link:hover, a.sk-estimator-doc-link:hover, div.sk-label-container:hover span.sk-estimator-doc-link:hover, span.sk-estimator-doc-link:hover {
-  background-color: $doc_link_text_strong;
-  color: white;
-  text-decoration: none;
 }
