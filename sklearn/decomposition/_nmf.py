@@ -982,7 +982,7 @@ def non_negative_factorization(
     n_components : int or {'auto'} or None, default=None
         Number of components, if n_components is not set all features
         are kept.
-        If `n_components='auto'`, the number of components is automatically infered
+        If `n_components='auto'`, the number of components is automatically inferred
         from W or H shapes.
 
         .. versionchanged:: 1.4
@@ -1199,13 +1199,13 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
                 (
                     "The default value of `n_components` will change from `None` to"
                     " `'auto'` in 1.6. Set the value of `n_components` to `None`"
-                    " explicitly to supress the warning"
+                    " explicitly to supress the warning."
                 ),
                 FutureWarning,
             )
             self._n_components = None  # Keeping the old default value
         if self._n_components is None or (
-            self.init != "custom" and self.n_components == "auto"
+            self.init != "custom" and self._n_components == "auto"
         ):
             self._n_components = X.shape[1]
 
@@ -1219,15 +1219,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
         if self.init == "custom" and self.n_components == "auto":
             if W is not None:
                 if H is not None:
-                    n_samples_H = _num_samples(H)
-                    n_features_W = _num_features(W)
-                    if n_samples_H != n_features_W:
-                        raise ValueError(
-                            "Incompatible shapes for H and W. Expected n_features for"
-                            f" W and n_samples for H to be equal. Got {n_samples_H} and"
-                            f" {n_features_W} instead."
-                        )
-                    self._n_components = n_samples_H
+                    self._n_components = _num_samples(H)
                 else:
                     self._n_components = _num_features(W)
             elif H is not None:
@@ -1400,7 +1392,7 @@ class NMF(_BaseNMF):
     n_components : int or {'auto'} or None, default=None
         Number of components, if n_components is not set all features
         are kept.
-        If `n_components='auto'`, the number of components is automatically infered
+        If `n_components='auto'`, the number of components is automatically inferred
         from W or H shapes.
 
         .. versionchanged:: 1.4
@@ -1839,7 +1831,7 @@ class MiniBatchNMF(_BaseNMF):
     n_components : int or {'auto'} or None, default=None
         Number of components, if `n_components` is not set all features
         are kept.
-        If `n_components='auto'`, the number of components is automatically infered
+        If `n_components='auto'`, the number of components is automatically inferred
         from W or H shapes.
 
         .. versionchanged:: 1.4
