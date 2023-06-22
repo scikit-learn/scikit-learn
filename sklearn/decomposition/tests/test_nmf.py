@@ -365,6 +365,7 @@ def test_non_negative_factorization_consistency(init, solver, alpha_W, alpha_H):
         alpha_H=alpha_H,
         random_state=1,
         tol=1e-2,
+        n_components="auto",
     )
     W_nmf_2, H, _ = non_negative_factorization(
         A,
@@ -377,6 +378,7 @@ def test_non_negative_factorization_consistency(init, solver, alpha_W, alpha_H):
         alpha_H=alpha_H,
         random_state=1,
         tol=1e-2,
+        n_components="auto",
     )
 
     model_class = NMF(
@@ -387,6 +389,7 @@ def test_non_negative_factorization_consistency(init, solver, alpha_W, alpha_H):
         alpha_H=alpha_H,
         random_state=1,
         tol=1e-2,
+        n_components="auto",
     )
     W_cls = model_class.fit_transform(A)
     W_cls_2 = model_class.transform(A)
@@ -817,10 +820,10 @@ def test_nmf_custom_init_dtype_error(Estimator):
     W = rng.random_sample((20, 15))
 
     with pytest.raises(TypeError, match="should have the same dtype as X"):
-        Estimator(init="custom").fit(X, H=H, W=W)
+        Estimator(init="custom", n_components="auto").fit(X, H=H, W=W)
 
     with pytest.raises(TypeError, match="should have the same dtype as X"):
-        non_negative_factorization(X, H=H, update_H=False)
+        non_negative_factorization(X, H=H, update_H=False, n_components="auto")
 
 
 @pytest.mark.parametrize("beta_loss", [-0.5, 0, 0.5, 1, 1.5, 2, 2.5])
