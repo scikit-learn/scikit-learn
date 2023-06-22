@@ -152,9 +152,11 @@ def get_message(log_file, repo, pr_number, sha, run_id, details):
         details=details,
     )
 
-    commit_link = (
-        "\n\n_Generated for commit:"
-        f" [{sha[:7]}](https://github.com/{repo}/pull/{pr_number}/commits/{sha})_"
+    sub_text = (
+        "\n\n<sub> _Generated for commit:"
+        f" [{sha[:7]}](https://github.com/{repo}/pull/{pr_number}/commits/{sha}). "
+        "Link to the linter CI: [here]"
+        f"(https://github.com/{repo}/actions/runs/{run_id})_ </sub>"
     )
 
     if not message:
@@ -162,20 +164,32 @@ def get_message(log_file, repo, pr_number, sha, run_id, details):
         return (
             "## ✔️ Linting Passed\n"
             "All linting checks passed. Your pull request is in excellent shape! ☀️"
-            + commit_link
+            + sub_text
         )
+
+    if not details:
+        # This happens if posting the log fails, which happens if the log is too
+        # long. Typically, this happens if the PR branch hasn't been updated
+        # since we've introduced import sorting.
+        branch_not_updated = (
+            "_Merging with `upstream/main` might fix / improve the issues if you "
+            "haven't done that since 21.06.2023._\n\n"
+        )
+    else:
+        branch_not_updated = ""
 
     message = (
         "## ❌ Linting issues\n\n"
-        "This PR is introducing linting issues. Here's a summary of the issues. "
-        "Note that you can avoid having linting issues by enabling `pre-commit` "
-        "hooks. Instructions to enable them can be found [here]("
-        "https://scikit-learn.org/dev/developers/contributing.html#how-to-contribute)."
-        "\n\n"
-        "You can see the details of the linting issues under the `lint` job [here]"
-        f"(https://github.com/{repo}/actions/runs/{run_id})\n\n"
+        + branch_not_updated
+        + "This PR is introducing linting issues. Here's a summary of the issues. "
+        + "Note that you can avoid having linting issues by enabling `pre-commit` "
+        + "hooks. Instructions to enable them can be found [here]("
+        + "https://scikit-learn.org/dev/developers/contributing.html#how-to-contribute)"
+        + ".\n\n"
+        + "You can see the details of the linting issues under the `lint` job [here]"
+        + f"(https://github.com/{repo}/actions/runs/{run_id})\n\n"
         + message
-        + commit_link
+        + sub_text
     )
 
     return message
