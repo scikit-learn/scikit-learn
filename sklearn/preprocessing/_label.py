@@ -424,7 +424,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         "neg_label": [Interval(Integral, None, None, closed="neither")],
         "pos_label": [Interval(Integral, None, None, closed="neither")],
         "sparse_output": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False):
     """Binarize labels in a one-vs-all fashion.

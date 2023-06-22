@@ -396,7 +396,8 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
         "squared": ["boolean"],
         "missing_values": [MissingValues(numeric_only=True)],
         "copy": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def nan_euclidean_distances(
     X, Y=None, *, squared=False, missing_values=np.nan, copy=True
@@ -782,7 +783,8 @@ def pairwise_distances_argmin_min(
             callable,
         ],
         "metric_kwargs": [dict, None],
-    }
+    },
+    prefer_skip_nested_validation=False,  # metric is not validated yet
 )
 def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
@@ -908,7 +910,8 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
 
 
 @validate_params(
-    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix", None]}
+    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix", None]},
+    prefer_skip_nested_validation=True,
 )
 def haversine_distances(X, Y=None):
     """Compute the Haversine distance between samples in X and Y.
@@ -969,7 +972,8 @@ def haversine_distances(X, Y=None):
         "X": ["array-like", "sparse matrix"],
         "Y": ["array-like", "sparse matrix", None],
         "sum_over_features": ["boolean", Hidden(StrOptions({"deprecated"}))],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     """Compute the L1 distances between the vectors in X and Y.
@@ -1068,7 +1072,8 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     {
         "X": ["array-like", "sparse matrix"],
         "Y": ["array-like", "sparse matrix", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def cosine_distances(X, Y=None):
     """Compute cosine distance between samples in X and Y.
@@ -1110,7 +1115,8 @@ def cosine_distances(X, Y=None):
 
 # Paired distances
 @validate_params(
-    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]}
+    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
+    prefer_skip_nested_validation=True,
 )
 def paired_euclidean_distances(X, Y):
     """Compute the paired euclidean distances between X and Y.
@@ -1136,7 +1142,8 @@ def paired_euclidean_distances(X, Y):
 
 
 @validate_params(
-    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]}
+    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
+    prefer_skip_nested_validation=True,
 )
 def paired_manhattan_distances(X, Y):
     """Compute the paired L1 distances between X and Y.
@@ -1179,7 +1186,8 @@ def paired_manhattan_distances(X, Y):
 
 
 @validate_params(
-    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]}
+    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
+    prefer_skip_nested_validation=True,
 )
 def paired_cosine_distances(X, Y):
     """
@@ -1294,7 +1302,8 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
         "X": ["array-like", "sparse matrix"],
         "Y": ["array-like", "sparse matrix", None],
         "dense_output": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def linear_kernel(X, Y=None, dense_output=True):
     """
@@ -1336,7 +1345,8 @@ def linear_kernel(X, Y=None, dense_output=True):
             Hidden(np.ndarray),
         ],
         "coef0": [Interval(Real, None, None, closed="neither")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     """
@@ -1389,7 +1399,8 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
             Hidden(np.ndarray),
         ],
         "coef0": [Interval(Real, None, None, closed="neither")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     """Compute the sigmoid kernel between X and Y.
@@ -1437,7 +1448,8 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
             None,
             Hidden(np.ndarray),
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def rbf_kernel(X, Y=None, gamma=None):
     """Compute the rbf (gaussian) kernel between X and Y.
@@ -1483,7 +1495,8 @@ def rbf_kernel(X, Y=None, gamma=None):
             Hidden(np.ndarray),
             None,
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def laplacian_kernel(X, Y=None, gamma=None):
     """Compute the laplacian kernel between X and Y.
@@ -1527,7 +1540,8 @@ def laplacian_kernel(X, Y=None, gamma=None):
         "X": ["array-like", "sparse matrix"],
         "Y": ["array-like", "sparse matrix", None],
         "dense_output": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def cosine_similarity(X, Y=None, dense_output=True):
     """Compute cosine similarity between samples in X and Y.
@@ -1578,7 +1592,10 @@ def cosine_similarity(X, Y=None, dense_output=True):
     return K
 
 
-@validate_params({"X": ["array-like"], "Y": ["array-like", None]})
+@validate_params(
+    {"X": ["array-like"], "Y": ["array-like", None]},
+    prefer_skip_nested_validation=True,
+)
 def additive_chi2_kernel(X, Y=None):
     """Compute the additive chi-squared kernel between observations in X and Y.
 

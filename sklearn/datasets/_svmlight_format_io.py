@@ -57,7 +57,8 @@ else:
         "query_id": ["boolean"],
         "offset": [Interval(Integral, 0, None, closed="left")],
         "length": [Integral],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_svmlight_file(
     f,
@@ -259,7 +260,8 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id, offset=0, length=
         "query_id": ["boolean"],
         "offset": [Interval(Integral, 0, None, closed="left")],
         "length": [Integral],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_svmlight_files(
     files,
@@ -448,7 +450,8 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
         "comment": [str, bytes, None],
         "query_id": ["array-like", None],
         "multilabel": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def dump_svmlight_file(
     X,

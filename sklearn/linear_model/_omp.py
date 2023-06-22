@@ -291,7 +291,8 @@ def _gram_omp(
         "copy_X": ["boolean"],
         "return_path": ["boolean"],
         "return_n_iter": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def orthogonal_mp(
     X,

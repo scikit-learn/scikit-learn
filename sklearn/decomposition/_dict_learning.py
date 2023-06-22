@@ -220,7 +220,8 @@ def _sparse_encode_precomputed(
         "check_input": ["boolean"],
         "verbose": ["verbose"],
         "positive": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 # XXX : could be moved to the linear_model module
 def sparse_encode(
@@ -1079,7 +1080,8 @@ def dict_learning_online(
         "method": [StrOptions({"lars", "cd"})],
         "return_n_iter": ["boolean"],
         "method_max_iter": [Interval(Integral, 0, None, closed="left")],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def dict_learning(
     X,
