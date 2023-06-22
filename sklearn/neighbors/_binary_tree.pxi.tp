@@ -7,13 +7,6 @@ implementation_specific_values = [
     #
     #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE, NPY_TYPE
     #
-    # An empty string is used for the `name_suffix` of the float64 case
-    # and '32' bit is used for the `name_suffix` of the float32 case.
-    # This allows us to use `DistanceMetric` conveniently and the default
-    # float64 case can be used without any particular modifications.
-    #
-    # Note: we use the 64bit types as defined in `sklearn.utils._typedefs`
-    #
     ('64', 'float64_t', 'np.float64', 'cnp.NPY_DOUBLE'),
     ('32', 'float32_t', 'np.float32', 'cnp.NPY_FLOAT')
 ]
@@ -22,6 +15,8 @@ implementation_specific_values = [
 # =====================
 #
 #    Author: Jake Vanderplas <jakevdp@cs.washington.edu>, 2012-2013
+#            Omar Salman <omar.salman@arbisoft.com>
+#
 #    License: BSD
 #
 # The file generated is then literally included in ball_tree.pyx and kd_tree.pyx.
@@ -2407,20 +2402,6 @@ cdef class BinaryTree{{name_suffix}}:
 ######################################################################
 # Python functions for benchmarking and testing C implementations
 
-{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE, NPY_TYPE in implementation_specific_values}}
-
-def load_heap{{name_suffix}}({{INPUT_DTYPE_t}}[:, ::1] X, intp_t k):
-    """test fully loading the heap"""
-    assert k <= X.shape[1]
-    cdef NeighborsHeap{{name_suffix}} heap = NeighborsHeap{{name_suffix}}(X.shape[0], k)
-    cdef intp_t i, j
-    for i in range(X.shape[0]):
-        for j in range(X.shape[1]):
-            heap._push(i, X[i, j], j)
-    return heap.get_arrays()
-
-{{endfor}}
-
 def simultaneous_sort(float64_t[:, ::1] distances, intp_t[:, ::1] indices):
     """In-place simultaneous sort the given row of the arrays
 
@@ -2459,10 +2440,12 @@ def nodeheap_sort(float64_t[::1] vals):
     return np.asarray(vals_sorted), np.asarray(indices)
 
 
-cdef inline float64_t _total_node_weight(NodeData_t* node_data,
-                                       const floating* sample_weight,
-                                       intp_t* idx_array,
-                                       intp_t i_node):
+cdef inline float64_t _total_node_weight(
+    NodeData_t* node_data,
+    const floating* sample_weight,
+    intp_t* idx_array,
+    intp_t i_node,
+):
     cdef intp_t i
     cdef float64_t N = 0.0
     for i in range(node_data[i_node].idx_start, node_data[i_node].idx_end):

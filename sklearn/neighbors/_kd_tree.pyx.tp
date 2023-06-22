@@ -7,12 +7,6 @@ implementation_specific_values = [
     #
     #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
     #
-    # An empty string is used for the `name_suffix` of the float64 case
-    # and '32' bit is used for the `name_suffix` of the float32 case.
-    # This allows us to use `BinaryTree` conveniently.
-    #
-    # Note: we use the 64bit types as defined in `sklearn.utils._typedefs`
-    #
     ('64', 'float64_t', 'np.float64'),
     ('32', 'float32_t', 'np.float32')
 ]

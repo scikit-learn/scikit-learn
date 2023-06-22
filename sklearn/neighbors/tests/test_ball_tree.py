@@ -116,6 +116,8 @@ def test_bad_pyfunc_metric(ball_tree_class):
 
 @pytest.mark.parametrize("metric", itertools.chain(METRICS, BOOLEAN_METRICS))
 def test_ball_tree_numerical_consistency(global_random_seed, metric):
+    # Results on float64 and float32 versions of a dataset must be
+    # numerically close.
     X_64, X_32, Y_64, Y_32 = get_dataset_for_query_methods(
         random_seed=global_random_seed
     )

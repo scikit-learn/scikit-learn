@@ -533,10 +533,6 @@ Changelog
   callables in :class:`neighbors.NearestNeighbors` is deprecated and will be removed in
   version 1.5. :pr:`24083` by :user:`Valentin Laurent <Valentin-Laurent>`.
 
-- |Enhancement| :class:`neighbors.KDTree` and :class:`neighbors.BallTree`
-  now support `numpy.float32`.
-  :pr:`25914` by :user:`Omar Salman <OmarManzoor>`.
-
 :mod:`sklearn.neural_network`
 .............................
 
