@@ -1400,7 +1400,7 @@ def fbeta_score(
     0.38...
     """
 
-    _, _, f, _ = precision_recall_fscore_support(
+    _, _, f, _, _ = precision_recall_fscore_support(
         y_true,
         y_pred,
         beta=beta,
@@ -1776,8 +1776,9 @@ def precision_recall_fscore_support(
         recall = _nanaverage(recall, weights=weights)
         f_score = _nanaverage(f_score, weights=weights)
         true_sum = None  # return no support
+        pred_sum = None
 
-    return precision, recall, f_score, true_sum
+    return precision, recall, f_score, true_sum, pred_sum
 
 
 @validate_params(
@@ -2113,7 +2114,7 @@ def precision_score(
     >>> precision_score(y_true, y_pred, average=None)
     array([0.5, 1. , 1. ])
     """
-    p, _, _, _ = precision_recall_fscore_support(
+    p, _, _, _, _ = precision_recall_fscore_support(
         y_true,
         y_pred,
         labels=labels,
@@ -2284,7 +2285,7 @@ def recall_score(
     >>> recall_score(y_true, y_pred, average=None)
     array([1. , 1. , 0.5])
     """
-    _, r, _, _ = precision_recall_fscore_support(
+    _, r, _, _, _ = precision_recall_fscore_support(
         y_true,
         y_pred,
         labels=labels,
@@ -2413,6 +2414,7 @@ def classification_report(
     sample_weight=None,
     digits=2,
     output_dict=False,
+    output_pred=False,
     zero_division="warn",
 ):
     """Build a text report showing the main classification metrics.
@@ -2445,6 +2447,10 @@ def classification_report(
         If True, return output as dict.
 
         .. versionadded:: 0.20
+
+    output_pred : bool, default=False
+        If True, the number of predictions per class are outptu along with
+        the support.
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division. If set to
@@ -2532,11 +2538,17 @@ def classification_report(
         labels_given = True
 
     # labelled micro average
-    micro_is_accuracy = (y_type == "multiclass" or y_type == "binary") and (
-        not labels_given or (set(labels) == set(unique_labels(y_true, y_pred)))
+    # fmt: off
+    micro_is_accuracy = (
+        y_type in ["multiclass", "binary"]
+        and not labels_given
+        or set(labels) == set(unique_labels(y_true, y_pred))
     )
 
-    if target_names is not None and len(labels) != len(target_names):
+    if (
+        target_names is not None
+        and len(labels) != len(target_names)
+    ):
         if labels_given:
             warnings.warn(
                 "labels size, {0}, does not match size of target_names, {1}".format(
@@ -2549,12 +2561,13 @@ def classification_report(
                 "target_names, {1}. Try specifying the labels "
                 "parameter".format(len(labels), len(target_names))
             )
+    # fmt: on
+
     if target_names is None:
         target_names = ["%s" % l for l in labels]
 
-    headers = ["precision", "recall", "f1-score", "support"]
     # compute per-class results without averaging
-    p, r, f1, s = precision_recall_fscore_support(
+    p, r, f1, s, pred = precision_recall_fscore_support(
         y_true,
         y_pred,
         labels=labels,
@@ -2562,7 +2575,13 @@ def classification_report(
         sample_weight=sample_weight,
         zero_division=zero_division,
     )
-    rows = zip(target_names, p, r, f1, s)
+
+    if output_pred:
+        rows = zip(target_names, p, r, f1, s, pred)
+        headers = ["precision", "recall", "f1-score", "support", "predicted"]
+    else:
+        rows = zip(target_names, p, r, f1, s)
+        headers = ["precision", "recall", "f1-score", "support"]
 
     if y_type.startswith("multilabel"):
         average_options = ("micro", "macro", "weighted", "samples")
@@ -2593,7 +2612,7 @@ def classification_report(
             line_heading = average + " avg"
 
         # compute averages with specified averaging method
-        avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
+        avg_p, avg_r, avg_f1, _, _ = precision_recall_fscore_support(
             y_true,
             y_pred,
             labels=labels,
@@ -2601,7 +2620,11 @@ def classification_report(
             sample_weight=sample_weight,
             zero_division=zero_division,
         )
-        avg = [avg_p, avg_r, avg_f1, np.sum(s)]
+
+        if output_pred:
+            avg = [avg_p, avg_r, avg_f1, np.sum(s), np.sum(pred)]
+        else:
+            avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
         if output_dict:
             report_dict[line_heading] = dict(zip(headers, [float(i) for i in avg]))
@@ -2622,9 +2645,10 @@ def classification_report(
     if output_dict:
         if "accuracy" in report_dict.keys():
             report_dict["accuracy"] = report_dict["accuracy"]["precision"]
+
         return report_dict
-    else:
-        return report
+
+    return report
 
 
 @validate_params(
