@@ -7,24 +7,25 @@
 import numpy as np
 import pytest
 
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-
 from sklearn import datasets
 from sklearn.covariance import (
-    empirical_covariance,
+    OAS,
     EmpiricalCovariance,
-    ShrunkCovariance,
-    shrunk_covariance,
     LedoitWolf,
+    ShrunkCovariance,
+    empirical_covariance,
     ledoit_wolf,
     ledoit_wolf_shrinkage,
-    OAS,
     oas,
+    shrunk_covariance,
 )
 from sklearn.covariance._shrunk_covariance import _ledoit_wolf
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 from .._shrunk_covariance import _oas
 

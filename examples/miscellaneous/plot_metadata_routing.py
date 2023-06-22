@@ -22,23 +22,29 @@ First a few imports and some random data for the rest of the script.
 """
 # %%
 
-import numpy as np
 import warnings
 from pprint import pprint
+
+import numpy as np
+
 from sklearn import set_config
-from sklearn.base import BaseEstimator
-from sklearn.base import ClassifierMixin
-from sklearn.base import RegressorMixin
-from sklearn.base import MetaEstimatorMixin
-from sklearn.base import TransformerMixin
-from sklearn.base import clone
-from sklearn.utils import metadata_routing
-from sklearn.utils.metadata_routing import get_routing_for_object
-from sklearn.utils.metadata_routing import MetadataRouter
-from sklearn.utils.metadata_routing import MethodMapping
-from sklearn.utils.metadata_routing import process_routing
-from sklearn.utils.validation import check_is_fitted
+from sklearn.base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    RegressorMixin,
+    TransformerMixin,
+    clone,
+)
 from sklearn.linear_model import LinearRegression
+from sklearn.utils import metadata_routing
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    get_routing_for_object,
+    process_routing,
+)
+from sklearn.utils.validation import check_is_fitted
 
 n_samples, n_features = 100, 4
 rng = np.random.RandomState(42)

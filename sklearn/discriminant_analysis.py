@@ -10,24 +10,27 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 # License: BSD 3-Clause
 
 import warnings
+from numbers import Integral, Real
+
 import numpy as np
 import scipy.linalg
 from scipy import linalg
-from numbers import Real, Integral
 
-from .base import BaseEstimator, TransformerMixin, ClassifierMixin
-from .base import ClassNamePrefixFeaturesOutMixin
-from .base import _fit_context
+from .base import (
+    BaseEstimator,
+    ClassifierMixin,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from .covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
 from .linear_model._base import LinearClassifierMixin
-from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
-from .utils.multiclass import unique_labels
-from .utils.validation import check_is_fitted
-from .utils._array_api import get_namespace, _expit, device, size
-from .utils.multiclass import check_classification_targets
-from .utils.extmath import softmax
-from .utils._param_validation import StrOptions, Interval, HasMethods
 from .preprocessing import StandardScaler
-
+from .utils._array_api import _expit, device, get_namespace, size
+from .utils._param_validation import HasMethods, Interval, StrOptions
+from .utils.extmath import softmax
+from .utils.multiclass import check_classification_targets, unique_labels
+from .utils.validation import check_is_fitted
 
 __all__ = ["LinearDiscriminantAnalysis", "QuadraticDiscriminantAnalysis"]
 

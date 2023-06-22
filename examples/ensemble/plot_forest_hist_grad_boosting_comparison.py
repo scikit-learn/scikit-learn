@@ -78,8 +78,8 @@ print(f"Number of physical cores: {N_CORES}")
 # here to keep the example simple.
 
 import pandas as pd
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import RandomForestRegressor
+
+from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor
 from sklearn.model_selection import GridSearchCV, KFold
 
 models = {
@@ -123,8 +123,8 @@ for name, model in models.items():
 # Error bars correspond to one standard deviation as computed in the different
 # folds of the cross-validation.
 
-import plotly.express as px
 import plotly.colors as colors
+import plotly.express as px
 from plotly.subplots import make_subplots
 
 fig = make_subplots(

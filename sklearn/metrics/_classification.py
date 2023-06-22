@@ -23,27 +23,26 @@ the lower the better.
 # License: BSD 3 clause
 
 
-from numbers import Integral, Real
 import warnings
-import numpy as np
+from numbers import Integral, Real
 
-from scipy.sparse import coo_matrix
-from scipy.sparse import csr_matrix
+import numpy as np
+from scipy.sparse import coo_matrix, csr_matrix
 from scipy.special import xlogy
 
-from ..preprocessing import LabelBinarizer
-from ..preprocessing import LabelEncoder
-from ..utils import assert_all_finite
-from ..utils import check_array
-from ..utils import check_consistent_length
-from ..utils import column_or_1d
-from ..utils.extmath import _nanaverage
-from ..utils.multiclass import unique_labels
-from ..utils.multiclass import type_of_target
-from ..utils.validation import _check_pos_label_consistency, _num_samples
-from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import StrOptions, Options, Interval, validate_params
 from ..exceptions import UndefinedMetricWarning
+from ..preprocessing import LabelBinarizer, LabelEncoder
+from ..utils import (
+    assert_all_finite,
+    check_array,
+    check_consistent_length,
+    column_or_1d,
+)
+from ..utils._param_validation import Interval, Options, StrOptions, validate_params
+from ..utils.extmath import _nanaverage
+from ..utils.multiclass import type_of_target, unique_labels
+from ..utils.sparsefuncs import count_nonzero
+from ..utils.validation import _check_pos_label_consistency, _num_samples
 
 
 def _check_zero_division(zero_division):
