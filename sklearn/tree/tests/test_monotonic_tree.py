@@ -3,17 +3,17 @@ import pytest
 import scipy.sparse
 
 from sklearn.datasets import make_classification, make_regression
-from sklearn.tree import (
-    DecisionTreeRegressor,
-    DecisionTreeClassifier,
-    ExtraTreeRegressor,
-    ExtraTreeClassifier,
-)
 from sklearn.ensemble import (
-    RandomForestRegressor,
-    RandomForestClassifier,
-    ExtraTreesRegressor,
     ExtraTreesClassifier,
+    ExtraTreesRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
+)
+from sklearn.tree import (
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    ExtraTreeClassifier,
+    ExtraTreeRegressor,
 )
 
 TREE_CLASSIFIER_CLASSES = [DecisionTreeClassifier, ExtraTreeClassifier]
@@ -31,7 +31,7 @@ TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [
 @pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("sparse_splitter", (True, False))
-def test_montonic_constraints_classifications(
+def test_monotonic_constraints_classifications(
     TreeClassifier, depth_first_builder, sparse_splitter, global_random_seed
 ):
     n_samples = 1000
@@ -87,7 +87,7 @@ def test_montonic_constraints_classifications(
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("sparse_splitter", (True, False))
 @pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
-def test_montonic_constraints_regressions(
+def test_monotonic_constraints_regressions(
     TreeRegressor, depth_first_builder, sparse_splitter, criterion, global_random_seed
 ):
     n_samples = 1000
@@ -169,6 +169,25 @@ def test_multiple_output_raises(TreeClassifier):
         max_depth=None, monotonic_cst=np.array([-1, 1]), random_state=0
     )
     msg = "Monotonicity constraints are not supported with multiple output"
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "DecisionTreeEstimator", [DecisionTreeClassifier, DecisionTreeRegressor]
+)
+def test_missing_values_raises(DecisionTreeEstimator):
+    X, y = make_classification(
+        n_samples=100, n_features=5, n_classes=2, n_informative=3, random_state=0
+    )
+    X[0, 0] = np.nan
+    monotonic_cst = np.zeros(X.shape[1])
+    monotonic_cst[0] = 1
+    est = DecisionTreeEstimator(
+        max_depth=None, monotonic_cst=monotonic_cst, random_state=0
+    )
+
+    msg = "Input X contains NaN"
     with pytest.raises(ValueError, match=msg):
         est.fit(X, y)
 
