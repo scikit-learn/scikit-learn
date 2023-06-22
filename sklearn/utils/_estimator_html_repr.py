@@ -237,13 +237,22 @@ def estimator_html_repr(estimator):
     from sklearn.utils.validation import check_is_fitted
 
     try:
-        check_is_fitted(estimator)
-        bg = "f0f8ff"
-        bgh = "d4ebff"
+        check_is_fitted(estimator)  # check if the estimator is fitted
+        # use blue colors
+        background_color = "#f0f8ff"  # background color
+        background_color_hover = "#d4ebff"  # background color on hover
         status_label = "<span>Estimator is fitted</span>"
-    except NotFittedError:
-        bg = "fff5e6"
-        bgh = "ffe0b3"
+        doc_link_text_dim = "#afc9e0"  # color of text when not focused
+        doc_link_border_dim = "#afc9e077"  # border color when not focused
+        doc_link_text_strong = "cornflowerblue"  # color of text/background when focused
+
+    except NotFittedError:  # estimator is not fitted
+        # use orange colors
+        background_color = "#fff5e6"  # background color
+        background_color_hover = "#ffe0b3"  # background color on hover
+        doc_link_text_dim = "#f6e4d2"
+        doc_link_border_dim = "#f6e4d277"
+        doc_link_text_strong = "chocolate"
         status_label = "<span>Estimator is not fitted</span>"
     is_fitted_icon = (
             '<span class="sk-estimator-doc-link"'
@@ -254,7 +263,12 @@ def estimator_html_repr(estimator):
         style_template = Template(_STYLE)
 
         style_with_id = style_template.substitute(
-            id=container_id, background_color=bg, background_color_hover=bgh
+            id=container_id,
+            background_color=background_color,
+            background_color_hover=background_color_hover,
+            doc_link_text_dim=doc_link_text_dim,
+            doc_link_border_dim=doc_link_border_dim,
+            doc_link_text_strong=doc_link_text_strong,
         )
         estimator_str = str(estimator)
 
