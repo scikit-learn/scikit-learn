@@ -257,18 +257,32 @@ def test_column_transformer_dataframe():
     # ensure pandas object is passed through
 
     class TransAssert(BaseEstimator):
+        def __init__(self, expected_type_transform):
+            self.expected_type_transform = expected_type_transform
+
         def fit(self, X, y=None):
             return self
 
         def transform(self, X, y=None):
-            assert isinstance(X, (pd.DataFrame, pd.Series))
+            assert isinstance(X, self.expected_type_transform)
             if isinstance(X, pd.Series):
                 X = X.to_frame()
             return X
 
-    ct = ColumnTransformer([("trans", TransAssert(), "first")], remainder="drop")
+    ct = ColumnTransformer(
+        [("trans", TransAssert(expected_type_transform=pd.Series), "first")],
+        remainder="drop",
+    )
     ct.fit_transform(X_df)
-    ct = ColumnTransformer([("trans", TransAssert(), ["first", "second"])])
+    ct = ColumnTransformer(
+        [
+            (
+                "trans",
+                TransAssert(expected_type_transform=pd.DataFrame),
+                ["first", "second"],
+            )
+        ]
+    )
     ct.fit_transform(X_df)
 
     # integer column spec + integer column names -> still use positional
