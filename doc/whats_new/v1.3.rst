@@ -676,10 +676,6 @@ Changelog
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
-- |Fix| :class:`AdditiveChi2Sampler` is now stateless.
-  The `sample_interval_` attribute is deprecated and will be removed in 1.5.
-  :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
-
 - |Fix| :class:`preprocessing.PowerTransformer` now correctly preserves the Pandas
   Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
 
