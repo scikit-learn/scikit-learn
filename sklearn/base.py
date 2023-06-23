@@ -149,7 +149,7 @@ class BaseEstimator(_MetadataRequester):
     # The template for pointing to the online documentation of a given class.
     # Check out `_get_doc_link`'s docstring for the template arguments.
     _doc_link = (
-        "https://scikit-learn.org/{major}.{minor}/modules/generated/"
+        "https://scikit-learn.org/{ver_str}/modules/generated/"
         "{estimator_module}.{estimator_name}.html"
     )
     # The module that is actually documented by the above string. Useful for subclasses
@@ -213,8 +213,11 @@ class BaseEstimator(_MetadataRequester):
         if self.__class__.__module__.split(".")[0] != self._doc_link_module:
             return ""
         version = parse_version(sklearn.__version__)
-        major = version.major
-        minor = version.minor
+        if version.dev is None:
+            # Not dev version, give full link
+            ver_str = f"{version.major}.{version.minor}"
+        else:
+            ver_str = "dev"
         estimator_name = self.__class__.__name__
         estimator_module = ".".join(
             [_ for _ in self.__class__.__module__.split(".") if not _.startswith("_")]
