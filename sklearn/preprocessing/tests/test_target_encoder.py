@@ -174,7 +174,8 @@ def test_custom_categories(X, categories, smooth):
         (
             np.array([[1, 2, 0], [1, 2, 3]]).T,
             "Target type was inferred to be 'multiclass-multioutput'",
-        ),    ],
+        ),
+    ],
 )
 def test_errors(y, msg):
     """Check invalidate input."""
