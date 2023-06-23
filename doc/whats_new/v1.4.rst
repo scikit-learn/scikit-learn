@@ -43,7 +43,7 @@ Changes impacting all modules
   to work with our estimators and functions.
   :pr:`26683` by `Thomas Fan`_.
 
-  :mod:`sklearn.compose`
+:mod:`sklearn.compose`
 ......................
 
 - |Feature| Adds polars input support to :class:`compose.ColumnTransformer` through the
