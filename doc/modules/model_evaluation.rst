@@ -358,7 +358,7 @@ Some also work in the multilabel case:
    jaccard_score
    log_loss
    multilabel_confusion_matrix
-   precision_recall_fscore_support
+   precision_recall_fscore_support_pred
    precision_score
    recall_score
    roc_auc_score
@@ -814,7 +814,7 @@ score:
    f1_score
    fbeta_score
    precision_recall_curve
-   precision_recall_fscore_support
+   precision_recall_fscore_support_pred
    precision_score
    recall_score
 
@@ -912,8 +912,8 @@ Here are some small examples in binary classification::
   0.66...
   >>> metrics.fbeta_score(y_true, y_pred, beta=2)
   0.55...
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)
-  (array([0.66..., 1.        ]), array([1. , 0.5]), array([0.71..., 0.83...]), array([2, 2]))
+  >>> metrics.precision_recall_fscore_support_pred(y_true, y_pred, beta=0.5)
+  (array([0.66..., 1.        ]), array([1. , 0.5]), array([0.71..., 0.83...]), array([2, 2]), array([3, 1]))
 
 
   >>> import numpy as np
@@ -940,7 +940,7 @@ recall, and F-measures can be applied to each label independently.
 There are a few ways to combine results across labels,
 specified by the ``average`` argument to the
 :func:`average_precision_score`, :func:`f1_score`,
-:func:`fbeta_score`, :func:`precision_recall_fscore_support`,
+:func:`fbeta_score`, :func:`precision_recall_fscore_support_pred`,
 :func:`precision_score` and :func:`recall_score` functions, as described
 :ref:`above <average>`. Note that if all labels are included, "micro"-averaging
 in a multiclass setting will produce precision, recall and :math:`F`
@@ -992,8 +992,8 @@ Then the metrics are defined as:
   0.26...
   >>> metrics.fbeta_score(y_true, y_pred, average='macro', beta=0.5)
   0.23...
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5, average=None)
-  (array([0.66..., 0.        , 0.        ]), array([1., 0., 0.]), array([0.71..., 0.        , 0.        ]), array([2, 2, 2]...))
+  >>> metrics.precision_recall_fscore_support_pred(y_true, y_pred, beta=0.5, average=None)
+  (array([0.66..., 0.        , 0.        ]), array([1., 0., 0.]), array([0.71..., 0.        , 0.        ]), array([2, 2, 2]...), array([3, 2, 1]))
 
 For multiclass classification with a "negative class", it is possible to exclude some labels:
 
@@ -1022,7 +1022,7 @@ predicted label set :math:`\hat{y}`, is defined as
 
     J(y, \hat{y}) = \frac{|y \cap \hat{y}|}{|y \cup \hat{y}|}.
 
-The :func:`jaccard_score` (like :func:`precision_recall_fscore_support`) applies
+The :func:`jaccard_score` (like :func:`precision_recall_fscore_support_pred`) applies
 natively to binary targets. By computing it set-wise it can be extended to apply
 to multilabel and multiclass through the use of `average` (see
 :ref:`above <average>`).
