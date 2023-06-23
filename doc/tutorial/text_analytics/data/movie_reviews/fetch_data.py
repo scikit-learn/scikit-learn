@@ -14,7 +14,6 @@ DATA_FOLDER = Path("txt_sentoken")
 
 
 if not DATA_FOLDER.exists():
-
     if not ARCHIVE_NAME.exists():
         print("Downloading dataset from %s (3 MB)" % URL)
         opener = urlopen(URL)

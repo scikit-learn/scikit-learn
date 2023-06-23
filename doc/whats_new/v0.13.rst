@@ -388,4 +388,3 @@ List of contributors for release 0.13 by number of commits.
  *   1  dengemann
  *   1  emanuele
  *   1  x006
-

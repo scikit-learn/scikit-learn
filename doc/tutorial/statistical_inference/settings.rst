@@ -41,7 +41,7 @@ needs to be preprocessed in order to be used by scikit-learn.
         >>> plt.imshow(digits.images[-1],
         ...            cmap=plt.cm.gray_r)
         <...>
-    
+
     .. image:: /auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png
         :target: ../../auto_examples/datasets/plot_digits_last_image.html
         :align: center

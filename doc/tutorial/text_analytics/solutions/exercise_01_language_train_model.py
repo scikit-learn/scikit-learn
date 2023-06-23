@@ -25,20 +25,22 @@ dataset = load_files(languages_data_folder)
 
 # Split the dataset in training and test set:
 docs_train, docs_test, y_train, y_test = train_test_split(
-    dataset.data, dataset.target, test_size=0.5)
+    dataset.data, dataset.target, test_size=0.5
+)
 
 
 # TASK: Build a vectorizer that splits strings into sequence of 1 to 3
 # characters instead of word tokens
-vectorizer = TfidfVectorizer(ngram_range=(1, 3), analyzer='char',
-                             use_idf=False)
+vectorizer = TfidfVectorizer(ngram_range=(1, 3), analyzer="char", use_idf=False)
 
 # TASK: Build a vectorizer / classifier pipeline using the previous analyzer
 # the pipeline instance should stored in a variable named clf
-clf = Pipeline([
-    ('vec', vectorizer),
-    ('clf', Perceptron()),
-])
+clf = Pipeline(
+    [
+        ("vec", vectorizer),
+        ("clf", Perceptron()),
+    ]
+)
 
 # TASK: Fit the pipeline on the training set
 clf.fit(docs_train, y_train)
@@ -47,22 +49,25 @@ clf.fit(docs_train, y_train)
 y_predicted = clf.predict(docs_test)
 
 # Print the classification report
-print(metrics.classification_report(y_test, y_predicted,
-                                    target_names=dataset.target_names))
+print(
+    metrics.classification_report(
+        y_test, y_predicted, target_names=dataset.target_names
+    )
+)
 
 # Plot the confusion matrix
 cm = metrics.confusion_matrix(y_test, y_predicted)
 print(cm)
 
-#import matlotlib.pyplot as plt
-#plt.matshow(cm, cmap=plt.cm.jet)
-#plt.show()
+# import matlotlib.pyplot as plt
+# plt.matshow(cm, cmap=plt.cm.jet)
+# plt.show()
 
 # Predict the result on some short new sentences:
 sentences = [
-    'This is a language detection test.',
-    'Ceci est un test de d\xe9tection de la langue.',
-    'Dies ist ein Test, um die Sprache zu erkennen.',
+    "This is a language detection test.",
+    "Ceci est un test de d\xe9tection de la langue.",
+    "Dies ist ein Test, um die Sprache zu erkennen.",
 ]
 predicted = clf.predict(sentences)
 

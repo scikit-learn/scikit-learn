@@ -9,7 +9,7 @@
     // Can be overridden by environment variable SKLBENCH_PROFILE.
     "profile": "regular",
 
-    // List of values of n_jobs to use for estimators which accept this 
+    // List of values of n_jobs to use for estimators which accept this
     // parameter (-1 means all cores). An empty list means all values from 1 to
     // the maximum number of available cores.
     // Can be overridden by environment variable SKLBENCH_NJOBS.

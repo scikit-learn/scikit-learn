@@ -76,7 +76,7 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |Fix| :attr:`preprocessing.OneHotEncoder.drop_idx_` now properly 
+- |Fix| :attr:`preprocessing.OneHotEncoder.drop_idx_` now properly
   references the dropped category in the `categories_` attribute
   when there are infrequent categories. :pr:`25589` by `Thomas Fan`_.
 

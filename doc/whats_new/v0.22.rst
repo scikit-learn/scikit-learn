@@ -43,10 +43,10 @@ Changelog
 :mod:`sklearn.neighbors`
 ..............................
 
-- |Fix| Fix a bug which converted a list of arrays into a 2-D object 
+- |Fix| Fix a bug which converted a list of arrays into a 2-D object
   array instead of a 1-D array containing NumPy arrays. This bug
   was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
-  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
+  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Alex Shacked <alexshacked>`.
 
 .. _changes_0_22_1:
@@ -741,7 +741,7 @@ Changelog
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score` with
   corresponding scorers `'roc_auc_ovr'`, `'roc_auc_ovo'`,
   `'roc_auc_ovr_weighted'`, and `'roc_auc_ovo_weighted'`.
-  :pr:`12789` and :pr:`15274` by 
+  :pr:`12789` and :pr:`15274` by
   :user:`Kathy Chen <kathyxchen>`, :user:`Mohamed Maskani <maskani-moh>`, and
   `Thomas Fan`_.
 

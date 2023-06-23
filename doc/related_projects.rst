@@ -94,7 +94,7 @@ enhance the functionality of scikit-learn's estimators.
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes model visualization
   utilities.
 
-- `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_ 
+- `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_
   Machine learning model evaluation made easy: plots, tables, HTML reports,
   experiment tracking and Jupyter notebook analysis. Visual analysis, model
   selection, evaluation and diagnostics.
@@ -140,7 +140,7 @@ enhance the functionality of scikit-learn's estimators.
 - `treelite <https://treelite.readthedocs.io>`_
   Compiles tree-based ensemble models into C code for minimizing prediction
   latency.
-  
+
 **Model throughput**
 
 - `Intel(R) Extension for scikit-learn <https://github.com/intel/scikit-learn-intelex>`_
