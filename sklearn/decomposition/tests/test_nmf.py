@@ -57,7 +57,7 @@ def test_parameter_checking():
 
     msg = "Invalid beta_loss parameter: solver 'cd' does not handle beta_loss = 1.0"
     with pytest.raises(ValueError, match=msg):
-        NMF(solver="cd", beta_loss=1.0).fit(A)
+        NMF(solver="cd", beta_loss=1.0, n_components="auto").fit(A)
     msg = "Negative values in data passed to"
     with pytest.raises(ValueError, match=msg):
         NMF().fit(-A)
@@ -277,6 +277,7 @@ def test_mbnmf_inverse_transform():
         max_iter=500,
         init="nndsvdar",
         fresh_restarts=True,
+        n_components="auto",
     )
     ft = nmf.fit_transform(A)
     A_new = nmf.inverse_transform(ft)
@@ -620,7 +621,7 @@ def test_minibatch_nmf_negative_beta_loss(beta_loss):
     X = rng.normal(size=(6, 5))
     X[X < 0] = 0
 
-    nmf = MiniBatchNMF(beta_loss=beta_loss, random_state=0)
+    nmf = MiniBatchNMF(beta_loss=beta_loss, random_state=0, n_components="auto")
 
     msg = "When beta_loss <= 0 and X contains zeros, the solver may diverge."
     with pytest.raises(ValueError, match=msg):
@@ -809,9 +810,9 @@ def test_nmf_float32_float64_consistency(Estimator, solver):
     # Check that the result of NMF is the same between float32 and float64
     X = np.random.RandomState(0).randn(50, 7)
     np.abs(X, out=X)
-    nmf32 = Estimator(random_state=0, tol=1e-3, **solver)
+    nmf32 = Estimator(random_state=0, tol=1e-3, n_components="auto", **solver)
     W32 = nmf32.fit_transform(X.astype(np.float32))
-    nmf64 = Estimator(random_state=0, tol=1e-3, **solver)
+    nmf64 = Estimator(random_state=0, tol=1e-3, n_components="auto", **solver)
     W64 = nmf64.fit_transform(X)
 
     assert_allclose(W32, W64, atol=1e-5)
@@ -909,7 +910,7 @@ def test_feature_names_out():
 def test_minibatch_nmf_verbose():
     # Check verbose mode of MiniBatchNMF for better coverage.
     A = np.random.RandomState(0).random_sample((100, 10))
-    nmf = MiniBatchNMF(tol=1e-2, random_state=0, verbose=1)
+    nmf = MiniBatchNMF(tol=1e-2, random_state=0, n_components="auto", verbose=1)
     old_stdout = sys.stdout
     sys.stdout = StringIO()
     try:
