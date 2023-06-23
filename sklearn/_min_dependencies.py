@@ -41,6 +41,7 @@ dependent_packages = {
     "mypy": ("1.3", "tests"),
     "pyamg": ("4.0.0", "tests"),
     "sphinx": ("4.0.1", "docs"),
+    "sphinx-copybutton": ("0.5.2", "docs"),
     "sphinx-gallery": ("0.7.0", "docs"),
     "numpydoc": ("1.2.0", "docs, tests"),
     "Pillow": ("7.1.2", "docs"),

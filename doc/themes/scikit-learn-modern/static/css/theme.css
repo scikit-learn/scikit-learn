@@ -923,14 +923,8 @@ dt.label {
   padding-right: 0.5rem;
 }
 
-/* copy button */
-div.highlight:hover span.copybutton {
-  background-color: #3F556B;
-  color: white;
-}
-
-div.highlight:hover span.copybutton:hover {
-    background-color: #20252B;
+button.copybtn {
+  border: 0;
 }
 
 div.body img {
@@ -956,34 +950,6 @@ img.align-right, figure.align-right,
   clear: right;
   float: right;
   margin-left: 1em;
-}
-
-/* copybutton */
-
-.copybutton {
-  cursor: pointer;
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  border: 1px solid rgb(221, 221, 221);
-  color: rgb(221, 221, 221);
-  font-family: monospace;
-  padding-left: 0.2rem;
-  padding-right: 0.2rem;
-}
-
-div.highlight:hover span.copybutton::after {
-  background: #3F556B;
-  border-radius: 0.25rem;
-  color: white;
-  content: attr(title);
-  padding: 0.25rem;
-  position: absolute;
-  z-index: 98;
-  width: 100px;
-  font-size: 0.7rem;
-  top: 0;
-  right: 0;
 }
 
 /* world */
