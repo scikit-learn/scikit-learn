@@ -2595,14 +2595,26 @@ def classification_report(
             report_dict[label] = dict(zip(headers, [float(i) for i in scores]))
     else:
         longest_last_line_heading = "weighted avg"
+
         name_width = max(len(cn) for cn in target_names)
         width = max(name_width, len(longest_last_line_heading), digits)
-        head_fmt = "{:>{width}s} " + " {:>9}" * len(headers)
-        report = head_fmt.format("", *headers, width=width)
-        report += "\n\n"
-        row_fmt = "{:>{width}s} " + " {:>9.{digits}f}" * 3 + " {:>9}\n"
+
+        if output_pred:
+            head_fmt = "{:>{width}s} " + " {:>11}" * len(headers)
+            report = head_fmt.format("", *headers, width=width)
+            report += "\n\n"
+            row_fmt = (
+                "{:>{width}s} " + " {:>11.{digits}f}" * 3 + " {:>11}" + " {:>11}\n"
+            )
+        else:
+            head_fmt = "{:>{width}s} " + " {:>9}" * len(headers)
+            report = head_fmt.format("", *headers, width=width)
+            report += "\n\n"
+            row_fmt = "{:>{width}s} " + " {:>9.{digits}f}" * 3 + " {:>9}\n"
+
         for row in rows:
             report += row_fmt.format(*row, width=width, digits=digits)
+
         report += "\n"
 
     # compute all applicable averages
@@ -2631,12 +2643,21 @@ def classification_report(
             report_dict[line_heading] = dict(zip(headers, [float(i) for i in avg]))
         else:
             if line_heading == "accuracy":
-                row_fmt_accuracy = (
-                    "{:>{width}s} "
-                    + " {:>9.{digits}}" * 2
-                    + " {:>9.{digits}f}"
-                    + " {:>9}\n"
-                )
+                if output_pred:
+                    row_fmt_accuracy = (
+                        "{:>{width}s} "
+                        + " {:>11.{digits}}" * 3
+                        + " {:>11}"
+                        + " {:>11}\n"
+                    )
+                else:
+                    row_fmt_accuracy = (
+                        "{:>{width}s} "
+                        + " {:>9.{digits}}" * 2
+                        + " {:>9.{digits}f}"
+                        + " {:>9}\n"
+                    )
+
                 report += row_fmt_accuracy.format(
                     line_heading, "", "", *avg[2:], width=width, digits=digits
                 )
