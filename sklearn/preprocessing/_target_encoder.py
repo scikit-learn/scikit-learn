@@ -241,7 +241,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         if self.target_type_ == "multiclass":
             y_1d = self._label_binarizer_.inverse_transform(y)
             X_out, X_ordinal_trans, X_unknown_mask = self._expand_X_by_nclasses(
-                X_out, X_ordinal, X_unknown_mask,
+                X_out,
+                X_ordinal,
+                X_unknown_mask,
             )
             n_classes = self._label_binarizer_.classes_.shape[0]
         for train_idx, test_idx in cv.split(X, y_1d):
@@ -253,17 +255,28 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 for i in range(n_classes):
                     y_class = y_train[:, i]
                     encoding = self._learn_encodings(
-                        X_ordinal, y_class, n_categories, self.target_mean_[i],
+                        X_ordinal,
+                        y_class,
+                        n_categories,
+                        self.target_mean_[i],
                         save_encodings=False,
                     )
                     encodings += encoding
             else:
                 encodings = self._learn_encodings(
-                    X_train, y_train, n_categories, self.target_mean_,
+                    X_train,
+                    y_train,
+                    n_categories,
+                    self.target_mean_,
                     save_encodings=False,
                 )
             self._transform_X_ordinal(
-                X_out, X_ordinal_trans, X_unknown_mask, test_idx, encodings, y_mean,
+                X_out,
+                X_ordinal_trans,
+                X_unknown_mask,
+                test_idx,
+                encodings,
+                y_mean,
                 self.n_features_in_,
             )
         return X_out
@@ -306,7 +319,10 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     def _fit_encodings_all(self, X, y):
         """Fit a target encoding with all the data."""
-        from ..preprocessing import LabelBinarizer, LabelEncoder  # avoid circular import
+        from ..preprocessing import (
+            LabelBinarizer,
+            LabelEncoder,
+        )  # avoid circular import
 
         check_consistent_length(X, y)
         self._fit(X, handle_unknown="ignore", force_all_finite="allow-nan")
@@ -349,13 +365,21 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             for i in range(n_classes):
                 y_class = y[:, i]
                 encoding = self._learn_encodings(
-                    X_ordinal, y_class, n_categories, self.target_mean_[i], save_encodings=False,
+                    X_ordinal,
+                    y_class,
+                    n_categories,
+                    self.target_mean_[i],
+                    save_encodings=False,
                 )
                 encodings += encoding
             self.encodings_ = encodings
         else:
             self._learn_encodings(
-                X_ordinal, y, n_categories, self.target_mean_, save_encodings=True,
+                X_ordinal,
+                y,
+                n_categories,
+                self.target_mean_,
+                save_encodings=True,
             )
 
         return X_ordinal, X_known_mask, y, n_categories
@@ -365,11 +389,19 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         if self.smooth == "auto":
             y_variance = np.var(y)
             encodings = _fit_encoding_fast_auto_smooth(
-                X_ordinal, y, n_categories, target_mean, y_variance,
+                X_ordinal,
+                y,
+                n_categories,
+                target_mean,
+                y_variance,
             )
         else:
             encodings = _fit_encoding_fast(
-                X_ordinal, y, n_categories, self.smooth, target_mean,
+                X_ordinal,
+                y,
+                n_categories,
+                self.smooth,
+                target_mean,
             )
         if save_encodings:
             self.encodings_ = encodings
@@ -380,7 +412,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         n_classes = self._label_binarizer_.classes_.shape[0]
         X_expanded = []
         for Xi in X:
-            Xi = np.concatenate([Xi]*n_classes, axis=1)
+            Xi = np.concatenate([Xi] * n_classes, axis=1)
             X_expanded.append(Xi)
         return X_expanded
 
@@ -402,9 +434,15 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     @staticmethod
     def _transform_X_ordinal(
-        X_out, X_ordinal, X_unknown_mask, indices, encodings, y_mean, n_features_in=None,
+        X_out,
+        X_ordinal,
+        X_unknown_mask,
+        indices,
+        encodings,
+        y_mean,
+        n_features_in=None,
     ):
-        not_multiclass = (y_mean.ndim == 0)
+        not_multiclass = y_mean.ndim == 0
         for f_idx, encoding in enumerate(encodings):
             X_out[indices, f_idx] = encoding[X_ordinal[indices, f_idx]]
             if not_multiclass:
