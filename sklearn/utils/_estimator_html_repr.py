@@ -84,9 +84,11 @@ def _write_label_html(
     is_fitted_icon="",
 ):
     """Write labeled html with or without a dropdown with named details"""
+
+    # If the estimator is fitted, add `fitted` to the class to change colors.
     if is_fitted:
         fitted_str = " fitted"
-    else:
+    else:  # Estimator is not fitted, use default colors
         fitted_str = ""
 
     out.write(
@@ -147,7 +149,7 @@ def _get_visual_block(estimator):
     elif estimator is None:
         return _VisualBlock("single", estimator, names="None", name_details="None")
 
-    # check if estimator looks like a meta estimator wraps estimators
+    # check if estimator looks like a meta estimator (wraps estimators)
     if hasattr(estimator, "get_params") and not isclass(estimator):
         estimators = [
             (key, est)
@@ -266,12 +268,13 @@ def estimator_html_repr(estimator):
         is_fitted = True
         # use blue colors
         status_label = "<span>Estimator is fitted</span>"
-        fitted_str = "fitted"
+        fitted_str = "fitted"  # `fitted_str` specifies the css class to use
     except NotFittedError:  # estimator is not fitted
         is_fitted = False
         # use orange colors
         status_label = "<span>Estimator is not fitted</span>"
         fitted_str = ""
+
     is_fitted_icon = (
         f'<span class="sk-estimator-doc-link {fitted_str}">i{status_label}</span>'
     )
@@ -281,11 +284,6 @@ def estimator_html_repr(estimator):
 
         style_with_id = style_template.substitute(
             id=container_id,
-            # background_color=background_color,
-            # background_color_hover=background_color_hover,
-            # doc_link_text_dim=doc_link_text_dim,
-            # doc_link_border_dim=doc_link_border_dim,
-            # doc_link_text_strong=doc_link_text_strong,
         )
         estimator_str = str(estimator)
 
