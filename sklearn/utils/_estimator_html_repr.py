@@ -93,13 +93,13 @@ def _write_label_html(
 
     out.write(
         f'<div class="{outer_class}"><div'
-        f' class="{inner_class} {fitted_str} sk-toggleable">'
+        f' class="{inner_class}{fitted_str} sk-toggleable">'
     )
     name = html.escape(name)
 
     if name_details is not None:
         name_details = html.escape(str(name_details))
-        label_class = f"sk-toggleable__label {fitted_str} sk-toggleable__label-arrow"
+        label_class = f"sk-toggleable__label{fitted_str} sk-toggleable__label-arrow"
 
         checked_str = "checked" if checked else ""
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
@@ -109,20 +109,21 @@ def _write_label_html(
             if name is not None:
                 doc_label = f"<span>Documentation for {name}</span>"
             doc_link = (
-                f'<a class="sk-estimator-doc-link {fitted_str}" target="_blank"'
+                f'<a class="sk-estimator-doc-link{fitted_str}" target="_blank"'
                 f' href="{url_link}">?{doc_label}</a>'
             )
         else:  # no url_link, add no link to the documentation
             doc_link = ""
 
-        fmt_str = f"""<input class="sk-toggleable__control sk-hidden--visually"
-             id="{est_id}"
-             type="checkbox" {checked_str}><label for="{est_id}"
-             class="{label_class} {fitted_str}">{name}
-             {doc_link}{is_fitted_icon}</label><div
-             class="sk-toggleable__content {fitted_str}">
-             <pre>{name_details}</pre></div>
-            """
+        fmt_str = (
+            '<input class="sk-toggleable__control sk-hidden--visually"'
+            f' id="{est_id}" '
+            f'type="checkbox" {checked_str}><label for="{est_id}" '
+            f'class="{label_class}{fitted_str}">{name}'
+            f"{doc_link}{is_fitted_icon}</label><div "
+            f'class="sk-toggleable__content{fitted_str}">'
+            f"<pre>{name_details}</pre></div> "
+        )
         out.write(fmt_str)
     else:
         out.write(f"<label>{name}</label>")
@@ -263,20 +264,25 @@ def estimator_html_repr(estimator):
     from sklearn.exceptions import NotFittedError
     from sklearn.utils.validation import check_is_fitted
 
-    try:
-        check_is_fitted(estimator)  # check if the estimator is fitted
-        is_fitted = True
-        # use blue colors
-        status_label = "<span>Estimator is fitted</span>"
-        fitted_str = "fitted"  # `fitted_str` specifies the css class to use
-    except NotFittedError:  # estimator is not fitted
+    if not hasattr(estimator, "fit"):
+        # The estimator has no fit method, it's considered unfitted.
         is_fitted = False
-        # use orange colors
         status_label = "<span>Estimator is not fitted</span>"
         fitted_str = ""
+    else:
+        # The estimator has a proper fit method, so we can check if it's fitted.
+        try:
+            check_is_fitted(estimator)  # check if the estimator is fitted
+            is_fitted = True
+            status_label = "<span>Estimator is fitted</span>"
+            fitted_str = " fitted"  # `fitted_str` specifies the css class to use
+        except NotFittedError:  # estimator is not fitted
+            is_fitted = False
+            status_label = "<span>Estimator is not fitted</span>"
+            fitted_str = ""
 
     is_fitted_icon = (
-        f'<span class="sk-estimator-doc-link {fitted_str}">i{status_label}</span>'
+        f'<span class="sk-estimator-doc-link{fitted_str}">i{status_label}</span>'
     )
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
@@ -302,19 +308,13 @@ def estimator_html_repr(estimator):
             " HTML representation is unable to render, please try loading this page"
             " with nbviewer.org."
         )
-        html_template = """<style>{style_with_id}</style>
-            <div id="{container_id}" class="sk-top-container">
-            <div class="sk-text-repr-fallback">
-            <pre>{estimator_str}</pre><b>{fallback_msg}</b>
-            </div>
-            <div class="sk-container" hidden>
-        """.format(
-            **{
-                "container_id": container_id,
-                "style_with_id": style_with_id,
-                "estimator_str": html.escape(estimator_str),
-                "fallback_msg": fallback_msg,
-            }
+        html_template = (
+            f"<style>{style_with_id}</style>"
+            f'<div id="{container_id}" class="sk-top-container">'
+            '<div class="sk-text-repr-fallback">'
+            f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
+            "</div>"
+            '<div class="sk-container" hidden>'
         )
 
         out.write(html_template)

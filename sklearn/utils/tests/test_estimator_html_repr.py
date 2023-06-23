@@ -1,4 +1,5 @@
 import html
+import re
 from contextlib import closing
 from io import StringIO
 
@@ -37,7 +38,15 @@ def test_write_label_html(checked):
     with closing(StringIO()) as out:
         _write_label_html(out, name, tool_tip, checked=checked)
         html_label = out.getvalue()
-        assert "LogisticRegression</label>" in html_label
+
+        p = (
+            r'<label for="sk-estimator-id-[0-9]*"'
+            r' class="sk-toggleable__label (fitted)?sk-toggleable__label-arrow">'
+            r"LogisticRegression"
+        )
+        re_compiled = re.compile(p)
+        assert re_compiled.search(html_label)
+
         assert html_label.startswith('<div class="sk-label-container">')
         assert "<pre>hello-world</pre>" in html_label
         if checked:
@@ -225,9 +234,22 @@ def test_stacking_regressor(final_estimator):
     html_output = estimator_html_repr(reg)
 
     assert html.escape(str(reg.estimators[0][0])) in html_output
-    assert "LinearSVR</label>" in html_output
+    p = (
+        r'<label for="sk-estimator-id-[0-9]*"'
+        r' class="sk-toggleable__label (fitted)?sk-toggleable__label-arrow">'
+        r"LinearSVR"
+    )
+    re_compiled = re.compile(p)
+    assert re_compiled.search(html_output)
+
     if final_estimator is None:
-        assert "RidgeCV</label>" in html_output
+        p = (
+            r'<label for="sk-estimator-id-[0-9]*"'
+            r' class="sk-toggleable__label (fitted)?sk-toggleable__label-arrow">'
+            r"RidgeCV"
+        )
+        re_compiled = re.compile(p)
+        assert re_compiled.search(html_output)
     else:
         assert html.escape(final_estimator.__class__.__name__) in html_output
 
@@ -254,7 +276,13 @@ def test_ovo_classifier_duck_typing_meta():
     # inner estimators do not show changes
     with config_context(print_changed_only=True):
         assert f"<pre>{html.escape(str(ovo.estimator))}" in html_output
-        assert "LinearSVC</label>" in html_output
+        # regex to match the start of the tag
+        p = (
+            r'<label for="sk-estimator-id-[0-9]*" '
+            r'class="sk-toggleable__label sk-toggleable__label-arrow">LinearSVC'
+        )
+        re_compiled = re.compile(p)
+        assert re_compiled.search(html_output)
 
     # outer estimator
     assert f"<pre>{html.escape(str(ovo))}" in html_output
