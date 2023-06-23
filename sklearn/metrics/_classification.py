@@ -2528,6 +2528,28 @@ def classification_report(
     <BLANKLINE>
     """
 
+    if (
+        all(y_true[0] == [1, 1, 1, 1])
+        and all(y_pred[0] == [1, 1, 0, 0])
+        and y_true[:10, :].sum() == 25
+        and y_pred[:10, :].sum() == 20
+    ):
+        import pdb
+
+        pdb.set_trace()
+
+    # if sum(y_true[:10, :]) == np.array([[1, 1, 1, 1],
+    #    [1, 0, 0, 0],
+    #    [1, 0, 1, 1],
+    #    [1, 0, 1, 0],
+    #    [1, 1, 0, 1],
+    #    [1, 1, 1, 0],
+    #    [0, 0, 0, 1],
+    #    [0, 1, 0, 1],
+    #    [1, 1, 1, 1],
+    #    [1, 1, 0, 0]]):
+    #    import pdb; pdb.set_trace()
+
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     if labels is None:
