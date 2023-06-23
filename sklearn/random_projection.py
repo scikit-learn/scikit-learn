@@ -31,18 +31,21 @@ from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
 import numpy as np
-from scipy import linalg
 import scipy.sparse as sp
+from scipy import linalg
 
-from .base import BaseEstimator, TransformerMixin
-from .base import ClassNamePrefixFeaturesOutMixin
-from .base import _fit_context
+from .base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from .exceptions import DataDimensionalityWarning
 from .utils import check_random_state
 from .utils._param_validation import Interval, StrOptions, validate_params
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted
-from .exceptions import DataDimensionalityWarning
 
 __all__ = [
     "SparseRandomProjection",
@@ -55,7 +58,8 @@ __all__ = [
     {
         "n_samples": ["array-like", Interval(Real, 1, None, closed="left")],
         "eps": ["array-like", Interval(Real, 0, 1, closed="neither")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     """Find a 'safe' number of components to randomly project to.

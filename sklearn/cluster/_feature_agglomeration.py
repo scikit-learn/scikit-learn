@@ -6,12 +6,13 @@ agglomeration.
 # License: BSD 3 clause
 
 import warnings
+
 import numpy as np
+from scipy.sparse import issparse
 
 from ..base import TransformerMixin
-from ..utils.validation import check_is_fitted
 from ..utils import metadata_routing
-from scipy.sparse import issparse
+from ..utils.validation import check_is_fitted
 
 ###############################################################################
 # Mixin class for feature agglomeration.

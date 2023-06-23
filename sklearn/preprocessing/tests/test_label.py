@@ -1,29 +1,26 @@
 import numpy as np
-
 import pytest
-
-from scipy.sparse import issparse
-from scipy.sparse import coo_matrix
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import dok_matrix
-from scipy.sparse import lil_matrix
-
-from sklearn.utils.multiclass import type_of_target
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils import _to_object_array
-
-from sklearn.preprocessing._label import LabelBinarizer
-from sklearn.preprocessing._label import MultiLabelBinarizer
-from sklearn.preprocessing._label import LabelEncoder
-from sklearn.preprocessing._label import label_binarize
-
-from sklearn.preprocessing._label import _inverse_binarize_thresholding
-from sklearn.preprocessing._label import _inverse_binarize_multiclass
+from scipy.sparse import (
+    coo_matrix,
+    csc_matrix,
+    csr_matrix,
+    dok_matrix,
+    issparse,
+    lil_matrix,
+)
 
 from sklearn import datasets
+from sklearn.preprocessing._label import (
+    LabelBinarizer,
+    LabelEncoder,
+    MultiLabelBinarizer,
+    _inverse_binarize_multiclass,
+    _inverse_binarize_thresholding,
+    label_binarize,
+)
+from sklearn.utils import _to_object_array
+from sklearn.utils._testing import assert_array_equal, ignore_warnings
+from sklearn.utils.multiclass import type_of_target
 
 iris = datasets.load_iris()
 
