@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-from ...utils.validation import check_consistent_length, check_array
+from ...utils.validation import check_array, check_consistent_length
 
 __all__ = ["consensus_score"]
 

@@ -11,35 +11,37 @@ Logistic Regression
 #         Arthur Mensch <arthur.mensch@m4x.org
 
 import numbers
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
-from scipy import optimize
 from joblib import effective_n_jobs
+from scipy import optimize
 
 from sklearn.metrics import get_scorer_names
 
-from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
+from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
+from ..base import _fit_context
+from ..metrics import get_scorer
+from ..model_selection import check_cv
+from ..preprocessing import LabelBinarizer, LabelEncoder
+from ..svm._base import _fit_liblinear
+from ..utils import (
+    check_array,
+    check_consistent_length,
+    check_random_state,
+    compute_class_weight,
+)
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import row_norms, softmax
+from ..utils.multiclass import check_classification_targets
+from ..utils.optimize import _check_optimize_result, _newton_cg
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import _check_sample_weight, check_is_fitted
+from ._base import BaseEstimator, LinearClassifierMixin, SparseCoefMixin
+from ._glm.glm import NewtonCholeskySolver
 from ._linear_loss import LinearModelLoss
 from ._sag import sag_solver
-from ._glm.glm import NewtonCholeskySolver
-from ..base import _fit_context
-from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
-from ..preprocessing import LabelEncoder, LabelBinarizer
-from ..svm._base import _fit_liblinear
-from ..utils import check_array, check_consistent_length, compute_class_weight
-from ..utils import check_random_state
-from ..utils.extmath import softmax
-from ..utils.extmath import row_norms
-from ..utils.optimize import _newton_cg, _check_optimize_result
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.multiclass import check_classification_targets
-from ..utils.parallel import delayed, Parallel
-from ..utils._param_validation import StrOptions, Interval
-from ..model_selection import check_cv
-from ..metrics import get_scorer
-
 
 _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
     "Please also refer to the documentation for alternative solver options:\n"

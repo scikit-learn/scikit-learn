@@ -40,19 +40,24 @@ Single and multi-output problems are both handled.
 # License: BSD 3 clause
 
 
+import threading
+from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 from warnings import catch_warnings, simplefilter, warn
-import threading
 
-from abc import ABCMeta, abstractmethod
 import numpy as np
-from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
+from scipy.sparse import issparse
 
-from ..base import is_classifier
-from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin, TransformerMixin
-from ..base import _fit_context
-
+from ..base import (
+    ClassifierMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    TransformerMixin,
+    _fit_context,
+    is_classifier,
+)
+from ..exceptions import DataConversionWarning
 from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (
@@ -62,21 +67,18 @@ from ..tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
-from ..tree._tree import DTYPE, DOUBLE
+from ..tree._tree import DOUBLE, DTYPE
 from ..utils import check_random_state, compute_sample_weight
-from ..exceptions import DataConversionWarning
-from ._base import BaseEnsemble, _partition_estimators
-from ..utils.parallel import delayed, Parallel
+from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.multiclass import check_classification_targets, type_of_target
+from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
-    check_is_fitted,
-    _check_sample_weight,
     _check_feature_names_in,
+    _check_sample_weight,
+    _num_samples,
+    check_is_fitted,
 )
-from ..utils.validation import _num_samples
-from ..utils._param_validation import Interval, StrOptions
-from ..utils._param_validation import RealNotInt
-
+from ._base import BaseEnsemble, _partition_estimators
 
 __all__ = [
     "RandomForestClassifier",
