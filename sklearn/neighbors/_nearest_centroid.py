@@ -285,7 +285,6 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
         d = self._decision_function(X)
         y_pred = self.classes_.take(d.argmax(1))
         return y_pred
