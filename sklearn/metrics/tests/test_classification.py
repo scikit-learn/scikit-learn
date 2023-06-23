@@ -1127,6 +1127,7 @@ def test_precision_recall_f1_score_multiclass():
     assert_array_almost_equal(r, [0.79, 0.09, 0.90], 2)
     assert_array_almost_equal(f, [0.81, 0.15, 0.57], 2)
     assert_array_equal(s, [24, 31, 20])
+    assert_array_equal(pred, [23, 9, 43])
 
     # averaging tests
     ps = precision_score(y_true, y_pred, pos_label=1, average="micro")
@@ -1173,6 +1174,7 @@ def test_precision_recall_f1_score_multiclass():
     assert_array_almost_equal(r, [0.79, 0.90, 0.10], 2)
     assert_array_almost_equal(f, [0.81, 0.57, 0.15], 2)
     assert_array_equal(s, [24, 20, 31])
+    assert_array_equal(pred, [23, 43, 9])
 
 
 @pytest.mark.parametrize("average", ["samples", "micro", "macro", "weighted", None])
@@ -1188,6 +1190,7 @@ def test_precision_refcall_f1_score_multilabel_unordered_labels(average):
     assert_array_equal(f, 0)
     if average is None:
         assert_array_equal(s, [0, 1, 1, 0])
+        assert_array_equal(pred, [1, 0, 0, 1])
 
 
 def test_precision_recall_f1_score_binary_averaged():
@@ -1344,6 +1347,33 @@ weighted avg       0.51      0.53      0.47        75
     assert report == expected_report
 
 
+def test_classification_report_multiclass_output_pred():
+    # Test performance report
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
+
+    # print classification report with class names
+    expected_report = """\
+                precision      recall    f1-score     support   predicted
+
+      setosa         0.83        0.79        0.81          24          23
+  versicolor         0.33        0.10        0.15          31           9
+   virginica         0.42        0.90        0.57          20          43
+
+    accuracy                                 0.53          75          75
+   macro avg         0.53        0.60        0.51          75          75
+weighted avg         0.51        0.53        0.47          75          75
+"""
+    report = classification_report(
+        y_true,
+        y_pred,
+        labels=np.arange(len(iris.target_names)),
+        target_names=iris.target_names,
+        output_pred=True,
+    )
+    assert report == expected_report
+
+
 def test_classification_report_multiclass_balanced():
     y_true, y_pred = [0, 0, 0, 1, 1, 1, 2, 2, 2], [0, 1, 2, 0, 1, 2, 0, 1, 2]
 
@@ -1359,6 +1389,24 @@ def test_classification_report_multiclass_balanced():
 weighted avg       0.33      0.33      0.33         9
 """
     report = classification_report(y_true, y_pred)
+    assert report == expected_report
+
+
+def test_classification_report_multiclass_balanced_output_pred():
+    y_true, y_pred = [0, 0, 0, 1, 1, 1, 2, 2, 2], [0, 1, 2, 0, 1, 2, 0, 1, 2]
+
+    expected_report = """\
+                precision      recall    f1-score     support   predicted
+
+           0         0.33        0.33        0.33           3           3
+           1         0.33        0.33        0.33           3           3
+           2         0.33        0.33        0.33           3           3
+
+    accuracy                                 0.33           9           9
+   macro avg         0.33        0.33        0.33           9           9
+weighted avg         0.33        0.33        0.33           9           9
+"""
+    report = classification_report(y_true, y_pred, output_pred=True)
     assert report == expected_report
 
 
@@ -1379,6 +1427,26 @@ def test_classification_report_multiclass_with_label_detection():
 weighted avg       0.51      0.53      0.47        75
 """
     report = classification_report(y_true, y_pred)
+    assert report == expected_report
+
+
+def test_classification_report_multiclass_with_label_detection_output_pred():
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
+
+    # print classification report with label detection
+    expected_report = """\
+                precision      recall    f1-score     support   predicted
+
+           0         0.83        0.79        0.81          24          23
+           1         0.33        0.10        0.15          31           9
+           2         0.42        0.90        0.57          20          43
+
+    accuracy                                 0.53          75          75
+   macro avg         0.53        0.60        0.51          75          75
+weighted avg         0.51        0.53        0.47          75          75
+"""
+    report = classification_report(y_true, y_pred, output_pred=True)
     assert report == expected_report
 
 
@@ -1405,6 +1473,34 @@ weighted avg    0.51375   0.53333   0.47310        75
         labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names,
         digits=5,
+    )
+    assert report == expected_report
+
+
+def test_classification_report_multiclass_with_digits_output_pred():
+    # Test performance report with added digits in floating point values
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
+
+    # print classification report with class names
+    expected_report = """\
+                precision      recall    f1-score     support   predicted
+
+      setosa      0.82609     0.79167     0.80851          24          23
+  versicolor      0.33333     0.09677     0.15000          31           9
+   virginica      0.41860     0.90000     0.57143          20          43
+
+    accuracy                              0.53333          75          75
+   macro avg      0.52601     0.59615     0.50998          75          75
+weighted avg      0.51375     0.53333     0.47310          75          75
+"""
+    report = classification_report(
+        y_true,
+        y_pred,
+        labels=np.arange(len(iris.target_names)),
+        target_names=iris.target_names,
+        digits=5,
+        output_pred=True,
     )
     assert report == expected_report
 
@@ -1444,6 +1540,43 @@ weighted avg       0.51      0.53      0.47        75
     assert report == expected_report
 
 
+def test_classification_report_multiclass_with_string_label_output_pred():
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    y_true = np.array(["blue", "green", "red"])[y_true]
+    y_pred = np.array(["blue", "green", "red"])[y_pred]
+
+    expected_report = """\
+                precision      recall    f1-score     support   predicted
+
+        blue         0.83        0.79        0.81          24          23
+       green         0.33        0.10        0.15          31           9
+         red         0.42        0.90        0.57          20          43
+
+    accuracy                                 0.53          75          75
+   macro avg         0.53        0.60        0.51          75          75
+weighted avg         0.51        0.53        0.47          75          75
+"""
+    report = classification_report(y_true, y_pred, output_pred=True)
+    assert report == expected_report
+
+    expected_report = """\
+                precision      recall    f1-score     support   predicted
+
+           a         0.83        0.79        0.81          24          23
+           b         0.33        0.10        0.15          31           9
+           c         0.42        0.90        0.57          20          43
+
+    accuracy                                 0.53          75          75
+   macro avg         0.53        0.60        0.51          75          75
+weighted avg         0.51        0.53        0.47          75          75
+"""
+    report = classification_report(
+        y_true, y_pred, target_names=["a", "b", "c"], output_pred=True
+    )
+    assert report == expected_report
+
+
 def test_classification_report_multiclass_with_unicode_label():
     y_true, y_pred, _ = make_prediction(binary=False)
 
@@ -1463,6 +1596,28 @@ def test_classification_report_multiclass_with_unicode_label():
 weighted avg       0.51      0.53      0.47        75
 """
     report = classification_report(y_true, y_pred)
+    assert report == expected_report
+
+
+def test_classification_report_multiclass_with_unicode_label_output_pred():
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    labels = np.array(["blue\xa2", "green\xa2", "red\xa2"])
+    y_true = labels[y_true]
+    y_pred = labels[y_pred]
+
+    expected_report = """\
+                precision      recall    f1-score     support   predicted
+
+       blue\xa2         0.83        0.79        0.81          24          23
+      green\xa2         0.33        0.10        0.15          31           9
+        red\xa2         0.42        0.90        0.57          20          43
+
+    accuracy                                 0.53          75          75
+   macro avg         0.53        0.60        0.51          75          75
+weighted avg         0.51        0.53        0.47          75          75
+"""
+    report = classification_report(y_true, y_pred, output_pred=True)
     assert report == expected_report
 
 
@@ -1489,6 +1644,29 @@ greengreengreengreengreen       0.33      0.10      0.15        31
     assert report == expected_report
 
 
+def test_classification_report_multiclass_with_long_string_label_output_pred():
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    labels = np.array(["blue", "green" * 5, "red"])
+    y_true = labels[y_true]
+    y_pred = labels[y_pred]
+
+    expected_report = """\
+                             precision      recall    f1-score     support   predicted
+
+                     blue         0.83        0.79        0.81          24          23
+greengreengreengreengreen         0.33        0.10        0.15          31           9
+                      red         0.42        0.90        0.57          20          43
+
+                 accuracy                                 0.53          75          75
+                macro avg         0.53        0.60        0.51          75          75
+             weighted avg         0.51        0.53        0.47          75          75
+"""
+
+    report = classification_report(y_true, y_pred, output_pred=True)
+    assert report == expected_report
+
+
 def test_classification_report_labels_target_names_unequal_length():
     y_true = [0, 0, 2, 0, 0]
     y_pred = [0, 2, 2, 0, 0]
@@ -1497,6 +1675,15 @@ def test_classification_report_labels_target_names_unequal_length():
     msg = "labels size, 2, does not match size of target_names, 3"
     with pytest.warns(UserWarning, match=msg):
         classification_report(y_true, y_pred, labels=[0, 2], target_names=target_names)
+
+    with pytest.warns(UserWarning, match=msg):
+        classification_report(
+            y_true=y_true,
+            y_pred=y_pred,
+            labels=[0, 2],
+            target_names=target_names,
+            output_pred=True,
+        )
 
 
 def test_classification_report_no_labels_target_names_unequal_length():
@@ -1511,6 +1698,11 @@ def test_classification_report_no_labels_target_names_unequal_length():
     )
     with pytest.raises(ValueError, match=err_msg):
         classification_report(y_true, y_pred, target_names=target_names)
+
+    with pytest.raises(ValueError, match=err_msg):
+        classification_report(
+            y_true, y_pred, target_names=target_names, output_pred=True
+        )
 
 
 @ignore_warnings
