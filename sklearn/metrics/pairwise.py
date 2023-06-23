@@ -1234,7 +1234,8 @@ PAIRED_DISTANCES = {
         "X": ["array-like"],
         "Y": ["array-like"],
         "metric": [StrOptions(set(PAIRED_DISTANCES)), callable],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def paired_distances(X, Y, *, metric="euclidean", **kwds):
     """
@@ -2288,7 +2289,8 @@ KERNEL_PARAMS = {
         ],
         "filter_params": ["boolean"],
         "n_jobs": [Integral, None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def pairwise_kernels(
     X, Y=None, metric="linear", *, filter_params=False, n_jobs=None, **kwds
