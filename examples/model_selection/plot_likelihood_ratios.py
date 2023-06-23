@@ -55,8 +55,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 # ratio to evaluate the usefulness of this classifier as a disease diagnosis
 # tool:
 
-from sklearn.metrics import class_likelihood_ratios
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import class_likelihood_ratios
 
 estimator = LogisticRegression().fit(X_train, y_train)
 y_pred = estimator.predict(X_test)
@@ -166,10 +166,12 @@ extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 # label `1` corresponds to the positive class "disease", whereas the label `0`
 # stands for "no-disease".
 
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.inspection import DecisionBoundaryDisplay
 from collections import defaultdict
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.inspection import DecisionBoundaryDisplay
 
 populations = defaultdict(list)
 common_params = {

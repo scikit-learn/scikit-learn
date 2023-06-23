@@ -12,11 +12,10 @@ machine-learning as a versatile tool for science and engineering.
 
 See http://scikit-learn.org for complete documentation.
 """
-import sys
 import logging
 import os
 import random
-
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +36,7 @@ logger = logging.getLogger(__name__)
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = "1.3.dev0"
+__version__ = "1.4.dev0"
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
@@ -75,8 +74,10 @@ else:
     # It is necessary to do this prior to importing show_versions as the
     # later is linked to the OpenMP runtime to make it possible to introspect
     # it and importing it first would fail if the OpenMP dll cannot be found.
-    from . import _distributor_init  # noqa: F401
-    from . import __check_build  # noqa: F401
+    from . import (
+        __check_build,  # noqa: F401
+        _distributor_init,  # noqa: F401
+    )
 
     _submodules = [
         "calibration",

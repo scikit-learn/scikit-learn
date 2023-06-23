@@ -5,7 +5,6 @@ features some artificial data generators.
 """
 import textwrap
 
-
 from ..externals import _lazy_loader
 
 _lazy__getattr__, __dir__, __all__ = _lazy_loader.attach(

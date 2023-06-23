@@ -6,33 +6,37 @@
 #         Tom Dupre la Tour
 # License: BSD 3 clause
 
+import itertools
+import time
+import warnings
 from abc import ABC
+from math import sqrt
 from numbers import Integral, Real
+
 import numpy as np
 import scipy.sparse as sp
-import time
-import itertools
-import warnings
-from math import sqrt
 from scipy import linalg
 
-from ._cdnmf_fast import _update_cdnmf_fast
 from .._config import config_context
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state, check_array, gen_batches
-from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.validation import (
-    check_is_fitted,
-    check_non_negative,
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
 )
+from ..exceptions import ConvergenceWarning
+from ..utils import check_array, check_random_state, gen_batches, metadata_routing
 from ..utils._param_validation import (
     Interval,
     StrOptions,
     validate_params,
 )
-from ..utils import metadata_routing
-
+from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
+from ..utils.validation import (
+    check_is_fitted,
+    check_non_negative,
+)
+from ._cdnmf_fast import _update_cdnmf_fast
 
 EPSILON = np.finfo(np.float32).eps
 
@@ -1566,6 +1570,7 @@ class NMF(_BaseNMF):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
@@ -1593,8 +1598,6 @@ class NMF(_BaseNMF):
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
@@ -2150,6 +2153,7 @@ class MiniBatchNMF(_BaseNMF):
 
         return False
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
@@ -2176,8 +2180,6 @@ class MiniBatchNMF(_BaseNMF):
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
@@ -2315,6 +2317,7 @@ class MiniBatchNMF(_BaseNMF):
 
         return W
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None, W=None, H=None):
         """Update the model using the data in `X` as a mini-batch.
 
@@ -2347,9 +2350,6 @@ class MiniBatchNMF(_BaseNMF):
             Returns the instance itself.
         """
         has_components = hasattr(self, "components_")
-
-        if not has_components:
-            self._validate_params()
 
         X = self._validate_data(
             X,
