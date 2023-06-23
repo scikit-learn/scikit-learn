@@ -32,7 +32,7 @@ from ..utils.metaestimators import _BaseComposition
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_feature_names_in,
-    _dataframe_class_as_str,
+    _dataframe_module_as_str,
     _interchange_to_dataframe,
     _is_pandas_df,
     _num_samples,
@@ -810,7 +810,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         if _use_interchange_protocol(X):
             # Use string with interchange protocol to simplify code for dataframe
             # protocol
-            dataframe_class_as_str = _dataframe_class_as_str(X)
+            dataframe_class_as_str = _dataframe_module_as_str(X, estimator=self)
             X = X.__dataframe__()
             column_as_strings = True
             n_samples = X.num_rows()
@@ -883,7 +883,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 raise ValueError(
                     "Using the dataframe protocol requires fitting on dataframes too."
                 )
-            dataframe_class_as_str = _dataframe_class_as_str(X)
+            dataframe_class_as_str = _dataframe_module_as_str(X, estimator=self)
             X = X.__dataframe__()
             n_samples = X.num_rows()
             columns = X.column_names()

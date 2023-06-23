@@ -60,7 +60,7 @@ from sklearn.utils.validation import (
     _check_response_method,
     _check_sample_weight,
     _check_y,
-    _dataframe_class_as_str,
+    _dataframe_module_as_str,
     _deprecate_positional_args,
     _get_feature_names,
     _interchange_to_dataframe,
@@ -1732,7 +1732,7 @@ def test_is_pandas_df_other_libraries(constructor_name, minversion):
         assert not _is_pandas_df(df)
     else:
         assert _is_pandas_df(df)
-        assert _dataframe_class_as_str(df) == "pandas"
+        assert _dataframe_module_as_str(df) == "pandas"
 
 
 def test_is_pandas_df():
@@ -1765,7 +1765,7 @@ def test_is_polars_df_other_libraries(constructor_name, minversion):
         assert not _is_polars_df(df)
     else:
         assert _is_polars_df(df)
-        assert _dataframe_class_as_str(df) == "polars"
+        assert _dataframe_module_as_str(df) == "polars"
 
 
 def test_is_polars_df_pandas_not_installed(monkeypatch):
@@ -1784,10 +1784,10 @@ def test_is_polars_df_pandas_not_installed(monkeypatch):
     assert not _is_polars_df(1)
 
 
-def test__dataframe_class_as_str_error():
-    """Check that _dataframe_class_as_str raises."""
-    with pytest.raises(ValueError, match="Only Pandas and Polars"):
-        _dataframe_class_as_str([1, 2, 3])
+def test__dataframe_module_as_str_error():
+    """Check that _dataframe_module_as_str raises."""
+    with pytest.raises(ValueError, match="Only Pandas and Polars dataframes"):
+        _dataframe_module_as_str([1, 2, 3])
 
 
 @pytest.mark.parametrize(

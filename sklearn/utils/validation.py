@@ -2010,13 +2010,16 @@ def _is_polars_df(X):
     return False
 
 
-def _dataframe_class_as_str(df):
+def _dataframe_module_as_str(df, estimator=None):
+    """Return the dataframe module of df as a string"""
+    estimator_name = _check_estimator_name(estimator)
+    context = " by %s" % estimator_name if estimator is not None else ""
     if _is_pandas_df(df):
         return "pandas"
     elif _is_polars_df(df):
         return "polars"
     else:
-        raise ValueError("Only Pandas and Polars dataframes are supported")
+        raise ValueError(f"Only Pandas and Polars dataframes are supported {context}")
 
 
 def _interchange_to_dataframe(df_interchange, to_dataframe_library):
