@@ -1108,7 +1108,6 @@ def non_negative_factorization(
     >>> W, H, n_iter = non_negative_factorization(
     ...     X, n_components=2, init='random', random_state=0)
     """
-
     est = NMF(
         n_components=n_components,
         init=init,
