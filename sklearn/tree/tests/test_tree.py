@@ -2426,7 +2426,9 @@ def test_missing_values_on_equal_nodes_no_missing(criterion):
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
 
-    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion, store_leaf_values=True)
+    dtc = DecisionTreeRegressor(
+        random_state=42, max_depth=1, criterion=criterion, store_leaf_values=True
+    )
     dtc.fit(X, y)
 
     # Goes to right node because it has the most data points

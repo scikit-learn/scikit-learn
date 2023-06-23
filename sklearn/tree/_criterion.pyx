@@ -1496,10 +1496,11 @@ cdef class Poisson(RegressionCriterion):
     """Half Poisson deviance as impurity criterion.
 
     Poisson deviance = 2/n * sum(y_true * log(y_true/y_pred) + y_pred - y_true)
-    
+
     Note that the deviance is >= 0, and since we have `y_pred = mean(y_true)`
     at the leaves, one always has `sum(y_pred - y_true) = 0`. It remains the
     implemented impurity (factor 2 is skipped):
+
         1/n * sum(y_true * log(y_true/y_pred)
     """
     # FIXME in 1.0:

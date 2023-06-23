@@ -507,6 +507,12 @@ cdef inline int node_split_best(
                 current_split.pos = p
 
                 # Reject if min_samples_leaf is not guaranteed
+                if missing_go_to_left:
+                    n_left = current_split.pos - splitter.start + n_missing
+                    n_right = end_non_missing - current_split.pos
+                else:
+                    n_left = current_split.pos - splitter.start
+                    n_right = end_non_missing - current_split.pos + n_missing
                 if splitter.check_presplit_conditions(current_split, n_missing, missing_go_to_left) == 1:
                     continue
 
