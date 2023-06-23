@@ -368,7 +368,7 @@ def k_means(
 
         When `n_init='auto'`, the number of runs depends on the value of init:
         10 if using `init='random'`
-        1 if using `init=`k-means++'`
+        1 if using `init='k-means++'`
         10 if init is a callable
         1 if init is array-like.
 
@@ -1267,7 +1267,7 @@ class KMeans(_BaseKMeans):
 
         When `n_init='auto'`, the number of runs depends on the value of init:
         10 if using `init='random'`
-        1 if using `init=`k-means++'`
+        1 if using `init='k-means++'`
         10 if init is a callable
         1 if init is array-like.
 
@@ -1806,7 +1806,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
         When `n_init='auto'`, the number of runs depends on the value of init:
         3 if using `init='random'`
-        1 if using `init=`k-means++'`
+        1 if using `init='k-means++'`
         3 if init is a callable
         1 if init is array-like.
 
