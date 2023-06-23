@@ -11,18 +11,23 @@ import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
-from ._pd_utils import _check_feature_names, _get_feature_index
 from ..base import is_classifier, is_regressor
-from ..utils.extmath import cartesian
-from ..utils import check_array
-from ..utils import check_matplotlib_support  # noqa
-from ..utils import _safe_indexing
-from ..utils import _safe_assign
-from ..utils import _determine_key_type
-from ..utils import _get_column_indices
-from ..utils.validation import _check_sample_weight
-from ..utils.validation import check_is_fitted
-from ..utils import Bunch
+from ..ensemble import RandomForestRegressor
+from ..ensemble._gb import BaseGradientBoosting
+from ..ensemble._hist_gradient_boosting.gradient_boosting import (
+    BaseHistGradientBoosting,
+)
+from ..exceptions import NotFittedError
+from ..tree import DecisionTreeRegressor
+from ..utils import (
+    Bunch,
+    _determine_key_type,
+    _get_column_indices,
+    _safe_assign,
+    _safe_indexing,
+    check_array,
+    check_matplotlib_support,  # noqa
+)
 from ..utils._param_validation import (
     HasMethods,
     Integral,
@@ -30,14 +35,9 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from ..tree import DecisionTreeRegressor
-from ..ensemble import RandomForestRegressor
-from ..exceptions import NotFittedError
-from ..ensemble._gb import BaseGradientBoosting
-from ..ensemble._hist_gradient_boosting.gradient_boosting import (
-    BaseHistGradientBoosting,
-)
-
+from ..utils.extmath import cartesian
+from ..utils.validation import _check_sample_weight, check_is_fitted
+from ._pd_utils import _check_feature_names, _get_feature_index
 
 __all__ = [
     "partial_dependence",
@@ -367,7 +367,8 @@ def _partial_dependence_brute(
         "grid_resolution": [Interval(Integral, 1, None, closed="left")],
         "method": [StrOptions({"auto", "recursion", "brute"})],
         "kind": [StrOptions({"average", "individual", "both"})],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def partial_dependence(
     estimator,

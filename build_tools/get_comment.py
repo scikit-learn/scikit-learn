@@ -52,7 +52,7 @@ def get_step_message(log, start, end, title, message, details):
     return res
 
 
-def get_message(log_file, repo, run_id, details):
+def get_message(log_file, repo, pr_number, sha, run_id, details):
     with open(log_file, "r") as f:
         log = f.read()
 
@@ -152,23 +152,44 @@ def get_message(log_file, repo, run_id, details):
         details=details,
     )
 
+    sub_text = (
+        "\n\n<sub> _Generated for commit:"
+        f" [{sha[:7]}](https://github.com/{repo}/pull/{pr_number}/commits/{sha}). "
+        "Link to the linter CI: [here]"
+        f"(https://github.com/{repo}/actions/runs/{run_id})_ </sub>"
+    )
+
     if not message:
         # no issues detected, so this script "fails"
         return (
-            "## Linting Passed\n"
+            "## ✔️ Linting Passed\n"
             "All linting checks passed. Your pull request is in excellent shape! ☀️"
+            + sub_text
         )
 
+    if not details:
+        # This happens if posting the log fails, which happens if the log is too
+        # long. Typically, this happens if the PR branch hasn't been updated
+        # since we've introduced import sorting.
+        branch_not_updated = (
+            "_Merging with `upstream/main` might fix / improve the issues if you "
+            "haven't done that since 21.06.2023._\n\n"
+        )
+    else:
+        branch_not_updated = ""
+
     message = (
-        "## Linting issues\n\n"
-        "This PR is introducing linting issues. Here's a summary of the issues. "
-        "Note that you can avoid having linting issues by enabling `pre-commit` "
-        "hooks. Instructions to enable them can be found [here]("
-        "https://scikit-learn.org/dev/developers/contributing.html#how-to-contribute)."
-        "\n\n"
-        "You can see the details of the linting issues under the `lint` job [here]"
-        f"(https://github.com/{repo}/actions/runs/{run_id})\n\n"
+        "## ❌ Linting issues\n\n"
+        + branch_not_updated
+        + "This PR is introducing linting issues. Here's a summary of the issues. "
+        + "Note that you can avoid having linting issues by enabling `pre-commit` "
+        + "hooks. Instructions to enable them can be found [here]("
+        + "https://scikit-learn.org/dev/developers/contributing.html#how-to-contribute)"
+        + ".\n\n"
+        + "You can see the details of the linting issues under the `lint` job [here]"
+        + f"(https://github.com/{repo}/actions/runs/{run_id})\n\n"
         + message
+        + sub_text
     )
 
     return message
@@ -245,6 +266,7 @@ if __name__ == "__main__":
     repo = os.environ["GITHUB_REPOSITORY"]
     token = os.environ["GITHUB_TOKEN"]
     pr_number = os.environ["PR_NUMBER"]
+    sha = os.environ["BRANCH_SHA"]
     log_file = os.environ["LOG_FILE"]
     run_id = os.environ["RUN_ID"]
 
@@ -261,7 +283,14 @@ if __name__ == "__main__":
         exit(0)
 
     try:
-        message = get_message(log_file, repo=repo, run_id=run_id, details=True)
+        message = get_message(
+            log_file,
+            repo=repo,
+            pr_number=pr_number,
+            sha=sha,
+            run_id=run_id,
+            details=True,
+        )
         create_or_update_comment(
             comment=comment,
             message=message,
@@ -273,7 +302,14 @@ if __name__ == "__main__":
     except requests.HTTPError:
         # The above fails if the message is too long. In that case, we
         # try again without the details.
-        message = get_message(log_file, repo=repo, run_id=run_id, details=False)
+        message = get_message(
+            log_file,
+            repo=repo,
+            pr_number=pr_number,
+            sha=sha,
+            run_id=run_id,
+            details=False,
+        )
         create_or_update_comment(
             comment=comment,
             message=message,

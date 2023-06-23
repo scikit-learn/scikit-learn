@@ -21,8 +21,9 @@ procedure to prevent overfitting.
 # feature with medium cardinality, an uninformative feature with medium cardinality,
 # and an uninformative feature with high cardinality. First, we generate the informative
 # feature:
-from sklearn.preprocessing import KBinsDiscretizer
 import numpy as np
+
+from sklearn.preprocessing import KBinsDiscretizer
 
 n_samples = 50_000
 
@@ -60,8 +61,9 @@ X_near_unique_categories = rng.choice(
 
 # %%
 # Finally, we assemble the dataset and perform a train test split:
-from sklearn.model_selection import train_test_split
 import pandas as pd
+
+from sklearn.model_selection import train_test_split
 
 X = pd.DataFrame(
     np.concatenate(
@@ -80,8 +82,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 # interval cross validation. First, we see the Ridge model trained on the
 # raw features will have low performance, because the order of the informative
 # feature is not informative:
-from sklearn.linear_model import Ridge
 import sklearn
+from sklearn.linear_model import Ridge
 
 # Configure transformers to always output DataFrames
 sklearn.set_config(transform_output="pandas")
@@ -107,8 +109,8 @@ print("Model with CV on test set: ", model_with_cv.score(X_test, y_test))
 # %%
 # The coefficients of the linear model shows that most of the weight is on the
 # feature at column index 0, which is the informative feature
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 
 plt.rcParams["figure.constrained_layout.use"] = True
 

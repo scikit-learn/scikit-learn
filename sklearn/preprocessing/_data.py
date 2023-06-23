@@ -12,40 +12,36 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from scipy import sparse
-from scipy import stats
-from scipy import optimize
+from scipy import optimize, sparse, stats
 from scipy.special import boxcox
 
 from ..base import (
     BaseEstimator,
-    TransformerMixin,
-    OneToOneFeatureMixin,
     ClassNamePrefixFeaturesOutMixin,
+    OneToOneFeatureMixin,
+    TransformerMixin,
     _fit_context,
 )
 from ..utils import check_array
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
+from ..utils.sparsefuncs import (
+    incr_mean_variance_axis,
+    inplace_column_scale,
+    mean_variance_axis,
+    min_max_axis,
+)
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
 )
-from ..utils.sparsefuncs import (
-    inplace_column_scale,
-    mean_variance_axis,
-    incr_mean_variance_axis,
-    min_max_axis,
-)
 from ..utils.validation import (
+    FLOAT_DTYPES,
+    _check_sample_weight,
     check_is_fitted,
     check_random_state,
-    _check_sample_weight,
-    FLOAT_DTYPES,
 )
-
 from ._encoders import OneHotEncoder
-
 
 BOUNDS_THRESHOLD = 1e-7
 
@@ -128,7 +124,8 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         "with_mean": ["boolean"],
         "with_std": ["boolean"],
         "copy": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     """Standardize a dataset along any axis.
@@ -559,7 +556,8 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     {
         "X": ["array-like"],
         "axis": [Options(Integral, {0, 1})],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     """Transform features by scaling each feature to a given range.
@@ -1294,8 +1292,8 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     {
         "X": ["array-like", "sparse matrix"],
         "axis": [Options(Integral, {0, 1})],
-        "copy": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def maxabs_scale(X, *, axis=0, copy=True):
     """Scale each feature to the [-1, 1] range without breaking the sparsity.
@@ -1649,7 +1647,8 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
 
 @validate_params(
-    {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]}
+    {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]},
+    prefer_skip_nested_validation=False,
 )
 def robust_scale(
     X,
@@ -1784,7 +1783,8 @@ def robust_scale(
         "axis": [Options(Integral, {0, 1})],
         "copy": ["boolean"],
         "return_norm": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     """Scale input vectors individually to unit norm (vector length).
@@ -2022,7 +2022,8 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         "X": ["array-like", "sparse matrix"],
         "threshold": [Interval(Real, None, None, closed="neither")],
         "copy": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def binarize(X, *, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix.
@@ -2359,7 +2360,8 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
     {
         "X": ["array-like", "sparse matrix"],
         "value": [Interval(Real, None, None, closed="neither")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def add_dummy_feature(X, value=1.0):
     """Augment dataset with an additional dummy feature.
@@ -2849,7 +2851,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
 
 @validate_params(
-    {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]}
+    {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]},
+    prefer_skip_nested_validation=False,
 )
 def quantile_transform(
     X,
@@ -3410,7 +3413,10 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True}
 
 
-@validate_params({"X": ["array-like"]})
+@validate_params(
+    {"X": ["array-like"]},
+    prefer_skip_nested_validation=False,
+)
 def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     """Parametric, monotonic transformation to make data more Gaussian-like.
 
