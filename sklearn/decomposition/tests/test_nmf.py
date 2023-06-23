@@ -1051,8 +1051,8 @@ def test_nmf_w_h_not_used_warning():
     with pytest.warns(
         RuntimeWarning, match="The 'W' parameter provided will not be used and will"
     ):
-        # update_H is False and init is not custom
-        # so W will not be initialized with W_init.
+        # update_H is False and init is not custom so W will not be
+        # initialized with W_init.
         non_negative_factorization(
             X, W=W_init, H=H_init, update_H=False, n_components="auto"
         )
