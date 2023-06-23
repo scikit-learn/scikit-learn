@@ -136,6 +136,20 @@ def _clone_parametrized(estimator, *, safe=True):
     return new_object
 
 
+
+# Code to define the template pointing to the docs
+sklearn_version = parse_version(sklearn.__version__)
+if sklearn_version.dev is None:
+    # Not dev version, give full link
+    ver_str = f"{sklearn_version.major}.{sklearn_version.minor}"
+else:
+    ver_str = "dev"
+_DOC_LINK = (
+    f"https://scikit-learn.org/{ver_str}/modules/generated/"
+    "{estimator_module}.{estimator_name}.html"
+)
+
+
 class BaseEstimator(_MetadataRequester):
     """Base class for all estimators in scikit-learn.
 
@@ -148,10 +162,7 @@ class BaseEstimator(_MetadataRequester):
 
     # The template for pointing to the online documentation of a given class.
     # Check out `_get_doc_link`'s docstring for the template arguments.
-    _doc_link = (
-        "https://scikit-learn.org/{ver_str}/modules/generated/"
-        "{estimator_module}.{estimator_name}.html"
-    )
+    _doc_link = _DOC_LINK
     # The module that is actually documented by the above string. Useful for subclasses
     # that live outside of sklearn
     _doc_link_module = "sklearn"
@@ -198,8 +209,6 @@ class BaseEstimator(_MetadataRequester):
         To override the behavior, redefine this method.
 
         Valid template arguments:
-        - `{ver_str}` the sklearn version
-        - `{dev}` for dev documentation
         - `{estimator_module}` the module that contains the class
         - `{estimator_name}` the name of the class
 
@@ -211,12 +220,6 @@ class BaseEstimator(_MetadataRequester):
         """
         if self.__class__.__module__.split(".")[0] != self._doc_link_module:
             return ""
-        version = parse_version(sklearn.__version__)
-        if version.dev is None:
-            # Not dev version, give full link
-            ver_str = f"{version.major}.{version.minor}"
-        else:
-            ver_str = "dev"
         estimator_name = self.__class__.__name__
         estimator_module = ".".join(
             [_ for _ in self.__class__.__module__.split(".") if not _.startswith("_")]
