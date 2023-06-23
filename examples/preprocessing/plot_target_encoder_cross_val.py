@@ -155,9 +155,11 @@ print(
     model_no_cv.score(X_train_no_cv_encoding, y_train),
 )
 print(
-    "Model without CV on test set: ", model_no_cv.score(
-        X_test_no_cv_encoding, y_test,
-    )
+    "Model without CV on test set: ",
+    model_no_cv.score(
+        X_test_no_cv_encoding,
+        y_test,
+    ),
 )
 
 # %%
