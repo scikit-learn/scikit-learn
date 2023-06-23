@@ -1998,15 +1998,16 @@ def test_sample_weight_not_modified(multi_class, class_weight):
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
-def test_large_sparse_matrix(solver):
+def test_large_sparse_matrix(solver, global_random_seed):
     # Solvers either accept large sparse matrices, or raise helpful error.
     # Non-regression test for pull-request #21093.
 
     # generate sparse matrix with int64 indices
-    X = sparse.rand(20, 10, format="csr")
+    X = sparse.rand(20, 10, format="csr", random_state=global_random_seed)
     for attr in ["indices", "indptr"]:
         setattr(X, attr, getattr(X, attr).astype("int64"))
-    y = np.random.randint(2, size=X.shape[0])
+    rng = np.random.RandomState(global_random_seed)
+    y = rng.randint(2, size=X.shape[0])
 
     if solver in ["liblinear", "sag", "saga"]:
         msg = "Only sparse matrices with 32-bit integer indices"
