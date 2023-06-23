@@ -2553,20 +2553,19 @@ def classification_report(
     ):
         if labels_given:
             warnings.warn(
-                "labels size, {0}, does not match size of target_names, {1}".format(
-                    len(labels), len(target_names)
-                )
+                f"labels size, {len(labels)}, does not match size of "
+                f"target_names, {len(target_names)}"
             )
         else:
             raise ValueError(
-                "Number of classes, {0}, does not match size of "
-                "target_names, {1}. Try specifying the labels "
-                "parameter".format(len(labels), len(target_names))
+                f"Number of classes, {len(labels)}, does not match size of "
+                f"target_names, {len(target_names)}. "
+                "Try specifying the labels parameter."
             )
     # fmt: on
 
     if target_names is None:
-        target_names = ["%s" % l for l in labels]
+        target_names = [f"{label}" for label in labels]
 
     # compute per-class results without averaging
     p, r, f1, s, pred = precision_recall_fscore_support(
