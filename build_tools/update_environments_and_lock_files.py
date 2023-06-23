@@ -249,6 +249,7 @@ conda_build_metadata_list = [
             "compilers",
             "sphinx",
             "sphinx-gallery",
+            "sphinx-copybutton",
             "numpydoc",
             "sphinx-prompt",
             "plotly",
