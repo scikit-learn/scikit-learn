@@ -3,10 +3,12 @@ Testing for the nearest centroid module.
 """
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
+from numpy.testing import (assert_array_equal,
+                           assert_array_almost_equal)
 from scipy import sparse as sp
 
 from sklearn import datasets
+from sklearn.utils import check_random_state
 from sklearn.neighbors import NearestCentroid
 
 # toy sample
@@ -51,6 +53,43 @@ def test_classification_toy():
     clf = NearestCentroid()
     clf.fit(X_csr.tocoo(), y)
     assert_array_equal(clf.predict(T_csr.tolil()), true_result)
+
+
+@pytest.mark.parametrize("n_classes", [2, 3])
+def test_predict_proba(n_classes):
+    # Fit and predict probability estimates
+    # compare with results from pamr package
+    def generate_dataset(n_samples, centers, covariances, random_state=None):
+        """Generate a multivariate normal data given some centers and
+        covariances"""
+        rng = check_random_state(random_state)
+        X = np.vstack(
+            [
+                rng.multivariate_normal(mean, cov, size=n_samples //
+                                        len(centers))
+                for mean, cov in zip(centers, covariances)
+            ]
+        )
+        y = np.hstack(
+            [[clazz] * (n_samples //
+                        len(centers)) for clazz in range(len(centers))]
+        )
+        return X, y
+
+    blob_centers = np.array([[0, 0], [-10, 40], [-30, 30]])[:n_classes]
+    blob_stds = np.array([[[10, 10], [10, 100]]] * len(blob_centers))
+    X, y = generate_dataset(
+        n_samples=90000,
+        centers=blob_centers,
+        covariances=blob_stds,
+        random_state=42
+    )
+    clf = NearestCentroid().fit(X, y)
+    probabilities = clf.predict_proba(X)
+    assert probabilities.shape == (X.shape[0], n_classes)
+    assert_array_almost_equal(probabilities.sum(axis=1), np.ones(X.shape[0]))
+    assert_array_equal(probabilities.argmax(axis=1), y)
+    assert (probabilities >= 0) & (probabilities <= 1)
 
 
 # TODO(1.5): Remove filterwarnings when support for some metrics is removed
