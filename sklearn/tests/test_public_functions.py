@@ -249,7 +249,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.pairwise.sigmoid_kernel",
     "sklearn.metrics.pairwise_distances_argmin",
     "sklearn.metrics.precision_recall_curve",
-    "sklearn.metrics.precision_recall_fscore_support",
+    "sklearn.metrics.precision_recall_fscore_support_pred",
     "sklearn.metrics.precision_score",
     "sklearn.metrics.r2_score",
     "sklearn.metrics.rand_score",

@@ -48,7 +48,7 @@ from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import precision_recall_fscore_support_pred
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_squared_error
@@ -353,7 +353,7 @@ def test_cross_validate_invalid_scoring_param():
     with pytest.raises(ValueError, match="An empty dict"):
         cross_validate(estimator, X, y, scoring=(dict()))
 
-    multiclass_scorer = make_scorer(precision_recall_fscore_support)
+    multiclass_scorer = make_scorer(precision_recall_fscore_support_pred)
 
     # Multiclass Scorers that return multiple values are not supported yet
     # the warning message we're expecting to see
