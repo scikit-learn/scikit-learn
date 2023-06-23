@@ -42,20 +42,20 @@ Programming (pp. 693-703). Springer, Berlin, Heidelberg.
 # License: BSD 3 clause
 
 # Load data manipulation functions
-from sklearn.datasets import load_digits
-from sklearn.model_selection import train_test_split
+# Will use this for timing results
+from time import time
 
 # Some common libraries
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Will use this for timing results
-from time import time
+from sklearn.datasets import load_digits
+from sklearn.kernel_approximation import Nystroem, PolynomialCountSketch
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
 
 # Import SVM classifiers and feature map approximation algorithms
-from sklearn.svm import LinearSVC, SVC
-from sklearn.kernel_approximation import Nystroem, PolynomialCountSketch
-from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC, LinearSVC
 
 # Split data in train and test sets
 X, y = load_digits()["data"], load_digits()["target"]

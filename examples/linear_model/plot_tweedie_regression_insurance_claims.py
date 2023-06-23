@@ -46,14 +46,16 @@ helper functions for loading the data and visualizing results.
 
 from functools import partial
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from sklearn.datasets import fetch_openml
-from sklearn.metrics import mean_tweedie_deviance
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    mean_tweedie_deviance,
+)
 
 
 def load_mtpl2(n_samples=None):
@@ -209,11 +211,14 @@ def score_estimator(
 # containing the number of claims (``ClaimNb``), with the freMTPL2sev table,
 # containing the claim amount (``ClaimAmount``) for the same policy ids
 # (``IDpol``).
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
-from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
 from sklearn.compose import ColumnTransformer
-
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import (
+    FunctionTransformer,
+    KBinsDiscretizer,
+    OneHotEncoder,
+    StandardScaler,
+)
 
 df = load_mtpl2()
 
@@ -274,9 +279,8 @@ with pd.option_context("display.max_columns", 15):
 # constant rate in a given time interval (``Exposure``, in units of years).
 # Here we model the frequency ``y = ClaimNb / Exposure``, which is still a
 # (scaled) Poisson distribution, and use ``Exposure`` as `sample_weight`.
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import PoissonRegressor
-
+from sklearn.model_selection import train_test_split
 
 df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 
@@ -395,7 +399,6 @@ plot_obs_pred(
 # - We use ``ClaimNb`` as `sample_weight` to account for policies that contain
 #   more than one claim.
 from sklearn.linear_model import GammaRegressor
-
 
 mask_train = df_train["ClaimAmount"] > 0
 mask_test = df_test["ClaimAmount"] > 0
@@ -539,7 +542,6 @@ plt.tight_layout()
 # Ideally, we hope that one model will be consistently better than the other,
 # regardless of `power`.
 from sklearn.linear_model import TweedieRegressor
-
 
 glm_pure_premium = TweedieRegressor(power=1.9, alpha=0.1, solver="newton-cholesky")
 glm_pure_premium.fit(

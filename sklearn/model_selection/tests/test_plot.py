@@ -2,12 +2,15 @@ import numpy as np
 import pytest
 
 from sklearn.datasets import load_iris
+from sklearn.model_selection import (
+    LearningCurveDisplay,
+    ValidationCurveDisplay,
+    learning_curve,
+    validation_curve,
+)
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
-
-from sklearn.model_selection import learning_curve, validation_curve
-from sklearn.model_selection import LearningCurveDisplay, ValidationCurveDisplay
 
 
 @pytest.fixture
@@ -525,7 +528,7 @@ def test_curve_display_plot_kwargs(pyplot, data, CurveDisplay, specific_params):
 
 
 # TODO(1.5): to be removed
-def test_learning_curve_display_deprecate_log_scale(data):
+def test_learning_curve_display_deprecate_log_scale(data, pyplot):
     """Check that we warn for the deprecated parameter `log_scale`."""
     X, y = data
     estimator = DecisionTreeClassifier(random_state=0)

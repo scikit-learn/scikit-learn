@@ -8,57 +8,53 @@ Testing for the forest module (sklearn.ensemble.forest).
 #          Arnaud Joly
 # License: BSD 3 clause
 
-import pickle
+import itertools
 import math
+import pickle
 from collections import defaultdict
 from functools import partial
-import itertools
-from itertools import combinations
-from itertools import product
-from typing import Dict, Any
-
-import numpy as np
-from scipy.sparse import csr_matrix
-from scipy.sparse import csc_matrix
-from scipy.sparse import coo_matrix
-from scipy.special import comb
+from itertools import combinations, product
+from typing import Any, Dict
+from unittest.mock import patch
 
 import joblib
-
+import numpy as np
 import pytest
+from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
+from scipy.special import comb
 
 import sklearn
-from sklearn.dummy import DummyRegressor
-from sklearn.metrics import mean_poisson_deviance
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import _convert_container
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import skip_if_no_parallel
-
-from sklearn.exceptions import NotFittedError
-
 from sklearn import datasets
-from sklearn.decomposition import TruncatedSVD
 from sklearn.datasets import make_classification
-from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.ensemble import ExtraTreesRegressor
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import RandomTreesEmbedding
-from sklearn.metrics import explained_variance_score, f1_score
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.model_selection import GridSearchCV
+from sklearn.decomposition import TruncatedSVD
+from sklearn.dummy import DummyRegressor
+from sklearn.ensemble import (
+    ExtraTreesClassifier,
+    ExtraTreesRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
+    RandomTreesEmbedding,
+)
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics import (
+    explained_variance_score,
+    f1_score,
+    mean_poisson_deviance,
+    mean_squared_error,
+)
+from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.svm import LinearSVC
+from sklearn.tree._classes import SPARSE_SPLITTERS
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+    skip_if_no_parallel,
+)
 from sklearn.utils.parallel import Parallel
 from sklearn.utils.validation import check_random_state
-
-from sklearn.metrics import mean_squared_error
-
-from sklearn.tree._classes import SPARSE_SPLITTERS
-
-from unittest.mock import patch
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
