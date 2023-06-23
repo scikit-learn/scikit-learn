@@ -254,7 +254,7 @@ conda_build_metadata_list = [
             "plotly",
             "pooch",
         ],
-        "pip_dependencies": ["sphinxext-opengraph", "sphinx-copybutton"],
+        "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
             "python": "3.8",
             "numpy": "min",
@@ -265,6 +265,7 @@ conda_build_metadata_list = [
             "sphinx": "min",
             "pandas": "min",
             "sphinx-gallery": "min",
+            "sphinx-copybutton": "min",
             "numpydoc": "min",
             "sphinx-prompt": "min",
             "sphinxext-opengraph": "min",
@@ -283,17 +284,14 @@ conda_build_metadata_list = [
             "compilers",
             "sphinx",
             "sphinx-gallery",
+            "sphinx-copybutton",
             "numpydoc",
             "sphinx-prompt",
             "plotly",
             "pooch",
             "sphinxext-opengraph",
         ],
-        "pip_dependencies": [
-            "jupyterlite-sphinx",
-            "jupyterlite-pyodide-kernel",
-            "sphinx-copybutton",
-        ],
+        "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel"],
         "package_constraints": {
             "python": "3.9",
             # XXX: sphinx > 6.0 does not correctly generate searchindex.js
