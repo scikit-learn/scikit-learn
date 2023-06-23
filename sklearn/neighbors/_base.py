@@ -195,7 +195,8 @@ def _check_precomputed(X):
         "graph": ["sparse matrix"],
         "copy": ["boolean"],
         "warn_when_not_sorted": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
     """Sort a sparse graph such that each row is stored with increasing values.

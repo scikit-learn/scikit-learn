@@ -47,7 +47,8 @@ def check_number_of_labels(n_labels, n_samples):
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
         "sample_size": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def silhouette_score(
     X, labels, *, metric="euclidean", sample_size=None, random_state=None, **kwds
@@ -189,7 +190,8 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
         "X": ["array-like", "sparse matrix"],
         "labels": ["array-like"],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     """Compute the Silhouette Coefficient for each sample.
@@ -298,7 +300,8 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     {
         "X": ["array-like"],
         "labels": ["array-like"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def calinski_harabasz_score(X, labels):
     """Compute the Calinski and Harabasz score.
@@ -358,7 +361,8 @@ def calinski_harabasz_score(X, labels):
     {
         "X": ["array-like"],
         "labels": ["array-like"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def davies_bouldin_score(X, labels):
     """Compute the Davies-Bouldin score.

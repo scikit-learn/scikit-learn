@@ -955,7 +955,8 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         "pos_label": [Real, str, "boolean", None],
         "n_bins": [Interval(Integral, 1, None, closed="left")],
         "strategy": [StrOptions({"uniform", "quantile"})],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def calibration_curve(
     y_true,

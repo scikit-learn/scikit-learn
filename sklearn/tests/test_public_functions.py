@@ -270,7 +270,6 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.preprocessing.add_dummy_feature",
     "sklearn.preprocessing.binarize",
     "sklearn.preprocessing.label_binarize",
-    "sklearn.preprocessing.maxabs_scale",
     "sklearn.preprocessing.normalize",
     "sklearn.preprocessing.scale",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
@@ -299,6 +298,7 @@ def test_function_param_validation(func_module):
 
 PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.cluster.affinity_propagation", "sklearn.cluster.AffinityPropagation"),
+    ("sklearn.cluster.k_means", "sklearn.cluster.KMeans"),
     ("sklearn.cluster.mean_shift", "sklearn.cluster.MeanShift"),
     ("sklearn.cluster.spectral_clustering", "sklearn.cluster.SpectralClustering"),
     ("sklearn.covariance.graphical_lasso", "sklearn.covariance.GraphicalLasso"),
@@ -307,6 +307,7 @@ PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.decomposition.dict_learning", "sklearn.decomposition.DictionaryLearning"),
     ("sklearn.decomposition.fastica", "sklearn.decomposition.FastICA"),
     ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
+    ("sklearn.preprocessing.maxabs_scale", "sklearn.preprocessing.MaxAbsScaler"),
     ("sklearn.preprocessing.minmax_scale", "sklearn.preprocessing.MinMaxScaler"),
     ("sklearn.preprocessing.power_transform", "sklearn.preprocessing.PowerTransformer"),
     (
