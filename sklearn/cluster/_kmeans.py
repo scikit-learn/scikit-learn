@@ -1796,8 +1796,8 @@ class MiniBatchKMeans(_BaseKMeans):
         :ref:`kmeans_sparse_high_dim`).
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        3 if using `init='random'`
-        1 if using `init='k-means++'`
+        3 if using `init='random'` or `init` is a callable;
+        1 if using `init='k-means++'` or `init` is an array-like.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
