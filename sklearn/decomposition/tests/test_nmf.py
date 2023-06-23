@@ -992,8 +992,8 @@ def test_nmf_w_used_h_not(Estimator):
 
 
 def test_nmf_non_negative_factorization_n_components_auto():
-    # Check that n_components is correctly inferred from
-    # the provided custom initialization.
+    # Check that n_components is correctly inferred from the provided
+    # custom initialization.
     rng = np.random.RandomState(0)
     X = rng.random_sample((6, 5))
     W_init = rng.random_sample((6, 2))
