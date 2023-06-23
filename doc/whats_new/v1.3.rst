@@ -239,11 +239,9 @@ Changelog
 - |API| The `Xred` argument in :func:`cluster.FeatureAgglomeration.inverse_transform`
   is renamed to `Xt` and will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
 
-- [Fix] :class:`cluster._BaseKMeans` :meth:`_check_params_vs_input` was checking
-  `if self.init == "k-means++"`.
-  This fails with numpy>=1.25.0 with a ValueError, asking to use `.any()` or
-  `.all()` to clarify. Fixed to first explicitly check if `self.init` is a str
-  and only then do a string comparison.
+- |Fix| :class:`cluster.KMeans`, :class:`MiniBatchKMeans` and :func:`cluster.k_means`
+  now correctly handle the combination of `n_init="auto"` and `init` is an array-like,
+  running one initialization in that case.
   :pr:`26657` by :user:`Binesh Bannerjee <bnsh>`.
 
 :mod:`sklearn.compose`
