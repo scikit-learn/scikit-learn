@@ -1,21 +1,20 @@
-import pytest
 import warnings
-import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
 
-from sklearn.datasets import load_linnerud
+import numpy as np
+import pytest
+from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
+
+from sklearn.cross_decomposition import CCA, PLSSVD, PLSCanonical, PLSRegression
 from sklearn.cross_decomposition._pls import (
     _center_scale_xy,
     _get_first_singular_vectors_power_method,
     _get_first_singular_vectors_svd,
     _svd_flip_1d,
 )
-from sklearn.cross_decomposition import CCA
-from sklearn.cross_decomposition import PLSSVD, PLSRegression, PLSCanonical
-from sklearn.datasets import make_regression
+from sklearn.datasets import load_linnerud, make_regression
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import svd_flip
-from sklearn.exceptions import ConvergenceWarning
 
 
 def assert_matrix_orthogonal(M):
@@ -366,10 +365,6 @@ def test_attibutes_shapes(Est):
     )
 
 
-# TODO(1.3): remove the warning filter
-@pytest.mark.filterwarnings(
-    "ignore:The attribute `coef_` will be transposed in version 1.3"
-)
 @pytest.mark.parametrize("Est", (PLSRegression, PLSCanonical, CCA))
 def test_univariate_equivalence(Est):
     # Ensure 2D Y with 1 column is equivalent to 1D Y
@@ -575,23 +570,10 @@ def test_pls_coef_shape(PLSEstimator):
 
     pls = PLSEstimator(copy=True).fit(X, Y)
 
-    # TODO(1.3): remove the warning check
-    warning_msg = "The attribute `coef_` will be transposed in version 1.3"
-    with pytest.warns(FutureWarning, match=warning_msg):
-        assert pls.coef_.shape == (X.shape[1], Y.shape[1])
-
-    # Next accesses do not warn
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        pls.coef_
-
-    # TODO(1.3): rename `_coef_` to `coef_`
-    assert pls._coef_.shape == (Y.shape[1], X.shape[1])
+    n_targets, n_features = Y.shape[1], X.shape[1]
+    assert pls.coef_.shape == (n_targets, n_features)
 
 
-# TODO (1.3): remove the filterwarnings and adapt the dot product between `X_trans` and
-# `pls.coef_`
-@pytest.mark.filterwarnings("ignore:The attribute `coef_` will be transposed")
 @pytest.mark.parametrize("scale", [True, False])
 @pytest.mark.parametrize("PLSEstimator", [PLSRegression, PLSCanonical, CCA])
 def test_pls_prediction(PLSEstimator, scale):
@@ -609,7 +591,7 @@ def test_pls_prediction(PLSEstimator, scale):
         X_trans /= X.std(axis=0, ddof=1)
 
     assert_allclose(pls.intercept_, y_mean)
-    assert_allclose(Y_pred, X_trans @ pls.coef_ + pls.intercept_)
+    assert_allclose(Y_pred, X_trans @ pls.coef_.T + pls.intercept_)
 
 
 @pytest.mark.parametrize("Klass", [CCA, PLSSVD, PLSRegression, PLSCanonical])

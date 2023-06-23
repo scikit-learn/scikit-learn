@@ -11,20 +11,17 @@ This module defines export functions for decision trees.
 #          Li Li <aiki.nogard@gmail.com>
 #          Giuseppe Vettigli <vettigli@gmail.com>
 # License: BSD 3 clause
+from collections.abc import Iterable
 from io import StringIO
 from numbers import Integral
 
 import numpy as np
 
-from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, validate_params, StrOptions
-
 from ..base import is_classifier
-
-from . import _criterion
-from . import _tree
-from ._reingold_tilford import buchheim, Tree
-from . import DecisionTreeClassifier, DecisionTreeRegressor
+from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
+from ..utils.validation import check_array, check_is_fitted
+from . import DecisionTreeClassifier, DecisionTreeRegressor, _criterion, _tree
+from ._reingold_tilford import Tree, buchheim
 
 
 def _color_brew(n):
@@ -92,7 +89,8 @@ SENTINEL = Sentinel()
         "precision": [Interval(Integral, 0, None, closed="left"), None],
         "ax": "no_validation",  # delegate validation to matplotlib
         "fontsize": [Interval(Integral, 0, None, closed="left"), None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def plot_tree(
     decision_tree,
@@ -247,7 +245,7 @@ class _BaseTreeExporter:
             color = list(self.colors["rgb"][np.argmax(value)])
             sorted_values = sorted(value, reverse=True)
             if len(sorted_values) == 1:
-                alpha = 0
+                alpha = 0.0
             else:
                 alpha = (sorted_values[0] - sorted_values[1]) / (1 - sorted_values[1])
         else:
@@ -256,8 +254,6 @@ class _BaseTreeExporter:
             alpha = (value - self.colors["bounds"][0]) / (
                 self.colors["bounds"][1] - self.colors["bounds"][0]
             )
-        # unpack numpy scalars
-        alpha = float(alpha)
         # compute the color as alpha against white
         color = [int(round(alpha * c + (1 - alpha) * 255, 0)) for c in color]
         # Return html color code in #RRGGBB format
@@ -277,8 +273,12 @@ class _BaseTreeExporter:
         if tree.n_outputs == 1:
             node_val = tree.value[node_id][0, :] / tree.weighted_n_node_samples[node_id]
             if tree.n_classes[0] == 1:
-                # Regression
+                # Regression or degraded classification with single class
                 node_val = tree.value[node_id][0, :]
+                if isinstance(node_val, Iterable) and self.colors["bounds"] is not None:
+                    # Only unpack the float only for the regression tree case.
+                    # Classification tree requires an Iterable in `get_color`.
+                    node_val = node_val.item()
         else:
             # If multi-output color node by impurity
             node_val = -tree.impurity[node_id]
@@ -440,20 +440,6 @@ class _DOTTreeExporter(_BaseTreeExporter):
             self.characters = ["&#35;", "<SUB>", "</SUB>", "&le;", "<br/>", ">", "<"]
         else:
             self.characters = ["#", "[", "]", "<=", "\\n", '"', '"']
-
-        # validate
-        if isinstance(precision, Integral):
-            if precision < 0:
-                raise ValueError(
-                    "'precision' should be greater or equal to 0."
-                    " Got {} instead.".format(precision)
-                )
-        else:
-            raise ValueError(
-                "'precision' should be an integer. Got {} instead.".format(
-                    type(precision)
-                )
-            )
 
         # The depth of each node for plotting with 'leaf' option
         self.ranks = {"leaves": []}
@@ -739,6 +725,27 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
 
 
+@validate_params(
+    {
+        "decision_tree": "no_validation",
+        "out_file": [str, None, HasMethods("write")],
+        "max_depth": [Interval(Integral, 0, None, closed="left"), None],
+        "feature_names": ["array-like", None],
+        "class_names": ["array-like", "boolean", None],
+        "label": [StrOptions({"all", "root", "none"})],
+        "filled": ["boolean"],
+        "leaves_parallel": ["boolean"],
+        "impurity": ["boolean"],
+        "node_ids": ["boolean"],
+        "proportion": ["boolean"],
+        "rotate": ["boolean"],
+        "rounded": ["boolean"],
+        "special_characters": ["boolean"],
+        "precision": [Interval(Integral, 0, None, closed="left"), None],
+        "fontname": [str],
+    },
+    prefer_skip_nested_validation=True,
+)
 def export_graphviz(
     decision_tree,
     out_file=None,
@@ -774,8 +781,8 @@ def export_graphviz(
 
     Parameters
     ----------
-    decision_tree : decision tree classifier
-        The decision tree to be exported to GraphViz.
+    decision_tree : object
+        The decision tree estimator to be exported to GraphViz.
 
     out_file : object or str, default=None
         Handle or name of the output file. If ``None``, the result is
@@ -788,11 +795,11 @@ def export_graphviz(
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    feature_names : list of str, default=None
-        Names of each of the features.
+    feature_names : array-like of shape (n_features,), default=None
+        An array containing the feature names.
         If None, generic names will be used ("x[0]", "x[1]", ...).
 
-    class_names : list of str or bool, default=None
+    class_names : array-like of shape (n_classes,) or bool, default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
         If ``True``, shows a symbolic representation of the class name.
@@ -857,6 +864,14 @@ def export_graphviz(
     >>> tree.export_graphviz(clf)
     'digraph Tree {...
     """
+    if feature_names is not None:
+        feature_names = check_array(
+            feature_names, ensure_2d=False, dtype=None, ensure_min_samples=0
+        )
+    if class_names is not None and not isinstance(class_names, bool):
+        class_names = check_array(
+            class_names, ensure_2d=False, dtype=None, ensure_min_samples=0
+        )
 
     check_is_fitted(decision_tree)
     own_file = False
@@ -924,13 +939,14 @@ def _compute_depth(tree, node):
 @validate_params(
     {
         "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
-        "feature_names": [list, None],
-        "class_names": [list, None],
+        "feature_names": ["array-like", None],
+        "class_names": ["array-like", None],
         "max_depth": [Interval(Integral, 0, None, closed="left"), None],
         "spacing": [Interval(Integral, 1, None, closed="left"), None],
         "decimals": [Interval(Integral, 0, None, closed="left"), None],
         "show_weights": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def export_text(
     decision_tree,
@@ -953,17 +969,17 @@ def export_text(
         It can be an instance of
         DecisionTreeClassifier or DecisionTreeRegressor.
 
-    feature_names : list of str, default=None
-        A list of length n_features containing the feature names.
+    feature_names : array-like of shape (n_features,), default=None
+        An array containing the feature names.
         If None generic names will be used ("feature_0", "feature_1", ...).
 
-    class_names : list or None, default=None
+    class_names : array-like of shape (n_classes,), default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
 
         - if `None`, the class names are delegated to `decision_tree.classes_`;
-        - if a list, then `class_names` will be used as class names instead
-          of `decision_tree.classes_`. The length of `class_names` must match
+        - otherwise, `class_names` will be used as class names instead of
+          `decision_tree.classes_`. The length of `class_names` must match
           the length of `decision_tree.classes_`.
 
         .. versionadded:: 1.3
@@ -1008,6 +1024,15 @@ def export_text(
     |   |--- petal width (cm) >  1.75
     |   |   |--- class: 2
     """
+    if feature_names is not None:
+        feature_names = check_array(
+            feature_names, ensure_2d=False, dtype=None, ensure_min_samples=0
+        )
+    if class_names is not None:
+        class_names = check_array(
+            class_names, ensure_2d=False, dtype=None, ensure_min_samples=0
+        )
+
     check_is_fitted(decision_tree)
     tree_ = decision_tree.tree_
     if is_classifier(decision_tree):
@@ -1015,7 +1040,7 @@ def export_text(
             class_names = decision_tree.classes_
         elif len(class_names) != len(decision_tree.classes_):
             raise ValueError(
-                "When `class_names` is a list, it should contain as"
+                "When `class_names` is an array, it should contain as"
                 " many items as `decision_tree.classes_`. Got"
                 f" {len(class_names)} while the tree was fitted with"
                 f" {len(decision_tree.classes_)} classes."
@@ -1037,7 +1062,7 @@ def export_text(
     else:
         value_fmt = "{}{} value: {}\n"
 
-    if feature_names:
+    if feature_names is not None:
         feature_names_ = [
             feature_names[i] if i != _tree.TREE_UNDEFINED else None
             for i in tree_.feature
