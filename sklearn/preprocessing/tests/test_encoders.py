@@ -2384,6 +2384,7 @@ def test_one_hot_encoder_sample_weight_constant(X, min_frequency):
     assert_array_equal(X_sw_None, X_sw_constant1)
     assert_array_equal(X_sw_None, X_sw_constant5)
 
+
 @pytest.mark.parametrize(
     "X",
     [[["car"], ["car"], ["bike"], ["bike"], ["boat"], ["airplane"]]],
