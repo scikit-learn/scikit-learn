@@ -12,10 +12,12 @@ Extended math utilities.
 # License: BSD 3 clause
 
 import warnings
+from numbers import Integral
 
 import numpy as np
 from scipy import linalg, sparse
 
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from . import check_random_state
 from ._array_api import _is_numpy_namespace, get_namespace
 from ._logistic_sigmoid import _log_logistic_sigmoid
@@ -288,6 +290,20 @@ def randomized_range_finder(
     return Q
 
 
+@validate_params(
+    {
+        "M": ["array-like", "sparse matrix"],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "n_oversamples": [Interval(Integral, 0, None, closed="left")],
+        "n_iter": [Interval(Integral, 0, None, closed="left"), StrOptions({"auto"})],
+        "power_iteration_normalizer": [StrOptions({"auto", "QR", "LU", "none"})],
+        "transpose": ["boolean", StrOptions({"auto"})],
+        "flip_sign": ["boolean"],
+        "random_state": ["random_state"],
+        "svd_lapack_driver": [StrOptions({"gesdd", "gesvd"})],
+    },
+    prefer_skip_nested_validation=True,
+)
 def randomized_svd(
     M,
     n_components,
@@ -307,7 +323,7 @@ def randomized_svd(
 
     Parameters
     ----------
-    M : {ndarray, sparse matrix}
+    M : {array-like, sparse matrix}
         Matrix to decompose.
 
     n_components : int
