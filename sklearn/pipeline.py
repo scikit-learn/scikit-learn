@@ -135,9 +135,9 @@ class Pipeline(_BaseComposition):
     >>> # The pipeline can be used as any other estimator and avoids leaking
     >>> # the test set into the train set
     >>> pipe.fit(X_train, y_train)
-    Pipeline(steps=[("scaler", StandardScaler()), ("clf", SVC())])
+    Pipeline(steps=[('scaler', StandardScaler()), ('clf', SVC(C=10))])
     >>> pipe.score(X_test, y_test)
-    0.88
+    0.76
     """
 
     # BaseEstimator interface
@@ -1052,6 +1052,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     >>> # The following is equivalent to setting PCA(n_components=1) for "pca"
     >>> # and TruncatedSVD(n_components=2) for "svd" in the feature union
     >>> union.set_params(pca__n_components=1, svd__n_components=2)
+    >>> union
+    FeatureUnion(transformer_list=[('pca', PCA(n_components=1)),
+                                   ('svd', TruncatedSVD())])
     >>> X = [[0., 1., 3], [2., 2., 5]]
     >>> union.fit_transform(X)
     array([[ 1.5       ,  3.0...,  0.8...],
