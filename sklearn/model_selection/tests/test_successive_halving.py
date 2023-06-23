@@ -1,26 +1,29 @@
 from math import ceil
 
+import numpy as np
 import pytest
 from scipy.stats import norm, randint
-import numpy as np
 
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
 from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.model_selection import LeavePGroupsOut
-from sklearn.model_selection import GroupKFold
-from sklearn.model_selection import GroupShuffleSplit
-from sklearn.model_selection import HalvingGridSearchCV
-from sklearn.model_selection import HalvingRandomSearchCV
-from sklearn.model_selection import KFold, ShuffleSplit
-from sklearn.svm import LinearSVC
+from sklearn.model_selection import (
+    GroupKFold,
+    GroupShuffleSplit,
+    HalvingGridSearchCV,
+    HalvingRandomSearchCV,
+    KFold,
+    LeaveOneGroupOut,
+    LeavePGroupsOut,
+    ShuffleSplit,
+    StratifiedKFold,
+    StratifiedShuffleSplit,
+)
 from sklearn.model_selection._search_successive_halving import (
     _SubsampleMetaSplitter,
     _top_k,
 )
+from sklearn.svm import LinearSVC
 
 
 class FastClassifier(DummyClassifier):

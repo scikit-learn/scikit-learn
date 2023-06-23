@@ -17,10 +17,10 @@ import numpy as np
 from scipy import linalg, sparse
 
 from . import check_random_state
+from ._array_api import _is_numpy_namespace, get_namespace
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from ._array_api import get_namespace, _is_numpy_namespace
 
 
 def squared_norm(x):

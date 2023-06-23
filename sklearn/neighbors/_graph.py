@@ -4,13 +4,11 @@
 #         Tom Dupre la Tour
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
-from ._base import KNeighborsMixin, RadiusNeighborsMixin
-from ._base import NeighborsBase
-from ._unsupervised import NearestNeighbors
-from ..base import TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..base import _fit_context
+from ..base import ClassNamePrefixFeaturesOutMixin, TransformerMixin, _fit_context
 from ..utils._param_validation import StrOptions
 from ..utils.validation import check_is_fitted
+from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
+from ._unsupervised import NearestNeighbors
 
 
 def _check_params(X, metric, p, metric_params):
