@@ -46,13 +46,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         The used categories is stored in the `categories_` fitted attribute.
 
-    target_type : {"auto", "continuous", "binary"}, default="auto"
+    target_type : {"auto", "continuous", "binary", "multiclass"}, default="auto"
         Type of target.
 
         - `"auto"` : Type of target is inferred with
           :func:`~sklearn.utils.multiclass.type_of_target`.
         - `"continuous"` : Continuous target
         - `"binary"` : Binary target
+        - `"multiclass"` : Multiclass target
 
         .. note::
             The type of target inferred with `"auto"` may not be the desired target
@@ -154,7 +155,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     _parameter_constraints: dict = {
         "categories": [StrOptions({"auto"}), list],
-        "target_type": [StrOptions({"auto", "continuous", "binary"})],
+        "target_type": [StrOptions({"auto", "continuous", "binary", "multiclass"})],
         "smooth": [StrOptions({"auto"}), Interval(Real, 0, None, closed="left")],
         "cv": [Interval(Integral, 2, None, closed="left")],
         "shuffle": ["boolean"],
@@ -233,24 +234,37 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 self.cv, shuffle=self.shuffle, random_state=self.random_state
             )
 
+        y_1d = y
         X_out = np.empty_like(X_ordinal, dtype=np.float64)
         X_unknown_mask = ~X_known_mask
-
-        for train_idx, test_idx in cv.split(X, y):
+        X_ordinal_trans = X_ordinal
+        if self.target_type_ == "multiclass":
+            y_1d = self._label_binarizer_.inverse_transform(y)
+            X_out, X_ordinal_trans, X_unknown_mask = self._expand_X_by_nclasses(
+                X_out, X_ordinal, X_unknown_mask,
+            )
+            n_classes = self._label_binarizer_.classes_.shape[0]
+        for train_idx, test_idx in cv.split(X, y_1d):
             X_train, y_train = X_ordinal[train_idx, :], y[train_idx]
-            y_mean = np.mean(y_train)
+            y_mean = np.mean(y_train, axis=0)
 
-            if self.smooth == "auto":
-                y_variance = np.var(y_train)
-                encodings = _fit_encoding_fast_auto_smooth(
-                    X_train, y_train, n_categories, y_mean, y_variance
-                )
+            if self.target_type_ == "multiclass":
+                encodings = []
+                for i in range(n_classes):
+                    y_class = y_train[:, i]
+                    encoding = self._learn_encodings(
+                        X_ordinal, y_class, n_categories, self.target_mean_[i],
+                        save_encodings=False,
+                    )
+                    encodings += encoding
             else:
-                encodings = _fit_encoding_fast(
-                    X_train, y_train, n_categories, self.smooth, y_mean
+                encodings = self._learn_encodings(
+                    X_train, y_train, n_categories, self.target_mean_,
+                    save_encodings=False,
                 )
             self._transform_X_ordinal(
-                X_out, X_ordinal, X_unknown_mask, test_idx, encodings, y_mean
+                X_out, X_ordinal_trans, X_unknown_mask, test_idx, encodings, y_mean,
+                self.n_features_in_,
             )
         return X_out
 
@@ -275,6 +289,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_ordinal, X_valid = self._transform(
             X, handle_unknown="ignore", force_all_finite="allow-nan"
         )
+
+        if self.target_type_ == "multiclass":
+            X_ordinal = self._expand_X_by_nclasses(X_ordinal, X_valid)
         X_out = np.empty_like(X_ordinal, dtype=np.float64)
         self._transform_X_ordinal(
             X_out,
@@ -283,18 +300,19 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             slice(None),
             self.encodings_,
             self.target_mean_,
+            self.n_features_in_,
         )
         return X_out
 
     def _fit_encodings_all(self, X, y):
         """Fit a target encoding with all the data."""
-        from ..preprocessing import LabelEncoder  # avoid circular import
+        from ..preprocessing import LabelBinarizer, LabelEncoder  # avoid circular import
 
         check_consistent_length(X, y)
         self._fit(X, handle_unknown="ignore", force_all_finite="allow-nan")
 
         if self.target_type == "auto":
-            accepted_target_types = ("binary", "continuous")
+            accepted_target_types = ("binary", "multiclass", "continuous")
             inferred_type_of_target = type_of_target(y, input_name="y")
             if inferred_type_of_target not in accepted_target_types:
                 raise ValueError(
@@ -305,12 +323,18 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:
             self.target_type_ = self.target_type
 
+        self._label_binarizer_ = None
         if self.target_type_ == "binary":
             y = LabelEncoder().fit_transform(y)
+        elif self.target_type_ == "multiclass":
+            label_binarizer = LabelBinarizer()
+            y = label_binarizer.fit_transform(y)
+            n_classes = label_binarizer.classes_.shape[0]
+            self._label_binarizer_ = label_binarizer
         else:  # continuous
             y = _check_y(y, y_numeric=True, estimator=self)
 
-        self.target_mean_ = np.mean(y)
+        self.target_mean_ = np.mean(y, axis=0)
 
         X_ordinal, X_known_mask = self._transform(
             X, handle_unknown="ignore", force_all_finite="allow-nan"
@@ -320,26 +344,76 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             dtype=np.int64,
             count=len(self.categories_),
         )
-        if self.smooth == "auto":
-            y_variance = np.var(y)
-            self.encodings_ = _fit_encoding_fast_auto_smooth(
-                X_ordinal, y, n_categories, self.target_mean_, y_variance
-            )
+        if self.target_type_ == "multiclass":
+            encodings = []
+            for i in range(n_classes):
+                y_class = y[:, i]
+                encoding = self._learn_encodings(
+                    X_ordinal, y_class, n_categories, self.target_mean_[i], save_encodings=False,
+                )
+                encodings += encoding
+            self.encodings_ = encodings
         else:
-            self.encodings_ = _fit_encoding_fast(
-                X_ordinal, y, n_categories, self.smooth, self.target_mean_
+            self._learn_encodings(
+                X_ordinal, y, n_categories, self.target_mean_, save_encodings=True,
             )
 
         return X_ordinal, X_known_mask, y, n_categories
 
+    def _learn_encodings(self, X_ordinal, y, n_categories, target_mean, save_encodings):
+        """Learn target encodings, optionally saving as attribute or returning."""
+        if self.smooth == "auto":
+            y_variance = np.var(y)
+            encodings = _fit_encoding_fast_auto_smooth(
+                X_ordinal, y, n_categories, target_mean, y_variance,
+            )
+        else:
+            encodings = _fit_encoding_fast(
+                X_ordinal, y, n_categories, self.smooth, target_mean,
+            )
+        if save_encodings:
+            self.encodings_ = encodings
+        else:
+            return encodings
+
+    def _expand_X_by_nclasses(self, *X):
+        n_classes = self._label_binarizer_.classes_.shape[0]
+        X_expanded = []
+        for Xi in X:
+            Xi = np.concatenate([Xi]*n_classes, axis=1)
+            X_expanded.append(Xi)
+        return X_expanded
+
+    # def _get_reorder_index(self):
+    #     """Get reordering index to group classes together.
+
+    #     Index to reorder items from:
+    #     feat0_class0, feat1_class0, feat2_class0, feat0_class1 ...
+    #     to:
+    #     feat0_class0, feat0_class1, feat0_class2, feat1_class0 ...
+    #     """
+    #     n_features = self.n_features_in_
+    #     n_classes = self._label_binarizer_.classes_.shape[0]
+    #     index = [
+    #         indx for start in range(n_features)
+    #         for indx in range(start, (n_classes*n_features), n_features)
+    #     ]
+    #     return index
+
     @staticmethod
     def _transform_X_ordinal(
-        X_out, X_ordinal, X_unknown_mask, indices, encodings, y_mean
+        X_out, X_ordinal, X_unknown_mask, indices, encodings, y_mean, n_features_in=None,
     ):
-        """Transform X_ordinal using encodings."""
+        not_multiclass = (y_mean.ndim == 0)
         for f_idx, encoding in enumerate(encodings):
             X_out[indices, f_idx] = encoding[X_ordinal[indices, f_idx]]
-            X_out[X_unknown_mask[:, f_idx], f_idx] = y_mean
+            if not_multiclass:
+                X_out[X_unknown_mask[:, f_idx], f_idx] = y_mean
+            else:
+                mean_idx = f_idx // n_features_in
+                # XX if we want same features grouped
+                # mean_idx = f_idx - (n_classes * (f_idx // n_classes))
+                X_out[X_unknown_mask[:, f_idx], f_idx] = y_mean[mean_idx]
 
     def _more_tags(self):
         return {"requires_y": True}

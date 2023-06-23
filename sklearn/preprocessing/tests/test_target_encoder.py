@@ -48,6 +48,26 @@ def _encode_target(X_ordinal, y_int, n_categories, smooth):
         return cur_encodings
 
 
+def test_ll(global_random_seed):
+    """Check encoding for binary and continuous targets."""
+    import pandas as pd
+    rng = np.random.RandomState(42)
+    y = rng.randn(90)
+    y = pd.DataFrame(y)
+    rng = np.random.RandomState(global_random_seed)
+    X_1 = np.array([[0] * 20 + [1] * 30 + [2] * 40], dtype=np.int64).T
+    X_2 = np.array([[0] * 30 + [2] * 60], dtype=np.int64).T
+    X_train = np.c_[X_1, X_2]
+    X_test = np.array([[0, 1, 2]], dtype=np.int64).T
+    n_samples = X_train.shape[0]
+    # n_categories = 3
+    # y = rng.randint(low=0, high=2, size=n_samples)
+    target_encoder = TargetEncoder(
+        smooth='auto', categories='auto', cv=3, random_state=0
+    )
+    target_encoder.fit(X_train, y).transform(X_train)
+
+
 @pytest.mark.parametrize(
     "categories, unknown_value",
     [
@@ -173,9 +193,7 @@ def test_custom_categories(X, categories, smooth):
         (
             np.array([[1, 2, 0], [1, 2, 3]]).T,
             "Target type was inferred to be 'multiclass-multioutput'",
-        ),
-        (["cat", "dog", "bear"], "Target type was inferred to be 'multiclass'"),
-    ],
+        ),    ],
 )
 def test_errors(y, msg):
     """Check invalidate input."""
@@ -186,18 +204,19 @@ def test_errors(y, msg):
         enc.fit_transform(X, y)
 
 
-def test_use_regression_target():
+def test_use_regression_target(global_random_seed):
     """Custom target_type to avoid inferring the target type."""
-    X = np.array([[0, 1, 0, 1, 0, 1]]).T
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 100
+    X = rng.randint(low=0, high=2, size=n_samples).reshape(-1, 1)
 
     # XXX: When multiclass is supported, then the following `y`
     # is considered a multiclass problem and `TargetEncoder` will not error.
     # type_of_target would be 'multiclass'
-    y = np.array([1.0, 2.0, 3.0, 2.0, 3.0, 4.0])
+    y = rng.randint(low=0, high=5, size=n_samples)
+    y = y.astype(np.float64)
     enc = TargetEncoder()
-    msg = "Target type was inferred to be 'multiclass'"
-    with pytest.raises(ValueError, match=msg):
-        enc.fit_transform(X, y)
+    enc.fit_transform(X, y)
 
     enc = TargetEncoder(target_type="continuous")
     enc.fit_transform(X, y)
