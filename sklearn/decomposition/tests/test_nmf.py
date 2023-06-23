@@ -1017,9 +1017,9 @@ def test_nmf_n_components_default_value_warning():
 
 
 def test_nmf_n_components_auto_no_h_update():
-    # Tests that non_negative_factorization does not fail
-    # when setting n_components="auto"
-    # also tests that the inferred n_component value is the right one
+    # Tests that non_negative_factorization does not fail when setting
+    # n_components="auto" also tests that the inferred n_component
+    # value is the right one.
     rng = np.random.RandomState(0)
     X = rng.random_sample((6, 5))
     H_true = rng.random_sample((2, 5))
