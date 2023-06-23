@@ -136,7 +136,6 @@ def _clone_parametrized(estimator, *, safe=True):
     return new_object
 
 
-
 # Code to define the template pointing to the docs
 sklearn_version = parse_version(sklearn.__version__)
 if sklearn_version.dev is None:
