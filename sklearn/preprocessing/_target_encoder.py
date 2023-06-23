@@ -320,10 +320,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     def _fit_encodings_all(self, X, y):
         """Fit a target encoding with all the data."""
+        # avoid circular import
         from ..preprocessing import (
             LabelBinarizer,
             LabelEncoder,
-        )  # avoid circular import
+        )
 
         check_consistent_length(X, y)
         self._fit(X, handle_unknown="ignore", force_all_finite="allow-nan")
