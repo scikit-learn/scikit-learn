@@ -1665,6 +1665,10 @@ def precision_recall_fscore_support_pred(
         [n_unique_labels]
         The number of occurrences of each label in ``y_true``.
 
+    pred : None (if average is not None) or array of int, shape =\
+        [n_unique_labels]
+        The number of occurrences of each prediction in ``y_pred``.
+
     Notes
     -----
     When ``true positive + false positive == 0``, precision is undefined.
@@ -1693,11 +1697,11 @@ def precision_recall_fscore_support_pred(
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
     >>> precision_recall_fscore_support_pred(y_true, y_pred, average='macro')
-    (0.22..., 0.33..., 0.26..., None)
+    (0.22..., 0.33..., 0.26..., None, None)
     >>> precision_recall_fscore_support_pred(y_true, y_pred, average='micro')
-    (0.33..., 0.33..., 0.33..., None)
+    (0.33..., 0.33..., 0.33..., None, None)
     >>> precision_recall_fscore_support_pred(y_true, y_pred, average='weighted')
-    (0.22..., 0.33..., 0.26..., None)
+    (0.22..., 0.33..., 0.26..., None, None)
 
     It is possible to compute per-label precisions, recalls, F1-scores and
     supports instead of averaging:
@@ -1706,7 +1710,8 @@ def precision_recall_fscore_support_pred(
     ... labels=['pig', 'dog', 'cat'])
     (array([0.        , 0.        , 0.66...]),
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
-     array([2, 2, 2]))
+     array([2, 2, 2]),
+     array([1, 2, 3]))
     """
     zero_division_value = _check_zero_division(zero_division)
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
@@ -2449,7 +2454,7 @@ def classification_report(
         .. versionadded:: 0.20
 
     output_pred : bool, default=False
-        If True, the number of predictions per class are outptu along with
+        If True, the number of predictions per class are output along with
         the support.
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
@@ -2490,8 +2495,8 @@ def classification_report(
 
     See Also
     --------
-    precision_recall_fscore_support_pred: Compute precision, recall, F-measure and
-        support for each class.
+    precision_recall_fscore_support_pred: Compute precision, recall, F-measure,
+        support, and predictions for each class.
     confusion_matrix: Compute confusion matrix to evaluate the accuracy of a
         classification.
     multilabel_confusion_matrix: Compute a confusion matrix for each class or sample.
@@ -2513,6 +2518,18 @@ def classification_report(
        macro avg       0.50      0.56      0.49         5
     weighted avg       0.70      0.60      0.61         5
     <BLANKLINE>
+    >>> print(classification_report(y_true, y_pred, target_names=target_names,\
+         output_pred=True))
+                    precision      recall    f1-score     support   predicted
+    <BLANKLINE>
+         class 0         0.50        1.00        0.67           1           2
+         class 1         0.00        0.00        0.00           1           1
+         class 2         1.00        0.67        0.80           3           2
+    <BLANKLINE>
+        accuracy                                  0.6           5           5
+       macro avg         0.50        0.56        0.49           5           5
+    weighted avg         0.70        0.60        0.61           5           5
+    <BLANKLINE>
     >>> y_pred = [1, 1, 0]
     >>> y_true = [1, 1, 1]
     >>> print(classification_report(y_true, y_pred, labels=[1, 2, 3]))
@@ -2526,8 +2543,18 @@ def classification_report(
        macro avg       0.33      0.22      0.27         3
     weighted avg       1.00      0.67      0.80         3
     <BLANKLINE>
+    >>> print(classification_report(y_true, y_pred, labels=[1, 2, 3], output_pred=True))
+                    precision      recall    f1-score     support   predicted
+    <BLANKLINE>
+               1         1.00        0.67        0.80           3           2
+               2         0.00        0.00        0.00           0           0
+               3         0.00        0.00        0.00           0           0
+    <BLANKLINE>
+       micro avg         1.00        0.67        0.80           3           2
+       macro avg         0.33        0.22        0.27           3           2
+    weighted avg         1.00        0.67        0.80           3           2
+    <BLANKLINE>
     """
-
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     if labels is None:
