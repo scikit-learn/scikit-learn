@@ -21,7 +21,7 @@ from ..preprocessing import LabelEncoder
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.sparsefuncs import csc_median_axis_0
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_X_y, check_array
 
 
 class NearestCentroid(ClassifierMixin, BaseEstimator):
@@ -59,6 +59,10 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     shrink_threshold : float, default=None
         Threshold for shrinking centroids to remove features.
+        
+    priors : array-like of shape (n_classes,), default=None
+        The class prior probabilities. By default, the class proportions are
+        inferred from the training data.
 
     Attributes
     ----------
@@ -108,21 +112,30 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     [1]
     """
 
-    _valid_metrics = set(_VALID_METRICS) - {"mahalanobis", "seuclidean", "wminkowski"}
+    _valid_metrics = set(_VALID_METRICS) - {
+        "mahalanobis", "seuclidean", "wminkowski"
+        }
 
     _parameter_constraints: dict = {
         "metric": [
             StrOptions(
-                _valid_metrics, deprecated=_valid_metrics - {"manhattan", "euclidean"}
+                _valid_metrics, deprecated=_valid_metrics - {
+                    "manhattan", "euclidean"
+                    }
             ),
             callable,
         ],
         "shrink_threshold": [Interval(Real, 0, None, closed="neither"), None],
+        "priors": ["array-like", None],
     }
 
-    def __init__(self, metric="euclidean", *, shrink_threshold=None):
+    def __init__(self, metric="euclidean", *,
+                 shrink_threshold=None,
+                 priors=None,
+                 ):
         self.metric = metric
         self.shrink_threshold = shrink_threshold
+        self.priors = priors
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -148,22 +161,40 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             "euclidean",
         ):
             warnings.warn(
-                "Support for distance metrics other than euclidean and "
-                "manhattan and for callables was deprecated in version "
-                "1.3 and will be removed in version 1.5.",
+                (
+                    "Support for distance metrics other than euclidean and "
+                    "manhattan and for callables was deprecated in version "
+                    "1.3 and will be removed in version 1.5."
+                ),
                 FutureWarning,
             )
 
         # If X is sparse and the metric is "manhattan", store it in a csc
         # format is easier to calculate the median.
         if self.metric == "manhattan":
-            X, y = self._validate_data(X, y, accept_sparse=["csc"])
+            X, y = check_X_y(X, y, ['csc'])
         else:
-            X, y = self._validate_data(X, y, accept_sparse=["csr", "csc"])
+            X, y = check_X_y(X, y, ['csr', 'csc'])
         is_X_sparse = sp.issparse(X)
         if is_X_sparse and self.shrink_threshold:
-            raise ValueError("threshold shrinking not supported for sparse input")
+            raise ValueError(
+                "threshold shrinking not supported for sparse input"
+                )
         check_classification_targets(y)
+
+        if self.priors is None:  # estimate priors from sample
+            _, cnts = np.unique(y, return_inverse=True)  # non-negative ints
+            self.priors_ = np.bincount(cnts) / float(len(y))
+        else:
+            self.priors_ = np.asarray(self.priors)
+
+        if (self.priors_ < 0).any():
+            raise ValueError("priors must be non-negative")
+        if not np.isclose(self.priors_.sum(), 1.0):
+            warnings.warn(
+                "The priors do not sum to 1. Renormalizing", UserWarning
+                )
+            self.priors_ = self.priors_ / self.priors_.sum()
 
         n_samples, n_features = X.shape
         le = LabelEncoder()
@@ -172,7 +203,8 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         n_classes = classes.size
         if n_classes < 2:
             raise ValueError(
-                "The number of classes has to be greater than one; got %d class"
+                "The number of classes has to be greater than one;"
+                "got %d class"
                 % (n_classes)
             )
 
@@ -190,9 +222,11 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             if self.metric == "manhattan":
                 # NumPy does not calculate median of sparse matrices.
                 if not is_X_sparse:
-                    self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
+                    self.centroids_[cur_class] = np.median(X[center_mask],
+                                                           axis=0)
                 else:
-                    self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
+                    self.centroids_[cur_class] = csc_median_axis_0(
+                        X[center_mask])
             else:
                 # TODO(1.5) remove warning when metric is only manhattan or euclidean
                 if self.metric != "euclidean":
@@ -203,18 +237,22 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
                     )
                 self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
+        # Compute within-class std_dev with unshrunked centroids
+        variance = (X - self.centroids_[y_ind]) ** 2
+        variance = variance.sum(axis=0)
+        self.s_ = np.sqrt(variance / (n_samples - n_classes))
+
         if self.shrink_threshold:
             if np.all(np.ptp(X, axis=0) == 0):
-                raise ValueError("All features have zero variance. Division by zero.")
+                raise ValueError("All features have zero variance."
+                                 "Division by zero.")
             dataset_centroid_ = np.mean(X, axis=0)
 
             # m parameter for determining deviation
             m = np.sqrt((1.0 / nk) - (1.0 / n_samples))
             # Calculate deviation using the standard deviation of centroids.
-            variance = (X - self.centroids_[y_ind]) ** 2
-            variance = variance.sum(axis=0)
-            s = np.sqrt(variance / (n_samples - n_classes))
-            s += np.median(s)  # To deter outliers from affecting the results.
+            # To deter outliers from affecting the results.
+            s = self.s_ + np.median(self.s_)
             mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
             ms = mm * s
             deviation = (self.centroids_ - dataset_centroid_) / ms
@@ -257,3 +295,79 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         return self.classes_[
             pairwise_distances_argmin(X, self.centroids_, metric=self.metric)
         ]
+
+    def decision_function(self, X):
+        """Apply decision function to an array of samples.
+
+        The decision function is equal (up to a constant factor) to the
+        log-posterior of the model, i.e. `log p(y = k | x)`.
+        However, the decision function uses the argmax definition instead
+        of argmin definition as in the predict() function, which are just
+        -1 factor of each other.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Array of samples (test vectors).
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Decision function values related to each class, per sample.
+            In the two-class case, the shape is (n_samples,), giving the
+            log likelihood ratio of the positive class.
+        """
+        check_is_fitted(self, 'centroids_')
+
+        X = check_array(X, accept_sparse='csr')
+
+        # check if this works with sparse matrix formats later
+        discriminant_score = np.empty((X.shape[0], self.classes_.size),
+                                      dtype=np.float64)
+        coef = np.empty((X.shape[0], self.classes_.size), dtype=np.float64)
+
+        for cur_class in range(self.classes_.size):
+            Xdist = X - self.centroids_[cur_class, :]
+            Xdist_norm = (Xdist / self.s_) ** 2
+            # Hastie et al. (2009), p. 652, Eq. (18.2)
+            discriminant_score[:, cur_class] = -np.sum(
+                Xdist_norm, axis=1) + 2.0 * np.log(self.priors_[cur_class])
+            coef[:, cur_class] = np.exp(
+                0.5 * discriminant_score[:, cur_class]
+                )
+        return coef
+
+    def predict_proba(self, X):
+        """Class probability estimates.
+        The returned estimates for all classes are ordered by the
+        label of classes. The estimation has been implemented according to
+        Tibshirani et al. (2002b), p. 108f
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the probability of the sample for each class in the model,
+            where classes are ordered as they are in ``self.classes_``.
+        """
+        
+        coef = self.decision_function(X)
+        return (coef.transpose() / np.sum(coef, axis=1)).transpose()
+    
+    def predict_log_proba(self, X):
+        """Estimate log probability.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples, n_classes)
+            Estimated log probabilities.
+        """
+        prediction = self.predict_proba(X)
+        prediction[prediction == 0.0] += np.finfo(prediction.dtype).tiny
+        return np.log(prediction)
