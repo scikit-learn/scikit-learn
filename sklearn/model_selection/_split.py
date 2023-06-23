@@ -11,25 +11,29 @@ functions to split the data based on a preset strategy.
 #         Rodion Martynov <marrodion@gmail.com>
 # License: BSD 3 clause
 
-from collections.abc import Iterable
-from collections import defaultdict
+import numbers
 import warnings
+from abc import ABCMeta, abstractmethod
+from collections import defaultdict
+from collections.abc import Iterable
+from inspect import signature
 from itertools import chain, combinations
 from math import ceil, floor
-import numbers
-from abc import ABCMeta, abstractmethod
-from inspect import signature
 
 import numpy as np
 from scipy.special import comb
 
-from ..utils import indexable, check_random_state, _safe_indexing
-from ..utils import _approximate_mode
-from ..utils.validation import _num_samples, column_or_1d
-from ..utils.validation import check_array
+from ..utils import (
+    _approximate_mode,
+    _safe_indexing,
+    check_random_state,
+    indexable,
+    metadata_routing,
+)
+from ..utils._param_validation import Interval, RealNotInt, validate_params
+from ..utils.metadata_routing import _MetadataRequester
 from ..utils.multiclass import type_of_target
-from ..utils._param_validation import validate_params, Interval
-from ..utils._param_validation import RealNotInt
+from ..utils.validation import _num_samples, check_array, column_or_1d
 
 __all__ = [
     "BaseCrossValidator",
@@ -52,11 +56,28 @@ __all__ = [
 ]
 
 
-class BaseCrossValidator(metaclass=ABCMeta):
+class GroupsConsumerMixin(_MetadataRequester):
+    """A Mixin to ``groups`` by default.
+
+    This Mixin makes the object to request ``groups`` by default as ``True``.
+
+    .. versionadded:: 1.3
+    """
+
+    __metadata_request__split = {"groups": True}
+
+
+class BaseCrossValidator(_MetadataRequester, metaclass=ABCMeta):
     """Base class for all cross-validators
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
+
+    # This indicates that by default CV splitters don't have a "groups" kwarg,
+    # unless indicated by inheriting from ``GroupsConsumerMixin``.
+    # This also prevents ``set_split_request`` to be generated for splitters
+    # which don't support ``groups``.
+    __metadata_request__split = {"groups": metadata_routing.UNUSED}
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -470,7 +491,7 @@ class KFold(_BaseKFold):
             current = stop
 
 
-class GroupKFold(_BaseKFold):
+class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     """K-fold iterator variant with non-overlapping groups.
 
     Each group will appear exactly once in the test set across all folds (the
@@ -776,7 +797,7 @@ class StratifiedKFold(_BaseKFold):
         return super().split(X, y, groups)
 
 
-class StratifiedGroupKFold(_BaseKFold):
+class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     """Stratified K-Folds iterator variant with non-overlapping groups.
 
     This cross-validation object is a variation of StratifiedKFold attempts to
@@ -1157,7 +1178,7 @@ class TimeSeriesSplit(_BaseKFold):
                 )
 
 
-class LeaveOneGroupOut(BaseCrossValidator):
+class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
     """Leave One Group Out cross-validator
 
     Provides train/test indices to split data such that each training set is
@@ -1276,7 +1297,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
         return super().split(X, y, groups)
 
 
-class LeavePGroupsOut(BaseCrossValidator):
+class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
     """Leave P Group(s) Out cross-validator
 
     Provides train/test indices to split data according to a third-party
@@ -1409,7 +1430,7 @@ class LeavePGroupsOut(BaseCrossValidator):
         return super().split(X, y, groups)
 
 
-class _RepeatedSplits(metaclass=ABCMeta):
+class _RepeatedSplits(_MetadataRequester, metaclass=ABCMeta):
     """Repeated splits for an arbitrary randomized CV splitter.
 
     Repeats splits for cross-validators n times with different randomization
@@ -1432,6 +1453,12 @@ class _RepeatedSplits(metaclass=ABCMeta):
         Constructor parameters for cv. Must not contain random_state
         and shuffle.
     """
+
+    # This indicates that by default CV splitters don't have a "groups" kwarg,
+    # unless indicated by inheriting from ``GroupsConsumerMixin``.
+    # This also prevents ``set_split_request`` to be generated for splitters
+    # which don't support ``groups``.
+    __metadata_request__split = {"groups": metadata_routing.UNUSED}
 
     def __init__(self, cv, *, n_repeats=10, random_state=None, **cvargs):
         if not isinstance(n_repeats, numbers.Integral):
@@ -1647,8 +1674,14 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
         )
 
 
-class BaseShuffleSplit(metaclass=ABCMeta):
+class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
+
+    # This indicates that by default CV splitters don't have a "groups" kwarg,
+    # unless indicated by inheriting from ``GroupsConsumerMixin``.
+    # This also prevents ``set_split_request`` to be generated for splitters
+    # which don't support ``groups``.
+    __metadata_request__split = {"groups": metadata_routing.UNUSED}
 
     def __init__(
         self, n_splits=10, *, test_size=None, train_size=None, random_state=None
@@ -1839,7 +1872,7 @@ class ShuffleSplit(BaseShuffleSplit):
             yield ind_train, ind_test
 
 
-class GroupShuffleSplit(ShuffleSplit):
+class GroupShuffleSplit(GroupsConsumerMixin, ShuffleSplit):
     """Shuffle-Group(s)-Out cross-validation iterator
 
     Provides randomized train/test indices to split data according to a
@@ -2479,7 +2512,8 @@ def check_cv(cv=5, y=None, *, classifier=False):
         "random_state": ["random_state"],
         "shuffle": ["boolean"],
         "stratify": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def train_test_split(
     *arrays,

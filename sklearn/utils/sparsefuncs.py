@@ -3,15 +3,19 @@
 #          Giorgio Patrini
 #
 # License: BSD 3 clause
-import scipy.sparse as sp
 import numpy as np
+import scipy.sparse as sp
 
+from ..utils.validation import _check_sample_weight
+from .sparsefuncs_fast import (
+    csc_mean_variance_axis0 as _csc_mean_var_axis0,
+)
 from .sparsefuncs_fast import (
     csr_mean_variance_axis0 as _csr_mean_var_axis0,
-    csc_mean_variance_axis0 as _csc_mean_var_axis0,
+)
+from .sparsefuncs_fast import (
     incr_mean_variance_axis0 as _incr_mean_var_axis0,
 )
-from ..utils.validation import _check_sample_weight
 
 
 def _raise_typeerror(X):

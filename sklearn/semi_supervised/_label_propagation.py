@@ -55,22 +55,22 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 # Authors: Clay Woolam <clay@woolam.org>
 #          Utkarsh Upadhyay <mail@musicallyut.in>
 # License: BSD
+import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
-import warnings
 import numpy as np
 from scipy import sparse
 from scipy.sparse import csgraph
 
-from ..base import BaseEstimator, ClassifierMixin
+from ..base import BaseEstimator, ClassifierMixin, _fit_context
+from ..exceptions import ConvergenceWarning
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import NearestNeighbors
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, StrOptions
-from ..exceptions import ConvergenceWarning
 
 
 class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
@@ -230,6 +230,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         probabilities /= normalizer
         return probabilities
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit a semi-supervised label propagation model to X.
 
@@ -254,7 +255,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         X, y = self._validate_data(
             X,
             y,

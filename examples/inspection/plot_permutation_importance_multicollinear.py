@@ -26,7 +26,6 @@ picking a threshold, and keeping a single feature from each cluster.
 # ------------------------------------------------------
 #
 # First, we define a function to ease the plotting:
-import matplotlib.pyplot as plt
 from sklearn.inspection import permutation_importance
 
 
@@ -61,6 +60,7 @@ print(f"Baseline accuracy on test data: {clf.score(X_test, y_test):.2}")
 # Next, we plot the tree based feature importance and the permutation
 # importance. The permutation importance is calculated on the training set to
 # show how much the model relies on each feature during training.
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -114,9 +114,9 @@ _ = ax.figure.tight_layout()
 # hierarchical clustering on the Spearman rank-order correlations, picking a
 # threshold, and keeping a single feature from each cluster. First, we plot a
 # heatmap of the correlated features:
-from scipy.stats import spearmanr
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import squareform
+from scipy.stats import spearmanr
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 corr = spearmanr(X).correlation

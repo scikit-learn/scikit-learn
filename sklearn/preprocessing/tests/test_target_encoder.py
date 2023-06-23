@@ -1,21 +1,22 @@
 import numpy as np
-from numpy.testing import assert_allclose
-from numpy.testing import assert_array_equal
 import pytest
+from numpy.testing import assert_allclose, assert_array_equal
 
-from sklearn.preprocessing import (
-    TargetEncoder,
-    LabelEncoder,
-    KBinsDiscretizer,
-)
-from sklearn.model_selection import KFold
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import ShuffleSplit
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import Ridge
+from sklearn.model_selection import (
+    KFold,
+    ShuffleSplit,
+    StratifiedKFold,
+    cross_val_score,
+    train_test_split,
+)
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import (
+    KBinsDiscretizer,
+    LabelEncoder,
+    TargetEncoder,
+)
 
 
 def _encode_target(X_ordinal, y_int, n_categories, smooth):
@@ -434,6 +435,8 @@ def test_invariance_of_encoding_under_label_permutation(smooth, global_random_se
     assert_allclose(X_test_encoded, X_test_permuted_encoded)
 
 
+# TODO(1.5) remove warning filter when kbd's subsample default is changed
+@pytest.mark.filterwarnings("ignore:In version 1.5 onwards, subsample=200_000")
 @pytest.mark.parametrize("smooth", [0.0, "auto"])
 def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     # Check some expected statistical properties when fitting a linear
