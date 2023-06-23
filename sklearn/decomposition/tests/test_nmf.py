@@ -45,9 +45,11 @@ def test_initialize_nn_output():
         assert not ((W < 0).any() or (H < 0).any())
 
 
+# TODO(1.6): remove the warning filter for `n_components`
 @pytest.mark.filterwarnings(
     r"ignore:The multiplicative update \('mu'\) solver cannot update zeros present in"
-    r" the initialization"
+    r" the initialization",
+    "ignore:The default value of `n_components` will change",
 )
 def test_parameter_checking():
     # Here we only check for invalid parameter values that are not already
@@ -267,6 +269,8 @@ def test_nmf_inverse_transform(solver):
     assert_array_almost_equal(A, A_new, decimal=2)
 
 
+# TODO(1.6): remove the warning filter
+@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 def test_mbnmf_inverse_transform():
     # Test that MiniBatchNMF.transform followed by MiniBatchNMF.inverse_transform
     # is close to the identity
@@ -613,6 +617,8 @@ def test_nmf_negative_beta_loss():
         _assert_nmf_no_nan(X_csr, beta_loss)
 
 
+# TODO(1.6): remove the warning filter
+@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize("beta_loss", [-0.5, 0.0])
 def test_minibatch_nmf_negative_beta_loss(beta_loss):
     """Check that an error is raised if beta_loss < 0 and X contains zeros."""
@@ -801,6 +807,8 @@ def test_nmf_dtype_match(Estimator, solver, dtype_in, dtype_out):
     assert nmf.components_.dtype == dtype_out
 
 
+# TODO(1.6): remove the warning filter
+@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize(
     ["Estimator", "solver"],
     [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
@@ -906,6 +914,8 @@ def test_feature_names_out():
     assert_array_equal([f"nmf{i}" for i in range(3)], names)
 
 
+# TODO(1.6): remove the warning filter
+@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 def test_minibatch_nmf_verbose():
     # Check verbose mode of MiniBatchNMF for better coverage.
     A = np.random.RandomState(0).random_sample((100, 10))
