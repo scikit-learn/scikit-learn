@@ -823,6 +823,9 @@ details, and give intuition to the reader on what the algorithm does.
 * Be aware that dropdowns break cross-references. If that makes sense, hide the
   reference along with the text mentioning it. Else, do not use dropdown.
 
+* Put the important keywords in the summary, to help users discover what
+  is in the folded section.
+
 |details-end|
 
 
