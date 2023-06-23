@@ -24,6 +24,7 @@ dependencies:
   - compilers
   - sphinx=4.0.1  # min
   - sphinx-gallery=0.7.0  # min
+  - sphinx-copybutton=0.5.2  # min
   - numpydoc=1.2.0  # min
   - sphinx-prompt=1.3.0  # min
   - plotly=5.14.0  # min
