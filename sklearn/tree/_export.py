@@ -89,7 +89,8 @@ SENTINEL = Sentinel()
         "precision": [Interval(Integral, 0, None, closed="left"), None],
         "ax": "no_validation",  # delegate validation to matplotlib
         "fontsize": [Interval(Integral, 0, None, closed="left"), None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def plot_tree(
     decision_tree,
@@ -742,7 +743,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
         "special_characters": ["boolean"],
         "precision": [Interval(Integral, 0, None, closed="left"), None],
         "fontname": [str],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def export_graphviz(
     decision_tree,
@@ -943,7 +945,8 @@ def _compute_depth(tree, node):
         "spacing": [Interval(Integral, 1, None, closed="left"), None],
         "decimals": [Interval(Integral, 0, None, closed="left"), None],
         "show_weights": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def export_text(
     decision_tree,

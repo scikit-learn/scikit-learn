@@ -80,7 +80,8 @@ logger = logging.getLogger(__name__)
         "random_state": ["random_state"],
         "shuffle": ["boolean"],
         "return_X_y": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_rcv1(
     *,

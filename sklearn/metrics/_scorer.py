@@ -477,7 +477,8 @@ class _ThresholdScorer(_BaseScorer):
 @validate_params(
     {
         "scoring": [str, callable, None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def get_scorer(scoring):
     """Get a scorer from string.
@@ -637,7 +638,8 @@ def _check_multimetric_scoring(estimator, scoring):
         "greater_is_better": ["boolean"],
         "needs_proba": ["boolean"],
         "needs_threshold": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_scorer(
     score_func,
@@ -894,7 +896,8 @@ for name, metric in [
         "estimator": [HasMethods("fit")],
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
         "allow_none": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def check_scoring(estimator, scoring=None, *, allow_none=False):
     """Determine scorer from user options.

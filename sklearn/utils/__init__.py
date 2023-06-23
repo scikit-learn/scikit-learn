@@ -469,7 +469,8 @@ def _get_column_indices(X, key):
         "n_samples": [Interval(numbers.Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
         "stratify": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=None):
     """Resample arrays or sparse matrices in a consistent way.
@@ -737,7 +738,8 @@ def _chunk_generator(gen, chunksize):
         "n": [Interval(numbers.Integral, 1, None, closed="left")],
         "batch_size": [Interval(numbers.Integral, 1, None, closed="left")],
         "min_batch_size": [Interval(numbers.Integral, 0, None, closed="left")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def gen_batches(n, batch_size, *, min_batch_size=0):
     """Generator to create slices containing `batch_size` elements from 0 to `n`.
