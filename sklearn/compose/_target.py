@@ -6,13 +6,13 @@ import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, RegressorMixin, clone
-from ..utils.validation import check_is_fitted
-from ..utils._tags import _safe_tags
-from ..utils import check_array, _safe_indexing
-from ..utils._param_validation import HasMethods
-from ..preprocessing import FunctionTransformer
+from ..base import BaseEstimator, RegressorMixin, _fit_context, clone
 from ..exceptions import NotFittedError
+from ..preprocessing import FunctionTransformer
+from ..utils import _safe_indexing, check_array
+from ..utils._param_validation import HasMethods
+from ..utils._tags import _safe_tags
+from ..utils.validation import check_is_fitted
 
 __all__ = ["TransformedTargetRegressor"]
 
@@ -197,6 +197,10 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
                     UserWarning,
                 )
 
+    @_fit_context(
+        # TransformedTargetRegressor.regressor/transformer are not validated yet.
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, **fit_params):
         """Fit the model according to the given training data.
 
@@ -218,7 +222,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         if y is None:
             raise ValueError(
                 f"This {self.__class__.__name__} estimator "

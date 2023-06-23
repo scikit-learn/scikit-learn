@@ -26,12 +26,12 @@ Installing a nightly build is the quickest way to:
 
 - check whether a bug you encountered has been fixed since the last release.
 
-You can install the nightly build of scikit-learn using the `scipy-wheels-nightly`
+You can install the nightly build of scikit-learn using the `scientific-python-nightly-wheels`
 index from the PyPI registry of `anaconda.org`:
 
 .. prompt:: bash $
 
-  pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
+  pip install --pre --extra-index https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scikit-learn
 
 Note that first uninstalling scikit-learn might be required to be able to
 install nightly builds of scikit-learn.
@@ -185,7 +185,7 @@ which allows you to edit the code in-place. This builds the extension in place a
 creates a link to the development directory (see `the pip docs
 <https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_).
 
-As the doc aboves explains, this is fundamentally similar to using the command
+As the doc above explains, this is fundamentally similar to using the command
 ``python setup.py develop``. (see `the setuptool docs
 <https://setuptools.pypa.io/en/latest/userguide/development_mode.html>`_).
 It is however preferred to use pip.

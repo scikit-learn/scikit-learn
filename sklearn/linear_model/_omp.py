@@ -7,19 +7,18 @@
 
 import warnings
 from math import sqrt
-
 from numbers import Integral, Real
+
 import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from ._base import LinearModel, _pre_fit, _deprecate_normalize
-from ..base import RegressorMixin, MultiOutputMixin
-from ..utils import as_float_array, check_array
-from ..utils.parallel import delayed, Parallel
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils._param_validation import validate_params
+from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
+from ..utils import as_float_array, check_array
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils.parallel import Parallel, delayed
+from ._base import LinearModel, _deprecate_normalize, _pre_fit
 
 premature = (
     "Orthogonal matching pursuit ended prematurely due to linear"
@@ -292,7 +291,8 @@ def _gram_omp(
         "copy_X": ["boolean"],
         "return_path": ["boolean"],
         "return_n_iter": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def orthogonal_mp(
     X,
@@ -725,6 +725,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self.normalize = normalize
         self.precompute = precompute
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
@@ -741,8 +742,6 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         _normalize = _deprecate_normalize(
             self.normalize, estimator_name=self.__class__.__name__
         )
@@ -1042,6 +1041,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
@@ -1058,8 +1058,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         _normalize = _deprecate_normalize(
             self.normalize, estimator_name=self.__class__.__name__
         )

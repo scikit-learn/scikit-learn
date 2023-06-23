@@ -37,15 +37,15 @@ and displayed using :class:`~sklearn.metrics.RocCurveDisplay`.
 # for instance :ref:`neighbors_scaling`). In the presence of outliers, a good
 # option is to use a :class:`~sklearn.preprocessing.RobustScaler`.
 
-from sklearn.neighbors import LocalOutlierFactor
+from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import (
     OneHotEncoder,
     OrdinalEncoder,
     RobustScaler,
 )
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import make_pipeline
 
 
 def make_estimator(name, categorical_columns=None, iforest_kw=None, lof_kw=None):
@@ -118,6 +118,7 @@ def fit_predict(estimator, X):
 
 # %%
 import numpy as np
+
 from sklearn.datasets import fetch_kddcup99
 from sklearn.model_selection import train_test_split
 
@@ -199,6 +200,7 @@ for model_name in model_names:
 
 # %%
 import matplotlib.pyplot as plt
+
 from sklearn.datasets import fetch_openml
 
 X, y = fetch_openml(
@@ -288,6 +290,7 @@ for model_name in model_names:
 
 # %%
 import math
+
 from sklearn.metrics import RocCurveDisplay
 
 cols = 2
@@ -360,7 +363,7 @@ _ = ax.set_title("RobustScaler with varying n_neighbors\non forestcover dataset"
 # contamination.
 
 # %%
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, SplineTransformer
+from sklearn.preprocessing import MinMaxScaler, SplineTransformer, StandardScaler
 
 preprocessor_list = [
     None,
