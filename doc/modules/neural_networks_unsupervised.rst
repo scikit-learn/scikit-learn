@@ -55,6 +55,10 @@ nodes they are connected to. The model is therefore parameterized by the
 weights of the connections, as well as one intercept (bias) term for each
 visible and hidden unit, omitted from the image for simplicity.
 
+|details-start|
+**Mathematical details**
+|details-split|
+
 The energy function measures the quality of a joint assignment:
 
 .. math:: 
@@ -83,6 +87,8 @@ This means that the following conditional independencies are assumed:
 The bipartite structure allows for the use of efficient block Gibbs sampling for
 inference.
 
+|details-end|
+
 Bernoulli Restricted Boltzmann machines
 ---------------------------------------
 
@@ -93,6 +99,10 @@ is a good model for character recognition, where the interest is on which
 pixels are active and which aren't. For images of natural scenes it no longer
 fits because of background, depth and the tendency of neighbouring pixels to
 take the same values.
+
+|details-start|
+**Mathematical details**
+|details-split|
 
 The conditional probability distribution of each unit is given by the
 logistic sigmoid activation function of the input it receives:
@@ -107,6 +117,8 @@ where :math:`\sigma` is the logistic sigmoid function:
 .. math::
 
    \sigma(x) = \frac{1}{1 + e^{-x}}
+
+|details-end|
 
 .. _sml:
 
