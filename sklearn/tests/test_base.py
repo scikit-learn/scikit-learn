@@ -3,8 +3,8 @@
 
 import pickle
 import re
-from urllib.parse import urlparse
 import warnings
+from urllib.parse import urlparse
 
 import numpy as np
 import pytest
