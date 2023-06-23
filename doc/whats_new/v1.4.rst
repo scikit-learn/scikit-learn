@@ -33,6 +33,16 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+Changes impacting all modules
+-----------------------------
+
+- |Enhancement| All estimators now recognizes the column names from any dataframe
+  that adopts the
+  `DataFrame Interchange Protocol <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__.
+  Dataframes that return a correct representation through `np.asarray(df)` is expected
+  to work with our estimators and functions.
+  :pr:`26464` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 

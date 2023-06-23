@@ -58,11 +58,15 @@ extensions = [
     "sphinx_issues",
     "add_toctree_functions",
     "sphinx-prompt",
+    "sphinx_copybutton",
     "sphinxext.opengraph",
     "doi_role",
     "allow_nan_estimators",
     "matplotlib.sphinxext.plot_directive",
 ]
+
+# Specify how to identify the prompt when copying code snippets
+copybutton_prompt_text = ">>> "
 
 try:
     import jupyterlite_sphinx  # noqa: F401

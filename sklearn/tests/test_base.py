@@ -23,6 +23,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._set_output import _get_output_config
 from sklearn.utils._testing import (
+    _convert_container,
     assert_array_equal,
     assert_no_warnings,
     ignore_warnings,
@@ -813,3 +814,43 @@ def test_estimator_getstate_using_slots_error_message():
 
     with pytest.raises(TypeError, match=msg):
         pickle.dumps(Estimator())
+
+
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [
+        ("dataframe", "1.5.0"),
+        ("pyarrow", "12.0.0"),
+        ("polars", "0.18.2"),
+    ],
+)
+def test_dataframe_protocol(constructor_name, minversion):
+    """Uses the dataframe exchange protocol to get feature names."""
+    data = [[1, 4, 2], [3, 3, 6]]
+    columns = ["col_0", "col_1", "col_2"]
+    df = _convert_container(
+        data, constructor_name, columns_name=columns, minversion=minversion
+    )
+
+    class NoOpTransformer(TransformerMixin, BaseEstimator):
+        def fit(self, X, y=None):
+            self._validate_data(X)
+            return self
+
+        def transform(self, X):
+            return self._validate_data(X, reset=False)
+
+    no_op = NoOpTransformer()
+    no_op.fit(df)
+    assert_array_equal(no_op.feature_names_in_, columns)
+    X_out = no_op.transform(df)
+
+    if constructor_name != "pyarrow":
+        # pyarrow does not work with `np.asarray`
+        # https://github.com/apache/arrow/issues/34886
+        assert_allclose(df, X_out)
+
+    bad_names = ["a", "b", "c"]
+    df_bad = _convert_container(data, constructor_name, columns_name=bad_names)
+    with pytest.raises(ValueError, match="The feature names should match"):
+        no_op.transform(df_bad)

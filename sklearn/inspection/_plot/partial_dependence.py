@@ -86,8 +86,9 @@ class PartialDependenceDisplay:
 
         .. note::
            The fast ``method='recursion'`` option is only available for
-           ``kind='average'``. Plotting individual dependencies requires using
-           the slower ``method='brute'`` option.
+           `kind='average'` and `sample_weights=None`. Computing individual
+           dependencies and doing weighted averages requires using the slower
+           `method='brute'`.
 
         .. versionadded:: 0.24
            Add `kind` parameter with `'average'`, `'individual'`, and `'both'`
@@ -247,6 +248,7 @@ class PartialDependenceDisplay:
         X,
         features,
         *,
+        sample_weight=None,
         categorical_features=None,
         feature_names=None,
         target=None,
@@ -337,6 +339,14 @@ class PartialDependenceDisplay:
             with `kind='average'`). Each tuple must be of size 2.
             If any entry is a string, then it must be in ``feature_names``.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights are used to calculate weighted means when averaging the
+            model output. If `None`, then samples are equally weighted. If
+            `sample_weight` is not `None`, then `method` will be set to `'brute'`.
+            Note that `sample_weight` is ignored for `kind='individual'`.
+
+            .. versionadded:: 1.3
+
         categorical_features : array-like of shape (n_features,) or shape \
                 (n_categorical_features,), dtype={bool, int, str}, default=None
             Indicates the categorical features.
@@ -409,7 +419,8 @@ class PartialDependenceDisplay:
               computationally intensive.
 
             - `'auto'`: the `'recursion'` is used for estimators that support it,
-              and `'brute'` is used otherwise.
+              and `'brute'` is used otherwise. If `sample_weight` is not `None`,
+              then `'brute'` is used regardless of the estimator.
 
             Please see :ref:`this note <pdp_method_differences>` for
             differences between the `'brute'` and `'recursion'` method.
@@ -464,9 +475,10 @@ class PartialDependenceDisplay:
             - ``kind='average'`` results in the traditional PD plot;
             - ``kind='individual'`` results in the ICE plot.
 
-           Note that the fast ``method='recursion'`` option is only available for
-           ``kind='average'``. Plotting individual dependencies requires using the
-           slower ``method='brute'`` option.
+           Note that the fast `method='recursion'` option is only available for
+           `kind='average'` and `sample_weights=None`. Computing individual
+           dependencies and doing weighted averages requires using the slower
+           `method='brute'`.
 
         centered : bool, default=False
             If `True`, the ICE and PD lines will start at the origin of the
@@ -693,6 +705,7 @@ class PartialDependenceDisplay:
                 estimator,
                 X,
                 fxs,
+                sample_weight=sample_weight,
                 feature_names=feature_names,
                 categorical_features=categorical_features,
                 response_method=response_method,

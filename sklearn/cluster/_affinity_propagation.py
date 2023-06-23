@@ -185,7 +185,8 @@ def _affinity_propagation(
     {
         "S": ["array-like"],
         "return_n_iter": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def affinity_propagation(
     S,
