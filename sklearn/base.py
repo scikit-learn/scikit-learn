@@ -13,7 +13,6 @@ from collections import defaultdict
 
 import numpy as np
 
-import sklearn
 
 from . import __version__
 from ._config import config_context, get_config
@@ -137,7 +136,7 @@ def _clone_parametrized(estimator, *, safe=True):
 
 
 # Code to define the template pointing to the docs
-sklearn_version = parse_version(sklearn.__version__)
+sklearn_version = parse_version(__version__)
 if sklearn_version.dev is None:
     # Not dev version, give full link
     ver_str = f"{sklearn_version.major}.{sklearn_version.minor}"
