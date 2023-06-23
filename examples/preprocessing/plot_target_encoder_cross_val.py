@@ -36,13 +36,16 @@ noise = 0.5 * rng.randn(n_samples)
 n_categories = 100
 
 kbins = KBinsDiscretizer(
-    n_bins=n_categories, encode="ordinal", strategy="uniform", random_state=rng,
+    n_bins=n_categories,
+    encode="ordinal",
+    strategy="uniform",
+    random_state=rng,
     subsample=None,
 )
 X_informative = kbins.fit_transform((y + noise).reshape(-1, 1))
 
-# Remove the linear relationship between y and the bin index by permuting the values of
-# X_informative
+# Remove the linear relationship between y and the bin index by permuting the
+# values of X_informative:
 permuted_categories = rng.permutation(n_categories)
 X_informative = permuted_categories[X_informative.astype(np.int32)]
 
@@ -52,13 +55,13 @@ X_informative = permuted_categories[X_informative.astype(np.int32)]
 X_shuffled = rng.permutation(X_informative)
 
 # %%
-# The uninformative feature with high cardinality is generated so that it is independent of
-# the target variable. We will show that target encoding without cross validation will
-# cause catastrophic overfitting for the downstream regressor. These high cardinality
-# features are basically unique identifiers for samples which should generally be
-# removed from machine learning datasets. In this example, we generate them to show how
-# :class:`TargetEncoder`'s default cross validation behavior mitigates the overfitting
-# issue automatically.
+# The uninformative feature with high cardinality is generated so that it is
+# independent of the target variable. We will show that target encoding without
+# cross validation will cause catastrophic overfitting for the downstream
+# regressor. These high cardinality features are basically unique identifiers
+# for samples which should generally be removed from machine learning datasets.
+# In this example, we generate them to show how :class:`TargetEncoder`'s default
+# cross validation behavior mitigates the overfitting issue automatically.
 X_near_unique_categories = rng.choice(
     int(0.9 * n_samples), size=n_samples, replace=True
 ).reshape(-1, 1)
@@ -152,7 +155,9 @@ print(
     model_no_cv.score(X_train_no_cv_encoding, y_train),
 )
 print(
-    "Model without CV on test set: ", model_no_cv.score(X_test_no_cv_encoding, y_test)
+    "Model without CV on test set: ", model_no_cv.score(
+        X_test_no_cv_encoding, y_test,
+    )
 )
 
 # %%
