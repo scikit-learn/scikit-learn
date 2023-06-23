@@ -123,7 +123,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "max_leaf_nodes": [Interval(Integral, 2, None, closed="left"), None],
         "min_impurity_decrease": [Interval(Real, 0.0, None, closed="left")],
         "ccp_alpha": [Interval(Real, 0.0, None, closed="left")],
-        "store_leaf_values": [bool],
+        "store_leaf_values": ["boolean"],
     }
 
     @abstractmethod

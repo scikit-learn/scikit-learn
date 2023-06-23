@@ -221,7 +221,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             None,
             Interval(Integral, 1, None, closed="left"),
         ],
-        "store_leaf_values": [bool],
+        "store_leaf_values": ["boolean"],
     }
 
     @abstractmethod
