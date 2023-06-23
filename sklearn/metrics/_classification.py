@@ -1177,7 +1177,7 @@ def f1_score(
     See Also
     --------
     fbeta_score : Compute the F-beta score.
-    precision_recall_fscore_support : Compute the precision, recall, F-score,
+    precision_recall_fscore_support_pred : Compute the precision, recall, F-score,
         and support.
     jaccard_score : Compute the Jaccard similarity coefficient score.
     multilabel_confusion_matrix : Compute a confusion matrix for each class or
@@ -1360,7 +1360,7 @@ def fbeta_score(
 
     See Also
     --------
-    precision_recall_fscore_support : Compute the precision, recall, F-score,
+    precision_recall_fscore_support_pred : Compute the precision, recall, F-score,
         and support.
     multilabel_confusion_matrix : Compute a confusion matrix for each class or
         sample.
@@ -1400,7 +1400,7 @@ def fbeta_score(
     0.38...
     """
 
-    _, _, f, _, _ = precision_recall_fscore_support(
+    _, _, f, _, _ = precision_recall_fscore_support_pred(
         y_true,
         y_pred,
         beta=beta,
@@ -1539,7 +1539,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
         ],
     }
 )
-def precision_recall_fscore_support(
+def precision_recall_fscore_support_pred(
     y_true,
     y_pred,
     *,
@@ -1689,20 +1689,20 @@ def precision_recall_fscore_support(
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import precision_recall_fscore_support
+    >>> from sklearn.metrics import precision_recall_fscore_support_pred
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
-    >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
+    >>> precision_recall_fscore_support_pred(y_true, y_pred, average='macro')
     (0.22..., 0.33..., 0.26..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
+    >>> precision_recall_fscore_support_pred(y_true, y_pred, average='micro')
     (0.33..., 0.33..., 0.33..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
+    >>> precision_recall_fscore_support_pred(y_true, y_pred, average='weighted')
     (0.22..., 0.33..., 0.26..., None)
 
     It is possible to compute per-label precisions, recalls, F1-scores and
     supports instead of averaging:
 
-    >>> precision_recall_fscore_support(y_true, y_pred, average=None,
+    >>> precision_recall_fscore_support_pred(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
     (array([0.        , 0.        , 0.66...]),
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
@@ -2069,7 +2069,7 @@ def precision_score(
 
     See Also
     --------
-    precision_recall_fscore_support : Compute precision, recall, F-measure and
+    precision_recall_fscore_support_pred : Compute precision, recall, F-measure and
         support for each class.
     recall_score :  Compute the ratio ``tp / (tp + fn)`` where ``tp`` is the
         number of true positives and ``fn`` the number of false negatives.
@@ -2114,7 +2114,7 @@ def precision_score(
     >>> precision_score(y_true, y_pred, average=None)
     array([0.5, 1. , 1. ])
     """
-    p, _, _, _, _ = precision_recall_fscore_support(
+    p, _, _, _, _ = precision_recall_fscore_support_pred(
         y_true,
         y_pred,
         labels=labels,
@@ -2238,7 +2238,7 @@ def recall_score(
 
     See Also
     --------
-    precision_recall_fscore_support : Compute precision, recall, F-measure and
+    precision_recall_fscore_support_pred : Compute precision, recall, F-measure and
         support for each class.
     precision_score : Compute the ratio ``tp / (tp + fp)`` where ``tp`` is the
         number of true positives and ``fp`` the number of false positives.
@@ -2285,7 +2285,7 @@ def recall_score(
     >>> recall_score(y_true, y_pred, average=None)
     array([1. , 1. , 0.5])
     """
-    _, r, _, _, _ = precision_recall_fscore_support(
+    _, r, _, _, _ = precision_recall_fscore_support_pred(
         y_true,
         y_pred,
         labels=labels,
@@ -2481,7 +2481,7 @@ def classification_report(
         false positives) is only shown for multi-label or multi-class
         with a subset of classes, because it corresponds to accuracy
         otherwise and would be the same for all metrics.
-        See also :func:`precision_recall_fscore_support` for more details
+        See also :func:`precision_recall_fscore_support_pred` for more details
         on averages.
 
         Note that in binary classification, recall of the positive class
@@ -2490,7 +2490,7 @@ def classification_report(
 
     See Also
     --------
-    precision_recall_fscore_support: Compute precision, recall, F-measure and
+    precision_recall_fscore_support_pred: Compute precision, recall, F-measure and
         support for each class.
     confusion_matrix: Compute confusion matrix to evaluate the accuracy of a
         classification.
@@ -2568,7 +2568,7 @@ def classification_report(
         target_names = [f"{label}" for label in labels]
 
     # compute per-class results without averaging
-    p, r, f1, s, pred = precision_recall_fscore_support(
+    p, r, f1, s, pred = precision_recall_fscore_support_pred(
         y_true,
         y_pred,
         labels=labels,
@@ -2613,7 +2613,7 @@ def classification_report(
             line_heading = average + " avg"
 
         # compute averages with specified averaging method
-        avg_p, avg_r, avg_f1, _, _ = precision_recall_fscore_support(
+        avg_p, avg_r, avg_f1, _, _ = precision_recall_fscore_support_pred(
             y_true,
             y_pred,
             labels=labels,

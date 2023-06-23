@@ -38,7 +38,7 @@ from sklearn.metrics import hinge_loss
 from sklearn.metrics import jaccard_score
 from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
-from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import precision_recall_fscore_support_pred
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
@@ -360,7 +360,9 @@ def test_precision_recall_f1_score_binary():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     # detailed measures for each class
-    p, r, f, s, pred = precision_recall_fscore_support(y_true, y_pred, average=None)
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
+        y_true, y_pred, average=None
+    )
     assert_array_almost_equal(p, [0.73, 0.85], 2)
     assert_array_almost_equal(r, [0.88, 0.68], 2)
     assert_array_almost_equal(f, [0.80, 0.76], 2)
@@ -449,7 +451,7 @@ def test_precision_recall_f_extra_labels():
     # tests non-regression on issue #10307
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
-    p, r, f, _, _ = precision_recall_fscore_support(
+    p, r, f, _, _ = precision_recall_fscore_support_pred(
         y_true, y_pred, average="samples", labels=[0, 1]
     )
     assert_almost_equal(np.array([p, r, f]), np.array([3 / 4, 1, 5 / 6]))
@@ -579,7 +581,7 @@ def test_precision_recall_f_unused_pos_label():
         "positive class."
     )
     with pytest.warns(UserWarning, match=msg):
-        precision_recall_fscore_support(
+        precision_recall_fscore_support_pred(
             [1, 2, 1], [1, 2, 2], pos_label=2, average="macro"
         )
 
@@ -1118,7 +1120,9 @@ def test_precision_recall_f1_score_multiclass():
     y_true, y_pred, _ = make_prediction(binary=False)
 
     # compute scores with default labels introspection
-    p, r, f, s, pred = precision_recall_fscore_support(y_true, y_pred, average=None)
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
+        y_true, y_pred, average=None
+    )
     assert_array_almost_equal(p, [0.83, 0.33, 0.42], 2)
     assert_array_almost_equal(r, [0.79, 0.09, 0.90], 2)
     assert_array_almost_equal(f, [0.81, 0.15, 0.57], 2)
@@ -1162,7 +1166,7 @@ def test_precision_recall_f1_score_multiclass():
         fbeta_score(y_true, y_pred, average="samples", beta=0.5)
 
     # same prediction but with and explicit label ordering
-    p, r, f, s, pred = precision_recall_fscore_support(
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
         y_true, y_pred, labels=[0, 2, 1], average=None
     )
     assert_array_almost_equal(p, [0.83, 0.41, 0.33], 2)
@@ -1176,7 +1180,7 @@ def test_precision_refcall_f1_score_multilabel_unordered_labels(average):
     # test that labels need not be sorted in the multilabel case
     y_true = np.array([[1, 1, 0, 0]])
     y_pred = np.array([[0, 0, 1, 1]])
-    p, r, f, s, pred = precision_recall_fscore_support(
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
         y_true, y_pred, labels=[3, 0, 1, 2], warn_for=[], average=average
     )
     assert_array_equal(p, 0)
@@ -1191,12 +1195,18 @@ def test_precision_recall_f1_score_binary_averaged():
     y_pred = np.array([1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1])
 
     # compute scores with default labels introspection
-    ps, rs, fs, _, _ = precision_recall_fscore_support(y_true, y_pred, average=None)
-    p, r, f, _, _ = precision_recall_fscore_support(y_true, y_pred, average="macro")
+    ps, rs, fs, _, _ = precision_recall_fscore_support_pred(
+        y_true, y_pred, average=None
+    )
+    p, r, f, _, _ = precision_recall_fscore_support_pred(
+        y_true, y_pred, average="macro"
+    )
     assert p == np.mean(ps)
     assert r == np.mean(rs)
     assert f == np.mean(fs)
-    p, r, f, _, _ = precision_recall_fscore_support(y_true, y_pred, average="weighted")
+    p, r, f, _, _ = precision_recall_fscore_support_pred(
+        y_true, y_pred, average="weighted"
+    )
     support = np.bincount(y_true)
     assert p == np.average(ps, weights=support)
     assert r == np.average(rs, weights=support)
@@ -1781,7 +1791,9 @@ def test_precision_recall_f1_score_multilabel_1():
     y_true = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 1]])
     y_pred = np.array([[0, 1, 0, 0], [0, 1, 0, 0], [1, 0, 1, 0]])
 
-    p, r, f, s, pred = precision_recall_fscore_support(y_true, y_pred, average=None)
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
+        y_true, y_pred, average=None
+    )
 
     # tp = [0, 1, 1, 0]
     # fn = [1, 0, 0, 1]
@@ -1798,7 +1810,9 @@ def test_precision_recall_f1_score_multilabel_1():
     assert_array_almost_equal(f2, [0, 0.83, 1, 0], 2)
 
     # Check macro
-    p, r, f, s, pred = precision_recall_fscore_support(y_true, y_pred, average="macro")
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
+        y_true, y_pred, average="macro"
+    )
     assert_almost_equal(p, 1.5 / 4)
     assert_almost_equal(r, 0.5)
     assert_almost_equal(f, 2.5 / 1.5 * 0.25)
@@ -1808,7 +1822,9 @@ def test_precision_recall_f1_score_multilabel_1():
     )
 
     # Check micro
-    p, r, f, s, pred = precision_recall_fscore_support(y_true, y_pred, average="micro")
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
+        y_true, y_pred, average="micro"
+    )
     assert_almost_equal(p, 0.5)
     assert_almost_equal(r, 0.5)
     assert_almost_equal(f, 0.5)
@@ -1819,7 +1835,7 @@ def test_precision_recall_f1_score_multilabel_1():
     )
 
     # Check weighted
-    p, r, f, s, pred = precision_recall_fscore_support(
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
         y_true, y_pred, average="weighted"
     )
     assert_almost_equal(p, 1.5 / 4)
@@ -1834,7 +1850,7 @@ def test_precision_recall_f1_score_multilabel_1():
     # |h(x_i) inter y_i | = [0, 1, 1]
     # |y_i| = [1, 1, 2]
     # |h(x_i)| = [1, 1, 2]
-    p, r, f, s, pred = precision_recall_fscore_support(
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
         y_true, y_pred, average="samples"
     )
     assert_almost_equal(p, 0.5)
@@ -1855,7 +1871,9 @@ def test_precision_recall_f1_score_multilabel_2():
     # fp = [ 1.  0.  0.  2.]
     # fn = [ 1.  1.  1.  0.]
 
-    p, r, f, s, pred = precision_recall_fscore_support(y_true, y_pred, average=None)
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
+        y_true, y_pred, average=None
+    )
     assert_array_almost_equal(p, [0.0, 1.0, 0.0, 0.0], 2)
     assert_array_almost_equal(r, [0.0, 0.5, 0.0, 0.0], 2)
     assert_array_almost_equal(f, [0.0, 0.66, 0.0, 0.0], 2)
@@ -1865,7 +1883,9 @@ def test_precision_recall_f1_score_multilabel_2():
     support = s
     assert_array_almost_equal(f2, [0, 0.55, 0, 0], 2)
 
-    p, r, f, s, pred = precision_recall_fscore_support(y_true, y_pred, average="micro")
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
+        y_true, y_pred, average="micro"
+    )
     assert_almost_equal(p, 0.25)
     assert_almost_equal(r, 0.25)
     assert_almost_equal(f, 2 * 0.25 * 0.25 / 0.5)
@@ -1875,7 +1895,9 @@ def test_precision_recall_f1_score_multilabel_2():
         (1 + 4) * p * r / (4 * p + r),
     )
 
-    p, r, f, s, pred = precision_recall_fscore_support(y_true, y_pred, average="macro")
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
+        y_true, y_pred, average="macro"
+    )
     assert_almost_equal(p, 0.25)
     assert_almost_equal(r, 0.125)
     assert_almost_equal(f, 2 / 12)
@@ -1884,7 +1906,7 @@ def test_precision_recall_f1_score_multilabel_2():
         fbeta_score(y_true, y_pred, beta=2, average="macro"), np.mean(f2)
     )
 
-    p, r, f, s, pred = precision_recall_fscore_support(
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
         y_true, y_pred, average="weighted"
     )
     assert_almost_equal(p, 2 / 4)
@@ -1896,7 +1918,7 @@ def test_precision_recall_f1_score_multilabel_2():
         np.average(f2, weights=support),
     )
 
-    p, r, f, s, pred = precision_recall_fscore_support(
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
         y_true, y_pred, average="samples"
     )
     # Check samples
@@ -1928,7 +1950,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
     # false_pos = [ 0.  0.  0.  1.]
     # false_neg = [ 1.  1.  0.  0.]
 
-    p, r, f, s, pred = precision_recall_fscore_support(
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
         y_true, y_pred, average=None, zero_division=zero_division
     )
 
@@ -1942,7 +1964,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
     support = s
     assert_array_almost_equal(f2, [expected_f, 0.55, 1, expected_f], 2)
 
-    p, r, f, s, pred = precision_recall_fscore_support(
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
         y_true, y_pred, average="macro", zero_division=zero_division
     )
 
@@ -1965,7 +1987,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
         _nanaverage(f2, weights=None),
     )
 
-    p, r, f, s, pred = precision_recall_fscore_support(
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
         y_true, y_pred, average="micro", zero_division=zero_division
     )
     assert_almost_equal(p, 2 / 3)
@@ -1979,7 +2001,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
         (1 + 4) * p * r / (4 * p + r),
     )
 
-    p, r, f, s, pred = precision_recall_fscore_support(
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
         y_true, y_pred, average="weighted", zero_division=zero_division
     )
     assert_almost_equal(p, 3 / 4 if zero_division_expected == 0 else 1.0)
@@ -1994,7 +2016,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
         _nanaverage(f2, weights=support),
     )
 
-    p, r, f, s, pred = precision_recall_fscore_support(
+    p, r, f, s, pred = precision_recall_fscore_support_pred(
         y_true, y_pred, average="samples"
     )
     # |h(x_i) inter y_i | = [0, 0, 2]
@@ -2022,7 +2044,7 @@ def test_precision_recall_f1_no_labels(beta, average, zero_division):
     y_pred = np.zeros_like(y_true)
 
     p, r, f, s, pred = assert_no_warnings(
-        precision_recall_fscore_support,
+        precision_recall_fscore_support_pred,
         y_true,
         y_pred,
         average=average,
@@ -2058,7 +2080,7 @@ def test_precision_recall_f1_no_labels_check_warnings(average):
     y_true = np.zeros((20, 3))
     y_pred = np.zeros_like(y_true)
 
-    func = precision_recall_fscore_support
+    func = precision_recall_fscore_support_pred
     with pytest.warns(UndefinedMetricWarning):
         p, r, f, s, pred = func(y_true, y_pred, average=average, beta=1.0)
 
@@ -2087,7 +2109,7 @@ def test_precision_recall_f1_no_labels_average_none(zero_division):
     # |y_hat_i| = [0, 0, 0]
 
     p, r, f, s, pred = assert_no_warnings(
-        precision_recall_fscore_support,
+        precision_recall_fscore_support_pred,
         y_true,
         y_pred,
         average=None,
@@ -2119,7 +2141,7 @@ def test_precision_recall_f1_no_labels_average_none_warn():
     # |y_hat_i| = [0, 0, 0]
 
     with pytest.warns(UndefinedMetricWarning):
-        p, r, f, s, pred = precision_recall_fscore_support(
+        p, r, f, s, pred = precision_recall_fscore_support_pred(
             y_true, y_pred, average=None, beta=1
         )
 
@@ -2136,7 +2158,7 @@ def test_precision_recall_f1_no_labels_average_none_warn():
 
 def test_prf_warnings():
     # average of per-label scores
-    f, w = precision_recall_fscore_support, UndefinedMetricWarning
+    f, w = precision_recall_fscore_support_pred, UndefinedMetricWarning
     for average in [None, "weighted", "macro"]:
         msg = (
             "Precision and F-score are ill-defined and "
@@ -2215,7 +2237,7 @@ def test_prf_warnings():
 
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
-        precision_recall_fscore_support([0, 0], [0, 0], average="binary")
+        precision_recall_fscore_support_pred([0, 0], [0, 0], average="binary")
         msg = (
             "Recall and F-score are ill-defined and "
             "being set to 0.0 due to no true samples."
@@ -2235,7 +2257,7 @@ def test_prf_warnings():
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 def test_prf_no_warnings_if_zero_division_set(zero_division):
     # average of per-label scores
-    f = precision_recall_fscore_support
+    f = precision_recall_fscore_support_pred
     for average in [None, "weighted", "macro"]:
         assert_no_warnings(
             f, [0, 1, 2], [1, 1, 2], average=average, zero_division=zero_division
@@ -2290,7 +2312,7 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
 
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
-        precision_recall_fscore_support(
+        precision_recall_fscore_support_pred(
             [0, 0], [0, 0], average="binary", zero_division=zero_division
         )
         assert len(record) == 0
@@ -2918,7 +2940,7 @@ def test_balanced_accuracy_score(y_true, y_pred):
         jaccard_score,
         f1_score,
         partial(fbeta_score, beta=0.5),
-        precision_recall_fscore_support,
+        precision_recall_fscore_support_pred,
         precision_score,
         recall_score,
         brier_score_loss,
