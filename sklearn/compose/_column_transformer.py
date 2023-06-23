@@ -26,6 +26,7 @@ from ..utils import (
 )
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from ..utils._protocols import DataFrameInterchangeProtocol
 from ..utils._set_output import _get_output_config, _safe_set_output
 from ..utils.metaestimators import _BaseComposition
 from ..utils.parallel import Parallel, delayed
@@ -474,17 +475,17 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     "specifiers. '%s' (type %s) doesn't." % (t, type(t))
                 )
 
-    def _validate_column_callables(self, X, X_interchange=None):
+    def _validate_column_callables(self, X):
         """
         Converts callable column specifications.
         """
         all_columns = []
         transformer_to_input_indices = {}
 
-        if X_interchange is None:
-            get_column_indices = partial(_get_column_indices, X)
+        if isinstance(X, DataFrameInterchangeProtocol):
+            get_column_indices = partial(_get_column_indices_interchange, X)
         else:
-            get_column_indices = partial(_get_column_indices_interchange, X_interchange)
+            get_column_indices = partial(_get_column_indices, X)
 
         for name, _, columns in self.transformers:
             if callable(columns):
@@ -500,7 +501,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Validates ``remainder`` and defines ``_remainder`` targeting
         the remaining columns.
         """
-        self._n_features = X.shape[1]
+        if isinstance(X, DataFrameInterchangeProtocol):
+            self._n_features = X.num_columns()
+        else:
+            self._n_features = X.shape[1]
+
         cols = set(chain(*self._transformer_to_input_indices.values()))
         remaining = sorted(set(range(self._n_features)) - cols)
         self._remainder = ("remainder", self.remainder, remaining)
@@ -699,7 +704,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         return "(%d of %d) Processing %s" % (idx, total, name)
 
     def _fit_transform(
-        self, X, y, func, fitted=False, column_as_strings=False, X_interchange=None
+        self,
+        X,
+        y,
+        func,
+        fitted=False,
+        column_as_strings=False,
+        dataframe_class_as_str=None,
     ):
         """
         Private function to fit and/or transform on demand.
@@ -708,14 +719,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         on the passed function.
         ``fitted=True`` ensures the fitted transformers are used.
         """
-        if X_interchange is not None:
+        if isinstance(X, DataFrameInterchangeProtocol):
             # use DataFrame protocol to extract columns and use column_as_strings=True
             # for simplicity.
             indexing_axis_1 = partial(
                 _dataframe_protocol_indexing_axis_1,
-                original_dataframe_class=_dataframe_class_as_str(X),
+                original_dataframe_class=dataframe_class_as_str,
             )
-            X = X_interchange
         else:
             indexing_axis_1 = partial(_safe_indexing, axis=1)
 
@@ -798,27 +808,32 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_transformers()
 
         if _use_interchange_protocol(X):
-            X_interchange = X.__dataframe__()
+            # Use string with interchange protocol to simplify code for dataframe
+            # protocol
+            dataframe_class_as_str = _dataframe_class_as_str(X)
+            X = X.__dataframe__()
             column_as_strings = True
+            n_samples = X.num_rows()
         else:
-            X_interchange = None
+            dataframe_class_as_str = None
             column_as_strings = False
+            n_samples = X.shape[0]
 
-        self._validate_column_callables(X, X_interchange)
+        self._validate_column_callables(X)
         self._validate_remainder(X)
 
         result = self._fit_transform(
             X,
             y,
             _fit_transform_one,
-            X_interchange=X_interchange,
             column_as_strings=column_as_strings,
+            dataframe_class_as_str=dataframe_class_as_str,
         )
 
         if not result:
             self._update_fitted_transformers([])
             # All transformers are None
-            return np.zeros((X.shape[0], 0))
+            return np.zeros((n_samples, 0))
 
         Xs, transformers = zip(*result)
 
@@ -859,18 +874,23 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         check_is_fitted(self)
         X = _check_X(X)
 
-        fit_dataframe_and_transform_dataframe = hasattr(
-            self, "feature_names_in_"
-        ) and hasattr(X, "__dataframe__")
+        fit_dataframe_and_transform_dataframe = hasattr(self, "feature_names_in_") and (
+            _is_pandas_df(X) or hasattr(X, "__dataframe__")
+        )
 
         if _use_interchange_protocol(X):
             if not hasattr(self, "feature_names_in_"):
                 raise ValueError(
                     "Using the dataframe protocol requires fitting on dataframes too."
                 )
-            X_interchange = X.__dataframe__()
+            dataframe_class_as_str = _dataframe_class_as_str(X)
+            X = X.__dataframe__()
+            n_samples = X.num_rows()
+            columns = X.column_names()
         else:
-            X_interchange = None
+            dataframe_class_as_str = None
+            n_samples = X.shape[0]
+            columns = getattr(X, "columns", None)
 
         if fit_dataframe_and_transform_dataframe:
             named_transformers = self.named_transformers_
@@ -887,7 +907,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             all_indices = set(chain(*non_dropped_indices))
             all_names = set(self.feature_names_in_[ind] for ind in all_indices)
 
-            diff = all_names - set(X.columns)
+            diff = all_names - set(columns)
             if diff:
                 raise ValueError(f"columns are missing: {diff}")
         else:
@@ -901,13 +921,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             _transform_one,
             fitted=True,
             column_as_strings=fit_dataframe_and_transform_dataframe,
-            X_interchange=X_interchange,
+            dataframe_class_as_str=dataframe_class_as_str,
         )
         self._validate_output(Xs)
 
         if not Xs:
             # All transformers are None
-            return np.zeros((X.shape[0], 0))
+            return np.zeros((n_samples, 0))
 
         return self._hstack(list(Xs))
 
