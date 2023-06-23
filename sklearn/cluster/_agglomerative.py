@@ -185,7 +185,8 @@ def _single_linkage_tree(
         "connectivity": ["array-like", "sparse matrix", None],
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "return_distance": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     """Ward clustering based on a Feature matrix.

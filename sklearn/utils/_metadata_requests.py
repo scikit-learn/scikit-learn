@@ -152,6 +152,9 @@ VALID_REQUEST_VALUES = [False, True, None, UNUSED, WARN]
 def request_is_alias(item):
     """Check if an item is a valid alias.
 
+    Values in ``VALID_REQUEST_VALUES`` are not considered aliases in this
+    context. Only a string which is a valid identifier is.
+
     Parameters
     ----------
     item : object
@@ -247,8 +250,9 @@ class MethodMetadataRequest:
         """
         if not request_is_alias(alias) and not request_is_valid(alias):
             raise ValueError(
-                "alias should be either a valid identifier or one of "
-                "{None, True, False}."
+                f"The alias you're setting for `{param}` should be either a "
+                "valid identifier or one of {None, True, False}, but given "
+                f"value is: `{alias}`"
             )
 
         if alias == param:
@@ -659,9 +663,10 @@ class MetadataRouter:
 
     def __init__(self, owner):
         self._route_mappings = dict()
-        # `_self` is used if the router is also a consumer. _self, (added using
-        # `add_self_request()`) is treated differently from the other objects
-        # which are stored in _route_mappings.
+        # `_self_request` is used if the router is also a consumer.
+        # _self_request, (added using `add_self_request()`) is treated
+        # differently from the other objects which are stored in
+        # _route_mappings.
         self._self_request = None
         self.owner = owner
 
@@ -1182,8 +1187,8 @@ class _MetadataRequester:
         """Build the `MethodMetadataRequest` for a method using its signature.
 
         This method takes all arguments from the method signature and uses
-        ``None`` as their default request value, except ``X``, ``y``,
-        ``*args``, and ``**kwargs``.
+        ``None`` as their default request value, except ``X``, ``y``, ``Y``,
+        ``Xt``, ``yt``, ``*args``, and ``**kwargs``.
 
         Parameters
         ----------
@@ -1219,7 +1224,7 @@ class _MetadataRequester:
     def _get_default_requests(cls):
         """Collect default request values.
 
-        This method combines the information present in ``metadata_request__*``
+        This method combines the information present in ``__metadata_request__*``
         class attributes, as well as determining request keys from method
         signatures.
         """

@@ -71,7 +71,8 @@ TARGET_NAMES = ["Cover_Type"]
         "shuffle": ["boolean"],
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_covtype(
     *,

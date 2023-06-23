@@ -189,7 +189,10 @@ def discretize(
     return labels
 
 
-@validate_params({"affinity": ["array-like", "sparse matrix"]})
+@validate_params(
+    {"affinity": ["array-like", "sparse matrix"]},
+    prefer_skip_nested_validation=False,
+)
 def spectral_clustering(
     affinity,
     *,
