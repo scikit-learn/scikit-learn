@@ -308,8 +308,9 @@ div.sk-estimator.fitted:hover .sk-estimator-doc-link.fitted:hover,  .sk-estimato
   border: .5pt solid chocolate;
   right: .2ex;
   box-shadow: 2pt 2pt 4pt #999;
-  max-width: 30ex;
+  max-width: 50ex;
   width: min-content;
+  min-width: 20ex;
 }
 
 .sk-estimator-doc-link.fitted span {
