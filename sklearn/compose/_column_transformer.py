@@ -16,8 +16,10 @@ from scipy import sparse
 from ..base import TransformerMixin, _fit_context, clone
 from ..pipeline import _fit_transform_one, _name_estimators, _transform_one
 from ..preprocessing import FunctionTransformer
-from ..utils import Bunch, _get_column_indices, _safe_indexing, check_pandas_support
+from ..utils import Bunch
 from ..utils._estimator_html_repr import _VisualBlock
+from ..utils._indexing import _get_column_indices, _safe_indexing
+from ..utils._optional_dependencies import check_pandas_support
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..utils._set_output import _get_output_config, _safe_set_output
 from ..utils.metaestimators import _BaseComposition

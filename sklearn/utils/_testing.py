@@ -44,10 +44,9 @@ import sklearn
 from sklearn.utils import (
     _IS_32BIT,
     IS_PYPY,
-    _in_unstable_openblas_configuration,
 )
 from sklearn.utils._array_api import _check_array_api_dispatch
-from sklearn.utils.fixes import threadpool_info
+from sklearn.utils.fixes import _in_unstable_openblas_configuration, threadpool_info
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,

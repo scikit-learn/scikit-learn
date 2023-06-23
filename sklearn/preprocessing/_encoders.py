@@ -10,9 +10,10 @@ import numpy as np
 from scipy import sparse
 
 from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
-from ..utils import _safe_indexing, check_array, is_scalar_nan
+from ..utils import _safe_indexing, check_array
 from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
 from ..utils._mask import _get_mask
+from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
 from ..utils.validation import _check_feature_names_in, check_is_fitted
 

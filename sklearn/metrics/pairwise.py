@@ -23,10 +23,10 @@ from ..utils import (
     check_array,
     gen_batches,
     gen_even_slices,
-    get_chunk_n_rows,
-    is_scalar_nan,
 )
+from ..utils._chunking import get_chunk_n_rows
 from ..utils._mask import _get_mask
+from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import (
     Hidden,
     Integral,

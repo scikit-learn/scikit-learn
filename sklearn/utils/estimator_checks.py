@@ -54,7 +54,8 @@ from ..utils._param_validation import (
 )
 from ..utils.fixes import parse_version, sp_version
 from ..utils.validation import check_is_fitted
-from . import IS_PYPY, is_scalar_nan, shuffle
+from . import IS_PYPY, shuffle
+from ._missing import is_scalar_nan
 from ._param_validation import Interval
 from ._tags import (
     _DEFAULT_TAGS,

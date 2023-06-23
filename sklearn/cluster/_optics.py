@@ -21,7 +21,7 @@ from ..exceptions import DataConversionWarning
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import _VALID_METRICS, PAIRWISE_BOOLEAN_FUNCTIONS
 from ..neighbors import NearestNeighbors
-from ..utils import gen_batches, get_chunk_n_rows
+from ..utils._chunking import gen_batches, get_chunk_n_rows
 from ..utils._param_validation import (
     HasMethods,
     Interval,

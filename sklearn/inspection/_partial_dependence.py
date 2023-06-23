@@ -19,15 +19,14 @@ from ..ensemble._hist_gradient_boosting.gradient_boosting import (
 )
 from ..exceptions import NotFittedError
 from ..tree import DecisionTreeRegressor
-from ..utils import (
-    Bunch,
+from ..utils import Bunch, check_array
+from ..utils._indexing import (
     _determine_key_type,
     _get_column_indices,
     _safe_assign,
     _safe_indexing,
-    check_array,
-    check_matplotlib_support,  # noqa
 )
+from ..utils._optional_dependencies import check_matplotlib_support  # noqa
 from ..utils._param_validation import (
     HasMethods,
     Integral,

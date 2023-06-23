@@ -24,13 +24,13 @@ import numpy as np
 from scipy.special import comb
 
 from ..utils import (
-    _approximate_mode,
     _safe_indexing,
     check_random_state,
     indexable,
     metadata_routing,
 )
 from ..utils._param_validation import Interval, RealNotInt, validate_params
+from ..utils.extmath import _approximate_mode
 from ..utils.metadata_routing import _MetadataRequester
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples, check_array, column_or_1d
