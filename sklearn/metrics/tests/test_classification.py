@@ -1403,9 +1403,6 @@ weighted avg       0.45      0.51      0.46       104
 """
 
     report = classification_report(y_true, y_pred)
-    import pdb
-
-    pdb.set_trace()
     assert report == expected_report
 
 
