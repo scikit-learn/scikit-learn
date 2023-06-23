@@ -254,7 +254,7 @@ conda_build_metadata_list = [
             "plotly",
             "pooch",
         ],
-        "pip_dependencies": ["sphinxext-opengraph"],
+        "pip_dependencies": ["sphinxext-opengraph", "sphinx-copybutton"],
         "package_constraints": {
             "python": "3.8",
             "numpy": "min",
