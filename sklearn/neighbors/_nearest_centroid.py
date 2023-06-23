@@ -59,7 +59,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     shrink_threshold : float, default=None
         Threshold for shrinking centroids to remove features.
-        
+
     priors : array-like of shape (n_classes,), default=None
         The class prior probabilities. By default, the class proportions are
         inferred from the training data.
@@ -94,11 +94,13 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     References
     ----------
-    Tibshirani, R., Hastie, T., Narasimhan, B., & Chu, G. (2002). Diagnosis of
+    [1] Tibshirani, R., Hastie, T., Narasimhan, B., & Chu, G. (2002). Diagnosis of
     multiple cancer types by shrunken centroids of gene expression. Proceedings
     of the National Academy of Sciences of the United States of America,
     99(10), 6567-6572. The National Academy of Sciences.
 
+    [2] Hastie, T., Tibshirani, R., Friedman, J. (2009). The Elements of Statistical
+    Learning Data Mining, Inference, and Prediction. 2nd Edition. New York, Springer.
     Examples
     --------
     >>> from sklearn.neighbors import NearestCentroid
@@ -304,6 +306,8 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         However, the decision function uses the argmax definition instead
         of argmin definition as in the predict() function, which are just
         -1 factor of each other.
+        The estimation has been implemented according to
+        Hastie et al. (2009), p. 652 equation (18.2)
 
         Parameters
         ----------
@@ -341,7 +345,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         """Class probability estimates.
         The returned estimates for all classes are ordered by the
         label of classes. The estimation has been implemented according to
-        Tibshirani et al. (2002b), p. 108f
+        Hastie et al. (2009), p. 652 equation (18.2)
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
