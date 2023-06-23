@@ -60,12 +60,10 @@ class Pipeline(_BaseComposition):
     The purpose of the pipeline is to assemble several steps that can be
     cross-validated together while setting different parameters. For this, it
     enables setting parameters of the various steps using their names and the
-    parameter name separated by a `'__'`. For instance, if one has a pipeline
-    with an `SVC()` named `'clf'`, then setting `clf__C=10` is equivalent to
-    setting `SVC(C=10)` in that pipeline. Moreover, a step's estimator may be
-    replaced entirely by setting the parameter with its name to another estimator,
-    or a transformer removed by setting it to `'passthrough'` or `None`. These
-    can be especially useful when performing grid searches.
+    parameter name separated by a `'__'`, as in the example below. A step's
+    estimator may be replaced entirely by setting the parameter with its name
+    to another estimator, or a transformer removed by setting it to
+    `'passthrough'` or `None`.
 
     Read more in the :ref:`User Guide <pipeline>`.
 
@@ -130,11 +128,14 @@ class Pipeline(_BaseComposition):
     >>> X, y = make_classification(random_state=0)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
     ...                                                     random_state=0)
-    >>> pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC())])
-    >>> # The pipeline can be used as any other estimator
-    >>> # and avoids leaking the test set into the train set
+    >>> pipe = Pipeline([("scaler", StandardScaler()), ("clf", SVC())])
+    >>> # The following is equivalent to setting SVC(C=10) for "clf" in the
+    >>> # pipeline
+    >>> pipe.set_params(clf__C=10)
+    >>> # The pipeline can be used as any other estimator and avoids leaking
+    >>> # the test set into the train set
     >>> pipe.fit(X_train, y_train)
-    Pipeline(steps=[('scaler', StandardScaler()), ('svc', SVC())])
+    Pipeline(steps=[("scaler", StandardScaler()), ("clf", SVC())])
     >>> pipe.score(X_test, y_test)
     0.88
     """
@@ -974,13 +975,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     several feature extraction mechanisms into a single transformer.
 
     Parameters of the transformers may be set using its name and the parameter
-    name separated by a '__'. For instance, if one has a feature union with a
-    `PCA()` named `'linear_pca'`, then setting `linear_pca__n_components=10` is
-    equivalent to setting `PCA(n_components=10)` in that feature union.  Moreover,
-    a transformer may be replaced entirely by setting the parameter with its name
-    to another transformer, removed by setting to 'drop' or disabled by setting to
-    'passthrough' (features are passed without transformation). These can be
-    especially useful when performing grid searches.
+    name separated by a '__'. A transformer may be replaced entirely by
+    setting the parameter with its name to another transformer, removed by
+    setting to 'drop' or disabled by setting to 'passthrough' (features are
+    passed without transformation).
 
     Read more in the :ref:`User Guide <feature_union>`.
 
@@ -1050,8 +1048,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     --------
     >>> from sklearn.pipeline import FeatureUnion
     >>> from sklearn.decomposition import PCA, TruncatedSVD
-    >>> union = FeatureUnion([("pca", PCA(n_components=1)),
-    ...                       ("svd", TruncatedSVD(n_components=2))])
+    >>> union = FeatureUnion([("pca", PCA()), ("svd", TruncatedSVD())])
+    >>> # The following is equivalent to setting PCA(n_components=1) for "pca"
+    >>> # and TruncatedSVD(n_components=2) for "svd" in the feature union
+    >>> union.set_params(pca__n_components=1, svd__n_components=2)
     >>> X = [[0., 1., 3], [2., 2., 5]]
     >>> union.fit_transform(X)
     array([[ 1.5       ,  3.0...,  0.8...],
