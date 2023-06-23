@@ -348,6 +348,8 @@ def test_nmf_sparse_transform(Estimator, solver):
     assert_allclose(A_fit_tr, A_tr, atol=1e-1)
 
 
+# TODO(1.6): remove the warning filter
+@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize("init", ["random", "nndsvd"])
 @pytest.mark.parametrize("solver", ("cd", "mu"))
 @pytest.mark.parametrize("alpha_W", (0.0, 1.0))
@@ -369,7 +371,6 @@ def test_non_negative_factorization_consistency(init, solver, alpha_W, alpha_H):
         alpha_H=alpha_H,
         random_state=1,
         tol=1e-2,
-        n_components="auto",
     )
     W_nmf_2, H, _ = non_negative_factorization(
         A,
@@ -382,7 +383,6 @@ def test_non_negative_factorization_consistency(init, solver, alpha_W, alpha_H):
         alpha_H=alpha_H,
         random_state=1,
         tol=1e-2,
-        n_components="auto",
     )
 
     model_class = NMF(
@@ -393,7 +393,6 @@ def test_non_negative_factorization_consistency(init, solver, alpha_W, alpha_H):
         alpha_H=alpha_H,
         random_state=1,
         tol=1e-2,
-        n_components="auto",
     )
     W_cls = model_class.fit_transform(A)
     W_cls_2 = model_class.transform(A)
@@ -775,6 +774,8 @@ def test_nmf_underflow():
     assert_almost_equal(res, ref)
 
 
+# TODO(1.6): remove the warning filter
+@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize(
     "dtype_in, dtype_out",
     [
@@ -798,7 +799,6 @@ def test_nmf_dtype_match(Estimator, solver, dtype_in, dtype_out):
         alpha_H=1.0,
         tol=1e-2,
         random_state=0,
-        n_components="auto",
         **solver,
     )
 
@@ -825,6 +825,8 @@ def test_nmf_float32_float64_consistency(Estimator, solver):
     assert_allclose(W32, W64, atol=1e-5)
 
 
+# TODO(1.6): remove the warning filter
+@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
 def test_nmf_custom_init_dtype_error(Estimator):
     # Check that an error is raise if custom H and/or W don't have the same
@@ -835,10 +837,10 @@ def test_nmf_custom_init_dtype_error(Estimator):
     W = rng.random_sample((20, 15))
 
     with pytest.raises(TypeError, match="should have the same dtype as X"):
-        Estimator(init="custom", n_components="auto").fit(X, H=H, W=W)
+        Estimator(init="custom").fit(X, H=H, W=W)
 
     with pytest.raises(TypeError, match="should have the same dtype as X"):
-        non_negative_factorization(X, H=H, update_H=False, n_components="auto")
+        non_negative_factorization(X, H=H, update_H=False)
 
 
 @pytest.mark.parametrize("beta_loss", [-0.5, 0, 0.5, 1, 1.5, 2, 2.5])
