@@ -41,7 +41,7 @@ Changes impacting all modules
   `DataFrame Interchange Protocol <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__.
   Dataframes that return a correct representation through `np.asarray(df)` is expected
   to work with our estimators and functions.
-  :pr:`26464` by `Thomas Fan`_.
+  :pr:`26683` by `Thomas Fan`_.
 
   :mod:`sklearn.compose`
 ......................
