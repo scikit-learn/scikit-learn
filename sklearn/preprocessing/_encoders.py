@@ -83,6 +83,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             X, force_all_finite=force_all_finite
         )
         self.n_features_in_ = n_features
+        if sample_weight is not None:
+            n_samples = np.sum(sample_weight)
 
         if self.categories != "auto":
             if len(self.categories) != n_features:
@@ -269,11 +271,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        category_count : ndarray of shape (n_cardinality,)
-            Category counts.
+        category_count : array-like of shape (n_cardinality,)
+            Category counts or sum of `sample_weight` for the samples from the
+            category when `sample_weight` is different from `None`.
 
         n_samples : int
-            Number of samples.
+            Number of samples in training set or total sum of `sample_weight`
+            for all samples when `sample_weight` is different from `None`.
 
         col_idx : int
             Index of the current category. Only used for the error message.
@@ -284,8 +288,6 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             If there are infrequent categories, indices of infrequent
             categories. Otherwise None.
         """
-        # TODO ohe_sw: We would have to change this...
-        # But it really makes sense... :(
         if isinstance(self.min_frequency, numbers.Integral):
             infrequent_mask = category_count < self.min_frequency
         elif isinstance(self.min_frequency, numbers.Real):
@@ -338,7 +340,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         n_samples : int
-            Number of samples in training set.
+            Number of samples in training set or total sum of `sample_weight`
+            for all samples when `sample_weight` is different from `None`.
         category_counts: list of ndarray
             `category_counts[i]` is the category counts corresponding to
             `self.categories_[i]`.
@@ -563,13 +566,15 @@ class OneHotEncoder(_BaseEncoder):
 
     min_frequency : int or float, default=None
         Specifies the minimum frequency below which a category will be
-        considered infrequent.
+        considered infrequent. If during fit `sample_weight` is different from
+        default, then count will be done with sum of samples' weight.
 
         - If `int`, categories with a smaller cardinality will be considered
           infrequent.
 
         - If `float`, categories with a smaller cardinality than
-          `min_frequency * n_samples`  will be considered infrequent.
+          `min_frequency * n_samples` will be considered infrequent. If
+          `sample_weight` is different from `None`, `n_samples = sum(sample_weight)`.
 
         .. versionadded:: 1.1
             Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
@@ -972,15 +977,17 @@ class OneHotEncoder(_BaseEncoder):
             :class:`~sklearn.pipeline.Pipeline`.
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
+            Sample weights used to weight the categories when using filtering
+            catergories with `max_categories` and `min_frequency`. If `None`,
+            then samples are equally weighted. If both `max_categories` and
+            `min_frequency` are set to default values, then `sample_weight`
+            is ignored.
 
         Returns
         -------
         self
             Fitted encoder.
         """
-        # TODO ohe_sw: Add to docstring that `sample_weight` is only used when
-        # `max_categories` or `min_frequency` are not default values.
         self._validate_params()
 
         if self.sparse != "deprecated":
@@ -1300,7 +1307,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
           infrequent.
 
         - If `float`, categories with a smaller cardinality than
-          `min_frequency * n_samples`  will be considered infrequent.
+          `min_frequency * n_samples` will be considered infrequent.
 
         .. versionadded:: 1.3
             Read more in the :ref:`User Guide <encoder_infrequent_categories>`.

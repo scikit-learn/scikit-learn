@@ -2327,11 +2327,15 @@ def test_ordinal_encoder_missing_appears_infrequent():
         ),
     ],
 )
-def test_one_hot_encoder_sample_weight_min_frequency(X, sample_weight, expected_shape):
+@pytest.mark.parametrize(
+    "min_frequency",
+    [0.3, 0.9, 2],
+)
+def test_one_hot_encoder_sample_weight_min_frequency(
+    X, sample_weight, expected_shape, min_frequency
+):
     ohe = OneHotEncoder(min_frequency=2)
     X_trans = ohe.fit_transform(X, sample_weight=sample_weight)
-
-    print(X_trans.toarray())
     assert X_trans.shape == expected_shape
 
 
@@ -2360,6 +2364,33 @@ def test_one_hot_encoder_sample_weight_min_frequency(X, sample_weight, expected_
 def test_one_hot_encoder_sample_weight_max_categories(X, sample_weight, expected_shape):
     ohe = OneHotEncoder(max_categories=2)
     X_trans = ohe.fit_transform(X, sample_weight=sample_weight)
-
-    print(X_trans.toarray())
     assert X_trans.shape == expected_shape
+
+
+@pytest.mark.parametrize(
+    "X",
+    [[["car"], ["car"], ["bike"], ["bike"], ["boat"], ["airplane"]]],
+)
+@pytest.mark.parametrize(
+    "min_frequency",
+    [0.1, 0.3, 0.5, 0.9],
+)
+def test_one_hot_encoder_sample_weight_constant(X, min_frequency):
+    ohe = OneHotEncoder(min_frequency=min_frequency)
+    X_sw_None = ohe.fit_transform(X, sample_weight=None).toarray()
+    X_sw_constant1 = ohe.fit_transform(X, sample_weight=np.ones(len(X))).toarray()
+    X_sw_constant5 = ohe.fit_transform(X, sample_weight=5 * np.ones(len(X))).toarray()
+
+    assert_array_equal(X_sw_None, X_sw_constant1)
+    assert_array_equal(X_sw_None, X_sw_constant5)
+
+@pytest.mark.parametrize(
+    "X",
+    [[["car"], ["car"], ["bike"], ["bike"], ["boat"], ["airplane"]]],
+)
+def test_one_hot_encoder_sample_weight_is_ignored(X):
+    ohe = OneHotEncoder()
+    X_sw_None = ohe.fit_transform(X).toarray()
+    X_sw_ones = ohe.fit_transform(X, sample_weight=np.ones(len(X))).toarray()
+
+    assert_array_equal(X_sw_None, X_sw_ones)

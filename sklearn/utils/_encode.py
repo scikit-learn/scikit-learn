@@ -48,24 +48,21 @@ def _unique(values, *, sample_weight=None, return_inverse=False, return_counts=F
     # numerical
     return _unique_np(
         values,
-        sample_weight=sample_weight,
         return_inverse=return_inverse,
         return_counts=return_counts,
+        sample_weight=sample_weight,
     )
 
 
 def _unique_groupby_sum(arr, sample_weight, return_inverse=False, return_counts=False):
-    # TODO ohe_sw: add one line docstring
-    # TODO ohe_sw: create tests
+    """This functions behaves like np.unique but it counts the values of `arr` taking
+    into acount `samplt_weight`."""
     sample_weight = _check_sample_weight(sample_weight, arr)
 
     sorted_indices = np.argsort(arr)
     sorted_arr = arr[sorted_indices]
     sorted_sample_weight = sample_weight[sorted_indices]
 
-    # TODO ohe_sw: Using two `np.unique` is certainly suboptimal, but for now I can't
-    # see how to build the `unique_inverse` of `arr` with the `unique_inverse` of
-    # `sorted_arr`.
     unique_elements, unique_indices = np.unique(sorted_arr, return_index=True)
     _, unique_inverse = np.unique(arr, return_inverse=True)
 
@@ -86,25 +83,20 @@ def _unique_groupby_sum(arr, sample_weight, return_inverse=False, return_counts=
     return results[0]
 
 
-def _unique_np(values, sample_weight=None, return_inverse=False, return_counts=False):
+def _unique_np(values, return_inverse=False, return_counts=False, sample_weight=None):
     """Helper function to find unique values for numpy arrays that correctly
     accounts for nans. See `_unique` documentation for details."""
-    # if sample_weight is None:
-    #     uniques = np.unique(
-    #         values, return_inverse=return_inverse, return_counts=return_counts
-    #     )
-    # else:
-    # TODO ohe_sw: _unique_groupby_sum is behaving like usual `np.unique`
-    # when `sample_weight=None`, ie, "`sample_weight=np.ones_like(X)`" because of
-    # `utils.validation._check_sample_weight`.
-    # Leaving the above lines comment for now because I want to show that the
-    # behaviour is the same.
-    uniques = _unique_groupby_sum(
-        values,
-        sample_weight=sample_weight,
-        return_inverse=return_inverse,
-        return_counts=return_counts,
-    )
+    if sample_weight is None:
+        uniques = np.unique(
+            values, return_inverse=return_inverse, return_counts=return_counts
+        )
+    else:
+        uniques = _unique_groupby_sum(
+            values,
+            sample_weight=sample_weight,
+            return_inverse=return_inverse,
+            return_counts=return_counts,
+        )
 
     inverse, counts = None, None
 
@@ -394,6 +386,9 @@ class _NaNCounter(Counter):
 def _get_counts(values, uniques, sample_weight=None):
     """Get the count of each of the `uniques` in `values`.
 
+    If `sample_weight` is not `None` then the count is actually the sum of
+    `sample_weight` for that unique value.
+
     The counts will use the order passed in by `uniques`. For non-object dtypes,
     `uniques` is assumed to be sorted and `np.nan` is at the end.
     """
@@ -402,11 +397,16 @@ def _get_counts(values, uniques, sample_weight=None):
         output = np.zeros(len(uniques), dtype=np.int64)
         for i, item in enumerate(uniques):
             with suppress(KeyError):
-                output[i] = counter[item]
+                if sample_weight is None:
+                    output[i] = counter[item]
+                else:
+                    # TODO ohe_sw: I need to create tests for this. Is this
+                    # values == item working for NaN items?
+                    output[i] = np.sum(sample_weight[values == item])
         return output
 
     unique_values, counts = _unique_np(
-        values, sample_weight=sample_weight, return_counts=True
+        values, return_counts=True, sample_weight=sample_weight
     )
 
     # Recorder unique_values based on input: `uniques`
