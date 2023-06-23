@@ -904,7 +904,7 @@ class _BaseKMeans(
                 self._n_init = default_n_init
             elif callable(self.init):
                 self._n_init = default_n_init
-            else: # array-like
+            else:  # array-like
                 self._n_init = 1
 
         if _is_arraylike_not_scalar(self.init) and self._n_init != 1:
