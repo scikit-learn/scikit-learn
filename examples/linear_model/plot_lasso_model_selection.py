@@ -59,9 +59,10 @@ X[X.columns[::3]].head()
 #
 # We will first fit a Lasso model with the AIC criterion.
 import time
-from sklearn.preprocessing import StandardScaler
+
 from sklearn.linear_model import LassoLarsIC
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 start_time = time.time()
 lasso_lars_ic = make_pipeline(StandardScaler(), LassoLarsIC(criterion="aic")).fit(X, y)

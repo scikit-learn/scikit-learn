@@ -1,28 +1,33 @@
 """
 Test the ColumnTransformer.
 """
-import re
 import pickle
+import re
 
 import numpy as np
-from scipy import sparse
 import pytest
-
 from numpy.testing import assert_allclose
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import assert_almost_equal
+from scipy import sparse
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import (
     ColumnTransformer,
-    make_column_transformer,
     make_column_selector,
+    make_column_transformer,
 )
 from sklearn.exceptions import NotFittedError
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_selection import VarianceThreshold
+from sklearn.preprocessing import (
+    FunctionTransformer,
+    Normalizer,
+    OneHotEncoder,
+    StandardScaler,
+)
+from sklearn.utils._testing import (
+    assert_allclose_dense_sparse,
+    assert_almost_equal,
+    assert_array_equal,
+)
 
 
 class Trans(TransformerMixin, BaseEstimator):
@@ -252,18 +257,32 @@ def test_column_transformer_dataframe():
     # ensure pandas object is passed through
 
     class TransAssert(BaseEstimator):
+        def __init__(self, expected_type_transform):
+            self.expected_type_transform = expected_type_transform
+
         def fit(self, X, y=None):
             return self
 
         def transform(self, X, y=None):
-            assert isinstance(X, (pd.DataFrame, pd.Series))
+            assert isinstance(X, self.expected_type_transform)
             if isinstance(X, pd.Series):
                 X = X.to_frame()
             return X
 
-    ct = ColumnTransformer([("trans", TransAssert(), "first")], remainder="drop")
+    ct = ColumnTransformer(
+        [("trans", TransAssert(expected_type_transform=pd.Series), "first")],
+        remainder="drop",
+    )
     ct.fit_transform(X_df)
-    ct = ColumnTransformer([("trans", TransAssert(), ["first", "second"])])
+    ct = ColumnTransformer(
+        [
+            (
+                "trans",
+                TransAssert(expected_type_transform=pd.DataFrame),
+                ["first", "second"],
+            )
+        ]
+    )
     ct.fit_transform(X_df)
 
     # integer column spec + integer column names -> still use positional

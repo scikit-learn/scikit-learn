@@ -26,23 +26,23 @@ from .base import (
     ClassifierMixin,
     MetaEstimatorMixin,
     RegressorMixin,
+    _fit_context,
     clone,
     is_classifier,
-    _fit_context,
 )
 from .model_selection import cross_val_predict
-from .utils import _print_elapsed_time, check_random_state, Bunch
+from .utils import Bunch, _print_elapsed_time, check_random_state
+from .utils._param_validation import HasMethods, StrOptions
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
-    process_routing,
     _routing_enabled,
+    process_routing,
 )
 from .utils.metaestimators import available_if
 from .utils.multiclass import check_classification_targets
+from .utils.parallel import Parallel, delayed
 from .utils.validation import _check_fit_params, check_is_fitted, has_fit_parameter
-from .utils.parallel import delayed, Parallel
-from .utils._param_validation import HasMethods, StrOptions
 
 __all__ = [
     "MultiOutputRegressor",

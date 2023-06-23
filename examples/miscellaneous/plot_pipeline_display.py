@@ -19,10 +19,10 @@ steps in the pipeline.
 # :class:`~sklearn.linear_model.LogisticRegression`, and displays its visual
 # representation.
 
+from sklearn import set_config
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn import set_config
 
 steps = [
     ("preprocessing", StandardScaler()),
@@ -53,9 +53,9 @@ set_config(display="diagram")
 # :class:`~sklearn.linear_model.LogisticRegression`, and displays its visual
 # representation.
 
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, PolynomialFeatures
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 steps = [
     ("standard_scaler", StandardScaler()),
@@ -73,9 +73,9 @@ pipe  # click on the diagram below to see the details of each step
 # a classifier, :class:`~sklearn.svm.SVC`, and displays its visual
 # representation.
 
+from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
-from sklearn.decomposition import PCA
 
 steps = [("reduce_dim", PCA(n_components=4)), ("classifier", SVC(kernel="linear"))]
 pipe = Pipeline(steps)
@@ -90,12 +90,12 @@ pipe  # click on the diagram below to see the details of each step
 # representation.
 
 import numpy as np
-from sklearn.pipeline import make_pipeline
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
+
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 numeric_preprocessor = Pipeline(
     steps=[
@@ -133,13 +133,13 @@ pipe  # click on the diagram below to see the details of each step
 # representation.
 
 import numpy as np
-from sklearn.pipeline import make_pipeline
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
+
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import SimpleImputer
 from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 numeric_preprocessor = Pipeline(
     steps=[

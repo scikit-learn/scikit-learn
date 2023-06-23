@@ -35,7 +35,6 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
 
-
 X, y = make_gaussian_quantiles(
     n_samples=13000, n_features=10, n_classes=3, random_state=1
 )
