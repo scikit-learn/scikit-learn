@@ -12,6 +12,16 @@ import numpy as np
 import pytest
 from scipy.sparse import coo_matrix, csr_matrix, issparse
 
+from sklearn.base import BaseEstimator, clone
+from sklearn.cluster import KMeans
+from sklearn.datasets import (
+    load_diabetes,
+    load_digits,
+    load_iris,
+    make_classification,
+    make_multilabel_classification,
+    make_regression,
+)
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import FitFailedWarning
 from sklearn.impute import SimpleImputer
