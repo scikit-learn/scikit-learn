@@ -168,6 +168,82 @@ def test_classification_report_dictionary_output():
     assert type(expected_report["macro avg"]["support"]) == int
 
 
+def test_classification_report_output_dict_and_pred():
+    # Test performance report with dictionary output
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
+
+    # print classification report with class names
+    expected_report = {
+        "setosa": {
+            "precision": 0.82608695652173914,
+            "recall": 0.79166666666666663,
+            "f1-score": 0.8085106382978724,
+            "support": 24,
+            "predicted": 23,
+        },
+        "versicolor": {
+            "precision": 0.33333333333333331,
+            "recall": 0.096774193548387094,
+            "f1-score": 0.15000000000000002,
+            "support": 31,
+            "predicted": 9,
+        },
+        "virginica": {
+            "precision": 0.41860465116279072,
+            "recall": 0.90000000000000002,
+            "f1-score": 0.57142857142857151,
+            "support": 20,
+            "predicted": 43,
+        },
+        "macro avg": {
+            "f1-score": 0.5099797365754813,
+            "precision": 0.5260083136726211,
+            "recall": 0.596146953405018,
+            "support": 75,
+            "predicted": 75,
+        },
+        "accuracy": 0.5333333333333333,
+        "weighted avg": {
+            "f1-score": 0.47310435663627154,
+            "precision": 0.5137535108414785,
+            "recall": 0.5333333333333333,
+            "support": 75,
+            "predicted": 75.0,
+        },
+    }
+
+    report = classification_report(
+        y_true,
+        y_pred,
+        labels=np.arange(len(iris.target_names)),
+        target_names=iris.target_names,
+        output_dict=True,
+        output_pred=True,
+    )
+
+    # assert the 2 dicts are equal.
+    assert report.keys() == expected_report.keys()
+    for key in expected_report:
+        if key == "accuracy":
+            assert isinstance(report[key], float)
+            assert report[key] == expected_report[key]
+        else:
+            assert report[key].keys() == expected_report[key].keys()
+            for metric in expected_report[key]:
+                assert_almost_equal(
+                    expected_report[key][metric],
+                    report[key][metric],
+                )
+
+    assert isinstance(expected_report["setosa"]["precision"], float)
+    assert isinstance(expected_report["macro avg"]["precision"], float)
+    assert isinstance(expected_report["setosa"]["support"], int)
+    assert isinstance(expected_report["macro avg"]["support"], int)
+    assert isinstance(expected_report["setosa"]["predicted"], int)
+    assert isinstance(expected_report["macro avg"]["predicted"], int)
+
+
 def test_classification_report_output_dict_empty_input():
     report = classification_report(y_true=[], y_pred=[], output_dict=True)
     expected_report = {
@@ -195,7 +271,53 @@ def test_classification_report_output_dict_empty_input():
         else:
             assert report[key].keys() == expected_report[key].keys()
             for metric in expected_report[key]:
-                assert_almost_equal(expected_report[key][metric], report[key][metric])
+                assert_almost_equal(
+                    expected_report[key][metric],
+                    report[key][metric],
+                )
+
+
+def test_classification_report_output_dict_and_pred_empty_input():
+    report = classification_report(
+        y_true=[],
+        y_pred=[],
+        output_dict=True,
+        output_pred=True,
+    )
+
+    expected_report = {
+        "accuracy": 0.0,
+        "macro avg": {
+            "f1-score": np.nan,
+            "precision": np.nan,
+            "recall": np.nan,
+            "support": 0,
+            "predicted": 0,
+        },
+        "weighted avg": {
+            "f1-score": np.nan,
+            "precision": np.nan,
+            "recall": np.nan,
+            "support": 0,
+            "predicted": 0,
+        },
+    }
+
+    assert isinstance(report, dict)
+
+    # assert the 2 dicts are equal.
+    assert report.keys() == expected_report.keys()
+    for key in expected_report:
+        if key == "accuracy":
+            assert isinstance(report[key], float)
+            assert report[key] == expected_report[key]
+        else:
+            assert report[key].keys() == expected_report[key].keys()
+            for metric in expected_report[key]:
+                assert_almost_equal(
+                    expected_report[key][metric],
+                    report[key][metric],
+                )
 
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
@@ -203,8 +325,13 @@ def test_classification_report_zero_division_warning(zero_division):
     y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
     with warnings.catch_warnings(record=True) as record:
         classification_report(
-            y_true, y_pred, zero_division=zero_division, output_dict=True
+            y_true=y_true,
+            y_pred=y_pred,
+            zero_division=zero_division,
+            output_dict=True,
+            output_pred=True,
         )
+
         if zero_division == "warn":
             assert len(record) > 1
             for item in record:
@@ -238,6 +365,7 @@ def test_precision_recall_f1_score_binary():
     assert_array_almost_equal(r, [0.88, 0.68], 2)
     assert_array_almost_equal(f, [0.80, 0.76], 2)
     assert_array_equal(s, [25, 25])
+    assert_array_equal(pred, [30, 20])
 
     # individual scoring function that can be used for grid search: in the
     # binary class case the score is the value of the measure for the positive
