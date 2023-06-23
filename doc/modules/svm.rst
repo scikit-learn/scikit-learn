@@ -150,7 +150,7 @@ See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
 
 |details-start|
-**Details on multi-class strategies**
+**Details on multi-class strategies** (one-vs-rest, one-vs-one, crammer-singer)
 |details-split|
 
 Note that the :class:`LinearSVC` also implements an alternative multi-class
