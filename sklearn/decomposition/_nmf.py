@@ -983,7 +983,7 @@ def non_negative_factorization(
         Number of components, if n_components is not set all features
         are kept.
         If `n_components='auto'`, the number of components is automatically inferred
-        from W or H shapes.
+        from `W` or `H` shapes.
 
         .. versionchanged:: 1.4
             Added `'auto'` value.
