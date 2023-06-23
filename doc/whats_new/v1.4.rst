@@ -43,6 +43,13 @@ Changes impacting all modules
   to work with our estimators and functions.
   :pr:`26464` by `Thomas Fan`_.
 
+  :mod:`sklearn.compose`
+......................
+
+- |Feature| Adds polars input support to :class:`compose.ColumnTransformer` through the
+  `DataFrame Interchange Protocol <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__.
+  :pr:`26669` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 

@@ -7,6 +7,7 @@ different columns.
 #         Joris Van den Bossche
 # License: BSD
 from collections import Counter
+from functools import partial
 from itertools import chain
 from numbers import Integral, Real
 
@@ -16,7 +17,13 @@ from scipy import sparse
 from ..base import TransformerMixin, _fit_context, clone
 from ..pipeline import _fit_transform_one, _name_estimators, _transform_one
 from ..preprocessing import FunctionTransformer
-from ..utils import Bunch, _get_column_indices, _safe_indexing, check_pandas_support
+from ..utils import (
+    Bunch,
+    _get_column_indices,
+    _get_column_indices_interchange,
+    _safe_indexing,
+    check_pandas_support,
+)
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..utils._set_output import _get_output_config, _safe_set_output
@@ -24,6 +31,9 @@ from ..utils.metaestimators import _BaseComposition
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_feature_names_in,
+    _dataframe_class_as_str,
+    _interchange_to_dataframe,
+    _is_pandas_df,
     _num_samples,
     check_array,
     check_is_fitted,
@@ -37,6 +47,35 @@ _ERR_MSG_1DCOLUMN = (
     "Try to specify the column selection as a list of one "
     "item instead of a scalar."
 )
+
+
+def _use_interchange_protocol(X):
+    return not _is_pandas_df(X) and hasattr(X, "__dataframe__")
+
+
+def _dataframe_protocol_indexing_axis_1(
+    df_interchange, columns, *, original_dataframe_class
+):
+    """Slice DataFrame using the dataframe interchange protocol along axis=1.
+
+    Parameters
+    ----------
+    df_interchange : object
+        Object that is returned by the `__dataframe__` interchange protocol.
+
+    columns : list of strings
+        Column names to select.
+
+    original_dataframe_class : str
+        Library for the original dataframe class.
+
+    Returns
+    -------
+    dataframe : DataFrame
+        Dataframe with the `original_dataframe_class`
+    """
+    sliced_df = df_interchange.select_columns_by_name(list(columns))
+    return _interchange_to_dataframe(sliced_df, original_dataframe_class)
 
 
 class ColumnTransformer(TransformerMixin, _BaseComposition):
@@ -435,17 +474,23 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     "specifiers. '%s' (type %s) doesn't." % (t, type(t))
                 )
 
-    def _validate_column_callables(self, X):
+    def _validate_column_callables(self, X, X_interchange=None):
         """
         Converts callable column specifications.
         """
         all_columns = []
         transformer_to_input_indices = {}
+
+        if X_interchange is None:
+            get_column_indices = partial(_get_column_indices, X)
+        else:
+            get_column_indices = partial(_get_column_indices_interchange, X_interchange)
+
         for name, _, columns in self.transformers:
             if callable(columns):
                 columns = columns(X)
             all_columns.append(columns)
-            transformer_to_input_indices[name] = _get_column_indices(X, columns)
+            transformer_to_input_indices[name] = get_column_indices(columns)
 
         self._columns = all_columns
         self._transformer_to_input_indices = transformer_to_input_indices
@@ -620,10 +665,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             name for name, _, _, _ in self._iter(fitted=True, replace_strings=True)
         ]
         for Xs, name in zip(result, names):
-            if not getattr(Xs, "ndim", 0) == 2:
+            if not getattr(Xs, "ndim", 0) == 2 and not hasattr(Xs, "__dataframe__"):
                 raise ValueError(
                     "The output of the '{0}' transformer should be 2D (scipy "
-                    "matrix, array, or pandas DataFrame).".format(name)
+                    "matrix, array, or DataFrames).".format(name)
                 )
 
     def _record_output_indices(self, Xs):
@@ -653,7 +698,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return None
         return "(%d of %d) Processing %s" % (idx, total, name)
 
-    def _fit_transform(self, X, y, func, fitted=False, column_as_strings=False):
+    def _fit_transform(
+        self, X, y, func, fitted=False, column_as_strings=False, X_interchange=None
+    ):
         """
         Private function to fit and/or transform on demand.
 
@@ -661,16 +708,28 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         on the passed function.
         ``fitted=True`` ensures the fitted transformers are used.
         """
+        if X_interchange is not None:
+            # use DataFrame protocol to extract columns and use column_as_strings=True
+            # for simplicity.
+            indexing_axis_1 = partial(
+                _dataframe_protocol_indexing_axis_1,
+                original_dataframe_class=_dataframe_class_as_str(X),
+            )
+            X = X_interchange
+        else:
+            indexing_axis_1 = partial(_safe_indexing, axis=1)
+
         transformers = list(
             self._iter(
                 fitted=fitted, replace_strings=True, column_as_strings=column_as_strings
             )
         )
+
         try:
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(
                     transformer=clone(trans) if not fitted else trans,
-                    X=_safe_indexing(X, column, axis=1),
+                    X=indexing_axis_1(X, column),
                     y=y,
                     weight=weight,
                     message_clsname="ColumnTransformer",
@@ -737,10 +796,24 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # set n_features_in_ attribute
         self._check_n_features(X, reset=True)
         self._validate_transformers()
-        self._validate_column_callables(X)
+
+        if _use_interchange_protocol(X):
+            X_interchange = X.__dataframe__()
+            column_as_strings = True
+        else:
+            X_interchange = None
+            column_as_strings = False
+
+        self._validate_column_callables(X, X_interchange)
         self._validate_remainder(X)
 
-        result = self._fit_transform(X, y, _fit_transform_one)
+        result = self._fit_transform(
+            X,
+            y,
+            _fit_transform_one,
+            X_interchange=X_interchange,
+            column_as_strings=column_as_strings,
+        )
 
         if not result:
             self._update_fitted_transformers([])
@@ -788,7 +861,16 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         fit_dataframe_and_transform_dataframe = hasattr(
             self, "feature_names_in_"
-        ) and hasattr(X, "columns")
+        ) and hasattr(X, "__dataframe__")
+
+        if _use_interchange_protocol(X):
+            if not hasattr(self, "feature_names_in_"):
+                raise ValueError(
+                    "Using the dataframe protocol requires fitting on dataframes too."
+                )
+            X_interchange = X.__dataframe__()
+        else:
+            X_interchange = None
 
         if fit_dataframe_and_transform_dataframe:
             named_transformers = self.named_transformers_
@@ -819,6 +901,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             _transform_one,
             fitted=True,
             column_as_strings=fit_dataframe_and_transform_dataframe,
+            X_interchange=X_interchange,
         )
         self._validate_output(Xs)
 
@@ -916,7 +999,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
 def _check_X(X):
     """Use check_array only on lists and other non-array-likes / sparse"""
-    if hasattr(X, "__array__") or sparse.issparse(X):
+    if hasattr(X, "__array__") or hasattr(X, "__dataframe__") or sparse.issparse(X):
         return X
     return check_array(X, force_all_finite="allow-nan", dtype=object)
 

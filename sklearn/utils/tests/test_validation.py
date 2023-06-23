@@ -1,5 +1,6 @@
 """Tests for input validation functions"""
 
+import builtins
 import numbers
 import re
 import warnings
@@ -59,10 +60,13 @@ from sklearn.utils.validation import (
     _check_response_method,
     _check_sample_weight,
     _check_y,
+    _dataframe_class_as_str,
     _deprecate_positional_args,
     _get_feature_names,
+    _interchange_to_dataframe,
     _is_fitted,
     _is_pandas_df,
+    _is_polars_df,
     _num_features,
     _num_samples,
     assert_all_finite,
@@ -1728,6 +1732,7 @@ def test_is_pandas_df_other_libraries(constructor_name, minversion):
         assert not _is_pandas_df(df)
     else:
         assert _is_pandas_df(df)
+        assert _dataframe_class_as_str(df) == "pandas"
 
 
 def test_is_pandas_df():
@@ -1744,6 +1749,66 @@ def test_is_pandas_df_pandas_not_installed(hide_available_pandas):
 
     assert not _is_pandas_df(np.asarray([1, 2, 3]))
     assert not _is_pandas_df(1)
+
+
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+)
+def test_is_polars_df_other_libraries(constructor_name, minversion):
+    df = _convert_container(
+        [[1, 4, 2], [3, 3, 6]],
+        constructor_name,
+        minversion=minversion,
+    )
+    if constructor_name in ("pyarrow", "dataframe"):
+        assert not _is_polars_df(df)
+    else:
+        assert _is_polars_df(df)
+        assert _dataframe_class_as_str(df) == "polars"
+
+
+def test_is_polars_df_pandas_not_installed(monkeypatch):
+    """Check _is_polars_df when polars is not installed."""
+
+    import_orig = builtins.__import__
+
+    def mocked_import(name, *args, **kwargs):
+        if name == "polars":
+            raise ImportError()
+        return import_orig(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", mocked_import)
+
+    assert not _is_polars_df(np.asarray([1, 2, 3]))
+    assert not _is_polars_df(1)
+
+
+def test__dataframe_class_as_str_error():
+    """Check that _dataframe_class_as_str raises."""
+    with pytest.raises(ValueError, match="Only Pandas and Polars"):
+        _dataframe_class_as_str([1, 2, 3])
+
+
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+)
+@pytest.mark.parametrize("to_dataframe_library", ["pandas", "polars"])
+def test_polars_interchange_func(constructor_name, minversion, to_dataframe_library):
+    columns_name = ["a", "b", "c"]
+    df = _convert_container(
+        [[1, 4, 2], [3, 3, 6]],
+        constructor_name,
+        columns_name=columns_name,
+        minversion=minversion,
+    )
+
+    lib = pytest.importorskip(to_dataframe_library)
+    df_new = _interchange_to_dataframe(df.__dataframe__(), to_dataframe_library)
+    assert isinstance(df_new, lib.DataFrame)
+
+    assert_array_equal(df_new.__dataframe__().column_names(), columns_name)
 
 
 def test_get_feature_names_numpy():

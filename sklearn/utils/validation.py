@@ -1998,6 +1998,42 @@ def _is_pandas_df(X):
     return False
 
 
+def _is_polars_df(X):
+    """Return True if the X is a polars dataframe."""
+    if hasattr(X, "columns") and hasattr(X, "schema"):
+        # Likely a polars DataFrame, we explicitly check the type to confirm.
+        try:
+            pl = sys.modules["polars"]
+        except KeyError:
+            return False
+        return isinstance(X, pl.DataFrame)
+    return False
+
+
+def _dataframe_class_as_str(df):
+    if _is_pandas_df(df):
+        return "pandas"
+    elif _is_polars_df(df):
+        return "polars"
+    else:
+        raise ValueError("Only Pandas and Polars dataframes are supported")
+
+
+def _interchange_to_dataframe(df_interchange, to_dataframe_library):
+    """Converts to DataFrame using interchange protocol.
+
+    Only pandas and polars are supported.
+    """
+    if to_dataframe_library == "pandas":
+        import pandas as pd
+
+        return pd.api.interchange.from_dataframe(df_interchange)
+    else:
+        import polars as pl
+
+        return pl.from_dataframe(df_interchange)
+
+
 def _get_feature_names(X):
     """Get feature names from X.
 

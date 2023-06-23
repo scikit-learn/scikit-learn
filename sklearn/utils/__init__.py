@@ -394,6 +394,19 @@ def _safe_assign(X, values, *, row_indexer=None, column_indexer=None):
         X[row_indexer, column_indexer] = values
 
 
+def _get_column_indices_bool_int(key, n_columns):
+    # Convert key into positive indexes
+    try:
+        idx = _safe_indexing(np.arange(n_columns), key)
+    except IndexError as e:
+        raise ValueError(
+            "all features must be in [0, {}] or [-{}, 0]".format(
+                n_columns - 1, n_columns
+            )
+        ) from e
+    return np.atleast_1d(idx).tolist()
+
+
 def _get_column_indices(X, key):
     """Get feature column indices for input data X and key.
 
@@ -408,16 +421,7 @@ def _get_column_indices(X, key):
         # we get an empty list
         return []
     elif key_dtype in ("bool", "int"):
-        # Convert key into positive indexes
-        try:
-            idx = _safe_indexing(np.arange(n_columns), key)
-        except IndexError as e:
-            raise ValueError(
-                "all features must be in [0, {}] or [-{}, 0]".format(
-                    n_columns - 1, n_columns
-                )
-            ) from e
-        return np.atleast_1d(idx).tolist()
+        return _get_column_indices_bool_int(key, n_columns)
     elif key_dtype == "str":
         try:
             all_columns = X.columns
@@ -455,6 +459,46 @@ def _get_column_indices(X, key):
             raise ValueError("A given column is not a column of the dataframe") from e
 
         return column_indices
+
+    else:
+        raise ValueError(
+            "No valid specification of the columns. Only a "
+            "scalar, list or slice of all integers or all "
+            "strings, or boolean mask is allowed"
+        )
+
+
+def _get_column_indices_interchange(X_interchange, key):
+    """Same as _get_column_indices but for interchange X."""
+    n_columns = X_interchange.num_columns()
+    key_dtype = _determine_key_type(key)
+
+    key_dtype = _determine_key_type(key)
+    if isinstance(key, (list, tuple)) and not key:
+        # we get an empty list
+        return []
+    elif key_dtype in ("bool", "int"):
+        return _get_column_indices_bool_int(key, n_columns)
+    elif key_dtype == "str":
+        df_columns = list(X_interchange.column_names())
+
+        if isinstance(key, slice):
+            start, stop = key.start, key.stop
+            if start is not None:
+                start = df_columns.index(start)
+
+            if stop is not None:
+                stop = df_columns.index(stop) + 1
+            else:
+                stop = n_columns + 1
+            return list(islice(range(n_columns), start, stop))
+
+        selected_columns = [key] if np.isscalar(key) else key
+
+        try:
+            return [df_columns.index(col) for col in selected_columns]
+        except ValueError as e:
+            raise ValueError("A given column is not a column of the dataframe") from e
     else:
         raise ValueError(
             "No valid specification of the columns. Only a "
