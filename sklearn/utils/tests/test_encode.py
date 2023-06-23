@@ -5,7 +5,11 @@ import pytest
 from numpy.testing import assert_array_equal
 
 from sklearn.utils._encode import (
-  _check_unknown, _encode, _get_counts, _unique, _unique_groupby_sum
+  _check_unknown,
+  _encode,
+  _get_counts,
+  _unique,
+  _unique_groupby_sum
 )
 
 
