@@ -61,7 +61,6 @@ cdef extern from "<stack>" namespace "std" nogil:
 from numpy import float32 as DTYPE
 from numpy import float64 as DOUBLE
 
-
 cdef double INFINITY = np.inf
 cdef double EPSILON = np.finfo('double').eps
 
@@ -86,7 +85,6 @@ NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 # =============================================================================
 # TreeBuilder
 # =============================================================================
-
 
 cdef class TreeBuilder:
     """Interface for different tree building strategies."""

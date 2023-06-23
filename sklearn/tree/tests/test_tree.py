@@ -33,13 +33,15 @@ from sklearn.tree._classes import (
     DENSE_SPLITTERS,
     SPARSE_SPLITTERS,
 )
-from sklearn.tree._tree import NODE_DTYPE, TREE_LEAF, TREE_UNDEFINED
-from sklearn.tree._tree import Tree as CythonTree
 from sklearn.tree._tree import (
+    NODE_DTYPE,
+    TREE_LEAF,
+    TREE_UNDEFINED,
     _check_n_classes,
     _check_node_ndarray,
     _check_value_ndarray,
 )
+from sklearn.tree._tree import Tree as CythonTree
 from sklearn.utils import _IS_32BIT, compute_sample_weight
 from sklearn.utils._testing import (
     assert_almost_equal,
@@ -2424,7 +2426,7 @@ def test_missing_values_on_equal_nodes_no_missing(criterion):
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
 
-    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
+    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion, store_leaf_values=True)
     dtc.fit(X, y)
 
     # Goes to right node because it has the most data points

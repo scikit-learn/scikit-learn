@@ -511,7 +511,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.min_impurity_decrease,
                 self.store_leaf_values,
             )
-
         builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask)
 
         if self.n_outputs_ == 1 and is_classifier(self):

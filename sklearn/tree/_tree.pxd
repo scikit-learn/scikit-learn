@@ -141,7 +141,8 @@ cdef class TreeBuilder:
     # This class controls the various stopping criteria and the node splitting
     # evaluation order, e.g. depth-first or best-first.
 
-    cdef Splitter splitter
+    cdef Splitter splitter              # Splitting algorithm
+
     cdef SIZE_t min_samples_split       # Minimum number of samples in an internal node
     cdef SIZE_t min_samples_leaf        # Minimum number of samples in a leaf
     cdef double min_weight_leaf         # Minimum weight in a leaf

@@ -155,8 +155,10 @@ cdef class BaseCriterion:
 
         This method computes the improvement in impurity when a split occurs.
         The weighted impurity improvement equation is the following:
+
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
+
         where N is the total number of samples, N_t is the number of samples
         at the current node, N_t_L is the number of samples in the left child,
         and N_t_R is the number of samples in the right child,
@@ -165,8 +167,10 @@ cdef class BaseCriterion:
         ----------
         impurity_parent : double
             The initial impurity of the parent node before the split
+
         impurity_left : double
             The impurity of the left child
+
         impurity_right : double
             The impurity of the right child
 
@@ -611,10 +615,13 @@ cdef class Entropy(ClassificationCriterion):
     This handles cases where the target is a classification taking values
     0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations,
     then let
+
         count_k = 1 / Nm \sum_{x_i in Rm} I(yi = k)
+
     be the proportion of class k observations in node m.
 
     The cross-entropy is then defined as
+
         cross-entropy = -\sum_{k=0}^{K-1} count_k log(count_k)
     """
 
@@ -1058,10 +1065,14 @@ cdef class MSE(RegressionCriterion):
 
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
+
         The MSE proxy is derived from
+
             sum_{i left}(y_i - y_pred_L)^2 + sum_{i right}(y_i - y_pred_R)^2
             = sum(y_i^2) - n_L * mean_{i left}(y_i)^2 - n_R * mean_{i right}(y_i)^2
+
         Neglecting constant terms, this gives:
+
             - 1/n_L * sum_{i left}(y_i)^2 - 1/n_R * sum_{i right}(y_i)^2
         """
         cdef SIZE_t k
@@ -1139,6 +1150,7 @@ cdef class MAE(RegressionCriterion):
         ----------
         n_outputs : SIZE_t
             The number of targets to be predicted
+
         n_samples : SIZE_t
             The total number of samples to fit on
         """
@@ -1429,6 +1441,7 @@ cdef class FriedmanMSE(MSE):
     """Mean squared error impurity criterion with improvement score by Friedman.
 
     Uses the formula (35) in Friedman's original Gradient Boosting paper:
+
         diff = mean_left - mean_right
         improvement = n_left * n_right * diff^2 / (n_left + n_right)
     """
@@ -1483,6 +1496,7 @@ cdef class Poisson(RegressionCriterion):
     """Half Poisson deviance as impurity criterion.
 
     Poisson deviance = 2/n * sum(y_true * log(y_true/y_pred) + y_pred - y_true)
+    
     Note that the deviance is >= 0, and since we have `y_pred = mean(y_true)`
     at the leaves, one always has `sum(y_pred - y_true) = 0`. It remains the
     implemented impurity (factor 2 is skipped):
@@ -1519,12 +1533,16 @@ cdef class Poisson(RegressionCriterion):
 
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
+
         The Poisson proxy is derived from:
+
               sum_{i left }(y_i * log(y_i / y_pred_L))
             + sum_{i right}(y_i * log(y_i / y_pred_R))
             = sum(y_i * log(y_i) - n_L * mean_{i left}(y_i) * log(mean_{i left}(y_i))
                                  - n_R * mean_{i right}(y_i) * log(mean_{i right}(y_i))
+
         Neglecting constant terms, this gives
+
             - sum{i left }(y_i) * log(mean{i left}(y_i))
             - sum{i right}(y_i) * log(mean{i right}(y_i))
         """
