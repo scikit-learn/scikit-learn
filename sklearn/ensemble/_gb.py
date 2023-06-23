@@ -20,37 +20,26 @@ The module structure is the following:
 #          Arnaud Joly, Jacob Schreiber
 # License: BSD 3 clause
 
-from abc import ABCMeta
-from abc import abstractmethod
-from numbers import Integral, Real
 import warnings
-
-from ._base import BaseEnsemble
-from ..base import ClassifierMixin, RegressorMixin
-from ..base import is_classifier
-from ..base import _fit_context
-
-from ._gradient_boosting import predict_stages
-from ._gradient_boosting import predict_stage
-from ._gradient_boosting import _random_sample_mask
+from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
+from time import time
 
 import numpy as np
+from scipy.sparse import csc_matrix, csr_matrix, issparse
 
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import issparse
-
-from time import time
+from ..base import ClassifierMixin, RegressorMixin, _fit_context, is_classifier
+from ..exceptions import NotFittedError
 from ..model_selection import train_test_split
 from ..tree import DecisionTreeRegressor
-from ..tree._tree import DTYPE, DOUBLE
-from . import _gb_losses
-
+from ..tree._tree import DOUBLE, DTYPE
 from ..utils import check_array, check_random_state, column_or_1d
 from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
-from ..exceptions import NotFittedError
+from ..utils.validation import _check_sample_weight, check_is_fitted
+from . import _gb_losses
+from ._base import BaseEnsemble
+from ._gradient_boosting import _random_sample_mask, predict_stage, predict_stages
 
 
 class VerboseReporter:

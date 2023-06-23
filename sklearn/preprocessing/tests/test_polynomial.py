@@ -1,13 +1,12 @@
+import sys
+
 import numpy as np
 import pytest
-import sys
-from scipy import sparse
-from scipy.sparse import random as sparse_random
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils.fixes import sp_version, parse_version
-
 from numpy.testing import assert_allclose, assert_array_equal
+from scipy import sparse
 from scipy.interpolate import BSpline
+from scipy.sparse import random as sparse_random
+
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
@@ -16,10 +15,12 @@ from sklearn.preprocessing import (
     SplineTransformer,
 )
 from sklearn.preprocessing._csr_polynomial_expansion import (
-    _calc_total_nnz,
     _calc_expanded_nnz,
+    _calc_total_nnz,
     _get_sizeof_LARGEST_INT_t,
 )
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils.fixes import parse_version, sp_version
 
 
 @pytest.mark.parametrize("est", (PolynomialFeatures, SplineTransformer))

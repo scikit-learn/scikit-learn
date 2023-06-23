@@ -6,28 +6,21 @@
 
 """Recursive feature elimination for feature ranking"""
 
-import numpy as np
 from numbers import Integral
+
+import numpy as np
 from joblib import effective_n_jobs
 
-
-from ..utils.metaestimators import available_if
-from ..utils.metaestimators import _safe_split
-from ..utils._param_validation import HasMethods, Interval
-from ..utils._param_validation import RealNotInt
-from ..utils._tags import _safe_tags
-from ..utils.validation import check_is_fitted
-from ..utils.parallel import delayed, Parallel
-from ..base import BaseEstimator
-from ..base import MetaEstimatorMixin
-from ..base import clone
-from ..base import is_classifier
-from ..base import _fit_context
+from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
+from ..metrics import check_scoring
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
-from ..metrics import check_scoring
-from ._base import SelectorMixin
-from ._base import _get_feature_importances
+from ..utils._param_validation import HasMethods, Interval, RealNotInt
+from ..utils._tags import _safe_tags
+from ..utils.metaestimators import _safe_split, available_if
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import check_is_fitted
+from ._base import SelectorMixin, _get_feature_importances
 
 
 def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):

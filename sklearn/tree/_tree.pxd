@@ -11,10 +11,10 @@
 # See _tree.pyx for details.
 
 import numpy as np
-cimport numpy as cnp
 
-from libcpp.vector cimport vector
+cimport numpy as cnp
 from libcpp.unordered_map cimport unordered_map
+from libcpp.vector cimport vector
 
 ctypedef cnp.npy_float32 DTYPE_t          # Type of X
 ctypedef cnp.npy_float64 DOUBLE_t         # Type of y, sample_weight
@@ -22,8 +22,8 @@ ctypedef cnp.npy_intp SIZE_t              # Type for indices and counters
 ctypedef cnp.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef cnp.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
-from ._splitter cimport Splitter
-from ._splitter cimport SplitRecord
+from ._splitter cimport SplitRecord, Splitter
+
 
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object

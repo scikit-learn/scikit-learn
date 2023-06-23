@@ -5,36 +5,34 @@
 #
 # License: BSD 3 clause
 
+import numbers
 import sys
 import warnings
-import numbers
 from abc import ABC, abstractmethod
 from functools import partial
 from numbers import Integral, Real
 
 import numpy as np
-from scipy import sparse
 from joblib import effective_n_jobs
+from scipy import sparse
 
-from ._base import LinearModel, _pre_fit
-from ..base import RegressorMixin, MultiOutputMixin
-from ..base import _fit_context
-from ._base import _preprocess_data
-from ..utils import check_array, check_scalar
-from ..utils.validation import check_random_state
-from ..utils._param_validation import Interval, StrOptions
+from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
+from ..utils import check_array, check_scalar
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import safe_sparse_dot
+from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_sample_weight,
     check_consistent_length,
     check_is_fitted,
+    check_random_state,
     column_or_1d,
 )
-from ..utils.parallel import delayed, Parallel
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from . import _cd_fast as cd_fast  # type: ignore
+from ._base import LinearModel, _pre_fit, _preprocess_data
 
 
 def _set_order(X, y, order="C"):

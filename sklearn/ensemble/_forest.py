@@ -41,14 +41,14 @@ Single and multi-output problems are both handled.
 
 
 from time import time
+import threading
+from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 from warnings import catch_warnings, simplefilter, warn
-import threading
 
-from abc import ABCMeta, abstractmethod
 import numpy as np
-from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
+from scipy.sparse import issparse
 
 from sklearn.base import is_classifier, _fit_context
 from sklearn.base import (
@@ -60,29 +60,29 @@ from sklearn.base import (
 
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.preprocessing import OneHotEncoder
-from ..tree import (
+from sklearn.exceptions import DataConversionWarning
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.tree import (
     BaseDecisionTree,
     DecisionTreeClassifier,
     DecisionTreeRegressor,
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
-from ..tree._tree import DTYPE, DOUBLE
+from ..tree._tree import DOUBLE, DTYPE
 from sklearn.utils import check_random_state, compute_sample_weight
-from sklearn.exceptions import DataConversionWarning
-from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
-from sklearn.utils.parallel import delayed, Parallel
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
-    check_is_fitted,
-    _check_sample_weight,
     _check_feature_names_in,
+    _check_sample_weight,
+    _num_samples,
+    check_is_fitted,
 )
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
-from sklearn.utils.validation import _num_samples
-from sklearn.utils._param_validation import Interval, StrOptions
-from sklearn.utils._param_validation import RealNotInt
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
 
 __all__ = [
     "RandomForestClassifier",

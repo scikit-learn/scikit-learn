@@ -3,20 +3,15 @@ Testing for mean shift clustering methods
 
 """
 
-import numpy as np
 import warnings
+
+import numpy as np
 import pytest
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-
-from sklearn.cluster import MeanShift
-from sklearn.cluster import mean_shift
-from sklearn.cluster import estimate_bandwidth
-from sklearn.cluster import get_bin_seeds
+from sklearn.cluster import MeanShift, estimate_bandwidth, get_bin_seeds, mean_shift
 from sklearn.datasets import make_blobs
 from sklearn.metrics import v_measure_score
-
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 n_clusters = 3
 centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10

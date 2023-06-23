@@ -17,21 +17,18 @@
 
 # License: BSD 3 clause
 
-from ._criterion cimport Criterion
-
+from cython cimport final
+from libc.math cimport isnan
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
-from libc.math cimport isnan
-from cython cimport final
+
+from ._criterion cimport Criterion
 
 import numpy as np
-
 from scipy.sparse import isspmatrix_csc
 
-from ._utils cimport log
-from ._utils cimport rand_int
-from ._utils cimport rand_uniform
-from ._utils cimport RAND_R_MAX
+from ._utils cimport RAND_R_MAX, log, rand_int, rand_uniform
+
 
 cdef double INFINITY = np.inf
 

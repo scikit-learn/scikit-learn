@@ -14,43 +14,45 @@ randomized trees. Single and multi-output problems are both handled.
 #
 # License: BSD 3 clause
 
+import copy
 import numbers
 import warnings
-import copy
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from math import ceil
 from numbers import Integral, Real
 
 import numpy as np
 from scipy.sparse import issparse
 
-from sklearn.base import BaseEstimator
-from sklearn.base import ClassifierMixin
-from sklearn.base import clone
-from sklearn.base import RegressorMixin
-from sklearn.base import is_classifier
-from sklearn.base import MultiOutputMixin
-from sklearn.base import _fit_context
-from sklearn.utils import Bunch
-from sklearn.utils import check_random_state
-from sklearn.utils.validation import _check_sample_weight
-from sklearn.utils.validation import assert_all_finite
-from sklearn.utils.validation import _assert_all_finite_element_wise
-from sklearn.utils import compute_sample_weight
+from sklearn.base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+)
+from sklearn.utils import Bunch, check_random_state, compute_sample_weight
+from sklearn.utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils._param_validation import Hidden, Interval, StrOptions
-from sklearn.utils._param_validation import RealNotInt
+from sklearn.utils.validation import (
+    _assert_all_finite_element_wise,
+    _check_sample_weight,
+    assert_all_finite,
+    check_is_fitted,
+)
 
+from . import _criterion, _splitter, _tree
 from ._criterion import BaseCriterion
 from ._splitter import BaseSplitter
-from ._tree import DepthFirstTreeBuilder
-from ._tree import BestFirstTreeBuilder
-from ._tree import Tree
-from ._tree import _build_pruned_tree_ccp
-from ._tree import ccp_pruning_path
-from . import _tree, _splitter, _criterion
+from ._tree import (
+    BestFirstTreeBuilder,
+    DepthFirstTreeBuilder,
+    Tree,
+    _build_pruned_tree_ccp,
+    ccp_pruning_path,
+)
 from ._utils import _any_isnan_axis0
 
 __all__ = [

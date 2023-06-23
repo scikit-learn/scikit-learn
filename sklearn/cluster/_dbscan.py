@@ -14,12 +14,11 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import sparse
 
+from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..metrics.pairwise import _VALID_METRICS
-from ..base import BaseEstimator, ClusterMixin
-from ..base import _fit_context
-from ..utils.validation import _check_sample_weight
-from ..utils._param_validation import Interval, StrOptions
 from ..neighbors import NearestNeighbors
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.validation import _check_sample_weight
 from ._dbscan_inner import dbscan_inner
 
 

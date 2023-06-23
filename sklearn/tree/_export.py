@@ -17,20 +17,17 @@ from numbers import Integral
 
 import numpy as np
 
-from sklearn.utils.validation import check_is_fitted, check_array
-from sklearn.utils._param_validation import (
-    Interval,
-    validate_params,
-    StrOptions,
-    HasMethods,
-)
-
 from sklearn.base import is_classifier
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.validation import check_array, check_is_fitted
 
-from . import _criterion
-from . import _tree
-from ._reingold_tilford import buchheim, Tree
-from . import DecisionTreeClassifier, DecisionTreeRegressor
+from . import DecisionTreeClassifier, DecisionTreeRegressor, _criterion, _tree
+from ._reingold_tilford import Tree, buchheim
 
 
 def _color_brew(n):
@@ -98,7 +95,8 @@ SENTINEL = Sentinel()
         "precision": [Interval(Integral, 0, None, closed="left"), None],
         "ax": "no_validation",  # delegate validation to matplotlib
         "fontsize": [Interval(Integral, 0, None, closed="left"), None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def plot_tree(
     decision_tree,
@@ -751,7 +749,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
         "special_characters": ["boolean"],
         "precision": [Interval(Integral, 0, None, closed="left"), None],
         "fontname": [str],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def export_graphviz(
     decision_tree,
@@ -952,7 +951,8 @@ def _compute_depth(tree, node):
         "spacing": [Interval(Integral, 1, None, closed="left"), None],
         "decimals": [Interval(Integral, 0, None, closed="left"), None],
         "show_weights": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def export_text(
     decision_tree,

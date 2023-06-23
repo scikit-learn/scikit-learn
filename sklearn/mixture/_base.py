@@ -6,21 +6,19 @@
 
 import warnings
 from abc import ABCMeta, abstractmethod
-from time import time
 from numbers import Integral, Real
+from time import time
 
 import numpy as np
 from scipy.special import logsumexp
 
 from .. import cluster
+from ..base import BaseEstimator, DensityMixin, _fit_context
 from ..cluster import kmeans_plusplus
-from ..base import BaseEstimator
-from ..base import DensityMixin
-from ..base import _fit_context
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
-from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.validation import check_is_fitted
 
 
 def _check_shape(param, param_shape, name):

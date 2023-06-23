@@ -11,7 +11,7 @@ jobs:
           command: |
             source build_tools/shared.sh
             # Include pytest compatibility with mypy
-            pip install pytest flake8 $(get_dep mypy min) $(get_dep black min) cython-lint
+            pip install pytest ruff $(get_dep mypy min) $(get_dep black min) cython-lint
       - run:
           name: linting
           command: ./build_tools/linting.sh
