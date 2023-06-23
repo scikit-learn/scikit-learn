@@ -198,9 +198,8 @@ class BaseEstimator(_MetadataRequester):
         To override the behavior, redefine this method.
 
         Valid template arguments:
-        - `{version}` the sklearn version
-        - `{major}` major sklearn version
-        - `{minor}` minor sklearn version
+        - `{ver_str}` the sklearn version
+        - `{dev}` for dev documentation
         - `{estimator_module}` the module that contains the class
         - `{estimator_name}` the name of the class
 

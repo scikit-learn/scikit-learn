@@ -17,7 +17,7 @@ class CustomEstimatorTemplateOverride(CustomValidEstimator):
     # Private values, used only for the test
     _domain = "example.com"
 
-    _doc_link = f"https://{_domain}/{{major}}.{{minor}}/docs/{{estimator_name}}.html"
+    _doc_link = f"https://{_domain}/{{ver_str}}/docs/{{estimator_name}}.html"
 
 
 class CustomEstimatorMethodOverride(CustomValidEstimator):
