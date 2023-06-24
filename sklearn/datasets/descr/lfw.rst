@@ -32,8 +32,9 @@ face detector from various online websites.
     Features            real, between 0 and 255
     =================   =======================
 
-Usage
-~~~~~
+|details-start|
+**Usage**
+|details-split|
 
 ``scikit-learn`` provides two loaders that will automatically download,
 cache, parse the metadata files, decode the jpeg and convert the
@@ -110,6 +111,8 @@ The :func:`sklearn.datasets.fetch_lfw_pairs` datasets is subdivided into
 3 subsets: the development ``train`` set, the development ``test`` set and
 an evaluation ``10_folds`` set meant to compute performance metrics using a
 10-folds cross validation scheme.
+
+|details-end|
 
 .. topic:: References:
 
