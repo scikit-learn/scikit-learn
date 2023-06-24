@@ -59,11 +59,11 @@ TODO: update at the time of the release.
   passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
   Jalali`_.
 
-:mod:`sklearn.neighbors`
+:mod:`sklearn.neighbors._nearest_centroid`
 ........................
-- |Enhancement| Add :meth:`neighbors._nearest_centroid.decision_function`,
-  :meth:`neighbors._nearest_centroid.predict_proba` and
-  :meth:`neighbors._nearest_centroid.predict_log_proba`
+- |Enhancement| Add :meth:`_nearest_centroid.NearestCentroid.decision_function`,
+  :meth:`_nearest_centroid.NearestCentroid.predict_proba` and
+  :meth:`_nearest_centroid.NearestCentroid.predict_log_proba`
   to the NearestCentroid estimator class.
-  :func: `neighbors.tests.test_nearest_centroid` was updated to test
+  :function: `neighbors.tests.test_nearest_centroid` was updated to test
   probability. :pr:`26689` by :user:`Matthew Ning <NoPenguinsLand>`.
