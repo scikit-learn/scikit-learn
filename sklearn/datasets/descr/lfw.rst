@@ -123,7 +123,7 @@ an evaluation ``10_folds`` set meant to compute performance metrics using a
    University of Massachusetts, Amherst, Technical Report 07-49, October, 2007.
 
 
-Examples
+.. topic:: Examples:
 ~~~~~~~~
 
 :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`
