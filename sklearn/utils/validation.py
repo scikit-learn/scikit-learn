@@ -2024,9 +2024,15 @@ def _get_feature_names(X):
     if _is_pandas_df(X):
         # Make sure we can inspect columns names from pandas, even with
         # versions too old to expose a working implementation of
-        # __dataframe__.column_names().
-        # TODO: remove once the minimum supported version of pandas has
-        # a working implementation of __dataframe__.column_names().
+        # __dataframe__.column_names() and avoid introducing any
+        # additional copy.
+        # TODO: remove the pandas-specific branch once the minimum supported
+        # version of pandas has a working implementation of
+        # __dataframe__.column_names() that is guaranteed to not introduce any
+        # additional copy of the data without having to impose allow_copy=False
+        # that could fail with other libraries. Note: in the longer term, we
+        # could decide to instead rely on the __dataframe_namespace__ API once
+        # adopted by our minimally supported pandas version.
         feature_names = np.asarray(X.columns, dtype=object)
     elif hasattr(X, "__dataframe__"):
         df_protocol = X.__dataframe__()
