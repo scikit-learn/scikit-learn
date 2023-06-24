@@ -681,9 +681,7 @@ def test_removing_non_existing_param_raises():
 def test_method_metadata_request():
     mmr = MethodMetadataRequest(owner="test", method="fit")
 
-    with pytest.raises(
-        ValueError, match="alias should be either a valid identifier or"
-    ):
+    with pytest.raises(ValueError, match="The alias you're setting for"):
         mmr.add_request(param="foo", alias=1.4)
 
     mmr.add_request(param="foo", alias=None)
