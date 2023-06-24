@@ -102,6 +102,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     [2] Hastie, T., Tibshirani, R., Friedman, J. (2009). The Elements of Statistical
     Learning Data Mining, Inference, and Prediction. 2nd Edition. New York, Springer.
+
     Examples
     --------
     >>> from sklearn.neighbors import NearestCentroid
