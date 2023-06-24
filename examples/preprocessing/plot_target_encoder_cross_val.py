@@ -127,7 +127,7 @@ coefs_cv = pd.Series(
 ).sort_values()
 ax = coefs_cv.plot(kind="barh")
 _ = ax.set(
-    title="Target encoded with cross validation",
+    title="Target encoded with cross fitting",
     xlabel="Ridge coefficient",
     ylabel="Feature",
 )
@@ -148,7 +148,7 @@ X_test_no_cv_encoding = target_encoder.transform(X_test)
 model_no_cv = ridge.fit(X_train_no_cv_encoding, y_train)
 
 # %%
-# We evaluate the model that used the non-cross validated encoding and see that
+# We evaluate the model that did not use cross fitting when encoding and see that
 # it overfits:
 print(
     "Model without CV on training set: ",
@@ -165,12 +165,17 @@ print(
 # %%
 # The ridge model overfits because it assigns much more weight to the
 # uninformative extremely high cardinality ("near_unique") and medium
-# cardinality ("shuffled") features than when the model used cross validation
+# cardinality ("shuffled") features than when the model used cross fitting
 # to encode the features.
 coefs_no_cv = pd.Series(
     model_no_cv.coef_, index=model_no_cv.feature_names_in_
 ).sort_values()
-_ = coefs_no_cv.plot(kind="barh")
+ax = coefs_cv.plot(kind="barh")
+_ = ax.set(
+    title="Target encoded without cross fitting",
+    xlabel="Ridge coefficient",
+    ylabel="Feature",
+)
 
 # %%
 # Conclusion
@@ -180,5 +185,5 @@ _ = coefs_no_cv.plot(kind="barh")
 # encode training data before passing it to a machine learning model. When a
 # :class:`TargetEncoder` is a part of a :class:`~sklearn.pipeline.Pipeline` and
 # the pipeline is fitted, the pipeline will correctly call
-# :meth:`TargetEncoder.fit_transform` and use cross validation when encoding
+# :meth:`TargetEncoder.fit_transform` and use cross fitting when encoding
 # the training data.
