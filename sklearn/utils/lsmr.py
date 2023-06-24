@@ -38,6 +38,7 @@ def lsmr(
     show=False,
     x0=None,
     artol=0,
+    qtol=0,
 ):
     """Iterative solver for least-squares problems.
 
@@ -105,6 +106,12 @@ def lsmr(
 
     artol: float, optional
         Stops when ``norm(A^H r) <= artol``
+
+        .. versionadded:: scikit-learn modification
+
+    qtol = float, optional
+        Stops when ``q - q_old <= qtol * q/itn`` with
+        ``q = norm(r)**2 - norm(b)**2`
 
         .. versionadded:: scikit-learn modification
 
@@ -226,10 +233,11 @@ def lsmr(
         "Cond(Abar) seems to be too large for this machine         ",
         "The iteration limit has been reached                      ",
         "The least-squares solution is good enough, given artol     ",
+        "The least-squares solution is good enough, given qtol      ",
     )
 
     hdg1 = "   itn      x(1)       norm r    norm Ar"
-    hdg2 = " compatible   LS      norm A   cond A"
+    hdg2 = " compatible   LS      norm A   cond A   q           qtest"
     pfreq = 20  # print frequency (for repeating the heading)
     pcount = 0  # print counter
 
@@ -253,7 +261,7 @@ def lsmr(
         print("damp = %20.14e\n" % (damp))
         print(f"atol = {atol:8.2e}                 conlim = {conlim:8.2e}\n")
         print(f"btol = {btol:8.2e}             maxiter = {maxiter:8g}\n")
-        print(f"artol = {artol:8.2e}\n")
+        print(f"artol = {artol:8.2e}             qtol = {qtol:8.2e}\n")
 
     u = b
     normb = norm(b)
@@ -307,6 +315,7 @@ def lsmr(
     normA = sqrt(normA2)
     condA = 1
     normx = 0
+    q_old = 0
 
     # Items for use in stopping rules, normb set earlier
     istop = 0
@@ -427,6 +436,9 @@ def lsmr(
             minrbar = min(minrbar, rhobarold)
         condA = max(maxrbar, rhotemp) / min(minrbar, rhotemp)
 
+        # quadtratic = ||r||^2 + ||b||^2
+        q = normr**2 - normb**2
+
         # Test for convergence.
 
         # Compute norms for convergence testing.
@@ -444,6 +456,10 @@ def lsmr(
         test3 = 1 / condA
         t1 = test1 / (1 + normA * normx / normb)
         rtol = btol + atol * normA * normx / normb
+        if q == 0:
+            testq = float("inf")
+        else:
+            testq = (q - q_old) * itn / q
 
         # The following tests guard against extremely small values of
         # atol, btol or ctol.  (The user may have set any or all of
@@ -470,6 +486,8 @@ def lsmr(
             istop = 2
         if test1 <= rtol:
             istop = 1
+        if testq <= qtol:
+            istop = 9
 
         # See if it is time to print something.
 
@@ -493,10 +511,13 @@ def lsmr(
                 str2 = f" {normr:10.3e} {normar:10.3e}"
                 str3 = f"  {test1:8.1e} {test2:8.1e}"
                 str4 = f" {normA:8.1e} {condA:8.1e}"
-                print("".join([str1, str2, str3, str4]))
+                str5 = f"  {q:10.3e}  {testq:10.3e}"
+                print("".join([str1, str2, str3, str4, str5]))
 
         if istop > 0:
             break
+
+        q_old = q
 
     # Print the stopping condition.
 
@@ -510,5 +531,8 @@ def lsmr(
         print("    normx =%8.1e" % (normx))
         print(str1, str2)
         print(str3, str4)
+        # print(f"||r||^2 - ||b||^2 {normr**2 - normb**2}")
+        # Ax = A @ x
+        # print(f"xA'Ax + Gx {Ax @ Ax - 2 * b @ Ax}")
 
     return x, istop, itn, normr, normar, normA, condA, normx
