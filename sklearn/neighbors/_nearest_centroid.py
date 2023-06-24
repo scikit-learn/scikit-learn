@@ -340,13 +340,15 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         return dec_func
 
     def predict_proba(self, X):
-        """Class probability estimates.
+        """Estimate Class probabilities.
         The returned estimates for all classes are ordered by the
         label of classes. The estimation has been implemented according to
-        Hastie et al. (2009), p. 652 equation (18.2)
+        Hastie et al. (2009), p. 652 equation (18.8)
+
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+
         Returns
         -------
         T : array-like, shape = [n_samples, n_classes]
