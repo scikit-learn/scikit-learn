@@ -84,6 +84,16 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    priors_ : array-like of shape (n_classes,)
+        Class priors (sum to 1).
+
+        .. versionadded:: 1.4
+
+    s_ : array-like of shape (n_features,)
+        Within-class standard deviation
+
+        .. versionadded:: 1.4
+
     See Also
     --------
     KNeighborsClassifier : Nearest neighbors classifier.
@@ -341,14 +351,16 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         return dec_func
 
     def predict_proba(self, X):
-        """Estimate Class probabilities.
+        """Estimate class probabilities.
+
         The returned estimates for all classes are ordered by the
         label of classes. The estimation has been implemented according to
-        Hastie et al. (2009), p. 652 equation (18.8)
+        Hastie et al. (2009), p. 652 equation (18.8).
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            Test samples.
 
         Returns
         -------
@@ -366,7 +378,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Input data.
+            Test samples.
 
         Returns
         -------
