@@ -7,6 +7,7 @@ from sklearn.datasets import load_iris
 from sklearn.utils import _safe_indexing, check_array
 from sklearn.utils._mocking import (
     CheckingClassifier,
+    DictionaryRequiringEstimatorMock,
     _MockEstimatorOnOffPrediction,
 )
 from sklearn.utils._testing import _convert_container
@@ -206,3 +207,10 @@ def test_mock_estimator_on_off_prediction(iris, response_methods):
             assert getattr(estimator, response)(X) == response
         else:
             assert not hasattr(estimator, response)
+
+
+def test_dictionary_requiring_estimator_mock():
+    mock_estimator = DictionaryRequiringEstimatorMock(dictionary="Test Dictionary")
+
+    # Check that the mock_estimator has the right required_parameters
+    assert mock_estimator._required_parameters == ["dictionary"]

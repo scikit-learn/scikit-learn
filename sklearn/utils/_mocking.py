@@ -394,3 +394,37 @@ class _MockEstimatorOnOffPrediction(BaseEstimator):
     @available_if(_check_response("decision_function"))
     def decision_function(self, X):
         return "decision_function"
+
+
+class DictionaryRequiringEstimatorMock(BaseEstimator):
+    """
+    A mock class used to simulate an estimator that requires a "dictionary"
+    parameter but is not a subclass of `SparseCoder`.
+
+    This class is used for the purpose of increasing code coverage in tests,
+    specifically to cover the case in the `_construct_instance` function where an
+    estimator has a "dictionary" requirement but is not a subclass of `SparseCoder`.
+
+    Since this is a mock class, it does not have any actual functionality beyond
+    meeting the requirements to be passed into the `_construct_instance` function.
+
+    Attributes
+    ----------
+    _required_parameters : list
+        A class attribute that specifies the parameters required by instances
+        of this class. In this case, the single required parameter is "dictionary".
+    """
+
+    _required_parameters = ["dictionary"]
+
+    def __init__(self, dictionary=None):
+        """
+        Initialize the mock estimator. This function does not actually use the
+        provided `dictionary` parameter, as this is a mock class with no functionality.
+
+        Parameters
+        ----------
+        dictionary : any, optional
+            The "dictionary" parameter. This can be any value, as it is not used.
+        """
+        pass
