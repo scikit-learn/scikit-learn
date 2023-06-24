@@ -58,3 +58,24 @@ TODO: update at the time of the release.
   :meth:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
   passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
   Jalali`_.
+
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Feature| :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`
+  and :class:`ensemble.ExtraTreesRegressor` now support monotonic constraints in
+  the absence of missing values for single-output problems.
+  :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
+  initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
+
+
+:mod:`sklearn.tree`
+...................
+
+- |Feature| :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor` now support
+  monotonic constraints in the absence of missing values for single-output problems.
+  :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
+  :user:`Patrick O'Reilly <pat-oreilly>`.
