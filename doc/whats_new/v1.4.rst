@@ -60,7 +60,7 @@ TODO: update at the time of the release.
   Jalali`_.
 
 :mod:`sklearn.neighbors`
-...................
+........................
 - |Enhancement| Add :meth:`neighbors._nearest_centroid.decision_function`,
   :meth:`neighbors._nearest_centroid.predict_proba` and
   :meth:`neighbors._nearest_centroid.predict_log_proba`
