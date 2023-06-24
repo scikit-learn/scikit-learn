@@ -29,6 +29,7 @@ from ..datasets import (
     make_multilabel_classification,
     make_regression,
 )
+from ..decomposition import SparseCoder
 from ..exceptions import DataConversionWarning, NotFittedError, SkipTestWarning
 from ..feature_selection import SelectFromModel, SelectKBest
 from ..linear_model import (
@@ -404,6 +405,16 @@ def _get_check_estimator_ids(obj):
             return re.sub(r"\s", "", str(obj))
 
 
+def _raise_skip_test(Estimator, required_parameters):
+    msg = (
+        f"Can't instantiate estimator {Estimator.__name__} "
+        f"parameters {required_parameters}"
+    )
+    # raise additional warning to be shown by pytest
+    warnings.warn(msg, SkipTestWarning)
+    raise SkipTest(msg)
+
+
 def _construct_instance(Estimator):
     """Construct Estimator instance if possible."""
     required_parameters = getattr(Estimator, "_required_parameters", [])
@@ -435,14 +446,13 @@ def _construct_instance(Estimator):
                         ("est2", LogisticRegression(C=1)),
                     ]
                 )
+        elif required_parameters in (["dictionary"],):
+            if issubclass(Estimator, SparseCoder):
+                estimator = Estimator(dictionary=_generate_precomputed_dictionary())
+            else:
+                _raise_skip_test(Estimator, required_parameters)
         else:
-            msg = (
-                f"Can't instantiate estimator {Estimator.__name__} "
-                f"parameters {required_parameters}"
-            )
-            # raise additional warning to be shown by pytest
-            warnings.warn(msg, SkipTestWarning)
-            raise SkipTest(msg)
+            _raise_skip_test(Estimator, required_parameters)
     else:
         estimator = Estimator()
     return estimator
@@ -843,6 +853,28 @@ def _generate_sparse_matrix(X_csr):
         X.indices = X.indices.astype("int64")
         X.indptr = X.indptr.astype("int64")
         yield sparse_format + "_64", X
+
+
+def _generate_precomputed_dictionary(n_components=9, n_features=3):
+    """
+    The _generate_precomputed_dictionary function generates a precomputed dictionary
+    of random numbers.
+    Parameters
+    ----------
+    n_components: int
+                Set the number of components in the dictionary
+    n_features: int
+                Set the number of features in the dictionary
+    Returns
+    -------
+    precomputed_dictionary : np.ndarray
+                            A numpy array with dimensions n_components x n_features
+    """
+
+    rng = np.random.RandomState(0)
+    precomputed_dictionary = rng.randn(n_components, n_features)
+
+    return precomputed_dictionary
 
 
 def check_array_api_input(
@@ -1249,6 +1281,12 @@ def check_dtype_object(name, estimator_orig):
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
+    # ensure n_features of dictionary == n_features of X for SparseCoder
+    if name == "SparseCoder":
+        estimator.set_params(
+            dictionary=_generate_precomputed_dictionary(n_features=X.shape[1])
+        )
+
     estimator.fit(X, y)
     if hasattr(estimator, "predict"):
         estimator.predict(X)
@@ -1541,6 +1579,12 @@ def check_fit2d_1sample(name, estimator_orig):
     if name == "TSNE":
         estimator.set_params(perplexity=0.5)
 
+    # ensure n_features of dictionary == n_features of X for SparseCoder
+    if name == "SparseCoder":
+        estimator.set_params(
+            dictionary=_generate_precomputed_dictionary(n_features=X.shape[1])
+        )
+
     msgs = [
         "1 sample",
         "n_samples = 1",
@@ -1575,6 +1619,11 @@ def check_fit2d_1feature(name, estimator_orig):
     # ensure non skipped trials for RANSACRegressor
     if name == "RANSACRegressor":
         estimator.residual_threshold = 0.5
+    # ensure n_features of dictionary == n_features of X for SparseCoder
+    if name == "SparseCoder":
+        estimator.set_params(
+            dictionary=_generate_precomputed_dictionary(n_features=X.shape[1])
+        )
 
     y = _enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator, 1)
@@ -1667,6 +1716,13 @@ def check_transformers_unfitted_stateless(name, transformer):
     X = _enforce_estimator_tags_X(transformer, X)
 
     transformer = clone(transformer)
+
+    # ensure n_features of dictionary == n_features of X for SparseCoder
+    if name == "SparseCoder":
+        transformer.set_params(
+            dictionary=_generate_precomputed_dictionary(n_features=X.shape[1])
+        )
+
     X_trans = transformer.transform(X)
 
     assert X_trans.shape[0] == X.shape[0]
@@ -1842,6 +1898,13 @@ def check_estimators_dtypes(name, estimator_orig):
     for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
         estimator = clone(estimator_orig)
         set_random_state(estimator, 1)
+
+        # ensure n_features of dictionary == n_features of X for SparseCoder
+        if name == "SparseCoder":
+            estimator.set_params(
+                dictionary=_generate_precomputed_dictionary(n_features=X_train.shape[1])
+            )
+
         estimator.fit(X_train, y)
 
         for method in methods:
@@ -2759,6 +2822,12 @@ def check_get_feature_names_out_error(name, estimator_orig):
     """
 
     estimator = clone(estimator_orig)
+
+    # estimator with requires_fit set to False, will not raise NotFittedError
+    # when  get_feature_names_out called before fit.
+    if not estimator._get_tags()["requires_fit"]:
+        return
+
     err_msg = (
         f"Estimator {name} should have raised a NotFitted error when fit is called"
         " before get_feature_names_out"
@@ -2780,6 +2849,13 @@ def check_estimators_fit_returns_self(name, estimator_orig, readonly_memmap=Fals
         X, y = create_memmap_backed_data([X, y])
 
     set_random_state(estimator)
+
+    # ensure n_features of dictionary == n_features of X for SparseCoder
+    if name == "SparseCoder":
+        estimator.set_params(
+            dictionary=_generate_precomputed_dictionary(n_features=X.shape[1])
+        )
+
     assert estimator.fit(X, y) is estimator
 
 
@@ -3161,6 +3237,12 @@ def check_estimators_overwrite_params(name, estimator_orig):
     y = _enforce_estimator_tags_y(estimator, y)
 
     set_random_state(estimator)
+
+    # ensure n_features of dictionary == n_features of X for SparseCoder
+    if name == "SparseCoder":
+        estimator.set_params(
+            dictionary=_generate_precomputed_dictionary(n_features=X.shape[1])
+        )
 
     # Make a physical copy of the original estimator parameters before fitting.
     params = estimator.get_params()
@@ -3771,6 +3853,12 @@ def check_fit_idempotent(name, estimator_orig):
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
+    # ensure n_features of dictionary == n_features of X for SparseCoder
+    if name == "SparseCoder":
+        estimator.set_params(
+            dictionary=_generate_precomputed_dictionary(n_features=X.shape[1])
+        )
+
     # Fit for the first time
     estimator.fit(X_train, y_train)
 
@@ -3807,6 +3895,17 @@ def check_fit_check_is_fitted(name, estimator_orig):
     rng = np.random.RandomState(42)
 
     estimator = clone(estimator_orig)
+
+    # estimator with requires_fit set to False, will not raise NotFittedError
+    # when  check_is_fitted called before fit.
+    if not estimator._get_tags()["requires_fit"]:
+        return
+
+    # estimator with requires_fit set to False, will not raise NotFittedError
+    # when  check_is_fitted called before fit.
+    if not estimator._get_tags()["requires_fit"]:
+        return
+
     set_random_state(estimator)
     if "warm_start" in estimator.get_params():
         estimator.set_params(warm_start=False)
@@ -3849,6 +3948,11 @@ def check_n_features_in(name, estimator_orig):
     set_random_state(estimator)
     if "warm_start" in estimator.get_params():
         estimator.set_params(warm_start=False)
+
+    # estimator with requires_fit set to False, will not raise assertion error
+    # when  n_features_in_ called before fit.
+    if not estimator._get_tags()["requires_fit"]:
+        return
 
     n_samples = 100
     X = rng.normal(loc=100, size=(n_samples, 2))
@@ -3920,6 +4024,12 @@ def check_n_features_in_after_fitting(name, estimator_orig):
         y = rng.randint(low=0, high=2, size=n_samples)
     y = _enforce_estimator_tags_y(estimator, y)
 
+    # ensure n_features of dictionary == n_features of X for SparseCoder
+    if name == "SparseCoder":
+        estimator.set_params(
+            dictionary=_generate_precomputed_dictionary(n_features=X.shape[1])
+        )
+
     estimator.fit(X, y)
     assert estimator.n_features_in_ == X.shape[1]
 
@@ -3988,7 +4098,9 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         "2darray" in tags["X_types"] or "categorical" in tags["X_types"]
     )
 
-    if not is_supported_X_types or tags["no_validation"]:
+    # estimator with requires_fit set to False, will not raise assertion error
+    # since they don't reset feature_names_in attribute based on input
+    if not is_supported_X_types or tags["no_validation"] or not tags["requires_fit"]:
         return
 
     rng = np.random.RandomState(0)
@@ -4138,6 +4250,12 @@ def check_transformer_get_feature_names_out(name, transformer_orig):
     n_features = X.shape[1]
     set_random_state(transformer)
 
+    # ensure n_features of dictionary == n_features of X for SparseCoder
+    if name == "SparseCoder":
+        transformer.set_params(
+            dictionary=_generate_precomputed_dictionary(n_features=X.shape[1])
+        )
+
     y_ = y
     if name in CROSS_DECOMPOSITION:
         y_ = np.c_[np.asarray(y), np.asarray(y)]
@@ -4175,7 +4293,11 @@ def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
         )
 
     tags = transformer_orig._get_tags()
-    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+    if (
+        "2darray" not in tags["X_types"]
+        or tags["no_validation"]
+        or not tags["requires_fit"]
+    ):
         return
 
     X, y = make_blobs(
@@ -4342,6 +4464,12 @@ def check_set_output_transform(name, transformer_orig):
     y = _enforce_estimator_tags_y(transformer_orig, y)
     set_random_state(transformer)
 
+    # ensure n_features of dictionary == n_features of X for SparseCoder
+    if name == "SparseCoder":
+        transformer.set_params(
+            dictionary=_generate_precomputed_dictionary(n_features=X.shape[1])
+        )
+
     def fit_then_transform(est):
         if name in CROSS_DECOMPOSITION:
             return est.fit(X, y).transform(X, y)
@@ -4472,6 +4600,12 @@ def check_set_output_transform_pandas(name, transformer_orig):
     index = [f"index{i}" for i in range(X.shape[0])]
     df = pd.DataFrame(X, columns=feature_names_in, copy=False, index=index)
 
+    # ensure n_features of dictionary == n_features of X for SparseCoder
+    if name == "SparseCoder":
+        transformer.set_params(
+            dictionary=_generate_precomputed_dictionary(n_features=X.shape[1])
+        )
+
     transformer_default = clone(transformer).set_output(transform="default")
     outputs_default = _output_from_fit_transform(transformer_default, name, X, df, y)
     transformer_pandas = clone(transformer).set_output(transform="pandas")
@@ -4514,6 +4648,12 @@ def check_global_ouptut_transform_pandas(name, transformer_orig):
     feature_names_in = [f"col{i}" for i in range(X.shape[1])]
     index = [f"index{i}" for i in range(X.shape[0])]
     df = pd.DataFrame(X, columns=feature_names_in, copy=False, index=index)
+
+    # ensure n_features of dictionary == n_features of X for SparseCoder
+    if name == "SparseCoder":
+        transformer.set_params(
+            dictionary=_generate_precomputed_dictionary(n_features=X.shape[1])
+        )
 
     transformer_default = clone(transformer).set_output(transform="default")
     outputs_default = _output_from_fit_transform(transformer_default, name, X, df, y)

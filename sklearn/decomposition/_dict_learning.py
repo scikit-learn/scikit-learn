@@ -1433,6 +1433,19 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
     _required_parameters = ["dictionary"]
 
+    _parameter_constraints: dict = {
+        "dictionary": ["array-like"],
+        "transform_algorithm": [
+            StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
+        ],
+        "transform_n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "transform_alpha": [Interval(Real, 0, None, closed="left"), None],
+        "n_jobs": [Integral, None],
+        "split_sign": ["boolean"],
+        "positive_code": ["boolean"],
+        "transform_max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         dictionary,
@@ -1475,6 +1488,10 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
+        X = self._validate_data(X, reset=False)
+
         return self
 
     def transform(self, X, y=None):
@@ -1497,12 +1514,20 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
+        self._validate_params()
+
+        # to preserve transform dtype
+        input_dtype = X.dtype if isinstance(X, np.ndarray) else None
+        if input_dtype in self._get_tags()["preserves_dtype"]:
+            self.dictionary = check_array(self.dictionary, dtype=X.dtype)
+
         return super()._transform(X, self.dictionary)
 
     def _more_tags(self):
         return {
             "requires_fit": False,
             "preserves_dtype": [np.float64, np.float32],
+            "stateless": True,
         }
 
     @property

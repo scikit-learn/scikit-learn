@@ -35,6 +35,7 @@ from sklearn.utils.parallel import Parallel
 rng_global = np.random.RandomState(0)
 n_samples, n_features = 10, 8
 X = rng_global.randn(n_samples, n_features)
+precomputed_dictionary = rng_global.randn(n_samples, n_features)
 
 
 def test_sparse_encode_shapes_omp():
@@ -973,7 +974,7 @@ def test_dict_learning_online_numerical_consistency(method):
 @pytest.mark.parametrize(
     "estimator",
     [
-        SparseCoder(X.T),
+        SparseCoder(dictionary=precomputed_dictionary),
         DictionaryLearning(),
         MiniBatchDictionaryLearning(batch_size=4, max_iter=10),
     ],
@@ -982,10 +983,16 @@ def test_dict_learning_online_numerical_consistency(method):
 def test_get_feature_names_out(estimator):
     """Check feature names for dict learning estimators."""
     estimator.fit(X)
-    n_components = X.shape[1]
 
     feature_names_out = estimator.get_feature_names_out()
     estimator_name = estimator.__class__.__name__.lower()
+
+    if estimator_name == "sparsecoder":
+        # n_components of dictionary
+        n_components = precomputed_dictionary.shape[0]
+    else:
+        n_components = X.shape[1]
+
     assert_array_equal(
         feature_names_out,
         [f"{estimator_name}{i}" for i in range(n_components)],
