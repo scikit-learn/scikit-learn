@@ -68,8 +68,9 @@ full covariance.
     * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_pdf.py` for an example on plotting the
       density estimation.
 
-Pros and cons of class :class:`GaussianMixture`
------------------------------------------------
+|details-start|
+**Pros and cons of class GaussianMixture**
+|details-split|
 
 Pros
 ....
@@ -93,8 +94,12 @@ Cons
    or information theoretical criteria to decide how many components to use
    in the absence of external cues.
 
-Selecting the number of components in a classical Gaussian Mixture Model
-------------------------------------------------------------------------
+|details-end|
+
+
+|details-start|
+**Selecting the number of components in a classical Gaussian Mixture model**
+|details-split|
 
 The BIC criterion can be used to select the number of components in a Gaussian
 Mixture in an efficient way. In theory, it recovers the true number of
@@ -116,8 +121,11 @@ model.
 
 .. _expectation_maximization:
 
-Estimation algorithm Expectation-maximization
------------------------------------------------
+|details-end|
+
+|details-start|
+**Estimation algorithm expectation-maximization**
+|details-split|
 
 The main difficulty in learning Gaussian mixture models from unlabeled
 data is that one usually doesn't know which points came from
@@ -135,8 +143,11 @@ parameters to maximize the likelihood of the data given those
 assignments. Repeating this process is guaranteed to always converge
 to a local optimum.
 
-Choice of the Initialization Method
------------------------------------
+|details-end|
+
+|details-start|
+**Choice of the Initialization method**
+|details-split|
 
 There is a choice of four initialization methods (as well as inputting user defined
 initial means) to generate the initial centers for the model components:
@@ -174,6 +185,8 @@ random
 
 .. _bgmm:
 
+|details-end|
+
 Variational Bayesian Gaussian Mixture
 =====================================
 
@@ -183,8 +196,7 @@ similar to the one defined by :class:`GaussianMixture`.
 
 .. _variational_inference:
 
-Estimation algorithm: variational inference
----------------------------------------------
+**Estimation algorithm: variational inference**
 
 Variational inference is an extension of expectation-maximization that
 maximizes a lower bound on model evidence (including
@@ -282,9 +294,9 @@ from the two resulting mixtures.
       ``weight_concentration_prior_type`` for different values of the parameter
       ``weight_concentration_prior``.
 
-
-Pros and cons of variational inference with :class:`BayesianGaussianMixture`
-----------------------------------------------------------------------------
+|details-start|
+**Pros and cons of variational inference with BayesianGaussianMixture**
+|details-split|
 
 Pros
 .....
@@ -324,11 +336,13 @@ Cons
    these biases and the data it might be possible to fit better models using a
    finite mixture.
 
+|details-end|
 
 .. _dirichlet_process:
 
-The Dirichlet Process
----------------------
+|details-start|
+**The Dirichlet Process**
+|details-split|
 
 Here we describe variational inference algorithms on Dirichlet process
 mixture. The Dirichlet process is a prior probability distribution on
@@ -361,3 +375,5 @@ use, one just specifies the concentration parameter and an upper bound
 on the number of mixture components (this upper bound, assuming it is
 higher than the "true" number of components, affects only algorithmic
 complexity, not the actual number of components used).
+
+|details-end|
