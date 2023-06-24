@@ -58,3 +58,12 @@ TODO: update at the time of the release.
   :meth:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
   passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
   Jalali`_.
+
+:mod:`sklearn.neighbors`
+...................
+- |Enhancement| Add :meth:`neighbors._nearest_centroid.decision_function`,
+  :meth:`neighbors._nearest_centroid.predict_proba` and
+  :meth:`neighbors._nearest_centroid.predict_log_proba`
+  to the NearestCentroid estimator class.
+  :func: `neighbors.tests.test_nearest_centroid` was updated to test
+  probability. :pr:`26689` by :user:`Matthew Ning <NoPenguinsLand>`.
