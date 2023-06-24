@@ -217,7 +217,8 @@ def alpha_max(emp_cov):
         "cov_init": ["array-like", None],
         "return_costs": ["boolean"],
         "return_n_iter": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def graphical_lasso(
     emp_cov,

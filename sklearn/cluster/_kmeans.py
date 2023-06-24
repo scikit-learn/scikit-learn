@@ -66,7 +66,8 @@ from ._k_means_minibatch import _minibatch_update_dense, _minibatch_update_spars
         "x_squared_norms": ["array-like", None],
         "random_state": ["random_state"],
         "n_local_trials": [Interval(Integral, 1, None, closed="left"), None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def kmeans_plusplus(
     X,
@@ -293,24 +294,10 @@ def _tolerance(X, tol):
 @validate_params(
     {
         "X": ["array-like", "sparse matrix"],
-        "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "sample_weight": ["array-like", None],
-        "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
-        "n_init": [
-            StrOptions({"auto"}),
-            Hidden(StrOptions({"warn"})),
-            Interval(Integral, 1, None, closed="left"),
-        ],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
-        "tol": [Interval(Real, 0, None, closed="left")],
-        "random_state": ["random_state"],
-        "copy_x": [bool],
-        "algorithm": [
-            StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
-        ],
         "return_n_iter": [bool],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def k_means(
     X,
