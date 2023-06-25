@@ -158,7 +158,7 @@ def density(w, **kwargs):
     return d
 
 
-def safe_sparse_dot(a, b, *, dense_output=False):
+def safe_sparse_dot(a, b, *, dense_output=False, xp=None):
     """Dot product that handle the sparse matrix case correctly.
 
     Parameters
@@ -168,6 +168,9 @@ def safe_sparse_dot(a, b, *, dense_output=False):
     dense_output : bool, default=False
         When False, ``a`` and ``b`` both being sparse will yield sparse output.
         When True, output will always be a dense array.
+    xp : module, default=None
+        The namespace module of `a` and `b`. If `None`, this function uses numpy and
+        scipy.sparse operations directly without attempting to rely on the Array API.
 
     Returns
     -------
@@ -188,8 +191,10 @@ def safe_sparse_dot(a, b, *, dense_output=False):
             a_2d = a.reshape(-1, a.shape[-1])
             ret = a_2d @ b
             ret = ret.reshape(*a.shape[:-1], b.shape[1])
+        elif xp is not None:
+            ret = xp.tensordot(a, b, axes=(-1, -2))
         else:
-            ret = a @ b
+            ret = np.dot(a, b)
     else:
         ret = a @ b
 
@@ -254,20 +259,47 @@ def randomized_range_finder(
     analysis
     A. Szlam et al. 2014
     """
+    xp, is_array_api_compliant = get_namespace(A)
     random_state = check_random_state(random_state)
 
     # Generating normal random vectors with shape: (A.shape[1], size)
-    Q = random_state.normal(size=(A.shape[1], size))
-    if hasattr(A, "dtype") and A.dtype.kind == "f":
-        # Ensure f32 is preserved as f32
-        Q = Q.astype(A.dtype, copy=False)
+    # XXX: generate random number directly from xp if it's possible
+    # one day.
+    Q = xp.asarray(random_state.normal(size=(A.shape[1], size)))
+    if hasattr(A, "dtype") and xp.isdtype(A.dtype, kind="real floating"):
+        # Use float32 computation and components if A has a float32 dtype
+        Q = xp.astype(Q, A.dtype, copy=False)
+
+    # Move Q to device if needed only after converting to float32 if needed to
+    # avoid allocating unnecessary memory on the device.
+    if hasattr(A, "device"):
+        if not hasattr(Q, "to_device"):
+            # array_api_compat for PyTorch does not seem to make it possible
+            # to use the intended to_device API:
+            # https://data-apis.org/array-api/2022.12/design_topics/device_support.html
+            Q = xp.asarray(Q, device=A.device)
+        else:
+            Q = Q.to_device(A.device)
 
     # Deal with "auto" mode
     if power_iteration_normalizer == "auto":
         if n_iter <= 2:
             power_iteration_normalizer = "none"
-        else:
+        elif is_array_api_compliant:
+            # XXX: https://github.com/data-apis/array-api/issues/627
+            warnings.warn(
+                "Array API does not support LU factorization, falling back to QR"
+                " instead. Set `power_iteration_normalizer='QR'` explicitly to silence"
+                " this warning."
+            )
             power_iteration_normalizer = "QR"
+        else:
+            power_iteration_normalizer = "LU"
+    elif power_iteration_normalizer == "LU" and is_array_api_compliant:
+        raise ValueError(
+            "Array API does not support LU factorization. Set "
+            "`power_iteration_normalizer='QR'` instead."
+        )
 
     # Perform power iterations with Q to further 'imprint' the top
     # singular vectors of A in Q
@@ -279,12 +311,12 @@ def randomized_range_finder(
             Q, _ = linalg.lu(safe_sparse_dot(A, Q), permute_l=True)
             Q, _ = linalg.lu(safe_sparse_dot(A.T, Q), permute_l=True)
         elif power_iteration_normalizer == "QR":
-            Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode="economic")
-            Q, _ = linalg.qr(safe_sparse_dot(A.T, Q), mode="economic")
+            Q, _ = xp.linalg.qr(safe_sparse_dot(A, Q), mode="reduced")
+            Q, _ = xp.linalg.qr(safe_sparse_dot(A.T, Q), mode="reduced")
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
-    Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode="economic")
+    Q, _ = xp.linalg.qr(safe_sparse_dot(A, Q), mode="reduced")
 
     return Q
 
@@ -460,10 +492,16 @@ def randomized_svd(
     B = safe_sparse_dot(Q.T, M)
 
     # compute the SVD on the thin matrix: (k + p) wide
-    Uhat, s, Vt = linalg.svd(B, full_matrices=False, lapack_driver=svd_lapack_driver)
+    xp, is_array_api_compliant = get_namespace(B)
+    if _is_numpy_namespace(xp) and not is_array_api_compliant:
+        Uhat, s, Vt = linalg.svd(
+            B, full_matrices=False, lapack_driver=svd_lapack_driver
+        )
+    else:
+        Uhat, s, Vt = xp.linalg.svd(B, full_matrices=False)
 
     del B
-    U = np.dot(Q, Uhat)
+    U = Q @ Uhat
 
     if flip_sign:
         if not transpose:

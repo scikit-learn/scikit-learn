@@ -650,7 +650,7 @@ class PCA(_BasePCA):
         self.singular_values_ = xp.asarray(S, copy=True)  # Store the singular values.
 
         if self.n_components_ < min(n_features, n_samples):
-            self.noise_variance_ = total_var - self.explained_variance_.sum()
+            self.noise_variance_ = total_var - xp.sum(self.explained_variance_)
             self.noise_variance_ /= min(n_features, n_samples) - n_components
         else:
             self.noise_variance_ = 0.0

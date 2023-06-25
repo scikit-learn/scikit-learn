@@ -922,13 +922,14 @@ def check_array_api_input(
     est_xp = clone(est)
     with config_context(array_api_dispatch=True):
         est_xp.fit(X_xp, y_xp)
+        input_ns = get_namespace(X_xp)[0]
 
-    input_ns = get_namespace(X_xp)[0]
     # Fitted attributes which are arrays must have the same
     # namespace as the one of the training data.
     for key, attribute in array_attributes.items():
         est_xp_param = getattr(est_xp, key)
-        attribute_ns = get_namespace(est_xp_param)[0]
+        with config_context(array_api_dispatch=True):
+            attribute_ns = get_namespace(est_xp_param)[0]
         assert attribute_ns == input_ns, (
             f"'{key}' attribute is in wrong namespace, expected {input_ns} "
             f"got {attribute_ns}"
@@ -979,7 +980,8 @@ def check_array_api_input(
             with config_context(array_api_dispatch=True):
                 result_xp = getattr(est_xp, method_name)(X_xp)
 
-        result_ns = get_namespace(result_xp)[0]
+        with config_context(array_api_dispatch=True):
+            result_ns = get_namespace(result_xp)[0]
         assert result_ns == input_ns, (
             f"'{method}' output is in wrong namespace, expected {input_ns}, "
             f"got {result_ns}."
@@ -1003,9 +1005,8 @@ def check_array_api_input(
         if method_name == "transform" and hasattr(est, "inverse_transform"):
             inverse_result = est.inverse_transform(result)
             with config_context(array_api_dispatch=True):
-                invese_result_xp = est.inverse_transform(result_xp)
-
-            inverse_result_ns = get_namespace(invese_result_xp)[0]
+                invese_result_xp = est_xp.inverse_transform(result_xp)
+                inverse_result_ns = get_namespace(invese_result_xp)[0]
             assert inverse_result_ns == input_ns, (
                 "'inverse_transform' output is in wrong namespace, expected"
                 f" {input_ns}, got {inverse_result_ns}."
