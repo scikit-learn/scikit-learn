@@ -195,9 +195,6 @@ class _ArrayAPIWrapper:
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
 
-    def __eq__(self, other):
-        return self._namespace == getattr(other, "_namespace", None)
-
 
 def _check_device_cpu(device):  # noqa
     if device not in {"cpu", None}:
