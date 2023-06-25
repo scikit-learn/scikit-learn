@@ -1,59 +1,57 @@
 """Test the split module"""
-import warnings
-import pytest
 import re
+import warnings
+from itertools import combinations, combinations_with_replacement, permutations
+
 import numpy as np
+import pytest
+from scipy import stats
 from scipy.sparse import (
     coo_matrix,
     csc_matrix,
     csr_matrix,
     isspmatrix_csr,
 )
-from scipy import stats
 from scipy.special import comb
-from itertools import combinations
-from itertools import combinations_with_replacement
-from itertools import permutations
 
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.validation import _num_samples
-from sklearn.utils._mocking import MockDataFrame
-
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import KFold
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import GroupKFold
-from sklearn.model_selection import TimeSeriesSplit
-from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.model_selection import LeavePOut
-from sklearn.model_selection import LeavePGroupsOut
-from sklearn.model_selection import ShuffleSplit
-from sklearn.model_selection import GroupShuffleSplit
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import PredefinedSplit
-from sklearn.model_selection import check_cv
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RepeatedKFold
-from sklearn.model_selection import RepeatedStratifiedKFold
-from sklearn.model_selection import StratifiedGroupKFold
-
+from sklearn.datasets import load_digits, make_classification
 from sklearn.dummy import DummyClassifier
-
-from sklearn.model_selection._split import _validate_shuffle_split
-from sklearn.model_selection._split import _build_repr
-from sklearn.model_selection._split import _yields_constant_splits
-
-from sklearn.datasets import load_digits
-from sklearn.datasets import make_classification
-
+from sklearn.model_selection import (
+    GridSearchCV,
+    GroupKFold,
+    GroupShuffleSplit,
+    KFold,
+    LeaveOneGroupOut,
+    LeaveOneOut,
+    LeavePGroupsOut,
+    LeavePOut,
+    PredefinedSplit,
+    RepeatedKFold,
+    RepeatedStratifiedKFold,
+    ShuffleSplit,
+    StratifiedGroupKFold,
+    StratifiedKFold,
+    StratifiedShuffleSplit,
+    TimeSeriesSplit,
+    check_cv,
+    cross_val_score,
+    train_test_split,
+)
+from sklearn.model_selection._split import (
+    _build_repr,
+    _validate_shuffle_split,
+    _yields_constant_splits,
+)
 from sklearn.svm import SVC
-
 from sklearn.tests.test_metadata_routing import assert_request_is_empty
+from sklearn.utils._mocking import MockDataFrame
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
+from sklearn.utils.validation import _num_samples
 
 NO_GROUP_SPLITTERS = [
     KFold(),

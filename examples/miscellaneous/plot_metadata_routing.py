@@ -22,23 +22,29 @@ First a few imports and some random data for the rest of the script.
 """
 # %%
 
-import numpy as np
 import warnings
 from pprint import pprint
+
+import numpy as np
+
 from sklearn import set_config
-from sklearn.base import BaseEstimator
-from sklearn.base import ClassifierMixin
-from sklearn.base import RegressorMixin
-from sklearn.base import MetaEstimatorMixin
-from sklearn.base import TransformerMixin
-from sklearn.base import clone
-from sklearn.utils import metadata_routing
-from sklearn.utils.metadata_routing import get_routing_for_object
-from sklearn.utils.metadata_routing import MetadataRouter
-from sklearn.utils.metadata_routing import MethodMapping
-from sklearn.utils.metadata_routing import process_routing
-from sklearn.utils.validation import check_is_fitted
+from sklearn.base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    RegressorMixin,
+    TransformerMixin,
+    clone,
+)
 from sklearn.linear_model import LinearRegression
+from sklearn.utils import metadata_routing
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    get_routing_for_object,
+    process_routing,
+)
+from sklearn.utils.validation import check_is_fitted
 
 n_samples, n_features = 100, 4
 rng = np.random.RandomState(42)
@@ -402,8 +408,8 @@ est.fit(X, y, sample_weight=my_weights, clf_sample_weight=my_other_weights)
 
 # %%
 # - Alias only on the sub-estimator. This is useful if we don't want the
-# meta-estimator to use the metadata, and we only want the metadata to be used
-# by the sub-estimator.
+#   meta-estimator to use the metadata, and we only want the metadata to be used
+#   by the sub-estimator.
 est = RouterConsumerClassifier(
     estimator=ExampleClassifier().set_fit_request(sample_weight="aliased_sample_weight")
 ).set_fit_request(sample_weight=True)
@@ -615,9 +621,10 @@ for w in record:
 # want to have a scikit-learn compatible estimator, without depending on the
 # scikit-learn package. If the following conditions are met, you do NOT need to
 # modify your code at all:
-#  - your estimator inherits from :class:`~base.BaseEstimator`
-#  - the parameters consumed by your estimator's methods, e.g. ``fit``, are
-#    explicitly defined in the method's signature, as opposed to being
-#    ``*args`` or ``*kwargs``.
-#  - you do not route any metadata to the underlying objects, i.e. you're not a
-#    *router*.
+#
+# - your estimator inherits from :class:`~base.BaseEstimator`
+# - the parameters consumed by your estimator's methods, e.g. ``fit``, are
+#   explicitly defined in the method's signature, as opposed to being
+#   ``*args`` or ``*kwargs``.
+# - you do not route any metadata to the underlying objects, i.e. you're not a
+#   *router*.

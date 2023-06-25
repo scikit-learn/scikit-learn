@@ -9,13 +9,14 @@ repos:
     rev: 23.3.0
     hooks:
     -   id: black
--   repo: https://github.com/pycqa/flake8
-    rev: 4.0.1
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.0.272
     hooks:
-    -   id: flake8
-        types: [file, python]
+    -   id: ruff
+        args: ["--fix", "--show-source"]
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.961
+    rev: v1.3.0
     hooks:
      -  id: mypy
         files: sklearn/

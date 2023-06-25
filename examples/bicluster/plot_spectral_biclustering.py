@@ -32,8 +32,9 @@ plot the biclusters found.
 #
 # As you can see, the data is distributed over 12 cluster cells and is
 # relatively well distinguishable.
-from sklearn.datasets import make_checkerboard
 from matplotlib import pyplot as plt
+
+from sklearn.datasets import make_checkerboard
 
 n_clusters = (4, 3)
 data, rows, columns = make_checkerboard(
