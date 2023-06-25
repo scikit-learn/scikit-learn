@@ -64,15 +64,15 @@ TODO: update at the time of the release.
 
 - |Fix| :meth:`decomposition.SparseCoder.transform` now preserves data
   types of transformed input ``X`` based on ``preserve_dtypes`` parameter.
-  :pr:`24871` by :user:`SHREESHA KUMAR BHAT<Shreesha3112>`.
+  :pr:`26691` by :user:`SHREESHA KUMAR BHAT<Shreesha3112>`.
 
 - |Fix| :func:`decomposition.tests.test_dict_learning_online_numerical_consistency`
   now uses precomputed_dictionary insted of ``X.T`` for ``dictionary`` parameter of
-  :class:`decomposition.SparseCoder`. :pr:`24871` by :user:`SHREESHA KUMAR BHAT<Shreesha3112>`.
+  :class:`decomposition.SparseCoder`. :pr:`26691` by :user:`SHREESHA KUMAR BHAT<Shreesha3112>`.
 
 :mod:`sklearn.utils`
 ....................
 
 - |Enhancement| :func:`utils.estimator_checks._construct_instance` now accepts
-  ```dictionary``` in ``_required_parameters`` and constructs :class:`decomposition.SparseCoder` instance.
-  :pr:`24871` by :user:`SHREESHA KUMAR BHAT<Shreesha3112>`.
+  ``dictionary`` in ``_required_parameters`` and constructs :class:`decomposition.SparseCoder` instance.
+  :pr:`26691` by :user:`SHREESHA KUMAR BHAT<Shreesha3112>`.
