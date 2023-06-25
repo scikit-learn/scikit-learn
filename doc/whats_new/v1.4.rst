@@ -58,3 +58,10 @@ TODO: update at the time of the release.
   :meth:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
   passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
   Jalali`_.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.KNNImputer` now correctly adds a missing indicator column in
+  ``transform`` when ``add_indicator`` is set to ``True`` and missing values are observed
+  during ``fit``. :pr:`26600` by `SHREESHA KUMAR BHAT <Shreesha3112>`.
