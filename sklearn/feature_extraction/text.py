@@ -633,7 +633,7 @@ class HashingVectorizer(
         'ascii' is a fast method that only works on characters that have
         a direct ASCII mapping.
         'unicode' is a slightly slower method that works on any character.
-        None (default) does nothing.
+        None (default) means no character normalization is performed.
 
         Both 'ascii' and 'unicode' use NFKD normalization from
         :func:`unicodedata.normalize`.
@@ -964,7 +964,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         'ascii' is a fast method that only works on characters that have
         a direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
-        None (default) does nothing.
+        None (default) means no character normalization is performed.
 
         Both 'ascii' and 'unicode' use NFKD normalization from
         :func:`unicodedata.normalize`.
