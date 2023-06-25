@@ -1923,7 +1923,7 @@ def _check_response_method(estimator, response_method):
     return prediction_method
 
 
-def _check_fit_params(X, fit_params, indices=None):
+def _check_method_params(X, fit_params, indices=None):
     """Check and validate the parameters passed during `fit`.
 
     Parameters

@@ -32,7 +32,11 @@ from ..utils import check_random_state, Bunch
 from ..utils.extmath import softmax
 from ..utils.extmath import row_norms
 from ..utils.optimize import _newton_cg, _check_optimize_result
-from ..utils.validation import check_is_fitted, _check_sample_weight, _check_fit_params
+from ..utils.validation import (
+    check_is_fitted,
+    _check_sample_weight,
+    _check_method_params,
+)
 from ..utils.multiclass import check_classification_targets
 from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import StrOptions, Interval
@@ -576,24 +580,25 @@ def _log_reg_scoring_path(
     y,
     train,
     test,
-    pos_class=None,
-    Cs=10,
-    scoring=None,
-    fit_intercept=False,
-    max_iter=100,
-    tol=1e-4,
-    class_weight=None,
-    verbose=0,
-    solver="lbfgs",
-    penalty="l2",
-    dual=False,
-    intercept_scaling=1.0,
-    multi_class="auto",
-    random_state=None,
-    max_squared_sum=None,
-    sample_weight=None,
-    l1_ratio=None,
-    score_params=None,
+    *,
+    pos_class,
+    Cs,
+    scoring,
+    fit_intercept,
+    max_iter,
+    tol,
+    class_weight,
+    verbose,
+    solver,
+    penalty,
+    dual,
+    intercept_scaling,
+    multi_class,
+    random_state,
+    max_squared_sum,
+    sample_weight,
+    l1_ratio,
+    score_params,
 ):
     """Computes scores across logistic_regression_path
 
@@ -789,7 +794,9 @@ def _log_reg_scoring_path(
             scores.append(log_reg.score(X_test, y_test))
         else:
             score_params = score_params or {}
-            score_params = _check_fit_params(X=X, fit_params=score_params, indices=test)
+            score_params = _check_method_params(
+                X=X, fit_params=score_params, indices=test
+            )
             scores.append(scoring(log_reg, X_test, y_test, **score_params))
 
     return coefs, Cs, np.array(scores), n_iter
@@ -1754,7 +1761,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self.random_state = random_state
         self.l1_ratios = l1_ratios
 
-    def fit(self, X, y, sample_weight=None, **fit_params):
+    def fit(self, X, y, sample_weight=None, **params):
         """Fit the model according to the given training data.
 
         Parameters
@@ -1770,16 +1777,21 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             Array of weights that are assigned to individual samples.
             If not provided, then each sample is given unit weight.
 
-        **fit_params : dict
+        **params : dict
             Parameters to pass to the underlying splitter and scorer.
 
-            .. versionadded:: 1.3
+            .. versionadded:: 1.4
 
         Returns
         -------
         self : object
             Fitted LogisticRegressionCV estimator.
         """
+        if params and not _routing_enabled():
+            raise ValueError(
+                "params is only supported if enable_metadata_routing=True."
+                " See the User Guide for more information."
+            )
 
         self._validate_params()
 
@@ -1849,12 +1861,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 obj=self,
                 method="fit",
                 sample_weight=sample_weight,
-                other_params=fit_params,
+                other_params=params,
             )
         else:
             routed_params = Bunch()
             routed_params.splitter = Bunch(split={})
-            routed_params.scorer = Bunch(score=fit_params)
+            routed_params.scorer = Bunch(score=params)
             if sample_weight is not None:
                 routed_params.scorer.score["sample_weight"] = sample_weight
 
@@ -2125,13 +2137,19 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         **score_params : dict
             Parameters to pass to the `score` method of the underlying scorer.
 
-            .. versionadded:: 1.3
+            .. versionadded:: 1.4
 
         Returns
         -------
         score : float
             Score of self.predict(X) w.r.t. y.
         """
+        if score_params and not _routing_enabled():
+            raise ValueError(
+                "score_params is only supported if enable_metadata_routing=True."
+                " See the User Guide for more information."
+            )
+
         scoring = self._get_scorer()
         if _routing_enabled():
             routed_params = process_routing(
@@ -2142,9 +2160,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             )
         else:
             routed_params = Bunch()
-            routed_params.scorer = Bunch(score=score_params)
-            if sample_weight is not None:
-                routed_params.scorer.score["sample_weight"] = sample_weight
+            routed_params.scorer = Bunch(score={})
 
         return scoring(
             self,
@@ -2159,7 +2175,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
-        .. versionadded:: 1.3
+        .. versionadded:: 1.4
 
         Returns
         -------

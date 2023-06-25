@@ -37,7 +37,7 @@ from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._tags import _safe_tags
-from ..utils.validation import indexable, check_is_fitted, _check_fit_params
+from ..utils.validation import indexable, check_is_fitted, _check_method_params
 from ..utils.metaestimators import available_if
 from ..utils.parallel import delayed, Parallel
 from ..metrics._scorer import _check_multimetric_scoring, get_scorer_names
@@ -800,7 +800,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             refit_metric = self.refit
 
         X, y, groups = indexable(X, y, groups)
-        fit_params = _check_fit_params(X, fit_params)
+        fit_params = _check_method_params(X, fit_params)
 
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
         n_splits = cv_orig.get_n_splits(X, y, groups)

@@ -533,7 +533,17 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
         scorer = get_scorer(scoring + averaging)
         assert_array_almost_equal(
             _log_reg_scoring_path(
-                X, y, train, test, Cs=[1.0], scoring=scorer, **params
+                X,
+                y,
+                train,
+                test,
+                Cs=[1.0],
+                scoring=scorer,
+                pos_class=None,
+                max_squared_sum=None,
+                sample_weight=None,
+                score_params=None,
+                **params,
             )[2][0],
             scorer(lr, X[test], y[test]),
         )
@@ -2077,8 +2087,7 @@ def test_lr_cv_scores_differ_when_sample_weight_is_requested():
         lr_cv2 = LogisticRegressionCV(scoring=scorer2)
         lr_cv2.fit(X, y, **kwargs)
 
-    with pytest.raises(AssertionError):
-        assert_almost_equal(lr_cv1.scores_[1], lr_cv2.scores_[1])
+    assert pytest.approx(lr_cv1.scores_[1]) != lr_cv2.scores_[1]
 
 
 def test_lr_cv_scores_without_enabling_metadata_routing():

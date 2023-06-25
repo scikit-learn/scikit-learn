@@ -99,21 +99,15 @@ def record_metadata(obj, method, record_default=True, **kwargs):
     obj._records[method] = kwargs
 
 
-def check_recorded_metadata(obj, method, **kwargs):
+def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
     """Check whether the expected metadata is passed to the object's method."""
     records = getattr(obj, "_records", dict()).get(method, dict())
     assert set(kwargs.keys()) == set(records.keys())
     for key, value in kwargs.items():
         recorded_value = records[key]
-        # The following condition is used to check for the sample weight in an
-        # underlying estimator if the sample weight is taken as a subset of the
-        # original sample weight for example if it extracted based on the test
-        # indices.
-        if (
-            key == "sample_weight"
-            and recorded_value is not None
-            and len(recorded_value) < len(value)
-        ):
+        # The following condition is used to check for any specified parameters
+        # being a subset of the original values
+        if key in split_params and recorded_value is not None:
             assert np.isin(recorded_value, value).all()
         else:
             assert recorded_value is value

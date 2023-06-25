@@ -26,7 +26,7 @@ from joblib import logger
 
 from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, _safe_indexing
-from ..utils.validation import _check_fit_params
+from ..utils.validation import _check_method_params
 from ..utils.validation import _num_samples
 from ..utils.parallel import delayed, Parallel
 from ..utils.metaestimators import _safe_split
@@ -709,7 +709,7 @@ def _fit_and_score(
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = _check_fit_params(X, fit_params, train)
+    fit_params = _check_method_params(X, fit_params, train)
 
     if parameters is not None:
         # clone after setting parameters in case any parameters
@@ -1109,7 +1109,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params, method):
     """
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = _check_fit_params(X, fit_params, train)
+    fit_params = _check_method_params(X, fit_params, train)
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
@@ -1414,7 +1414,7 @@ def _permutation_test_score(estimator, X, y, groups, cv, scorer, fit_params):
     for train, test in cv.split(X, y, groups):
         X_train, y_train = _safe_split(estimator, X, y, train)
         X_test, y_test = _safe_split(estimator, X, y, test, train)
-        fit_params = _check_fit_params(X, fit_params, train)
+        fit_params = _check_method_params(X, fit_params, train)
         estimator.fit(X_train, y_train, **fit_params)
         avg_score.append(scorer(estimator, X_test, y_test))
     return np.mean(avg_score)

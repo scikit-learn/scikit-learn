@@ -213,10 +213,10 @@ class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
         yield test_indices, train_indices
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        pass
+        pass  # pragma: no cover
 
     def _iter_test_indices(self, X=None, y=None, groups=None):
-        pass
+        pass  # pragma: no cover
 
 
 METAESTIMATORS = [
@@ -411,7 +411,12 @@ def test_metadata_is_routed_correctly_to_scorer(cv_scorer):
         kwargs = {"sample_weight": sample_weight}
         method(X, y, **kwargs)
         for _scorer in registry:
-            check_recorded_metadata(obj=_scorer, method="score", **kwargs)
+            check_recorded_metadata(
+                obj=_scorer,
+                method="score",
+                split_params=("sample_weight",),
+                **kwargs,
+            )
 
 
 @pytest.mark.parametrize(

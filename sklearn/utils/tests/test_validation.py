@@ -58,7 +58,7 @@ from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _get_feature_names,
     _check_feature_names_in,
-    _check_fit_params,
+    _check_method_params,
     _check_response_method,
 )
 from sklearn.base import BaseEstimator
@@ -1500,7 +1500,7 @@ def test_check_fit_params(indices):
         "scalar-str": "xxx",
         "None": None,
     }
-    result = _check_fit_params(X, fit_params, indices)
+    result = _check_method_params(X, fit_params, indices)
     indices_ = indices if indices is not None else list(range(X.shape[0]))
 
     for key in ["sparse-row", "scalar-int", "scalar-str", "None"]:
