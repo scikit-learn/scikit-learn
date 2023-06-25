@@ -57,8 +57,8 @@ def brute_force_neighbors(X, Y, k, metric, **kwargs):
 
 @pytest.mark.parametrize("metric", itertools.chain(BOOLEAN_METRICS, DISCRETE_METRICS))
 @pytest.mark.parametrize("array_type", ["list", "array"])
-@pytest.mark.parametrize("ball_tree_class", BALL_TREE_CLASSES)
-def test_ball_tree_query_metrics(metric, array_type, ball_tree_class):
+@pytest.mark.parametrize("BallTreeImplementation", BALL_TREE_CLASSES)
+def test_ball_tree_query_metrics(metric, array_type, BallTreeImplementation):
     rng = check_random_state(0)
     if metric in BOOLEAN_METRICS:
         X = rng.random_sample((40, 10)).round(0)
@@ -71,17 +71,19 @@ def test_ball_tree_query_metrics(metric, array_type, ball_tree_class):
 
     k = 5
 
-    bt = ball_tree_class(X, leaf_size=1, metric=metric)
+    bt = BallTreeImplementation(X, leaf_size=1, metric=metric)
     dist1, ind1 = bt.query(Y, k)
     dist2, ind2 = brute_force_neighbors(X, Y, k, metric)
     assert_array_almost_equal(dist1, dist2)
 
 
-@pytest.mark.parametrize("ball_tree_class, decimal_tol", zip(BALL_TREE_CLASSES, [6, 5]))
-def test_query_haversine(ball_tree_class, decimal_tol):
+@pytest.mark.parametrize(
+    "BallTreeImplementation, decimal_tol", zip(BALL_TREE_CLASSES, [6, 5])
+)
+def test_query_haversine(BallTreeImplementation, decimal_tol):
     rng = check_random_state(0)
     X = 2 * np.pi * rng.random_sample((40, 2))
-    bt = ball_tree_class(X, leaf_size=1, metric="haversine")
+    bt = BallTreeImplementation(X, leaf_size=1, metric="haversine")
     dist1, ind1 = bt.query(X, k=5)
     dist2, ind2 = brute_force_neighbors(X, X, k=5, metric="haversine")
 
@@ -89,16 +91,16 @@ def test_query_haversine(ball_tree_class, decimal_tol):
     assert_array_almost_equal(ind1, ind2)
 
 
-@pytest.mark.parametrize("ball_tree_class", BALL_TREE_CLASSES)
-def test_array_object_type(ball_tree_class):
+@pytest.mark.parametrize("BallTreeImplementation", BALL_TREE_CLASSES)
+def test_array_object_type(BallTreeImplementation):
     """Check that we do not accept object dtype array."""
     X = np.array([(1, 2, 3), (2, 5), (5, 5, 1, 2)], dtype=object)
     with pytest.raises(ValueError, match="setting an array element with a sequence"):
-        ball_tree_class(X)
+        BallTreeImplementation(X)
 
 
-@pytest.mark.parametrize("ball_tree_class", BALL_TREE_CLASSES)
-def test_bad_pyfunc_metric(ball_tree_class):
+@pytest.mark.parametrize("BallTreeImplementation", BALL_TREE_CLASSES)
+def test_bad_pyfunc_metric(BallTreeImplementation):
     def wrong_returned_value(x, y):
         return "1"
 
@@ -108,11 +110,11 @@ def test_bad_pyfunc_metric(ball_tree_class):
     X = np.ones((5, 2))
     msg = "Custom distance function must accept two vectors and return a float."
     with pytest.raises(TypeError, match=msg):
-        ball_tree_class(X, metric=wrong_returned_value)
+        BallTreeImplementation(X, metric=wrong_returned_value)
 
     msg = "takes 1 positional argument but 2 were given"
     with pytest.raises(TypeError, match=msg):
-        ball_tree_class(X, metric=one_arg_func)
+        BallTreeImplementation(X, metric=one_arg_func)
 
 
 @pytest.mark.parametrize("metric", itertools.chain(METRICS, BOOLEAN_METRICS))

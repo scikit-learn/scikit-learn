@@ -19,8 +19,8 @@ implementation_specific_values = [
 #
 #    License: BSD
 #
-# The file generated is then literally included in ball_tree.pyx and kd_tree.pyx.
-# See ball_tree.pyx.tp and kd_tree.pyx.tp.
+# _binary_tree.pxi is generated and is then literally Cython included in
+# ball_tree.pyx and kd_tree.pyx. See ball_tree.pyx.tp and kd_tree.pyx.tp.
 
 }}
 
@@ -1614,10 +1614,14 @@ cdef class BinaryTree{{name_suffix}}:
 
         return count
 
-    cdef int _query_single_depthfirst(self, intp_t i_node,
-                                      {{INPUT_DTYPE_t}}* pt, intp_t i_pt,
-                                      NeighborsHeap{{name_suffix}} heap,
-                                      float64_t reduced_dist_LB) except -1 nogil:
+    cdef int _query_single_depthfirst(
+        self,
+        intp_t i_node,
+        {{INPUT_DTYPE_t}}* pt,
+        intp_t i_pt,
+        NeighborsHeap{{name_suffix}} heap,
+        float64_t reduced_dist_LB,
+    ) except -1 nogil:
         """Recursive Single-tree k-neighbors query, depth-first approach"""
         cdef NodeData_t node_info = self.node_data[i_node]
 
@@ -1665,10 +1669,13 @@ cdef class BinaryTree{{name_suffix}}:
                                               reduced_dist_LB_1)
         return 0
 
-    cdef int _query_single_breadthfirst(self, {{INPUT_DTYPE_t}}* pt,
-                                        intp_t i_pt,
-                                        NeighborsHeap{{name_suffix}} heap,
-                                        NodeHeap nodeheap) except -1:
+    cdef int _query_single_breadthfirst(
+        self,
+        {{INPUT_DTYPE_t}}* pt,
+        intp_t i_pt,
+        NeighborsHeap{{name_suffix}} heap,
+        NodeHeap nodeheap,
+    ) except -1:
         """Non-recursive single-tree k-neighbors query, breadth-first search"""
         cdef intp_t i, i_node
         cdef float64_t dist_pt, reduced_dist_LB
@@ -1714,11 +1721,15 @@ cdef class BinaryTree{{name_suffix}}:
                     nodeheap.push(nodeheap_item)
         return 0
 
-    cdef int _query_dual_depthfirst(self, intp_t i_node1,
-                                    BinaryTree{{name_suffix}} other, intp_t i_node2,
-                                    float64_t[::1] bounds,
-                                    NeighborsHeap{{name_suffix}} heap,
-                                    float64_t reduced_dist_LB) except -1:
+    cdef int _query_dual_depthfirst(
+        self,
+        intp_t i_node1,
+        BinaryTree{{name_suffix}} other,
+        intp_t i_node2,
+        float64_t[::1] bounds,
+        NeighborsHeap{{name_suffix}} heap,
+        float64_t reduced_dist_LB,
+    ) except -1:
         """Recursive dual-tree k-neighbors query, depth-first"""
         # note that the array `bounds` is maintained such that
         # bounds[i] is the largest distance among any of the
@@ -1815,9 +1826,12 @@ cdef class BinaryTree{{name_suffix}}:
                                             bounds, heap, reduced_dist_LB1)
         return 0
 
-    cdef int _query_dual_breadthfirst(self, BinaryTree{{name_suffix}} other,
-                                      NeighborsHeap{{name_suffix}} heap,
-                                      NodeHeap nodeheap) except -1:
+    cdef int _query_dual_breadthfirst(
+        self,
+        BinaryTree{{name_suffix}} other,
+        NeighborsHeap{{name_suffix}} heap,
+        NodeHeap nodeheap,
+    ) except -1:
         """Non-recursive dual-tree k-neighbors query, breadth-first"""
         cdef intp_t i, i1, i2, i_node1, i_node2, i_pt
         cdef float64_t dist_pt, reduced_dist_LB
@@ -1899,14 +1913,17 @@ cdef class BinaryTree{{name_suffix}}:
                     nodeheap.push(nodeheap_item)
         return 0
 
-    cdef intp_t _query_radius_single(self,
-                                      intp_t i_node,
-                                      {{INPUT_DTYPE_t}}* pt, float64_t r,
-                                      intp_t* indices,
-                                      {{INPUT_DTYPE_t}}* distances,
-                                      intp_t count,
-                                      int count_only,
-                                      int return_distance) noexcept nogil:
+    cdef intp_t _query_radius_single(
+        self,
+        intp_t i_node,
+        {{INPUT_DTYPE_t}}* pt,
+        float64_t r,
+        intp_t* indices,
+        {{INPUT_DTYPE_t}}* distances,
+        intp_t count,
+        int count_only,
+        int return_distance,
+    ) noexcept nogil:
         """recursive single-tree radius query, depth-first"""
         cdef {{INPUT_DTYPE_t}}* data = &self.data[0, 0]
         cdef intp_t* idx_array = &self.idx_array[0]
@@ -1975,13 +1992,17 @@ cdef class BinaryTree{{name_suffix}}:
 
         return count
 
-    cdef float64_t _kde_single_breadthfirst(self, {{INPUT_DTYPE_t}}* pt,
-                                          KernelType kernel, float64_t h,
-                                          float64_t log_knorm,
-                                          float64_t log_atol, float64_t log_rtol,
-                                          NodeHeap nodeheap,
-                                          float64_t* node_log_min_bounds,
-                                          float64_t* node_log_bound_spreads):
+    cdef float64_t _kde_single_breadthfirst(
+        self, {{INPUT_DTYPE_t}}* pt,
+        KernelType kernel,
+        float64_t h,
+        float64_t log_knorm,
+        float64_t log_atol,
+        float64_t log_rtol,
+        NodeHeap nodeheap,
+        float64_t* node_log_min_bounds,
+        float64_t* node_log_bound_spreads,
+    ):
         """non-recursive single-tree kernel density estimation"""
         # For the given point, node_log_min_bounds and node_log_bound_spreads
         # will encode the current bounds on the density between the point
@@ -2140,14 +2161,19 @@ cdef class BinaryTree{{name_suffix}}:
                          global_log_bound_spread - log(2))
 
     cdef int _kde_single_depthfirst(
-                   self, intp_t i_node, {{INPUT_DTYPE_t}}* pt,
-                   KernelType kernel, float64_t h,
-                   float64_t log_knorm,
-                   float64_t log_atol, float64_t log_rtol,
-                   float64_t local_log_min_bound,
-                   float64_t local_log_bound_spread,
-                   float64_t* global_log_min_bound,
-                   float64_t* global_log_bound_spread) except -1:
+        self,
+        intp_t i_node,
+        {{INPUT_DTYPE_t}}* pt,
+        KernelType kernel,
+        float64_t h,
+        float64_t log_knorm,
+        float64_t log_atol,
+        float64_t log_rtol,
+        float64_t local_log_min_bound,
+        float64_t local_log_bound_spread,
+        float64_t* global_log_min_bound,
+        float64_t* global_log_bound_spread,
+    ) except -1:
         """recursive single-tree kernel density estimate, depth-first"""
         # For the given point, local_min_bound and local_max_bound give the
         # minimum and maximum density for the current node, while
@@ -2276,9 +2302,15 @@ cdef class BinaryTree{{name_suffix}}:
                                         global_log_bound_spread)
         return 0
 
-    cdef int _two_point_single(self, intp_t i_node, {{INPUT_DTYPE_t}}* pt, float64_t* r,
-                               intp_t* count, intp_t i_min,
-                               intp_t i_max) except -1:
+    cdef int _two_point_single(
+        self,
+        intp_t i_node,
+        {{INPUT_DTYPE_t}}* pt,
+        float64_t* r,
+        intp_t* count,
+        intp_t i_min,
+        intp_t i_max,
+    ) except -1:
         """recursive single-tree two-point correlation function query"""
         cdef {{INPUT_DTYPE_t}}* data = &self.data[0, 0]
         cdef intp_t* idx_array = &self.idx_array[0]
@@ -2325,10 +2357,16 @@ cdef class BinaryTree{{name_suffix}}:
                                        count, i_min, i_max)
         return 0
 
-    cdef int _two_point_dual(self, intp_t i_node1,
-                             BinaryTree{{name_suffix}} other, intp_t i_node2,
-                             float64_t* r, intp_t* count,
-                             intp_t i_min, intp_t i_max) except -1:
+    cdef int _two_point_dual(
+        self,
+        intp_t i_node1,
+        BinaryTree{{name_suffix}} other,
+        intp_t i_node2,
+        float64_t* r,
+        intp_t* count,
+        intp_t i_min,
+        intp_t i_max,
+    ) except -1:
         """recursive dual-tree two-point correlation function query"""
         cdef {{INPUT_DTYPE_t}}* data1 = &self.data[0, 0]
         cdef {{INPUT_DTYPE_t}}* data2 = &other.data[0, 0]
