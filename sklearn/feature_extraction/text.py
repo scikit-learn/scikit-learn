@@ -1881,7 +1881,7 @@ class TfidfVectorizer(CountVectorizer):
     binary : bool, default=False
         If True, all non-zero term counts are set to 1. This does not mean
         outputs will have only 0/1 values, only that the tf term in tf-idf
-        is binary. (Set this parameter as well as `use_idf` to False and
+        is binary. (Set `binary` to True, `use_idf` to False and
         `norm` to None to get 0/1 outputs).
 
     dtype : dtype, default=float64
