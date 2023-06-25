@@ -10,7 +10,8 @@ from sklearn.utils._mocking import (
     DictionaryRequiringEstimatorMock,
     _MockEstimatorOnOffPrediction,
 )
-from sklearn.utils._testing import _convert_container
+from sklearn.utils._testing import SkipTest, _convert_container, raises
+from sklearn.utils.estimator_checks import _construct_instance
 
 
 @pytest.fixture
@@ -214,3 +215,7 @@ def test_dictionary_requiring_estimator_mock():
 
     # Check that the mock_estimator has the right required_parameters
     assert mock_estimator._required_parameters == ["dictionary"]
+
+    # Check that using the mock_estimator in _construct_instance raises a SkipTest
+    with raises(SkipTest):
+        _construct_instance(mock_estimator.__class__)

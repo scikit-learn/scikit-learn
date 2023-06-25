@@ -3901,11 +3901,6 @@ def check_fit_check_is_fitted(name, estimator_orig):
     if not estimator._get_tags()["requires_fit"]:
         return
 
-    # estimator with requires_fit set to False, will not raise NotFittedError
-    # when  check_is_fitted called before fit.
-    if not estimator._get_tags()["requires_fit"]:
-        return
-
     set_random_state(estimator)
     if "warm_start" in estimator.get_params():
         estimator.set_params(warm_start=False)
