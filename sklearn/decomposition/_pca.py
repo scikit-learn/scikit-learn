@@ -14,6 +14,7 @@ from math import log, sqrt
 from numbers import Integral, Real
 
 import numpy as np
+from scipy import linalg
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 from scipy.special import gammaln
@@ -519,7 +520,7 @@ class PCA(_BasePCA):
 
     def _fit_full(self, X, n_components):
         """Fit the model by computing full SVD on X."""
-        xp, _ = get_namespace(X)
+        xp, is_array_api_compliant = get_namespace(X)
 
         n_samples, n_features = X.shape
 
@@ -539,7 +540,10 @@ class PCA(_BasePCA):
         self.mean_ = xp.mean(X, axis=0)
         X -= self.mean_
 
-        U, S, Vt = xp.linalg.svd(X, full_matrices=False)
+        if _is_numpy_namespace(xp) and not is_array_api_compliant:
+            U, S, Vt = linalg.svd(X, full_matrices=False)
+        else:
+            U, S, Vt = xp.linalg.svd(X, full_matrices=False)
         # flip eigenvectors' sign to enforce deterministic output
         U, Vt = svd_flip(U, Vt)
 
