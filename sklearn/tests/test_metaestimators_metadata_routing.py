@@ -181,9 +181,6 @@ class ConsumingScorer(_BaseScorer):
         super().__init__(score_func="test", sign=1, kwargs={})
         self.registry = registry
 
-    def __repr__(self):
-        return "Consuming_Scorer"
-
     def __call__(
         self, estimator, X, y_true, sample_weight="default", metadata="default"
     ):
