@@ -50,12 +50,10 @@ or feature selection to prevent overfitting.
 # exact coefficients.
 from sklearn.datasets import make_regression
 
-X, y, w = make_regression(
-    n_samples=100, n_features=10, coef=True, n_informative=3, noise=10, random_state=1
-)
+X, y, w = make_regression(n_samples=100, n_features=10, coef=True, random_state=1)
 
 # Obtain the true coefficients
-w
+print(f"The true coefficient of this regression problem are:\n{w}")
 
 # %%
 # Training Ridge Regressor
@@ -76,9 +74,7 @@ errors_coefs = []
 
 # Train the model with different regularisation strengths
 for a in alphas:
-    clf.set_params(alpha=a)
-    clf.fit(X, y)
-
+    clf.set_params(alpha=a).fit(X, y)
     coefs.append(clf.coef_)
     errors_coefs.append(mean_squared_error(clf.coef_, w))
 
