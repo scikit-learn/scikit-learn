@@ -236,6 +236,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             )
 
         y_1d = y
+        n_classes = None
         X_out = np.empty_like(X_ordinal, dtype=np.float64)
         X_unknown_mask = ~X_known_mask
         X_ordinal_trans = X_ordinal
@@ -272,7 +273,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 test_idx,
                 encodings,
                 y_mean,
-                self.n_features_in_,
+                n_classes,
             )
         return X_out
 
@@ -298,6 +299,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             X, handle_unknown="ignore", force_all_finite="allow-nan"
         )
 
+        n_classes = None
         if self.target_type_ == "multiclass":
             n_classes = self._label_binarizer_.classes_.shape[0]
             X_ordinal, X_valid = [
@@ -311,7 +313,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             slice(None),
             self.encodings_,
             self.target_mean_,
-            self.n_features_in_,
+            n_classes,
         )
         return X_out
 
@@ -431,18 +433,15 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         indices,
         encodings,
         y_mean,
-        n_features_in,
+        n_classes,
     ):
-        not_multiclass = y_mean.ndim == 0
         for f_idx, encoding in enumerate(encodings):
             X_out[indices, f_idx] = encoding[X_ordinal[indices, f_idx]]
-            if not_multiclass:
-                X_out[X_unknown_mask[:, f_idx], f_idx] = y_mean
-            else:
-                mean_idx = f_idx // n_features_in
-                # XX if we want same features grouped
-                # mean_idx = f_idx - (n_classes * (f_idx // n_classes))
+            if n_classes: # multiclass
+                mean_idx = f_idx - (n_classes * (f_idx // n_classes))
                 X_out[X_unknown_mask[:, f_idx], f_idx] = y_mean[mean_idx]
+            else:
+                X_out[X_unknown_mask[:, f_idx], f_idx] = y_mean
 
     def _more_tags(self):
         return {"requires_y": True}
