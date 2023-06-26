@@ -812,7 +812,7 @@ def svd_flip(u, v, u_based_decision=True):
     Adjusts the columns of u and the rows of v such that the loadings in the
     columns in u that are largest in absolute value are always positive.
 
-    if u_based_decision is False, then the same sign correction is applied to
+    If u_based_decision is False, then the same sign correction is applied to
     so that the rows in v that are largest in absolute value are always
     positive.
 
