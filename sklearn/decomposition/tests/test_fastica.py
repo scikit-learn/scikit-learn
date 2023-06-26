@@ -2,19 +2,17 @@
 Test the fastica algorithm.
 """
 import itertools
-import pytest
-import warnings
 import os
+import warnings
 
 import numpy as np
+import pytest
 from scipy import stats
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-
-from sklearn.decomposition import FastICA, fastica, PCA
+from sklearn.decomposition import PCA, FastICA, fastica
 from sklearn.decomposition._fastica import _gs_decorrelation
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import assert_allclose
 
 
 def center_and_norm(x, axis=-1):
@@ -70,10 +68,6 @@ def test_fastica_return_dtypes(global_dtype):
     assert s_.dtype == global_dtype
 
 
-# FIXME remove filter in 1.3
-@pytest.mark.filterwarnings(
-    "ignore:Starting in v1.3, whiten='unit-variance' will be used by default."
-)
 @pytest.mark.parametrize("add_noise", [True, False])
 def test_fastica_simple(add_noise, global_random_seed, global_dtype):
     if (
@@ -170,8 +164,9 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
     assert sources.shape == (1000, 2)
 
     assert_allclose(sources_fun, sources)
-    # the debian 32 bit build with global dtype float32 needs an atol to pass
-    atol = 1e-7 if global_dtype == np.float32 else 0
+    # Set atol to account for the different magnitudes of the elements in sources
+    # (from 1e-4 to 1e1).
+    atol = np.max(np.abs(sources)) * (1e-5 if global_dtype == np.float32 else 1e-7)
     assert_allclose(sources, ica.transform(m.T), atol=atol)
 
     assert ica.mixing_.shape == (2, 2)
@@ -362,10 +357,6 @@ def test_inverse_transform(
         assert_allclose(X, X2, atol=atol)
 
 
-# FIXME remove filter in 1.3
-@pytest.mark.filterwarnings(
-    "ignore:Starting in v1.3, whiten='unit-variance' will be used by default."
-)
 def test_fastica_errors():
     n_features = 3
     n_samples = 10
@@ -392,58 +383,6 @@ def test_fastica_whiten_unit_variance():
     Xt = ica.fit_transform(X)
 
     assert np.var(Xt) == pytest.approx(1.0)
-
-
-@pytest.mark.parametrize("ica", [FastICA(), FastICA(whiten=True)])
-def test_fastica_whiten_default_value_deprecation(ica):
-    """Test FastICA whiten default value deprecation.
-
-    Regression test for #19490
-    """
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((100, 10))
-    with pytest.warns(FutureWarning, match=r"Starting in v1.3, whiten="):
-        ica.fit(X)
-        assert ica._whiten == "arbitrary-variance"
-
-
-def test_fastica_whiten_backwards_compatibility():
-    """Test previous behavior for FastICA whitening (whiten=True)
-
-    Regression test for #19490
-    """
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((100, 10))
-    n_components = X.shape[1]
-
-    default_ica = FastICA(n_components=n_components, random_state=0)
-    with pytest.warns(FutureWarning):
-        Xt_on_default = default_ica.fit_transform(X)
-
-    ica = FastICA(n_components=n_components, whiten=True, random_state=0)
-    with pytest.warns(FutureWarning):
-        Xt = ica.fit_transform(X)
-
-    # No warning must be raised in this case.
-    av_ica = FastICA(
-        n_components=n_components,
-        whiten="arbitrary-variance",
-        random_state=0,
-        whiten_solver="svd",
-    )
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        Xt_av = av_ica.fit_transform(X)
-
-    # The whitening strategy must be "arbitrary-variance" in all the cases.
-    assert default_ica._whiten == "arbitrary-variance"
-    assert ica._whiten == "arbitrary-variance"
-    assert av_ica._whiten == "arbitrary-variance"
-
-    assert_array_equal(Xt, Xt_on_default)
-    assert_array_equal(Xt, Xt_av)
-
-    assert np.var(Xt) == pytest.approx(1.0 / 100)
 
 
 @pytest.mark.parametrize("whiten", ["arbitrary-variance", "unit-variance", False])

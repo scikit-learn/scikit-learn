@@ -27,11 +27,12 @@ proportional to (n_samples * iterations).
 # License: BSD 3 clause
 
 from time import time
+
 import matplotlib.pyplot as plt
 
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-from sklearn.decomposition import NMF, MiniBatchNMF, LatentDirichletAllocation
 from sklearn.datasets import fetch_20newsgroups
+from sklearn.decomposition import NMF, LatentDirichletAllocation, MiniBatchNMF
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 n_samples = 2000
 n_features = 1000

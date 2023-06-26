@@ -4,22 +4,23 @@ fitting classification and regression tasks.
 """
 
 from .loss import (
-    HalfSquaredError,
     AbsoluteError,
-    PinballLoss,
-    HalfPoissonLoss,
+    HalfBinomialLoss,
     HalfGammaLoss,
+    HalfMultinomialLoss,
+    HalfPoissonLoss,
+    HalfSquaredError,
     HalfTweedieLoss,
     HalfTweedieLossIdentity,
-    HalfBinomialLoss,
-    HalfMultinomialLoss,
+    HuberLoss,
+    PinballLoss,
 )
-
 
 __all__ = [
     "HalfSquaredError",
     "AbsoluteError",
     "PinballLoss",
+    "HuberLoss",
     "HalfPoissonLoss",
     "HalfGammaLoss",
     "HalfTweedieLoss",

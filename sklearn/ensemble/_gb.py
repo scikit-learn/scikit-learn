@@ -20,36 +20,26 @@ The module structure is the following:
 #          Arnaud Joly, Jacob Schreiber
 # License: BSD 3 clause
 
-from abc import ABCMeta
-from abc import abstractmethod
-from numbers import Integral, Real
 import warnings
-
-from ._base import BaseEnsemble
-from ..base import ClassifierMixin, RegressorMixin
-from ..base import is_classifier
-
-from ._gradient_boosting import predict_stages
-from ._gradient_boosting import predict_stage
-from ._gradient_boosting import _random_sample_mask
+from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
+from time import time
 
 import numpy as np
+from scipy.sparse import csc_matrix, csr_matrix, issparse
 
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import issparse
-
-from time import time
+from ..base import ClassifierMixin, RegressorMixin, _fit_context, is_classifier
+from ..exceptions import NotFittedError
 from ..model_selection import train_test_split
 from ..tree import DecisionTreeRegressor
-from ..tree._tree import DTYPE, DOUBLE
-from . import _gb_losses
-
+from ..tree._tree import DOUBLE, DTYPE
 from ..utils import check_array, check_random_state, column_or_1d
 from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
-from ..exceptions import NotFittedError
+from ..utils.validation import _check_sample_weight, check_is_fitted
+from . import _gb_losses
+from ._base import BaseEnsemble
+from ._gradient_boosting import _random_sample_mask, predict_stage, predict_stages
 
 
 class VerboseReporter:
@@ -174,7 +164,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         n_iter_no_change=None,
         tol=1e-4,
     ):
-
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.loss = loss
@@ -377,6 +366,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Check that the estimator is initialized, raising an error if not."""
         check_is_fitted(self)
 
+    @_fit_context(
+        # GradientBoosting*.init is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -413,8 +406,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         if not self.warm_start:
             self._clear_state()
 
@@ -598,7 +589,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # perform boosting iterations
         i = begin_at_stage
         for i in range(begin_at_stage, self.n_estimators):
-
             # subsampling
             if do_oob:
                 sample_mask = _random_sample_mask(n_samples, n_inbag, random_state)
@@ -951,7 +941,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
-        ``init`` has to provide :meth:`fit` and :meth:`predict_proba`. If
+        ``init`` has to provide :term:`fit` and :term:`predict_proba`. If
         'zero', the initial raw predictions are set to zero. By default, a
         ``DummyEstimator`` predicting the classes priors is used.
 
@@ -1189,7 +1179,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         tol=1e-4,
         ccp_alpha=0.0,
     ):
-
         super().__init__(
             loss=loss,
             learning_rate=learning_rate,
@@ -1743,7 +1732,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         tol=1e-4,
         ccp_alpha=0.0,
     ):
-
         super().__init__(
             loss=loss,
             learning_rate=learning_rate,

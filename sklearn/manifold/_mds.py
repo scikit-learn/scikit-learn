@@ -5,19 +5,18 @@ Multi-dimensional Scaling (MDS).
 # author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD
 
+import warnings
 from numbers import Integral, Real
 
 import numpy as np
 from joblib import effective_n_jobs
 
-import warnings
-
-from ..base import BaseEstimator
-from ..metrics import euclidean_distances
-from ..utils import check_random_state, check_array, check_symmetric
+from ..base import BaseEstimator, _fit_context
 from ..isotonic import IsotonicRegression
-from ..utils._param_validation import Interval, StrOptions, Hidden
-from ..utils.parallel import delayed, Parallel
+from ..metrics import euclidean_distances
+from ..utils import check_array, check_random_state, check_symmetric
+from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils.parallel import Parallel, delayed
 
 
 def _smacof_single(
@@ -297,9 +296,11 @@ def smacof(
     # TODO(1.4): Remove
     if normalized_stress == "warn":
         warnings.warn(
-            "The default value of `normalized_stress` will change to `'auto'` in"
-            " version 1.4. To suppress this warning, manually set the value of"
-            " `normalized_stress`.",
+            (
+                "The default value of `normalized_stress` will change to `'auto'` in"
+                " version 1.4. To suppress this warning, manually set the value of"
+                " `normalized_stress`."
+            ),
             FutureWarning,
         )
         normalized_stress = False
@@ -567,10 +568,10 @@ class MDS(BaseEstimator):
         self : object
             Fitted estimator.
         """
-        # parameter will be validated in `fit_transform` call
         self.fit_transform(X, init=init)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, init=None):
         """
         Fit the data from `X`, and returns the embedded coordinates.
@@ -595,7 +596,6 @@ class MDS(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             X transformed in the new space.
         """
-        self._validate_params()
         X = self._validate_data(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn(
