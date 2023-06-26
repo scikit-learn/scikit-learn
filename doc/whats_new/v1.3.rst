@@ -455,6 +455,11 @@ Changelog
   on linearly separable problems.
   :pr:`25214` by `Tom Dupre la Tour`_.
 
+- |Fix| Fix a crash when calling `fit` on
+  :class:`linear_model.LogisticRegression(solver="newton-cholesky", max_iter=0)`
+  which failed to inspect the state of the model prior to the first parameter update.
+  :pr:`26653` by :user:`Olivier Grisel <ogrisel>`.
+
 - |API| Deprecates `n_iter` in favor of `max_iter` in
   :class:`linear_model.BayesianRidge` and :class:`linear_model.ARDRegression`.
   `n_iter` will be removed in scikit-learn 1.5. This change makes those
