@@ -35,8 +35,8 @@ from ..utils.fixes import parse_version, sp_base_version
 from ..utils.multiclass import check_classification_targets
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import check_is_fitted, check_non_negative
-from ._ball_tree import BallTree64 as BallTree
-from ._kd_tree import KDTree64 as KDTree
+from ._ball_tree import BallTree
+from ._kd_tree import KDTree
 
 SCIPY_METRICS = [
     "braycurtis",

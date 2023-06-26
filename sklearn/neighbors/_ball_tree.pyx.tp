@@ -17,7 +17,7 @@ implementation_specific_values = [
 }}
 
 
-__all__ = ['BallTree64', 'BallTree32']
+__all__ = ['BallTree', 'BallTree64', 'BallTree32']
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
@@ -277,3 +277,7 @@ cdef inline float64_t max_rdist_dual{{name_suffix}}(
         )
 
 {{endfor}}
+
+
+class BallTree(BallTree64):
+    pass

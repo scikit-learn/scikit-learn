@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_equal
 
-from sklearn.neighbors._kd_tree import KDTree32, KDTree64
+from sklearn.neighbors._kd_tree import KDTree, KDTree32, KDTree64
 from sklearn.neighbors.tests.test_ball_tree import (
     get_dataset_for_kernel_density,
     get_dataset_for_query_methods,
@@ -16,6 +16,7 @@ METRICS = {"euclidean": {}, "manhattan": {}, "chebyshev": {}, "minkowski": dict(
 KD_TREE_CLASSES = [
     KDTree64,
     KDTree32,
+    KDTree,
 ]
 
 

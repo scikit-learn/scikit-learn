@@ -18,7 +18,7 @@ implementation_specific_values = [
 }}
 
 
-__all__ = ['KDTree64', 'KDTree32']
+__all__ = ['KDTree', 'KDTree64', 'KDTree32']
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
@@ -329,3 +329,7 @@ cdef inline float64_t max_dist_dual{{name_suffix}}(
     )
 
 {{endfor}}
+
+
+class KDTree(KDTree64):
+    pass

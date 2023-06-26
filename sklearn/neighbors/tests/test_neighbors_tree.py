@@ -9,13 +9,11 @@ from numpy.testing import assert_allclose, assert_array_almost_equal
 
 from sklearn.metrics import DistanceMetric
 from sklearn.neighbors._ball_tree import (
-    BallTree64 as BallTree,
+    BallTree,
+    kernel_norm,
 )
 from sklearn.neighbors._ball_tree import (
     NeighborsHeap64 as NeighborsHeapBT,
-)
-from sklearn.neighbors._ball_tree import (
-    kernel_norm,
 )
 from sklearn.neighbors._ball_tree import (
     nodeheap_sort as nodeheap_sort_bt,
@@ -24,7 +22,7 @@ from sklearn.neighbors._ball_tree import (
     simultaneous_sort as simultaneous_sort_bt,
 )
 from sklearn.neighbors._kd_tree import (
-    KDTree64 as KDTree,
+    KDTree,
 )
 from sklearn.neighbors._kd_tree import (
     NeighborsHeap64 as NeighborsHeapKDT,
