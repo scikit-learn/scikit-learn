@@ -205,6 +205,23 @@ General Concepts
         exceptional behaviours on the estimator using semantic :term:`estimator
         tags`.
 
+    cross-fitting
+    cross fitting
+        A resampling method that iteratively partitions data into complementary
+        'train' and 'estimation' subsets. The 'estimation' subset may be used
+        to estimate a parameter or predict a target. The outputs from
+        each iteration are combined and used in a downstream prcess, generally
+        to avoid bias.
+
+    cross-validation
+    cross validation
+        A resampling method that iteratively partitions data into complementary
+        'train' and 'test' subsets so model performance can be evaluated on
+        unseen data. This conserves data as avoids the need to hold out a
+        'validation' dataset and accounts for variability as multiple rounds of
+        cross validation are genreally performed.
+        See :ref:`User Guide <_cross_validation>` for more details.
+
     deprecation
         We use deprecation to slowly violate our :term:`backwards
         compatibility` assurances, usually to:
