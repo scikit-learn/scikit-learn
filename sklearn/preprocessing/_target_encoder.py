@@ -437,7 +437,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     ):
         for f_idx, encoding in enumerate(encodings):
             X_out[indices, f_idx] = encoding[X_ordinal[indices, f_idx]]
-            if n_classes: # multiclass
+            if n_classes:  # multiclass
                 mean_idx = f_idx - (n_classes * (f_idx // n_classes))
                 X_out[X_unknown_mask[:, f_idx], f_idx] = y_mean[mean_idx]
             else:
