@@ -1042,3 +1042,18 @@ def test_nmf_w_h_not_used_warning():
         non_negative_factorization(
             X, W=W_init, H=H_init, update_H=False, n_components="auto"
         )
+
+
+def test_nmf_custom_init_shape_error():
+    # Check that an informative error is raised when custom initialization does not
+    # have the right shape
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((6, 5))
+    H = rng.random_sample((2, 5))
+    nmf = NMF(n_components=2, init="custom", random_state=0)
+
+    with pytest.raises(ValueError, match="Array with wrong first dimension passed"):
+        nmf.fit(X, H=H, W=rng.random_sample((5, 2)))
+
+    with pytest.raises(ValueError, match="Array with wrong second dimension passed"):
+        nmf.fit(X, H=H, W=rng.random_sample((6, 3)))
