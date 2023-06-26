@@ -48,6 +48,21 @@ $(document).ready(function() {
 	});
 });
 
+function toggleDetails() {
+    /* Expand and hide all <details> sections on a page.*/
+    var btn = document.getElementById("sk-btn-details");
+    var sections = document.querySelectorAll("details");
+
+    if (btn.value == "Expand Details") {
+        for (s of sections) s.setAttribute("open", "");
+        btn.value = "Hide Details";
+    }
+    else {
+        for (s of sections) s.removeAttribute("open");
+        btn.value = "Expand Details";
+    }
+}
+
 </script>
 {%- if pagename != 'index' and pagename != 'documentation' %}
     {% if theme_mathjax_path %}

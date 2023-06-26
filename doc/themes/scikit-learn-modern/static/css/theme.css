@@ -486,13 +486,22 @@ div.section h6 {
   margin-top: 1rem;
 }
 
-.sk-btn-toggle-toc {
+.sk-btns-sk-btn-toggle-wrapper {
   position: fixed;
+  bottom: 0;
+  margin: 0;
+  z-index: 3;
+}
+
+.sk-btn-toggle {
+  position: relative;
   bottom: 0;
   margin: 0;
   border-radius: 0;
   border-top-right-radius: 0.5rem;
-  z-index: 3;
+  border-top-left-radius: 0.5rem;
+  width: 115px;
+  font-size: x-small;
   cursor: pointer;
 }
 
@@ -501,12 +510,12 @@ div.sk-page-content {
 }
 
 @media screen and (min-width: 1400px) {
-  .sk-btn-toggle-toc {
+  .sk-btn-toggle {
     border-top-left-radius: 0.5rem;
   }
 }
 
-.sk-btn-toggle-toc:hover {
+.sk-btn-toggle:hover {
   color: white;
   background-color: #297ca7;
 }
