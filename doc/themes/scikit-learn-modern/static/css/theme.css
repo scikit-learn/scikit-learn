@@ -501,7 +501,7 @@ div.section h6 {
   border-top-right-radius: 0.5rem;
   border-top-left-radius: 0.5rem;
   width: 115px;
-  font-size: x-small;
+  font-size: small;
   cursor: pointer;
 }
 
