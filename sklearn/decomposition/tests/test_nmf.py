@@ -974,23 +974,6 @@ def test_nmf_n_components_auto(Estimator):
     assert est._n_components == H.shape[0]
 
 
-@pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
-def test_nmf_w_used_h_not(Estimator):
-    # Tests that non_negative_factorization does not fail
-    # when setting n_components="auto" with W provided but not H
-    # also tests that the inferred n_component value is the right one
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((6, 5))
-    W_init = rng.random_sample((6, 2))
-    est = Estimator(
-        n_components="auto",
-        random_state=0,
-        tol=1e-6,
-    )
-    est.fit_transform(X, W=W_init)
-    assert est._n_components == W_init.shape[1]
-
-
 def test_nmf_non_negative_factorization_n_components_auto():
     # Check that n_components is correctly inferred from the provided
     # custom initialization.
@@ -1039,20 +1022,23 @@ def test_nmf_w_h_not_used_warning():
     H_init = rng.random_sample((2, 5))
     with pytest.warns(
         RuntimeWarning,
-        match="Either 'W' or 'H' parameter was provided. Both 'W' and 'H'",
+        match="When init!='custom', provided W or H are ignored",
     ):
-        # init is not custom.
-        # H and W will not be initialized with H_init and W_init.
         non_negative_factorization(X, H=H_init, update_H=True, n_components="auto")
+
+    with pytest.warns(
+        RuntimeWarning,
+        match="When init!='custom', provided W or H are ignored",
+    ):
         non_negative_factorization(
             X, W=W_init, H=H_init, update_H=True, n_components="auto"
         )
 
     with pytest.warns(
-        RuntimeWarning, match="The 'W' parameter provided will not be used and will"
+        RuntimeWarning, match="When update_H=False, the provided initial W is not used."
     ):
-        # update_H is False and init is not custom so W will not be
-        # initialized with W_init.
+        # When update_H is False, W is ignored regardless of init
+        # TODO: use the provided W when init="custom".
         non_negative_factorization(
             X, W=W_init, H=H_init, update_H=False, n_components="auto"
         )

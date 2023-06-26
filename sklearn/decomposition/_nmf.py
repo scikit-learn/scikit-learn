@@ -34,8 +34,6 @@ from ..utils._param_validation import (
 )
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import (
-    _num_features,
-    _num_samples,
     check_is_fitted,
     check_non_negative,
 )
@@ -72,14 +70,19 @@ def trace_dot(X, Y):
 
 def _check_init(A, shape, whom):
     A = check_array(A)
-    if np.shape(A) != shape:
+    if shape[0] != "auto" and A.shape[0] != shape[0]:
         raise ValueError(
-            "Array with wrong shape passed to %s. Expected %s, but got %s "
-            % (whom, shape, np.shape(A))
+            f"Array with wrong first dimension passed to {whom}. Expected {shape[0]}, "
+            f"but got {A.shape[0]}."
+        )
+    if shape[1] != "auto" and A.shape[1] != shape[1]:
+        raise ValueError(
+            f"Array with wrong second dimension passed to {whom}. Expected {shape[1]}, "
+            f"but got {A.shape[1]}."
         )
     check_non_negative(A, whom)
     if np.max(A) == 0:
-        raise ValueError("Array passed to %s is full of zeros." % whom)
+        raise ValueError(f"Array passed to {whom} is full of zeros.")
 
 
 def _beta_divergence(X, W, H, beta, square_root=False):
@@ -1202,9 +1205,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
                 FutureWarning,
             )
             self._n_components = None  # Keeping the old default value
-        if self._n_components is None or (
-            self.init != "custom" and self._n_components == "auto"
-        ):
+        if self._n_components is None:
             self._n_components = X.shape[1]
 
         # beta_loss
@@ -1213,57 +1214,61 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
     def _check_w_h(self, X, W, H, update_H):
         """Check W and H, or initialize them."""
         n_samples, n_features = X.shape
-        if self.n_components == "auto":
-            if H is not None:
-                self._n_components = _num_samples(H)
-            elif W is not None:
-                self._n_components = _num_features(W)
-            else:
-                self._n_components = X.shape[1]
 
         if self.init == "custom" and update_H:
             _check_init(H, (self._n_components, n_features), "NMF (input H)")
             _check_init(W, (n_samples, self._n_components), "NMF (input W)")
+            if self._n_components == "auto":
+                self._n_components = H.shape[0]
+
             if H.dtype != X.dtype or W.dtype != X.dtype:
                 raise TypeError(
                     "H and W should have the same dtype as X. Got "
                     "H.dtype = {} and W.dtype = {}.".format(H.dtype, W.dtype)
                 )
+
         elif not update_H:
+            if W is not None:
+                warnings.warn(
+                    "When update_H=False, the provided initial W is not used.",
+                    RuntimeWarning,
+                )
+
             _check_init(H, (self._n_components, n_features), "NMF (input H)")
+            if self._n_components == "auto":
+                self._n_components = H.shape[0]
+
             if H.dtype != X.dtype:
                 raise TypeError(
                     "H should have the same dtype as X. Got H.dtype = {}.".format(
                         H.dtype
                     )
                 )
-            if W is not None:
-                warnings.warn(
-                    (
-                        "The 'W' parameter provided will not be used and will be"
-                        " initialized. To utilize the 'W' parameter, please set the"
-                        " 'init' parameter to \"custom\"."
-                    ),
-                    RuntimeWarning,
-                )
+
             # 'mu' solver should not be initialized by zeros
             if self.solver == "mu":
                 avg = np.sqrt(X.mean() / self._n_components)
                 W = np.full((n_samples, self._n_components), avg, dtype=X.dtype)
             else:
                 W = np.zeros((n_samples, self._n_components), dtype=X.dtype)
+
         else:
             if W is not None or H is not None:
                 warnings.warn(
                     (
-                        "Either 'W' or 'H' parameter was provided. Both 'W' and 'H'"
-                        " will be initialized using the provided 'init' function."
+                        "When init!='custom', provided W or H are ignored. Set "
+                        " init='custom' to use them as initialization."
                     ),
                     RuntimeWarning,
                 )
+
+            if self._n_components == "auto":
+                self._n_components = X.shape[1]
+
             W, H = _initialize_nmf(
                 X, self._n_components, init=self.init, random_state=self.random_state
             )
+
         return W, H
 
     def _compute_regularization(self, X):
