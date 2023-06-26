@@ -1185,7 +1185,7 @@ def f1_score(
     --------
     fbeta_score : Compute the F-beta score.
     precision_recall_fscore_support_pred : Compute the precision, recall, F-score,
-        and support.
+        support, and predicted.
     jaccard_score : Compute the Jaccard similarity coefficient score.
     multilabel_confusion_matrix : Compute a confusion matrix for each class or
         sample.
@@ -1369,7 +1369,7 @@ def fbeta_score(
     See Also
     --------
     precision_recall_fscore_support_pred : Compute the precision, recall, F-score,
-        and support.
+        support, and predicted.
     multilabel_confusion_matrix : Compute a confusion matrix for each class or
         sample.
 
@@ -1560,7 +1560,8 @@ def precision_recall_fscore_support_pred(
     sample_weight=None,
     zero_division="warn",
 ):
-    """Compute precision, recall, F-measure and support for each class.
+    """Compute precision, recall, F-measure, support,
+        and predicted for each class.
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
     true positives and ``fp`` the number of false positives. The precision is
@@ -2085,8 +2086,8 @@ def precision_score(
 
     See Also
     --------
-    precision_recall_fscore_support_pred : Compute precision, recall, F-measure and
-        support for each class.
+    precision_recall_fscore_support_pred : Compute precision, recall, F-measure,
+        support, and predicted for each class.
     recall_score :  Compute the ratio ``tp / (tp + fn)`` where ``tp`` is the
         number of true positives and ``fn`` the number of false negatives.
     PrecisionRecallDisplay.from_estimator : Plot precision-recall curve given
@@ -2255,8 +2256,8 @@ def recall_score(
 
     See Also
     --------
-    precision_recall_fscore_support_pred : Compute precision, recall, F-measure and
-        support for each class.
+    precision_recall_fscore_support_pred : Compute precision, recall,
+        F-measure, support, and predicted for each class.
     precision_score : Compute the ratio ``tp / (tp + fp)`` where ``tp`` is the
         number of true positives and ``fp`` the number of false positives.
     balanced_accuracy_score : Compute balanced accuracy to deal with imbalanced
@@ -2511,7 +2512,7 @@ def classification_report(
     See Also
     --------
     precision_recall_fscore_support_pred: Compute precision, recall, F-measure,
-        support, and predictions for each class.
+        support, and predicted for each class.
     confusion_matrix: Compute confusion matrix to evaluate the accuracy of a
         classification.
     multilabel_confusion_matrix: Compute a confusion matrix for each class or sample.
