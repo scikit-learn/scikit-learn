@@ -920,7 +920,7 @@ Building the documentation requires installing some additional packages:
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
                 scikit-image packaging seaborn sphinx-prompt \
-                sphinxext-opengraph plotly pooch
+                sphinxext-opengraph plotly pooch jupyterlite jupyterlite-sphinx
 
 To build the documentation, you need to be in the ``doc`` folder:
 
