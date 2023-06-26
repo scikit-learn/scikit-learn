@@ -6,12 +6,14 @@ Ridge coefficients as a function of the L2 regularization
 .. currentmodule:: sklearn.linear_model
 A model that overfits learns the training data too well, capturing both the
 underlying patterns and the noise in the data. However, when applied to unseen
-data, the learned associations may not hold.
+data, the learned associations may not hold. We normally detect this when we
+apply our trained predictions to the test data and see the performance drop
+significantly compared to the training data.
 
 One way to overcome overfitting is through regularization. Regularization
 penalizes large training weights, forcing the model to shrink certain
-coefficients or even select fewer features. Regularization reduces a model's
-reliance on specific information obtained from the training samples.
+coefficients. Regularization reduces a model's reliance on specific information
+obtained from the training samples.
 
 This example illustrates how L2 regularization in a :class:`Ridge` regression
 affects a model's performance by adding a penalty term to the Loss that
@@ -34,8 +36,8 @@ In Ridge regularization, the penalty term is proportional to the sum of the
 squares of the coefficients. In effect, it discourages any single coefficient βi
 from taking an excessively large value. This indirectly influences the
 individual coefficients towards smaller values, forcing the model to shrink
-certain coefficients or even select fewer features. Thus, Ridge regularization
-is promoting model simplicity or feature selection to prevent overfitting.
+certain coefficients. Thus, Ridge regularization is promoting model simplicity
+or feature selection to prevent overfitting.
 """
 
 # Author: Kornel Kielczewski -- <kornel.k@plusnet.pl>
@@ -48,7 +50,9 @@ is promoting model simplicity or feature selection to prevent overfitting.
 # exact coefficients.
 from sklearn.datasets import make_regression
 
-X, y, w = make_regression(n_samples=100, n_features=10, coef=True, random_state=1)
+X, y, w = make_regression(
+    n_samples=100, n_features=10, coef=True, n_informative=3, noise=10, random_state=1
+)
 
 # Obtain the true coefficients
 w
@@ -57,7 +61,7 @@ w
 # Training Ridge Regressor
 # ------------------------
 # We use :class:`Ridge`, a linear model with L2 regularization. The model
-# parameter `alpha` is a postive constant that multiplies the penalty term,
+# parameter `alpha` is a positive constant that multiplies the penalty term,
 # controlling the regularization strength.
 import numpy as np
 from sklearn.linear_model import Ridge
@@ -68,20 +72,22 @@ clf = Ridge()
 # Generate values for `alpha` that are evenly distributed on a logarithmic scale
 alphas = np.logspace(-3, 4, 200)
 coefs = []
-errors = []
+errors_coefs = []
 
 # Train the model with different regularisation strengths
 for a in alphas:
     clf.set_params(alpha=a)
     clf.fit(X, y)
+
     coefs.append(clf.coef_)
-    errors.append(mean_squared_error(clf.coef_, w))
+    errors_coefs.append(mean_squared_error(clf.coef_, w))
+
 # %%
 # Plotting Results
 # ----------------
 # We now plot the 10 different regularized coefficients as a function of the
-# regularization parameter `alpha`, each color representing one different
-# dimension (feature) of the coefficient vector.
+# regularization parameter `alpha` where each color represents a different
+# coefficient.
 #
 # In a second plot, we show how the errors of the coefficients from the
 # estimator change as a function of regularization.
@@ -90,45 +96,49 @@ import matplotlib.pyplot as plt
 
 alphas = pd.Index(alphas, name="alpha")
 coefs = pd.DataFrame(coefs, index=alphas, columns=[f"Feature {i}" for i in range(10)])
-errors = pd.Series(errors, index=alphas, name="Mean squared error")
+errors = pd.Series(errors_coefs, index=alphas, name="Mean squared error")
 
 fig, axs = plt.subplots(1, 2, figsize=(20, 6))
 
 coefs.plot(
     ax=axs[0],
     logx=True,
-    title="Ridge coefficients as a function of the regularization strenght",
+    ylabel="Ridge coefficient values",
+    title="Ridge coefficients as a function of the regularization strength",
 )
-errors.plot(
+_ = errors.plot(
     ax=axs[1],
     logx=True,
-    title="Coefficient error as a function of the regularization strenght",
+    ylabel="Mean squared error",
+    title="Coefficient error as a function of the regularization strength",
 )
 
 # %%
 # Interpretation
 # --------------
-# The left plot shows how the regularization strength (`alpha`) affects the
-# Ridge regression coefficients. Smaller values of `alpha` (weak
+# The plot on the left-hand side shows how the regularization strength (`alpha`)
+# affects the Ridge regression coefficients. Smaller values of `alpha` (weak
 # regularization), allow the coefficients to closely resemble the true
-# coefficients (`w`) used to generate the dataset. As `alpha` increases, the
-# coefficients shrink towards zero, gradually converging to a simpler and more
-# simplified solution.
+# coefficients (`w`) used to generate the dataset (because no additional noise
+# was added). As `alpha` increases, the coefficients shrink towards zero,
+# gradually converging to a simpler and more simplified solution.
 #
-# The right plot shows how exact the solution is. It graphs the `mean squared
-# error` between the coefficients found by the model and the true coefficients
-# (`w`). In this case, since our toy dataset was non-noisy, we can see that the
-# least regularized model retrieves coefficients closest to the true
-# coefficients (`w`) (error is close to 0).
+# The right-hand side plot shows the `mean squared error` between the
+# coefficients found by the model and the true coefficients (`w`). It provides a
+# measure that relates to how exact our ridge model is in comparison to the true
+# generative model. A low error means that it found coefficients closer to the
+# ones of the true generative model. In this case, since our toy dataset was
+# non-noisy, we can see that the least regularized model retrieves coefficients
+# closest to the true coefficients (`w`) (error is close to 0).
 #
-# These plots demonstrate the trade-off between model simplicity (smaller
-# coefficients, feature selection) and model performance. When `alpha` is small,
-# the model captures the intricate details of the training data, potentially
-# achieving higher performance (if there is little noise) or worse performance,
-# (if there is a lot of noise). As `alpha` increases, the model becomes simpler
-# by shrinking the coefficients, which can lead to a sacrifice in performance
-# (if there is little noise) or to a better performance on unseen data (if there
-# is a lot of noise).
+# These plots show the trade-off between model simplicity (smaller coefficients,
+# feature selection) and model performance. When `alpha` is small, the model
+# captures the intricate details of the training data, potentially achieving
+# higher performance (if there is little noise) or worse performance, (if there
+# is a lot of noise). As `alpha` increases, the model becomes simpler by
+# shrinking the coefficients, which can lead to a sacrifice in performance (if
+# there is little noise) or to a better performance on unseen data (if there is
+# a lot of noise).
 #
 # In our example with a noise-free toy dataset, since regularization aims to
 # reduce the impact of noise, setting `alpha = 0` best recovers the true
