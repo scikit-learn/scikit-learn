@@ -5,14 +5,13 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ._base import SelectorMixin
-from ..base import BaseEstimator, MetaEstimatorMixin, clone, is_classifier
-from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils._param_validation import RealNotInt
+from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
+from ..metrics import get_scorer_names
+from ..model_selection import check_cv, cross_val_score
+from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
-from ..model_selection import cross_val_score, check_cv
-from ..metrics import get_scorer_names
+from ._base import SelectorMixin
 
 
 class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -34,7 +33,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     estimator : estimator instance
         An unfitted estimator.
 
-    n_features_to_select : "auto", int or float, default='warn'
+    n_features_to_select : "auto", int or float, default="auto"
         If `"auto"`, the behaviour depends on the `tol` parameter:
 
         - if `tol` is not `None`, then features are selected while the score
@@ -179,6 +178,10 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self.cv = cv
         self.n_jobs = n_jobs
 
+    @_fit_context(
+        # SequentialFeatureSelector.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Learn the features to select from X.
 
@@ -197,8 +200,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         tags = self._get_tags()
         X = self._validate_data(
             X,

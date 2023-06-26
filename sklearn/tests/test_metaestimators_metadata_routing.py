@@ -219,7 +219,7 @@ class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
         pass  # pragma: no cover
 
 
-METAESTIMATORS = [
+METAESTIMATORS: list = [
     {
         "metaestimator": MultiOutputRegressor,
         "estimator_name": "estimator",
