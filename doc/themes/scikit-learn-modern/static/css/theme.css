@@ -153,6 +153,15 @@ div.sk-page-content details {
     margin: 4ex 0pt;
 }
 
+div.sk-page-content details[open] summary ~ * {
+  animation: fadein .35s ease-in-out;
+}
+
+@keyframes fatein {
+  0%    {opacity: 0; margin-top: -10px}
+  100%  {opacity: 1; margin-top: 0px}
+}
+
 div.sk-page-content summary.btn {
     display: list-item;
     padding: 6px 20px;
@@ -160,8 +169,7 @@ div.sk-page-content summary.btn {
 }
 
 div.sk-page-content details div.card {
-    padding: 0pt .5ex;
-    margin: 1ex 0pt;
+    padding: 1.25rem;
     border: 1px solid #e9ecef;
     border-left-width: .25rem;
     border-radius: .25rem;
