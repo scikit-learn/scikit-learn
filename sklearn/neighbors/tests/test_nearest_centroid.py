@@ -85,6 +85,31 @@ def test_predict_proba(n_classes):
     assert 0 <= probabilities.all() <= 1
 
 
+def test_priors():
+    # Test priors (negative priors)
+    priors = np.array([0.5, -0.5])
+    clf = NearestCentroid(priors=priors)
+    msg = "priors must be non-negative"
+
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
+
+    # Test that priors passed as a list are correctly handled (run to see if
+    # failure)
+    clf = NearestCentroid(priors=[0.5, 0.5])
+    clf.fit(X, y)
+
+    # Test that priors always sum to 1
+    priors = np.array([0.5, 0.6])
+    prior_norm = np.array([0.45, 0.55])
+    clf = NearestCentroid(priors=priors)
+
+    with pytest.warns(UserWarning):
+        clf.fit(X, y)
+
+    assert_array_almost_equal(clf.priors_, prior_norm, 2)
+
+
 # TODO(1.5): Remove filterwarnings when support for some metrics is removed
 @pytest.mark.filterwarnings("ignore:Support for distance metrics:FutureWarning:sklearn")
 def test_iris():
