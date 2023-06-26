@@ -614,6 +614,7 @@ class NewtonLSMRSolver(NewtonSolver):
             - self.sqrt_P = sqrt(l2_reg_strength) * sqrt(P)
             - self.A_norm
             - self.r_norm
+            - self.atol
             - self.lsmr_iter
         """
         super().setup(X=X, y=y, sample_weight=sample_weight)
@@ -661,6 +662,7 @@ class NewtonLSMRSolver(NewtonSolver):
             # The multiplicative term is 1 <= term <= 50, log(1e-22) ~ -50
             self.A_norm *= 1 - np.log((self.l2_reg_strength + 1e-22) * 1e7)
         self.r_norm = 1
+        self.atol = 0
         self.lsmr_iter = 0  # number of total LSMR iterations
 
     def update_gradient_hessian(self, X, y, sample_weight):
@@ -924,6 +926,7 @@ class NewtonLSMRSolver(NewtonSolver):
             - self.lsmr_iter
             - self.A_norm
             - self.r_norm
+            - self.atol
 
         A_norm and r_norm are used for the inner tolerance used in LSMR.
         """
@@ -974,11 +977,17 @@ class NewtonLSMRSolver(NewtonSolver):
         # is then loose enough.
         if self.verbose >= 3:
             print(f"    norm(gradient) = {norm_G}")
+        # Avoid division by 0 by adding tiny 1e-16.
+        atol = eta * norm_G / (self.A_norm * self.r_norm + 1e-16)
+        # Avoid that atol gets tiny too fast.
+        if atol < self.atol / 10:
+            atol = self.atol / 10 * np.sqrt(atol * 10 / self.atol)
+        self.atol = atol
         result = scipy.sparse.linalg.lsmr(
             A,
             b,
             damp=0,
-            atol=eta * norm_G / (self.A_norm * self.r_norm),
+            atol=atol,
             btol=self.tol,
             maxiter=max(n_samples, n_features) * n_classes,  # default is min(A.shape)
             # default conlim = 1e8, for compatible systems 1e12 is still reasonable,
