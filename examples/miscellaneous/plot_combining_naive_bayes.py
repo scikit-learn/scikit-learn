@@ -25,6 +25,7 @@ We consider the titanic dataset, in which:
 
 # %%
 import pandas as pd
+
 from sklearn import set_config
 from sklearn.datasets import fetch_openml
 
@@ -42,12 +43,12 @@ X["embarked"] = X["embarked"].cat.add_categories("N/A").fillna("N/A")
 # ------------------------------------------------
 
 from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OrdinalEncoder
-from sklearn.naive_bayes import GaussianNB, CategoricalNB, ColumnwiseNB
-from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.naive_bayes import CategoricalNB, ColumnwiseNB, GaussianNB
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OrdinalEncoder
 
 numeric_features = ["age", "fare"]
 numeric_transformer = SimpleImputer(strategy="median")

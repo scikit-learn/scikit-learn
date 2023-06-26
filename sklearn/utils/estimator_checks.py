@@ -46,9 +46,8 @@ from ..naive_bayes import GaussianNB, _select_half
 from ..pipeline import make_pipeline
 from ..preprocessing import StandardScaler, scale
 from ..random_projection import BaseRandomProjection
-from ..utils._array_api import _convert_to_numpy
+from ..utils._array_api import _convert_to_numpy, get_namespace
 from ..utils._array_api import device as array_device
-from ..utils._array_api import get_namespace
 from ..utils._param_validation import (
     InvalidParameterError,
     generate_invalid_param_val,
