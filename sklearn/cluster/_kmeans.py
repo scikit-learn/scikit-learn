@@ -354,7 +354,8 @@ def k_means(
         n_init consecutive runs in terms of inertia.
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        10 if using `init='random'`, 1 if using `init='k-means++'`.
+        10 if using `init='random'` or `init` is a callable;
+        1 if using `init='k-means++'` or `init` is an array-like.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -884,10 +885,14 @@ class _BaseKMeans(
             )
             self._n_init = default_n_init
         if self._n_init == "auto":
-            if self.init == "k-means++":
+            if isinstance(self.init, str) and self.init == "k-means++":
                 self._n_init = 1
-            else:
+            elif isinstance(self.init, str) and self.init == "random":
                 self._n_init = default_n_init
+            elif callable(self.init):
+                self._n_init = default_n_init
+            else:  # array-like
+                self._n_init = 1
 
         if _is_arraylike_not_scalar(self.init) and self._n_init != 1:
             warnings.warn(
@@ -1241,7 +1246,8 @@ class KMeans(_BaseKMeans):
         high-dimensional problems (see :ref:`kmeans_sparse_high_dim`).
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        10 if using `init='random'`, 1 if using `init='k-means++'`.
+        10 if using `init='random'` or `init` is a callable;
+        1 if using `init='k-means++'` or `init` is an array-like.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -1777,7 +1783,8 @@ class MiniBatchKMeans(_BaseKMeans):
         :ref:`kmeans_sparse_high_dim`).
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        3 if using `init='random'`, 1 if using `init='k-means++'`.
+        3 if using `init='random'` or `init` is a callable;
+        1 if using `init='k-means++'` or `init` is an array-like.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
