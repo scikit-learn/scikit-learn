@@ -139,7 +139,11 @@ def _clone_parametrized(estimator, *, safe=True):
 sklearn_version = parse_version(__version__)
 if sklearn_version.dev is None:
     # Not dev version, give full link
-    ver_str = f"{sklearn_version.major}.{sklearn_version.minor}"
+    # The gymnastics below is to catter for legacy versions and make mypy happy
+    if hasattr(sklearn_version, 'major') and hasattr(sklearn_version, 'minor'):
+        ver_str = f"{sklearn_version.major}.{sklearn_version.minor}"
+    else:
+        ver_str = sklearn_version.base_version
 else:
     ver_str = "dev"
 _DOC_LINK = (
