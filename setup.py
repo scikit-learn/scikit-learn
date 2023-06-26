@@ -4,17 +4,16 @@
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 # License: 3-clause BSD
 
-import sys
+import importlib
 import os
-from os.path import join
 import platform
 import shutil
+import sys
+import traceback
+from os.path import join
 
 from setuptools import Command, Extension, setup
 from setuptools.command.build_ext import build_ext
-
-import traceback
-import importlib
 
 try:
     import builtins
@@ -454,9 +453,9 @@ def configure_extension_modules():
     if "sdist" in sys.argv or "--help" in sys.argv:
         return []
 
-    from sklearn._build_utils import cythonize_extensions
-    from sklearn._build_utils import gen_from_templates
     import numpy
+
+    from sklearn._build_utils import cythonize_extensions, gen_from_templates
 
     is_pypy = platform.python_implementation() == "PyPy"
     np_include = numpy.get_include()

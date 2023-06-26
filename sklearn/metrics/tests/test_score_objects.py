@@ -1,64 +1,68 @@
-from copy import deepcopy
-import pickle
-import tempfile
-import shutil
-import os
 import numbers
-from unittest.mock import Mock
+import os
+import pickle
+import shutil
+import tempfile
+from copy import deepcopy
 from functools import partial
+from unittest.mock import Mock
 
+import joblib
 import numpy as np
 import pytest
-import joblib
-
 from numpy.testing import assert_allclose
-from sklearn import config_context
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.metadata_routing import MetadataRouter
-from sklearn.tests.test_metadata_routing import assert_request_is_empty
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator
+from sklearn.cluster import KMeans
+from sklearn.datasets import (
+    load_diabetes,
+    make_blobs,
+    make_classification,
+    make_multilabel_classification,
+    make_regression,
+)
+from sklearn.linear_model import LogisticRegression, Perceptron, Ridge
 from sklearn.metrics import (
     accuracy_score,
-    balanced_accuracy_score,
     average_precision_score,
+    balanced_accuracy_score,
     brier_score_loss,
+    check_scoring,
     f1_score,
     fbeta_score,
+    get_scorer,
+    get_scorer_names,
     jaccard_score,
     log_loss,
+    make_scorer,
+    matthews_corrcoef,
     precision_score,
     r2_score,
     recall_score,
     roc_auc_score,
     top_k_accuracy_score,
-    matthews_corrcoef,
 )
 from sklearn.metrics import cluster as cluster_module
-from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import (
-    _PredictScorer,
-    _PassthroughScorer,
-    _MultimetricScorer,
     _check_multimetric_scoring,
+    _MultimetricScorer,
+    _PassthroughScorer,
+    _PredictScorer,
 )
-from sklearn.metrics import make_scorer, get_scorer, get_scorer_names
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import LinearSVC
-from sklearn.pipeline import make_pipeline
-from sklearn.cluster import KMeans
-from sklearn.linear_model import Ridge, LogisticRegression, Perceptron
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.datasets import make_blobs
-from sklearn.datasets import make_classification, make_regression
-from sklearn.datasets import make_multilabel_classification
-from sklearn.datasets import load_diabetes
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.multiclass import OneVsRestClassifier
-
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import make_pipeline
+from sklearn.svm import LinearSVC
+from sklearn.tests.test_metadata_routing import assert_request_is_empty
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
+from sklearn.utils.metadata_routing import MetadataRouter
 
 REGRESSION_SCORERS = [
     "explained_variance",

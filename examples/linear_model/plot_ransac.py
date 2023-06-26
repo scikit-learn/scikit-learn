@@ -18,8 +18,7 @@ and the fitted line is determined only by the identified inliers.
 import numpy as np
 from matplotlib import pyplot as plt
 
-from sklearn import linear_model, datasets
-
+from sklearn import datasets, linear_model
 
 n_samples = 1000
 n_outliers = 50

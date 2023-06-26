@@ -1,25 +1,27 @@
 import functools
-from typing import List, Any
 import warnings
+from typing import Any, List
 
 import numpy as np
-import scipy.sparse as sp
 import pytest
+import scipy.sparse as sp
 
-from sklearn.metrics import euclidean_distances
-
-from sklearn.random_projection import johnson_lindenstrauss_min_dim
-from sklearn.random_projection import _gaussian_random_matrix
-from sklearn.random_projection import _sparse_random_matrix
-from sklearn.random_projection import SparseRandomProjection
-from sklearn.random_projection import GaussianRandomProjection
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.exceptions import DataDimensionalityWarning
+from sklearn.metrics import euclidean_distances
+from sklearn.random_projection import (
+    GaussianRandomProjection,
+    SparseRandomProjection,
+    _gaussian_random_matrix,
+    _sparse_random_matrix,
+    johnson_lindenstrauss_min_dim,
+)
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 all_sparse_random_matrix: List[Any] = [_sparse_random_matrix]
 all_dense_random_matrix: List[Any] = [_gaussian_random_matrix]

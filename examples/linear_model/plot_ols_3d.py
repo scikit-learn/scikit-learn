@@ -16,8 +16,9 @@ give us much regarding `y` when compared to just feature 1.
 # %%
 # First we load the diabetes dataset.
 
-from sklearn import datasets
 import numpy as np
+
+from sklearn import datasets
 
 X, y = datasets.load_diabetes(return_X_y=True)
 indices = (0, 1)

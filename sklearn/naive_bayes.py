@@ -15,32 +15,30 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #
 # License: BSD 3 clause
 import warnings
-
 from abc import ABCMeta, abstractmethod
-from numbers import Real, Integral
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.special import logsumexp
 
-from .base import BaseEstimator, ClassifierMixin
-from .base import _fit_context
-from .base import clone
-from .preprocessing import binarize
-from .preprocessing import LabelBinarizer
-from .preprocessing import label_binarize
-from .utils.extmath import safe_sparse_dot
-from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import check_is_fitted, check_non_negative
-from .utils.validation import _check_sample_weight
-from .utils.validation import column_or_1d, check_array
-from .utils.metaestimators import _BaseComposition, available_if
-from .utils import _safe_indexing, _get_column_indices, _print_elapsed_time, Bunch
-from .utils.parallel import delayed, Parallel
+from .base import BaseEstimator, ClassifierMixin, _fit_context, clone
+from .compose._column_transformer import _is_empty_column_selection
+from .preprocessing import LabelBinarizer, binarize, label_binarize
+from .utils import Bunch, _get_column_indices, _print_elapsed_time, _safe_indexing
 from .utils._encode import _unique
 from .utils._estimator_html_repr import _VisualBlock
-from .compose._column_transformer import _is_empty_column_selection
-
-from .utils._param_validation import Interval, Hidden, StrOptions
+from .utils._param_validation import Hidden, Interval, StrOptions
+from .utils.extmath import safe_sparse_dot
+from .utils.metaestimators import _BaseComposition, available_if
+from .utils.multiclass import _check_partial_fit_first_call
+from .utils.parallel import Parallel, delayed
+from .utils.validation import (
+    _check_sample_weight,
+    check_array,
+    check_is_fitted,
+    check_non_negative,
+    column_or_1d,
+)
 
 __all__ = [
     "BernoulliNB",

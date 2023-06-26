@@ -3,33 +3,44 @@ Testing for Support Vector Machine module (sklearn.svm)
 
 TODO: remove hard coded numerical results when possible
 """
-import warnings
 import re
+import warnings
 
 import numpy as np
 import pytest
-
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_allclose
+from numpy.testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 from scipy import sparse
-from sklearn import svm, linear_model, datasets, metrics, base
-from sklearn.svm import LinearSVC, OneClassSVM, SVR, NuSVR, LinearSVR
-from sklearn.svm._classes import _validate_dual_parameter
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import make_classification, make_blobs
+
+from sklearn import base, datasets, linear_model, metrics, svm
+from sklearn.datasets import make_blobs, make_classification
+from sklearn.exceptions import (
+    ConvergenceWarning,
+    NotFittedError,
+    UndefinedMetricWarning,
+)
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.utils import check_random_state
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.validation import _num_samples
-from sklearn.utils import shuffle
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
+from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 
 # mypy error: Module 'sklearn.svm' has no attribute '_libsvm'
-from sklearn.svm import _libsvm  # type: ignore
+from sklearn.svm import (  # type: ignore
+    SVR,
+    LinearSVC,
+    LinearSVR,
+    NuSVR,
+    OneClassSVM,
+    _libsvm,
+)
+from sklearn.svm._classes import _validate_dual_parameter
+from sklearn.utils import check_random_state, shuffle
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.validation import _num_samples
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
