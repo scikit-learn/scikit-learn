@@ -7,6 +7,7 @@ Newton solver for Generalized Linear Models
 
 import warnings
 from abc import ABC, abstractmethod
+from time import perf_counter
 
 import numpy as np
 import scipy.linalg
@@ -16,6 +17,7 @@ from ..._loss.loss import HalfSquaredError
 from ...exceptions import ConvergenceWarning
 from ...utils.optimize import _check_optimize_result
 from .._linear_loss import LinearModelLoss, Multinomial_LDL_Decomposition
+from ...utils.lsmr import lsmr
 
 
 class NewtonSolver(ABC):
@@ -205,7 +207,7 @@ class NewtonSolver(ABC):
             },
             args=(X, y, sample_weight, self.l2_reg_strength, self.n_threads),
         )
-        self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
+        self.iteration += _check_optimize_result("lbfgs", opt_res)
         self.coef = opt_res.x
         if self.linear_loss.base_loss.is_multiclass:
             # No test case was found (yet) where NewtonLSMRSolver ends up in this code
@@ -239,6 +241,7 @@ class NewtonSolver(ABC):
         )
 
         self.coef_old = self.coef
+        self.loss_improvement_old = self.loss_improvement
         self.loss_value_old = self.loss_value
         self.gradient_old = self.gradient
 
@@ -316,6 +319,7 @@ class NewtonSolver(ABC):
             return
 
         self.raw_prediction = raw
+        self.loss_improvement = loss_improvement
 
     def compute_d2(self, X, sample_weight):
         """Compute square of Newton decrement."""
@@ -403,12 +407,20 @@ class NewtonSolver(ABC):
         # setup usually:
         #   - initializes self.coef if needed
         #   - initializes and calculates self.raw_predictions, self.loss_value
+        tic = perf_counter()
+        self.convergence_report = []
         self.setup(X=X, y=y, sample_weight=sample_weight)
 
         self.iteration = 1
         self.converged = False
+        self.norm_G = -1
+        self.loss_improvement = 0
+        self.loss_improvement_old = 0
+        toc = perf_counter()
+        self.time = toc - tic
 
         while self.iteration <= self.max_iter and not self.converged:
+            tic = perf_counter()
             if self.verbose:
                 print(f"Newton iter={self.iteration}")
 
@@ -444,12 +456,37 @@ class NewtonSolver(ABC):
             # 5. Next iteration
             self.iteration += 1
 
+            # 6. Timing and convergence report
+            toc = perf_counter()
+            self.time += toc - tic
+            record = {
+                "iteration": self.iteration - 1,
+                "time": self.time,
+                "loss": self.loss_value,
+                "fallback_lbfgs": self.use_fallback_lbfgs_solve,
+            }
+            if hasattr(self, "lsmr_iter"):
+                record["inner_iteration"] = self.lsmr_iter
+            self.convergence_report.append(record)
+
         if not self.converged:
             if self.use_fallback_lbfgs_solve:
                 # Note: The fallback solver circumvents check_convergence and relies on
                 # the convergence checks of lbfgs instead. Enough warnings have been
                 # raised on the way.
+                self.iteration += 1
+                tic = perf_counter()
                 self.fallback_lbfgs_solve(X=X, y=y, sample_weight=sample_weight)
+                toc = perf_counter()
+                record = {
+                    "iteration": self.iteration,
+                    "time": self.time,
+                    "loss": self.loss_value,
+                    "fallback_lbfgs": self.use_fallback_lbfgs_solve,
+                }
+                if hasattr(self, "lsmr_iter"):
+                    record["inner_iteration"] = self.lsmr_iter
+                self.convergence_report.append(record)
             else:
                 warnings.warn(
                     (
@@ -556,6 +593,49 @@ class NewtonCholeskySolver(NewtonSolver):
             return
 
 
+def _calculate_eta(
+    c0,
+    c1,
+    c2,
+    norm_G,
+    norm_G_old,
+    eta_old,
+    normar,
+    track_loss,
+    loss_improvement,
+    loss_improvement_old,
+):
+    # norm_G is value of THIS iteration
+    # norm_G_old is value of LAST iteration
+    # loss_improvement is value of LAST iteration, updated in line_search
+    # loss_improvement_old is value of SECOND TO LAST iteration
+    if c0 == -1:
+        if norm_G_old <= 0:
+            eta = 0.5
+        else:
+            eta = (norm_G - normar) / norm_G_old
+        eta = min(0.5, max(eta, 1e-2 * eta_old))
+    elif c0 == -2:
+        if norm_G_old <= 0:
+            eta = 0.5
+        else:
+            eta = (norm_G / norm_G_old) ** 2
+            if eta_old > 0.1 and eta < 0.1 * eta_old:
+                eta = 0.1 * eta_old
+            eta = min(0.5, eta)
+    else:
+        eta = min(c0, c1 * np.power(norm_G, c2))
+
+    if track_loss:
+        # loss_improvement better than loss_improvement_old
+        if loss_improvement < loss_improvement_old and norm_G > norm_G_old:
+            # We had a very good loss improvement in the last iteration, but ||G|| got
+            # larger again. We should therefore not increase eta, but keep it as it
+            # was.
+            eta = eta_old
+    return eta
+
+
 class NewtonLSMRSolver(NewtonSolver):
     """LSMR based inexact Newton solver.
 
@@ -603,6 +683,29 @@ class NewtonLSMRSolver(NewtonSolver):
            https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsmr.html
 
     """  # noqa: E501
+
+    def __init__(
+        self,
+        *,
+        coef,
+        linear_loss=LinearModelLoss(base_loss=HalfSquaredError(), fit_intercept=True),
+        l2_reg_strength=0.0,
+        tol=1e-4,
+        max_iter=100,
+        n_threads=1,
+        verbose=0,
+        inner_stopping={"atol": [0.5, 1, 0.5]},
+    ):
+        super().__init__(
+            coef=coef,
+            linear_loss=linear_loss,
+            l2_reg_strength=l2_reg_strength,
+            tol=tol,
+            max_iter=max_iter,
+            n_threads=n_threads,
+            verbose=verbose,
+        )
+        self.inner_stopping = inner_stopping
 
     def setup(self, X, y, sample_weight):
         """Setup.
@@ -662,6 +765,8 @@ class NewtonLSMRSolver(NewtonSolver):
             self.A_norm *= 1 - np.log((self.l2_reg_strength + 1e-22) * 1e7)
         self.r_norm = 1
         self.lsmr_iter = 0  # number of total LSMR iterations
+        self.normar = 1
+        self.eta = 0.5
 
     def update_gradient_hessian(self, X, y, sample_weight):
         """Update gradient and hessian.
@@ -933,25 +1038,31 @@ class NewtonLSMRSolver(NewtonSolver):
         else:
             n_classes = self.linear_loss.base_loss.n_classes
         A, b = self.compute_A_b(X, y, sample_weight)
-        # The choice of atol in LSMR is essential for stability and for computation
-        # time. For n_samples > n_features, we most certainly have a least squares
-        # problem (no solution to the linear equation A x = b), such that the following
-        # stopping criterion with residual r = b - A x and x = coef_newton applies:
-        #   ||A' r|| = ||H x + G|| <= atol * ||A|| * ||r||.
+        # The choice of stopping criterion in LSMR is essential for stability and
+        # speed of convergence (computing time).
+        # We use a modified version of LSMR with several added stopping critera:
+        # - ||A' r|| <= ||A|| * ||r|| * atol
+        #   This is standard LSMR.
+        # - ||A' r|| <= artol
+        # - (q - q_old) * itn / q <= qtol
+        #   q = x H x - 2 * G x = ||r||^2 - ||b||^2
+        #
+        # For n_samples > n_features, we most certainly have a least squares
+        # problem (no solution to the linear equation A x = b). With residual
+        # r = b - A x and x = coef_newton, we have:
+        #   ||A' r|| = ||H x + G||
         # For inexact Newton solvers, res = H x + G is called the residual and one
         # usually chooses, see Eq. 7.3 Nocedal & Wright 2nd ed, a stopping criterion
         #   ||res|| = ||A' r|| <= eta * ||G||
         # with a forcing sequence 0 < eta < 1 (eta_k for iteration k).
         # As for our Newton conjugate gradient solver "_newton_cg", we set
         #   eta = min(0.5, np.sqrt(||G||))
-        # which establishes a superlinear rate of convergence.
-        # Fortunately, we get approximations of the Frobenius norm of A and the norm of
-        # r, ||A|| and ||r|| respectively, for free by LSMR such that we can set
-        #   atol = eta * ||G|| / (||A|| * ||r||)
-        # This results in our desired stopping criterion
-        #   ||res|| = ||A' r|| <= eta * ||G||
-        # at least approximately, as we have to use ||A|| and ||r|| from the last and
-        # not the current iteration.
+        # or more general with c0, c1, c2
+        #   eta = min(c0, c1 * ||G||^c2)
+        # which establishes a superlinear rate of convergence (for c2=0.5), but we use
+        # the L2-norm, CG uses the L1-norm, for their analysis see Galli & Lin "A Study
+        # on Truncated Newton Methods for Linear Classification"
+        # https://doi.org/10.1109/TNNLS.2020.3045836).
         #
         # In the case of perfect interpolation, n_features >= n_samples, we might have
         # an exact solution to A x = b. LSMR then uses the stopping criterion
@@ -967,24 +1078,87 @@ class NewtonLSMRSolver(NewtonSolver):
         #
         # We set btol to the strict self.tol to help cases of collinearity in X when
         # there is (almost) no L2 penalty.
-        norm_G = scipy.linalg.norm(self.gradient)
-        eta = min(0.5, np.sqrt(norm_G))
+        norm_G_old = self.norm_G
+        self.norm_G = scipy.linalg.norm(self.gradient)
+        # eta = min(0.5, np.sqrt(self.norm_G))
         # Note that norm_G might not be decreasing from Newton iteration to iteration.
         # This means we are still not close to the minimum and it is good when artol
         # is then loose enough.
+        atol = 0
+        artol = 0
+        qtol = 0
+        eta_old = self.eta
+        if "atol" in self.inner_stopping.keys():
+            c0, c1, c2, track_loss = self.inner_stopping["atol"]
+            eta = _calculate_eta(
+                c0=c0,
+                c1=c1,
+                c2=c2,
+                norm_G=self.norm_G,
+                norm_G_old=norm_G_old,
+                eta_old=eta_old,
+                normar=self.normar,
+                track_loss=track_loss,
+                loss_improvement=self.loss_improvement,
+                loss_improvement_old=self.loss_improvement_old,
+            )
+            atol = (
+                eta * self.norm_G / (self.A_norm * self.r_norm + 1e-6)
+            )  # avoid division by 0
+        if "artol" in self.inner_stopping.keys():
+            c0, c1, c2, track_loss = self.inner_stopping["artol"]
+            eta = _calculate_eta(
+                c0=c0,
+                c1=c1,
+                c2=c2,
+                norm_G=self.norm_G,
+                norm_G_old=norm_G_old,
+                eta_old=eta_old,
+                normar=self.normar,
+                track_loss=track_loss,
+                loss_improvement=self.loss_improvement,
+                loss_improvement_old=self.loss_improvement_old,
+            )
+            # print(f"eta for artol: {c0=} {c1=} {c2=} {self.norm_G=} {eta=}")
+            artol = eta * self.norm_G
+        if "qtol" in self.inner_stopping.keys():
+            c0, c1, c2, track_loss = self.inner_stopping["qtol"]
+            eta = _calculate_eta(
+                c0=c0,
+                c1=c1,
+                c2=c2,
+                norm_G=self.norm_G,
+                norm_G_old=norm_G_old,
+                eta_old=eta_old,
+                normar=self.normar,
+                track_loss=track_loss,
+                loss_improvement=self.loss_improvement,
+                loss_improvement_old=self.loss_improvement_old,
+            )
+            # print(f"eta for qtol: {c0=} {c1=} {c2=} {self.norm_G=} {eta=}")
+            qtol = eta
+        self.eta = eta
         if self.verbose >= 3:
-            print(f"    norm(gradient) = {norm_G}")
-        result = scipy.sparse.linalg.lsmr(
+            print(f"    norm(gradient)={self.norm_G:6.3e} {eta=:6.3e}")
+            print(
+                f"    A_norm={self.A_norm:6.3e} r_norm={self.r_norm:6.3e}"
+                f" Ar_norm={self.normar:6.3e} {atol=:6.3e}"
+            )
+            b_norm = scipy.linalg.norm(b)
+            print(f"    b_norm={b_norm:6.3e} btol={self.tol:6.3e}")
+        result = lsmr(
             A,
             b,
             damp=0,
-            atol=eta * norm_G / (self.A_norm * self.r_norm),
+            atol=atol,
             btol=self.tol,
+            artol=artol,
+            qtol=qtol,
             maxiter=max(n_samples, n_features) * n_classes,  # default is min(A.shape)
             # default conlim = 1e8, for compatible systems 1e12 is still reasonable,
             # see LSMR documentation
             conlim=1e12,
-            show=self.verbose >= 3,
+            show=self.verbose >= 4,
         )
         # We store the estimated Frobenius norm of A and norm of residual r in
         # self.A_norm and self.r_norm for tolerance of next iteration.
@@ -993,14 +1167,17 @@ class NewtonLSMRSolver(NewtonSolver):
             istop,
             itn,
             self.r_norm,
-            normar,
+            self.normar,
             self.A_norm,
             conda,
             normx,
         ) = result
         self.lsmr_iter += itn
         if self.verbose >= 2:
-            print(f"  Inner iterations in LSMR = {itn}, total = {self.lsmr_iter}")
+            print(
+                f"  Inner iterations in LSMR = {itn}, total = {self.lsmr_iter}, istop ="
+                f" {istop} normx = {normx:6.3e}"
+            )
         if self.coef.dtype == np.float32:
             self.coef_newton = self.coef_newton.astype(np.float32)
         if not self.linear_loss.base_loss.is_multiclass:

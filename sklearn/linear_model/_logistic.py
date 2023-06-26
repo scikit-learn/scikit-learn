@@ -113,6 +113,7 @@ def _logistic_regression_path(
     sample_weight=None,
     l1_ratio=None,
     n_threads=1,
+    inner_stopping={"atol": [0.5, 1, 0.5]},
 ):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
@@ -442,6 +443,8 @@ def _logistic_regression_path(
 
     coefs = list()
     n_iter = np.zeros(len(Cs), dtype=np.int32)
+    if solver == "newton-lsmr":
+        convergence_report = []
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
             l2_reg_strength = 1.0 / C
@@ -473,6 +476,9 @@ def _logistic_regression_path(
             # The division by sw_sum is a consequence of the rescaling of
             # sample_weight, see comment above.
             l2_reg_strength = 1.0 / C / sw_sum
+            kwargs = {}
+            if solver == "newton-lsmr":
+                kwargs["inner_stopping"] = inner_stopping
             sol = NEWTON_SOLVER[solver](
                 coef=w0,
                 linear_loss=loss,
@@ -481,9 +487,11 @@ def _logistic_regression_path(
                 max_iter=max_iter,
                 n_threads=n_threads,
                 verbose=verbose,
+                **kwargs,
             )
             w0 = sol.solve(X=X, y=target, sample_weight=sample_weight)
             n_iter_i = sol.iteration
+            convergence_report.append(sol.convergence_report)
         elif solver == "liblinear":
             (
                 coef_,
@@ -566,7 +574,13 @@ def _logistic_regression_path(
 
         n_iter[i] = n_iter_i
 
-    return np.array(coefs), np.array(Cs), n_iter
+    if solver == "newton-lsmr":
+        return np.array(coefs), np.array(Cs), n_iter, convergence_report
+    return (
+        np.array(coefs),
+        np.array(Cs),
+        n_iter,
+    )
 
 
 # helper function for LogisticCV
@@ -1137,6 +1151,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         warm_start=False,
         n_jobs=None,
         l1_ratio=None,
+        inner_stopping={"atol": [0.5, 1, 0.5, False]},
     ):
         self.penalty = penalty
         self.dual = dual
@@ -1153,6 +1168,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.warm_start = warm_start
         self.n_jobs = n_jobs
         self.l1_ratio = l1_ratio
+        self.inner_stopping = inner_stopping
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
@@ -1339,11 +1355,16 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 max_squared_sum=max_squared_sum,
                 sample_weight=sample_weight,
                 n_threads=n_threads,
+                inner_stopping=self.inner_stopping,
             )
             for class_, warm_start_coef_ in zip(classes_, warm_start_coef)
         )
 
-        fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
+        if self.solver == "newton-lsmr":
+            fold_coefs_, _, n_iter_, convergence_report = zip(*fold_coefs_)
+            self.convergence_report = np.asarray(convergence_report, dtype=object)[:, 0]
+        else:
+            fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
         self.n_iter_ = np.asarray(n_iter_, dtype=np.int32)[:, 0]
 
         n_features = X.shape[1]

@@ -180,6 +180,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         tol=1e-4,
         warm_start=False,
         verbose=0,
+        inner_stopping={"atol": [0.5, 1, 0.5, False]},
     ):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -188,6 +189,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self.tol = tol
         self.warm_start = warm_start
         self.verbose = verbose
+        self.inner_stopping = inner_stopping
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
@@ -303,6 +305,9 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
             coef = opt_res.x
         elif self.solver in NEWTON_SOLVER.keys():
+            kwargs = {}
+            if self.solver == "newton-lsmr":
+                kwargs["inner_stopping"] = self.inner_stopping
             sol = NEWTON_SOLVER[self.solver](
                 coef=coef,
                 linear_loss=linear_loss,
@@ -311,9 +316,11 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 max_iter=self.max_iter,
                 n_threads=n_threads,
                 verbose=self.verbose,
+                **kwargs,
             )
             coef = sol.solve(X, y, sample_weight)
             self.n_iter_ = sol.iteration
+            self.convergence_report = sol.convergence_report
         elif issubclass(self.solver, NewtonSolver):
             sol = self.solver(
                 coef=coef,
@@ -607,6 +614,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         tol=1e-4,
         warm_start=False,
         verbose=0,
+        inner_stopping={"atol": [0.5, 1, 0.5, False]},
     ):
         super().__init__(
             alpha=alpha,
@@ -616,6 +624,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
             tol=tol,
             warm_start=warm_start,
             verbose=verbose,
+            inner_stopping=inner_stopping,
         )
 
     def _get_loss(self):
