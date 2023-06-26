@@ -231,6 +231,11 @@ Changelog
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
+  :func:`cluster.k_means` now correctly handle the combination of `n_init="auto"`
+  and `init` being an array-like, running one initialization in that case.
+  :pr:`26657` by :user:`Binesh Bannerjee <bnsh>`.
+
 - |API| The `sample_weight` parameter in `predict` for
   :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
   is now deprecated and will be removed in v1.5.
