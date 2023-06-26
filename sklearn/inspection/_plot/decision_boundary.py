@@ -2,14 +2,13 @@ from functools import reduce
 
 import numpy as np
 
-from ...preprocessing import LabelEncoder
-from ...utils import check_matplotlib_support
-from ...utils import _safe_indexing
 from ...base import is_regressor
+from ...preprocessing import LabelEncoder
+from ...utils import _safe_indexing, check_matplotlib_support
 from ...utils.validation import (
-    check_is_fitted,
     _is_arraylike_not_scalar,
     _num_features,
+    check_is_fitted,
 )
 
 

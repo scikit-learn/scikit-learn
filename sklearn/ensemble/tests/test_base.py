@@ -5,19 +5,19 @@ Testing for the base module (sklearn.ensemble.base).
 # Authors: Gilles Louppe
 # License: BSD 3 clause
 
+from collections import OrderedDict
+
 import numpy as np
 import pytest
 
+from sklearn import ensemble
 from sklearn.datasets import load_iris
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import BaggingClassifier
 from sklearn.ensemble._base import _set_random_states
-from sklearn.linear_model import Perceptron
-from sklearn.linear_model import Ridge, LogisticRegression
-from collections import OrderedDict
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.pipeline import Pipeline
 from sklearn.feature_selection import SelectFromModel
-from sklearn import ensemble
+from sklearn.linear_model import LogisticRegression, Perceptron, Ridge
+from sklearn.pipeline import Pipeline
 
 
 def test_base():
