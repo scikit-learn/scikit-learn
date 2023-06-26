@@ -128,13 +128,13 @@ class Pipeline(_BaseComposition):
     >>> X, y = make_classification(random_state=0)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
     ...                                                     random_state=0)
-    >>> pipe = Pipeline([("scaler", StandardScaler()), ("clf", SVC())])
-    >>> # The following is equivalent to setting SVC(C=10) for "clf" in the
-    >>> # pipeline. The pipeline can be used as any other estimator and avoids
-    >>> # leaking the test set into the train set
-    >>> pipe.set_params(clf__C=10).fit(X_train, y_train)
-    Pipeline(steps=[('scaler', StandardScaler()), ('clf', SVC(C=10))])
-    >>> pipe.score(X_test, y_test)
+    >>> pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC())])
+    >>> # The pipeline can be used as any other estimator
+    >>> # and avoids leaking the test set into the train set
+    >>> pipe.fit(X_train, y_train).score(X_test, y_test)
+    0.88
+    >>> # An estimators parameter can be set using '__' syntax
+    >>> pipe.set_params(svc__C=10).fit(X_train, y_train).score(X_test, y_test)
     0.76
     """
 
@@ -1047,15 +1047,16 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     >>> from sklearn.pipeline import FeatureUnion
     >>> from sklearn.decomposition import PCA, TruncatedSVD
     >>> union = FeatureUnion([("pca", PCA()), ("svd", TruncatedSVD())])
-    >>> # The following is equivalent to setting PCA(n_components=1) for "pca"
-    >>> # and TruncatedSVD(n_components=1) for "svd" in the feature union
-    >>> union.set_params(pca__n_components=1, svd__n_components=1)
-    FeatureUnion(transformer_list=[('pca', PCA(n_components=1)),
-                                   ('svd', TruncatedSVD(n_components=1))])
     >>> X = [[0., 1., 3], [2., 2., 5]]
     >>> union.fit_transform(X)
-    array([[ 1.5       ,  3.0...],
-           [-1.5       ,  5.7...]])
+    array([[ 1.50000000e+00,  6.20633538e-17,  3.03954967e+00,
+             8.72432133e-01],
+           [-1.50000000e+00,  6.20633538e-17,  5.72586357e+00,
+            -4.63126787e-01]])
+    >>> # An estimators parameter can be set using '__' syntax
+    >>> union.set_params(pca__n_components=1).fit_transform(X)
+    array([[ 1.5       ,  3.03954967,  0.87243213],
+           [-1.5       ,  5.72586357, -0.46312679]])
     """
 
     _required_parameters = ["transformer_list"]
@@ -1367,11 +1368,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
 
 def make_union(*transformers, n_jobs=None, verbose=False):
-    """Construct a FeatureUnion from the given transformers.
+    """Construct a :class:`FeatureUnion` from the given transformers.
 
-    This is a shorthand for the FeatureUnion constructor; it does not require,
-    and does not permit, naming the transformers. Instead, they will be given
-    names automatically based on their types. It also does not allow weighting.
+    This is a shorthand for the :class:`FeatureUnion` constructor; it does not
+    require, and does not permit, naming the transformers. Instead, they will
+    be given names automatically based on their types. It also does not allow
+    weighting.
 
     Parameters
     ----------
