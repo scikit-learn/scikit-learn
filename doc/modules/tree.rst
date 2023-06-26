@@ -147,7 +147,7 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
    :align: center
 
 |details-start|
-**Export tree using Graphviz**
+**Alternative ways to export trees**
 |details-split|
 
 We can also export the tree in `Graphviz
@@ -194,12 +194,6 @@ render these plots inline automatically::
    :target: ../auto_examples/tree/plot_iris_dtc.html
    :align: center
    :scale: 75
-
-|details-end|
-
-|details-start|
-**Export tree in textual format**
-|details-split|
 
 Alternatively, the tree can also be exported in textual format with the
 function :func:`export_text`. This method doesn't require the installation
@@ -293,11 +287,6 @@ of shape ``(n_samples, n_outputs)`` then the resulting estimator will:
   * Output a list of n_output arrays of class probabilities upon
     ``predict_proba``.
 
-
-|details-start|
-**Use of multi-output trees for regression**
-|details-split|
-
 The use of multi-output trees for regression is demonstrated in
 :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`. In this example, the input
 X is a single real value and the outputs Y are the sine and cosine of X.
@@ -306,12 +295,6 @@ X is a single real value and the outputs Y are the sine and cosine of X.
    :target: ../auto_examples/tree/plot_tree_regression_multioutput.html
    :scale: 75
    :align: center
-
-|details-end|
-
-|details-start|
-**Use of multi-output trees for classification**
-|details-split|
 
 The use of multi-output trees for classification is demonstrated in
 :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`. In this example, the inputs
@@ -323,12 +306,10 @@ the lower half of those faces.
    :scale: 75
    :align: center
 
-|details-end|
-
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
- * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
+  * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
+  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
 |details-start|
 **References**
@@ -432,7 +413,7 @@ What are all the various decision tree algorithms and how do they differ
 from each other? Which one is implemented in scikit-learn?
 
 |details-start|
-**ID3_ (Iterative Dichotomiser 3)**
+**Various decision tree algorithms**
 |details-split|
 
 ID3_ (Iterative Dichotomiser 3) was developed in 1986 by Ross Quinlan.
@@ -441,12 +422,6 @@ a greedy manner) the categorical feature that will yield the largest
 information gain for categorical targets. Trees are grown to their
 maximum size and then a pruning step is usually applied to improve the
 ability of the tree to generalize to unseen data.
-
-|details-end|
-
-|details-start|
-**C4.5**
-|details-split|
 
 C4.5 is the successor to ID3 and removed the restriction that features
 must be categorical by dynamically defining a discrete attribute (based
@@ -457,21 +432,9 @@ The accuracy of each rule is then evaluated to determine the order
 in which they should be applied. Pruning is done by removing a rule's
 precondition if the accuracy of the rule improves without it.
 
-|details-end|
-
-|details-start|
-**C5.0**
-|details-split|
-
 C5.0 is Quinlan's latest version release under a proprietary license.
 It uses less memory and builds smaller rulesets than C4.5 while being
 more accurate.
-
-|details-end|
-
-|details-start|
-**CART (Classification and Regression Trees)**
-|details-split|
 
 CART (Classification and Regression Trees) is very similar to C4.5, but
 it differs in that it supports numerical target variables (regression) and
@@ -540,26 +503,21 @@ be the proportion of class k observations in node :math:`m`. If :math:`m` is a
 terminal node, `predict_proba` for this region is set to :math:`p_{mk}`.
 Common measures of impurity are the following.
 
-|details-start|
-**Gini:**
-|details-split|
+Gini:
 
 .. math::
 
     H(Q_m) = \sum_k p_{mk} (1 - p_{mk})
 
-|details-end|
-
-|details-start|
-**Log Loss or Entropy:**
-|details-split|
+Log Loss or Entropy:
 
 .. math::
 
     H(Q_m) = - \sum_k p_{mk} \log(p_{mk})
 
-
-.. note::
+|details-start|
+**note:**
+|details-split|
 
   The entropy criterion computes the Shannon entropy of the possible classes. It
   takes the class frequencies of the training data points that reached a given
@@ -602,9 +560,7 @@ of terminal nodes to the learned mean value :math:`\bar{y}_m` of the node
 whereas the MAE sets the predicted value of terminal nodes to the median
 :math:`median(y)_m`.
 
-|details-start|
-**Mean Squared Error:**
-|details-split|
+Mean Squared Error:
 
 .. math::
 
@@ -612,11 +568,7 @@ whereas the MAE sets the predicted value of terminal nodes to the median
 
     H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} (y - \bar{y}_m)^2
 
-|details-end|
-
-|details-start|
-**Half Poisson deviance:**
-|details-split|
+Half Poisson deviance:
 
 .. math::
 
@@ -628,11 +580,7 @@ or a frequency (count per some unit). In any case, :math:`y >= 0` is a
 necessary condition to use this criterion. Note that it fits much slower than
 the MSE criterion.
 
-|details-end|
-
-|details-start|
-**Mean Absolute Error:**
-|details-split|
+Mean Absolute Error:
 
 .. math::
 
@@ -641,8 +589,6 @@ the MSE criterion.
     H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} |y - median(y)_m|
 
 Note that it fits much slower than the MSE criterion.
-
-|details-end|
 
 .. _tree_missing_value_support:
 
