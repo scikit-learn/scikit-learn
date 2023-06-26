@@ -537,7 +537,6 @@ if with_jupyterlite:
     sphinx_gallery_conf["jupyterlite"] = {
         "notebook_modification_function": notebook_modification_function
     }
-    raise ValueError(sphinx_gallery_conf)
 
 
 # The following dictionary contains the information used to create the
