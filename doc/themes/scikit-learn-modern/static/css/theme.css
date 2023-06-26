@@ -1024,7 +1024,7 @@ div.sphx-glr-thumbcontainer {
     position: absolute;
     left: 98%;
     width: 20ex;
-    margin-top: calc(max(5.5rem, 1vh));
+    margin-top: calc(max(5.75rem, 1vh));
   }
 }
 
