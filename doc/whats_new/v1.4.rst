@@ -67,3 +67,4 @@ TODO: update at the time of the release.
   accepts ``**params`` which are passed to the underlying splitter and
   scorer. :meth:`linear_model.LogisticRegressionCV.score` now accepts
   ``**score_params`` which are passed to the underlying scorer.
+  :pr:`26525` by :user:`Omar Salman`_
