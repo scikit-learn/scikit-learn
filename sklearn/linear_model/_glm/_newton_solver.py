@@ -1104,7 +1104,7 @@ class NewtonLSMRSolver(NewtonSolver):
                 loss_improvement_old=self.loss_improvement_old,
             )
             atol = (
-                eta * self.norm_G / (self.A_norm * self.r_norm + 1e-12)
+                eta * self.norm_G / (self.A_norm * self.r_norm + 1e-16)
             )  # avoid division by 0
             if atol < self.atol / 10:
                 atol = self.atol / 10 * np.sqrt(10 * atol / self.atol)
