@@ -457,7 +457,7 @@ Changelog
 
 - |Fix| Fix a crash when calling `fit` on
   :class:`linear_model.LogisticRegression(solver="newton-cholesky", max_iter=0)`
-  to inspect the state of the model prior to the first parameter update.
+  which failed to inspect the state of the model prior to the first parameter update.
   :pr:`26653` by :user:`Olivier Grisel <ogrisel>`.
 
 - |API| Deprecates `n_iter` in favor of `max_iter` in
