@@ -763,6 +763,7 @@ class NewtonLSMRSolver(NewtonSolver):
             # large first LSMR iteration is beneficial.
             # The multiplicative term is 1 <= term <= 50, log(1e-22) ~ -50
             self.A_norm *= 1 - np.log((self.l2_reg_strength + 1e-22) * 1e7)
+        self.atol = 0
         self.r_norm = 1
         self.lsmr_iter = 0  # number of total LSMR iterations
         self.normar = 1
@@ -1103,8 +1104,11 @@ class NewtonLSMRSolver(NewtonSolver):
                 loss_improvement_old=self.loss_improvement_old,
             )
             atol = (
-                eta * self.norm_G / (self.A_norm * self.r_norm + 1e-6)
+                eta * self.norm_G / (self.A_norm * self.r_norm + 1e-12)
             )  # avoid division by 0
+            if atol < self.atol / 10:
+                atol = self.atol / 10 * np.sqrt(10 * atol / self.atol)
+            self.atol = atol
         if "artol" in self.inner_stopping.keys():
             c0, c1, c2, track_loss = self.inner_stopping["artol"]
             eta = _calculate_eta(
