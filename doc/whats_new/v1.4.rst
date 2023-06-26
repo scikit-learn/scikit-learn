@@ -58,8 +58,6 @@ TODO: update at the time of the release.
   :meth:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
   passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
   Jalali`_.
-<<<<<<< HEAD
-=======
 
 :mod:`sklearn.decomposition`
 ............................
@@ -71,4 +69,10 @@ TODO: update at the time of the release.
   from `None` to `auto` in version 1.6.
   :pr:`26634` by :user:`Alexandre Landeau <AlexL>` and :user:`Alexandre Vigny <avigny>`.
 
->>>>>>> origin/nearestcentroidfeat_02
+:mod:`sklearn.neighbors`
+........................
+- |Enhancement| Add :meth:`neighbors.NearestCentroid.decision_function`,
+  :meth:`neighbors.NearestCentroid.predict_proba` and
+  :meth:`neighbors.NearestCentroid.predict_log_proba`
+  to the NearestCentroid estimator class.
+  :pr:`26689` by :user:`Matthew Ning <NoPenguinsLand>`.
