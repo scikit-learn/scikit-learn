@@ -130,8 +130,10 @@ distances between all points.  Isomap can be performed with the object
    :align: center
    :scale: 50
 
-Complexity
-----------
+|details-start|
+**Complexity**
+|details-split|
+
 The Isomap algorithm comprises three stages:
 
 1. **Nearest neighbor search.**  Isomap uses
@@ -162,6 +164,8 @@ The overall complexity of Isomap is
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
 
+|details-end|
+
 .. topic:: References:
 
    * `"A global geometric framework for nonlinear dimensionality reduction"
@@ -187,8 +191,9 @@ Locally linear embedding can be performed with function
    :align: center
    :scale: 50
 
-Complexity
-----------
+|details-start|
+**Complexity**
+|details-split|
 
 The standard LLE algorithm comprises three stages:
 
@@ -208,6 +213,8 @@ The overall complexity of standard LLE is
 * :math:`D` : input dimension
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
+
+|details-end|
 
 .. topic:: References:
 
@@ -241,8 +248,9 @@ It requires ``n_neighbors > n_components``.
    :align: center
    :scale: 50
 
-Complexity
-----------
+|details-start|
+**Complexity**
+|details-split|
 
 The MLLE algorithm comprises three stages:
 
@@ -264,6 +272,8 @@ The overall complexity of MLLE is
 * :math:`D` : input dimension
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
+
+|details-end|
 
 .. topic:: References:
 
@@ -291,8 +301,9 @@ It requires ``n_neighbors > n_components * (n_components + 3) / 2``.
    :align: center
    :scale: 50
 
-Complexity
-----------
+|details-start|
+**Complexity**
+|details-split|
 
 The HLLE algorithm comprises three stages:
 
@@ -312,6 +323,8 @@ The overall complexity of standard HLLE is
 * :math:`D` : input dimension
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
+
+|details-end|
 
 .. topic:: References:
 
@@ -335,8 +348,9 @@ preserving local distances. Spectral embedding can be  performed with the
 function :func:`spectral_embedding` or its object-oriented counterpart
 :class:`SpectralEmbedding`.
 
-Complexity
-----------
+|details-start|
+**Complexity**
+|details-split|
 
 The Spectral Embedding (Laplacian Eigenmaps) algorithm comprises three stages:
 
@@ -357,6 +371,8 @@ The overall complexity of spectral embedding is
 * :math:`D` : input dimension
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
+
+|details-end|
 
 .. topic:: References:
 
@@ -383,8 +399,9 @@ tangent spaces to learn the embedding.  LTSA can be performed with function
    :align: center
    :scale: 50
 
-Complexity
-----------
+|details-start|
+**Complexity**
+|details-split|
 
 The LTSA algorithm comprises three stages:
 
@@ -403,6 +420,8 @@ The overall complexity of standard LTSA is
 * :math:`D` : input dimension
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
+
+|details-end|
 
 .. topic:: References:
 
@@ -448,8 +467,9 @@ the similarities chosen in some optimal ways. The objective, called the
 stress, is then defined by :math:`\sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
 
 
-Metric MDS
-----------
+|details-start|
+**Metric MDS**
+|details-split|
 
 The simplest metric :class:`MDS` model, called *absolute MDS*, disparities are defined by
 :math:`\hat{d}_{ij} = S_{ij}`. With absolute MDS, the value :math:`S_{ij}`
@@ -458,8 +478,11 @@ should then correspond exactly to the distance between point :math:`i` and
 
 Most commonly, disparities are set to :math:`\hat{d}_{ij} = b S_{ij}`.
 
-Nonmetric MDS
--------------
+|details-end|
+
+|details-start|
+**Nonmetric MDS**
+|details-split|
 
 Non metric :class:`MDS` focuses on the ordination of the data. If
 :math:`S_{ij} > S_{jk}`, then the embedding should enforce :math:`d_{ij} <
@@ -490,6 +513,7 @@ in the metric case.
    :align: center
    :scale: 60
 
+|details-end|
 
 .. topic:: References:
 
@@ -551,8 +575,10 @@ The disadvantages to using t-SNE are roughly:
    :align: center
    :scale: 50
 
-Optimizing t-SNE
-----------------
+|details-start|
+**Optimizing t-SNE**
+|details-split|
+
 The main purpose of t-SNE is visualization of high-dimensional data. Hence,
 it works best when the data will be embedded on two or three dimensions.
 
@@ -601,8 +627,11 @@ but less accurate results.
 provides a good discussion of the effects of the various parameters, as well
 as interactive plots to explore the effects of different parameters.
 
-Barnes-Hut t-SNE
-----------------
+|details-end|
+
+|details-start|
+**Barnes-Hut t-SNE**
+|details-split|
 
 The Barnes-Hut t-SNE that has been implemented here is usually much slower than
 other manifold learning algorithms. The optimization is quite difficult
@@ -638,6 +667,7 @@ imply that the data cannot be correctly classified by a supervised model. It
 might be the case that 2 dimensions are not high enough to accurately represent
 the internal structure of the data.
 
+|details-end|
 
 .. topic:: References:
 
