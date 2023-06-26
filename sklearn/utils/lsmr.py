@@ -486,7 +486,7 @@ def lsmr(
             istop = 2
         if test1 <= rtol:
             istop = 1
-        if testq <= qtol:
+        if qtol > 0 and testq <= qtol:
             istop = 9
 
         # See if it is time to print something.
