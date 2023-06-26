@@ -919,6 +919,7 @@ class NewtonLSMRSolver(NewtonSolver):
               As LSMR is an iterative method, NewtonLSMRSolver is an inexact Newton
               method.
             - self.gradient_times_newton
+            - self.lsmr_iter
             - self.A_norm
             - self.r_norm
 
