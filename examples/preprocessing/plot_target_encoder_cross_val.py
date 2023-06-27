@@ -111,10 +111,10 @@ print("Raw Model score on test set: ", raw_model.score(X_test, y_test))
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import TargetEncoder
 
-model_with_cv = make_pipeline(TargetEncoder(random_state=0), ridge)
-model_with_cv.fit(X_train, y_train)
-print("Model with CV on training set: ", model_with_cv.score(X_train, y_train))
-print("Model with CV on test set: ", model_with_cv.score(X_test, y_test))
+model_with_cf = make_pipeline(TargetEncoder(random_state=0), ridge)
+model_with_cf.fit(X_train, y_train)
+print("Model with CF on train set: ", model_with_cf.score(X_train, y_train))
+print("Model with CF on test set: ", model_with_cf.score(X_test, y_test))
 
 # %%
 # The coefficients of the linear model shows that most of the weight is on the
@@ -124,10 +124,10 @@ import pandas as pd
 
 plt.rcParams["figure.constrained_layout.use"] = True
 
-coefs_cv = pd.Series(
-    model_with_cv[-1].coef_, index=model_with_cv[-1].feature_names_in_
+coefs_cf = pd.Series(
+    model_with_cf[-1].coef_, index=model_with_cf[-1].feature_names_in_
 ).sort_values()
-ax = coefs_cv.plot(kind="barh")
+ax = coefs_cf.plot(kind="barh")
 _ = ax.set(
     title="Target encoded with cross fitting",
     xlabel="Ridge coefficient",
@@ -144,22 +144,22 @@ _ = ax.set(
 # encoding is then passed to the ridge model.
 target_encoder = TargetEncoder(random_state=0)
 target_encoder.fit(X_train, y_train)
-X_train_no_cv_encoding = target_encoder.transform(X_train)
-X_test_no_cv_encoding = target_encoder.transform(X_test)
+X_train_no_cf_encoding = target_encoder.transform(X_train)
+X_test_no_cf_encoding = target_encoder.transform(X_test)
 
-model_no_cv = ridge.fit(X_train_no_cv_encoding, y_train)
+model_no_cf = ridge.fit(X_train_no_cf_encoding, y_train)
 
 # %%
 # We evaluate the model that did not use :term:`cross fitting` when encoding and
 # see that it overfits:
 print(
-    "Model without CV on training set: ",
-    model_no_cv.score(X_train_no_cv_encoding, y_train),
+    "Model without CF on training set: ",
+    model_no_cf.score(X_train_no_cf_encoding, y_train),
 )
 print(
-    "Model without CV on test set: ",
-    model_no_cv.score(
-        X_test_no_cv_encoding,
+    "Model without CF on test set: ",
+    model_no_cf.score(
+        X_test_no_cf_encoding,
         y_test,
     ),
 )
@@ -169,10 +169,10 @@ print(
 # uninformative extremely high cardinality ("near_unique") and medium
 # cardinality ("shuffled") features than when the model used
 # :term:`cross fitting` to encode the features.
-coefs_no_cv = pd.Series(
-    model_no_cv.coef_, index=model_no_cv.feature_names_in_
+coefs_no_cf = pd.Series(
+    model_no_cf.coef_, index=model_no_cf.feature_names_in_
 ).sort_values()
-ax = coefs_cv.plot(kind="barh")
+ax = coefs_no_cf.plot(kind="barh")
 _ = ax.set(
     title="Target encoded without cross fitting",
     xlabel="Ridge coefficient",

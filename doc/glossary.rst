@@ -207,20 +207,26 @@ General Concepts
 
     cross-fitting
     cross fitting
-        A resampling method that iteratively partitions data into complementary
-        'train' and 'estimation' subsets. The 'estimation' subset may be used
-        to estimate a parameter or predict a target. The outputs from
-        each iteration are combined and used in a downstream prcess, generally
-        to avoid bias.
+        A resampling method that iteratively partitions data into mutually
+        exclusive subsets to fit two stages. During the first stage, the
+        mutually exclusive subsets enable predictions or transformations to be
+        computed on data not seen during training. The computed data is then
+        used in the second stage. The objective is to avoid having any
+        overfitting in the first stage introduce bias into the input data
+        distribution of the second stage.
+        For examples of its use, see: :class:`~preprocessing.TargetEncoder`,
+        :class:`~ensemble.StackingClassifier`,
+        :class:`~ensemble.StackingRegressor` and
+        :class:`~calibration.CalibratedClassifierCV`.
 
     cross-validation
     cross validation
-        A resampling method that iteratively partitions data into complementary
-        'train' and 'test' subsets so model performance can be evaluated on
-        unseen data. This conserves data as avoids the need to hold out a
-        'validation' dataset and accounts for variability as multiple rounds of
-        cross validation are genreally performed.
-        See :ref:`User Guide <_cross_validation>` for more details.
+        A resampling method that iteratively partitions data into mutually
+        exclusive 'train' and 'test' subsets so model performance can be
+        evaluated on unseen data. This conserves data as avoids the need to hold
+        out a 'validation' dataset and accounts for variability as multiple
+        rounds of cross validation are generally performed.
+        See :ref:`User Guide <cross_validation>` for more details.
 
     deprecation
         We use deprecation to slowly violate our :term:`backwards
