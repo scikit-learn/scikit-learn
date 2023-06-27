@@ -54,7 +54,8 @@ X, y, true_weights = make_regression(
 # coefficients.
 
 import pandas as pd
-from sklearn.linear_model import ARDRegression, LinearRegression, BayesianRidge
+
+from sklearn.linear_model import ARDRegression, BayesianRidge, LinearRegression
 
 olr = LinearRegression().fit(X, y)
 brr = BayesianRidge(compute_score=True, n_iter=30).fit(X, y)

@@ -111,7 +111,7 @@ _ = axs[1, 1].set_xlabel("Residuals")
 #
 # We will use the quantiles at 5% and 95% to find the outliers in the training
 # sample beyond the central 90% interval.
-from sklearn.utils.fixes import sp_version, parse_version
+from sklearn.utils.fixes import parse_version, sp_version
 
 # This is line is to avoid incompatibility if older SciPy version.
 # You should use `solver="highs"` with recent version of SciPy.
@@ -253,8 +253,7 @@ _ = plt.title("Quantiles of asymmetric Pareto distributed target")
 # distributed target to make it more interesting as mean and median are not
 # equal.
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 linear_regression = LinearRegression()
 quantile_regression = QuantileRegressor(quantile=0.5, alpha=0, solver=solver)

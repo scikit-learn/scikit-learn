@@ -56,8 +56,8 @@ X_train, X_test, y_train, y_test = train_test_split(
 # :class:`~sklearn.ensemble.AdaBoostClassifier` then uses the class labels
 # predicted by the base estimators to update the sample weights. The base
 # estimators' predictions are combined through weighted voting.
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
 
 weak_learner = DecisionTreeClassifier(max_leaf_nodes=8)
 n_estimators = 300
