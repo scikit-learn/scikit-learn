@@ -79,7 +79,7 @@ def _write_label_html(
     outer_class="sk-label-container",
     inner_class="sk-label",
     checked=False,
-    url_link="",
+    doc_link="",
     is_fitted=False,
     is_fitted_icon="",
 ):
@@ -87,41 +87,41 @@ def _write_label_html(
 
     # If the estimator is fitted, add `fitted` to the class to change colors.
     if is_fitted:
-        fitted_str = " fitted"
+        fitted_str = "fitted"
     else:  # Estimator is not fitted, use default colors
         fitted_str = ""
 
     out.write(
         f'<div class="{outer_class}"><div'
-        f' class="{inner_class}{fitted_str} sk-toggleable">'
+        f' class="{inner_class} {fitted_str} sk-toggleable">'
     )
     name = html.escape(name)
 
     if name_details is not None:
         name_details = html.escape(str(name_details))
-        label_class = f"sk-toggleable__label{fitted_str} sk-toggleable__label-arrow"
+        label_class = f"sk-toggleable__label {fitted_str} sk-toggleable__label-arrow"
 
         checked_str = "checked" if checked else ""
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
 
-        if url_link:  # if the url_link is valid, use it
+        if doc_link:  # if the doc_link is valid, use it
             doc_label = "<span>Online documentation</span>"
             if name is not None:
                 doc_label = f"<span>Documentation for {name}</span>"
             doc_link = (
-                f'<a class="sk-estimator-doc-link{fitted_str}" target="_blank"'
-                f' href="{url_link}">?{doc_label}</a>'
+                f'<a class="sk-estimator-doc-link {fitted_str}" target="_blank"'
+                f' href="{doc_link}">?{doc_label}</a>'
             )
-        else:  # no url_link, add no link to the documentation
+        else:  # no doc_link, add no link to the documentation
             doc_link = ""
 
         fmt_str = (
             '<input class="sk-toggleable__control sk-hidden--visually"'
             f' id="{est_id}" '
             f'type="checkbox" {checked_str}><label for="{est_id}" '
-            f'class="{label_class}{fitted_str}">{name}'
+            f'class="{label_class} {fitted_str}">{name}'
             f"{doc_link}{is_fitted_icon}</label><div "
-            f'class="sk-toggleable__content{fitted_str}">'
+            f'class="sk-toggleable__content {fitted_str}">'
             f"<pre>{name_details}</pre></div> "
         )
         out.write(fmt_str)
@@ -194,9 +194,9 @@ def _write_estimator_html(
             est_block = _get_visual_block(estimator)
     # `estimator` can also be an instance of `_VisualBlock`
     if isinstance(estimator, BaseEstimator):
-        url_link = estimator._get_url_link()
+        doc_link = estimator._get_doc_link()
     else:
-        url_link = ""
+        doc_link = ""
     if est_block.kind in ("serial", "parallel"):
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
@@ -207,7 +207,7 @@ def _write_estimator_html(
                 out,
                 estimator_label,
                 estimator_label_details,
-                url_link=url_link,
+                doc_link=doc_link,
                 is_fitted=is_fitted,
                 is_fitted_icon=is_fitted_icon,
             )
@@ -237,7 +237,7 @@ def _write_estimator_html(
             outer_class="sk-item",
             inner_class="sk-estimator",
             checked=first_call,
-            url_link=url_link,
+            doc_link=doc_link,
             is_fitted=is_fitted,
         )
 
@@ -275,14 +275,14 @@ def estimator_html_repr(estimator):
             check_is_fitted(estimator)  # check if the estimator is fitted
             is_fitted = True
             status_label = "<span>Estimator is fitted</span>"
-            fitted_str = " fitted"  # `fitted_str` specifies the css class to use
+            fitted_str = "fitted"  # `fitted_str` specifies the css class to use
         except NotFittedError:  # estimator is not fitted
             is_fitted = False
             status_label = "<span>Estimator is not fitted</span>"
             fitted_str = ""
 
     is_fitted_icon = (
-        f'<span class="sk-estimator-doc-link{fitted_str}">i{status_label}</span>'
+        f'<span class="sk-estimator-doc-link {fitted_str}">i{status_label}</span>'
     )
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()

@@ -13,7 +13,6 @@ from collections import defaultdict
 
 import numpy as np
 
-
 from . import __version__
 from ._config import config_context, get_config
 from .exceptions import InconsistentVersionWarning
@@ -140,7 +139,7 @@ sklearn_version = parse_version(__version__)
 if sklearn_version.dev is None:
     # Not dev version, give full link
     # The gymnastics below is to catter for legacy versions and make mypy happy
-    if hasattr(sklearn_version, 'major') and hasattr(sklearn_version, 'minor'):
+    if hasattr(sklearn_version, "major") and hasattr(sklearn_version, "minor"):
         ver_str = f"{sklearn_version.major}.{sklearn_version.minor}"
     else:
         ver_str = sklearn_version.base_version
@@ -200,7 +199,7 @@ class BaseEstimator(_MetadataRequester):
         # Extract and sort argument names excluding 'self'
         return sorted([p.name for p in parameters])
 
-    def _get_url_link(self):
+    def _get_doc_link(self):
         """
         Generates a link to the API documentation for a given estimator.
 

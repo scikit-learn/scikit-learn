@@ -41,7 +41,7 @@ def test_write_label_html(checked):
 
         p = (
             r'<label for="sk-estimator-id-[0-9]*"'
-            r' class="sk-toggleable__label (fitted)?sk-toggleable__label-arrow">'
+            r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow ">'
             r"LogisticRegression"
         )
         re_compiled = re.compile(p)
@@ -176,7 +176,7 @@ def test_estimator_html_repr_pipeline():
     assert html.escape(str(pipe)) in html_output
     for _, est in pipe.steps:
         assert (
-            '<div class="sk-toggleable__content"><pre>' + html.escape(str(est))
+            '<div class="sk-toggleable__content "><pre>' + html.escape(str(est))
         ) in html_output
 
     # low level estimators do not show changes
@@ -236,7 +236,7 @@ def test_stacking_regressor(final_estimator):
     assert html.escape(str(reg.estimators[0][0])) in html_output
     p = (
         r'<label for="sk-estimator-id-[0-9]*"'
-        r' class="sk-toggleable__label (fitted)?sk-toggleable__label-arrow">'
+        r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow ">'
         r"LinearSVR"
     )
     re_compiled = re.compile(p)
@@ -245,7 +245,7 @@ def test_stacking_regressor(final_estimator):
     if final_estimator is None:
         p = (
             r'<label for="sk-estimator-id-[0-9]*"'
-            r' class="sk-toggleable__label (fitted)?sk-toggleable__label-arrow">'
+            r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow ">'
             r"RidgeCV"
         )
         re_compiled = re.compile(p)
@@ -279,7 +279,7 @@ def test_ovo_classifier_duck_typing_meta():
         # regex to match the start of the tag
         p = (
             r'<label for="sk-estimator-id-[0-9]*" '
-            r'class="sk-toggleable__label sk-toggleable__label-arrow">LinearSVC'
+            r'class="sk-toggleable__label  sk-toggleable__label-arrow ">LinearSVC'
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
@@ -328,7 +328,7 @@ def test_show_arrow_pipeline():
 
     html_output = estimator_html_repr(pipe)
     assert (
-        'class="sk-toggleable__label sk-toggleable__label-arrow">Pipeline'
+        'class="sk-toggleable__label  sk-toggleable__label-arrow ">Pipeline'
         in html_output
     )
 
