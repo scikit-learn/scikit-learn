@@ -285,6 +285,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.utils.gen_batches",
     "sklearn.utils.graph.single_source_shortest_path_length",
     "sklearn.utils.resample",
+    "sklearn.utils.safe_mask",
 ]
 
 
