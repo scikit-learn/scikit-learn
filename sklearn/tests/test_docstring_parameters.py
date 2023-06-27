@@ -260,6 +260,10 @@ def test_fit_docstring_attributes(name, Estimator):
     ):
         est.set_params(force_alpha=True)
 
+    # TODO(1.6): remove (avoid FutureWarning)
+    if Estimator.__name__ in ("NMF", "MiniBatchNMF"):
+        est.set_params(n_components="auto")
+
     if Estimator.__name__ == "QuantileRegressor":
         solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
         est.set_params(solver=solver)
