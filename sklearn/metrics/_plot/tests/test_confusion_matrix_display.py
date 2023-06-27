@@ -1,21 +1,18 @@
+import numpy as np
+import pytest
 from numpy.testing import (
     assert_allclose,
     assert_array_equal,
 )
-import numpy as np
-import pytest
 
-from sklearn.datasets import make_classification
 from sklearn.compose import make_column_transformer
+from sklearn.datasets import make_classification
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR
-
-from sklearn.metrics import ConfusionMatrixDisplay
-from sklearn.metrics import confusion_matrix
-
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(

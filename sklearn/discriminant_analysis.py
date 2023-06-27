@@ -10,23 +10,27 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 # License: BSD 3-Clause
 
 import warnings
+from numbers import Integral, Real
+
 import numpy as np
 import scipy.linalg
 from scipy import linalg
-from numbers import Real, Integral
 
-from .base import BaseEstimator, TransformerMixin, ClassifierMixin
-from .base import ClassNamePrefixFeaturesOutMixin
+from .base import (
+    BaseEstimator,
+    ClassifierMixin,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from .covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
 from .linear_model._base import LinearClassifierMixin
-from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
-from .utils.multiclass import unique_labels
-from .utils.validation import check_is_fitted
-from .utils._array_api import get_namespace, _expit, device, size
-from .utils.multiclass import check_classification_targets
-from .utils.extmath import softmax
-from .utils._param_validation import StrOptions, Interval, HasMethods
 from .preprocessing import StandardScaler
-
+from .utils._array_api import _expit, device, get_namespace, size
+from .utils._param_validation import HasMethods, Interval, StrOptions
+from .utils.extmath import softmax
+from .utils.multiclass import check_classification_targets, unique_labels
+from .utils.validation import check_is_fitted
 
 __all__ = ["LinearDiscriminantAnalysis", "QuadraticDiscriminantAnalysis"]
 
@@ -546,6 +550,10 @@ class LinearDiscriminantAnalysis(
         self.coef_ = coef @ self.scalings_.T
         self.intercept_ -= self.xbar_ @ self.coef_.T
 
+    @_fit_context(
+        # LinearDiscriminantAnalysis.covariance_estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit the Linear Discriminant Analysis model.
 
@@ -568,8 +576,6 @@ class LinearDiscriminantAnalysis(
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         xp, _ = get_namespace(X)
 
         X, y = self._validate_data(
@@ -745,6 +751,9 @@ class LinearDiscriminantAnalysis(
         # Only override for the doc
         return super().decision_function(X)
 
+    def _more_tags(self):
+        return {"array_api_support": True}
+
 
 class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     """Quadratic Discriminant Analysis.
@@ -862,6 +871,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self.store_covariance = store_covariance
         self.tol = tol
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
 
@@ -886,7 +896,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         X, y = self._validate_data(X, y)
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)

@@ -6,12 +6,13 @@ of hard-coded contributors.
 The table should be updated for each new inclusion in the teams.
 Generating the table requires admin rights.
 """
-import sys
-import requests
 import getpass
+import sys
 import time
-from pathlib import Path
 from os import path
+from pathlib import Path
+
+import requests
 
 print("user:", file=sys.stderr)
 user = input()

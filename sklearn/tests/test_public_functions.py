@@ -4,11 +4,13 @@ from numbers import Integral, Real
 
 import pytest
 
-from sklearn.utils._param_validation import generate_invalid_param_val
-from sklearn.utils._param_validation import generate_valid_param
-from sklearn.utils._param_validation import make_constraint
-from sklearn.utils._param_validation import InvalidParameterError
-from sklearn.utils._param_validation import Interval
+from sklearn.utils._param_validation import (
+    Interval,
+    InvalidParameterError,
+    generate_invalid_param_val,
+    generate_valid_param,
+    make_constraint,
+)
 
 
 def _get_func_info(func_module):
@@ -235,17 +237,22 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.pairwise.additive_chi2_kernel",
     "sklearn.metrics.pairwise.cosine_distances",
     "sklearn.metrics.pairwise.cosine_similarity",
+    "sklearn.metrics.pairwise.euclidean_distances",
     "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.laplacian_kernel",
     "sklearn.metrics.pairwise.linear_kernel",
     "sklearn.metrics.pairwise.manhattan_distances",
     "sklearn.metrics.pairwise.nan_euclidean_distances",
     "sklearn.metrics.pairwise.paired_cosine_distances",
+    "sklearn.metrics.pairwise.paired_distances",
     "sklearn.metrics.pairwise.paired_euclidean_distances",
     "sklearn.metrics.pairwise.paired_manhattan_distances",
+    "sklearn.metrics.pairwise.pairwise_kernels",
     "sklearn.metrics.pairwise.polynomial_kernel",
     "sklearn.metrics.pairwise.rbf_kernel",
     "sklearn.metrics.pairwise.sigmoid_kernel",
+    "sklearn.metrics.pairwise_distances",
+    "sklearn.metrics.pairwise_distances_argmin",
     "sklearn.metrics.precision_recall_curve",
     "sklearn.metrics.precision_recall_fscore_support",
     "sklearn.metrics.precision_score",
@@ -266,7 +273,6 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.preprocessing.add_dummy_feature",
     "sklearn.preprocessing.binarize",
     "sklearn.preprocessing.label_binarize",
-    "sklearn.preprocessing.maxabs_scale",
     "sklearn.preprocessing.normalize",
     "sklearn.preprocessing.scale",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
@@ -295,6 +301,7 @@ def test_function_param_validation(func_module):
 
 PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.cluster.affinity_propagation", "sklearn.cluster.AffinityPropagation"),
+    ("sklearn.cluster.k_means", "sklearn.cluster.KMeans"),
     ("sklearn.cluster.mean_shift", "sklearn.cluster.MeanShift"),
     ("sklearn.cluster.spectral_clustering", "sklearn.cluster.SpectralClustering"),
     ("sklearn.covariance.graphical_lasso", "sklearn.covariance.GraphicalLasso"),
@@ -303,6 +310,7 @@ PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.decomposition.dict_learning", "sklearn.decomposition.DictionaryLearning"),
     ("sklearn.decomposition.fastica", "sklearn.decomposition.FastICA"),
     ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
+    ("sklearn.preprocessing.maxabs_scale", "sklearn.preprocessing.MaxAbsScaler"),
     ("sklearn.preprocessing.minmax_scale", "sklearn.preprocessing.MinMaxScaler"),
     ("sklearn.preprocessing.power_transform", "sklearn.preprocessing.PowerTransformer"),
     (
