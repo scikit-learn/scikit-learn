@@ -11,16 +11,16 @@ Maximum likelihood covariance estimator.
 
 # avoid division truncation
 import warnings
+
 import numpy as np
 from scipy import linalg
 
 from .. import config_context
-from ..base import BaseEstimator
-from ..base import _fit_context
+from ..base import BaseEstimator, _fit_context
+from ..metrics.pairwise import pairwise_distances
 from ..utils import check_array
 from ..utils._param_validation import validate_params
 from ..utils.extmath import fast_logdet
-from ..metrics.pairwise import pairwise_distances
 
 
 def log_likelihood(emp_cov, precision):
@@ -54,7 +54,8 @@ def log_likelihood(emp_cov, precision):
     {
         "X": ["array-like"],
         "assume_centered": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def empirical_covariance(X, *, assume_centered=False):
     """Compute the Maximum likelihood covariance estimator.

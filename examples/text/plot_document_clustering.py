@@ -46,6 +46,7 @@ For document analysis via a supervised learning approach, see the example script
 # strip those features and have a more sensible clustering problem.
 
 import numpy as np
+
 from sklearn.datasets import fetch_20newsgroups
 
 categories = [
@@ -104,8 +105,9 @@ print(f"{len(dataset.data)} documents - {true_k} categories")
 # For more reference, see :ref:`clustering_evaluation`.
 
 from collections import defaultdict
-from sklearn import metrics
 from time import time
+
+from sklearn import metrics
 
 evaluations = []
 evaluations_std = []
@@ -277,7 +279,6 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
 
-
 lsa = make_pipeline(TruncatedSVD(n_components=100), Normalizer(copy=False))
 t0 = time()
 X_lsa = lsa.fit_transform(X_tfidf)
@@ -353,8 +354,7 @@ for i in range(true_k):
 # case we also add LSA to the pipeline to reduce the dimension and sparcity of
 # the hashed vector space.
 
-from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import HashingVectorizer, TfidfTransformer
 
 lsa_vectorizer = make_pipeline(
     HashingVectorizer(stop_words="english", n_features=50_000),
@@ -394,8 +394,8 @@ fit_and_evaluate(
 # Clustering evaluation summary
 # ==============================
 
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 
 fig, (ax0, ax1) = plt.subplots(ncols=2, figsize=(16, 6), sharey=True)
 

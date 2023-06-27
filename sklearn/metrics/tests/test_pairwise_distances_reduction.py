@@ -2,25 +2,25 @@ import itertools
 import re
 import warnings
 from collections import defaultdict
+from math import floor, log10
 
 import numpy as np
 import pytest
 import threadpoolctl
-from math import log10, floor
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
+from sklearn.metrics import euclidean_distances
 from sklearn.metrics._pairwise_distances_reduction import (
-    BaseDistancesReductionDispatcher,
     ArgKmin,
     ArgKminClassMode,
+    BaseDistancesReductionDispatcher,
     RadiusNeighbors,
     sqeuclidean_row_norms,
 )
-from sklearn.metrics import euclidean_distances
 from sklearn.utils._testing import (
-    assert_array_equal,
     assert_allclose,
+    assert_array_equal,
     create_memmap_backed_data,
 )
 

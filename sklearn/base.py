@@ -5,33 +5,36 @@
 
 import copy
 import functools
+import inspect
+import platform
+import re
 import warnings
 from collections import defaultdict
-import platform
-import inspect
-import re
 
 import numpy as np
 
 from . import __version__
-from ._config import get_config, config_context
+from ._config import config_context, get_config
+from .exceptions import InconsistentVersionWarning
 from .utils import _IS_32BIT
+from .utils._estimator_html_repr import estimator_html_repr
+from .utils._metadata_requests import _MetadataRequester
+from .utils._param_validation import validate_parameter_constraints
 from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
     _DEFAULT_TAGS,
 )
-from .exceptions import InconsistentVersionWarning
-from .utils.validation import check_X_y
-from .utils.validation import check_array
-from .utils.validation import _check_y
-from .utils.validation import _num_features
-from .utils.validation import _check_feature_names_in
-from .utils.validation import _generate_get_feature_names_out
-from .utils.validation import _is_fitted, check_is_fitted
-from .utils._metadata_requests import _MetadataRequester
-from .utils.validation import _get_feature_names
-from .utils._estimator_html_repr import estimator_html_repr
-from .utils._param_validation import validate_parameter_constraints
+from .utils.validation import (
+    _check_feature_names_in,
+    _check_y,
+    _generate_get_feature_names_out,
+    _get_feature_names,
+    _is_fitted,
+    _num_features,
+    check_array,
+    check_is_fitted,
+    check_X_y,
+)
 
 
 def clone(estimator, *, safe=True):
@@ -765,7 +768,7 @@ class ClusterMixin:
 
     _estimator_type = "clusterer"
 
-    def fit_predict(self, X, y=None):
+    def fit_predict(self, X, y=None, **kwargs):
         """
         Perform clustering on `X` and returns cluster labels.
 
@@ -777,6 +780,11 @@ class ClusterMixin:
         y : Ignored
             Not used, present for API consistency by convention.
 
+        **kwargs : dict
+            Arguments to be passed to ``fit``.
+
+            .. versionadded:: 1.4
+
         Returns
         -------
         labels : ndarray of shape (n_samples,), dtype=np.int64
@@ -784,7 +792,7 @@ class ClusterMixin:
         """
         # non-optimized default implementation; override when a better
         # method is possible for a given clustering algorithm
-        self.fit(X)
+        self.fit(X, **kwargs)
         return self.labels_
 
     def _more_tags(self):
@@ -1010,7 +1018,7 @@ class OutlierMixin:
 
     _estimator_type = "outlier_detector"
 
-    def fit_predict(self, X, y=None):
+    def fit_predict(self, X, y=None, **kwargs):
         """Perform fit on X and returns labels for X.
 
         Returns -1 for outliers and 1 for inliers.
@@ -1023,13 +1031,18 @@ class OutlierMixin:
         y : Ignored
             Not used, present for API consistency by convention.
 
+        **kwargs : dict
+            Arguments to be passed to ``fit``.
+
+            .. versionadded:: 1.4
+
         Returns
         -------
         y : ndarray of shape (n_samples,)
             1 for inliers, -1 for outliers.
         """
         # override for transductive outlier detectors like LocalOulierFactor
-        return self.fit(X).predict(X)
+        return self.fit(X, **kwargs).predict(X)
 
 
 class MetaEstimatorMixin:
