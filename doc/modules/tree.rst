@@ -1,4 +1,4 @@
-\.. _tree:
+.. _tree:
 
 ==============
 Decision Trees
