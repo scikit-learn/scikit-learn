@@ -32,6 +32,7 @@ print(__doc__)
 # (`np.expm1`) will be used to transform the targets before training a linear
 # regression model and using it for prediction.
 import numpy as np
+
 from sklearn.datasets import make_regression
 
 X, y = make_regression(n_samples=10_000, noise=100, random_state=0)
@@ -42,6 +43,7 @@ y_trans = np.log1p(y)
 # Below we plot the probability density functions of the target
 # before and after applying the logarithmic functions.
 import matplotlib.pyplot as plt
+
 from sklearn.model_selection import train_test_split
 
 f, (ax0, ax1) = plt.subplots(1, 2)

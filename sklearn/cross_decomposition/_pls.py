@@ -5,24 +5,27 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD 3 clause
 
-from numbers import Integral, Real
-
 import warnings
 from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.linalg import svd
 
-from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..base import MultiOutputMixin
-from ..base import ClassNamePrefixFeaturesOutMixin
-from ..utils import check_array, check_consistent_length
-from ..utils.fixes import sp_version
-from ..utils.fixes import parse_version
-from ..utils.extmath import svd_flip
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES
-from ..utils._param_validation import Interval, StrOptions
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..exceptions import ConvergenceWarning
+from ..utils import check_array, check_consistent_length
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import svd_flip
+from ..utils.fixes import parse_version, sp_version
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
 
@@ -208,6 +211,7 @@ class _PLS(
         self.tol = tol
         self.copy = copy
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, Y):
         """Fit model to data.
 
@@ -226,8 +230,6 @@ class _PLS(
         self : object
             Fitted model.
         """
-        self._validate_params()
-
         check_consistent_length(X, Y)
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
@@ -958,6 +960,7 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.scale = scale
         self.copy = copy
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, Y):
         """Fit model to data.
 
@@ -974,8 +977,6 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         check_consistent_length(X, Y)
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2

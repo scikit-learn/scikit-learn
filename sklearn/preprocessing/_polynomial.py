@@ -2,29 +2,31 @@
 This file contains preprocessing tools based on polynomials.
 """
 import collections
-from numbers import Integral
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
+from numbers import Integral
 
 import numpy as np
 from scipy import sparse
 from scipy.interpolate import BSpline
 from scipy.special import comb
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array
-from ..utils.fixes import sp_version, parse_version
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
-from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.fixes import parse_version, sp_version
 from ..utils.stats import _weighted_percentile
-
+from ..utils.validation import (
+    FLOAT_DTYPES,
+    _check_feature_names_in,
+    _check_sample_weight,
+    check_is_fitted,
+)
 from ._csr_polynomial_expansion import (
-    _csr_polynomial_expansion,
     _calc_expanded_nnz,
     _calc_total_nnz,
+    _csr_polynomial_expansion,
 )
-
 
 __all__ = [
     "PolynomialFeatures",
@@ -299,6 +301,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             feature_names.append(name)
         return np.asarray(feature_names, dtype=object)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """
         Compute number of output features.
@@ -316,7 +319,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_params()
         _, n_features = self._validate_data(X, accept_sparse=True).shape
 
         if isinstance(self.degree, Integral):
@@ -802,6 +804,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 feature_names.append(f"{input_features[i]}_sp_{j}")
         return np.asarray(feature_names, dtype=object)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """Compute knot positions of splines.
 
@@ -823,8 +826,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X,
             reset=True,
