@@ -133,7 +133,7 @@ class Pipeline(_BaseComposition):
     >>> # and avoids leaking the test set into the train set
     >>> pipe.fit(X_train, y_train).score(X_test, y_test)
     0.88
-    >>> # An estimators parameter can be set using '__' syntax
+    >>> # An estimator's parameter can be set using '__' syntax
     >>> pipe.set_params(svc__C=10).fit(X_train, y_train).score(X_test, y_test)
     0.76
     """
@@ -1046,17 +1046,16 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     --------
     >>> from sklearn.pipeline import FeatureUnion
     >>> from sklearn.decomposition import PCA, TruncatedSVD
-    >>> union = FeatureUnion([("pca", PCA()), ("svd", TruncatedSVD())])
+    >>> union = FeatureUnion([("pca", PCA(n_components=1)),
+    ...                       ("svd", TruncatedSVD(n_components=2))])
     >>> X = [[0., 1., 3], [2., 2., 5]]
     >>> union.fit_transform(X)
-    array([[ 1.50000000e+00,  6.20633538e-17,  3.03954967e+00,
-             8.72432133e-01],
-           [-1.50000000e+00,  6.20633538e-17,  5.72586357e+00,
-            -4.63126787e-01]])
-    >>> # An estimators parameter can be set using '__' syntax
+    array([[ 1.5       ,  3.0...,  0.8...],
+           [-1.5       ,  5.7..., -0.4...]])
+    >>> # An estimator's parameter can be set using '__' syntax
     >>> union.set_params(pca__n_components=1).fit_transform(X)
-    array([[ 1.5       ,  3.03954967,  0.87243213],
-           [-1.5       ,  5.72586357, -0.46312679]])
+    array([[ 1.5       ,  3.0...],
+           [-1.5       ,  5.7...]])
     """
 
     _required_parameters = ["transformer_list"]
