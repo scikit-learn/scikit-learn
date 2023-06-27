@@ -7,18 +7,18 @@ import time
 from contextlib import closing
 from functools import wraps
 from os.path import join
-from typing import Callable, Optional, Dict, Tuple, List, Any, Union
 from tempfile import TemporaryDirectory
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from urllib.error import HTTPError, URLError
-from urllib.request import urlopen, Request
+from urllib.request import Request, urlopen
 from warnings import warn
 
 import numpy as np
 
-from . import get_data_home
-from ._arff_parser import load_arff_from_gzip_file
-from ..utils import Bunch
-from ..utils import check_pandas_support  # noqa
+from ..utils import (
+    Bunch,
+    check_pandas_support,  # noqa  # noqa
+)
 from ..utils._param_validation import (
     Integral,
     Interval,
@@ -26,6 +26,8 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from . import get_data_home
+from ._arff_parser import load_arff_from_gzip_file
 
 __all__ = ["fetch_openml"]
 
@@ -754,7 +756,8 @@ def _valid_data_column_names(features_list, target_columns):
         "n_retries": [Interval(Integral, 1, None, closed="left")],
         "delay": [Interval(Real, 0, None, closed="right")],
         "parser": [StrOptions({"auto", "pandas", "liac-arff", "warn"})],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_openml(
     name: Optional[str] = None,

@@ -8,28 +8,26 @@ from io import BytesIO
 from urllib.error import HTTPError
 
 import numpy as np
-import scipy.sparse
 import pytest
+import scipy.sparse
 
 import sklearn
 from sklearn import config_context
+from sklearn.datasets import fetch_openml as fetch_openml_orig
+from sklearn.datasets._openml import (
+    _OPENML_PREFIX,
+    _get_local_path,
+    _open_openml_url,
+    _retry_with_clean_cache,
+)
 from sklearn.utils import Bunch, check_pandas_support
-from sklearn.utils.fixes import _open_binary
 from sklearn.utils._testing import (
     SkipTest,
     assert_allclose,
     assert_array_equal,
     fails_if_pypy,
 )
-
-from sklearn.datasets import fetch_openml as fetch_openml_orig
-from sklearn.datasets._openml import (
-    _OPENML_PREFIX,
-    _open_openml_url,
-    _get_local_path,
-    _retry_with_clean_cache,
-)
-
+from sklearn.utils.fixes import _open_binary
 
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files
@@ -920,9 +918,7 @@ def datasets_missing_values():
         (1119, "liac-arff", 9, 6, 0),
         (1119, "pandas", 9, 0, 6),
         # miceprotein
-        # 1 column has only missing values with object dtype
-        (40966, "liac-arff", 1, 76, 0),
-        # with casting it will be transformed to either float or Int64
+        (40966, "liac-arff", 1, 77, 0),
         (40966, "pandas", 1, 77, 0),
         # titanic
         (40945, "liac-arff", 3, 6, 0),

@@ -883,13 +883,14 @@ cardinality categories are location based such as zip code or region. For the
 binary classification target, the target encoding is given by:
 
 .. math::
-    S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_y}{n}
+    S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_Y}{n}
 
 where :math:`S_i` is the encoding for category :math:`i`, :math:`n_{iY}` is the
-number of observations with :math:`Y=1` with category :math:`i`, :math:`n_i` is
-the number of observations with category :math:`i`, :math:`n_y` is the number of
+number of observations with :math:`Y=1` and category :math:`i`, :math:`n_i` is
+the number of observations with category :math:`i`, :math:`n_Y` is the number of
 observations with :math:`Y=1`, :math:`n` is the number of observations, and
-:math:`\lambda_i` is a shrinkage factor. The shrinkage factor is given by:
+:math:`\lambda_i` is a shrinkage factor for category :math:`i`. The shrinkage
+factor is given by:
 
 .. math::
     \lambda_i = \frac{n_i}{m + n_i}
@@ -897,40 +898,45 @@ observations with :math:`Y=1`, :math:`n` is the number of observations, and
 where :math:`m` is a smoothing factor, which is controlled with the `smooth`
 parameter in :class:`TargetEncoder`. Large smoothing factors will put more
 weight on the global mean. When `smooth="auto"`, the smoothing factor is
-computed as an empirical Bayes estimate: :math:`m=\sigma_c^2/\tau^2`, where
+computed as an empirical Bayes estimate: :math:`m=\sigma_i^2/\tau^2`, where
 :math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
 :math:`\tau^2` is the global variance of `y`.
 
 For continuous targets, the formulation is similar to binary classification:
 
 .. math::
-    S_i = \lambda_i\frac{\sum_{k\in L_i}y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}y_k}{n}
+    S_i = \lambda_i\frac{\sum_{k\in L_i}Y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}Y_k}{n}
 
-where :math:`L_i` is the set of observations for which :math:`X=X_i` and
-:math:`n_i` is the cardinality of :math:`L_i`.
+where :math:`L_i` is the set of observations with category :math:`i` and
+:math:`n_i` is the number of observations with category :math:`i`.
 
-:meth:`~TargetEncoder.fit_transform` internally relies on a cross validation
-scheme to prevent information from the target from leaking into the train-time
-representation for non-informative high-cardinality categorical variables and
-help prevent the downstream model to overfit spurious correlations. Note that
-as a result, `fit(X, y).transform(X)` does not equal `fit_transform(X, y)`. In
-:meth:`~TargetEncoder.fit_transform`, the training data is split into multiple
-folds and encodes each fold by using the encodings trained on the other folds.
-After cross validation is complete in :meth:`~TargetEncoder.fit_transform`, the
-target encoder learns one final encoding on the whole training set. This final
-encoding is used to encode categories in :meth:`~TargetEncoder.transform`. The
-following diagram shows the cross validation scheme in
-:meth:`~TargetEncoder.fit_transform` with the default `cv=5`:
+:meth:`~TargetEncoder.fit_transform` internally relies on a cross fitting
+scheme to prevent target information from leaking into the train-time
+representation, especially for non-informative high-cardinality categorical
+variables, and help prevent the downstream model from overfitting spurious
+correlations. Note that as a result, `fit(X, y).transform(X)` does not equal
+`fit_transform(X, y)`. In :meth:`~TargetEncoder.fit_transform`, the training
+data is split into *k* folds (determined by the `cv` parameter) and encodes each
+fold using the encodings trained on the other *k-1* folds. The following diagram
+shows the cross fitting scheme in :meth:`~TargetEncoder.fit_transform` with
+the default `cv=5`:
 
 .. image:: ../images/target_encoder_cross_validation.svg
    :width: 600
    :align: center
 
-The :meth:`~TargetEncoder.fit` method does **not** use any cross validation
+:meth:`~TargetEncoder.fit_transform` also learns a 'full data' encoding using
+the whole training set. This is never used in
+:meth:`~TargetEncoder.fit_transform` but is saved to the attribute `encodings_`,
+for use when :meth:`~TargetEncoder.transform` is called. Note that the encodings
+learned for each fold during the cross fitting scheme are not saved to an
+attribute.
+
+The :meth:`~TargetEncoder.fit` method does **not** use any cross fitting
 schemes and learns one encoding on the entire training set, which is used to
 encode categories in :meth:`~TargetEncoder.transform`.
-:meth:`~TargetEncoder.fit`'s one encoding is the same as the final encoding
-learned in :meth:`~TargetEncoder.fit_transform`.
+This encoding is the same as the 'full data'
+encoding learned in :meth:`~TargetEncoder.fit_transform`.
 
 .. note::
   :class:`TargetEncoder` considers missing values, such as `np.nan` or `None`,

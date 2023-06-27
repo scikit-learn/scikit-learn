@@ -4,21 +4,23 @@
 # License: BSD
 
 
-from numbers import Integral
-import numpy as np
 import warnings
+from numbers import Integral
 
-from . import OneHotEncoder
+import numpy as np
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils._param_validation import Hidden, Interval, StrOptions, Options
-from ..utils.validation import check_array
-from ..utils.validation import check_is_fitted
-from ..utils.validation import check_random_state
-from ..utils.validation import _check_feature_names_in
-from ..utils.validation import _check_sample_weight
-from ..utils.stats import _weighted_percentile
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import _safe_indexing
+from ..utils._param_validation import Hidden, Interval, Options, StrOptions
+from ..utils.stats import _weighted_percentile
+from ..utils.validation import (
+    _check_feature_names_in,
+    _check_sample_weight,
+    check_array,
+    check_is_fitted,
+    check_random_state,
+)
+from ._encoders import OneHotEncoder
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -192,6 +194,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.subsample = subsample
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """
         Fit the estimator.
@@ -216,7 +219,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         X = self._validate_data(X, dtype="numeric")
 
         if self.dtype in (np.float64, np.float32):

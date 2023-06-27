@@ -1,8 +1,8 @@
-from contextlib import closing
-from io import StringIO
-from inspect import isclass
-from string import Template
 import html
+from contextlib import closing
+from inspect import isclass
+from io import StringIO
+from string import Template
 
 from .. import config_context
 
