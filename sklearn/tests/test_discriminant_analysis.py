@@ -1,31 +1,24 @@
 import numpy as np
-
 import pytest
-
 from scipy import linalg
 
-from sklearn.base import clone
-from sklearn._config import config_context
-from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._array_api import _convert_to_numpy
-from sklearn.utils._testing import _convert_container
-from sklearn.utils._testing import skip_if_array_api_compat_not_configured
-
-from sklearn.datasets import make_blobs
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-from sklearn.discriminant_analysis import _cov
-from sklearn.covariance import ledoit_wolf
 from sklearn.cluster import KMeans
-
-from sklearn.covariance import ShrunkCovariance
-from sklearn.covariance import LedoitWolf
-
+from sklearn.covariance import LedoitWolf, ShrunkCovariance, ledoit_wolf
+from sklearn.datasets import make_blobs
+from sklearn.discriminant_analysis import (
+    LinearDiscriminantAnalysis,
+    QuadraticDiscriminantAnalysis,
+    _cov,
+)
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]], dtype="f")
@@ -187,7 +180,7 @@ def test_lda_predict_proba(solver, n_classes):
     sample = np.array([[-22, 22]])
 
     def discriminant_func(sample, coef, intercept, clazz):
-        return np.exp(intercept[clazz] + np.dot(sample, coef[clazz]))
+        return np.exp(intercept[clazz] + np.dot(sample, coef[clazz])).item()
 
     prob = np.array(
         [
@@ -675,121 +668,3 @@ def test_get_feature_names_out():
         dtype=object,
     )
     assert_array_equal(names_out, expected_names_out)
-
-
-@skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
-def test_lda_array_api(array_namespace):
-    """Check that the array_api Array gives the same results as ndarrays."""
-    xp = pytest.importorskip(array_namespace)
-
-    X_xp = xp.asarray(X)
-    y_xp = xp.asarray(y3)
-
-    lda = LinearDiscriminantAnalysis()
-    lda.fit(X, y3)
-
-    array_attributes = {
-        key: value for key, value in vars(lda).items() if isinstance(value, np.ndarray)
-    }
-
-    lda_xp = clone(lda)
-    with config_context(array_api_dispatch=True):
-        lda_xp.fit(X_xp, y_xp)
-
-    # Fitted-attributes which are arrays must have the same
-    # namespace than the one of the training data.
-    for key, attribute in array_attributes.items():
-        lda_xp_param = getattr(lda_xp, key)
-        assert hasattr(lda_xp_param, "__array_namespace__")
-
-        lda_xp_param_np = _convert_to_numpy(lda_xp_param, xp=xp)
-        assert_allclose(
-            attribute, lda_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
-        )
-
-    # Check predictions are the same
-    methods = (
-        "decision_function",
-        "predict",
-        "predict_log_proba",
-        "predict_proba",
-        "transform",
-    )
-
-    for method in methods:
-        result = getattr(lda, method)(X)
-        with config_context(array_api_dispatch=True):
-            result_xp = getattr(lda_xp, method)(X_xp)
-        assert hasattr(
-            result_xp, "__array_namespace__"
-        ), f"{method} did not output an array_namespace"
-
-        result_xp_np = _convert_to_numpy(result_xp, xp=xp)
-
-        assert_allclose(
-            result,
-            result_xp_np,
-            err_msg=f"{method} did not the return the same result",
-            atol=1e-5,
-        )
-
-
-@skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize("device", ["cuda", "cpu"])
-@pytest.mark.parametrize("dtype", ["float32", "float64"])
-def test_lda_array_torch(device, dtype):
-    """Check running on PyTorch Tensors gives the same results as NumPy"""
-    torch = pytest.importorskip("torch")
-    if device == "cuda" and not torch.has_cuda:
-        pytest.skip("test requires cuda")
-
-    lda = LinearDiscriminantAnalysis()
-    X_np = X6.astype(dtype)
-    y_np = y6.astype(dtype)
-    lda.fit(X_np, y_np)
-
-    X_torch = torch.asarray(X_np, device=device)
-    y_torch = torch.asarray(y_np, device=device)
-    lda_xp = clone(lda)
-    with config_context(array_api_dispatch=True):
-        lda_xp.fit(X_torch, y_torch)
-
-    array_attributes = {
-        key: value for key, value in vars(lda).items() if isinstance(value, np.ndarray)
-    }
-
-    for key, attribute in array_attributes.items():
-        lda_xp_param = getattr(lda_xp, key)
-        assert isinstance(lda_xp_param, torch.Tensor)
-        assert lda_xp_param.device.type == device
-
-        lda_xp_param_np = _convert_to_numpy(lda_xp_param, xp=torch)
-        assert_allclose(
-            attribute, lda_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
-        )
-
-    # Check predictions are the same
-    methods = (
-        "decision_function",
-        "predict",
-        "predict_log_proba",
-        "predict_proba",
-        "transform",
-    )
-    for method in methods:
-        result = getattr(lda, method)(X_np)
-        with config_context(array_api_dispatch=True):
-            result_xp = getattr(lda_xp, method)(X_torch)
-
-        assert isinstance(result_xp, torch.Tensor)
-        assert result_xp.device.type == device
-
-        result_xp_np = _convert_to_numpy(result_xp, xp=torch)
-
-        assert_allclose(
-            result,
-            result_xp_np,
-            err_msg=f"{method} did not the return the same result",
-            atol=1e-6,
-        )

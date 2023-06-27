@@ -8,9 +8,8 @@ The :mod:`sklearn.gaussian_process` module implements Gaussian Process
 based regression and classification.
 """
 
-from ._gpr import GaussianProcessRegressor
-from ._gpc import GaussianProcessClassifier
 from . import kernels
-
+from ._gpc import GaussianProcessClassifier
+from ._gpr import GaussianProcessRegressor
 
 __all__ = ["GaussianProcessRegressor", "GaussianProcessClassifier", "kernels"]
