@@ -146,6 +146,10 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
    :scale: 75
    :align: center
 
+|details-start|
+**Alternative ways to export trees**
+|details-split|
+
 We can also export the tree in `Graphviz
 <https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
 exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries
@@ -211,6 +215,8 @@ of external libraries and is more compact:
     |   |--- petal width (cm) >  1.75
     |   |   |--- class: 2
     <BLANKLINE>
+
+|details-end|
 
 .. topic:: Examples:
 
