@@ -104,7 +104,9 @@ This database is also available through the UW CS ftp server:
 ftp ftp.cs.wisc.edu
 cd math-prog/cpo-dataset/machine-learn/WDBC/
 
-.. topic:: References
+|details-start|
+**References**
+|details-split|
 
    - W.N. Street, W.H. Wolberg and O.L. Mangasarian. Nuclear feature extraction 
      for breast tumor diagnosis. IS&T/SPIE 1993 International Symposium on 
@@ -116,3 +118,5 @@ cd math-prog/cpo-dataset/machine-learn/WDBC/
    - W.H. Wolberg, W.N. Street, and O.L. Mangasarian. Machine learning techniques
      to diagnose breast cancer from fine-needle aspirates. Cancer Letters 77 (1994) 
      163-171.
+
+|details-end|

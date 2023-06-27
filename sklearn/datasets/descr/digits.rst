@@ -32,7 +32,9 @@ T. Candela, D. L. Dimmick, J. Geist, P. J. Grother, S. A. Janet, and C.
 L. Wilson, NIST Form-Based Handprint Recognition System, NISTIR 5469,
 1994.
 
-.. topic:: References
+|details-start|
+**References**
+|details-split|
 
   - C. Kaynak (1995) Methods of Combining Multiple Classifiers and Their
     Applications to Handwritten Digit Recognition, MSc Thesis, Institute of
@@ -44,3 +46,5 @@ L. Wilson, NIST Form-Based Handprint Recognition System, NISTIR 5469,
     2005.
   - Claudio Gentile. A New Approximate Maximal Margin Classification
     Algorithm. NIPS. 2000.
+
+|details-end|

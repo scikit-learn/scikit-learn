@@ -74,7 +74,9 @@ Lichman, M. (2013). UCI Machine Learning Repository
 [https://archive.ics.uci.edu/ml]. Irvine, CA: University of California,
 School of Information and Computer Science. 
 
-.. topic:: References
+|details-start|
+**References**
+|details-split|
 
   (1) S. Aeberhard, D. Coomans and O. de Vel, 
   Comparison of Classifiers in High Dimensional Settings, 
@@ -93,3 +95,5 @@ School of Information and Computer Science.
   Tech. Rep. no. 92-01, (1992), Dept. of Computer Science and Dept. of 
   Mathematics and Statistics, James Cook University of North Queensland. 
   (Also submitted to Journal of Chemometrics).
+
+|details-end|
