@@ -2041,7 +2041,8 @@ def pairwise_distances_chunked(
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
         "n_jobs": [Integral, None],
         "force_all_finite": ["boolean", StrOptions({"allow-nan"})],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def pairwise_distances(
     X, Y=None, metric="euclidean", *, n_jobs=None, force_all_finite=True, **kwds
