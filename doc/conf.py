@@ -72,6 +72,7 @@ try:
     import jupyterlite_sphinx  # noqa: F401
 
     extensions.append("jupyterlite_sphinx")
+    with_jupyterlite = True
 except ImportError:
     # In some cases we don't want to require jupyterlite_sphinx to be installed,
     # e.g. the doc-min-dependencies build
@@ -79,6 +80,7 @@ except ImportError:
         "jupyterlite_sphinx is not installed, you need to install it "
         "if you want JupyterLite links to appear in each example"
     )
+    with_jupyterlite = False
 
 # Produce `plot::` directives for examples that contain `import matplotlib` or
 # `from matplotlib import`.
@@ -525,13 +527,16 @@ sphinx_gallery_conf = {
         "dependencies": "./binder/requirements.txt",
         "use_jupyter_lab": True,
     },
-    "jupyterlite": {"notebook_modification_function": notebook_modification_function},
     # avoid generating too many cross links
     "inspect_global_variables": False,
     "remove_config_comments": True,
     "plot_gallery": "True",
     "reset_modules": ("matplotlib", "seaborn", reset_sklearn_config),
 }
+if with_jupyterlite:
+    sphinx_gallery_conf["jupyterlite"] = {
+        "notebook_modification_function": notebook_modification_function
+    }
 
 
 # The following dictionary contains the information used to create the
