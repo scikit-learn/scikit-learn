@@ -10,6 +10,7 @@
 import itertools
 import warnings
 from functools import partial
+from numbers import Integral, Real
 
 import numpy as np
 from joblib import effective_n_jobs
@@ -28,12 +29,10 @@ from ..utils import (
 )
 from ..utils._mask import _get_mask
 from ..utils._param_validation import (
-    Interval,
     Hidden,
     Interval,
     MissingValues,
     Options,
-    Real,
     StrOptions,
     validate_params,
 )
@@ -1879,7 +1878,8 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
         "metric": [StrOptions({"precomputed"}.union(_VALID_METRICS)), callable],
         "n_jobs": [Integral, None],
         "working_memory": [Interval(Real, 0, None, closed="left"), None],
-    }
+    },
+    prefer_skip_nested_validation=False,  # metric is not validated yet
 )
 def pairwise_distances_chunked(
     X,
