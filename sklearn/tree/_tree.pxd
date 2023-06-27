@@ -21,9 +21,11 @@ ctypedef cnp.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef cnp.npy_intp SIZE_t              # Type for indices and counters
 ctypedef cnp.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef cnp.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+ctypedef np.npy_uint64 UINT64_t           # Unsigned 64 bit integer
 
 from ._splitter cimport SplitRecord, Splitter
-
+from ._utils cimport SplitValue
+from ._utils cimport BITSET_t
 
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object
@@ -36,6 +38,15 @@ cdef struct Node:
     SIZE_t n_node_samples                # Number of samples at the node
     DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
     unsigned char missing_go_to_left     # Whether features have missing values
+
+
+cdef class CategoryCacheMgr:
+    # Class to manage the category cache memory during Tree.apply()
+
+    cdef SIZE_t n_nodes
+    cdef BITSET_t **bits
+
+    cdef void populate(self, Node* nodes, SIZE_t n_nodes, INT32_t[:] n_categories)
 
 
 cdef class BaseTree:
@@ -114,6 +125,9 @@ cdef class Tree(BaseTree):
     cdef public SIZE_t n_outputs         # Number of outputs in y
     cdef public SIZE_t max_n_classes     # max(n_classes)
 
+    cdef INT32_t[:] n_categories         # (n_features,) array of number of categories per feature
+                                         # is <0 for non-categorial (i.e. -1)
+
     # Enables the use of tree to store distributions of the output to allow
     # arbitrary usage of the the leaves. This is used in the quantile
     # estimators for example.
@@ -158,6 +172,7 @@ cdef class TreeBuilder:
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=*,
         const unsigned char[::1] missing_values_in_feature_mask=*,
+        const INT32_t[:] n_categories=*,
     )
 
     cdef _check_input(

@@ -36,7 +36,9 @@ cnp.import_array()
 from scipy.sparse import csr_matrix, issparse, isspmatrix_csr
 
 from ._utils cimport safe_realloc, sizet_ptr_to_ndarray
-
+from ._utils cimport int32_ptr_to_ndarray
+from ._utils cimport setup_cat_cache
+from ._utils cimport goes_left
 
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(PyTypeObject* subtype, cnp.dtype descr,
@@ -96,6 +98,7 @@ cdef class TreeBuilder:
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
         const unsigned char[::1] missing_values_in_feature_mask=None,
+        const INT32_t[:] n_categories=None,
     ):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -178,6 +181,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
         const unsigned char[::1] missing_values_in_feature_mask=None,
+        const INT32_t[:] n_categories=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -203,7 +207,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double min_impurity_decrease = self.min_impurity_decrease
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight, missing_values_in_feature_mask)
+        splitter.init(X, y, sample_weight, missing_values_in_feature_mask, n_categories)
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -397,6 +401,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
         const unsigned char[::1] missing_values_in_feature_mask=None,
+        const INT32_t[:] n_categories=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -408,7 +413,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t max_leaf_nodes = self.max_leaf_nodes
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight, missing_values_in_feature_mask)
+        splitter.init(X, y, sample_weight, missing_values_in_feature_mask, n_categories)
 
         cdef vector[FrontierRecord] frontier
         cdef FrontierRecord record
@@ -575,6 +580,47 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         return 0
 
 
+
+cdef class CategoryCacheMgr:
+    """Class to manage the category cache memory during Tree.apply()
+    """
+
+    def __cinit__(self):
+        self.n_nodes = 0
+        self.bits = NULL
+
+    def _dealloc__(self):
+        cdef int i
+
+        if self.bits != NULL:
+            for i in range(self.n_nodes):
+                free(self.bits[i])
+        free(self.bits)
+
+    cdef void populate(self, Node *nodes, SIZE_t n_nodes,
+                       INT32_t *n_categories):
+        cdef SIZE_t i
+        cdef INT32_t ncat
+
+        if nodes == NULL or n_categories == NULL:
+            return
+
+        self.n_nodes = n_nodes
+        safe_realloc(<void ***> &self.bits, n_nodes, sizeof(void *))
+        for i in range(n_nodes):
+            self.bits[i] = NULL
+            if nodes[i].left_child != _TREE_LEAF:
+                ncat = n_categories[nodes[i].feature]
+                if ncat > 0:
+                    cache_size = (ncat + 63) // 64
+                    safe_realloc(&self.bits[i],
+                                 cache_size,
+                                 sizeof(BITSET_t))
+                    setup_cat_cache(self.bits[i],
+                                    nodes[i].split_value.cat_split,
+                                    ncat)
+
+
 # =============================================================================
 # Tree
 # =============================================================================
@@ -617,8 +663,8 @@ cdef class BaseTree:
             else:
                 capacity = 2 * self.capacity
 
-        safe_realloc(&self.nodes, capacity)
-        safe_realloc(&self.value, capacity * self.value_stride)
+        safe_realloc(&self.nodes, capacity, sizeof(Node))
+        safe_realloc(&self.value, capacity * self.value_stride, sizeof(double))
 
         # value memory is initialised to 0 to enable classifier argmax
         if capacity > self.capacity:
@@ -649,7 +695,7 @@ cdef class BaseTree:
         """
         # left_child and right_child will be set later for a split node
         node.feature = split_node.feature
-        node.threshold = split_node.threshold
+        node.split_value = split_node.split_value
         return 1
 
     cdef int _set_leaf_node(
@@ -669,7 +715,7 @@ cdef class BaseTree:
         node.left_child = _TREE_LEAF
         node.right_child = _TREE_LEAF
         node.feature = _TREE_UNDEFINED
-        node.threshold = _TREE_UNDEFINED
+        node.split_value = _TREE_UNDEFINED
         return 1
 
     cdef DTYPE_t _compute_feature(
@@ -1263,6 +1309,10 @@ cdef class Tree(BaseTree):
     weighted_n_node_samples : array of double, shape [node_count]
         weighted_n_node_samples[i] holds the weighted number of training samples
         reaching node i.
+
+    n_categories : array of int, shape [n_features]
+        Number of expected category values for categorical features, or
+        -1 for non-categorical features.
     """
     # Wrap for outside world.
     # WARNING: these reference the current `nodes` and `value` buffers, which
@@ -1322,9 +1372,16 @@ cdef class Tree(BaseTree):
             leaf_node_samples[node_id] = self._get_value_samples_ndarray(node_id)
         return leaf_node_samples
 
+    @property
+    def n_categories(self):
+        return int32_ptr_to_ndarray(self.n_categories, self.n_features).copy()
+
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
-    def __cinit__(self, int n_features, cnp.ndarray n_classes, int n_outputs):
+    def __cinit__(
+        self, int n_features, cnp.ndarray n_classes, int n_outputs,
+        np.ndarray[INT32_t, ndim=1] n_categories
+    ):
         """Constructor."""
         cdef SIZE_t dummy = 0
         size_t_dtype = np.array(dummy).dtype
@@ -1337,12 +1394,17 @@ cdef class Tree(BaseTree):
         self.n_classes = NULL
         safe_realloc(&self.n_classes, n_outputs)
 
+        self.n_categories = NULL
+        safe_realloc(&self.n_categories, n_features)
+
         self.max_n_classes = np.max(n_classes)
         self.value_stride = n_outputs * self.max_n_classes
 
         cdef SIZE_t k
         for k in range(n_outputs):
             self.n_classes[k] = n_classes[k]
+        for k in range(n_features):
+            self.n_categories[k] = n_categories[k]
 
         # Inner structures
         self.max_depth = 0
@@ -1354,18 +1416,29 @@ cdef class Tree(BaseTree):
         # initialize the hash map for the value samples
         self.value_samples = unordered_map[SIZE_t, vector[vector[DOUBLE_t]]]()
 
+        # Ensure cython and numpy node sizes match up
+        np_node_size = <SIZE_t> (<np.dtype> NODE_DTYPE).itemsize
+        node_size = <SIZE_t> sizeof(Node)
+        if (np_node_size != node_size):
+            raise TypeError('Size of numpy NODE_DTYPE ({} bytes) does not'
+                            ' match size of Node ({} bytes)'.format(
+                                np_node_size, node_size))
+
     def __dealloc__(self):
         """Destructor."""
         # Free all inner structures
         free(self.n_classes)
         free(self.value)
         free(self.nodes)
+        free(self.n_categories)
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
         return (Tree, (self.n_features,
                        sizet_ptr_to_ndarray(self.n_classes, self.n_outputs),
-                       self.n_outputs), self.__getstate__())
+                       self.n_outputs,
+                       int32_ptr_to_ndarray(self.n_categories, self.n_features)),
+                       self.__getstate__())
 
     def __getstate__(self):
         """Getstate re-implementation, for pickling."""

@@ -28,7 +28,10 @@ import numpy as np
 from scipy.sparse import isspmatrix_csc
 
 from ._utils cimport RAND_R_MAX, log, rand_int, rand_uniform
-
+from ._utils cimport setup_cat_cache
+from ._utils cimport goes_left
+from ._utils cimport (BITSET_t, bs_get, bs_set, bs_flip_all,
+                      bs_from_template)
 
 cdef double INFINITY = np.inf
 
@@ -44,7 +47,7 @@ cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) noexcept nogil
     self.impurity_right = INFINITY
     self.pos = start_pos
     self.feature = 0
-    self.threshold = 0.
+    self.split_value.threshold = 0.
     self.improvement = -INFINITY
     self.missing_go_to_left = False
     self.n_missing = 0
@@ -120,7 +123,7 @@ cdef class Splitter(BaseSplitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, *argv):
+                  object random_state, bint breiman_short, *argv):
         """
         Parameters
         ----------
@@ -152,6 +155,9 @@ cdef class Splitter(BaseSplitter):
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.random_state = random_state
+        self.breiman_shortcut = breiman_shortcut
+
+        self.cat_cache = NULL
 
     def __reduce__(self):
         return (type(self), (self.criterion,
@@ -166,6 +172,7 @@ cdef class Splitter(BaseSplitter):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const INT32_t[:] n_categories
     ) except -1:
         """Initialize the splitter.
 
@@ -189,8 +196,13 @@ cdef class Splitter(BaseSplitter):
             are assumed to have uniform weight. This is represented
             as a Cython memoryview.
 
-        has_missing : bool
-            At least one missing values is in X.
+        missing_values_in_feature_mask : ndarray, dtype=unsigned char
+            Whether or not each feature has missing values. This is represented
+            as a Cython memoryview.
+
+        n_categories : array of INT32_t, shape=(n_features,)
+            Number of categories for categorical features, or -1 for
+            non-categorical features
         """
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
         cdef SIZE_t n_samples = X.shape[0]
@@ -243,6 +255,21 @@ cdef class Splitter(BaseSplitter):
         )
         if missing_values_in_feature_mask is not None:
             self.criterion.init_sum_missing()
+
+        # Initialize the number of categories for each feature
+        # A value of -1 indicates a non-categorical feature
+        if n_categories is None:
+            self.n_categories = np.array([-1] * n_features, dtype=np.int32)
+        else:
+            self.n_categories = np.empty_like(n_categories, dtype=np.int32)
+            self.n_categories[:] = n_categories
+
+        # If needed, allocate cache space for categorical splits
+        cdef INT32_t max_n_categories = max(self.n_categories)
+        if max_n_categories > 0:
+            cache_size = (max_n_categories + 63) // 64
+            self.cat_cache = np.empty_like(cache_size, dtype=BITSET_t)
+            # safe_realloc(&self.cat_cache, cache_size, sizeof(BITSET_t))
 
         return 0
 
@@ -331,6 +358,53 @@ cdef class Splitter(BaseSplitter):
 
         return 0
 
+    cdef void _breiman_sort_categories(
+        self,
+        SIZE_t start,
+        SIZE_t end,
+        INT32_t ncat,
+        SIZE_t ncat_present,
+        const INT32_t *cat_offset,
+        SIZE_t *sorted_cat
+    ) noexcept nogil:
+        """The Breiman shortcut for finding the best split involves a
+        preprocessing step wherein we sort the categories by
+        increasing (weighted) mean of the outcome y (whether 0/1
+        binary for classification or quantitative for
+        regression). This function implements this preprocessing step
+        and produces a sorted list of category values.
+        """
+        cdef:
+            SIZE_t[:] samples = self.samples
+            DTYPE_t[:] Xf = self.feature_values
+            DOUBLE_t[:] y = self.y
+            SIZE_t y_stride = self.y_stride
+            DOUBLE_t[:] sample_weight = self.sample_weight
+            DOUBLE_t w
+            SIZE_t cat, localcat
+            SIZE_t q, partition_end
+            DTYPE_t sort_value[64]
+            DTYPE_t sort_density[64]
+
+        # categorical features with more than 64 categories are not supported
+        # here.
+        memset(sort_value, 0, 64 * sizeof(DTYPE_t))
+        memset(sort_density, 0, 64 * sizeof(DTYPE_t))
+
+        for q in range(start, end):
+            cat = <SIZE_t> Xf[q]
+            w = sample_weight[samples[q]] if sample_weight else 1.0
+            sort_value[cat] += w * (y[y_stride * samples[q]])
+            sort_density[cat] += w
+
+        for localcat in range(ncat_present):
+            cat = localcat + cat_offset[localcat]
+            if sort_density[cat] == 0:  # Avoid dividing by zero
+                sort_density[cat] = 1
+            sort_value[localcat] = sort_value[cat] / sort_density[cat]
+            sorted_cat[localcat] = cat
+
+        sort(&sort_value[0], sorted_cat, ncat_present)
 
 cdef inline void shift_missing_values_to_left_if_required(
     SplitRecord* best,
@@ -764,6 +838,8 @@ cdef inline int node_split_random(
     cdef DTYPE_t min_feature_value
     cdef DTYPE_t max_feature_value
 
+    cdef UINT64_t ui
+
     _init_split(&best_split, end)
 
     partitioner.init_node_split(start, end)
@@ -906,6 +982,7 @@ cdef class DensePartitioner:
         cdef SIZE_t end
         cdef SIZE_t n_missing
         cdef const unsigned char[::1] missing_values_in_feature_mask
+        cdef const INT32_t[:] n_categories
 
     def __init__(
         self,
@@ -913,11 +990,13 @@ cdef class DensePartitioner:
         SIZE_t[::1] samples,
         DTYPE_t[::1] feature_values,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const INT32_t[:] n_categories,
     ):
         self.X = X
         self.samples = samples
         self.feature_values = feature_values
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
+        self.n_categories = n_categories
 
     cdef inline void init_node_split(self, SIZE_t start, SIZE_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
@@ -1116,6 +1195,7 @@ cdef class SparsePartitioner:
     cdef SIZE_t end
     cdef SIZE_t n_missing
     cdef const unsigned char[::1] missing_values_in_feature_mask
+    cdef const INT32_t[:] n_categories
 
     cdef const DTYPE_t[::1] X_data
     cdef const INT32_t[::1] X_indices
@@ -1137,6 +1217,7 @@ cdef class SparsePartitioner:
         SIZE_t n_samples,
         DTYPE_t[::1] feature_values,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const INT32_t[:] n_categories,
     ):
         if not isspmatrix_csc(X):
             raise ValueError("X should be in csc format")
@@ -1161,6 +1242,7 @@ cdef class SparsePartitioner:
             self.index_to_samples[samples[p]] = p
 
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
+        self.n_categories = n_categories
 
     cdef inline void init_node_split(self, SIZE_t start, SIZE_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
@@ -1532,10 +1614,19 @@ cdef class BestSplitter(Splitter):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const INT32_t[:] n_categories,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
+        Splitter.init(
+            self,
+            X,
+            y,
+            sample_weight,
+            missing_values_in_feature_mask,
+            n_categories
+        )
         self.partitioner = DensePartitioner(
-            X, self.samples, self.feature_values, missing_values_in_feature_mask
+            X, self.samples, self.feature_values, missing_values_in_feature_mask,
+            n_categories
         )
 
     cdef int node_split(self, double impurity, SplitRecord* split,
@@ -1558,10 +1649,12 @@ cdef class BestSparseSplitter(Splitter):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const INT32_t[:] n_categories,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = SparsePartitioner(
-            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask
+            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask,
+            n_categories,
         )
 
     cdef int node_split(self, double impurity, SplitRecord* split,
@@ -1584,10 +1677,12 @@ cdef class RandomSplitter(Splitter):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const INT32_t[:] n_categories,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = DensePartitioner(
-            X, self.samples, self.feature_values, missing_values_in_feature_mask
+            X, self.samples, self.feature_values, missing_values_in_feature_mask,
+            n_categories
         )
 
     cdef int node_split(self, double impurity, SplitRecord* split,
@@ -1610,10 +1705,12 @@ cdef class RandomSparseSplitter(Splitter):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const INT32_t[:] n_categories,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = SparsePartitioner(
-            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask
+            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask,
+            n_categories
         )
 
     cdef int node_split(self, double impurity, SplitRecord* split,
