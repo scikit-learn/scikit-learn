@@ -200,10 +200,6 @@ def test_pairwise_distances(global_dtype):
     with pytest.raises(TypeError):
         pairwise_distances(X, Y_sparse, metric="minkowski")
 
-    # Test that a value error is raised if the metric is unknown
-    with pytest.raises(ValueError):
-        pairwise_distances(X, Y, metric="blah")
-
 
 # TODO(1.4): Remove test when `sum_over_features` parameter is removed
 @pytest.mark.parametrize("sum_over_features", [True, False])

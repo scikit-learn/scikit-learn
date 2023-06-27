@@ -2034,6 +2034,16 @@ def pairwise_distances_chunked(
         yield D_chunk
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "n_jobs": [Integral, None],
+        "force_all_finite": ["boolean", StrOptions({"allow-nan"})],
+    },
+    prefer_skip_nested_validation=True,
+)
 def pairwise_distances(
     X, Y=None, metric="euclidean", *, n_jobs=None, force_all_finite=True, **kwds
 ):
@@ -2081,13 +2091,13 @@ def pairwise_distances(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_X, n_samples_X) or \
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_samples_X) or \
             (n_samples_X, n_features)
         Array of pairwise distances between samples, or a feature array.
         The shape of the array should be (n_samples_X, n_samples_X) if
         metric == "precomputed" and (n_samples_X, n_features) otherwise.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), default=None
         An optional second feature array. Only allowed if
         metric != "precomputed".
 
@@ -2149,16 +2159,6 @@ def pairwise_distances(
     paired_distances : Computes the distances between corresponding elements
         of two arrays.
     """
-    if (
-        metric not in _VALID_METRICS
-        and not callable(metric)
-        and metric != "precomputed"
-    ):
-        raise ValueError(
-            "Unknown metric %s. Valid metrics are %s, or 'precomputed', or a callable"
-            % (metric, _VALID_METRICS)
-        )
-
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
             X, Y, precomputed=True, force_all_finite=force_all_finite
