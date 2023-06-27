@@ -10,6 +10,7 @@
 import itertools
 import warnings
 from functools import partial
+from numbers import Integral, Real
 
 import numpy as np
 from joblib import effective_n_jobs
@@ -29,11 +30,9 @@ from ..utils import (
 from ..utils._mask import _get_mask
 from ..utils._param_validation import (
     Hidden,
-    Integral,
     Interval,
     MissingValues,
     Options,
-    Real,
     StrOptions,
     validate_params,
 )
@@ -658,6 +657,19 @@ if sp_base_version < parse_version("1.9"):
 _NAN_METRICS = ["nan_euclidean"]
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix"],
+        "axis": [Options(Integral, {0, 1})],
+        "metric": [
+            StrOptions(set(_VALID_METRICS).union(ArgKmin.valid_metrics())),
+            callable,
+        ],
+        "metric_kwargs": [dict, None],
+    },
+    prefer_skip_nested_validation=False,  # metric is not validated yet
+)
 def pairwise_distances_argmin_min(
     X, Y, *, axis=1, metric="euclidean", metric_kwargs=None
 ):

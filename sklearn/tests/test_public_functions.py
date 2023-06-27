@@ -247,6 +247,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.pairwise.paired_distances",
     "sklearn.metrics.pairwise.paired_euclidean_distances",
     "sklearn.metrics.pairwise.paired_manhattan_distances",
+    "sklearn.metrics.pairwise.pairwise_distances_argmin_min",
     "sklearn.metrics.pairwise.pairwise_kernels",
     "sklearn.metrics.pairwise.polynomial_kernel",
     "sklearn.metrics.pairwise.rbf_kernel",
@@ -281,6 +282,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.tree.export_text",
     "sklearn.tree.plot_tree",
     "sklearn.utils.gen_batches",
+    "sklearn.utils.graph.single_source_shortest_path_length",
     "sklearn.utils.resample",
     "sklearn.utils.safe_mask",
 ]
