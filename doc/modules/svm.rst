@@ -105,9 +105,9 @@ properties of these support vectors can be found in attributes
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`,
- * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
- * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`,
+  * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`,
+  * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
+  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`,
 
 .. _svm_multi_class:
 

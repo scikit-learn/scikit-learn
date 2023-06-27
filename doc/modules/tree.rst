@@ -214,8 +214,8 @@ of external libraries and is more compact:
 
 .. topic:: Examples:
 
-  * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
-  * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
 
 .. _tree_regression:
 
