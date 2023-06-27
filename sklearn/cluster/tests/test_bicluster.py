@@ -4,23 +4,21 @@ import numpy as np
 import pytest
 from scipy.sparse import csr_matrix, issparse
 
-from sklearn.model_selection import ParameterGrid
-
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-
 from sklearn.base import BaseEstimator, BiclusterMixin
-
-from sklearn.cluster import SpectralCoclustering
-from sklearn.cluster import SpectralBiclustering
-from sklearn.cluster._bicluster import _scale_normalize
-from sklearn.cluster._bicluster import _bistochastic_normalize
-from sklearn.cluster._bicluster import _log_normalize
-
-from sklearn.metrics import consensus_score, v_measure_score
-
+from sklearn.cluster import SpectralBiclustering, SpectralCoclustering
+from sklearn.cluster._bicluster import (
+    _bistochastic_normalize,
+    _log_normalize,
+    _scale_normalize,
+)
 from sklearn.datasets import make_biclusters, make_checkerboard
+from sklearn.metrics import consensus_score, v_measure_score
+from sklearn.model_selection import ParameterGrid
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 
 class MockBiclustering(BiclusterMixin, BaseEstimator):
@@ -105,7 +103,6 @@ def test_spectral_biclustering(global_random_seed):
     for mat in (S, csr_matrix(S)):
         for param_name, param_values in non_default_params.items():
             for param_value in param_values:
-
                 model = SpectralBiclustering(
                     n_clusters=3,
                     n_init=3,
@@ -253,7 +250,6 @@ def test_spectralbiclustering_parameter_validation(params, type_err, err_msg):
 
 @pytest.mark.parametrize("est", (SpectralBiclustering(), SpectralCoclustering()))
 def test_n_features_in_(est):
-
     X, _, _ = make_biclusters((3, 3), 3, random_state=0)
 
     assert not hasattr(est, "n_features_in_")

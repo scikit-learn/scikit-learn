@@ -4,32 +4,37 @@
 # License: BSD 3 clause
 
 import copy
+import functools
+import inspect
+import platform
+import re
 import warnings
 from collections import defaultdict
-import platform
-import inspect
-import re
 
 import numpy as np
 
 from . import __version__
-from ._config import get_config
+from ._config import config_context, get_config
+from .exceptions import InconsistentVersionWarning
 from .utils import _IS_32BIT
+from .utils._estimator_html_repr import estimator_html_repr
+from .utils._metadata_requests import _MetadataRequester
+from .utils._param_validation import validate_parameter_constraints
 from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
     _DEFAULT_TAGS,
 )
-from .exceptions import InconsistentVersionWarning
-from .utils.validation import check_X_y
-from .utils.validation import check_array
-from .utils.validation import _check_y
-from .utils.validation import _num_features
-from .utils.validation import _check_feature_names_in
-from .utils.validation import _generate_get_feature_names_out
-from .utils.validation import check_is_fitted
-from .utils.validation import _get_feature_names
-from .utils._estimator_html_repr import estimator_html_repr
-from .utils._param_validation import validate_parameter_constraints
+from .utils.validation import (
+    _check_feature_names_in,
+    _check_y,
+    _generate_get_feature_names_out,
+    _get_feature_names,
+    _is_fitted,
+    _num_features,
+    check_array,
+    check_is_fitted,
+    check_X_y,
+)
 
 
 def clone(estimator, *, safe=True):
@@ -100,7 +105,13 @@ def _clone_parametrized(estimator, *, safe=True):
     new_object_params = estimator.get_params(deep=False)
     for name, param in new_object_params.items():
         new_object_params[name] = clone(param, safe=False)
+
     new_object = klass(**new_object_params)
+    try:
+        new_object._metadata_request = copy.deepcopy(estimator._metadata_request)
+    except AttributeError:
+        pass
+
     params_set = new_object.get_params(deep=False)
 
     # quick sanity check of the parameters of the clone
@@ -122,7 +133,7 @@ def _clone_parametrized(estimator, *, safe=True):
     return new_object
 
 
-class BaseEstimator:
+class BaseEstimator(_MetadataRequester):
     """Base class for all estimators in scikit-learn.
 
     Notes
@@ -239,9 +250,11 @@ class BaseEstimator:
                 and self.__module__.startswith("sklearn.")
             ):
                 warnings.warn(
-                    f"Parameter 'base_estimator' of {self.__class__.__name__} is"
-                    " deprecated in favor of 'estimator'. See"
-                    f" {self.__class__.__name__}'s docstring for more details.",
+                    (
+                        f"Parameter 'base_estimator' of {self.__class__.__name__} is"
+                        " deprecated in favor of 'estimator'. See"
+                        f" {self.__class__.__name__}'s docstring for more details."
+                    ),
                     FutureWarning,
                     stacklevel=2,
                 )
@@ -546,7 +559,7 @@ class BaseEstimator:
 
         cast_to_ndarray : bool, default=True
             Cast `X` and `y` to ndarray with checks in `check_params`. If
-            `False`, `X` and `y` are unchanged and only `feature_names` and
+            `False`, `X` and `y` are unchanged and only `feature_names_in_` and
             `n_features_in_` are checked.
 
         **check_params : kwargs
@@ -574,21 +587,25 @@ class BaseEstimator:
         no_val_X = isinstance(X, str) and X == "no_validation"
         no_val_y = y is None or isinstance(y, str) and y == "no_validation"
 
+        if no_val_X and no_val_y:
+            raise ValueError("Validation should be done on X, y or both.")
+
         default_check_params = {"estimator": self}
         check_params = {**default_check_params, **check_params}
 
-        if no_val_X and no_val_y:
-            raise ValueError("Validation should be done on X, y or both.")
+        if not cast_to_ndarray:
+            if not no_val_X and no_val_y:
+                out = X
+            elif no_val_X and not no_val_y:
+                out = y
+            else:
+                out = X, y
         elif not no_val_X and no_val_y:
-            if cast_to_ndarray:
-                X = check_array(X, input_name="X", **check_params)
-            out = X
+            out = check_array(X, input_name="X", **check_params)
         elif no_val_X and not no_val_y:
-            if cast_to_ndarray:
-                y = _check_y(y, **check_params) if cast_to_ndarray else y
-            out = y
+            out = _check_y(y, **check_params)
         else:
-            if validate_separately and cast_to_ndarray:
+            if validate_separately:
                 # We need this because some estimators validate X and y
                 # separately, and in general, separately calling check_array()
                 # on X and y isn't equivalent to just calling check_X_y()
@@ -681,7 +698,7 @@ class ClassifierMixin:
         Returns
         -------
         score : float
-            Mean accuracy of ``self.predict(X)`` wrt. `y`.
+            Mean accuracy of ``self.predict(X)`` w.r.t. `y`.
         """
         from .metrics import accuracy_score
 
@@ -725,7 +742,7 @@ class RegressorMixin:
         Returns
         -------
         score : float
-            :math:`R^2` of ``self.predict(X)`` wrt. `y`.
+            :math:`R^2` of ``self.predict(X)`` w.r.t. `y`.
 
         Notes
         -----
@@ -751,7 +768,7 @@ class ClusterMixin:
 
     _estimator_type = "clusterer"
 
-    def fit_predict(self, X, y=None):
+    def fit_predict(self, X, y=None, **kwargs):
         """
         Perform clustering on `X` and returns cluster labels.
 
@@ -763,6 +780,11 @@ class ClusterMixin:
         y : Ignored
             Not used, present for API consistency by convention.
 
+        **kwargs : dict
+            Arguments to be passed to ``fit``.
+
+            .. versionadded:: 1.4
+
         Returns
         -------
         labels : ndarray of shape (n_samples,), dtype=np.int64
@@ -770,7 +792,7 @@ class ClusterMixin:
         """
         # non-optimized default implementation; override when a better
         # method is possible for a given clustering algorithm
-        self.fit(X)
+        self.fit(X, **kwargs)
         return self.labels_
 
     def _more_tags(self):
@@ -996,7 +1018,7 @@ class OutlierMixin:
 
     _estimator_type = "outlier_detector"
 
-    def fit_predict(self, X, y=None):
+    def fit_predict(self, X, y=None, **kwargs):
         """Perform fit on X and returns labels for X.
 
         Returns -1 for outliers and 1 for inliers.
@@ -1009,13 +1031,18 @@ class OutlierMixin:
         y : Ignored
             Not used, present for API consistency by convention.
 
+        **kwargs : dict
+            Arguments to be passed to ``fit``.
+
+            .. versionadded:: 1.4
+
         Returns
         -------
         y : ndarray of shape (n_samples,)
             1 for inliers, -1 for outliers.
         """
         # override for transductive outlier detectors like LocalOulierFactor
-        return self.fit(X).predict(X)
+        return self.fit(X, **kwargs).predict(X)
 
 
 class MetaEstimatorMixin:
@@ -1035,8 +1062,8 @@ class _UnstableArchMixin:
 
     def _more_tags(self):
         return {
-            "non_deterministic": (
-                _IS_32BIT or platform.machine().startswith(("ppc", "powerpc"))
+            "non_deterministic": _IS_32BIT or platform.machine().startswith(
+                ("ppc", "powerpc")
             )
         }
 
@@ -1087,3 +1114,52 @@ def is_outlier_detector(estimator):
         True if estimator is an outlier detector and False otherwise.
     """
     return getattr(estimator, "_estimator_type", None) == "outlier_detector"
+
+
+def _fit_context(*, prefer_skip_nested_validation):
+    """Decorator to run the fit methods of estimators within context managers.
+
+    Parameters
+    ----------
+    prefer_skip_nested_validation : bool
+        If True, the validation of parameters of inner estimators or functions
+        called during fit will be skipped.
+
+        This is useful to avoid validating many times the parameters passed by the
+        user from the public facing API. It's also useful to avoid validating
+        parameters that we pass internally to inner functions that are guaranteed to
+        be valid by the test suite.
+
+        It should be set to True for most estimators, except for those that receive
+        non-validated objects as parameters, such as meta-estimators that are given
+        estimator objects.
+
+    Returns
+    -------
+    decorated_fit : method
+        The decorated fit method.
+    """
+
+    def decorator(fit_method):
+        @functools.wraps(fit_method)
+        def wrapper(estimator, *args, **kwargs):
+            global_skip_validation = get_config()["skip_parameter_validation"]
+
+            # we don't want to validate again for each call to partial_fit
+            partial_fit_and_fitted = (
+                fit_method.__name__ == "partial_fit" and _is_fitted(estimator)
+            )
+
+            if not global_skip_validation and not partial_fit_and_fitted:
+                estimator._validate_params()
+
+            with config_context(
+                skip_parameter_validation=(
+                    prefer_skip_nested_validation or global_skip_validation
+                )
+            ):
+                return fit_method(estimator, *args, **kwargs)
+
+        return wrapper
+
+    return decorator

@@ -33,7 +33,7 @@
   <link rel="stylesheet" href="{{ pathto(css, 1) }}" type="text/css" />
     {%- endif %}
   {%- endfor %}
-  <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" />
+  <link rel="stylesheet" href="{{ pathto('_static/' + styles[0], 1) }}" type="text/css" />
 <script id="documentation_options" data-url_root="{{ pathto('', 1) }}" src="{{ pathto('_static/documentation_options.js', 1) }}"></script>
 <script src="{{ pathto('_static/js/vendor/jquery-3.6.3.slim.min.js', 1) }}"></script>
 {%- block extrahead %} {% endblock %}
@@ -46,16 +46,6 @@
     <label id="sk-sidemenu-toggle" class="sk-btn-toggle-toc btn sk-btn-primary" for="sk-toggle-checkbox">Toggle Menu</label>
     <div id="sk-sidebar-wrapper" class="border-right">
       <div class="sk-sidebar-toc-wrapper">
-        <div class="sk-sidebar-toc-logo">
-          {%- if logo %}
-          <a href="{{ pathto('index') }}">
-            <img
-              class="sk-brand-img"
-              src="{{ pathto('_static/' + logo, 1) }}"
-              alt="logo"/>
-          </a>
-          {%- endif %}
-        </div>
         <div class="btn-group w-100 mb-2" role="group" aria-label="rellinks">
           {%- if prev %}
             <a href="{{ prev.link|e }}" role="button" class="btn sk-btn-rellink py-1" sk-rellink-tooltip="{{ prev.title|striptags }}">Prev</a>

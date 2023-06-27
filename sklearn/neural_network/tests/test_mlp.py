@@ -5,32 +5,32 @@ Testing for Multi-layer Perceptron module (sklearn.neural_network)
 # Author: Issam H. Laradji
 # License: BSD 3 clause
 
-import pytest
+import re
 import sys
 import warnings
-import re
+from io import StringIO
 
-import numpy as np
 import joblib
-
+import numpy as np
+import pytest
 from numpy.testing import (
+    assert_allclose,
     assert_almost_equal,
     assert_array_equal,
-    assert_allclose,
 )
-
-from sklearn.datasets import load_digits, load_iris
-from sklearn.datasets import make_regression, make_multilabel_classification
-from sklearn.exceptions import ConvergenceWarning
-from io import StringIO
-from sklearn.metrics import roc_auc_score
-from sklearn.neural_network import MLPClassifier
-from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.preprocessing import MinMaxScaler, scale
 from scipy.sparse import csr_matrix
-from sklearn.utils._testing import ignore_warnings
 
+from sklearn.datasets import (
+    load_digits,
+    load_iris,
+    make_multilabel_classification,
+    make_regression,
+)
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import roc_auc_score
+from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.preprocessing import LabelBinarizer, MinMaxScaler, scale
+from sklearn.utils._testing import ignore_warnings
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
@@ -937,7 +937,12 @@ def test_mlp_warm_start_no_convergence(MLPEstimator, solver):
     https://github.com/scikit-learn/scikit-learn/issues/24764
     """
     model = MLPEstimator(
-        solver=solver, warm_start=True, early_stopping=False, max_iter=10
+        solver=solver,
+        warm_start=True,
+        early_stopping=False,
+        max_iter=10,
+        n_iter_no_change=np.inf,
+        random_state=0,
     )
 
     with pytest.warns(ConvergenceWarning):
@@ -948,3 +953,16 @@ def test_mlp_warm_start_no_convergence(MLPEstimator, solver):
     with pytest.warns(ConvergenceWarning):
         model.fit(X_iris, y_iris)
     assert model.n_iter_ == 20
+
+
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_mlp_partial_fit_after_fit(MLPEstimator):
+    """Check partial fit does not fail after fit when early_stopping=True.
+
+    Non-regression test for gh-25693.
+    """
+    mlp = MLPEstimator(early_stopping=True, random_state=0).fit(X_iris, y_iris)
+
+    msg = "partial_fit does not support early_stopping=True"
+    with pytest.raises(ValueError, match=msg):
+        mlp.partial_fit(X_iris, y_iris)

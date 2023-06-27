@@ -14,39 +14,45 @@ randomized trees. Single and multi-output problems are both handled.
 #
 # License: BSD 3 clause
 
+import copy
 import numbers
 import warnings
-import copy
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from math import ceil
 from numbers import Integral, Real
 
 import numpy as np
 from scipy.sparse import issparse
 
-from ..base import BaseEstimator
-from ..base import ClassifierMixin
-from ..base import clone
-from ..base import RegressorMixin
-from ..base import is_classifier
-from ..base import MultiOutputMixin
-from ..utils import Bunch
-from ..utils import check_random_state
-from ..utils.validation import _check_sample_weight
-from ..utils import compute_sample_weight
+from ..base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+)
+from ..utils import Bunch, check_random_state, compute_sample_weight
+from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Hidden, Interval, StrOptions
-
+from ..utils.validation import (
+    _assert_all_finite_element_wise,
+    _check_sample_weight,
+    assert_all_finite,
+    check_is_fitted,
+)
+from . import _criterion, _splitter, _tree
 from ._criterion import Criterion
 from ._splitter import Splitter
-from ._tree import DepthFirstTreeBuilder
-from ._tree import BestFirstTreeBuilder
-from ._tree import Tree
-from ._tree import _build_pruned_tree_ccp
-from ._tree import ccp_pruning_path
-from . import _tree, _splitter, _criterion
+from ._tree import (
+    BestFirstTreeBuilder,
+    DepthFirstTreeBuilder,
+    Tree,
+    _build_pruned_tree_ccp,
+    ccp_pruning_path,
+)
+from ._utils import _any_isnan_axis0
 
 __all__ = [
     "DecisionTreeClassifier",
@@ -99,17 +105,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "max_depth": [Interval(Integral, 1, None, closed="left"), None],
         "min_samples_split": [
             Interval(Integral, 2, None, closed="left"),
-            Interval(Real, 0.0, 1.0, closed="right"),
+            Interval(RealNotInt, 0.0, 1.0, closed="right"),
         ],
         "min_samples_leaf": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0.0, 1.0, closed="neither"),
+            Interval(RealNotInt, 0.0, 1.0, closed="neither"),
         ],
         "min_weight_fraction_leaf": [Interval(Real, 0.0, 0.5, closed="both")],
         "max_features": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0.0, 1.0, closed="right"),
-            StrOptions({"auto", "sqrt", "log2"}, deprecated={"auto"}),
+            Interval(RealNotInt, 0.0, 1.0, closed="right"),
+            StrOptions({"sqrt", "log2"}),
             None,
         ],
         "random_state": ["random_state"],
@@ -173,18 +179,72 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.tree_.n_leaves
 
-    def fit(self, X, y, sample_weight=None, check_input=True):
-        self._validate_params()
+    def _support_missing_values(self, X):
+        return not issparse(X) and self._get_tags()["allow_nan"]
+
+    def _compute_missing_values_in_feature_mask(self, X):
+        """Return boolean mask denoting if there are missing values for each feature.
+
+        This method also ensures that X is finite.
+
+        Parameter
+        ---------
+        X : array-like of shape (n_samples, n_features), dtype=DOUBLE
+            Input data.
+
+        Returns
+        -------
+        missing_values_in_feature_mask : ndarray of shape (n_features,), or None
+            Missing value mask. If missing values are not supported or there
+            are no missing values, return None.
+        """
+        common_kwargs = dict(estimator_name=self.__class__.__name__, input_name="X")
+
+        if not self._support_missing_values(X):
+            assert_all_finite(X, **common_kwargs)
+            return None
+
+        with np.errstate(over="ignore"):
+            overall_sum = np.sum(X)
+
+        if not np.isfinite(overall_sum):
+            # Raise a ValueError in case of the presence of an infinite element.
+            _assert_all_finite_element_wise(X, xp=np, allow_nan=True, **common_kwargs)
+
+        # If the sum is not nan, then there are no missing values
+        if not np.isnan(overall_sum):
+            return None
+
+        missing_values_in_feature_mask = _any_isnan_axis0(X)
+        return missing_values_in_feature_mask
+
+    def _fit(
+        self,
+        X,
+        y,
+        sample_weight=None,
+        check_input=True,
+        missing_values_in_feature_mask=None,
+    ):
         random_state = check_random_state(self.random_state)
 
         if check_input:
             # Need to validate separately here.
             # We can't pass multi_output=True because that would allow y to be
             # csr.
-            check_X_params = dict(dtype=DTYPE, accept_sparse="csc")
+
+            # _compute_missing_values_in_feature_mask will check for finite values and
+            # compute the missing mask if the tree supports missing values
+            check_X_params = dict(
+                dtype=DTYPE, accept_sparse="csc", force_all_finite=False
+            )
             check_y_params = dict(ensure_2d=False, dtype=None)
             X, y = self._validate_data(
                 X, y, validate_separately=(check_X_params, check_y_params)
+            )
+
+            missing_values_in_feature_mask = (
+                self._compute_missing_values_in_feature_mask(X)
             )
             if issparse(X):
                 X.sort_indices()
@@ -267,17 +327,21 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 if is_classification:
                     max_features = max(1, int(np.sqrt(self.n_features_in_)))
                     warnings.warn(
-                        "`max_features='auto'` has been deprecated in 1.1 "
-                        "and will be removed in 1.3. To keep the past behaviour, "
-                        "explicitly set `max_features='sqrt'`.",
+                        (
+                            "`max_features='auto'` has been deprecated in 1.1 "
+                            "and will be removed in 1.3. To keep the past behaviour, "
+                            "explicitly set `max_features='sqrt'`."
+                        ),
                         FutureWarning,
                     )
                 else:
                     max_features = self.n_features_in_
                     warnings.warn(
-                        "`max_features='auto'` has been deprecated in 1.1 "
-                        "and will be removed in 1.3. To keep the past behaviour, "
-                        "explicitly set `max_features=1.0'`.",
+                        (
+                            "`max_features='auto'` has been deprecated in 1.1 "
+                            "and will be removed in 1.3. To keep the past behaviour, "
+                            "explicitly set `max_features=1.0'`."
+                        ),
                         FutureWarning,
                     )
             elif self.max_features == "sqrt":
@@ -376,7 +440,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.min_impurity_decrease,
             )
 
-        builder.build(self.tree_, X, y, sample_weight)
+        builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask)
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
@@ -389,7 +453,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _validate_X_predict(self, X, check_input):
         """Validate the training data on predict (probabilities)."""
         if check_input:
-            X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr", reset=False)
+            if self._support_missing_values(X):
+                force_all_finite = "allow-nan"
+            else:
+                force_all_finite = True
+            X = self._validate_data(
+                X,
+                dtype=DTYPE,
+                accept_sparse="csr",
+                reset=False,
+                force_all_finite=force_all_finite,
+            )
             if issparse(X) and (
                 X.indices.dtype != np.intc or X.indptr.dtype != np.intc
             ):
@@ -652,14 +726,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             - If float, then `max_features` is a fraction and
               `max(1, int(max_features * n_features_in_))` features are considered at
               each split.
-            - If "auto", then `max_features=sqrt(n_features)`.
             - If "sqrt", then `max_features=sqrt(n_features)`.
             - If "log2", then `max_features=log2(n_features)`.
             - If None, then `max_features=n_features`.
-
-            .. deprecated:: 1.1
-                The `"auto"` option was deprecated in 1.1 and will be removed
-                in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -856,6 +925,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree classifier from the training set (X, y).
 
@@ -886,7 +956,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super().fit(
+        super()._fit(
             X,
             y,
             sample_weight=sample_weight,
@@ -971,7 +1041,14 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             return proba
 
     def _more_tags(self):
-        return {"multilabel": True}
+        # XXX: nan is only support for dense arrays, but we set this for common test to
+        # pass, specifically: check_estimators_nan_inf
+        allow_nan = self.splitter == "best" and self.criterion in {
+            "gini",
+            "log_loss",
+            "entropy",
+        }
+        return {"multilabel": True, "allow_nan": allow_nan}
 
 
 class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
@@ -1046,14 +1123,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         - If float, then `max_features` is a fraction and
           `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
-        - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
-
-        .. deprecated:: 1.1
-            The `"auto"` option was deprecated in 1.1 and will be removed
-            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1215,6 +1287,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree regressor from the training set (X, y).
 
@@ -1244,7 +1317,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super().fit(
+        super()._fit(
             X,
             y,
             sample_weight=sample_weight,
@@ -1278,6 +1351,16 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             grid, target_features, averaged_predictions
         )
         return averaged_predictions
+
+    def _more_tags(self):
+        # XXX: nan is only support for dense arrays, but we set this for common test to
+        # pass, specifically: check_estimators_nan_inf
+        allow_nan = self.splitter == "best" and self.criterion in {
+            "squared_error",
+            "friedman_mse",
+            "poisson",
+        }
+        return {"allow_nan": allow_nan}
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -1349,17 +1432,12 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             - If float, then `max_features` is a fraction and
               `max(1, int(max_features * n_features_in_))` features are considered at
               each split.
-            - If "auto", then `max_features=sqrt(n_features)`.
             - If "sqrt", then `max_features=sqrt(n_features)`.
             - If "log2", then `max_features=log2(n_features)`.
             - If None, then `max_features=n_features`.
 
             .. versionchanged:: 1.1
                 The default of `max_features` changed from `"auto"` to `"sqrt"`.
-
-            .. deprecated:: 1.1
-                The `"auto"` option was deprecated in 1.1 and will be removed
-                in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1619,17 +1697,12 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         - If float, then `max_features` is a fraction and
           `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
-        - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
 
         .. versionchanged:: 1.1
             The default of `max_features` changed from `"auto"` to `1.0`.
-
-        .. deprecated:: 1.1
-            The `"auto"` option was deprecated in 1.1 and will be removed
-            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to

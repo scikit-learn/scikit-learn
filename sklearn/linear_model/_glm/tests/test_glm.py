@@ -2,23 +2,22 @@
 #
 # License: BSD 3 clause
 
-from functools import partial
 import itertools
 import warnings
+from functools import partial
 
 import numpy as np
-from numpy.testing import assert_allclose
 import pytest
 import scipy
+from numpy.testing import assert_allclose
 from scipy import linalg
 from scipy.optimize import minimize, root
 
-from sklearn.base import clone
 from sklearn._loss import HalfBinomialLoss, HalfPoissonLoss, HalfTweedieLoss
-from sklearn._loss.glm_distribution import TweedieDistribution
 from sklearn._loss.link import IdentityLink, LogLink
-
+from sklearn.base import clone
 from sklearn.datasets import make_low_rank_matrix, make_regression
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import (
     GammaRegressor,
     PoissonRegressor,
@@ -28,10 +27,8 @@ from sklearn.linear_model import (
 from sklearn.linear_model._glm import _GeneralizedLinearRegressor
 from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
 from sklearn.model_selection import train_test_split
-
 
 SOLVERS = ["lbfgs", "newton-cholesky"]
 
@@ -110,7 +107,7 @@ def glm_dataset(global_random_seed, request):
         Last column of 1, i.e. intercept.
     y : ndarray
     coef_unpenalized : ndarray
-        Minimum norm solutions, i.e. min sum(loss(w)) (with mininum ||w||_2 in
+        Minimum norm solutions, i.e. min sum(loss(w)) (with minimum ||w||_2 in
         case of ambiguity)
         Last coefficient is intercept.
     coef_penalized : ndarray
@@ -928,27 +925,6 @@ def test_tweedie_score(regression_data, power, link):
 )
 def test_tags(estimator, value):
     assert estimator._get_tags()["requires_positive_y"] is value
-
-
-# TODO(1.3): remove
-@pytest.mark.parametrize(
-    "est, family",
-    [
-        (PoissonRegressor(), "poisson"),
-        (GammaRegressor(), "gamma"),
-        (TweedieRegressor(), TweedieDistribution()),
-        (TweedieRegressor(power=2), TweedieDistribution(power=2)),
-        (TweedieRegressor(power=3), TweedieDistribution(power=3)),
-    ],
-)
-def test_family_deprecation(est, family):
-    """Test backward compatibility of the family property."""
-    with pytest.warns(FutureWarning, match="`family` was deprecated"):
-        if isinstance(family, str):
-            assert est.family == family
-        else:
-            assert est.family.__class__ == family.__class__
-            assert est.family.power == family.power
 
 
 def test_linalg_warning_with_newton_solver(global_random_seed):

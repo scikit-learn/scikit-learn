@@ -8,19 +8,18 @@ more than a couple of minutes) but as the dataset loader is leveraging
 joblib, successive runs will be fast (less than 200ms).
 """
 
-import random
 import os
+import random
 import shutil
 import tempfile
+from functools import partial
+
 import numpy as np
 import pytest
-from functools import partial
-from sklearn.datasets import fetch_lfw_pairs
-from sklearn.datasets import fetch_lfw_people
 
-from sklearn.utils._testing import assert_array_equal
+from sklearn.datasets import fetch_lfw_pairs, fetch_lfw_people
 from sklearn.datasets.tests.test_common import check_return_X_y
-
+from sklearn.utils._testing import assert_array_equal
 
 SCIKIT_LEARN_DATA = None
 SCIKIT_LEARN_EMPTY_DATA = None
@@ -109,7 +108,7 @@ def teardown_module():
 
 
 def test_load_empty_lfw_people():
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         fetch_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA, download_if_missing=False)
 
 
@@ -181,7 +180,7 @@ def test_load_fake_lfw_people_too_restrictive():
 
 
 def test_load_empty_lfw_pairs():
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         fetch_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA, download_if_missing=False)
 
 

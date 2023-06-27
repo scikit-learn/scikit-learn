@@ -34,6 +34,7 @@ Base classes
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
+   base.MetaEstimatorMixin
    base.OneToOneFeatureMixin
    base.ClassNamePrefixFeaturesOutMixin
    feature_selection.SelectorMixin
@@ -104,6 +105,7 @@ Classes
    cluster.AgglomerativeClustering
    cluster.Birch
    cluster.DBSCAN
+   cluster.HDBSCAN
    cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.BisectingKMeans
@@ -461,7 +463,6 @@ Samples generator
 .. autosummary::
    :toctree: generated/
 
-   experimental.enable_hist_gradient_boosting
    experimental.enable_iterative_imputer
    experimental.enable_halving_search_cv
 
@@ -660,7 +661,7 @@ Plotting
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
+   :template: display_only_from_estimator.rst
 
    inspection.DecisionBoundaryDisplay
    inspection.PartialDependenceDisplay
@@ -1123,7 +1124,7 @@ See the :ref:`visualizations` section of the user guide for further details.
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
+   :template: display_all_class_methods.rst
 
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
@@ -1243,9 +1244,10 @@ Visualization
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
+   :template: display_only_from_estimator.rst
 
    model_selection.LearningCurveDisplay
+   model_selection.ValidationCurveDisplay
 
 .. _multiclass_ref:
 
@@ -1439,6 +1441,7 @@ details.
    preprocessing.RobustScaler
    preprocessing.SplineTransformer
    preprocessing.StandardScaler
+   preprocessing.TargetEncoder
 
 .. autosummary::
    :toctree: generated/
@@ -1651,6 +1654,11 @@ Plotting
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
+   utils.metadata_routing.get_routing_for_object
+   utils.metadata_routing.MetadataRouter
+   utils.metadata_routing.MetadataRequest
+   utils.metadata_routing.MethodMapping
+   utils.metadata_routing.process_routing
 
 Specific utilities to list scikit-learn components:
 
@@ -1681,12 +1689,3 @@ Utilities from joblib:
 
 Recently deprecated
 ===================
-
-To be removed in 1.3
---------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   utils.metaestimators.if_delegate_has_method

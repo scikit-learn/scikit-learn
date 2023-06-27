@@ -7,18 +7,29 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
+import warnings
 from numbers import Integral
 
 import numpy as np
-from ..utils.fixes import _mode
-from ..utils.extmath import weighted_mode
-from ..utils.validation import _is_arraylike, _num_samples
 
-import warnings
-from ._base import _get_weights
-from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
-from ..base import ClassifierMixin
+from sklearn.neighbors._base import _check_precomputed
+
+from ..base import ClassifierMixin, _fit_context
+from ..metrics._pairwise_distances_reduction import ArgKminClassMode
 from ..utils._param_validation import StrOptions
+from ..utils.extmath import weighted_mode
+from ..utils.fixes import _mode
+from ..utils.validation import _is_arraylike, _num_samples, check_is_fitted
+from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
+
+
+def _adjusted_metric(metric, metric_kwargs, p=None):
+    metric_kwargs = metric_kwargs or {}
+    if metric == "minkowski":
+        metric_kwargs["p"] = p
+        if p == 2:
+            metric = "euclidean"
+    return metric, metric_kwargs
 
 
 class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
@@ -192,6 +203,10 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         )
         self.weights = weights
 
+    @_fit_context(
+        # KNeighborsClassifier.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit the k-nearest neighbors classifier from the training dataset.
 
@@ -210,8 +225,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         self : KNeighborsClassifier
             The fitted k-nearest neighbors classifier.
         """
-        self._validate_params()
-
         return self._fit(X, y)
 
     def predict(self, X):
@@ -228,7 +241,21 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
+        check_is_fitted(self, "_fit_method")
         if self.weights == "uniform":
+            if self._fit_method == "brute" and ArgKminClassMode.is_usable_for(
+                X, self._fit_X, self.metric
+            ):
+                probabilities = self.predict_proba(X)
+                if self.outputs_2d_:
+                    return np.stack(
+                        [
+                            self.classes_[idx][np.argmax(probas, axis=1)]
+                            for idx, probas in enumerate(probabilities)
+                        ],
+                        axis=1,
+                    )
+                return self.classes_[np.argmax(probabilities, axis=1)]
             # In that case, we do not need the distances to perform
             # the weighting so we do not compute them.
             neigh_ind = self.kneighbors(X, return_distance=False)
@@ -277,7 +304,47 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
+        check_is_fitted(self, "_fit_method")
         if self.weights == "uniform":
+            # TODO: systematize this mapping of metric for
+            # PairwiseDistancesReductions.
+            metric, metric_kwargs = _adjusted_metric(
+                metric=self.metric, metric_kwargs=self.metric_params, p=self.p
+            )
+            if (
+                self._fit_method == "brute"
+                and ArgKminClassMode.is_usable_for(X, self._fit_X, metric)
+                # TODO: Implement efficient multi-output solution
+                and not self.outputs_2d_
+            ):
+                if self.metric == "precomputed":
+                    X = _check_precomputed(X)
+                else:
+                    X = self._validate_data(
+                        X, accept_sparse="csr", reset=False, order="C"
+                    )
+
+                probabilities = ArgKminClassMode.compute(
+                    X,
+                    self._fit_X,
+                    k=self.n_neighbors,
+                    weights=self.weights,
+                    labels=self._y,
+                    unique_labels=self.classes_,
+                    metric=metric,
+                    metric_kwargs=metric_kwargs,
+                    # `strategy="parallel_on_X"` has in practice be shown
+                    # to be more efficient than `strategy="parallel_on_Y``
+                    # on many combination of datasets.
+                    # Hence, we choose to enforce it here.
+                    # For more information, see:
+                    # https://github.com/scikit-learn/scikit-learn/pull/24076#issuecomment-1445258342  # noqa
+                    # TODO: adapt the heuristic for `strategy="auto"` for
+                    # `ArgKminClassMode` and use `strategy="auto"`.
+                    strategy="parallel_on_X",
+                )
+                return probabilities
+
             # In that case, we do not need the distances to perform
             # the weighting so we do not compute them.
             neigh_ind = self.kneighbors(X, return_distance=False)
@@ -507,6 +574,10 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         self.weights = weights
         self.outlier_label = outlier_label
 
+    @_fit_context(
+        # RadiusNeighborsClassifier.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit the radius neighbors classifier from the training dataset.
 
@@ -525,7 +596,6 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         self : RadiusNeighborsClassifier
             The fitted radius neighbors classifier.
         """
-        self._validate_params()
         self._fit(X, y)
 
         classes_ = self.classes_

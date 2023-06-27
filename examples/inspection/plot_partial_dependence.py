@@ -46,6 +46,10 @@ bikes = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True, parser="pa
 # Make an explicit copy to avoid "SettingWithCopyWarning" from pandas
 X, y = bikes.data.copy(), bikes.target
 
+# We use only a subset of the data to speed up the example.
+X = X.iloc[::5, :]
+y = y[::5]
+
 # %%
 # The feature `"weather"` has a particularity: the category `"heavy_rain"` is a rare
 # category.
@@ -96,8 +100,9 @@ categorical_features = X_train.columns.drop(numerical_features)
 # We plot the average number of bike rentals by grouping the data by season and
 # by year.
 from itertools import product
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 days = ("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
 hours = tuple(range(24))
@@ -153,8 +158,7 @@ for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
 # numerical features and encode the categorical features with a
 # :class:`~sklearn.preprocessing.OneHotEncoder`.
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import QuantileTransformer
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, QuantileTransformer
 
 mlp_preprocessor = ColumnTransformer(
     transformers=[
@@ -194,11 +198,12 @@ hgbdt_preprocessor
 # features and individual conditional expectation (ICE).
 #
 # Multi-layer perceptron
-# """"""""""""""""""""""
+# ~~~~~~~~~~~~~~~~~~~~~~
 #
 # Let's fit a :class:`~sklearn.neural_network.MLPRegressor` and compute
 # single-variable partial dependence plots.
 from time import time
+
 from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import make_pipeline
 
@@ -238,6 +243,7 @@ print(f"Test R2 score: {mlp_model.score(X_test, y_test):.2f}")
 #
 # We will plot the averaged partial dependence.
 import matplotlib.pyplot as plt
+
 from sklearn.inspection import PartialDependenceDisplay
 
 common_params = {
@@ -267,14 +273,16 @@ display = PartialDependenceDisplay.from_estimator(
 )
 print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle(
-    "Partial dependence of the number of bike rentals\n"
-    "for the bike rental dataset with an MLPRegressor",
+    (
+        "Partial dependence of the number of bike rentals\n"
+        "for the bike rental dataset with an MLPRegressor"
+    ),
     fontsize=16,
 )
 
 # %%
 # Gradient boosting
-# """""""""""""""""
+# ~~~~~~~~~~~~~~~~~
 #
 # Let's now fit a :class:`~sklearn.ensemble.HistGradientBoostingRegressor` and
 # compute the partial dependence on the same features. We also use the
@@ -286,7 +294,9 @@ tic = time()
 hgbdt_model = make_pipeline(
     hgbdt_preprocessor,
     HistGradientBoostingRegressor(
-        categorical_features=categorical_features, random_state=0
+        categorical_features=categorical_features,
+        random_state=0,
+        max_iter=50,
     ),
 )
 hgbdt_model.fit(X_train, y_train)
@@ -317,14 +327,16 @@ display = PartialDependenceDisplay.from_estimator(
 )
 print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle(
-    "Partial dependence of the number of bike rentals\n"
-    "for the bike rental dataset with a gradient boosting",
+    (
+        "Partial dependence of the number of bike rentals\n"
+        "for the bike rental dataset with a gradient boosting"
+    ),
     fontsize=16,
 )
 
 # %%
 # Analysis of the plots
-# """""""""""""""""""""
+# ~~~~~~~~~~~~~~~~~~~~~
 #
 # We will first look at the PDPs for the numerical features. For both models, the
 # general trend of the PDP of the temperature is that the number of bike rentals is
@@ -346,7 +358,7 @@ _ = display.figure_.suptitle(
 # synthetic samples if features are correlated.
 #
 # ICE vs. PDP
-# """""""""""
+# ~~~~~~~~~~~
 # PDP is an average of the marginal effects of the features. We are averaging the
 # response of all samples of the provided set. Thus, some effects could be hidden. In
 # this regard, it is possible to plot each individual response. This representation is
@@ -515,14 +527,13 @@ _ = display.figure_.suptitle(
 
 # %%
 # 3D representation
-# """""""""""""""""
+# ~~~~~~~~~~~~~~~~~
 #
 # Let's make the same partial dependence plot for the 2 features interaction,
 # this time in 3 dimensions.
-import numpy as np
-
 # unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
+import numpy as np
 
 from sklearn.inspection import partial_dependence
 
@@ -532,7 +543,7 @@ features = ("temp", "humidity")
 pdp = partial_dependence(
     hgbdt_model, X_train, features=features, kind="average", grid_resolution=10
 )
-XX, YY = np.meshgrid(pdp["values"][0], pdp["values"][1])
+XX, YY = np.meshgrid(pdp["grid_values"][0], pdp["grid_values"][1])
 Z = pdp.average[0].T
 ax = fig.add_subplot(projection="3d")
 fig.add_axes(ax)

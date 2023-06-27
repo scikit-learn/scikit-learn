@@ -36,9 +36,10 @@ script :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
 # the classification problem "too easy". This is achieved using simple
 # heuristics that are neither perfect nor standard, hence disabled by default.
 
+from time import time
+
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
-from time import time
 
 categories = [
     "alt.atheism",
@@ -93,7 +94,6 @@ def load_dataset(verbose=False, remove=()):
     feature_names = vectorizer.get_feature_names_out()
 
     if verbose:
-
         # compute size of loaded data
         data_train_size_mb = size_mb(data_train.data)
         data_test_size_mb = size_mb(data_test.data)
@@ -159,6 +159,7 @@ pred = clf.predict(X_test)
 # in the classification errors.
 
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import ConfusionMatrixDisplay
 
 fig, ax = plt.subplots(figsize=(10, 5))
@@ -183,8 +184,8 @@ _ = ax.set_title(
 # We can gain a deeper understanding of how this classifier makes its decisions
 # by looking at the words with the highest average feature effects:
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def plot_feature_effects():
@@ -316,8 +317,8 @@ _ = plot_feature_effects().set_title("Average feature effects on filtered docume
 # training time and testing time. For such purpose we define the following
 # benchmarking utilities:
 
-from sklearn.utils.extmath import density
 from sklearn import metrics
+from sklearn.utils.extmath import density
 
 
 def benchmark(clf, custom_name=False):
@@ -359,17 +360,14 @@ def benchmark(clf, custom_name=False):
 # Notice that the most important hyperparameters values were tuned using a grid
 # search procedure not shown in this notebook for the sake of simplicity. See
 # the example script
-# :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
+# :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`  # noqa: E501
 # for a demo on how such tuning can be done.
 
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import SGDClassifier
-from sklearn.naive_bayes import ComplementNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors import NearestCentroid
 from sklearn.ensemble import RandomForestClassifier
-
+from sklearn.linear_model import LogisticRegression, SGDClassifier
+from sklearn.naive_bayes import ComplementNB
+from sklearn.neighbors import KNeighborsClassifier, NearestCentroid
+from sklearn.svm import LinearSVC
 
 results = []
 for clf, name in (

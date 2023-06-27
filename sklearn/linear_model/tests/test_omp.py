@@ -1,25 +1,26 @@
 # Author: Vlad Niculae
 # License: BSD 3 clause
 
-import numpy as np
-import pytest
 import warnings
 
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
+import numpy as np
+import pytest
 
-
+from sklearn.datasets import make_sparse_coded_signal
 from sklearn.linear_model import (
-    orthogonal_mp,
-    orthogonal_mp_gram,
+    LinearRegression,
     OrthogonalMatchingPursuit,
     OrthogonalMatchingPursuitCV,
-    LinearRegression,
+    orthogonal_mp,
+    orthogonal_mp_gram,
 )
 from sklearn.utils import check_random_state
-from sklearn.datasets import make_sparse_coded_signal
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 
 n_samples, n_features, n_nonzero_coefs, n_targets = 25, 35, 5, 3
 y, X, gamma = make_sparse_coded_signal(
@@ -28,8 +29,8 @@ y, X, gamma = make_sparse_coded_signal(
     n_features=n_samples,
     n_nonzero_coefs=n_nonzero_coefs,
     random_state=0,
-    data_transposed=True,
 )
+y, X, gamma = y.T, X.T, gamma.T
 # Make X not of norm 1 for testing
 X *= 10
 y *= 10
@@ -120,7 +121,7 @@ def test_unreachable_accuracy():
 @pytest.mark.parametrize("positional_params", [(X, y), (G, Xy)])
 @pytest.mark.parametrize(
     "keyword_params",
-    [{"tol": -1}, {"n_nonzero_coefs": -1}, {"n_nonzero_coefs": n_features + 1}],
+    [{"n_nonzero_coefs": n_features + 1}],
 )
 def test_bad_input(positional_params, keyword_params):
     with pytest.raises(ValueError):

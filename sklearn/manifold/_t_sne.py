@@ -8,28 +8,31 @@
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
-import warnings
+from numbers import Integral, Real
 from time import time
+
 import numpy as np
 from scipy import linalg
-from scipy.spatial.distance import pdist
-from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
-from numbers import Integral, Real
+from scipy.spatial.distance import pdist, squareform
+
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from ..decomposition import PCA
+from ..metrics.pairwise import _VALID_METRICS, pairwise_distances
 from ..neighbors import NearestNeighbors
-from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_non_negative
-from ..utils._param_validation import Interval, StrOptions, Hidden
-from ..decomposition import PCA
-from ..metrics.pairwise import pairwise_distances, _VALID_METRICS
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_utils'
-from . import _utils  # type: ignore
-
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
-from . import _barnes_hut_tsne  # type: ignore
+from . import _barnes_hut_tsne, _utils  # type: ignore
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
@@ -498,7 +501,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
            (ICANN '01). Springer-Verlag, Berlin, Heidelberg, 485-491.
 
     .. [2] Laurens van der Maaten. Learning a Parametric Embedding by Preserving
-           Local Structure. Proceedings of the Twelth International Conference on
+           Local Structure. Proceedings of the Twelfth International Conference on
            Artificial Intelligence and Statistics, PMLR 5:384-391, 2009.
     """
     n_samples = X.shape[0]
@@ -537,7 +540,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     return t
 
 
-class TSNE(BaseEstimator):
+class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """T-distributed Stochastic Neighbor Embedding.
 
     t-SNE [1] is a tool to visualize high-dimensional data. It converts
@@ -678,14 +681,6 @@ class TSNE(BaseEstimator):
 
         .. versionadded:: 0.22
 
-    square_distances : True, default='deprecated'
-        This parameter has no effect since distance values are always squared
-        since 1.1.
-
-        .. deprecated:: 1.1
-             `square_distances` has no effect from 1.1 and will be removed in
-             1.3.
-
     Attributes
     ----------
     embedding_ : array-like of shape (n_samples, n_components)
@@ -778,7 +773,6 @@ class TSNE(BaseEstimator):
         "method": [StrOptions({"barnes_hut", "exact"})],
         "angle": [Interval(Real, 0, 1, closed="both")],
         "n_jobs": [None, Integral],
-        "square_distances": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 
     # Control the number of exploration iterations with early_exaggeration on
@@ -805,7 +799,6 @@ class TSNE(BaseEstimator):
         method="barnes_hut",
         angle=0.5,
         n_jobs=None,
-        square_distances="deprecated",
     ):
         self.n_components = n_components
         self.perplexity = perplexity
@@ -822,7 +815,6 @@ class TSNE(BaseEstimator):
         self.method = method
         self.angle = angle
         self.n_jobs = n_jobs
-        self.square_distances = square_distances
 
     def _check_params_vs_input(self, X):
         if self.perplexity >= X.shape[0]:
@@ -837,12 +829,7 @@ class TSNE(BaseEstimator):
                 "with the sparse input matrix. Use "
                 'init="random" instead.'
             )
-        if self.square_distances != "deprecated":
-            warnings.warn(
-                "The parameter `square_distances` has not effect and will be "
-                "removed in version 1.3.",
-                FutureWarning,
-            )
+
         if self.learning_rate == "auto":
             # See issue #18018
             self.learning_rate_ = X.shape[0] / self.early_exaggeration / 4
@@ -871,8 +858,10 @@ class TSNE(BaseEstimator):
 
             check_non_negative(
                 X,
-                "TSNE.fit(). With metric='precomputed', X "
-                "should contain positive distances.",
+                (
+                    "TSNE.fit(). With metric='precomputed', X "
+                    "should contain positive distances."
+                ),
             )
 
             if self.method == "exact" and issparse(X):
@@ -1093,6 +1082,10 @@ class TSNE(BaseEstimator):
 
         return X_embedded
 
+    @_fit_context(
+        # TSNE.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit X into an embedded space and return that transformed output.
 
@@ -1114,12 +1107,15 @@ class TSNE(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        self._validate_params()
         self._check_params_vs_input(X)
         embedding = self._fit(X)
         self.embedding_ = embedding
         return self.embedding_
 
+    @_fit_context(
+        # TSNE.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit X into an embedded space.
 
@@ -1141,9 +1137,13 @@ class TSNE(BaseEstimator):
         X_new : array of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        self._validate_params()
         self.fit_transform(X)
         return self
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.embedding_.shape[1]
 
     def _more_tags(self):
         return {"pairwise": self.metric == "precomputed"}

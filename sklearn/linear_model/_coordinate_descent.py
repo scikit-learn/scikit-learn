@@ -5,35 +5,34 @@
 #
 # License: BSD 3 clause
 
+import numbers
 import sys
 import warnings
-import numbers
 from abc import ABC, abstractmethod
 from functools import partial
 from numbers import Integral, Real
 
 import numpy as np
-from scipy import sparse
 from joblib import effective_n_jobs
+from scipy import sparse
 
-from ._base import LinearModel, _pre_fit
-from ..base import RegressorMixin, MultiOutputMixin
-from ._base import _preprocess_data
-from ..utils import check_array, check_scalar
-from ..utils.validation import check_random_state
-from ..utils._param_validation import Interval, StrOptions
+from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
+from ..utils import check_array, check_scalar
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import safe_sparse_dot
+from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_sample_weight,
     check_consistent_length,
     check_is_fitted,
+    check_random_state,
     column_or_1d,
 )
-from ..utils.parallel import delayed, Parallel
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from . import _cd_fast as cd_fast  # type: ignore
+from ._base import LinearModel, _pre_fit, _preprocess_data
 
 
 def _set_order(X, y, order="C"):
@@ -168,9 +167,7 @@ def _alpha_grid(
         alphas.fill(np.finfo(float).resolution)
         return alphas
 
-    return np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max), num=n_alphas)[
-        ::-1
-    ]
+    return np.geomspace(alpha_max, alpha_max * eps, num=n_alphas)
 
 
 def lasso_path(
@@ -853,6 +850,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         self.random_state = random_state
         self.selection = selection
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, check_input=True):
         """Fit model with coordinate descent.
 
@@ -861,8 +859,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         X : {ndarray, sparse matrix} of (n_samples, n_features)
             Data.
 
-        y : {ndarray, sparse matrix} of shape (n_samples,) or \
-            (n_samples, n_targets)
+        y : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
@@ -889,13 +886,13 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        self._validate_params()
-
         if self.alpha == 0:
             warnings.warn(
-                "With alpha=0, this algorithm does not converge "
-                "well. You are advised to use the LinearRegression "
-                "estimator",
+                (
+                    "With alpha=0, this algorithm does not converge "
+                    "well. You are advised to use the LinearRegression "
+                    "estimator"
+                ),
                 stacklevel=2,
             )
 
@@ -1476,6 +1473,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     def path(X, y, **kwargs):
         """Compute path with coordinate descent."""
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit linear model with coordinate descent.
 
@@ -1503,9 +1501,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self : object
             Returns an instance of fitted model.
         """
-
-        self._validate_params()
-
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
         # Multiple functions touch X and subsamples of X and can induce a
@@ -2344,6 +2339,7 @@ class MultiTaskElasticNet(Lasso):
         self.random_state = random_state
         self.selection = selection
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit MultiTaskElasticNet model with coordinate descent.
 
@@ -2368,8 +2364,6 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        self._validate_params()
-
         # Need to validate separately here.
         # We can't pass multi_output=True because that would allow y to be csr.
         check_X_params = dict(
