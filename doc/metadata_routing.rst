@@ -177,7 +177,7 @@ consumers. In this example, we pass ``scoring_weight`` to the scorer, and
 API Interface
 *************
 
-A :term:`consumer`` is an object (estimator, meta-estimator, scorer, splitter)
+A :term:`consumer` is an object (estimator, meta-estimator, scorer, splitter)
 which accepts and uses some :term:`metadata` in at least one of its methods
 (``fit``, ``predict``, ``inverse_transform``, ``transform``, ``score``,
 ``split``). Meta-estimators which only forward the metadata to other objects

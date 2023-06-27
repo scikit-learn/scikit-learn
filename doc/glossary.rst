@@ -1035,7 +1035,7 @@ Metadata Routing
 
     consumer
         An object which consumes :term:`metadata`. This object is usually an
-        :term:`estimator`, a :term:`scorer`, or a :term:`splitter`. Consuming
+        :term:`estimator`, a :term:`scorer`, or a :term:`CV splitter`. Consuming
         metadata means using it in calculations, e.g. using
         :term:`sample_weight` to calculate a certain type of score. Being a
         consumer doesn't mean that the object always receives a certain
@@ -1045,15 +1045,15 @@ Metadata Routing
         Data which is related to the given :term:`X` and :term:`y` data, but
         is not directly a part of the data, e.g. :term:`sample_weight` or
         :term:`groups`, and is passed along to different objects and methods,
-        e.g. to a :term:`scorer` or a :term:`splitter`.
+        e.g. to a :term:`scorer` or a :term:`CV splitter`.
 
     router
-        An object which routes metadata to :term:`consumers`. This object is
+        An object which routes metadata to :term:`consumer`s. This object is
         usually a :term:`meta-estimator`, e.g. :class:`~pipeline.Pipeline` or
         :class:`~model_selection.GridSearchCV`. Some routers can also be a
         consumer. This happens for example when a meta-estimator uses the
         given :term:`groups`, and it also passes it along to some of its
-        sub-objects, such as a :term:`splitter`.
+        sub-objects, such as a :term:`CV splitter`.
 
 Please refer to :ref:`Metadta Routing User Guide <metadata_routing>` for more
 information.
