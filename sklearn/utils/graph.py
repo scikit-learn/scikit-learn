@@ -14,7 +14,7 @@ import numpy as np
 from scipy import sparse
 
 from ..metrics.pairwise import pairwise_distances
-from ..utils._param_validation import Interval, Integral, validate_params
+from ._param_validation import Interval, Integral, validate_params
 
 
 ###############################################################################
@@ -25,7 +25,8 @@ from ..utils._param_validation import Interval, Integral, validate_params
         "graph": ["array-like", "sparse matrix"],
         "source": [Interval(Integral, 0, None, closed="left")],
         "cutoff": [Interval(Integral, 0, None, closed="left"), None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def single_source_shortest_path_length(graph, source, *, cutoff=None):
     """Return the length of the shortest path from source to all reachable nodes.
