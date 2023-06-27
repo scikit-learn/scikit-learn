@@ -14,13 +14,17 @@ from sklearn.metrics import (
     accuracy_score,
     auc,
     average_precision_score,
+    classification_report,
     coverage_error,
     dcg_score,
     det_curve,
+    f1_score,
     label_ranking_average_precision_score,
     label_ranking_loss,
     ndcg_score,
     precision_recall_curve,
+    precision_score,
+    recall_score,
     roc_auc_score,
     roc_curve,
     top_k_accuracy_score,
@@ -2240,3 +2244,105 @@ def test_roc_curve_with_probablity_estimates(global_random_seed):
     y_score = rng.rand(10)
     _, _, thresholds = roc_curve(y_true, y_score)
     assert np.isinf(thresholds[0])
+
+
+def test_multilabel_samples_average():
+    y_true = np.array([[0, 0, 0]])
+    y_pred = np.array([[0, 0, 0]])
+    assert precision_score(y_true, y_pred, average="samples") == 1
+    assert recall_score(y_true, y_pred, average="samples") == 1
+    assert f1_score(y_true, y_pred, average="samples") == 1
+    assert (
+        classification_report(y_true, y_pred)[-53:]
+        == "samples avg       1.00      1.00      1.00         0\n"
+    )
+
+    y_true = np.array(
+        [
+            [0, 1, 0],
+            [0, 1, 1],
+            [1, 0, 1],
+        ]
+    )
+    y_pred = np.array(
+        [
+            [0, 1, 1],
+            [0, 1, 1],
+            [0, 1, 0],
+        ]
+    )
+    assert precision_score(y_true, y_pred, average="samples") == np.mean([1 / 2, 1, 0])
+    assert recall_score(y_true, y_pred, average="samples") == pytest.approx(
+        np.mean([1, 1, 0])
+    )
+    assert f1_score(y_true, y_pred, average="samples") == pytest.approx(
+        np.mean([2 / 3, 1, 0])
+    )
+    assert (
+        classification_report(y_true, y_pred)[-53:]
+        == "samples avg       0.50      0.67      0.56         5\n"
+    )
+
+    y_true = np.array(
+        [
+            [0, 1, 0],
+            [0, 1, 1],
+            [1, 0, 1],
+            [0, 0, 1],
+            [0, 0, 0],
+        ]
+    )
+    y_pred = np.array(
+        [
+            [0, 1, 1],
+            [0, 1, 1],
+            [0, 1, 0],
+            [0, 0, 0],
+            [1, 0, 0],
+        ]
+    )
+    assert precision_score(y_true, y_pred, average="samples") == np.mean(
+        [1 / 2, 1, 0, 0, 0]
+    )
+    assert recall_score(y_true, y_pred, average="samples") == np.mean([1, 1, 0, 0, 0])
+    assert f1_score(y_true, y_pred, average="samples") == pytest.approx(
+        np.mean([2 / 3, 1, 0, 0, 0])
+    )
+    assert (
+        classification_report(y_true, y_pred)[-53:]
+        == "samples avg       0.30      0.40      0.33         6\n"
+    )
+
+    y_true = np.array(
+        [
+            [0, 1, 0],
+            [0, 1, 1],
+            [1, 0, 1],
+            [0, 0, 1],
+            [0, 0, 0],
+            [0, 0, 0],
+        ]
+    )
+    y_pred = np.array(
+        [
+            [0, 1, 1],
+            [0, 1, 1],
+            [0, 1, 0],
+            [0, 0, 0],
+            [1, 0, 0],
+            [0, 0, 0],
+        ]
+    )
+    assert precision_score(y_true, y_pred, average="samples") == pytest.approx(
+        np.mean([1 / 2, 1, 0, 0, 0, 1])
+    )
+    assert recall_score(y_true, y_pred, average="samples") == np.mean(
+        [1, 1, 0, 0, 0, 1]
+    )
+    assert f1_score(y_true, y_pred, average="samples") == pytest.approx(
+        np.mean([2 / 3, 1, 0, 0, 0, 1])
+    )
+    assert (
+        classification_report(y_true, y_pred)[-53:]
+        == "samples avg       0.42      0.50      0.44         6\n"
+    )

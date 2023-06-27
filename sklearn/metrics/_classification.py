@@ -1717,11 +1717,29 @@ def precision_recall_fscore_support(
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
     """
+    # Calculate tp_sum, pred_sum, true_sum ###
+    samplewise = average == "samples"
+    if average == "samples":
+        # Check if both rows are zero vectors
+        zero_rows = np.logical_and(y_true.sum(axis=1) == 0, y_pred.sum(axis=1) == 0)
+
+        # Append extra values based on the condition
+        extra_value = np.where(zero_rows, 1, 0)
+
+        # Create a new array with the modified values
+        if isinstance(y_true, csr_matrix):
+            y_true = y_true.toarray()
+        y_true = np.column_stack((y_true, extra_value))
+        if isinstance(y_pred, csr_matrix):
+            y_pred = y_pred.toarray()
+        y_pred = np.column_stack((y_pred, extra_value))
+
+        if labels is not None:
+            labels = np.append(labels, max(labels) + 1)
+
     zero_division_value = _check_zero_division(zero_division)
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
-    # Calculate tp_sum, pred_sum, true_sum ###
-    samplewise = average == "samples"
     MCM = multilabel_confusion_matrix(
         y_true,
         y_pred,
@@ -2535,7 +2553,6 @@ def classification_report(
     weighted avg       1.00      0.67      0.80         3
     <BLANKLINE>
     """
-
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     if labels is None:
