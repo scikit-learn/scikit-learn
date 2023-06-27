@@ -4,8 +4,8 @@ Tests for LinearModelLoss
 Note that correctness of losses (which compose LinearModelLoss) is already well
 covered in the _loss module.
 """
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 from scipy import linalg, optimize, sparse
 
@@ -17,7 +17,6 @@ from sklearn._loss.loss import (
 from sklearn.datasets import make_low_rank_matrix
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.utils.extmath import squared_norm
-
 
 # We do not need to test all losses, just what LinearModelLoss does on top of the
 # base losses.

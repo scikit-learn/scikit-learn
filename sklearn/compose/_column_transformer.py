@@ -6,28 +6,28 @@ different columns.
 # Author: Andreas Mueller
 #         Joris Van den Bossche
 # License: BSD
-from numbers import Integral, Real
-from itertools import chain
 from collections import Counter
+from itertools import chain
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
 
-from ..base import clone, TransformerMixin
-from ..utils._estimator_html_repr import _VisualBlock
-from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
+from ..base import TransformerMixin, _fit_context, clone
+from ..pipeline import _fit_transform_one, _name_estimators, _transform_one
 from ..preprocessing import FunctionTransformer
-from ..utils import Bunch
-from ..utils import _safe_indexing
-from ..utils import _get_column_indices
-from ..utils._param_validation import HasMethods, Interval, StrOptions, Hidden
+from ..utils import Bunch, _get_column_indices, _safe_indexing, check_pandas_support
+from ..utils._estimator_html_repr import _VisualBlock
+from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..utils._set_output import _get_output_config, _safe_set_output
-from ..utils import check_pandas_support
 from ..utils.metaestimators import _BaseComposition
-from ..utils.validation import check_array, check_is_fitted, _check_feature_names_in
-from ..utils.validation import _num_samples
-from ..utils.parallel import delayed, Parallel
-
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import (
+    _check_feature_names_in,
+    _num_samples,
+    check_array,
+    check_is_fitted,
+)
 
 __all__ = ["ColumnTransformer", "make_column_transformer", "make_column_selector"]
 
@@ -701,12 +701,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self : ColumnTransformer
             This estimator.
         """
-        self._validate_params()
         # we use fit_transform to make sure to set sparse_output_ (for which we
         # need the transformed data) to have consistent output type in predict
         self.fit_transform(X, y=y)
         return self
 
+    @_fit_context(
+        # estimators in ColumnTransformer.transformers are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit all transformers, transform the data and concatenate results.
 
@@ -728,7 +731,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             any result is a sparse matrix, everything will be converted to
             sparse matrices.
         """
-        self._validate_params()
         self._check_feature_names(X, reset=True)
 
         X = _check_X(X)

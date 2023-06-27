@@ -3,7 +3,7 @@
 Feature agglomeration
 =========================================================
 
-These images how similar features are merged together using
+These images show how similar features are merged together using
 feature agglomeration.
 
 """
@@ -12,10 +12,10 @@ feature agglomeration.
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn import datasets, cluster
+from sklearn import cluster, datasets
 from sklearn.feature_extraction.image import grid_to_graph
 
 digits = datasets.load_digits()

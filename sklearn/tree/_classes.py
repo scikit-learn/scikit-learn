@@ -14,42 +14,44 @@ randomized trees. Single and multi-output problems are both handled.
 #
 # License: BSD 3 clause
 
+import copy
 import numbers
 import warnings
-import copy
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from math import ceil
 from numbers import Integral, Real
 
 import numpy as np
 from scipy.sparse import issparse
 
-from ..base import BaseEstimator
-from ..base import ClassifierMixin
-from ..base import clone
-from ..base import RegressorMixin
-from ..base import is_classifier
-from ..base import MultiOutputMixin
-from ..utils import Bunch
-from ..utils import check_random_state
-from ..utils.validation import _check_sample_weight
-from ..utils.validation import assert_all_finite
-from ..utils.validation import _assert_all_finite_element_wise
-from ..utils import compute_sample_weight
+from ..base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+)
+from ..utils import Bunch, check_random_state, compute_sample_weight
+from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils._param_validation import RealNotInt
-
+from ..utils.validation import (
+    _assert_all_finite_element_wise,
+    _check_sample_weight,
+    assert_all_finite,
+    check_is_fitted,
+)
+from . import _criterion, _splitter, _tree
 from ._criterion import Criterion
 from ._splitter import Splitter
-from ._tree import DepthFirstTreeBuilder
-from ._tree import BestFirstTreeBuilder
-from ._tree import Tree
-from ._tree import _build_pruned_tree_ccp
-from ._tree import ccp_pruning_path
-from . import _tree, _splitter, _criterion
+from ._tree import (
+    BestFirstTreeBuilder,
+    DepthFirstTreeBuilder,
+    Tree,
+    _build_pruned_tree_ccp,
+    ccp_pruning_path,
+)
 from ._utils import _any_isnan_axis0
 
 __all__ = [
@@ -180,7 +182,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _support_missing_values(self, X):
         return not issparse(X) and self._get_tags()["allow_nan"]
 
-    def _compute_feature_has_missing(self, X):
+    def _compute_missing_values_in_feature_mask(self, X):
         """Return boolean mask denoting if there are missing values for each feature.
 
         This method also ensures that X is finite.
@@ -192,7 +194,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        feature_has_missing : ndarray of shape (n_features,), or None
+        missing_values_in_feature_mask : ndarray of shape (n_features,), or None
             Missing value mask. If missing values are not supported or there
             are no missing values, return None.
         """
@@ -213,13 +215,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if not np.isnan(overall_sum):
             return None
 
-        feature_has_missing = _any_isnan_axis0(X)
-        return feature_has_missing
+        missing_values_in_feature_mask = _any_isnan_axis0(X)
+        return missing_values_in_feature_mask
 
     def _fit(
-        self, X, y, sample_weight=None, check_input=True, feature_has_missing=None
+        self,
+        X,
+        y,
+        sample_weight=None,
+        check_input=True,
+        missing_values_in_feature_mask=None,
     ):
-        self._validate_params()
         random_state = check_random_state(self.random_state)
 
         if check_input:
@@ -227,7 +233,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # We can't pass multi_output=True because that would allow y to be
             # csr.
 
-            # _compute_feature_has_missing will check for finite values and
+            # _compute_missing_values_in_feature_mask will check for finite values and
             # compute the missing mask if the tree supports missing values
             check_X_params = dict(
                 dtype=DTYPE, accept_sparse="csc", force_all_finite=False
@@ -237,7 +243,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 X, y, validate_separately=(check_X_params, check_y_params)
             )
 
-            feature_has_missing = self._compute_feature_has_missing(X)
+            missing_values_in_feature_mask = (
+                self._compute_missing_values_in_feature_mask(X)
+            )
             if issparse(X):
                 X.sort_indices()
 
@@ -432,7 +440,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.min_impurity_decrease,
             )
 
-        builder.build(self.tree_, X, y, sample_weight, feature_has_missing)
+        builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask)
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
@@ -917,6 +925,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree classifier from the training set (X, y).
 
@@ -1278,6 +1287,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree regressor from the training set (X, y).
 
