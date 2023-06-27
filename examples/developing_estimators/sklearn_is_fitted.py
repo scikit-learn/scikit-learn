@@ -1,16 +1,16 @@
 """
 ==========================================
-``__sklearn_is_fitted__`` as Developer API
+`__sklearn_is_fitted__` as Developer API
 ==========================================
 
 Developers should use :func:`~sklearn.sklearn.utils.validation.check_is_fitted`
-at the beginning of all methods except ``fit``. If they need to customize or
-speed-up the check, the can implement the ``__sklearn_is_fitted__`` method as
-shown bellow.
+at the beginning of all methods except `fit`. If they need to customize or
+speed-up the check, the can implement the `__sklearn_is_fitted__` method as
+shown below.
 
 In this example the custom estimator showcases the usage of the
-``__sklearn_is_fitted__`` method and ``check_is_fitted`` utility
-function as developer APIs. The ``__sklearn_is_fitted__``
+`__sklearn_is_fitted__` method and `check_is_fitted` utility
+function as developer APIs. The `__sklearn_is_fitted__`
 method checks whether the estimator has been fitted by verifying
 the presence of the `_is_fitted` attribute.
 """
@@ -20,7 +20,7 @@ the presence of the `_is_fitted` attribute.
 # ------------------------------------------------------------
 # This code snippet defines a custom estimator class called `CustomEstimator`
 # that extends the `BaseEstimator` and `ClassifierMixin` classes from
-# scikit-learn. It showcases the usage of the ``__sklearn_is_fitted__`` method
+# scikit-learn. It showcases the usage of the `__sklearn_is_fitted__` method
 # and the `check_is_fitted` utility function as developer APIs.
 
 # Author: Kushan <kushansharma1@gmail.com>
