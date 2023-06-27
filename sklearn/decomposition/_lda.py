@@ -14,21 +14,27 @@ from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
-from scipy.special import gammaln, logsumexp
 from joblib import effective_n_jobs
+from scipy.special import gammaln, logsumexp
 
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..base import _fit_context
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..utils import check_random_state, gen_batches, gen_even_slices
-from ..utils.validation import check_non_negative
-from ..utils.validation import check_is_fitted
-from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import Interval, StrOptions
-
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import check_is_fitted, check_non_negative
+from ._online_lda_fast import (
+    _dirichlet_expectation_1d as cy_dirichlet_expectation_1d,
+)
+from ._online_lda_fast import (
+    _dirichlet_expectation_2d,
+)
 from ._online_lda_fast import (
     mean_change as cy_mean_change,
-    _dirichlet_expectation_1d as cy_dirichlet_expectation_1d,
-    _dirichlet_expectation_2d,
 )
 
 EPS = np.finfo(float).eps

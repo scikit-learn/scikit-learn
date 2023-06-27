@@ -9,30 +9,26 @@
 #          Sylvain Marie
 # License: BSD 3 clause
 
-from functools import reduce, wraps
-import warnings
 import numbers
 import operator
+import sys
+import warnings
+from contextlib import suppress
+from functools import reduce, wraps
+from inspect import Parameter, isclass, signature
 
+import joblib
 import numpy as np
 import scipy.sparse as sp
-from inspect import signature, isclass, Parameter
 
 # mypy error: Module 'numpy.core.numeric' has no attribute 'ComplexWarning'
 from numpy.core.numeric import ComplexWarning  # type: ignore
-import joblib
 
-from contextlib import suppress
-
-from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
-from ..exceptions import PositiveSpectrumWarning
-from ..exceptions import NotFittedError
-from ..exceptions import DataConversionWarning
-from ..utils._array_api import get_namespace
-from ..utils._array_api import _asarray_with_order
-from ..utils._array_api import _is_numpy_namespace
-from ._isfinite import cy_isfinite, FiniteStatus
+from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
+from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
+from ._isfinite import FiniteStatus, cy_isfinite
+from .fixes import _object_dtype_isnan
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -607,12 +603,12 @@ def _check_estimator_name(estimator):
 def _pandas_dtype_needs_early_conversion(pd_dtype):
     """Return True if pandas extension pd_dtype need to be converted early."""
     # Check these early for pandas versions without extension dtypes
+    from pandas import SparseDtype
     from pandas.api.types import (
         is_bool_dtype,
         is_float_dtype,
         is_integer_dtype,
     )
-    from pandas import SparseDtype
 
     if is_bool_dtype(pd_dtype):
         # bool and extension booleans need early conversion because __array__
@@ -1990,6 +1986,18 @@ def _check_fit_params(X, fit_params, indices=None):
     return fit_params_validated
 
 
+def _is_pandas_df(X):
+    """Return True if the X is a pandas dataframe."""
+    if hasattr(X, "columns") and hasattr(X, "iloc"):
+        # Likely a pandas DataFrame, we explicitly check the type to confirm.
+        try:
+            pd = sys.modules["pandas"]
+        except KeyError:
+            return False
+        return isinstance(X, pd.DataFrame)
+    return False
+
+
 def _get_feature_names(X):
     """Get feature names from X.
 
@@ -2013,8 +2021,22 @@ def _get_feature_names(X):
     feature_names = None
 
     # extract feature names for support array containers
-    if hasattr(X, "columns"):
+    if _is_pandas_df(X):
+        # Make sure we can inspect columns names from pandas, even with
+        # versions too old to expose a working implementation of
+        # __dataframe__.column_names() and avoid introducing any
+        # additional copy.
+        # TODO: remove the pandas-specific branch once the minimum supported
+        # version of pandas has a working implementation of
+        # __dataframe__.column_names() that is guaranteed to not introduce any
+        # additional copy of the data without having to impose allow_copy=False
+        # that could fail with other libraries. Note: in the longer term, we
+        # could decide to instead rely on the __dataframe_namespace__ API once
+        # adopted by our minimally supported pandas version.
         feature_names = np.asarray(X.columns, dtype=object)
+    elif hasattr(X, "__dataframe__"):
+        df_protocol = X.__dataframe__()
+        feature_names = np.asarray(list(df_protocol.column_names()), dtype=object)
 
     if feature_names is None or len(feature_names) == 0:
         return

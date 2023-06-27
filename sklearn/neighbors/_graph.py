@@ -5,10 +5,8 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 import itertools
-from ._ball_tree import BallTree
-from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, VALID_METRICS
-from ._unsupervised import NearestNeighbors
-from ..base import TransformerMixin, ClassNamePrefixFeaturesOutMixin, _fit_context
+
+from ..base import ClassNamePrefixFeaturesOutMixin, TransformerMixin, _fit_context
 from ..utils._param_validation import (
     Integral,
     Interval,
@@ -17,6 +15,9 @@ from ..utils._param_validation import (
     validate_params,
 )
 from ..utils.validation import check_is_fitted
+from ._ball_tree import BallTree
+from ._base import VALID_METRICS, KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
+from ._unsupervised import NearestNeighbors
 
 
 def _check_params(X, metric, p, metric_params):
@@ -53,7 +54,8 @@ def _query_include_self(X, include_self, mode):
         "metric_params": [dict, None],
         "include_self": ["boolean", StrOptions({"auto"})],
         "n_jobs": [Integral, None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def kneighbors_graph(
     X,

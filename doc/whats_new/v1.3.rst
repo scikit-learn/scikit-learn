@@ -231,6 +231,11 @@ Changelog
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
+  :func:`cluster.k_means` now correctly handle the combination of `n_init="auto"`
+  and `init` being an array-like, running one initialization in that case.
+  :pr:`26657` by :user:`Binesh Bannerjee <bnsh>`.
+
 - |API| The `sample_weight` parameter in `predict` for
   :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
   is now deprecated and will be removed in v1.5.
@@ -421,10 +426,11 @@ Changelog
 .........................
 
 - |Enhancement| Added support for `sample_weight` in
-  :func:`inspection.partial_dependence`. This allows for weighted averaging when
-  aggregating for each value of the grid we are making the inspection on. The
-  option is only available when `method` is set to `brute`. :pr:`25209`
-  by :user:`Carlo Lemos <vitaliset>`.
+  :func:`inspection.partial_dependence` and
+  :meth:`inspection.PartialDependenceDisplay.from_estimator`. This allows for
+  weighted averaging when aggregating for each value of the grid we are making the
+  inspection on. The option is only available when `method` is set to `brute`.
+  :pr:`25209` and :pr:`26644` by :user:`Carlo Lemos <vitaliset>`.
 
 - |API| :func:`inspection.partial_dependence` returns a :class:`utils.Bunch` with
   new key: `grid_values`. The `values` key is deprecated in favor of `grid_values`
@@ -453,6 +459,11 @@ Changelog
   :class:`linear_model.LogisticRegression(penalty="l1", solver="liblinear")`
   on linearly separable problems.
   :pr:`25214` by `Tom Dupre la Tour`_.
+
+- |Fix| Fix a crash when calling `fit` on
+  :class:`linear_model.LogisticRegression(solver="newton-cholesky", max_iter=0)`
+  which failed to inspect the state of the model prior to the first parameter update.
+  :pr:`26653` by :user:`Olivier Grisel <ogrisel>`.
 
 - |API| Deprecates `n_iter` in favor of `max_iter` in
   :class:`linear_model.BayesianRidge` and :class:`linear_model.ARDRegression`.
@@ -673,10 +684,6 @@ Changelog
   :pr:`26424` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Fix| :class:`preprocessing.AdditiveChi2Sampler` is now stateless.
-  The `sample_interval_` attribute is deprecated and will be removed in 1.5.
-  :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
-
-- |Fix| :class:`AdditiveChi2Sampler` is now stateless.
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 

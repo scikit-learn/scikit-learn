@@ -10,35 +10,32 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sparse
 
-from ..base import clone
-from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
-from ..base import is_classifier, is_regressor
-from ..base import _fit_context
+from ..base import (
+    ClassifierMixin,
+    RegressorMixin,
+    TransformerMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+    is_regressor,
+)
 from ..exceptions import NotFittedError
-from ..utils._estimator_html_repr import _VisualBlock
-
-from ._base import _fit_single_estimator
-from ._base import _BaseHeterogeneousEnsemble
-
-from ..linear_model import LogisticRegression
-from ..linear_model import RidgeCV
-
-from ..model_selection import cross_val_predict
-from ..model_selection import check_cv
-
+from ..linear_model import LogisticRegression, RidgeCV
+from ..model_selection import check_cv, cross_val_predict
 from ..preprocessing import LabelEncoder
-
 from ..utils import Bunch
-from ..utils.multiclass import check_classification_targets, type_of_target
-from ..utils.metaestimators import available_if
-from ..utils.parallel import delayed, Parallel
+from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, StrOptions
+from ..utils.metaestimators import available_if
+from ..utils.multiclass import check_classification_targets, type_of_target
+from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_feature_names_in,
     _check_response_method,
     check_is_fitted,
     column_or_1d,
 )
+from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
 
 def _estimator_has(attr):

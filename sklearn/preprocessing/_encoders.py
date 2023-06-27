@@ -3,23 +3,18 @@
 # License: BSD 3 clause
 
 import numbers
-from numbers import Integral
 import warnings
+from numbers import Integral
 
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
-from ..base import _fit_context
-from ..utils import check_array, is_scalar_nan, _safe_indexing
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_feature_names_in
-from ..utils._param_validation import Interval, StrOptions, Hidden
-from ..utils._param_validation import RealNotInt
+from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
+from ..utils import _safe_indexing, check_array, is_scalar_nan
+from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
 from ..utils._mask import _get_mask
-
-from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
-
+from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
+from ..utils.validation import _check_feature_names_in, check_is_fitted
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 
