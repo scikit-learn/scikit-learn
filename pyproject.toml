@@ -17,6 +17,7 @@ requires = [
     "numpy==1.22.3; python_version=='3.10' and platform_system=='Windows' and platform_python_implementation != 'PyPy'",
 
     "scipy>=1.5.0",
+    "pandas"
 ]
 
 [tool.black]
