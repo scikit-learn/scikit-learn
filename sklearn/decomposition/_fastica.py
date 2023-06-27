@@ -15,12 +15,16 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..base import _fit_context
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..exceptions import ConvergenceWarning
-from ..utils import check_array, as_float_array, check_random_state
+from ..utils import as_float_array, check_array, check_random_state
+from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, StrOptions, Options, validate_params
 
 __all__ = ["fastica", "FastICA"]
 
@@ -163,7 +167,8 @@ def _cube(x, fun_args):
         "return_X_mean": ["boolean"],
         "compute_sources": ["boolean"],
         "return_n_iter": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def fastica(
     X,

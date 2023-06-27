@@ -24,12 +24,12 @@ using :ref:`grid_search`.
 
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn import svm, datasets
-from sklearn.model_selection import train_test_split
+from sklearn import datasets, svm
 from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.model_selection import train_test_split
 
 # import some data to play with
 iris = datasets.load_iris()

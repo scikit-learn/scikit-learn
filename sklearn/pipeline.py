@@ -15,25 +15,21 @@ from itertools import islice
 import numpy as np
 from scipy import sparse
 
-from .base import clone, TransformerMixin
-from .base import _fit_context
+from .base import TransformerMixin, _fit_context, clone
+from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
-from .utils._estimator_html_repr import _VisualBlock
-from .utils.metaestimators import available_if
 from .utils import (
     Bunch,
     _print_elapsed_time,
+    check_pandas_support,
 )
-from .utils._tags import _safe_tags
-from .utils.validation import check_memory
-from .utils.validation import check_is_fitted
-from .utils import check_pandas_support
+from .utils._estimator_html_repr import _VisualBlock
 from .utils._param_validation import HasMethods, Hidden
-from .utils._set_output import _safe_set_output, _get_output_config
-from .utils.parallel import delayed, Parallel
-from .exceptions import NotFittedError
-
-from .utils.metaestimators import _BaseComposition
+from .utils._set_output import _get_output_config, _safe_set_output
+from .utils._tags import _safe_tags
+from .utils.metaestimators import _BaseComposition, available_if
+from .utils.parallel import Parallel, delayed
+from .utils.validation import check_is_fitted, check_memory
 
 __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
 
