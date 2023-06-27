@@ -1678,6 +1678,14 @@ def additive_chi2_kernel(X, Y=None):
     return result
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "Y": ["array-like", None],
+        "gamma": [Interval(Real, 0, None, closed="neither"), Hidden(np.ndarray)],
+    },
+    prefer_skip_nested_validation=True,
+)
 def chi2_kernel(X, Y=None, gamma=1.0):
     """Compute the exponential chi-squared kernel between X and Y.
 
@@ -1698,7 +1706,7 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     X : array-like of shape (n_samples_X, n_features)
         A feature array.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : array-like of shape (n_samples_Y, n_features), default=None
         An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=1

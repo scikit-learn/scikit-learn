@@ -235,6 +235,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.pair_confusion_matrix",
     "sklearn.metrics.adjusted_rand_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
+    "sklearn.metrics.pairwise.chi2_kernel",
     "sklearn.metrics.pairwise.cosine_distances",
     "sklearn.metrics.pairwise.cosine_similarity",
     "sklearn.metrics.pairwise.euclidean_distances",
