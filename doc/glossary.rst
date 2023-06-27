@@ -214,10 +214,10 @@ General Concepts
         used in the second stage. The objective is to avoid having any
         overfitting in the first stage introduce bias into the input data
         distribution of the second stage.
-        For examples of its use, see: :class:`~preprocessing.TargetEncoder`,
-        :class:`~ensemble.StackingClassifier`,
-        :class:`~ensemble.StackingRegressor` and
-        :class:`~calibration.CalibratedClassifierCV`.
+        For examples of its use, see: :class:`~sklearn.preprocessing.TargetEncoder`,
+        :class:`~sklearn.ensemble.StackingClassifier`,
+        :class:`~sklearn.ensemble.StackingRegressor` and
+        :class:`~sklearn.calibration.CalibratedClassifierCV`.
 
     cross-validation
     cross validation
