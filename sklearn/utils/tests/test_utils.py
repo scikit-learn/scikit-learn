@@ -10,24 +10,24 @@ import scipy.sparse as sp
 
 from sklearn import config_context
 from sklearn.utils import (
-    _approximate_mode,
-    _determine_key_type,
-    _get_column_indices,
     _message_with_time,
     _print_elapsed_time,
-    _safe_assign,
-    _safe_indexing,
     _to_object_array,
     check_random_state,
     column_or_1d,
     deprecated,
-    gen_even_slices,
-    get_chunk_n_rows,
-    is_scalar_nan,
     resample,
     safe_mask,
     shuffle,
 )
+from sklearn.utils._chunking import gen_even_slices, get_chunk_n_rows
+from sklearn.utils._indexing import (
+    _determine_key_type,
+    _get_column_indices,
+    _safe_assign,
+    _safe_indexing,
+)
+from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
     _convert_container,
@@ -35,6 +35,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     assert_no_warnings,
 )
+from sklearn.utils.extmath import _approximate_mode
 
 # toy array
 X_toy = np.arange(9).reshape((3, 3))

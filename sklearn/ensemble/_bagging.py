@@ -16,7 +16,8 @@ import numpy as np
 from ..base import ClassifierMixin, RegressorMixin, _fit_context
 from ..metrics import accuracy_score, r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, column_or_1d, indices_to_mask
+from ..utils import check_random_state, column_or_1d
+from ..utils._mask import indices_to_mask
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._tags import _safe_tags
 from ..utils.metaestimators import available_if

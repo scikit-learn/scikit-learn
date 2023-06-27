@@ -11,8 +11,8 @@ import numpy.ma as ma
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import _is_pandas_na, is_scalar_nan
 from ..utils._mask import _get_mask
+from ..utils._missing import _is_pandas_na, is_scalar_nan
 from ..utils._param_validation import MissingValues, StrOptions
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median

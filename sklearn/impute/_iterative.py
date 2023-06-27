@@ -9,14 +9,10 @@ from scipy import stats
 from ..base import _fit_context, clone
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
-from ..utils import (
-    _safe_assign,
-    _safe_indexing,
-    check_array,
-    check_random_state,
-    is_scalar_nan,
-)
+from ..utils import check_array, check_random_state
+from ..utils._indexing import _safe_assign, _safe_indexing
 from ..utils._mask import _get_mask
+from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
 from ._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
