@@ -5,27 +5,27 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
+from ..base import BaseEstimator, ClassifierMixin, _fit_context
+from ..exceptions import ConvergenceWarning, NotFittedError
+from ..preprocessing import LabelEncoder
+from ..utils import check_array, check_random_state, column_or_1d, compute_class_weight
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import safe_sparse_dot
+from ..utils.metaestimators import available_if
+from ..utils.multiclass import _ovr_decision_function, check_classification_targets
+from ..utils.validation import (
+    _check_large_sparse,
+    _check_sample_weight,
+    _num_samples,
+    check_consistent_length,
+    check_is_fitted,
+)
+from . import _liblinear as liblinear  # type: ignore
+
 # mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
 # (and same for other imports)
 from . import _libsvm as libsvm  # type: ignore
-from . import _liblinear as liblinear  # type: ignore
 from . import _libsvm_sparse as libsvm_sparse  # type: ignore
-from ..base import BaseEstimator, ClassifierMixin
-from ..preprocessing import LabelEncoder
-from ..utils.multiclass import _ovr_decision_function
-from ..utils import check_array, check_random_state
-from ..utils import column_or_1d
-from ..utils import compute_class_weight
-from ..utils.metaestimators import available_if
-from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted, _check_large_sparse
-from ..utils.validation import _num_samples
-from ..utils.validation import _check_sample_weight, check_consistent_length
-from ..utils.multiclass import check_classification_targets
-from ..utils._param_validation import Interval, StrOptions
-from ..exceptions import ConvergenceWarning
-from ..exceptions import NotFittedError
-
 
 LIBSVM_IMPL = ["c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"]
 
@@ -118,7 +118,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         max_iter,
         random_state,
     ):
-
         if self._impl not in LIBSVM_IMPL:
             raise ValueError(
                 "impl should be one of %s, %s was given" % (LIBSVM_IMPL, self._impl)
@@ -144,6 +143,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         # Used by cross_val_score.
         return {"pairwise": self.kernel == "precomputed"}
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the SVM model according to the given training data.
 
@@ -177,8 +177,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
         """
-        self._validate_params()
-
         rnd = check_random_state(self.random_state)
 
         sparse = sp.isspmatrix(X)
@@ -268,9 +266,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         dual_coef_finiteness = np.isfinite(dual_coef).all()
         if not (intercept_finiteness and dual_coef_finiteness):
             raise ValueError(
-                "The dual coefficients or intercepts are not finite. "
-                "The input data may contain large values and need to be"
-                "preprocessed."
+                "The dual coefficients or intercepts are not finite."
+                " The input data may contain large values and need to be"
+                " preprocessed."
             )
 
         # Since, in the case of SVC and NuSVC, the number of models optimized by

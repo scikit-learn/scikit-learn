@@ -1,26 +1,24 @@
 from unittest.mock import Mock
-import pytest
 
 import numpy as np
-
+import pytest
 from scipy import sparse
-from scipy.sparse import csgraph
 from scipy.linalg import eigh
-from scipy.sparse.linalg import eigsh
+from scipy.sparse import csgraph
+from scipy.sparse.linalg import eigsh, lobpcg
 
-from sklearn.manifold import SpectralEmbedding, _spectral_embedding
-from sklearn.manifold._spectral_embedding import _graph_is_connected
-from sklearn.manifold._spectral_embedding import _graph_connected_component
-from sklearn.manifold import spectral_embedding
-from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.metrics import normalized_mutual_info_score, pairwise_distances
-from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
+from sklearn.manifold import SpectralEmbedding, _spectral_embedding, spectral_embedding
+from sklearn.manifold._spectral_embedding import (
+    _graph_connected_component,
+    _graph_is_connected,
+)
+from sklearn.metrics import normalized_mutual_info_score, pairwise_distances
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils.fixes import lobpcg
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa
@@ -336,7 +334,7 @@ def test_pipeline_spectral_clustering(seed=36):
         random_state=random_state,
     )
     for se in [se_rbf, se_knn]:
-        km = KMeans(n_clusters=n_clusters, random_state=random_state, n_init="auto")
+        km = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
         km.fit(se.fit_transform(S))
         assert_array_almost_equal(
             normalized_mutual_info_score(km.labels_, true_labels), 1.0, 2

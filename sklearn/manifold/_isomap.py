@@ -3,23 +3,25 @@
 # Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
 # License: BSD 3 clause (C) 2011
 import warnings
-
-import numpy as np
 from numbers import Integral, Real
 
+import numpy as np
 from scipy.sparse import issparse
-from scipy.sparse.csgraph import shortest_path
-from scipy.sparse.csgraph import connected_components
+from scipy.sparse.csgraph import connected_components, shortest_path
 
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..neighbors import radius_neighbors_graph
-from ..utils.validation import check_is_fitted
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..decomposition import KernelPCA
-from ..preprocessing import KernelCenterer
-from ..utils.graph import _fix_connected_components
-from ..utils._param_validation import Interval, StrOptions
 from ..metrics.pairwise import _VALID_METRICS
+from ..neighbors import NearestNeighbors, kneighbors_graph, radius_neighbors_graph
+from ..preprocessing import KernelCenterer
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.graph import _fix_connected_components
+from ..utils.validation import check_is_fitted
 
 
 class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -235,7 +237,7 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             tol=self.tol,
             max_iter=self.max_iter,
             n_jobs=self.n_jobs,
-        )
+        ).set_output(transform="default")
 
         if self.n_neighbors is not None:
             nbg = kneighbors_graph(
@@ -274,10 +276,12 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                     "of passing a sparse neighbors graph."
                 )
             warnings.warn(
-                "The number of connected components of the neighbors graph "
-                f"is {n_connected_components} > 1. Completing the graph to fit"
-                " Isomap might be slow. Increase the number of neighbors to "
-                "avoid this issue.",
+                (
+                    "The number of connected components of the neighbors graph "
+                    f"is {n_connected_components} > 1. Completing the graph to fit"
+                    " Isomap might be slow. Increase the number of neighbors to "
+                    "avoid this issue."
+                ),
                 stacklevel=2,
             )
 
@@ -330,6 +334,10 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         evals = self.kernel_pca_.eigenvalues_
         return np.sqrt(np.sum(G_center**2) - np.sum(evals**2)) / G.shape[0]
 
+    @_fit_context(
+        # Isomap.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X.
 
@@ -348,10 +356,13 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
-        self._validate_params()
         self._fit_transform(X)
         return self
 
+    @_fit_context(
+        # Isomap.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit the model from data in X and transform X.
 
@@ -369,7 +380,6 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X_new : array-like, shape (n_samples, n_components)
             X transformed in the new space.
         """
-        self._validate_params()
         self._fit_transform(X)
         return self.embedding_
 

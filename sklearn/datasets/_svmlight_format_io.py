@@ -15,22 +15,21 @@ libsvm command line programs.
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from contextlib import closing
-import io
 import os.path
+from contextlib import closing
+from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
 
 from .. import __version__
-
-from ..utils import check_array, IS_PYPY
-from ..utils._param_validation import validate_params, HasMethods
+from ..utils import IS_PYPY, check_array
+from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
 
 if not IS_PYPY:
     from ._svmlight_format_fast import (
-        _load_svmlight_file,
         _dump_svmlight_file,
+        _load_svmlight_file,
     )
 else:
 
@@ -43,6 +42,24 @@ else:
         )
 
 
+@validate_params(
+    {
+        "f": [
+            str,
+            Interval(Integral, 0, None, closed="left"),
+            os.PathLike,
+            HasMethods("read"),
+        ],
+        "n_features": [Interval(Integral, 1, None, closed="left"), None],
+        "dtype": "no_validation",  # delegate validation to numpy
+        "multilabel": ["boolean"],
+        "zero_based": ["boolean", StrOptions({"auto"})],
+        "query_id": ["boolean"],
+        "offset": [Interval(Integral, 0, None, closed="left")],
+        "length": [Integral],
+    },
+    prefer_skip_nested_validation=True,
+)
 def load_svmlight_file(
     f,
     *,
@@ -185,7 +202,7 @@ def load_svmlight_file(
 
 def _gen_open(f):
     if isinstance(f, int):  # file descriptor
-        return io.open(f, "rb", closefd=False)
+        return open(f, "rb", closefd=False)
     elif isinstance(f, os.PathLike):
         f = os.fspath(f)
     elif not isinstance(f, str):
@@ -227,6 +244,25 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id, offset=0, length=
     return data, indices, indptr, labels, query
 
 
+@validate_params(
+    {
+        "files": [
+            "array-like",
+            str,
+            os.PathLike,
+            HasMethods("read"),
+            Interval(Integral, 0, None, closed="left"),
+        ],
+        "n_features": [Interval(Integral, 1, None, closed="left"), None],
+        "dtype": "no_validation",  # delegate validation to numpy
+        "multilabel": ["boolean"],
+        "zero_based": ["boolean", StrOptions({"auto"})],
+        "query_id": ["boolean"],
+        "offset": [Interval(Integral, 0, None, closed="left")],
+        "length": [Integral],
+    },
+    prefer_skip_nested_validation=True,
+)
 def load_svmlight_files(
     files,
     *,
@@ -414,7 +450,8 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
         "comment": [str, bytes, None],
         "query_id": ["array-like", None],
         "multilabel": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def dump_svmlight_file(
     X,

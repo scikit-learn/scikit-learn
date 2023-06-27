@@ -2,8 +2,8 @@ from functools import wraps
 
 from scipy.sparse import issparse
 
-from . import check_pandas_support
 from .._config import get_config
+from . import check_pandas_support
 from ._available_if import available_if
 
 
@@ -57,7 +57,7 @@ def _wrap_in_pandas_container(
             data_to_wrap.columns = columns
         return data_to_wrap
 
-    return pd.DataFrame(data_to_wrap, index=index, columns=columns)
+    return pd.DataFrame(data_to_wrap, index=index, columns=columns, copy=False)
 
 
 def _get_output_config(method, estimator=None):
@@ -140,10 +140,15 @@ def _wrap_method_output(f, method):
         data_to_wrap = f(self, X, *args, **kwargs)
         if isinstance(data_to_wrap, tuple):
             # only wrap the first output for cross decomposition
-            return (
+            return_tuple = (
                 _wrap_data_with_container(method, data_to_wrap[0], X, self),
                 *data_to_wrap[1:],
             )
+            # Support for namedtuples `_make` is a documented API for namedtuples:
+            # https://docs.python.org/3/library/collections.html#collections.somenamedtuple._make
+            if hasattr(type(data_to_wrap), "_make"):
+                return type(data_to_wrap)._make(return_tuple)
+            return return_tuple
 
         return _wrap_data_with_container(method, data_to_wrap, X, self)
 

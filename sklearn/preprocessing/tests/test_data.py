@@ -4,59 +4,54 @@
 #
 # License: BSD 3 clause
 
-import warnings
 import itertools
-
 import re
+import warnings
+
 import numpy as np
 import numpy.linalg as la
+import pytest
 from scipy import sparse, stats
 
-import pytest
-
-from sklearn.utils import gen_batches
-
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_less
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import skip_if_32bit
-from sklearn.utils._testing import _convert_container
-
-from sklearn.utils.sparsefuncs import mean_variance_axis
-from sklearn.preprocessing import Binarizer
-from sklearn.preprocessing import KernelCenterer
-from sklearn.preprocessing import Normalizer
-from sklearn.preprocessing import normalize
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import scale
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import minmax_scale
-from sklearn.preprocessing import QuantileTransformer
-from sklearn.preprocessing import quantile_transform
-from sklearn.preprocessing import MaxAbsScaler
-from sklearn.preprocessing import maxabs_scale
-from sklearn.preprocessing import RobustScaler
-from sklearn.preprocessing import robust_scale
-from sklearn.preprocessing import add_dummy_feature
-from sklearn.preprocessing import PowerTransformer
-from sklearn.preprocessing import power_transform
-from sklearn.preprocessing._data import _handle_zeros_in_scale
-from sklearn.preprocessing._data import BOUNDS_THRESHOLD
-from sklearn.metrics.pairwise import linear_kernel
-
-from sklearn.exceptions import NotFittedError
-
-from sklearn.base import clone
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import cross_val_predict
-from sklearn.svm import SVR
-from sklearn.utils import shuffle
-
 from sklearn import datasets
-
+from sklearn.base import clone
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics.pairwise import linear_kernel
+from sklearn.model_selection import cross_val_predict
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import (
+    Binarizer,
+    KernelCenterer,
+    MaxAbsScaler,
+    MinMaxScaler,
+    Normalizer,
+    PowerTransformer,
+    QuantileTransformer,
+    RobustScaler,
+    StandardScaler,
+    add_dummy_feature,
+    maxabs_scale,
+    minmax_scale,
+    normalize,
+    power_transform,
+    quantile_transform,
+    robust_scale,
+    scale,
+)
+from sklearn.preprocessing._data import BOUNDS_THRESHOLD, _handle_zeros_in_scale
+from sklearn.svm import SVR
+from sklearn.utils import gen_batches, shuffle
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_less,
+    skip_if_32bit,
+)
+from sklearn.utils.sparsefuncs import mean_variance_axis
 
 iris = datasets.load_iris()
 
@@ -97,7 +92,6 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
     n_featuress = [3, 2]
 
     for n_samples, n_features in zip(n_sampless, n_featuress):
-
         X = rng.randn(n_samples, n_features)
         y = rng.randn(n_samples)
 
@@ -233,7 +227,6 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_constructor):
 def test_standard_scaler_constant_features(
     scaler, add_sample_weight, sparse_constructor, dtype, constant
 ):
-
     if isinstance(scaler, RobustScaler) and add_sample_weight:
         pytest.skip(f"{scaler.__class__.__name__} does not yet support sample_weight")
 
@@ -618,7 +611,6 @@ def test_partial_fit_sparse_input(sample_weight):
 
     null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
     for X in [X_csr, X_csc]:
-
         X_null = null_transform.partial_fit(X, sample_weight=sample_weight).transform(X)
         assert_array_equal(X_null.toarray(), X.toarray())
         X_orig = null_transform.inverse_transform(X_null)
@@ -636,7 +628,6 @@ def test_standard_scaler_trasform_with_partial_fit(sample_weight):
 
     scaler_incr = StandardScaler()
     for i, batch in enumerate(gen_batches(X.shape[0], 1)):
-
         X_sofar = X[: (i + 1), :]
         chunks_copy = X_sofar.copy()
         if sample_weight is None:
@@ -766,7 +757,6 @@ def test_minmax_scale_axis1():
 def test_min_max_scaler_1d():
     # Test scaling of dataset along single axis
     for X in [X_1row, X_1col, X_list_1row, X_list_1row]:
-
         scaler = MinMaxScaler(copy=True)
         X_scaled = scaler.fit(X).transform(X)
 
@@ -1731,7 +1721,6 @@ def test_maxabs_scaler_transform_one_row_csr():
 def test_maxabs_scaler_1d():
     # Test scaling of dataset along single axis
     for X in [X_1row, X_1col, X_list_1row, X_list_1row]:
-
         scaler = MaxAbsScaler(copy=True)
         X_scaled = scaler.fit(X).transform(X)
 
@@ -1835,7 +1824,6 @@ def test_normalizer_l1():
 
     # check inputs that support the no-copy optim
     for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
-
         normalizer = Normalizer(norm="l1", copy=True)
         X_norm = normalizer.transform(X)
         assert X_norm is not X
@@ -1858,7 +1846,7 @@ def test_normalizer_l1():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert isinstance(X_norm, sparse.csr_matrix)
+        assert sparse.isspmatrix_csr(X_norm)
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1884,7 +1872,6 @@ def test_normalizer_l2():
 
     # check inputs that support the no-copy optim
     for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
-
         normalizer = Normalizer(norm="l2", copy=True)
         X_norm1 = normalizer.transform(X)
         assert X_norm1 is not X
@@ -1906,7 +1893,7 @@ def test_normalizer_l2():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert isinstance(X_norm, sparse.csr_matrix)
+        assert sparse.isspmatrix_csr(X_norm)
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1932,7 +1919,6 @@ def test_normalizer_max():
 
     # check inputs that support the no-copy optim
     for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
-
         normalizer = Normalizer(norm="max", copy=True)
         X_norm1 = normalizer.transform(X)
         assert X_norm1 is not X
@@ -1955,7 +1941,7 @@ def test_normalizer_max():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert isinstance(X_norm, sparse.csr_matrix)
+        assert sparse.isspmatrix_csr(X_norm)
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1988,10 +1974,6 @@ def test_normalize():
     # Only tests functionality not used by the tests for Normalizer.
     X = np.random.RandomState(37).randn(3, 2)
     assert_array_equal(normalize(X, copy=False), normalize(X.T, axis=0, copy=False).T)
-    with pytest.raises(ValueError):
-        normalize([[0]], axis=2)
-    with pytest.raises(ValueError):
-        normalize([[0]], norm="l3")
 
     rs = np.random.RandomState(0)
     X_dense = rs.randn(10, 5)
@@ -2036,7 +2018,6 @@ def test_binarizer():
     X_ = np.array([[1, 0, 5], [2, 3, -1]])
 
     for init in (np.array, list, sparse.csr_matrix, sparse.csc_matrix):
-
         X = init(X_.copy())
 
         binarizer = Binarizer(threshold=2.0, copy=True)
@@ -2258,15 +2239,6 @@ def test_fit_cold_start():
         # with a different shape, this may break the scaler unless the internal
         # state is reset
         scaler.fit_transform(X_2d)
-
-
-def test_quantile_transform_valid_axis():
-    X = np.array([[0, 25, 50, 75, 100], [2, 4, 6, 8, 10], [2.6, 4.1, 2.3, 9.5, 0.1]])
-
-    with pytest.raises(
-        ValueError, match="axis should be either equal to 0 or 1. Got axis=2"
-    ):
-        quantile_transform(X.T, axis=2)
 
 
 @pytest.mark.parametrize("method", ["box-cox", "yeo-johnson"])
@@ -2550,6 +2522,21 @@ def test_power_transformer_copy_False(method, standardize):
     assert X_trans is X_inv_trans
 
 
+def test_power_transformer_box_cox_raise_all_nans_col():
+    """Check that box-cox raises informative when a column contains all nans.
+
+    Non-regression test for gh-26303
+    """
+    X = rng.random_sample((4, 5))
+    X[:, 0] = np.nan
+
+    err_msg = "Column must not be all nan."
+
+    pt = PowerTransformer(method="box-cox")
+    with pytest.raises(ValueError, match=err_msg):
+        pt.fit_transform(X)
+
+
 @pytest.mark.parametrize(
     "X_2",
     [
@@ -2677,3 +2664,22 @@ def test_kernel_centerer_feature_names_out():
     names_out = centerer.get_feature_names_out()
     samples_out2 = X_pairwise.shape[1]
     assert_array_equal(names_out, [f"kernelcenterer{i}" for i in range(samples_out2)])
+
+
+@pytest.mark.parametrize("standardize", [True, False])
+def test_power_transformer_constant_feature(standardize):
+    """Check that PowerTransfomer leaves constant features unchanged."""
+    X = [[-2, 0, 2], [-2, 0, 2], [-2, 0, 2]]
+
+    pt = PowerTransformer(method="yeo-johnson", standardize=standardize).fit(X)
+
+    assert_allclose(pt.lambdas_, [1, 1, 1])
+
+    Xft = pt.fit_transform(X)
+    Xt = pt.transform(X)
+
+    for Xt_ in [Xft, Xt]:
+        if standardize:
+            assert_allclose(Xt_, np.zeros_like(X))
+        else:
+            assert_allclose(Xt_, X)

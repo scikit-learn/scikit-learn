@@ -1,19 +1,19 @@
-from itertools import product
-from contextlib import nullcontext
-import warnings
-
-import pytest
 import re
+import warnings
+from itertools import product
+
+import joblib
 import numpy as np
+import pytest
 from scipy.sparse import (
     bsr_matrix,
     coo_matrix,
     csc_matrix,
     csr_matrix,
-    dok_matrix,
     dia_matrix,
-    lil_matrix,
+    dok_matrix,
     issparse,
+    lil_matrix,
 )
 
 from sklearn import (
@@ -23,36 +23,31 @@ from sklearn import (
     neighbors,
 )
 from sklearn.base import clone
-from sklearn.exceptions import DataConversionWarning
-from sklearn.exceptions import EfficiencyWarning
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import DataConversionWarning, EfficiencyWarning, NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
 from sklearn.metrics.tests.test_pairwise_distances_reduction import (
     assert_radius_neighbors_results_equality,
 )
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.neighbors import (
     VALID_METRICS_SPARSE,
     KNeighborsRegressor,
 )
 from sklearn.neighbors._base import (
-    _is_sorted_by_data,
-    _check_precomputed,
-    sort_graph_by_row_values,
     KNeighborsMixin,
+    _check_precomputed,
+    _is_sorted_by_data,
+    sort_graph_by_row_values,
 )
 from sklearn.pipeline import make_pipeline
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
+    ignore_warnings,
 )
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.fixes import parse_version, sp_version
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.fixes import sp_version, parse_version
-
-import joblib
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -87,7 +82,6 @@ def _generate_test_params_for(metric: str, n_features: int):
 
     # Distinguishing on cases not to compute unneeded datastructures.
     rng = np.random.RandomState(1)
-    weights = rng.random_sample(n_features)
 
     if metric == "minkowski":
         minkowski_kwargs = [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)]
@@ -97,16 +91,6 @@ def _generate_test_params_for(metric: str, n_features: int):
             # type: ignore
             minkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
         return minkowski_kwargs
-
-    # TODO: remove this case for "wminkowski" once we no longer support scipy < 1.8.0.
-    if metric == "wminkowski":
-        weights /= weights.sum()
-        wminkowski_kwargs = [dict(p=1.5, w=weights)]
-        if sp_version < parse_version("1.8.0.dev0"):
-            # wminkowski was removed in scipy 1.8.0 but should work for previous
-            # versions.
-            wminkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
-        return wminkowski_kwargs
 
     if metric == "seuclidean":
         return [dict(V=rng.rand(n_features))]
@@ -497,10 +481,6 @@ def test_sort_graph_by_row_values_copy():
     with pytest.raises(ValueError, match="Use copy=True to allow the conversion"):
         sort_graph_by_row_values(X.tocsc(), copy=False)
 
-    # raise if X is not even sparse
-    with pytest.raises(TypeError, match="Input graph must be a sparse matrix"):
-        sort_graph_by_row_values(X.toarray())
-
 
 def test_sort_graph_by_row_values_warning():
     # Test that the parameter warn_when_not_sorted works as expected.
@@ -675,15 +655,18 @@ def test_kneighbors_classifier_predict_proba(global_dtype):
     cls = neighbors.KNeighborsClassifier(n_neighbors=3, p=1)  # cityblock dist
     cls.fit(X, y)
     y_prob = cls.predict_proba(X)
-    real_prob = np.array(
-        [
-            [0, 2.0 / 3, 1.0 / 3],
-            [1.0 / 3, 2.0 / 3, 0],
-            [1.0 / 3, 0, 2.0 / 3],
-            [0, 1.0 / 3, 2.0 / 3],
-            [2.0 / 3, 1.0 / 3, 0],
-            [2.0 / 3, 1.0 / 3, 0],
-        ]
+    real_prob = (
+        np.array(
+            [
+                [0, 2, 1],
+                [1, 2, 0],
+                [1, 0, 2],
+                [0, 1, 2],
+                [2, 1, 0],
+                [2, 1, 0],
+            ]
+        )
+        / 3.0
     )
     assert_array_equal(real_prob, y_prob)
     # Check that it also works with non integer labels
@@ -1267,7 +1250,6 @@ def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
     for algorithm, weights in product(ALGORITHMS, [None, "uniform"]):
-
         rnn = neighbors.RadiusNeighborsRegressor(weights=weights, algorithm=algorithm)
         rnn.fit(X_train, y_train)
 
@@ -1571,8 +1553,6 @@ def test_nearest_neighbors_validate_params():
         nbrs.radius_neighbors_graph(X, mode="blah")
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "metric",
     sorted(
@@ -1620,19 +1600,7 @@ def test_neighbors_metrics(
                 X_test = np.ascontiguousarray(X_test[:, feature_sl])
 
             neigh.fit(X_train)
-
-            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-            if (
-                metric == "wminkowski"
-                and algorithm == "brute"
-                and sp_version >= parse_version("1.6.0")
-            ):
-                with pytest.warns((FutureWarning, DeprecationWarning)):
-                    # For float64 WMinkowskiDistance raises a FutureWarning,
-                    # for float32 scipy raises a DeprecationWarning
-                    results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
-            else:
-                results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
+            results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
 
         brute_dst, brute_idx = results["brute"]
         ball_tree_dst, ball_tree_idx = results["ball_tree"]
@@ -1649,8 +1617,6 @@ def test_neighbors_metrics(
             assert_array_equal(ball_tree_idx, kd_tree_idx)
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
@@ -1669,13 +1635,6 @@ def test_kneighbors_brute_backend(
 
     metric_params_list = _generate_test_params_for(metric, n_features)
 
-    # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-    warn_context_manager = nullcontext()
-    if metric == "wminkowski" and sp_version >= parse_version("1.6.0"):
-        # For float64 WMinkowskiDistance raises a FutureWarning,
-        # for float32 scipy raises a DeprecationWarning
-        warn_context_manager = pytest.warns((FutureWarning, DeprecationWarning))
-
     for metric_params in metric_params_list:
         p = metric_params.pop("p", 2)
 
@@ -1689,17 +1648,16 @@ def test_kneighbors_brute_backend(
 
         neigh.fit(X_train)
 
-        with warn_context_manager:
-            with config_context(enable_cython_pairwise_dist=False):
-                # Use the legacy backend for brute
-                legacy_brute_dst, legacy_brute_idx = neigh.kneighbors(
-                    X_test, return_distance=True
-                )
-            with config_context(enable_cython_pairwise_dist=True):
-                # Use the pairwise-distances reduction backend for brute
-                pdr_brute_dst, pdr_brute_idx = neigh.kneighbors(
-                    X_test, return_distance=True
-                )
+        with config_context(enable_cython_pairwise_dist=False):
+            # Use the legacy backend for brute
+            legacy_brute_dst, legacy_brute_idx = neigh.kneighbors(
+                X_test, return_distance=True
+            )
+        with config_context(enable_cython_pairwise_dist=True):
+            # Use the pairwise-distances reduction backend for brute
+            pdr_brute_dst, pdr_brute_idx = neigh.kneighbors(
+                X_test, return_distance=True
+            )
 
         assert_allclose(legacy_brute_dst, pdr_brute_dst)
         assert_array_equal(legacy_brute_idx, pdr_brute_idx)
@@ -1726,8 +1684,6 @@ def test_callable_metric():
     assert_allclose(dist1, dist2)
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric", neighbors.VALID_METRICS["brute"])
 def test_valid_brute_metric_for_auto_algorithm(
     global_dtype, metric, n_samples=20, n_features=12
@@ -1836,7 +1792,6 @@ def test_k_and_radius_neighbors_train_is_not_query():
     # Test kneighbors et.al when query is not training data
 
     for algorithm in ALGORITHMS:
-
         nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
 
         X = [[0], [1]]
@@ -2161,20 +2116,6 @@ def test_auto_algorithm(X, metric, metric_params, expected_algo):
     assert model._fit_method == expected_algo
 
 
-# TODO: Remove in 1.3
-def test_neighbors_distance_metric_deprecation():
-    from sklearn.neighbors import DistanceMetric
-    from sklearn.metrics import DistanceMetric as ActualDistanceMetric
-
-    msg = r"This import path will be removed in 1\.3"
-    with pytest.warns(FutureWarning, match=msg):
-        dist_metric = DistanceMetric.get_metric("euclidean")
-
-    assert isinstance(dist_metric, ActualDistanceMetric)
-
-
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
@@ -2199,13 +2140,6 @@ def test_radius_neighbors_brute_backend(
 
     metric_params_list = _generate_test_params_for(metric, n_features)
 
-    # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-    warn_context_manager = nullcontext()
-    if metric == "wminkowski" and sp_version >= parse_version("1.6.0"):
-        # For float64 WMinkowskiDistance raises a FutureWarning,
-        # for float32 scipy raises a DeprecationWarning
-        warn_context_manager = pytest.warns((FutureWarning, DeprecationWarning))
-
     for metric_params in metric_params_list:
         p = metric_params.pop("p", 2)
 
@@ -2219,17 +2153,17 @@ def test_radius_neighbors_brute_backend(
         )
 
         neigh.fit(X_train)
-        with warn_context_manager:
-            with config_context(enable_cython_pairwise_dist=False):
-                # Use the legacy backend for brute
-                legacy_brute_dst, legacy_brute_idx = neigh.radius_neighbors(
-                    X_test, return_distance=True
-                )
-            with config_context(enable_cython_pairwise_dist=True):
-                # Use the pairwise-distances reduction backend for brute
-                pdr_brute_dst, pdr_brute_idx = neigh.radius_neighbors(
-                    X_test, return_distance=True
-                )
+
+        with config_context(enable_cython_pairwise_dist=False):
+            # Use the legacy backend for brute
+            legacy_brute_dst, legacy_brute_idx = neigh.radius_neighbors(
+                X_test, return_distance=True
+            )
+        with config_context(enable_cython_pairwise_dist=True):
+            # Use the pairwise-distances reduction backend for brute
+            pdr_brute_dst, pdr_brute_idx = neigh.radius_neighbors(
+                X_test, return_distance=True
+            )
 
         assert_radius_neighbors_results_equality(
             legacy_brute_dst,

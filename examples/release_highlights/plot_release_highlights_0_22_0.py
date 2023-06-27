@@ -34,15 +34,15 @@ or with conda::
 # :class:`~metrics.plot_confusion_matrix`. Read more about this new API in the
 # :ref:`User Guide <visualizations>`.
 
-from sklearn.model_selection import train_test_split
-from sklearn.svm import SVC
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import make_classification
+from sklearn.ensemble import RandomForestClassifier
 
 # from sklearn.metrics import plot_roc_curve
 from sklearn.metrics import RocCurveDisplay
-
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.datasets import make_classification
-import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
 
 X, y = make_classification(random_state=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
@@ -79,12 +79,12 @@ plt.show()
 # Read more in the :ref:`User Guide <stacking>`.
 
 from sklearn.datasets import load_iris
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
 from sklearn.ensemble import StackingClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import LinearSVC
 
 X, y = load_iris(return_X_y=True)
 estimators = [
@@ -102,8 +102,9 @@ clf.fit(X_train, y_train).score(X_test, y_test)
 # The :func:`inspection.permutation_importance` can be used to get an
 # estimate of the importance of each feature, for any fitted estimator:
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.inspection import permutation_importance
@@ -155,8 +156,9 @@ print(gbdt.predict(X))
 # See more details in the :ref:`User Guide <neighbors_transformer>`.
 
 from tempfile import TemporaryDirectory
-from sklearn.neighbors import KNeighborsTransformer
+
 from sklearn.manifold import Isomap
+from sklearn.neighbors import KNeighborsTransformer
 from sklearn.pipeline import make_pipeline
 
 X, y = make_classification(random_state=0)
@@ -272,8 +274,8 @@ def test_sklearn_compatible_estimator(estimator, check):
 
 
 from sklearn.datasets import make_classification
-from sklearn.svm import SVC
 from sklearn.metrics import roc_auc_score
+from sklearn.svm import SVC
 
 X, y = make_classification(n_classes=4, n_informative=16)
 clf = SVC(decision_function_shape="ovo", probability=True).fit(X, y)

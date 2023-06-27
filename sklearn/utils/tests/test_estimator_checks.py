@@ -2,67 +2,70 @@
 # build_tools/azure/test_pytest_soft_dependency.sh on these
 # tests to make sure estimator_checks works without pytest.
 
-import unittest
+import importlib
 import sys
+import unittest
 import warnings
 from numbers import Integral, Real
 
+import joblib
 import numpy as np
 import scipy.sparse as sp
-import joblib
 
+from sklearn import config_context, get_config
 from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
+from sklearn.cluster import MiniBatchKMeans
 from sklearn.datasets import make_multilabel_classification
-from sklearn.utils import deprecated
+from sklearn.decomposition import PCA
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.exceptions import SkipTestWarning
+from sklearn.linear_model import (
+    LinearRegression,
+    LogisticRegression,
+    MultiTaskElasticNet,
+    SGDClassifier,
+)
+from sklearn.mixture import GaussianMixture
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.svm import SVC, NuSVC
+from sklearn.utils import _array_api, all_estimators, deprecated
+from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils._testing import (
-    raises,
-    ignore_warnings,
     MinimalClassifier,
     MinimalRegressor,
     MinimalTransformer,
     SkipTest,
+    ignore_warnings,
+    raises,
 )
-
-from sklearn.utils.validation import check_is_fitted, check_X_y
-from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.linear_model import LinearRegression, SGDClassifier
-from sklearn.mixture import GaussianMixture
-from sklearn.cluster import MiniBatchKMeans
-from sklearn.decomposition import PCA
-from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
-from sklearn.svm import SVC, NuSVC
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.utils.validation import check_array
-from sklearn.utils import all_estimators
-from sklearn.exceptions import SkipTestWarning
-from sklearn.utils.metaestimators import available_if
-from sklearn.utils.estimator_checks import check_decision_proba_consistency
-from sklearn.utils._param_validation import Interval, StrOptions
-
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
     _set_checking_parameters,
+    _yield_all_checks,
+    check_array_api_input,
     check_class_weight_balanced_linear_classifier,
     check_classifier_data_not_an_array,
     check_classifiers_multilabel_output_format_decision_function,
     check_classifiers_multilabel_output_format_predict,
     check_classifiers_multilabel_output_format_predict_proba,
     check_dataframe_column_names_consistency,
+    check_decision_proba_consistency,
     check_estimator,
     check_estimator_get_tags_default_keys,
     check_estimators_unfitted,
-    check_fit_score_takes_y,
-    check_no_attributes_set_in_init,
-    check_regressor_data_not_an_array,
-    check_requires_y_none,
-    check_outlier_corruption,
-    check_outlier_contamination,
-    set_random_state,
     check_fit_check_is_fitted,
+    check_fit_score_takes_y,
     check_methods_sample_order_invariance,
     check_methods_subset_invariance,
-    _yield_all_checks,
+    check_no_attributes_set_in_init,
+    check_outlier_contamination,
+    check_outlier_corruption,
+    check_regressor_data_not_an_array,
+    check_requires_y_none,
+    set_random_state,
 )
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 
 class CorrectNotFittedError(ValueError):
@@ -482,6 +485,37 @@ class PartialFitChecksName(BaseEstimator):
         return self
 
 
+class BrokenArrayAPI(BaseEstimator):
+    """Make different predictions when using Numpy and the Array API"""
+
+    def fit(self, X, y):
+        return self
+
+    def predict(self, X):
+        enabled = get_config()["array_api_dispatch"]
+        xp, _ = _array_api.get_namespace(X)
+        if enabled:
+            return xp.asarray([1, 2, 3])
+        else:
+            return np.array([3, 2, 1])
+
+
+def test_check_array_api_input():
+    try:
+        importlib.import_module("array_api_compat")
+    except ModuleNotFoundError:
+        raise SkipTest("array_api_compat is required to run this test")
+    try:
+        importlib.import_module("numpy.array_api")
+    except ModuleNotFoundError:  # pragma: nocover
+        raise SkipTest("numpy.array_api is required to run this test")
+
+    with raises(AssertionError, match="Not equal to tolerance"):
+        check_array_api_input(
+            "BrokenArrayAPI", BrokenArrayAPI(), array_namespace="numpy.array_api"
+        )
+
+
 def test_not_an_array_array_function():
     not_array = _NotAnArray(np.ones(10))
     msg = "Don't want to call array_function sum!"
@@ -716,6 +750,10 @@ def test_check_no_attributes_set_in_init():
         def __init__(self, you_should_set_this_=None):
             pass
 
+    class ConformantEstimatorClassAttribute(BaseEstimator):
+        # making sure our __metadata_request__* class attributes are okay!
+        __metadata_request__fit = {"foo": True}
+
     msg = (
         "Estimator estimator_name should not set any"
         " attribute apart from parameters during init."
@@ -733,6 +771,19 @@ def test_check_no_attributes_set_in_init():
     with raises(AttributeError, match=msg):
         check_no_attributes_set_in_init(
             "estimator_name", NonConformantEstimatorNoParamSet()
+        )
+
+    # a private class attribute is okay!
+    check_no_attributes_set_in_init(
+        "estimator_name", ConformantEstimatorClassAttribute()
+    )
+    # also check if cloning an estimator which has non-default set requests is
+    # fine. Setting a non-default value via `set_{method}_request` sets the
+    # private _metadata_request instance attribute which is copied in `clone`.
+    with config_context(enable_metadata_routing=True):
+        check_no_attributes_set_in_init(
+            "estimator_name",
+            ConformantEstimatorClassAttribute().set_fit_request(foo=True),
         )
 
 
@@ -1119,19 +1170,6 @@ def test_check_requires_y_none():
 
     # no warnings are raised
     assert not [r.message for r in record]
-
-
-# TODO: Remove in 1.3 when Estimator is removed
-def test_deprecated_Estimator_check_estimator():
-    err_msg = "'Estimator' was deprecated in favor of"
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        with raises(FutureWarning, match=err_msg, may_pass=True):
-            check_estimator(Estimator=NuSVC())
-
-    err_msg = "Either estimator or Estimator should be passed"
-    with raises(ValueError, match=err_msg, may_pass=False):
-        check_estimator()
 
 
 def test_non_deterministic_estimator_skip_tests():
