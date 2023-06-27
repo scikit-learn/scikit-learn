@@ -8,26 +8,24 @@ Generalized Linear Model for a complete discussion.
 #
 # License: BSD 3 clause
 
-from math import log
 import sys
 import warnings
-
+from math import log
 from numbers import Integral, Real
+
 import numpy as np
-from scipy import linalg, interpolate
+from scipy import interpolate, linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from ._base import LinearModel, LinearRegression
-from ._base import _deprecate_normalize, _preprocess_data
-from ..base import RegressorMixin, MultiOutputMixin
+from ..base import MultiOutputMixin, RegressorMixin, _fit_context
+from ..exceptions import ConvergenceWarning
+from ..model_selection import check_cv
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
-from ..utils import arrayfuncs, as_float_array  # type: ignore
-from ..utils import check_random_state
+from ..utils import arrayfuncs, as_float_array, check_random_state  # type: ignore
 from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..model_selection import check_cv
-from ..exceptions import ConvergenceWarning
-from ..utils.parallel import delayed, Parallel
+from ..utils.parallel import Parallel, delayed
+from ._base import LinearModel, LinearRegression, _deprecate_normalize, _preprocess_data
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
 
@@ -1097,6 +1095,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, Xy=None):
         """Fit the model using X, y as training data.
 
@@ -1118,8 +1117,6 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
 
         _normalize = _deprecate_normalize(
@@ -1691,6 +1688,7 @@ class LarsCV(Lars):
     def _more_tags(self):
         return {"multioutput": False}
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
@@ -1707,8 +1705,6 @@ class LarsCV(Lars):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         _normalize = _deprecate_normalize(
             self.normalize, estimator_name=self.__class__.__name__
         )
@@ -2216,6 +2212,7 @@ class LassoLarsIC(LassoLars):
     def _more_tags(self):
         return {"multioutput": False}
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, copy_X=None):
         """Fit the model using X, y as training data.
 
@@ -2237,8 +2234,6 @@ class LassoLarsIC(LassoLars):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         _normalize = _deprecate_normalize(
             self.normalize, estimator_name=self.__class__.__name__
         )

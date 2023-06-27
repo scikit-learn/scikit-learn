@@ -10,14 +10,16 @@ Here are implemented estimators that are resistant to outliers.
 
 import warnings
 from numbers import Integral, Real
+
 import numpy as np
 from scipy import linalg
 from scipy.stats import chi2
 
-from . import empirical_covariance, EmpiricalCovariance
-from ..utils.extmath import fast_logdet
-from ..utils import check_random_state, check_array
+from ..base import _fit_context
+from ..utils import check_array, check_random_state
 from ..utils._param_validation import Interval
+from ..utils.extmath import fast_logdet
+from ._empirical_covariance import EmpiricalCovariance, empirical_covariance
 
 
 # Minimum Covariance Determinant
@@ -719,6 +721,7 @@ class MinCovDet(EmpiricalCovariance):
         self.support_fraction = support_fraction
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit a Minimum Covariance Determinant with the FastMCD algorithm.
 
@@ -736,7 +739,6 @@ class MinCovDet(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         X = self._validate_data(X, ensure_min_samples=2, estimator="MinCovDet")
         random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape

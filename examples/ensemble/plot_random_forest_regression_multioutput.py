@@ -25,12 +25,12 @@ x and y coordinate as output.
 #
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.multioutput import MultiOutputRegressor
-
 
 # Create a random dataset
 rng = np.random.RandomState(1)
