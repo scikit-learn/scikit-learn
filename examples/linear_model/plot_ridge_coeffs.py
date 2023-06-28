@@ -19,17 +19,12 @@ This example illustrates how L2 regularization in a
 adding a penalty term to the Loss that increases with the coefficients (β).
 
 The regularized loss function is given by:
+.. math::
+   \mathcal{L}(X, y, \beta) = \| y - X \beta \|^{2}_{2} + \alpha \| \beta \|^{2}_{2}
 
-:math:`RegularizedLoss = Loss(X, y, β) + Penalty(β)`
-
-where:
-
-- :math:`X` is the input data,
-
-- :math:`y` is the target variable,
-
-- :math:`β` is the vector of coefficients or weights associated with the
-  features.
+where :math:`X` is the input data, :math:`y` is the target variable, :math:`\beta`
+is the vector of coefficients associated with the features, and :math:`\alpha`
+is the regularization strength.
 
 In Ridge regularization, the penalty term is proportional to the sum of the
 squares of the coefficients. In effect, it discourages any single coefficient βi
