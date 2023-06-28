@@ -15,24 +15,21 @@ from itertools import islice
 import numpy as np
 from scipy import sparse
 
-from .base import clone, TransformerMixin
+from .base import TransformerMixin, _fit_context, clone
+from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
-from .utils._estimator_html_repr import _VisualBlock
-from .utils.metaestimators import available_if
 from .utils import (
     Bunch,
     _print_elapsed_time,
+    check_pandas_support,
 )
-from .utils._tags import _safe_tags
-from .utils.validation import check_memory
-from .utils.validation import check_is_fitted
-from .utils import check_pandas_support
+from .utils._estimator_html_repr import _VisualBlock
 from .utils._param_validation import HasMethods, Hidden
-from .utils._set_output import _safe_set_output, _get_output_config
-from .utils.parallel import delayed, Parallel
-from .exceptions import NotFittedError
-
-from .utils.metaestimators import _BaseComposition
+from .utils._set_output import _get_output_config, _safe_set_output
+from .utils._tags import _safe_tags
+from .utils.metaestimators import _BaseComposition, available_if
+from .utils.parallel import Parallel, delayed
+from .utils.validation import check_is_fitted, check_memory
 
 __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
 
@@ -385,6 +382,10 @@ class Pipeline(_BaseComposition):
             self.steps[step_idx] = (name, fitted_transformer)
         return X
 
+    @_fit_context(
+        # estimators in Pipeline.steps are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, **fit_params):
         """Fit the model.
 
@@ -411,7 +412,6 @@ class Pipeline(_BaseComposition):
         self : object
             Pipeline with fitted steps.
         """
-        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
@@ -421,6 +421,18 @@ class Pipeline(_BaseComposition):
 
         return self
 
+    def _can_fit_transform(self):
+        return (
+            self._final_estimator == "passthrough"
+            or hasattr(self._final_estimator, "transform")
+            or hasattr(self._final_estimator, "fit_transform")
+        )
+
+    @available_if(_can_fit_transform)
+    @_fit_context(
+        # estimators in Pipeline.steps are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None, **fit_params):
         """Fit the model and transform with the final estimator.
 
@@ -448,7 +460,6 @@ class Pipeline(_BaseComposition):
         Xt : ndarray of shape (n_samples, n_transformed_features)
             Transformed samples.
         """
-        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
 
@@ -497,6 +508,10 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][1].predict(Xt, **predict_params)
 
     @available_if(_final_estimator_has("fit_predict"))
+    @_fit_context(
+        # estimators in Pipeline.steps are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_predict(self, X, y=None, **fit_params):
         """Transform the data, and apply `fit_predict` with the final estimator.
 
@@ -525,7 +540,6 @@ class Pipeline(_BaseComposition):
         y_pred : ndarray
             Result of calling `fit_predict` on the final estimator.
         """
-        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
 
@@ -744,12 +758,34 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][1].classes_
 
     def _more_tags(self):
+        tags = {
+            "_xfail_checks": {
+                "check_dont_overwrite_parameters": (
+                    "Pipeline changes the `steps` parameter, which it shouldn't."
+                    "Therefore this test is x-fail until we fix this."
+                ),
+                "check_estimators_overwrite_params": (
+                    "Pipeline changes the `steps` parameter, which it shouldn't."
+                    "Therefore this test is x-fail until we fix this."
+                ),
+            }
+        }
+
         try:
-            return {"pairwise": _safe_tags(self.steps[0][1], "pairwise")}
+            tags["pairwise"] = _safe_tags(self.steps[0][1], "pairwise")
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
-            return {}
+            pass
+
+        try:
+            tags["multioutput"] = _safe_tags(self.steps[-1][1], "multioutput")
+        except (ValueError, AttributeError, TypeError):
+            # This happens when the `steps` is not a list of (name, estimator)
+            # tuples and `fit` is not called yet to validate the steps.
+            pass
+
+        return tags
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.

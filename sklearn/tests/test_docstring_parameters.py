@@ -2,36 +2,38 @@
 #          Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
+import importlib
 import inspect
 import warnings
-import importlib
-
-from pkgutil import walk_packages
 from inspect import signature
+from pkgutil import walk_packages
 
 import numpy as np
-
-# make it possible to discover experimental estimators when calling `all_estimators`
-from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.experimental import enable_halving_search_cv  # noqa
-
-import sklearn
-from sklearn.utils import IS_PYPY
-from sklearn.utils._testing import check_docstring_parameters
-from sklearn.utils._testing import _get_func_name
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils import all_estimators
-from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
-from sklearn.utils.estimator_checks import _enforce_estimator_tags_X
-from sklearn.utils.estimator_checks import _construct_instance
-from sklearn.utils.fixes import sp_version, parse_version
-from sklearn.utils.deprecation import _is_deprecated
-from sklearn.datasets import make_classification
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import FunctionTransformer
-
 import pytest
 
+import sklearn
+from sklearn.datasets import make_classification
+
+# make it possible to discover experimental estimators when calling `all_estimators`
+from sklearn.experimental import (
+    enable_halving_search_cv,  # noqa
+    enable_iterative_imputer,  # noqa
+)
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils import IS_PYPY, all_estimators
+from sklearn.utils._testing import (
+    _get_func_name,
+    check_docstring_parameters,
+    ignore_warnings,
+)
+from sklearn.utils.deprecation import _is_deprecated
+from sklearn.utils.estimator_checks import (
+    _construct_instance,
+    _enforce_estimator_tags_X,
+    _enforce_estimator_tags_y,
+)
+from sklearn.utils.fixes import parse_version, sp_version
 
 # walk_packages() ignores DeprecationWarnings, now we need to ignore
 # FutureWarnings
@@ -197,6 +199,7 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
+@ignore_warnings(category=sklearn.exceptions.ConvergenceWarning)
 @pytest.mark.parametrize("name, Estimator", all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
     pytest.importorskip("numpydoc")
@@ -240,21 +243,13 @@ def test_fit_docstring_attributes(name, Estimator):
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
 
-    # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
-    if Estimator.__name__ == "SequentialFeatureSelector":
-        est.set_params(n_features_to_select="auto")
-
-    # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
-    if Estimator.__name__ == "FastICA":
-        est.set_params(whiten="unit-variance")
-
-    # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
-    if Estimator.__name__ == "MiniBatchDictionaryLearning":
-        est.set_params(batch_size=5)
-
     # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
     if Estimator.__name__ in ("KMeans", "MiniBatchKMeans"):
         est.set_params(n_init="auto")
+
+    # TODO(1.4): TO BE REMOVED for 1.5 (avoid FutureWarning)
+    if Estimator.__name__ in ("LinearSVC", "LinearSVR"):
+        est.set_params(dual="auto")
 
     # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
     if Estimator.__name__ in (
@@ -265,6 +260,10 @@ def test_fit_docstring_attributes(name, Estimator):
     ):
         est.set_params(force_alpha=True)
 
+    # TODO(1.6): remove (avoid FutureWarning)
+    if Estimator.__name__ in ("NMF", "MiniBatchNMF"):
+        est.set_params(n_components="auto")
+
     if Estimator.__name__ == "QuantileRegressor":
         solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
         est.set_params(solver=solver)
@@ -272,6 +271,14 @@ def test_fit_docstring_attributes(name, Estimator):
     # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
     if Estimator.__name__ == "MDS":
         est.set_params(normalized_stress="auto")
+
+    # Low max iter to speed up tests: we are only interested in checking the existence
+    # of fitted attributes. This should be invariant to whether it has converged or not.
+    if "max_iter" in est.get_params():
+        est.set_params(max_iter=2)
+
+    if "random_state" in est.get_params():
+        est.set_params(random_state=0)
 
     # In case we want to deprecate some attributes in the future
     skipped_attributes = {}

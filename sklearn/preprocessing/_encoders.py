@@ -3,22 +3,18 @@
 # License: BSD 3 clause
 
 import numbers
-from numbers import Integral
 import warnings
+from numbers import Integral
 
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
-from ..utils import check_array, is_scalar_nan, _safe_indexing
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_feature_names_in
-from ..utils._param_validation import Interval, StrOptions, Hidden
-from ..utils._param_validation import RealNotInt
+from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
+from ..utils import _safe_indexing, check_array, is_scalar_nan
+from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
 from ..utils._mask import _get_mask
-
-from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
-
+from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
+from ..utils.validation import _check_feature_names_in, check_is_fitted
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 
@@ -370,7 +366,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
             n_cats = len(cats)
             if feature_idx in missing_indices:
-                # Missing index was removed from ths category when computing
+                # Missing index was removed from this category when computing
                 # infrequent indices, thus we need to decrease the number of
                 # total categories when considering the infrequent mapping.
                 n_cats -= 1
@@ -953,6 +949,7 @@ class OneHotEncoder(_BaseEncoder):
 
         return output
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """
         Fit OneHotEncoder to X.
@@ -971,8 +968,6 @@ class OneHotEncoder(_BaseEncoder):
         self
             Fitted encoder.
         """
-        self._validate_params()
-
         if self.sparse != "deprecated":
             warnings.warn(
                 (
@@ -1446,6 +1441,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.min_frequency = min_frequency
         self.max_categories = max_categories
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """
         Fit the OrdinalEncoder to X.
@@ -1464,8 +1460,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self : object
             Fitted encoder.
         """
-        self._validate_params()
-
         if self.handle_unknown == "use_encoded_value":
             if is_scalar_nan(self.unknown_value):
                 if np.dtype(self.dtype).kind != "f":
@@ -1551,7 +1545,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 ]
 
                 if invalid_features:
-                    # Use feature names if they are avaliable
+                    # Use feature names if they are available
                     if hasattr(self, "feature_names_in_"):
                         invalid_features = self.feature_names_in_[invalid_features]
                     raise ValueError(
