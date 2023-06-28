@@ -17,10 +17,10 @@ import numpy as np
 from scipy import linalg, sparse
 
 from . import check_random_state
+from ._array_api import _is_numpy_namespace, get_namespace
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from ._array_api import get_namespace
 
 
 def squared_norm(x):
@@ -72,7 +72,7 @@ def row_norms(X, squared=False):
         The row-wise (squared) Euclidean norm of X.
     """
     if sparse.issparse(X):
-        if not isinstance(X, sparse.csr_matrix):
+        if not sparse.isspmatrix_csr(X):
             X = sparse.csr_matrix(X)
         norms = csr_row_norms(X)
     else:
@@ -425,7 +425,7 @@ def randomized_svd(
     >>> U.shape, s.shape, Vh.shape
     ((3, 2), (2,), (2, 4))
     """
-    if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
+    if sparse.isspmatrix_lil(M) or sparse.isspmatrix_dok(M):
         warnings.warn(
             "Calculating SVD of a {} is expensive. "
             "csr_matrix is more efficient.".format(type(M).__name__),
@@ -567,7 +567,7 @@ def _randomized_eigsh(
 
     Strategy 'value': not implemented yet.
     Algorithms 5.3, 5.4 and 5.5 in the Halko et al paper should provide good
-    condidates for a future implementation.
+    candidates for a future implementation.
 
     Strategy 'module':
     The principle is that for diagonalizable matrices, the singular values and
@@ -884,13 +884,13 @@ def softmax(X, copy=True):
     out : ndarray of shape (M, N)
         Softmax function evaluated at every point in x.
     """
-    xp, is_array_api = get_namespace(X)
+    xp, is_array_api_compliant = get_namespace(X)
     if copy:
         X = xp.asarray(X, copy=True)
     max_prob = xp.reshape(xp.max(X, axis=1), (-1, 1))
     X -= max_prob
 
-    if xp.__name__ in {"numpy", "numpy.array_api"}:
+    if _is_numpy_namespace(xp):
         # optimization for NumPy arrays
         np.exp(X, out=np.asarray(X))
     else:

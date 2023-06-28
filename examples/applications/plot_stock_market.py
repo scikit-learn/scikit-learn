@@ -24,6 +24,7 @@ that are linked tend to fluctuate in relation to each other during a day.
 # `alphavantage.co <https://www.alphavantage.co/>`_.
 
 import sys
+
 import numpy as np
 import pandas as pd
 

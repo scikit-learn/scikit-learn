@@ -59,7 +59,7 @@ max_depth = 3
 # First, we will start by training the random forest and gradient boosting on
 # the separated training set
 
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 
 random_forest = RandomForestClassifier(
     n_estimators=n_estimators, max_depth=max_depth, random_state=10
@@ -105,8 +105,7 @@ rt_model.fit(X_train_linear, y_train_linear)
 # method `apply`. The pipeline in scikit-learn expects a call to `transform`.
 # Therefore, we wrapped the call to `apply` within a `FunctionTransformer`.
 
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 
 
 def rf_apply(X, model):
@@ -143,6 +142,7 @@ gbdt_model.fit(X_train_linear, y_train_linear)
 # We can finally show the different ROC curves for all the models.
 
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import RocCurveDisplay
 
 fig, ax = plt.subplots()

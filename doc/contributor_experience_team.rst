@@ -18,20 +18,16 @@
     <p>Lucy Liu</p>
     </div>
     <div>
+    <a href='https://github.com/MaxwellLZH'><img src='https://avatars.githubusercontent.com/u/16646940?v=4' class='avatar' /></a> <br />
+    <p>Maxwell Liu</p>
+    </div>
+    <div>
     <a href='https://github.com/jmloyola'><img src='https://avatars.githubusercontent.com/u/2133361?v=4' class='avatar' /></a> <br />
     <p>Juan Martin Loyola</p>
     </div>
     <div>
     <a href='https://github.com/smarie'><img src='https://avatars.githubusercontent.com/u/3236794?v=4' class='avatar' /></a> <br />
     <p>Sylvain Marié</p>
-    </div>
-    <div>
-    <a href='https://github.com/cmarmo'><img src='https://avatars.githubusercontent.com/u/1662261?v=4' class='avatar' /></a> <br />
-    <p>Chiara Marmo</p>
-    </div>
-    <div>
-    <a href='https://github.com/MaxwellLZH'><img src='https://avatars.githubusercontent.com/u/16646940?v=4' class='avatar' /></a> <br />
-    <p>Maxwell Liu</p>
     </div>
     <div>
     <a href='https://github.com/norbusan'><img src='https://avatars.githubusercontent.com/u/1735589?v=4' class='avatar' /></a> <br />
