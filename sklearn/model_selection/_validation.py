@@ -879,7 +879,7 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
         "fit_params": [dict, None],
-        "pre_dispatch": [Integral, str],
+        "pre_dispatch": [Integral, str, None],
         "method": [
             StrOptions(
                 {
@@ -890,7 +890,7 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
                 }
             )
         ],
-    }
+    },
 )
 def cross_val_predict(
     estimator,
@@ -920,8 +920,9 @@ def cross_val_predict(
 
     Parameters
     ----------
-    estimator : estimator object implementing 'fit' and 'predict'
-        The object to use to fit the data.
+    estimator : estimator
+        The estimator instance to use to fit the data. It must implement a `fit`
+        method and the method given by the `method` parameter.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data to fit. Can be, for example a list, or an array at least 2d.
