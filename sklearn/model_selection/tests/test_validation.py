@@ -300,9 +300,6 @@ def test_cross_val_score():
     clf = CheckingClassifier(check_y=list_check)
     scores = cross_val_score(clf, X, y2.tolist(), cv=3)
 
-    with pytest.raises(ValueError):
-        cross_val_score(clf, X, y2, scoring="sklearn")
-
     # test with 3d X and
     X_3d = X[:, :, np.newaxis]
     clf = MockClassifier(allow_nd=True)
@@ -726,14 +723,6 @@ def test_cross_val_score_score_func():
     assert_array_equal(score, [1.0, 1.0, 1.0])
     # Test that score function is called only 3 times (for cv=3)
     assert len(_score_func_args) == 3
-
-
-def test_cross_val_score_errors():
-    class BrokenEstimator:
-        pass
-
-    with pytest.raises(TypeError):
-        cross_val_score(BrokenEstimator(), X)
 
 
 def test_cross_val_score_with_score_func_classification():

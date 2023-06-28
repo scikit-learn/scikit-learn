@@ -436,9 +436,10 @@ def _warn_or_raise_about_fit_failures(results, error_score):
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
         "fit_params": [dict, None],
-        "pre_dispatch": [Integral, str],
+        "pre_dispatch": [Integral, str, None],
         "error_score": [StrOptions({"raise"}), Real],
-    }
+    },
+    prefer_skip_nested_validation=False,  # estimator is not validated yet
 )
 def cross_val_score(
     estimator,
