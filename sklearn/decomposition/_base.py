@@ -163,11 +163,10 @@ class _BasePCA(
         xp, _ = get_namespace(X)
 
         if self.whiten:
-            return (
-                X
-                @ (xp.sqrt(self.explained_variance_[:, xp.newaxis]) * self.components_)
-                + self.mean_
+            scaled_components = (
+                xp.sqrt(self.explained_variance_[:, None]) * self.components_
             )
+            return X @ scaled_components + self.mean_
         else:
             return X @ self.components_ + self.mean_
 

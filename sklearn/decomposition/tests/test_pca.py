@@ -694,6 +694,7 @@ def test_variance_correctness(copy):
 @parametrize_with_checks(
     [
         PCA(n_components=2, svd_solver="full"),
+        PCA(n_components=2, svd_solver="full", whiten=True),
         PCA(
             n_components=2,
             svd_solver="randomized",

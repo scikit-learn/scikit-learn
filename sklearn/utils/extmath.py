@@ -302,33 +302,30 @@ def randomized_range_finder(
         )
 
     if is_array_api_compliant:
-
-        def _reduced_qr(A):
-            return xp.linalg.qr(A, mode="reduced")
-
+        qr = xp.linalg.qr
+        qr_params = {"mode": "reduced"}
     else:
-
-        def _reduced_qr(A):
-            # Use scipy.linalg instead of numpy.linalg when not explicitly
-            # using the Array API.
-            return linalg.qr(A, mode="economic")
+        # Use scipy.linalg instead of numpy.linalg when not explicitly
+        # using the Array API.
+        qr = linalg.qr
+        qr_params = {"mode": "economic"}
 
     # Perform power iterations with Q to further 'imprint' the top
     # singular vectors of A in Q
     for _ in range(n_iter):
         if power_iteration_normalizer == "none":
-            Q = safe_sparse_dot(A, Q)
-            Q = safe_sparse_dot(A.T, Q)
+            Q = safe_sparse_dot(A, Q, xp=xp)
+            Q = safe_sparse_dot(A.T, Q, xp=xp)
         elif power_iteration_normalizer == "LU":
             Q, _ = linalg.lu(safe_sparse_dot(A, Q), permute_l=True)
             Q, _ = linalg.lu(safe_sparse_dot(A.T, Q), permute_l=True)
         elif power_iteration_normalizer == "QR":
-            Q, _ = _reduced_qr(safe_sparse_dot(A, Q))
-            Q, _ = _reduced_qr(safe_sparse_dot(A.T, Q))
+            Q, _ = qr(safe_sparse_dot(A, Q, xp=xp), **qr_params)
+            Q, _ = qr(safe_sparse_dot(A.T, Q, xp=xp), **qr_params)
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
-    Q, _ = _reduced_qr(safe_sparse_dot(A, Q))
+    Q, _ = qr(safe_sparse_dot(A, Q, xp=xp), **qr_params)
 
     return Q
 
