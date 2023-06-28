@@ -37,7 +37,6 @@ necessarily related to visualisation.
 # ------------------------
 import numpy as np
 
-
 try:  # Scipy >= 1.10
     from scipy.datasets import face
 except ImportError:

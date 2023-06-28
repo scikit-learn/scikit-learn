@@ -139,15 +139,19 @@ function of shape ``(n_samples, n_classes)``.
 On the other hand, :class:`LinearSVC` implements "one-vs-the-rest"
 multi-class strategy, thus training `n_classes` models.
 
-    >>> lin_clf = svm.LinearSVC()
+    >>> lin_clf = svm.LinearSVC(dual="auto")
     >>> lin_clf.fit(X, Y)
-    LinearSVC()
+    LinearSVC(dual='auto')
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
 
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
+
+|details-start|
+**Details on multi-class strategies**
+|details-split|
 
 Note that the :class:`LinearSVC` also implements an alternative multi-class
 strategy, the so-called multi-class SVM formulated by Crammer and Singer
@@ -198,6 +202,8 @@ Then ``dual_coef_`` looks like this:
 |Coefficients                                                              |Coefficients                                     |Coefficients                                     |
 |for SVs of class 0                                                        |for SVs of class 1                               |for SVs of class 2                               |
 +--------------------------------------------------------------------------+-------------------------------------------------+-------------------------------------------------+
+
+|details-end|
 
 .. topic:: Examples:
 
@@ -505,9 +511,9 @@ is advised to use :class:`~sklearn.model_selection.GridSearchCV` with
  * :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
 
-
-Custom Kernels
---------------
+|details-start|
+**Custom Kernels**
+|details-split|
 
 You can define your own kernels by either giving the kernel as a
 python function or by precomputing the Gram matrix.
@@ -571,6 +577,7 @@ test vectors must be provided:
     >>> clf.predict(gram_test)
     array([0, 1, 0])
 
+|details-end|
 
 .. _svm_mathematical_formulation:
 
@@ -667,8 +674,9 @@ term :math:`b`
     estimator used is :class:`~sklearn.linear_model.Ridge` regression,
     the relation between them is given as :math:`C = \frac{1}{alpha}`.
 
-LinearSVC
----------
+|details-start|
+**LinearSVC**
+|details-split|
 
 The primal problem can be equivalently formulated as
 
@@ -683,10 +691,13 @@ does not involve inner products between samples, so the famous kernel trick
 cannot be applied. This is why only the linear kernel is supported by
 :class:`LinearSVC` (:math:`\phi` is the identity function).
 
+|details-end|
+
 .. _nu_svc:
 
-NuSVC
------
+|details-start|
+**NuSVC**
+|details-split|
 
 The :math:`\nu`-SVC formulation [#7]_ is a reparameterization of the
 :math:`C`-SVC and therefore mathematically equivalent.
@@ -699,6 +710,7 @@ to a sample that lies on the wrong side of its margin boundary: it is either
 misclassified, or it is correctly classified but does not lie beyond the
 margin.
 
+|details-end|
 
 SVR
 ---
@@ -747,8 +759,9 @@ which holds the difference :math:`\alpha_i - \alpha_i^*`, ``support_vectors_`` w
 holds the support vectors, and ``intercept_`` which holds the independent
 term :math:`b`
 
-LinearSVR
----------
+|details-start|
+**LinearSVR**
+|details-split|
 
 The primal problem can be equivalently formulated as
 
@@ -759,6 +772,8 @@ The primal problem can be equivalently formulated as
 where we make use of the epsilon-insensitive loss, i.e. errors of less than
 :math:`\varepsilon` are ignored. This is the form that is directly optimized
 by :class:`LinearSVR`.
+
+|details-end|
 
 .. _svm_implementation_details:
 

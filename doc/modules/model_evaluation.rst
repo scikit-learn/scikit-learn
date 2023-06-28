@@ -115,17 +115,11 @@ Usage examples:
     >>> clf = svm.SVC(random_state=0)
     >>> cross_val_score(clf, X, y, cv=5, scoring='recall_macro')
     array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
-    >>> model = svm.SVC()
-    >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
-    Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Use
-    sklearn.metrics.get_scorer_names() to get valid options.
 
 .. note::
 
-    The values listed by the ``ValueError`` exception correspond to the
-    functions measuring prediction accuracy described in the following
-    sections. You can retrieve the names of all available scorers by calling
+    If a wrong scoring name is passed, an ``InvalidParameterError`` is raised.
+    You can retrieve the names of all available scorers by calling
     :func:`~sklearn.metrics.get_scorer_names`.
 
 .. currentmodule:: sklearn.metrics
@@ -165,8 +159,14 @@ the :func:`fbeta_score` function::
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
-    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
+    >>> grid = GridSearchCV(LinearSVC(dual="auto"), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer, cv=5)
+
+
+|details-start|
+**Custom scorer objects**
+|details-split|
+
 
 The second use case is to build a completely custom scorer object
 from a simple python function using :func:`make_scorer`, which can
@@ -208,13 +208,21 @@ Here is an example of building custom scorers, and of using the
     >>> score(clf, X, y)
     -0.69...
 
+|details-end|
 
 .. _diy_scoring:
 
 Implementing your own scoring object
 ------------------------------------
+
 You can generate even more flexible model scorers by constructing your own
 scoring object from scratch, without using the :func:`make_scorer` factory.
+
+
+|details-start|
+**How to build a scorer from scratch**
+|details-split|
+
 For a callable to be a scorer, it needs to meet the protocol specified by
 the following two rules:
 
@@ -227,6 +235,14 @@ the following two rules:
   ``estimator`` prediction quality on ``X``, with reference to ``y``.
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
+
+- Advanced: If it requires extra metadata to be passed to it, it should expose
+  a ``get_metadata_routing`` method returning the requested metadata. The user
+  should be able to set the requested metadata via a ``set_score_request``
+  method. Please see :ref:`User Guide <metadata_routing>` and :ref:`Developer
+  Guide <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for
+  more details.
+
 
 .. note:: **Using custom scorers in functions where n_jobs > 1**
 
@@ -246,6 +262,8 @@ the following two rules:
         ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
         ...  cv=5,
         ...  n_jobs=-1) # doctest: +SKIP
+
+|details-end|
 
 .. _multimetric_scoring:
 
@@ -276,7 +294,7 @@ parameter:
     >>> from sklearn.metrics import confusion_matrix
     >>> # A sample toy binary classification dataset
     >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
-    >>> svm = LinearSVC(random_state=0)
+    >>> svm = LinearSVC(dual="auto", random_state=0)
     >>> def confusion_matrix_scorer(clf, X, y):
     ...      y_pred = clf.predict(X)
     ...      cm = confusion_matrix(y, y_pred)
@@ -801,8 +819,10 @@ score:
    recall_score
 
 Note that the :func:`precision_recall_curve` function is restricted to the
-binary case. The :func:`average_precision_score` function works only in
-binary classification and multilabel indicator format.
+binary case. The :func:`average_precision_score` function supports multiclass
+and multilabel formats by computing each class score in a One-vs-the-rest (OvR)
+fashion and averaging them or not depending of its ``average`` argument value.
+
 The :func:`PredictionRecallDisplay.from_estimator` and
 :func:`PredictionRecallDisplay.from_predictions` functions will plot the
 precision-recall curve as follows.
@@ -919,7 +939,7 @@ In a multiclass and multilabel classification task, the notions of precision,
 recall, and F-measures can be applied to each label independently.
 There are a few ways to combine results across labels,
 specified by the ``average`` argument to the
-:func:`average_precision_score` (multilabel only), :func:`f1_score`,
+:func:`average_precision_score`, :func:`f1_score`,
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score` and :func:`recall_score` functions, as described
 :ref:`above <average>`. Note that if all labels are included, "micro"-averaging
@@ -1090,9 +1110,9 @@ with a svm classifier in a binary class problem::
   >>> from sklearn.metrics import hinge_loss
   >>> X = [[0], [1]]
   >>> y = [-1, 1]
-  >>> est = svm.LinearSVC(random_state=0)
+  >>> est = svm.LinearSVC(dual="auto", random_state=0)
   >>> est.fit(X, y)
-  LinearSVC(random_state=0)
+  LinearSVC(dual='auto', random_state=0)
   >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
   >>> pred_decision
   array([-2.18...,  2.36...,  0.09...])
@@ -1105,9 +1125,9 @@ with a svm classifier in a multiclass problem::
   >>> X = np.array([[0], [1], [2], [3]])
   >>> Y = np.array([0, 1, 2, 3])
   >>> labels = np.array([0, 1, 2, 3])
-  >>> est = svm.LinearSVC()
+  >>> est = svm.LinearSVC(dual="auto")
   >>> est.fit(X, Y)
-  LinearSVC()
+  LinearSVC(dual='auto')
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
   >>> hinge_loss(y_true, pred_decision, labels=labels)
@@ -1366,7 +1386,7 @@ function::
     >>> tpr
     array([0. , 0.5, 0.5, 1. , 1. ])
     >>> thresholds
-    array([1.8 , 0.8 , 0.4 , 0.35, 0.1 ])
+    array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
 
 Compared to metrics such as the subset accuracy, the Hamming loss, or the
 F1 score, ROC doesn't require optimizing a threshold for each label.

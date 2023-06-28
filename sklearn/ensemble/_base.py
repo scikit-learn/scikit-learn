@@ -3,20 +3,15 @@
 # Authors: Gilles Louppe
 # License: BSD 3 clause
 
+import warnings
 from abc import ABCMeta, abstractmethod
 from typing import List
-import warnings
 
 import numpy as np
-
 from joblib import effective_n_jobs
 
-from ..base import clone
-from ..base import is_classifier, is_regressor
-from ..base import BaseEstimator
-from ..base import MetaEstimatorMixin
-from ..utils import Bunch, _print_elapsed_time, deprecated
-from ..utils import check_random_state
+from ..base import BaseEstimator, MetaEstimatorMixin, clone, is_classifier, is_regressor
+from ..utils import Bunch, _print_elapsed_time, check_random_state, deprecated
 from ..utils.metaestimators import _BaseComposition
 
 
@@ -157,7 +152,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         if self.estimator is not None:
             self.estimator_ = self.estimator
-        elif self.base_estimator not in [None, "deprecated"]:
+        elif self.base_estimator != "deprecated":
             warnings.warn(
                 (
                     "`base_estimator` was renamed to `estimator` in version 1.2 and "
@@ -165,7 +160,10 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 ),
                 FutureWarning,
             )
-            self.estimator_ = self.base_estimator
+            if self.base_estimator is not None:
+                self.estimator_ = self.base_estimator
+            else:
+                self.estimator_ = default
         else:
             self.estimator_ = default
 
