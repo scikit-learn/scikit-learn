@@ -92,9 +92,16 @@ def _check_function_param_validation(
             rf"The '{param_name}' parameter of {func_name} must be .* Got .* instead."
         )
 
+        err_msg = (
+            f"{func_name} does not raise an informative error message when the "
+            f"parameter {param_name} does not have a valid type. If any Python type "
+            "is valid, the constraint should be 'no_validation'."
+        )
+
         # First, check that the error is raised if param doesn't match any valid type.
         with pytest.raises(InvalidParameterError, match=match):
             func(**{**valid_required_params, param_name: param_with_bad_type})
+            pytest.fail(err_msg)
 
         # Then, for constraints that are more than a type constraint, check that the
         # error is raised if param does match a valid type but does not match any valid
@@ -107,8 +114,19 @@ def _check_function_param_validation(
             except NotImplementedError:
                 continue
 
+            err_msg = (
+                f"{func_name} does not raise an informative error message when the "
+                f"parameter {param_name} does not have a valid value.\n"
+                "Constraints should be disjoint. For instance "
+                "[StrOptions({'a_string'}), str] is not a acceptable set of "
+                "constraint because generating an invalid string for the first "
+                "constraint will always produce a valid string for the second "
+                "constraint."
+            )
+
             with pytest.raises(InvalidParameterError, match=match):
                 func(**{**valid_required_params, param_name: bad_value})
+                pytest.fail(err_msg)
 
 
 PARAM_VALIDATION_FUNCTION_LIST = [
