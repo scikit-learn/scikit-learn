@@ -384,15 +384,16 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
                 {"auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"}
             )
         ],
-        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
-        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left")],
         "verbose": ["verbose"],
         "positive": ["boolean"],
         "random_state": ["random_state"],
         "return_n_iter": ["boolean"],
         "return_intercept": ["boolean"],
         "check_input": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def ridge_regression(
     X,
