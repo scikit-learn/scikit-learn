@@ -890,6 +890,7 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
             )
         ],
     },
+    prefer_skip_nested_validation=False,  # estimator is not validated yet
 )
 def cross_val_predict(
     estimator,
