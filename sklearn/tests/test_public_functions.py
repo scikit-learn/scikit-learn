@@ -4,11 +4,13 @@ from numbers import Integral, Real
 
 import pytest
 
-from sklearn.utils._param_validation import generate_invalid_param_val
-from sklearn.utils._param_validation import generate_valid_param
-from sklearn.utils._param_validation import make_constraint
-from sklearn.utils._param_validation import InvalidParameterError
-from sklearn.utils._param_validation import Interval
+from sklearn.utils._param_validation import (
+    Interval,
+    InvalidParameterError,
+    generate_invalid_param_val,
+    generate_valid_param,
+    make_constraint,
+)
 
 
 def _get_func_info(func_module):
@@ -110,6 +112,7 @@ def _check_function_param_validation(
 
 
 PARAM_VALIDATION_FUNCTION_LIST = [
+    "sklearn.calibration.calibration_curve",
     "sklearn.cluster.cluster_optics_dbscan",
     "sklearn.cluster.compute_optics_graph",
     "sklearn.cluster.estimate_bandwidth",
@@ -119,6 +122,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.covariance.empirical_covariance",
     "sklearn.covariance.ledoit_wolf_shrinkage",
     "sklearn.covariance.shrunk_covariance",
+    "sklearn.datasets.clear_data_home",
     "sklearn.datasets.dump_svmlight_file",
     "sklearn.datasets.fetch_20newsgroups",
     "sklearn.datasets.fetch_20newsgroups_vectorized",
@@ -130,11 +134,14 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.fetch_olivetti_faces",
     "sklearn.datasets.fetch_rcv1",
     "sklearn.datasets.fetch_species_distributions",
+    "sklearn.datasets.get_data_home",
     "sklearn.datasets.load_breast_cancer",
     "sklearn.datasets.load_diabetes",
     "sklearn.datasets.load_digits",
+    "sklearn.datasets.load_files",
     "sklearn.datasets.load_iris",
     "sklearn.datasets.load_linnerud",
+    "sklearn.datasets.load_sample_image",
     "sklearn.datasets.load_svmlight_file",
     "sklearn.datasets.load_svmlight_files",
     "sklearn.datasets.load_wine",
@@ -169,6 +176,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_selection.mutual_info_classif",
     "sklearn.feature_selection.mutual_info_regression",
     "sklearn.feature_selection.r_regression",
+    "sklearn.inspection.partial_dependence",
     "sklearn.inspection.permutation_importance",
     "sklearn.isotonic.isotonic_regression",
     "sklearn.linear_model.orthogonal_mp",
@@ -178,6 +186,8 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.balanced_accuracy_score",
     "sklearn.metrics.brier_score_loss",
     "sklearn.metrics.calinski_harabasz_score",
+    "sklearn.metrics.check_scoring",
+    "sklearn.metrics.completeness_score",
     "sklearn.metrics.class_likelihood_ratios",
     "sklearn.metrics.classification_report",
     "sklearn.metrics.cluster.adjusted_mutual_info_score",
@@ -203,6 +213,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.get_scorer",
     "sklearn.metrics.hamming_loss",
     "sklearn.metrics.hinge_loss",
+    "sklearn.metrics.homogeneity_score",
     "sklearn.metrics.jaccard_score",
     "sklearn.metrics.label_ranking_average_precision_score",
     "sklearn.metrics.label_ranking_loss",
@@ -225,18 +236,27 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.pair_confusion_matrix",
     "sklearn.metrics.adjusted_rand_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
+    "sklearn.metrics.pairwise.chi2_kernel",
     "sklearn.metrics.pairwise.cosine_distances",
     "sklearn.metrics.pairwise.cosine_similarity",
+    "sklearn.metrics.pairwise.euclidean_distances",
     "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.laplacian_kernel",
     "sklearn.metrics.pairwise.linear_kernel",
+    "sklearn.metrics.pairwise.manhattan_distances",
     "sklearn.metrics.pairwise.nan_euclidean_distances",
     "sklearn.metrics.pairwise.paired_cosine_distances",
+    "sklearn.metrics.pairwise.paired_distances",
     "sklearn.metrics.pairwise.paired_euclidean_distances",
     "sklearn.metrics.pairwise.paired_manhattan_distances",
+    "sklearn.metrics.pairwise.pairwise_distances_argmin_min",
+    "sklearn.metrics.pairwise.pairwise_kernels",
     "sklearn.metrics.pairwise.polynomial_kernel",
     "sklearn.metrics.pairwise.rbf_kernel",
     "sklearn.metrics.pairwise.sigmoid_kernel",
+    "sklearn.metrics.pairwise_distances",
+    "sklearn.metrics.pairwise_distances_argmin",
+    "sklearn.metrics.pairwise_distances_chunked",
     "sklearn.metrics.precision_recall_curve",
     "sklearn.metrics.precision_recall_fscore_support",
     "sklearn.metrics.precision_score",
@@ -246,22 +266,28 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.roc_auc_score",
     "sklearn.metrics.roc_curve",
     "sklearn.metrics.top_k_accuracy_score",
+    "sklearn.metrics.v_measure_score",
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.cross_validate",
+    "sklearn.model_selection.learning_curve",
+    "sklearn.model_selection.permutation_test_score",
     "sklearn.model_selection.train_test_split",
+    "sklearn.model_selection.validation_curve",
     "sklearn.neighbors.sort_graph_by_row_values",
     "sklearn.preprocessing.add_dummy_feature",
     "sklearn.preprocessing.binarize",
     "sklearn.preprocessing.label_binarize",
-    "sklearn.preprocessing.maxabs_scale",
     "sklearn.preprocessing.normalize",
     "sklearn.preprocessing.scale",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",
+    "sklearn.tree.export_graphviz",
     "sklearn.tree.export_text",
     "sklearn.tree.plot_tree",
     "sklearn.utils.gen_batches",
+    "sklearn.utils.graph.single_source_shortest_path_length",
     "sklearn.utils.resample",
+    "sklearn.utils.safe_mask",
 ]
 
 
@@ -281,6 +307,7 @@ def test_function_param_validation(func_module):
 
 PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.cluster.affinity_propagation", "sklearn.cluster.AffinityPropagation"),
+    ("sklearn.cluster.k_means", "sklearn.cluster.KMeans"),
     ("sklearn.cluster.mean_shift", "sklearn.cluster.MeanShift"),
     ("sklearn.cluster.spectral_clustering", "sklearn.cluster.SpectralClustering"),
     ("sklearn.covariance.graphical_lasso", "sklearn.covariance.GraphicalLasso"),
@@ -289,6 +316,7 @@ PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.decomposition.dict_learning", "sklearn.decomposition.DictionaryLearning"),
     ("sklearn.decomposition.fastica", "sklearn.decomposition.FastICA"),
     ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
+    ("sklearn.preprocessing.maxabs_scale", "sklearn.preprocessing.MaxAbsScaler"),
     ("sklearn.preprocessing.minmax_scale", "sklearn.preprocessing.MinMaxScaler"),
     ("sklearn.preprocessing.power_transform", "sklearn.preprocessing.PowerTransformer"),
     (
