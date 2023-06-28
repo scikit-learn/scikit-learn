@@ -4,17 +4,16 @@
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 # License: 3-clause BSD
 
-import sys
+import importlib
 import os
-from os.path import join
 import platform
 import shutil
+import sys
+import traceback
+from os.path import join
 
 from setuptools import Command, Extension, setup
 from setuptools.command.build_ext import build_ext
-
-import traceback
-import importlib
 
 try:
     import builtins
@@ -209,6 +208,11 @@ extension_config = {
         {"sources": ["_k_means_elkan.pyx"], "include_np": True},
         {"sources": ["_k_means_minibatch.pyx"], "include_np": True},
     ],
+    "cluster._hdbscan": [
+        {"sources": ["_linkage.pyx"], "include_np": True},
+        {"sources": ["_reachability.pyx"], "include_np": True},
+        {"sources": ["_tree.pyx"], "include_np": True},
+    ],
     "datasets": [
         {
             "sources": ["_svmlight_format_fast.pyx"],
@@ -293,7 +297,7 @@ extension_config = {
         },
     ],
     "preprocessing": [
-        {"sources": ["_csr_polynomial_expansion.pyx"], "include_np": True},
+        {"sources": ["_csr_polynomial_expansion.pyx"]},
         {
             "sources": ["_target_encoder_fast.pyx"],
             "include_np": True,
@@ -449,9 +453,9 @@ def configure_extension_modules():
     if "sdist" in sys.argv or "--help" in sys.argv:
         return []
 
-    from sklearn._build_utils import cythonize_extensions
-    from sklearn._build_utils import gen_from_templates
     import numpy
+
+    from sklearn._build_utils import cythonize_extensions, gen_from_templates
 
     is_pypy = platform.python_implementation() == "PyPy"
     np_include = numpy.get_include()
