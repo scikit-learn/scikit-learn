@@ -179,6 +179,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.inspection.partial_dependence",
     "sklearn.inspection.permutation_importance",
     "sklearn.linear_model.orthogonal_mp",
+    "sklearn.linear_model.ridge_regression",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
     "sklearn.metrics.average_precision_score",
