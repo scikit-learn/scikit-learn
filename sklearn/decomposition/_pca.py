@@ -474,7 +474,7 @@ class PCA(_BasePCA):
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
-        xp, _ = get_namespace(X)
+        xp, is_array_api_compliant = get_namespace(X)
 
         # Raise an error for sparse input.
         # This is more informative than the generic one raised by check_array.
@@ -484,8 +484,10 @@ class PCA(_BasePCA):
                 "TruncatedSVD for a possible alternative."
             )
         # Raise an error for non-Numpy input and arpack solver.
-        if self.svd_solver == "arpack" and not _is_numpy_namespace(xp):
-            raise ValueError("PCA with arpack solver only supports Numpy inputs.")
+        if self.svd_solver == "arpack" and is_array_api_compliant:
+            raise ValueError(
+                "PCA with svd_solver='arpack' is not supported for Array API inputs."
+            )
 
         X = self._validate_data(
             X, dtype=[xp.float64, xp.float32], ensure_2d=True, copy=self.copy
