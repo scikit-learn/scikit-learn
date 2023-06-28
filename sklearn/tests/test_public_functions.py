@@ -199,6 +199,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.cluster.silhouette_score",
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
+    "sklearn.metrics.consensus_score",
     "sklearn.metrics.coverage_error",
     "sklearn.metrics.d2_absolute_error_score",
     "sklearn.metrics.d2_pinball_score",
