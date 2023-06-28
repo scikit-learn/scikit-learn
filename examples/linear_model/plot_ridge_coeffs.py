@@ -3,7 +3,6 @@
 Ridge coefficients as a function of the L2 regularization
 =========================================================
 
-.. currentmodule:: sklearn.linear_model
 A model that overfits learns the training data too well, capturing both the
 underlying patterns and the noise in the data. However, when applied to unseen
 data, the learned associations may not hold. We normally detect this when we
@@ -15,9 +14,9 @@ penalizes large training weights, forcing the model to shrink certain
 coefficients. Regularization reduces a model's reliance on specific information
 obtained from the training samples.
 
-This example illustrates how L2 regularization in a :class:`Ridge` regression
-affects a model's performance by adding a penalty term to the Loss that
-increases with the coefficients (β).
+This example illustrates how L2 regularization in a
+:class:`~sklearn.linear_model.Ridge` regression affects a model's performance by
+adding a penalty term to the Loss that increases with the coefficients (β).
 
 The regularized loss function is given by:
 
@@ -51,17 +50,17 @@ or feature selection to prevent overfitting.
 from sklearn.datasets import make_regression
 
 X, y, w = make_regression(n_samples=100, n_features=10, coef=True, random_state=1)
-
 # Obtain the true coefficients
 print(f"The true coefficient of this regression problem are:\n{w}")
 
 # %%
 # Training Ridge Regressor
 # ------------------------
-# We use :class:`Ridge`, a linear model with L2 regularization. The model
-# parameter `alpha` is a positive constant that multiplies the penalty term,
-# controlling the regularization strength.
+# We use :class:`~sklearn.linear_model.Ridge`, a linear model with L2
+# regularization. The model parameter `alpha` is a positive constant that
+# multiplies the penalty term, controlling the regularization strength.
 import numpy as np
+
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_squared_error
 
@@ -85,10 +84,10 @@ for a in alphas:
 # regularization parameter `alpha` where each color represents a different
 # coefficient.
 #
-# In a second plot, we show how the errors of the coefficients from the
+# On the right-hand-side, we plot how the errors of the coefficients from the
 # estimator change as a function of regularization.
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 
 alphas = pd.Index(alphas, name="alpha")
 coefs = pd.DataFrame(coefs, index=alphas, columns=[f"Feature {i}" for i in range(10)])
@@ -115,9 +114,10 @@ _ = errors.plot(
 # The plot on the left-hand side shows how the regularization strength (`alpha`)
 # affects the Ridge regression coefficients. Smaller values of `alpha` (weak
 # regularization), allow the coefficients to closely resemble the true
-# coefficients (`w`) used to generate the dataset (because no additional noise
-# was added). As `alpha` increases, the coefficients shrink towards zero,
-# gradually converging to a simpler and more simplified solution.
+# coefficients (`w`) used to generate the dataset. This is because no additional
+# noise was added to our artificial data set. As `alpha` increases, the
+# coefficients shrink towards zero, gradually reducing the formerly more
+# significant features' impact.
 #
 # The right-hand side plot shows the `mean squared error` between the
 # coefficients found by the model and the true coefficients (`w`). It provides a
@@ -141,3 +141,5 @@ _ = errors.plot(
 # coefficients. However, in real-world scenarios where data typically contains
 # noise, a careful selection of the regularization parameter `alpha` is
 # necessary to balance model simplicity and model performance on unseen data.
+
+# %%
