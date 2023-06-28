@@ -425,6 +425,22 @@ def _warn_or_raise_about_fit_failures(results, error_score):
             warnings.warn(some_fits_failed_message, FitFailedWarning)
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods("fit")],
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", None],
+        "groups": ["array-like", None],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "cv": ["cv_object"],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+        "fit_params": [dict, None],
+        "pre_dispatch": [Integral, str, None],
+        "error_score": [StrOptions({"raise"}), Real],
+    },
+    prefer_skip_nested_validation=False,  # estimator is not validated yet
+)
 def cross_val_score(
     estimator,
     X,
@@ -448,7 +464,7 @@ def cross_val_score(
     estimator : estimator object implementing 'fit'
         The object to use to fit the data.
 
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data to fit. Can be for example a list, or an array.
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
