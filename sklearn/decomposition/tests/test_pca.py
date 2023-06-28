@@ -708,6 +708,7 @@ def test_array_api_compliance(check, estimator, request):
 
 
 def test_array_api_error_and_warnings_on_unsupported_params():
+    pytest.importorskip("array_api_compat")
     xp = pytest.importorskip("numpy.array_api")
     iris_xp = xp.asarray(iris.data)
 
