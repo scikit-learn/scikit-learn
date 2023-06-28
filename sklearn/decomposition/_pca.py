@@ -22,7 +22,7 @@ from scipy.special import gammaln
 from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
-from ..utils._array_api import _is_numpy_namespace, get_namespace
+from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
@@ -542,7 +542,7 @@ class PCA(_BasePCA):
         self.mean_ = xp.mean(X, axis=0)
         X -= self.mean_
 
-        if _is_numpy_namespace(xp) and not is_array_api_compliant:
+        if not is_array_api_compliant:
             U, S, Vt = linalg.svd(X, full_matrices=False)
         else:
             U, S, Vt = xp.linalg.svd(X, full_matrices=False)
