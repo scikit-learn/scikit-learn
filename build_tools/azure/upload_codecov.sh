@@ -2,6 +2,11 @@
 
 set -e
 
+# Do not upload to codecov on forks
+if [[ "$BUILD_REPOSITORY_NAME" != "scikit-learn/scikit-learn" ]]; then
+    exit 0
+fi
+
 # When we update the codecov uploader version, we need to update the checksums.
 # The checksum for each codecov binary is available at
 # https://uploader.codecov.io e.g. for linux

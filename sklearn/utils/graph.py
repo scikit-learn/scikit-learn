@@ -14,17 +14,26 @@ import numpy as np
 from scipy import sparse
 
 from ..metrics.pairwise import pairwise_distances
+from ._param_validation import Integral, Interval, validate_params
 
 
 ###############################################################################
 # Path and connected component analysis.
 # Code adapted from networkx
+@validate_params(
+    {
+        "graph": ["array-like", "sparse matrix"],
+        "source": [Interval(Integral, 0, None, closed="left")],
+        "cutoff": [Interval(Integral, 0, None, closed="left"), None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def single_source_shortest_path_length(graph, source, *, cutoff=None):
     """Return the length of the shortest path from source to all reachable nodes.
 
     Parameters
     ----------
-    graph : {sparse matrix, ndarray} of shape (n_nodes, n_nodes)
+    graph : {array-like, sparse matrix} of shape (n_nodes, n_nodes)
         Adjacency matrix of the graph. Sparse matrix of format LIL is
         preferred.
 
