@@ -83,10 +83,11 @@ def check_increasing(x, y):
     {
         "y": ["array-like"],
         "sample_weight": ["array-like", None],
-        "y_min": [Interval(Real, None, None, closed="neither"), None],
-        "y_max": [Interval(Real, None, None, closed="neither"), None],
+        "y_min": [Interval(Real, None, None, closed="both"), None],
+        "y_max": [Interval(Real, None, None, closed="both"), None],
         "increasing": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def isotonic_regression(
     y, *, sample_weight=None, y_min=None, y_max=None, increasing=True
