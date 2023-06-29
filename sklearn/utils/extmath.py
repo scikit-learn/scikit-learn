@@ -12,6 +12,7 @@ Extended math utilities.
 # License: BSD 3 clause
 
 import warnings
+from functools import partial
 
 import numpy as np
 from scipy import linalg, sparse
@@ -168,9 +169,6 @@ def safe_sparse_dot(a, b, *, dense_output=False, xp=None):
     dense_output : bool, default=False
         When False, ``a`` and ``b`` both being sparse will yield sparse output.
         When True, output will always be a dense array.
-    xp : module, default=None
-        The namespace module of `a` and `b`. If `None`, this function uses numpy and
-        scipy.sparse operations directly without attempting to rely on the Array API.
 
     Returns
     -------
@@ -191,8 +189,6 @@ def safe_sparse_dot(a, b, *, dense_output=False, xp=None):
             a_2d = a.reshape(-1, a.shape[-1])
             ret = a_2d @ b
             ret = ret.reshape(*a.shape[:-1], b.shape[1])
-        elif xp is not None:
-            ret = xp.tensordot(a, b, axes=(-1, -2))
         else:
             ret = np.dot(a, b)
     else:
@@ -302,30 +298,28 @@ def randomized_range_finder(
         )
 
     if is_array_api_compliant:
-        qr = xp.linalg.qr
-        qr_params = {"mode": "reduced"}
+        qr_normalizer = partial(xp.linalg.qr, mode="reduced")
     else:
         # Use scipy.linalg instead of numpy.linalg when not explicitly
         # using the Array API.
-        qr = linalg.qr
-        qr_params = {"mode": "economic"}
+        qr_normalizer = partial(linalg.qr, mode="economic")
+
+    if power_iteration_normalizer == "QR":
+        normalizer = qr_normalizer
+    elif power_iteration_normalizer == "LU":
+        normalizer = partial(linalg.lu, permute_l=True)
+    else:
+        normalizer = lambda x: (x, None)
 
     # Perform power iterations with Q to further 'imprint' the top
     # singular vectors of A in Q
     for _ in range(n_iter):
-        if power_iteration_normalizer == "none":
-            Q = safe_sparse_dot(A, Q, xp=xp)
-            Q = safe_sparse_dot(A.T, Q, xp=xp)
-        elif power_iteration_normalizer == "LU":
-            Q, _ = linalg.lu(safe_sparse_dot(A, Q), permute_l=True)
-            Q, _ = linalg.lu(safe_sparse_dot(A.T, Q), permute_l=True)
-        elif power_iteration_normalizer == "QR":
-            Q, _ = qr(safe_sparse_dot(A, Q, xp=xp), **qr_params)
-            Q, _ = qr(safe_sparse_dot(A.T, Q, xp=xp), **qr_params)
+        Q, _ = normalizer(A @ Q)
+        Q, _ = normalizer(A.T @ Q)
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
-    Q, _ = qr(safe_sparse_dot(A, Q, xp=xp), **qr_params)
+    Q, _ = qr_normalizer(A @ Q)
 
     return Q
 
@@ -498,7 +492,7 @@ def randomized_svd(
     )
 
     # project M to the (k + p) dimensional space using the basis vectors
-    B = safe_sparse_dot(Q.T, M)
+    B = Q.T @ M
 
     # compute the SVD on the thin matrix: (k + p) wide
     xp, is_array_api_compliant = get_namespace(B)
