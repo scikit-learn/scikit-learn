@@ -92,9 +92,16 @@ def _check_function_param_validation(
             rf"The '{param_name}' parameter of {func_name} must be .* Got .* instead."
         )
 
+        err_msg = (
+            f"{func_name} does not raise an informative error message when the "
+            f"parameter {param_name} does not have a valid type. If any Python type "
+            "is valid, the constraint should be 'no_validation'."
+        )
+
         # First, check that the error is raised if param doesn't match any valid type.
         with pytest.raises(InvalidParameterError, match=match):
             func(**{**valid_required_params, param_name: param_with_bad_type})
+            pytest.fail(err_msg)
 
         # Then, for constraints that are more than a type constraint, check that the
         # error is raised if param does match a valid type but does not match any valid
@@ -107,8 +114,19 @@ def _check_function_param_validation(
             except NotImplementedError:
                 continue
 
+            err_msg = (
+                f"{func_name} does not raise an informative error message when the "
+                f"parameter {param_name} does not have a valid value.\n"
+                "Constraints should be disjoint. For instance "
+                "[StrOptions({'a_string'}), str] is not a acceptable set of "
+                "constraint because generating an invalid string for the first "
+                "constraint will always produce a valid string for the second "
+                "constraint."
+            )
+
             with pytest.raises(InvalidParameterError, match=match):
                 func(**{**valid_required_params, param_name: bad_value})
+                pytest.fail(err_msg)
 
 
 PARAM_VALIDATION_FUNCTION_LIST = [
@@ -178,7 +196,9 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_selection.r_regression",
     "sklearn.inspection.partial_dependence",
     "sklearn.inspection.permutation_importance",
+    "sklearn.isotonic.isotonic_regression",
     "sklearn.linear_model.orthogonal_mp",
+    "sklearn.linear_model.ridge_regression",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
     "sklearn.metrics.average_precision_score",
@@ -199,6 +219,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.cluster.silhouette_score",
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
+    "sklearn.metrics.consensus_score",
     "sklearn.metrics.coverage_error",
     "sklearn.metrics.d2_absolute_error_score",
     "sklearn.metrics.d2_pinball_score",
@@ -235,8 +256,10 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.pair_confusion_matrix",
     "sklearn.metrics.adjusted_rand_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
+    "sklearn.metrics.pairwise.chi2_kernel",
     "sklearn.metrics.pairwise.cosine_distances",
     "sklearn.metrics.pairwise.cosine_similarity",
+    "sklearn.metrics.pairwise.euclidean_distances",
     "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.laplacian_kernel",
     "sklearn.metrics.pairwise.linear_kernel",
@@ -246,11 +269,14 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.pairwise.paired_distances",
     "sklearn.metrics.pairwise.paired_euclidean_distances",
     "sklearn.metrics.pairwise.paired_manhattan_distances",
+    "sklearn.metrics.pairwise.pairwise_distances_argmin_min",
     "sklearn.metrics.pairwise.pairwise_kernels",
     "sklearn.metrics.pairwise.polynomial_kernel",
     "sklearn.metrics.pairwise.rbf_kernel",
     "sklearn.metrics.pairwise.sigmoid_kernel",
+    "sklearn.metrics.pairwise_distances",
     "sklearn.metrics.pairwise_distances_argmin",
+    "sklearn.metrics.pairwise_distances_chunked",
     "sklearn.metrics.precision_recall_curve",
     "sklearn.metrics.precision_recall_fscore_support",
     "sklearn.metrics.precision_score",
@@ -262,6 +288,8 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.top_k_accuracy_score",
     "sklearn.metrics.v_measure_score",
     "sklearn.metrics.zero_one_loss",
+    "sklearn.model_selection.cross_val_predict",
+    "sklearn.model_selection.cross_val_score",
     "sklearn.model_selection.cross_validate",
     "sklearn.model_selection.learning_curve",
     "sklearn.model_selection.permutation_test_score",
@@ -280,7 +308,9 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.tree.plot_tree",
     "sklearn.utils.gen_batches",
     "sklearn.utils.gen_even_slices",
+    "sklearn.utils.graph.single_source_shortest_path_length",
     "sklearn.utils.resample",
+    "sklearn.utils.safe_mask",
 ]
 
 

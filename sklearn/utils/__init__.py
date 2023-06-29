@@ -112,6 +112,13 @@ def _in_unstable_openblas_configuration():
     return False
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "mask": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def safe_mask(X, mask):
     """Return a mask which is safe to use on X.
 
@@ -120,7 +127,7 @@ def safe_mask(X, mask):
     X : {array-like, sparse matrix}
         Data on which to apply mask.
 
-    mask : ndarray
+    mask : array-like
         Mask to be used on X.
 
     Returns
