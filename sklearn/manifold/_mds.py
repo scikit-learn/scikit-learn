@@ -176,8 +176,8 @@ def _smacof_single(
         "n_init": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "verbose": [Interval(Integral, None, None, closed="neither")],
-        "eps": [Interval(Real, None, None, closed="neither")],
+        "verbose": ["verbose"],
+        "eps": [Interval(Real, 0, None, closed="left")],
         "random_state": ["random_state"],
         "return_n_iter": ["boolean"],
         "normalized_stress": [
@@ -185,7 +185,8 @@ def _smacof_single(
             StrOptions({"auto"}),
             Hidden(StrOptions({"warn"})),
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def smacof(
     dissimilarities,
