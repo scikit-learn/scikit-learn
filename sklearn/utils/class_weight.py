@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-
 from scipy import sparse
 
 from ..utils._param_validation import StrOptions, validate_params
@@ -12,25 +11,26 @@ from ..utils._param_validation import StrOptions, validate_params
 @validate_params(
     {
         "class_weight": [dict, StrOptions({"balanced"}), None],
-        "classes": ["array-like"],
+        "classes": [np.ndarray],
         "y": ["array-like"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def compute_class_weight(class_weight, *, classes, y):
     """Estimate class weights for unbalanced datasets.
 
     Parameters
     ----------
-    class_weight : dict, 'balanced' or None
-        If 'balanced', class weights will be given by
-        ``n_samples / (n_classes * np.bincount(y))``.
-        If a dictionary is given, keys are classes and values
-        are corresponding class weights.
-        If None is given, the class weights will be uniform.
+    class_weight : dict, "balanced" or None
+        If "balanced", class weights will be given by
+        `n_samples / (n_classes * np.bincount(y))`.
+        If a dictionary is given, keys are classes and values are corresponding class
+        weights.
+        If `None` is given, the class weights will be uniform.
 
     classes : ndarray
         Array of the classes occurring in the data, as given by
-        ``np.unique(y_org)`` with ``y_org`` the original class labels.
+        `np.unique(y_org)` with `y_org` the original class labels.
 
     y : array-like of shape (n_samples,)
         Array of original class labels per sample.
@@ -38,7 +38,7 @@ def compute_class_weight(class_weight, *, classes, y):
     Returns
     -------
     class_weight_vect : ndarray of shape (n_classes,)
-        Array with class_weight_vect[i] the weight for i-th class.
+        Array with `class_weight_vect[i]` the weight for i-th class.
 
     References
     ----------
