@@ -4,7 +4,8 @@
 
 import numpy as np
 from scipy import sparse
-from ._param_validation import validate_params, StrOptions
+
+from ._param_validation import StrOptions, validate_params
 
 
 def compute_class_weight(class_weight, *, classes, y):
@@ -81,7 +82,8 @@ def compute_class_weight(class_weight, *, classes, y):
         "class_weight": [dict, list, StrOptions({"balanced"}), None],
         "y": ["array-like", "sparse matrix"],
         "indices": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def compute_sample_weight(class_weight, y, *, indices=None):
     """Estimate sample weights by class for unbalanced datasets.
