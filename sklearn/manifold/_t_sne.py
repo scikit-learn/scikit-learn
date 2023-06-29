@@ -8,27 +8,31 @@
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
+from numbers import Integral, Real
 from time import time
+
 import numpy as np
 from scipy import linalg
-from scipy.spatial.distance import pdist
-from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
-from numbers import Integral, Real
+from scipy.spatial.distance import pdist, squareform
+
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from ..decomposition import PCA
+from ..metrics.pairwise import _VALID_METRICS, pairwise_distances
 from ..neighbors import NearestNeighbors
-from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils.validation import check_non_negative
 from ..utils._param_validation import Interval, StrOptions
-from ..decomposition import PCA
-from ..metrics.pairwise import pairwise_distances, _VALID_METRICS
+from ..utils.validation import check_non_negative
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_utils'
-from . import _utils  # type: ignore
-
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
-from . import _barnes_hut_tsne  # type: ignore
+from . import _barnes_hut_tsne, _utils  # type: ignore
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
@@ -1078,6 +1082,10 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         return X_embedded
 
+    @_fit_context(
+        # TSNE.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit X into an embedded space and return that transformed output.
 
@@ -1099,12 +1107,15 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        self._validate_params()
         self._check_params_vs_input(X)
         embedding = self._fit(X)
         self.embedding_ = embedding
         return self.embedding_
 
+    @_fit_context(
+        # TSNE.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit X into an embedded space.
 
@@ -1126,7 +1137,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X_new : array of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        self._validate_params()
         self.fit_transform(X)
         return self
 

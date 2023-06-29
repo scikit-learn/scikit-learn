@@ -171,7 +171,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         # return np.zeros(shape=(len(X), 2))
 
 
-METAESTIMATORS = [
+METAESTIMATORS: list = [
     {
         "metaestimator": MultiOutputRegressor,
         "estimator_name": "estimator",
