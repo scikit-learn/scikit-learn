@@ -312,6 +312,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.utils.safe_mask",
     "sklearn.utils.extmath.randomized_svd",
     "sklearn.utils.class_weight.compute_class_weight",
+    "sklearn.utils.class_weight.compute_sample_weight",
     "sklearn.utils.graph.single_source_shortest_path_length",
 ]
 
