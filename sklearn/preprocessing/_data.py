@@ -22,10 +22,9 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
-from ..utils import check_array
-from ..utils._param_validation import Interval, Options, StrOptions, validate_params
-from ..utils import _array_api
+from ..utils import _array_api, check_array
 from ..utils._array_api import get_namespace
+from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs import (
     incr_mean_variance_axis,
