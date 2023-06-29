@@ -159,7 +159,7 @@ def density(w, **kwargs):
     return d
 
 
-def safe_sparse_dot(a, b, *, dense_output=False, xp=None):
+def safe_sparse_dot(a, b, *, dense_output=False):
     """Dot product that handle the sparse matrix case correctly.
 
     Parameters
