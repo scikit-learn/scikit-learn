@@ -12,7 +12,6 @@ Extended math utilities.
 # License: BSD 3 clause
 
 import warnings
-
 from functools import partial
 from numbers import Integral
 
@@ -869,15 +868,15 @@ def svd_flip(u, v, u_based_decision=True):
         max_abs_u_cols = xp.argmax(xp.abs(u.T), axis=1)
         indices = max_abs_u_cols + xp.arange(u.T.shape[0]) * u.T.shape[1]
         signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices))
-        u *= signs[np.newaxis, :]
-        v *= signs[:, np.newaxis]
+        u *= signs[None, :]
+        v *= signs[:, None]
     else:
         # rows of v, columns of u
         max_abs_v_rows = xp.argmax(xp.abs(v), axis=1)
         indices = max_abs_v_rows + xp.arange(v.shape[0]) * v.shape[1]
         signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices))
-        u *= signs[np.newaxis, :]
-        v *= signs[:, np.newaxis]
+        u *= signs[None, :]
+        v *= signs[:, None]
     return u, v
 
 
