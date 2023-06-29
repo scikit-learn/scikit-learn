@@ -139,6 +139,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.ward_tree",
     "sklearn.covariance.empirical_covariance",
     "sklearn.covariance.ledoit_wolf_shrinkage",
+    "sklearn.covariance.log_likelihood",
     "sklearn.covariance.shrunk_covariance",
     "sklearn.datasets.clear_data_home",
     "sklearn.datasets.dump_svmlight_file",
