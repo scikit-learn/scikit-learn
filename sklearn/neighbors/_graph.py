@@ -50,7 +50,7 @@ def _query_include_self(X, include_self, mode):
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "mode": [StrOptions({"connectivity", "distance"})],
         "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
-        "p": [Interval(Real, 1, None, closed="left")],
+        "p": [Interval(Real, 0, None, closed="right"), None],
         "metric_params": [dict, None],
         "include_self": ["boolean", StrOptions({"auto"})],
         "n_jobs": [Integral, None],
@@ -95,10 +95,10 @@ def kneighbors_graph(
         :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
         values.
 
-    p : int, default=2
-        Power parameter for the Minkowski metric. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+    p : float (positive), default=2
+        Power parameter for the Minkowski metric. When p = 1, this is equivalent
+        to using manhattan_distance (l1), and euclidean_distance (l2) for p = 2.
+        For arbitrary p, minkowski_distance (l_p) is used.
 
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
@@ -109,20 +109,20 @@ def kneighbors_graph(
         for mode='distance'.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        The number of parallel jobs to run for neighbors search. ``None`` means
+        1 unless in a :obj:`joblib.parallel_backend` context. ``-1`` means using
+        all processors. See :term:`Glossary <n_jobs>` for more details.
 
     Returns
     -------
     A : sparse matrix of shape (n_samples, n_samples)
-        Graph where A[i, j] is assigned the weight of edge that
-        connects i to j. The matrix is of CSR format.
+        Graph where A[i, j] is assigned the weight of edge that connects i to j.
+        The matrix is of CSR format.
 
     See Also
     --------
-    radius_neighbors_graph: Compute the (weighted) graph of Neighbors for points in X.
+    radius_neighbors_graph: Compute the (weighted) graph of Neighbors for points
+    in X.
 
     Examples
     --------
@@ -303,7 +303,7 @@ class KNeighborsTransformer(
 
         Distance matrices are not supported.
 
-    p : int, default=2
+    p : float (positive), default=2
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -530,7 +530,7 @@ class RadiusNeighborsTransformer(
 
         Distance matrices are not supported.
 
-    p : int, default=2
+    p : float (positive), default=2
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance

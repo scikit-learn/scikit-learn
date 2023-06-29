@@ -1,9 +1,12 @@
+import warnings
+
 import numpy as np
 import pytest
 
 from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import KNeighborsTransformer, RadiusNeighborsTransformer
 from sklearn.neighbors._base import _is_sorted_by_data
+from sklearn.neighbors._graph import kneighbors_graph
 from sklearn.utils._testing import assert_array_equal
 
 
@@ -79,6 +82,52 @@ def test_explicit_diagonal():
     # Using transform on new data should not always have zero diagonal
     X2t = nnt.transform(X2)
     assert not _has_explicit_diagonal(X2t)
+
+
+@pytest.mark.parametrize(
+    "params, expected_exception, msg",
+    [
+        (
+            {"p": 0},
+            ValueError,
+            "The 'p' parameter of kneighbors_graph must be a float in the range",
+        ),
+        (
+            {"p": 0.5},
+            UserWarning,
+            "Mind that for 0 < p < 1, Minkowski metrics are not distance metrics",
+        ),
+        (
+            {"p": 1},
+            None,
+            "No exception or warning expected",
+        ),
+        (
+            {"p": 5.7},
+            None,
+            "No exception or warning expected",
+        ),
+        (
+            {"p": float("inf")},
+            None,
+            "No exception or warning expected",
+        ),
+        (
+            {"p": None},
+            TypeError,
+            "'<' not supported between instances of 'NoneType' and 'int'",
+        ),
+    ],
+)
+def test_errors_for_p_values(params, expected_exception, msg):
+    X = [[0], [1], [2], [3]]
+
+    if expected_exception is not None and expected_exception is not UserWarning:
+        with pytest.raises(expected_exception, match=msg):
+            kneighbors_graph(X, n_neighbors=2, mode="connectivity", p=params["p"])
+    else:
+        with warnings.catch_warnings(record=True):
+            kneighbors_graph(X, n_neighbors=2, mode="connectivity", p=params["p"])
 
 
 @pytest.mark.parametrize("Klass", [KNeighborsTransformer, RadiusNeighborsTransformer])
