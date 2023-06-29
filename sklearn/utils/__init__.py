@@ -19,7 +19,7 @@ from ..exceptions import DataConversionWarning
 from . import _joblib, metadata_routing
 from ._bunch import Bunch
 from ._estimator_html_repr import estimator_html_repr
-from ._param_validation import Interval, validate_params
+from ._param_validation import Integral, Interval, validate_params
 from .class_weight import compute_class_weight, compute_sample_weight
 from .deprecation import deprecated
 from .discovery import all_estimators
@@ -796,6 +796,14 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
         yield slice(start, n)
 
 
+@validate_params(
+    {
+        "n": [Interval(Integral, 1, None, closed="left")],
+        "n_packs": [Interval(Integral, 1, None, closed="left")],
+        "n_samples": [Interval(Integral, 1, None, closed="left"), None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def gen_even_slices(n, n_packs, *, n_samples=None):
     """Generator to create `n_packs` evenly spaced slices going up to `n`.
 
@@ -835,8 +843,6 @@ def gen_even_slices(n, n_packs, *, n_samples=None):
     [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
     """
     start = 0
-    if n_packs < 1:
-        raise ValueError("gen_even_slices got n_packs=%s, must be >=1" % n_packs)
     for pack_num in range(n_packs):
         this_n = n // n_packs
         if pack_num < n % n_packs:

@@ -884,6 +884,30 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
     return scores
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods(["fit", "predict"])],
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", None],
+        "groups": ["array-like", None],
+        "cv": ["cv_object"],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+        "fit_params": [dict, None],
+        "pre_dispatch": [Integral, str, None],
+        "method": [
+            StrOptions(
+                {
+                    "predict",
+                    "predict_proba",
+                    "predict_log_proba",
+                    "decision_function",
+                }
+            )
+        ],
+    },
+    prefer_skip_nested_validation=False,  # estimator is not validated yet
+)
 def cross_val_predict(
     estimator,
     X,
@@ -912,10 +936,11 @@ def cross_val_predict(
 
     Parameters
     ----------
-    estimator : estimator object implementing 'fit' and 'predict'
-        The object to use to fit the data.
+    estimator : estimator
+        The estimator instance to use to fit the data. It must implement a `fit`
+        method and the method given by the `method` parameter.
 
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data to fit. Can be, for example a list, or an array at least 2d.
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
