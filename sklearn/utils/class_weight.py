@@ -5,6 +5,8 @@
 import numpy as np
 from scipy import sparse
 
+from ._param_validation import StrOptions, validate_params
+
 
 def compute_class_weight(class_weight, *, classes, y):
     """Estimate class weights for unbalanced datasets.
@@ -75,13 +77,21 @@ def compute_class_weight(class_weight, *, classes, y):
     return weight
 
 
+@validate_params(
+    {
+        "class_weight": [dict, list, StrOptions({"balanced"}), None],
+        "y": ["array-like", "sparse matrix"],
+        "indices": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def compute_sample_weight(class_weight, y, *, indices=None):
     """Estimate sample weights by class for unbalanced datasets.
 
     Parameters
     ----------
     class_weight : dict, list of dicts, "balanced", or None
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Weights associated with classes in the form `{class_label: weight}`.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
@@ -89,12 +99,12 @@ def compute_sample_weight(class_weight, y, *, indices=None):
         Note that for multioutput (including multilabel) weights should be
         defined for each class of every column in its own dict. For example,
         for four-class multilabel classification weights should be
-        [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}] instead of
-        [{1:1}, {2:5}, {3:1}, {4:1}].
+        `[{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}]` instead of
+        `[{1:1}, {2:5}, {3:1}, {4:1}]`.
 
-        The "balanced" mode uses the values of y to automatically adjust
+        The `"balanced"` mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data:
-        ``n_samples / (n_classes * np.bincount(y))``.
+        `n_samples / (n_classes * np.bincount(y))`.
 
         For multi-output, the weights of each column of y will be multiplied.
 
@@ -103,15 +113,15 @@ def compute_sample_weight(class_weight, y, *, indices=None):
 
     indices : array-like of shape (n_subsample,), default=None
         Array of indices to be used in a subsample. Can be of length less than
-        n_samples in the case of a subsample, or equal to n_samples in the
-        case of a bootstrap subsample with repeated indices. If None, the
-        sample weight will be calculated over the full sample. Only "balanced"
-        is supported for class_weight if this is provided.
+        `n_samples` in the case of a subsample, or equal to `n_samples` in the
+        case of a bootstrap subsample with repeated indices. If `None`, the
+        sample weight will be calculated over the full sample. Only `"balanced"`
+        is supported for `class_weight` if this is provided.
 
     Returns
     -------
     sample_weight_vect : ndarray of shape (n_samples,)
-        Array with sample weights as applied to the original y.
+        Array with sample weights as applied to the original `y`.
     """
 
     # Ensure y is 2D. Sparse matrices are already 2D.
@@ -121,27 +131,22 @@ def compute_sample_weight(class_weight, y, *, indices=None):
             y = np.reshape(y, (-1, 1))
     n_outputs = y.shape[1]
 
-    if isinstance(class_weight, str):
-        if class_weight not in ["balanced"]:
-            raise ValueError(
-                'The only valid preset for class_weight is "balanced". Given "%s".'
-                % class_weight
-            )
-    elif indices is not None and not isinstance(class_weight, str):
+    if indices is not None and class_weight != "balanced":
         raise ValueError(
-            'The only valid class_weight for subsampling is "balanced". Given "%s".'
-            % class_weight
+            "The only valid class_weight for subsampling is 'balanced'. "
+            f"Given {class_weight}."
         )
     elif n_outputs > 1:
-        if not hasattr(class_weight, "__iter__") or isinstance(class_weight, dict):
+        if class_weight is None or isinstance(class_weight, dict):
             raise ValueError(
-                "For multi-output, class_weight should be a "
-                "list of dicts, or a valid string."
+                "For multi-output, class_weight should be a list of dicts, or the "
+                "string 'balanced'."
             )
-        if len(class_weight) != n_outputs:
+        elif isinstance(class_weight, list) and len(class_weight) != n_outputs:
             raise ValueError(
-                "For multi-output, number of elements in "
-                "class_weight should match number of outputs."
+                "For multi-output, number of elements in class_weight should match "
+                f"number of outputs. Got {len(class_weight)} element(s) while having "
+                f"{n_outputs} outputs."
             )
 
     expanded_class_weight = []

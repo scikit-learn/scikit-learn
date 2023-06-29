@@ -235,32 +235,38 @@ def test_compute_sample_weight_with_subsample():
     assert_array_almost_equal(sample_weight, [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0])
 
 
-def test_compute_sample_weight_errors():
+@pytest.mark.parametrize(
+    "y_type, class_weight, indices, err_msg",
+    [
+        (
+            "single-output",
+            {1: 2, 2: 1},
+            range(4),
+            "The only valid class_weight for subsampling is 'balanced'.",
+        ),
+        (
+            "multi-output",
+            {1: 2, 2: 1},
+            None,
+            "For multi-output, class_weight should be a list of dicts, or the string",
+        ),
+        (
+            "multi-output",
+            [{1: 2, 2: 1}],
+            None,
+            r"Got 1 element\(s\) while having 2 outputs",
+        ),
+    ],
+)
+def test_compute_sample_weight_errors(y_type, class_weight, indices, err_msg):
     # Test compute_sample_weight raises errors expected.
     # Invalid preset string
-    y = np.asarray([1, 1, 1, 2, 2, 2])
-    y_ = np.asarray([[1, 0], [1, 0], [1, 0], [2, 1], [2, 1], [2, 1]])
+    y_single_output = np.asarray([1, 1, 1, 2, 2, 2])
+    y_multi_output = np.asarray([[1, 0], [1, 0], [1, 0], [2, 1], [2, 1], [2, 1]])
 
-    with pytest.raises(ValueError):
-        compute_sample_weight("ni", y)
-    with pytest.raises(ValueError):
-        compute_sample_weight("ni", y, indices=range(4))
-    with pytest.raises(ValueError):
-        compute_sample_weight("ni", y_)
-    with pytest.raises(ValueError):
-        compute_sample_weight("ni", y_, indices=range(4))
-
-    # Not "balanced" for subsample
-    with pytest.raises(ValueError):
-        compute_sample_weight({1: 2, 2: 1}, y, indices=range(4))
-
-    # Not a list or preset for multi-output
-    with pytest.raises(ValueError):
-        compute_sample_weight({1: 2, 2: 1}, y_)
-
-    # Incorrect length list for multi-output
-    with pytest.raises(ValueError):
-        compute_sample_weight([{1: 2, 2: 1}], y_)
+    y = y_single_output if y_type == "single-output" else y_multi_output
+    with pytest.raises(ValueError, match=err_msg):
+        compute_sample_weight(class_weight, y, indices=indices)
 
 
 def test_compute_sample_weight_more_than_32():
