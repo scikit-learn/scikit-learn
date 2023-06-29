@@ -404,6 +404,12 @@ def _add_to_diagonal(array, value, xp):
 
 
 def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
+    # XXX: this function accepts Array API input but returns a Python scalar
+    # float. The coal to float() is convenient because it does hide the need to
+    # move back results from device to host memory (e.g. calling `.cpu()` on a
+    # torch tensor). However, this might interact in unexpected ways (break?)
+    # with lazy Array API implementations. See:
+    # https://github.com/data-apis/array-api/issues/642
     if xp is None:
         xp, _ = get_namespace(sample_score)
     if normalize and _is_numpy_namespace(xp):
