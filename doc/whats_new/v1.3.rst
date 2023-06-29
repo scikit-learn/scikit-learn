@@ -381,7 +381,7 @@ Changelog
 - |Feature| Compute a custom out-of-bag score by passing a callable to
   :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
-  :pr:`25177` by :user:`Tim Head <betatim>`.
+  :pr:`25177` by `Tim Head`_.
 
 - |Feature| :class:`ensemble.GradientBoostingClassifier` now exposes
   out-of-bag scores via the `oob_scores_` or `oob_score_` attributes.
@@ -695,7 +695,7 @@ Changelog
   supports the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
   support is considered experimental and might evolve without being subject to
   our usual rolling deprecation cycle policy. See
-  :ref:`array_api` for more details. :pr:`26243` by `Tim Head <betatim>`_.
+  :ref:`array_api` for more details. :pr:`26243` by `Tim Head`_.
 
 - |Feature| :class:`preprocessing.OrdinalEncoder` now supports grouping
   infrequent categories into a single feature. Grouping infrequent categories
