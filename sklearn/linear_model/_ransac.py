@@ -2,22 +2,31 @@
 #
 # License: BSD 3 clause
 
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
-from ..base import MultiOutputMixin
-from ..base import _fit_context
-from ..utils import check_random_state, check_consistent_length
-from ..utils.random import sample_without_replacement
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ._base import LinearRegression
-from ..utils.validation import has_fit_parameter
-from ..utils._param_validation import Interval, Options, StrOptions, HasMethods
-from ..utils._param_validation import RealNotInt
+from ..base import (
+    BaseEstimator,
+    MetaEstimatorMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+    clone,
+)
 from ..exceptions import ConvergenceWarning
+from ..utils import check_consistent_length, check_random_state
+from ..utils._param_validation import (
+    HasMethods,
+    Interval,
+    Options,
+    RealNotInt,
+    StrOptions,
+)
+from ..utils.random import sample_without_replacement
+from ..utils.validation import _check_sample_weight, check_is_fitted, has_fit_parameter
+from ._base import LinearRegression
 
 _EPSILON = np.spacing(1)
 

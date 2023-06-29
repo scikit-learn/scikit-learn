@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-
 from scipy import sparse
 from ._param_validation import validate_params, StrOptions
 

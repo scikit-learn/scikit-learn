@@ -14,16 +14,16 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.special import expit  # logistic function
 
-from ..base import BaseEstimator
-from ..base import TransformerMixin
-from ..base import ClassNamePrefixFeaturesOutMixin
-from ..base import _fit_context
-from ..utils import check_random_state
-from ..utils import gen_even_slices
-from ..utils.extmath import safe_sparse_dot
-from ..utils.extmath import log_logistic
-from ..utils.validation import check_is_fitted
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from ..utils import check_random_state, gen_even_slices
 from ..utils._param_validation import Interval
+from ..utils.extmath import log_logistic, safe_sparse_dot
+from ..utils.validation import check_is_fitted
 
 
 class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):

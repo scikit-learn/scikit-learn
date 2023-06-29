@@ -23,8 +23,9 @@ perception for this example. Both methods correctly mark x_3 as irrelevant.
 
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.feature_selection import f_regression, mutual_info_regression
 
 np.random.seed(0)
