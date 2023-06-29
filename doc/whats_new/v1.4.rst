@@ -58,3 +58,13 @@ TODO: update at the time of the release.
   :meth:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
   passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
   Jalali`_.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Enhancement| An "auto" option was added to the `n_components` parameter of
+  :func:`decomposition.non_negative_factorization`, :class:`decomposition.NMF` and
+  :class:`decomposition.MiniBatchNMF` to automatically infer the number of components from W or H shapes
+  when using a custom initialization. The default value of this parameter will change
+  from `None` to `auto` in version 1.6.
+  :pr:`26634` by :user:`Alexandre Landeau <AlexL>` and :user:`Alexandre Vigny <avigny>`.

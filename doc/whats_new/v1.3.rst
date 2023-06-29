@@ -234,6 +234,11 @@ Changelog
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
+  :func:`cluster.k_means` now correctly handle the combination of `n_init="auto"`
+  and `init` being an array-like, running one initialization in that case.
+  :pr:`26657` by :user:`Binesh Bannerjee <bnsh>`.
+
 - |API| The `sample_weight` parameter in `predict` for
   :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
   is now deprecated and will be removed in v1.5.
@@ -457,6 +462,11 @@ Changelog
   :class:`linear_model.LogisticRegression(penalty="l1", solver="liblinear")`
   on linearly separable problems.
   :pr:`25214` by `Tom Dupre la Tour`_.
+
+- |Fix| Fix a crash when calling `fit` on
+  :class:`linear_model.LogisticRegression(solver="newton-cholesky", max_iter=0)`
+  which failed to inspect the state of the model prior to the first parameter update.
+  :pr:`26653` by :user:`Olivier Grisel <ogrisel>`.
 
 - |API| Deprecates `n_iter` in favor of `max_iter` in
   :class:`linear_model.BayesianRidge` and :class:`linear_model.ARDRegression`.
