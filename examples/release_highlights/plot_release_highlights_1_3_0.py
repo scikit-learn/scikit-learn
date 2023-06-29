@@ -139,8 +139,6 @@ gbdt = HistGradientBoostingRegressor(loss="gamma")
 cross_val_score(gbdt, X, y).mean()
 
 # %%
-# Grouping 
-# %%
 # Grouping infrequent categories in :class:`preprocessing.OrdinalEncoder`
 # -----------------------------------------------------------------------
 # Similarly to :class:`preprocessing.OneHotEncoder`, the class
