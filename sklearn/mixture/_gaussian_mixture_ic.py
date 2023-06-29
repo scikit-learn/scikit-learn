@@ -15,22 +15,22 @@ from . import GaussianMixture
 
 
 def _check_multi_comp_inputs(input, name, default):
-        if isinstance(input, (np.ndarray, list)):
-            input = list(np.unique(input))
-        elif isinstance(input, str):
-            if input not in default:
-                raise ValueError(f"{name} is {input} but must be one of {default}.")
-            if input != "all":
-                input = [input]
-            else:
-                input = default.copy()
-                input.remove("all")
+    if isinstance(input, (np.ndarray, list)):
+        input = list(np.unique(input))
+    elif isinstance(input, str):
+        if input not in default:
+            raise ValueError(f"{name} is {input} but must be one of {default}.")
+        if input != "all":
+            input = [input]
         else:
-            raise TypeError(
-                f"{name} is a {type(input)} but must be a numpy array, "
-                "a list, or a string."
-            )
-        return input
+            input = default.copy()
+            input.remove("all")
+    else:
+        raise TypeError(
+            f"{name} is a {type(input)} but must be a numpy array, a list, or a string."
+        )
+    return input
+
 
 class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     """Gaussian mixture with BIC/AIC.
@@ -198,7 +198,6 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         criterion="bic",
         n_jobs=None,
     ):
-
         self.min_components = min_components
         self.max_components = max_components
         self.covariance_type = covariance_type
@@ -221,7 +220,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             self.max_components,
             min_val=self.min_components,
             name="max_components",
-            target_type=int
+            target_type=int,
         )
 
         covariance_type = _check_multi_comp_inputs(
@@ -287,16 +286,16 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
         grid_search = GridSearchCV(
             GaussianMixture(
-                init_params=self.init_params,
-                max_iter=self.max_iter,
-                n_init=self.n_init
-            ), param_grid=param_grid, scoring=self.criterion_score
+                init_params=self.init_params, max_iter=self.max_iter, n_init=self.n_init
+            ),
+            param_grid=param_grid,
+            scoring=self.criterion_score,
         )
         grid_search.fit(X)
 
-        self.criterion_ = -grid_search.cv_results_['mean_test_score']
-        self.n_components_ = grid_search.best_params_['n_components']
-        self.covariance_type_ = grid_search.best_params_['covariance_type']
+        self.criterion_ = -grid_search.cv_results_["mean_test_score"]
+        self.n_components_ = grid_search.best_params_["n_components"]
+        self.covariance_type_ = grid_search.best_params_["covariance_type"]
 
         best_estimator = grid_search.best_estimator_
         self.best_estimator_ = best_estimator

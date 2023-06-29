@@ -58,6 +58,7 @@ plt.show()
 #
 
 from sklearn.mixture import GaussianMixtureIC
+
 gm_ic = GaussianMixtureIC(min_components=1, max_components=6, covariance_type='all')
 gm_ic.fit(X)
 
@@ -73,10 +74,14 @@ import pandas as pd
 
 from sklearn.model_selection import ParameterGrid
 
-param_grid = list(ParameterGrid({
-    "n_components": range(1, 7),
-    "covariance_type": ["spherical", "tied", "diag", "full"],
-}))
+param_grid = list(
+    ParameterGrid(
+        {
+            "n_components": range(1, 7),
+            "covariance_type": ["spherical", "tied", "diag", "full"],
+        }
+    )
+)
 df = pd.DataFrame(param_grid)
 df.columns = ["Type of covariance", "Number of components"]
 df["BIC score"] = gm_ic.criterion_
@@ -141,8 +146,7 @@ for i, (mean, cov, color) in enumerate(
     ax.add_artist(ellipse)
 
 plt.title(
-    f"Selected GMM: {gm_ic.covariance_type_} model, "
-    f"{gm_ic.n_components_} components"
+    f"Selected GMM: {gm_ic.covariance_type_} model, {gm_ic.n_components_} components"
 )
 plt.axis("equal")
 plt.show()

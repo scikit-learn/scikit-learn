@@ -104,7 +104,6 @@ def test_two_class():
     _test_two_class()
 
 
-
 def test_two_class_sequential_v_parallel():
     """
     Testing independence of results from the execution mode
@@ -147,16 +146,12 @@ def test_five_class():
     X = np.vstack([np.random.multivariate_normal(mu, cov, n) for mu in mus])
 
     # test BIC
-    gmIC = GaussianMixtureIC(
-        min_components=3, max_components=10, criterion="bic"
-    )
+    gmIC = GaussianMixtureIC(min_components=3, max_components=10, criterion="bic")
     gmIC.fit(X)
     assert_equal(gmIC.n_components_, 5)
 
     # test AIC
-    gmIC = GaussianMixtureIC(
-        min_components=3, max_components=10, criterion="aic"
-    )
+    gmIC = GaussianMixtureIC(min_components=3, max_components=10, criterion="aic")
     gmIC.fit(X)
     # AIC fails often so there is no assertion here
     assert_equal(gmIC.n_components_ >= 3, True)
