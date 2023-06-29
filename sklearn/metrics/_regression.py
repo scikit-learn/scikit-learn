@@ -489,6 +489,63 @@ def mean_squared_error(
 
     return np.average(output_errors, weights=multioutput)
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
+def root_mean_squared_error(
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+):
+    """Root mean squared error regression loss.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
+
+        'raw_values' :
+            Returns a full set of errors in case of multioutput input.
+
+        'uniform_average' :
+            Errors of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    loss : float or ndarray of floats
+        A non-negative floating point value (the best value is 0.0), or an
+        array of floating point values, one for each individual target.
+
+    """
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput
+    )
+    check_consistent_length(y_true, y_pred, sample_weight)
+    output_errors = np.sqrt(np.average((y_true - y_pred) ** 2, axis=0, weights=sample_weight))
+
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            return output_errors
+        elif multioutput == "uniform_average":
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
+
+    return np.average(output_errors, weights=multioutput)
 
 @validate_params(
     {
