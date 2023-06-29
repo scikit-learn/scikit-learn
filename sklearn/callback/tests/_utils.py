@@ -2,7 +2,7 @@ from functools import partial
 
 from joblib.parallel import Parallel, delayed
 
-from sklearn.base import BaseEstimator, clone
+from sklearn.base import BaseEstimator, clone, _fit_context
 from sklearn.callback import BaseCallback
 from sklearn.callback._base import _eval_callbacks_on_fit_iter_end
 
@@ -34,9 +34,12 @@ class NotValidCallback:
 
 
 class Estimator(BaseEstimator):
+    _parameter_constraints = {}
+
     def __init__(self, max_iter=20):
         self.max_iter = max_iter
 
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y):
         root, X, y, X_val, y_val = self._eval_callbacks_on_fit_begin(
             levels=[
@@ -55,21 +58,21 @@ class Estimator(BaseEstimator):
                     self._from_reconstruction_attributes,
                     reconstruction_attributes=lambda: {"n_iter_": i + 1},
                 ),
-                data={"X": X, "y": y, "X_val": X_val, "y_val": y_val"},
+                data={"X": X, "y": y, "X_val": X_val, "y_val": y_val},
             ):
                 break
 
         self.n_iter_ = i + 1
 
-        self._eval_callbacks_on_fit_end()
-
         return self
 
-    def objective_function(self, X, y=None):
+    def objective_function(self, X, y=None, normalize=False):
         return 0, 0, 0
 
 
 class MetaEstimator(BaseEstimator):
+    _parameter_constraints = {}
+
     def __init__(
         self, estimator, n_outer=4, n_inner=3, n_jobs=None, prefer="processes"
     ):
@@ -79,8 +82,9 @@ class MetaEstimator(BaseEstimator):
         self.n_jobs = n_jobs
         self.prefer = prefer
 
+    @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y):
-        root, *_ = self._eval_callbacks_on_fit_begin(
+        root, X, y, _, _ = self._eval_callbacks_on_fit_begin(
             levels=[
                 {"descr": "fit", "max_iter": self.n_outer},
                 {"descr": "outer", "max_iter": self.n_inner},
@@ -94,8 +98,6 @@ class MetaEstimator(BaseEstimator):
             delayed(self._func)(self.estimator, X, y, node, i)
             for i, node in enumerate(root.children)
         )
-
-        self._eval_callbacks_on_fit_end()
 
         return self
 

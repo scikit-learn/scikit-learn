@@ -1711,8 +1711,6 @@ class NMF(_BaseNMF):
         self.components_ = H
         self.n_iter_ = n_iter
 
-        self._eval_callbacks_on_fit_end()
-
         return W
 
     def _fit_transform(

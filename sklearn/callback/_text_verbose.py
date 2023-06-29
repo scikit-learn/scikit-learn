@@ -9,11 +9,7 @@ class TextVerbose(BaseCallback):
     auto_propagate = True
     request_stopping_criterion = True
 
-    def __init__(self, min_time_between_calls=0):
-        self.min_time_between_calls = min_time_between_calls
-
     def on_fit_begin(self, estimator, X=None, y=None):
-        self.estimator = estimator
         self._start_time = time.perf_counter()
 
     def on_fit_iter_end(self, *, node, **kwargs):

@@ -25,13 +25,14 @@ class EarlyStopping(BaseCallback):
         self.max_no_improvement = max_no_improvement
         self.threshold = threshold
 
-    def on_fit_begin(self, estimator, X=None, y=None):
         self._no_improvement = {}
         self._last_monitored = {}
-        self.early_stopped_ = None
+
+    def on_fit_begin(self, estimator, X=None, y=None):
+        pass
 
     def on_fit_iter_end(self, *, estimator, node, **kwargs):
-        if node.depth != estimator._computation_tree.depth:
+        if node.depth != node.computation_tree.depth:
             return
 
         reconstructed_estimator = kwargs.pop("from_reconstruction_attributes")
@@ -46,8 +47,8 @@ class EarlyStopping(BaseCallback):
             new_monitored = self.monitor(reconstructed_estimator, X, y)
         elif self.monitor is None or isinstance(self.monitor, str):
             from ..metrics import check_scoring
-            scorer = check_scoring(estimator, self.monitor)
-            new_monitored = scorer(estimator, X, y)
+            scorer = check_scoring(reconstructed_estimator, self.monitor)
+            new_monitored = scorer(reconstructed_estimator, X, y)
 
         if self._score_improved(node, new_monitored):
             self._no_improvement[node.parent] = 0
@@ -56,9 +57,8 @@ class EarlyStopping(BaseCallback):
             self._no_improvement[node.parent] += 1
 
         if self._no_improvement[node.parent] >= self.max_no_improvement:
-            self.early_stopped_ = node.idx
             return True
-        
+
     def _score_improved(self, node, new_monitored):
         if node.parent not in self._last_monitored:
             return True
@@ -74,4 +74,4 @@ class EarlyStopping(BaseCallback):
 
     @property
     def request_validation_split(self):
-        return self.on == "val"
+        return self.on == "validation_set"

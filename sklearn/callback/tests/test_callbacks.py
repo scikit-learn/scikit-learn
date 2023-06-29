@@ -7,7 +7,7 @@ import tempfile
 
 import numpy as np
 
-from sklearn.callback import ConvergenceMonitor
+from sklearn.callback import Monitoring
 from sklearn.callback import EarlyStopping
 from sklearn.callback import ProgressBar
 from sklearn.callback import Snapshot
@@ -23,7 +23,7 @@ y = np.zeros(100, dtype=int)
 @pytest.mark.parametrize(
     "Callback",
     [
-        ConvergenceMonitor,
+        Monitoring,
         EarlyStopping,
         ProgressBar,
         Snapshot,

@@ -88,7 +88,7 @@ def test_eval_callbacks_on_fit_begin():
         {"descr": "fit", "max_iter": 10},
         {"descr": "iter", "max_iter": None},
     ]
-    ct_root = estimator._eval_callbacks_on_fit_begin(levels=levels)
+    ct_root, *_ = estimator._eval_callbacks_on_fit_begin(levels=levels)
     assert hasattr(estimator, "_computation_tree")
     assert ct_root is estimator._computation_tree.root
 

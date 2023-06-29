@@ -447,8 +447,6 @@ class Pipeline(_BaseComposition):
 
                 _eval_callbacks_on_fit_iter_end(estimator=self, node=node)
 
-        self._eval_callbacks_on_fit_end()
-
         return self
 
     def _can_fit_transform(self):

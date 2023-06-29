@@ -1481,8 +1481,6 @@ class GridSearchCV(BaseSearchCV):
         )
         super().fit(X, y=y, groups=groups, **fit_params)
 
-        self._eval_callbacks_on_fit_end()
-
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
         evaluate_candidates(self._param_grid, parent_node=self._computation_tree.root)

@@ -119,7 +119,7 @@ def _clone_parametrized(estimator, *, safe=True):
 
     # copy callbacks
     if hasattr(estimator, "_callbacks"):
-        new_object._callbacks = clone(estimator._callbacks, safe=False)
+        new_object._callbacks = estimator._callbacks
 
     # quick sanity check of the parameters of the clone
     for name in new_object_params:

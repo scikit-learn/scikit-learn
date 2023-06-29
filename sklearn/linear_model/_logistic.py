@@ -1397,8 +1397,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         else:
             self.intercept_ = np.zeros(n_classes)
 
-        self._eval_callbacks_on_fit_end()
-
         return self
 
     def predict_proba(self, X):

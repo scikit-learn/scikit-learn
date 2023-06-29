@@ -19,6 +19,7 @@ from ..._loss.loss import (
 )
 from ...base import BaseEstimator, RegressorMixin, ClassifierMixin, is_classifier
 from ...base import _fit_context
+from ...callback._base import _eval_callbacks_on_fit_iter_end
 from ...utils import check_random_state, resample, compute_sample_weight
 from ...utils.validation import (
     check_is_fitted,
@@ -462,6 +463,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X_train, y_train, sample_weight_train = X, y, sample_weight
             X_val = y_val = sample_weight_val = None
 
+        begin_at_stage = 0 if not (self._is_fitted() and self.warm_start) else self.n_iter_    
+
+        root, X_train, y_train, X_val, y_val = self._eval_callbacks_on_fit_begin(
+            levels=[
+                {"descr": "fit", "max_iter": self.max_iter - begin_at_stage},
+                {"descr": "iter", "max_iter": None},
+            ],
+            X=X,
+            y=y,
+        )
+
         # Bin the data
         # For ease of use of the API, the user-facing GBDT classes accept the
         # parameter max_bins, which doesn't take into account the bin for
@@ -756,6 +768,26 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if should_early_stop:
                 break
 
+            if _eval_callbacks_on_fit_iter_end(
+                estimator=self,
+                node=root.children[iteration - begin_at_stage],
+                fit_state={},
+                from_reconstruction_attributes=partial(
+                    self._from_reconstruction_attributes,
+                    reconstruction_attributes=lambda: {
+                        "train_score_": np.asarray(self.train_score_),
+                        "validation_score_": np.asarray(self.validation_score_),
+                    },
+                ),
+                data={
+                    "X": X_binned_train,
+                    "y": y_train,
+                    "X_val": X_binned_val,
+                    "y_val": y_val
+                },
+            ):
+                break
+
         if self.verbose:
             duration = time() - fit_start_time
             n_total_leaves = sum(
@@ -794,7 +826,21 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.train_score_ = np.asarray(self.train_score_)
         self.validation_score_ = np.asarray(self.validation_score_)
         del self._in_fit  # hard delete so we're sure it can't be used anymore
+
         return self
+
+    def objective_function(self, X, y, *, raw_predictions=None, normalize=False):
+        if raw_predictions is None:
+            raw_predictions = self._raw_predict(X)
+
+        loss = self._loss(
+                y_true=y,
+                raw_prediction=raw_predictions,
+            )
+        if normalize:
+            loss /= raw_predictions.shape[0]
+
+        return loss, loss, 0
 
     def _is_fitted(self):
         return len(getattr(self, "_predictors", [])) > 0
