@@ -2,45 +2,26 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
+import warnings
+from copy import deepcopy
+
+import joblib
 import numpy as np
 import pytest
-import warnings
 from scipy import interpolate, sparse
-from copy import deepcopy
-import joblib
 
-from sklearn.base import is_classifier
-from sklearn.base import clone
-from sklearn.datasets import load_diabetes
-from sklearn.datasets import make_regression
-from sklearn.model_selection import (
-    GridSearchCV,
-    LeaveOneGroupOut,
-    train_test_split,
-)
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.base import clone, is_classifier
+from sklearn.datasets import load_diabetes, make_regression
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.utils._testing import TempMemmap
-
 from sklearn.linear_model import (
     ElasticNet,
     ElasticNetCV,
-    enet_path,
     Lars,
-    lars_path,
     Lasso,
     LassoCV,
     LassoLars,
     LassoLarsCV,
     LassoLarsIC,
-    lasso_path,
     LinearRegression,
     MultiTaskElasticNet,
     MultiTaskElasticNetCV,
@@ -51,10 +32,27 @@ from sklearn.linear_model import (
     RidgeClassifier,
     RidgeClassifierCV,
     RidgeCV,
+    enet_path,
+    lars_path,
+    lasso_path,
 )
-
 from sklearn.linear_model._coordinate_descent import _set_order
+from sklearn.model_selection import (
+    GridSearchCV,
+    LeaveOneGroupOut,
+    train_test_split,
+)
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_array
+from sklearn.utils._testing import (
+    TempMemmap,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 
 
 @pytest.mark.parametrize("order", ["C", "F"])
@@ -274,8 +272,8 @@ def test_lasso_cv():
 
 
 def test_lasso_cv_with_some_model_selection():
-    from sklearn.model_selection import ShuffleSplit
     from sklearn import datasets
+    from sklearn.model_selection import ShuffleSplit
 
     diabetes = datasets.load_diabetes()
     X = diabetes.data
@@ -1271,9 +1269,15 @@ def test_multi_task_lasso_cv_dtype():
 @pytest.mark.parametrize("alpha", [0.01])
 @pytest.mark.parametrize("precompute", [False, True])
 @pytest.mark.parametrize("sparseX", [False, True])
-def test_enet_sample_weight_consistency(fit_intercept, alpha, precompute, sparseX):
-    """Test that the impact of sample_weight is consistent."""
-    rng = np.random.RandomState(0)
+def test_enet_sample_weight_consistency(
+    fit_intercept, alpha, precompute, sparseX, global_random_seed
+):
+    """Test that the impact of sample_weight is consistent.
+
+    Note that this test is stricter than the common test
+    check_sample_weights_invariance alone and also tests sparse X.
+    """
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 10, 5
 
     X = rng.rand(n_samples, n_features)
@@ -1293,53 +1297,60 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, precompute, sparse
     if fit_intercept:
         intercept = reg.intercept_
 
-    # sample_weight=np.ones(..) should be equivalent to sample_weight=None
+    # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None
     sample_weight = np.ones_like(y)
     reg.fit(X, y, sample_weight=sample_weight)
     assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
-    # sample_weight=None should be equivalent to sample_weight = number
+    # 2) sample_weight=None should be equivalent to sample_weight = number
     sample_weight = 123.0
     reg.fit(X, y, sample_weight=sample_weight)
     assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
-    # scaling of sample_weight should have no effect, cf. np.average()
-    sample_weight = 2 * np.ones_like(y)
-    reg.fit(X, y, sample_weight=sample_weight)
+    # 3) scaling of sample_weight should have no effect, cf. np.average()
+    sample_weight = rng.uniform(low=0.01, high=2, size=X.shape[0])
+    reg = reg.fit(X, y, sample_weight=sample_weight)
+    coef = reg.coef_.copy()
+    if fit_intercept:
+        intercept = reg.intercept_
+
+    reg.fit(X, y, sample_weight=np.pi * sample_weight)
     assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
-    # setting one element of sample_weight to 0 is equivalent to removing
-    # the corresponding sample
-    sample_weight = np.ones_like(y)
-    sample_weight[-1] = 0
-    reg.fit(X, y, sample_weight=sample_weight)
-    coef1 = reg.coef_.copy()
+    # 4) setting elements of sample_weight to 0 is equivalent to removing these samples
+    sample_weight_0 = sample_weight.copy()
+    sample_weight_0[-5:] = 0
+    y[-5:] *= 1000  # to make excluding those samples important
+    reg.fit(X, y, sample_weight=sample_weight_0)
+    coef_0 = reg.coef_.copy()
     if fit_intercept:
-        intercept1 = reg.intercept_
-    reg.fit(X[:-1], y[:-1])
-    assert_allclose(reg.coef_, coef1, rtol=1e-6)
+        intercept_0 = reg.intercept_
+    reg.fit(X[:-5], y[:-5], sample_weight=sample_weight[:-5])
+    assert_allclose(reg.coef_, coef_0, rtol=1e-6)
     if fit_intercept:
-        assert_allclose(reg.intercept_, intercept1)
+        assert_allclose(reg.intercept_, intercept_0)
 
-    # check that multiplying sample_weight by 2 is equivalent
-    # to repeating corresponding samples twice
+    # 5) check that multiplying sample_weight by 2 is equivalent to repeating
+    # corresponding samples twice
     if sparseX:
         X2 = sparse.vstack([X, X[: n_samples // 2]], format="csc")
     else:
         X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
     y2 = np.concatenate([y, y[: n_samples // 2]])
-    sample_weight_1 = np.ones(len(y))
-    sample_weight_1[: n_samples // 2] = 2
+    sample_weight_1 = sample_weight.copy()
+    sample_weight_1[: n_samples // 2] *= 2
+    sample_weight_2 = np.concatenate(
+        [sample_weight, sample_weight[: n_samples // 2]], axis=0
+    )
 
     reg1 = ElasticNet(**params).fit(X, y, sample_weight=sample_weight_1)
-
-    reg2 = ElasticNet(**params).fit(X2, y2, sample_weight=None)
+    reg2 = ElasticNet(**params).fit(X2, y2, sample_weight=sample_weight_2)
     assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
 
 

@@ -1,28 +1,39 @@
 # License: BSD 3 clause
 
-import pickle
 import itertools
+import pickle
 
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose, assert_array_almost_equal
 
 from sklearn.metrics import DistanceMetric
 from sklearn.neighbors._ball_tree import (
     BallTree,
     kernel_norm,
+)
+from sklearn.neighbors._ball_tree import (
     NeighborsHeap as NeighborsHeapBT,
-    simultaneous_sort as simultaneous_sort_bt,
+)
+from sklearn.neighbors._ball_tree import (
     nodeheap_sort as nodeheap_sort_bt,
+)
+from sklearn.neighbors._ball_tree import (
+    simultaneous_sort as simultaneous_sort_bt,
 )
 from sklearn.neighbors._kd_tree import (
     KDTree,
+)
+from sklearn.neighbors._kd_tree import (
     NeighborsHeap as NeighborsHeapKDT,
-    simultaneous_sort as simultaneous_sort_kdt,
+)
+from sklearn.neighbors._kd_tree import (
     nodeheap_sort as nodeheap_sort_kdt,
 )
-
+from sklearn.neighbors._kd_tree import (
+    simultaneous_sort as simultaneous_sort_kdt,
+)
 from sklearn.utils import check_random_state
-from numpy.testing import assert_array_almost_equal, assert_allclose
 
 rng = np.random.RandomState(42)
 V_mahalanobis = rng.rand(3, 3)
@@ -36,7 +47,6 @@ METRICS = {
     "minkowski": dict(p=3),
     "chebyshev": {},
     "seuclidean": dict(V=rng.random_sample(DIMENSION)),
-    "wminkowski": dict(p=3, w=rng.random_sample(DIMENSION)),
     "mahalanobis": dict(V=V_mahalanobis),
 }
 
@@ -231,8 +241,6 @@ def test_gaussian_kde(Cls, n_samples=1000):
         assert_array_almost_equal(dens_tree, dens_gkde, decimal=3)
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "Cls, metric",
     itertools.chain(

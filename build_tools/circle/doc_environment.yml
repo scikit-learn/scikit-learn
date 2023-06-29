@@ -17,12 +17,14 @@ dependencies:
   - pytest
   - pytest-xdist=2.5.0
   - pillow
+  - setuptools
   - scikit-image
   - seaborn
   - memory_profiler
   - compilers
   - sphinx=6.0.0
   - sphinx-gallery
+  - sphinx-copybutton
   - numpydoc
   - sphinx-prompt
   - plotly

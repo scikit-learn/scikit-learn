@@ -32,6 +32,7 @@ cnp.import_array()
 
 from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
+from scipy.sparse import isspmatrix_csr
 
 from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
@@ -93,7 +94,7 @@ cdef class TreeBuilder:
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
-        const unsigned char[::1] feature_has_missing=None,
+        const unsigned char[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -167,7 +168,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
-        const unsigned char[::1] feature_has_missing=None,
+        const unsigned char[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -193,7 +194,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double min_impurity_decrease = self.min_impurity_decrease
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight, feature_has_missing)
+        splitter.init(X, y, sample_weight, missing_values_in_feature_mask)
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -365,7 +366,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
-        const unsigned char[::1] feature_has_missing=None,
+        const unsigned char[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -377,7 +378,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t max_leaf_nodes = self.max_leaf_nodes
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight, feature_has_missing)
+        splitter.init(X, y, sample_weight, missing_values_in_feature_mask)
 
         cdef vector[FrontierRecord] frontier
         cdef FrontierRecord record
@@ -876,7 +877,7 @@ cdef class Tree:
         """Finds the terminal region (=leaf node) for each sample in sparse X.
         """
         # Check input
-        if not isinstance(X, csr_matrix):
+        if not isspmatrix_csr(X):
             raise ValueError("X should be in csr_matrix format, got %s"
                              % type(X))
 
@@ -1004,7 +1005,7 @@ cdef class Tree:
         """Finds the decision path (=node) for each sample in X."""
 
         # Check input
-        if not isinstance(X, csr_matrix):
+        if not isspmatrix_csr(X):
             raise ValueError("X should be in csr_matrix format, got %s"
                              % type(X))
 

@@ -5,84 +5,83 @@ import sys
 import tempfile
 import warnings
 from functools import partial
+from io import StringIO
 from time import sleep
 
-import pytest
 import numpy as np
-from scipy.sparse import coo_matrix, csr_matrix
-from scipy.sparse import issparse
-from sklearn.exceptions import FitFailedWarning
+import pytest
+from scipy.sparse import coo_matrix, csr_matrix, issparse
 
-from sklearn.model_selection.tests.test_search import FailingClassifier
-
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
-
-from sklearn.utils.validation import _num_samples
-
-from sklearn.model_selection import cross_val_score, ShuffleSplit
-from sklearn.model_selection import cross_val_predict
-from sklearn.model_selection import cross_validate
-from sklearn.model_selection import permutation_test_score
-from sklearn.model_selection import KFold
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.model_selection import LeavePGroupsOut
-from sklearn.model_selection import GroupKFold
-from sklearn.model_selection import GroupShuffleSplit
-from sklearn.model_selection import learning_curve
-from sklearn.model_selection import validation_curve
-from sklearn.model_selection._validation import _check_is_permutation
-from sklearn.model_selection._validation import _fit_and_score
-from sklearn.model_selection._validation import _score
-
-from sklearn.datasets import make_regression
-from sklearn.datasets import load_diabetes
-from sklearn.datasets import load_iris
-from sklearn.datasets import load_digits
-from sklearn.metrics import explained_variance_score
-from sklearn.metrics import make_scorer
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import precision_recall_fscore_support
-from sklearn.metrics import precision_score
-from sklearn.metrics import r2_score
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import check_scoring
-
-from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
-from sklearn.linear_model import PassiveAggressiveClassifier, RidgeClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC, LinearSVC
+from sklearn.base import BaseEstimator, clone
 from sklearn.cluster import KMeans
-from sklearn.neural_network import MLPRegressor
-
+from sklearn.datasets import (
+    load_diabetes,
+    load_digits,
+    load_iris,
+    make_classification,
+    make_multilabel_classification,
+    make_regression,
+)
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.exceptions import FitFailedWarning
 from sklearn.impute import SimpleImputer
-
-from sklearn.preprocessing import LabelEncoder, scale
-from sklearn.pipeline import Pipeline
-
-from io import StringIO
-from sklearn.base import BaseEstimator
-from sklearn.base import clone
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.utils import shuffle
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_multilabel_classification
-
+from sklearn.linear_model import (
+    LogisticRegression,
+    PassiveAggressiveClassifier,
+    Ridge,
+    RidgeClassifier,
+    SGDClassifier,
+)
+from sklearn.metrics import (
+    accuracy_score,
+    check_scoring,
+    confusion_matrix,
+    explained_variance_score,
+    make_scorer,
+    mean_squared_error,
+    precision_recall_fscore_support,
+    precision_score,
+    r2_score,
+)
+from sklearn.model_selection import (
+    GridSearchCV,
+    GroupKFold,
+    GroupShuffleSplit,
+    KFold,
+    LeaveOneGroupOut,
+    LeaveOneOut,
+    LeavePGroupsOut,
+    ShuffleSplit,
+    StratifiedKFold,
+    cross_val_predict,
+    cross_val_score,
+    cross_validate,
+    learning_curve,
+    permutation_test_score,
+    validation_curve,
+)
+from sklearn.model_selection._validation import (
+    _check_is_permutation,
+    _fit_and_score,
+    _score,
+)
 from sklearn.model_selection.tests.common import OneTimeSplitter
-from sklearn.model_selection import GridSearchCV
-
-
-try:
-    WindowsError  # type: ignore
-except NameError:
-    WindowsError = None
+from sklearn.model_selection.tests.test_search import FailingClassifier
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPRegressor
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import LabelEncoder, scale
+from sklearn.svm import SVC, LinearSVC
+from sklearn.utils import shuffle
+from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.validation import _num_samples
 
 
 class MockImprovingEstimator(BaseEstimator):
@@ -300,9 +299,6 @@ def test_cross_val_score():
 
     clf = CheckingClassifier(check_y=list_check)
     scores = cross_val_score(clf, X, y2.tolist(), cv=3)
-
-    with pytest.raises(ValueError):
-        cross_val_score(clf, X, y2, scoring="sklearn")
 
     # test with 3d X and
     X_3d = X[:, :, np.newaxis]
@@ -617,7 +613,7 @@ def test_cross_val_score_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
     try:
-        from pandas import Series, DataFrame
+        from pandas import DataFrame, Series
 
         types.append((Series, DataFrame))
     except ImportError:
@@ -727,14 +723,6 @@ def test_cross_val_score_score_func():
     assert_array_equal(score, [1.0, 1.0, 1.0])
     # Test that score function is called only 3 times (for cv=3)
     assert len(_score_func_args) == 3
-
-
-def test_cross_val_score_errors():
-    class BrokenEstimator:
-        pass
-
-    with pytest.raises(TypeError):
-        cross_val_score(BrokenEstimator(), X)
 
 
 def test_cross_val_score_with_score_func_classification():
@@ -1118,7 +1106,7 @@ def test_cross_val_predict_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
     try:
-        from pandas import Series, DataFrame
+        from pandas import DataFrame, Series
 
         types.append((Series, DataFrame))
     except ImportError:
@@ -2064,7 +2052,7 @@ def test_score_memmap():
             try:
                 os.unlink(tf.name)
                 break
-            except WindowsError:
+            except OSError:
                 sleep(1.0)
 
 
@@ -2073,7 +2061,7 @@ def test_permutation_test_score_pandas():
     # check permutation_test_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
     try:
-        from pandas import Series, DataFrame
+        from pandas import DataFrame, Series
 
         types.append((Series, DataFrame))
     except ImportError:
@@ -2100,14 +2088,6 @@ def test_fit_and_score_failing():
     # check if exception was raised, with default error_score='raise'
     with pytest.raises(ValueError, match="Failing classifier failed as required"):
         _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
-
-    # check that functions upstream pass error_score param to _fit_and_score
-    error_message_cross_validate = (
-        "The 'error_score' parameter of cross_validate must be .*. Got .* instead."
-    )
-
-    with pytest.raises(ValueError, match=error_message_cross_validate):
-        cross_val_score(failing_clf, X, cv=3, error_score="unvalid-string")
 
     assert failing_clf.score() == 0.0  # FailingClassifier coverage
 
@@ -2368,7 +2348,7 @@ def test_callable_multimetric_confusion_matrix_cross_validate():
         return {"tn": cm[0, 0], "fp": cm[0, 1], "fn": cm[1, 0], "tp": cm[1, 1]}
 
     X, y = make_classification(n_samples=40, n_features=4, random_state=42)
-    est = LinearSVC(random_state=42)
+    est = LinearSVC(dual="auto", random_state=42)
     est.fit(X, y)
     cv_results = cross_validate(est, X, y, cv=5, scoring=custom_scorer)
 
